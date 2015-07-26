@@ -1803,15 +1803,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NFLOG_GROUP:
-                        if (opt_whole <= 0  ||
-                            opt_whole > 65535) {
-                                char buf[120];
+			if (opt_whole <= 0  ||
+			    opt_whole > 65535) {
+				char buf[120];
 
-                                snprintf(buf, sizeof(buf),
-                                        "invalid nflog-group value - range must be 1-65535 \"%s\"",
-                                        optarg);
-                                diag(buf);
-                        }
+				snprintf(buf, sizeof(buf),
+					"invalid nflog-group value - range must be 1-65535 \"%s\"",
+					optarg);
+				diag(buf);
+			}
 			msg.nflog_group = opt_whole;
 			continue;
 

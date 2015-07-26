@@ -830,9 +830,9 @@ int notifier_call_chain(struct notifier_block **n, unsigned long val, void *v);
 #define NETDEV_UP       0x0001                                  /* For now you can't veto a device up/down */
 #define NETDEV_DOWN     0x0002
 #define NETDEV_REBOOT   0x0003                                  /* Tell a protocol stack a network interface
-	                                                           detected a hardware crash and restarted
-	                                                           - we can use this eg to kick tcp sessions
-	                                                           once done */
+								   detected a hardware crash and restarted
+								   - we can use this eg to kick tcp sessions
+								   once done */
 #define NETDEV_CHANGE   0x0004                                  /* Notify device state change */
 #define NETDEV_REGISTER 0x0005
 #define NETDEV_UNREGISTER       0x0006

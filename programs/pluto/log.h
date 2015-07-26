@@ -154,8 +154,8 @@ extern void show_global_status(void);
 #endif
 
 enum linux_audit_kind {
-        LAK_PARENT_START,
-        LAK_CHILD_START,
+	LAK_PARENT_START,
+	LAK_CHILD_START,
 	LAK_PARENT_DESTROY,
 	LAK_CHILD_DESTROY
 };

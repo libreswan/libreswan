@@ -996,7 +996,7 @@ void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct stat
 {
 	struct timeval delay;
 
-        DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
 
 	delay.tv_sec =  delay_ms / 1000;
 	delay.tv_usec = (delay_ms % 1000) * 1000;
@@ -1007,7 +1007,7 @@ void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
 {
 	struct timeval delay;
 
-        DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
 
 	/* unexpectedly far away, pexpect will flag in test cases */
 	pexpect(delay_sec < 3600 * 24 * 31);

@@ -954,8 +954,8 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 #ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
 		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
-               return STF_FAIL + SITUATION_NOT_SUPPORTED;
-       }
+		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+	}
 #endif
 
 	/* verify echoed SA */
@@ -2101,7 +2101,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	/* CERT out, if we have one */
 	if (send_cert) {
 		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT :
-					        ISAKMP_NEXT_SIG;
+						ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
@@ -3010,7 +3010,7 @@ bool accept_delete(struct msg_digest *md,
 					    dst->st_event->ev_type ==
 						  EVENT_SA_REPLACE &&
 					    !monobefore(monotimesum(mononow(),
-					          deltatime(DELETE_SA_DELAY)),
+						  deltatime(DELETE_SA_DELAY)),
 						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to

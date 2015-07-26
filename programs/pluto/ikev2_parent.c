@@ -2451,7 +2451,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 	if (st == NULL) {
 		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls"
 					" state #%lu, %s[%lu]."
-				        " The state is gone. elapsed time %lu.%06lu",
+					" The state is gone. elapsed time %lu.%06lu",
 					p->pam.st_serialno, p->pam.c_name,
 					p->pam.c_instance_serial,
 					(unsigned long)served_delta.tv_sec,

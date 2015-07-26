@@ -1713,7 +1713,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				    val > SA_LIFE_DURATION_MAXIMUM ?
 					deltatime(SA_LIFE_DURATION_MAXIMUM) :
 				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
-				        st->st_connection->sa_ipsec_life_seconds :
+					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);
 				break;
 			case SA_LIFE_TYPE_KBYTES:
@@ -1778,7 +1778,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					}
 					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
 				} else if (!(st->hidden_variables.st_nat_traversal &
-				           NAT_T_DETECTED)) {
+					   NAT_T_DETECTED)) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s must only be used if NAT-Traversal is detected",
 					       enum_name(&enc_mode_names,
@@ -2671,7 +2671,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ah_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_AH);
+						inner_proto == IPPROTO_AH);
 			}
 
 			/* ESP proposal */
@@ -2685,7 +2685,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_ESP);
+						inner_proto == IPPROTO_ESP);
 			}
 
 			/* IPCOMP proposal */
@@ -2699,7 +2699,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_COMP);
+						inner_proto == IPPROTO_COMP);
 			}
 
 			close_output_pbs(r_sa_pbs);

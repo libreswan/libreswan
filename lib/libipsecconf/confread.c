@@ -1481,7 +1481,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(dnsctx,
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
-				                 /*default conn*/ TRUE,
+						/*default conn*/ TRUE,
 						 resolvip, perr);
 			}
 
@@ -1491,7 +1491,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(dnsctx,
 						 &cfg->conn_oedefault,
 						 cfgp, sconn, FALSE,
-				                 /*default conn*/ TRUE,
+						/*default conn*/ TRUE,
 						 resolvip, perr);
 				if (!err)
 					cfg->got_oedefault = TRUE;

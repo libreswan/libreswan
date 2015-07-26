@@ -353,7 +353,7 @@ extern bool assign_holdpass(struct connection *c,
 			const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
-                int transport_proto, ipsec_spi_t failure_shunt);
+		int transport_proto, ipsec_spi_t failure_shunt);
 
 extern ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective);
 
@@ -421,23 +421,23 @@ extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,
-                       const ip_subnet *this_client,
-                       const ip_address *that_host,
-                       const ip_subnet *that_client,
-                       ipsec_spi_t cur_spi,
-                       ipsec_spi_t new_spi,
-                       int sa_proto,
-                       unsigned int transport_proto,
-                       enum eroute_type esatype,
-                       const struct pfkey_proto_info *proto_info,
-                       deltatime_t use_lifetime,
-                       unsigned long sa_priority,
-                       enum pluto_sadb_operations op,
-                       const char *opname
+		       const ip_subnet *this_client,
+		       const ip_address *that_host,
+		       const ip_subnet *that_client,
+		       ipsec_spi_t cur_spi,
+		       ipsec_spi_t new_spi,
+		       int sa_proto,
+		       unsigned int transport_proto,
+		       enum eroute_type esatype,
+		       const struct pfkey_proto_info *proto_info,
+		       deltatime_t use_lifetime,
+		       unsigned long sa_priority,
+		       enum pluto_sadb_operations op,
+		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
-                       , const char *policy_label
+		       , const char *policy_label
 #endif
-                       );
+		       );
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

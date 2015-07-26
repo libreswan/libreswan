@@ -790,9 +790,9 @@ static void show_system_security(void)
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "fips mode=%s;",
-                fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
+		fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
-                selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
+		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */
 
 }
@@ -1213,7 +1213,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			} else {
 				snprintf(integname, sizeof(integname), "none");
 			}
-                }
+		}
 
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",

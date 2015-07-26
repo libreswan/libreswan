@@ -998,7 +998,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 			bool quiet = (st == NULL ||
-                                     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
+				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
 
 			if (st == NULL) {
 				if (!quiet) {
@@ -2731,7 +2731,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
 	     id->isaid_doi_specific_b == pluto_nat_port)) {

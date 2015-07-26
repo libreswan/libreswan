@@ -1825,7 +1825,7 @@ void fmt_state(struct state *st, const monotime_t n,
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
 						       traffic_buf +
-						         sizeof(traffic_buf),
+							 sizeof(traffic_buf),
 						       " AHout=");
 			}
 #endif

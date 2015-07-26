@@ -49,7 +49,7 @@ static int import_crl(const char *url, unsigned char *buf, size_t len)
 	si.len = len;
 
 	if ((crl = CERT_ImportCRL(handle, &si, (char *)url, SEC_CRL_TYPE,
-						        NULL)) == NULL) {
+							NULL)) == NULL) {
 		return PORT_GetError();
 	}
 

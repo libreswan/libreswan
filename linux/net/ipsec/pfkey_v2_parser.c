@@ -530,7 +530,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 				    ((struct sadb_msg*)extensions[
 				      K_SADB_EXT_RESERVED])->sadb_msg_pid),
 			       extensions_reply) &&
-	      pfkey_safe_build(error =
+		pfkey_safe_build(error =
 			pfkey_sa_build(&extensions_reply[K_SADB_EXT_SA],
 				       K_SADB_EXT_SA,
 				       extr->ips->ips_said.spi,
@@ -540,9 +540,9 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 				       extr->ips->ips_encalg,
 				       extr->ips->ips_flags),
 			       extensions_reply) &&
-	      /* The 3 lifetime extentions should only be sent if non-zero. */
-	      (extensions[K_SADB_EXT_LIFETIME_HARD] == 0 ||
-		  pfkey_safe_build(error =
+		/* The 3 lifetime extentions should only be sent if non-zero. */
+		(extensions[K_SADB_EXT_LIFETIME_HARD] == 0 ||
+		    pfkey_safe_build(error =
 			pfkey_lifetime_build(&extensions_reply[
 					       K_SADB_EXT_LIFETIME_HARD],
 					     K_SADB_EXT_LIFETIME_HARD,
@@ -557,8 +557,8 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					     extr->ips->ips_life.ipl_packets.
 					       ipl_hard),
 				   extensions_reply)) &&
-	      (extensions[K_SADB_EXT_LIFETIME_SOFT] == 0 ||
-		  pfkey_safe_build(error =
+		(extensions[K_SADB_EXT_LIFETIME_SOFT] == 0 ||
+		    pfkey_safe_build(error =
 			pfkey_lifetime_build(&extensions_reply[
 					       K_SADB_EXT_LIFETIME_SOFT],
 					     K_SADB_EXT_LIFETIME_SOFT,
@@ -573,13 +573,13 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					     extr->ips->ips_life.ipl_packets.
 					       ipl_count),
 				extensions_reply)) &&
-	      (!(extr->ips->ips_life.ipl_allocations.ipl_count ||
-	       extr->ips->ips_life.ipl_bytes.ipl_count ||
-	       extr->ips->ips_life.ipl_addtime.ipl_count ||
-	       extr->ips->ips_life.ipl_usetime.ipl_count ||
-	       extr->ips->ips_life.ipl_packets.ipl_count) ||
+		(!(extr->ips->ips_life.ipl_allocations.ipl_count ||
+		   extr->ips->ips_life.ipl_bytes.ipl_count ||
+		   extr->ips->ips_life.ipl_addtime.ipl_count ||
+		   extr->ips->ips_life.ipl_usetime.ipl_count ||
+		   extr->ips->ips_life.ipl_packets.ipl_count) ||
 
-	         pfkey_safe_build(error =
+		  pfkey_safe_build(error =
 			pfkey_lifetime_build(&extensions_reply[
 						K_SADB_EXT_LIFETIME_CURRENT],
 					     K_SADB_EXT_LIFETIME_CURRENT,
@@ -594,7 +594,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					     extr->ips->ips_life.ipl_packets.
 						ipl_count),
 				  extensions_reply)) &&
-	      pfkey_safe_build(error =
+		pfkey_safe_build(error =
 			pfkey_address_build(&extensions_reply[
 						K_SADB_EXT_ADDRESS_SRC],
 					    K_SADB_EXT_ADDRESS_SRC,
@@ -602,7 +602,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					    0,
 					    extr->ips->ips_addr_s),
 			       extensions_reply) &&
-	      pfkey_safe_build(error =
+		pfkey_safe_build(error =
 			pfkey_address_build(&extensions_reply[
 						K_SADB_EXT_ADDRESS_DST],
 					    K_SADB_EXT_ADDRESS_DST,
@@ -610,8 +610,8 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					    0,
 					    extr->ips->ips_addr_d),
 			       extensions_reply) &&
-	      (!extr->ips->ips_ident_s.data ||
-	       pfkey_safe_build(error =
+		(!extr->ips->ips_ident_s.data ||
+		  pfkey_safe_build(error =
 			pfkey_ident_build(&extensions_reply[
 					      K_SADB_EXT_IDENTITY_SRC],
 					  K_SADB_EXT_IDENTITY_SRC,
@@ -620,8 +620,8 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					  extr->ips->ips_ident_s.len,
 					  extr->ips->ips_ident_s.data),
 				extensions_reply)) &&
-	      (!extr->ips->ips_ident_d.data ||
-	       pfkey_safe_build(error =
+		(!extr->ips->ips_ident_d.data ||
+		 pfkey_safe_build(error =
 			pfkey_ident_build(&extensions_reply[
 					      K_SADB_EXT_IDENTITY_DST],
 					  K_SADB_EXT_IDENTITY_DST,
@@ -631,10 +631,11 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 					  extr->ips->ips_ident_d.data),
 				extensions_reply))
 #if 0
-	      /* FIXME: This won't work yet because I have not finished
-	         it. */
-	      && (!extr->ips->ips_sens_ ||
-		  pfkey_safe_build(error =
+		/* FIXME: This won't work yet because I have not finished it */
+
+		&&
+		(!extr->ips->ips_sens ||
+		 pfkey_safe_build(error =
 			pfkey_sens_build(&extensions_reply[
 					     K_SADB_EXT_SENSITIVITY],
 					 extr->ips->ips_sens_dpd,
@@ -953,8 +954,7 @@ DEBUG_NO_STATIC int pfkey_add_parse(struct sock *sk,
 							  ips_ident_d.data),
 				extensions_reply))
 #if 0
-	      /* FIXME: This won't work yet because I have not finished
-	         it. */
+		/* FIXME: This won't work yet because I have not finished it */
 	      && (extr->ips->ips_sens_== 0 ||
 		  pfkey_safe_build(error = pfkey_sens_build(&extensions_reply[
 								    K_SADB_EXT_SENSITIVITY
@@ -1363,9 +1363,11 @@ DEBUG_NO_STATIC int pfkey_get_parse(struct sock *sk,
 							    ips_addr_p),
 				extensions_reply))
 #if 0
-	      /* FIXME: This won't work yet because the keys are not
-	         stored directly in the ipsec_sa.  They are stored as
-	         contexts. */
+		/*
+		 * FIXME: This won't work yet because the keys are not
+		 * stored directly in the ipsec_sa.  They are stored as
+		 * contexts.
+		 */
 	      && (extr->ips->ips_key_a_size == 0 ||
 		  pfkey_safe_build(error = pfkey_key_build(&extensions_reply[
 								   K_SADB_EXT_KEY_AUTH
@@ -1375,9 +1377,11 @@ DEBUG_NO_STATIC int pfkey_get_parse(struct sock *sk,
 							   ips_key_a_size * 8,
 							   extr->ips->ips_key_a),
 				   extensions_reply) : 1)
-	      /* FIXME: This won't work yet because the keys are not
-	         stored directly in the ipsec_sa.  They are stored as
-	         key schedules. */
+		/*
+		 * FIXME: This won't work yet because the keys are not
+		 * stored directly in the ipsec_sa.  They are stored as
+		 * key schedules.
+		 */
 	      && (extr->ips->ips_key_e_size ?
 		  pfkey_safe_build(error = pfkey_key_build(&extensions_reply[
 								   K_SADB_EXT_KEY_ENCRYPT
@@ -1417,8 +1421,7 @@ DEBUG_NO_STATIC int pfkey_get_parse(struct sock *sk,
 							  ips_ident_d.data),
 				extensions_reply))
 #if 0
-	      /* FIXME: This won't work yet because I have not finished
-	         it. */
+		/* FIXME: This won't work yet because I have not finished it */
 	      && (extr->ips->ips_sens_== 0 ||
 		  pfkey_safe_build(error = pfkey_sens_build(&extensions_reply[
 								    K_SADB_EXT_SENSITIVITY
@@ -2122,7 +2125,7 @@ DEBUG_NO_STATIC int pfkey_x_grpsa_parse(struct sock *sk,
 								       K_SADB_X_EXT_SATYPE2
 							       ])->
 							      sadb_x_satype_satype
-	                                                      /* proto2satype(extr->ips2->ips_said.proto) */),
+							      /* proto2satype(extr->ips2->ips_said.proto) */),
 				 extensions_reply) &&
 		pfkey_safe_build(error = pfkey_sa_build(&extensions_reply[
 								K_SADB_X_EXT_SA2
@@ -3015,8 +3018,7 @@ int pfkey_acquire(struct ipsec_sa *ipsp)
 							     data),
 				   extensions))
 #if 0
-	      /* FIXME: This won't work yet because I have not finished
-	         it. */
+		/* FIXME: This won't work yet because I have not finished it */
 	      && (ipsp->ips_sens_== 0 ||
 		  pfkey_safe_build(error = pfkey_sens_build(&extensions[
 								    K_SADB_EXT_SENSITIVITY

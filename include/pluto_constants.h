@@ -160,9 +160,9 @@ enum crypto_importance {
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
 	DDOS_undefined,
-        DDOS_AUTO,
-        DDOS_FORCE_BUSY,
-        DDOS_FORCE_UNLIMITED
+	DDOS_AUTO,
+	DDOS_FORCE_BUSY,
+	DDOS_FORCE_UNLIMITED
 };
 
 /* status for state-transition-function

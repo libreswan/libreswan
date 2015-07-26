@@ -181,9 +181,9 @@ struct hidden_variables {
 						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
 	lset_t st_nat_traversal;                /* bit field of permitted
-	                                         * methods. If non-zero, then
-	                                         * NAT-T has been detected, and
-	                                         * should be used. */
+						 * methods. If non-zero, then
+						 * NAT-T has been detected, and
+						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
 };
@@ -228,14 +228,14 @@ struct state {
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
-	                                         * to be replaced with IKEv2
+						 * to be replaced with IKEv2
 						 */
 
 	struct connection *st_connection;       /* connection for this SA */
 	int st_whack_sock;                      /* fd for our Whack TCP socket.
-	                                         * Single copy: close when
-	                                         * freeing struct.
-	                                         */
+						 * Single copy: close when
+						 * freeing struct.
+						 */
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */
 	const char        *st_suspended_md_func;
@@ -276,7 +276,7 @@ struct state {
 	/** IKEv1-only things **/
 
 	msgid_t st_msgid;                       /* MSG-ID from header.
-	                                           Network Order! */
+						   Network Order! */
 	bool st_msgid_reserved;			/* is msgid reserved yet? */
 
 	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
@@ -385,15 +385,15 @@ struct state {
 	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
 
 	PK11SymKey *st_shared_nss;	/* Derived shared secret
-	                                 * Note: during Quick Mode,
+					 * Note: during Quick Mode,
 					 * presence indicates PFS
 					 * selected.
 					 */
 	/* end of DH values */
 
 	enum crypto_importance st_import;       /* relative priority of crypto
-	                                         * operations
-	                                         */
+						 * operations
+						 */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
@@ -411,10 +411,10 @@ struct state {
 					 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
-	                                         * performing cryptographic
-	                                         * operations on this state at
-	                                         * this time
-	                                         */
+							 * performing cryptographic
+							 * operations on this state at
+							 * this time
+							 */
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
@@ -470,7 +470,7 @@ struct state {
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
 	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
-	                                           to receive */
+						   to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
 	struct pluto_event *st_dpd_event;		/* backpointer for DPD events */

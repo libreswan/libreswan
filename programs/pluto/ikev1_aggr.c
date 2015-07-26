@@ -460,7 +460,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		    ((st->st_connection->spd.this.sendcert ==
-		        cert_sendifasked &&
+			cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend);
 

@@ -706,6 +706,6 @@ char *msg;
  */
 void (exit_tool)(int x)
 {
-        exit(x);
+	exit(x);
 }
 
