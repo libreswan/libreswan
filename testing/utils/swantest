@@ -82,8 +82,8 @@ class guest (threading.Thread):
                 if not e:
                     e = "end"
             self.log_line('OUTPUT/RESULT', e)
-            logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
-                         round(time.time() - self.start, 2), e)
+            logging.info("%s done %s ran %.2fs %s", self.hostname, self.testname,
+                         time.time() - self.start, e)
         except Exception as x:
             # XXXX: Bad, but easiest way to get rid of a deadlock when
             # things go wrong
@@ -133,8 +133,8 @@ class guest (threading.Thread):
             n_init.wait()
             logging.debug("%s wait for responder to initialize", self.hostname)
             r_init.wait()
-            logging.info("%s initiator is ready (waited %s)", self.hostname,
-                         round((time.time() - start), 2))
+            logging.info("%s initiator is ready (waited %.2fs)", self.hostname,
+                         time.time() - start)
 
         output_file = "OUTPUT/%s.console.verbose.txt" % (self.hostname)
         f = open(output_file, 'w')
@@ -163,9 +163,10 @@ class guest (threading.Thread):
                 return e
         else:
             start = time.time()
-            print("waiting for initiator to finish run")
+            print(self.hostname + " waiting for initiator to finish run")
             i_ran.wait()
-            print(("initiator is ran waited %s" % (time.time() - start)))
+            print(("%s initiator finished after %.2fs" %
+	    	(self.hostname, time.time() - start)))
 
         cmd = "./final.sh"
         if os.path.exists(cmd):
