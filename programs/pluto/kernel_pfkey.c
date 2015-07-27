@@ -307,9 +307,9 @@ static bool pfkey_get(pfkey_buf *buf)
 				(unsigned) buf->msg.sadb_msg_len,
 				(unsigned) IPSEC_PFKEYv2_ALIGN);
 		} else if (!(buf->msg.sadb_msg_pid == (unsigned)pid
-		             /*	for now, unsolicited messages can be:
-		              *	K_SADB_ACQUIRE, K_SADB_REGISTER, K_SADB_X_NAT_T_NEW_MAPPING
-		              */
+			     /*	for now, unsolicited messages can be:
+			      *	K_SADB_ACQUIRE, K_SADB_REGISTER, K_SADB_X_NAT_T_NEW_MAPPING
+			      */
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type == SADB_ACQUIRE)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
@@ -448,7 +448,7 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 	    !(ugh = src_proto == dst_proto ?
 		NULL : "src and dst protocols differ") &&
 	    !(ugh = addrtypeof(src) == addrtypeof(dst) ?
-	        NULL : "conflicting address types") &&
+		NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, 0,

@@ -107,6 +107,14 @@ typedef struct packet_byte_stream pb_stream;
 extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 
+/*
+ * init_out_pbs:
+ * Same as init_pbs except it scribbles on the buffer to prevent leakage.
+ * Should be totally redundant.
+ */
+extern void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
+		     const char *name);
+
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
@@ -630,7 +638,30 @@ extern struct_desc isakmp_delete_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 extern struct_desc isakmp_vendor_id_desc;
+/* ISAKMP NAT-Traversal NAT-D
+ * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 3.2
+ *
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                 HASH of the address and port                  !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+extern struct_desc isakmp_nat_d;
 
+/* ISAKMP NAT-Traversal NAT-OA
+ * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 4.2
+ *
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !   ID Type     !   RESERVED    !            RESERVED           !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !         IPv4 (4 octets) or IPv6 address (16 octets)           !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
 struct isakmp_nat_oa {
 	u_int8_t isanoa_np;
 	u_int8_t isanoa_reserved_1;
@@ -639,8 +670,6 @@ struct isakmp_nat_oa {
 	u_int8_t isanoa_reserved_2;
 	u_int16_t isanoa_reserved_3;
 };
-
-extern struct_desc isakmp_nat_d;
 extern struct_desc isakmp_nat_oa;
 
 extern struct_desc isakmp_ignore_desc; /* generic payload (when ignoring) */

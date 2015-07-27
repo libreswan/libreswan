@@ -60,70 +60,56 @@ mk/tests.sh
 This script goes through a whole heap of make commands, such as
 sub-directory clean/build, that should work.
 
-TODO: a.k.a. what needs fixing in the existing build system
------------------------------------------------------------
+TODO: a.k.a. what needs fixing
+------------------------------
 
-delete any targets that are not recursive, "spotless" for instance.
+The following are querks in the build system:
 
-switch lib/libswan to using library.mk; having more recursive targets
-descend $(srcdir) is predicated on this.
+- lib/libswan should use library.mk
 
-switch programs/pluto to using program.mk; having more recursive
-targets descend $(srcdir) is predicated on this.
+- programs/pluto should to use program.mk
 
-have "make install" descend $(srcdir); "make install-manpages" already
-works so just need to fix above.
+- recursive make targets should stick to $(srcdir); currently some
+  switch back to $(builddir) at the last moment
 
-have "make all" descend $(srcdir); "make manpages" already works so
-just need to fix above.
+- remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
-Expand $(OBJDIR) to include more build specific information such as
-.kvm, the actual kernel, and any thing else.
+- move modobj to under $(builddir)
 
-When on fedora/rhel, enable audit logs.  One way to implement this is
-to add packaging/defaults/fedora and pull that in.  Presumably OBJDIR
-would be updated to reflect this.  Mumble something about how it would
-be nice if audit tests were not run on systems that did not have
-audit.
+- unit tests under testing/ could do with their own unit-test.mk file;
+  grep for UNITTEST in testing's Makefile-s
 
-merge sanitize.sh and re-sanitize.sh
+- free up CFLAGS; see autoconf/automake for possible guidelines?
 
-when a test fails early, should sanitize.sh still be run?
+- be more consistent with "=", ":=" and "?="; there's a meta issue
+  here - configuration files are included early leading to "?=" rather
+  than late
 
-Have *init.sh et.al. scripts always succeed.  This means that commands
-like ping that are expected to fail (demonstrating no conectivity)
-will need a "!" prefix so the failure is success.
+- eliminate :: rules
 
-As a separate line in the log file print the basename, line, and
-function of DBG calls.
+- run "make --warn-undefined-variables"
 
-Run swan-init et.al. from ../../../testing/guestbin/ (a relative
-path), and not /testing/guestbin/
+- do not generate the makefiles under $(OBJDIR); need to stop things
+  switching to that directory first
 
-Remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
+- eliminate Makefile.ver: this is really messy as scripts do all sorts
+  of wierd and wonderful stuff with it.
 
-move modobj to under $(builddir)
+The following are querks inside of pluto:
 
-stuff built under testing/ could do with its own unit-test.mk file -
-which is just a tweak of program.mk; grep for UNITTEST
+- log, as a separate line, the file's basename, line and function
 
-add depend.mk to program.mk
+- enable -std=gnu99; hopefully just slog
 
-enable -std=gnu99: hopefully just slog
+The following are querks in the test infrastructure:
 
-Free up CFLAGS, like autoconf/automake?
+- have *init.sh et.al. scripts always succeed.  This means that
+  commands like ping that are expected to fail (demonstrating no
+  conectivity) will need a "!" prefix so the failure is success.
 
-= vs :=
+- run ../../../testing/guestbin/swan-init (a relative path within the
+  current test tree), and not /testing/guestbin/swan-init
 
-eliminate :: rules
-
-Make --warn-undefined-variables
-
-Do not generate OBJDIR make files.
-
-eliminate Makefile.ver: this is really messy as scripts do all sorts
-of wierd and wonderful stuff with it.
-
-kvm-build-east use "make" and not "swan-build"
-
-"make" run "make all".
+- support multiple run files (for instance run1east.sh, run2west.sh,
+  ...); this will allow more complicated tests such as where west
+  establishes a connection but east triggers the re-establish

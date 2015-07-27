@@ -192,7 +192,7 @@ static void pcr_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,
 			    enum crypto_importance pcr_pcim)
 {
-	zero(r);
+	messup(r);
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_type;
 	r->pcr_pcim = pcr_pcim;
@@ -300,8 +300,6 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 	for (;;) {
 		size_t sz;
-
-		zero(&req);
 
 		errno = 0;
 		sz = fread(&req, sizeof(char), sizeof(req), in);
@@ -796,8 +794,6 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 		    w->pcw_work));
 
 	/* read from the socketpair in one gulp */
-
-	zero(&rr);
 
 	errno = 0;
 	actlen = read(w->pcw_master_fd, (void *)&rr, sizeof(rr));

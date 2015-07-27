@@ -85,7 +85,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
 
-	zero(&ts);
+	zero(&ts);	/* OK: no pointer fields */
 
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
@@ -285,7 +285,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		if (i >= array_max)
 			return -1;
 
-		zero(&array[i]);
+		zero(&array[i]);	/* OK: no pointer fields */
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
@@ -1012,7 +1012,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
-		zero(&r_sa);
+		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
 			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
 
@@ -1032,7 +1032,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		struct ikev2_generic in;
 		pb_stream pb_nr;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointer fields */
 		in.isag_np = ISAKMP_NEXT_v2TSi;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {

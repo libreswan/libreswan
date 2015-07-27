@@ -178,8 +178,8 @@ kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-11-failike			good
 kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good
-kvmplutotest	newoe-15-block				good
-kvmplutotest	newoe-17-block				good
+kvmplutotest	newoe-15-poc-block			good
+kvmplutotest	newoe-17-poc-clear			good
 	
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
@@ -714,12 +714,15 @@ kvmplutotest	ikeport-01				wip
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
 #################################################################
-skiptest	fips-01-ikev1-default			wip
-kvmplutotest	fips-02-ikev2-default			good
-skiptest	fips-03-ikev1-md5			wip
-skiptest	fips-04-ikev2-md5			good
+kvmplutotest	fips-default-ikev1-01-nofips-east	good
+kvmplutotest	fips-default-ikev2-01-nofips-east	good
+kvmplutotest	fips-default-ikev1-02-nofips-west	good
+kvmplutotest	fips-default-ikev2-02-nofips-west	good
+
+kvmplutotest	fips-03-ikev1-md5			good
+kvmplutotest	fips-04-ikev2-md5			good
 skiptest	fips-05-ikev1-gcm			wip
-skiptest	fips-06-ikev1-sha1			wip
+kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
 kvmplutotest	fips-08-ikev2-x509			good
 kvmplutotest	fips-09-ikev2-gcm			good

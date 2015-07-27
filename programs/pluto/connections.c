@@ -775,8 +775,9 @@ static bool load_end_nss_certificate(const char *name, struct end *dst)
 {
 	cert_t cert;
 
-	zero(&dst->cert);
+	zero(&dst->cert);	/* redundant */
 	dst->cert.ty = CERT_NONE;
+	dst->cert.u.nss_cert = NULL;
 
 	if (name == NULL)
 		return FALSE;
@@ -2616,27 +2617,18 @@ struct connection *refine_host_connection(const struct state *st,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
-	struct connection *d;
 	struct connection *best_found = NULL;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 	bool wcpip; /* wildcard Peer IP? */
-	int wildcards, best_wildcards;
-	int our_pathlen, best_our_pathlen, peer_pathlen, best_peer_pathlen;
-	chunk_t peer_ca;
+	int wildcards = 0,
+		best_wildcards = 0;
+	int our_pathlen = 0,
+		best_our_pathlen = 0,
+		peer_pathlen = 0,
+		best_peer_pathlen = 0;
 	const chunk_t *psk = NULL;
 
 	*fromcert = FALSE;
-
-	our_pathlen = peer_pathlen = 0;
-	best_our_pathlen  = 0;
-	best_peer_pathlen = 0;
-	wildcards = best_wildcards = 0;
-
-	/*
-	 * Zero it, so because we will test it later, to see if we found
-	 * something, and the get_peer_ca code is uncertain.
-	 **/
-	zero(&peer_ca);
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("refine_host_connection: starting with %s",
@@ -2648,10 +2640,10 @@ struct connection *refine_host_connection(const struct state *st,
 		return c;
 	}
 
-	peer_ca = get_peer_ca(peer_id);
+	chunk_t peer_ca = get_peer_ca(peer_id);
 
 	if (same_id(&c->spd.that.id, peer_id) &&
-		(peer_ca.ptr != NULL) &&
+		peer_ca.ptr != NULL &&
 		trusted_ca_nss(peer_ca, c->spd.that.ca, &peer_pathlen) &&
 		peer_pathlen == 0 &&
 		match_requested_ca(c->requested_ca, c->spd.this.ca,
@@ -2659,8 +2651,7 @@ struct connection *refine_host_connection(const struct state *st,
 		our_pathlen == 0) {
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("refine_host_connection: happy with starting "
-				"point: %s",
+			DBG_log("refine_host_connection: happy with starting point: %s",
 				c->name));
 
 		/* peer ID matches current connection -- look no further */
@@ -2709,7 +2700,9 @@ struct connection *refine_host_connection(const struct state *st,
 	 *   + our RSA key must not change (we used in in previous message)
 	 */
 	passert(c != NULL);
-	d = c->host_pair->connections;
+
+	struct connection *d = c->host_pair->connections;
+
 	for (wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
 			bool d_fromcert = FALSE;
@@ -3555,21 +3548,24 @@ static void show_one_sr(struct connection *c,
 		c->name, instance, c->modecfg_banner);
 	}
 
+	/*
+	 * Always print the labeled ipsec status; and always use the
+	 * same log call.  Ensures that test result output is
+	 * consistent regardless of support.
+	 */
+	const char *labeled_ipsec;
+	const char *policy_label;
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s; ",
-		c->name, instance,
-		c->labeled_ipsec ? "yes" : "no"
-		);
-	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
-		c->name, instance,
-		(c->policy_label == NULL) ? "unset" : c->policy_label);
+	labeled_ipsec = c->labeled_ipsec ? "yes" : "no";
+	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
 #else
-	/* this makes output consistent for testing regardless of support */
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no; ",
-		  c->name, instance);
-	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
-		  c->name, instance);
+	labeled_ipsec = "no";
+	policy_label = "unset";
 #endif
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s;",
+		  c->name, instance, labeled_ipsec);
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
+		  c->name, instance, policy_label);
 
 }
 
@@ -3633,14 +3629,12 @@ void show_one_connection(struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "
-		"cisco_unity:%s; send_vendorid:%s;",
-		c->name,
-		instance,
-		(c->sha2_truncbug) ? "yes" : "no",
-		(c->initial_contact) ? "yes" : "no",
-		(c->cisco_unity) ? "yes" : "no",
-		(c->send_vendorid) ? "yes" : "no");
+		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; send_vendorid:%s;",
+		  c->name, instance,
+		  (c->sha2_truncbug) ? "yes" : "no",
+		  (c->initial_contact) ? "yes" : "no",
+		  (c->cisco_unity) ? "yes" : "no",
+		  (c->send_vendorid) ? "yes" : "no");
 
 	if (c->policy_next) {
 		whack_log(RC_COMMENT,
@@ -3648,60 +3642,50 @@ void show_one_connection(struct connection *c)
 			c->name, instance, c->policy_next->name);
 	}
 
-	/*
-	 * Note: we _no longer_ display key_from_DNS_on_demand as
-	 * if policy [lr]KOD
-	 */
-	whack_log(RC_COMMENT,
-		"\"%s\"%s:   policy: %s; %s%s%s",
-		c->name,
-		instance,
-		prettypolicy(c->policy),
-		c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-		c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "",
-		(c->spd.this.key_from_DNS_on_demand ||
-			c->spd.that.key_from_DNS_on_demand) ? ";" : "");
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s;",
+		  c->name, instance,
+		  prettypolicy(c->policy),
+		  c->spd.this.key_from_DNS_on_demand |
+			c->spd.that.key_from_DNS_on_demand ? "; " : "",
+		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
+		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
-	if (c->connmtu > 0)
-		snprintf(mtustr, 7, "%d", c->connmtu);
+	if (c->connmtu != 0)
+		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
 	else
 		strcpy(mtustr, "unset");
 
-	if (c->sa_priority)
-		snprintf(sapriostr, 12, "%lu", c->sa_priority);
+	if (c->sa_priority != 0)
+		snprintf(sapriostr, sizeof(sapriostr), "%lu", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
-	if (c->nflog_group > 0)
-		snprintf(nflogstr, 7, "%d", c->nflog_group);
+	if (c->nflog_group != 0)
+		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
 	else
 		strcpy(nflogstr, "unset");
 
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; "
-		"mtu: %s; sa_prio:%s; nflog-group: %s;",
-		c->name,
-		instance,
-		prio,
-		ifn,
-		(unsigned long)c->metric,
-		mtustr, sapriostr, nflogstr);
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s;",
+		  c->name, instance,
+		  prio,
+		  ifn,
+		  (unsigned long)c->metric,
+		  mtustr, sapriostr, nflogstr);
 
 	/* slightly complicated stuff to avoid extra crap */
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
-			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			c->name,
-			instance,
-			enum_name(&dpd_action_names, c->dpd_action),
-			(long) deltasecs(c->dpd_delay),
-			(long) deltasecs(c->dpd_timeout),
-			(c->forceencaps) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no",
-			(c->ikev1_natt == natt_both) ? "both" :
+			  "\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+			  c->name, instance,
+			  enum_name(&dpd_action_names, c->dpd_action),
+			  (long) deltasecs(c->dpd_delay),
+			  (long) deltasecs(c->dpd_timeout),
+			  (c->forceencaps) ? "yes" : "no",
+			  (c->nat_keepalive) ? "yes" : "no",
+			  (c->ikev1_natt == natt_both) ? "both" :
 			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
@@ -3714,7 +3698,7 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; ",
+		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
 		c->name,
 		instance,
 		c->newest_isakmp_sa,

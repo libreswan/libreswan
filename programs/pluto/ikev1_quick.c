@@ -395,41 +395,41 @@ static void compute_proto_keymat(struct state *st,
 		case AH_SHA:
 			needed_len = HMAC_SHA1_KEY_LEN;
 			break;
-           /* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
-           case AH_SHA2_256:
-               needed_len = BYTES_FOR_BITS(256);
-               break;
-           case AH_SHA2_384:
-               needed_len = BYTES_FOR_BITS(384);
-               break;
-           case AH_SHA2_512:
-               needed_len = BYTES_FOR_BITS(512);
-               break;
-           case AH_RIPEMD:
-               needed_len = BYTES_FOR_BITS(160);
-               break;
-           case AH_AES_XCBC_MAC:
-               needed_len = BYTES_FOR_BITS(128);
-               break;
-           case AH_RSA:
-               /* ? */
-               break;
-           case AH_AES_128_GMAC:
-               needed_len = BYTES_FOR_BITS(128);
-               break;
-           case AH_AES_192_GMAC:
-               needed_len = BYTES_FOR_BITS(192);
-               break;
-           case AH_AES_256_GMAC:
-               needed_len = BYTES_FOR_BITS(256);
-               break;
-           case AH_NULL:
-               needed_len = 0; /* presumably? */
-               break;
+		/* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
+		case AH_SHA2_256:
+			needed_len = BYTES_FOR_BITS(256);
+			break;
+		case AH_SHA2_384:
+			needed_len = BYTES_FOR_BITS(384);
+			break;
+		case AH_SHA2_512:
+			needed_len = BYTES_FOR_BITS(512);
+			break;
+		case AH_RIPEMD:
+			needed_len = BYTES_FOR_BITS(160);
+			break;
+		case AH_AES_XCBC_MAC:
+			needed_len = BYTES_FOR_BITS(128);
+			break;
+		case AH_RSA:
+			/* ? */
+			break;
+		case AH_AES_128_GMAC:
+			needed_len = BYTES_FOR_BITS(128);
+			break;
+		case AH_AES_192_GMAC:
+			needed_len = BYTES_FOR_BITS(192);
+			break;
+		case AH_AES_256_GMAC:
+			needed_len = BYTES_FOR_BITS(256);
+			break;
+		case AH_NULL:
+			needed_len = 0; /* presumably? */
+			break;
 
 		default:
 			if (kernel_alg_ah_auth_ok(
-				    pi->attrs.transattrs.integ_hash, NULL)) {
+			    pi->attrs.transattrs.integ_hash, NULL)) {
 				needed_len += kernel_alg_ah_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;
@@ -1049,7 +1049,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	}
 
 	/* set up reply */
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR* out */
@@ -1292,8 +1292,9 @@ struct p2id {
 
 struct verify_oppo_bundle {
 	enum verify_oppo_step step;
-	bool failure_ok;  /* if true, quick_inI1_outR1_continue will try
-	                   * other things on DNS failure */
+	bool failure_ok;	/* if true, quick_inI1_outR1_continue will try
+				 * other things on DNS failure
+				 */
 	struct msg_digest *md;
 	struct p2id my, his;
 	unsigned int new_iv_len; /* p1st's might change */
@@ -2331,7 +2332,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	zero(&sa);
+	zero(&sa);	/* OK: no pointer fields */
 	sa.isasa_doi = ISAKMP_DOI_IPSEC;
 	sa.isasa_np = ISAKMP_NEXT_NONCE;
 	if (!out_struct(&sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))

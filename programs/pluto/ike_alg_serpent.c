@@ -96,5 +96,5 @@ void ike_alg_serpent_init(void)
 {
 	if (!ike_alg_register_enc(&encrypt_desc_serpent))
 		libreswan_log(
-                        "ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
+			"ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
 }

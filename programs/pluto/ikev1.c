@@ -873,8 +873,7 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	struct isakmp_hdr hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	hdr.isa_flags = 0; /* zero all flags */
@@ -998,7 +997,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 			bool quiet = (st == NULL ||
-                                     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
+				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
 
 			if (st == NULL) {
 				if (!quiet) {
@@ -2731,7 +2730,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
 	     id->isaid_doi_specific_b == pluto_nat_port)) {
@@ -2754,7 +2753,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
-	zero(&peer);
+	zero(&peer);	/* ??? pointer fields might not be NULLed */
 	peer.kind = id->isaid_idtype;
 
 	if (!extract_peer_id(&peer, id_pbs))

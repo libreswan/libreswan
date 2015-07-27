@@ -72,6 +72,8 @@ v3.14 (unreleased)
 * pluto: Added config setup keyword ddos-ike-treshold= (default 25000) [Paul]
 * pluto: Added config setup keyword max-halfopen-ike= (default 50000) [Paul]
 * pluto: route_owner() don't passert on changed interface [Paul]
+* pluto: Remove DNSSEC DLV support (DLV is decommissioned) [paul]
+* pluto: Support for unbound < 1.4.21 [Tony Whyman]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
 * libcrypto/twofish: Fix CALC_SB_* macros [Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]

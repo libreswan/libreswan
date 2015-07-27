@@ -35,10 +35,6 @@
 static const char rootanchor[] =
 	". IN DNSKEY 257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=";
 
-/* DNSSEC DLV key, see http://dlv.isc.org/ */
-static const char dlvanchor[] =
-	"dlv.isc.org. IN DNSKEY 257 3 5 BEAAAAPHMu/5onzrEE7z1egmhg/WPO0+juoZrW3euWEn4MxDCE1+lLy2brhQv5rN32RKtMzX6Mj70jdzeND4XknW58dnJNPCxn8+jAGl2FZLK8t+1uq4W+nnA3qO2+DL+k6BD4mewMLbIYFwe0PG73Te9fZ2kJb56dhgMde5ymX4BI/oQ+cAK50/xvJv00Frf8kw6ucMTwFlgPe+jnGxPPEmHAte/URkY62ZfkLoBAADLHQ9IrS2tryAe7mbBZVcOwIeU/Rw/mRx/vwwMCTgNboMQKtUdvNXDrYJDSHZws3xiRXF1Rf+al9UmZfSav/4NWLKjHzpT59k/VStTDN0YUuWrBNh";
-
 bool unbound_init(struct ub_ctx *dnsctx)
 {
 	int ugh;
@@ -87,20 +83,14 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	DBG(DBG_DNS,
 		DBG_log("Loading root key:%s", rootanchor);
 		);
+#ifdef UNBOUND_VERSION_MAJOR
 	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
+#else
+	/* for unbound < 1.4.21 */
+	ugh = ub_ctx_add_ta(dnsctx, (char*) rootanchor);
+#endif
 	if (ugh != 0) {
 		libreswan_log("error adding the DNSSEC root key: %s: %s",
-			ub_strerror(ugh), strerror(errno));
-		return FALSE;
-	}
-
-	/* Enable DLV */
-	DBG(DBG_DNS,
-		DBG_log("Loading dlv key:%s", dlvanchor);
-		);
-	ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:", dlvanchor);
-	if (ugh != 0) {
-		libreswan_log("error adding the DLV key: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 		return FALSE;
 	}

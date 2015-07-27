@@ -67,7 +67,7 @@ static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 }
 
 static void do_camellia_ctr(u_int8_t *buf UNUSED, size_t buf_len UNUSED, PK11SymKey *symkey UNUSED,
-                  u_int8_t *nonce_iv UNUSED, bool enc UNUSED)
+			    u_int8_t *nonce_iv UNUSED, bool enc UNUSED)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS do_camellia_ctr: stubb only"));
 }

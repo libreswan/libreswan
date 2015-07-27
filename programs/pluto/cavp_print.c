@@ -43,22 +43,22 @@ void config_number(const char *key, int number)
 void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
 {
 	printf("%s = ", prefix);
-        size_t len = binlen == 0 ? chunk.len
-                : binlen < chunk.len ? binlen
-                : chunk.len;
+	size_t len = binlen == 0 ? chunk.len
+		: binlen < chunk.len ? binlen
+		: chunk.len;
 
-        size_t i = 0;
-        for (i = 0; i < len; i++) {
-                printf("%02x", chunk.ptr[i]);
-        }
-        printf("%s", crlf);
+	size_t i = 0;
+	for (i = 0; i < len; i++) {
+		printf("%02x", chunk.ptr[i]);
+	}
+	printf("%s", crlf);
 }
 
 void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
 {
-        chunk_t chunk = chunk_from_symkey(prefix, key);
+	chunk_t chunk = chunk_from_symkey(prefix, key);
 	print_chunk(prefix, chunk, binlen);
-        freeanychunk(chunk);
+	freeanychunk(chunk);
 }
 
 void print_number(const char *prefix, int number)

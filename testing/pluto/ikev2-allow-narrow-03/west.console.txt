@@ -35,7 +35,7 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
@@ -56,14 +56,14 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
-000 "westnet-eastnet-ikev2":    policy_label:unset; 
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2":   policy_label:unset;
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
  echo "initdone"
 initdone
@@ -166,26 +166,26 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
-000 "westnet-eastnet-ikev2":    policy_label:unset; 
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2":   policy_label:unset;
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-ikev2"[1]: 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]:0/1234...192.1.2.23<192.1.2.23>[@east]:0/1234===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2"[1]:     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2"[1]:   labeled_ipsec:no; 
-000 "westnet-eastnet-ikev2"[1]:    policy_label:unset; 
+000 "westnet-eastnet-ikev2"[1]:   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2"[1]:   policy_label:unset;
 000 "westnet-eastnet-ikev2"[1]:   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ikev2"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-ikev2"[1]:   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-ikev2"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2"[1]:   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ikev2"[1]:   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 2, active 0
 000  

@@ -32,7 +32,7 @@ try:
     import setproctitle
 except ImportError as e:
     module = str(e)[16:]
-    sys.exit("we require the python module %s " % module)
+    sys.exit("we require the python module %s" % module)
 
 q = Queue()
 
@@ -82,8 +82,8 @@ class guest (threading.Thread):
                 if not e:
                     e = "end"
             self.log_line('OUTPUT/RESULT', e)
-            logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
-                         round(time.time() - self.start, 2), e)
+            logging.info("%s done %s ran %.2fs %s", self.hostname, self.testname,
+                         time.time() - self.start, e)
         except Exception as x:
             # XXXX: Bad, but easiest way to get rid of a deadlock when
             # things go wrong
@@ -116,7 +116,7 @@ class guest (threading.Thread):
         timer = 120
         ret = True
 
-        cmd = "cd %s/pluto/%s " % (self.testingdir, self.testname)
+        cmd = "cd %s/pluto/%s" % (self.testingdir, self.testname)
         print("sending command: " + cmd + " expecting prompt: " + prompt)
         child.sendline(str(cmd))
         try:
@@ -133,8 +133,8 @@ class guest (threading.Thread):
             n_init.wait()
             logging.debug("%s wait for responder to initialize", self.hostname)
             r_init.wait()
-            logging.info("%s initiator is ready (waited %s)", self.hostname,
-                         round((time.time() - start), 2))
+            logging.info("%s initiator is ready (waited %.2fs)", self.hostname,
+                         time.time() - start)
 
         output_file = "OUTPUT/%s.console.verbose.txt" % (self.hostname)
         f = open(output_file, 'w')
@@ -163,9 +163,10 @@ class guest (threading.Thread):
                 return e
         else:
             start = time.time()
-            print("waiting for initiator to finish run")
+            print(self.hostname + " waiting for initiator to finish run")
             i_ran.wait()
-            print(("initiator is ran waited %s" % (time.time() - start)))
+            print(("%s initiator finished after %.2fs" %
+	    	(self.hostname, time.time() - start)))
 
         cmd = "./final.sh"
         if os.path.exists(cmd):
@@ -488,7 +489,7 @@ class scantests:
 
         if not self.tdirs:
             logging.info("node directory %s is empty", rnode)
-            return "no testruns found %s in " % rnode
+            return "no testruns found in %s" % rnode
 
         for d in self.tdirs:
             self.tdir = d
@@ -623,10 +624,10 @@ class scantests:
 
             r = self.trpath + '/' + tname + '/OUTPUT/RESULT'
             if not os.path.exists(r):
-                e = "missing %s " % r
+                e = "missing %s" % r
                 r = self.trpath + '/' + tname + '/OUTPUT'
                 if not os.path.exists(r):
-                    e = "missing %s " % r
+                    e = "missing %s" % r
                     self.tsum['missing OUTPUT'] += 1
                     self.tests[tname]["output"] = 'missing OUTPUT'
                 else:
@@ -664,7 +665,7 @@ class scantests:
                     x = json.loads(line)
                 except TypeError:
                     logging.error(
-                        "TypeError can not convert this line %s to json ", line)
+                        "TypeError can not convert '%s' to json", line)
                     continue
                 if not "result" in x:
                     continue
@@ -936,7 +937,7 @@ def get_results(r):
             x = json.loads(line)
         except TypeError:
             logging.error(
-                "TypeError can not convert this line %s to json ", line)
+                "TypeError can not convert '%s' to json", line)
             continue
         if "result" in x and "testname" in x:
             return x
@@ -958,7 +959,7 @@ def shut_down_hosts(args, test_hosts):
                 if h is t:
                     all_hosts.remove(t)
 
-    logging.debug("shutdown list [%s] ", ' '.join(map(str, all_hosts)))
+    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
 
     vmlist = subprocess.getoutput("sudo virsh list")
     for line in vmlist.split("\n")[2:]:
@@ -1180,7 +1181,7 @@ def re_write_result(sanity):
     if sanity:
         result = split_sanity(sanity)
     else:
-        logging.debug("nothing sane to re write ")
+        logging.debug("nothing sane to re-write")
         return
 
     output_file = "OUTPUT/RESULT"
@@ -1277,7 +1278,7 @@ DEFAULTCONFIG = {
         'stoponerror': None,
         'swanhosts': ['east', 'west', 'road', 'north'],
         'tcpdumpfilter': "-s  0 -n not stp and not port 22",
-        'tcpdump': "/usr/sbin/tcpdump ",
+        'tcpdump': "/usr/sbin/tcpdump",
         'testlist': "TESTLIST"
 }
 
@@ -1298,7 +1299,7 @@ def cmdline():
 
     parser.add_argument(
         "--dockerimage", default=DEFAULTCONFIG['dockerimage'],
-            help="docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
+            help="sudo docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
 
     parser.add_argument("--exclude", default=None, type=compile_regex_arg, help="Exclude tests that match <regex>")
 
@@ -1428,14 +1429,14 @@ def docker_stop_container(dname):
 
 
 def docker_start_container(dhost, dname, dimage):
-    cmd = "docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
+    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
         dhost, dname, dimage)
     return (runcmd(cmd))
 
 
 def docker_flush_eth0(dhost, dname):
     # docker exec -ti dwest  ip address flush dev eth0
-    runcmd("docker exec -ti %s ip address flush dev eth0" % dname)
+    runcmd("sudo docker exec -ti %s ip address flush dev eth0" % dname)
 
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
@@ -1443,19 +1444,19 @@ def docker_add_route(test, dnamei, dnamer, dnamen):
     # docker exec -it $dwest ip route add 192.0.2.0/24 via 192.1.2.23
 
     if test["initiator"] == "west":
-        runcmd("docker exec -ti %s ip route add 192.0.2.0/24 via 192.1.2.23" %
+        runcmd("sudo docker exec -ti %s ip route add 192.0.2.0/24 via 192.1.2.23" %
                dnamei)
-        runcmd("docker exec -ti %s ip route add default via 192.1.2.254" %
+        runcmd("sudo docker exec -ti %s ip route add default via 192.1.2.254" %
                dnamei)
     elif test["initiator"] == "road" or test["initiator"] == "north":
-        runcmd("docker exec -ti %s ip route add default via 192.1.3.254" %
+        runcmd("sudo docker exec -ti %s ip route add default via 192.1.3.254" %
                dnamei)
     else:
         pass
 
-    runcmd("docker exec -ti %s ip route add 192.0.1.0/24 via 192.1.2.45" %
+    runcmd("sudo docker exec -ti %s ip route add 192.0.1.0/24 via 192.1.2.45" %
            dnamer)
-    runcmd("docker exec -ti %s ip route add default via 192.1.2.254" % dnamer)
+    runcmd("sudo docker exec -ti %s ip route add default via 192.1.2.254" % dnamer)
 
 
 def docker_swan_build(args, dname):
@@ -1463,21 +1464,31 @@ def docker_swan_build(args, dname):
     # cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make
     # programs install'"%dname
     if (args.rpm):
-        cmd = "docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
             dname, args.rpm)
     else:
-        cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make base install'" % dname
 
     (line, e) = runcmd_check_output(cmd)
     if e:
-        return(e.output)
-    cmd = "docker exec -ti %s ipsec pluto --version" % dname
+        return(e.output) 
+
+    cmd = "sudo docker exec -ti %s ipsec pluto --version" % dname
     (line, e) = runcmd_check_output(cmd)
     logging.debug("%s", str(line))
     if re.search("not found", str(line)):
         logging.error("ERROR %s" % line)
         return ("no version found")
 
+    cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make showobjdir'" % dname
+    (line, e) = runcmd_check_output(cmd)
+    objdir = line.decode('ascii')
+    objdir = objdir.strip()
+    if e:
+        return(e.output) 
+    cmd =  "sudo chown build.build -R /home/build/libreswan/%s" % objdir
+    logging.debug("%s",cmd)
+    subprocess.getoutput(cmd)
 
 def docker_containers_start_stop(args, test, st, stop):
     dnamei = test["initiator"] + "-" + test["name"]
@@ -1519,7 +1530,7 @@ def docker_containers_start_stop(args, test, st, stop):
 
 
 def docker_net_bridge(dname, brname, iface, prefix):
-    cmd = "pipework %s -i %s %s %s" % (brname, iface, dname, prefix)
+    cmd = "sudo /usr/local/bin/pipework %s -i %s %s %s" % (brname, iface, dname, prefix)
     output = runcmd(cmd)
     if output:
         logging.error(output)
@@ -1546,13 +1557,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
     if test["initiator"] == "west":
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.0.1.254/24"
         brname = "br%s" % bidw
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth0"
+        iface = "eth1"
         prefix = "192.1.2.45/24"
         brname = "br%s" % bidc
         docker_net_bridge(
@@ -1567,13 +1578,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
 
     elif test["initiator"] == "north":
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.0.3.254/24"
         brname = "br%s" % bidno
         docker_net_bridge(
             danme=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth0"
+        iface = "eth1"
         prefix = "192.1.3.33/24"
         brname = "br%s" % bidn
         docker_net_bridge(
@@ -1643,7 +1654,7 @@ def docker_run_script(host, testname, script, timer=60):
     output = ''
     for line in f_cmds:
         f_log.write(line)
-        cmd = "docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s;%s'" % (
+        cmd = "sudo docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s;%s'" % (
             host, testname, testname, line)
         logging.info("%s", cmd)
         try:
@@ -1652,7 +1663,7 @@ def docker_run_script(host, testname, script, timer=60):
             f_log.write("%s #timedout %s\n" % (cmd, timer))
         except subprocess.CalledProcessError as e:
             logging.error("ERROR %s %s", cmd, e.output)
-            return (None, e)
+            output = e.output
 
         f_log.write(output.decode('ascii'))
         f_log.write("\n")
@@ -1664,7 +1675,7 @@ def docker_run_script(host, testname, script, timer=60):
 
 def docker_run_script_1(host, testname, script):
     output = "OUTPUT/%s.console.verbose.txt" % host
-    cmd = "docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s; ./%s' >> %s" % (
+    cmd = "suod docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s; ./%s' >> %s" % (
         host, testname, testname, script, output)
     logging.info("%s", cmd)
     subprocess.getoutput(cmd)
@@ -1862,10 +1873,10 @@ def do_single_test(args, start='', test=None, st=None):
     write_result(args, start, test["name"], s, testexpect=test["expect"])
 
     if "odir" in st:
-        logging.info("copyig results ")
+        logging.info("copying results")
         rsync_file_to_dir(os.getcwd(), st["odir"])
     else:
-        logging.debug("not copyig results ")
+        logging.debug("not copying results")
 
     if "is_testlist" in st:
         os.chdir("..")
@@ -1912,7 +1923,7 @@ def resanitize(args):
     #               cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
     #               (status, output) =  commands.getstatusoutput(cmd);
     #               if not status:
-    #                       print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
+    #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)
     #                       print "cat %s/%s"%(testdir,f)
 
 
@@ -2185,16 +2196,16 @@ def main():
         args, start, tried, output_dir)
     if testlist:
         tried = 1 + tried
-        logging.info("ran  %s retry %s %s/%s ",
+        logging.info("ran %s retry %s %s/%s",
                      ran_tests, args.testlist, tried, args.retry)
         while (tried < args.retry):
             if ran_tests > 0:
                 gen_graphs_tables(args)
                 logging.info(
-                    "retry %s %s/%s ", args.testlist, tried, args.retry)
+                    "retry %s %s/%s", args.testlist, tried, args.retry)
             (output_dir, testlist, ran_tests) = do_test_list(
                 args, start, tried, output_dir)
-            logging.info("ran  %s retry %s %s/%s ",
+            logging.info("ran %s retry %s %s/%s",
                          ran_tests, args.testlist, tried, args.retry)
             tried = 1 + tried
 

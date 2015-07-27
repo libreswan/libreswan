@@ -132,14 +132,14 @@ west #
 000 "westnet-eastnet-esp-null-alg":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-esp-null-alg":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-esp-null-alg":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-esp-null-alg":   labeled_ipsec:no; 
-000 "westnet-eastnet-esp-null-alg":    policy_label:unset; 
+000 "westnet-eastnet-esp-null-alg":   labeled_ipsec:no;
+000 "westnet-eastnet-esp-null-alg":   policy_label:unset;
 000 "westnet-eastnet-esp-null-alg":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-esp-null-alg":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-esp-null-alg":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-esp-null-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
-000 "westnet-eastnet-esp-null-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-esp-null-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-esp-null-alg":   ESP algorithms wanted: NULL(11)_000-SHA1(2)_000
 000 "westnet-eastnet-esp-null-alg":   ESP algorithms loaded: NULL(11)_000-SHA1(2)_000
 000  

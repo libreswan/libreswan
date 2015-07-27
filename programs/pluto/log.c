@@ -790,9 +790,9 @@ static void show_system_security(void)
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "fips mode=%s;",
-                fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
+		fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
-                selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
+		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */
 
 }
@@ -862,8 +862,8 @@ void daily_log_event(void)
 }
 
 /*
- * we store runtime info for stats/status this way,
- * you may be able to do something similar using these hooks
+ * We store runtime info for stats/status this way.
+ * You may be able to do something similar using these hooks.
  */
 
 struct log_conn_info {
@@ -996,8 +996,10 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state called for state update for connection %s ",
 		    conn->name));
-	zero(&lc);
+	zero(&lc);	/* OK: the two pointer fields handled below */
 	lc.conn = conn;
+	lc.ignore = NULL;
+
 	save_state = st->st_state;
 	st->st_state = new_state;
 	for_each_state(connection_state, &lc);
@@ -1180,14 +1182,14 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
 
-	zero(&cipher_str);
-	zero(&spi_str);
+	zero(&cipher_str);	/* OK: no pointer fields */
+	zero(&spi_str);	/* OK: no pointer fields */
 
 	switch(op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
 		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
-		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=#%lu ike-version=%s auth=%s",
+		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%lu ike-version=%s auth=%s",
 			op == LAK_PARENT_START ? "start" : "destroy",
 			initiator ? "initiator" : "responder",
 			conn_encode,
@@ -1213,7 +1215,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			} else {
 				snprintf(integname, sizeof(integname), "none");
 			}
-                }
+		}
 
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
@@ -1225,7 +1227,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 	case LAK_CHILD_START:
 	case LAK_CHILD_DESTROY:
-		snprintf(head, sizeof(head), "op=%s %s connstate=#%lu, satype=%s samode=%s",
+		snprintf(head, sizeof(head), "op=%s %s connstate=%lu, satype=%s samode=%s",
 			op == LAK_CHILD_START ? "start" : "destroy",
 			conn_encode,
 			st->st_serialno,

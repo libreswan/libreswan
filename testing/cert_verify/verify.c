@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 	}
 
 	rv = CERT_ImportCerts(handle, 0, numcerts, certs, &certout, PR_FALSE,
-						         PR_FALSE, NULL);
+							 PR_FALSE, NULL);
 	if (rv != SECSuccess) {
 		printf("CERT_ImportCerts failed %d\n", PORT_GetError());
 		exit(-1);
@@ -344,9 +344,9 @@ int main(int argc, char *argv[])
 		PRUint64 revFlagsLeaf[2] = { 0, 0 };
 		PRUint64 revFlagsChain[2] = { 0, 0 };
 
-		zero(&cvin);
-		zero(&cvout);
-		zero(&rev);
+		zero(&cvin);	/* ??? is this reasonable? */
+		zero(&cvout);	/* ??? is this reasonable? */
+		zero(&rev);	/* ??? is this reasonable? */
 
 		if (rightca_nick == NULL)
 			rightca_nick = "root";

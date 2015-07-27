@@ -63,8 +63,9 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 static void lsw_conf_setdefault(void)
 {
 	char buf[PATH_MAX];
+	static const struct lsw_conf_options zero_oco;	/* full of null pointers */
 
-	zero(&global_oco);
+	global_oco = zero_oco;
 
 	/* allocate them all to make it consistent */
 	global_oco.rootdir = clone_str("","rootdir");
@@ -97,13 +98,12 @@ void lsw_conf_free_oco(void)
 
 const struct lsw_conf_options *lsw_init_options(void)
 {
-	if (setup)
-		return &global_oco;
+	if (!setup) {
+		setup = TRUE;
 
-	setup = TRUE;
-
-	lsw_conf_setdefault();
-	lsw_conf_calculate(&global_oco);
+		lsw_conf_setdefault();
+		lsw_conf_calculate(&global_oco);
+	}
 
 	return &global_oco;
 }

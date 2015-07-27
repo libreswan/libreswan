@@ -100,9 +100,9 @@ enum {
 	RTN_UNICAST,            /* Gateway or direct route	*/
 	RTN_LOCAL,              /* Accept locally		*/
 	RTN_BROADCAST,          /* Accept locally as broadcast,
-	                           send as broadcast */
+				   send as broadcast */
 	RTN_ANYCAST,            /* Accept locally as broadcast,
-	                           but send as unicast */
+				   but send as unicast */
 	RTN_MULTICAST,          /* Multicast route		*/
 	RTN_BLACKHOLE,          /* Drop				*/
 	RTN_UNREACHABLE,        /* Destination is unreachable   */
@@ -119,7 +119,7 @@ enum {
 
 #define RTPROT_UNSPEC   0
 #define RTPROT_REDIRECT 1       /* Route installed by ICMP redirects;
-	                           not used by current IPv4 */
+				   not used by current IPv4 */
 #define RTPROT_KERNEL   2       /* Route installed by kernel		*/
 #define RTPROT_BOOT     3       /* Route installed during boot		*/
 #define RTPROT_STATIC   4       /* Route installed by administrator	*/

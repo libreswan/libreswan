@@ -193,32 +193,32 @@ void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 		pluto_gn->kind = GN_DNS_NAME;
 		break;
 
-        case certX400Address:
+	case certX400Address:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_X400_ADDRESS;
 		break;
 
-        case certEDIPartyName:
+	case certEDIPartyName:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_EDI_PARTY_NAME;
 		break;
 
-        case certURI:
+	case certURI:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_URI;
 		break;
 
-        case certIPAddress:
+	case certIPAddress:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_IP_ADDRESS;
 		break;
 
-        case certRegisterID:
+	case certRegisterID:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_REGISTERED_ID;
 		break;
 
-        case certDirectoryName:
+	case certDirectoryName:
 		pluto_gn->name = secitem_to_chunk(nss_gn->derDirectoryName);
 		pluto_gn->kind = GN_DIRECTORY_NAME;
 		break;
@@ -464,7 +464,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 		return NULL;
 
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
-					               &crlval) != SECSuccess) {
+						       &crlval) != SECSuccess) {
 		DBG(DBG_X509,
 		    DBG_log("could not find CRL URI ext %d", PORT_GetError()));
 		return NULL;
@@ -530,7 +530,7 @@ char *find_dercrl_uri(chunk_t *dercrl)
 						 cacert->subjectName);
 
 	if (CERT_FindCertExtension(cacert, SEC_OID_X509_CRL_DIST_POINTS,
-					               &crlval) != SECSuccess) {
+						       &crlval) != SECSuccess) {
 		DBG(DBG_X509,
 		    DBG_log("could not find CRL URI ext %d", PORT_GetError()));
 
@@ -1416,7 +1416,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 						       ca->name, outpbs,
 						       ca->next == NULL ? np :
-						         ISAKMP_NEXT_v2CERTREQ))
+							 ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);
@@ -1650,7 +1650,7 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %s", is_root ? "Root ":"",
-						         is_CA ? "CA":"End",
+							 is_CA ? "CA":"End",
 							 cert->nickname, print_sn);
 	whack_log(RC_COMMENT, "  subject: %s", sbuf);
 	whack_log(RC_COMMENT, "  issuer: %s", ibuf);

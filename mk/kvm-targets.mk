@@ -21,24 +21,19 @@
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVM_MOUNTS_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmmounts.sh
-KVM_SWANTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/swantest
+KVMTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
+KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+
 KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
-# Determine the target's indented host.  Assumes the target looks like
-# xxx-yyy-HOST, defaults to 'east'.
+# Uses "$@" to determine the current make target's indented host.
+# Assumes the target looks like xxx-yyy-HOST, defaults to 'east' (the
+# choice is arbitrary).
 KVM_HOST = $(firstword $(filter $(KVM_HOSTS),$(lastword $(subst -, ,$@))) east)
 
-# NOTE: Use this from make rules only.  Determines the KVM path to
-# $(abs_top_srcdir).  If broken, override using Makefile.inc.local.
-KVM_BUILD_MOUNT ?= $(shell $(KVM_MOUNTS_COMMAND) $(1) swansource)
-KVM_BUILD_SUBDIR ?= $(subst $(call KVM_BUILD_MOUNT,$(1)),,$(abs_top_srcdir))
-KVM_TARGET_SOURCEDIR ?= $(patsubst %/,%,/source/$(patsubst /%,%,$(call KVM_BUILD_SUBDIR,$(1))))
-KVM_EASTDIR ?= $(call KVM_TARGET_SOURCEDIR,east)
-
-# Run "make $(1) on $(KVM_HOST); unless specified as part of the make
-# target $(KVM_HOST) will default to "east"
+# Run "make $(1)" on $(KVM_HOST); see $(KVM_HOST) above for how the
+# host is identified.
 define kvm-make
 	: KVM_HOST: '$(KVM_HOST)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
@@ -49,66 +44,65 @@ define kvm-make
 		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(1)'
 endef
 
-KVMSH_TARGETS = $(patsubst %,kvmsh-%,$(KVM_HOSTS))
-.PHONY: $(KVMSH_TARGETS)
-$(KVMSH_TARGETS):
-	: COMMAND: '$(COMMAND)'
-	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' $(if $(COMMAND),'$(COMMAND)')
-.PHONY: kvmsh
-kvmsh: kvmsh-command | $(KVMSH_TARGETS)
-.PHONY: kvmsh-command
-kvmsh-command:
-	test '$(COMMAND)' != ''
+# Standard targets; just mirror the local target names.
 
-KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_HOSTS))
-.PHONY: $(KVM_SHUTDOWN_TARGETS)
-$(KVM_SHUTDOWN_TARGETS):
-	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --shutdown '$(KVM_HOST)'
-.PHONY: kvm-shutdown
-kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
+KVM_MAKE_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean
+.PHONY: $(KVM_MAKE_TARGETS)
+$(KVM_MAKE_TARGETS):
+	$(call kvm-make, $(patsubst kvm-%,%,$@))
 
-.PHONY: kvm-build kvm-clean kvm-distclean
-kvm-build:
-	$(call kvm-make, base module)
-kvm-clean:
-	$(call kvm-make, clean)
-kvm-distclean:
-	$(call kvm-make, distclean)
-
+# "install" is a little wierd.  It needs to be run on all VMs, and it
+# needs to use the swan-install script.  Also, to avoid parallel
+# builds getting in the way, this uses sub-makes to explicitly
+# serialize things.
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
-.PHONY: kvm-install $(KVM_INSTALL_TARGETS)
+PHONY: kvm-install $(KVM_INSTALL_TARGETS)
 $(KVM_INSTALL_TARGETS):
 	: KVM_HOST: '$(KVM_HOST)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-kvm-install: $(KVM_INSTALL_TARGETS)
+kvm-install:
+	$(MAKE) --no-print-directory kvm-base
+	$(MAKE) --no-print-directory kvm-module
+	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
 
-# To avoid kvm-build and one or more of the $(KVM_INSTALL_TARGETS)
-# being run in parallel, use a sub-make to trigger the installs.
-.PHONY: kvm-update
-kvm-update: kvm-build
-	$(MAKE) --no-print-directory kvm-install
 
-KVM_EXCLUDE = bad|wip|incomplete
-KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
-KVM_INCLUDE =
-KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
-NEWRUN = $(if $(wildcard kvm-checksum.new),--newrun)
-.PHONY: kvm-check
+# Some useful kvm wide commands.
+KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_HOSTS))
+.PHONY: kvm-shutdown $(KVM_SHUTDOWN_TARGETS)
+$(KVM_SHUTDOWN_TARGETS):
+	: KVM_HOST: '$(KVM_HOST)'
+	$(KVMSH_COMMAND) --shutdown '$(KVM_HOST)'
+kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
+
+
+# Run the testsuite.
+#
+# The problem is that it is never really clear, when re-running tests,
+# what the intent of a user really is.  For instance, should running
+# check twice be incremental, and if so, what exactly does incremental
+# mean?
+#
+# For the moment provide the rules below, each with subtlely different
+# behaviour and names.
+
+.PHONY: kvm-check kvm-recheck kvm-recheck-all
+# This only runs tests that have not been started (it skips failed and
+# crashed tests).
 kvm-check: testing/x509/keys/mainca.key
-	: $@:
-	:   PWD: $(PWD)
-	:   KVM_HOSTS: $(KVM_HOSTS)
-	:   KVM_PRINT_TARGETS: $(KVM_PRINT_TARGETS)
-	:   KVM_EASTDIR: $(KVM_EASTDIR)
-	:   KVM_EXCLUDE: '$(KVM_EXCLUDE)'
-	:     KVM_EXCLUDE_FLAG: $(KVM_EXCLUDE_FLAG)
-	:   KVM_INCLUDE: '$(KVM_INCLUDE)'
-	:     KVM_INCLUDE_FLAG: $(KVM_INCLUDE_FLAG)
-	:   NEWRUN: $(NEWRUN)
-	cd testing/pluto && $(KVM_SWANTEST_COMMAND) $(NEWRUN) --testingdir $(KVM_EASTDIR)/testing $(KVM_INCLUDE_FLAG) $(KVM_EXCLUDE_FLAG)
+	$(KVMRUNNER_COMMAND) --retry 0 testing/pluto
+# This runs tests that have have not passed (not started, failed,
+# crashed).
+kvm-recheck: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry 1 testing/pluto
+# This tests everything regardless.
+kvm-recheck-all: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry -1 testing/pluto
+# clean up
+.PHONY: kvm-clean-check
+kvm-clean-check:
+	rm -rf testing/pluto/*/OUTPUT*
+
 
 # Hide a make call
 SHOWVERSION = $(MAKE) showversion

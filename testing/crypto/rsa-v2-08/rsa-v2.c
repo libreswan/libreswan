@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 	passert(c1 != NULL);
 	show_one_connection(c1);
 
-	init_pbs(&outs, outbuf, 1024, "rsa signature");
+	init_out_pbs(&outs, outbuf, sizeof(outbuf), "rsa signature");
 
 	load_preshared_secrets();
 
@@ -157,8 +157,8 @@ int main(int argc, char *argv[])
 	DBG_dump_pbs(&outs);
 
 	{
-		int sig_len;
-		sig_len = pbs_offset(&outs);
+		size_t sig_len = pbs_offset(&outs);
+
 		/* rewind outs pbs */
 		init_pbs(&outs, outbuf, sig_len, "rsa signature");
 	}
@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
 	 */
 	{
 		struct end tmp = c1->spd.this;
+
 		c1->spd.this = c1->spd.that;
 		c1->spd.that = tmp;
 	}

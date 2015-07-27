@@ -816,7 +816,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	struct db_prop_conj pc;
 	struct db_sa t, *n;
 
-	zero(&t);
+	zero(&t);	/* ??? may not NULL pointers properly */
 
 	if (ei == NULL) {
 		struct db_sa *sadb;

@@ -444,9 +444,9 @@ enum {
 	RTN_UNICAST,            /* Gateway or direct route	*/
 	RTN_LOCAL,              /* Accept locally		*/
 	RTN_BROADCAST,          /* Accept locally as broadcast,
-	                           send as broadcast */
+				   send as broadcast */
 	RTN_ANYCAST,            /* Accept locally as broadcast,
-	                           but send as unicast */
+				   but send as unicast */
 	RTN_MULTICAST,          /* Multicast route		*/
 	RTN_BLACKHOLE,          /* Drop				*/
 	RTN_UNREACHABLE,        /* Destination is unreachable   */

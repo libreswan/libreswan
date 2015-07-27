@@ -1,4 +1,4 @@
-pluto RSA test in FIPS mode using forbidden MD5 and IKEv1
+pluto RSA test with east in FIPS mode using forbidden MD5 and IKEv1
 
 East is placed in fips mode, allowing for tests of non-fips proposals by west
 

@@ -302,7 +302,7 @@ static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
 	bool found_me, bool found_him)
 {
-	zero(&st->hidden_variables.st_natd);
+	zero(&st->hidden_variables.st_natd);	/* ??? odd way to set an ip_address field */
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	if (!found_me) {
@@ -593,7 +593,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	out_modify_previous_np(nat_np, outs);
 
-	zero(&natoa);
+	zero(&natoa);	/* OK: no pointer fields */
 	natoa.isanoa_np = nat_np;
 
 	switch (addrtypeof(ipinit)) {
@@ -616,6 +616,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	{
 		pb_stream pbs;
+
 		if (!out_struct(&natoa, &isakmp_nat_oa, outs, &pbs))
 			return FALSE;
 
@@ -628,7 +629,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	}
 
 	/* output second NAT-OA */
-	zero(&natoa);
+	zero(&natoa);	/* OK: no pointer fields */
 	natoa.isanoa_np = np;
 
 	switch (addrtypeof(ipresp)) {
@@ -719,30 +720,30 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 	int r;
 	struct ifreq ifr;
 	int *fdp = (int *) &ifr.ifr_data;
+	const char *ifn;
 
 	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying new style NAT-T"));
 	zero(&ifr);
 	switch (kern_interface) {
-	case USE_MASTKLIPS:
-		/* using mast0 will break it! */
-		strcpy(ifr.ifr_name, "ipsec0");
-		break;
+	case USE_MASTKLIPS:	/* using mast0 will break it! */
 	case USE_KLIPS:
-		strcpy(ifr.ifr_name, "ipsec0");
+		ifn = "ipsec0";
 		break;
 	case USE_NETKEY:
 		/* Let's hope we have at least one ethernet device */
-		strcpy(ifr.ifr_name, "eth0");
+		ifn = "eth0";
 		break;
 	case USE_BSDKAME:
 		/* Let's hope we have at least one ethernet device */
-		strcpy(ifr.ifr_name, "en0");
+		ifn = "en0";
 		break;
 	default:
-		/* We have nothing, really prob just abort and return -1 */
-		strcpy(ifr.ifr_name, "eth0");
+		/* ??? We have nothing, really prob just abort and return -1 */
+		ifn = "eth0";
 		break;
 	}
+	strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+
 	fdp[0] = sk;
 	fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
 	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);

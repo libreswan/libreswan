@@ -96,21 +96,29 @@ size_t dstlen;
 
 	if (sa->proto == SA_INT) {
 		char intunk[10];
+
 		switch (ntohl(sa->spi)) {
-		case SPI_PASS:  p = "%pass";
+		case SPI_PASS:
+			p = "%pass";
 			break;
-		case SPI_DROP:  p = "%drop";
+		case SPI_DROP:
+			p = "%drop";
 			break;
-		case SPI_REJECT:        p = "%reject";
+		case SPI_REJECT:
+			p = "%reject";
 			break;
-		case SPI_HOLD:  p = "%hold";
+		case SPI_HOLD:
+			p = "%hold";
 			break;
-		case SPI_TRAP:  p = "%trap";
+		case SPI_TRAP:
+			p = "%trap";
 			break;
-		case SPI_TRAPSUBNET:    p = "%trapsubnet";
+		case SPI_TRAPSUBNET:
+			p = "%trapsubnet";
 			break;
-		default:        snprintf(intunk, 10, "%%unk-%d",
-					 ntohl(sa->spi));
+		default:
+			snprintf(intunk, sizeof(intunk), "%%unk-%d",
+				 ntohl(sa->spi));
 			p = intunk;
 			break;
 		}

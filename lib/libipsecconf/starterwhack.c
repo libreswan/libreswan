@@ -283,7 +283,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	zero(msg);
+	/* properly initialzes pointers to NULL */
+	static const struct whack_message zwm;
+
+	*msg = zwm;
 	msg->magic = WHACK_MAGIC;
 }
 
@@ -793,7 +796,8 @@ int starter_permutate_conns(int
 		sc.right.subnet = rnet;
 		sc.right.has_client = TRUE;
 
-		snprintf(tmpconnname, 256, "%s/%ux%u", conn->name, lc, rc);
+		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
+			conn->name, lc, rc);
 		sc.name = tmpconnname;
 
 		sc.connalias = conn->name;

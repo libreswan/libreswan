@@ -336,7 +336,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
 		nlmsg->nlmsg_flags |= NLM_F_DUMP;
-        }
+	}
 
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",

@@ -80,10 +80,7 @@ struct ub_ctx {
  */
 void ipsecconf_default_values(struct starter_config *cfg)
 {
-	if (!cfg)
-		return;
-
-	zero(cfg);
+	zero(cfg);	/* ??? pointer fields might not be NULLed */
 
 	TAILQ_INIT(&cfg->conns);
 
@@ -1336,7 +1333,8 @@ static void conn_default(struct starter_conn *conn,
 	*conn = *def;
 
 	/* unlink it */
-	zero(&conn->link);
+	conn->link.tqe_next = NULL;
+	conn->link.tqe_prev = NULL;
 
 	conn->left.iface = clone_str(def->left.iface, "conn default left iface");
 	conn->left.id = clone_str(def->left.id, "conn default leftid");
@@ -1379,7 +1377,6 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name)
 
 	conn = (struct starter_conn *)alloc_bytes(sizeof(struct starter_conn),"add_conn starter_conn");
 
-	zero(conn);
 	conn_default(conn, &cfg->conn_default);
 	conn->name = clone_str(name, "add conn name");
 	conn->desired_state = STARTUP_IGNORE;
@@ -1445,8 +1442,6 @@ struct starter_config *confread_load(const char *file,
 
 	cfg = (struct starter_config *)alloc_bytes(sizeof(struct starter_config),"starter_config cfg");
 
-	zero(cfg);
-
 	/**
 	 * Set default values
 	 */
@@ -1481,7 +1476,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(dnsctx,
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
-				                 /*default conn*/ TRUE,
+						/*default conn*/ TRUE,
 						 resolvip, perr);
 			}
 
@@ -1491,7 +1486,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(dnsctx,
 						 &cfg->conn_oedefault,
 						 cfgp, sconn, FALSE,
-				                 /*default conn*/ TRUE,
+						/*default conn*/ TRUE,
 						 resolvip, perr);
 				if (!err)
 					cfg->got_oedefault = TRUE;

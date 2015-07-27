@@ -107,8 +107,8 @@ static int RunLaunchCtl(
 			// child
 			err = 0;
 
-            // If we've been told to junk the I/O for launchctl, open
-            // /dev/null and dup that down to stdin, stdout, and stderr.
+			// If we've been told to junk the I/O for launchctl, open
+			// /dev/null and dup that down to stdin, stdout, and stderr.
 
 			if (junkStdIO) {
 				int		fd;
@@ -170,9 +170,9 @@ static int RunLaunchCtl(
 		} else {
 			assert(waitResult == childPID);
 
-            if ( ! WIFEXITED(status) || (WEXITSTATUS(status) != 0) ) {
-                err = EINVAL;
-            }
+			if ( ! WIFEXITED(status) || (WEXITSTATUS(status) != 0) ) {
+				err = EINVAL;
+			}
 		}
 	}
 

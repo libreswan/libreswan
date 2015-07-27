@@ -35,7 +35,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	SECStatus rv = CERT_EnableOCSPChecking(handle);
 	if (rv != SECSuccess) {
 		DBG(DBG_CONTROL, DBG_log("NSS error enabling OCSP checking [%d]",
-				         PORT_GetError()));
+					 PORT_GetError()));
 		return FALSE;
 	}
 

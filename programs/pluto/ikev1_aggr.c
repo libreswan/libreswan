@@ -460,7 +460,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		    ((st->st_connection->spd.this.sendcert ==
-		        cert_sendifasked &&
+			cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend);
 
@@ -486,8 +486,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 	/* done parsing; initialize crypto  */
 
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
@@ -512,7 +511,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		struct isakmp_sa r_sa;
 		notification_t rn;
 
-		zero(&r_sa);
+		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
@@ -805,8 +804,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
@@ -842,7 +840,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		size_t hash_len;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
-		init_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
+		init_out_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, NULL) ||
@@ -968,7 +966,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 		pb_stream id_pbs;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
-		init_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
+		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
 		/* interop ID for SoftRemote & maybe others ? */
@@ -1251,15 +1249,14 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	/* the MD is already set up by alloc_md() */
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr); /* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;

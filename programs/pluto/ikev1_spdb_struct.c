@@ -947,7 +947,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		struct trans_attrs ta;
 		err_t ugh = NULL;       /* set to diagnostic when problem detected */
 		char ugh_buf[256];      /* room for building a diagnostic */
-		zero(&ta);
+
+		zero(&ta);	/* ??? may not NULL pointer fields */
 
 		life_type = 0;
 
@@ -1467,7 +1468,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
 
-	zero(&ta);
+	zero(&ta);	/* ??? may not NULL pointer fields */
 
 	/* When this SA expires (seconds) */
 	ta.life_seconds = st->st_connection->sa_ike_life_seconds;
@@ -1713,7 +1714,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				    val > SA_LIFE_DURATION_MAXIMUM ?
 					deltatime(SA_LIFE_DURATION_MAXIMUM) :
 				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
-				        st->st_connection->sa_ipsec_life_seconds :
+					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);
 				break;
 			case SA_LIFE_TYPE_KBYTES:
@@ -1778,7 +1779,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					}
 					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
 				} else if (!(st->hidden_variables.st_nat_traversal &
-				           NAT_T_DETECTED)) {
+					   NAT_T_DETECTED)) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s must only be used if NAT-Traversal is detected",
 					       enum_name(&enc_mode_names,
@@ -2051,26 +2052,42 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	/* for each conjunction of proposals... */
 	while (next_full) {
 		int propno = next_proposal.isap_proposal;
-		pb_stream ah_prop_pbs, esp_prop_pbs, ipcomp_prop_pbs;
-		struct isakmp_proposal ah_proposal, esp_proposal,
-				       ipcomp_proposal;
-		ipsec_spi_t ah_spi, esp_spi, ipcomp_cpi;
-		bool ah_seen = FALSE, esp_seen = FALSE, ipcomp_seen = FALSE;
+		pb_stream
+			ah_prop_pbs,
+			esp_prop_pbs,
+			ipcomp_prop_pbs;
+		struct isakmp_proposal
+			ah_proposal,
+			esp_proposal,
+			ipcomp_proposal;
+		ipsec_spi_t
+			ah_spi = 0,
+			esp_spi = 0,
+			ipcomp_cpi = 0;
+		bool
+			ah_seen = FALSE,
+			esp_seen = FALSE,
+			ipcomp_seen = FALSE;
 		int inner_proto = 0;
 		bool tunnel_mode = FALSE;
 		u_int16_t well_known_cpi = 0;
 
-		pb_stream ah_trans_pbs, esp_trans_pbs, ipcomp_trans_pbs;
-		struct isakmp_transform ah_trans, esp_trans, ipcomp_trans;
-		struct ipsec_trans_attrs ah_attrs, esp_attrs, ipcomp_attrs;
+		pb_stream
+			ah_trans_pbs,
+			esp_trans_pbs,
+			ipcomp_trans_pbs;
+		struct isakmp_transform
+			ah_trans,
+			esp_trans,
+			ipcomp_trans;
+		struct ipsec_trans_attrs
+			ah_attrs,
+			esp_attrs,
+			ipcomp_attrs;
 
-		ipcomp_cpi = 0;
-		esp_spi = 0;
-		ah_spi = 0;
-
-		zero(&ah_proposal);
-		zero(&esp_proposal);
-		zero(&ipcomp_proposal);
+		zero(&ah_proposal);	/* OK: no pointer fields */
+		zero(&esp_proposal);	/* OK: no pointer fields */
+		zero(&ipcomp_proposal);	/* OK: no pointer fields */
 
 		/* for each proposal in the conjunction */
 		do {
@@ -2141,6 +2158,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 					break;
 				}
+				/* end of IPCOMP CPI handling */
 			} else {
 				/* AH or ESP SPI */
 				if (next_proposal.isap_spisize !=
@@ -2671,7 +2689,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ah_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_AH);
+						inner_proto == IPPROTO_AH);
 			}
 
 			/* ESP proposal */
@@ -2685,7 +2703,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_ESP);
+						inner_proto == IPPROTO_ESP);
 			}
 
 			/* IPCOMP proposal */
@@ -2699,7 +2717,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-					        inner_proto == IPPROTO_COMP);
+						inner_proto == IPPROTO_COMP);
 			}
 
 			close_output_pbs(r_sa_pbs);

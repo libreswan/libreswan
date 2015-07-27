@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
 	setbuf(stdout, NULL);
 
 	NSS_NoDB_Init(".");
-        init_crypto();
+	init_crypto();
 
 	cavp_parser();
 

@@ -622,7 +622,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
 		    (id_is_ipaddr(&c->spd.that.id))
-	            /* Check if we are a road warrior instantiation, not a vnet: instantiation */
+		    /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		    && (isanyaddr(&c->spd.that.host_addr)))
 		  )
 		  ) {
@@ -662,7 +662,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	zero(&xa_id);
+	zero(&xa_id);	/* redundant */
 	xa_id.kind = ID_FQDN;
 	xa_id.name.ptr = (unsigned char *)xauthname;
 	xa_id.name.len = strlen(xauthname);

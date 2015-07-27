@@ -117,7 +117,7 @@ static const char *usage_string =
 	"Usage:\n"
 	"	in the following, <SA> is: --af <inet | inet6> --edst <dstaddr> --spi <spi> --proto <proto>\n"
 	"                               OR: --said <proto><.|:><spi>@<dstaddr>\n"
-	"	                  <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
+	"                         <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
 	"spi --clear\n"
 	"spi --help\n"
 	"spi --version\n"
@@ -126,7 +126,7 @@ static const char *usage_string =
 	"spi --ip4 <SA> --src <encap-src> --dst <encap-dst>\n"
 	"spi --ip6 <SA> --src <encap-src> --dst <encap-dst>\n"
 	"spi --ah <algo> <SA> [<life> ][ --replay_window <replay_window> ] --authkey <key>\n"
-	"	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded \n"
+	"	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded\n"
 	"spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey> --authkey <akey>\n"
 	"	where <algo> is one of:	3des-md5-96 | 3des-sha1-96\n | something-loaded"
 	"	also, --natt will enable UDP encapsulation, and --sport/--dport will set\n"
@@ -138,7 +138,7 @@ static const char *usage_string =
 	"[ --sarefme=XXX ]  set the saref to use for this SA\n"
 	"[ --sarefhim=XXX ] set the saref to use for paired SA\n"
 	"[ --dumpsaref ] show the saref allocated\n"
-	"[ --outif=XXX ] set the outgoing interface to use \n"
+	"[ --outif=XXX ] set the outgoing interface to use\n"
 	"[ --debug ] is optional to any spi command.\n"
 	"[ --label <label> ] is optional to any spi command.\n"
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
@@ -427,8 +427,8 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 	size_t len;
 	/*
 	 * err_t ttodatav(const char *src, size_t srclen, int base,
-         *                char *dst, size_t dstlen, size_t *lenp,
-         *                char *errp, size_t errlen, int flags);
+	 *                char *dst, size_t dstlen, size_t *lenp,
+	 *                char *errp, size_t errlen, int flags);
 	 */
 	err_t ugh = ttodatav(optarg, 0, 0, NULL, 0, &len, err_buf, sizeof(err_buf), 0);
 
@@ -517,7 +517,7 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	zero(&said);
+	zero(&said);	/* OK: no pointer fields */
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
 		src_opt = NULL;
 	{
@@ -1631,7 +1631,7 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if (pfkey_msg) {
+	if (pfkey_msg != NULL) {
 		pfkey_extensions_free(extensions);
 		pfkey_msg_free(&pfkey_msg);
 	}
@@ -1639,16 +1639,16 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%s: pfkey message buffer freed.\n",
 			progname);
 	}
-	if (authkey) {
-		memset((caddr_t)authkey, 0, authkeylen);
+	if (authkey != NULL) {
+		memset(authkey, 0, authkeylen);
 		free(authkey);
 	}
-	if (enckey) {
-		memset((caddr_t)enckey, 0, enckeylen);
+	if (enckey != NULL) {
+		memset(enckey, 0, enckeylen);
 		free(enckey);
 	}
-	if (iv) {
-		memset((caddr_t)iv, 0, ivlen);
+	if (iv != NULL) {
+		memset(iv, 0, ivlen);
 		free(iv);
 	}
 

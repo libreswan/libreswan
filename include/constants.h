@@ -121,11 +121,33 @@ typedef int bool;
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
 
 
-/* zero an object given a pointer to it.
+/*
+ * zero an object given a pointer to it.
+ *
  * Note: this won't work on an array without an explicit &
  * (it will appear to work but it will only zero the first element).
+ *
+ * Note also that zeroing a pointer is not guaranteed to make it NULL
+ * (read the C standard).  This problem is mostly theoretical since
+ * on almost all real architectures it works.
+ * ??? there are many calls that are intended to set pointers to NULL.
+ * ??? there are many calls to zero that are not needed and thus confusing.
+ *     Often we would be better served if calls to messup were used:
+ *     actual bugs might be detected.
  */
 #define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
+
+/*
+ * messup: set memory to a deterministic useless value
+ *
+ * Like zero macro, but sets object to likely wrong value.
+ * The intent is that memory that is supposed to not be used
+ * without futher initialization will not accidentally have a
+ * plausible value (eg. zero, or the previous value, or some
+ * secret that might be leaked).
+ */
+
+#define messup(x) memset((x), 0xFB, sizeof(*(x)))	/* set all bytes to wrong value */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);

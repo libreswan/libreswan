@@ -236,8 +236,9 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
 
-	/* clear out the reply */
-	zero(skr);
+	/* clear out the reply (including pointers) */
+	static const struct pcr_skeycalc_v2_r zero_pcr_skeycalc_v2_r;
+	*skr = zero_pcr_skeycalc_v2_r;
 	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);

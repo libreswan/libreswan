@@ -164,15 +164,14 @@ stf_status main_outI1(int whack_sock,
 			predecessor->st_serialno);
 
 	/* set up reply */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr); /* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 			ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;
@@ -769,8 +768,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
 		struct isakmp_hdr hdr = md->hdr;
@@ -811,7 +809,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	{
 		struct isakmp_sa r_sa;
 
-		zero(&r_sa);
+		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		/*
@@ -951,13 +949,6 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
-#ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
-		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
-               return STF_FAIL + SITUATION_NOT_SUPPORTED;
-       }
-#endif
-
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
@@ -966,6 +957,13 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 							&sapd->payload.sa,
 							NULL, TRUE, st));
 	}
+
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
+		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+	}
+#endif
 
 	merge_quirks(st, md);
 
@@ -1020,7 +1018,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
-	zero(&reply_buffer);
+	zero(&reply_buffer);	/* redundant */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -1220,7 +1218,8 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 #ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
-		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
+		loglog(RC_LOG_SERIOUS,
+		       "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
 #endif
@@ -2101,7 +2100,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	/* CERT out, if we have one */
 	if (send_cert) {
 		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT :
-					        ISAKMP_NEXT_SIG;
+						ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
@@ -2323,8 +2322,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"ISAKMP notify");
 
 	/* HDR* */
@@ -2502,8 +2500,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		}
 	}
 
-	zero(&buffer);
-	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
+	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR* */
 	{
@@ -2645,8 +2642,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 	passert(md);
 
-	zero(&st);
-	zero(&cnx);
+	zero(&st);	/* ??? pointer fields might not be NULLed */
+	zero(&cnx);	/* ??? pointer fields might not be NULLed */
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;
@@ -2721,8 +2718,7 @@ bool ikev1_delete_out(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	zero(&buffer);
-	init_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
+	init_out_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
 
 	/* HDR* */
 	{
@@ -3010,7 +3006,7 @@ bool accept_delete(struct msg_digest *md,
 					    dst->st_event->ev_type ==
 						  EVENT_SA_REPLACE &&
 					    !monobefore(monotimesum(mononow(),
-					          deltatime(DELETE_SA_DELAY)),
+						  deltatime(DELETE_SA_DELAY)),
 						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to

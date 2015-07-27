@@ -1,0 +1,107 @@
+docker exec -ti road-ikev2-37-docker-rw halt
+docker stop road-ikev2-37-docker-rw
+docker rm road-ikev2-37-docker-rw
+docker exec -ti east-ikev2-37-docker-rw halt
+docker stop east-ikev2-37-docker-rw
+docker rm east-ikev2-37-docker-rw
+docker exec -ti nic-ikev2-37-docker-rw halt
+docker stop nic-ikev2-37-docker-rw
+docker rm nic-ikev2-37-docker-rw
+docker run -h road --net=none --privileged --name road-ikev2-37-docker-rw -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /usr/sbin/init
+docker run -h east --net=none  --privileged --name east-ikev2-37-docker-rw -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /usr/sbin/init
+docker run -h nic --net=none --privileged --name nic-ikev2-37-docker-rw -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /usr/sbin/init
+docker exec -ti road-ikev2-37-docker-rw ip address flush dev eth0
+docker exec -ti east-ikev2-37-docker-rw ip address flush dev eth0
+docker exec -ti nic-ikev2-37-docker-rw ip address flush dev eth0
+pipework br46961960 -i eth1 road-ikev2-37-docker-rw 192.1.3.209/24
+pipework br11063808 -i eth1 nic-ikev2-37-docker-rw 192.1.2.254/24
+pipework br46961960 -i eth0 nic-ikev2-37-docker-rw 192.1.3.254/24
+pipework br31164035 -i eth1 east-ikev2-37-docker-rw 192.0.2.254/24
+pipework br11063808 -i eth0 east-ikev2-37-docker-rw 192.1.2.23/24
+/usr/sbin/tcpdump  /usr/sbin/tcpdump  -w OUTPUT/swan13.pcap -i br46961960 -s  0 -n not stp and not port 22
+/usr/sbin/tcpdump  /usr/sbin/tcpdump  -w OUTPUT/swan12.pcap -i br11063808 -s  0 -n not stp and not port 22
+docker exec -ti road-ikev2-37-docker-rw ip route add default via 192.1.3.254
+tcpdump: WARNING: br46961960: no IPv4 address assigned
+tcpdump: WARNING: br11063808: no IPv4 address assigned
+tcpdump: listening on br11063808, link-type EN10MB (Ethernet), capture size 65535 bytes
+tcpdump: listening on br46961960, link-type EN10MB (Ethernet), capture size 65535 bytes
+docker exec -ti east-ikev2-37-docker-rw ip route add 192.0.1.0/24 via 192.1.2.45
+docker exec -ti east-ikev2-37-docker-rw ip route add default via 192.1.2.254
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /home/build/libreswan; make programs install'
+docker exec -ti road-ikev2-37-docker-rw ipsec pluto --version
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /home/build/libreswan; make programs install'
+docker exec -ti east-ikev2-37-docker-rw ipsec pluto --version
+docker exec -ti nic-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;set -x
+'
+docker exec -ti nic-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;iptables -t nat -F
+'
+docker exec -ti nic-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;iptables -F
+'
+docker exec -ti nic-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;iptables -t nat -L
+'
+docker exec -ti nic-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;echo done
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;/testing/guestbin/swan-prep
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec setup start
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;/testing/pluto/bin/wait-until-pluto-started
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --add road-eastnet-nonat
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --status
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;echo "initdone"
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;/testing/guestbin/swan-prep
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;# make sure that clear text does not get through
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j DROP
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec setup start
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;/testing/pluto/bin/wait-until-pluto-started
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --add road-eastnet-nonat
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --status
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;echo "initdone"
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --up road-eastnet-nonat
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ping -n -c 4 192.0.2.254
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec look
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;echo done
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec look
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== cut ====
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --status
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== tuc ====
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+'
+docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== end ====
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec look
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== cut ====
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;ipsec auto --status
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== tuc ====
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+'
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;: ==== end ====
+'

@@ -174,7 +174,7 @@ typedef enum __ns_opcode {
 	ns_o_query = 0,         /* Standard query. */
 	ns_o_iquery = 1,        /* Inverse query (deprecated/unsupported). */
 	ns_o_status = 2,        /* Name server status query (unsupported). */
-	                        /* Opcode 3 is undefined/reserved. */
+				/* Opcode 3 is undefined/reserved. */
 	ns_o_notify = 4,        /* Zone change notification. */
 	ns_o_update = 5,        /* Zone update message. */
 	ns_o_max = 6
