@@ -67,37 +67,42 @@ kvm-install:
 	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
 
 
-KVMSH_TARGETS = $(patsubst %,kvmsh-%,$(KVM_HOSTS))
-.PHONY: $(KVMSH_TARGETS)
-$(KVMSH_TARGETS):
-	: COMMAND: '$(COMMAND)'
-	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' $(if $(COMMAND),'$(COMMAND)')
-.PHONY: kvmsh
-kvmsh: kvmsh-command | $(KVMSH_TARGETS)
-.PHONY: kvmsh-command
-kvmsh-command:
-	test '$(COMMAND)' != ''
-
+# Some useful kvm wide commands.
 KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_HOSTS))
-.PHONY: $(KVM_SHUTDOWN_TARGETS)
+.PHONY: kvm-shutdown $(KVM_SHUTDOWN_TARGETS)
 $(KVM_SHUTDOWN_TARGETS):
 	: KVM_HOST: '$(KVM_HOST)'
 	$(KVMSH_COMMAND) --shutdown '$(KVM_HOST)'
-.PHONY: kvm-shutdown
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
 
-KVM_EXCLUDE =
-KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
-NEWRUN = $(if $(wildcard kvm-checksum.new),--newrun)
-.PHONY: kvm-check
+# Run the testsuite.
+#
+# The problem is that it is never really clear, when re-running tests,
+# what the intent of a user really is.  For instance, should running
+# check twice be incremental, and if so, what exactly does incremental
+# mean?
+#
+# For the moment provide the rules below, each with subtlely different
+# behaviour and names.
+
+.PHONY: kvm-check kvm-recheck kvm-recheck-all
+# This only runs tests that have not been started (it skips failed and
+# crashed tests).
 kvm-check: testing/x509/keys/mainca.key
-	: $@:
-	:   PWD: $(PWD)
-	:   KVM_EXCLUDE: '$(KVM_EXCLUDE)'
-	:     KVM_EXCLUDE_FLAG: $(KVM_EXCLUDE_FLAG)
-	$(KVMRUNNER_COMMAND) testing/pluto
+	$(KVMRUNNER_COMMAND) --retry 0 testing/pluto
+# This runs tests that have have not passed (not started, failed,
+# crashed).
+kvm-recheck: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry 1 testing/pluto
+# This tests everything regardless.
+kvm-recheck-all: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry -1 testing/pluto
+# clean up
+.PHONY: kvm-clean-check
+kvm-clean-check:
+	rm -rf testing/pluto/*/OUTPUT*
+
 
 # Hide a make call
 SHOWVERSION = $(MAKE) showversion

@@ -104,8 +104,8 @@ def main():
     # A list of test directories was specified (i.e, not a testsuite),
     # then force the tests to run.
     if isinstance(tests, list) and args.retry is None:
-        logger.info("Forcing test run")
-        args.retry = -1;
+        args.retry = 1;
+        logger.info("Explicit directory list; forcing --retry=%d (retry failed tests)", args.retry)
 
     # Use a default dict so no need to worry about initializing values
     # to zero.
