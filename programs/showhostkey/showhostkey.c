@@ -58,9 +58,9 @@
 
 char usage[] =
 	"Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
-	"                         [--precedence <precedence> ] [--gateway <gateway>] \n"
-	"                         [--dump ] [--list ] \n"
-	"                         [--dhclient ] [--file secretfile ] \n"
+	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
+	"                         [--dump ] [--list ]\n"
+	"                         [--dhclient ] [--file secretfile ]\n"
 	"                         [--keynum count ] [--id identity ]\n"
 	"                         [--rsaid keyid ] [--verbose] [--version]\n";
 

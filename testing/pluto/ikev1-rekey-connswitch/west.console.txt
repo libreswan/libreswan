@@ -36,7 +36,7 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
@@ -124,9 +124,9 @@ west #
  #IKE sa will be on TUNNEL-A
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
-000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3; 
-000 "TUNNEL-C":   newest ISAKMP SA: #1; newest IPsec SA: #4; 
+000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "TUNNEL-C":   newest ISAKMP SA: #1; newest IPsec SA: #4;
 000 #1: "TUNNEL-A":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 west #
  sleep 60
@@ -134,9 +134,9 @@ west #
  #IKE sa will be on TUNNEL-B
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
-000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3; 
-000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
+000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3;
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
 000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 west #
  ipsec auto --down TUNNEL-B
@@ -152,44 +152,44 @@ west #
 000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
 000 "TUNNEL-A":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "TUNNEL-A":   labeled_ipsec:no; 
-000 "TUNNEL-A":    policy_label:unset; 
+000 "TUNNEL-A":   labeled_ipsec:no;
+000 "TUNNEL-A":    policy_label:unset;
 000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
 000 "TUNNEL-A":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
 000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 "TUNNEL-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
 000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west
 000 "TUNNEL-B":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "TUNNEL-B":   labeled_ipsec:no; 
-000 "TUNNEL-B":    policy_label:unset; 
+000 "TUNNEL-B":   labeled_ipsec:no;
+000 "TUNNEL-B":    policy_label:unset;
 000 "TUNNEL-B":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #0; 
+000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #0;
 000 "TUNNEL-B":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west
 000 "TUNNEL-C":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "TUNNEL-C":   labeled_ipsec:no; 
-000 "TUNNEL-C":    policy_label:unset; 
+000 "TUNNEL-C":   labeled_ipsec:no;
+000 "TUNNEL-C":    policy_label:unset;
 000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
 000 "TUNNEL-C":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27976s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
@@ -209,29 +209,29 @@ west #
 000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
 000 "TUNNEL-A":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "TUNNEL-A":   labeled_ipsec:no; 
-000 "TUNNEL-A":    policy_label:unset; 
+000 "TUNNEL-A":   labeled_ipsec:no;
+000 "TUNNEL-A":    policy_label:unset;
 000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west
 000 "TUNNEL-C":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "TUNNEL-C":   labeled_ipsec:no; 
-000 "TUNNEL-C":    policy_label:unset; 
+000 "TUNNEL-C":   labeled_ipsec:no;
+000 "TUNNEL-C":    policy_label:unset;
 000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27975s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 

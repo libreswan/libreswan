@@ -357,7 +357,7 @@ static void _capi_destroy_key(struct ipsec_alg_enc *alg, __u8 *key_e)
 
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_destroy_key:"
-		       "name=%s key_e=%p \n",
+		       "name=%s key_e=%p\n",
 		       alg->ixt_common.ixt_name, key_e);
 	if (!key_e) {
 		printk(KERN_ERR "klips_debug: _capi_destroy_key:"
@@ -513,7 +513,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 				       cptr->ciphername);
 			}
 		} else {
-			printk(KERN_INFO "KLIPS: lookup for ciphername=%s: not found \n",
+			printk(KERN_INFO "KLIPS: lookup for ciphername=%s: not found\n",
 				cptr->ciphername);
 		}
 	}
@@ -619,7 +619,7 @@ _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_destroy_hmac_key:"
-		       "name=%s key_e=%p \n",
+		       "name=%s key_e=%p\n",
 		       alg->ixt_common.ixt_name, key_a);
 	if (!key_a) {
 		printk(KERN_ERR "klips_debug: _capi_destroy_hmac_key:"
@@ -767,7 +767,7 @@ setup_digest_list (struct ipsec_alg_capi_digest* dlist)
 				       , dptr->digestname);
 			}
 		} else {
-			printk(KERN_INFO "KLIPS: lookup for digestname=%s: not found \n",
+			printk(KERN_INFO "KLIPS: lookup for digestname=%s: not found\n",
 			       dptr->digestname);
 		}
 	}

@@ -56,7 +56,7 @@ static int verbose = 0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
-				  "Usage: writeconf \n";
+				  "Usage: writeconf\n";
 
 static void usage(void)
 {

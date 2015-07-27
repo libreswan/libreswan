@@ -213,10 +213,10 @@ int main(int argc, char *argv[])
 	expModP.pk_proglen = 2;
 	execute_pkprogram(mapping, &expModP);
 
-	printf("got: \n");
+	printf("got:\n");
 	hexdump(gtothex, 0, 192);
 
-	printf("expected: \n");
+	printf("expected:\n");
 	hexdump(aModExpExpectedRes_l, 0, 192);
 
 	if (memeq(gtothex, aModExpExpectedRes_l, 192))

@@ -3556,18 +3556,18 @@ static void show_one_sr(struct connection *c,
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s;",
 		c->name, instance,
 		c->labeled_ipsec ? "yes" : "no"
 		);
-	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s;",
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
 	/* this makes output consistent for testing regardless of support */
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no;",
 		  c->name, instance);
-	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:unset;",
 		  c->name, instance);
 #endif
 
@@ -3633,7 +3633,7 @@ void show_one_connection(struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "
+		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s;"
 		"cisco_unity:%s; send_vendorid:%s;",
 		c->name,
 		instance,
@@ -3679,7 +3679,7 @@ void show_one_connection(struct connection *c)
 
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; "
+		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu;"
 		"mtu: %s; sa_prio:%s; nflog-group: %s;",
 		c->name,
 		instance,
@@ -3692,7 +3692,7 @@ void show_one_connection(struct connection *c)
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld;"
 			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
@@ -3714,7 +3714,7 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; ",
+		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
 		c->name,
 		instance,
 		c->newest_isakmp_sa,

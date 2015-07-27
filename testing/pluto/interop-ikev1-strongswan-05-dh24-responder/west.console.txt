@@ -42,7 +42,7 @@ west #
 [ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
 [ 00.00] alg: No test for digest_null (digest_null-generic)
 [ 00.00] alg: No test for compress_null (compress_null-generic)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
 [ 00.00] 
 west #
  PATH/libexec/ipsec/pluto --config /etc/ipsec.conf

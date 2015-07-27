@@ -546,7 +546,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex format - not the real values \n");
+		printf("\t# everything after this point is CKA_ID in hex format - not the real values\n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));

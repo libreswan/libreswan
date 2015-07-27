@@ -520,7 +520,7 @@ enum ipsec_xmit_value ipsec_tunnel_strip_hard_header(
 			printk("%c%02x", c, ixs->skb->data[i]);
 			c = ':';
 		}
-		printk(" \n");
+		printk("\n");
 	}
 
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);

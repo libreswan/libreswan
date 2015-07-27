@@ -111,7 +111,7 @@ west #
 000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "v6-transport":   prio: 128,128; interface: eth1; metric: 0, mtu: unset;
-000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
