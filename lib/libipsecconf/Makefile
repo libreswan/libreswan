@@ -43,14 +43,17 @@ lex.yy.c: parser.l
 	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<) | grep -v '^extern int isatty' > $@
 
 # Use wild card rule so that GNU Make knows that both are output from
-# single program.  Use UNIX basename to strip off the directory.
-# workaround for older bison using sed
+# a single recipe.
+# - sed command for workaround for older bison vs GCC warning
+# - avoid sed -i which somehow causes unwritable files
+#   on fedora 20 with 9p filesystem mount
 %.tab.h %.tab.c: %.y
-	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<)
-	cd $(builddir) && sed -i 's/if YYENABLE_NLS/if defined YYENABLE_NLS \&\& YYENABLE_NLS/g' parser.tab.c
-	cd $(builddir) && sed -i 's/if YYLTYPE_IS_TRIVIAL/if defined YYLTYPE_IS_TRIVIAL \&\& YYLTYPE_IS_TRIVIAL/g' parser.tab.c
-
-
+	cd $(builddir) && \
+	$(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<) && \
+	sed -e '/^ *#/s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
+		-e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
+		$$(basename $< .y).tab.c >TMP$$$$ && \
+	mv TMP$$$$ $$(basename $< .y).tab.c
 
 clean: parser-clean
 .PHONY: parser-clean
