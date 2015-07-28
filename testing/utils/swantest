@@ -1423,9 +1423,9 @@ def docker_stop_container(dname):
         return
     # docker exec -ti west-basic-pluto-01 halt
 
-    runcmd("docker exec -ti %s halt" % dname)
-    runcmd("docker stop %s" % dname)
-    runcmd("docker rm %s" % dname)
+    runcmd("sudo docker exec -ti %s halt" % dname)
+    runcmd("sudo docker stop %s" % dname)
+    runcmd("sudo docker rm %s" % dname)
 
 
 def docker_start_container(dhost, dname, dimage):
@@ -1639,7 +1639,7 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         test["tpids"].append(tpid)
 
 
-def docker_run_script(host, testname, script, timer=60):
+def docker_run_script(host, testname, script, timer=90):
     dname = "%s-%s" % (host, testname)
     if not os.path.exists(script):
         logging.info(
