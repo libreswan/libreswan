@@ -2740,7 +2740,9 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				st,
 				ORIGINAL_RESPONDER,
 				idhash_in,
+#ifdef USE_KEYRR
 				NULL,	/* keys from DNS */
+#endif
 				NULL,	/* gateways from DNS */
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
@@ -3123,7 +3125,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				pst,
 				ORIGINAL_INITIATOR,
 				idhash_in,
+#ifdef USE_KEYRR
 				NULL,	/* keys from DNS */
+#endif
 				NULL,	/* gateways from DNS */
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
