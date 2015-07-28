@@ -949,13 +949,6 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
-#ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
-		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
-		return STF_FAIL + SITUATION_NOT_SUPPORTED;
-	}
-#endif
-
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
@@ -964,6 +957,13 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 							&sapd->payload.sa,
 							NULL, TRUE, st));
 	}
+
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
+		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+	}
+#endif
 
 	merge_quirks(st, md);
 
@@ -1218,7 +1218,8 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 #ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
-		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
+		loglog(RC_LOG_SERIOUS,
+		       "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
 #endif
