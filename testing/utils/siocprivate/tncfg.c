@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 {
 	struct ifreq ifr;
 
-	zero(&ifr);
+	zero(&ifr);	/* OK: no pointer fields */
 	program_name = argv[0];
 
 	s = safe_socket(AF_INET, SOCK_DGRAM, 0);

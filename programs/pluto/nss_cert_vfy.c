@@ -366,9 +366,10 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 
 	new_vfy_log(&vfy_log);
 	new_vfy_log(&vfy_log2);
-	zero(&cvin);
-	zero(&cvout);
-	zero(&rev);
+
+	zero(&cvin);	/* ??? are there pointer fields? */
+	zero(&cvout);	/* ??? are there pointer fields? */
+	zero(&rev);	/* ??? are there pointer fields? */
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],

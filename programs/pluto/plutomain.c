@@ -388,7 +388,7 @@ static bool pluto_init_nss(char *nssdb)
 
 	/*
 	 * This exists purely to make the BSI happy.
-	 * We do not infliect this on other users
+	 * We do not inflict this on other users
 	 */
 	if (pluto_nss_seedbits != 0) {
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
@@ -398,7 +398,7 @@ static bool pluto_init_nss(char *nssdb)
 		rv = PK11_RandomUpdate(buf, seedbytes);
 		libreswan_log("seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
-		zero(&buf);
+		messup(&buf);
 		pfree(buf);
 	}
 

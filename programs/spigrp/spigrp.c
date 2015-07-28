@@ -110,8 +110,7 @@ int main(int argc, char **argv)
 #endif
 
 	progname = argv[0];
-	for (i = 0; i < 4; i++)
-		zero(&said_af_array[i]);
+	zero(&said_af_array);	/* OK: no pointer fields */
 
 	if (argc > 1 && streq(argv[1], "--debug")) {
 		debug = 1;

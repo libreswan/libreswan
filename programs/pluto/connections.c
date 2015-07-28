@@ -775,8 +775,9 @@ static bool load_end_nss_certificate(const char *name, struct end *dst)
 {
 	cert_t cert;
 
-	zero(&dst->cert);
+	zero(&dst->cert);	/* redundant */
 	dst->cert.ty = CERT_NONE;
+	dst->cert.u.nss_cert = NULL;
 
 	if (name == NULL)
 		return FALSE;
@@ -2616,27 +2617,18 @@ struct connection *refine_host_connection(const struct state *st,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
-	struct connection *d;
 	struct connection *best_found = NULL;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 	bool wcpip; /* wildcard Peer IP? */
-	int wildcards, best_wildcards;
-	int our_pathlen, best_our_pathlen, peer_pathlen, best_peer_pathlen;
-	chunk_t peer_ca;
+	int wildcards = 0,
+		best_wildcards = 0;
+	int our_pathlen = 0,
+		best_our_pathlen = 0,
+		peer_pathlen = 0,
+		best_peer_pathlen = 0;
 	const chunk_t *psk = NULL;
 
 	*fromcert = FALSE;
-
-	our_pathlen = peer_pathlen = 0;
-	best_our_pathlen  = 0;
-	best_peer_pathlen = 0;
-	wildcards = best_wildcards = 0;
-
-	/*
-	 * Zero it, so because we will test it later, to see if we found
-	 * something, and the get_peer_ca code is uncertain.
-	 **/
-	zero(&peer_ca);
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("refine_host_connection: starting with %s",
@@ -2648,10 +2640,10 @@ struct connection *refine_host_connection(const struct state *st,
 		return c;
 	}
 
-	peer_ca = get_peer_ca(peer_id);
+	chunk_t peer_ca = get_peer_ca(peer_id);
 
 	if (same_id(&c->spd.that.id, peer_id) &&
-		(peer_ca.ptr != NULL) &&
+		peer_ca.ptr != NULL &&
 		trusted_ca_nss(peer_ca, c->spd.that.ca, &peer_pathlen) &&
 		peer_pathlen == 0 &&
 		match_requested_ca(c->requested_ca, c->spd.this.ca,
@@ -2659,8 +2651,7 @@ struct connection *refine_host_connection(const struct state *st,
 		our_pathlen == 0) {
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("refine_host_connection: happy with starting "
-				"point: %s",
+			DBG_log("refine_host_connection: happy with starting point: %s",
 				c->name));
 
 		/* peer ID matches current connection -- look no further */
@@ -2709,7 +2700,9 @@ struct connection *refine_host_connection(const struct state *st,
 	 *   + our RSA key must not change (we used in in previous message)
 	 */
 	passert(c != NULL);
-	d = c->host_pair->connections;
+
+	struct connection *d = c->host_pair->connections;
+
 	for (wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
 			bool d_fromcert = FALSE;

@@ -845,7 +845,7 @@ int main(int argc, char **argv)
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
 	assert(IMPAIR_roof_IX <= LELEM_ROOF);
 
-	zero(&msg);
+	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
 	clear_end(&msg.right);	/* left set from this after --to */
 

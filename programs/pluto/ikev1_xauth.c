@@ -427,7 +427,7 @@ static stf_status modecfg_resp(struct state *st,
 				return STF_INTERNAL_ERROR;
 		}
 
-		zero(&ia);
+		zero(&ia);	/* OK: no pointer fields */
 		if (!get_internal_addresses(st, &ia, &has_lease))
 			return STF_INTERNAL_ERROR;
 
@@ -569,7 +569,8 @@ static stf_status modecfg_resp(struct state *st,
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
 					unsigned char si[14];	/* 14 is magic */
-					zero(&si);
+
+					zero(&si);	/* OK: no pointer fields */
 					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
 					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
 					memcpy(si + 4, &splitmask, 4);
@@ -617,14 +618,14 @@ static stf_status modecfg_send_set(struct state *st)
 	unsigned char buf[256];
 
 	/* set up reply */
-	init_pbs(&reply, buf, sizeof(buf), "ModecfgR1");
+	init_out_pbs(&reply, buf, sizeof(buf), "ModecfgR1");
 
 	change_state(st, STATE_MODE_CFG_R1);
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);	/* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
@@ -704,7 +705,7 @@ stf_status xauth_send_request(struct state *st)
 	u_char *r_hash_start, *r_hashval;
 
 	/* set up reply */
-	init_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
 	libreswan_log("XAUTH: Sending Username/Password request (XAUTH_R0)");
 
@@ -716,7 +717,7 @@ stf_status xauth_send_request(struct state *st)
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr); /* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
@@ -800,7 +801,7 @@ stf_status modecfg_send_request(struct state *st)
 	u_char *r_hash_start, *r_hashval;
 
 	/* set up reply */
-	init_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
 	libreswan_log("modecfg: Sending IP request (MODECFG_I1)");
 
@@ -812,7 +813,7 @@ stf_status modecfg_send_request(struct state *st)
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr); /* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
@@ -924,7 +925,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	u_char *r_hash_start, *r_hashval;
 
 	/* set up reply */
-	init_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
 	/* pick a new message id */
 	st->st_msgid_phase15 = generate_msgid(st);
@@ -933,7 +934,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr); /* default to 0 */
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;

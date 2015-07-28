@@ -676,18 +676,22 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	err_t ugh = NULL;
 	bool unexpected;
 
-	zero(&friendly_name);
-
 	/* we expect the NSS friendly name of a PKCS#1 private key in the NSS store */
 
-	if (*flp->tok == '"' || *flp->tok == '\'')	/* quoted friendly_name */
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		/* quoted friendly_name */
+		passert(flp->tok[0] == flp->cur[-1]);	/* both quotes the same */
+		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok - 2);
 		memcpy(friendly_name, flp->tok + 1, flp->cur - flp->tok - 2);
-	else
-		memcpy(friendly_name, flp->tok, flp->cur - flp->tok);
+		friendly_name[flp->cur - flp->tok - 2] = '\0';
+	} else {
+		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok);
+		memcpy(friendly_name, flp->tok, flp->cur - flp->tok + 1);
+	}
 
 	unexpected = shift();
 	/* we used to recommend people to provide an empty passphrase for NSS keys */
-	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
+	if (unexpected && (streq(flp->tok, "\"\"") || streq(flp->tok, "''"))) {
 		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
 		unexpected = shift();
 	}
@@ -1171,7 +1175,6 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	char **fnp;
 	glob_t globbuf;
 
-	zero(&globbuf);
 	pos.depth = flp == NULL ? 0 : flp->depth + 1;
 
 	if (pos.depth > 10) {

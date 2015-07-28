@@ -169,7 +169,7 @@ static void UpdateNSS_RNG(int seedbits)
 	getrandom(seedbytes, buf);
 	rv = PK11_RandomUpdate(buf, seedbytes);
 	assert(rv == SECSuccess);
-	zero(&buf);
+	messup(&buf);
 	pfree(buf);
 }
 

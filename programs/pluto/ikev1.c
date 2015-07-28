@@ -873,8 +873,7 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	struct isakmp_hdr hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	hdr.isa_flags = 0; /* zero all flags */
@@ -2754,7 +2753,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
-	zero(&peer);
+	zero(&peer);	/* ??? pointer fields might not be NULLed */
 	peer.kind = id->isaid_idtype;
 
 	if (!extract_peer_id(&peer, id_pbs))

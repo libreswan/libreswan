@@ -344,9 +344,9 @@ int main(int argc, char *argv[])
 		PRUint64 revFlagsLeaf[2] = { 0, 0 };
 		PRUint64 revFlagsChain[2] = { 0, 0 };
 
-		zero(&cvin);
-		zero(&cvout);
-		zero(&rev);
+		zero(&cvin);	/* ??? is this reasonable? */
+		zero(&cvout);	/* ??? is this reasonable? */
+		zero(&rev);	/* ??? is this reasonable? */
 
 		if (rightca_nick == NULL)
 			rightca_nick = "root";

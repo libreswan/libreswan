@@ -918,7 +918,7 @@ void delete_state(struct state *st)
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
 #endif
-	zero(st);
+	messup(st);
 	pfree(st);
 }
 

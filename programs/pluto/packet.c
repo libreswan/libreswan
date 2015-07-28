@@ -1351,6 +1351,12 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	pbs->lenfld_desc = NULL;
 }
 
+void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
+{
+	init_pbs(pbs, start, len, name);
+	memset(start, 0xFA, len);	/* value likely to be unpleasant */
+}
+
 /* choose table from struct enum_enum_names */
 static enum_names *enum_enum_table(
 	const field_desc *fp,

@@ -370,7 +370,7 @@ static bool justship_v2KE(struct state *st UNUSED,
 	struct ikev2_ke v2ke;
 	pb_stream kepbs;
 
-	zero(&v2ke);
+	zero(&v2ke);	/* OK: no pointer fields */
 	v2ke.isak_np = np;
 	v2ke.isak_group = oakley_group;
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
@@ -416,14 +416,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	struct connection *c = st->st_connection;
 
 	/* set up reply */
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);
+		zero(&hdr);	/* OK: no pointer fields */
 		/* Impair function will raise major/minor by 1 for testing */
 		hdr.isa_version = build_ikev2_version();
 
@@ -501,7 +501,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		struct ikev2_generic in;
 		pb_stream pb;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointer fields */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -533,7 +533,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointer fields */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
@@ -859,8 +859,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		     "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
@@ -888,7 +887,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
-		zero(&r_sa);
+		zero(&r_sa);	/* OK: no pointers */
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
@@ -970,7 +969,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		struct ikev2_generic in;
 		pb_stream pb;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -1008,7 +1007,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
 			c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
@@ -1836,7 +1835,7 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
 				cfg_reply ? "reply" : "request"));
-	zero(&cp);
+	zero(&cp);	/* OK: no pointer fields */
 	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	cp.isacp_np = np;
 	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST;
@@ -1963,8 +1962,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&frag_buffer);
-	init_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
+	init_out_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
 		 "reply frag packet");
 
 	/* beginning of data going out */
@@ -2142,8 +2140,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	unsigned char *const authstart = reply_stream.cur;
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR out */
@@ -2519,7 +2516,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 
 	p->master_fd = NULL_FD;
 	set_suspended(md->st, md);
-	zero(p);
+	messup(p);
 	p->in_use = TRUE;
 	gettimeofday(&p->start_time, NULL);
 
@@ -2849,8 +2846,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		struct isakmp_hdr hdr;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(&reply_buffer);
-		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "reply packet");
 
 		/* HDR out */
@@ -3524,14 +3520,13 @@ void send_v2_notification(struct state *p1st,
 			p1st->st_remoteport);
 	}
 
-	zero(&buffer);
-	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
+	init_out_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = build_ikev2_version();
 		if (rcookie != NULL) /* some responses are with zero rSPI */
 			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
@@ -3775,15 +3770,14 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 	pb_stream e_pbs, e_pbs_cipher;
 	stf_status ret;
 
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 	authstart = reply_stream.cur;
 
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = build_ikev2_version();
 		/* add message responder flag */
 		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
@@ -3923,8 +3917,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		struct payload_digest *p;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(&reply_buffer);
-		init_pbs(&reply_stream, reply_buffer,
+		init_out_pbs(&reply_stream, reply_buffer,
 			 sizeof(reply_buffer),
 			 "information exchange reply packet");
 
@@ -3938,7 +3931,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		{
 			struct isakmp_hdr hdr;
 
-			zero(&hdr); /* default to 0 */
+			zero(&hdr);	/* OK: no pointer fields */
 			hdr.isa_version = build_ikev2_version();
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -4048,7 +4041,6 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				u_int16_t j = 0;	/* number of SPIs in spi_buf */
 				u_int8_t *spi_start = p->pbs.cur;	/* save for next pass */
 				pb_stream del_pbs;	/* output stream */
-				struct ikev2_delete v2del_tmp;
 				u_int16_t i;
 
 				if (v2del->isad_spisize != sizeof(ipsec_spi_t)){
@@ -4130,7 +4122,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				}
 
 				/* build output Delete Payload */
-				zero(&v2del_tmp);
+				struct ikev2_delete v2del_tmp;
+
+				zero(&v2del_tmp);	/* OK: no pointer fields */
 
 				v2del_tmp.isad_np = p->next == NULL ?
 					ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D;
@@ -4374,15 +4368,15 @@ stf_status ikev2_send_informational(struct state *st)
 		pb_stream rbody;
 		pb_stream reply_stream;
 
-		zero(&buffer);
-		init_pbs(&reply_stream, buffer, sizeof(buffer),
+		init_out_pbs(&reply_stream, buffer, sizeof(buffer),
 			 "informational exchange request packet");
 		authstart = reply_stream.cur;
 
 		/* HDR out */
 		{
 			struct isakmp_hdr hdr;
-			zero(&hdr);
+
+			zero(&hdr);	/* OK: no pointer fields */
 			hdr.isa_version = build_ikev2_version();
 			memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 			memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
@@ -4484,8 +4478,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	unsigned char *encstart;
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "information exchange request packet");
 	/* beginning of data going out */
 	authstart = reply_stream.cur;
@@ -4493,7 +4486,8 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr;
-		zero(&hdr);
+
+		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = build_ikev2_version();
 		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
@@ -4548,7 +4542,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		 * char spi_buf[1024];
 		 */
 
-		zero(&v2del_tmp);
+		zero(&v2del_tmp);	/* OK: no pointer fields */
 		v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
 
 		if (IS_CHILD_SA(st)) {

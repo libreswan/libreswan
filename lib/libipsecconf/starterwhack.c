@@ -283,7 +283,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	zero(msg);
+	/* properly initialzes pointers to NULL */
+	static const struct whack_message zwm;
+
+	*msg = zwm;
 	msg->magic = WHACK_MAGIC;
 }
 

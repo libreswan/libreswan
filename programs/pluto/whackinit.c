@@ -390,7 +390,7 @@ int main(int argc, char **argv)
 	/* check division of numbering space */
 	assert(OPT_LAST - OPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
 
-	zero(&msg);
+	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
 	clear_end(&msg.right);  /* left set from this after --to */
 

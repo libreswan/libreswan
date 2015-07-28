@@ -47,9 +47,10 @@ int main(int argc, char *argv[])
 	*/
 	
 	cfg = (struct starter_config *) malloc(sizeof(struct starter_config));
-	if (!cfg) printf("can't allocate memory");
-	
-	memset(cfg, 0, sizeof(struct starter_config));
+	if (cfg == NULL) {
+		printf("can't allocate memory");
+		return 1
+	}
 	
 	ipsecconf_default_values(cfg);
 	
@@ -69,7 +70,7 @@ int main(int argc, char *argv[])
 	new_conn->connalias = strdup("anotheralias");
 	
 	new_conn->left.rsakey2 = (unsigned char *)"0s23489234ba28934243";
-    new_conn->left.rsakey1 = (unsigned char *)"0sabcdabcdabcd";
+	new_conn->left.rsakey1 = (unsigned char *)"0sabcdabcdabcd";
 
 	new_conn->desired_state = STARTUP_START;
 	

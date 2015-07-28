@@ -128,7 +128,7 @@ bool ikev2_out_sa(pb_stream *outs,
 	{
 		struct ikev2_sa sa;
 
-		zero(&sa);
+		zero(&sa);	/* OK: no pointer fields */
 		sa.isasa_np = np;
 		sa.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -188,7 +188,7 @@ bool ikev2_out_sa(pb_stream *outs,
 			struct ikev2_prop p;
 			pb_stream t_pbs;
 
-			zero(&p);
+			zero(&p);	/* OK: no pointer members */
 
 			/* if we are AH we need to skip any encryption payload */
 			if (protoid == IKEv2_SEC_PROTO_AH) {
@@ -248,7 +248,7 @@ bool ikev2_out_sa(pb_stream *outs,
 				if (ts_i == skip_encr)
 					continue;
 
-				zero(&t);
+				zero(&t);	/* OK: no pointer members */
 
 				t.isat_lt = ts_i + 1 < ts_cnt ?
 					v2_TRANSFORM_NON_LAST : v2_TRANSFORM_LAST;
@@ -1023,7 +1023,7 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 					   pb_stream *prop_pbs,
 					   struct ikev2_transform_list *itl)
 {
-	zero(itl);
+	zero(itl);	/* OK: no pointer members */
 
 	while (prop->isap_numtrans-- > 0) {
 		pb_stream trans_pbs;
@@ -1144,7 +1144,7 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 	/* ??? everything to do with is_ah is a kludge */
 	bool is_ah = FALSE;
 
-	zero(&r_trans);
+	zero(&r_trans);	/* OK: no pointer members */
 
 	if (parentSA) {
 		/* Proposal - XXX */
@@ -1323,7 +1323,7 @@ stf_status ikev2_parse_parent_sa_body(
 	}
 	sa_v2_convert(&st->st_sadb);
 
-	zero(&ta);
+	zero(&ta);	/* ??? pointer fields might not be NULLed */
 
 	/*
 	 * loop for each proposal.
@@ -1733,7 +1733,7 @@ stf_status ikev2_parse_child_sa_body(
 	st->st_sadb = kernel_alg_makedb(c->policy, c->alg_info_esp, TRUE);
 	sa_v2_convert(&st->st_sadb);
 
-	zero(&ta);
+	zero(&ta);	/* ??? pointer fields might not be NULLed */
 
 	/*
 	 * loop for each proposal.

@@ -13,7 +13,7 @@ stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	continuation = cn;
-	zero(&rd);
+	zero(&rd);	/* ??? pointer fields might not be NULLed */
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_build_ke_and_nonce;
@@ -32,7 +32,7 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	continuation = cn;
-	zero(&rd);
+	zero(&rd);	/* ??? pointer fields might not be NULLed */
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_compute_dh_v2;

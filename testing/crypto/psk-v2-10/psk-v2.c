@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 	passert(c1 != NULL);
 	show_one_connection(c1);
 
-	init_pbs(&outs, outbuf, 1024, "psk signature");
+	init_out_pbs(&outs, outbuf, sizeof(outbuf), "psk signature");
 
 	load_preshared_secrets();
 
@@ -158,8 +158,8 @@ int main(int argc, char *argv[])
 	DBG_dump_pbs(&outs);
 
 	{
-		int sig_len;
-		sig_len = pbs_offset(&outs);
+		size_t sig_len = pbs_offset(&outs);
+
 		/* rewind outs pbs */
 		init_pbs(&outs, outbuf, sig_len, "psk signature");
 	}

@@ -202,11 +202,9 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 
 void clear_end(struct whack_end *e)
 {
-	zero(e);
-	e->id = NULL;
-	e->cert = NULL;
-	e->ca = NULL;
-	e->updown = NULL;
+	static const struct whack_end zero_end;	/* zeros and NULL pointers */
+
+	*e = zero_end;
 	e->host_port = IKE_UDP_PORT; /* XXX should really use ike_port ? */
 }
 

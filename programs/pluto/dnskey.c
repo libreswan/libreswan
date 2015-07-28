@@ -358,7 +358,8 @@ static err_t process_txt_rr_body(char *str,
 
 	/* Decode iii (Security Gateway ID). */
 
-	zero(&gi);                      /* before first use */
+	static const struct gw_info zgi;	/* zeros and NULLs */
+	gi = zgi;	/* before first use */
 
 	TRY(decode_iii(&p, &gi.gw_id)); /* will need to unshare_id_content */
 
@@ -1514,7 +1515,7 @@ err_t start_adns_query(const struct id *id,     /* domain to query */
 
 	idtoa(&cr->sgw_id, gwidb, sizeof(gwidb));
 
-	zero(&cr->query);
+	zero(&cr->query);	/* struct adns_query has no pointer fields */
 
 	{
 		err_t ugh = build_dns_name(cr->query.name_buf, cr->qtid,

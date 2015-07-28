@@ -176,7 +176,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
 
 	/* clear out the reply */
-	zero(skr);
+	zero(skr);	/* ??? pointer fields might not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);

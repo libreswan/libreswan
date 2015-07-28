@@ -480,17 +480,18 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 	int err = 0;
 	FILE *f;
 
-	memset(parser_errstring, 0, ERRSTRING_LEN+1);
-	if (perr) *perr = NULL;
+	zero(&parser_errstring);
+	if (perr != NULL)
+		*perr = NULL;
 
 	cfg = (struct config_parsed *)malloc(sizeof(struct config_parsed));
-	if (!cfg)
+	if (cfg == NULL)
 	{
 	    snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
 	    err++;
 	    goto end;
 	}
-	memset(cfg, 0, sizeof(struct config_parsed));
+	zero(cfg);	/* ??? pointer fields may not be NULLed */
 	if (strncmp(file, "-", sizeof("-")) == 0) {
 		f = fdopen(STDIN_FILENO, "r");
 	}
@@ -576,7 +577,7 @@ static struct kw_list *alloc_kwlist(void)
 	struct kw_list *new;
 
 	new = (struct kw_list *)malloc(sizeof(struct kw_list));
-	memset(new, 0, sizeof(struct kw_list));
+	zero(new);	/* ??? pointer members might not be set to NULL */
 	return new;
 }
 
@@ -585,6 +586,6 @@ static struct starter_comments *alloc_comment(void)
 	struct starter_comments *new;
 
 	new = (struct starter_comments *)malloc(sizeof(struct starter_comments));
-	memset(new, 0, sizeof(struct starter_comments));
+	zero(new);	/* ??? pointer members might not be set to NULL */
 	return new;
 }

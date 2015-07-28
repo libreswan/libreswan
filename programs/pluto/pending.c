@@ -136,8 +136,10 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct stat stst;
 
 	if (st->st_whack_sock == NULL_FD ||
-	    fstat(st->st_whack_sock, &stst) != 0)
-		zero(&stst); /* resulting st_dev/st_ino ought to be distinct */
+	    fstat(st->st_whack_sock, &stst) != 0) {
+		/* resulting st_dev/st_ino ought to be distinct */
+		zero(&stst);	/* OK: no pointer fields */
+	}
 
 	release_whack(st);
 

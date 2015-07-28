@@ -492,6 +492,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 		zero(pd);	/* ??? is this needed? */
 
 		struct_desc *sd = v2_payload_desc(np);
+
 		if (sd == NULL) {
 			/*
 			 * This payload is unknown to us.  RFCs 4306
@@ -1343,8 +1344,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 */
 	passert(md != NULL);
 
-	zero(&st);
-	zero(&cnx);
+	zero(&st);	/* ??? might not NULL pointer fields */
+	zero(&cnx);	/* ??? might not NULL pointer fields */
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;

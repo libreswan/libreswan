@@ -517,7 +517,7 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	zero(&said);
+	zero(&said);	/* OK: no pointer fields */
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
 		src_opt = NULL;
 	{
@@ -1631,7 +1631,7 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if (pfkey_msg) {
+	if (pfkey_msg != NULL) {
 		pfkey_extensions_free(extensions);
 		pfkey_msg_free(&pfkey_msg);
 	}
@@ -1639,16 +1639,16 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%s: pfkey message buffer freed.\n",
 			progname);
 	}
-	if (authkey) {
-		memset((caddr_t)authkey, 0, authkeylen);
+	if (authkey != NULL) {
+		memset(authkey, 0, authkeylen);
 		free(authkey);
 	}
-	if (enckey) {
-		memset((caddr_t)enckey, 0, enckeylen);
+	if (enckey != NULL) {
+		memset(enckey, 0, enckeylen);
 		free(enckey);
 	}
-	if (iv) {
-		memset((caddr_t)iv, 0, ivlen);
+	if (iv != NULL) {
+		memset(iv, 0, ivlen);
 		free(iv);
 	}
 

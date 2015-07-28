@@ -662,7 +662,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	zero(&xa_id);
+	zero(&xa_id);	/* redundant */
 	xa_id.kind = ID_FQDN;
 	xa_id.name.ptr = (unsigned char *)xauthname;
 	xa_id.name.len = strlen(xauthname);

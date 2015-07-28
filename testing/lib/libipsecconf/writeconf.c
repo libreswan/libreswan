@@ -93,12 +93,10 @@ int main(int argc, char *argv[])
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
 	cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
-	if (!cfg) {
+	if (cfg == NULL) {
 		fprintf(stderr, "can't allocate mem in %s\n", progname);
 		exit(10);
 	}
-
-	zero(cfg);
 
 	/**
 	 * Set default values

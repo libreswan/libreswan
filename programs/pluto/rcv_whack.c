@@ -618,7 +618,17 @@ static void whack_handle(int whackctlfd)
 		close(whackfd);
 		return;
 	}
+
+	/*
+	 * properly initialize msg
+	 *
+	 * - needed because short reads are sometimes OK
+	 *
+	 * - although struct whack_msg has pointer fields
+	 *   they don't appear on the wire so zero() should work.
+	 */
 	zero(&msg);
+
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		log_errno((e, "read() failed in whack_handle()"));

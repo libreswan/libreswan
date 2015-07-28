@@ -1049,7 +1049,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	}
 
 	/* set up reply */
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
 	/* HDR* out */
@@ -2332,7 +2332,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	zero(&sa);
+	zero(&sa);	/* OK: no pointer fields */
 	sa.isasa_doi = ISAKMP_DOI_IPSEC;
 	sa.isasa_np = ISAKMP_NEXT_NONCE;
 	if (!out_struct(&sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))

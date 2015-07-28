@@ -862,8 +862,8 @@ void daily_log_event(void)
 }
 
 /*
- * we store runtime info for stats/status this way,
- * you may be able to do something similar using these hooks
+ * We store runtime info for stats/status this way.
+ * You may be able to do something similar using these hooks.
  */
 
 struct log_conn_info {
@@ -996,8 +996,10 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state called for state update for connection %s ",
 		    conn->name));
-	zero(&lc);
+	zero(&lc);	/* OK: the two pointer fields handled below */
 	lc.conn = conn;
+	lc.ignore = NULL;
+
 	save_state = st->st_state;
 	st->st_state = new_state;
 	for_each_state(connection_state, &lc);
@@ -1180,8 +1182,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
 
-	zero(&cipher_str);
-	zero(&spi_str);
+	zero(&cipher_str);	/* OK: no pointer fields */
+	zero(&spi_str);	/* OK: no pointer fields */
 
 	switch(op) {
 	case LAK_PARENT_START:

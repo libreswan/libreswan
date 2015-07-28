@@ -166,8 +166,8 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 {
 	const struct id *id = resolve_myid(&end->id);
 
-	zero(hd);
-	zero(tl);
+	zero(hd);	/* OK: no pointer fields */
+	*tl = empty_chunk;
 	hd->isaiid_idtype = id->kind;
 	switch (id->kind) {
 	case ID_NONE:
