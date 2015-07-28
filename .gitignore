@@ -14,7 +14,7 @@ modobj
 modobj24
 modobj26
 testing/*/OUTPUT/*
-testing/*/*/OUTPUT
+testing/*/*/OUTPUT*
 testing/x509/*/*
 testing/x509/index.*
 testing/x509/crlnumber.*

@@ -192,7 +192,7 @@ clean-local-base: moduleclean
 # being built only to then delete it.
 distclean: clean-local-base module24clean module26clean
 	rm -f out.kpatch
-	rm -rf testing/pluto/*/OUTPUT
+	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf testing/x509/*/
 	rm -f testing/x509/index.*
 	rm -f testing/x509/crlnumber.*
