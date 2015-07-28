@@ -12,15 +12,16 @@ rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf install -y wget vim-enhanced bison flex gmp-devel nss-devel \
- nspr-devel nss-tools gcc make unbound-libs ipsec-tools pexpect racoon2 \
+ nspr-devel nss-tools  gcc make unbound-libs ipsec-tools pexpect racoon2 \
  nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel \
  audit-libs-devel strace unbound pexpect net-tools bind-utils \
  rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel xmlto yum yum-utils trousers; dnf clean all
-RUN debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils \
+ libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography trousers; 
+RUN dnf clean all;
+RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
- libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap \
+ libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr \
  nss libevent-devel; dnf clean all
 RUN mkdir -p /home/build/libreswan
@@ -44,12 +45,16 @@ ADD authorized_keys /root/.ssh/authorized_keys
 RUN chmod 400 /root/.ssh/authorized_keys
 RUN chown -R root:root /root/.ssh
 RUN  systemctl enable sshd.service
-RUN wget ftp://ftp.nohats.ca/ssw/strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm  -O strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm
-RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm -O strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm 
-RUN rpm -i strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm
 # tell ssh to not use ugly PAM
 RUN sed -i 's/UsePAM\syes/UsePAM no/' /etc/ssh/sshd_config
+RUN echo "UseDNS no" >> /etc/ssh/sshd_config
 # make the terminal prettier
+RUN wget ftp://ftp.nohats.ca/pyOpenSSL/python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
+RUN wget ftp://ftp.nohats.ca/pyOpenSSL/pyOpenSSL-0.14-4.fc22.noarch.rpm
+#RUN rpm -i pyOpenSSL-0.14-4.fc22.noarch.rpm python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
+RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm 
+RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
+#RUN rpm -i strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
 RUN echo 'export GIT_PS1_SHOWDIRTYSTATE=true' >> /root/.bash_profile
 RUN echo 'export PS1="[\u@i\h] \w # "' >> /root/.bash_profile
 RUN echo 'export EDITOR=vim' >> /root/.bash_profile

@@ -169,7 +169,7 @@ kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-01				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
-kvmplutotest	newoe-06-prio				good
+kvmplutotest	newoe-06-prio				wip
 kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
@@ -179,6 +179,7 @@ kvmplutotest	newoe-11-failike			good
 kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good
 kvmplutotest	newoe-15-poc-block			good
+kvmplutotest	newoe-16-poc-pass-hold			good
 kvmplutotest	newoe-17-poc-clear			good
 	
 

@@ -1580,6 +1580,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		name = clone_str(t->name, "group instance name");
 		t->spd.that.client = *target;
 		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
+		t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
 		t->kind = isanyaddr(&t->spd.that.host_addr) &&
 			!NEVER_NEGOTIATE(t->policy) ?
 			CK_TEMPLATE : CK_INSTANCE;
@@ -2508,8 +2509,28 @@ struct connection *find_next_host_connection(
 					c->policy),
 				c->name));
 
-		if (NEVER_NEGOTIATE(c->policy))
+		if (NEVER_NEGOTIATE(c->policy)) {
+			/* are we a block or clear connection? */
+		        lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
+			if (shunt) {
+				/*
+				 * We need to match block/clear so we can send back
+				 * NO_PROPOSAL_CHOSEN, otherwise not match so we
+				 * can hit packetdefault to do real IKE.
+				 * clear and block do not have POLICY_OPPORTUNISTIC,
+				 * but clear-or-private and private-or-clear do, but
+				 * they don't do IKE themselves but allow packetdefault
+				 * to be hit and do the work.
+				 * if not policy_oppo -> we hit clear/block so this is right c
+				 */
+				if ((c->policy & POLICY_OPPORTUNISTIC))
+					continue;
+				/* shunt match - stop the search for another conn if we are groupinstance*/
+				if (c->policy & POLICY_GROUPINSTANCE)
+					break;
+			}
 			continue;
+		}
 
 		/*
 		 * Success may require exact match of:
