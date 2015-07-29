@@ -150,10 +150,12 @@ def load_output(logger, output_file):
 
 
 def mortem(test, baseline=None, skip_diff=False, skip_sanitize=False,
+           output_directory=None,
            update_diff=False, update_sanitize=False):
 
-    if not os.path.exists(test.output_directory):
-        test.logger.debug("output dir missing: %s", test.output_directory)
+    output_directory = output_directory or test.output_directory
+    if not os.path.exists(output_directory):
+        test.logger.debug("output directory missing: %s", output_directory)
         return None
 
     errors = Errors(test.logger)
@@ -162,7 +164,7 @@ def mortem(test, baseline=None, skip_diff=False, skip_sanitize=False,
     # Check the pluto logs for markers indicating that there was a
     # crash or other unexpected behaviour.
     for domain in test.domain_names():
-        pluto_log = os.path.join(test.output_directory, domain + ".pluto.log")
+        pluto_log = os.path.join(output_directory, domain + ".pluto.log")
         test.logger.debug("checking '%s' for markers", pluto_log)
         if os.path.exists(pluto_log):
             errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", domain)
@@ -177,7 +179,7 @@ def mortem(test, baseline=None, skip_diff=False, skip_sanitize=False,
         # domains.  If there isn't then there's a big problem and
         # little point with continuing checks for this domain.
 
-        raw_console_file = os.path.join(test.output_directory,
+        raw_console_file = os.path.join(output_directory,
                                         domain + ".console.verbose.txt")
         test.logger.debug("domain %s raw console output '%s'", domain, raw_console_file)
         if not os.path.exists(raw_console_file):
@@ -202,7 +204,7 @@ def mortem(test, baseline=None, skip_diff=False, skip_sanitize=False,
             finished = False
             continue
 
-        sanitized_console_file = os.path.join(test.output_directory,
+        sanitized_console_file = os.path.join(output_directory,
                                               domain + ".console.txt")
         test.logger.debug("domain %s sanitize console output '%s'", domain, sanitized_console_file)
         sanitized_console_output = None
@@ -223,7 +225,7 @@ def mortem(test, baseline=None, skip_diff=False, skip_sanitize=False,
         if os.path.exists(expected_output_file):
             with open(expected_output_file) as f:
                 expected_output = f.read()
-            console_diff_file = os.path.join(test.output_directory, domain + ".console.diff")
+            console_diff_file = os.path.join(output_directory, domain + ".console.diff")
             console_diff = None
             if skip_diff:
                 console_diff = load_output(test.logger, console_diff_file)

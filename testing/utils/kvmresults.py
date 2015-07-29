@@ -129,6 +129,7 @@ def main():
             result = None
             if not ignore:
                 result = post.mortem(test, baseline=baseline,
+                                     output_directory=test.old_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,
                                      update_sanitize=args.update or args.update_sanitize,

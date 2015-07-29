@@ -19,25 +19,36 @@ from fab import utils
 
 class Test:
 
-    def __init__(self, directory, kind, expected_result):
+    def __init__(self, directory, kind, expected_result, old_output_directory=None):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
         self.expected_result = expected_result
-        # name must match the directory's basename; since directory
-        # could be ".", need to first convert it to an absolute path.
+        # The test's name is always identical to the test's directory
+        # name (aka basename).  However, since directory could be
+        # relative (for instance "."  or "./..") it first needs to be
+        # converted to absolute before the basename can be extracted.
         directory = os.path.abspath(directory)
         self.name = os.path.basename(directory)
         self.full_name = "test " + self.name
-        # Rewrite the directory path so that the test name always
-        # appears.  For instance "." gets rewritten as ../TEST; and
-        # ".." gets rewritten as "../../TEST".  Avoids confusing
-        # output were only "." or ".." appears.
+        # Construct a relative directory path such that it always
+        # contains the actual test directory name.  For instance: "."
+        # gets rewritten as ../TEST; and ".." gets rewritten as
+        # "../../TEST".  This prevents optuse paths appearing in the
+        # output.  For instance, it prevents "kvmresult.py ../OUTPUT"
+        # printing just ".. passed".
         self.directory = os.path.join(os.path.relpath(os.path.dirname(directory)), self.name)
-        if self.directory == ".":
-            self.directory = os.path.join("..", self.name)
+        # Need to juggle two directories: first, there is the
+        # directory containing the OLD output from a previous test
+        # run; and second, there is the directory that will contain
+        # the [NEW] output from the next test run.  It makes a
+        # difference when an old output directory is explicitly
+        # specified. For instance, "kvmresults.py test/OUTPUT.OLD/"
+        # should output the results for that directory and not
+        # "test/OUTPUT/".
         self.output_directory = os.path.join(self.directory, "OUTPUT")
         self.result_file = os.path.join(self.output_directory, "RESULT")
+        self.old_output_directory = old_output_directory or self.output_directory
         # will be filled in later
         self.domains = None
         self.initiators = None
@@ -161,25 +172,61 @@ def load(logger, directory, error_level=logutil.ERROR):
 
 def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
 
-    # Is it a single testsuite directory?
+    # If there is only one directory then, perhaps, it contains a full
+    # testsuite.  The easiest way to find out is to simply try loading
+    # it.
     if len(directories) == 1:
         tests = load(logger, directories[0])
         if tests:
             logger.log(log_level, "tests loaded from testsuite '%s'", tests.directory)
             return tests
 
-    # Presumably this is a list of directories, each specifying one
-    # test.
+    # There are multiple directories so, presumably, each one
+    # specifies a single test that need to be "loaded".  Form a list
+    # of the tests.
     tests = []
     for directory in directories:
-        logger.log(log_level, "adding test directory '%s'", directory)
-        # Deal with a directory specifying the test's OUTPUT
-        # sub-directory.
-        test_directory = os.path.abspath(directory)
-        if os.path.basename(test_directory) == "OUTPUT":
-            test_directory = os.path.dirname(test_directory)
-        tests.append(Test(directory=test_directory, kind="kvmplutotest",
-                          expected_result="good"))
+        # Python's basename is close to useless - given "foo/" it
+        # returns "" and not "foo" - get around this.
+        if not os.path.basename(directory):
+            directory = os.path.dirname(directory)
+        # Apply some heuristics to detect a DIRECTORY specifying an
+        # the test output sub-directory and not the test directory
+        # proper.
+        old_output_directory = None
+        if not os.path.exists(os.path.join(directory, "description.txt")) \
+        and os.path.exists(os.path.join(directory, "..", "description.txt")):
+            # DIRECTORY specifies an existing output sub-directory.
+            # The test directory proper is just one level up. Note
+            # that the relative path DIRECTORY/.. only works when
+            # DIRECTORY exists.
+            old_output_directory = directory
+            directory = os.path.join(directory, "..")
+        elif os.path.basename(directory).startswith("OUTPUT") \
+        and os.path.exists(os.path.join(os.path.dirname(directory), "description.txt")):
+            # DIRECTORY doesn't exist (if it did the first test would
+            # pass) yet it really looks like a test OUTPUT directory.
+            # The test directory proper is just dirname of DIRECTORY.
+            #
+            # A sequence like:
+            #
+            #   rm -rf OUTPUT
+            #   kvmrunner.py !$
+            #
+            # will trigger this case
+            old_output_directory = directory
+            directory = os.path.dirname(directory)
+        # one last sanity check
+        if not os.path.exists(os.path.join(directory, "description.txt")):
+            logger.error("invalid test directory: %s", old_output_directory or directory)
+            return None
+        # explain what is going on
+        if old_output_directory:
+            logger.log(log_level, "adding test directory '%s' with old output directory '%s')", directory, old_output_directory)
+        else:
+            logger.log(log_level, "adding test directory '%s'", directory)
+        tests.append(Test(directory=directory, old_output_directory=old_output_directory,
+                          kind="kvmplutotest", expected_result="good"))
 
     return tests
 
