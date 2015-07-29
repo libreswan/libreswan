@@ -181,7 +181,32 @@ kvmplutotest	newoe-13-block				good
 kvmplutotest	newoe-15-poc-block			good
 kvmplutotest	newoe-16-poc-pass-hold			good
 kvmplutotest	newoe-17-poc-clear			good
-	
+# 
+kvmplutotest 	newoe-18-poc-poc 			good
+kvmplutotest 	newoe-18-poc-cop 			good
+kvmplutotest 	newoe-18-poc-private 			good
+kvmplutotest 	newoe-18-poc-clear 			good
+kvmplutotest 	newoe-18-poc-block 			good
+kvmplutotest 	newoe-18-cop-poc 			good
+kvmplutotest 	newoe-18-cop-cop 			good
+kvmplutotest 	newoe-18-cop-private 			good
+kvmplutotest 	newoe-18-cop-clear 			good
+kvmplutotest 	newoe-18-cop-block 			good
+kvmplutotest 	newoe-18-private-poc 			good
+kvmplutotest 	newoe-18-private-cop 			good
+kvmplutotest 	newoe-18-private-private 		good
+kvmplutotest 	newoe-18-private-clear 			good
+kvmplutotest 	newoe-18-private-block 			good
+kvmplutotest 	newoe-18-clear-poc 			good
+kvmplutotest 	newoe-18-clear-cop 			good
+kvmplutotest 	newoe-18-clear-private 			good
+kvmplutotest 	newoe-18-clear-clear 			good
+kvmplutotest 	newoe-18-clear-block 			good
+kvmplutotest 	newoe-18-block-poc 			good
+kvmplutotest 	newoe-18-block-cop 			good
+kvmplutotest 	newoe-18-block-private 			good
+kvmplutotest 	newoe-18-block-clear 			good
+kvmplutotest 	newoe-18-block-block 			good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate

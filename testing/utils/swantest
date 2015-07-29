@@ -1609,13 +1609,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
 
     if test["responder"] == "east":
 
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.0.2.254/24"
         brname = "br%s" % bide
         docker_net_bridge(
             dname=dnamer, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth0"
+        iface = "eth1"
         prefix = "192.1.2.23/24"
         brname = "br%s" % bidc
         docker_net_bridge(
