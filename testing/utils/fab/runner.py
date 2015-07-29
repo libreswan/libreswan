@@ -176,53 +176,53 @@ def run_test(test, max_workers=1):
     # Lots of WITH/TRY blocks so things always clean up.
 
     # Time just this test
-    with logutil.TIMER:
-        logger = logutil.getLogger(__name__, test.name)
-        logger.info("starting test")
+    logger = logutil.getLogger(__name__, test.name)
+    logger.info("starting test")
 
-        with TestDomains(logger, test, DOMAIN_NAMES) as all_test_domains:
+    with TestDomains(logger, test, DOMAIN_NAMES) as all_test_domains:
+        try:
 
-            try:
-                # Python doesn't have an easy way to obtain an
-                # executor's current jobs (futures) so track them
-                # using the JOBS map.  If there's a crash, any
-                # remaining members of JOBS are canceled or killed in
-                # the finally block below.  The executor is cleaned up
-                # explicitly in the finally clause.
-                executor = futures.ThreadPoolExecutor(max_workers=max_workers)
-                jobs = {}
-                run_test_on_executor(executor, jobs, logger, test, all_test_domains)
-            finally:
-                # Control-c, timeouts, along with any other crash, and
-                # even a normal exit, all end up here!
-                logger.info("finishing test")
+            # Python doesn't have an easy way to obtain an executor's
+            # current jobs (futures) so track them using the JOBS map.
+            # If there's a crash, any remaining members of JOBS are
+            # canceled or killed in the finally block below.  The
+            # executor is cleaned up explicitly in the finally clause.
+            executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+            jobs = {}
+            run_test_on_executor(executor, jobs, logger, test, all_test_domains)
 
-                # Start with a list of jobs still in the queue; one or
-                # more of them may be running.
-                done, not_done = futures.wait(jobs, timeout=0)
-                logger.debug("jobs done %s not done %s", done, not_done)
-                # First: cancel all outstanding jobs (otherwise
-                # killing one job would just result in the next job
-                # starting).  Calling cancel() on running jobs has no
-                # effect so need to stop them some other way; ulgh!
-                not_canceled = set()
-                for job in not_done:
-                    logger.info("trying to cancel job %s on %s", job, jobs[job])
-                    if job.cancel():
-                        logger.info("job %s on %s canceled", job, jobs[job])
-                    else:
-                        logger.info("job %s on %s did not cancel", job, jobs[job])
-                        not_canceled.add(job)
-                # Second: cause any un-canceled jobs (presumably they
-                # are running) to crash.  The crash() call,
-                # effectively, pulls the rug out from under the code
-                # interacting with the domain.
-                for job in not_canceled:
-                    logger.info("trying to crash job %s on %s", job, jobs[job])
-                    jobs[job].crash()
-                # finally shutdown the executor; it will reap all the
-                # crashed jobs.
-                executor.shutdown()
+        finally:
+
+            # Control-c, timeouts, along with any other crash, and
+            # even a normal exit, all end up here!
+            logger.info("finishing test")
+
+            # Start with a list of jobs still in the queue; one or
+            # more of them may be running.
+            done, not_done = futures.wait(jobs, timeout=0)
+            logger.debug("jobs done %s not done %s", done, not_done)
+            # First: cancel all outstanding jobs (otherwise killing
+            # one job would just result in the next job starting).
+            # Calling cancel() on running jobs has no effect so need
+            # to stop them some other way; ulgh!
+            not_canceled = set()
+            for job in not_done:
+                logger.info("trying to cancel job %s on %s", job, jobs[job])
+                if job.cancel():
+                    logger.info("job %s on %s canceled", job, jobs[job])
+                else:
+                    logger.info("job %s on %s did not cancel", job, jobs[job])
+                    not_canceled.add(job)
+            # Second: cause any un-canceled jobs (presumably they are
+            # running) to crash.  The crash() call, effectively, pulls
+            # the rug out from under the code interacting with the
+            # domain.
+            for job in not_canceled:
+                logger.info("trying to crash job %s on %s", job, jobs[job])
+                jobs[job].crash()
+            # finally shutdown the executor; it will reap all the
+            # crashed jobs.
+            executor.shutdown()
 
 def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 

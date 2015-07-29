@@ -142,8 +142,9 @@ def main():
                                      output_directory=test.old_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,
-                                     update_sanitize=args.update or args.update_sanitize,
-                                     update_diff=args.update or args.update_diff)
+                                     update=args.update,
+                                     update_sanitize=args.update_sanitize,
+                                     update_diff=args.update_diff)
                 if not result and not args.list_untested:
                     continue
 

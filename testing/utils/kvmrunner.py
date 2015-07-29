@@ -20,6 +20,7 @@ import re
 import pexpect
 import argparse
 import subprocess
+import time
 from collections import defaultdict
 from datetime import datetime
 from distutils import util
@@ -113,6 +114,7 @@ def main():
     # to zero.
     stats = Stats()
     results = Results()
+    start_time = time.localtime()
 
     try:
         logger.info("run started at %s", datetime.now())
@@ -144,7 +146,8 @@ def main():
                         results.add(result)
                         continue
                     if retry == 0:
-                        logger.info("*** %s: %s (delete '%s' to re-test)", test.name, result.value, test.output_directory)
+                        logger.info("*** %s: %s (delete '%s' to re-test)", test.name,
+                                    result.value, test.output_directory)
                         stats.add("skipped", test)
                         results.add(result)
                         continue
@@ -153,25 +156,56 @@ def main():
             debugfile = None
             result = None
 
-            # Start logging, directory is a marker that that the test
-            # was started
-            os.makedirs(test.output_directory, exist_ok=True)
+            # At least one iteration; above will have filtered out
+            # skips and ignores
+            runs = max(abs(retry), 1)
+            for run in range(runs):
+                stats.add("runs", test)
 
-            with logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
+                # Create an output directory.  If there's already an
+                # existing OUTPUT directory rename it to OUTPUT...
+                # Need to do this before the OUTPUT/debug.log is
+                # started as otherwise it too would get moved away.
+                saved_output_directory = None
+                if not args.dry_run:
+                    try:
+                        os.mkdir(test.output_directory)
+                    except FileExistsError:
+                        stats.add("reruns", test)
+                        # Include the time this test run started in
+                        # the suffix - that way all saved results can
+                        # be matched using a wild card.  Include the
+                        # time the directory was last modified in the
+                        # suffix - it makes a good approximation as to
+                        # when the previous test run finished.
+                        stat = os.stat(test.output_directory)
+                        mtime = time.localtime(os.stat(test.output_directory).st_mtime)
+                        saved_output_directory = (test.output_directory
+                                                + time.strftime(".%Y%m%d%H%M", start_time)
+                                                + time.strftime(".%H%M%S", mtime))
+                        logger.debug("renaming '%s' to '%s'",
+                                     test.output_directory, saved_output_directory)
+                        os.rename(test.output_directory, saved_output_directory)
+                        # if the second attempt fails, let it crash
+                        os.mkdir(test.output_directory)
 
-                # At least one iteration; above will have filtered out
-                # skips and ignores
-                runs = max(abs(retry), 1)
-                for run in range(runs):
-                    stats.add("runs", test)
+                # Start a debug log in the OUTPUT directory; include
+                # timing for this specific test run.
+                with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
                     logger.info("****** test %s attempt %d of %d started at %s ******",
                                 test.name, run+1, runs, datetime.now())
+                    # Add a log message about any saved output
+                    # directory to the per-test-run debug log.  It
+                    # just looks better.
+                    if saved_output_directory:
+                        logger.info("existing OUTPUT saved in '%s'",
+                                    saved_output_directory)
                     ending = "undefined"
                     try:
                         if not args.dry_run:
                             runner.run_test(test, max_workers=args.workers)
                         ending = "finished"
-                        result = post.mortem(test, args)
+                        result = post.mortem(test, args, update=(not args.dry_run))
                         if not args.dry_run:
                             # Store enough to fool the script
                             # pluto-testlist-scan.sh.
@@ -184,7 +218,7 @@ def main():
                     except pexpect.TIMEOUT as e:
                         ending = "timeout"
                         logger.exception("**** test %s timed out ****", test.name)
-                        result = post.mortem(test, args)
+                        result = post.mortem(test, args, update=(not args.dry_run))
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
                     stats.add("runs(%s:%s)" % (ending, result.value), test)

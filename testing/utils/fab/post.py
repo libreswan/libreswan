@@ -184,7 +184,10 @@ def load_output(logger, output_file):
 
 def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
            output_directory=None,
-           update_diff=False, update_sanitize=False):
+           update=False, update_diff=False, update_sanitize=False):
+
+    update_diff = update or update_diff
+    update_sanitize = update or update_sanitize
 
     strip_spaces = args.ignore_all_spaces
     strip_blank_lines = args.ignore_blank_lines
