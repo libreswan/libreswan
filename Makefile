@@ -188,8 +188,12 @@ clean-local-base: moduleclean
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
 		rm -rf $(file) ; )	# but leave out.kpatch
 
-# "distclean" does not depend on "clean" as that results in $(OBJDIR)
-# being built only to then delete it.
+# Delete absolutely everything.
+#
+# Since "clean" is a recursive target and requires the existance of
+# $(OBJDIR), "distclean" does not depend on it.  If it did, "make
+# distclean" would have the querky behaviour of first creating
+# $(OBJDIR) only to then delete it.
 distclean: clean-local-base module24clean module26clean
 	rm -f out.kpatch
 	rm -rf testing/pluto/*/OUTPUT*
@@ -198,7 +202,7 @@ distclean: clean-local-base module24clean module26clean
 	rm -f testing/x509/crlnumber.*
 	rm -f testing/x509/serial*
 	rm -f testing/x509/nss-pw
-	rm -rf $(OBJDIR)
+	rm -rf OBJ.* $(OBJDIR)
 
 # proxies for major kernel make operations
 
