@@ -100,7 +100,7 @@ def main():
             console = remote.start(domain)
         remote.login(domain, console)
 
-        if os.path.isabs(args.chdir):
+        if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
         elif args.chdir:
             chdir = remote.directory(domain, console, directory=os.path.abspath(args.chdir))
