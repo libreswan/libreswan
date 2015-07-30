@@ -3548,21 +3548,24 @@ static void show_one_sr(struct connection *c,
 		c->name, instance, c->modecfg_banner);
 	}
 
+	/*
+	 * Always print the labeled ipsec status; and always use the
+	 * same log call.  Ensures that test result output is
+	 * consistent regardless of support.
+	 */
+	const char *labeled_ipsec;
+	const char *policy_label;
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s;",
-		c->name, instance,
-		c->labeled_ipsec ? "yes" : "no"
-		);
-	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s;",
-		c->name, instance,
-		(c->policy_label == NULL) ? "unset" : c->policy_label);
+	labeled_ipsec = c->labeled_ipsec ? "yes" : "no";
+	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
 #else
-	/* this makes output consistent for testing regardless of support */
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no;",
-		  c->name, instance);
-	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:unset;",
-		  c->name, instance);
+	labeled_ipsec = "no";
+	policy_label = "unset";
 #endif
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s;",
+		  c->name, instance, labeled_ipsec);
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
+		  c->name, instance, policy_label);
 
 }
 
