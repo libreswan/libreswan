@@ -3645,28 +3645,19 @@ void show_one_connection(struct connection *c)
 	/*
 	 * Note: we _no longer_ display key_from_DNS_on_demand as
 	 * if policy [lr]KOD
-	 *
-	 * This gets a little messy - if the DNS-on-demand stuff is
-	 * being displayed then need to add some extra white space,
-	 * but not otherwise.
 	 */
-	const char *key_from_DNS_prefix;
-	const char *key_from_DNS_suffix;
 	if (c->spd.this.key_from_DNS_on_demand ||
 	    c->spd.that.key_from_DNS_on_demand) {
-		key_from_DNS_prefix = " ";
-		key_from_DNS_suffix = ";";
+		whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s; %s%s;",
+			  c->name, instance,
+			  prettypolicy(c->policy),
+			  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
+			  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 	} else {
-		key_from_DNS_prefix = "";
-		key_from_DNS_suffix = "";
+		whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s;",
+			  c->name, instance,
+			  prettypolicy(c->policy));
 	}
-	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s;%s%s%s%s",
-		  c->name, instance,
-		  prettypolicy(c->policy),
-		  key_from_DNS_prefix,
-		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "",
-		  key_from_DNS_suffix);
 
 	if (c->connmtu > 0)
 		snprintf(mtustr, 7, "%d", c->connmtu);
