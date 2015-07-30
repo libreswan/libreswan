@@ -83,8 +83,10 @@ def main():
     basetests = None
     tests = None
     if len(args.directories) > 1:
-        # Perhaps the last argument is the baseline?
-        basetests = testsuite.load(logger, args.directories[-1])
+        # Perhaps the last argument is the baseline?  Suppress any
+        # nasty errors.
+        basetests = testsuite.load(logger, args.directories[-1],
+                                   error_level=logutil.DEBUG)
         if basetests:
             logger.debug("basetests loaded from '%s'", basetests.directory)
             args.directories.pop()
@@ -101,10 +103,10 @@ def main():
     if isinstance(tests, list):
         args.list_untested = True
 
-    # Preload the baseline.  This avoids re-scanning the TESTLIST and,
-    # when errors, printing those repeatedly.  Also, passing the full
-    # baseline to Test.results() lets that function differentiate
-    # between a baseline missing results or being entirely absent.
+    # Preload the baseline.  This avoids re-scanning the TESTLIST.
+    # Also, passing the full baseline to Test.results() lets that
+    # function differentiate between a baseline missing results or
+    # being entirely absent.
     baseline = None
     if basetests:
         baseline = {}

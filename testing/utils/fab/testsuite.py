@@ -66,7 +66,8 @@ class Test:
 
 class TestIterator:
 
-    def __init__(self, testsuite):
+    def __init__(self, testsuite, error_level):
+        self.error_level = error_level
         self.logger = logutil.getLogger(__name__)
         self.testsuite = testsuite
         self.test_list = open(testsuite.testlist, 'r')
@@ -87,13 +88,15 @@ class TestIterator:
                             kind=kind, expected_result=expected_result)
             except ValueError:
                 # This is serious
-                self.logger.error("****** malformed line: %s", line)
+                self.logger.log(self.error_level,
+                                "****** malformed line: %s", line)
                 continue
             self.logger.debug("test directory: %s", test.directory)
             if not os.path.exists(test.directory):
                 # This is serious
-                self.logger.error("****** invalid test %s: directory not found: %s",
-                              test.name, test.directory)
+                self.logger.log(self.error_level,
+                                "****** invalid test %s: directory not found: %s",
+                                test.name, test.directory)
                 continue
             return test
 
@@ -103,12 +106,13 @@ class TestIterator:
 
 class Testsuite:
 
-    def __init__(self, directory, testlist):
+    def __init__(self, directory, testlist, error_level):
+        self.error_level = error_level
         self.directory = directory
         self.testlist = testlist
 
     def __iter__(self):
-        return TestIterator(self)
+        return TestIterator(self, self.error_level)
 
 
 def add_arguments(parser):
@@ -144,13 +148,13 @@ def log_arguments(logger, args):
 TESTLIST = "TESTLIST"
 
 
-def load(logger, directory):
+def load(logger, directory, error_level=logutil.ERROR):
     """Load the testsuite (TESTLIST) found in DIRECTORY"""
 
     testlist = os.path.join(directory, TESTLIST)
     if os.path.exists(testlist):
         logger.debug("loading testsuite in '%s'", directory)
-        return Testsuite(directory, testlist)
+        return Testsuite(directory, testlist, error_level=error_level)
 
     return None
 

@@ -41,6 +41,9 @@ import sys
 from datetime import datetime
 from fab import argutil
 
+# Avoid having code include both "logging" and "logutil" by
+# re-exporting useful stuff here.  Good idea?  Perhaps.
+ERROR = logging.ERROR
 DEBUG = logging.DEBUG
 INFO = logging.INFO
 NONE = 100 # something large
