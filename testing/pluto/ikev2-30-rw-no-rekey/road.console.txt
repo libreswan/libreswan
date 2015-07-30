@@ -122,7 +122,7 @@ road #
 000 "road-east-x509-ipv4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-x509-ipv4":   modecfg info: us:server, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
-000 "road-east-x509-ipv4":    policy_label:unset;
+000 "road-east-x509-ipv4":   policy_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4":   ike_life: 100s; ipsec_life: 28800s; rekey_margin: 20s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;

@@ -214,7 +214,7 @@ ipsec status
 000 "block":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "block":   labeled_ipsec:no;
-000 "block":    policy_label:unset;
+000 "block":   policy_label:unset;
 000 "block":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "block":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "block":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -227,7 +227,7 @@ ipsec status
 000 "block#192.0.2.0/24":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "block#192.0.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "block#192.0.2.0/24":   labeled_ipsec:no;
-000 "block#192.0.2.0/24":    policy_label:unset;
+000 "block#192.0.2.0/24":   policy_label:unset;
 000 "block#192.0.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "block#192.0.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "block#192.0.2.0/24":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -240,7 +240,7 @@ ipsec status
 000 "clear":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear":   labeled_ipsec:no;
-000 "clear":    policy_label:unset;
+000 "clear":   policy_label:unset;
 000 "clear":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -253,7 +253,7 @@ ipsec status
 000 "clear#192.1.2.0/24":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.2.0/24":   labeled_ipsec:no;
-000 "clear#192.1.2.0/24":    policy_label:unset;
+000 "clear#192.1.2.0/24":   policy_label:unset;
 000 "clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear#192.1.2.0/24":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -266,7 +266,7 @@ ipsec status
 000 "clear#192.1.2.129/32":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear#192.1.2.129/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.2.129/32":   labeled_ipsec:no;
-000 "clear#192.1.2.129/32":    policy_label:unset;
+000 "clear#192.1.2.129/32":   policy_label:unset;
 000 "clear#192.1.2.129/32":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear#192.1.2.129/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear#192.1.2.129/32":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -279,7 +279,7 @@ ipsec status
 000 "clear#192.1.2.130/32":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear#192.1.2.130/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.2.130/32":   labeled_ipsec:no;
-000 "clear#192.1.2.130/32":    policy_label:unset;
+000 "clear#192.1.2.130/32":   policy_label:unset;
 000 "clear#192.1.2.130/32":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear#192.1.2.130/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear#192.1.2.130/32":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -292,7 +292,7 @@ ipsec status
 000 "clear#192.1.2.254/32":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.2.254/32":   labeled_ipsec:no;
-000 "clear#192.1.2.254/32":    policy_label:unset;
+000 "clear#192.1.2.254/32":   policy_label:unset;
 000 "clear#192.1.2.254/32":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear#192.1.2.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear#192.1.2.254/32":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -305,7 +305,7 @@ ipsec status
 000 "clear-or-private":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "clear-or-private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear-or-private":   labeled_ipsec:no;
-000 "clear-or-private":    policy_label:unset;
+000 "clear-or-private":   policy_label:unset;
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
 000 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear-or-private":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -318,7 +318,7 @@ ipsec status
 000 "packetdefault":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "packetdefault":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "packetdefault":   labeled_ipsec:no;
-000 "packetdefault":    policy_label:unset;
+000 "packetdefault":   policy_label:unset;
 000 "packetdefault":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
 000 "packetdefault":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "packetdefault":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -331,7 +331,7 @@ ipsec status
 000 "packetdefault"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "packetdefault"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "packetdefault"[1]:   labeled_ipsec:no;
-000 "packetdefault"[1]:    policy_label:unset;
+000 "packetdefault"[1]:   policy_label:unset;
 000 "packetdefault"[1]:   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
 000 "packetdefault"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "packetdefault"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -346,7 +346,7 @@ ipsec status
 000 "private":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "private":   labeled_ipsec:no;
-000 "private":    policy_label:unset;
+000 "private":   policy_label:unset;
 000 "private":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "private":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -359,7 +359,7 @@ ipsec status
 000 "private-or-clear":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "private-or-clear":   labeled_ipsec:no;
-000 "private-or-clear":    policy_label:unset;
+000 "private-or-clear":   policy_label:unset;
 000 "private-or-clear":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "private-or-clear":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;

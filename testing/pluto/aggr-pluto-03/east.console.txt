@@ -27,7 +27,7 @@ east #
 000 "north-east-x509-pluto-02":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "north-east-x509-pluto-02":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "north-east-x509-pluto-02":   labeled_ipsec:no;
-000 "north-east-x509-pluto-02":    policy_label:unset;
+000 "north-east-x509-pluto-02":   policy_label:unset;
 000 "north-east-x509-pluto-02":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "north-east-x509-pluto-02":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-east-x509-pluto-02":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;

@@ -103,7 +103,7 @@ east #
 000 "ipv4-psk-ikev2-transport":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "ipv4-psk-ikev2-transport":   labeled_ipsec:no;
-000 "ipv4-psk-ikev2-transport":    policy_label:unset;
+000 "ipv4-psk-ikev2-transport":   policy_label:unset;
 000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;

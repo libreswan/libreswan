@@ -37,7 +37,7 @@ east #
 000 "nss-cert-correct":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-correct":   labeled_ipsec:no;
-000 "nss-cert-correct":    policy_label:unset;
+000 "nss-cert-correct":   policy_label:unset;
 000 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'E=testing@libreswan.org, CN=Libreswan test CA for Mainca, OU=Test Department, L=Toronto, O=Libreswan, ST=Ontario, C=CA'
 000 "nss-cert-correct":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
@@ -51,7 +51,7 @@ east #
 000 "nss-cert-wrong":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-wrong":   labeled_ipsec:no;
-000 "nss-cert-wrong":    policy_label:unset;
+000 "nss-cert-wrong":   policy_label:unset;
 000 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'E=testing@libreswan.org, CN=Libreswan test CA for otherca, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'
 000 "nss-cert-wrong":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
