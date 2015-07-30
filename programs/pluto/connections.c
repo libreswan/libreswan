@@ -3629,14 +3629,12 @@ void show_one_connection(struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s;"
-		"cisco_unity:%s; send_vendorid:%s;",
-		c->name,
-		instance,
-		(c->sha2_truncbug) ? "yes" : "no",
-		(c->initial_contact) ? "yes" : "no",
-		(c->cisco_unity) ? "yes" : "no",
-		(c->send_vendorid) ? "yes" : "no");
+		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; send_vendorid:%s;",
+		  c->name, instance,
+		  (c->sha2_truncbug) ? "yes" : "no",
+		  (c->initial_contact) ? "yes" : "no",
+		  (c->cisco_unity) ? "yes" : "no",
+		  (c->send_vendorid) ? "yes" : "no");
 
 	if (c->policy_next) {
 		whack_log(RC_COMMENT,
@@ -3675,29 +3673,25 @@ void show_one_connection(struct connection *c)
 
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu;"
-		"mtu: %s; sa_prio:%s; nflog-group: %s;",
-		c->name,
-		instance,
-		prio,
-		ifn,
-		(unsigned long)c->metric,
-		mtustr, sapriostr, nflogstr);
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s;",
+		  c->name, instance,
+		  prio,
+		  ifn,
+		  (unsigned long)c->metric,
+		  mtustr, sapriostr, nflogstr);
 
 	/* slightly complicated stuff to avoid extra crap */
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld;"
-			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			c->name,
-			instance,
-			enum_name(&dpd_action_names, c->dpd_action),
-			(long) deltasecs(c->dpd_delay),
-			(long) deltasecs(c->dpd_timeout),
-			(c->forceencaps) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no",
-			(c->ikev1_natt == natt_both) ? "both" :
+			  "\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+			  c->name, instance,
+			  enum_name(&dpd_action_names, c->dpd_action),
+			  (long) deltasecs(c->dpd_delay),
+			  (long) deltasecs(c->dpd_timeout),
+			  (c->forceencaps) ? "yes" : "no",
+			  (c->nat_keepalive) ? "yes" : "no",
+			  (c->ikev1_natt == natt_both) ? "both" :
 			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
