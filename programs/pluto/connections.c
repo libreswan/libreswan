@@ -3650,17 +3650,17 @@ void show_one_connection(struct connection *c)
 		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
 		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
-	if (c->connmtu > 0)
+	if (c->connmtu != 0)
 		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
 	else
 		strcpy(mtustr, "unset");
 
-	if (c->sa_priority)
+	if (c->sa_priority != 0)
 		snprintf(sapriostr, sizeof(sapriostr), "%lu", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
-	if (c->nflog_group > 0)
+	if (c->nflog_group != 0)
 		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
 	else
 		strcpy(nflogstr, "unset");
