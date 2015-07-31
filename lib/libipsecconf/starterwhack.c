@@ -796,7 +796,8 @@ int starter_permutate_conns(int
 		sc.right.subnet = rnet;
 		sc.right.has_client = TRUE;
 
-		snprintf(tmpconnname, 256, "%s/%ux%u", conn->name, lc, rc);
+		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
+			conn->name, lc, rc);
 		sc.name = tmpconnname;
 
 		sc.connalias = conn->name;

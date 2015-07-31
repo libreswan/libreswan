@@ -3660,17 +3660,17 @@ void show_one_connection(struct connection *c)
 	}
 
 	if (c->connmtu > 0)
-		snprintf(mtustr, 7, "%d", c->connmtu);
+		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
 	else
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority)
-		snprintf(sapriostr, 12, "%lu", c->sa_priority);
+		snprintf(sapriostr, sizeof(sapriostr), "%lu", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
 	if (c->nflog_group > 0)
-		snprintf(nflogstr, 7, "%d", c->nflog_group);
+		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
 	else
 		strcpy(nflogstr, "unset");
 
