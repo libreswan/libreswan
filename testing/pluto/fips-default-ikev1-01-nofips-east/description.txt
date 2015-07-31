@@ -1,0 +1,10 @@
+pluto RSA test with west in FIPS mode using default IKE parameters and IKEv1
+
+East is in default mode, allowing for test of FIPS-only proposals by west
+
+This test requires compilation with USE_FIPSCHECK=true
+This test fakes the kernel being in FIPS mode
+This test uses NSS modutil to put NSS explicitely in FIPS mode
+
+This test also uses plutodebug=all,private to test that private does not
+break things (we cannot access key material to log via private calls)

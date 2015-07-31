@@ -714,8 +714,8 @@ kvmplutotest	ikeport-01				wip
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
 #################################################################
-skiptest	fips-01-ikev1-default			wip
-kvmplutotest	fips-02-ikev2-default			good
+kvmplutotest	fips-default-ikev1-01-nofips-east	good
+kvmplutotest	fips-default-ikev2-01-nofips-east	good
 skiptest	fips-03-ikev1-md5			wip
 skiptest	fips-04-ikev2-md5			good
 skiptest	fips-05-ikev1-gcm			wip

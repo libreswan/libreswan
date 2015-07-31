@@ -1,7 +1,0 @@
-pluto RSA test in FIPS mode using default IKE parameters and IKEv2
-
-East is placed in fips mode, allowing for tests of non-fips proposals by west
-
-This test requires compilation with USE_FIPSCHECK=true
-This test requires installing by rpm so the .hmac FIPS verification passes
-This test fakes the kernel being in FIPS mode
