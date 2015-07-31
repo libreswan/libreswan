@@ -81,6 +81,7 @@ def main():
                               " a list of test directories"))
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
+    post.add_arguments(parser)
     logutil.add_arguments(parser)
 
     args = parser.parse_args()
@@ -93,6 +94,7 @@ def main():
     logger.info("  directories: %s", args.directories)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
+    post.log_arguments(logger, args)
     logutil.log_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories,
@@ -134,7 +136,7 @@ def main():
             # little wierd.
             retry = args.retry or 0
             if retry >= 0:
-                result = post.mortem(test)
+                result = post.mortem(test, args)
                 if result:
                     if result.passed:
                         logger.info("*** %s: passed", test.name)
@@ -169,7 +171,7 @@ def main():
                         if not args.dry_run:
                             runner.run_test(test, max_workers=args.workers)
                         ending = "finished"
-                        result = post.mortem(test)
+                        result = post.mortem(test, args)
                         if not args.dry_run:
                             # Store enough to fool the script
                             # pluto-testlist-scan.sh.
@@ -182,7 +184,7 @@ def main():
                     except pexpect.TIMEOUT as e:
                         ending = "timeout"
                         logger.exception("**** test %s timed out ****", test.name)
-                        result = post.mortem(test)
+                        result = post.mortem(test, args)
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
                     stats.add("runs(%s:%s)" % (ending, result.value), test)

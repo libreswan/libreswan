@@ -43,6 +43,7 @@ def main():
     parser.add_argument("--print-name", action="store_true")
     parser.add_argument("--print-result", action="store_true")
     parser.add_argument("--print-diff", action="store_true")
+    parser.add_argument("--print-args", action="store_true")
 
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
@@ -56,6 +57,7 @@ def main():
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
                         help=("An optional testsuite directory containing"
                               " results from a previous test run"))
+    post.add_arguments(parser)
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
 
@@ -72,10 +74,18 @@ def main():
     v += 1
     args.list_untested = args.list_untested or args.verbose > v ; v += 1
     args.list_ignored = args.list_ignored or args.verbose > v ; v += 1
+    v += 1
+    args.print_args = args.print_args or args.verbose > v
 
     # By default print the relative directory path.
     if not args.print_directory and not args.print_name:
         args.print_directory = True
+
+    if args.print_args:
+        post.log_arguments(logger, args)
+        testsuite.log_arguments(logger, args)
+        logutil.log_arguments(logger, args)
+        return 1
 
     # If there is more than one directory then the last might be the
     # baseline.  Try loading it as a testsuite (baselines are
@@ -128,7 +138,7 @@ def main():
             # Filter out tests that have not been run?
             result = None
             if not ignore:
-                result = post.mortem(test, baseline=baseline,
+                result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.old_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,

@@ -15,6 +15,16 @@
 import sys
 from fab import tee
 
+def boolean(arg):
+    a = arg.lower()
+    for t in [ "1", "yes", "true", "enable" ]:
+        if t.startswith(a):
+            return True
+    for f in [ "0", "no", "false", "disable" ]:
+        if f.startswith(a):
+            return False
+    raise Exception("Unrecognized boolean argument '%s'" % arg)
+
 def timeout(arg):
     arg = arg.lower()
     if arg == "none" or arg == "infinite":
