@@ -3642,22 +3642,13 @@ void show_one_connection(struct connection *c)
 			c->name, instance, c->policy_next->name);
 	}
 
-	/*
-	 * Note: we _no longer_ display key_from_DNS_on_demand as
-	 * if policy [lr]KOD
-	 */
-	if (c->spd.this.key_from_DNS_on_demand ||
-	    c->spd.that.key_from_DNS_on_demand) {
-		whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s; %s%s;",
-			  c->name, instance,
-			  prettypolicy(c->policy),
-			  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-			  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
-	} else {
-		whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s;",
-			  c->name, instance,
-			  prettypolicy(c->policy));
-	}
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s;",
+		  c->name, instance,
+		  prettypolicy(c->policy),
+		  c->spd.this.key_from_DNS_on_demand |
+			c->spd.that.key_from_DNS_on_demand ? "; " : "",
+		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
+		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
 	if (c->connmtu > 0)
 		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
