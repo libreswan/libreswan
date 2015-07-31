@@ -720,8 +720,8 @@ kvmplutotest	fips-default-ikev2-01-nofips-east	good
 kvmplutotest	fips-default-ikev1-02-nofips-west	wip
 kvmplutotest	fips-default-ikev2-02-nofips-west	wip
 
-skiptest	fips-03-ikev1-md5			wip
-skiptest	fips-04-ikev2-md5			good
+kvmplutotest	fips-03-ikev1-md5			good
+kvmplutotest	fips-04-ikev2-md5			good
 skiptest	fips-05-ikev1-gcm			wip
 kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
