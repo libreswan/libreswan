@@ -716,9 +716,8 @@ kvmplutotest	ikeport-01				wip
 #################################################################
 kvmplutotest	fips-default-ikev1-01-nofips-east	good
 kvmplutotest	fips-default-ikev2-01-nofips-east	good
-# these seem to downgrade 256-bit AES to 128-bit?
-kvmplutotest	fips-default-ikev1-02-nofips-west	wip
-kvmplutotest	fips-default-ikev2-02-nofips-west	wip
+kvmplutotest	fips-default-ikev1-02-nofips-west	good
+kvmplutotest	fips-default-ikev2-02-nofips-west	good
 
 kvmplutotest	fips-03-ikev1-md5			good
 kvmplutotest	fips-04-ikev2-md5			good
