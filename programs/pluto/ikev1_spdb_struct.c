@@ -1709,11 +1709,30 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
-				/* silently limit duration to our maximum */
+				/*
+				 * Silently limit duration to our maximum.
+				 *
+				 * Note:
+				 *
+				 * GCC now complains about comparisions between
+				 * signed and unsigned values.  This is good:
+				 * should the comparison be done as if the
+				 * unsigned representation were signed or as if
+				 * the signed representation were unsigned?
+				 * The C standard has an arbitrary answer.
+				 * So GCC's warning should be heeded.
+				 *
+				 * We know that time_t can represent all
+				 * values between 0 and SA_LIFE_DURATION_MAXIMUM.
+				 * It is safe to cast val (of type u_int32_t)
+				 * to time_t (some signed type) AFTER checking
+				 * that val does not exceed
+				 * SA_LIFE_DURATION_MAXIMUM.
+				 */
 				attrs->life_seconds =
 				    val > SA_LIFE_DURATION_MAXIMUM ?
 					deltatime(SA_LIFE_DURATION_MAXIMUM) :
-				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
+				    (time_t)val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);
 				break;
