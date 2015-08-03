@@ -180,7 +180,9 @@ int main(int argc, char *argv[])
 		stf_status stat = ikev2_verify_rsa_sha1(&st1,
 							RESPONDER,
 							idhash,
+#ifdef USE_KEYRR
 							NULL,   /* keys from dns */
+#endif
 							NULL,   /* gateways from dns */
 							&outs);
 		printf("stf status: %s\n", enum_name(&stfstatus_name, stat));
