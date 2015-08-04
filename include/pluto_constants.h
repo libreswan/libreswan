@@ -674,6 +674,7 @@ enum sa_policy_bits {
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUP_IX,	/* is this a group template? */
 	POLICY_GROUTED_IX,	/* do we want this group routed? */
+	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
 	POLICY_UP_IX,	/* do we want this up? */
 	POLICY_XAUTH_IX,	/* do we offer XAUTH? */
 	POLICY_MODECFG_PULL_IX,	/* is modecfg pulled by client? */
@@ -721,6 +722,7 @@ enum sa_policy_bits {
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
 #define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
+#define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want this up? */
 #define POLICY_XAUTH	LELEM(POLICY_XAUTH_IX)	/* do we offer XAUTH? */
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */

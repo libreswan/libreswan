@@ -307,6 +307,7 @@ const char *const sa_policy_bit_names[] = {
 	"OPPORTUNISTIC",
 	"GROUP",
 	"GROUTED",
+	"GROUPINSTANCE",
 	"UP",
 	"XAUTH",
 	"MODECFG_PULL",
