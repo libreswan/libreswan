@@ -52,10 +52,10 @@ lex.yy.c: parser.l
 	$(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<) && \
 	sed -e '/^ *#/s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
 		-e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
-		$$(basename $< .y).tab.c >TMP$$$$ && \
-	mv TMP$$$$ $$(basename $< .y).tab.c
+		$$(basename $< .y).tab.c >SEDTMP$$$$ && \
+	mv SEDTMP$$$$ $$(basename $< .y).tab.c
 
 clean: parser-clean
 .PHONY: parser-clean
 parser-clean:
-	cd $(builddir) && $(RM) -f parser.tab.* lex.yy.*
+	cd $(builddir) && $(RM) -f SEDTMP* *.tab.[cdho] *.dot *.output lex.yy.[cdho]
