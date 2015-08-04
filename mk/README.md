@@ -65,12 +65,16 @@ TODO: a.k.a. what needs fixing
 
 The following are querks in the build system:
 
+- stop library.mk switching to $(builddir)
+
+- stop program.mk switching to $(builddir)
+
+- recursive make targets should stick to $(srcdir); currently some
+  switch back to $(builddir) at the last moment (see above)
+
 - lib/libswan should use library.mk
 
 - programs/pluto should to use program.mk
-
-- recursive make targets should stick to $(srcdir); currently some
-  switch back to $(builddir) at the last moment
 
 - remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
@@ -113,3 +117,9 @@ The following are querks in the test infrastructure:
 - support multiple run files (for instance run1east.sh, run2west.sh,
   ...); this will allow more complicated tests such as where west
   establishes a connection but east triggers the re-establish
+
+- speed up ping aka liveness tests
+
+- simplify fips check
+
+- eliminate test results "incomplete" and "bad"
