@@ -86,18 +86,21 @@ kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 # For the moment provide the rules below, each with subtlely different
 # behaviour and names.
 
-.PHONY: kvm-check kvm-recheck kvm-recheck-all
-# This only runs tests that have not been started (it skips failed and
-# crashed tests).
-kvm-check: testing/x509/keys/mainca.key
-	$(KVMRUNNER_COMMAND) --retry 0 testing/pluto
-# This runs tests that have have not passed (not started, failed,
-# crashed).
+# "check" only runs tests that have never been started (it skips
+# failed and crashed tests).
+.PHONY: kvm-check kvm-check-good kvm-check-all
+kvm-check: kvm-check-good
+kvm-check-good: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good"     testing/pluto
+kvm-check-all: testing/x509/keys/mainca.key
+	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good|wip" testing/pluto
+# "recheck" re-runs any test that didn't pass.
+.PHONY: kvm-recheck-good kvm-recheck-all
+kvm-recheck: kvm-recheck-good
 kvm-recheck: testing/x509/keys/mainca.key
-	$(KVMRUNNER_COMMAND) --retry 1 testing/pluto
-# This tests everything regardless.
+	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good"     testing/pluto
 kvm-recheck-all: testing/x509/keys/mainca.key
-	$(KVMRUNNER_COMMAND) --retry -1 testing/pluto
+	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" testing/pluto
 # clean up
 .PHONY: kvm-clean-check
 kvm-clean-check:

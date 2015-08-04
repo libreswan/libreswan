@@ -138,10 +138,9 @@ def add_arguments(parser):
                        type=re.compile, metavar="REGULAR-EXPRESSION",
                        help=("Select tests with kind matching %(metavar)s"
                              " (default: '%(default)s')"))
-    group.add_argument("--test-expected-result", default="good",
+    group.add_argument("--test-result", default="good",
                        type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Select tests with expected-result matching %(metavar)s"
-                             " (default: '%(default)s')"))
+                       help="Select tests with (expected) result matching %(metavar)s (default: '%(default)s')")
     group.add_argument("--test-exclude", default="",
                        type=re.compile, metavar="REGULAR-EXPRESSION",
                        help=("Exclude tests that match %(metavar)s"
@@ -152,7 +151,7 @@ def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-name: '%s'" , args.test_name.pattern)
-    logger.info("  test-result: '%s'" , args.test_expected_result.pattern)
+    logger.info("  test-result: '%s'" , args.test_result.pattern)
     logger.info("  test-exclude: '%s'" , args.test_exclude.pattern)
 
 
@@ -246,8 +245,8 @@ def ignore(test, args):
         return "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
     if args.test_name.pattern and not args.test_name.search(test.name):
         return "name '%s' does not match '%s'" % (test.name, args.test_name.pattern)
-    if args.test_expected_result.pattern and not args.test_expected_result.search(test.expected_result):
-        return "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_expected_result.pattern)
+    if args.test_result.pattern and not args.test_result.search(test.expected_result):
+        return "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
 
     if args.test_exclude.pattern:
         if args.test_exclude.search(test.kind) or \
