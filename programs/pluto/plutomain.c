@@ -398,7 +398,7 @@ static bool pluto_init_nss(char *nssdb)
 		rv = PK11_RandomUpdate(buf, seedbytes);
 		libreswan_log("seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
-		messup(&buf);
+		messupn(buf, seedbytes);
 		pfree(buf);
 	}
 

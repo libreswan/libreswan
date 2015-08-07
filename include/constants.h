@@ -124,8 +124,17 @@ typedef int bool;
 /*
  * zero an object given a pointer to it.
  *
- * Note: this won't work on an array without an explicit &
- * (it will appear to work but it will only zero the first element).
+ * Note: this won't work on a pointer to the first element of an
+ * array since sizeof() will only give the length of the first element.
+ * Unfortunately, no compiler diagnostic will flag this.
+ * Any array will have to be prefixed with an & to yield a pointer
+ * to the whole array.  The normal representation for a string or pointer
+ * to a raw buffer is a pointer to the first element, so they cannot be zeroed.
+ *
+ * Simple form of this rule:
+ * The argument to zero must be prefixed by & unless it is a pointer
+ * to the object you wish to zero.  A pointer to an object must be
+ * a pointer to the whole object, not just the first element.
  *
  * Note also that zeroing a pointer is not guaranteed to make it NULL
  * (read the C standard).  This problem is mostly theoretical since
@@ -147,7 +156,8 @@ typedef int bool;
  * secret that might be leaked).
  */
 
-#define messup(x) memset((x), 0xFB, sizeof(*(x)))	/* set all bytes to wrong value */
+#define messupn(x, n) memset((x), 0xFB, (n))	/* set n bytes to wrong value */
+#define messup(x) messupn((x), sizeof(*(x)))	/* set all bytes to wrong value */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
