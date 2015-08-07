@@ -28,8 +28,8 @@
 /*
  * A horrible locking hack,  we ride on tdb_lock for now since it
  * is basically what we want.  Since all calls into prng_bytes pass in
- * a pointer to ipsec_prng,  there is contention on the data in ipsec_prng
- * as it is not always locked.  TO make sure we never messup the PRNG, just
+ * a pointer to ipsec_prng, there is contention on the data in ipsec_prng
+ * as it is not always locked.  To make sure we never mess up the PRNG, just
  * locked it if we don't already have the tdb_lock
  */
 
