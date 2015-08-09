@@ -278,13 +278,13 @@ binary-common:
 	dh_builddeb
 
 # Build architecture-independent files here.
-binary-indep: install-libreswan-doc install-libreswan-modules-source
+binary-indep: install-libreswan-doc
 	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 
 # Build architecture-dependent files here.
-binary-arch: install-libreswan install-libreswan-modules-dkms
+binary-arch: install-libreswan
 	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
 
 binary: binary-indep binary-arch
-.PHONY: clean binary-indep binary-arch binary-common install-libreswan-modules-dkms \
-        install-libreswan-modules-source install-libreswan-doc install-libreswan
+.PHONY: clean binary-indep binary-arch binary-common \
+        install-libreswan-doc install-libreswan
