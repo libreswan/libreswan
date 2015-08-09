@@ -196,7 +196,7 @@ west #
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 
 000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27757s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=9 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=0 Traffic:! ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": deleting connection
@@ -236,7 +236,7 @@ west #
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27975s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27756s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=9 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=0 Traffic:! ESPmax=4194303B 
 west #
  echo done
 done
