@@ -41,6 +41,10 @@ def help:
 	@echo
 	@echo "See the files INSTALL and README for more general information,"
 	@echo "and details on how to build / install on KLIPS and other systems"
+	@echo
+	@echo "To build debian packages: make deb"
+	@echo "To build fedora/rhel/centos rpms, see packaging/"
+
 .PHONY: def help
 
 include ${LIBRESWANSRCDIR}/Makefile.top
