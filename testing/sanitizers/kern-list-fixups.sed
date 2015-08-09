@@ -98,3 +98,4 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.* random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
+s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
