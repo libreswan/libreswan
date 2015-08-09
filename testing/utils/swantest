@@ -388,12 +388,14 @@ class TestList:
     def __iter__(self):
         return self
 
-    def __init__(self, testlist, args, verbose = True):
+    def __init__(self, testlist, args, trpath='./', verbose = True):
         self.verbose = verbose
         self.args = args
         self.file = open(testlist, 'r')
+        self.trpath = trpath
 
     def __next__(self):
+        tdir = ''
         for line in self.file:
             line = line.strip()
             if not line:
@@ -408,9 +410,10 @@ class TestList:
                 # This is serious
                 logging.error("****** malformed line: %s", line)
                 continue
-            if not os.path.exists(testdir):
+            tdir = self.trpath + '/' + testdir
+            if not os.path.exists(tdir):
                 # This is serious
-                logging.error("****** invalid test %s: directory %s/%s not found", testdir, os.getcwd(), testdir)
+                logging.error("****** invalid test %s: directory %s not found", testdir, tdir)
                 continue
             reason = self.skip_test(testtype, testdir, testexpect)
             if reason and self.verbose:
@@ -571,7 +574,7 @@ class scantests:
         self.tests.clear()
 
         logging.debug("Reading testlist file %s", r)
-        for testtype, testdir, testexpect in TestList(r, self.args, verbose=False):
+        for testtype, testdir, testexpect in TestList(r, self.args, trpath=self.trpath, verbose=False):
             self.tests[testdir] = {}
             self.tests[testdir]["name"] = testdir
             self.tests[testdir]["type"] = testtype
@@ -1883,10 +1886,10 @@ def do_single_test(args, start='', test=None, st=None):
         # chdir end
 
 def scancwd(args):
-    r = args.testlist
+    r = args.testlist or none
     stdir=os.getcwd()
     logging.info(
-        "re scan results in CWD %s.", stdir, r)
+        "re scan results in CWD %s/%s", stdir, r)
 
     if not os.path.exists(r):
         logging.error(
