@@ -495,8 +495,10 @@ class scantests:
             return "no testruns found in %s" % rnode
 
         for d in self.tdirs:
+            logging.debug("scan directory %s for tests ", d)
             self.tdir = d
             if self.scan_trun():
+                logging.error("scan directory %s", d)
                 continue
             self.scan_test_results()
 
@@ -621,7 +623,8 @@ class scantests:
         for tname in tests:
             if not os.path.isdir(self.trpath + '/' + tname):
                 continue
-            self.tests[tname] = {}
+            if not tname in self.tests:
+                self.tests[tname] = {}
             self.tests[tname]["name"] = tname
             self.tests[tname]["type"] = "unknown"
 
@@ -640,7 +643,7 @@ class scantests:
                 logging.info(e)
                 continue
 
-            if not tname in self.tests:
+            if not "expect" in self.tests[tname]:
                 self.tests[tname]["expect"] = "not in TESTLIST"
 
             self.testname = tname
