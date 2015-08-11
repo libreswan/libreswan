@@ -85,8 +85,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-# remove man page for ipsec.conf so it is forced to regenerate
-rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
