@@ -494,8 +494,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 POOL?=/vol/pool
 # support types are fedora and ubuntu
 OSTYPE?=fedora
-#OSMEDIA?=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
-OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
+OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x86_64/os/
 
 # Ubuntu media
 # OSTYPE?=ubuntu
