@@ -22,7 +22,7 @@ Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
-Source0: https://download.libreswan.org/%{prever:development/}%{name}-%{version}%{?prever}.tar.gz
+Source0: https://download.libreswan.org/%{?prever:development/}%{name}-%{version}%{?prever}.tar.gz
 %if %{cavstests}
 Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
