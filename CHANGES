@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.14 (August 11, 2015)
+v3.14 (unreleased)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions for FIPS [Andrew]
 * FIPS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
 * IKEv2: RFC 7383 IKEv2 Fragmentation support [Herbert/Hugh]
