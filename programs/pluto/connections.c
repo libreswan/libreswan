@@ -1337,7 +1337,6 @@ void add_connection(const struct whack_message *wm)
 #endif
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
-		c->sa_priority = wm->sa_priority;
 		c->nflog_group = wm->nflog_group;
 
 		c->forceencaps = wm->forceencaps;
@@ -1357,6 +1356,7 @@ void add_connection(const struct whack_message *wm)
 
 		}
 
+		c->sa_priority = wm->sa_priority;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
