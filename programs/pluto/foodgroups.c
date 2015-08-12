@@ -171,7 +171,7 @@ static void read_foodgroup(struct fg_groups *g)
 					       "\"%s\" line %d: %s \"%s\"",
 					       flp->filename, flp->lino, ugh,
 					       flp->tok);
-				} else if (afi->af != AF_INET) {
+				} else if ((afi->af != AF_INET) && (afi->af != AF_INET6)) {
 					loglog(RC_LOG_SERIOUS,
 					       "\"%s\" line %d: unsupported Address Family \"%s\"",
 					       flp->filename, flp->lino,
