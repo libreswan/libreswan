@@ -379,6 +379,7 @@ extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t new_spi,
 			      int proto, enum eroute_type esatype,
 			      const struct pfkey_proto_info *proto_info,
+			      uint32_t sa_priority,
 			      unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
 			      , const char *policy_label

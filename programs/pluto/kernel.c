@@ -1216,6 +1216,7 @@ bool eroute_connection(struct spd_route *sr,
 		       ipsec_spi_t new_spi,
 		       int sa_proto, enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
+		       uint32_t sa_priority,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
 		       , const char *policy_label
@@ -1240,7 +1241,7 @@ bool eroute_connection(struct spd_route *sr,
 			  esatype,
 			  proto_info,
 			  deltatime(0),
-			  DEFAULT_IPSEC_SA_PRIORITY, op, buf2
+			  sa_priority, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -1316,6 +1317,7 @@ bool assign_holdpass(struct connection *c,
 			if (eroute_connection(sr, htonl(SPI_HOLD) /* kernel induced */, htonl(negotiation_shunt),
 					       SA_INT, ET_INT,
 					       null_proto_info,
+					       DEFAULT_IPSEC_SA_PRIORITY,
 					       op,
 					       reason
 #ifdef HAVE_LABELED_IPSEC

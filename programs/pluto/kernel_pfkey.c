@@ -1449,7 +1449,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 op, opname
+				 DEFAULT_IPSEC_SA_PRIORITY, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				 , NULL
 #endif

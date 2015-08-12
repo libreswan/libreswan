@@ -1760,6 +1760,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 			unsigned op, const char *opname)
 {
+	struct connection *c = st->st_connection;
 	unsigned int inner_proto;
 	enum eroute_type inner_esatype;
 	ipsec_spi_t inner_spi;
@@ -1838,7 +1839,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				op, opname
+				c->sa_priority, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				, st->st_connection->policy_label
 #endif
