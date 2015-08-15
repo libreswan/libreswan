@@ -860,7 +860,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
 		      deltatime_t use_lifetime UNUSED,
-		      unsigned long sa_priority UNUSED,
+		      uint32_t sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC

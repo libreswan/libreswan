@@ -954,7 +954,7 @@ bool raw_eroute(const ip_address *this_host,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       deltatime_t use_lifetime,
-		       unsigned long sa_priority,
+		       uint32_t sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC

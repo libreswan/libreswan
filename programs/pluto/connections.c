@@ -2462,8 +2462,9 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			ipstr_buf b;
 
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-					" but \"%s\" forbids connection",
-					ipstr(me, &b), pluto_port, c->name);
+					" but \"%s\" kind=%s forbids connection",
+					ipstr(me, &b), pluto_port, c->name,
+					enum_name(&connection_kind_names, c->kind));
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -3680,7 +3681,7 @@ void show_one_connection(struct connection *c)
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority != 0)
-		snprintf(sapriostr, sizeof(sapriostr), "%lu", c->sa_priority);
+		snprintf(sapriostr, sizeof(sapriostr), "%u", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
