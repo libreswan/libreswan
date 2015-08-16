@@ -1337,7 +1337,6 @@ void add_connection(const struct whack_message *wm)
 #endif
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
-		c->nflog_group = wm->nflog_group;
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
@@ -1354,8 +1353,9 @@ void add_connection(const struct whack_message *wm)
 		c->modecfg_domain = wm->modecfg_domain;
 		c->modecfg_banner = wm->modecfg_banner;
 
-		}
+		} /* !NEVER_NEGOTIATE() */
 
+		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
@@ -1436,7 +1436,7 @@ void add_connection(const struct whack_message *wm)
 		/* force all oppo connections to have a client */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			c->spd.that.has_client = TRUE;
-			c->spd.that.client.maskbits = 0;
+			c->spd.that.client.maskbits = 0; /* shouldn't this be 32 for v4? */
 		}
 
 		if (c->policy & POLICY_GROUP) {
