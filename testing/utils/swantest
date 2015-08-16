@@ -777,7 +777,10 @@ class scantests:
             se = (runtime % 60)
             self.tsum["runtime_str"] = "%02d:%02d:%02d" % (ho, mi, se)
 
-        self.tsum["dir"] = self.tdir
+        if self.stdir and self.to_append:
+            self.tsum["dir"] = os.path.basename(self.tdir)
+        else:
+            self.tsum["dir"] = self.tdir
         match = re.search(r'(\d+-\d+-\d+)', self.tdir)
         logging.info("date %s", match)
         if match:
