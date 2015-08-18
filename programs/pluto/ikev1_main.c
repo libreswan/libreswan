@@ -3041,6 +3041,12 @@ bool accept_delete(struct msg_digest *md,
 						md->st = NULL;
 				}
 
+				if (rc->newest_ipsec_sa == SOS_NOBODY) {
+					rc->policy &= ~POLICY_UP;
+					flush_pending_by_connection(rc);
+					delete_states_by_connection(rc, FALSE);
+					reset_cur_connection();
+				}
 				/* reset connection */
 				set_cur_connection(oldc);
 			}
