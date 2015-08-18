@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.15 (unreleased)
 * KLIPS: fix use of *iovec() functions for linux 4.x kernels [Greg Ungerer]
+* IKEv1: Remove all IPsec SA's of a connection when newest SA is removed [CHEN, JIANFU]
 
 v3.14 (August 11, 2015)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions for FIPS [Andrew]
