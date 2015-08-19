@@ -1,0 +1,67 @@
+/testing/guestbin/swan-prep
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ipsec auto --add road-east-ikev2
+002 added connection description "road-east-ikev2"
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec auto --route road-east-ikev2
+road #
+ # hopefully trigger road-east-ikev2 - not the OE authnull conn
+road #
+ # The ping should also get a reply, proving the IPsec SA was
+road #
+ # prefered over the OE trap policy
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
+road #
+ cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
+road #
+ echo done
+done
+road #
+ ipsec whack --trafficstatus
+000  
+006 #2: "road-east-ikev2", type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='@east'
+000  
+road #
+ # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
+road #
+ ipsec status | grep road-east | sed 's/"road-east-ikev2".*/"road-east-ikev2" --- cut ---/' | grep "#"
+000 #2: "road-east-ikev2" --- cut ---
+000 #2: "road-east-ikev2" --- cut ---
+000 #1: "road-east-ikev2" --- cut ---
+000 #1: "road-east-ikev2" --- cut ---
+road #
+road #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
