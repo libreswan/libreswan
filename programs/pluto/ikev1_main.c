@@ -67,6 +67,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "asn1.h"
+#include "pending.h"
 
 #include "sha1.h"
 #include "md5.h"
