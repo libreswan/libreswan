@@ -544,7 +544,7 @@ typedef struct ctl_table ctl_table;
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
-# define memcpy_fropm_msg(a,b,c)        memcpy_fromiovec(a,(b)->msg_iov,c)
+# define memcpy_from_msg(a,b,c)        memcpy_fromiovec(a,(b)->msg_iov,c)
 # define skb_copy_datagram_msg(a,b,c,d) skb_copy_datagram_iovec(a,b,(c)->msg_iov,d)
 #endif
 
