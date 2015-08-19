@@ -210,7 +210,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	-DBUILDER=\"${BUILDER}\" \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
@@ -259,7 +258,6 @@ OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 SYSDEP_SRC=sysdep_${OSDEP}.c
 SYSDEP_OBJ=sysdep_${OSDEP}.o
 
-BUILDER=${shell echo ${USER}@`hostname` }
 # End of configuration coping options.
 
 LDFLAGS+=${NSSLIBS}

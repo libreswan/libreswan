@@ -1483,16 +1483,6 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 
-		if (startswith(&vc[2], "git")) {
-			/*
-			 * when people build RPMs from GIT, make sure they
-			 * get blamed appropriately, and that we get some way
-			 * to identify who did it, and when they did it.
-			 */
-			libreswan_log(
-				"@(#) built on "__DATE__
-				":" __TIME__ " by " BUILDER);
-		}
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
