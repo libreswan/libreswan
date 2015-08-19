@@ -84,7 +84,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	zero(&uctx.sec_ctx_value);	/* abundance of caution */
 
-	if (in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
+	if (!in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
 			"Sec Ctx Textual Label"))
 		return FALSE;
 
