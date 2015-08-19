@@ -6,7 +6,7 @@
 %global USE_NM true
 %global USE_LINUX_AUDIT true
 
-%global fipscheck_version 1.2.0-1
+%global fipscheck_version 1.2.0-7
 %global buildefence 0
 %global development 0
 %global cavstests 0
