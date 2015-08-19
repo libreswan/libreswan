@@ -1,6 +1,10 @@
 
 See also https://libreswan.org/
 
+v3.15 (unreleased)
+* KLIPS: fix use of *iovec() functions for linux 4.x kernels [Greg Ungerer]
+* IKEv1: Remove all IPsec SA's of a connection when newest SA is removed [CHEN, JIANFU]
+
 v3.14 (August 11, 2015)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions for FIPS [Andrew]
 * FIPS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
@@ -38,7 +42,7 @@ v3.14 (August 11, 2015)
 * pluto: Added retransmit-timeout= (default 60s) [Antony]
 * pluto: Added retransmit-interval= in ms (default 500) [Antony]
 * pluto: Greatly reduce time to retransmit from 20s to 0.5s [Antony]
-* pluto: Support for IKEv1 and IKEv2 AES_CTR (ike=aes_ctr) [Andrew Cagney]
+* pluto: Support for IKEv2 AES_CTR (ike=aes_ctr) [Andrew Cagney]
 * pluto: Support for CBC/CTR test vectors using NSS [Andrew Cagney]
 * pluto: Remove last weary old FreeS/WAN X.509 code and use NSS instead [Matt]
 * pluto: Static IP support using passwd file with addresspool= [Wolfgang]

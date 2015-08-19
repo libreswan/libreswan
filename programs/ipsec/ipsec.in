@@ -243,88 +243,88 @@ case "${1}" in
 	if [ ! -d "${IPSEC_NSSDIR}" ]; then
 	    mkdir -p "${IPSEC_NSSDIR}"
 	fi
+	# if we have old database
 	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
 	    -f "${IPSEC_NSSDIR}/key3.db" -o \
 	    -f "${IPSEC_NSSDIR}/secmod.db" ]; then
-	    # if just checking, silently quit
-	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
-		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
-		    ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
-		    IMPORTDBPW=""
-		    NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXXXX)
-		    if [ $? -gt 0 ]; then
-			echo "Failed to create temporary directory for NSS db migration" >&2
-			exit 4
-		    fi
-		    # save current umask
-		    umask=$(umask)
-		    # set safe umask
-		    umask 077
-		    echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
+	    if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
+		! -f "${IPSEC_NSSDIR}/key4.db" ]; then
+		IMPORTDBPW=""
+		NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXXXX)
+		if [ $? -gt 0 ]; then
+		    echo "Failed to create temporary directory for NSS db migration" >&2
+		    exit 4
+		fi
+		# save current umask
+		umask=$(umask)
+		# set safe umask
+		umask 077
+		echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
 
-		    # this section works around a few certutil quirks
-		    # to maintain the current password and merge keys
-		    certutil -N -d sql:"${NSSTMP}" --empty-password
-		    if [ $? -gt 0 ]; then
-			echo "Failed to initialize nss database sql:${NSSTMP}" >&2
-			exit 4
+		# this section works around a few certutil quirks
+		# to maintain the current password and merge keys
+		certutil -N -d sql:"${NSSTMP}" --empty-password
+		if [ $? -gt 0 ]; then
+		    echo "Failed to initialize nss database sql:${NSSTMP}" >&2
+		    exit 4
+		fi
+		if [ -f "${IPSEC_NSSPW}" ]; then
+		    # Look for FIPS format of token:pw, or just the pw
+		    grep -q ':' "${IPSEC_NSSPW}"
+		    if [ $? -eq 0 ]; then
+			cut -d':' -f2 "${IPSEC_NSSPW}" \
+			    > "${NSSTMP}/nsspassword.txt"
+			cut -d':' -f2 "${IPSEC_NSSPW}" \
+			    >> "${NSSTMP}/nsspassword.txt"
+		    else
+			cat "${IPSEC_NSSPW}" > "${NSSTMP}/nsspassword.txt"
+			cat "${IPSEC_NSSPW}" >> "${NSSTMP}/nsspassword.txt"
 		    fi
-		    if [ -f "${IPSEC_NSSPW}" ]; then
-			# Look for FIPS format of token:pw, or just the pw
-			grep -q ':' "${IPSEC_NSSPW}"
-			if [ $? -eq 0 ]; then
-			    cut -d':' -f2 "${IPSEC_NSSPW}" \
-				> "${NSSTMP}/nsspassword.txt"
-			    cut -d':' -f2 "${IPSEC_NSSPW}" \
-				>> "${NSSTMP}/nsspassword.txt"
-			else
-			    cat "${IPSEC_NSSPW}" > "${NSSTMP}/nsspassword.txt"
-			    cat "${IPSEC_NSSPW}" >> "${NSSTMP}/nsspassword.txt"
-			fi
-			# For the empty password prompt:
-			echo -e "\n\n" > "${NSSTMP}/nsspassword2.txt"
-			# Change blank pw to the current, and use
-			# for certutil --upgrade-merge
-			certutil -W -d sql:"${NSSTMP}" \
-			    -f "${NSSTMP}/nsspassword2.txt" \
-			    -@ "${NSSTMP}/nsspassword.txt"
-			DBPW="-f ${NSSTMP}/nsspassword.txt -@ ${NSSTMP}/nsspassword.txt"
-			IMPORTDBPW="-f ${NSSTMP}/nsspassword.txt"
-		    fi
-		    # restore umask
-		    umask ${umask}
+		    # For the empty password prompt:
+		    echo -e "\n\n" > "${NSSTMP}/nsspassword2.txt"
+		    # Change blank pw to the current, and use
+		    # for certutil --upgrade-merge
+		    certutil -W -d sql:"${NSSTMP}" \
+			-f "${NSSTMP}/nsspassword2.txt" \
+			-@ "${NSSTMP}/nsspassword.txt"
+		    DBPW="-f ${NSSTMP}/nsspassword.txt -@ ${NSSTMP}/nsspassword.txt"
+		    IMPORTDBPW="-f ${NSSTMP}/nsspassword.txt"
+		fi
+		# restore umask
+		umask ${umask}
 
-		    certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
-			-d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		    if [ $? -ne 0 ]; then
-			echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against sql:${IPSEC_NSSDIR}"
-			exit $?
-		    fi
-		    # import cacerts and crls
-		    if [ -d "${CACERTDIR}" ]; then
-			for file in "${CACERTDIR}"/*; do
+		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
+		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
+		if [ $? -ne 0 ]; then
+		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
+		    exit $?
+		fi
+		# import cacerts and crls
+		if [ -d "${CACERTDIR}" ]; then
+		    for file in "${CACERTDIR}"/*; do
+			if [ -f "${file}" ]; then
 			    filename=$(basename "${file}")
 			    name=${filename%%.*}
 			    certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
 			    [ $? -eq 0 ] || echo "${file}"
-			done
-		    fi
-		    if [ -d "${CRLDIR}" ]; then
-			for file in "${CRLDIR}"/*; do
+			fi
+		    done
+		fi
+		if [ -d "${CRLDIR}" ]; then
+		    for file in "${CRLDIR}"/*; do
+			if [ -f "${file}" ]; then
 			    crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
 			    [ $? -eq 0 ] || echo "${file}"
-			done
-		    fi
-		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
-		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
-		    rmdir "${NSSTMP}"
-		    # Skip cleanup if pkcs11.txt was there before
-		    [ "${PKCS11TXT}" = Yes ] || rm -f "${IPSEC_NSSDIR}"/pkcs11.txt
-		    echo "NSS upgrade complete"
+			fi
+		    done
 		fi
-		exit 0
+		cp "${NSSTMP}"/*.db "${NSSTMP}"/*.txt "${IPSEC_NSSDIR}"
+		rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
+		rmdir "${NSSTMP}"
+		echo "NSS upgrade complete"
 	    fi
-	fi
+	    exit 0
+	fi	# no old database
 
 	if [ -f "${IPSEC_NSSDIR}/cert9.db" -o -f "${IPSEC_NSSDIR}/key4.db" ]; then
 	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
@@ -339,10 +339,6 @@ case "${1}" in
 	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
-	# Check if pkcs11.txt was there before
-	if [ -f "${IPSEC_NSSDIR}"/pkcs11.txt ]; then
-	    PKCS11TXT="Yes"
-	fi
 	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ $? -gt 0 ]; then
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2

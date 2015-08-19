@@ -4,6 +4,7 @@
  * Copyright (C) 2010-12 David McCullough <david_mccullough@mcafee.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Greg Ungerer <gerg@uclinux.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -948,7 +949,7 @@ pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len,
 		SENDERR(ENOBUFS);
 	}
 
-	memcpy_fromiovec((void *)pfkey_msg, msg->msg_iov, len);
+	memcpy_from_msg((void *)pfkey_msg, msg, len);
 
 	if (pfkey_msg->sadb_msg_version != PF_KEY_V2) {
 		KLIPS_PRINT(1 || debug_pfkey,
@@ -1123,7 +1124,7 @@ pfkey_recvmsg(struct socket *sock,
 	else if (size < skb->len)
 		msg->msg_flags |= MSG_TRUNC;
 
-	skb_copy_datagram_iovec(skb, 0, msg->msg_iov, size);
+	skb_copy_datagram_msg(skb, 0, msg, size);
 #ifdef HAVE_KERNEL_TSTAMP
 	sk->sk_stamp = skb->tstamp;
 #elif defined(HAVE_TSTAMP)

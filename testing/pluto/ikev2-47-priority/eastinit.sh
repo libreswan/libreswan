@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
-cp policies/* /etc/ipsec.d/policies/
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add road-eastnet-nonat
+ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --status
 echo "initdone"
