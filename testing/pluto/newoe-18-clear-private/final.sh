@@ -1,3 +1,4 @@
+ipsec look
 # should not show any hits
 grep "negotiated tunnel" /tmp/pluto.log
 : ==== cut ====

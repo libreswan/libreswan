@@ -1,3 +1,4 @@
+ipsec look
 # A tunnel should have established
 grep "negotiated tunnel" /tmp/pluto.log
 : ==== cut ====

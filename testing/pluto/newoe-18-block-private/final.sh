@@ -1,4 +1,5 @@
-# should not show any hits
+ipsec look
+# should not show any hits because block prevents trigger
 grep "fos_" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status

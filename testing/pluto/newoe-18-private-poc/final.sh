@@ -1,4 +1,5 @@
-# a connections should have been established
+ipsec look
+# tunnel should have been established
 grep "negotiated tunnel" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
