@@ -370,6 +370,7 @@ DISTSRC = \
 	nss_cert_vfy.c nss_cert_vfy.h \
 	nss_ocsp.c nss_ocsp.h \
 	nss_crl_import.c nss_crl_import.h \
+	nss_err.c nss_err.h \
 	${UDPFROMTO_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
@@ -410,6 +411,7 @@ OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
 OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
 OBJSPLUTO += nss_ocsp.o nss_crl_import.o
+OBJSPLUTO += nss_err.o
 OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
 
 OBJSADNS = adns.o
