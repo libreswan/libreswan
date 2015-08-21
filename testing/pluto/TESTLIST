@@ -180,7 +180,6 @@ kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-11-failike			good
 kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good
-kvmplutotest	newoe-15-poc-block			good
 kvmplutotest	newoe-16-poc-pass-hold			good
 # 
 kvmplutotest 	newoe-18-poc-poc 			good
