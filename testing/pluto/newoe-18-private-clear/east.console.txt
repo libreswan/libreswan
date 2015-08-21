@@ -1,0 +1,110 @@
+/testing/guestbin/swan-prep
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+XFRM state:
+XFRM policy:
+src 192.1.2.23/32 dst 0.0.0.0/0 
+	dir out priority 2112 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.254/32 dst 192.1.2.23/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.254/32 dst 192.1.2.23/32 
+	dir in priority 1568 ptype main 
+src 192.1.2.23/32 dst 192.1.3.254/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.2.23/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.2.23/32 
+	dir in priority 1568 ptype main 
+src 192.1.2.23/32 dst 192.1.3.253/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.0/24 dst 192.1.2.23/32 
+	dir fwd priority 1576 ptype main 
+src 192.1.3.0/24 dst 192.1.2.23/32 
+	dir in priority 1576 ptype main 
+src 192.1.2.23/32 dst 192.1.3.0/24 
+	dir out priority 1576 ptype main 
+src 192.1.2.254/32 dst 192.1.2.23/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.254/32 dst 192.1.2.23/32 
+	dir in priority 1568 ptype main 
+src 192.1.2.23/32 dst 192.1.2.254/32 
+	dir out priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.2.23/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.2.23/32 
+	dir in priority 1568 ptype main 
+src 192.1.2.23/32 dst 192.1.2.253/32 
+	dir out priority 1568 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ # should not show any hits
+east #
+ grep "negotiated tunnel" /tmp/pluto.log
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

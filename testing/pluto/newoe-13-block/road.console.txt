@@ -27,14 +27,10 @@ initdone
 road #
  # block policy causing ping to hang
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23 &
-[x] PID
-road #
- sleep 2
+ ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-road #
- killall -9 ping > /dev/null 2>/dev/null
-[2]+  Killed                  ping -n -c 1 -I 192.1.3.209 192.1.2.23
+--- 192.1.2.23 ping statistics ---
+0 packets transmitted, 0 received
 road #
  # wait on OE retransmits and rekeying
 road #

@@ -4,7 +4,7 @@ ping -n -c 2 -I 192.1.3.209 7.7.7.7
 sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-# if 7.7.7.7 shows as %pass, we should be able to ping it
+# 7.7.7.7 is %pass, we should be able to ping it
 ping -n -c 2 -I 192.1.3.209 7.7.7.7
 ipsec look
 # letting acquire and shunt exire

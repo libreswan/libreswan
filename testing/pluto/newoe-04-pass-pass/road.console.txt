@@ -61,7 +61,7 @@ road #
 000  
 000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failing
 road #
- # if 7.7.7.7 shows as %pass, we should be able to ping it
+ # 7.7.7.7 is %pass, we should be able to ping it
 road #
  ping -n -c 2 -I 192.1.3.209 7.7.7.7
 PING 7.7.7.7 (7.7.7.7) from 192.1.3.209 : 56(84) bytes of data.
@@ -295,8 +295,6 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.1.3.209/32 dst 7.7.7.7/32 
-	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
