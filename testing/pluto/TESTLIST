@@ -166,12 +166,12 @@ kvmplutotest	ikev2-frag-02-ipv6			good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
-kvmplutotest	newoe-02-klips				good
+kvmplutotest	newoe-02-klips				wip
 kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-01				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
-kvmplutotest	newoe-06-prio				wip
+kvmplutotest	newoe-06-prio				good
 kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good

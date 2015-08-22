@@ -34,7 +34,7 @@ road #
 road #
  sleep 5
 road #
- # should not show bare shunts or tunnel due to remote block
+ # should show no tunnel or bare shunt
 road #
  ipsec whack --trafficstatus
 000  

@@ -2,7 +2,7 @@
 east #
  cp policies/* /etc/ipsec.d/policies/
 east #
- echo "192.0.2.0/24" >> /etc/ipsec.d/policies/clear-or-private
+ echo "192.1.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
 east #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
@@ -50,12 +50,6 @@ src 192.1.2.23/32 dst 192.1.2.0/24
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.0/24 dst 192.1.2.23/32 
-	dir fwd priority 1576 ptype main 
-src 192.0.2.0/24 dst 192.1.2.23/32 
-	dir in priority 1576 ptype main 
-src 192.1.2.23/32 dst 192.0.2.0/24 
-	dir out priority 1576 ptype main 
 src 192.1.3.253/32 dst 192.1.2.23/32 
 	dir fwd priority 1568 ptype main 
 src 192.1.3.253/32 dst 192.1.2.23/32 
