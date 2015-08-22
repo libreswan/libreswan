@@ -122,6 +122,7 @@ yum install -y 2>&1 \
     screen \
     strace \
     strongswan \
+    telnet \
     tcpdump \
     unbound \
     unbound-devel \
@@ -216,6 +217,14 @@ cat << EOD > /etc/modules-load.d/virtio-rng.conf
 virtio-rng
 EOD
 
+cat << EOD >> /root/.bash_profile
+export GIT_PS1_SHOWDIRTYSTATE=true
+source /usr/share/git-core/contrib/completion/git-prompt.sh
+export PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(declare -F __git_ps1 &>/dev/null && __git_ps1 " (%s)")\[\033[00m\]\\$ '
+alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
+export EDITOR=vim
+EOD
+
 systemctl disable firewalld.service
 systemctl enable network.service
 systemctl enable iptables.service
@@ -271,7 +280,10 @@ yum upgrade -y 2>&1 \
 
 # Need strongswan with CTR, GCM, and other fixes
 yum upgrade -y 2>&1 \
-    https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc21.x86_64.rpm \
+    https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm \
     | tee /var/tmp/strongswan.log
 
+yum upgrade -y 2>&1 \
+    https://nohats.ca/ftp/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm \
+    | tee /var/tmp/strongswan-debug.log
 %end
