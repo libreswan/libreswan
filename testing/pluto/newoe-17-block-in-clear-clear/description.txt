@@ -1,0 +1,22 @@
+as newoe-18-clear-block but now road has east's /24 clear
+but east's /32 in block. ping should fail
+
+currently this test is failing. The /24 clear policy is
+
+src 192.1.2.0/24 dst 192.1.3.209/32
+        dir fwd priority 1576 ptype main
+src 192.1.2.0/24 dst 192.1.3.209/32
+        dir in priority 1576 ptype main
+
+and the block policy is
+
+src 192.1.2.23/32 dst 192.1.3.209/32
+        dir fwd action block priority 2080 ptype main
+src 192.1.2.23/32 dst 192.1.3.209/32
+        dir in action block priority 2080 ptype main
+src 192.1.3.209/32 dst 192.1.2.23/32
+        dir out action block priority 2080 ptype main
+
+So the clear policy mistakenly wins despite the block having a longer prefix
+
+Manually setting this will cause failure for the reverse test case
