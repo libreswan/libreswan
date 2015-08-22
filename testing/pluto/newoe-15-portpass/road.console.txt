@@ -1,0 +1,185 @@
+/testing/guestbin/swan-prep
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ipsec auto --add passthrough-in
+002 added connection description "passthrough-in"
+road #
+ ipsec auto --route passthrough-in
+road #
+ ipsec auto --add passthrough-out
+002 added connection description "passthrough-out"
+road #
+ ipsec auto --route passthrough-out
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ echo "initdone"
+initdone
+road #
+ ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 1 received, 50% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ # wait on OE retransmits and rekeying
+road #
+ sleep 5
+road #
+ # ping should succeed through tunnel
+road #
+ ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 3
+road #
+ ipsec whack --trafficstatus
+000  
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+000  
+road #
+ # echo should go through passthrough, not increase traffic counter of tunnel
+road #
+ echo "PLAINTEXT" | nc -s 192.1.3.209 192.1.2.23 22
+SSH-2.0-OpenSSH_XXX
+Protocol mismatch.
+road #
+ sleep 3
+road #
+ ipsec whack --trafficstatus
+000  
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+000  
+road #
+ echo done
+done
+road #
+ ipsec look
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
+XFRM policy:
+src 192.1.3.209/32 dst 192.1.2.23/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32 
+	dir fwd priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32 
+	dir in priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.1.3.209/32 proto tcp sport 22 
+	dir fwd priority 1472 ptype main 
+src 0.0.0.0/0 dst 192.1.3.209/32 proto tcp sport 22 
+	dir in priority 1472 ptype main 
+src 192.1.3.209/32 dst 0.0.0.0/0 proto tcp dport 22 
+	dir out priority 1536 ptype main 
+src 0.0.0.0/0 dst 192.1.3.209/32 proto tcp dport 22 
+	dir fwd priority 1536 ptype main 
+src 0.0.0.0/0 dst 192.1.3.209/32 proto tcp dport 22 
+	dir in priority 1536 ptype main 
+src 192.1.3.209/32 dst 0.0.0.0/0 proto tcp sport 22 
+	dir out priority 1472 ptype main 
+src 192.1.3.209/32 dst 0.0.0.0/0 
+	dir out priority 2112 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24 
+	dir out priority 2088 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.254/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.254/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.3.254/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.3.253/32 
+	dir out priority 1568 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.254/32 
+	dir out priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.253/32 
+	dir out priority 1568 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0 
+192.1.3.0/24 dev eth0  proto kernel  scope link  src 192.1.3.209 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ # A tunnel should have established
+road #
+ grep "negotiated tunnel" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated tunnel [192.1.3.209,192.1.3.209:0-65535 0] -> [192.1.2.23,192.1.2.23:0-65535 0]
+road #
+road #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

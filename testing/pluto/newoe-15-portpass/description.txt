@@ -1,0 +1,6 @@
+basic OE connection but now we are excluding a specific port
+from encryption (eg port 22 to avoid double encrypting)
+
+note: the tcpdumps don't show the plaintext ssh packets, but a
+manually attached tcpdump to swan13 outside the test does show
+it works properly
