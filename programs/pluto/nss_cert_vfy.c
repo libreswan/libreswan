@@ -31,6 +31,7 @@
 #include "x509.h"
 #include "nss_copies.h"
 #include "nss_cert_vfy.h"
+#include "nss_err.h"
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
@@ -133,63 +134,24 @@ static bool crl_update_check(CERTCertDBHandle *handle,
 	return FALSE;
 }
 
-static int translate_nss_err(long err, bool ca)
+static int nss_err_to_revfail(CERTVerifyLogNode *node)
 {
-	int ret;
-	char *hd = ca ? "CA" : "Peer";
+	int ret = VERIFY_RET_FAIL;
 
-	switch (err) {
-	case SEC_ERROR_INADEQUATE_KEY_USAGE:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate has inadequate keyUsage flags", hd));
-		ret = VERIFY_RET_FAIL;
-		break;
-	case SEC_ERROR_INADEQUATE_CERT_TYPE:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate type is not approved for this application (EKU)", hd));
-		ret = VERIFY_RET_FAIL;
-		break;
-	case SEC_ERROR_UNKNOWN_ISSUER:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate issuer not recognized", hd));
-		ret = VERIFY_RET_FAIL;
-		break;
-	case SEC_ERROR_OCSP_UNKNOWN_CERT:
-		DBG(DBG_X509,
-		    DBG_log("The OCSP server has no status for the certificate"));
-		ret = VERIFY_RET_FAIL;
-		break;
-	case SEC_ERROR_UNTRUSTED_ISSUER:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate issuer has been marked as not trusted by the user", hd));
-		ret = VERIFY_RET_FAIL;
-		break;
-	case SEC_ERROR_REVOKED_CERTIFICATE:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate has been revoked", hd));
-		ret = VERIFY_RET_REVOKED;
-		break;
-	default:
-		DBG(DBG_X509,
-		    DBG_log("%s certificate verify failed [%ld]", hd, err));
-		ret = VERIFY_RET_FAIL;
-		break;
+	if (node == NULL || node->cert == NULL) {
+		return ret;
 	}
-	return ret;
-
-}
-
-static int get_node_error_status(CERTVerifyLogNode *node)
-{
-	if (node == NULL || node->cert == NULL)
-		return VERIFY_RET_FAIL;
 
 	DBG(DBG_X509,
-	    DBG_log("Certificate %s failed verification [%ld]",
+	    DBG_log("Certificate %s failed verification : %s",
 		    node->cert->subjectName,
-		    node->error));
+		    nss_err_str(node->error)));
 
-	return translate_nss_err(node->error, CERT_IsCACert(node->cert, NULL));
+	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
+		ret = VERIFY_RET_REVOKED;
+	}
+
+	return ret;
 }
 
 /*
@@ -417,9 +379,13 @@ retry:
 				reverify = FALSE;
 				goto retry;
 			}
-			fin = get_node_error_status(cur_log->head);
+			fin = nss_err_to_revfail(cur_log->head);
 		} else {
-			fin = translate_nss_err(PORT_GetError(), FALSE);
+			/* An rv != SECFailure without CERTVerifyLog results should not
+			 * happen, but catch it anyways */
+			DBG(DBG_X509,
+			    DBG_log("unspecified NSS verification failure"));
+			fin = VERIFY_RET_FAIL;
 		}
 	} else {
 		DBG(DBG_X509, DBG_log("certificate is valid"));
