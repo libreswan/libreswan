@@ -55,7 +55,7 @@ static void perform_t2_test(void)
 	fflush(stdout);
 	fflush(stderr);
 
-	calc_dh_iv(&r);
+	calc_dh_iv(&r);	/* ??? NSS may fail */
 
 	printf("\noutput:\n");
 

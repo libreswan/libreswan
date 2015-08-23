@@ -69,6 +69,7 @@
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
+ * If there is something that upsets NSS (what?) we will return NULL.
  */
 /* MUST BE THREAD-SAFE */
 PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
@@ -115,44 +116,45 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 				  CKM_CONCATENATE_DATA_AND_BASE,
 				  CKA_DERIVE, group->bytes,
 				  lsw_return_nss_password_file_info());
-	passert(dhshared != NULL);
 
-	unsigned int shortfall = group->bytes - PK11_GetKeyLength(dhshared);
+	if (dhshared != NULL) {
+		unsigned int shortfall = group->bytes - PK11_GetKeyLength(dhshared);
 
-	if (shortfall > 0) {
-		/*
-		 * We've got to pad the result with [shortfall] 0x00 bytes.
-		 * The chance of shortfall being n should be 1 in 256^n.
-		 * So really zauto ought to be big enough for the zeros.
-		 * If it isn't, we allocate space on the heap
-		 * (this will likely never be executed).
-		 */
-		DBG(DBG_CRYPT,
-			DBG_log("restoring %u DHshared leading zeros", shortfall));
-		unsigned char zauto[10];
-		unsigned char *z =
-			shortfall <= sizeof(zauto) ?
-				zauto : alloc_bytes(shortfall, "DH shortfall");
-		memset(z, 0x00, shortfall);
-		CK_KEY_DERIVATION_STRING_DATA string_params = {
-			.pData = z,
-			.ulLen = shortfall
-		};
-		SECItem params = {
-			.data = (unsigned char *)&string_params,
-			.len = sizeof(string_params)
-		};
-		PK11SymKey *newdhshared =
-			PK11_Derive(dhshared,
-				    CKM_CONCATENATE_DATA_AND_BASE,
-				    &params,
-				    CKM_CONCATENATE_DATA_AND_BASE,
-				    CKA_DERIVE, 0);
-		passert(newdhshared != NULL);
-		if (z != zauto)
-			pfree(z);
-		free_any_symkey("dhshared", &dhshared);
-		dhshared = newdhshared;
+		if (shortfall > 0) {
+			/*
+			 * We've got to pad the result with [shortfall] 0x00 bytes.
+			 * The chance of shortfall being n should be 1 in 256^n.
+			 * So really zauto ought to be big enough for the zeros.
+			 * If it isn't, we allocate space on the heap
+			 * (this will likely never be executed).
+			 */
+			DBG(DBG_CRYPT,
+				DBG_log("restoring %u DHshared leading zeros", shortfall));
+			unsigned char zauto[10];
+			unsigned char *z =
+				shortfall <= sizeof(zauto) ?
+					zauto : alloc_bytes(shortfall, "DH shortfall");
+			memset(z, 0x00, shortfall);
+			CK_KEY_DERIVATION_STRING_DATA string_params = {
+				.pData = z,
+				.ulLen = shortfall
+			};
+			SECItem params = {
+				.data = (unsigned char *)&string_params,
+				.len = sizeof(string_params)
+			};
+			PK11SymKey *newdhshared =
+				PK11_Derive(dhshared,
+					    CKM_CONCATENATE_DATA_AND_BASE,
+					    &params,
+					    CKM_CONCATENATE_DATA_AND_BASE,
+					    CKA_DERIVE, 0);
+			passert(newdhshared != NULL);
+			if (z != zauto)
+				pfree(z);
+			free_any_symkey("dhshared", &dhshared);
+			dhshared = newdhshared;
+		}
 	}
 
 	*story = enum_name(&oakley_group_names, group->group);
@@ -161,35 +163,34 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	return dhshared;
 }
 
+/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
 void calc_dh(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
-	struct pcr_skeyid_q dhq;
-	const struct oakley_group_desc *group;
-	chunk_t g;
-	SECKEYPrivateKey *ltsecret;
-	SECKEYPublicKey *pubk;
-	const char *story = NULL;
-
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
+	struct pcr_skeyid_q dhq;
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
 
 	/* clear out the reply */
+	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
 	zero(skr);	/* ??? pointer fields might not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	ltsecret = dhq.secret;
-	pubk = dhq.pubk;
+	SECKEYPrivateKey *ltsecret = dhq.secret;
+	SECKEYPublicKey *pubk = dhq.pubk;
 
 	/* now calculate the (g^x)(g^y) */
+
+	chunk_t g;
 
 	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+
+	const char *story;	/* we ignore the value */
 
 	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
 }

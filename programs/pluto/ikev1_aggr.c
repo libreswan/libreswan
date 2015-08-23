@@ -444,7 +444,8 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 * so we have to build our reply_stream and emit HDR before calling it.
 	 */
 
-	finish_dh_secretiv(st, r);
+	if (!finish_dh_secretiv(st, r))
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md, &requested_ca);
@@ -767,9 +768,11 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	finish_dh_secretiv(st, r);
-
-	e = aggr_inR1_outI2_tail(md, NULL);
+	if (!finish_dh_secretiv(st, r)) {
+		e = STF_FAIL + INVALID_KEY_INFORMATION;
+	} else {
+		e = aggr_inR1_outI2_tail(md, NULL);
+	}
 
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);

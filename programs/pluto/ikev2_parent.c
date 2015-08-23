@@ -2105,7 +2105,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct state *const pst = md->st;	/* parent's state object */
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 
-	finish_dh_v2(pst, r);
+	if (!finish_dh_v2(pst, r))
+		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
@@ -2692,7 +2693,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	/* extract calculated values from r */
-	finish_dh_v2(st, r);
+	if (!finish_dh_v2(st, r))
+		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))

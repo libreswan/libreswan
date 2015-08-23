@@ -1169,6 +1169,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
  * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
  * the state that it is working for may not yet care about the result.
  * We are precomputing the DH.
+ * This also means that it isn't good at reporting an NSS error.
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
@@ -1191,10 +1192,8 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
 
 	set_cur_state(st);
 
-	finish_dh_secretiv(st, r);
-
-	st->hidden_variables.st_skeyid_calculated = TRUE;
-	update_iv(st);
+	if (finish_dh_secretiv(st, r))
+		update_iv(st);
 
 	/*
 	 * If there was a packet received while we were calculating, then
@@ -1448,7 +1447,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
 
-	finish_dh_secretiv(st, r);
+	if (!finish_dh_secretiv(st, r))
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md, &requested_ca);
@@ -1979,7 +1979,10 @@ static key_tail_fn main_inI3_outR3_tail; /* forward */
 
 stf_status main_inI3_outR3(struct msg_digest *md)
 {
-	return main_inI3_outR3_tail(md, NULL);
+	/* handle case where NSS balked at generating DH */
+	return md->st->st_shared_nss == NULL ?
+		STF_FAIL + INVALID_KEY_INFORMATION :
+		main_inI3_outR3_tail(md, NULL);
 }
 
 static inline stf_status main_id_and_auth(struct msg_digest *md,

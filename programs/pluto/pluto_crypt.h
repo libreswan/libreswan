@@ -369,7 +369,7 @@ extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 				    enum original_role role,
 				    oakley_group_t oakley_group2);
 
-extern void finish_dh_secretiv(struct state *st,
+extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
 extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
@@ -386,7 +386,7 @@ extern stf_status start_dh_v2(struct msg_digest *md,
 			      enum original_role role,
 			      crypto_req_cont_func pcrc_func);
 
-extern void finish_dh_v2(struct state *st,
+extern bool finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);
 
 extern void unpack_KE_from_helper(

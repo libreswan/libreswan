@@ -283,67 +283,52 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 /* MUST BE THREAD-SAFE */
 void calc_dh_iv(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
-	struct pcr_skeyid_q dhq;
-	const struct oakley_group_desc *group;
-	PK11SymKey *shared;
-	chunk_t g;
-	SECKEYPrivateKey *ltsecret;
-	PK11SymKey
-		*skeyid,
-		*skeyid_d,
-		*skeyid_a,
-		*skeyid_e,
-		*enc_key;
-	chunk_t new_iv;
-	SECKEYPublicKey *pubk;
-	const char *story = NULL;
-
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
+	struct pcr_skeyid_q dhq;
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
 
 	/* clear out the reply */
+	struct pcr_skeyid_r *const skr = &r->pcr_d.dhr;
 	zero(skr);	/* ??? pointer fields may not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	ltsecret = dhq.secret;
-	pubk = dhq.pubk;
+	SECKEYPrivateKey *ltsecret = dhq.secret;
+	SECKEYPublicKey *pubk = dhq.pubk;
 
-	/* now calculate the (g^x)(g^y) ---
-	 * need gi on responder, gr on initiator
+	/*
+	 * Now calculate the (g^x)(g^y).
+	 * Need gi on responder and gr on initiator.
 	 */
 
-	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+	chunk_t g;
+	setchunk_from_wire(g, &dhq,
+		dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
-	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("peer's g: ", g));
+	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
+	const char *story;	/* we don't use the value set in calc_dh_shared */
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
 
-	new_iv = empty_chunk;
+	if (skr->shared != NULL) {
+		chunk_t new_iv = empty_chunk;
 
-	/* okay, so now calculate IV */
-	calc_skeyids_iv(&dhq,
-			shared,
+		/* okay, so now calculate IV */
+		calc_skeyids_iv(&dhq,
+			skr->shared,
 			dhq.key_size,
-			&skeyid,
-			&skeyid_d,
-			&skeyid_a,
-			&skeyid_e,
-			&new_iv,
-			&enc_key);
 
-	skr->shared = shared;
-	skr->skeyid = skeyid;
-	skr->skeyid_d = skeyid_d;
-	skr->skeyid_a = skeyid_a;
-	skr->skeyid_e = skeyid_e;
-	skr->enc_key = enc_key;
+			&skr->skeyid,	/* output */
+			&skr->skeyid_d,	/* output */
+			&skr->skeyid_a,	/* output */
+			&skr->skeyid_e,	/* output */
+			&new_iv,	/* output */
+			&skr->enc_key	/* output */
+			);
 
-
-	WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
-	freeanychunk(new_iv);
+		WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
+		freeanychunk(new_iv);
+	}
 }

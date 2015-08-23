@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	fflush(stderr);
 
-	calc_dh_v2(&r, &story);
+	calc_dh_v2(&r, &story); /* ??? NSS may fail */
 
 	printf("\noutput:\n");
 
