@@ -42,8 +42,8 @@ road #
 002 "modecfg-road-east" #1: I am sending a certificate request
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "modecfg-road-east" #1: received Vendor ID payload [CAN-IKEv2]
-002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "modecfg-road-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,ST=Ontario,C=ca OK
+002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "modecfg-road-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 integ=sha group=MODP2048}
 041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
 040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
@@ -93,10 +93,10 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
 east                                                         P,,  
 east-ec                                                      P,,  
 hashsha2                                                     P,,  
-mainca                                                       ,,   
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         u,u,u
