@@ -1,0 +1,81 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair-send-zero-gx --impair-retransmits
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: initiate
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: supressing retransmit because IMPAIR_RETRANSMITS is set.
+217 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: v2N_INVALID_KE_PAYLOAD
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: EXPECTATION FAILED at /source/programs/pluto/ikev2.c:1823: st != NULL && st->st_event != NULL && st->st_event->ev_type == EVENT_v2_RETRANSMIT
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+XFRM state:
+XFRM policy:
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
