@@ -5,6 +5,8 @@ v3.15 (unreleased)
 * KLIPS: fix use of *iovec() functions for linux 4.x kernels [Greg Ungerer]
 * IKEv1: Remove all IPsec SA's of a connection when newest SA is removed [CHEN, JIANFU]
 * IKEv1: Fix Labeled IPsec SECCTX parsing - bug introduced in 3.14 [Matt]
+* NETKEY: workaround bug in NLMSG_OK() macro on i686 [Hugh]
+* pluto: Use PORT_ErrorToString() to translate NSS errors [Matt]
 
 v3.14 (August 11, 2015)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions for FIPS [Andrew]
