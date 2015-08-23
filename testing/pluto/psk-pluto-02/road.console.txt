@@ -158,8 +158,8 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(1), half-open(1), authenticated(0), anonymous(1)
-000 IPsec SAs: total(1), authenticated(1), anonymous(0)
+000 IKE SAs: total(1), half-open(1), open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 #1: "road-eastnet-psk":500 STATE_AGGR_I1 (sent AI1, expecting AR1); none in -1s; nodpd; idle; import:admin initiate
 000 #1: pending Phase 2 for "road-eastnet-psk" replacing #0
