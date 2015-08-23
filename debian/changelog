@@ -1,6 +1,6 @@
-libreswan (1:3.14-1) precise; urgency=low
+libreswan (1:IPSECBASEVERSION-1) precise; urgency=low
 
-  * Update to 3.14-1
+  * Update to IPSECBASEVERSION-1
 
   The real changelog is in /usr/share/doc/libreswan/changelog.gz
 
@@ -8,4 +8,4 @@ libreswan (1:3.14-1) precise; urgency=low
   not file any Debian/Ubuntu bug reports for this package but contact
   <dev@libreswan.org> if you have a problem.
 
- -- Unknown User <unknown@libreswan.org>  Tue, 11 Aug 2015 00:00:00 +0200
+ -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
