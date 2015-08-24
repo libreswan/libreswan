@@ -991,14 +991,14 @@ bool justship_KE(chunk_t *g,
 	if (DBGP(IMPAIR_SEND_ZERO_GX))  {
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
                /* Only used to test sending/receiving bogus g^x */
-		chunk_t *gzero;
+		chunk_t gzero;
 		bool ret;
 
-		gzero->ptr = alloc_bytes(g->len, "impair gzero"); /* alloc_bytes uses zeros */
-		gzero->len = g->len;
-		ret = out_generic_chunk(np, &isakmp_keyex_desc, outs, *gzero,
+		gzero.ptr = alloc_bytes(g->len, "impair gzero"); /* alloc_bytes uses zeros */
+		gzero.len = g->len;
+		ret = out_generic_chunk(np, &isakmp_keyex_desc, outs, gzero,
 				"impaired zero keyex value");
-		pfree(gzero->ptr);
+		pfree(gzero.ptr);
 		return ret;
 	} else {
 		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
