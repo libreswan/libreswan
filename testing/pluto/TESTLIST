@@ -120,6 +120,8 @@ kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
+kvmplutotest	ikev1-impair-gx-01			good
+kvmplutotest	ikev1-impair-gx-02			good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
