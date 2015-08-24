@@ -403,7 +403,7 @@ NONINTCONFIG=oldconfig
 # make sure we only run this once per build,  its too expensive to run
 # every time Makefile.inc is included
 ifndef IPSECVERSION
-IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${3.14} ${LIBRESWANSRCDIR})
+IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
 # VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
 IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')

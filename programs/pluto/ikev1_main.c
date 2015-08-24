@@ -988,8 +988,22 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 bool justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
-	return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
+	if (DBGP(IMPAIR_SEND_ZERO_GX))  {
+		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
+               /* Only used to test sending/receiving bogus g^x */
+		chunk_t *gzero;
+		bool ret;
+
+		gzero->ptr = alloc_bytes(g->len, "impair gzero"); /* alloc_bytes uses zeros */
+		gzero->len = g->len;
+		ret = out_generic_chunk(np, &isakmp_keyex_desc, outs, *gzero,
+				"impaired zero keyex value");
+		pfree(gzero->ptr);
+		return ret;
+	} else {
+		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
+	}
 }
 
 bool ship_KE(struct state *st,
@@ -1169,6 +1183,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
  * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
  * the state that it is working for may not yet care about the result.
  * We are precomputing the DH.
+ * This also means that it isn't good at reporting an NSS error.
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
@@ -1191,10 +1206,8 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
 
 	set_cur_state(st);
 
-	finish_dh_secretiv(st, r);
-
-	st->hidden_variables.st_skeyid_calculated = TRUE;
-	update_iv(st);
+	if (finish_dh_secretiv(st, r))
+		update_iv(st);
 
 	/*
 	 * If there was a packet received while we were calculating, then
@@ -1448,7 +1461,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
 
-	finish_dh_secretiv(st, r);
+	if (!finish_dh_secretiv(st, r))
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md, &requested_ca);
@@ -1979,7 +1993,10 @@ static key_tail_fn main_inI3_outR3_tail; /* forward */
 
 stf_status main_inI3_outR3(struct msg_digest *md)
 {
-	return main_inI3_outR3_tail(md, NULL);
+	/* handle case where NSS balked at generating DH */
+	return md->st->st_shared_nss == NULL ?
+		STF_FAIL + INVALID_KEY_INFORMATION :
+		main_inI3_outR3_tail(md, NULL);
 }
 
 static inline stf_status main_id_and_auth(struct msg_digest *md,

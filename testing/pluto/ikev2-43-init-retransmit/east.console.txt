@@ -46,8 +46,9 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep retransmit /tmp/pluto.log
-| sending 416 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
-| sending 189 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| duplicate IKE_INIT_I message received, retransmiting previous packet
+| sending 424 bytes for ikev2-responder-retransmit IKE_INIT_I through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 424 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

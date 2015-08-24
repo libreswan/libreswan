@@ -209,31 +209,14 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
 }
 
+/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
 void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 {
-	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
-	struct pcr_skeyid_q dhq;
-	const struct oakley_group_desc *group;
-	PK11SymKey *shared;
-	chunk_t g;
-	SECKEYPrivateKey *ltsecret;
-	PK11SymKey *skeyseed;
-	PK11SymKey
-		*SK_d,
-		*SK_ai,
-		*SK_ar,
-		*SK_ei,
-		*SK_er,
-		*SK_pi,
-		*SK_pr;
-	chunk_t initiator_salt;
-	chunk_t responder_salt;
-	chunk_t chunk_SK_pi;
-	chunk_t chunk_SK_pr;
-	SECKEYPublicKey *pubk;
+	struct pcr_skeycalc_v2_r *const skr = &r->pcr_d.dhv2;
 
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
+	struct pcr_skeyid_q dhq;
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
 
 	/* clear out the reply (including pointers) */
@@ -241,52 +224,41 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 	*skr = zero_pcr_skeycalc_v2_r;
 	INIT_WIRE_ARENA(*skr);
 
-	group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	ltsecret = dhq.secret;
-	pubk = dhq.pubk;
+	SECKEYPrivateKey *ltsecret = dhq.secret;
+	SECKEYPublicKey *pubk = dhq.pubk;
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
+	chunk_t g;
 	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	shared = calc_dh_shared(g, ltsecret, group, pubk, story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, story);
 
+	if (skr->shared != NULL) {
 	/* okay, so now all the shared key material */
-	calc_skeyseed_v2(&dhq,	/* input */
-			 shared,	/* input */
-			 dhq.key_size,	/* input */
-			 dhq.salt_size, /* input */
+	calc_skeyseed_v2(&dhq,  /* input */
+		skr->shared,   /* input */
+		dhq.key_size,  /* input */
+		dhq.salt_size, /* input */
 
-			 &skeyseed,	/* output */
-			 &SK_d,	/* output */
-			 &SK_ai,	/* output */
-			 &SK_ar,	/* output */
-			 &SK_ei,	/* output */
-			 &SK_er,	/* output */
-			 &SK_pi,	/* output */
-			 &SK_pr,	/* output */
-			 &initiator_salt, /* output */
-			 &responder_salt, /* output */
-			 &chunk_SK_pi, /* output */
-			 &chunk_SK_pr); /* output */
-
-	skr->shared = shared;
-	skr->skeyseed = skeyseed;
-	skr->skeyid_d = SK_d;
-	skr->skeyid_ai = SK_ai;
-	skr->skeyid_ar = SK_ar;
-	skr->skeyid_ei = SK_ei;
-	skr->skeyid_er = SK_er;
-	skr->skeyid_pi = SK_pi;
-	skr->skeyid_pr = SK_pr;
-	skr->skey_initiator_salt = initiator_salt;
-	skr->skey_responder_salt = responder_salt;
-	skr->skey_chunk_SK_pi = chunk_SK_pi;
-	skr->skey_chunk_SK_pr = chunk_SK_pr;
+		&skr->skeyseed,        /* output */
+		&skr->skeyid_d,        /* output */
+		&skr->skeyid_ai,       /* output */
+		&skr->skeyid_ar,       /* output */
+		&skr->skeyid_ei,       /* output */
+		&skr->skeyid_er,       /* output */
+		&skr->skeyid_pi,       /* output */
+		&skr->skeyid_pr,       /* output */
+		&skr->skey_initiator_salt, /* output */
+		&skr->skey_responder_salt, /* output */
+		&skr->skey_chunk_SK_pi, /* output */
+		&skr->skey_chunk_SK_pr); /* output */
+	}
 }
 
 static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,

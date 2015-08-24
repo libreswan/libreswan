@@ -185,7 +185,7 @@ west #
  sleep 20
 west #
  ipsec eroute
-0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x100a@192.1.2.23
+0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1002@192.1.2.23
 west #
  echo done
 done

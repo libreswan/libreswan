@@ -111,7 +111,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	return send_crypto_helper_request(&r, dh);
 }
 
-void finish_dh_secretiv(struct state *st,
+bool finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
 	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
@@ -123,12 +123,17 @@ void finish_dh_secretiv(struct state *st,
 	st->st_skeyid_e_nss = dhr->skeyid_e;
 	st->st_enc_key_nss = dhr->enc_key;
 
-	passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
-	passert(dhr->new_iv.len > 0);
-	memcpy(st->st_new_iv, WIRE_CHUNK_PTR(*dhr, new_iv), dhr->new_iv.len);
-	st->st_new_iv_len = dhr->new_iv.len;
-
 	st->hidden_variables.st_skeyid_calculated = TRUE;
+
+	if (st->st_shared_nss == NULL) {
+		return FALSE;
+	} else {
+		passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
+		passert(dhr->new_iv.len > 0);
+		memcpy(st->st_new_iv, WIRE_CHUNK_PTR(*dhr, new_iv), dhr->new_iv.len);
+		st->st_new_iv_len = dhr->new_iv.len;
+		return TRUE;
+	}
 }
 
 stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
@@ -257,7 +262,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	}
 }
 
-void finish_dh_v2(struct state *st,
+bool finish_dh_v2(struct state *st,
 		  const struct pluto_crypto_req *r)
 {
 	const struct pcr_skeycalc_v2_r *dhv2 = &r->pcr_d.dhv2;
@@ -276,4 +281,5 @@ void finish_dh_v2(struct state *st,
 	st->st_skey_chunk_SK_pr = dhv2->skey_chunk_SK_pr;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
+	return st->st_shared_nss != NULL;	/* was NSS happy to DH? */
 }

@@ -225,8 +225,13 @@ main(int argc, char *argv[]){
 		calc_skeyids_iv(&skq,
 				rsasc[i].shared,
 				skq.keysize,
-				&skeyid, &skeyid_d, &skeyid_a, &skeyid_e,
-				&new_iv, &enc_key);
+				&skeyid,	/* output */
+				&skeyid_d,	/* output */
+				&skeyid_a,	/* output */
+				&skeyid_e,	/* output */
+				&new_iv,	/* output */
+				&enc_key	/* output */
+				);
 
 		/* calc_dh_iv(dhq); */
 	}

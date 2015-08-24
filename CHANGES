@@ -2,9 +2,14 @@
 See also https://libreswan.org/
 
 v3.15 (unreleased)
+* SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
 * KLIPS: fix use of *iovec() functions for linux 4.x kernels [Greg Ungerer]
-* IKEv1: Remove all IPsec SA's of a connection when newest SA is removed [CHEN, JIANFU]
+* IKEv1: Remove old IPsec SA's when newest IPsec SA is removed [CHEN, JIANFU]
 * IKEv1: Fix Labeled IPsec SECCTX parsing - bug introduced in 3.14 [Matt]
+* NETKEY: workaround for NLMSG_OK() macro causing build failure on i686 [Hugh]
+* pluto: Use PORT_ErrorToString() to translate NSS errors [Matt]
+* pluto/whack: add --impair-send-zero-gx to test CVE-2015-3240 [Paul]
+* ipsec: checknss/initnss must both convert old database if it exists [Tuomo]
 
 v3.14 (August 11, 2015)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions for FIPS [Andrew]
