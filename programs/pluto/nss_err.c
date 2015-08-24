@@ -15,7 +15,7 @@
 
 #include <libreswan.h>
 #include <prerror.h>
-#include <nss3/secport.h>
+#include <secport.h>
 #include "nss_err.h"
 
 const char *nss_err_str(PRInt32 err)
