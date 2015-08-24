@@ -988,18 +988,14 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 bool justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
-	if (DBGP(IMPAIR_SEND_ZERO_GX))  {
+	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
+		pb_stream z;
+
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
                /* Only used to test sending/receiving bogus g^x */
-		chunk_t gzero;
-		bool ret;
-
-		gzero.ptr = alloc_bytes(g->len, "impair gzero"); /* alloc_bytes uses zeros */
-		gzero.len = g->len;
-		ret = out_generic_chunk(np, &isakmp_keyex_desc, outs, gzero,
-				"impaired zero keyex value");
-		pfree(gzero.ptr);
-		return ret;
+		return out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+			out_zero(g->len, &z, "fake g^x") &&
+			(close_output_pbs(&z), TRUE);
 	} else {
 		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
