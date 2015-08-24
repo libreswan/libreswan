@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair-send-zero-gx --impair-retransmits
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: initiate
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: supressing retransmit because IMPAIR_RETRANSMITS is set.
+134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: supressing retransmit because IMPAIR_RETRANSMITS is set.
+west #
+ echo done
+done
+west #
+ grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

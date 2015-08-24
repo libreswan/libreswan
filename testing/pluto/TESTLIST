@@ -57,7 +57,8 @@ kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
-kvmplutotest	ikev2-45-impair-gx			good
+kvmplutotest	ikev2-45-impair-gx-01			good
+kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			wip
 

@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
+| ikev2_parent_inI2outR2_tail returned STF_FAIL with v2N_INVALID_KE_PAYLOAD
+| #1 complete v2 state transition from STATE_PARENT_R1 with v2N_INVALID_KE_PAYLOAD
+"westnet-eastnet-ipv4-psk-ikev2" #1: sending unencrypted notification v2N_INVALID_KE_PAYLOAD to 192.1.2.45:500
+|    Notify Message Type: v2N_INVALID_KE_PAYLOAD (0x11)
+| state transition function for STATE_PARENT_R1 failed: v2N_INVALID_KE_PAYLOAD
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
