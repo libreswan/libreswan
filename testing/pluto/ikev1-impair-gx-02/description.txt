@@ -1,0 +1,3 @@
+IKEv1 test where west is impaired to send a g^x ==0 DH compontent
+
+east is impaired to send a bad g^x
