@@ -8,6 +8,7 @@ v3.15 (unreleased)
 * IKEv1: Fix Labeled IPsec SECCTX parsing - bug introduced in 3.14 [Matt]
 * NETKEY: workaround for NLMSG_OK() macro causing build failure on i686 [Hugh]
 * NETKEY: Fix IPsec SA priority on type=passthrough conns [Antony]
+* NETKEY: Fix nflog= on type=passthrough conns [Paul]
 * pluto: Use PORT_ErrorToString() to translate NSS errors [Matt]
 * pluto/whack: add --impair-send-zero-gx to test CVE-2015-3240 [Paul]
 * ipsec: checknss/initnss must both convert old database if it exists [Tuomo]
