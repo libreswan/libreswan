@@ -49,7 +49,6 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 conn: westnet-eastnet-ikev2, rekeymargin (540s) >= salifetime (60s); reducing rekeymargin to 30 seconds
 002 added connection description "westnet-eastnet-ikev2"
 west #
  ipsec auto --status
@@ -74,8 +73,6 @@ west #
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
-000 - allowed subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - excluded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -132,7 +129,7 @@ west #
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2":   labeled_ipsec:no;
 000 "westnet-eastnet-ikev2":   policy_label:unset;
-000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 60s; rekey_margin: 30s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 60s; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -186,6 +183,11 @@ west #
 west #
  ipsec eroute
 0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1002@192.1.2.23
+west #
+ ipsec whack --trafficstatus
+000  
+006 #4: "westnet-eastnet-ikev2", type=ESP,  add_time=1234567890, id='@east'
+000  
 west #
  echo done
 done

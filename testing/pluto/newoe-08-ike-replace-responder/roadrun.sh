@@ -9,6 +9,7 @@ sleep 60
 sleep 60
 ping -n -c 4 -I 192.1.3.209 192.1.2.23
 # state number should have changed from #2 to #4 indicating rekey
+sleep 5 # give kernel time to count
 ipsec whack --trafficstatus
 ipsec look
 killall ip > /dev/null 2> /dev/null
