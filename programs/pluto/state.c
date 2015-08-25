@@ -1652,14 +1652,6 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
 				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
-		if (get_sa_info(st, TRUE, NULL)) {
-			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
-				st->st_ah.present ? st->st_ah.peer_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
-
-			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
-		}
 		if (get_sa_info(st, FALSE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
 			u_int outb = st->st_esp.present ? st->st_esp.our_bytes :
@@ -1667,6 +1659,14 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
 
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
+		}
+		if (get_sa_info(st, TRUE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
+				st->st_ah.present ? st->st_ah.peer_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
+
+			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
 		}
 	}
 
