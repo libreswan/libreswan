@@ -1,6 +1,4 @@
-sleep 3 # give kernel time to count
-ipsec whack --trafficstatus
-ipsec look
+grep INVALID_KEY_INFORMATION /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

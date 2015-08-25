@@ -616,7 +616,7 @@ deb:
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
 	debuild -i -us -uc -b
 	#debuild -S -sa
-	echo "to build optional KLIPS kernel module, run make deb-klips"
+	@echo "to build optional KLIPS kernel module, run make deb-klips"
 
 deb-klips:
 	sudo module-assistant prepare -u .

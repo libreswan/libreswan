@@ -72,14 +72,6 @@ east #
 "westnet-eastnet-3des" #7: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
 |    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 | state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
-| complete v1 state transition with BAD_PROPOSAL_SYNTAX
-"westnet-eastnet-3des" #8: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
-| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
-| complete v1 state transition with BAD_PROPOSAL_SYNTAX
-"westnet-eastnet-3des" #9: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
-| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

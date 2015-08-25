@@ -8,5 +8,5 @@ libreswan (1:@IPSECBASEVERSION@) precise; urgency=low
   not file any Debian/Ubuntu bug reports for this package but contact
   <dev@libreswan.org> if you have a problem.
 
- -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
+ -- Team Libreswan <team@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
 
