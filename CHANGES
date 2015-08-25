@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.15 (unreleased)
+v3.16 (unreleased)
+
+v3.15 (August 24, 2015)
 * SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
 * KLIPS: fix use of *iovec() functions for linux 4.x kernels [Greg Ungerer]
 * IKEv1: Remove old IPsec SA's when newest IPsec SA is removed [CHEN, JIANFU]
