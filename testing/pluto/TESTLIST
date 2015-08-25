@@ -215,6 +215,9 @@ kvmplutotest 	newoe-18-block-private 			good
 kvmplutotest 	newoe-18-block-clear 			good
 kvmplutotest 	newoe-18-block-block 			good
 
+kvmplutotest 	newoe-19-poc-poc-clear			wip
+
+
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
 ctltest	pluto-unit-01	good
