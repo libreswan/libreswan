@@ -40,7 +40,10 @@ $(OBJS): parser.tab.h
 
 # Use UNIX basename to strip off the directory. Use grep to workaround flex < 2.5.35
 lex.yy.c: parser.l
-	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<) | grep -v '^extern int isatty' > $@
+	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<)  \
+	| sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < _yybytes_len; ++i )/' \
+	      -e '/^extern int isatty.*$$/d' \
+	> $@
 
 # Use wild card rule so that GNU Make knows that both are output from
 # a single recipe.
