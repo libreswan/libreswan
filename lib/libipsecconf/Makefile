@@ -38,12 +38,20 @@ endif
 # since all the $(OBJS) indirectly depend on the header anyway.
 $(OBJS): parser.tab.h
 
-# Use UNIX basename to strip off the directory. Use grep to workaround flex < 2.5.35
+# Use UNIX basename to strip off the directory.
+# Use sed to work around two bugs:
+# - flex < 2.5.35 generates an extern that isn't good
+# - flex on RHEL 7 generates code that provokes GCC to warn
+#   about comparing a signed value with an unsigned value
+#   (Combination of a new GCC and an old flex)
+# Avoid sed -i which somehow causes unwritable files
+# on fedora 20 with 9p filesystem mount.
 lex.yy.c: parser.l
-	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<)  \
-	| sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < _yybytes_len; ++i )/' \
-	      -e '/^extern int isatty.*$$/d' \
-	> $@
+	cd $(builddir) && \
+	$(LEX) -o $@ $(srcdir)/$$(basename $<) && \
+	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < _yybytes_len; ++i )/' \
+	    -e '/^extern int isatty.*$$/d' $@ >SEDTMP$$$$ && \
+	mv SEDTMP$$$$ $@
 
 # Use wild card rule so that GNU Make knows that both are output from
 # a single recipe.
