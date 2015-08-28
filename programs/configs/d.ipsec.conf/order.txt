@@ -2,6 +2,7 @@ d.ipsec.conf/head.xml
 d.ipsec.conf/connsections.xml
 d.ipsec.conf/exampleleftright.xml
 d.ipsec.conf/conngeneral.xml
+d.ipsec.conf/keyexchange.xml
 d.ipsec.conf/connaddrfamily.xml
 d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
