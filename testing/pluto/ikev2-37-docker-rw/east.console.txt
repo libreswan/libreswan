@@ -12,10 +12,12 @@ ipsec auto --status
 000 using kernel interface: netkey
 000 interface lo/lo 127.0.0.1@4500
 000 interface lo/lo 127.0.0.1@500
-000 interface eth1/eth1 192.0.2.254@4500
-000 interface eth1/eth1 192.0.2.254@500
-000 interface eth0/eth0 192.1.2.23@4500
-000 interface eth0/eth0 192.1.2.23@500
+000 interface eth0/eth0 192.0.2.254@4500
+000 interface eth0/eth0 192.0.2.254@500
+000 interface eth2/eth2 192.9.2.23@4500
+000 interface eth2/eth2 192.9.2.23@500
+000 interface eth1/eth1 192.1.2.23@4500
+000 interface eth1/eth1 192.1.2.23@500
 000  
 000  
 000 fips mode=disabled;
@@ -106,10 +108,10 @@ ipsec auto --status
 000 "road-eastnet-nonat":   policy_label:unset;
 000 "road-eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "road-eastnet-nonat":   sha2_truncbug:no; initial_contact:no;cisco_unity:no; send_vendorid:no;
-000 "road-eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "road-eastnet-nonat":   conn_prio: 24,32; interface: eth0; metric: 0;mtu: unset; sa_prio:auto; nflog-group: unset;
-000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0;nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-eastnet-nonat":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "road-eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "road-eastnet-nonat":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -174,14 +176,25 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
+iptables: No chain/target/match by that name.
 NEW_IPSEC_CONN mangle TABLES
+iptables: No chain/target/match by that name.
 ROUTING TABLES
-default via 192.1.2.254 dev eth0 
-192.0.1.0/24 via 192.1.2.45 dev eth0 
-192.0.2.0/24 dev eth1  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth0  proto kernel  scope link  src 192.1.2.23 
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

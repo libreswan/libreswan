@@ -25,6 +25,7 @@ from os import listdir
 from os.path import isfile, join
 from multiprocessing import Process, Queue
 from json import encoder
+from contextlib import contextmanager
 
 try:
     import argparse
@@ -458,7 +459,7 @@ class scantests:
     def __init__(self, args, stdir=None, to_append=False):
         self.args = args
         self.stdir = stdir  # summarize a this single test run directory
-        self.t_append = to_append
+        self.to_append = to_append
         self.htmlsums = {"columns": ["Dir", "Passed", "Failed", "Tests", "Run Time(Hours)"], "runDir": "/results/%s" % (
             self.args.node), "suffix": "", "rows": list()}
         self.graphsums = list()
@@ -501,6 +502,26 @@ class scantests:
                 logging.error("scan directory %s", d)
                 continue
             self.scan_test_results()
+
+
+    def append_node_sum(self):
+        gfile = self.args.resultsdir + '/' + 'graph.json'
+        logging.debug("reading file %s" % gfile)
+        with opened_w_error(gfile) as (f, err):
+            if err:
+                logging.error("can't read %s %s" % (gfile, err))
+            else:
+                lines = f.read().replace("\n", "").replace("\t", "")
+                self.graphsums = json.loads(lines)
+
+        hfile = self.args.resultsdir + '/' + 'graph.json'
+        logging.debug("reading file %s" % hfile)
+        with opened_w_error(hfile) as (f, err):
+            if err:
+                logging.error("can't read %s %s" % (gfile, err))
+            else:
+                lines = f.read().replace("\n", "").replace("\t", "")
+                self.htmlsums = json.loads(lines)
 
     def write_node_sum(self):
         gfile = self.npath + '/' + 'graph.json'
@@ -556,9 +577,8 @@ class scantests:
                         "skip this dir %s . can not read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
                     return True
 
-        if self.nopath:
-            rsync_file_to_dir(
-                (self.trpath + '/' + self.args.testlist), self.nopath)
+        if self.nopath  and self.args.resanitize:
+            rsync_file((self.trpath + '/' + self.args.testlist), (self.nopath + '/TESTLIST' ))
 
     def read_testlist(self, resultsdir=''):
         if resultsdir:
@@ -586,16 +606,78 @@ class scantests:
         logging.debug("red %s tests from %s" % (i, r))
         return True
 
-    def scan_test_results(self):
-        i = 0
-        tests = listdir(self.trpath)
-        if not tests:
-            e = "no tests found in test run directory  %s" % self.trpath
+    def scan_single_test_result(self, tname=''):
+
+        if not os.path.isdir(self.trpath + '/' + tname):
+            return
+
+        if not tname in self.tests:
+            self.tests[tname] = {}
+        self.tests[tname]["name"] = tname
+        self.tests[tname]["type"] = "unknown"
+
+        r = self.trpath + '/' + tname + '/OUTPUT/RESULT'
+        if not os.path.exists(r):
+            e = "missing %s" % r
+            r = self.trpath + '/' + tname + '/OUTPUT'
+            if not os.path.exists(r):
+                e = "missing %s" % r
+                self.tsum['missing OUTPUT'] += 1
+                self.tests[tname]["output"] = 'missing OUTPUT'
+            else:
+                self.tsum['missing RESULT'] += 1
+                self.tests[tname]["output"] = 'missing RESULT'
+
             logging.info(e)
             return
 
-        logging.debug("read %s entries in trpath %s" %
-                      (len(tests), self.trpath))
+        if not "expect" in self.tests[tname]:
+            self.tests[tname]["expect"] = "not in TESTLIST"
+
+        self.testname = tname
+        self.tpath = self.trpath + '/' + self.testname
+        logging.debug("tpath %s" % self.tpath)
+
+        os.chdir(self.tpath)
+        tcpmdump_cmds, test_hosts = orient(self.args, self.tests[tname])
+
+        if self.args.resanitize:
+            s = sanitize(self.args.sanitizer)
+            re_write_result(sanity=s)
+
+        os.chdir("..")
+        if self.nopath:
+            rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
+
+        if not test_hosts:
+            return
+
+        f = open(r, 'r')
+        for line in f:
+            try:
+                x = json.loads(line)
+            except TypeError:
+                logging.error(
+                    "TypeError can not convert '%s' to json", line)
+                continue
+            if not "result" in x:
+                continue
+            if not "testname" in x:
+                continue
+            if not x["result"]:
+                continue
+            x["result"] = x["result"].lower()
+            self.tests[tname]["result"] = x["result"]
+            self.tests[tname]["runtime"] = round(x["runtime"], 2)
+            self.tsum["runtime"] += x["runtime"]
+            self.tsum[x["result"]] += 1
+            logging.debug("test %s", self.tests[tname])
+            self.diffstat_test()
+            self.grep_4_known_errors()
+
+
+    def scan_test_results(self):
+        i = 0
 
         self.tsum = collections.OrderedDict()
         self.tsum.clear()
@@ -618,85 +700,27 @@ class scantests:
         self.tsum["date"] = "0000-00-00"
         self.tsum["dir"] = ''
 
-        self.tsum['runtime'] = 0
+        self.tsum["runtime"] = 0.0
 
-        for tname in tests:
-            if not os.path.isdir(self.trpath + '/' + tname):
-                continue
-            if not tname in self.tests:
-                self.tests[tname] = {}
-            self.tests[tname]["name"] = tname
-            self.tests[tname]["type"] = "unknown"
-
-            r = self.trpath + '/' + tname + '/OUTPUT/RESULT'
-            if not os.path.exists(r):
-                e = "missing %s" % r
-                r = self.trpath + '/' + tname + '/OUTPUT'
-                if not os.path.exists(r):
-                    e = "missing %s" % r
-                    self.tsum['missing OUTPUT'] += 1
-                    self.tests[tname]["output"] = 'missing OUTPUT'
-                else:
-                    self.tsum['missing RESULT'] += 1
-                    self.tests[tname]["output"] = 'missing RESULT'
-
-                logging.info(e)
-                continue
-
-            if not "expect" in self.tests[tname]:
-                self.tests[tname]["expect"] = "not in TESTLIST"
-
-            self.testname = tname
-            self.tpath = self.trpath + '/' + self.testname
-            logging.debug("tpath %s" % self.tpath)
-
-            os.chdir(self.tpath)
-            tcpmdump_cmds, test_hosts = orient(self.args, self.tests[tname])
-
-            if self.args.resanitize:
-                s = sanitize(self.args.sanitizer)
-                re_write_result(sanity=s)
-
-            os.chdir("..")
-            if self.nopath:
-                rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
-
-            if not test_hosts:
-                continue
-
+        for tname, test in self.tests.items():
             i += 1
-            f = open(r, 'r')
-            for line in f:
-                try:
-                    x = json.loads(line)
-                except TypeError:
-                    logging.error(
-                        "TypeError can not convert '%s' to json", line)
-                    continue
-                if not "result" in x:
-                    continue
-                if not "testname" in x:
-                    continue
-                if not x["result"]:
-                    continue
-                x["result"] = x["result"].lower()
-                self.tests[tname]["result"] = x["result"]
-                self.tests[tname]["runtime"] = round(x["runtime"], 2)
-                self.tsum["runtime"] += x["runtime"]
-                self.tsum[x["result"]] += 1
-                logging.debug("test %s", self.tests[tname])
-                self.diffstat_test()
-                self.grep_4_known_errors()
+            self.scan_single_test_result(tname = tname);
 
         e = self.create_test_run_table()
         if e:
             return
-        if self.stdir:
+        if self.stdir and not self.to_append:
             return
 
+        if self.to_append:
+            logging.info("append the graph file")
+            self.append_node_sum()
+        else:
+            logging.info("AA not append the graph file")
+
         self.graphsums.append(self.tsum)
-        row = [self.tsum["dir"], self.tsum["passed"], self.tsum[
-            "failed"], self.tsum["Total"], self.tsum["runtime"]]
+        row = [self.tsum["dir"], self.tsum["passed"], self.tsum["failed"],
+        self.tsum["Total"], self.tsum["runtime"]]
         self.htmlsums["rows"].append(row)
         self.write_node_sum()
 
@@ -751,7 +775,7 @@ class scantests:
             ho = runtime // 3600
             mi = (runtime % 3600) // 60
             se = (runtime % 60)
-            self.tsum["runtime"] = "%02d:%02d:%02d" % (ho, mi, se)
+            self.tsum["runtime_str"] = "%02d:%02d:%02d" % (ho, mi, se)
 
         self.tsum["dir"] = self.tdir
         match = re.search(r'(\d+-\d+-\d+)', self.tdir)
@@ -782,6 +806,8 @@ class scantests:
         with open(csvfile, 'w') as csvfile:
             line = ''
             for key in table["summary"].keys():
+                if key == "runtime":
+                    continue
                 line += key + " %s, " % table["summary"][key]
             csvfile.write(line)
             csvfile.write("\n")
@@ -923,7 +949,25 @@ class scantests:
             else:
                 self.tests[self.testname][key] = self.tests[
                     self.testname][role] + " " + note
+@contextmanager
+def opened_w_error(filename, mode="r"):
+    try:
+        f = open(filename, mode)
+    except IOError as err:
+        yield None, err
+    else:
+        try:
+            yield f, None
+        finally:
+            f.close()
 
+def rsync_file(src, dst):
+    cmd = "/usr/bin/rsync -q -aP %s %s" % (src, dst)
+    logging.debug("%s", cmd)
+    try:
+        os.system(cmd)
+    except:
+        logging.exception("EXCEPTION ? cmd %s , cwd %s", os.getcwd(), cmd)
 
 def rsync_file_to_dir(src, dst):
     cmd = "/usr/bin/rsync -q -aP %s %s/" % (src, dst)
@@ -1430,8 +1474,8 @@ def docker_stop_container(dname):
     # docker exec -ti west-basic-pluto-01 halt
 
     runcmd("sudo docker exec -ti %s halt" % dname)
-    runcmd("sudo docker stop %s" % dname)
-    runcmd("sudo docker rm %s" % dname)
+    runcmd("sudo docker stop --time=1 %s" % dname)
+    runcmd("sudo docker rm -f %s" % dname)
 
 
 def docker_start_container(dhost, dname, dimage):
@@ -1444,6 +1488,11 @@ def docker_flush_eth0(dhost, dname):
     # docker exec -ti dwest  ip address flush dev eth0
     runcmd("sudo docker exec -ti %s ip address flush dev eth0" % dname)
 
+def docker_restart_network(test, dnamei, dnamer, dnamen):
+
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamei)
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamer)
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamen)
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
 
@@ -1473,7 +1522,7 @@ def docker_swan_build(args, dname):
         cmd = "sudo docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
             dname, args.rpm)
     else:
-        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make base install'" % dname
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install'" % dname
 
     (line, e) = runcmd_check_output(cmd)
     if e:
@@ -1527,7 +1576,7 @@ def docker_containers_start_stop(args, test, st, stop):
     except:
         return True
 
-    docker_add_route(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+    docker_restart_network(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
 
     if docker_swan_build(args, dnamei):
         return True
@@ -1547,52 +1596,59 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     bidc = random.randint(10000001, 19999999)
 
     # for clients behind west
-    bidw = random.randint(20000001, 29999999)
+    bidw0 = random.randint(21000001, 21999999)
+    bidw2 = random.randint(22000001, 22999999)
 
     # for clients behind east
-    bide = random.randint(30000001, 39999999)
+    bide0 = random.randint(31000001, 31999999)
+    bide2 = random.randint(32000001, 32999999)
 
     # shared bridge between nic - road, nic - north
-    bidn = random.randint(40000001, 49999999)
+    bidn1 = random.randint(51000001, 51999999)
+    bidn2 = random.randint(52000001, 52999999)
+    bidn3 = random.randint(53000001, 53999999)
 
     # shared for clients behind north
-    bidno = random.randint(50000001, 59999999)
+    bidno1 = random.randint(61000001, 61999999)
 
     brname = ''
     pcap_file_ext = '.pcap'
     pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
+    prefix = "0/0"
     if test["initiator"] == "west":
         iface = "eth0"
-        prefix = "192.0.1.254/24"
-        brname = "br%s" % bidw
+        brname = "br%s" % bidw0
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
         iface = "eth1"
-        prefix = "192.1.2.45/24"
         brname = "br%s" % bidc
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-    elif test["initiator"] == "road":
-        iface = "eth0"
-        prefix = "192.1.3.209/24"
-        brname = "br%s" % bidn
+        iface = "eth2"
+        brname = "br%s" % bidw2
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+
+
+    elif test["initiator"] == "road":
+        iface = "eth0"
+        brname = "br%s" % bidn1
+        docker_net_bridge(
+            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+
         pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
 
     elif test["initiator"] == "north":
         iface = "eth0"
-        prefix = "192.0.3.254/24"
-        brname = "br%s" % bidno
+        brname = "br%s" % bidn1
         docker_net_bridge(
             danme=dnamei, brname=brname, iface=iface, prefix=prefix)
 
         iface = "eth1"
-        prefix = "192.1.3.33/24"
-        brname = "br%s" % bidn
+        brname = "br%s" % bidno1
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
         pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
@@ -1602,27 +1658,39 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
 
     if "nic" in test:
         iface = "eth1"
-        prefix = "192.1.2.254/24"
+        brname = "br%s" % bidn1
+        docker_net_bridge(
+            dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+
+        iface = "eth0"
         brname = "br%s" % bidc
         docker_net_bridge(
             dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth0"
-        prefix = "192.1.3.254/24"
-        brname = "br%s" % bidn
-        docker_net_bridge(
-            dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+		# adding eth2 and eth3 seems to slowdown network.restart
+		# if we need it in the future we could enable those
+        iface = "eth2"
+        brname = "br%s" % bidn2
+        #docker_net_bridge( dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+
+        iface = "eth3"
+        brname = "br%s" % bidn3
+        #docker_net_bridge(dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
     if test["responder"] == "east":
 
         iface = "eth0"
-        prefix = "192.0.2.254/24"
-        brname = "br%s" % bide
+        brname = "br%s" % bide0
         docker_net_bridge(
             dname=dnamer, brname=brname, iface=iface, prefix=prefix)
 
+        iface = "eth2"
+        brname = "br%s" % bide2
+        docker_net_bridge(
+            dname=dnamer, brname=brname, iface=iface, prefix=prefix)
+
+
         iface = "eth1"
-        prefix = "192.1.2.23/24"
         brname = "br%s" % bidc
         docker_net_bridge(
             dname=dnamer, brname=brname, iface=iface, prefix=prefix)
@@ -1939,7 +2007,7 @@ def check_host_netkey_stack():
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
         logging.debug("no netkey stack found, try to load it %s", v_line)
-        runcmd("ipsec _stackmanager start --netkey")
+        runcmd("sudo ipsec _stackmanager start --netkey")
         v_line = runcmd("ipsec version")
         if v_line.split()[3] != '(netkey)':
             # give up
@@ -1955,8 +2023,12 @@ def run_docker_q(args, tests, st):
             "dtorun"], args.npool,
             args.testlist)
 
-    if not check_host_netkey_stack():
+    if check_host_netkey_stack():
         return True
+
+
+    for name, test in tests.items():
+        logging.debug("queue up %s type %s", test["name"], test["type"])
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=int(args.npool)) as executor:
         for name, test in tests.items():
@@ -1967,10 +2039,11 @@ def run_docker_q(args, tests, st):
 
     while not q.empty():
         print (q.get())
-
+	
+def update_progress_table(args, tests, st):
+    return
 
 def run_kvm_q(args, tests, st):
-    ran = 0
 
     logging.info(
         "%s KVM pluto tests to run. from %s", st["ktorun"], args.testlist)
@@ -1979,10 +2052,12 @@ def run_kvm_q(args, tests, st):
             continue
         logging.debug("next up %s type %s", test["name"], test["type"])
         do_single_test(args=args, test=test, st=st)
-        ran = ran + 1
-
+        st["kran"] = st["kran"] + 1
+        st["progress"].scan_single_test_result(tname = name);
+        st["progress"].create_test_run_table()
 
 def do_test_list(args, start, tried, output_dir):
+
     if not os.path.exists(args.testlist):
         return ("", False, 0)
     ran = 0
@@ -1998,7 +2073,9 @@ def do_test_list(args, start, tried, output_dir):
 
     st["odir"] = odir
     st["ktorun"] = 0
+    st["kran"] = 0
     st["dtorun"] = 0
+    st["dran"] = 0
     st["n_lines"] = 0
     st["n_lines_skip"] = 0
     st["knottorun"] = 0
@@ -2009,13 +2086,14 @@ def do_test_list(args, start, tried, output_dir):
         os.unlink(s)
         logging.debug("removing existing %s" % s)
 
-    rsync_file_to_dir(args.testlist, odir)
+    rsync_file(args.testlist, "%s/TESTLIST" % odir)
 
     tests = collections.OrderedDict()  # slow but keeps the order
     tests.clear()
 
     progress = scantests(args, stdir=os.getcwd())
     progress.scan_test_runs()
+    st["progress"] = progress
 
     logging.info("** read tests from file %s **", args.testlist)
     for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=True):
@@ -2078,6 +2156,10 @@ def do_test_list(args, start, tried, output_dir):
     if st["ktorun"]:
         run_kvm_q(args, tests, st)
 
+    logging.info("AA ran the Qs")
+    if os.path.isdir(st["odir"]):
+        endscan = scantests(args, stdir=st["odir"], to_append=True)
+        endscan.scan_test_runs()
     return (odir, True, (st["dtorun"] + st["ktorun"]))
 
 
@@ -2198,15 +2280,15 @@ def main():
 
     output_dir = ''
     # if there is TESTLIST run in batch mode.
-    (output_dir, testlist, ran_tests) = do_test_list(
+    (output_dir, is_testlist, ran_tests) = do_test_list(
         args, start, tried, output_dir)
-    if testlist:
+    if is_testlist:
         tried = 1 + tried
         logging.info("ran %s retry %s %s/%s",
                      ran_tests, args.testlist, tried, args.retry)
         while (tried < args.retry):
             if ran_tests > 0:
-                gen_graphs_tables(args)
+                #gen_graphs_tables(args)
                 logging.info(
                     "retry %s %s/%s", args.testlist, tried, args.retry)
             (output_dir, testlist, ran_tests) = do_test_list(

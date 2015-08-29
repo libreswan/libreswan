@@ -17,11 +17,12 @@ RUN dnf install -y wget vim-enhanced bison flex gmp-devel nss-devel \
  audit-libs-devel strace unbound pexpect net-tools bind-utils \
  rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography trousers; 
+ libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography \
+ tcpdump trousers traceroute telnet;
 RUN dnf clean all;
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
- libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap
+ libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap \
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr \
  nss libevent-devel; dnf clean all
 RUN mkdir -p /home/build/libreswan
@@ -53,10 +54,14 @@ RUN wget ftp://ftp.nohats.ca/pyOpenSSL/python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
 RUN wget ftp://ftp.nohats.ca/pyOpenSSL/pyOpenSSL-0.14-4.fc22.noarch.rpm
 #RUN rpm -i pyOpenSSL-0.14-4.fc22.noarch.rpm python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
 RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm 
-RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
+RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm
 #RUN rpm -i strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
 RUN echo 'export GIT_PS1_SHOWDIRTYSTATE=true' >> /root/.bash_profile
 RUN echo 'export PS1="[\u@i\h] \w # "' >> /root/.bash_profile
 RUN echo 'export EDITOR=vim' >> /root/.bash_profile
+RUN printf '#!/bin/bash\n/home/build/libreswan/testing/guestbin/swan-transmogrify\n'  >> /etc/rc.d/rc.local
+RUN chmod a+x /etc/rc.d/rc.local; 
+RUN systemctl enable rc-local.service  
+RUN printf 'export TERM=xterm\nexport EDITOR=vim\n' > /etc/profile.d/docker_exec_hack.sh
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]
