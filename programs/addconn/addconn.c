@@ -64,6 +64,8 @@ static int verbose = 0;
  * If DST is not specified, full route table will be returned.
  * 16kB was too small for biggish router, so do 32kB.
  * TODO: This should be dynamic! Fix it in netlink_read_reply().
+ * Note: due to our hack to dodge a bug in NLMSG_OK,
+ * RTNL_BUFSIZE must be less than or equal to USHRT_MAX.
  */
 #define RTNL_BUFSIZE 32768
 
@@ -139,30 +141,34 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 static
 ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 {
-	struct nlmsghdr *nlhdr;
-	struct sockaddr_nl sa;
-	socklen_t salen = sizeof(sa);
-	ssize_t readlen = 0;
 	ssize_t msglen = 0;
 
 	/* TODO: use dynamic buf */
-	do {
+	for (;;) {
+		struct sockaddr_nl sa;
+		ssize_t readlen;
+
 		/* Read netlink message, verifying kernel origin. */
 		do {
+			socklen_t salen = sizeof(sa);
+
 			readlen = recvfrom(sock, buf, RTNL_BUFSIZE - msglen, 0,
 					(struct sockaddr *)&sa, &salen);
-			if (readlen < 0)
+			if (readlen < 0 || salen != sizeof(sa))
 				return -1;
 		} while (sa.nl_pid != 0);
 
 		/* Verify it's valid */
-		nlhdr = (struct nlmsghdr *) buf;
+		struct nlmsghdr *nlhdr = (struct nlmsghdr *) buf;
+
 		/*
-		 * CAST TO unsigned short IS TO AVOID netlink.h:NLMSG_OK error
-		 * which triggers a GCC warning in recent GCCs:
+		 * The cast to unsigned short is to dodge an error in
+		 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
+		 * versions of GCC (2014 August):
 		 * error: comparison between signed and unsigned integer expressions
+		 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
 		 */
-		if (NLMSG_OK(nlhdr, (unsigned short)readlen) == 0 ||
+		if (!NLMSG_OK(nlhdr, (unsigned short)readlen) ||
 			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
@@ -174,11 +180,16 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		buf += readlen;
 		msglen += readlen;
 
-		/* All done if it's not a multi part */
+		/* all done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
 			break;
-	} while (nlhdr->nlmsg_seq != seqnum ||
-			nlhdr->nlmsg_pid != pid);
+
+		/* all done if this is the one we were searching for */
+		if (nlhdr->nlmsg_seq == seqnum &&
+		    nlhdr->nlmsg_pid == pid)
+			break;
+	}
+
 	return msglen;
 }
 
@@ -188,31 +199,33 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 static
 ssize_t netlink_query(char *msgbuf)
 {
-	struct nlmsghdr *nlmsg;
-	int sock;
+	int sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
-	/* Create socket */
-	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
+	if (sock < 0) {
 		int e = errno;
-		printf("create netlink socket: (%d: %s)", e, strerror(e));
+
+		printf("create netlink socket failure: (%d: %s)\n", e, strerror(e));
 		return -1;
 	}
 
 	/* Send request */
-	nlmsg = (struct nlmsghdr *)msgbuf;
+	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
-		printf("write netlink socket: (%d: %s)", e, strerror(e));
+
+		printf("write netlink socket failure: (%d: %s)\n", e, strerror(e));
 		return -1;
 	}
 
 	/* Read response */
+	errno = 0;	/* in case failure does not set it */
 	ssize_t len = netlink_read_reply(sock, msgbuf, 1, getpid());
 
 	if (len < 0) {
 		int e = errno;
 
-		printf("read netlink socket: (%d: %s)", e, strerror(e));
+		printf("read netlink socket failure: (%d: %s)\n", e, strerror(e));
 		return -1;
 	}
 	close(sock);
@@ -331,11 +344,9 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	 * 1) find out default gateway
 	 * 2) find out src for that default gateway
 	 */
-	if (!has_dst) {
-		if (seeking_src && seeking_gateway) {
-			seeking_src = FALSE;
-			query_again = 1;
-		}
+	if (!has_dst && seeking_src && seeking_gateway) {
+		seeking_src = FALSE;
+		query_again = 1;
 	}
 	if (seeking_gateway) {
 		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
@@ -358,19 +369,17 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
 	/*
-	 * CAST TO unsigned short IS TO AVOID netlink.h:NLMSG_OK error
-	 * which triggers a GCC warning in recent GCCs:
+	 * The cast to unsigned short is to dodge an error in
+	 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
+	 * versions of GCC (2014 August):
 	 * error: comparison between signed and unsigned integer expressions
+	 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
 	 */
-	for (; NLMSG_OK(nlmsg,  (unsigned short)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
-		struct rtmsg *rtmsg;
-		struct rtattr *rtattr;
-		int rtlen;
+	for (; NLMSG_OK(nlmsg, (unsigned short)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		char r_interface[IF_NAMESIZE+1];
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
 		char r_destination[ADDRTOT_BUF];
-		bool ignore;
 
 		if (nlmsg->nlmsg_type == NLMSG_DONE)
 			break;
@@ -378,23 +387,23 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
 			printf("netlink error\n");
 			return -1;
-			break;
 		}
 
 		/* ignore all but IPv4 and IPv6 */
-		rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
+		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
+
 		if (rtmsg->rtm_family != AF_INET &&
 			rtmsg->rtm_family != AF_INET6)
 			continue;
 
 		/* Parse one route entry */
-		r_interface[0] = r_interface[IF_NAMESIZE] = r_source[0] =
-			r_gateway[0] = r_destination[0] = '\0';
-		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
-		rtlen = RTM_PAYLOAD(nlmsg);
-		for (;
-			RTA_OK(rtattr, rtlen);
-			rtattr = RTA_NEXT(rtattr, rtlen)) {
+		zero(&r_interface);
+		r_source[0] = r_gateway[0] = r_destination[0] = '\0';
+
+		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
+		int rtlen = RTM_PAYLOAD(nlmsg);
+
+		while (RTA_OK(rtattr, rtlen)) {
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
 				if_indextoname(*(int *)RTA_DATA(rtattr),
@@ -417,13 +426,14 @@ static int resolve_defaultroute_one(struct starter_end *host,
 					sizeof(r_destination));
 				break;
 			}
+			rtattr = RTA_NEXT(rtattr, rtlen);
 		}
 
 		/*
 		 * Ignore if not main table.
 		 * Ignore ipsecX or mastX interfaces.
 		 */
-		ignore = rtmsg->rtm_table != RT_TABLE_MAIN ||
+		bool ignore = rtmsg->rtm_table != RT_TABLE_MAIN ||
 			startswith(r_interface, "ipsec") ||
 			startswith(r_interface, "mast");
 
@@ -548,20 +558,23 @@ static const struct option longopts[] =
 int main(int argc, char *argv[])
 {
 	int opt = 0;
-	int autoall = 0;
+	bool autoall = FALSE;
 	int configsetup = 0;
 	int checkconfig = 0;
-	char *export = "export"; /* display export before the foo=bar or not */
-	int listroute = 0, liststart = 0, listignore = 0, listadd = 0,
-		listall = 0, dolist = 0, liststack = 0;
-	struct starter_config *cfg = NULL;
-	err_t err = NULL;
-	char *confdir = NULL;
+	const char *export = "export"; /* display export before the foo=bar or not */
+	bool
+		dolist = FALSE,
+		listadd = FALSE,
+		listroute = FALSE,
+		liststart = FALSE,
+		listignore = FALSE,
+		listall = FALSE,
+		liststack = FALSE;
 	char *configfile = NULL;
-	char *varprefix = "";
+	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	char *ctlbase = NULL;
+	const char *ctlbase = NULL;
 	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
@@ -586,7 +599,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'a':
-			autoall = 1;
+			autoall = TRUE;
 			break;
 
 		case 'D':
@@ -595,11 +608,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			configsetup++;
+			configsetup++;	/* ??? is this not idempotent? */
 			break;
 
 		case 'K':
-			checkconfig++;
+			checkconfig++;	/* ??? is this not idempotent? */
 			break;
 
 		case 'N':
@@ -615,33 +628,33 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			listadd = 1;
-			dolist = 1;
+			listadd = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 'r':
-			listroute = 1;
-			dolist = 1;
+			listroute = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 's':
-			liststart = 1;
-			dolist = 1;
+			liststart = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 'S':
-			liststack = 1;
-			dolist = 1;
+			liststack = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 'i':
-			listignore = 1;
-			dolist = 1;
+			listignore = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 'A':
-			listall = 1;
-			dolist = 1;
+			listall = TRUE;
+			dolist = TRUE;
 			break;
 
 		case 'P':
@@ -672,9 +685,7 @@ int main(int argc, char *argv[])
 		yydebug = 1;
 	}
 
-	/* find config file */
-	if (confdir == NULL)
-		confdir = IPSEC_CONFDIR;
+	char *confdir = IPSEC_CONFDIR;
 
 	if (configfile == NULL) {
 		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
@@ -694,28 +705,31 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	err = NULL;	/* reset to no error */
-
 	if (configsetup || checkconfig || dolist) {
 		/* skip if we have no use for them... causes delays */
 		resolvip = FALSE;
 	}
 
-	cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
+	struct starter_config *cfg = NULL;
 
-	if (cfg == NULL) {
-		fprintf(stderr, "cannot load config '%s': %s\n",
-			configfile, err);
-		exit(3);
-	} else if (checkconfig) {
-		confread_free(cfg);
-		exit(0);
+	{
+		err_t err = NULL;
+
+		cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
+
+		if (cfg == NULL) {
+			fprintf(stderr, "cannot load config '%s': %s\n",
+				configfile, err);
+			exit(3);
+		} else if (checkconfig) {
+			confread_free(cfg);
+			exit(0);
+		}
 	}
 
 	if (autoall) {
 		if (verbose)
 			printf("loading all conns according to their auto= settings\n");
-
 
 		/*
 		 * Load all conns marked as auto=add or better.
@@ -726,7 +740,6 @@ int main(int argc, char *argv[])
 		 */
 		if (verbose)
 			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
-
 
 		for (conn = cfg->conns.tqh_first;
 			conn != NULL;
@@ -828,7 +841,6 @@ int main(int argc, char *argv[])
 							conn->
 							strings[KSF_CONNALIAS]
 							)) {
-
 						if (conn->state ==
 							STATE_ADDED) {
 							printf("\nalias: %s conn %s already added\n",
@@ -875,11 +887,9 @@ int main(int argc, char *argv[])
 			printf("%s ", conn->name);
 		printf("\n");
 	} else {
-
 		if (listadd) {
 			if (verbose)
 				printf("listing all conns marked as auto=add\n");
-
 
 			/* list all conns marked as auto=add */
 			for (conn = cfg->conns.tqh_first;
@@ -892,7 +902,6 @@ int main(int argc, char *argv[])
 		if (listroute) {
 			if (verbose)
 				printf("listing all conns marked as auto=route and auto=start\n");
-
 
 			/*
 			 * list all conns marked as auto=route or start or
@@ -911,7 +920,6 @@ int main(int argc, char *argv[])
 			if (verbose)
 				printf("listing all conns marked as auto=start\n");
 
-
 			/* list all conns marked as auto=start */
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
@@ -924,7 +932,6 @@ int main(int argc, char *argv[])
 		if (listignore) {
 			if (verbose)
 				printf("listing all conns marked as auto=ignore\n");
-
 
 			/* list all conns marked as auto=start */
 			for (conn = cfg->conns.tqh_first;
@@ -942,14 +949,14 @@ int main(int argc, char *argv[])
 
 		for (kd = ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->setup.strings[kd->field])
+				if (cfg->setup.strings[kd->field]) {
 					printf("%s\n",
 						cfg->setup.strings[kd->field]);
-				else
+				} else {
 					/* implicit default */
 					printf("netkey\n");
+				}
 			}
-
 		}
 		confread_free(cfg);
 		exit(0);
@@ -1008,7 +1015,6 @@ int main(int argc, char *argv[])
 		}
 		confread_free(cfg);
 		exit(0);
-
 	}
 
 	confread_free(cfg);
