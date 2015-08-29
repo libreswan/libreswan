@@ -60,7 +60,7 @@ static struct starter_comments_list *_parser_comments;
 
 %union {
 	char *s;
-        unsigned int num;
+	unsigned int num;
 	struct keyword k;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
@@ -84,8 +84,8 @@ config_file: blanklines versionstmt sections ;
 /* we have configs shipped with version 2 (INTEGER) and with version 2.0 (STRING, now  NUMBER/float was removed */
 
 versionstmt: /* NULL */
-        | VERSION STRING EOL blanklines
-        | VERSION INTEGER EOL blanklines
+	| VERSION STRING EOL blanklines
+	| VERSION INTEGER EOL blanklines
 	;
 
 blanklines: /* NULL */
@@ -114,7 +114,7 @@ section_or_include:
 
 			TAILQ_INSERT_TAIL(&_parser_cfg->sections, section, link);
 
-        	        /* setup keyword section to record values */
+			/* setup keyword section to record values */
 			_parser_kw = &(section->kw);
 			_parser_kw_last = NULL;
 
@@ -131,7 +131,7 @@ section_or_include:
 		}
 	} kw_sections
 	| INCLUDE STRING EOL {
- 		parser_y_include($2);
+		parser_y_include($2);
 	}
 	;
 
@@ -152,34 +152,34 @@ statement_kw:
 		    yyerror("can't allocate memory in statement_kw");
 		} else {
 		    struct keyword kw;
-                    /* because the third argument was also a keyword, we dig up the string representation. */
-	            const char *value = $3.keydef->keyname;
+		    /* because the third argument was also a keyword, we dig up the string representation. */
+		    const char *value = $3.keydef->keyname;
 
-	            kw = $1;
+		    kw = $1;
 		    new->keyword = kw;
 
 		    switch(kw.keydef->type) {
 		    case kt_list:
 			new->number = parser_enum_list(kw.keydef, value, TRUE);
 			break;
-	            case kt_enum:
+		    case kt_enum:
 			new->number = parser_enum_list(kw.keydef, value, FALSE);
 			break;
 		    case kt_rsakey:
 		    case kt_loose_enum:
 			new->number = parser_loose_enum(&new->keyword, value);
-                        break;
+			break;
 		    case kt_string:
 		    case kt_appendstring:
 		    case kt_appendlist:
 		    case kt_filename:
-                    case kt_dirname:
-                    case kt_ipaddr:
-                    case kt_bitstring:
+		    case kt_dirname:
+		    case kt_ipaddr:
+		    case kt_bitstring:
 		    case kt_idtype:
 		    case kt_range:
 		    case kt_subnet:
-		        new->string = strdup(value);
+			new->string = strdup(value);
 			break;
 
 		    case kt_bool:
@@ -191,12 +191,12 @@ statement_kw:
 			assert(kw.keydef->type != kt_bool);
 			break;
 
-           	    case kt_comment:
-                        break;
+		    case kt_comment:
+			break;
 
-           	    case kt_obsolete:
-           	    case kt_obsolete_quiet:
-                        break;
+		    case kt_obsolete:
+		    case kt_obsolete_quiet:
+			break;
 		    }
 		    new->next = NULL;
 
@@ -216,7 +216,7 @@ statement_kw:
 		} else {
 		    new->x_comment = strdup($1.string);
 		    new->commentvalue = strdup($3);
-	            TAILQ_INSERT_TAIL(_parser_comments, new, link);
+		    TAILQ_INSERT_TAIL(_parser_comments, new, link);
 		}
 	}
 	| KEYWORD EQUAL STRING {
@@ -229,31 +229,31 @@ statement_kw:
 		} else {
 		    struct keyword kw;
 
-	            kw = $1;
+		    kw = $1;
 		    new->keyword = kw;
 
 		    switch(kw.keydef->type) {
 		    case kt_list:
 			new->number = parser_enum_list(kw.keydef, $3, TRUE);
 			break;
-	            case kt_enum:
+		    case kt_enum:
 			new->number = parser_enum_list(kw.keydef, $3, FALSE);
 			break;
 		    case kt_rsakey:
 		    case kt_loose_enum:
 			new->number = parser_loose_enum(&new->keyword, $3);
-                        break;
+			break;
 		    case kt_string:
 		    case kt_appendstring:
 		    case kt_appendlist:
 		    case kt_filename:
-                    case kt_dirname:
-                    case kt_ipaddr:
-                    case kt_bitstring:
+		    case kt_dirname:
+		    case kt_ipaddr:
+		    case kt_bitstring:
 		    case kt_idtype:
 		    case kt_range:
 		    case kt_subnet:
-		        new->string = $3;
+			new->string = $3;
 			break;
 
 		    case kt_bool:
@@ -264,11 +264,11 @@ statement_kw:
 			yyerror("valid keyword, but value is not a number");
 			assert(!(kw.keydef->type == kt_bool));
 			break;
-           	    case kt_comment:
-                        break;
-           	    case kt_obsolete:
-           	    case kt_obsolete_quiet:
-                        break;
+		    case kt_comment:
+			break;
+		    case kt_obsolete:
+		    case kt_obsolete_quiet:
+			break;
 		    }
 		    new->next = NULL;
 
@@ -316,10 +316,10 @@ statement_kw:
 	| TIMEWORD EQUAL STRING {
 		struct kw_list *new;
 		char *endptr, *str;
-                unsigned int val;
+		unsigned int val;
 		struct keyword kw = $1;
 		bool fail;
-                char buf[80];
+		char buf[80];
 
 
 		fail = FALSE;
@@ -329,13 +329,13 @@ statement_kw:
 		val = strtoul(str, &endptr, 10);
 
 		if(endptr == str) {
-                  snprintf(buf, sizeof(buf), "bad duration value %s=%s", kw.keydef->keyname, str);
-                  yyerror(buf);
+		  snprintf(buf, sizeof(buf), "bad duration value %s=%s", kw.keydef->keyname, str);
+		  yyerror(buf);
 		  fail = TRUE;
 		}
 
 		if(!fail)
-                {
+		{
 			unsigned scale;
 
 			if (*endptr == '\0') {
@@ -375,10 +375,10 @@ statement_kw:
 					val *= scale;
 				}
 			}
-                }
+		}
 
-	        if(!fail)
-                {
+		if(!fail)
+		{
 		  assert(_parser_kw != NULL);
 		  new = alloc_kwlist();
 		  if (new == NULL) {
@@ -393,15 +393,15 @@ statement_kw:
 		    if (*_parser_kw == NULL)
 			*_parser_kw = new;
 		  }
-                }
+		}
 	}
 	| PERCENTWORD EQUAL STRING {
 		struct kw_list *new;
 		char *endptr, *str;
 		struct keyword kw = $1;
-                unsigned int val;
+		unsigned int val;
 		bool fail;
-                char buf[80];
+		char buf[80];
 
 
 		fail = FALSE;
@@ -411,24 +411,24 @@ statement_kw:
 		val = strtoul(str, &endptr, 10);
 
 		if(endptr == str) {
-                  snprintf(buf, sizeof(buf), "bad percent value %s=%s", kw.keydef->keyname, str);
-                  yyerror(buf);
+		  snprintf(buf, sizeof(buf), "bad percent value %s=%s", kw.keydef->keyname, str);
+		  yyerror(buf);
 		  fail = TRUE;
 
 		}
 
 		if(!fail)
-                {
+		{
 		  if ((*endptr == '%') && (endptr[1] == '\0')) { }
 		  else {
-                    snprintf(buf, sizeof(buf), "bad percentage multiplier '%c' on %s", *endptr, str);
-                    yyerror(buf);
-                    fail=TRUE;
-                  }
-                }
+		    snprintf(buf, sizeof(buf), "bad percentage multiplier '%c' on %s", *endptr, str);
+		    yyerror(buf);
+		    fail=TRUE;
+		  }
+		}
 
-	        if(!fail)
-                {
+		if(!fail)
+		{
 		  assert(_parser_kw != NULL);
 		  new = alloc_kwlist();
 		  if (new == NULL) {
@@ -443,7 +443,7 @@ statement_kw:
 		    if (*_parser_kw == NULL)
 			*_parser_kw = new;
 		  }
-                }
+		}
 	}
 	| KEYWORD EQUAL BOOL {
 		struct kw_list *new;
@@ -498,7 +498,7 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 	else {
 		f = fopen(file, "r");
 	}
-        if (!f)
+	if (!f)
 	{
 	    snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
 		     file);
@@ -513,15 +513,15 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 	TAILQ_INIT(&cfg->comments);
 	_parser_cfg = cfg;
 
-        if (yyparse()!=0) {
- 	    if (parser_errstring[0]=='\0') {
+	if (yyparse()!=0) {
+	    if (parser_errstring[0]=='\0') {
 		snprintf(parser_errstring, ERRSTRING_LEN,
 			"Unknown error...");
 	    }
 	   _save_errors_=0;
 	   while (yyparse()!=0);
 	   err++;
-           goto end;
+	   goto end;
 	}
 	if (parser_errstring[0]!='\0') {
 	    err++;
@@ -558,7 +558,7 @@ void parser_free_conf(struct config_parsed *cfg)
 	if (cfg) {
 		parser_free_kwlist(cfg->config_setup);
 
-	        for(seci = cfg->sections.tqh_first; seci != NULL; )
+		for(seci = cfg->sections.tqh_first; seci != NULL; )
 		{
 			sec = seci;
 			seci = seci->link.tqe_next;
