@@ -1418,7 +1418,7 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 struct starter_config *confread_load(const char *file,
 				     err_t *perr,
 				     bool resolvip,
-				     char *ctlbase,
+				     const char *ctlbase,
 				     bool setuponly)
 {
 	struct starter_config *cfg = NULL;
