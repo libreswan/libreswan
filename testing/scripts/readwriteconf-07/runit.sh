@@ -7,7 +7,7 @@
 
 conf=$ROOTDIR/testing/pluto/transport-01/east.conf
 args="--rootdir=${ROOTDIR} --rootdir2=$ROOTDIR"
-echo "file $ROOTDIR/OBJ.linux.i386/programs/readwriteconf/readwriteconf" >.gdbinit
+echo "file $ROOTDIR/OBJ.linux.$(arch)/programs/readwriteconf/readwriteconf" >.gdbinit
 echo "set args $ROOTDIR --config $conf --verbose --verbose >OUTPUT/transport-flat.conf-out" >>.gdbinit
 
 eval ${OBJDIRTOP}/programs/readwriteconf/readwriteconf $ROOTDIR --config ${conf}
