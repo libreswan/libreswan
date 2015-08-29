@@ -1912,7 +1912,8 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
 		snprintf(buf, POLICY_PRIO_BUF, "0");
 	else
 		snprintf(buf, POLICY_PRIO_BUF, "%lu,%lu",
-			pp >> 16, (pp & ~(~(policy_prio_t)0 << 16)) >> 8);
+			pp >> 16,
+			(pp & ~(~(policy_prio_t)0 << 16)) >> 8);
 }
 
 /*
