@@ -1,0 +1,5 @@
+xauth test using pam via mypam.c simple-pam test module
+
+NOTE: It's known this does not ensure other pam methds works.
+      We know past code failures broke pam_krb5 while this test
+      still passed.
