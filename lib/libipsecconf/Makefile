@@ -40,17 +40,28 @@ $(OBJS): parser.tab.h
 
 # Use UNIX basename to strip off the directory.
 # Use sed to work around two bugs:
+#
 # - flex < 2.5.35 generates an extern that isn't good
+#
 # - flex on RHEL 7 generates code that provokes GCC to warn
 #   about comparing a signed value with an unsigned value
-#   (Combination of a new GCC and an old flex)
+#   (Combination of a new GCC and an old flex).
+#   Adding one cast makes RHEL 6's GCC unhappy, so we add two.
+#   On RHEL 6, i is int and _yybytes_len is int.
+#   On RHEL 7, i is int and _yybytes_len is yy_size_t
+#   On Fedora 21, i is yy_size_t and _yybytes_len is yy_size_t
+#   On some architectures, yy_size_t is wider than int;
+#   which makes a mixed comparison OK.
+#
 # Avoid sed -i which somehow causes unwritable files
 # on fedora 20 with 9p filesystem mount.
+# Avoid creating the target file until it is done.
 lex.yy.c: parser.l
 	cd $(builddir) && \
-	$(LEX) -o $@ $(srcdir)/$$(basename $<) && \
-	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < _yybytes_len; ++i )/' \
-	    -e '/^extern int isatty.*$$/d' $@ >SEDTMP$$$$ && \
+	$(LEX) -o $@.$$$$ $(srcdir)/$$(basename $<) && \
+	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
+	    -e '/^extern int isatty.*$$/d' $@.$$$$ >SEDTMP$$$$ && \
+	rm $@.$$$$ && \
 	mv SEDTMP$$$$ $@
 
 # Use wild card rule so that GNU Make knows that both are output from
@@ -58,12 +69,14 @@ lex.yy.c: parser.l
 # - sed command for workaround for older bison vs GCC warning
 # - avoid sed -i which somehow causes unwritable files
 #   on fedora 20 with 9p filesystem mount
+# - avoid creating the target file until it is done
 %.tab.h %.tab.c: %.y
 	cd $(builddir) && \
-	$(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<) && \
+	$(BISON) ${BISONOSFLAGS} -v --defines=$$(basename $< .y).tab.h -o $$(basename $< .y).tab.c$$$$ $(srcdir)/$$(basename $<) && \
 	sed -e '/^ *#/s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
 		-e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
-		$$(basename $< .y).tab.c >SEDTMP$$$$ && \
+		$$(basename $< .y).tab.c$$$$ >SEDTMP$$$$ && \
+	rm $$(basename $< .y).tab.c$$$$ && \
 	mv SEDTMP$$$$ $$(basename $< .y).tab.c
 
 clean: parser-clean
