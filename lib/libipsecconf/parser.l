@@ -373,7 +373,17 @@ static int parser_y_eof(void)
 
 <INITIAL,USERDEF>[0-9]+	{
 				/* process a number */
-				yylval.num = strtoul(yytext, NULL, 10);
+				unsigned long val = (errno = 0, strtoul(yytext, NULL, 10));
+
+				if (errno != 0 || val > UINT_MAX) {
+					char ebuf[128];
+
+					snprintf(ebuf, sizeof(ebuf),
+						"number too large: %s",
+						yytext);
+					yyerror(ebuf);
+				}
+				yylval.num = val;
 				BEGIN INITIAL;
 				return INTEGER;
 			}
