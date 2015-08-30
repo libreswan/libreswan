@@ -720,7 +720,7 @@ class scantests:
 
         self.graphsums.append(self.tsum)
         row = [self.tsum["dir"], self.tsum["passed"], self.tsum["failed"],
-        self.tsum["Total"], self.tsum["runtime"]]
+        self.tsum["Total"], self.tsum["runtime_str"]]
         self.htmlsums["rows"].append(row)
         self.write_node_sum()
 
@@ -863,7 +863,7 @@ class scantests:
                             "EXPECT %s" % table["summary"]["EXPECT"],
                             "GPFAULT %s" % table["summary"]["GPFAULT"],
                             "SEGFAULT %s" % table["summary"]["SEGFAULT"],
-                            "runtime %s" % table["summary"]["runtime"]]
+                            "runtime %s" % table["summary"]["runtime_str"]]
                            )
             csv_h.writerow(table["columns"])
             csv_h.writerows(table["rows"])
