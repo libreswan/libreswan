@@ -514,7 +514,7 @@ class scantests:
                 lines = f.read().replace("\n", "").replace("\t", "")
                 self.graphsums = json.loads(lines)
 
-        hfile = self.args.resultsdir + '/' + 'graph.json'
+        hfile = self.args.resultsdir + '/' + 'table.json'
         logging.debug("reading file %s" % hfile)
         with opened_w_error(hfile) as (f, err):
             if err:
