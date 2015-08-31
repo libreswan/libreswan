@@ -2,6 +2,11 @@
 See also https://libreswan.org/
 
 v3.16 (unreleased)
+* libipsecconf: allow time with no unit suffix (openswan compat) [Hugh]
+* libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
+* pluto: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
+* PAM: Fix some IKEv1 XAUTH methods always returning "denied" [Antony]
+* newhostkey: fix seedev device [Paul]
 
 v3.15 (August 24, 2015)
 * SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
