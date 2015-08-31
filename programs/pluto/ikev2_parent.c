@@ -2382,7 +2382,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
 	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	p->pam_status = ikev2_do_pam_authentication(&p->pam);
+	p->pam_status = do_pam_authentication(&p->pam);
 	gettimeofday(&p->done_time, NULL);
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
@@ -2545,6 +2545,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	p->pam.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
 	p->pam.c_instance_serial = st->st_connection->instance_serial;
 	p->pam.st_serialno = st->st_serialno;
+	p->pam.atype = "IKEv2";
 
 	p->next = pluto_v2_pam_helpers;
 	pluto_v2_pam_helpers = p;

@@ -10,7 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012-2013 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -109,15 +109,25 @@ int pam_conv(int num_msg,
 	return PAM_SUCCESS;
 }
 
+static void log_pam_step(const struct pam_thread_arg *arg, const char *what,
+		const char *how)
+{
+	DBG(DBG_CONTROL, DBG_log("%s helper thread %s %s for "
+                                "state #%lu, %s[%lu] user=%s.",
+				arg->atype, what, how,
+				arg->st_serialno, arg->c_name,
+				arg->c_instance_serial, arg->name));
+
+}
+
 /*
  * Do IKEv2 second authentication via PAM (Plugable Authentication Modules)
  *
  * @return bool success
  */
 /* IN AN AUTH THREAD */
-bool ikev2_do_pam_authentication(void *varg)
+bool do_pam_authentication(struct pam_thread_arg *arg)
 {
-	struct pam_thread_arg *arg = varg;
 	int retval;
 	pam_handle_t *pamh = NULL;
 	struct pam_conv conv;
@@ -129,22 +139,20 @@ bool ikev2_do_pam_authentication(void *varg)
 	 */
 	do {
 		conv.conv = pam_conv;
-		conv.appdata_ptr = varg;
+		conv.appdata_ptr = arg;
 
 		what = "pam_start";
 		retval = pam_start("pluto", arg->name, &conv, &pamh);
 		if (retval != PAM_SUCCESS)
 			break;
-
-		DBG(DBG_CONTROL, DBG_log("pam_start SUCCESS"));
+		log_pam_step(arg, what, "SUCCESS");
 
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
 		retval = pam_set_item(pamh, PAM_RHOST, arg->ra);
 		if (retval != PAM_SUCCESS)
 			break;
-
-		DBG(DBG_CONTROL, DBG_log("pam_set_item SUCCESS"));
+		log_pam_step(arg, what, "SUCCESS");
 
 		/* Two factor authentication - Check that the user is valid,
 		 * and then check if they are permitted access
@@ -154,16 +162,16 @@ bool ikev2_do_pam_authentication(void *varg)
 
 		if (retval != PAM_SUCCESS)
 			break;
+		log_pam_step(arg, what, "SUCCESS");
 
-		DBG(DBG_CONTROL, DBG_log("pam_authenticate SUCCESS"));
-
-		what = "pam_acct_mgmt";
 		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
 		if (retval != PAM_SUCCESS)
 			break;
 
+		what = "pam";
+		log_pam_step(arg, what, "SUCCESS");
+
 		/* success! */
-		libreswan_log("IKEv2: PAM_SUCCESS");
 		pam_end(pamh, PAM_SUCCESS);
 		return TRUE;
 	} while (FALSE);

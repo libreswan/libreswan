@@ -1001,81 +1001,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 	return STF_OK;
 }
 
-#ifdef XAUTH_HAVE_PAM
-
-/** Do authentication via PAM (Plugable Authentication Modules)
- *
- * We try to authenticate the user in our own PAM session.
- *
- * @return bool success
- */
-/* IN AN AUTH THREAD */
-static bool do_pam_authentication(void *varg)
-{
-	struct xauth_thread_arg *arg = varg;
-	int retval;
-	pam_handle_t *pamh = NULL;
-	struct pam_conv conv;
-	const char *what;
-
-	/* This do-while structure is designed to allow a logical cascade
-	 * without excessive indentation.  No actual looping happens.
-	 * Failure is handled by "break".
-	 */
-	do {
-		ipstr_buf ra;
-
-		conv.conv = pam_conv;
-		conv.appdata_ptr = varg;
-
-		what = "pam_start";
-		retval = pam_start("pluto", arg->name, &conv, &pamh);
-		if (retval != PAM_SUCCESS)
-			break;
-
-		DBG(DBG_CONTROL, DBG_log("pam_start SUCCESS"));
-
-		/* Send the remote host address to PAM */
-		what = "pam_set_item";
-		retval = pam_set_item(pamh, PAM_RHOST,
-				      ipstr(&arg->st->st_remoteaddr, &ra));
-		if (retval != PAM_SUCCESS)
-			break;
-
-		DBG(DBG_CONTROL, DBG_log("pam_set_item SUCCESS"));
-
-		/* Two factor authentication - Check that the user is valid,
-		 * and then check if they are permitted access
-		 */
-		what = "pam_authenticate";
-		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
-
-		if (retval != PAM_SUCCESS)
-			break;
-
-		DBG(DBG_CONTROL, DBG_log("pam_authenticate SUCCESS"));
-
-		what = "pam_acct_mgmt";
-		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
-		if (retval != PAM_SUCCESS)
-			break;
-
-		/* success! */
-		libreswan_log("XAUTH: PAM_SUCCESS");
-		pam_end(pamh, PAM_SUCCESS);
-		return TRUE;
-	} while (FALSE);
-
-	/* common failure code */
-
-	DBG(DBG_CONTROL,
-	    DBG_log("%s failed with '%s", what, pam_strerror(pamh, retval)));
-	libreswan_log("XAUTH: %s failed with '%s'", what, pam_strerror(pamh, retval));
-	pam_end(pamh, retval);
-	return FALSE;
-}
-#endif /* XAUTH_HAVE_PAM */
-
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
  *
  * Structure is one entry per line.
@@ -1256,6 +1181,43 @@ static bool do_file_authentication(void *varg)
 	return win;
 }
 
+/* IN AN AUTH THREAD */
+static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
+{
+	struct state *st = arg->st;
+	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",
+			arg->name);
+	struct pam_thread_arg parg;
+	ipstr_buf ra;
+	struct timeval start_time;
+	struct timeval served_time;
+	struct timeval served_delta;
+	bool results = FALSE;
+
+	parg.name = arg->name;
+	parg.password =  arg->password;
+	parg.c_name = arg->connname;
+	parg.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
+	parg.st_serialno = st->st_serialno;
+	parg.c_instance_serial = st->st_connection->instance_serial;
+	parg.atype = "XAUTH";
+	gettimeofday(&start_time, NULL);
+	results = do_pam_authentication(&parg);
+	gettimeofday(&served_time, NULL);
+	timersub(&served_time, &start_time, &served_delta);
+	DBG(DBG_CONTROL, DBG_log("XAUTH PAM helper thread call "
+				"state #%lu, %s[%lu] user=%s %s. "
+				"elapsed time %lu.%06lu",
+				parg.st_serialno, parg.c_name,
+				parg.c_instance_serial, parg.name,
+				results ? "SUCCESS" : "FAIL",
+				(unsigned long)served_delta.tv_sec,
+				(unsigned long)(served_delta.tv_usec * 1000000)));
+
+	pfreeany(parg.ra);
+	return (results);
+}
+
 /*
  * Main authentication routine will then call the actual compiled-in
  * method to verify the user/password
@@ -1330,10 +1292,7 @@ static void *do_authentication(void *varg)
 	switch (st->st_connection->xauthby) {
 #ifdef XAUTH_HAVE_PAM
 	case XAUTHBY_PAM:
-		libreswan_log(
-			"XAUTH: pam authentication being called to authenticate user %s",
-			arg->name);
-		results = do_pam_authentication(varg);
+		results = ikev1_do_pam_authentication(arg);
 		break;
 #endif
 	case XAUTHBY_FILE:
