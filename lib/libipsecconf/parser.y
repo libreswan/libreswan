@@ -41,7 +41,6 @@
  * Bison
  */
 static char parser_errstring[ERRSTRING_LEN+1];
-static struct starter_comments *alloc_comment(void);	/* forward */
 
 /**
  * Static Globals
@@ -198,7 +197,8 @@ statement_kw:
 		new_parser_kw(&kw, string, number);
 	}
 	| COMMENT EQUAL STRING {
-		struct starter_comments *new = alloc_comment();
+		struct starter_comments *new =
+			malloc(sizeof(struct starter_comments));
 
 		if (new == NULL) {
 			yyerror("can't allocate memory in statement_kw");
@@ -472,12 +472,4 @@ static void new_parser_kw(struct keyword *keyword, char *string, unsigned int nu
 		/* new is new last on list */
 		parser_kw_last = new;
 	}
-}
-
-static struct starter_comments *alloc_comment(void)
-{
-	struct starter_comments *new = malloc(sizeof(struct starter_comments));
-
-	zero(new);	/* ??? pointer members might not be set to NULL */
-	return new;
 }
