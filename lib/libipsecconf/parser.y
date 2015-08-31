@@ -47,10 +47,10 @@ static struct starter_comments *alloc_comment(void);
 /**
  * Static Globals
  */
-static int _save_errors_;
-static struct config_parsed *_parser_cfg;
-static struct kw_list **_parser_kw, *_parser_kw_last;
-static struct starter_comments_list *_parser_comments;
+static int save_errors;
+static struct config_parsed *parser_cfg;
+static struct kw_list **parser_kw, *parser_kw_last;
+static struct starter_comments_list *parser_comments;
 
 /**
  * Functions
@@ -100,9 +100,9 @@ sections: /* NULL */
 
 section_or_include:
 	CONFIG SETUP EOL {
-		_parser_kw = &(_parser_cfg->config_setup);
-		_parser_kw_last = NULL;
-		_parser_comments = &_parser_cfg->comments;
+		parser_kw = &(parser_cfg->config_setup);
+		parser_kw_last = NULL;
+		parser_comments = &parser_cfg->comments;
 		if (yydebug)
 			fprintf(stderr, "\nconfig setup read\n");
 
@@ -114,21 +114,21 @@ section_or_include:
 			section->name = $2;
 			section->kw = NULL;
 
-			TAILQ_INSERT_TAIL(&_parser_cfg->sections, section, link);
+			TAILQ_INSERT_TAIL(&parser_cfg->sections, section, link);
 
 			/* setup keyword section to record values */
-			_parser_kw = &(section->kw);
-			_parser_kw_last = NULL;
+			parser_kw = &(section->kw);
+			parser_kw_last = NULL;
 
 			/* and comments */
 			TAILQ_INIT(&section->comments);
-			_parser_comments = &section->comments;
+			parser_comments = &section->comments;
 
 			if(yydebug)
 				fprintf(stderr, "\nread conn %s\n", section->name);
 		} else {
-			_parser_kw = NULL;
-			_parser_kw_last = NULL;
+			parser_kw = NULL;
+			parser_kw_last = NULL;
 			yyerror("can't allocate memory in section_or_include/conn");
 		}
 	} kw_sections
@@ -148,7 +148,7 @@ statement_kw:
 	KEYWORD EQUAL KEYWORD {
 		struct kw_list *new;
 
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		new = alloc_kwlist();
 		if (new == NULL) {
 		    yyerror("can't allocate memory in statement_kw");
@@ -202,11 +202,11 @@ statement_kw:
 		    }
 		    new->next = NULL;
 
-		    if (_parser_kw_last)
-			_parser_kw_last->next = new;
-		    _parser_kw_last = new;
-		    if (*_parser_kw == NULL)
-			*_parser_kw = new;
+		    if (parser_kw_last)
+			parser_kw_last->next = new;
+		    parser_kw_last = new;
+		    if (*parser_kw == NULL)
+			*parser_kw = new;
 		}
 	}
 	| COMMENT EQUAL STRING {
@@ -218,13 +218,13 @@ statement_kw:
 		} else {
 		    new->x_comment = strdup($1.string);
 		    new->commentvalue = strdup($3);
-		    TAILQ_INSERT_TAIL(_parser_comments, new, link);
+		    TAILQ_INSERT_TAIL(parser_comments, new, link);
 		}
 	}
 	| KEYWORD EQUAL STRING {
 		struct kw_list *new;
 
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		new = alloc_kwlist();
 		if (new == NULL) {
 		    yyerror("can't allocate memory in statement_kw");
@@ -274,17 +274,17 @@ statement_kw:
 		    }
 		    new->next = NULL;
 
-		    if (_parser_kw_last)
-			_parser_kw_last->next = new;
-		    _parser_kw_last = new;
-		    if (!*_parser_kw) *_parser_kw = new;
+		    if (parser_kw_last)
+			parser_kw_last->next = new;
+		    parser_kw_last = new;
+		    if (!*parser_kw) *parser_kw = new;
 		}
 	}
 
 	| BOOLWORD EQUAL BOOL {
 		struct kw_list *new;
 
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		new = alloc_kwlist();
 		if (new == NULL) {
 		    yyerror("can't allocate memory in statement_kw");
@@ -292,16 +292,16 @@ statement_kw:
 		    new->keyword = $1;
 		    new->number = $<num>3;  /* Should not be necessary! */
 		    new->next = NULL;
-		    if (_parser_kw_last)
-			_parser_kw_last->next = new;
-		    _parser_kw_last = new;
-		    if (!*_parser_kw) *_parser_kw = new;
+		    if (parser_kw_last)
+			parser_kw_last->next = new;
+		    parser_kw_last = new;
+		    if (!*parser_kw) *parser_kw = new;
 		}
 	}
 	| KEYWORD EQUAL INTEGER {
 		struct kw_list *new;
 
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		new = alloc_kwlist();
 		if (new == NULL) {
 		    yyerror("can't allocate memory in statement_kw");
@@ -309,14 +309,14 @@ statement_kw:
 		    new->keyword = $1;
 		    new->number = $<num>3;  /* Should not be necessary! */
 		    new->next = NULL;
-		    if (_parser_kw_last)
-			_parser_kw_last->next = new;
-		    _parser_kw_last = new;
-		    if (!*_parser_kw) *_parser_kw = new;
+		    if (parser_kw_last)
+			parser_kw_last->next = new;
+		    parser_kw_last = new;
+		    if (!*parser_kw) *parser_kw = new;
 		}
 	}
 	| TIMEWORD EQUAL duration {
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		struct kw_list *new = alloc_kwlist();
 		if (new == NULL) {
 			yyerror("can't allocate memory in statement_kw");
@@ -324,11 +324,11 @@ statement_kw:
 			new->keyword = $1;
 			new->number = $3;
 			new->next = NULL;
-			if (_parser_kw_last)
-				_parser_kw_last->next = new;
-			_parser_kw_last = new;
-			if (*_parser_kw == NULL)
-				*_parser_kw = new;
+			if (parser_kw_last)
+				parser_kw_last->next = new;
+			parser_kw_last = new;
+			if (*parser_kw == NULL)
+				*parser_kw = new;
 		}
 	}
 	| PERCENTWORD EQUAL STRING {
@@ -353,7 +353,7 @@ statement_kw:
 				"percentage way too large \"%s\"", str);
 			yyerror(buf);
 		} else {
-			assert(_parser_kw != NULL);
+			assert(parser_kw != NULL);
 			struct kw_list *new = alloc_kwlist();
 			if (new == NULL) {
 				yyerror("can't allocate memory in statement_kw");
@@ -361,18 +361,18 @@ statement_kw:
 				new->keyword = $1;
 				new->number = val;
 				new->next = NULL;
-				if (_parser_kw_last)
-					_parser_kw_last->next = new;
-				_parser_kw_last = new;
-				if (*_parser_kw == NULL)
-					*_parser_kw = new;
+				if (parser_kw_last)
+					parser_kw_last->next = new;
+				parser_kw_last = new;
+				if (*parser_kw == NULL)
+					*parser_kw = new;
 			}
 		}
 	}
 	| KEYWORD EQUAL BOOL {
 		struct kw_list *new;
 
-		assert(_parser_kw != NULL);
+		assert(parser_kw != NULL);
 		new = alloc_kwlist();
 		if (new != NULL) {
 		    yyerror("can't allocate memory in statement_kw");
@@ -380,11 +380,11 @@ statement_kw:
 		    new->keyword = $1;
 		    new->number = $<num>3;  /* Should not be necessary! */
 		    new->next = NULL;
-		    if (_parser_kw_last)
-			_parser_kw_last->next = new;
-		    _parser_kw_last = new;
-		    if (*_parser_kw == NULL)
-			*_parser_kw = new;
+		    if (parser_kw_last)
+			parser_kw_last->next = new;
+		    parser_kw_last = new;
+		    if (*parser_kw == NULL)
+			*parser_kw = new;
 		}
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
@@ -446,7 +446,7 @@ duration:
 
 void yyerror(const char *s)
 {
-	if (_save_errors_)
+	if (save_errors)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
 
@@ -484,17 +484,17 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 
 	yyin = f;
 	parser_y_init(file, f);
-	_save_errors_=1;
+	save_errors=1;
 	TAILQ_INIT(&cfg->sections);
 	TAILQ_INIT(&cfg->comments);
-	_parser_cfg = cfg;
+	parser_cfg = cfg;
 
 	if (yyparse()!=0) {
 	    if (parser_errstring[0]=='\0') {
 		snprintf(parser_errstring, ERRSTRING_LEN,
 			"Unknown error...");
 	    }
-	   _save_errors_=0;
+	   save_errors=0;
 	   while (yyparse()!=0);
 	   err++;
 	   goto end;
