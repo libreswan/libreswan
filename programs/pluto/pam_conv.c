@@ -121,7 +121,8 @@ static void log_pam_step(const struct pam_thread_arg *arg, const char *what,
 }
 
 /*
- * Do IKEv2 second authentication via PAM (Plugable Authentication Modules)
+ * PAM (Plugable Authentication Modules) interaction with external module
+ * NO locks/mutex here all data is copied already
  *
  * @return bool success
  */
@@ -130,14 +131,15 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 {
 	int retval;
 	pam_handle_t *pamh = NULL;
-	struct pam_conv conv;
-	const char *what;
 
 	/* This do-while structure is designed to allow a logical cascade
 	 * without excessive indentation.  No actual looping happens.
 	 * Failure is handled by "break".
 	 */
 	do {
+		struct pam_conv conv;
+		const char *what;
+
 		conv.conv = pam_conv;
 		conv.appdata_ptr = arg;
 
@@ -177,10 +179,10 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 	} while (FALSE);
 
 	/* common failure code */
-
-	DBG(DBG_CONTROL,
-	    DBG_log("%s failed with '%s", what, pam_strerror(pamh, retval)));
-	libreswan_log("IKEv2 : %s failed with '%s'", what, pam_strerror(pamh, retval));
+	libreswan_log ("%s FAILED with '%s' for state #%lu, %s[%lu] user=%s.",
+			arg->atype, pam_strerror(pamh, retval),
+			arg->st_serialno, arg->c_name, arg->c_instance_serial,
+			arg->name);
 	pam_end(pamh, retval);
 	return FALSE;
 }
