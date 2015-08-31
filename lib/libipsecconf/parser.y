@@ -41,15 +41,15 @@
  * Bison
  */
 static char parser_errstring[ERRSTRING_LEN+1];
-static struct kw_list *alloc_kwlist(void);
-static struct starter_comments *alloc_comment(void);
+static struct starter_comments *alloc_comment(void);	/* forward */
 
 /**
  * Static Globals
  */
-static int save_errors;
+static bool save_errors;
 static struct config_parsed *parser_cfg;
 static struct kw_list **parser_kw, *parser_kw_last;
+static void new_parser_kw(struct keyword *keyword, char *string, unsigned int number);	/* forward */
 static struct starter_comments_list *parser_comments;
 
 /**
@@ -100,7 +100,7 @@ sections: /* NULL */
 
 section_or_include:
 	CONFIG SETUP EOL {
-		parser_kw = &(parser_cfg->config_setup);
+		parser_kw = &parser_cfg->config_setup;
 		parser_kw_last = NULL;
 		parser_comments = &parser_cfg->comments;
 		if (yydebug)
@@ -108,28 +108,28 @@ section_or_include:
 
 	} kw_sections
 	| CONN STRING EOL {
-		struct section_list *section;
-		section = (struct section_list *)malloc(sizeof(struct section_list));
-		if (section != NULL) {
+		struct section_list *section = malloc(sizeof(struct section_list));
+
+		if (section == NULL) {
+			parser_kw = NULL;
+			parser_kw_last = NULL;
+			yyerror("can't allocate memory in section_or_include/conn");
+		} else {
 			section->name = $2;
 			section->kw = NULL;
 
 			TAILQ_INSERT_TAIL(&parser_cfg->sections, section, link);
 
 			/* setup keyword section to record values */
-			parser_kw = &(section->kw);
+			parser_kw = &section->kw;
 			parser_kw_last = NULL;
 
 			/* and comments */
 			TAILQ_INIT(&section->comments);
 			parser_comments = &section->comments;
 
-			if(yydebug)
+			if (yydebug)
 				fprintf(stderr, "\nread conn %s\n", section->name);
-		} else {
-			parser_kw = NULL;
-			parser_kw_last = NULL;
-			yyerror("can't allocate memory in section_or_include/conn");
 		}
 	} kw_sections
 	| INCLUDE STRING EOL {
@@ -146,190 +146,124 @@ kw_section: FIRST_SPACES statement_kw EOL
 
 statement_kw:
 	KEYWORD EQUAL KEYWORD {
-		struct kw_list *new;
+		struct keyword kw = $1;
 
-		assert(parser_kw != NULL);
-		new = alloc_kwlist();
-		if (new == NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    struct keyword kw;
-		    /* because the third argument was also a keyword, we dig up the string representation. */
-		    const char *value = $3.keydef->keyname;
+		/* because the third argument was also a keyword, we dig up the string representation. */
+		const char *value = $3.keydef->keyname;
 
-		    kw = $1;
-		    new->keyword = kw;
+		char *string = NULL;	/* neutral placeholding value */
+		unsigned int number = 0;	/* neutral placeholding value */
 
-		    switch(kw.keydef->type) {
-		    case kt_list:
-			new->number = parser_enum_list(kw.keydef, value, TRUE);
+		switch(kw.keydef->type) {
+		case kt_list:
+			number = parser_enum_list(kw.keydef, value, TRUE);
 			break;
-		    case kt_enum:
-			new->number = parser_enum_list(kw.keydef, value, FALSE);
+		case kt_enum:
+			number = parser_enum_list(kw.keydef, value, FALSE);
 			break;
-		    case kt_rsakey:
-		    case kt_loose_enum:
-			new->number = parser_loose_enum(&new->keyword, value);
+		case kt_rsakey:
+		case kt_loose_enum:
+			number = parser_loose_enum(&kw, value);
 			break;
-		    case kt_string:
-		    case kt_appendstring:
-		    case kt_appendlist:
-		    case kt_filename:
-		    case kt_dirname:
-		    case kt_ipaddr:
-		    case kt_bitstring:
-		    case kt_idtype:
-		    case kt_range:
-		    case kt_subnet:
-			new->string = strdup(value);
+		case kt_string:
+		case kt_appendstring:
+		case kt_appendlist:
+		case kt_filename:
+		case kt_dirname:
+		case kt_ipaddr:
+		case kt_bitstring:
+		case kt_idtype:
+		case kt_range:
+		case kt_subnet:
+			string = strdup(value);
 			break;
 
-		    case kt_bool:
-		    case kt_invertbool:
-		    case kt_number:
-		    case kt_time:
-		    case kt_percent:
+		case kt_bool:
+		case kt_invertbool:
+		case kt_number:
+		case kt_time:
+		case kt_percent:
 			yyerror("keyword value is a keyword, but type not a string");
 			assert(kw.keydef->type != kt_bool);
 			break;
 
-		    case kt_comment:
+		case kt_comment:
 			break;
 
-		    case kt_obsolete:
-		    case kt_obsolete_quiet:
+		case kt_obsolete:
+		case kt_obsolete_quiet:
 			break;
-		    }
-		    new->next = NULL;
-
-		    if (parser_kw_last)
-			parser_kw_last->next = new;
-		    parser_kw_last = new;
-		    if (*parser_kw == NULL)
-			*parser_kw = new;
 		}
+
+		new_parser_kw(&kw, string, number);
 	}
 	| COMMENT EQUAL STRING {
-		struct starter_comments *new;
+		struct starter_comments *new = alloc_comment();
 
-		new = alloc_comment();
-		if (new == NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    new->x_comment = strdup($1.string);
-		    new->commentvalue = strdup($3);
-		    TAILQ_INSERT_TAIL(parser_comments, new, link);
-		}
-	}
-	| KEYWORD EQUAL STRING {
-		struct kw_list *new;
-
-		assert(parser_kw != NULL);
-		new = alloc_kwlist();
-		if (new == NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    struct keyword kw;
-
-		    kw = $1;
-		    new->keyword = kw;
-
-		    switch(kw.keydef->type) {
-		    case kt_list:
-			new->number = parser_enum_list(kw.keydef, $3, TRUE);
-			break;
-		    case kt_enum:
-			new->number = parser_enum_list(kw.keydef, $3, FALSE);
-			break;
-		    case kt_rsakey:
-		    case kt_loose_enum:
-			new->number = parser_loose_enum(&new->keyword, $3);
-			break;
-		    case kt_string:
-		    case kt_appendstring:
-		    case kt_appendlist:
-		    case kt_filename:
-		    case kt_dirname:
-		    case kt_ipaddr:
-		    case kt_bitstring:
-		    case kt_idtype:
-		    case kt_range:
-		    case kt_subnet:
-			new->string = $3;
-			break;
-
-		    case kt_bool:
-		    case kt_invertbool:
-		    case kt_number:
-		    case kt_time:
-		    case kt_percent:
-			yyerror("valid keyword, but value is not a number");
-			assert(!(kw.keydef->type == kt_bool));
-			break;
-		    case kt_comment:
-			break;
-		    case kt_obsolete:
-		    case kt_obsolete_quiet:
-			break;
-		    }
-		    new->next = NULL;
-
-		    if (parser_kw_last)
-			parser_kw_last->next = new;
-		    parser_kw_last = new;
-		    if (!*parser_kw) *parser_kw = new;
-		}
-	}
-
-	| BOOLWORD EQUAL BOOL {
-		struct kw_list *new;
-
-		assert(parser_kw != NULL);
-		new = alloc_kwlist();
-		if (new == NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    new->keyword = $1;
-		    new->number = $<num>3;  /* Should not be necessary! */
-		    new->next = NULL;
-		    if (parser_kw_last)
-			parser_kw_last->next = new;
-		    parser_kw_last = new;
-		    if (!*parser_kw) *parser_kw = new;
-		}
-	}
-	| KEYWORD EQUAL INTEGER {
-		struct kw_list *new;
-
-		assert(parser_kw != NULL);
-		new = alloc_kwlist();
-		if (new == NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    new->keyword = $1;
-		    new->number = $<num>3;  /* Should not be necessary! */
-		    new->next = NULL;
-		    if (parser_kw_last)
-			parser_kw_last->next = new;
-		    parser_kw_last = new;
-		    if (!*parser_kw) *parser_kw = new;
-		}
-	}
-	| TIMEWORD EQUAL duration {
-		assert(parser_kw != NULL);
-		struct kw_list *new = alloc_kwlist();
 		if (new == NULL) {
 			yyerror("can't allocate memory in statement_kw");
 		} else {
-			new->keyword = $1;
-			new->number = $3;
-			new->next = NULL;
-			if (parser_kw_last)
-				parser_kw_last->next = new;
-			parser_kw_last = new;
-			if (*parser_kw == NULL)
-				*parser_kw = new;
+			new->x_comment = strdup($1.string);
+			new->commentvalue = strdup($3);
+			TAILQ_INSERT_TAIL(parser_comments, new, link);
 		}
+	}
+	| KEYWORD EQUAL STRING {
+		struct keyword kw = $1;
+
+		char *string = NULL;	/* neutral placeholding value */
+		unsigned int number = 0;	/* neutral placeholding value */
+
+		switch(kw.keydef->type) {
+		case kt_list:
+			number = parser_enum_list(kw.keydef, $3, TRUE);
+			break;
+		case kt_enum:
+			number = parser_enum_list(kw.keydef, $3, FALSE);
+			break;
+		case kt_rsakey:
+		case kt_loose_enum:
+			number = parser_loose_enum(&kw, $3);
+			break;
+		case kt_string:
+		case kt_appendstring:
+		case kt_appendlist:
+		case kt_filename:
+		case kt_dirname:
+		case kt_ipaddr:
+		case kt_bitstring:
+		case kt_idtype:
+		case kt_range:
+		case kt_subnet:
+			string = $3;
+			break;
+
+		case kt_bool:
+		case kt_invertbool:
+		case kt_number:
+		case kt_time:
+		case kt_percent:
+			yyerror("valid keyword, but value is not a number");
+			assert(kw.keydef->type != kt_bool);
+			break;
+		case kt_comment:
+			break;
+		case kt_obsolete:
+		case kt_obsolete_quiet:
+			break;
+		}
+
+		new_parser_kw(&kw, string, number);
+	}
+
+	| BOOLWORD EQUAL BOOL {
+		new_parser_kw(&$1, NULL, $<num>3);
+	}
+	| KEYWORD EQUAL INTEGER {
+		new_parser_kw(&$1, NULL, $<num>3);
+	}
+	| TIMEWORD EQUAL duration {
+		new_parser_kw(&$1, NULL, $3);
 	}
 	| PERCENTWORD EQUAL STRING {
 		struct keyword kw = $1;
@@ -353,39 +287,11 @@ statement_kw:
 				"percentage way too large \"%s\"", str);
 			yyerror(buf);
 		} else {
-			assert(parser_kw != NULL);
-			struct kw_list *new = alloc_kwlist();
-			if (new == NULL) {
-				yyerror("can't allocate memory in statement_kw");
-			} else {
-				new->keyword = $1;
-				new->number = val;
-				new->next = NULL;
-				if (parser_kw_last)
-					parser_kw_last->next = new;
-				parser_kw_last = new;
-				if (*parser_kw == NULL)
-					*parser_kw = new;
-			}
+			new_parser_kw(&kw, NULL, (unsigned int)val);
 		}
 	}
 	| KEYWORD EQUAL BOOL {
-		struct kw_list *new;
-
-		assert(parser_kw != NULL);
-		new = alloc_kwlist();
-		if (new != NULL) {
-		    yyerror("can't allocate memory in statement_kw");
-		} else {
-		    new->keyword = $1;
-		    new->number = $<num>3;  /* Should not be necessary! */
-		    new->next = NULL;
-		    if (parser_kw_last)
-			parser_kw_last->next = new;
-		    parser_kw_last = new;
-		    if (*parser_kw == NULL)
-			*parser_kw = new;
-		}
+		new_parser_kw(&$1, NULL, $<num>3);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	;
@@ -452,68 +358,56 @@ void yyerror(const char *s)
 
 struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 {
-	struct config_parsed *cfg=NULL;
-	int err = 0;
-	FILE *f;
-
-	zero(&parser_errstring);
+	parser_errstring[0] = '\0';
 	if (perr != NULL)
 		*perr = NULL;
 
-	cfg = (struct config_parsed *)malloc(sizeof(struct config_parsed));
-	if (cfg == NULL)
-	{
-	    snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
-	    err++;
-	    goto end;
+	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
+
+	if (cfg == NULL) {
+		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
+		goto err;
 	}
 	zero(cfg);	/* ??? pointer fields may not be NULLed */
-	if (strncmp(file, "-", sizeof("-")) == 0) {
-		f = fdopen(STDIN_FILENO, "r");
-	}
-	else {
-		f = fopen(file, "r");
-	}
-	if (!f)
-	{
-	    snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
-		     file);
-	    err++;
-	    goto end;
+
+	FILE *f = streq(file, "-") ?
+		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
+
+	if (f == NULL) {
+		snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
+			 file);
+		goto err;
 	}
 
 	yyin = f;
 	parser_y_init(file, f);
-	save_errors=1;
+	save_errors = TRUE;
 	TAILQ_INIT(&cfg->sections);
 	TAILQ_INIT(&cfg->comments);
 	parser_cfg = cfg;
 
-	if (yyparse()!=0) {
-	    if (parser_errstring[0]=='\0') {
-		snprintf(parser_errstring, ERRSTRING_LEN,
-			"Unknown error...");
-	    }
-	   save_errors=0;
-	   while (yyparse()!=0);
-	   err++;
-	   goto end;
+	if (yyparse() != 0) {
+		if (parser_errstring[0] == '\0') {
+			snprintf(parser_errstring, ERRSTRING_LEN,
+				"Unknown error...");
+		}
+		save_errors = FALSE;
+		do {} while (yyparse() != 0);
+	} else if (parser_errstring[0] == '\0') {
+		/**
+		 * Config valid
+		 */
+		return cfg;
 	}
-	if (parser_errstring[0]!='\0') {
-	    err++;
-	    goto end;
-	}
-	/**
-	 * Config valid
-	 */
-end:
-	if (err) {
-		if (perr) *perr = (err_t)strdup(parser_errstring);
-		if (cfg) parser_free_conf (cfg);
-		cfg = NULL;
-	}
+	/* falls through on error */
 
-	return cfg;
+err:
+	if (perr != NULL)
+		*perr = (err_t)strdup(parser_errstring);
+	if (cfg != NULL)
+		parser_free_conf(cfg);
+
+	return NULL;
 }
 
 static void parser_free_kwlist(struct kw_list *list)
@@ -522,7 +416,7 @@ static void parser_free_kwlist(struct kw_list *list)
 		struct kw_list *elt = list;
 
 		list = list->next;
-		if (elt->string)
+		if (elt->string != NULL)
 			free(elt->string);
 		free(elt);
 	}
@@ -530,16 +424,18 @@ static void parser_free_kwlist(struct kw_list *list)
 
 void parser_free_conf(struct config_parsed *cfg)
 {
-	struct section_list *seci, *sec;
-	if (cfg) {
+	if (cfg != NULL) {
+		struct section_list *seci;
+
 		parser_free_kwlist(cfg->config_setup);
 
-		for(seci = cfg->sections.tqh_first; seci != NULL; )
-		{
-			sec = seci;
+		for (seci = cfg->sections.tqh_first; seci != NULL; ) {
+			struct section_list *sec = seci;
+
 			seci = seci->link.tqe_next;
 
-			if (sec->name) free(sec->name);
+			if (sec->name != NULL)
+				free(sec->name);
 			parser_free_kwlist(sec->kw);
 			free(sec);
 		}
@@ -548,20 +444,40 @@ void parser_free_conf(struct config_parsed *cfg)
 	}
 }
 
-static struct kw_list *alloc_kwlist(void)
+static void new_parser_kw(struct keyword *keyword, char *string, unsigned int number)
 {
-	struct kw_list *new;
+	struct kw_list *new = malloc(sizeof(struct kw_list));
 
-	new = (struct kw_list *)malloc(sizeof(struct kw_list));
-	zero(new);	/* ??? pointer members might not be set to NULL */
-	return new;
+	if (new == NULL) {
+		yyerror("cannot allocate memory for a kw_list");
+	} else {
+		/*
+		 * fill the values into new
+		 * (either string or number might have a placeholder value
+		 */
+		new->keyword = *keyword;
+		new->string = string;
+		new->number = number;
+		new->next = NULL;
+
+		/* link the new kw_list into the list */
+
+		if (*parser_kw == NULL)
+			*parser_kw = new;	/* first in (some) list */
+
+		/* connect to previous last on list */
+		if (parser_kw_last != NULL)
+			parser_kw_last->next = new;
+
+		/* new is new last on list */
+		parser_kw_last = new;
+	}
 }
 
 static struct starter_comments *alloc_comment(void)
 {
-	struct starter_comments *new;
+	struct starter_comments *new = malloc(sizeof(struct starter_comments));
 
-	new = (struct starter_comments *)malloc(sizeof(struct starter_comments));
 	zero(new);	/* ??? pointer members might not be set to NULL */
 	return new;
 }

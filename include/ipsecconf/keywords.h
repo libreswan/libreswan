@@ -305,8 +305,7 @@ struct keyword {
 struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
-	char        *string;
-	double decimal;
+	char *string;
 	unsigned int number;
 };
 
