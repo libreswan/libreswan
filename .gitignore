@@ -8,6 +8,7 @@ OBJ.*
 *.orig
 *.bak
 *.pyc
+*.o
 TAGS
 tags
 modobj
