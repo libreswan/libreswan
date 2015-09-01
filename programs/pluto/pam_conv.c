@@ -159,16 +159,14 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 		 */
 		what = "pam_authenticate";
 		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
-
 		if (retval != PAM_SUCCESS)
 			break;
 		log_pam_step(arg, what);
 
+		what = "pam_acct_mgmt";
 		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
 		if (retval != PAM_SUCCESS)
 			break;
-
-		what = "pam";
 		log_pam_step(arg, what);
 
 		/* success! */
