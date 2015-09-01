@@ -1654,19 +1654,18 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 
 		if (get_sa_info(st, FALSE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int outb = st->st_esp.present ? st->st_esp.our_bytes :
-				st->st_ah.present ? st->st_ah.our_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
-
-			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
-		}
-		if (get_sa_info(st, TRUE, NULL)) {
-			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
+			u_int outb = st->st_esp.present ? st->st_esp.peer_bytes :
 				st->st_ah.present ? st->st_ah.peer_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
+			mbcp += snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
+		}
 
-			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
+		if (get_sa_info(st, TRUE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			u_int inb = st->st_esp.present ? st->st_esp.our_bytes:
+				st->st_ah.present ? st->st_ah.our_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
+			snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
 		}
 	}
 
