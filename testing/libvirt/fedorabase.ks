@@ -220,7 +220,8 @@ EOD
 cat << EOD >> /root/.bash_profile
 export GIT_PS1_SHOWDIRTYSTATE=true
 source /usr/share/git-core/contrib/completion/git-prompt.sh
-export PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(declare -F __git_ps1 &>/dev/null && __git_ps1 " (%s)")\[\033[00m\]\\$ '
+source /usr/share/doc/git/contrib/completion/git-prompt.sh
+#export PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(declare -F __git_ps1 &>/dev/null && __git_ps1 " (%s)")\[\033[00m\]\\$ '
 alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim
 EOD

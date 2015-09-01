@@ -488,6 +488,7 @@ kvmplutotest	xauth-pluto-16		good
 skiptest	xauth-pluto-17		wip
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
+kvmplutotest	xauth-pluto-20		good
 
 
 

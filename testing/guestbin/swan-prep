@@ -197,6 +197,9 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
 	else:
 		resolv = "/testing/baseconfigs/all/etc/resolv.conf"
+	dst = "/etc/resolv.conf"
+	if os.path.islink(dst): #on fedora 22 it is link frist remove the link
+		os.unlink(dst)
 	shutil.copyfile(resolv, "/etc/resolv.conf")
 
 	if args.nsspw or args.fips:
@@ -348,7 +351,11 @@ if not args.ipv:
 if args.ipv6:
 	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
 	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
-	commands.getoutput("/etc/init.d/network restart")
+
+	if os.path.isfile("/usr/bin/systemctl"):
+		commands.getoutput("systemctl restart network.service")
+	else:
+		commands.getoutput("service network restart")
 
 if not os.path.isfile("/root/.gdbinit"):
 	fp = open("/root/.gdbinit","w")

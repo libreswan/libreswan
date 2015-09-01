@@ -319,7 +319,7 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 	if (st == NULL || IS_IKE_SA(st))
 		return;
 
-	if (get_sa_info(st, FALSE, NULL)) {
+	if (get_sa_info(st, FALSE, NULL)) { /* our_bytes = out going bytes */
 		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%u' ",
 			 st->st_esp.present ? st->st_esp.our_bytes :
 			 st->st_ah.present ? st->st_ah.our_bytes :
