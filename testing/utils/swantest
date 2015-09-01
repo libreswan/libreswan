@@ -1918,7 +1918,7 @@ def do_single_test(args, start='', test=None, st=None):
         else:
             logging.error(
                 "******* missing test directory %s in %s", test["name"], os.getcwd())
-            retrun
+            return
     else:
         logging.debug("%s is a single test not a testlist", test["name"])
 
@@ -2170,7 +2170,7 @@ def makedirs_log(D, mode):  # mode is octal
         os.makedirs(D, mode)
     except:
         logging.error("failed to create directory %s", output_dir)
-        retrun
+        return
 
     return True
 
@@ -2232,7 +2232,7 @@ def setup_result_dir(args, to_create):
 
     if to_create and not os.path.isdir(output_dir):
         logging.error("%s is not directory.", output_dir)
-        retrun
+        return
 
     logging.info("results will be in %s", output_dir)
 
