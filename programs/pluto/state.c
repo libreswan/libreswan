@@ -1814,7 +1814,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						       mbcp,
 						       traffic_buf +
 							  sizeof(traffic_buf),
-						       " AHin=");
+						       " AHout=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
@@ -1825,7 +1825,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
-						       " AHout=");
+						       " AHin=");
 			}
 #endif
 			mbcp = humanize_number(
@@ -1841,23 +1841,23 @@ void fmt_state(struct state *st, const monotime_t n,
 				 SA_ESP);
 /* ??? needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, FALSE, NULL)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
-						       " ESPin=");
+						       " ESPout=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, NULL)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
-						       " ESPout=");
+						       " ESPin=");
 			}
 #endif
 
@@ -1878,7 +1878,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						mbcp,
 						traffic_buf +
 						  sizeof(traffic_buf),
-						" IPCOMPin=");
+						" IPCOMPout=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
@@ -1890,7 +1890,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						mbcp,
 						traffic_buf +
 						  sizeof(traffic_buf),
-						" IPCOMPout=");
+						" IPCOMPin=");
 			}
 #endif
 
