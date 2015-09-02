@@ -81,7 +81,6 @@ static const struct fld RSA_private_field[] =
 
 static err_t lsw_process_psk_secret(chunk_t *psk);
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
-static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak);
 static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
@@ -186,6 +185,30 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 		}
 	}
 	return secrets;
+}
+
+static void create_empty_idlist(struct secret *s)
+{
+	if (s->ids == NULL) {
+		/*
+		 * make sure that empty lists have an implicit match
+		 * everything set of IDs (ipv4 and ipv6)
+		 */
+		struct id_list *idl, *idl2;
+		idl = alloc_bytes(sizeof(*idl), "id list");
+		idl->next = NULL;
+		idl->id = empty_id;
+		idl->id.kind = ID_NONE;
+		(void)anyaddr(AF_INET, &idl->id.ip_addr);
+
+		idl2 = alloc_bytes(sizeof(*idl2), "id list");
+		idl2->next = idl;
+		idl2->id = empty_id;
+		idl2->id.kind = ID_NONE;
+		(void)anyaddr(AF_INET, &idl2->id.ip_addr);
+
+		s->ids = idl2;
+	}
 }
 
 /*
@@ -505,103 +528,6 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	return best;
 }
 
-static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
-						*rsak,
-						char *nssHostCertNickName)
-{
-	err_t ugh = NULL;
-	SECItem *certCKAID;
-	SECKEYPublicKey *pubk;
-	CERTCertificate *nssCert;
-
-	DBG(DBG_CRYPT,
-		DBG_log("NSS: extract_and_add_secret_from_nss_cert_file start");
-		);
-
-	nssCert = CERT_FindCertByNicknameOrEmailAddr(
-		CERT_GetDefaultCertDB(), nssHostCertNickName);
-
-	if (nssCert == NULL)
-		nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
-					lsw_return_nss_password_file_info());
-
-	if (nssCert == NULL) {
-		libreswan_log(
-			"    could not open host cert with nick name '%s' in NSS DB",
-			nssHostCertNickName);
-		ugh = "NSS certficate not found";
-		goto error;
-	}
-	DBG(DBG_CRYPT,
-		DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: NSS Cert found");
-		);
-
-	pubk = CERT_ExtractPublicKey(nssCert);
-	if (pubk == NULL) {
-		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: cannot find cert's public key (err %d)",
-			PR_GetError());
-		ugh = "NSS cert found, pub key not found";
-		goto error;
-	}
-	DBG(DBG_CRYPT,
-		DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: public key found");
-		);
-
-	/*
-	 * does not return any lowkeyid
-	 *
-	 * certCKAID=PK11_GetLowLevelKeyIDForCert(nssCert->slot,nssCert,
-	 *				lsw_return_nss_password_file_info());
-	 */
-	certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, nssCert,
-					lsw_return_nss_password_file_info());
-	if (certCKAID == NULL) {
-		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: cannot find cert's low level CKA ID (err %d)",
-			PR_GetError());
-		ugh = "cert cka id not found";
-		goto error2;
-	}
-	DBG(DBG_CRYPT,
-		DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: ckaid found");
-		);
-
-	rsak->pub.nssCert = nssCert;
-
-	passert(sizeof(rsak->ckaid) >= certCKAID->len);
-	rsak->ckaid_len = certCKAID->len;
-	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
-
-	n_to_mpz(&rsak->pub.e, pubk->u.rsa.publicExponent.data,
-		pubk->u.rsa.publicExponent.len);
-	n_to_mpz(&rsak->pub.n, pubk->u.rsa.modulus.data,
-		pubk->u.rsa.modulus.len);
-
-	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
-			rsak->pub.keyid, &rsak->pub.k);
-
-	/*
-	 * loglog(RC_LOG_SERIOUS, "extract_and_add_secret_from_nsscert: before free (value of k %d)",
-	 *	rsak->pub.k);
-	 */
-	SECITEM_FreeItem(certCKAID, PR_TRUE);
-
-error2:
-	/*
-	 * loglog(RC_LOG_SERIOUS, "extract_and_add_secret_from_nss_cert_file: before freeing public key");
-	 */
-	SECKEY_DestroyPublicKey(pubk);
-	/*
-	 * loglog(RC_LOG_SERIOUS, "extract_and_add_secret_from_nss_cert_file: end retune fine");
-	 */
-error:
-	DBG(DBG_CRYPT,
-		DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: end");
-		);
-	return ugh;
-}
-
 /*
  * check the existence of an RSA private key matching an RSA public
  */
@@ -658,53 +584,10 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * The fields are a subset of those used by BIND 8.2 and have the
  * same names.
  *
- * For RSA Keys from certificate imports in NSS, use the "RSA" keyword,
- * followed by the friendly_name used by NSS (usually specified during
- * key export when creating PKCS#12 files.
- *
  * For XAUTH passwords, use @username followed by ":XAUTH" followed by the password
  *
  * PIN for smartcard is no longer supported - use NSS with smartcards
  */
-
-/*
- * process rsa key entry from certificate in NSS database
- */
-static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
-{
-	char friendly_name[PATH_MAX]; /* XXX: is there an NSS limit < PATH_MAX ? */
-	err_t ugh = NULL;
-	bool unexpected;
-
-	/* we expect the NSS friendly name of a PKCS#1 private key in the NSS store */
-
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		/* quoted friendly_name */
-		passert(flp->tok[0] == flp->cur[-1]);	/* both quotes the same */
-		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok - 2);
-		memcpy(friendly_name, flp->tok + 1, flp->cur - flp->tok - 2);
-		friendly_name[flp->cur - flp->tok - 2] = '\0';
-	} else {
-		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok);
-		memcpy(friendly_name, flp->tok, flp->cur - flp->tok + 1);
-	}
-
-	unexpected = shift();
-	/* we used to recommend people to provide an empty passphrase for NSS keys */
-	if (unexpected && (streq(flp->tok, "\"\"") || streq(flp->tok, "''"))) {
-		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
-		unexpected = shift();
-	}
-	if (unexpected) {
-		ugh = "RSA private key file -- unexpected token after friendly_name";
-	} else {
-		ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
-		if (ugh == NULL)
-			ugh = RSA_public_key_sanity(rsak);
-	}
-
-	return ugh;
-}
 
 /* parse PSK from file */
 static err_t lsw_process_psk_secret(chunk_t *psk)
@@ -969,8 +852,7 @@ static void process_secret(struct secret **psecrets,
 					&s->pks.u.RSA_private_key);
 		} else {
 			/* RSA key in certificate in NSS */
-			ugh = lsw_process_rsa_keycert(
-				&s->pks.u.RSA_private_key);
+			ugh = "WARNING: secrets entries for NSS certificates have been deprecated";
 		}
 		if (!ugh) {
 			libreswan_log("loaded private key for keyid: %s:%s",
@@ -992,27 +874,7 @@ static void process_secret(struct secret **psecrets,
 		/* gauntlet has been run: install new secret */
 		lock_certs_and_keys("process_secret");
 
-		if (s->ids == NULL) {
-			/*
-			 * make sure that empty lists have an implicit match
-			 * everything set of IDs (ipv4 and ipv6)
-			 */
-			struct id_list *idl, *idl2;
-
-			idl = alloc_bytes(sizeof(*idl), "id list");
-			idl->next = NULL;
-			idl->id = empty_id;
-			idl->id.kind = ID_NONE;
-			(void)anyaddr(AF_INET, &idl->id.ip_addr);
-
-			idl2 = alloc_bytes(sizeof(*idl2), "id list");
-			idl2->next = idl;
-			idl2->id = empty_id;
-			idl2->id.kind = ID_NONE;
-			(void)anyaddr(AF_INET, &idl2->id.ip_addr);
-
-			s->ids = idl2;
-		}
+		create_empty_idlist(s);
 		s->next   = *psecrets;
 		*psecrets = s;
 		unlock_certs_and_keys("process_secret");
@@ -1465,4 +1327,178 @@ void delete_public_keys(struct pubkey_list **head,
 		else
 			pp = &p->next;
 	}
+}
+
+/*
+ * Relocated from x509.c for convenience
+ */
+struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
+{
+	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+	chunk_t e, n;
+
+	/* secitem_to_chunk
+	 */
+	e.ptr = nsspk->u.rsa.publicExponent.data;
+	e.len = nsspk->u.rsa.publicExponent.len;
+	n.ptr = nsspk->u.rsa.modulus.data;
+	n.len = nsspk->u.rsa.modulus.len;
+
+	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
+	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
+
+	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
+
+	/*
+	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
+	*/
+
+	pk->alg = PUBKEY_ALG_RSA;
+	pk->id  = empty_id;
+	pk->issuer = empty_chunk;
+
+	SECKEY_DestroyPublicKey(nsspk);
+	return pk;
+}
+
+static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
+				      CERTCertificate *cert)
+{
+	err_t ugh = NULL;
+	SECItem *certCKAID = NULL;
+	SECKEYPublicKey *pubk = NULL;
+	SECKEYPrivateKey *privk = NULL;
+
+	if ((pubk = CERT_ExtractPublicKey(cert)) == NULL) {
+		loglog(RC_LOG_SERIOUS,
+		       "%s: should not happen: cert public key not found [%d]",
+		       __FUNCTION__, PR_GetError());
+		return "NSS: cert public key not found";
+	}
+
+	/* only a check */
+	if ((privk = PK11_FindKeyByAnyCert(cert,
+				lsw_return_nss_password_file_info())) == NULL) {
+		SECKEY_DestroyPublicKey(pubk);
+		return "NSS: cert private key not found";
+	}
+	SECKEY_DestroyPrivateKey(privk);
+
+	certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+					lsw_return_nss_password_file_info());
+	if (certCKAID == NULL) {
+		loglog(RC_LOG_SERIOUS,
+		       "%s: no key ID - slot or DB error [%d]",
+		       __FUNCTION__, PR_GetError());
+		ugh = "NSS: key ID not found";
+		goto out;
+	}
+
+	/*
+	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't mean
+	 * that the private key exists. The data may be empty if there's no
+	 * private key.
+	 *
+	 * Update: I don't think this is true anymore, hence the search for the private
+	 * key above
+	 */
+	if (certCKAID->data == NULL || certCKAID->len < 1) {
+		ugh = "NSS: no CKAID data";
+		goto out;
+	}
+
+	rsak->pub.nssCert = cert;
+
+	passert(sizeof(rsak->ckaid) >= certCKAID->len);
+	rsak->ckaid_len = certCKAID->len;
+	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
+
+	n_to_mpz(&rsak->pub.e, pubk->u.rsa.publicExponent.data,
+		pubk->u.rsa.publicExponent.len);
+	n_to_mpz(&rsak->pub.n, pubk->u.rsa.modulus.data,
+		pubk->u.rsa.modulus.len);
+
+	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
+			rsak->pub.keyid, &rsak->pub.k);
+
+out:
+	if (certCKAID != NULL) {
+		SECITEM_FreeItem(certCKAID, PR_TRUE);
+	}
+	if (pubk != NULL) {
+		SECKEY_DestroyPublicKey(pubk);
+	}
+	return ugh;
+}
+
+static err_t lsw_extract_nss_cert_privkey(struct RSA_private_key *rsak,
+					  CERTCertificate *cert)
+{
+	err_t ugh = NULL;
+
+	DBG(DBG_CRYPT,
+	    DBG_log("extracting the RSA private key for %s", cert->nickname));
+
+	if ((ugh = add_ckaid_to_rsa_privkey(rsak, cert)) != NULL) {
+		return ugh;
+	}
+
+	return RSA_public_key_sanity(rsak);
+}
+
+static const struct RSA_private_key *get_nss_cert_privkey(struct secret *secrets,
+							  CERTCertificate *cert)
+{
+	struct secret *s = NULL;
+	const struct RSA_private_key *priv = NULL;
+	struct pubkey *pub = allocate_RSA_public_key_nss(cert);
+	if (pub == NULL) {
+		return NULL;
+	}
+
+	for (s = secrets; s != NULL; s = s->next) {
+		if (s->pks.kind == PPK_RSA &&
+			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
+					    &pub->u.rsa)) {
+			priv = &s->pks.u.RSA_private_key;
+			break;
+		}
+	}
+	free_public_key(pub);
+	return priv;
+}
+
+err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
+{
+	struct secret *s = NULL;
+	const struct RSA_private_key *pkey = NULL;
+	err_t ugh = NULL;
+
+	if ((pkey = get_nss_cert_privkey(*secrets, cert)) != NULL) {
+		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
+					 cert->nickname));
+		CERT_DestroyCertificate(cert);
+		return NULL;
+	}
+	s = alloc_thing(struct secret, "secret");
+	s->pks.kind = PPK_RSA;
+	s->secretlineno = 0;
+
+	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,
+						cert)) != NULL) {
+		pfree(s);
+		CERT_DestroyCertificate(cert);
+		return ugh;
+	}
+
+	lock_certs_and_keys("lsw_add_rsa_secret");
+
+	create_empty_idlist(s);
+	s->next = *secrets;
+	*secrets = s;
+
+	unlock_certs_and_keys("lsw_add_rsa_secret");
+
+	return NULL;
 }

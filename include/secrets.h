@@ -179,5 +179,7 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
+extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
+extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
 
 #endif /* _SECRETS_H */

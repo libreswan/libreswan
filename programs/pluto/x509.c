@@ -727,31 +727,6 @@ void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 	*gn_out = pgn_list;
 }
 
-struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
-{
-	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-
-	chunk_t e = secitem_to_chunk(nsspk->u.rsa.publicExponent);
-	chunk_t n = secitem_to_chunk(nsspk->u.rsa.modulus);
-
-	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-	/*
-	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-	*/
-
-	pk->alg = PUBKEY_ALG_RSA;
-	pk->id  = empty_id;
-	pk->issuer = empty_chunk;
-
-	SECKEY_DestroyPublicKey(nsspk);
-	return pk;
-}
-
 static void replace_public_key(struct pubkey *pk)
 {
 	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
