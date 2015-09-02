@@ -63,6 +63,7 @@
 
 #include "fetch.h"
 #include "pluto_x509.h"
+#include "nss_cert_load.h"
 
 #include "nat_traversal.h"
 
@@ -893,4 +894,17 @@ void list_public_keys(bool utc, bool check_pub_keys)
 		}
 		p = p->next;
 	}
+}
+
+err_t load_nss_cert_secret(const char *nickname)
+{
+	CERTCertificate *cert = get_cert_from_nss(nickname);
+
+	if (cert == NULL) {
+		return "NSS cert not found";
+	}
+	/*
+	 * cert is released in lsw_add_rsa_secret on error
+	 */
+	return lsw_add_rsa_secret(&pluto_secrets, cert);
 }

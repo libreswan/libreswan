@@ -92,7 +92,6 @@ extern void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 extern void get_pluto_gn_from_nss_cert(CERTCertificate *cert,
 					generalName_t **gn_out);
 extern realtime_t get_nss_cert_notafter(CERTCertificate *cert);
-extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
 extern generalName_t *gndp_from_nss_cert(CERTCertificate *cert);
 extern bool cert_key_is_rsa(CERTCertificate *cert);
 extern void select_nss_cert_id(CERTCertificate *cert, struct id *end_id);

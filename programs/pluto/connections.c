@@ -1113,8 +1113,10 @@ static reqid_t gen_reqid(void)
 	}
 }
 
-static bool have_wm_certs(const struct whack_message *wm)
+static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
+	err_t ugh;
+
 	if (wm->left.cert != NULL) {
 		if (!cert_exists_in_nss(wm->left.cert)) {
 			loglog(RC_COMMENT, "leftcert with the "
@@ -1123,15 +1125,24 @@ static bool have_wm_certs(const struct whack_message *wm)
 					   wm->left.cert);
 			return FALSE;
 		}
+		if ((ugh = load_nss_cert_secret(wm->left.cert)) != NULL) {
+			DBG(DBG_CONTROL, DBG_log("warning: no secret key loaded for leftcert=%s: %s",
+						  wm->left.cert, ugh));
+		}
 	}
 
 	if (wm->right.cert != NULL) {
+		//nokey-refpatch check_cert_nss PK11_FindKeyByAnyCert(cert)
 		if (!cert_exists_in_nss(wm->right.cert)) {
 			loglog(RC_COMMENT, "rightcert with the "
 					   "nickname \"%s\" does "
 					   "not exist in NSS db",
 					   wm->right.cert);
 			return FALSE;
+		}
+		if ((ugh = load_nss_cert_secret(wm->right.cert)) != NULL) {
+			DBG(DBG_CONTROL, DBG_log("warning: no secret key loaded for rightcert=%s: %s",
+						  wm->right.cert, ugh));
 		}
 	}
 
@@ -1150,8 +1161,7 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
-	/* pre-check for leftcert/rightcert availablility */
-	if (!have_wm_certs(wm))
+	if (!preload_wm_cert_secrets(wm))
 		return;
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
