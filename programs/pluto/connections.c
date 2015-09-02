@@ -320,8 +320,10 @@ void delete_connection(struct connection *c, bool relations)
 
 	free_generalNames(c->requested_ca, TRUE);
 
+#ifdef USE_ADNS
 	if ((c->policy & POLICY_AUTH_NULL) == LEMPTY)
 		gw_delref(&c->gw_info);
+#endif
 
 	if (c->alg_info_ike != NULL) {
 		alg_info_delref(&c->alg_info_ike->ai);
@@ -1817,7 +1819,11 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
+#ifdef USE_ADNS
 				struct gw_info *gw,
+#else
+				struct gw_info *gw UNUSED,
+#endif
 				const ip_address *our_client,
 				const ip_address *peer_client)
 {
@@ -1870,11 +1876,13 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
 
+#ifdef USE_ADNS
 	if (!(d->policy & POLICY_AUTH_NULL)) {
 		passert(d->gw_info == NULL);
 		gw_addref(gw);
 		d->gw_info = gw;
 	}
+#endif
 
 	/*
 	 * Adjust routing if something is eclipsing c.

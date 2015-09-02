@@ -109,6 +109,7 @@ make %{?_smp_mflags} \
     USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
     USE_LDAP=%{USE_CRL_FETCHING} \
     USE_LIBCURL=%{USE_CRL_FETCHING} \
+    USE_ADNS=false \
     USE_DNSSEC=%{USE_DNSSEC} \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \

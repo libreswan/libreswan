@@ -577,6 +577,7 @@ void initiate_ondemand(const ip_address *our_client,
 				      );
 }
 
+#ifdef USE_ADNS
 static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 {
 	struct find_oppo_continuation *cr = (void *)acr; /* inherit, damn you! */
@@ -642,6 +643,7 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 	whack_log_fd = NULL_FD;
 	close_any(whackfd);
 }
+#endif
 
 static err_t check_txt_recs(enum myid_state try_state,
 			    const struct connection *c,
@@ -1245,7 +1247,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,
 				"opportunistic continuation");
+#ifdef USE_ADNS
 			struct id id;
+#endif
 
 			b->policy_prio = c->prio;
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
@@ -1287,6 +1291,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 			switch (next_step) {
 			case fos_myid_ip_txt:
+#ifdef USE_ADNS
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = TRUE;
@@ -1299,9 +1304,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
+#endif
 				cr->b.step = fos_myid_hostname_txt;
 			/* FALL THROUGH */
 			case fos_myid_hostname_txt:
+#ifdef USE_ADNS
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = FALSE;
@@ -1315,10 +1322,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
-
+#endif
 				cr->b.step = fos_our_client;
 			/* FALL THROUGH */
 			case fos_our_client: /* IPSECKEY for our client */
+#ifdef USE_ADNS
 				if (!sameaddr(&c->spd.this.host_addr,
 					      &b->our_client)) {
 					/* Check that at least one IPSECKEY(reverse(b->our_client)) is workable.
@@ -1334,9 +1342,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
+#endif
 				cr->b.step = fos_our_txt;
 			/* FALL THROUGH */
 			case fos_our_txt: /* IPSECKEY for us */
+#ifdef USE_ADNS
 				cr->b.failure_ok = b->failure_ok = TRUE;
 				cr->b.want = b->want = "our IPSECKEY record";
 				ugh = start_adns_query(&sr->this.id,
@@ -1345,8 +1355,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       continue_oppo,
 						       &cr->ac);
 				break;
-
+#endif
 			case fos_his_client: /* IPSECKEY for his client */
+#ifdef USE_ADNS
 				/* note: {unshare|free}_id_content not needed for id: ephemeral */
 				cr->b.want = b->want =
 						     "target's IPSECKEY record";
@@ -1358,7 +1369,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       continue_oppo,
 						       &cr->ac);
 				break;
-
+#endif
 			default:
 				bad_case(next_step);
 			}

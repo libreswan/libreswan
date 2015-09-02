@@ -42,7 +42,9 @@ build-stamp: patch
 			 USE_XAUTHPAM=true \
 			 USE_FIPSCHECK=false \
 			 USE_LIBCAP_NG=false \
-			 USE_LABELED_IPSEC=false
+			 USE_LABELED_IPSEC=false \
+			 USE_ADNS=false \
+
 
 	# remove the temporary file, it will be created during install
 	rm -f $(CURDIR)/debian/ipsec.secrets

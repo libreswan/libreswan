@@ -76,11 +76,11 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 #    Double quoting may be needed.
 
 
-USE_ADNS=true
-BINNAMEADNSIFNEEDED=$(BINNAMEADNS)
 
+ifeq ($(USE_ADNS),true)
 ifeq ($(USE_KEYRR),true)
 KEYRR_DEFINES=-DUSE_KEYRR
+endif
 endif
 
 ifeq ($(USE_PFKEYv2),true)
@@ -203,9 +203,9 @@ endif
 
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
+	${ADNS_DEFS} \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
-	$(DNSSECDEF) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
@@ -251,7 +251,6 @@ endif
 BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
 BINNAMEWHACKINIT = whackinit
-BINNAMEADNS = _pluto_adns
 BINNAMEIMPORTCRL = _import_crl
 
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
@@ -266,8 +265,12 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
+ifeq ($(USE_ADNS),true)
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
+BINNAMEADNS = _pluto_adns
+ADNS_OBJS=dnskey.o
+endif
 
 LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
 ifeq ($(USE_DNSSEC),true)
@@ -392,7 +395,7 @@ OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
-OBJSPLUTO += demux.o msgdigest.o keys.o dnskey.o
+OBJSPLUTO += demux.o msgdigest.o keys.o ${ADNS_OBJS}
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
@@ -425,7 +428,7 @@ clean-local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) cleanall
 install-local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+buildall: $(BINNAMEPLUTO) $(BINNAMEADNS) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
@@ -444,8 +447,10 @@ list-local-base:
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
 
+ifeq ($(USE_ADNS),true)
 $(BINNAMEADNS): $(OBJSADNS)
 	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}
+endif
 
 $(BINNAMEWHACK): $(OBJSWHACK)
 	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}

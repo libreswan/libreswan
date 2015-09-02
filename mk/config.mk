@@ -287,6 +287,10 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
 
+# Enable support for the obsoleted adns resolver
+# This code is only used by IKEv1 OE - which is obsoleted. Do not enable!
+USE_ADNS?=false
+
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
 # and any certificates to be in a single directory defined by
 # FINALCONFDDIR?
