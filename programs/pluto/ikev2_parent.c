@@ -1601,16 +1601,21 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	size_t enc_size = integ_start - enc_start;
 
 	/*
-	 * Check if block-size is valid.  Do this before the payload's
-	 * integrity has been verified as block-alignment requirements
-	 * aren't exactly secret (originally this was being done
-	 * beteen integrity and decrypt).
+	 * Check that the payload is block-size aligned.
+	 *
+	 * Per rfc7296 "the recipient MUST accept any length that
+	 * results in proper alignment".
+	 *
+	 * Do this before the payload's integrity has been verified as
+	 * block-alignment requirements aren't exactly secret
+	 * (originally this was being done between integrity and
+	 * decrypt).
 	 */
 	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
 	bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
 	if (pad_to_blocksize) {
 		if (enc_size % enc_blocksize != 0) {
-			libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
+			libreswan_log("discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
 				      enc_size, enc_blocksize);
 			return STF_FAIL;
 		}
@@ -1707,17 +1712,47 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size + integ_size));
 	}
 
-
-	u_char padlen = enc_start[enc_size - 1] + 1;
-	if (padlen > enc_blocksize || padlen > enc_size) {
-		libreswan_log("invalid padding-length octet: 0x%2x", padlen - 1);
+	/*
+	 * Check the padding.
+	 *
+	 * Per rfc7296 "The sender SHOULD set the Pad Length to the
+	 * minimum value that makes the combination of the payloads,
+	 * the Padding, and the Pad Length a multiple of the block
+	 * size, but the recipient MUST accept any length that results
+	 * in proper alignment."
+	 *
+	 * Notice the "should".  RACOON, for instance, sends extra
+	 * blocks of padding that contain random bytes.
+	 */
+	u_int8_t padlen = enc_start[enc_size - 1] + 1;
+	if (padlen > enc_size) {
+		libreswan_log("discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
+			      padlen, padlen - 1, enc_size);
 		return STF_FAIL;
 	}
+	if (pad_to_blocksize) {
+		if (padlen > enc_blocksize) {
+			/* probably racoon */
+			DBG(DBG_CRYPT,
+			    DBG_log("payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
+				    (padlen - 1) / enc_blocksize,
+				    padlen, padlen - 1, enc_blocksize));
+		}
+	} else {
+		if (padlen > 1) {
+			DBG(DBG_CRYPT,
+			    DBG_log("payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
+				    padlen - 1, padlen, padlen - 1));
+		}
+	}
 
-	/* don't bother to check any other pad octets */
-	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
-
+	/*
+	 * Don't check the contents of the pad octets; racoon, for
+	 * instance, sets them to random values.
+	 */
+	DBG(DBG_CRYPT, DBG_log("stripping %u octets as pad", padlen));
 	setchunk(*chunk, enc_start, enc_size - padlen);
+
 	return STF_OK;
 }
 
