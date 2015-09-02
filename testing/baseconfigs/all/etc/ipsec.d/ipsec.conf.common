@@ -9,9 +9,6 @@
 # left  = other stuff.
 #
 
-conn %default
-        retransmit-interval=2000
-
 conn us-to-anyone
 	also=us
 	also=me-to-anyone
