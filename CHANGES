@@ -7,6 +7,8 @@ v3.16 (unreleased)
 * pluto: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
 * PAM: Fix some IKEv1 XAUTH methods always returning "denied" [Antony]
 * newhostkey: fix seedev device [Paul]
+* pluto: Fix trafficstatus byte counter output [Antony]
+* building: obsolete USE_ADNS and disable building adns helpers [Paul]
 
 v3.15 (August 24, 2015)
 * SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
