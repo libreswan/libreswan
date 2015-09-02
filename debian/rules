@@ -44,6 +44,7 @@ build-stamp: patch
 			 USE_LIBCAP_NG=false \
 			 USE_LABELED_IPSEC=false \
 			 USE_ADNS=false \
+			 USE_DNSSEC=true \
 
 
 	# remove the temporary file, it will be created during install
