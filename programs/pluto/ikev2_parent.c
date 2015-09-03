@@ -712,8 +712,14 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			break;
 	}
 
-	if (e != STF_OK)
+	if (e != STF_OK) {
+		ipstr_buf b;
+
+		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy of RSASIG, PSK or AUTH_NULL",
+			ipstr(&md->iface->ip_addr, &b),
+			ntohs(portof(&md->iface->ip_addr)));
 		return e;
+	}
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 

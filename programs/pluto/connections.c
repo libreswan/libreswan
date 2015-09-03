@@ -2459,20 +2459,22 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
-					ipstr(me, &b),
-					ntohs(portof(me)),
-					bitnamesof(sa_policy_bit_names, policy));
+			DBG(DBG_CONTROL, DBG_log(
+				"initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
+				ipstr(me, &b),
+				ntohs(portof(me)),
+				bitnamesof(sa_policy_bit_names, policy)));
+
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-					" but \"%s\" kind=%s forbids connection",
-					ipstr(me, &b), pluto_port, c->name,
-					enum_name(&connection_kind_names, c->kind));
+			DBG(DBG_CONTROL, DBG_log(
+				"initial parent SA message received on %s:%u but \"%s\" kind=%s forbids connection",
+				ipstr(me, &b), pluto_port, c->name,
+				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
