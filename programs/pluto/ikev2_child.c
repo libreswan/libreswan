@@ -816,16 +816,13 @@ static stf_status ikev2_create_responder_child_state(
 			struct spd_route *sr;
 			int wildcards, pathlen; /* XXX */
 
-			if (d == c) continue; /* skip comparing againt self */
-
 			if (d->policy & POLICY_GROUP)
 				continue;
 
 			/*
 			 * ??? same_id && match_id seems redundant.
 			 * if d->spd.this.id.kind == ID_NONE, both TRUE
-			 * else if c->spd.this.id.kind == ID_NONE, same_id
-			 * treats it as a wildcard and match_id does not.  Odd.
+			 * else if c->spd.this.id.kind == ID_NONE, same_id treats it as a wildcard and match_id does not.  Odd.
 			 * else if kinds differ, match_id FALSE
 			 * else if kind ID_DER_ASN1_DN, wildcards are forbidden by same_id
 			 * else match_id just calls same_id.
