@@ -2336,10 +2336,13 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
 	 * for it.
 	 */
+
 	/* so far child's connection is same as parent's */
 	passert(pc == cst->st_connection);
+
 	{
 		lset_t policy = pc->policy;
+
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
 
@@ -2348,7 +2351,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s Reauthentication so use the original policy",
 				cc->name));
 		}
-		cst->st_connection = cc;
+
+		/* ??? this seems very late to change the connection */
+		cst->st_connection = cc;	/* safe: from duplicate_state */
 
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
 				ISAKMP_NEXT_v2TSi, cc, policy);

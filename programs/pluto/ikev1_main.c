@@ -721,7 +721,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	passert(!st->st_oakley.doing_xauth);
 
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from new_state */
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
 	st->st_localaddr = md->iface->ip_addr;
@@ -2659,8 +2659,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	struct state st;
-	struct connection cnx;
+	struct state st;	/* note: not a pointer! */
+	struct connection cnx;	/* note: not a pointer! */
 
 	passert(md);
 

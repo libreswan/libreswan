@@ -495,7 +495,7 @@ void initialize_new_state(struct state *st,
 {
 	struct spd_route *sr;
 
-	st->st_connection = c;
+	st->st_connection = c;	/* surely safe: must be a new state */
 
 	set_state_ike_endpoints(st, c);
 

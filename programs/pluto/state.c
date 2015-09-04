@@ -849,7 +849,7 @@ void delete_state(struct state *st)
 	fake_state(st, STATE_UNDEFINED);
 
 	/* we might be about to free it */
-	st->st_connection = NULL;
+	st->st_connection = NULL;	/* c will be discarded */
 	/* without st_connection, st isn't complete */
 	cur_state = old_cur_state;
 	connection_discard(c);
@@ -929,8 +929,10 @@ bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
 	int i;
+
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
+
 		FOR_EACH_ENTRY(st, i, {
 			if (st->st_connection == c)
 				return TRUE;

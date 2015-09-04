@@ -2877,15 +2877,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 						   &peer);
 			}
 
-			st->st_connection = r; /* kill reference to c */
-
-			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection()
-			 */
-			if (cur_connection == c)
-				set_cur_connection(r);
-
-			connection_discard(c);
+			update_state_connection(st, r);
 		} else if (c->spd.that.has_id_wildcards) {
 			free_id_content(&c->spd.that.id);
 			c->spd.that.id = peer;

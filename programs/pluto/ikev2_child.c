@@ -919,11 +919,12 @@ static stf_status ikev2_create_responder_child_state(
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
+		update_state_connection(cst, c);
 	} else {
 		cst = duplicate_state(pst);
+		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
-	cst->st_connection = c;
 
 	if (role == ORIGINAL_INITIATOR) {
 		memcpy(&cst->st_ts_this, &tsi[best_tsi_i],
@@ -946,7 +947,6 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 	enum isakmp_xchg_types isa_xchg)
 {
 	ip_address ipv4;
-	struct state *cst = NULL;
 	struct connection *c = md->st->st_connection;
 
 	err_t e = lease_an_address(c, &ipv4);
@@ -955,10 +955,14 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 	}
 
+	struct state *cst;
+
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
+		update_state_connection(cst, c);
 	} else {
 		cst = duplicate_state(md->st);
+		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
 
@@ -971,7 +975,6 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 
 	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
 	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
-	cst->st_connection = c;
 
 	*ret_cst = cst;	/* success! */
 	return STF_OK;

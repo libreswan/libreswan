@@ -390,10 +390,8 @@ extern struct connection
 				      const ip_address *peer_client,
 				      int transport_proto);
 
-/* instantiating routines
- * Note: connection_discard() is in state.h because all its work
- * is looking through state objects.
- */
+/* instantiating routines */
+
 struct gw_info;         /* forward declaration of tag (defined in dnskey.h) */
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
 extern struct connection *rw_instantiate(struct connection *c,
@@ -445,7 +443,9 @@ extern void release_pending_whacks(struct state *st, err_t story);
 extern void unpend(struct state *st);
 extern void update_pending(struct state *os, struct state *ns);
 extern void flush_pending_by_state(struct state *st);
+
 extern void connection_discard(struct connection *c);
+extern void update_state_connection(struct state *st, struct connection *c);
 
 /* A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff

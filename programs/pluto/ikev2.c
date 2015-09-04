@@ -1202,15 +1202,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 						   NULL, &peer);
 				}
 
-				md->st->st_connection = r; /* kill reference to c */
-
-				/* this ensures we don't move cur_connection from NULL to
-				* something, requiring a reset_cur_connection()
-				*/
-				if (cur_connection == c)
-					set_cur_connection(r);
-
-				connection_discard(c);
+				update_state_connection(md->st, r);
 			} else if (c->spd.that.has_id_wildcards) {
 				free_id_content(&c->spd.that.id);
 				c->spd.that.id = peer;
@@ -1330,8 +1322,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
 				  chunk_t *data)
 {
-	struct state st;
-	struct connection cnx;
+	struct state st;	/* note: not a pointer */
+	struct connection cnx;	/* note: not a pointer */
 
 	/**
 	 * Create a dummy state to be able to use send_ike_msg in

@@ -3810,6 +3810,35 @@ void connection_discard(struct connection *c)
 }
 
 /*
+ * If a state's connection is being changed, there may no longer be any
+ * uses of that connection.  If so, it should be discarded.
+ * This routine should be called when you don't know if there are
+ * remaining references.
+ *
+ * You don't need to call this routine if:
+ *
+ * - the state has just been created by new_state()
+ *   (the st_connection field will be NULL).
+ *
+ * - the state has just been created by duplicate_state()
+ *   (the state from which it was cloned will retain a reference
+ *   to the old state)
+ */
+void update_state_connection(struct state *st, struct connection *c)
+{
+	struct connection *t = st->st_connection;
+
+	if (t != c) {
+		st->st_connection = c;
+		if (t != NULL) {
+			if (cur_connection == t)
+				set_cur_connection(c);
+			connection_discard(t);
+		}
+	}
+}
+
+/*
  * A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
  * the template is a /32 -> /32. This requires some special casing.

@@ -915,7 +915,7 @@ stf_status quick_outI1(int whack_sock,
 	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
@@ -2065,11 +2065,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		 * routine, so we can "reach back" to p1st to get it.
 		 */
 		if (st->st_connection != c) {
-			struct connection *t = st->st_connection;
-
-			st->st_connection = c;
+			st->st_connection = c;	/* safe: from duplicate_state */
 			set_cur_connection(c);
-			connection_discard(t);
 		}
 
 		st->st_try = 0; /* not our job to try again from start */
