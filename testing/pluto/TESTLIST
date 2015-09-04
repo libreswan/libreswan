@@ -63,7 +63,7 @@ kvmplutotest	ikev2-45-impair-gx-01			good
 kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			wip
-kvmplutotest	ikev2-48-nat-cp				wip
+kvmplutotest	ikev2-48-nat-cp				good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
