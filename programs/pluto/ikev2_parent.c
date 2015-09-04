@@ -1596,7 +1596,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	 */
 	u_char *payload_end = chunk->ptr + chunk->len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
-		libreswan_log("encrypted payload impossibly short (%zu)",
+		libreswan_log("encrypted payload impossibly short (%tu)",
 			      payload_end - wire_iv_start);
 		return STF_FAIL;
 	}
@@ -4105,7 +4105,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				}
 
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-					libreswan_log("IPsec Delete Notification payload size is %tu but %u is required",
+					libreswan_log("IPsec Delete Notification payload size is %zu but %u is required",
 						pbs_left(&p->pbs),
 						v2del->isad_nrspi * v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
