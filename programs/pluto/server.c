@@ -529,19 +529,19 @@ static void childhandler(int sig UNUSED)
 }
 
 /* perform waitpid() for any children */
-#if 0	/* ??? no longer used because of libevent? */
 static void reapchildren(void)
 {
 	pid_t child;
 	int status;
 
-	sigchildflag = FALSE;
 	errno = 0;
 
 	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
+#ifdef USE_ADNS
 		/* got a child to reap */
 		if (adns_reapchild(child))
 			continue;
+#endif
 
 		if (child == addconn_child_pid) {
 			DBG(DBG_CONTROLMORE,
@@ -559,7 +559,11 @@ static void reapchildren(void)
 			      errno, strerror(errno));
 	}
 }
-#endif
+
+static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+    reapchildren();
+}
 
 void init_event_base(void) {
 	DBG(DBG_CONTROLMORE, DBG_log("Initialize up libevent base"));
@@ -575,6 +579,7 @@ static void main_loop(void)
 	struct event *ev_ctl ; /* AA_2015 don't forget to free it */
 	struct event *ev_sig_hup;
 	struct event *ev_sig_term;
+	struct event *ev_sig_chld;
 
 	/*
 	 * new lbevent setup and loop
@@ -588,6 +593,10 @@ static void main_loop(void)
 
 	passert(ev_ctl != NULL);
 	passert(event_add(ev_ctl, NULL) >= 0);
+
+	ev_sig_chld = event_new(pluto_eb, SIGCHLD, EV_SIGNAL,childhandler_cb, NULL);
+	passert(ev_sig_chld != NULL);
+	passert(event_add(ev_sig_chld, NULL) >= 0);
 
 	ev_sig_term = event_new(pluto_eb, SIGTERM, EV_SIGNAL,termhandler_cb, NULL);
 	passert(ev_sig_term != NULL);
