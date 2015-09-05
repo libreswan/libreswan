@@ -96,6 +96,13 @@
  *  Server main loop and socket initialization routines.
  */
 
+struct pluto_events {
+	struct event *ev_ctl ;
+	struct event *ev_sig_hup;
+	struct event *ev_sig_term;
+	struct event *ev_sig_chld;
+} pluto_evs;
+
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 char *pluto_vendorid;
@@ -566,20 +573,26 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 }
 
 void init_event_base(void) {
-	DBG(DBG_CONTROLMORE, DBG_log("Initialize up libevent base"));
+	DBG(DBG_CONTROLMORE, DBG_log("Initialize libevent base"));
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
 	passert(evthread_use_pthreads() >= 0);
 	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
 }
 
+/* free pluto events at the end. better memory accounting. */
+static void pluto_event_free(struct pluto_events *pluto_evs)
+{
+	event_free(pluto_evs->ev_ctl);
+	event_free(pluto_evs->ev_sig_chld);
+	event_free(pluto_evs->ev_sig_term);
+	event_free(pluto_evs->ev_sig_hup);
+}
+
 static void main_loop(void)
 {
 	int r;
-	struct event *ev_ctl ; /* AA_2015 don't forget to free it */
-	struct event *ev_sig_hup;
-	struct event *ev_sig_term;
-	struct event *ev_sig_chld;
+	struct pluto_events pluto_evs;
 
 	/*
 	 * new lbevent setup and loop
@@ -588,28 +601,22 @@ static void main_loop(void)
 
 	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
 
-	ev_ctl = event_new(pluto_eb, ctl_fd, EV_READ | EV_PERSIST,
-			whack_handle_cb, NULL);
+	pluto_evs.ev_ctl = pluto_event_new(ctl_fd, EV_READ | EV_PERSIST,
+				 whack_handle_cb, NULL, NULL);
 
-	passert(ev_ctl != NULL);
-	passert(event_add(ev_ctl, NULL) >= 0);
+	pluto_evs.ev_sig_chld = pluto_event_new(SIGCHLD, EV_SIGNAL,
+				      childhandler_cb, NULL, NULL);
 
-	ev_sig_chld = event_new(pluto_eb, SIGCHLD, EV_SIGNAL,childhandler_cb, NULL);
-	passert(ev_sig_chld != NULL);
-	passert(event_add(ev_sig_chld, NULL) >= 0);
+	pluto_evs.ev_sig_term = pluto_event_new(SIGTERM, EV_SIGNAL,
+				      termhandler_cb, NULL, NULL);
 
-	ev_sig_term = event_new(pluto_eb, SIGTERM, EV_SIGNAL,termhandler_cb, NULL);
-	passert(ev_sig_term != NULL);
-	passert(event_add(ev_sig_term, NULL) >= 0);
-
-	ev_sig_hup = event_new(pluto_eb, SIGHUP, EV_SIGNAL|EV_PERSIST,
-			huphandler_cb, NULL);
-
-	passert(ev_sig_hup != NULL);
-	passert(event_add(ev_sig_hup, NULL) >= 0);
+	pluto_evs.ev_sig_hup = pluto_event_new(SIGHUP, EV_SIGNAL|EV_PERSIST,
+				     huphandler_cb, NULL, NULL);
 
 	r = event_base_loop(pluto_eb, 0);
 	passert (r == 0);
+
+	pluto_event_free(&pluto_evs);
 	return;
 }
 

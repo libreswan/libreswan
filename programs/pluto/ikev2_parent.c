@@ -2625,7 +2625,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 
 	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback"
 				" for master fd %d", p->master_fd));
-	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb,p, NULL);
+	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb, p, NULL);
 
 	return STF_SUSPEND;
 }
