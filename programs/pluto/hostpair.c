@@ -1,4 +1,4 @@
-/* information about connections between hosts and clients
+/* information about connections between hosts
  *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>

@@ -164,8 +164,8 @@ struct end {
 	char *updown;
 	u_int16_t host_port;		/* where the IKE port is */
 	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
-	u_int16_t port;			/* port number, if per-port keying. */
-	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
+	u_int16_t port;			/* port number, if per-port keying */
+	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	char *cert_nickname;		/* NSS certificate nickname */
@@ -273,8 +273,9 @@ struct connection {
 	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
-	struct host_pair *host_pair;	/* opaque type outside of connections.c/hostpair.c */
-	struct connection *hp_next;	/* host pair list link */
+	/* host_pair linkage */
+	struct host_pair *host_pair;
+	struct connection *hp_next;
 
 	struct connection *ac_next;	/* all connections list link */
 
@@ -287,7 +288,7 @@ struct connection {
 
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
-	struct ip_pool *pool; /*v4 addresspool as a range, start end */
+	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
 	char *cisco_dns_info; /* scratchpad for writing IP addresses */
 	char *modecfg_domain;
 	char *modecfg_banner;
