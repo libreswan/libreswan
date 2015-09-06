@@ -138,7 +138,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
 					    "bare shunt");
 
-	bs->why = clone_str(why, "story for bare shunt");
+	bs->why = why;
 	bs->ours = *ours;
 	bs->his = *his;
 	bs->transport_proto = transport_proto;
@@ -906,7 +906,6 @@ static void free_bare_shunt(struct bare_shunt **pp)
 
 	*pp = p->next;
 	DBG_bare_shunt("delete", p);
-	pfree(p->why);
 	pfree(p);
 }
 
@@ -1162,8 +1161,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 				 */
 				struct bare_shunt *bs = *bs_pp;
 
-				pfree(bs->why);
-				bs->why = clone_str(why, "bare shunt story");
+				bs->why = why;
 				bs->policy_prio = policy_prio;
 				bs->said.spi = htonl(new_shunt_spi);
 				bs->said.proto = SA_INT;
@@ -3283,7 +3281,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 	{
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
 
-		bs->why = clone_str("oe-failing", "orphaning shunt");
+		bs->why = "oe-failing";
 		bs->ours = sr->this.client;
 		bs->his = sr->that.client;
 		bs->transport_proto = sr->this.protocol;

@@ -300,7 +300,7 @@ struct bare_shunt {
 	int transport_proto;
 	unsigned long count;
 	monotime_t last_activity;
-	char *why;
+	const char *why;
 	struct bare_shunt *next;
 };
 extern void show_shunt_status(void);
