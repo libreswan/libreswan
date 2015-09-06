@@ -372,17 +372,17 @@ static void set_whack_end(char *lr,
 	w->updown = l->strings[KSCF_UPDOWN];
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
-	w->has_port_wildcard   = l->has_port_wildcard;
+	w->has_port_wildcard = l->has_port_wildcard;
 
 	w->cert = l->cert;
-	w->ca   = l->ca;
+	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
 		w->sendcert = cert_alwayssend;
 
 	w->updown = l->updown;
-	w->virt   = NULL;
+	w->virt = NULL;
 	w->protocol = l->protocol;
 	w->port = l->port;
 	w->virt = l->virt;
@@ -665,9 +665,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike;
 
 
-	r =  send_whack_msg(&msg, cfg->ctlbase);
+	r = send_whack_msg(&msg, cfg->ctlbase);
 
-	if ((r == 0) && (conn->policy & POLICY_RSASIG)) {
+	if (r == 0 && (conn->policy & POLICY_RSASIG)) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r == 0)
 			r = starter_whack_add_pubkey(cfg, conn, &conn->right,
