@@ -1127,6 +1127,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		CASE_fos_his_client:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
+			 struct gw_info *nullgw = c->gw_info;
 			/* We've finished last DNS queries: IPSECKEY for his client.
 			 * Using the information, try to instantiate a connection
 			 * and start negotiating.
@@ -1137,9 +1138,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				(ac == NULL) ? c->gw_info : ac->gateways_from_dns,
+				(ac == NULL) ? nullgw : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
+			pfreeany(nullgw);
 
 			if (c == NULL) {
 				/* We cannot seem to instantiate a suitable connection:
