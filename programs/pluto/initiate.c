@@ -891,8 +891,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				portof(&b->our_client) != 0 ||
 				portof(&b->peer_client) != 0))
 			{
-				char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-				char *addwidemsg = "oe-negotiating";
+				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+				const char *const addwidemsg = "oe-negotiating";
 				ip_subnet this_client, that_client;
 	
 				happy(addrtosubnet(&b->our_client, &this_client));

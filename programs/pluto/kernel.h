@@ -300,7 +300,14 @@ struct bare_shunt {
 	int transport_proto;
 	unsigned long count;
 	monotime_t last_activity;
+
+	/*
+	 * Note: "why" must be in stable storage (not auto, not heap)
+	 * because we use it indefinitely without copying or pfreeing.
+	 * Simple rule: use a string literal.
+	 */
 	const char *why;
+
 	struct bare_shunt *next;
 };
 extern void show_shunt_status(void);
@@ -316,6 +323,11 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 #ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 #endif
@@ -408,6 +420,12 @@ extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
 extern void expire_bare_shunts(void);
 
+
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 		int transport_proto, ipsec_spi_t shunt_spi,
 		const char *why);

@@ -131,6 +131,11 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 	    });
 }
 
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	int transport_proto, ipsec_spi_t shunt_spi,
 	const char *why)
@@ -156,6 +161,12 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	DBG_bare_shunt("add", bs);
 }
 
+
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
 				       int transport_proto
