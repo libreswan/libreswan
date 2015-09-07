@@ -1,4 +1,3 @@
-sleep 3 # give kernel time to count
 ipsec whack --trafficstatus
 ipsec look
 : ==== cut ====
