@@ -2983,13 +2983,12 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-			bool bogus;
-			struct state *dst;
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 				return self_delete;
 
-			dst = find_phase2_state_to_delete(st,
+			bool bogus;
+			struct state *dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
 							spi,
 							&bogus);
@@ -2997,14 +2996,19 @@ bool accept_delete(struct msg_digest *md,
 			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
-					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					ntohl(spi),
-					bogus ?
-						"our SPI - bogus implementation" :
-						"maybe expired");
+					ntohl(spi));
 			} else {
+				if (bogus) {
+					loglog(RC_LOG_SERIOUS,
+						"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
+						enum_show(&protocol_names,
+							d->isad_protoid),
+						ntohl(spi));
+				}
+
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc = cur_connection;
 

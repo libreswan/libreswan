@@ -1537,37 +1537,52 @@ struct state *find_likely_sender(size_t packet_len, u_char *packet)
 	return NULL;
 }
 
+/*
+ * find_phase2_state_to_delete: find an AH or ESP SA to delete
+ *
+ * We are supposed to be given the other side's SPI.
+ * Certain CISCO implementations send our side's SPI instead.
+ * We'll accept this, but mark it as bogus.
+ */
 struct state *find_phase2_state_to_delete(const struct state *p1st,
 					  u_int8_t protoid,
 					  ipsec_spi_t spi,
 					  bool *bogus)
 {
-	struct state *st;
+	struct state  *bogusst = NULL;
 	int i;
 
 	*bogus = FALSE;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
 		FOR_EACH_ENTRY(st, i, {
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
 				p1st->st_connection->host_pair ==
 				st->st_connection->host_pair &&
 				same_peer_ids(p1st->st_connection,
-					st->st_connection, NULL)) {
+					st->st_connection, NULL))
+			{
 				struct ipsec_proto_info *pr =
 					protoid == PROTO_IPSEC_AH ?
 					&st->st_ah : &st->st_esp;
 
 				if (pr->present) {
-					if (pr->attrs.spi == spi)
+					if (pr->attrs.spi == spi) {
+						*bogus = FALSE;
 						return st;
+					}
 
-					if (pr->our_spi == spi)
+					if (pr->our_spi == spi) {
 						*bogus = TRUE;
+						bogusst = st;
+						/* don't return! */
+					}
 				}
 			}
 		});
 	}
-	return NULL;
+	return bogusst;
 }
 
 /*
