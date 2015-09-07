@@ -864,6 +864,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		enum find_oppo_step next_step;
 		err_t ugh = ac_ugh;
 		char mycredentialstr[IDTOA_BUF];
+		struct gw_info nullgw;
 
 		DBG(DBG_CONTROL, {
 			    char cib[CONN_INST_BUF];
@@ -938,15 +939,16 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			}
 
 			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
+				ipstr_buf b1;
+
 				/* no dns queries to find the gateway. create one here */
 				if (c->policy & POLICY_AUTH_NULL) {
-					struct gw_info nullgw;
 
-					DBG(DBG_OPPO, DBG_log("setting c->gw_info for POLICY_AUTH_NULL"));
+					DBG(DBG_OPPO, DBG_log("use POLICY_AUTH_NULL to initiate to  %s",
+								ipstr(&b->peer_client, &b1)));
 					nullgw.client_id.kind = ID_NULL;
 					nullgw.gw_id.kind = ID_NULL;
 					nullgw.gw_id.ip_addr = b->peer_client;
-					c->gw_info = clone_thing(nullgw, "nullgw info");
 				}
 
 				b->step = fos_his_client;
@@ -1127,7 +1129,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		CASE_fos_his_client:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
-			 struct gw_info *nullgw = c->gw_info;
 			/* We've finished last DNS queries: IPSECKEY for his client.
 			 * Using the information, try to instantiate a connection
 			 * and start negotiating.
@@ -1138,10 +1139,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				(ac == NULL) ? nullgw : ac->gateways_from_dns,
+				(ac == NULL) ? &nullgw : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
-			pfreeany(nullgw);
 
 			if (c == NULL) {
 				/* We cannot seem to instantiate a suitable connection:
