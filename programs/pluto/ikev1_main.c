@@ -702,14 +702,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
 				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.has_id_wildcards) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
 			DBG(DBG_CONTROL,
 				DBG_log("remote end has wildcard ID, needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);

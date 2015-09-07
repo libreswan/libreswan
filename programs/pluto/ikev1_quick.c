@@ -2026,7 +2026,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 			c->spd.that.client = *his_net;
 			c->spd.that.has_client = TRUE;
-			c->spd.that.virt = NULL;
+			c->spd.that.virt = NULL;	/* ??? leak? */
 
 			if (subnetishost(his_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, his_net)) {

@@ -233,7 +233,6 @@ static void delete_sr(struct spd_route *sr)
 
 void delete_connection(struct connection *c, bool relations)
 {
-	struct spd_route *sr;
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
 
@@ -299,9 +298,6 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 
-	if (c->kind != CK_GOING_AWAY)
-		pfreeany(c->spd.that.virt);
-
 	set_debugging(old_cur_debugging);
 	pfreeany(c->name);
 	pfreeany(c->cisco_dns_info);
@@ -312,10 +308,32 @@ void delete_connection(struct connection *c, bool relations)
 #endif
 	pfreeany(c->dnshostname);
 
-	sr = &c->spd;
-	while (sr) {
+	/* deal with top spd_route and then the rest */
+
+	passert(c->spd.this.virt == NULL);
+
+	if (c->kind != CK_GOING_AWAY) {
+#if 0
+		/* ??? this seens buggy since virts don't get unshared */
+		pfreeany(c->spd.that.virt);
+#else
+		/* ??? make do until virts get unshared */
+		c->spd.that.virt = NULL;
+#endif
+	}
+
+	struct spd_route *sr = c->spd.next;
+
+	delete_sr(&c->spd);
+
+	while (sr != NULL) {
+		struct spd_route *next_sr = sr->next;
+
+		passert(sr->this.virt == NULL);
+		passert(sr->that.virt == NULL);
 		delete_sr(sr);
-		sr = sr->next;
+		/* ??? should we: pfree(sr); */
+		sr = next_sr;
 	}
 
 	free_generalNames(c->requested_ca, TRUE);
@@ -1054,11 +1072,11 @@ static bool check_connection_end(const struct whack_end *this,
 	 * Virtual IP is also valid with rightsubnet=vnet:%priv or with
 	 * rightprotoport=17/%any
 	 */
-	if ((this->virt) &&
-		(!isanyaddr(&this->host_addr) || this->has_client)) {
+	if (this->virt != NULL &&
+		(!isanyaddr(&this->host_addr) || this->has_client))
+	{
 		loglog(RC_CLASH,
-			"virtual IP must only be used with %%any and without "
-			"client");
+			"virtual IP must only be used with %%any and without client");
 		return FALSE;
 	}
 #endif
@@ -1089,7 +1107,8 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
  * numbers: one is used for each SA in an SA bundle.
  *
  * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
- * - is a multiple of 4 (not actually a requirement?)
+ * - is a multiple of 4 (we are actually allocating
+ *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
  * - does not duplicate any currently in use
  */
 static reqid_t gen_reqid(void)
@@ -1458,8 +1477,7 @@ void add_connection(const struct whack_message *wm)
 			 * or wildcard ID
 			 */
 			c->kind = CK_TEMPLATE;
-		} else if ((wm->left.virt != NULL) ||
-			(wm->right.virt != NULL)) {
+		} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 			/*
 			 * If we have a subnet=vnet: needing instantiation
 			 * so we can accept multiple subnets from
@@ -1481,8 +1499,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->gw_info = NULL;
 
-		passert(!(wm->left.virt && wm->right.virt));
-		if (wm->left.virt || wm->right.virt) {
+		/* at most one virt can be present */
+		passert(wm->left.virt == NULL || wm->right.virt == NULL);
+
+		if (wm->left.virt != NULL || wm->right.virt != NULL) {
 			/*
 			 * This now happens with wildcards on
 			 * non-instantiations, such as rightsubnet=vnet:%priv
@@ -1490,10 +1510,10 @@ void add_connection(const struct whack_message *wm)
 			 * passert(isanyaddr(&c->spd.that.host_addr));
 			 */
 			c->spd.that.virt = create_virtual(c,
-							wm->left.virt ?
+							wm->left.virt != NULL ?
 							wm->left.virt :
 							wm->right.virt);
-			if (c->spd.that.virt)
+			if (c->spd.that.virt != NULL)
 				c->spd.that.has_client = TRUE;
 		}
 
@@ -1576,7 +1596,18 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 			namebuf);
 	} else {
 		t = clone_thing(*group, "group instance");
-		t->name = namebuf;
+		t->name = namebuf;	/* trick: unsharing will clone this for us */
+
+		/* suppress virt before unsharing */
+		passert(t->spd.this.virt == NULL);
+
+		pexpect(t->spd.next == NULL);	/* we only handle top spd */
+
+		if (t->spd.that.virt != NULL) {
+			DBG_log("virtual_ip not supported in group instance; ignored");
+			t->spd.that.virt = NULL;
+		}
+
 		unshare_connection_strings(t);
 		name = clone_str(t->name, "group instance name");
 		t->spd.that.client = *target;
@@ -1591,22 +1622,15 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		t->log_file = NULL;
 		t->log_file_err = FALSE;
 
-		if (group->spd.reqid) {
-			t->spd.reqid = group->spd.reqid;
-		} else {
-			t->spd.reqid = gen_reqid();
-		}
-
-		if (t->spd.that.virt) {
-			DBG_log("virtual_ip not supported in group instance");
-			t->spd.that.virt = NULL;
-		}
+		t->spd.reqid = group->spd.reqid == 0 ?
+			gen_reqid() : group->spd.reqid;
 
 		/* add to connections list */
 		t->ac_next = connections;
 		connections = t;
 
 		/* same host_pair as parent: stick after parent on list */
+		/* t->hp_next = group->hp_next; */	/* done by clone_thing */
 		group->hp_next = t;
 
 		/* route if group is routed */
@@ -2486,13 +2510,16 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			c = rw_instantiate(c, him, NULL, NULL);
 		}
 	} else {
-		/* We found a non-wildcard connection.
+		/*
+		 * We found a non-wildcard connection.
 		 * Double check whether it needs instantiation anyway (eg. vnet=)
 		 */
 		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		passert(c->spd.this.virt == NULL);
+
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			DBG(DBG_CONTROL,
-					DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
+				DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
 			c = rw_instantiate(c, him, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
