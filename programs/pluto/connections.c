@@ -733,9 +733,8 @@ static size_t format_connection(char *buf, size_t buf_len,
 }
 
 /* spd_route's with end's get copied in xauth.c */
-void unshare_connection_end_strings(struct end *e)
+void unshare_connection_end(struct end *e)
 {
-	/* do "left" */
 	unshare_id_content(&e->id);
 
 	if (e->cert.u.nss_cert) {
@@ -753,10 +752,15 @@ void unshare_connection_end_strings(struct end *e)
 	e->cert_nickname = clone_str(e->cert_nickname, "cert_nickname");
 }
 
-static void unshare_connection_strings(struct connection *c)
+/*
+ * unshare_connection: after a struct connection has been copied,
+ * duplicate anything it references so that unshareable resources
+ * are no longer shared.  Typically strings, but some other things too.
+ *
+ * Think of this as converting a shallow copy to a deep copy
+ */
+static void unshare_connection(struct connection *c)
 {
-	struct spd_route *sr;
-
 	c->name = clone_str(c->name, "connection name");
 
 	c->cisco_dns_info = clone_str(c->cisco_dns_info,
@@ -774,10 +778,11 @@ static void unshare_connection_strings(struct connection *c)
 	/* duplicate any alias, adding spaces to the beginning and end */
 	c->connalias = clone_str(c->connalias, "connection alias");
 
-	/* do "right" */
+	struct spd_route *sr;
+
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
-		unshare_connection_end_strings(&sr->this);
-		unshare_connection_end_strings(&sr->that);
+		unshare_connection_end(&sr->this);
+		unshare_connection_end(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
@@ -1221,7 +1226,7 @@ void add_connection(const struct whack_message *wm)
 
 		/*
 		 * Connection values are set using strings in the whack
-		 * message, unshare_connection_strings() is responsible
+		 * message, unshare_connection() is responsible
 		 * for cloning the strings before the whack message is
 		 * destroyed.
 		 */
@@ -1518,7 +1523,7 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		/* ensure we allocate copies of all strings */
-		unshare_connection_strings(c);
+		unshare_connection(c);
 
 		(void)orient(c);
 		connect_to_host_pair(c);
@@ -1608,7 +1613,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 			t->spd.that.virt = NULL;
 		}
 
-		unshare_connection_strings(t);
+		unshare_connection(t);
 		name = clone_str(t->name, "group instance name");
 		t->spd.that.client = *target;
 		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
@@ -1680,7 +1685,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.id = *his_id;
 		d->spd.that.has_id_wildcards = FALSE;
 	}
-	unshare_connection_strings(d);
+	unshare_connection(d);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);

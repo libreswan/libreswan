@@ -2165,8 +2165,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd->this.virt = NULL;
 					tmp_spd->that.virt = NULL;
 
-					unshare_connection_end_strings(&tmp_spd->this);
-					unshare_connection_end_strings(&tmp_spd->that);
+					unshare_connection_end(&tmp_spd->this);
+					unshare_connection_end(&tmp_spd->that);
 
 					tmp_spd->next = NULL;
 					last_spd->next = tmp_spd;

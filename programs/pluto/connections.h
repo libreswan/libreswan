@@ -486,6 +486,6 @@ extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
 
-extern void unshare_connection_end_strings(struct end *e);
+extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);
