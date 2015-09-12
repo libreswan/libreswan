@@ -1075,20 +1075,18 @@ void delete_states_by_connection(struct connection *c, bool relations)
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	/*
-	 * Seems to dump here because 1 of the states is NULL.
+	 * XXX Seems to dump here because one of the states is NULL.
 	 * Removing the Assert makes things work.
 	 * We should fix this eventually.
+	 * -- MCR 2005 Nov 2 commit a87bf151b7b6566a3d4560584c8e6b2884123780
 	 *
 	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
 	 *  && c->newest_isakmp_sa == SOS_NOBODY);
-	 *
 	 */
 
-	sr = &c->spd;
-	while (sr != NULL) {
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		passert(sr->eroute_owner == SOS_NOBODY);
 		passert(sr->routing != RT_ROUTED_TUNNEL);
-		sr = sr->spd_next;
 	}
 
 	if (ck == CK_INSTANCE) {
