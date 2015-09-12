@@ -523,7 +523,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 			set_cur_connection(c);
 
-			for (sr = &c->spd; sr != NULL; sr = sr->next) {
+			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 				if (sr->routing >= RT_ROUTED_TUNNEL)
 					fail++;
 			}

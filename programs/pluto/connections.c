@@ -322,12 +322,12 @@ void delete_connection(struct connection *c, bool relations)
 #endif
 	}
 
-	struct spd_route *sr = c->spd.next;
+	struct spd_route *sr = c->spd.spd_next;
 
 	delete_sr(&c->spd);
 
 	while (sr != NULL) {
-		struct spd_route *next_sr = sr->next;
+		struct spd_route *next_sr = sr->spd_next;
 
 		passert(sr->this.virt == NULL);
 		passert(sr->that.virt == NULL);
@@ -780,7 +780,7 @@ static void unshare_connection(struct connection *c)
 
 	struct spd_route *sr;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		unshare_connection_end(&sr->this);
 		unshare_connection_end(&sr->that);
 	}
@@ -1436,7 +1436,7 @@ void add_connection(const struct whack_message *wm)
 			c->spd.that = t;
 		}
 
-		c->spd.next = NULL;
+		c->spd.spd_next = NULL;
 
 		if (wm->sa_reqid == 0) {
 			c->spd.reqid = gen_reqid();
@@ -1606,7 +1606,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		/* suppress virt before unsharing */
 		passert(t->spd.this.virt == NULL);
 
-		pexpect(t->spd.next == NULL);	/* we only handle top spd */
+		pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
 
 		if (t->spd.that.virt != NULL) {
 			DBG_log("virtual_ip not supported in group instance; ignored");
@@ -1674,7 +1674,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	struct connection *d;
 
 	passert(c->kind == CK_TEMPLATE);
-	passert(c->spd.next == NULL);
+	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
@@ -1704,7 +1704,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	default_end(&d->spd.this, &d->spd.that.host_addr);
-	d->spd.next = NULL;
+	d->spd.spd_next = NULL;
 
 	if (c->spd.reqid) {
 		d->spd.reqid = c->spd.reqid;
@@ -1792,7 +1792,7 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 						&d->spd), instbuf));
 		});
 
-	passert(d->spd.next == NULL);
+	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
@@ -1871,7 +1871,7 @@ struct connection *oppo_instantiate(struct connection *c,
 						&d->spd), instbuf));
 		});
 
-	passert(d->spd.next == NULL);
+	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
@@ -2060,7 +2060,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		if (c->kind == CK_GROUP)
 			continue;
 
-		for (sr = &c->spd; best != c && sr; sr = sr->next) {
+		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
 			if ((routed(sr->routing) ||
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&
@@ -2212,7 +2212,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 			if (c->kind == CK_GROUP)
 				continue;
 
-			for (sr = &c->spd; best != c && sr; sr = sr->next) {
+			for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
 				if (routed(sr->routing) &&
 					addrinsubnet(our_client,
 						&sr->this.client) &&
@@ -2228,7 +2228,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 							"to %s",
 							best->name, c->name));
 
-					for (bestsr = &best->spd; best != c && bestsr; bestsr = bestsr->next) {
+					for (bestsr = &best->spd; best != c && bestsr; bestsr = bestsr->spd_next) {
 						if (!subnetinsubnet(&bestsr->this.client,
 							&sr->this.client) || (samesubnet(&bestsr->this.client,
 							&sr->this.client) && !subnetinsubnet(
@@ -2295,11 +2295,11 @@ struct connection *route_owner(struct connection *c,
 				continue;
 #endif
 
-		for (srd = &d->spd; srd; srd = srd->next) {
+		for (srd = &d->spd; srd; srd = srd->spd_next) {
 			if (srd->routing == RT_UNROUTED)
 				continue;
 
-			for (src = &c->spd; src; src = src->next) {
+			for (src = &c->spd; src; src = src->spd_next) {
 				if (src == srd)
 					continue;
 
@@ -3147,7 +3147,7 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, peer_net must just have peer itself.
 		 */
 
-		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
+		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			policy_prio_t prio;
 
 			DBG(DBG_CONTROLMORE, {
@@ -3308,7 +3308,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
-		for (sr = &d->spd; sr != NULL; sr = sr->next) {
+		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			DBG(DBG_CONTROLMORE, {
 				char s1[SUBNETTOT_BUF];
 				char d1[SUBNETTOT_BUF];
@@ -3400,7 +3400,7 @@ struct connection *find_client_connection(struct connection *const c,
 		int srnum = -1;
 
 		for (sr = &c->spd; unrouted == NULL && sr != NULL;
-			sr = sr->next) {
+			sr = sr->spd_next) {
 			srnum++;
 
 			DBG(DBG_CONTROLMORE, {
@@ -3453,7 +3453,7 @@ struct connection *find_client_connection(struct connection *const c,
 		struct host_pair *hp = NULL;
 
 		for (sra = &c->spd; hp == NULL &&
-				sra != NULL; sra = sra->next) {
+				sra != NULL; sra = sra->spd_next) {
 			hp = find_host_pair(&sra->this.host_addr,
 					sra->this.host_port,
 					NULL,
@@ -3658,7 +3658,7 @@ void show_one_connection(struct connection *c)
 
 		while (sr != NULL) {
 			show_one_sr(c, sr, instance);
-			sr = sr->next;
+			sr = sr->spd_next;
 		}
 	}
 
@@ -3902,7 +3902,7 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 			!(samesubnet(&sr1->this.client, &srue->this.client) &&
 				samesubnet(&sr1->that.client,
 					&srue->that.client)))
-			srue = srue->next;
+			srue = srue->spd_next;
 		if (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED) {
 			*esrp = srue;
 			break;

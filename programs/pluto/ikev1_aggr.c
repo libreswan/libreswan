@@ -1160,7 +1160,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	st->st_import = importance;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name != NULL) {
 				jam_str(st->st_xauth_username,

@@ -1088,7 +1088,7 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	while (sr != NULL) {
 		passert(sr->eroute_owner == SOS_NOBODY);
 		passert(sr->routing != RT_ROUTED_TUNNEL);
-		sr = sr->next;
+		sr = sr->spd_next;
 	}
 
 	if (ck == CK_INSTANCE) {

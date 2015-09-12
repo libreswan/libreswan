@@ -762,7 +762,7 @@ static stf_status informational(struct msg_digest *md)
 							    tmp_spd->that.
 							    has_id_wildcards));
 
-						tmp_spd = tmp_spd->next;
+						tmp_spd = tmp_spd->spd_next;
 					} while (tmp_spd != NULL);
 
 					if (tmp_c->interface != NULL) {

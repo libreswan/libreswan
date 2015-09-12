@@ -231,7 +231,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 		ts_r = &st->st_ts_this;
 	}
 
-	for (sr = &c0->spd; sr != NULL; sr = sr->next) {
+	for (sr = &c0->spd; sr != NULL; sr = sr->spd_next) {
 		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
 				    ts_i, ORIGINAL_INITIATOR);
 		if (ret != STF_OK)
@@ -721,7 +721,7 @@ static stf_status ikev2_create_responder_child_state(
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
 	/* find best spd in c */
-	for (sra = &c->spd; sra != NULL; sra = sra->next) {
+	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
 				tsr, tsi_n, tsr_n);
 
@@ -784,7 +784,7 @@ static stf_status ikev2_create_responder_child_state(
 	struct host_pair *hp = NULL;
 
 	for (sra = &c->spd; hp == NULL && sra != NULL;
-	     sra = sra->next)
+	     sra = sra->spd_next)
 	{
 		struct connection *d;
 
@@ -837,7 +837,7 @@ static stf_status ikev2_create_responder_child_state(
 					 d->spd.that.ca, &pathlen)))
 				continue;
 
-			for (sr = &d->spd; sr != NULL; sr = sr->next) {
+			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 				int newfit = ikev2_evaluate_connection_fit(
 					d, sr, role, tsi, tsr, tsi_n, tsr_n);
 

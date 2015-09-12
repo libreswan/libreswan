@@ -851,7 +851,7 @@ void unroute_connection(struct connection *c)
 {
 	struct spd_route *sr;
 
-	for (sr = &c->spd; sr; sr = sr->next) {
+	for (sr = &c->spd; sr; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
@@ -2975,11 +2975,11 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		return TRUE;
 
 	sr = &st->st_connection->spd;
-	if (st->st_connection->remotepeertype == CISCO && sr->next)
-		sr = sr->next;
+	if (st->st_connection->remotepeertype == CISCO && sr->spd_next != NULL)
+		sr = sr->spd_next;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
-	for (; sr != NULL; sr = sr->next) {
+	for (; sr != NULL; sr = sr->spd_next) {
 		DBG(DBG_CONTROL, DBG_log("sr for #%lu: %s",
 					 st->st_serialno,
 					 enum_name(&routing_story,
@@ -3006,7 +3006,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
-		sr = st->st_connection->spd.next;
+		sr = st->st_connection->spd.spd_next;
 		if (sr != NULL) {
 			st->st_connection->spd.eroute_owner = sr->eroute_owner;
 			st->st_connection->spd.routing = sr->routing;
@@ -3047,7 +3047,7 @@ void delete_ipsec_sa(struct state *st)
 
 			passert(st->st_connection);
 
-			for (sr = &c->spd; sr; sr = sr->next) {
+			for (sr = &c->spd; sr; sr = sr->spd_next) {
 				if (sr->eroute_owner == st->st_serialno &&
 				    sr->routing == RT_ROUTED_TUNNEL) {
 					sr->eroute_owner = SOS_NOBODY;

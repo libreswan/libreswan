@@ -185,7 +185,7 @@ struct end {
 };
 
 struct spd_route {
-	struct spd_route *next;
+	struct spd_route *spd_next;
 	struct end this;
 	struct end that;
 	so_serial_t eroute_owner;

@@ -828,7 +828,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	xauth_init = xauth_resp = FALSE;
 
 	/* calculate the per-end policy which might apply */
-	for (spd = &c->spd; spd != NULL; spd = spd->next) {
+	for (spd = &c->spd; spd != NULL; spd = spd->spd_next) {
 		if (selection) {
 			/*
 			 * this is the initiator, we have proposed, they have answered,

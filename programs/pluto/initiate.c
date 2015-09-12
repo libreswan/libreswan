@@ -85,7 +85,7 @@ bool orient(struct connection *c)
 	if (!oriented(*c)) {
 		struct iface_port *p;
 
-		for (sr = &c->spd; sr; sr = sr->next) {
+		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			/* There can be more then 1 spd policy associated - required
 			 * for cisco split networking when remote_peer_type=cisco
 			 */
@@ -466,8 +466,8 @@ static void cannot_oppo(struct connection *c,
 
 		shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
 
-		shunt_spd->next = nc->spd.next;
-		nc->spd.next = shunt_spd;
+		shunt_spd->spd_next = nc->spd.spd_next;
+		nc->spd.spd_next = shunt_spd;
 
 		happy(addrtosubnet(&b->peer_client, &shunt_spd->that.client));
 
@@ -1263,7 +1263,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			for (sr = &c->spd
 			     ; sr != NULL &&
 			      !sameaddr(&sr->this.host_addr, &b->our_client)
-			     ; sr = sr->next)
+			     ; sr = sr->spd_next)
 				;
 
 			if (sr == NULL)
@@ -1470,7 +1470,7 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 	struct spd_route *sr;
 
 	for (c = connections; c != NULL; c = c->ac_next) {
-		for (sr = &c->spd; sr; sr = sr->next) {
+		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
 			    samesubnet(ours, &sr->this.client) &&
 			    samesubnet(his, &sr->that.client))

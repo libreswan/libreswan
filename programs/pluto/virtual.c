@@ -316,7 +316,7 @@ bool is_virtual_connection(const struct connection *c)
 {
 	const struct spd_route *sr;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next)
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next)
 		if (sr->that.virt != NULL)
 			return TRUE;
 
