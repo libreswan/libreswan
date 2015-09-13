@@ -1438,11 +1438,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.spd_next = NULL;
 
-		if (wm->sa_reqid == 0) {
-			c->spd.reqid = gen_reqid();
-		} else {
-			c->spd.reqid = wm->sa_reqid;
-		}
+		c->spd.reqid = wm->sa_reqid == 0 ? gen_reqid() : wm->sa_reqid;
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1706,11 +1702,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	default_end(&d->spd.this, &d->spd.that.host_addr);
 	d->spd.spd_next = NULL;
 
-	if (c->spd.reqid) {
-		d->spd.reqid = c->spd.reqid;
-	} else {
-		d->spd.reqid = gen_reqid();
-	}
+	d->spd.reqid = c->spd.reqid == 0 ? gen_reqid() : c->spd.reqid;
 
 	/* set internal fields */
 	d->ac_next = connections;
@@ -2033,14 +2025,12 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *peer_client,
 					int transport_proto)
 {
-	struct connection *c, *best = NULL;
-	policy_prio_t best_prio = BOTTOM_PRIO;
-	struct spd_route *sr;
-	struct spd_route *best_sr;
 	int our_port = ntohs(portof(our_client));
 	int peer_port = ntohs(portof(peer_client));
 
-	best_sr = NULL;
+	struct connection *best = NULL;
+	policy_prio_t best_prio = BOTTOM_PRIO;
+	struct spd_route *best_sr = NULL;
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2056,27 +2046,32 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			transport_proto, peer_port);
 	});
 
+	struct connection *c;
+
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
 			continue;
+
+		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
 			if ((routed(sr->routing) ||
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&
 				addrinsubnet(peer_client, &sr->that.client) &&
-				(!sr->this.protocol ||
-				    transport_proto == sr->this.protocol) &&
-				(!sr->this.port || our_port == sr->this.port) &&
-				(!sr->that.port ||
-					peer_port == sr->that.port)) {
-
+				(sr->this.protocol == 0 ||
+					transport_proto == sr->this.protocol) &&
+				(sr->this.port == 0 ||
+					our_port == sr->this.port) &&
+				(sr->that.port == 0 ||
+					peer_port == sr->that.port))
+			{
 				policy_prio_t prio =
 					8 * (c->prio +
 					     (c->kind == CK_INSTANCE)) +
 					2 * (sr->this.port == our_port) +
 					2 * (sr->that.port == peer_port) +
-					(sr->this.protocol == transport_proto);
+					1 * (sr->this.protocol == transport_proto);
 
 				DBG(DBG_CONTROLMORE, {
 						char cib[CONN_INST_BUF];
@@ -2096,32 +2091,37 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 							c_ocb, c_pcb, prio);
 					});
 
-				if (best == NULL) {
-					best = c;
-					best_sr = sr;
-					best_prio = prio;
-				}
+				DBG(DBG_CONTROLMORE,
+					if (best == NULL) {
+						char cib2[CONN_INST_BUF];
+						DBG_log("find_connection: first OK \"%s\"%s [pri:%ld]{%p} (child %s)",
+							c->name,
+							fmt_conn_instance(c, cib2),
+							prio, c,
+							c->policy_next ?
+								c->policy_next->name :
+								"none");
+					} else {
+						char cib[CONN_INST_BUF];
+						char cib2[CONN_INST_BUF];
+						DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
+							best->name,
+							fmt_conn_instance(best, cib),
+							best_prio,
+							best,
+							best->policy_next ?
+								best->policy_next->name :
+								"none",
+							c->name,
+							fmt_conn_instance(c, cib2),
+							prio, c,
+							c->policy_next ?
+								c->policy_next->name :
+								"none");
+					}
+				);
 
-				DBG(DBG_CONTROLMORE, {
-					char cib[CONN_INST_BUF];
-					char cib2[CONN_INST_BUF];
-					DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
-						best->name,
-						fmt_conn_instance(best, cib),
-						best_prio,
-						best,
-						best->policy_next ?
-							best->policy_next->name :
-							"none",
-						c->name,
-						fmt_conn_instance(c, cib2),
-						prio, c,
-						c->policy_next ?
-							c->policy_next->name :
-							"none");
-				});
-
-				if (prio > best_prio) {
+				if (best == NULL || prio > best_prio) {
 					best = c;
 					best_sr = sr;
 					best_prio = prio;
@@ -2156,7 +2156,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 /*
  * Find and instantiate a connection for an outgoing Opportunistic connection.
  * We've already discovered its gateway.
- * We look for a the connection such that:
+ * We look for a connection such that:
  *   + this is one of our interfaces
  *   + this subnet contains our_client (or we are our_client)
  *     (we will specialize the client). We prefer the smallest such subnet.
@@ -2180,9 +2180,8 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 						const ip_address *our_client,
 						const ip_address *peer_client)
 {
-	struct iface_port *p;
 	struct connection *best = NULL;
-	struct spd_route *sr, *bestsr;
+	struct spd_route *bestsr = NULL;	/* initialization not necessary */
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2192,6 +2191,9 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	// passert(id_is_ipaddr(&gw->gw_id));
 
 	/* for each of our addresses... */
+
+	struct iface_port *p;
+
 	for (p = interfaces; p != NULL; p = p->next) {
 		/*
 		 * Go through those connections with our address and NO_IP as
@@ -2200,11 +2202,8 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		 * that it is pluto_port (makes debugging easier).
 		 */
 		struct connection *c = find_host_pair_connections(__FUNCTION__,
-								&p->ip_addr,
-								pluto_port,
-								(ip_address
-									*)NULL,
-								pluto_port);
+			&p->ip_addr, pluto_port,
+			(ip_address *) NULL, pluto_port);
 
 		for (; c != NULL; c = c->hp_next) {
 			DBG(DBG_OPPO,
@@ -2212,31 +2211,35 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 			if (c->kind == CK_GROUP)
 				continue;
 
-			for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-				if (routed(sr->routing) &&
-					addrinsubnet(our_client,
-						&sr->this.client) &&
-					addrinsubnet(peer_client,
-						&sr->that.client)) {
-					if (best == NULL) {
-						best = c;
-						break;
-					}
+			struct spd_route *sr;
 
-					DBG(DBG_OPPO,
-						DBG_log("comparing best %s "
-							"to %s",
-							best->name, c->name));
-
-					for (bestsr = &best->spd; best != c && bestsr; bestsr = bestsr->spd_next) {
-						if (!subnetinsubnet(&bestsr->this.client,
-							&sr->this.client) || (samesubnet(&bestsr->this.client,
-							&sr->this.client) && !subnetinsubnet(
-								&bestsr->that.client,
-								&sr->that.client))) {
-							best = c;
-						}
-					}
+			/* for each sr of c, see if we have a new best */
+			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+				if (!routed(sr->routing) ||
+				    !addrinsubnet(our_client, &sr->this.client) ||
+				    !addrinsubnet(peer_client, &sr->that.client))
+				{
+					/*  sr does not work for these clients */
+				} else if (best == NULL ||
+					   !subnetinsubnet(&bestsr->this.client, &sr->this.client) ||
+					   (samesubnet(&bestsr->this.client, &sr->this.client) &&
+					    !subnetinsubnet(&bestsr->that.client, &sr->that.client)))
+				{
+					/*
+					 * First or better solution.
+					 *
+					 * The test for better (see above) is:
+					 *   sr's this is narrower, or
+					 *   sr's this is same and sr's that is narrower.
+					 * ??? not elegant, not symmetric.
+					 * Possible replacement test:
+					 *   bestsr->this.client.maskbits + bestsr->that.client.maskbits >
+					 *   sr->this.client.maskbits + sr->that.client.maskbits
+					 * but this knows too much about the representation of ip_subnet.
+					 * What is the correct semantics?
+					 */
+					best = c;
+					bestsr = sr;
 				}
 			}
 		}
@@ -2246,10 +2249,12 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		NEVER_NEGOTIATE(best->policy) ||
 		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
 		best->kind != CK_TEMPLATE)
+	{
 		return NULL;
-	else
+	} else {
 		return oppo_instantiate(best, &gw->gw_id.ip_addr, NULL, gw,
 					our_client, peer_client);
+	}
 }
 
 /*
