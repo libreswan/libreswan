@@ -80,6 +80,7 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 ifeq ($(USE_ADNS),true)
 ifeq ($(USE_KEYRR),true)
 KEYRR_DEFINES=-DUSE_KEYRR
+ADNS_SRC=adns.c adns.h dnskey.c dnskey.h
 endif
 endif
 
@@ -229,7 +230,7 @@ LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
 PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${LIBCRYPT} -lgmp #-lefence
+PLUTOMINUSL+= ${LIBCRYPT} -lgmp
 
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
@@ -267,9 +268,10 @@ endif
 
 ifeq ($(USE_ADNS),true)
 LIBSADNS = $(LIBRESWANLIB)
-LIBSADNS += -lresolv # -lefence
+LIBSADNS += -lresolv
 BINNAMEADNS = _pluto_adns
 ADNS_OBJS=dnskey.o
+OBJSADNS = adns.o
 endif
 
 LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
@@ -326,7 +328,6 @@ DISTSRC = \
 	db_ops.c \
 	defs.h defs.c \
 	demux.c demux.h msgdigest.c \
-	dnskey.c dnskey.h \
 	myid.c hmac.c \
 	hostpair.c ipsec_doi.c ipsec_doi.h \
 	spdb.c spdb_struct.c spdb_print.c spdb.h \
@@ -361,7 +362,7 @@ DISTSRC = \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
-	adns.c adns.h \
+	${ADNS_SRC} \
 	whack.c whackinit.c \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
@@ -395,7 +396,7 @@ OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
-OBJSPLUTO += demux.o msgdigest.o keys.o ${ADNS_OBJS}
+OBJSPLUTO += demux.o msgdigest.o keys.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
@@ -404,6 +405,7 @@ OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
 OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
+OBJSPLUTO += ${ADNS_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
 OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
@@ -414,8 +416,6 @@ OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
 OBJSPLUTO += nss_ocsp.o nss_crl_import.o
 OBJSPLUTO += nss_err.o
 OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
-
-OBJSADNS = adns.o
 
 OBJSWHACK = whack.o
 OBJSWHACKINIT = whackinit.o
