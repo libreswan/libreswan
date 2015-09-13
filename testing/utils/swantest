@@ -589,7 +589,7 @@ class scantests:
         self.nopath = ''
         if self.stdir:
             trpath = self.stdir
-            if not (self.args.scancwd or self.to_append):
+            if self.args.resanitize:
                 self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
