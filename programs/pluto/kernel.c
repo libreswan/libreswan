@@ -1359,7 +1359,7 @@ bool assign_holdpass(struct connection *c,
 }
 
 /* compute a (host-order!) SPI to implement the policy in connection c */
-ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective)
+ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
 {
 	/* note: these are in host order :-( */
 	static const ipsec_spi_t shunt_spi[] =

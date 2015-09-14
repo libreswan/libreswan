@@ -112,8 +112,8 @@ static bool noklips_sag_eroute(const struct state *st UNUSED,
 	return TRUE;
 }
 
-static bool noklips_shunt_eroute(struct connection *c UNUSED,
-				 struct spd_route *sr UNUSED,
+static bool noklips_shunt_eroute(const struct connection *c UNUSED,
+				 const struct spd_route *sr UNUSED,
 				 enum routing_t rt_kind UNUSED,
 				 enum pluto_sadb_operations op UNUSED,
 				 const char *opname UNUSED)

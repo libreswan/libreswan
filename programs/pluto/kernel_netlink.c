@@ -1860,8 +1860,8 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 		!deltaless(idle_time, idle_max);
 }
 
-static bool netlink_shunt_eroute(struct connection *c,
-				struct spd_route *sr,
+static bool netlink_shunt_eroute(const struct connection *c,
+				const struct spd_route *sr,
 				enum routing_t rt_kind,
 				enum pluto_sadb_operations op,
 				const char *opname)

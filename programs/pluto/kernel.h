@@ -172,8 +172,8 @@ struct kernel_ops {
 			   , const char *policy_label
 #endif
 			   );
-	bool (*shunt_eroute)(struct connection *c,
-			     struct spd_route *sr,
+	bool (*shunt_eroute)(const struct connection *c,
+			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
 			     enum pluto_sadb_operations op,
 			     const char *opname);
@@ -367,7 +367,7 @@ extern bool assign_holdpass(struct connection *c,
 extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		int transport_proto, ipsec_spi_t failure_shunt);
 
-extern ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective);
+extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
 
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,

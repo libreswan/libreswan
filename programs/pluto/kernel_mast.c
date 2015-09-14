@@ -483,8 +483,8 @@ static bool mast_raw_eroute(const ip_address *this_host,
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool mast_shunt_eroute(struct connection *c UNUSED,
-			      struct spd_route *sr UNUSED,
+static bool mast_shunt_eroute(const struct connection *c UNUSED,
+			      const struct spd_route *sr UNUSED,
 			      enum routing_t rt_kind UNUSED,
 			      enum pluto_sadb_operations op UNUSED,
 			      const char *opname UNUSED)

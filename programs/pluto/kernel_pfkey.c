@@ -1235,8 +1235,8 @@ void pfkey_close(void)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-bool pfkey_shunt_eroute(struct connection *c,
-			struct spd_route *sr,
+bool pfkey_shunt_eroute(const struct connection *c,
+			const struct spd_route *sr,
 			enum routing_t rt_kind,
 			enum pluto_sadb_operations op, const char *opname)
 {

@@ -60,8 +60,8 @@ extern bool pfkey_raw_eroute(const ip_address *this_host,
 #endif
 			     );
 
-extern bool pfkey_shunt_eroute(struct connection *c,
-			       struct spd_route *sr,
+extern bool pfkey_shunt_eroute(const struct connection *c,
+			       const struct spd_route *sr,
 			       enum routing_t rt_kind,
 			       enum pluto_sadb_operations op,
 			       const char *opname);
