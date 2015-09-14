@@ -1365,6 +1365,7 @@ DEFAULTCONFIG = {
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
+    'initshwait' : 600,
     'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
     'newrun': None,
     'node': platform.node(),
@@ -1414,6 +1415,10 @@ def cmdline():
 
     parser.add_argument("--include", default=None, type=compile_regex_arg,
                         help="Only include tests that match <regex>")
+
+    parser.add_argument(
+        "--initshwait", default=DEFAULTCONFIG['initshwait'],
+        type=int, help="seconds to wait for the init.sh, Python Thread, %s seconds" % DEFAULTCONFIG['initshwait'])
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1918,10 +1923,10 @@ def do_kvmplutotest(args, start, test, st):
     th_initiator.start()
 
     # now wait for the threads to finish their job
-    th_responder.join()
-    th_initiator.join()
+    th_responder.join(timeout=args.initshwait)
+    th_initiator.join(timeout=args.initshwait);
     if "nic" in test:
-        th_nic.join()
+        th_nic.join(timeout=args.initshwait)
 
     kill_zombie_tcpdump()
 
