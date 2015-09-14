@@ -455,7 +455,7 @@ extern void update_state_connection(struct state *st, struct connection *c);
 #define eclipsable(sr) (subnetishost(&(sr)->this.client) && \
 			subnetishost(&(sr)->that.client))
 extern long eclipse_count;
-extern struct connection *eclipsed(struct connection *c, struct spd_route **);
+extern struct connection *eclipsed(const struct connection *c, struct spd_route **);
 
 /* print connection status */
 

@@ -3882,10 +3882,10 @@ void update_state_connection(struct state *st, struct connection *c)
  */
 long eclipse_count = 0;
 
-struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
+struct connection *eclipsed(const struct connection *c, struct spd_route **esrp)
 {
 	struct connection *ue;
-	struct spd_route *sr1 = &c->spd;
+	const struct spd_route *sr1 = &c->spd;
 
 	ue = NULL;
 
@@ -3895,10 +3895,7 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 	 * It should be caught by the testing/pluto/co-terminal test cases
 	 */
 
-	if (sr1 == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to sr1 == NULL"));
-		return NULL;
-	}
+	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
 
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
 		struct spd_route *srue = &ue->spd;
@@ -3908,16 +3905,18 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 				samesubnet(&sr1->that.client,
 					&srue->that.client)))
 			srue = srue->spd_next;
+
 		if (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED) {
 			*esrp = srue;
 			break;
 		}
 	}
-	if (ue == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to ue == NULL"));
-	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning non-NULL ue"));
-	}
+	DBG(DBG_CONTROLMORE,
+		if (ue == NULL) {
+			DBG_log("eclipsed() returning NULL due to ue == NULL");
+		} else {
+			DBG_log("eclipsed() returning non-NULL ue");
+		});
 	return ue;
 }
 
