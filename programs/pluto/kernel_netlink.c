@@ -1097,11 +1097,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
 				algo.alg_trunc_len = 96;
-				/*
-				 * fixup to the real number,
-				 * not our private number
-				 */
-				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 				break;
 
 			case AUTH_ALGORITHM_HMAC_SHA2_384:
@@ -1117,7 +1112,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo) + sa->authkeylen);
 
-			strcpy(algo.alg_name, name);
+			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
 				sa->authkey, sa->authkeylen);
@@ -1134,7 +1129,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo_old) + sa->authkeylen);
-			strcpy(algo_old.alg_name, name);
+			strncpy(algo_old.alg_name, name, sizeof(algo_old.alg_name));
 			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
 			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
 				sa->authkey,
@@ -1163,7 +1158,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strcpy(algo.alg_name, name);
+		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
 		attr->rta_type = XFRMA_ALG_COMP;
@@ -1176,7 +1171,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	} else if (aead != NULL) {
 		struct xfrm_algo_aead algo;
 
-		strcpy(algo.alg_name, aead->name);
+		strncpy(algo.alg_name, aead->name, sizeof(algo.alg_name));
 		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 		algo.alg_icv_len = aead->icvlen * BITS_PER_BYTE;
 
@@ -1200,7 +1195,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strcpy(algo.alg_name, name);
+		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 		attr->rta_type = XFRMA_ALG_CRYPT;
