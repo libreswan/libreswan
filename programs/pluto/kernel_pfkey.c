@@ -1382,7 +1382,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	 * for the innermost transformation.
 	 */
 
-	i = sizeof(proto_info) / sizeof(proto_info[0]) - 1;
+	i = elemsof(proto_info) - 1;
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
@@ -1430,7 +1430,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
 
-	if (i == sizeof(proto_info) / sizeof(proto_info[0]) - 1)
+	if (i == elemsof(proto_info) - 1)
 		impossible(); /* no transform at all! */
 
 	if (tunnel) {

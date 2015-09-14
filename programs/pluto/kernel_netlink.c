@@ -213,7 +213,7 @@ static const struct aead_alg *get_aead_alg(int algid)
 {
 	unsigned int i;
 
-	for (i = 0; i < sizeof(aead_algs) / sizeof(aead_algs[0]); i++)
+	for (i = 0; i < elemsof(aead_algs); i++)
 		if (aead_algs[i].id == algid)
 			return aead_algs + i;
 
@@ -1772,7 +1772,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 	 * figure out the SPI and protocol (in two forms)
 	 * for the innermost transformation.
 	 */
-	i = sizeof(proto_info) / sizeof(proto_info[0]) - 1;
+	i = elemsof(proto_info) - 1;
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
