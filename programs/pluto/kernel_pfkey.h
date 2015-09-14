@@ -31,7 +31,7 @@ extern bool pfkey_add_sa(struct kernel_sa *sa, bool replace);
 extern bool pfkey_grp_sa(const struct kernel_sa *sa0,
 			 const struct kernel_sa *sa1);
 extern bool pfkey_del_sa(const struct kernel_sa *sa);
-extern bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
+extern bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 			     unsigned op, const char *opname);
 extern bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern void pfkey_set_debug(int cur_debug,

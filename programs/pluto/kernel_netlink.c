@@ -1757,7 +1757,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
  *
  * (identical to KLIPS version, but refactoring isn't waranteed yet
  */
-static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
+static bool netlink_sag_eroute(const struct state *st, const struct spd_route *sr,
 			unsigned op, const char *opname)
 {
 	struct connection *c = st->st_connection;

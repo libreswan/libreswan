@@ -518,7 +518,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		struct connection *c = con_by_name(msg.name, TRUE);
 
 		if (c != NULL) {
-			struct spd_route *sr;
+			const struct spd_route *sr;
 			int fail = 0;
 
 			set_cur_connection(c);

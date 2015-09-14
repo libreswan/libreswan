@@ -885,8 +885,8 @@ static bool bsdkame_shunt_eroute(struct connection *c,
  * information to install the policy, since they are not strongly linked.
  *
  */
-static bool bsdkame_sag_eroute(struct state *st,
-			       struct spd_route *sr,
+static bool bsdkame_sag_eroute(const struct state *st,
+			       const struct spd_route *sr,
 			       unsigned op UNUSED,
 			       const char *opname UNUSED)
 {

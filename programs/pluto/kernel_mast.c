@@ -533,7 +533,7 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 }
 
 /* install or remove eroute for SA Group */
-static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
+static bool mast_sag_eroute(const struct state *st, const struct spd_route *sr,
 			    enum pluto_sadb_operations op,
 			    const char *opname UNUSED)
 {

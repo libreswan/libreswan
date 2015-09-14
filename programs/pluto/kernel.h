@@ -177,7 +177,7 @@ struct kernel_ops {
 			     enum routing_t rt_kind,
 			     enum pluto_sadb_operations op,
 			     const char *opname);
-	bool (*sag_eroute)(struct state *st, struct spd_route *sr,
+	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);
 	void (*remove_orphaned_holds)(int transportproto,
@@ -386,7 +386,7 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
-extern bool eroute_connection(struct spd_route *sr,
+extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
 			      int proto, enum eroute_type esatype,

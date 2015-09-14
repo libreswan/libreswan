@@ -104,8 +104,8 @@ static bool noklips_del_sa(const struct kernel_sa *sa UNUSED)
 	return TRUE;
 }
 
-static bool noklips_sag_eroute(struct state *st UNUSED,
-			       struct spd_route *sr UNUSED,
+static bool noklips_sag_eroute(const struct state *st UNUSED,
+			       const struct spd_route *sr UNUSED,
 			       enum pluto_sadb_operations op UNUSED,
 			       const char *opname UNUSED)
 {

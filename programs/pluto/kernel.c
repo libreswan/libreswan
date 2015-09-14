@@ -834,8 +834,8 @@ static bool shunt_eroute(struct connection *c,
 	return TRUE;
 }
 
-static bool sag_eroute(struct state *st,
-		       struct spd_route *sr,
+static bool sag_eroute(const struct state *st,
+		       const struct spd_route *sr,
 		       enum pluto_sadb_operations op,
 		       const char *opname)
 {
@@ -1220,7 +1220,7 @@ bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */, FALSE, transport_proto, why);
 }
 
-bool eroute_connection(struct spd_route *sr,
+bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
 		       int sa_proto, enum eroute_type esatype,
@@ -2898,10 +2898,9 @@ bool route_and_eroute(struct connection *c,
 
 					if (ost != NULL) {
 						if (!sag_eroute(ost, esr,
-								  ERO_REPLACE,
-								  "restore")) {
-						libreswan_log("sag_eroute() in route_and_eroute() failed restore/replace");
-					}
+							ERO_REPLACE,
+							"restore"))
+							libreswan_log("sag_eroute() in route_and_eroute() failed restore/replace");
 					}
 				}
 			} else {
@@ -3170,13 +3169,11 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	if (st->st_esp.present) {
 		proto = SA_ESP;
 		p2 = &st->st_esp;
+	} else if (st->st_ah.present) {
+		proto = SA_AH;
+		p2 = &st->st_ah;
 	} else {
-		if (st->st_ah.present) {
-			proto = SA_AH;
-			p2 = &st->st_ah;
-		} else {
-			return FALSE;
-		}
+		return FALSE;
 	}
 
 	if (inbound) {

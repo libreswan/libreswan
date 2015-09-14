@@ -1368,7 +1368,7 @@ bool pfkey_shunt_eroute(struct connection *c,
 }
 
 /* install or remove eroute for SA Group */
-bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
+bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		      unsigned op, const char *opname)
 {
 	unsigned int inner_proto;
