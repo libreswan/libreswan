@@ -942,7 +942,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successfull
  */
-static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
+static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2317,7 +2317,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	return TRUE;
 }
 
-static bool netkey_do_command(struct connection *c, struct spd_route *sr,
+static bool netkey_do_command(const struct connection *c, const struct spd_route *sr,
 			const char *verb, struct state *st)
 {
 	char cmd[2048];	/* arbitrary limit on shell command length */

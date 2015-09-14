@@ -249,7 +249,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 	}
 }
 
-static bool bsdkame_do_command(struct connection *c, struct spd_route *sr,
+static bool bsdkame_do_command(const struct connection *c, const struct spd_route *sr,
 			       const char *verb, struct state *st)
 {
 	char cmd[1536]; /* arbitrary limit on shell command length */

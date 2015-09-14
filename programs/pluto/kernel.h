@@ -183,7 +183,7 @@ struct kernel_ops {
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
-	bool (*add_sa)(struct kernel_sa *sa, bool replace);
+	bool (*add_sa)(const struct kernel_sa *sa, bool replace);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
 	bool (*del_sa)(const struct kernel_sa *sa);
@@ -197,8 +197,8 @@ struct kernel_ops {
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
 			       const char *text_said);
-	bool (*docommand)(struct connection *c,
-			  struct spd_route *sr,
+	bool (*docommand)(const struct connection *c,
+			  const struct spd_route *sr,
 			  const char *verb,
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
@@ -221,8 +221,8 @@ extern struct raw_iface *find_raw_ifaces4(void);
 extern struct raw_iface *find_raw_ifaces6(void);
 
 /* helper for invoking call outs */
-extern int fmt_common_shell_out(char *buf, int blen, struct connection *c,
-				struct spd_route *sr, struct state *st);
+extern int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
+				const struct spd_route *sr, struct state *st);
 
 #ifdef KLIPS_MAST
 /* KLIPS/mast/pfkey things */

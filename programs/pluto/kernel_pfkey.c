@@ -961,7 +961,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	return finish_pfkey_msg(extensions, "flow", text_said, NULL);
 }
 
-bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
+bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 {
 	unsigned klips_satype;
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];

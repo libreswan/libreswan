@@ -374,7 +374,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		init_useful_mast(firstq->ip_addr, useful_mast_name, sizeof(useful_mast_name));
 }
 
-static bool mast_do_command(struct connection *c, struct spd_route *sr,
+static bool mast_do_command(const struct connection *c, const struct spd_route *sr,
 			    const char *verb, struct state *st)
 {
 	char cmd[2048]; /* arbitrary limit on shell command length */

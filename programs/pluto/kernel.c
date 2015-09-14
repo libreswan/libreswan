@@ -348,8 +348,8 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 }
 
 /* form the command string */
-int fmt_common_shell_out(char *buf, int blen, struct connection *c,
-			 struct spd_route *sr, struct state *st)
+int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
+			 const struct spd_route *sr, struct state *st)
 {
 #define MAX_DISPLAY_BYTES 13
 	int result;
@@ -407,12 +407,12 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	addrtot(&ta, 0, peerclientmask_str, sizeof(peerclientmask_str));
 
 	metric_str[0] = '\0';
-	if (c->metric)
+	if (c->metric != 0)
 		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
 			c->metric);
 
 	connmtu_str[0] = '\0';
-	if (c->connmtu)
+	if (c->connmtu != 0)
 		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
 			c->connmtu);
 
@@ -433,7 +433,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
 
 	nflogstr[0] = '\0';
-	if (c->nflog_group) {
+	if (c->nflog_group != 0) {
 		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
 			c->nflog_group);
 	}

@@ -27,7 +27,7 @@ extern void pfkey_event(void);
 #ifdef KLIPS
 extern void klips_pfkey_register(void);
 #endif
-extern bool pfkey_add_sa(struct kernel_sa *sa, bool replace);
+extern bool pfkey_add_sa(const struct kernel_sa *sa, bool replace);
 extern bool pfkey_grp_sa(const struct kernel_sa *sa0,
 			 const struct kernel_sa *sa1);
 extern bool pfkey_del_sa(const struct kernel_sa *sa);
