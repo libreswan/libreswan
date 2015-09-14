@@ -3882,42 +3882,41 @@ void update_state_connection(struct state *st, struct connection *c)
  */
 long eclipse_count = 0;
 
-struct connection *eclipsed(const struct connection *c, struct spd_route **esrp)
+struct connection *eclipsed(const struct connection *c, struct spd_route **esrp /*OUT*/)
 {
-	struct connection *ue;
-	const struct spd_route *sr1 = &c->spd;
-
-	ue = NULL;
-
 	/*
 	 * This function was changed in freeswan 2.02 and since
 	 * then has never worked because it always returned NULL.
-	 * It should be caught by the testing/pluto/co-terminal test cases
+	 * It should be caught by the testing/pluto/co-terminal test cases.
+	 * ??? DHR doesn't know how much of this is true.
 	 */
 
 	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
 
+	struct connection *ue;
+
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
-		struct spd_route *srue = &ue->spd;
+		struct spd_route *srue;
 
-		while (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED &&
-			!(samesubnet(&sr1->this.client, &srue->this.client) &&
-				samesubnet(&sr1->that.client,
-					&srue->that.client)))
-			srue = srue->spd_next;
+		for (srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
+			const struct spd_route *src;
 
-		if (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED) {
-			*esrp = srue;
-			break;
+			for (src = &c->spd; src != NULL; src = src->spd_next) {
+				if (srue->routing == RT_ROUTED_ECLIPSED &&
+				    samesubnet(&src->this.client, &srue->this.client) &&
+				    samesubnet(&src->that.client, &srue->that.client))
+				{
+					DBG(DBG_CONTROLMORE,
+						DBG_log("%s eclipsed %s",
+							c->name, ue->name));
+					*esrp = srue;
+					return ue;
+				}
+			}
 		}
 	}
-	DBG(DBG_CONTROLMORE,
-		if (ue == NULL) {
-			DBG_log("eclipsed() returning NULL due to ue == NULL");
-		} else {
-			DBG_log("eclipsed() returning non-NULL ue");
-		});
-	return ue;
+	*esrp = NULL;
+	return NULL;
 }
 
 void liveness_clear_connection(struct connection *c, char *v)
@@ -3936,9 +3935,9 @@ void liveness_clear_connection(struct connection *c, char *v)
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
 		delete_states_by_connection(c, TRUE);
 		DBG(DBG_DPD,
-				DBG_log("%s: unrouting connection %s",
-					enum_name(&connection_kind_names,
-						c->kind), v));
+			DBG_log("%s: unrouting connection %s",
+				enum_name(&connection_kind_names,
+					c->kind), v));
 		unroute_connection(c); /* --unroute */
 	}
 }
