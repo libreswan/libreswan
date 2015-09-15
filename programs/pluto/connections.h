@@ -347,7 +347,7 @@ extern void remove_group_instance(const struct connection *group,
 extern void release_dead_interfaces(void);
 extern void check_orientations(void);
 extern struct connection *route_owner(struct connection *c,
-				      struct spd_route *cur_spd,
+				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,
 				      struct connection **erop,
 				      struct spd_route **esrp);
@@ -459,7 +459,7 @@ extern struct connection *eclipsed(const struct connection *c, struct spd_route 
 
 /* print connection status */
 
-extern void show_one_connection(struct connection *c);
+extern void show_one_connection(const struct connection *c);
 extern void show_connections_status(void);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);

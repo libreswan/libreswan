@@ -90,14 +90,6 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-bool do_command_cygwin(struct connection *c UNUSED,
-		       struct spd_route *sr UNUSED,
-		       const char *verb UNUSED,
-		       struct state *st UNUSED)
-{
-	return FALSE;
-}
-
 /* Called to handle --interface <ifname>
  * Semantics: if specified, only these (real) interfaces are considered.
  */

@@ -1317,12 +1317,10 @@ bool pfkey_shunt_eroute(const struct connection *c,
 
 #if 0
 	{
-		bool ok;
-		enum pluto_sadb_operations inop;
+		enum pluto_sadb_operations inop =
+			op + ERO_ADD_INBOUND - ERO_ADD;
 
-		inop = op + ERO_ADD_INBOUND - ERO_ADD;
-
-		ok = pfkey_raw_eroute(&c->spd.that.host_addr,
+		bool ok = pfkey_raw_eroute(&c->spd.that.host_addr,
 				      &c->spd.that.client,
 				      &c->spd.this.host_addr,
 				      &c->spd.this.client,

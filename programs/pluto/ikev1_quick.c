@@ -2363,8 +2363,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		      st->st_msgid);
 	{
 		char instbuf[END_BUF];
-		struct connection *c = st->st_connection;
-		struct spd_route *sr = &c->spd;
+		const struct connection *c = st->st_connection;
+		const struct spd_route *sr = &c->spd;
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
 			   TRUE, LEMPTY, oriented(*c));

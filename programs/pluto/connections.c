@@ -721,7 +721,7 @@ size_t format_end(char *buf,
 
 static size_t format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
-			struct spd_route *sr)
+			const struct spd_route *sr)
 {
 	size_t w =
 		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
@@ -2270,26 +2270,26 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
  * *erop is used to find other connections sharing an eroute.
  */
 struct connection *route_owner(struct connection *c,
-			struct spd_route *cur_spd,
+			const struct spd_route *cur_spd,
 			struct spd_route **srp,
 			struct connection **erop,
 			struct spd_route **esrp)
 {
-	struct connection *d,
-		*best_ro = c,
-		*best_ero = c;
-	struct spd_route *srd, *src;
-	struct spd_route *best_sr, *best_esr;
-	enum routing_t best_routing, best_erouting;
 
 	if (!oriented(*c)) {
 		libreswan_log("route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
-	best_sr = NULL;
-	best_esr = NULL;
-	best_routing = cur_spd->routing;
-	best_erouting = best_routing;
+
+	struct connection
+		*best_ro = c,
+		*best_ero = c;
+	struct spd_route *best_sr = NULL,
+		*best_esr = NULL;
+	enum routing_t best_routing = cur_spd->routing,
+		best_erouting = best_routing;
+
+	struct connection *d;
 
 	for (d = connections; d != NULL; d = d->ac_next) {
 
@@ -2300,11 +2300,15 @@ struct connection *route_owner(struct connection *c,
 				continue;
 #endif
 
-		for (srd = &d->spd; srd; srd = srd->spd_next) {
+		struct spd_route *srd;
+
+		for (srd = &d->spd; srd != NULL; srd = srd->spd_next) {
 			if (srd->routing == RT_UNROUTED)
 				continue;
 
-			for (src = &c->spd; src; src = src->spd_next) {
+			const struct spd_route *src;
+
+			for (src = &c->spd; src != NULL; src = src->spd_next) {
 				if (src == srd)
 					continue;
 
@@ -3097,7 +3101,7 @@ static bool is_virtual_net_used(struct connection *c,
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
-				struct host_pair *hp,
+				const struct host_pair *hp,
 				const struct id *peer_id UNUSED,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
@@ -3106,10 +3110,8 @@ static struct connection *fc_try(const struct connection *c,
 				const u_int8_t peer_protocol,
 				const u_int16_t peer_port)
 {
-	struct connection *d;
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	int wildcards, pathlen;
 	const bool peer_net_is_host = subnetisaddr(peer_net,
 						&c->spd.that.host_addr);
 	err_t virtualwhy = NULL;
@@ -3118,11 +3120,13 @@ static struct connection *fc_try(const struct connection *c,
 	subnettot(our_net, 0, s1, sizeof(s1));
 	subnettot(peer_net, 0, d1, sizeof(d1));
 
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		struct spd_route *sr;
+	struct connection *d;
 
+	for (d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
+
+		int wildcards, pathlen;
 
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 				match_id(&c->spd.that.id, &d->spd.that.id,
@@ -3151,6 +3155,8 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has a peer client, it must match peer_net.
 		 * If d has no peer client, peer_net must just have peer itself.
 		 */
+
+		const struct spd_route *sr;
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			policy_prio_t prio;
@@ -3270,7 +3276,7 @@ static struct connection *fc_try(const struct connection *c,
 }
 
 static struct connection *fc_try_oppo(const struct connection *c,
-				struct host_pair *hp,
+				const struct host_pair *hp,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
 				const u_int8_t our_protocol,
@@ -3278,24 +3284,23 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				const u_int8_t peer_protocol,
 				const u_int16_t peer_port)
 {
-	struct connection *d;
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	int wildcards, pathlen;
+
+	struct connection *d;
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		struct spd_route *sr;
-		policy_prio_t prio;
-
 		if (d->policy & POLICY_GROUP)
 			continue;
 
+		int wildcards, pathlen;
+
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				match_id(&c->spd.that.id, &d->spd.that.id,
-					&wildcards) &&
-				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
-					&pathlen)))
+		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+		{
 			continue;
+		}
 
 		/* compare protocol and ports */
 		if (d->spd.this.protocol != our_protocol ||
@@ -3313,6 +3318,9 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
+
+		const struct spd_route *sr;
+
 		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			DBG(DBG_CONTROLMORE, {
 				char s1[SUBNETTOT_BUF];
@@ -3348,9 +3356,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred
 			 */
-			prio = PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
+			policy_prio_t prio =
+				PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
+
 			if (prio > best_prio) {
 				best = d;
 				best_prio = prio;
@@ -3360,15 +3370,14 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
-		(NEVER_NEGOTIATE(best->policy) ||
-			(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
+	    (NEVER_NEGOTIATE(best->policy) ||
+	     (best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try_oppo concluding with %s [%ld]",
 			(best ? best->name : "none"), best_prio));
 	return best;
-
 }
 
 struct connection *find_client_connection(struct connection *const c,
@@ -3380,7 +3389,6 @@ struct connection *find_client_connection(struct connection *const c,
 					const u_int16_t peer_port)
 {
 	struct connection *d;
-	struct spd_route *sr;
 
 	DBG(DBG_CONTROLMORE, {
 		char s1[SUBNETTOT_BUF];
@@ -3403,6 +3411,8 @@ struct connection *find_client_connection(struct connection *const c,
 	{
 		struct connection *unrouted = NULL;
 		int srnum = -1;
+
+		const struct spd_route *sr;
 
 		for (sr = &c->spd; unrouted == NULL && sr != NULL;
 			sr = sr->spd_next) {
@@ -3454,8 +3464,9 @@ struct connection *find_client_connection(struct connection *const c,
 
 	if (d == NULL) {
 		/* look for an abstract connection to match */
-		struct spd_route *sra;
-		struct host_pair *hp = NULL;
+		const struct host_pair *hp = NULL;
+
+		const struct spd_route *sra;
 
 		for (sra = &c->spd; hp == NULL &&
 				sra != NULL; sra = sra->spd_next) {
@@ -3538,9 +3549,9 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-static void show_one_sr(struct connection *c,
-			struct spd_route *sr,
-			char *instance)
+static void show_one_sr(const struct connection *c,
+			const struct spd_route *sr,
+			const char *instance)
 {
 	char topo[CONN_BUF_LEN];
 	ipstr_buf thisipb, thatipb, dns1b, dns2b;
@@ -3641,7 +3652,7 @@ static void show_one_sr(struct connection *c,
 
 }
 
-void show_one_connection(struct connection *c)
+void show_one_connection(const struct connection *c)
 {
 	const char *ifn;
 	char instance[1 + 10 + 1];
@@ -3659,7 +3670,7 @@ void show_one_connection(struct connection *c)
 
 	/* Show topology. */
 	{
-		struct spd_route *sr = &c->spd;
+		const struct spd_route *sr = &c->spd;
 
 		while (sr != NULL) {
 			show_one_sr(c, sr, instance);

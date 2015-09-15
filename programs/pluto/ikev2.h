@@ -126,7 +126,7 @@ extern stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 extern void ikev2_derive_child_keys(struct state *st,
 				    enum original_role role);
 
-extern struct traffic_selector ikev2_end_to_ts(struct end *e);
+extern struct traffic_selector ikev2_end_to_ts(const struct end *e);
 
 extern int ikev2_evaluate_connection_fit(const struct connection *d,
 					 const struct spd_route *sr,

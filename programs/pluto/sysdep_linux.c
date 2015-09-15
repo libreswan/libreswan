@@ -108,7 +108,7 @@ typedef void (*sighandler_t)(int);
 static const char *pluto_ifn[10];
 static int pluto_ifn_roof = 0;
 
-bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
+bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
 	DBG(DBG_CONTROL, {

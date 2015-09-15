@@ -695,7 +695,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 	} else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
-		struct connection *ue = eclipsed(c, &esr);
+		const struct connection *ue = eclipsed(c, &esr);
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;

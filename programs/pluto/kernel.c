@@ -245,7 +245,7 @@ static reqid_t get_proto_reqid(reqid_t base, int proto)
  * check if the number was previously used (assuming that no
  * SPI lives longer than 4G of its successors).
  */
-ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
+ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, const struct spd_route *sr,
 			  bool tunnel)
 {
 	static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
@@ -285,7 +285,7 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 {
 	static cpi_t
 		first_busy_cpi = 0,
@@ -565,7 +565,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 #undef MAX_DISPLAY_BYTES
 }
 
-bool do_command(struct connection *c, struct spd_route *sr, const char *verb,
+bool do_command(const struct connection *c, const struct spd_route *sr, const char *verb,
 		struct state *st)
 {
 	const char *verb_suffix;
@@ -614,7 +614,11 @@ enum routability {
 	route_unnecessary
 };
 
-/* handle co-terminal attempt of the "near" kind */
+/*
+ * handle co-terminal attempt of the "near" kind
+ *
+ * Note: it mutates both inside and outside
+ */
 static enum routability note_nearconflict(
 	struct connection *outside,	/* CK_PERMANENT */
 	struct connection *inside)	/* CK_TEMPLATE */
@@ -649,12 +653,11 @@ static enum routability note_nearconflict(
 	return route_nearconflict;
 }
 
+/*
+ * Note: this may mutate c
+ */
 static enum routability could_route(struct connection *c)
 {
-	struct spd_route *esr, *rosr;
-	struct connection *ero,                                 /* who, if anyone, owns our eroute? */
-	*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);       /* who owns our route? */
-
 	DBG(DBG_CONTROL,
 	    DBG_log("could_route called for %s (kind=%s)",
 		    c->name,
@@ -702,6 +705,10 @@ static enum routability could_route(struct connection *c)
 		       "cannot install route: peer is within its client");
 		return route_impossible;
 	}
+
+	struct spd_route *esr, *rosr;
+	struct connection *ero,		/* who, if anyone, owns our eroute? */
+		*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
 
 	/* If there is already a route for peer's client subnet
 	 * and it disagrees about interface or nexthop, we cannot steal it.
@@ -817,8 +824,8 @@ bool trap_connection(struct connection *c)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool shunt_eroute(struct connection *c,
-			 struct spd_route *sr,
+static bool shunt_eroute(const struct connection *c,
+			 const struct spd_route *sr,
 			 enum routing_t rt_kind,
 			 enum pluto_sadb_operations op,
 			 const char *opname)
@@ -1259,7 +1266,7 @@ bool eroute_connection(const struct spd_route *sr,
 
 /* assign a bare hold or pass to a connection */
 
-bool assign_holdpass(struct connection *c,
+bool assign_holdpass(const struct connection *c,
 		struct spd_route *sr,
 		int transport_proto, ipsec_spi_t negotiation_shunt,
 		const ip_address *src, const ip_address *dst)
@@ -2498,8 +2505,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
 	if (c->spd.that.has_client) {
 		for (;; ) {
-			ipstr_buf b;
-			struct spd_route *esr;
+			struct spd_route *esr;	/* value is ignored */
 			struct connection *o = route_owner(c, &c->spd, &esr,
 							   NULL, NULL);
 
@@ -2531,6 +2537,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 					break;
 			}
 
+			ipstr_buf b;
 			loglog(RC_LOG_SERIOUS,
 			       "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route",
 			       o->name, ipstr(&o->spd.that.host_addr, &b));
@@ -2594,9 +2601,6 @@ bool route_and_eroute(struct connection *c,
 		      struct spd_route *sr,
 		      struct state *st)
 {
-	struct spd_route *esr;
-	struct spd_route *rosr;
-	struct connection *ero, *ro;  /* who, if anyone, owns our eroute? */
 	bool eroute_installed = FALSE,
 	     firewall_notified = FALSE,
 	     route_installed = FALSE;
@@ -2605,9 +2609,9 @@ bool route_and_eroute(struct connection *c,
 	bool new_eroute = FALSE;
 #endif
 
-	struct bare_shunt **bspp;
-
-	ro = route_owner(c, sr, &rosr, &ero, &esr);
+	struct spd_route *esr, *rosr;
+	struct connection *ero,
+		*ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
@@ -2635,7 +2639,7 @@ bool route_and_eroute(struct connection *c,
 			break;
 #endif
 
-	bspp = (ero == NULL) ?
+	struct bare_shunt **bspp = (ero == NULL) ?
 	       bare_shunt_ptr(&sr->this.client, &sr->that.client,
 			      sr->this.protocol) :
 	       NULL;
@@ -2726,7 +2730,7 @@ bool route_and_eroute(struct connection *c,
 		if (!route_installed)
 			DBG(DBG_CONTROL,
 			    DBG_log("route command returned an error"));
-	} else if (routed(sr->routing)   ||
+	} else if (routed(sr->routing) ||
 		   routes_agree(ro, c)) {
 		route_installed = TRUE; /* nothing to be done */
 	} else {
@@ -2928,15 +2932,13 @@ bool route_and_eroute(struct connection *c,
 
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
-	struct spd_route *sr;
-	enum routability rb;
-
 	DBG(DBG_CONTROL, DBG_log("install_ipsec_sa() for #%lu: %s",
 				 st->st_serialno,
 				 inbound_also ?
 				 "inbound and outbound" : "outbound only"));
 
-	rb = could_route(st->st_connection);
+	enum routability rb = could_route(st->st_connection);
+
 	switch (rb) {
 	case route_easy:
 	case route_unnecessary:
@@ -2973,7 +2975,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	if (rb == route_unnecessary)
 		return TRUE;
 
-	sr = &st->st_connection->spd;
+	struct spd_route *sr = &st->st_connection->spd;
+
 	if (st->st_connection->remotepeertype == CISCO && sr->spd_next != NULL)
 		sr = sr->spd_next;
 
@@ -3005,10 +3008,11 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
-		sr = st->st_connection->spd.spd_next;
-		if (sr != NULL) {
-			st->st_connection->spd.eroute_owner = sr->eroute_owner;
-			st->st_connection->spd.routing = sr->routing;
+		struct spd_route *srcisco = st->st_connection->spd.spd_next;
+
+		if (srcisco != NULL) {
+			st->st_connection->spd.eroute_owner = srcisco->eroute_owner;
+			st->st_connection->spd.routing = srcisco->routing;
 		}
 	}
 
@@ -3043,8 +3047,6 @@ void delete_ipsec_sa(struct state *st)
 			 */
 			struct connection *c = st->st_connection;
 			struct spd_route *sr;
-
-			passert(st->st_connection);
 
 			for (sr = &c->spd; sr; sr = sr->spd_next) {
 				if (sr->eroute_owner == st->st_serialno &&
@@ -3232,7 +3234,7 @@ void free_kernelfd(void)
 
 }
 
-bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		int transport_proto, ipsec_spi_t failure_shunt)
 {
 	enum routing_t ro = sr->routing,        /* routing, old */

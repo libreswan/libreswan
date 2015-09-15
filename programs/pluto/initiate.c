@@ -80,10 +80,8 @@
 
 bool orient(struct connection *c)
 {
-	struct spd_route *sr;
-
 	if (!oriented(*c)) {
-		struct iface_port *p;
+		struct spd_route *sr;
 
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			/* There can be more then 1 spd policy associated - required
@@ -95,6 +93,8 @@ bool orient(struct connection *c)
 			/* Note: this loop does not stop when it finds a match:
 			 * it continues checking to catch any ambiguity.
 			 */
+			const struct iface_port *p;
+
 			for (p = interfaces; p != NULL; p = p->next) {
 				if (p->ike_float)
 					continue;
@@ -446,9 +446,7 @@ static void cannot_oppo(struct connection *c,
 
 	if (c != NULL && c->policy_next != NULL) {
 		/* there is some policy that comes afterwards */
-		struct spd_route *shunt_spd;
 		struct connection *nc = c->policy_next;
-		struct state *st;
 
 		passert(c->kind == CK_TEMPLATE);
 		passert(nc->kind == CK_PERMANENT);
@@ -464,7 +462,7 @@ static void cannot_oppo(struct connection *c,
 		 * situation that we have.
 		 */
 
-		shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
+		struct spd_route *shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
 
 		shunt_spd->spd_next = nc->spd.spd_next;
 		nc->spd.spd_next = shunt_spd;
@@ -480,15 +478,15 @@ static void cannot_oppo(struct connection *c,
 		 */
 		shunt_spd->that.host_addr = nc->spd.that.host_addr;
 
-		/* now, lookup the state, and poke it up.
-		 */
+		/* now, lookup the state, and poke it up. */
 
-		st = state_with_serialno(nc->newest_ipsec_sa);
+		struct state *st = state_with_serialno(nc->newest_ipsec_sa);
 
 		/* XXX what to do if the IPSEC SA has died? */
 		passert(st != NULL);
 
-		/* link the new connection instance to the state's list of
+		/*
+		 * link the new connection instance to the state's list of
 		 * connections
 		 */
 
@@ -518,6 +516,7 @@ static void cannot_oppo(struct connection *c,
 	if (b->held) {
 		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
 		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
+
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
@@ -530,12 +529,13 @@ static void cannot_oppo(struct connection *c,
 					  b->transport_proto,
 					  ughmsg))
 		{
-			DBG(DBG_CONTROL, DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-				(b->failure_shunt == SPI_PASS) ? "pass" :
-					(b->failure_shunt == SPI_HOLD) ? "hold" : "very-unexpected"
-			));
+			DBG(DBG_CONTROL,
+				DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+					(b->failure_shunt == SPI_PASS) ? "pass" :
+					(b->failure_shunt == SPI_HOLD) ? "hold" :
+					"very-unexpected"));
 		} else {
-		 libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+			libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -1467,9 +1467,10 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 {
 	struct connection *c;
-	struct spd_route *sr;
 
 	for (c = connections; c != NULL; c = c->ac_next) {
+		const struct spd_route *sr;
+
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
 			    samesubnet(ours, &sr->this.client) &&

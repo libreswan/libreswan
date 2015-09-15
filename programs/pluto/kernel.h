@@ -230,34 +230,12 @@ extern bool pfkey_plumb_mast_device(int mast_dev);
 #endif
 
 /* many bits reach in to use this, but maybe shouldn't */
-extern bool do_command(struct connection *c, struct spd_route *sr,
+extern bool do_command(const struct connection *c, const struct spd_route *sr,
 		       const char *verb, struct state *st);
 
-#if defined(linux)
-extern bool do_command_linux(struct connection *c, struct spd_route *sr,
-			     const char *verb, struct state *st);
+/* defined in various sysdep_*.c where needed */
 extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(__FreeBSD__)
-extern bool do_command_freebsd(struct connection *c, struct spd_route *sr,
-			       const char *verb, struct state *st);
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-extern bool do_command_darwin(struct connection *c, struct spd_route *sr,
-			      const char *verb, struct state *st);
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(__CYGWIN32__)
-extern bool do_command_cygwin(struct connection *c, struct spd_route *sr,
-			      const char *verb, struct state *st);
-#endif
+			   const char *cmd);
 
 /* information from /proc/net/ipsec_eroute */
 
@@ -358,13 +336,13 @@ extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       int transport_proto,
 			       const char *why);
 
-extern bool assign_holdpass(struct connection *c,
+extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
 			int transport_proto,
 			ipsec_spi_t negotiation_shunt,
 			const ip_address *src, const ip_address *dst);
 
-extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		int transport_proto, ipsec_spi_t failure_shunt);
 
 extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
@@ -372,9 +350,9 @@ extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 int proto,
-				 struct spd_route *sr,
+				 const struct spd_route *sr,
 				 bool tunnel_mode);
-extern ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel_mode);
+extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
@@ -398,8 +376,8 @@ extern bool eroute_connection(const struct spd_route *sr,
 #endif
 			      );
 
-static inline bool compatible_overlapping_connections(struct connection *a,
-						      struct connection *b)
+static inline bool compatible_overlapping_connections(const struct connection *a,
+						      const struct connection *b)
 {
 	return kernel_ops->overlap_supported &&
 	       a != NULL && b != NULL &&

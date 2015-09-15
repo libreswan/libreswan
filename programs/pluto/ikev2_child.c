@@ -80,7 +80,7 @@ void ikev2_print_ts(struct traffic_selector *ts)
 }
 
 /* rewrite me with addrbytesptr() */
-struct traffic_selector ikev2_end_to_ts(struct end *e)
+struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
@@ -220,8 +220,6 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 {
 	struct state *st = md->st;
 	struct traffic_selector *ts_i, *ts_r;
-	struct spd_route *sr;
-	stf_status ret;
 
 	if (role == ORIGINAL_INITIATOR) {
 		ts_i = &st->st_ts_this;
@@ -231,9 +229,12 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 		ts_r = &st->st_ts_this;
 	}
 
+	const struct spd_route *sr;
+
 	for (sr = &c0->spd; sr != NULL; sr = sr->spd_next) {
-		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
+		stf_status ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
 				    ts_i, ORIGINAL_INITIATOR);
+
 		if (ret != STF_OK)
 			return ret;
 
@@ -242,7 +243,8 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
 					    ts_r, ORIGINAL_RESPONDER);
 		} else {
-			struct payload_digest *p;
+			const struct payload_digest *p;
+
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
 			     p = p->next) {
 				if (p->payload.v2n.isan_type ==
@@ -254,7 +256,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					break;
 				}
 			}
-			if (!p) {
+			if (p != NULL) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
 						    ts_r, ORIGINAL_RESPONDER);
@@ -690,13 +692,13 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
  * find the best connection and, if it is AUTH exchange, create the child state
  */
 static stf_status ikev2_create_responder_child_state(
-	struct msg_digest *md,
+	const struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
 	enum original_role role, enum isakmp_xchg_types isa_xchg)
 {
 	struct connection *c = md->st->st_connection;
 
-	/* ??? is 16 and undocumented limit? */
+	/* ??? is 16 an undocumented limit? */
 	struct traffic_selector tsi[16], tsr[16];
 	const int tsi_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
 		tsi, elemsof(tsi));
@@ -707,12 +709,10 @@ static stf_status ikev2_create_responder_child_state(
 	int bestfit_n = -1;
 	int bestfit_p = -1;
 	int bestfit_pr = -1;
-	struct spd_route *bsr = NULL;	/* best spd_route so far */
+	const struct spd_route *bsr = NULL;	/* best spd_route so far */
 
 	int best_tsi_i = -1;
 	int best_tsr_i = -1;
-
-	struct spd_route *sra;
 
 	*ret_cst = NULL;	/* no child state yet */
 
@@ -721,6 +721,8 @@ static stf_status ikev2_create_responder_child_state(
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
 	/* find best spd in c */
+	const struct spd_route *sra;
+
 	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
 				tsr, tsi_n, tsr_n);
@@ -781,13 +783,11 @@ static stf_status ikev2_create_responder_child_state(
 	 */
 
 	struct connection *b = c;	/* best connection so far */
-	struct host_pair *hp = NULL;
+	const struct host_pair *hp = NULL;
 
 	for (sra = &c->spd; hp == NULL && sra != NULL;
 	     sra = sra->spd_next)
 	{
-		struct connection *d;
-
 		hp = find_host_pair(&sra->this.host_addr,
 				    sra->this.host_port,
 				    &sra->that.host_addr,
@@ -810,8 +810,9 @@ static stf_status ikev2_create_responder_child_state(
 		if (hp == NULL)
 			continue;
 
+		struct connection *d;
+
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
-			struct spd_route *sr;
 			int wildcards, pathlen; /* XXX */
 
 			if (d->policy & POLICY_GROUP)
@@ -836,6 +837,8 @@ static stf_status ikev2_create_responder_child_state(
 			      trusted_ca_nss(c->spd.that.ca,
 					 d->spd.that.ca, &pathlen)))
 				continue;
+
+			const struct spd_route *sr;
 
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 				int newfit = ikev2_evaluate_connection_fit(
@@ -935,7 +938,7 @@ static stf_status ikev2_create_responder_child_state(
 	return STF_OK;	/* ignored because *ret_cst is not NULL */
 }
 
-static stf_status ikev2_cp_reply_state(struct msg_digest *md,
+static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	struct state **ret_cst,
 	enum isakmp_xchg_types isa_xchg)
 {

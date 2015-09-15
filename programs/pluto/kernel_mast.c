@@ -499,7 +499,7 @@ static bool mast_shunt_eroute(const struct connection *c UNUSED,
  * @param sr - new route
  * @return TRUE if add was successful, FALSE otherwise
  */
-static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
+static bool mast_sag_eroute_replace(const struct state *st, const struct spd_route *sr)
 {
 	struct connection *c = st->st_connection;
 	struct state *old_st;

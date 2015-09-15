@@ -1060,7 +1060,6 @@ static bool same_phase1_sa(struct state *this,
 void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
-	struct spd_route *sr;
 
 	DBG(DBG_CONTROL, DBG_log("Deleting states for connection"));
 
@@ -1083,6 +1082,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
 	 *  && c->newest_isakmp_sa == SOS_NOBODY);
 	 */
+
+	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		passert(sr->eroute_owner == SOS_NOBODY);
@@ -1703,6 +1704,9 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		);
 }
 
+/*
+ * odd fact: st cannot be const because we call get_sa_info on it
+ */
 void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
