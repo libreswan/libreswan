@@ -256,7 +256,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					break;
 				}
 			}
-			if (p != NULL) {
+			if (p == NULL) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
 						    ts_r, ORIGINAL_RESPONDER);
