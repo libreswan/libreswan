@@ -2328,7 +2328,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 /* keep track of kernel version  */
 static char kversion[256];
 
-const struct kernel_ops *kernel_ops;
+const struct kernel_ops *kernel_ops = NULL;
 
 void init_kernel(void)
 {
@@ -2354,9 +2354,10 @@ void init_kernel(void)
 			break;
 		} else {
 			libreswan_log(
-				"No Kernel XFRM/NETKEY interface detected");
+				"No XFRM/NETKEY kernel interface detected");
+			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
-		/* FALL THROUGH */
+		break;
 #endif
 
 #if defined(KLIPS)
@@ -2368,9 +2369,10 @@ void init_kernel(void)
 			kernel_ops = &klips_kernel_ops;
 			break;
 		} else {
-			libreswan_log("No Kernel KLIPS interface detected");
+			libreswan_log("No KLIPS kernel interface detected");
+			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
-		/* FALL THROUGH */
+		break;
 #endif
 
 #if defined(KLIPS_MAST)
@@ -2383,9 +2385,10 @@ void init_kernel(void)
 			kernel_ops = &mast_kernel_ops;
 			break;
 		} else {
-			libreswan_log("No Kernel MASTKLIPS interface detected");
+			libreswan_log("No MASTKLIPS kernel interface detected");
+			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
-		/* FALL THROUGH */
+		break;
 #endif
 
 #if defined(BSD_KAME)
