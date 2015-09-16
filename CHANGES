@@ -4,12 +4,19 @@ See also https://libreswan.org/
 v3.16 (unreleased)
 * libipsecconf: allow time with no unit suffix (openswan compat) [Hugh]
 * libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
+* libipsecconf: re-introduce strictcrlpolicy= as alias for crl-strict= [Paul]
 * pluto: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
 * PAM: Fix some IKEv1 XAUTH methods always returning "denied" [Antony]
 * newhostkey: fix seedev device [Paul]
 * pluto: Fix trafficstatus byte counter output [Antony]
-* building: obsolete USE_ADNS and disable building adns helpers [Paul]
 * pluto: accept racoon's over-sized padding (got rejected in 3.14) [Andrew]
+* pluto: obsolete plutofork= and ignore the keyword on startup [Paul]
+* pluto: send_crl_to_import: use waitpid(2) to wait for correct child [Hugh]
+* pluto: cleanup struct spd_route and related tidying [Hugh]
+* pluto: Don't reject IPv6 family for OE foodgroups [Antony]
+* pluto: fix eclipsed to iterate over connection's spd_routes [Hugh]
+* pluto: accept delete payload with wrong side's SPI (CISCO bug) [Paul+Hugh]
+* building: obsolete USE_ADNS and disable building adns helpers [Paul]
 
 v3.15 (August 24, 2015)
 * SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
