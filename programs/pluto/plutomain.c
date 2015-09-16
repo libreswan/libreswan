@@ -1071,8 +1071,7 @@ int main(int argc, char **argv)
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
-			/* plutofork= */
-			fork_desired = cfg->setup.options[KBF_PLUTOFORK];
+			/* plutofork= no longer supported via config file */
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];

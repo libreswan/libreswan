@@ -354,21 +354,14 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "logtime",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM },
 	{ "plutostderrlogtime",        kv_config | kv_alias, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM }, /* obsolete */
 	{ "logappend",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGAPPEND, NOT_ENUM },
-	{ "plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,
-	  NOT_ENUM },
+	{ "plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH, NOT_ENUM },
 	{ "dumpdir",        kv_config, kt_dirname,   KSF_DUMPDIR, NOT_ENUM },
 	{ "ipsecdir",        kv_config, kt_dirname,   KSF_IPSECDIR, NOT_ENUM },
-	{ "secretsfile",        kv_config, kt_dirname,   KSF_SECRETSFILE,
-	  NOT_ENUM },
+	{ "secretsfile",        kv_config, kt_dirname,   KSF_SECRETSFILE, NOT_ENUM },
 	{ "statsbin",        kv_config, kt_dirname,   KSF_STATSBINARY, NOT_ENUM },
-	{ "plutofork",           kv_config, kt_bool,      KBF_PLUTOFORK,
-	  NOT_ENUM },
-	{ "perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG,
-	  NOT_ENUM },
-	{ "perpeerlogdir",        kv_config, kt_dirname,   KSF_PERPEERDIR,
-	  NOT_ENUM },
-	{ "oe",             kv_config, kt_obsolete_quiet,      KBF_WARNIGNORE,
-	  NOT_ENUM },
+	{ "perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG, NOT_ENUM },
+	{ "perpeerlogdir",        kv_config, kt_dirname,   KSF_PERPEERDIR, NOT_ENUM },
+	{ "oe",             kv_config, kt_obsolete_quiet,      KBF_WARNIGNORE, NOT_ENUM },
 	{ "fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP, NOT_ENUM },
 	{ "hidetos",        kv_config, kt_bool,      KBF_HIDETOS, NOT_ENUM },
 	{ "uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS, NOT_ENUM },
@@ -390,6 +383,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "ocsp_timeout", kv_config | kv_alias, kt_number,     KBF_OCSPTIMEOUT, NOT_ENUM }, /* obsolete _ */
 	{ "ocsp_trust_name", kv_config | kv_alias, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM }, /* obsolete _ */
 
+	{ "plutofork",      kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },     /* obsolete */
 	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
 	{ "force-busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM }, /* obsoleted for ddos-mode=busy */
 	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KBF_DDOS_MODE, &kw_ddos_list },

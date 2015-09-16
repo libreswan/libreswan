@@ -1,21 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>plutofork</emphasis></term>
   <listitem>
-<para>Whether<emphasis remap='I'>pluto</emphasis> will turn into a daemon
-by forking in the background, or whether it will remain on the foreground.
-Valid options are  <emphasis remap='I'>yes</emphasis> (the default) or
- <emphasis remap='I'>no</emphasis>.
-Older init systems, such as sysv initscripts, require that pluto forks
-into the background. Newer init systems, such as
- <emphasis remap='I'>systemd</emphasis> or
-<emphasis remap='I'>upstart</emphasis> prefer the process remains in
-the foreground. The current default reflects the fact that most systems
-are still based on sysv init scripts. Init systems can override this
-configuration option by starting pluto specifically with
- <emphasis remap='I'>--nofork</emphasis> specified on the command line to start
-the <emphasis remap='I'>pluto</emphasis> daemon <emphasis remap='B'>after</emphasis>
-specifying the
-<emphasis remap='I'>--config /etc/ipsec.conf</emphasis> option.
-</para>
+<para>This option has been obsoleted. The pluto daemon always forks unless
+it is started with the --nofork option.</para>
   </listitem>
   </varlistentry>
