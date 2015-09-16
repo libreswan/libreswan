@@ -130,7 +130,10 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 		DBG_log("pipe() error: %s", strerror(errno));
 		goto end;
 	}
-	switch(fork()) {
+
+	pid_t child = fork();
+
+	switch (child) {
 	case -1:
 		DBG_log("fork() error: %s", strerror(errno));
 		break;
@@ -171,7 +174,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 					strerror(errno));
 			break;
 		}
-		wait(&wstatus);
+
+		waitpid(child, &wstatus, 0);
 
 		if (WIFEXITED(wstatus)) {
 			DBG_log("CRL helper exited with status: %d",
