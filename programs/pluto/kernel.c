@@ -2345,55 +2345,44 @@ void init_kernel(void)
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)
 	case USE_NETKEY:
-		if (stat("/proc/net/pfkey", &buf) == 0) {
-			kern_interface = USE_NETKEY;
-			libreswan_log(
-				"Using Linux XFRM/NETKEY IPsec interface code on %s",
-				kversion);
-			kernel_ops = &netkey_kernel_ops;
-			break;
-		} else {
+		if (stat("/proc/net/pfkey", &buf) != 0) {
 			libreswan_log(
 				"No XFRM/NETKEY kernel interface detected");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
+		libreswan_log(
+			"Using Linux XFRM/NETKEY IPsec interface code on %s",
+			kversion);
+		kernel_ops = &netkey_kernel_ops;
 		break;
 #endif
 
 #if defined(KLIPS)
 	case USE_KLIPS:
-		if (stat("/proc/net/pf_key", &buf) == 0) {
-			kern_interface = USE_KLIPS;
-			libreswan_log("Using KLIPS IPsec interface code on %s",
-				      kversion);
-			kernel_ops = &klips_kernel_ops;
-			break;
-		} else {
+		if (stat("/proc/net/pf_key", &buf) != 0) {
 			libreswan_log("No KLIPS kernel interface detected");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
+		libreswan_log("Using KLIPS IPsec interface code on %s",
+			      kversion);
+		kernel_ops = &klips_kernel_ops;
 		break;
 #endif
 
 #if defined(KLIPS_MAST)
 	case USE_MASTKLIPS:
-		if (stat("/proc/sys/net/ipsec/debug_mast", &buf) == 0) {
-			kern_interface = USE_MASTKLIPS;
-			libreswan_log(
-				"Using KLIPSng (mast) IPsec interface code on %s",
-				kversion);
-			kernel_ops = &mast_kernel_ops;
-			break;
-		} else {
+		if (stat("/proc/sys/net/ipsec/debug_mast", &buf) != 0) {
 			libreswan_log("No MASTKLIPS kernel interface detected");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
+		libreswan_log("Using KLIPSng (mast) IPsec interface code on %s",
+			kversion);
+		kernel_ops = &mast_kernel_ops;
 		break;
 #endif
 
 #if defined(BSD_KAME)
 	case USE_BSDKAME:
-		kern_interface = USE_BSDKAME;
 		libreswan_log("Using BSD/KAME IPsec interface code on %s",
 			      kversion);
 		kernel_ops = &bsdkame_kernel_ops;
@@ -2402,7 +2391,6 @@ void init_kernel(void)
 
 #if defined(WIN32) && defined(WIN32_NATIVE)
 	case USE_WIN32_NATIVE:
-		kern_interface = USE_WIN32_NATIVE;
 		libreswan_log("Using Win2K native IPsec interface code on %s",
 			      kversion);
 		kernel_ops = &win2k_kernel_ops;
@@ -2410,7 +2398,6 @@ void init_kernel(void)
 #endif
 
 	case NO_KERNEL:
-		kern_interface = NO_KERNEL;
 		libreswan_log("Using 'no_kernel' interface code on %s",
 			      kversion);
 		kernel_ops = &noklips_kernel_ops;
