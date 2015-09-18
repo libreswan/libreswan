@@ -721,9 +721,9 @@ kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
-
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
-
+kvmplutotest	interop-ikev2-strongswan-28-reauth		good
+kvmplutotest	interop-ikev2-strongswan-29-rekey		wip
 
 #################################################################
 # DNSSEC tests
