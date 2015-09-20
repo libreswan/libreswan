@@ -74,34 +74,11 @@ static struct fg_targets *targets = NULL;
 
 static struct fg_targets *new_targets;
 
-/* ipcmp compares the two ip_address values a and b.
- * It returns -1, 0, or +1 if a is, respectively,
- * less than, equal to, or greater than b.
- */
-static int ipcmp(ip_address *a, ip_address *b)
-{
-	if (addrtypeof(a) != addrtypeof(b)) {
-		return addrtypeof(a) < addrtypeof(b) ? -1 : 1;
-	} else if (sameaddr(a, b)) {
-		return 0;
-	} else {
-		const struct sockaddr *sa = sockaddrof(a),
-		*sb = sockaddrof(b);
-
-		passert(addrtypeof(a) == AF_INET); /* not yet implemented IPv6 version :-( */
-		return (ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr)
-			<
-			ntohl(((const struct sockaddr_in *)sb)->sin_addr.s_addr))
-		       ?
-		       -1 : 1;
-	}
-}
-
 /* subnetcmp compares the two ip_subnet values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
  */
-static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
+static bool subnetcmp(const ip_subnet *a, const ip_subnet *b)
 {
 	ip_address neta, maska, netb, maskb;
 	int r;
@@ -110,9 +87,9 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	maskof(a, &maska);
 	networkof(b, &netb);
 	maskof(b, &maskb);
-	r = ipcmp(&neta, &netb);
+	r = sameaddr(&neta, &netb);
 	if (r == 0)
-		r = ipcmp(&maska, &maskb);
+		r = sameaddr(&maska, &maskb);
 	return r;
 }
 
