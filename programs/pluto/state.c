@@ -1643,6 +1643,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 	    });
 }
 
+/* note: this mutates *st by calling get_sa_info */
 void fmt_list_traffic(struct state *st, char *state_buf,
 		      const size_t state_buf_len)
 {

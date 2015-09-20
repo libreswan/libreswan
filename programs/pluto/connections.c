@@ -139,30 +139,34 @@ void release_connection(struct connection *c, bool relations)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct host_pair *p = c->host_pair;
-	struct connection *d;
-	struct connection *conn_next_tmp;
-	struct connection *conn_list = NULL;
-	ip_address new_addr;
-	char *dnshostname = c->dnshostname;
+	struct host_pair *const hp = c->host_pair;
+	const char *dnshostname = c->dnshostname;
 
 	/* ??? perhaps we should return early if dnshostname == NULL */
 
-	if (p == NULL)
+	if (hp == NULL)
 		return;
 
-	d = p->connections;
+	struct connection *d = hp->connections;
 
 	/* ??? looks as if addr_family is not allowed to change.  Bug? */
-	/* ??? why are we using d->dnshostname instead of c->hostname? */
-	if (d == NULL ||
-	    d->dnshostname == NULL ||
+	/* ??? why are we using d->dnshostname instead of (c->)dnshostname? */
+	/* ??? code used to test for d == NULL, but that seems impossible. */
+
+	pexpect(dnshostname == d->dnshostname || streq(dnshostname, d->dnshostname));
+
+	ip_address new_addr;
+
+	if (d->dnshostname == NULL ||
 	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-	    sameaddr(&new_addr, &p->him.addr))
+	    sameaddr(&new_addr, &hp->him.addr))
 		return;
 
-	for (; d != NULL; d = conn_next_tmp) {
-		conn_next_tmp = d->hp_next;
+	struct connection *conn_list = NULL;
+
+	while (d != NULL) {
+		struct connection *nxt = d->hp_next;
+
 		/*
 		 * ??? this test used to assume that dnshostname != NULL
 		 * if d->dnshostname != NULL.  Is that true?
@@ -182,22 +186,20 @@ void update_host_pairs(struct connection *c)
 			d->hp_next = conn_list;
 			conn_list = d;
 		}
+		d = nxt;
 	}
 
-	if (conn_list != NULL) {
-		for (d = conn_list; d != NULL; d = conn_next_tmp) {
-			/*
-			 * connect the connection to the new host_pair
-			 */
-			conn_next_tmp = d->hp_next;
-			connect_to_host_pair(d);
-		}
+	while (conn_list != NULL) {
+		struct connection *nxt = conn_list->hp_next;
+
+		connect_to_host_pair(conn_list);
+		conn_list = nxt;
 	}
 
-	if (p->connections == NULL) {
-		passert(p->pending == NULL); /* ??? must deal with this! */
-		list_rm(struct host_pair, next, p, host_pairs);
-		pfree(p);
+	if (hp->connections == NULL) {
+		passert(hp->pending == NULL); /* ??? must deal with this! */
+		list_rm(struct host_pair, next, hp, host_pairs);
+		pfree(hp);
 	}
 }
 
@@ -1044,9 +1046,8 @@ static bool check_connection_end(const struct whack_end *this,
 			 * amongst themselves as the ID is known from the
 			 * outset.
 			 */
-			const struct connection *c = NULL;
-
-			c = find_host_pair_connections(__FUNCTION__,
+			const struct connection *c =
+				find_host_pair_connections(__FUNCTION__,
 						&this->host_addr,
 						this->host_port,
 						(const ip_address *)NULL,

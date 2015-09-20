@@ -320,40 +320,47 @@ static bool same_in_some_sense(const struct connection *a,
 			b->dnshostname, &b->spd.that.host_addr);
 }
 
-void restart_connections_by_peer(struct connection *c)
+void restart_connections_by_peer(struct connection *const c)
 {
-	struct connection *d;
-	/* if c is an CK_INSTANCE, it removed. keep copy of necessary bits */
-	char *dnshostname;
-	ip_address host_addr;
-	struct host_pair *hp = c->host_pair;
-	enum connection_kind kind  = c->kind;
+	/*
+	 * Iff c is a CK_INSTANCE, it will be removed by terminate_connection.
+	 * Any parts of c we need after that must be copied first.
+	 */
 
+	const struct host_pair *const hp = c->host_pair;
+	enum connection_kind c_kind  = c->kind;
+
+	pexpect(hp != NULL);	/* ??? why would this happen? */
 	if (hp == NULL)
 		return;
 
-	dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
-	host_addr = c->spd.that.host_addr;
+	char *dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
 
-	for (d = c->host_pair->connections; d != NULL;) {
-		struct connection *next = d->hp_next; /* copy beofre d is deleteed, CK_INSTANCE */
-		if (same_host(dnshostname, &host_addr, d->dnshostname,
-					&d->spd.that.host_addr))
+	ip_address host_addr = c->spd.that.host_addr;
+
+	struct connection *d;
+
+	for (d = hp->connections; d != NULL;) {
+		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
+
+		if (same_host(dnshostname, &host_addr,
+				d->dnshostname, &d->spd.that.host_addr))
+		{
+			/* This might delete c if CK_INSTANCE */
+			/* ??? is there a chance hp becomes dangling? */
 			terminate_connection(d->name);
+		}
 		d = next;
 	}
 
-	if (kind != CK_INSTANCE)
+	if (c_kind != CK_INSTANCE) {
+		/* reference to c is OK because not CK_INSTANCE */
 		update_host_pairs(c);
-
-	if (hp->connections == NULL) {
-		pfreeany(dnshostname);
-		return;
 	}
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		if (same_host(dnshostname, &host_addr, d->dnshostname,
-					&d->spd.that.host_addr))
+		if (same_host(dnshostname, &host_addr,
+				d->dnshostname, &d->spd.that.host_addr))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					pcim_demand_crypto);
 	}
@@ -1555,7 +1562,8 @@ static void connection_check_ddns1(struct connection *c)
 	update_host_pairs(c);
 	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto);
 
-	/* no host pairs,  no more to do */
+	/* no host pairs, no more to do */
+	pexpect(c->host_pair != NULL);	/* ??? surely */
 	if (c->host_pair == NULL)
 		return;
 

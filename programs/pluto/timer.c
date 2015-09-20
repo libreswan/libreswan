@@ -353,6 +353,7 @@ static void retransmit_v2_msg(struct state *st)
 	/* note: no md->st to clear */
 }
 
+/* note: this mutates *st by calling get_sa_info */
 static void liveness_check(struct state *st)
 {
 	struct state *pst;
@@ -648,9 +649,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					"not replacing stale %s SA: #%lu will do",
 					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
-		} else if ((type == EVENT_v2_SA_REPLACE_IF_USED) &&
-				(get_sa_info(st, TRUE, &last_used_age) &&
-				 deltaless(c->sa_rekey_margin, last_used_age))) {
+		} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
+				get_sa_info(st, TRUE, &last_used_age) &&
+				deltaless(c->sa_rekey_margin, last_used_age)) {
 			ikev2_expire_parent(st, last_used_age);
 			break;
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&

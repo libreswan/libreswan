@@ -101,6 +101,7 @@ const struct pfkey_proto_info null_proto_info[2] = {
 };
 
 static struct bare_shunt *bare_shunts = NULL;
+
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
@@ -220,8 +221,6 @@ static reqid_t get_proto_reqid(reqid_t base, int proto)
 	default:
 		bad_case(proto);
 	}
-
-	return base;
 }
 
 /* Generate Unique SPI numbers.
@@ -322,6 +321,7 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 	return htonl((ipsec_spi_t)latest_cpi);
 }
 
+/* note: this mutates *st by calling get_sa_info */
 static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char *ostr, size_t ostr_len)
 {
 	passert(istr_len > 0 && ostr_len > 0);
@@ -347,7 +347,11 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 	}
 }
 
-/* form the command string */
+/*
+ * form the command string
+ *
+ * note: this mutates *st by calling fmt_traffic_str
+ */
 int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			 const struct spd_route *sr, struct state *st)
 {
@@ -373,6 +377,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
+#undef MAX_DISPLAY_BYTES
 
 	ipstr_buf bme, bpeer;
 	ip_address ta;
@@ -562,7 +567,6 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	 * eiter -1 or the output length  -- by Carsten Schlote
 	 */
 	return ((result >= blen) || (result < 0)) ? -1 : result;
-#undef MAX_DISPLAY_BYTES
 }
 
 bool do_command(const struct connection *c, const struct spd_route *sr, const char *verb,
@@ -929,7 +933,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 
 void show_shunt_status(void)
 {
-	struct bare_shunt *bs;
+	const struct bare_shunt *bs;
 
 	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
@@ -1047,12 +1051,14 @@ bool has_bare_hold(const ip_address *src, const ip_address *dst,
 		   int transport_proto)
 {
 	ip_subnet this_client, that_client;
-	struct bare_shunt **bspp;
 
 	passert(addrtypeof(src) == addrtypeof(dst));
 	happy(addrtosubnet(src, &this_client));
 	happy(addrtosubnet(dst, &that_client));
-	bspp = bare_shunt_ptr(&this_client, &that_client, transport_proto);
+
+	/*const*/ struct bare_shunt **bspp =
+		bare_shunt_ptr(&this_client, &that_client, transport_proto);
+
 	return bspp != NULL &&
 	       (*bspp)->said.proto == SA_INT && (*bspp)->said.spi == htonl(
 		SPI_HOLD);
@@ -2306,7 +2312,7 @@ static event_callback_routine kernel_process_msg_cb;
 static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
 		const short event UNUSED, void *arg)
 {
-	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+	const struct kernel_ops *kernel_ops = arg;
 
 	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
 	kernel_ops->process_msg();
@@ -2318,7 +2324,7 @@ static event_callback_routine kernel_process_queue_cb;
 static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 		const short event UNUSED, void *arg)
 {
-	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+	const struct kernel_ops *kernel_ops = arg;
 
 	kernel_ops->process_queue();
 	passert(GLOBALS_ARE_RESET());
@@ -2443,7 +2449,7 @@ void init_kernel(void)
 
 void show_kernel_interface()
 {
-	if (kernel_ops) {
+	if (kernel_ops != NULL) {
 		whack_log(RC_COMMENT, "using kernel interface: %s",
 			  kernel_ops->kern_name);
 	}
@@ -3140,6 +3146,8 @@ const char *kernel_if_name()
 
 /*
  * get information about a given sa - needs merging with was_eroute_idle
+ *
+ * Note: this mutates *st.
  */
 bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
@@ -3152,7 +3160,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	struct kernel_sa sa;
 	struct ipsec_proto_info *p2;
 
-	struct connection *c = st->st_connection;
+	const struct connection *c = st->st_connection;
 
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return FALSE;
@@ -3324,12 +3332,12 @@ void expire_bare_shunts()
 	for (bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
-		char *msg = "expire_bare_shunt";
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG(DBG_OPPO, DBG_bare_shunt("expiring old", bsp));
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
-				bsp->transport_proto, ntohl(bsp->said.spi), msg);
+				bsp->transport_proto, ntohl(bsp->said.spi),
+				"expire_bare_shunt");
 		} else {
 			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
 			bspp = &bsp->next;

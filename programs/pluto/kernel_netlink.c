@@ -1845,6 +1845,8 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
  * seconds. If TRUE, the SA was idle and DPD exchange should be performed.
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
+ *
+ * note: this mutates *st by calling get_sa_info
  */
 static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 {

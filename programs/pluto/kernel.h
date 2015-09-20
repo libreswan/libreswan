@@ -179,7 +179,7 @@ struct kernel_ops {
 			     const char *opname);
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
-	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);
+	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
