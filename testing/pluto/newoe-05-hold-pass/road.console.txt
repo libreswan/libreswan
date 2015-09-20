@@ -47,7 +47,7 @@ PING 7.7.7.7 (7.7.7.7) from 192.1.3.209 : 56(84) bytes of data.
 road #
  # wait on OE retransmits and rekeying - shuntstatus is empty because shunt not bare
 road #
- sleep 1
+ sleep 3
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
