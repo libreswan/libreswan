@@ -608,6 +608,113 @@ bool do_command(const struct connection *c, const struct spd_route *sr, const ch
 	return TRUE;
 }
 
+#include <signal.h>
+typedef void (*sighandler_t)(int);	/* GNU extension would define this */
+
+bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
+{
+#	define CHUNK_WIDTH	80	/* units for cmd logging */
+	DBG(DBG_CONTROL, {
+		int slen = strlen(cmd);
+		int i;
+
+		DBG_log("executing %s%s: %s",
+			 verb, verb_suffix, cmd);
+		DBG_log("popen cmd is %d chars long", slen);
+		for (i = 0; i < slen; i += CHUNK_WIDTH)
+			DBG_log("cmd(%4d):%.*s:", i,
+				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
+				&cmd[i]);
+	});
+#	undef CHUNK_WIDTH
+
+
+	{
+		/* invoke the script, catching stderr and stdout
+		 * It may be of concern that some file descriptors will
+		 * be inherited.  For the ones under our control, we
+		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
+		 * Any used by library routines (perhaps the resolver or syslog)
+		 * will remain.
+		 */
+		sighandler_t savesig = signal(SIGCHLD, SIG_DFL);
+		FILE *f = popen(cmd, "r");
+
+		if (f == NULL) {
+#ifdef HAVE_BROKEN_POPEN
+			/* See bug #1067  Angstrom Linux on a arm7 has no popen() */
+			if (errno == ENOSYS) {
+				/* Try system(), though it will not give us output */
+				DBG_log("unable to popen(), falling back to system()");
+				system(cmd);
+				return TRUE;
+			}
+#endif
+			loglog(RC_LOG_SERIOUS, "unable to popen %s%s command",
+			       verb, verb_suffix);
+			signal(SIGCHLD, savesig);
+			return FALSE;
+		}
+
+		/* log any output */
+		for (;; ) {
+			/* if response doesn't fit in this buffer, it will be folded */
+			char resp[256];
+
+			if (fgets(resp, sizeof(resp), f) == NULL) {
+				if (ferror(f)) {
+					log_errno((e,
+						   "fgets failed on output of %s%s command",
+						   verb, verb_suffix));
+					signal(SIGCHLD, savesig);
+					return FALSE;
+				} else {
+					passert(feof(f));
+					break;
+				}
+			} else {
+				char *e = resp + strlen(resp);
+
+				if (e > resp && e[-1] == '\n')
+					e[-1] = '\0'; /* trim trailing '\n' */
+				libreswan_log("%s%s output: %s", verb,
+					      verb_suffix, resp);
+			}
+		}
+
+		/* report on and react to return code */
+		{
+			int r = pclose(f);
+			signal(SIGCHLD, savesig);
+
+			if (r == -1) {
+				log_errno((e, "pclose failed for %s%s command",
+					   verb, verb_suffix));
+				return FALSE;
+			} else if (WIFEXITED(r)) {
+				if (WEXITSTATUS(r) != 0) {
+					loglog(RC_LOG_SERIOUS,
+					       "%s%s command exited with status %d",
+					       verb, verb_suffix, WEXITSTATUS(
+						       r));
+					return FALSE;
+				}
+			} else if (WIFSIGNALED(r)) {
+				loglog(RC_LOG_SERIOUS,
+				       "%s%s command exited with signal %d",
+				       verb, verb_suffix, WTERMSIG(r));
+				return FALSE;
+			} else {
+				loglog(RC_LOG_SERIOUS,
+				       "%s%s command exited with unknown status %d",
+				       verb, verb_suffix, r);
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
 /* Check that we can route (and eroute).  Diagnose if we cannot. */
 
 enum routability {

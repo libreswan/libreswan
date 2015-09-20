@@ -233,7 +233,6 @@ extern bool pfkey_plumb_mast_device(int mast_dev);
 extern bool do_command(const struct connection *c, const struct spd_route *sr,
 		       const char *verb, struct state *st);
 
-/* defined in various sysdep_*.c where needed */
 extern bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd);
 
