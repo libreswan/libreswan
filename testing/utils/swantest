@@ -589,7 +589,7 @@ class scantests:
         self.nopath = ''
         if self.stdir:
             trpath = self.stdir
-            if not self.args.scancwd:
+            if not (self.args.scancwd or self.to_append):
                 self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
@@ -676,6 +676,7 @@ class scantests:
         self.tpath = self.trpath + '/' + self.testname
         logging.debug("tpath %s" % self.tpath)
 
+        ocwd = os.getcwd()
         os.chdir(self.tpath)
         tcpmdump_cmds, test_hosts = orient(self.args, self.tests[tname])
 
@@ -684,6 +685,8 @@ class scantests:
             re_write_result(sanity=s)
 
         os.chdir("..")
+        os.chdir(ocwd);
+
         if self.nopath:
             rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
 
@@ -2226,7 +2229,7 @@ def do_test_list(args, start, tried, output_dir):
         run_kvm_q(args, tests, st)
 
     logging.info("AA ran the Qs")
-    if os.path.isdir(st["odir"]):
+    if os.path.isdir(st["odir"]) and ((st["dtorun"] + st["ktorun"]) > 0):
         endscan = scantests(args, stdir=st["odir"], to_append=True)
         endscan.scan_test_runs()
     return (odir, True, (st["dtorun"] + st["ktorun"]))
