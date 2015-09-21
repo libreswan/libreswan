@@ -200,6 +200,7 @@ struct kernel_ops {
 	bool (*docommand)(const struct connection *c,
 			  const struct spd_route *sr,
 			  const char *verb,
+			  const char *verb_suffix,
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);

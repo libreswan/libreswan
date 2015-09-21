@@ -2320,32 +2320,10 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 }
 
 static bool netkey_do_command(const struct connection *c, const struct spd_route *sr,
-			const char *verb, struct state *st)
+			const char *verb, const char *verb_suffix, struct state *st)
 {
 	char cmd[2048];	/* arbitrary limit on shell command length */
 	char common_shell_out_str[2048];
-	const char *verb_suffix;
-
-	/* figure out which verb suffix applies */
-	{
-		const char *hs, *cs;
-
-		switch (addrtypeof(&sr->this.host_addr)) {
-		case AF_INET:
-			hs = "-host";
-			cs = "-client";
-			break;
-		case AF_INET6:
-			hs = "-host-v6";
-			cs = "-client-v6";
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "unknown address family");
-			return FALSE;
-		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					&sr->this.host_addr) ? hs : cs;
-	}
 
 	if (-1 == fmt_common_shell_out(common_shell_out_str,
 					sizeof(common_shell_out_str),

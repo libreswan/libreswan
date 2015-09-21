@@ -574,7 +574,10 @@ bool do_command(const struct connection *c, const struct spd_route *sr, const ch
 {
 	const char *verb_suffix;
 
-	/* figure out which verb suffix applies for logging purposes */
+	/*
+	 * Figure out which verb suffix applies.
+	 * NOTE: this is a duplicate of code in mast_do_command_vs.
+	 */
 	{
 		const char *hs, *cs;
 
@@ -599,11 +602,11 @@ bool do_command(const struct connection *c, const struct spd_route *sr, const ch
 	DBG(DBG_CONTROL, DBG_log("command executing %s%s",
 				 verb, verb_suffix));
 
-	if (kernel_ops->docommand != NULL) {
-		return (*kernel_ops->docommand)(c, sr, verb, st);
-	} else {
+	if (kernel_ops->docommand == NULL) {
 		DBG(DBG_CONTROL, DBG_log("no do_command for method %s",
 					 kernel_ops->kern_name));
+	} else {
+		return (*kernel_ops->docommand)(c, sr, verb, verb_suffix, st);
 	}
 	return TRUE;
 }
