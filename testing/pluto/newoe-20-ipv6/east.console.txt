@@ -4,6 +4,14 @@ east #
 east #
  echo "2001:db8:1:3::0/64" >> /etc/ipsec.d/policies/private-or-clear
 east #
+ echo "2001:db8:1:3::254/128" >> /etc/ipsec.d/policies/clear
+east #
+ echo "2001:db8:1:2::254/128" >> /etc/ipsec.d/policies/clear
+east #
+ echo "fe80::/10" >> /etc/ipsec.d/policies/clear
+east #
+ cp /source/programs/configs/v6neighbor-hole.conf /etc/ipsec.d/
+east #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
 east #
@@ -19,10 +27,6 @@ east #
  ipsec look
 east NOW
 XFRM state:
-src 2001:db8:1:2::23 dst 2001:db8:1:2::23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
-	replay-window 0 
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 1 code 3 
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
@@ -33,18 +37,6 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 2001:db8:1:2::23 dst ff02::1:ff00:254
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
-	replay-window 0 
-	sel src 2001:db8:1:2::23/128 dst ff02::1:ff00:254/128 proto ipv6-icmp type 135 code 0 dev eth1 
-src 2001:db8:1:2::23 dst 2001:db8:1:3::209
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
-	replay-window 0 
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 proto ipv6-icmp type 129 code 0 dev eth1 
-src 2001:db8:1:2::23 dst fe80::1000:ff:fede:adba
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
-	replay-window 0 
-	sel src 2001:db8:1:2::23/128 dst fe80::1000:ff:fede:adba/128 proto ipv6-icmp type 136 code 0 dev eth1 
 XFRM policy:
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 
 	dir out priority 17536 ptype main 
@@ -58,10 +50,6 @@ src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
 	dir in priority 17536 ptype main 
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
-src 2001:db8:1:2::23/128 dst ff02::1:ff00:254/128 
-	dir out priority 17024 ptype main 
-src 2001:db8:1:2::23/128 dst fe80::1000:ff:fede:adba/128 
-	dir out priority 17024 ptype main 
 src 2001:db8:1:2::23/128 dst ::/0 
 	dir out priority 17664 ptype main 
 	tmpl src :: dst ::
@@ -70,6 +58,36 @@ src 2001:db8:1:2::23/128 dst 2001:db8:1:3::/64
 	dir out priority 17600 ptype main 
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
+src fe80::/10 dst 2001:db8:1:2::23/128 
+	dir fwd priority 17142 ptype main 
+src fe80::/10 dst 2001:db8:1:2::23/128 
+	dir in priority 17142 ptype main 
+src 2001:db8:1:2::23/128 dst fe80::/10 
+	dir out priority 17142 ptype main 
+src 2001:db8:1:3::254/128 dst 2001:db8:1:2::23/128 
+	dir fwd priority 17024 ptype main 
+src 2001:db8:1:3::254/128 dst 2001:db8:1:2::23/128 
+	dir in priority 17024 ptype main 
+src 2001:db8:1:2::23/128 dst 2001:db8:1:3::254/128 
+	dir out priority 17024 ptype main 
+src 2001:db8:1:2::254/128 dst 2001:db8:1:2::23/128 
+	dir fwd priority 17024 ptype main 
+src 2001:db8:1:2::254/128 dst 2001:db8:1:2::23/128 
+	dir in priority 17024 ptype main 
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::254/128 
+	dir out priority 17024 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority 1 ptype main 
 src ::/0 dst ::/0 
 	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
