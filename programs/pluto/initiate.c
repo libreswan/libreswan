@@ -444,11 +444,11 @@ static void cannot_oppo(struct connection *c,
 	addrtot(&b->our_client, 0, ocb, sizeof(ocb));
 
 	DBG(DBG_OPPO,
-	    libreswan_log("Can not opportunistically initiate for %s to %s: %s",
+	    libreswan_log("Cannot opportunistically initiate for %s to %s: %s",
 			  ocb, pcb, ughmsg));
 
 	whack_log(RC_OPPOFAILURE,
-		  "Can not opportunistically initiate for %s to %s: %s",
+		  "Cannot opportunistically initiate for %s to %s: %s",
 		  ocb, pcb, ughmsg);
 
 	if (c != NULL && c->policy_next != NULL) {

@@ -256,7 +256,7 @@ static int get_value(char *buf, size_t bufsize)
 		if (fgets(buf, bufsize, stdin) != buf) {
 			if (errno == 0) {
 				fprintf(stderr,
-					"Can not read password from standard in\n");
+					"Cannot read password from standard in\n");
 				exit(RC_WHACK_PROBLEM);
 			} else {
 				perror("fgets value");
