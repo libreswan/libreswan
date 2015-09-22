@@ -4,4 +4,3 @@
 /^XFRM state:/,/XFRM done/s/enc \(.*\) 0x.*$/enc \1 0xENCKEY/g
 /^XFRM state:/,/XFRM done/s/aead \(.*\) 0x[^ ]*\( .*\)$/aead \1 0xENCAUTHKEY\2/g
 /^XFRM state:/,/XFRM done/s/reqid [0-9]* /reqid REQID /g
-/^XFRM state:/,/XFRM done/s/sport [0-9]* /sport SPORT /g
