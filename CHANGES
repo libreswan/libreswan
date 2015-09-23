@@ -16,6 +16,7 @@ v3.16 (unreleased)
 * pluto: Don't reject IPv6 family for OE foodgroups [Antony]
 * pluto: fix eclipsed to iterate over connection's spd_routes [Hugh]
 * pluto: accept delete payload with wrong side's SPI (CISCO bug) [Paul+Hugh]
+* pluto: No longer require :RSA entries for X.509 cers in ipsec.secrets [Mat]
 * building: obsolete USE_ADNS and disable building adns helpers [Paul]
 
 v3.15 (August 24, 2015)
