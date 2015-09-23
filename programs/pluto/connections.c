@@ -139,30 +139,34 @@ void release_connection(struct connection *c, bool relations)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct host_pair *p = c->host_pair;
-	struct connection *d;
-	struct connection *conn_next_tmp;
-	struct connection *conn_list = NULL;
-	ip_address new_addr;
-	char *dnshostname = c->dnshostname;
+	struct host_pair *const hp = c->host_pair;
+	const char *dnshostname = c->dnshostname;
 
 	/* ??? perhaps we should return early if dnshostname == NULL */
 
-	if (p == NULL)
+	if (hp == NULL)
 		return;
 
-	d = p->connections;
+	struct connection *d = hp->connections;
 
 	/* ??? looks as if addr_family is not allowed to change.  Bug? */
-	/* ??? why are we using d->dnshostname instead of c->hostname? */
-	if (d == NULL ||
-	    d->dnshostname == NULL ||
+	/* ??? why are we using d->dnshostname instead of (c->)dnshostname? */
+	/* ??? code used to test for d == NULL, but that seems impossible. */
+
+	pexpect(dnshostname == d->dnshostname || streq(dnshostname, d->dnshostname));
+
+	ip_address new_addr;
+
+	if (d->dnshostname == NULL ||
 	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-	    sameaddr(&new_addr, &p->him.addr))
+	    sameaddr(&new_addr, &hp->him.addr))
 		return;
 
-	for (; d != NULL; d = conn_next_tmp) {
-		conn_next_tmp = d->hp_next;
+	struct connection *conn_list = NULL;
+
+	while (d != NULL) {
+		struct connection *nxt = d->hp_next;
+
 		/*
 		 * ??? this test used to assume that dnshostname != NULL
 		 * if d->dnshostname != NULL.  Is that true?
@@ -182,22 +186,20 @@ void update_host_pairs(struct connection *c)
 			d->hp_next = conn_list;
 			conn_list = d;
 		}
+		d = nxt;
 	}
 
-	if (conn_list != NULL) {
-		for (d = conn_list; d != NULL; d = conn_next_tmp) {
-			/*
-			 * connect the connection to the new host_pair
-			 */
-			conn_next_tmp = d->hp_next;
-			connect_to_host_pair(d);
-		}
+	while (conn_list != NULL) {
+		struct connection *nxt = conn_list->hp_next;
+
+		connect_to_host_pair(conn_list);
+		conn_list = nxt;
 	}
 
-	if (p->connections == NULL) {
-		passert(p->pending == NULL); /* ??? must deal with this! */
-		list_rm(struct host_pair, next, p, host_pairs);
-		pfree(p);
+	if (hp->connections == NULL) {
+		passert(hp->pending == NULL); /* ??? must deal with this! */
+		list_rm(struct host_pair, next, hp, host_pairs);
+		pfree(hp);
 	}
 }
 
@@ -233,7 +235,6 @@ static void delete_sr(struct spd_route *sr)
 
 void delete_connection(struct connection *c, bool relations)
 {
-	struct spd_route *sr;
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
 
@@ -299,9 +300,6 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 
-	if (c->kind != CK_GOING_AWAY)
-		pfreeany(c->spd.that.virt);
-
 	set_debugging(old_cur_debugging);
 	pfreeany(c->name);
 	pfreeany(c->cisco_dns_info);
@@ -312,16 +310,40 @@ void delete_connection(struct connection *c, bool relations)
 #endif
 	pfreeany(c->dnshostname);
 
-	sr = &c->spd;
-	while (sr) {
+	/* deal with top spd_route and then the rest */
+
+	passert(c->spd.this.virt == NULL);
+
+	if (c->kind != CK_GOING_AWAY) {
+#if 0
+		/* ??? this seens buggy since virts don't get unshared */
+		pfreeany(c->spd.that.virt);
+#else
+		/* ??? make do until virts get unshared */
+		c->spd.that.virt = NULL;
+#endif
+	}
+
+	struct spd_route *sr = c->spd.spd_next;
+
+	delete_sr(&c->spd);
+
+	while (sr != NULL) {
+		struct spd_route *next_sr = sr->spd_next;
+
+		passert(sr->this.virt == NULL);
+		passert(sr->that.virt == NULL);
 		delete_sr(sr);
-		sr = sr->next;
+		/* ??? should we: pfree(sr); */
+		sr = next_sr;
 	}
 
 	free_generalNames(c->requested_ca, TRUE);
 
+#ifdef USE_ADNS
 	if ((c->policy & POLICY_AUTH_NULL) == LEMPTY)
 		gw_delref(&c->gw_info);
+#endif
 
 	if (c->alg_info_ike != NULL) {
 		alg_info_delref(&c->alg_info_ike->ai);
@@ -701,7 +723,7 @@ size_t format_end(char *buf,
 
 static size_t format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
-			struct spd_route *sr)
+			const struct spd_route *sr)
 {
 	size_t w =
 		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
@@ -713,9 +735,8 @@ static size_t format_connection(char *buf, size_t buf_len,
 }
 
 /* spd_route's with end's get copied in xauth.c */
-void unshare_connection_end_strings(struct end *e)
+void unshare_connection_end(struct end *e)
 {
-	/* do "left" */
 	unshare_id_content(&e->id);
 
 	if (e->cert.u.nss_cert) {
@@ -733,10 +754,15 @@ void unshare_connection_end_strings(struct end *e)
 	e->cert_nickname = clone_str(e->cert_nickname, "cert_nickname");
 }
 
-static void unshare_connection_strings(struct connection *c)
+/*
+ * unshare_connection: after a struct connection has been copied,
+ * duplicate anything it references so that unshareable resources
+ * are no longer shared.  Typically strings, but some other things too.
+ *
+ * Think of this as converting a shallow copy to a deep copy
+ */
+static void unshare_connection(struct connection *c)
 {
-	struct spd_route *sr;
-
 	c->name = clone_str(c->name, "connection name");
 
 	c->cisco_dns_info = clone_str(c->cisco_dns_info,
@@ -754,10 +780,11 @@ static void unshare_connection_strings(struct connection *c)
 	/* duplicate any alias, adding spaces to the beginning and end */
 	c->connalias = clone_str(c->connalias, "connection alias");
 
-	/* do "right" */
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
-		unshare_connection_end_strings(&sr->this);
-		unshare_connection_end_strings(&sr->that);
+	struct spd_route *sr;
+
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		unshare_connection_end(&sr->this);
+		unshare_connection_end(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
@@ -1019,9 +1046,8 @@ static bool check_connection_end(const struct whack_end *this,
 			 * amongst themselves as the ID is known from the
 			 * outset.
 			 */
-			const struct connection *c = NULL;
-
-			c = find_host_pair_connections(__FUNCTION__,
+			const struct connection *c =
+				find_host_pair_connections(__FUNCTION__,
 						&this->host_addr,
 						this->host_port,
 						(const ip_address *)NULL,
@@ -1052,11 +1078,11 @@ static bool check_connection_end(const struct whack_end *this,
 	 * Virtual IP is also valid with rightsubnet=vnet:%priv or with
 	 * rightprotoport=17/%any
 	 */
-	if ((this->virt) &&
-		(!isanyaddr(&this->host_addr) || this->has_client)) {
+	if (this->virt != NULL &&
+		(!isanyaddr(&this->host_addr) || this->has_client))
+	{
 		loglog(RC_CLASH,
-			"virtual IP must only be used with %%any and without "
-			"client");
+			"virtual IP must only be used with %%any and without client");
 		return FALSE;
 	}
 #endif
@@ -1087,7 +1113,8 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
  * numbers: one is used for each SA in an SA bundle.
  *
  * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
- * - is a multiple of 4 (not actually a requirement?)
+ * - is a multiple of 4 (we are actually allocating
+ *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
  * - does not duplicate any currently in use
  */
 static reqid_t gen_reqid(void)
@@ -1210,7 +1237,7 @@ void add_connection(const struct whack_message *wm)
 
 		/*
 		 * Connection values are set using strings in the whack
-		 * message, unshare_connection_strings() is responsible
+		 * message, unshare_connection() is responsible
 		 * for cloning the strings before the whack message is
 		 * destroyed.
 		 */
@@ -1420,13 +1447,9 @@ void add_connection(const struct whack_message *wm)
 			c->spd.that = t;
 		}
 
-		c->spd.next = NULL;
+		c->spd.spd_next = NULL;
 
-		if (wm->sa_reqid == 0) {
-			c->spd.reqid = gen_reqid();
-		} else {
-			c->spd.reqid = wm->sa_reqid;
-		}
+		c->spd.reqid = wm->sa_reqid == 0 ? gen_reqid() : wm->sa_reqid;
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1466,8 +1489,7 @@ void add_connection(const struct whack_message *wm)
 			 * or wildcard ID
 			 */
 			c->kind = CK_TEMPLATE;
-		} else if ((wm->left.virt != NULL) ||
-			(wm->right.virt != NULL)) {
+		} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 			/*
 			 * If we have a subnet=vnet: needing instantiation
 			 * so we can accept multiple subnets from
@@ -1489,8 +1511,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->gw_info = NULL;
 
-		passert(!(wm->left.virt && wm->right.virt));
-		if (wm->left.virt || wm->right.virt) {
+		/* at most one virt can be present */
+		passert(wm->left.virt == NULL || wm->right.virt == NULL);
+
+		if (wm->left.virt != NULL || wm->right.virt != NULL) {
 			/*
 			 * This now happens with wildcards on
 			 * non-instantiations, such as rightsubnet=vnet:%priv
@@ -1498,15 +1522,15 @@ void add_connection(const struct whack_message *wm)
 			 * passert(isanyaddr(&c->spd.that.host_addr));
 			 */
 			c->spd.that.virt = create_virtual(c,
-							wm->left.virt ?
+							wm->left.virt != NULL ?
 							wm->left.virt :
 							wm->right.virt);
-			if (c->spd.that.virt)
+			if (c->spd.that.virt != NULL)
 				c->spd.that.has_client = TRUE;
 		}
 
 		/* ensure we allocate copies of all strings */
-		unshare_connection_strings(c);
+		unshare_connection(c);
 
 		(void)orient(c);
 		connect_to_host_pair(c);
@@ -1584,8 +1608,19 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 			namebuf);
 	} else {
 		t = clone_thing(*group, "group instance");
-		t->name = namebuf;
-		unshare_connection_strings(t);
+		t->name = namebuf;	/* trick: unsharing will clone this for us */
+
+		/* suppress virt before unsharing */
+		passert(t->spd.this.virt == NULL);
+
+		pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
+
+		if (t->spd.that.virt != NULL) {
+			DBG_log("virtual_ip not supported in group instance; ignored");
+			t->spd.that.virt = NULL;
+		}
+
+		unshare_connection(t);
 		name = clone_str(t->name, "group instance name");
 		t->spd.that.client = *target;
 		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
@@ -1599,22 +1634,15 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		t->log_file = NULL;
 		t->log_file_err = FALSE;
 
-		if (group->spd.reqid) {
-			t->spd.reqid = group->spd.reqid;
-		} else {
-			t->spd.reqid = gen_reqid();
-		}
-
-		if (t->spd.that.virt) {
-			DBG_log("virtual_ip not supported in group instance");
-			t->spd.that.virt = NULL;
-		}
+		t->spd.reqid = group->spd.reqid == 0 ?
+			gen_reqid() : group->spd.reqid;
 
 		/* add to connections list */
 		t->ac_next = connections;
 		connections = t;
 
 		/* same host_pair as parent: stick after parent on list */
+		/* t->hp_next = group->hp_next; */	/* done by clone_thing */
 		group->hp_next = t;
 
 		/* route if group is routed */
@@ -1653,7 +1681,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	struct connection *d;
 
 	passert(c->kind == CK_TEMPLATE);
-	passert(c->spd.next == NULL);
+	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
@@ -1664,7 +1692,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.id = *his_id;
 		d->spd.that.has_id_wildcards = FALSE;
 	}
-	unshare_connection_strings(d);
+	unshare_connection(d);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
@@ -1683,13 +1711,9 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	default_end(&d->spd.this, &d->spd.that.host_addr);
-	d->spd.next = NULL;
+	d->spd.spd_next = NULL;
 
-	if (c->spd.reqid) {
-		d->spd.reqid = c->spd.reqid;
-	} else {
-		d->spd.reqid = gen_reqid();
-	}
+	d->spd.reqid = c->spd.reqid == 0 ? gen_reqid() : c->spd.reqid;
 
 	/* set internal fields */
 	d->ac_next = connections;
@@ -1771,7 +1795,7 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 						&d->spd), instbuf));
 		});
 
-	passert(d->spd.next == NULL);
+	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
@@ -1827,7 +1851,11 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
+#ifdef USE_ADNS
 				struct gw_info *gw,
+#else
+				struct gw_info *gw UNUSED,
+#endif
 				const ip_address *our_client,
 				const ip_address *peer_client)
 {
@@ -1846,7 +1874,7 @@ struct connection *oppo_instantiate(struct connection *c,
 						&d->spd), instbuf));
 		});
 
-	passert(d->spd.next == NULL);
+	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
@@ -1880,11 +1908,13 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
 
+#ifdef USE_ADNS
 	if (!(d->policy & POLICY_AUTH_NULL)) {
 		passert(d->gw_info == NULL);
 		gw_addref(gw);
 		d->gw_info = gw;
 	}
+#endif
 
 	/*
 	 * Adjust routing if something is eclipsing c.
@@ -2006,14 +2036,12 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *peer_client,
 					int transport_proto)
 {
-	struct connection *c, *best = NULL;
-	policy_prio_t best_prio = BOTTOM_PRIO;
-	struct spd_route *sr;
-	struct spd_route *best_sr;
 	int our_port = ntohs(portof(our_client));
 	int peer_port = ntohs(portof(peer_client));
 
-	best_sr = NULL;
+	struct connection *best = NULL;
+	policy_prio_t best_prio = BOTTOM_PRIO;
+	struct spd_route *best_sr = NULL;
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2029,27 +2057,32 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			transport_proto, peer_port);
 	});
 
+	struct connection *c;
+
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
 			continue;
 
-		for (sr = &c->spd; best != c && sr; sr = sr->next) {
+		struct spd_route *sr;
+
+		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
 			if ((routed(sr->routing) ||
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&
 				addrinsubnet(peer_client, &sr->that.client) &&
-				(!sr->this.protocol ||
-				    transport_proto == sr->this.protocol) &&
-				(!sr->this.port || our_port == sr->this.port) &&
-				(!sr->that.port ||
-					peer_port == sr->that.port)) {
-
+				(sr->this.protocol == 0 ||
+					transport_proto == sr->this.protocol) &&
+				(sr->this.port == 0 ||
+					our_port == sr->this.port) &&
+				(sr->that.port == 0 ||
+					peer_port == sr->that.port))
+			{
 				policy_prio_t prio =
 					8 * (c->prio +
 					     (c->kind == CK_INSTANCE)) +
 					2 * (sr->this.port == our_port) +
 					2 * (sr->that.port == peer_port) +
-					(sr->this.protocol == transport_proto);
+					1 * (sr->this.protocol == transport_proto);
 
 				DBG(DBG_CONTROLMORE, {
 						char cib[CONN_INST_BUF];
@@ -2069,32 +2102,37 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 							c_ocb, c_pcb, prio);
 					});
 
-				if (best == NULL) {
-					best = c;
-					best_sr = sr;
-					best_prio = prio;
-				}
+				DBG(DBG_CONTROLMORE,
+					if (best == NULL) {
+						char cib2[CONN_INST_BUF];
+						DBG_log("find_connection: first OK \"%s\"%s [pri:%ld]{%p} (child %s)",
+							c->name,
+							fmt_conn_instance(c, cib2),
+							prio, c,
+							c->policy_next ?
+								c->policy_next->name :
+								"none");
+					} else {
+						char cib[CONN_INST_BUF];
+						char cib2[CONN_INST_BUF];
+						DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
+							best->name,
+							fmt_conn_instance(best, cib),
+							best_prio,
+							best,
+							best->policy_next ?
+								best->policy_next->name :
+								"none",
+							c->name,
+							fmt_conn_instance(c, cib2),
+							prio, c,
+							c->policy_next ?
+								c->policy_next->name :
+								"none");
+					}
+				);
 
-				DBG(DBG_CONTROLMORE, {
-					char cib[CONN_INST_BUF];
-					char cib2[CONN_INST_BUF];
-					DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
-						best->name,
-						fmt_conn_instance(best, cib),
-						best_prio,
-						best,
-						best->policy_next ?
-							best->policy_next->name :
-							"none",
-						c->name,
-						fmt_conn_instance(c, cib2),
-						prio, c,
-						c->policy_next ?
-							c->policy_next->name :
-							"none");
-				});
-
-				if (prio > best_prio) {
+				if (best == NULL || prio > best_prio) {
 					best = c;
 					best_sr = sr;
 					best_prio = prio;
@@ -2129,7 +2167,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 /*
  * Find and instantiate a connection for an outgoing Opportunistic connection.
  * We've already discovered its gateway.
- * We look for a the connection such that:
+ * We look for a connection such that:
  *   + this is one of our interfaces
  *   + this subnet contains our_client (or we are our_client)
  *     (we will specialize the client). We prefer the smallest such subnet.
@@ -2153,9 +2191,8 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 						const ip_address *our_client,
 						const ip_address *peer_client)
 {
-	struct iface_port *p;
 	struct connection *best = NULL;
-	struct spd_route *sr, *bestsr;
+	struct spd_route *bestsr = NULL;	/* initialization not necessary */
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2165,6 +2202,9 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	// passert(id_is_ipaddr(&gw->gw_id));
 
 	/* for each of our addresses... */
+
+	struct iface_port *p;
+
 	for (p = interfaces; p != NULL; p = p->next) {
 		/*
 		 * Go through those connections with our address and NO_IP as
@@ -2173,11 +2213,8 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		 * that it is pluto_port (makes debugging easier).
 		 */
 		struct connection *c = find_host_pair_connections(__FUNCTION__,
-								&p->ip_addr,
-								pluto_port,
-								(ip_address
-									*)NULL,
-								pluto_port);
+			&p->ip_addr, pluto_port,
+			(ip_address *) NULL, pluto_port);
 
 		for (; c != NULL; c = c->hp_next) {
 			DBG(DBG_OPPO,
@@ -2185,31 +2222,35 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 			if (c->kind == CK_GROUP)
 				continue;
 
-			for (sr = &c->spd; best != c && sr; sr = sr->next) {
-				if (routed(sr->routing) &&
-					addrinsubnet(our_client,
-						&sr->this.client) &&
-					addrinsubnet(peer_client,
-						&sr->that.client)) {
-					if (best == NULL) {
-						best = c;
-						break;
-					}
+			struct spd_route *sr;
 
-					DBG(DBG_OPPO,
-						DBG_log("comparing best %s "
-							"to %s",
-							best->name, c->name));
-
-					for (bestsr = &best->spd; best != c && bestsr; bestsr = bestsr->next) {
-						if (!subnetinsubnet(&bestsr->this.client,
-							&sr->this.client) || (samesubnet(&bestsr->this.client,
-							&sr->this.client) && !subnetinsubnet(
-								&bestsr->that.client,
-								&sr->that.client))) {
-							best = c;
-						}
-					}
+			/* for each sr of c, see if we have a new best */
+			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+				if (!routed(sr->routing) ||
+				    !addrinsubnet(our_client, &sr->this.client) ||
+				    !addrinsubnet(peer_client, &sr->that.client))
+				{
+					/*  sr does not work for these clients */
+				} else if (best == NULL ||
+					   !subnetinsubnet(&bestsr->this.client, &sr->this.client) ||
+					   (samesubnet(&bestsr->this.client, &sr->this.client) &&
+					    !subnetinsubnet(&bestsr->that.client, &sr->that.client)))
+				{
+					/*
+					 * First or better solution.
+					 *
+					 * The test for better (see above) is:
+					 *   sr's this is narrower, or
+					 *   sr's this is same and sr's that is narrower.
+					 * ??? not elegant, not symmetric.
+					 * Possible replacement test:
+					 *   bestsr->this.client.maskbits + bestsr->that.client.maskbits >
+					 *   sr->this.client.maskbits + sr->that.client.maskbits
+					 * but this knows too much about the representation of ip_subnet.
+					 * What is the correct semantics?
+					 */
+					best = c;
+					bestsr = sr;
 				}
 			}
 		}
@@ -2219,10 +2260,12 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		NEVER_NEGOTIATE(best->policy) ||
 		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
 		best->kind != CK_TEMPLATE)
+	{
 		return NULL;
-	else
+	} else {
 		return oppo_instantiate(best, &gw->gw_id.ip_addr, NULL, gw,
 					our_client, peer_client);
+	}
 }
 
 /*
@@ -2238,26 +2281,26 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
  * *erop is used to find other connections sharing an eroute.
  */
 struct connection *route_owner(struct connection *c,
-			struct spd_route *cur_spd,
+			const struct spd_route *cur_spd,
 			struct spd_route **srp,
 			struct connection **erop,
 			struct spd_route **esrp)
 {
-	struct connection *d,
-		*best_ro = c,
-		*best_ero = c;
-	struct spd_route *srd, *src;
-	struct spd_route *best_sr, *best_esr;
-	enum routing_t best_routing, best_erouting;
 
 	if (!oriented(*c)) {
 		libreswan_log("route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
-	best_sr = NULL;
-	best_esr = NULL;
-	best_routing = cur_spd->routing;
-	best_erouting = best_routing;
+
+	struct connection
+		*best_ro = c,
+		*best_ero = c;
+	struct spd_route *best_sr = NULL,
+		*best_esr = NULL;
+	enum routing_t best_routing = cur_spd->routing,
+		best_erouting = best_routing;
+
+	struct connection *d;
 
 	for (d = connections; d != NULL; d = d->ac_next) {
 
@@ -2268,11 +2311,15 @@ struct connection *route_owner(struct connection *c,
 				continue;
 #endif
 
-		for (srd = &d->spd; srd; srd = srd->next) {
+		struct spd_route *srd;
+
+		for (srd = &d->spd; srd != NULL; srd = srd->spd_next) {
 			if (srd->routing == RT_UNROUTED)
 				continue;
 
-			for (src = &c->spd; src; src = src->next) {
+			const struct spd_route *src;
+
+			for (src = &c->spd; src != NULL; src = src->spd_next) {
 				if (src == srd)
 					continue;
 
@@ -2461,20 +2508,22 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
-					ipstr(me, &b),
-					ntohs(portof(me)),
-					bitnamesof(sa_policy_bit_names, policy));
+			DBG(DBG_CONTROL, DBG_log(
+				"initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
+				ipstr(me, &b),
+				ntohs(portof(me)),
+				bitnamesof(sa_policy_bit_names, policy)));
+
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-					" but \"%s\" kind=%s forbids connection",
-					ipstr(me, &b), pluto_port, c->name,
-					enum_name(&connection_kind_names, c->kind));
+			DBG(DBG_CONTROL, DBG_log(
+				"initial parent SA message received on %s:%u but \"%s\" kind=%s forbids connection",
+				ipstr(me, &b), pluto_port, c->name,
+				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -2486,13 +2535,16 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			c = rw_instantiate(c, him, NULL, NULL);
 		}
 	} else {
-		/* We found a non-wildcard connection.
+		/*
+		 * We found a non-wildcard connection.
 		 * Double check whether it needs instantiation anyway (eg. vnet=)
 		 */
 		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		passert(c->spd.this.virt == NULL);
+
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			DBG(DBG_CONTROL,
-					DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
+				DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
 			c = rw_instantiate(c, him, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
@@ -3060,7 +3112,7 @@ static bool is_virtual_net_used(struct connection *c,
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
-				struct host_pair *hp,
+				const struct host_pair *hp,
 				const struct id *peer_id UNUSED,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
@@ -3069,10 +3121,8 @@ static struct connection *fc_try(const struct connection *c,
 				const u_int8_t peer_protocol,
 				const u_int16_t peer_port)
 {
-	struct connection *d;
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	int wildcards, pathlen;
 	const bool peer_net_is_host = subnetisaddr(peer_net,
 						&c->spd.that.host_addr);
 	err_t virtualwhy = NULL;
@@ -3081,11 +3131,13 @@ static struct connection *fc_try(const struct connection *c,
 	subnettot(our_net, 0, s1, sizeof(s1));
 	subnettot(peer_net, 0, d1, sizeof(d1));
 
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		struct spd_route *sr;
+	struct connection *d;
 
+	for (d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
+
+		int wildcards, pathlen;
 
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 				match_id(&c->spd.that.id, &d->spd.that.id,
@@ -3115,7 +3167,9 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, peer_net must just have peer itself.
 		 */
 
-		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
+		const struct spd_route *sr;
+
+		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			policy_prio_t prio;
 
 			DBG(DBG_CONTROLMORE, {
@@ -3233,7 +3287,7 @@ static struct connection *fc_try(const struct connection *c,
 }
 
 static struct connection *fc_try_oppo(const struct connection *c,
-				struct host_pair *hp,
+				const struct host_pair *hp,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
 				const u_int8_t our_protocol,
@@ -3241,24 +3295,23 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				const u_int8_t peer_protocol,
 				const u_int16_t peer_port)
 {
-	struct connection *d;
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	int wildcards, pathlen;
+
+	struct connection *d;
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		struct spd_route *sr;
-		policy_prio_t prio;
-
 		if (d->policy & POLICY_GROUP)
 			continue;
 
+		int wildcards, pathlen;
+
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				match_id(&c->spd.that.id, &d->spd.that.id,
-					&wildcards) &&
-				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
-					&pathlen)))
+		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+		{
 			continue;
+		}
 
 		/* compare protocol and ports */
 		if (d->spd.this.protocol != our_protocol ||
@@ -3276,7 +3329,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
-		for (sr = &d->spd; sr != NULL; sr = sr->next) {
+
+		const struct spd_route *sr;
+
+		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			DBG(DBG_CONTROLMORE, {
 				char s1[SUBNETTOT_BUF];
 				char d1[SUBNETTOT_BUF];
@@ -3311,9 +3367,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred
 			 */
-			prio = PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
+			policy_prio_t prio =
+				PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
+
 			if (prio > best_prio) {
 				best = d;
 				best_prio = prio;
@@ -3323,15 +3381,14 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
-		(NEVER_NEGOTIATE(best->policy) ||
-			(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
+	    (NEVER_NEGOTIATE(best->policy) ||
+	     (best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try_oppo concluding with %s [%ld]",
 			(best ? best->name : "none"), best_prio));
 	return best;
-
 }
 
 struct connection *find_client_connection(struct connection *const c,
@@ -3343,7 +3400,6 @@ struct connection *find_client_connection(struct connection *const c,
 					const u_int16_t peer_port)
 {
 	struct connection *d;
-	struct spd_route *sr;
 
 	DBG(DBG_CONTROLMORE, {
 		char s1[SUBNETTOT_BUF];
@@ -3367,8 +3423,10 @@ struct connection *find_client_connection(struct connection *const c,
 		struct connection *unrouted = NULL;
 		int srnum = -1;
 
+		const struct spd_route *sr;
+
 		for (sr = &c->spd; unrouted == NULL && sr != NULL;
-			sr = sr->next) {
+			sr = sr->spd_next) {
 			srnum++;
 
 			DBG(DBG_CONTROLMORE, {
@@ -3417,11 +3475,12 @@ struct connection *find_client_connection(struct connection *const c,
 
 	if (d == NULL) {
 		/* look for an abstract connection to match */
-		struct spd_route *sra;
-		struct host_pair *hp = NULL;
+		const struct host_pair *hp = NULL;
+
+		const struct spd_route *sra;
 
 		for (sra = &c->spd; hp == NULL &&
-				sra != NULL; sra = sra->next) {
+				sra != NULL; sra = sra->spd_next) {
 			hp = find_host_pair(&sra->this.host_addr,
 					sra->this.host_port,
 					NULL,
@@ -3501,9 +3560,9 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-static void show_one_sr(struct connection *c,
-			struct spd_route *sr,
-			char *instance)
+static void show_one_sr(const struct connection *c,
+			const struct spd_route *sr,
+			const char *instance)
 {
 	char topo[CONN_BUF_LEN];
 	ipstr_buf thisipb, thatipb, dns1b, dns2b;
@@ -3604,7 +3663,7 @@ static void show_one_sr(struct connection *c,
 
 }
 
-void show_one_connection(struct connection *c)
+void show_one_connection(const struct connection *c)
 {
 	const char *ifn;
 	char instance[1 + 10 + 1];
@@ -3622,11 +3681,11 @@ void show_one_connection(struct connection *c)
 
 	/* Show topology. */
 	{
-		struct spd_route *sr = &c->spd;
+		const struct spd_route *sr = &c->spd;
 
 		while (sr != NULL) {
 			show_one_sr(c, sr, instance);
-			sr = sr->next;
+			sr = sr->spd_next;
 		}
 	}
 
@@ -3810,49 +3869,76 @@ void connection_discard(struct connection *c)
 }
 
 /*
+ * If a state's connection is being changed, there may no longer be any
+ * uses of that connection.  If so, it should be discarded.
+ * This routine should be called when you don't know if there are
+ * remaining references.
+ *
+ * You don't need to call this routine if:
+ *
+ * - the state has just been created by new_state()
+ *   (the st_connection field will be NULL).
+ *
+ * - the state has just been created by duplicate_state()
+ *   (the state from which it was cloned will retain a reference
+ *   to the old state)
+ */
+void update_state_connection(struct state *st, struct connection *c)
+{
+	struct connection *t = st->st_connection;
+
+	if (t != c) {
+		st->st_connection = c;
+		if (t != NULL) {
+			if (cur_connection == t)
+				set_cur_connection(c);
+			connection_discard(t);
+		}
+	}
+}
+
+/*
  * A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
  * the template is a /32 -> /32. This requires some special casing.
  */
 long eclipse_count = 0;
 
-struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
+struct connection *eclipsed(const struct connection *c, struct spd_route **esrp /*OUT*/)
 {
-	struct connection *ue;
-	struct spd_route *sr1 = &c->spd;
-
-	ue = NULL;
-
 	/*
 	 * This function was changed in freeswan 2.02 and since
 	 * then has never worked because it always returned NULL.
-	 * It should be caught by the testing/pluto/co-terminal test cases
+	 * It should be caught by the testing/pluto/co-terminal test cases.
+	 * ??? DHR doesn't know how much of this is true.
 	 */
 
-	if (sr1 == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to sr1 == NULL"));
-		return NULL;
-	}
+	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
+
+	struct connection *ue;
 
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
-		struct spd_route *srue = &ue->spd;
+		struct spd_route *srue;
 
-		while (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED &&
-			!(samesubnet(&sr1->this.client, &srue->this.client) &&
-				samesubnet(&sr1->that.client,
-					&srue->that.client)))
-			srue = srue->next;
-		if (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED) {
-			*esrp = srue;
-			break;
+		for (srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
+			const struct spd_route *src;
+
+			for (src = &c->spd; src != NULL; src = src->spd_next) {
+				if (srue->routing == RT_ROUTED_ECLIPSED &&
+				    samesubnet(&src->this.client, &srue->this.client) &&
+				    samesubnet(&src->that.client, &srue->that.client))
+				{
+					DBG(DBG_CONTROLMORE,
+						DBG_log("%s eclipsed %s",
+							c->name, ue->name));
+					*esrp = srue;
+					return ue;
+				}
+			}
 		}
 	}
-	if (ue == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to ue == NULL"));
-	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning non-NULL ue"));
-	}
-	return ue;
+	*esrp = NULL;
+	return NULL;
 }
 
 void liveness_clear_connection(struct connection *c, char *v)
@@ -3871,9 +3957,9 @@ void liveness_clear_connection(struct connection *c, char *v)
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
 		delete_states_by_connection(c, TRUE);
 		DBG(DBG_DPD,
-				DBG_log("%s: unrouting connection %s",
-					enum_name(&connection_kind_names,
-						c->kind), v));
+			DBG_log("%s: unrouting connection %s",
+				enum_name(&connection_kind_names,
+					c->kind), v));
 		unroute_connection(c); /* --unroute */
 	}
 }

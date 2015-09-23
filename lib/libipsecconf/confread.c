@@ -91,7 +91,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
-	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */

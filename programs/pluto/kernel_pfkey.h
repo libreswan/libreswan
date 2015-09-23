@@ -27,11 +27,11 @@ extern void pfkey_event(void);
 #ifdef KLIPS
 extern void klips_pfkey_register(void);
 #endif
-extern bool pfkey_add_sa(struct kernel_sa *sa, bool replace);
+extern bool pfkey_add_sa(const struct kernel_sa *sa, bool replace);
 extern bool pfkey_grp_sa(const struct kernel_sa *sa0,
 			 const struct kernel_sa *sa1);
 extern bool pfkey_del_sa(const struct kernel_sa *sa);
-extern bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
+extern bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 			     unsigned op, const char *opname);
 extern bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern void pfkey_set_debug(int cur_debug,
@@ -60,8 +60,8 @@ extern bool pfkey_raw_eroute(const ip_address *this_host,
 #endif
 			     );
 
-extern bool pfkey_shunt_eroute(struct connection *c,
-			       struct spd_route *sr,
+extern bool pfkey_shunt_eroute(const struct connection *c,
+			       const struct spd_route *sr,
 			       enum routing_t rt_kind,
 			       enum pluto_sadb_operations op,
 			       const char *opname);

@@ -493,9 +493,7 @@ void initialize_new_state(struct state *st,
 			  int whack_sock,
 			  enum crypto_importance importance)
 {
-	struct spd_route *sr;
-
-	st->st_connection = c;
+	st->st_connection = c;	/* surely safe: must be a new state */
 
 	set_state_ike_endpoints(st, c);
 
@@ -506,7 +504,9 @@ void initialize_new_state(struct state *st,
 
 	st->st_import = importance;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
+	const struct spd_route *sr;
+
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name != NULL) {
 				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_name);

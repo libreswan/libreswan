@@ -768,10 +768,10 @@ extern struct_desc isakmp_ikefrag_desc;
  * We make all these entries NULL.
  * ??? is there a good reason for these two things to be in one table?
  */
-extern const struct_desc *v1_payload_desc(unsigned p);
+extern struct_desc *v1_payload_desc(unsigned p);
 
 /* descriptor for V2 payload type.  */
-extern const struct_desc *v2_payload_desc(unsigned p);
+extern struct_desc *v2_payload_desc(unsigned p);
 
 
 /*

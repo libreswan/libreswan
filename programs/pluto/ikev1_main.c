@@ -702,14 +702,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
 				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.has_id_wildcards) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
 			DBG(DBG_CONTROL,
 				DBG_log("remote end has wildcard ID, needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -721,7 +721,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	passert(!st->st_oakley.doing_xauth);
 
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from new_state */
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
 	st->st_localaddr = md->iface->ip_addr;
@@ -1773,7 +1773,11 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 stf_status oakley_id_and_auth(struct msg_digest *md,
 			bool initiator, /* are we the Initiator? */
 			bool aggrmode, /* aggressive mode? */
+#ifdef USE_ADNS
 			cont_fn_t cont_fn, /* continuation function */
+#else
+			cont_fn_t cont_fn UNUSED, /* continuation function */
+#endif
 			/* current state, can be NULL */
 			const struct key_continuation *kc)
 {
@@ -1838,7 +1842,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 					"key continuation");
 			enum key_oppo_step step_done =
 				kc == NULL ? kos_null : kc->step;
-			err_t ugh;
+			err_t ugh = NULL;
 
 			/* Record that state is used by a suspended md */
 			passert(st->st_suspended_md == NULL);
@@ -1854,6 +1858,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 #ifdef USE_KEYRR
 				nkc->failure_ok = TRUE;
 #endif
+#ifdef USE_ADNS
 				ugh = start_adns_query(
 					&st->st_connection->spd.that.id,
 					/* SG itself */
@@ -1861,18 +1866,21 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 					ns_t_txt,
 					cont_fn,
 					&nkc->ac);
+#endif
 				break;
 
 #ifdef USE_KEYRR
 			case kos_his_txt:
 				/* second try: look for the KEY records */
 				nkc->step = kos_his_key;
+#ifdef USE_ADNS
 				ugh = start_adns_query(
 					&st->st_connection->spd.that.id,
 					NULL, /* no sgw for KEY */
 					ns_t_key,
 					cont_fn,
 					&nkc->ac);
+#endif
 				break;
 #endif /* USE_KEYRR */
 
@@ -2651,8 +2659,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	struct state st;
-	struct connection cnx;
+	struct state st;	/* note: not a pointer! */
+	struct connection cnx;	/* note: not a pointer! */
 
 	passert(md);
 
@@ -2975,13 +2983,12 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-			bool bogus;
-			struct state *dst;
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 				return self_delete;
 
-			dst = find_phase2_state_to_delete(st,
+			bool bogus;
+			struct state *dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
 							spi,
 							&bogus);
@@ -2989,14 +2996,19 @@ bool accept_delete(struct msg_digest *md,
 			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
-					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					ntohl(spi),
-					bogus ?
-						"our SPI - bogus implementation" :
-						"maybe expired");
+					ntohl(spi));
 			} else {
+				if (bogus) {
+					loglog(RC_LOG_SERIOUS,
+						"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
+						enum_show(&protocol_names,
+							d->isad_protoid),
+						ntohl(spi));
+				}
+
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc = cur_connection;
 

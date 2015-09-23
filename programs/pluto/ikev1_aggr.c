@@ -226,10 +226,9 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  That's the one justification for Aggressive Mode.
 	 */
-	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
-       if (drop_new_exchanges()) {
+	if (drop_new_exchanges()) {
 		return STF_IGNORE;
 	}
 
@@ -280,9 +279,12 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		loglog(RC_LOG_SERIOUS,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
+
 	/* Set up state */
-	cur_state = md->st = st = new_state();  /* (caller will reset cur_state) */
-	st->st_connection = c;
+	struct state *st = new_state();
+
+	cur_state = md->st = st;  /* (caller will reset cur_state) */
+	st->st_connection = c;	/* safe: from new_state */
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
 	st->st_localaddr = md->iface->ip_addr;
@@ -1142,7 +1144,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	/* set up new state */
 	cur_state = st = new_state();
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from new_state */
 #ifdef HAVE_LABELED_IPSEC
 	st->sec_ctx = NULL;
 #endif
@@ -1158,7 +1160,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	st->st_import = importance;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name != NULL) {
 				jam_str(st->st_xauth_username,
@@ -1179,7 +1181,7 @@ stf_status aggr_outI1(int whack_sock,
 		 * should tell the user to add a proper proposal policy
 		 */
 		loglog(RC_AGGRALGO,
-		       "no IKE proposal policy specified in config!  Can not initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
+		       "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		reset_globals();
 		return STF_FAIL;
 	}

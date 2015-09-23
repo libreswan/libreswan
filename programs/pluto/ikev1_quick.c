@@ -915,7 +915,7 @@ stf_status quick_outI1(int whack_sock,
 	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
@@ -1475,6 +1475,7 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 	       which, ugh, st->st_msgid);
 }
 
+#ifdef USE_ADNS
 static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 {
 	stf_status r;
@@ -1502,6 +1503,7 @@ static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 	release_any_md(&b->md);
 	cur_state = NULL;
 }
+#endif
 
 static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 					       enum verify_oppo_step next_step)
@@ -1516,7 +1518,7 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 	struct id id,           /* subject of query */
 		  our_id_space; /* ephemeral: no need for unshare_id_content */
 	ip_address client;
-	err_t ugh;
+	err_t ugh = NULL;
 
 	/* Record that state is used by a suspended md */
 	b->step = next_step; /* not just vc->b.step */
@@ -1561,30 +1563,36 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->my.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
+#ifdef USE_ADNS
 		ugh = start_adns_query(&id,
 				       our_id,
 				       ns_t_txt,
 				       quick_inI1_outR1_continue,
 				       &vc->ac);
+#endif
 		break;
 
 	case vos_our_txt:
 		vc->b.failure_ok = b->failure_ok = TRUE;
+#ifdef USE_ADNS
 		ugh = start_adns_query(our_id,
 				       our_id, /* self as SG */
 				       ns_t_txt,
 				       quick_inI1_outR1_continue,
 				       &vc->ac);
+#endif
 		break;
 
 #ifdef USE_KEYRR
 	case vos_our_key:
 		vc->b.failure_ok = b->failure_ok = FALSE;
+#ifdef USE_ADNS
 		ugh = start_adns_query(our_id,
 				       NULL,
 				       ns_t_key,
 				       quick_inI1_outR1_continue,
 				       &vc->ac);
+#endif
 		break;
 #endif
 
@@ -1592,11 +1600,13 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->his.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
+#ifdef USE_ADNS
 		ugh = start_adns_query(&id,
 				       &c->spd.that.id,
 				       ns_t_txt,
 				       quick_inI1_outR1_continue,
 				       &vc->ac);
+#endif
 		break;
 
 	default:
@@ -2016,7 +2026,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 			c->spd.that.client = *his_net;
 			c->spd.that.has_client = TRUE;
-			c->spd.that.virt = NULL;
+			c->spd.that.virt = NULL;	/* ??? leak? */
 
 			if (subnetishost(his_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, his_net)) {
@@ -2055,11 +2065,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		 * routine, so we can "reach back" to p1st to get it.
 		 */
 		if (st->st_connection != c) {
-			struct connection *t = st->st_connection;
-
-			st->st_connection = c;
+			st->st_connection = c;	/* safe: from duplicate_state */
 			set_cur_connection(c);
-			connection_discard(t);
 		}
 
 		st->st_try = 0; /* not our job to try again from start */
@@ -2356,8 +2363,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		      st->st_msgid);
 	{
 		char instbuf[END_BUF];
-		struct connection *c = st->st_connection;
-		struct spd_route *sr = &c->spd;
+		const struct connection *c = st->st_connection;
+		const struct spd_route *sr = &c->spd;
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
 			   TRUE, LEMPTY, oriented(*c));

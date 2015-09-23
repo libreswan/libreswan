@@ -813,22 +813,17 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								 * can appear. */
 				    struct state *const st)	/* current state object */
 {
-	u_int32_t ipsecdoisit;
-	pb_stream proposal_pbs;
-	struct isakmp_proposal proposal;
-	unsigned no_trans_left;
-	int last_transnum;
-	struct connection *const c = st->st_connection;
-	struct spd_route *spd;
-	bool xauth_init, xauth_resp;
+	const struct connection *const c = st->st_connection;
+	bool xauth_init = FALSE,
+		xauth_resp = FALSE;
 	const char *const role = selection ? "initiator" : "responder";
 
 	passert(c != NULL);
 
-	xauth_init = xauth_resp = FALSE;
-
 	/* calculate the per-end policy which might apply */
-	for (spd = &c->spd; spd != NULL; spd = spd->next) {
+	const struct spd_route *spd;
+
+	for (spd = &c->spd; spd != NULL; spd = spd->spd_next) {
 		if (selection) {
 			/*
 			 * this is the initiator, we have proposed, they have answered,
@@ -855,6 +850,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	}
 
 	/* Situation */
+	u_int32_t ipsecdoisit;
+
 	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
 		return SITUATION_NOT_SUPPORTED;
 
@@ -870,6 +867,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	 * can only be one SA, and it can have only one proposal in it.
 	 * There may well be multiple transforms.
 	 */
+	struct isakmp_proposal proposal;
+	pb_stream proposal_pbs;
+
 	if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs,
 		       &proposal_pbs))
 		return PAYLOAD_MALFORMED;
@@ -934,23 +934,16 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	/* for each transform payload... */
 
-	last_transnum = -1;
-	no_trans_left = proposal.isap_notrans;
+	int last_transnum = -1;
+	unsigned no_trans_left = proposal.isap_notrans;
+
 	for (;;) {
-		pb_stream trans_pbs;
-		u_char *attr_start;
-		size_t attr_len;
-		struct isakmp_transform trans;
-		lset_t seen_attrs = 0,
-		       seen_durations = 0;
-		u_int16_t life_type;
+		u_int16_t life_type = 0;	/* initialized to silence GCC */
 		struct trans_attrs ta;
 		err_t ugh = NULL;       /* set to diagnostic when problem detected */
 		char ugh_buf[256];      /* room for building a diagnostic */
 
 		zero(&ta);	/* ??? may not NULL pointer fields */
-
-		life_type = 0;
 
 		/* initialize only optional field in ta */
 		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
@@ -960,6 +953,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			       "number of Transform Payloads disagrees with Oakley Proposal Payload");
 			return BAD_PROPOSAL_SYNTAX;
 		}
+
+		struct isakmp_transform trans;
+		pb_stream trans_pbs;
 
 		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
 			       &proposal_pbs, &trans_pbs))
@@ -981,10 +977,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			return INVALID_TRANSFORM_ID;
 		}
 
-		attr_start = trans_pbs.cur;
-		attr_len = pbs_left(&trans_pbs);
+		u_char *attr_start = trans_pbs.cur;
+		size_t attr_len = pbs_left(&trans_pbs);
 
 		/* process all the attributes that make up the transform */
+
+		lset_t seen_attrs = LEMPTY,
+		       seen_durations = LEMPTY;
 
 		while (pbs_left(&trans_pbs) != 0) {
 			struct isakmp_attribute a;
@@ -1964,7 +1963,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct ipsec_proto_info *pi,          /* info about this protocol instance */
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
-			  struct spd_route *sr,                 /* host details for the association */
+			  const struct spd_route *sr,           /* host details for the association */
 			  bool tunnel_mode)                     /* true for inner most tunnel SA */
 {
 	pb_stream r_proposal_pbs;

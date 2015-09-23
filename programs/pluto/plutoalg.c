@@ -723,9 +723,9 @@ void kernel_alg_show_status(void)
 	whack_log(RC_COMMENT, " "); /* spacer */
 }
 
-void kernel_alg_show_connection(struct connection *c, const char *instance)
+void kernel_alg_show_connection(const struct connection *c, const char *instance)
 {
-	struct state *st;
+	const struct state *st;
 	const char *satype;
 	const char *pfsbuf;
 

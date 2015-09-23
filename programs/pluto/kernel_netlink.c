@@ -213,7 +213,7 @@ static const struct aead_alg *get_aead_alg(int algid)
 {
 	unsigned int i;
 
-	for (i = 0; i < sizeof(aead_algs) / sizeof(aead_algs[0]); i++)
+	for (i = 0; i < elemsof(aead_algs); i++)
 		if (aead_algs[i].id == algid)
 			return aead_algs + i;
 
@@ -942,7 +942,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successfull
  */
-static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
+static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1097,11 +1097,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
 				algo.alg_trunc_len = 96;
-				/*
-				 * fixup to the real number,
-				 * not our private number
-				 */
-				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 				break;
 
 			case AUTH_ALGORITHM_HMAC_SHA2_384:
@@ -1117,7 +1112,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo) + sa->authkeylen);
 
-			strcpy(algo.alg_name, name);
+			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
 				sa->authkey, sa->authkeylen);
@@ -1134,7 +1129,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo_old) + sa->authkeylen);
-			strcpy(algo_old.alg_name, name);
+			strncpy(algo_old.alg_name, name, sizeof(algo_old.alg_name));
 			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
 			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
 				sa->authkey,
@@ -1163,7 +1158,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strcpy(algo.alg_name, name);
+		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
 		attr->rta_type = XFRMA_ALG_COMP;
@@ -1176,7 +1171,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	} else if (aead != NULL) {
 		struct xfrm_algo_aead algo;
 
-		strcpy(algo.alg_name, aead->name);
+		strncpy(algo.alg_name, aead->name, sizeof(algo.alg_name));
 		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 		algo.alg_icv_len = aead->icvlen * BITS_PER_BYTE;
 
@@ -1200,7 +1195,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strcpy(algo.alg_name, name);
+		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 		attr->rta_type = XFRMA_ALG_CRYPT;
@@ -1757,7 +1752,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
  *
  * (identical to KLIPS version, but refactoring isn't waranteed yet
  */
-static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
+static bool netlink_sag_eroute(const struct state *st, const struct spd_route *sr,
 			unsigned op, const char *opname)
 {
 	struct connection *c = st->st_connection;
@@ -1772,7 +1767,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 	 * figure out the SPI and protocol (in two forms)
 	 * for the innermost transformation.
 	 */
-	i = sizeof(proto_info) / sizeof(proto_info[0]) - 1;
+	i = elemsof(proto_info) - 1;
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
@@ -1850,6 +1845,8 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
  * seconds. If TRUE, the SA was idle and DPD exchange should be performed.
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
+ *
+ * note: this mutates *st by calling get_sa_info
  */
 static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 {
@@ -1860,8 +1857,8 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 		!deltaless(idle_time, idle_max);
 }
 
-static bool netlink_shunt_eroute(struct connection *c,
-				struct spd_route *sr,
+static bool netlink_shunt_eroute(const struct connection *c,
+				const struct spd_route *sr,
 				enum routing_t rt_kind,
 				enum pluto_sadb_operations op,
 				const char *opname)
@@ -2322,33 +2319,11 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	return TRUE;
 }
 
-static bool netkey_do_command(struct connection *c, struct spd_route *sr,
-			const char *verb, struct state *st)
+static bool netkey_do_command(const struct connection *c, const struct spd_route *sr,
+			const char *verb, const char *verb_suffix, struct state *st)
 {
 	char cmd[2048];	/* arbitrary limit on shell command length */
 	char common_shell_out_str[2048];
-	const char *verb_suffix;
-
-	/* figure out which verb suffix applies */
-	{
-		const char *hs, *cs;
-
-		switch (addrtypeof(&sr->this.host_addr)) {
-		case AF_INET:
-			hs = "-host";
-			cs = "-client";
-			break;
-		case AF_INET6:
-			hs = "-host-v6";
-			cs = "-client-v6";
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "unknown address family");
-			return FALSE;
-		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					&sr->this.host_addr) ? hs : cs;
-	}
 
 	if (-1 == fmt_common_shell_out(common_shell_out_str,
 					sizeof(common_shell_out_str),

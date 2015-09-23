@@ -1,0 +1,186 @@
+/testing/guestbin/swan-prep --6
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "2001:db8:1:2::0/64" >>  /etc/ipsec.d/policies/private-or-clear
+road #
+ echo "2001:db8:1:3::254/128" >> /etc/ipsec.d/policies/clear
+road #
+ echo "2001:db8:1:2::254/128" >> /etc/ipsec.d/policies/clear
+road #
+ echo "fe80::/10" >> /etc/ipsec.d/policies/clear
+road #
+ cp /source/programs/configs/v6neighbor-hole.conf /etc/ipsec.d/
+road #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ ping6 -n -c 8 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=5 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=6 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=7 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=8 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+8 packets transmitted, 7 received, 12% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+000  
+006 #2: "private-or-clear#2001:db8:1:2::/64"[1] ...2001:db8:1:2::23, type=ESP,  add_time=1234567890, inBytes=728, outBytes=728, id='ID_NULL'
+000  
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
+road #
+ cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
+road #
+ echo done
+done
+road #
+ ipsec look
+road NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 proto udp sport SPORT dport 1025 
+XFRM policy:
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 
+	dir out priority 17536 ptype main 
+	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 
+	dir fwd priority 17536 ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+		proto esp reqid REQID mode tunnel
+src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 
+	dir in priority 17536 ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+		proto esp reqid REQID mode tunnel
+src 2001:db8:1:3::209/128 dst ::/0 
+	dir out priority 17664 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::/64 
+	dir out priority 17600 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src fe80::/10 dst 2001:db8:1:3::209/128 
+	dir fwd priority 17142 ptype main 
+src fe80::/10 dst 2001:db8:1:3::209/128 
+	dir in priority 17142 ptype main 
+src 2001:db8:1:3::209/128 dst fe80::/10 
+	dir out priority 17142 ptype main 
+src 2001:db8:1:3::254/128 dst 2001:db8:1:3::209/128 
+	dir fwd priority 17024 ptype main 
+src 2001:db8:1:3::254/128 dst 2001:db8:1:3::209/128 
+	dir in priority 17024 ptype main 
+src 2001:db8:1:3::209/128 dst 2001:db8:1:3::254/128 
+	dir out priority 17024 ptype main 
+src 2001:db8:1:2::254/128 dst 2001:db8:1:3::209/128 
+	dir fwd priority 17024 ptype main 
+src 2001:db8:1:2::254/128 dst 2001:db8:1:3::209/128 
+	dir in priority 17024 ptype main 
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::254/128 
+	dir out priority 17024 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0 
+192.1.3.0/24 dev eth0  proto kernel  scope link  src 192.1.3.209 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:1:2::23 via 2001:db8:1:3::254 dev eth0  metric 0 
+    cache 
+2001:db8:1:3::254 dev eth0  metric 0 
+    cache 
+2001:db8:1:3::/64 dev eth0  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+default via 2001:db8:1:3::254 dev eth0  metric 1 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+road #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

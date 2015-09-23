@@ -32,12 +32,12 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 }
 
 struct spd_route;
-ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 {
 	return 10;
 }
 
-ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
+ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, const struct spd_route *sr,
 			  bool tunnel)
 {
 	return 10;

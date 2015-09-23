@@ -80,7 +80,7 @@ void ikev2_print_ts(struct traffic_selector *ts)
 }
 
 /* rewrite me with addrbytesptr() */
-struct traffic_selector ikev2_end_to_ts(struct end *e)
+struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
@@ -220,8 +220,6 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 {
 	struct state *st = md->st;
 	struct traffic_selector *ts_i, *ts_r;
-	struct spd_route *sr;
-	stf_status ret;
 
 	if (role == ORIGINAL_INITIATOR) {
 		ts_i = &st->st_ts_this;
@@ -231,9 +229,12 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 		ts_r = &st->st_ts_this;
 	}
 
-	for (sr = &c0->spd; sr != NULL; sr = sr->next) {
-		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
+	const struct spd_route *sr;
+
+	for (sr = &c0->spd; sr != NULL; sr = sr->spd_next) {
+		stf_status ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
 				    ts_i, ORIGINAL_INITIATOR);
+
 		if (ret != STF_OK)
 			return ret;
 
@@ -242,7 +243,8 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
 					    ts_r, ORIGINAL_RESPONDER);
 		} else {
-			struct payload_digest *p;
+			const struct payload_digest *p;
+
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
 			     p = p->next) {
 				if (p->payload.v2n.isan_type ==
@@ -254,7 +256,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					break;
 				}
 			}
-			if (!p) {
+			if (p == NULL) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
 						    ts_r, ORIGINAL_RESPONDER);
@@ -687,35 +689,27 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 }
 
 /*
- * find the best connection and if it is AUTH exchange create the child state
+ * find the best connection and, if it is AUTH exchange, create the child state
  */
 static stf_status ikev2_create_responder_child_state(
-	struct msg_digest *md,
+	const struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
 	enum original_role role, enum isakmp_xchg_types isa_xchg)
 {
-	/*
-	 * parent state. only for AUTH exchange. for CREATE_CHILD_SA exchange
-	 * this is the child state
-	 */
-	struct state *pst = md->st;
+	struct connection *c = md->st->st_connection;
 
-	struct state *cst;	/* child state */
-	struct connection *c = pst->st_connection;
-
-	/* ??? is 16 and undocumented limit? */
+	/* ??? is 16 an undocumented limit? */
 	struct traffic_selector tsi[16], tsr[16];
 	const int tsi_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
 		tsi, elemsof(tsi));
 	const int tsr_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr],
 		tsr, elemsof(tsr));
 
-	struct connection *b = c;	/* best */
+	/* best so far */
 	int bestfit_n = -1;
 	int bestfit_p = -1;
 	int bestfit_pr = -1;
-	struct spd_route *sra, *bsr = NULL;
-	struct host_pair *hp = NULL;
+	const struct spd_route *bsr = NULL;	/* best spd_route so far */
 
 	int best_tsi_i = -1;
 	int best_tsr_i = -1;
@@ -726,7 +720,10 @@ static stf_status ikev2_create_responder_child_state(
 	if (tsi_n < 0 || tsr_n < 0)
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
-	for (sra = &c->spd; sra != NULL; sra = sra->next) {
+	/* find best spd in c */
+	const struct spd_route *sra;
+
+	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
 				tsr, tsi_n, tsr_n);
 
@@ -757,8 +754,6 @@ static stf_status ikev2_create_responder_child_state(
 
 					bestfit_p = bfit_p;
 					bestfit_n = bfit_n;
-					/* ??? b is surely already equal to c.  What's this all about? */
-					b = c;
 					bsr = sra;
 				} else {
 					DBG(DBG_CONTROLMORE,
@@ -786,10 +781,13 @@ static stf_status ikev2_create_responder_child_state(
 	 * each sra, something that matches the current
 	 * nested loop structure but not what it actually does.
 	 */
-	for (sra = &c->spd; hp == NULL && sra != NULL;
-	     sra = sra->next) {
-		struct connection *d;
 
+	struct connection *b = c;	/* best connection so far */
+	const struct host_pair *hp = NULL;
+
+	for (sra = &c->spd; hp == NULL && sra != NULL;
+	     sra = sra->spd_next)
+	{
 		hp = find_host_pair(&sra->this.host_addr,
 				    sra->this.host_port,
 				    &sra->that.host_addr,
@@ -812,8 +810,9 @@ static stf_status ikev2_create_responder_child_state(
 		if (hp == NULL)
 			continue;
 
+		struct connection *d;
+
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
-			struct spd_route *sr;
 			int wildcards, pathlen; /* XXX */
 
 			if (d->policy & POLICY_GROUP)
@@ -822,7 +821,9 @@ static stf_status ikev2_create_responder_child_state(
 			/*
 			 * ??? same_id && match_id seems redundant.
 			 * if d->spd.this.id.kind == ID_NONE, both TRUE
-			 * else if c->spd.this.id.kind == ID_NONE, same_id treats it as a wildcard and match_id does not.  Odd.
+			 * else if c->spd.this.id.kind == ID_NONE,
+			 *     same_id treats it as a wildcard and match_id
+			 *     does not.  Odd.
 			 * else if kinds differ, match_id FALSE
 			 * else if kind ID_DER_ASN1_DN, wildcards are forbidden by same_id
 			 * else match_id just calls same_id.
@@ -837,7 +838,9 @@ static stf_status ikev2_create_responder_child_state(
 					 d->spd.that.ca, &pathlen)))
 				continue;
 
-			for (sr = &d->spd; sr != NULL; sr = sr->next) {
+			const struct spd_route *sr;
+
+			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 				int newfit = ikev2_evaluate_connection_fit(
 					d, sr, role, tsi, tsr, tsi_n, tsr_n);
 
@@ -900,14 +903,7 @@ static stf_status ikev2_create_responder_child_state(
 		}
 	}
 
-	/*
-	 * now that we have found the best connection, copy the data into
-	 * the state structure as the tsi/tsr
-	 *
-	 */
-
-	/* best connection */
-	c = b;
+	/* b is now the best connection (if there is one!) */
 
 	if (bsr == NULL) {
 		/* ??? why do we act differently based on role? */
@@ -917,19 +913,20 @@ static stf_status ikev2_create_responder_child_state(
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
+	struct state *cst = md->st;	/* child state */
+
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		cst = md->st;
+		update_state_connection(cst, b);
 	} else {
-		cst = duplicate_state(pst);
+		/* ??? is this only for AUTH exchange? */
+		cst = duplicate_state(cst);
+		cst->st_connection = b;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
-	cst->st_connection = c;
 
 	if (role == ORIGINAL_INITIATOR) {
-		memcpy(&cst->st_ts_this, &tsi[best_tsi_i],
-		       sizeof(struct traffic_selector));
-		memcpy(&cst->st_ts_that, &tsr[best_tsr_i],
-		       sizeof(struct traffic_selector));
+		cst->st_ts_this = tsi[best_tsi_i];
+		cst->st_ts_that = tsr[best_tsr_i];
 	} else {
 		cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
 		cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
@@ -938,15 +935,14 @@ static stf_status ikev2_create_responder_child_state(
 	ikev2_print_ts(&cst->st_ts_that);
 
 	*ret_cst = cst;	/* success! */
-	return STF_OK;	/* ignored */
+	return STF_OK;	/* ignored because *ret_cst is not NULL */
 }
 
-static stf_status ikev2_cp_reply_state(struct msg_digest *md,
+static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	struct state **ret_cst,
 	enum isakmp_xchg_types isa_xchg)
 {
 	ip_address ipv4;
-	struct state *cst = NULL;
 	struct connection *c = md->st->st_connection;
 
 	err_t e = lease_an_address(c, &ipv4);
@@ -955,10 +951,14 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 	}
 
+	struct state *cst;
+
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
+		update_state_connection(cst, c);
 	} else {
 		cst = duplicate_state(md->st);
+		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
 
@@ -971,7 +971,6 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 
 	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
 	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
-	cst->st_connection = c;
 
 	*ret_cst = cst;	/* success! */
 	return STF_OK;

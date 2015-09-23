@@ -109,9 +109,9 @@ void ike_alg_show_status(void)
  *      - this connection (result from ike= string)
  *      - newest SA
  */
-void ike_alg_show_connection(struct connection *c, const char *instance)
+void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
-	struct state *st;
+	const struct state *st;
 
 	if (c->alg_info_ike) {
 		char buf[1024];

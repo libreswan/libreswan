@@ -225,7 +225,7 @@ int whack_get_value(char *buf, size_t bufsize)
 		if (fgets(buf, bufsize, stdin) != buf) {
 			if (errno == 0) {
 				fprintf(stderr,
-					"Can not read username from standard in\n");
+					"Cannot read username from standard in\n");
 				exit(RC_WHACK_PROBLEM);
 			} else {
 				perror("fgets value");

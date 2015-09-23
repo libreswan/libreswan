@@ -849,7 +849,7 @@ void delete_state(struct state *st)
 	fake_state(st, STATE_UNDEFINED);
 
 	/* we might be about to free it */
-	st->st_connection = NULL;
+	st->st_connection = NULL;	/* c will be discarded */
 	/* without st_connection, st isn't complete */
 	cur_state = old_cur_state;
 	connection_discard(c);
@@ -929,8 +929,10 @@ bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
 	int i;
+
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
+
 		FOR_EACH_ENTRY(st, i, {
 			if (st->st_connection == c)
 				return TRUE;
@@ -1058,7 +1060,6 @@ static bool same_phase1_sa(struct state *this,
 void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
-	struct spd_route *sr;
 
 	DBG(DBG_CONTROL, DBG_log("Deleting states for connection"));
 
@@ -1073,20 +1074,20 @@ void delete_states_by_connection(struct connection *c, bool relations)
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	/*
-	 * Seems to dump here because 1 of the states is NULL.
+	 * XXX Seems to dump here because one of the states is NULL.
 	 * Removing the Assert makes things work.
 	 * We should fix this eventually.
+	 * -- MCR 2005 Nov 2 commit a87bf151b7b6566a3d4560584c8e6b2884123780
 	 *
 	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
 	 *  && c->newest_isakmp_sa == SOS_NOBODY);
-	 *
 	 */
 
-	sr = &c->spd;
-	while (sr != NULL) {
+	const struct spd_route *sr;
+
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		passert(sr->eroute_owner == SOS_NOBODY);
 		passert(sr->routing != RT_ROUTED_TUNNEL);
-		sr = sr->next;
 	}
 
 	if (ck == CK_INSTANCE) {
@@ -1535,37 +1536,52 @@ struct state *find_likely_sender(size_t packet_len, u_char *packet)
 	return NULL;
 }
 
+/*
+ * find_phase2_state_to_delete: find an AH or ESP SA to delete
+ *
+ * We are supposed to be given the other side's SPI.
+ * Certain CISCO implementations send our side's SPI instead.
+ * We'll accept this, but mark it as bogus.
+ */
 struct state *find_phase2_state_to_delete(const struct state *p1st,
 					  u_int8_t protoid,
 					  ipsec_spi_t spi,
 					  bool *bogus)
 {
-	struct state *st;
+	struct state  *bogusst = NULL;
 	int i;
 
 	*bogus = FALSE;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
 		FOR_EACH_ENTRY(st, i, {
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
 				p1st->st_connection->host_pair ==
 				st->st_connection->host_pair &&
 				same_peer_ids(p1st->st_connection,
-					st->st_connection, NULL)) {
+					st->st_connection, NULL))
+			{
 				struct ipsec_proto_info *pr =
 					protoid == PROTO_IPSEC_AH ?
 					&st->st_ah : &st->st_esp;
 
 				if (pr->present) {
-					if (pr->attrs.spi == spi)
+					if (pr->attrs.spi == spi) {
+						*bogus = FALSE;
 						return st;
+					}
 
-					if (pr->our_spi == spi)
+					if (pr->our_spi == spi) {
 						*bogus = TRUE;
+						bogusst = st;
+						/* don't return! */
+					}
 				}
 			}
 		});
 	}
-	return NULL;
+	return bogusst;
 }
 
 /*
@@ -1627,6 +1643,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 	    });
 }
 
+/* note: this mutates *st by calling get_sa_info */
 void fmt_list_traffic(struct state *st, char *state_buf,
 		      const size_t state_buf_len)
 {
@@ -1652,22 +1669,22 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
 				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
-		if (get_sa_info(st, FALSE, NULL)) {
-			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int outb = st->st_esp.present ? st->st_esp.our_bytes :
-				st->st_ah.present ? st->st_ah.our_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
-
-			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
-		}
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
-				st->st_ah.present ? st->st_ah.peer_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
-
+			u_int inb = st->st_esp.present ? st->st_esp.our_bytes:
+				st->st_ah.present ? st->st_ah.our_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
 			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
 		}
+
+		if (get_sa_info(st, FALSE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			u_int outb = st->st_esp.present ? st->st_esp.peer_bytes :
+				st->st_ah.present ? st->st_ah.peer_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
+			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
+		}
+
 	}
 
 
@@ -1688,6 +1705,9 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		);
 }
 
+/*
+ * odd fact: st cannot be const because we call get_sa_info on it
+ */
 void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
@@ -1815,7 +1835,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						       mbcp,
 						       traffic_buf +
 							  sizeof(traffic_buf),
-						       " AHin=");
+						       " AHout=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
@@ -1826,7 +1846,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
-						       " AHout=");
+						       " AHin=");
 			}
 #endif
 			mbcp = humanize_number(
@@ -1842,8 +1862,8 @@ void fmt_state(struct state *st, const monotime_t n,
 				 SA_ESP);
 /* ??? needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = humanize_number(st->st_esp.peer_bytes,
+			if (get_sa_info(st, TRUE, NULL)) {
+				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
@@ -1853,8 +1873,8 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = humanize_number(st->st_esp.our_bytes,
+			if (get_sa_info(st, FALSE, NULL)) {
+				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
@@ -1879,7 +1899,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						mbcp,
 						traffic_buf +
 						  sizeof(traffic_buf),
-						" IPCOMPin=");
+						" IPCOMPout=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
@@ -1891,7 +1911,7 @@ void fmt_state(struct state *st, const monotime_t n,
 						mbcp,
 						traffic_buf +
 						  sizeof(traffic_buf),
-						" IPCOMPout=");
+						" IPCOMPin=");
 			}
 #endif
 

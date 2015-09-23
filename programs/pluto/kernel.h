@@ -172,18 +172,18 @@ struct kernel_ops {
 			   , const char *policy_label
 #endif
 			   );
-	bool (*shunt_eroute)(struct connection *c,
-			     struct spd_route *sr,
+	bool (*shunt_eroute)(const struct connection *c,
+			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
 			     enum pluto_sadb_operations op,
 			     const char *opname);
-	bool (*sag_eroute)(struct state *st, struct spd_route *sr,
+	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
-	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);
+	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
-	bool (*add_sa)(struct kernel_sa *sa, bool replace);
+	bool (*add_sa)(const struct kernel_sa *sa, bool replace);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
 	bool (*del_sa)(const struct kernel_sa *sa);
@@ -197,9 +197,10 @@ struct kernel_ops {
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
 			       const char *text_said);
-	bool (*docommand)(struct connection *c,
-			  struct spd_route *sr,
+	bool (*docommand)(const struct connection *c,
+			  const struct spd_route *sr,
 			  const char *verb,
+			  const char *verb_suffix,
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
@@ -221,8 +222,8 @@ extern struct raw_iface *find_raw_ifaces4(void);
 extern struct raw_iface *find_raw_ifaces6(void);
 
 /* helper for invoking call outs */
-extern int fmt_common_shell_out(char *buf, int blen, struct connection *c,
-				struct spd_route *sr, struct state *st);
+extern int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
+				const struct spd_route *sr, struct state *st);
 
 #ifdef KLIPS_MAST
 /* KLIPS/mast/pfkey things */
@@ -230,34 +231,11 @@ extern bool pfkey_plumb_mast_device(int mast_dev);
 #endif
 
 /* many bits reach in to use this, but maybe shouldn't */
-extern bool do_command(struct connection *c, struct spd_route *sr,
+extern bool do_command(const struct connection *c, const struct spd_route *sr,
 		       const char *verb, struct state *st);
 
-#if defined(linux)
-extern bool do_command_linux(struct connection *c, struct spd_route *sr,
-			     const char *verb, struct state *st);
 extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(__FreeBSD__)
-extern bool do_command_freebsd(struct connection *c, struct spd_route *sr,
-			       const char *verb, struct state *st);
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-extern bool do_command_darwin(struct connection *c, struct spd_route *sr,
-			      const char *verb, struct state *st);
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   char *cmd);
-#endif
-
-#if defined(__CYGWIN32__)
-extern bool do_command_cygwin(struct connection *c, struct spd_route *sr,
-			      const char *verb, struct state *st);
-#endif
+			   const char *cmd);
 
 /* information from /proc/net/ipsec_eroute */
 
@@ -300,7 +278,14 @@ struct bare_shunt {
 	int transport_proto;
 	unsigned long count;
 	monotime_t last_activity;
-	char *why;
+
+	/*
+	 * Note: "why" must be in stable storage (not auto, not heap)
+	 * because we use it indefinitely without copying or pfreeing.
+	 * Simple rule: use a string literal.
+	 */
+	const char *why;
+
 	struct bare_shunt *next;
 };
 extern void show_shunt_status(void);
@@ -316,6 +301,11 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 #ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 #endif
@@ -346,23 +336,23 @@ extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       int transport_proto,
 			       const char *why);
 
-extern bool assign_holdpass(struct connection *c,
+extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
 			int transport_proto,
 			ipsec_spi_t negotiation_shunt,
 			const ip_address *src, const ip_address *dst);
 
-extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		int transport_proto, ipsec_spi_t failure_shunt);
 
-extern ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective);
+extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
 
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 int proto,
-				 struct spd_route *sr,
+				 const struct spd_route *sr,
 				 bool tunnel_mode);
-extern ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel_mode);
+extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
@@ -374,7 +364,7 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
-extern bool eroute_connection(struct spd_route *sr,
+extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
 			      int proto, enum eroute_type esatype,
@@ -386,8 +376,8 @@ extern bool eroute_connection(struct spd_route *sr,
 #endif
 			      );
 
-static inline bool compatible_overlapping_connections(struct connection *a,
-						      struct connection *b)
+static inline bool compatible_overlapping_connections(const struct connection *a,
+						      const struct connection *b)
 {
 	return kernel_ops->overlap_supported &&
 	       a != NULL && b != NULL &&
@@ -408,6 +398,12 @@ extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
 extern void expire_bare_shunts(void);
 
+
+/*
+ * Note: "why" must be in stable storage (not auto, not heap)
+ * because we use it indefinitely without copying or pfreeing.
+ * Simple rule: use a string literal.
+ */
 extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 		int transport_proto, ipsec_spi_t shunt_spi,
 		const char *why);

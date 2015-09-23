@@ -62,7 +62,8 @@ kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev2-45-impair-gx-01			good
 kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
-kvmplutotest	ikev2-47-priority			wip
+kvmplutotest	ikev2-47-priority			good
+kvmplutotest	ikev2-48-nat-cp				good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -216,8 +217,10 @@ kvmplutotest 	newoe-18-block-cop 			good
 kvmplutotest 	newoe-18-block-private 			good
 kvmplutotest 	newoe-18-block-clear 			good
 kvmplutotest 	newoe-18-block-block 			good
-
+#
 kvmplutotest 	newoe-19-poc-poc-clear			wip
+kvmplutotest 	newoe-20-ipv6				good
+kvmplutotest 	newoe-21-livenss-clear			good
 
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
@@ -307,6 +310,8 @@ kvmplutotest	dpd-08-netkey	wip
 kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
+kvmplutotest	ikev2-liveness-01-netkey	wip
+kvmplutotest	ikev2-liveness-01-netkey-drop	good
 
 kvmplutotest	delete-sa-01	good
 kvmplutotest	delete-sa-03	wip
@@ -718,9 +723,9 @@ kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
-
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
-
+kvmplutotest	interop-ikev2-strongswan-28-reauth		good
+kvmplutotest	interop-ikev2-strongswan-29-rekey		wip
 
 #################################################################
 # DNSSEC tests

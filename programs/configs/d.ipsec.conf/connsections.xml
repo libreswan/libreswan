@@ -169,11 +169,7 @@ section.
 There may be multiple
 <emphasis remap='B'>%default</emphasis>
 sections of a given type,
-but only one default may be supplied for any specific parameter name,
-and all
-<emphasis remap='B'>%default</emphasis>
-sections of a given type must precede all non-<emphasis remap='B'>%default</emphasis>
-sections of that type.
+but only one default may be supplied for any specific parameter name.
 <emphasis remap='B'>%default</emphasis>
 sections may not contain
 <emphasis remap='B'>also</emphasis>

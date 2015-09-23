@@ -53,8 +53,8 @@
  */
 
 static const char *const kern_interface_name[] = {
-	"none",
-	"auto-pick",
+	"no-kernel", /* run without stack */
+	"auto-pick", /* obsoleted but punts to netkey */
 	"klips",
 	"netkey",
 	"win2k",

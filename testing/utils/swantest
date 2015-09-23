@@ -20,6 +20,7 @@ import concurrent.futures
 import collections
 import datetime
 import csv
+import operator
 
 from os import listdir
 from os.path import isfile, join
@@ -51,9 +52,12 @@ formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+
 class PipeworkEroor():
+
     """General exception for pipework errors."""
     pass
+
 
 class guest (threading.Thread):
 
@@ -167,7 +171,7 @@ class guest (threading.Thread):
             print(self.hostname + " waiting for initiator to finish run")
             i_ran.wait()
             print(("%s initiator finished after %.2fs" %
-	    	(self.hostname, time.time() - start)))
+                   (self.hostname, time.time() - start)))
 
         cmd = "./final.sh"
         if os.path.exists(cmd):
@@ -253,7 +257,7 @@ class guest (threading.Thread):
         elif self.reboot:
             subprocess.getoutput("sudo virsh reboot %s" % self.hostname)
             print(("Rebooting %s - pausing %s seconds" %
-                  (self.hostname, pause)))
+                   (self.hostname, pause)))
             time.sleep(pause)
 
         print(("Taking %s console by force" % self.hostname))
@@ -322,6 +326,7 @@ class guest (threading.Thread):
 TIMEOUT = 10
 SEARCH_WINDOW_SIZE = 100
 
+
 class Remote:
 
     def __init__(self, child, hostname, prompt="\[root@[^ ]+ [^\]]+\]# "):
@@ -339,10 +344,12 @@ class Remote:
             # pretty but misleading.
             print(("%s: %s" % (self.prompt.replace("\\", ""), command)))
         self.child.sendline(command)
-        self.child.expect(self.prompt, timeout=timeout, searchwindowsize=SEARCH_WINDOW_SIZE)
+        self.child.expect(
+            self.prompt, timeout=timeout, searchwindowsize=SEARCH_WINDOW_SIZE)
 
     def cd(self, directory):
-        self.prompt = "\[root@%s %s\]# " % (self.hostname, os.path.basename(directory))
+        self.prompt = "\[root@%s %s\]# " % (
+            self.hostname, os.path.basename(directory))
         self.run("cd %s" % directory)
         return self.prompt
 
@@ -384,12 +391,13 @@ class Remote:
 
 # end of class
 
+
 class TestList:
 
     def __iter__(self):
         return self
 
-    def __init__(self, testlist, args, trpath='./', verbose = True):
+    def __init__(self, testlist, args, trpath='./', verbose=True):
         self.verbose = verbose
         self.args = args
         self.file = open(testlist, 'r')
@@ -414,7 +422,8 @@ class TestList:
             tdir = self.trpath + '/' + testdir
             if not os.path.exists(tdir):
                 # This is serious
-                logging.error("****** invalid test %s: directory %s not found", testdir, tdir)
+                logging.error(
+                    "****** invalid test %s: directory %s not found", testdir, tdir)
                 continue
             reason = self.skip_test(testtype, testdir, testexpect)
             if reason and self.verbose:
@@ -453,6 +462,7 @@ class TestList:
         return None
 
 # end of class
+
 
 class scantests:
 
@@ -503,8 +513,12 @@ class scantests:
                 continue
             self.scan_test_results()
 
+    def append_node_sum(self, g_sum='', h_sum=''):
+        if not self.to_append:
+            self.graphsums.append(g_sum)
+            self.htmlsums["rows"].append(h_sum)
+            return
 
-    def append_node_sum(self):
         gfile = self.args.resultsdir + '/' + 'graph.json'
         logging.debug("reading file %s" % gfile)
         with opened_w_error(gfile) as (f, err):
@@ -512,7 +526,16 @@ class scantests:
                 logging.error("can't read %s %s" % (gfile, err))
             else:
                 lines = f.read().replace("\n", "").replace("\t", "")
-                self.graphsums = json.loads(lines)
+                graphsums = json.loads(lines)
+
+        self.graphsums = list()
+        if graphsums:
+            g = dict()
+            for o in graphsums:
+                logging.debug("AA dir %s new %s " % (o["dir"] , g_sum["dir"]))
+                if o["dir"] != g_sum["dir"] and  (not o["dir"] in g):
+                    g[o["dir"]] = True
+                    self.graphsums.append(o)
 
         hfile = self.args.resultsdir + '/' + 'table.json'
         logging.debug("reading file %s" % hfile)
@@ -521,7 +544,21 @@ class scantests:
                 logging.error("can't read %s %s" % (gfile, err))
             else:
                 lines = f.read().replace("\n", "").replace("\t", "")
-                self.htmlsums = json.loads(lines)
+                htmlsums = json.loads(lines)
+
+        self.htmlsums["rows"] = list()
+        if htmlsums:
+            h = dict()
+            for o in htmlsums["rows"]:
+                if (not o[0] in h) and (o[0] != h_sum[0]):
+                    h[o[0]] = True
+                    self.htmlsums["rows"].append(o)
+
+        self.graphsums.append(g_sum)
+        self.graphsums = sorted(self.graphsums, key=lambda k: k['dir'])
+
+        self.htmlsums["rows"].append(h_sum)
+        self.htmlsums["rows"] = sorted(self.htmlsums["rows"], key=lambda k: k[0], reverse=True)
 
     def write_node_sum(self):
         gfile = self.npath + '/' + 'graph.json'
@@ -552,7 +589,7 @@ class scantests:
         self.nopath = ''
         if self.stdir:
             trpath = self.stdir
-            if not self.args.scancwd:
+            if not (self.args.scancwd or self.to_append):
                 self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
@@ -577,8 +614,9 @@ class scantests:
                         "skip this dir %s . can not read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
                     return True
 
-        if self.nopath  and self.args.resanitize:
-            rsync_file((self.trpath + '/' + self.args.testlist), (self.nopath + '/TESTLIST' ))
+        if self.nopath and self.args.resanitize:
+            rsync_file(
+                (self.trpath + '/' + self.args.testlist), (self.nopath + '/TESTLIST'))
 
     def read_testlist(self, resultsdir=''):
         if resultsdir:
@@ -638,6 +676,7 @@ class scantests:
         self.tpath = self.trpath + '/' + self.testname
         logging.debug("tpath %s" % self.tpath)
 
+        ocwd = os.getcwd()
         os.chdir(self.tpath)
         tcpmdump_cmds, test_hosts = orient(self.args, self.tests[tname])
 
@@ -646,6 +685,8 @@ class scantests:
             re_write_result(sanity=s)
 
         os.chdir("..")
+        os.chdir(ocwd);
+
         if self.nopath:
             rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
 
@@ -675,7 +716,6 @@ class scantests:
             self.diffstat_test()
             self.grep_4_known_errors()
 
-
     def scan_test_results(self):
         i = 0
 
@@ -704,7 +744,7 @@ class scantests:
 
         for tname, test in self.tests.items():
             i += 1
-            self.scan_single_test_result(tname = tname);
+            self.scan_single_test_result(tname=tname)
 
         e = self.create_test_run_table()
         if e:
@@ -712,21 +752,22 @@ class scantests:
         if self.stdir and not self.to_append:
             return
 
-        if self.to_append:
-            logging.info("append the graph file")
-            self.append_node_sum()
-        else:
-            logging.info("AA not append the graph file")
-
-        self.graphsums.append(self.tsum)
         row = [self.tsum["dir"], self.tsum["passed"], self.tsum["failed"],
-        self.tsum["Total"], self.tsum["runtime_str"]]
-        self.htmlsums["rows"].append(row)
+               self.tsum["Total"], self.tsum["runtime_str"]]
+        logging.info("append the graph file")
+        self.append_node_sum(g_sum=self.tsum, h_sum=row)
+
         self.write_node_sum()
 
     def create_test_run_table(self):
+
+        if self.stdir and self.to_append:
+            runDir = os.path.basename(self.tdir)
+        else:
+            runDir = self.tdir
+
         table = {
-            "columns": ["Test", "Expected", "Result", "Run time", "Responder", "Initiator"], "runDir": "/results/%s/%s" % (self.args.node, self.tdir), "suffix": "/OUTPUT", "rows": list()
+            "columns": ["Test", "Expected", "Result", "Run time", "Responder", "Initiator"], "runDir": "/results/%s/%s" % (self.args.node, runDir), "suffix": "/OUTPUT", "rows": list()
         }
         for key, test in self.tests.items():
             row = []
@@ -735,7 +776,7 @@ class scantests:
                 row.append(test["expect"])
             elif "output" in test:
                 row.append(test["output"])
-				
+
             if "result" in test:
                 row.append(test["result"])
             else:
@@ -763,7 +804,8 @@ class scantests:
 
             table["rows"].append(list(row))
 
-        self.tsum["Total"] = self.tsum['failed'] + self.tsum['passed'] + self.tsum['missing OUTPUT'] + self.tsum['missing RESULT']
+        self.tsum["Total"] = self.tsum['failed'] + self.tsum['passed'] + \
+            self.tsum['missing OUTPUT'] + self.tsum['missing RESULT']
 
         if not self.tsum["Total"]:
             e = "no tests in %s" % self.trpath
@@ -777,7 +819,10 @@ class scantests:
             se = (runtime % 60)
             self.tsum["runtime_str"] = "%02d:%02d:%02d" % (ho, mi, se)
 
-        self.tsum["dir"] = self.tdir
+        if self.stdir and self.to_append:
+            self.tsum["dir"] = os.path.basename(self.tdir)
+        else:
+            self.tsum["dir"] = self.tdir
         match = re.search(r'(\d+-\d+-\d+)', self.tdir)
         logging.info("date %s", match)
         if match:
@@ -857,7 +902,8 @@ class scantests:
                             "failed %s" % table["summary"]["failed"],
                             "missing baseline %s" % table[
                                 "summary"]["missing baseline"],
-                            "nooutput %s" % table["summary"]["missing console output"],
+                            "nooutput %s" % table["summary"][
+                                "missing console output"],
                             "ASSERT %s" % table["summary"]["ASSERT"],
                             "CORE %s" % table["summary"]["CORE"],
                             "EXPECT %s" % table["summary"]["EXPECT"],
@@ -949,6 +995,8 @@ class scantests:
             else:
                 self.tests[self.testname][key] = self.tests[
                     self.testname][role] + " " + note
+
+
 @contextmanager
 def opened_w_error(filename, mode="r"):
     try:
@@ -961,6 +1009,7 @@ def opened_w_error(filename, mode="r"):
         finally:
             f.close()
 
+
 def rsync_file(src, dst):
     cmd = "/usr/bin/rsync -q -aP %s %s" % (src, dst)
     logging.debug("%s", cmd)
@@ -968,6 +1017,7 @@ def rsync_file(src, dst):
         os.system(cmd)
     except:
         logging.exception("EXCEPTION ? cmd %s , cwd %s", os.getcwd(), cmd)
+
 
 def rsync_file_to_dir(src, dst):
     cmd = "/usr/bin/rsync -q -aP %s %s/" % (src, dst)
@@ -1030,7 +1080,7 @@ def shut_down_hosts(args, test_hosts):
         logging.info(
             "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
                 running),
-                        ' '.join(map(str, running)), tries)
+            ' '.join(map(str, running)), tries)
 
         del running[:]
         try:
@@ -1312,28 +1362,30 @@ def write_result(args, start, testname, sanity, result='FAILED', e=None, testexp
 
 DEFAULTCONFIG = {
     'bootwait': 109,
-        'docker': False,
-        'dockerimage': "swanbase",
-        'kvm': True,
-        'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
-        'newrun': None,
-        'node': platform.node(),
-        'npool': 17,
-        'regualrhosts': ['nic'],
-        'resultsdir': '/home/build/results',
-        'retry': 5,
-        'rpm': '',
-        'sanitizer': "../../utils/sanitize.sh",
-        'shutdownwait': 63,
-        'stoponerror': None,
-        'swanhosts': ['east', 'west', 'road', 'north'],
-        'tcpdumpfilter': "-s  0 -n not stp and not port 22",
-        'tcpdump': "/usr/sbin/tcpdump",
-        'testlist': "TESTLIST"
+    'docker': False,
+    'dockerimage': "swanbase",
+    'kvm': True,
+    'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
+    'newrun': None,
+    'node': platform.node(),
+    'npool': 17,
+    'regualrhosts': ['nic'],
+    'resultsdir': '/home/build/results',
+    'retry': 5,
+    'rpm': '',
+    'sanitizer': "../../utils/sanitize.sh",
+    'shutdownwait': 63,
+    'stoponerror': None,
+    'swanhosts': ['east', 'west', 'road', 'north'],
+    'tcpdumpfilter': "-s  0 -n not stp and not port 22",
+    'tcpdump': "/usr/sbin/tcpdump",
+    'testlist': "TESTLIST"
 }
+
 
 def compile_regex_arg(string):
     return re.compile(string)
+
 
 def cmdline():
 
@@ -1349,14 +1401,19 @@ def cmdline():
 
     parser.add_argument(
         "--dockerimage", default=DEFAULTCONFIG['dockerimage'],
-            help="sudo docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
+        help="sudo docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
 
-    parser.add_argument("--exclude", default=None, type=compile_regex_arg, help="Exclude tests that match <regex>")
+    parser.add_argument("--exclude", default=None,
+                        type=compile_regex_arg, help="Exclude tests that match <regex>")
+
+    parser.add_argument("--graphsappend", default='',
+                        help="update this graph entry. for advanced use only")
 
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
 
-    parser.add_argument("--include", default=None, type=compile_regex_arg, help="Only include tests that match <regex>")
+    parser.add_argument("--include", default=None, type=compile_regex_arg,
+                        help="Only include tests that match <regex>")
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1395,7 +1452,7 @@ def cmdline():
                         help="san/resanitize  results, run in cwd")
     parser.add_argument(
         "--shutdownwait", default=DEFAULTCONFIG['shutdownwait'],
-            type=int, help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
+        type=int, help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
 
     parser.add_argument("--stop", default=False, action="store_true",
                         help="stop tests now. call from testing/pluto directory")
@@ -1408,9 +1465,10 @@ def cmdline():
 
     parser.add_argument(
         "--tcpdumpfilter", default=DEFAULTCONFIG['tcpdumpfilter'],
-            help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
+        help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
 
-    parser.add_argument("--testingdir", default="/testing", help="Change the /testing directory")
+    parser.add_argument(
+        "--testingdir", default="/testing", help="Change the /testing directory")
 
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
@@ -1453,7 +1511,7 @@ def kvm_error(r_file):
 
 def runcmd(cmd):
     logging.info("%s", cmd)
-    o =  subprocess.getoutput(cmd)
+    o = subprocess.getoutput(cmd)
     logging.debug(o)
     return o
 
@@ -1467,6 +1525,7 @@ def runcmd_check_output(cmd):
     except subprocess.CalledProcessError as e:
         logging.error("ERROR %s %s", cmd, e.output)
         return (None, e)
+
 
 def docker_stop_container(dname):
     if not dname:
@@ -1488,11 +1547,16 @@ def docker_flush_eth0(dhost, dname):
     # docker exec -ti dwest  ip address flush dev eth0
     runcmd("sudo docker exec -ti %s ip address flush dev eth0" % dname)
 
+
 def docker_restart_network(test, dnamei, dnamer, dnamen):
 
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamei)
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamer)
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" % dnamen)
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
+           dnamei)
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
+           dnamer)
+    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
+           dnamen)
+
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
 
@@ -1511,7 +1575,8 @@ def docker_add_route(test, dnamei, dnamer, dnamen):
 
     runcmd("sudo docker exec -ti %s ip route add 192.0.1.0/24 via 192.1.2.45" %
            dnamer)
-    runcmd("sudo docker exec -ti %s ip route add default via 192.1.2.254" % dnamer)
+    runcmd(
+        "sudo docker exec -ti %s ip route add default via 192.1.2.254" % dnamer)
 
 
 def docker_swan_build(args, dname):
@@ -1526,7 +1591,7 @@ def docker_swan_build(args, dname):
 
     (line, e) = runcmd_check_output(cmd)
     if e:
-        return(e.output) 
+        return(e.output)
 
     cmd = "sudo docker exec -ti %s ipsec pluto --version" % dname
     (line, e) = runcmd_check_output(cmd)
@@ -1540,10 +1605,11 @@ def docker_swan_build(args, dname):
     objdir = line.decode('ascii')
     objdir = objdir.strip()
     if e:
-        return(e.output) 
-    cmd =  "sudo chown build.build -R /home/build/libreswan/%s" % objdir
-    logging.debug("%s",cmd)
+        return(e.output)
+    cmd = "sudo chown build.build -R /home/build/libreswan/%s" % objdir
+    logging.debug("%s", cmd)
     subprocess.getoutput(cmd)
+
 
 def docker_containers_start_stop(args, test, st, stop):
     dnamei = test["initiator"] + "-" + test["name"]
@@ -1572,7 +1638,8 @@ def docker_containers_start_stop(args, test, st, stop):
         didn = docker_start_container(test["nic"], dnamen, args.dockerimage)
 
     try:
-        docker_add_net_bridges(args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+        docker_add_net_bridges(
+            args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
     except:
         return True
 
@@ -1585,11 +1652,13 @@ def docker_containers_start_stop(args, test, st, stop):
 
 
 def docker_net_bridge(dname, brname, iface, prefix):
-    cmd = "sudo /usr/local/bin/pipework %s -i %s %s %s" % (brname, iface, dname, prefix)
+    cmd = "sudo /usr/local/bin/pipework %s -i %s %s %s" % (
+        brname, iface, dname, prefix)
     output = runcmd(cmd)
     if output:
         logging.error(output)
         raise PipeworkEroor(output)
+
 
 def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     # shared bridge between east - west, east - nic
@@ -1632,7 +1701,6 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-
     elif test["initiator"] == "road":
         iface = "eth0"
         brname = "br%s" % bidn1
@@ -1667,15 +1735,15 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         docker_net_bridge(
             dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
-		# adding eth2 and eth3 seems to slowdown network.restart
-		# if we need it in the future we could enable those
+        # adding eth2 and eth3 seems to slowdown network.restart
+        # if we need it in the future we could enable those
         iface = "eth2"
         brname = "br%s" % bidn2
-        #docker_net_bridge( dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+        # docker_net_bridge( dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
         iface = "eth3"
         brname = "br%s" % bidn3
-        #docker_net_bridge(dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+        # docker_net_bridge(dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
     if test["responder"] == "east":
 
@@ -1688,7 +1756,6 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         brname = "br%s" % bide2
         docker_net_bridge(
             dname=dnamer, brname=brname, iface=iface, prefix=prefix)
-
 
         iface = "eth1"
         brname = "br%s" % bidc
@@ -1918,7 +1985,7 @@ def do_single_test(args, start='', test=None, st=None):
         else:
             logging.error(
                 "******* missing test directory %s in %s", test["name"], os.getcwd())
-            retrun
+            return
     else:
         logging.debug("%s is a single test not a testlist", test["name"])
 
@@ -1956,9 +2023,10 @@ def do_single_test(args, start='', test=None, st=None):
         os.chdir("..")
         # chdir end
 
+
 def scancwd(args):
     r = args.testlist or none
-    stdir=os.getcwd()
+    stdir = os.getcwd()
     logging.info(
         "re scan results in CWD %s/%s", stdir, r)
 
@@ -2021,11 +2089,10 @@ def run_docker_q(args, tests, st):
     logging.info(
         "%s Docker pluto tests to run. pool size %s, from %s", st[
             "dtorun"], args.npool,
-            args.testlist)
+        args.testlist)
 
     if check_host_netkey_stack():
         return True
-
 
     for name, test in tests.items():
         logging.debug("queue up %s type %s", test["name"], test["type"])
@@ -2039,9 +2106,11 @@ def run_docker_q(args, tests, st):
 
     while not q.empty():
         print (q.get())
-	
+
+
 def update_progress_table(args, tests, st):
     return
+
 
 def run_kvm_q(args, tests, st):
 
@@ -2053,8 +2122,9 @@ def run_kvm_q(args, tests, st):
         logging.debug("next up %s type %s", test["name"], test["type"])
         do_single_test(args=args, test=test, st=st)
         st["kran"] = st["kran"] + 1
-        st["progress"].scan_single_test_result(tname = name);
+        st["progress"].scan_single_test_result(tname=name)
         st["progress"].create_test_run_table()
+
 
 def do_test_list(args, start, tried, output_dir):
 
@@ -2111,11 +2181,13 @@ def do_test_list(args, start, tried, output_dir):
                     o = odir + '/' + testdir
                     shutil.rmtree(o)
                 else:
-                    TestList.log_skip(testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
+                    TestList.log_skip(
+                        testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
                     continue
             else:
                 # output already exists: skip test
-                TestList.log_skip(testdir, "%s exists, do not run again" % r_file)
+                TestList.log_skip(
+                    testdir, "%s exists, do not run again" % r_file)
                 if testtype == 'kvmplutotest':
                     st["knottorun"] = st["knottorun"] + 1
                 if testtype == 'dockerplutotest':
@@ -2137,7 +2209,7 @@ def do_test_list(args, start, tried, output_dir):
 
         logging.info(
             "red %s lines from %s. to run (kvm %s , docker %s), do not run(kvm %s, docker %s)",
-                     st["n_lines"], args.testlist, st["ktorun"], st["dtorun"], st["knottorun"], st["dnottorun"])
+            st["n_lines"], args.testlist, st["ktorun"], st["dtorun"], st["knottorun"], st["dnottorun"])
 
         logging.info("** no tests to run in file %s. could run %s **",
                      args.testlist, (st["dnottorun"] + st["knottorun"]))
@@ -2157,7 +2229,7 @@ def do_test_list(args, start, tried, output_dir):
         run_kvm_q(args, tests, st)
 
     logging.info("AA ran the Qs")
-    if os.path.isdir(st["odir"]):
+    if os.path.isdir(st["odir"]) and ((st["dtorun"] + st["ktorun"]) > 0):
         endscan = scantests(args, stdir=st["odir"], to_append=True)
         endscan.scan_test_runs()
     return (odir, True, (st["dtorun"] + st["ktorun"]))
@@ -2170,7 +2242,7 @@ def makedirs_log(D, mode):  # mode is octal
         os.makedirs(D, mode)
     except:
         logging.error("failed to create directory %s", output_dir)
-        retrun
+        return
 
     return True
 
@@ -2232,11 +2304,17 @@ def setup_result_dir(args, to_create):
 
     if to_create and not os.path.isdir(output_dir):
         logging.error("%s is not directory.", output_dir)
-        retrun
+        return
 
     logging.info("results will be in %s", output_dir)
 
     return output_dir
+
+
+def append_graphs_tables(args):
+    s = scantests(args)
+    s.scan_test_runs()
+    # testsum.read_dirs(args)
 
 
 def gen_graphs_tables(args):
@@ -2264,6 +2342,10 @@ def main():
     if args.graphs:
         gen_graphs_tables(args)
         return
+    elif args.graphsappend:
+        a = scantests(args, stdir=args.graphsappend, to_append=True)
+        a.scan_test_runs()
+        return
     elif args.stop:
         gen_stop_tests_now(args)
         return
@@ -2272,8 +2354,8 @@ def main():
         # gen_graphs_tables(args)
         return
     elif args.scancwd:
-       scancwd(args)
-       return
+        scancwd(args)
+        return
 
     if not args.leavezombies:
         kill_zombies("swantest")
@@ -2288,7 +2370,7 @@ def main():
                      ran_tests, args.testlist, tried, args.retry)
         while (tried < args.retry):
             if ran_tests > 0:
-                #gen_graphs_tables(args)
+                # gen_graphs_tables(args)
                 logging.info(
                     "retry %s %s/%s", args.testlist, tried, args.retry)
             (output_dir, testlist, ran_tests) = do_test_list(

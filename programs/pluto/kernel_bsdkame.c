@@ -249,34 +249,11 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 	}
 }
 
-static bool bsdkame_do_command(struct connection *c, struct spd_route *sr,
-			       const char *verb, struct state *st)
+static bool bsdkame_do_command(const struct connection *c, const struct spd_route *sr,
+			       const char *verb, const char *verb_suffix, struct state *st)
 {
 	char cmd[1536]; /* arbitrary limit on shell command length */
 	char common_shell_out_str[1024];
-	const char *verb_suffix;
-
-	/* figure out which verb suffix applies */
-	{
-		const char *hs, *cs;
-
-		switch (addrtypeof(&sr->this.host_addr)) {
-		case AF_INET:
-			hs = "-host";
-			cs = "-client";
-			break;
-		case AF_INET6:
-			hs = "-host-v6";
-			cs = "-client-v6";
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "unknown address family");
-			return FALSE;
-		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					   &sr->this.host_addr) ?
-			      hs : cs;
-	}
 
 	if (fmt_common_shell_out(common_shell_out_str,
 				 sizeof(common_shell_out_str), c, sr,
@@ -615,8 +592,8 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool bsdkame_shunt_eroute(struct connection *c,
-				 struct spd_route *sr,
+static bool bsdkame_shunt_eroute(const struct connection *c,
+				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
 				 enum pluto_sadb_operations op,
 				 const char *opname)
@@ -695,7 +672,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 	} else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
-		struct connection *ue = eclipsed(c, &esr);
+		const struct connection *ue = eclipsed(c, &esr);
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
@@ -885,8 +862,8 @@ static bool bsdkame_shunt_eroute(struct connection *c,
  * information to install the policy, since they are not strongly linked.
  *
  */
-static bool bsdkame_sag_eroute(struct state *st,
-			       struct spd_route *sr,
+static bool bsdkame_sag_eroute(const struct state *st,
+			       const struct spd_route *sr,
 			       unsigned op UNUSED,
 			       const char *opname UNUSED)
 {
