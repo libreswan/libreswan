@@ -852,7 +852,7 @@ static void process_secret(struct secret **psecrets,
 					&s->pks.u.RSA_private_key);
 		} else {
 			/* RSA key in certificate in NSS */
-			ugh = "WARNING: secrets entries for NSS certificates have been deprecated";
+			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
 		if (!ugh) {
 			libreswan_log("loaded private key for keyid: %s:%s",
