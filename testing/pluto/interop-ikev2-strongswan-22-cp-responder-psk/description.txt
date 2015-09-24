@@ -1,4 +1,2 @@
 Libreswan(road) to Strongswan IKEv2 using PSK the initiator (road).
-The initiator request and IP address using CP. Thresponder has an addresspool.
-
-
+The initiator request and IP address using CP. The responder has an addresspool.
