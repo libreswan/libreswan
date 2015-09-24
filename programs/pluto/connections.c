@@ -3401,6 +3401,11 @@ struct connection *find_client_connection(struct connection *const c,
 {
 	struct connection *d;
 
+	/* weird things can happen to our interfaces */
+	if (!oriented(*c)) {
+		return NULL;
+	}
+
 	DBG(DBG_CONTROLMORE, {
 		char s1[SUBNETTOT_BUF];
 		char d1[SUBNETTOT_BUF];
@@ -3447,7 +3452,6 @@ struct connection *find_client_connection(struct connection *const c,
 				(sr->that.protocol == peer_protocol) &&
 				(!sr->that.port ||
 					sr->that.port == peer_port)) {
-				passert(oriented(*c));
 				if (routed(sr->routing))
 					return c;
 
