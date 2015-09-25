@@ -1,0 +1,7 @@
+
+This is a test for a crasher described in
+
+pluto crashes when removing logical interface
+
+https://bugzilla.redhat.com/show_bug.cgi?id=609343
+
