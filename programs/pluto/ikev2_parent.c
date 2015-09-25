@@ -1821,6 +1821,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 
 	if (md->chain[ISAKMP_NEXT_v2SKF]) {
 		status = ikev2_reassemble_fragments(md, &chunk);
+		/* note: if status is SFT_OK, chunk is set */
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
@@ -1835,6 +1836,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 		return status;
 	}
 
+	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
 	init_pbs(&md->clr_pbs, chunk.ptr, chunk.len, "cleartext");
 
 	unsigned np = md->chain[ISAKMP_NEXT_v2SK] ?

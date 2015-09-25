@@ -729,6 +729,7 @@ void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 
 static void replace_public_key(struct pubkey *pk)
 {
+	/* ??? clang 3.5 thinks pk might be NULL */
 	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
 	install_public_key(pk, &pluto_pubkeys);
 }

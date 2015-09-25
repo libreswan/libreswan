@@ -2335,16 +2335,16 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * so deleting any one will do.  So we just delete the
 	 * first one found.  It may or may not be the only one.
 	 */
-	struct connection *c = st->st_connection;
+	struct connection *const c = st->st_connection;
 
 	struct {
 		unsigned proto;
 		struct ipsec_proto_info *info;
 	} protos[4];
-	int i;
+	int i = 0;
 	bool result;
 
-	i = 0;
+	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr, &c->spd.that.client,

@@ -265,6 +265,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 				string, c->name);
 			return NULL;
 		}
+		/* clang 3.5 thinks that next might be NULL; wrong */
 		str = *next != '\0' ? next + 1 : NULL;
 	}
 

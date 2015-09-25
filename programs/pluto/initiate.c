@@ -1156,6 +1156,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				 */
 				ipstr_buf b1, b2, b3;
 
+				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
 				passert(id_is_ipaddr(&ac->gateways_from_dns->
 						     gw_id));
 				loglog(RC_OPPOFAILURE,
@@ -1231,6 +1232,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		DBG(DBG_OPPO | DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
+			/* ??? CLANG 3.5 thinks c might be NULL */
 			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
 				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 				ipstr(&b->our_client, &b1),

@@ -638,6 +638,7 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	struct ikev2_frag *i;
 
+	/* ??? CLANG 3.5 thinks st might be NULL */
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
 		DBG(DBG_CONTROL, DBG_log(
 			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
@@ -1295,6 +1296,7 @@ void ikev2_log_parentSA(struct state *st)
 
 void send_v2_notification_invalid_ke_from_state(struct state *st)
 {
+	/* ??? CLANG 3.5 thinks that st might be NULL */
 	passert(st->st_oakley.group != NULL);
 	DBG(DBG_CONTROL,
 	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",

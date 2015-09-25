@@ -2084,7 +2084,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	if (self_delete) {
 		accept_self_delete(md);
-		st = md->st;	/* st not subseqently used */
+		st = md->st;	/* st not subsequently used */
 		/* note: st ought to be NULL from here on */
 	}
 
