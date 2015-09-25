@@ -278,7 +278,7 @@ static const char *const stfstatus_names[] = {
 	"STF_INTERNAL_ERROR",
 	"STF_TOOMUCHCRYPTO",
 	"STF_FATAL",
-	"STF_STOLEN",
+	"STF_DROP",
 	"STF_FAIL"
 };
 

@@ -1770,6 +1770,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		 */
 		break;
 
+	case STF_DROP:
+		/* be vewy vewy quiet */
+		if (st != NULL) {
+			delete_state(st);
+			md->st = st = NULL;
+		}
+		break;
+
 	case STF_FATAL:
 		passert(st != NULL);
 		whack_log(RC_FATAL,

@@ -2521,11 +2521,11 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			ipstr_buf b;
 
 			DBG(DBG_CONTROL, DBG_log(
-				"initial parent SA message received on %s:%u but \"%s\" kind=%s forbids connection",
+				"initial parent SA message received on %s:%u wfor \"%s\" with kind=%s dropped",
 				ipstr(me, &b), pluto_port, c->name,
 				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
 		}
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			/* opporstunistic */

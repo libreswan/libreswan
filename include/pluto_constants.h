@@ -179,7 +179,7 @@ typedef enum {
 	                         * so just ignore the message, and let them retransmit.
 	                         */
 	STF_FATAL,              /* just stop. we can't continue. */
-	STF_STOLEN,             /* only used by TaProoM */
+	STF_DROP,               /* just stop, delete any state, and don't log or respond */
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
 	                         * values STF_FAIL + x are notifications.
 	                         */
