@@ -275,9 +275,9 @@ east #
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
 |    message ID:  00 00 00 0f
 |    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
 |    message ID:  00 00 00 10
 |    message ID:  00 00 00 00
 east #
