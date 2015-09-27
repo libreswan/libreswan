@@ -62,6 +62,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "mpzfuncs.h"
+#include "hostpair.h" /* for find_host_pair_connections */
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -610,13 +611,6 @@ void load_crls(void)
 			save_dir, e, strerror(e));
 	}
 }
-
-/* forward */
-extern struct connection *find_host_pair_connections(const char *func,
-						     const ip_address *myaddr,
-						     u_int16_t myport,
-						     const ip_address *hisaddr,
-						     u_int16_t hisport);
 
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
