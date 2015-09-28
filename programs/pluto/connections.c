@@ -2455,8 +2455,7 @@ struct connection *find_host_connection(
 	});
 
 	return find_next_host_connection(
-		find_host_pair_connections(__FUNCTION__,
-			me, my_port, him, his_port),
+		find_host_pair_connections(me, my_port, him, his_port),
 		req_policy, policy_exact_mask);
 }
 stf_status ikev2_find_host_connection( struct connection **cp,
