@@ -189,8 +189,7 @@ void remove_host_pair(struct host_pair *hp)
 }
 
 /* find head of list of connections with this pair of hosts */
-struct connection *find_host_pair_connections(const char *func,
-					      const ip_address *myaddr,
+struct connection *find_host_pair_connections(const ip_address *myaddr,
 					      u_int16_t myport,
 					      const ip_address *hisaddr,
 					      u_int16_t hisport)
@@ -202,8 +201,7 @@ struct connection *find_host_pair_connections(const char *func,
 		ipstr_buf bm;
 		ipstr_buf bh;
 
-		DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s",
-			func,
+		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s",
 			ipstr(myaddr, &bm), myport,
 			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
 			hisport,

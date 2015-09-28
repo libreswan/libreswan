@@ -34,8 +34,7 @@ struct host_pair {
 extern struct host_pair *host_pairs;
 
 extern void connect_to_host_pair(struct connection *c);
-extern struct connection *find_host_pair_connections(const char *func,
-						     const ip_address *myaddr,
+extern struct connection *find_host_pair_connections(const ip_address *myaddr,
 						     u_int16_t myport,
 						     const ip_address *hisaddr,
 						     u_int16_t hisport);

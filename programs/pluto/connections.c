@@ -1047,8 +1047,7 @@ static bool check_connection_end(const struct whack_end *this,
 			 * outset.
 			 */
 			const struct connection *c =
-				find_host_pair_connections(__FUNCTION__,
-						&this->host_addr,
+				find_host_pair_connections(&this->host_addr,
 						this->host_port,
 						(const ip_address *)NULL,
 						that->host_port);
@@ -2212,7 +2211,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		 * We cannot know what port the peer would use, so we assume
 		 * that it is pluto_port (makes debugging easier).
 		 */
-		struct connection *c = find_host_pair_connections(__FUNCTION__,
+		struct connection *c = find_host_pair_connections(
 			&p->ip_addr, pluto_port,
 			(ip_address *) NULL, pluto_port);
 
@@ -2980,8 +2979,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Look on list of connections for host pair with wildcard
 		 * Peer IP.
 		 */
-		d = find_host_pair_connections(__FUNCTION__,
-					&c->spd.this.host_addr,
+		d = find_host_pair_connections(&c->spd.this.host_addr,
 					c->spd.this.host_port,
 					(ip_address *)NULL,
 					c->spd.that.host_port);

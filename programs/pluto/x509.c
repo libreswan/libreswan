@@ -616,7 +616,6 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
 	struct connection *d = find_host_pair_connections(
-		__FUNCTION__,
 		&md->iface->ip_addr, pluto_port,
 		(ip_address *)NULL, md->sender_port);
 
