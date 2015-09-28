@@ -2520,7 +2520,7 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			ipstr_buf b;
 
 			DBG(DBG_CONTROL, DBG_log(
-				"initial parent SA message received on %s:%u wfor \"%s\" with kind=%s dropped",
+				"initial parent SA message received on %s:%u for \"%s\" with kind=%s dropped",
 				ipstr(me, &b), pluto_port, c->name,
 				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
