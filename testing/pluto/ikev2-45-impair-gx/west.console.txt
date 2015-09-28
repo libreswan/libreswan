@@ -20,7 +20,6 @@ west #
 133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: supressing retransmit because IMPAIR_RETRANSMITS is set.
 217 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: v2N_INVALID_KE_PAYLOAD
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: EXPECTATION FAILED at /source/programs/pluto/ikev2.c:1823: st != NULL && st->st_event != NULL && st->st_event->ev_type == EVENT_v2_RETRANSMIT
 west #
  echo done
 done
