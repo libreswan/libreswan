@@ -419,15 +419,6 @@ kvmplutotest	x509-pluto-02		good
 #
 kvmplutotest	x509-pluto-03		good
 
-# NSS tests
-# a test for using nss with X.509 cert
-#
-# incomplete test - disabled
-#umlplutotest	x509-nss-01		good
-
-umlplutotest	nss-leftrsasigkey2-01	good
-
-
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
 kvmplutotest	nat-pluto-03		good
@@ -785,3 +776,49 @@ kvmplutotest	klips-passthrough-00			good
 
 kvmplutotest	ikev1-isakmp-reserved-flags-01		good
 kvmplutotest	ikev1-isakmp-reserved-flags-02		good
+
+#################################################################
+# X.509 NSS tests
+#################################################################
+kvmplutotest	nss-cert-01			good
+kvmplutotest	nss-cert-01-ikev2		good
+kvmplutotest	nss-cert-02			good
+kvmplutotest	nss-cert-02-eku			good
+kvmplutotest	nss-cert-02-eku-combined	good
+kvmplutotest	nss-cert-02-ikev2		good
+kvmplutotest	nss-cert-03			good
+kvmplutotest	nss-cert-03-ikev2		good
+kvmplutotest	nss-cert-04			good
+kvmplutotest	nss-cert-04-ikev2		good
+kvmplutotest	nss-cert-05			good
+kvmplutotest	nss-cert-05-ikev2		good
+kvmplutotest	nss-cert-06			good
+kvmplutotest	nss-cert-07			good
+kvmplutotest	nss-cert-chain-01		good
+kvmplutotest	nss-cert-chain-02		good
+kvmplutotest	nss-cert-chain-03		good
+kvmplutotest	nss-cert-crl-01			good
+kvmplutotest	nss-cert-crl-01-strict		good
+kvmplutotest	nss-cert-crl-02			good
+kvmplutotest	nss-cert-crl-02-fetch		good
+kvmplutotest	nss-cert-crl-03			good
+kvmplutotest	nss-cert-crl-03-strict		good
+kvmplutotest	nss-cert-nosecret		good
+kvmplutotest	nss-cert-ocsp-01		good
+kvmplutotest	nss-cert-ocsp-01-chain		good
+kvmplutotest	nss-cert-ocsp-01-ikev2		good
+kvmplutotest	nss-cert-ocsp-01-strict		good
+kvmplutotest	nss-cert-ocsp-02		good
+kvmplutotest	nss-cert-ocsp-02-ikev2		good
+kvmplutotest	nss-cert-ocsp-02-strict		good
+kvmplutotest	nss-cert-ocsp-03		good
+kvmplutotest	nss-cert-ocsp-03-ikev2		good
+kvmplutotest	nss-cert-ocsp-03-strict		good
+kvmplutotest	nss-cert-ocsp-04		good
+kvmplutotest	nss-cert-ocsp-04-strict		good
+kvmplutotest	nss-cert-ocsp-05		good
+kvmplutotest	nss-cert-ocsp-05-ikev2		good
+kvmplutotest	nss-cert-ocsp-05-strict		good
+kvmplutotest	nss-cert-ocsp-06		good
+kvmplutotest	nss-cert-ocsp-07-nourl		good
+kvmplutotest	nss-leftrsasigkey2-01		good
