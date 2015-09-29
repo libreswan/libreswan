@@ -1,4 +1,3 @@
-ipsec look
 crlutil -L -d sql:/etc/ipsec.d | grep mainca
 ipsec auto --listcrls
 grep "CRL imported" /tmp/pluto.log
