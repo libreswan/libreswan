@@ -7,7 +7,5 @@ ipsec setup start
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 # give OE policies time to load
 sleep 5
-# temp workaround for outgoing packet matching packetdefault instead of private-or-clear
-ipsec auto --delete packetdefault
 ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 echo "initdone"
