@@ -70,6 +70,8 @@
 
 #include "ietf_constants.h"
 
+#include "hostpair.h"
+
 /* Note: same definition appears in programs/pluto/ikev2.c */
 #define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
@@ -695,7 +697,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
+	static const lset_t policies[] = { POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
 	struct state *st = md->st;
 	lset_t policy;
@@ -703,6 +705,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	stf_status e;
 	unsigned int i;
 
+	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
 	for (i=0; i < elemsof(policies); i++){
 		policy = policies[i] | POLICY_IKEV2_ALLOW;
 		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
@@ -716,7 +719,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		ipstr_buf b;
 
 		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy of RSASIG, PSK or AUTH_NULL",
+		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy",
 			ipstr(&md->iface->ip_addr, &b),
 			ntohs(portof(&md->iface->ip_addr)));
 		return e;
@@ -727,6 +730,27 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	DBG(DBG_CONTROL,
 		DBG_log("found connection: %s with policy %s",
 			c->name, bitnamesof(sa_policy_bit_names, policy)));
+
+	/*
+	 * Did we overlook a type=passthrough foodgroup?
+	 */
+	{
+		struct connection *tmp = find_host_pair_connections(
+			&md->iface->ip_addr, md->iface->port,
+			(ip_address *)NULL, md->sender_port);
+
+		for (; tmp != NULL; tmp = tmp->hp_next) {
+			if ((tmp->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+				if (tmp->kind == CK_INSTANCE) {
+					if (addrinsubnet(&md->sender, &tmp->spd.that.client)) {
+						DBG(DBG_OPPO, DBG_log("passthrough conn %s was a match - suppressing NO_PROPSAL_CHOSEN reply",
+							tmp->name));
+						return STF_DROP;
+					}
+				}
+			}
+		}
+	}
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
