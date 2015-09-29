@@ -219,6 +219,10 @@ kvmplutotest 	newoe-18-block-cop 			good
 kvmplutotest 	newoe-18-block-private 			good
 kvmplutotest 	newoe-18-block-clear 			good
 kvmplutotest 	newoe-18-block-block 			good
+kvmplutotest	newoe-18-poc-blockall			good
+kvmplutotest	newoe-18-private-clearall		good
+kvmplutotest	newoe-18-private-copall			good
+kvmplutotest	newoe-18-private-pocall			good
 #
 kvmplutotest 	newoe-19-poc-poc-clear			wip
 kvmplutotest 	newoe-20-ipv6				good
