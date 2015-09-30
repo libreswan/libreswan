@@ -1,0 +1,7 @@
+west allows east to rekey, IKE will then exist under TUNNEL-B
+
+Taking down TUNNEL-B connection should leave its IKE up since it's
+being used by TUNNEL-A/TUNNEL-C IPsec states
+
+Deleting the connection with a lone IKE state will then remove the
+connection.

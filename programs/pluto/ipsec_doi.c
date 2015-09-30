@@ -1,4 +1,5 @@
 /* IPsec DOI and Oakley resolution routines
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
@@ -9,6 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +63,6 @@
 #include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -82,7 +83,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
@@ -108,18 +109,16 @@ void unpack_KE_from_helper(
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
-	pexpect(!st->st_sec_in_use);
-	if (!st->st_sec_in_use) {
-		st->st_sec_in_use = TRUE;
-		freeanychunk(*g); /* happens in odd error cases */
+	passert(!st->st_sec_in_use);
+	st->st_sec_in_use = TRUE;
+	freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-			     kn->gi.len, "saved gi value");
-		DBG(DBG_CRYPT,
-		    DBG_log("saving DH priv (local secret) and pub key into state struct"));
-		st->st_sec_nss = kn->secret;
-		st->st_pubk_nss = kn->pubk;
-	}
+	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
+		     kn->gi.len, "saved gi value");
+	DBG(DBG_CRYPT,
+	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
+	st->st_sec_nss = kn->secret;
+	st->st_pubk_nss = kn->pubk;
 }
 
 /* accept_KE
@@ -170,49 +169,68 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-/** The whole message must be a multiple of 4 octets.
- * I'm not sure where this is spelled out, but look at
- * rfc2408 3.6 Transform Payload.
- * Note: it talks about 4 BYTE boundaries!
+/*
+ * In IKEv1, some implementations (including freeswan/openswan/libreswan)
+ * interpreted the RFC that the whole IKE message must padded to a multiple
+ * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
+ * drop padded IKE packets. Some of the text on this topic can be found in the
+ * IKEv1 RFC 2408 section 3.6 Transform Payload.
+ *
+ * The ikepad= option can be set to yes or no on a per-connection basis,
+ * and defaults to yes.
+ *
+ * In IKEv2, there is no padding specified in the RFC and some implementations
+ * will reject IKEv2 messages that are padded. As there are no known IKEv2
+ * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
+ * clients are discovered in the wild, we will revisit this - please contact
+ * the libreswan developers if you find such an implementation.
+ * Therefor, the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */
 bool close_message(pb_stream *pbs, struct state *st)
 {
-	size_t padding =  pad_up(pbs_offset(pbs), 4);
+	size_t padding;
 
-	/* Workaround for overzealous Checkpoint firewall */
+	if (st->st_ikev2) {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required for IKEv2"));
+		close_output_pbs(pbs);
+		return TRUE;
+	}
+
+	padding =  pad_up(pbs_offset(pbs), 4);
+
 	if (padding != 0 && st != NULL && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
+		DBG(DBG_CONTROLMORE, DBG_log("IKEv1 message padding of %zu bytes skipped by policy",
 			padding));
 	} else if (padding != 0) {
-		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %zu bytes", padding));
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKEv1 message with %zu bytes", padding));
 		if (!out_zero(padding, pbs, "message padding"))
 			return FALSE;
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+		DBG(DBG_CONTROLMORE, DBG_log("no IKEv1 message padding required"));
 	}
 
 	close_output_pbs(pbs);
 	return TRUE;
 }
 
-static initiator_function *pick_initiator(struct connection *c UNUSED,
+static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
-		if (policy & POLICY_AGGRESSIVE) {
-			return aggr_outI1;
-		} else {
-			return main_outI1;
-		}
-	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
-		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
+	if ((policy & POLICY_IKEV2_PROPOSE) &&
+	    (policy & c->policy & POLICY_IKEV2_ALLOW) &&
+	    !c->failed_ikev2) {
+		/* we may try V2, and we haven't failed */
 		return ikev2parent_outI1;
+	} else if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+		/* we may try V1; Aggressive or Main Mode? */
+		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 	} else {
-		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
+		libreswan_log("Neither IKEv1 nor IKEv2 allowed: %s%s",
+			c->failed_ikev2? "previous V2 failure, " : "",
+			bitnamesof(sa_policy_bit_names, policy & c->policy));
 		/*
 		 * tried IKEv2, if allowed, and failed,
 		 * and tried IKEv1, if allowed, and got nowhere.
@@ -228,7 +246,7 @@ void ipsecdoi_initiate(int whack_sock,
 		       so_serial_t replacing,
 		       enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike * uctx
+		       , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {
@@ -454,6 +472,9 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 		    DBG_dump_chunk("DER ASN1 DN:", peer->name));
 		break;
 
+	case ID_NULL:
+		break;
+
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,
@@ -501,6 +522,11 @@ void initialize_new_state(struct state *st,
 
 bool send_delete(struct state *st)
 {
+	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
+		DBG(DBG_CONTROL,
+			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
+		return TRUE;
+	}
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
@@ -601,43 +627,72 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	add_str(sadetails, sad_len, b, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len)
+void fmt_isakmp_sa_established(struct state *st, char *sa_details,
+			       size_t sa_details_size)
 {
-
-	/* document ISAKMP SA details for admin's pleasure */
-	char *b = sadetails;
-	const char *authname, *prfname;
-	const char *integstr, *integname;
-	char integname_tmp[20];
-
 	passert(st->st_oakley.encrypter != NULL);
 	passert(st->st_oakley.prf_hasher != NULL);
 	passert(st->st_oakley.group != NULL);
+	/*
+	 * Note: for IKEv1 and AEAD encrypters,
+	 * st->st_oakley.integ_hasher is NULL!
+	 */
 
+	const char *auth_name;
 	if (st->st_ikev2) {
-		authname = "IKEv2";
-		integstr = " integ=";
-		prfname = "prf=";
-		snprintf(integname_tmp, sizeof(integname_tmp), "%s_%zu",
-			 st->st_oakley.integ_hasher->common.officname,
-			 st->st_oakley.integ_hasher->hash_integ_len *
-			 BITS_PER_BYTE);
-		integname = (const char*)integname_tmp;
+		auth_name = "IKEv2";
 	} else {
-		authname = enum_show(&oakley_auth_names, st->st_oakley.auth);
-		integstr = "";
-		integname = "";
-		prfname = "integ=";
+		auth_name = enum_show(&oakley_auth_names, st->st_oakley.auth);
+		auth_name = strip_prefix(auth_name, "OAKLEY_");
 	}
 
-	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s %s%s group=%s}",
-		 strip_prefix(authname,"OAKLEY_"),
+	/*
+	 * [2015-01-10] Some PRFs get their common.name set to
+	 * "OAKLEY_..." and this leads to the below printing the full
+	 * uppercase name (e.x., prf=OAKLEY_SHA2_256).  This is an
+	 * historic "feature".  See ike_alg.c:ike_alg_register_hash
+	 * for where those names come from.
+	 */
+	const char *prf_common_name =
+		strip_prefix(st->st_oakley.prf_hasher->common.name,
+			     "oakley_");
+
+	char prf_name[30] = "";
+	if (st->st_ikev2) {
+		snprintf(prf_name, sizeof(prf_name),
+			 " prf=%s", prf_common_name);
+	}
+
+	char integ_name[30] = "";
+	if (st->st_ikev2) {
+		if (st->st_oakley.integ_hasher == NULL) {
+			jam_str(integ_name, sizeof(integ_name), " integ=n/a");
+		} else {
+			snprintf(integ_name, sizeof(integ_name),
+				 " integ=%s_%zu",
+				 st->st_oakley.integ_hasher->common.officname,
+				 (st->st_oakley.integ_hasher->hash_integ_len *
+				  BITS_PER_BYTE));
+		}
+	} else {
+		/*
+		 * For IKEv1, since the INTEG algorithm is potentially
+		 * (always?) NULL.  Display the PRF.  The choice and
+		 * behaviour are historic.
+		 */
+		snprintf(integ_name, sizeof(integ_name),
+			 " integ=%s", prf_common_name);
+	}
+
+	const char *group_name = enum_name(&oakley_group_names,
+					   st->st_oakley.group->group);
+	group_name = strip_prefix(group_name, "OAKLEY_GROUP_");
+
+	snprintf(sa_details, sa_details_size,
+		 " {auth=%s cipher=%s_%d%s%s group=%s}",
+		 auth_name,
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
-		 integstr, integname,
-		 prfname,
-		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
-		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
+		 integ_name, prf_name, group_name);
 	st->hidden_variables.st_logged_p1algos = TRUE;
 }

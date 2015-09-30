@@ -16,13 +16,13 @@ If you still want to create an old style plain RSA key, you can create it with
 where $KEYLENGTH should be >= 2048. The resulting private key must be inserted
 into /etc/ipsec.secrets and enclosed with a ": RSA { .... }" marker. The
 following commands can be used to create a correctly formatted block:
-    echo -e ': RSA\t{' >> /etc/ipsec.secrets; 
-    cat $TMPFILE >> /etc/ipsec.secrets; 
+    echo -e ': RSA\t{' >> /etc/ipsec.secrets;
+    cat $TMPFILE >> /etc/ipsec.secrets;
     echo -e '\t}' >> /etc/ipsec.secrets;
 Afterwards, it is recommended to remove $TMPFILE in a secure manner (using
 something line srm, shred, wipe...) and create a public key line for insertation
-into the "conn" section of ipsec.conf with 
-    ipsec showhostkey --left 
+into the "conn" section of ipsec.conf with
+    ipsec showhostkey --left
 (or "--right" depending on which side you want to use it). For further
 information please take a closer look at the manpages ipsec_rsasigkey,
 ipsec.secrets, ipsec_showhostkey and ipsec.conf.
@@ -34,4 +34,4 @@ in all recent stock Debian kernel images.  This packaging does not
 support the KLIPS or any other custom kernel modules at the moment for
 simplicity's sake.
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Fri, 20 Mar 2015 02:44:29 -0400
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Wed, 30 Sep 2015 00:19:42 -0700

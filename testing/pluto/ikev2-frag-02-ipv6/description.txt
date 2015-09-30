@@ -1,0 +1,5 @@
+IPv6 with IKEv2 fragmentation, using ike/esp lines that generate
+big packets, using a 4096 bit key in the certificate as well.
+
+this tests various attempts to create fragments bigger than allowed,
+and includes ipv6 subnets that increse the packet sizes further

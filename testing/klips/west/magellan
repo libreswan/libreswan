@@ -36,7 +36,7 @@ case "$1" in
 		#modprobe ipsec
 
 		#tncfg attach $ipsecdev eth0
-		#ifconfig $ipsecdev $sg1 netmask $nmask29 
+		#ifconfig $ipsecdev $sg1 netmask $nmask29
 	;;
 	# Transport mode
 	tresp3desmd5)

@@ -9,5 +9,5 @@ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add v6-tunnel
-ipsec auto --status
+ipsec auto --status | grep v6-tunnel
 echo "initdone"

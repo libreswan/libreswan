@@ -2,69 +2,31 @@
 ; BIND reverse data file for untrusted net
 ;
 $TTL	604800
-@	IN	SOA	3.1.192.in-addr.arpa. root.freeswan.org. (
-			200306021	; Serial
+@	IN	SOA	3.1.192.in-addr.arpa. root.testing.libreswan.org. (
+			2015030301	; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-	IN	NS	nic.uml.freeswan.org.
-	IN	NS	beet.uml.freeswan.org.
-$INCLUDE K3.1.192.in-addr.arpa.+001+39340.key
+	IN	NS	nic.testing.libreswan.org.
 ;
-33	IN	PTR	north.uml.freeswan.org.
-45	IN	PTR	west.uml.freeswan.org.
-        IN      KEY     0x4200 4 1 AQNzGEFs18VKT00sA+4p+GUKn9C55PYuPQca6C+9Qhj0jfMdQnTRTDLeI+lp9TnidHH7fVpq+PkfiF2LHlZtDwMurLlwzbNOghlEYKfQ080WlOTTUAmOLhAzH28MF70q3hzq0m5fCaVZWtxcV+LfHWdxceCkjBUSaTFtR2W12urFCBz+SB3+OM33aeIbfHxmck2yzhJ8xyMods5kF3ek/RZlFvgN8VqBdcFVrZwTh0mXDCGN12HNFixL6FzQ1jQKerKBbjb0m/IPqugvpVPWVIUajUpLMEmi1FAXc1mFZE9x1SFuSr0NzYIu2ZaHfvsAZY5oN+I+R2oC67fUCjgxY+t7
-        IN      TXT     "X-IPsec-Server(10)=192.1.3.45" "AQNzGEFs18VKT00sA+4p+GUKn9C55PYuPQca6C+9Qhj0jfMdQnTRTDLeI+lp9TnidHH7fVpq+PkfiF2LHlZtDwMurLlwzbNOghlEYKfQ080WlOTTUAmOLhAzH28MF70q3hzq0m5fCaVZWtxcV+LfHWdxceCkjBUSaTFtR2W12urFCBz+SB3+OM33aeIbfHxmck2yzhJ8xyMods5kF3ek/RZlFvgN8VqBdcFVrZwTh0mXDCGN12HNFixL6FzQ1jQ" "KerKBbjb0m/IPqugvpVPWVIUajUpLMEmi1FAXc1mFZE9x1SFuSr0NzYIu2ZaHfvsAZY5oN+I+R2oC67fUCjgxY+t7"
-209	IN	PTR	road.uml.freeswan.org.
+33	IN	PTR	north.testing.libreswan.org.
+45	IN	PTR	west.testing.libreswan.org.
+45	IN      TXT     "X-IPsec-Server(10)=192.1.3.45 " "AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPK" "X3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9w" "fXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH" "1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5"
+45    IN    IPSECKEY  10 0 2 . AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+
+209	IN	PTR	road.testing.libreswan.org.
+;209    IN    IPSECKEY  10 0 2 . AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+;209    IN    TXT     "X-IPsec-Server(10)=192.1.3.209 " "AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPK" "X3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9w" "fXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH" "1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5"
 
 ; for test case myid-road-02
-213	IN	PTR	road.uml.freeswan.org.
-	IN	TXT	"X-IPsec-Server(10)=192.1.3.213 " "AQNxbOBmDqiNrUmn5q4kzBQ6I6pW/g2c8iDh3Y/KDtELBC6G0dASaaa95lV0cZT2kla681hVLzRF4MUCmFkH5ih514Nrwc5aptte49/70WotqcbvAhXeBX0zbg78gUPaT7CcUEAYxHoqHubao4mmfWlSrOnpf4crE/q3J6zH+8Z3bfsTGnpThgfNCItHpH7jkHPUYDilHsk0Zfd5fxjVDbl8JbQoT3P1KrdmpK7M1sXQhug12ocq8HlrXa3smJI" "q5b4T0rF+MYrThrNytNIEn53phuj6S8qmONin4usCqpUw50i2VqaBNQSY++/B57AqThFZNqt7TjqqT0CQ7tPRELgXwRvWA04GDhqBHHWoOrLdsR0p"
+213	IN	PTR	road.testing.libreswan.org.
+213	IN	TXT	"X-IPsec-Server(10)=192.1.3.213 " "AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPK" "X3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9w" "fXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH" "1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5"
+213    IN    IPSECKEY  10 0 2 . AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
 
 ; for test case myid-road-04
-214	IN	PTR	road.uml.freeswan.org.
-	IN      KEY     0x4200 4 1 AQNxbOBmDqiNrUmn5q4kzBQ6I6pW/g2c8iDh3Y/KDtELBC6G0dASaaa95lV0cZT2kla681hVLzRF4MUCmFkH5ih514Nrwc5aptte49/70WotqcbvAhXeBX0zbg78gUPaT7CcUEAYxHoqHubao4mmfWlSrOnpf4crE/q3J6zH+8Z3bfsTGnpThgfNCItHpH7jkHPUYDilHsk0Zfd5fxjVDbl8JbQoT3P1KrdmpK7M1sXQhug12ocq8HlrXa3smJIq5b4T0rF+MYrThrNytNIEn53phuj6S8qmONin4usCqpUw50i2VqaBNQSY++/B57AqThFZNqt7TjqqT0CQ7tPRELgXwRvWA04GDhqBHHWoOrLdsR0p
+214	IN	PTR	road.testing.libreswan.org.
+214	IN	TXT	"X-IPsec-Server(10)=192.1.3.213 " "AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPK" "X3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9w" "fXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH" "1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5"
+214    IN    IPSECKEY  10 0 2 . AQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
 
-254	IN	PTR	nic.uml.freeswan.org.
-
-;
-; $Log: db.3.1.192.in-addr.arpa.,v $
-; Revision 1.9  2003/06/02 05:33:48  mcr
-; 	added .214 for myid-road-04
-;
-; Revision 1.8  2003/06/02 01:20:29  mcr
-; 	added reverse for road for .213
-;
-; Revision 1.7  2003/05/26 22:11:23  mcr
-; 	both TXT/KEY records present.
-;
-; Revision 1.6  2003/05/23 16:04:19  mcr
-; 	versions of file with KEY removed, but TXT added.
-;
-; Revision 1.5  2003/02/27 09:22:52  mcr
-; 	adjusted DNS files to include:
-; 	forward OE for japan.
-; 	delegation for japan -> west (on 3.45)
-; 	self-delegation for east.
-; 	sorted out PTRs for reverse of east/west.
-; 	added 192.1.3.x network for testing.
-;
-; Revision 1.4  2003/02/20 20:53:48  mcr
-; 	added forward/reverse for road.uml.freeswan.org.
-; 	added forward only for KEY record.
-;
-; Revision 1.3  2002/11/12 18:56:52  mcr
-; 	resigned zones, include proper keys.
-;
-; Revision 1.2  2002/10/24 05:36:44  mcr
-; 	updated zone files - the SOA record had "root@freeswan.org"
-; 	rather than "root.freeswan.org"
-;
-; Revision 1.1  2002/10/21 18:05:29  mcr
-; 	signed forward and reverse zones.
-;
-;
-;
-
-
+254	IN	PTR	nic.testing.libreswan.org.

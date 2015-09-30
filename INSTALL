@@ -5,11 +5,12 @@ Specific vendors/distribution build instructions available in packaging/
 
 Build requirements
 ------------------
-bison flex pkgconfig gcc make xmlto gmp-devel nss-devel nspr-devel
+bison flex pkgconfig gcc make xmlto
+gmp-devel nss-devel nspr-devel libevent-devel
 
 for systemd: pkgconfig hostname systemd
 for pam/xauth: pam-devel
-for dnssec support: unbound-devel, ldns-devel
+for dnssec support: unbound-devel
 for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
 for CRL fetching support: openldap-devel curl-devel
@@ -17,14 +18,21 @@ for CRL fetching support: openldap-devel curl-devel
 Building userland
 -----------------
 
-	make programs 
+	make all
 	sudo make install
 
-You can enable/disable features in Makefile.inc
+For a minimal install (no manpages) type:
 
-Optional building alternative KLIPS IPsec stack:
+	make base
+	sudo make install-base
 
-on Linux 2.6 or higher for the running kernel:
+The file Makefile.inc.local can be used to enable/disable features
+configured by mk/config.mk and mk/userland-cflags.mk
+
+Optional building alternative KLIPS IPsec stack
+-----------------------------------------------
+
+On Linux 2.6 or higher for the running kernel:
 
 	make module
 	sudo make module_install
@@ -35,6 +43,13 @@ Build for a kernel different from the running kernel:
 
 Building KLIPS kernel module for the old Linux 2.4 kernel
 
-	make module24 
+	make module24
 	sudo make minstall24
 
+When using KLIPS with OCF:
+
+	make CONFIG_KLIPS_OCF=y MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install
+
+When called in openwrt/packaging/libreswan/Makefile to build kmod-libreswan
+
+	make MODULE_DEFCONFIG=$${LIBRESWANSRCDIR}/packaging/openwrt/defconfig MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/openwrt/config-all.h module

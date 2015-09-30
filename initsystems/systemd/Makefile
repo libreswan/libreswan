@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
+SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
 SYSTEMDFILE=ipsec.service
@@ -19,8 +19,9 @@ programs:     systemdfiles sysconfigfiles
 systemdfiles: $(SYSTEMDFILE)
 sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall postcheck
+install-programs: doinstall postcheck
 
-doinstall: programs installsystemdservice installsysconfig oldinitdcheck 
+doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
@@ -58,16 +59,16 @@ postcheck:
 	fi ; \
 	if test $(shell systemctl is-active ipsec.service) = "disabled" ; then \
 		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
-		echo " systemctl enable ipsec.servce" ; \
+		echo " systemctl enable ipsec.service" ; \
 	fi ; \
 	if test $(shell systemctl is-active ipsec.service) = "active" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently running. You need to restart the service using:" ; \
-		echo " systemctl restart ipsec.servce" ; \
+		echo " systemctl restart ipsec.service" ; \
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

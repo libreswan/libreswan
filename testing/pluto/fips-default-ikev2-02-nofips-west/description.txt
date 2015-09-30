@@ -1,0 +1,7 @@
+pluto RSA test with east in FIPS mode using default IKE parameters and IKEv2
+
+East is in FIPS mode, west makes a default proposal.
+
+This test requires compilation with USE_FIPSCHECK=true
+This test fakes the kernel being in FIPS mode
+This test uses NSS modutil to put NSS explicitely in FIPS mode

@@ -1,0 +1,9 @@
+basic OE test, using road and east triggered by packet using NETKEY on road
+
+This test has policies so that east has road in clear-or-private, and road
+has east in private-or-clear, so one clean OE connection happens even after
+restart.
+
+This test uses ping's redirected to /dev/null and an sed line on the traffic
+status so prevent false positives depending on timing/ping/packetloss during
+acquires.

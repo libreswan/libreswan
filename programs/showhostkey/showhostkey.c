@@ -58,9 +58,9 @@
 
 char usage[] =
 	"Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
-	"                         [--precedence <precedence> ] [--gateway <gateway>] \n"
-	"                         [--dump ] [--list ] \n"
-	"                         [--dhclient ] [--file secretfile ] \n"
+	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
+	"                         [--dump ] [--list ]\n"
+	"                         [--dhclient ] [--file secretfile ]\n"
 	"                         [--keynum count ] [--id identity ]\n"
 	"                         [--rsaid keyid ] [--verbose] [--version]\n";
 
@@ -111,7 +111,7 @@ static void print_key(struct secret *secret,
 			'x', pskbuf, sizeof(pskbuf));
 	}
 
-	while (l) {
+	while (l != NULL) {
 		idtoa(&l->id, idb, IDTOA_BUF);
 
 		switch (pks->kind) {
@@ -132,6 +132,10 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
+		case PPK_NULL:
+			/* can't happen but the compiler does not know that */
+			printf("%d(%d): NULL authentication -- cannot happen: %s\n", lineno, count, idb);
+			abort();
 		}
 
 		l = l->next;
@@ -187,10 +191,9 @@ static struct secret *pick_key(struct secret *host_secrets,
 {
 	struct id id;
 	struct secret *s;
-	err_t e;
+	err_t e = atoid(idname, &id, FALSE, FALSE);
 
-	e = atoid(idname, &id, FALSE, FALSE);
-	if (e) {
+	if (e != NULL) {
 		printf("%s: key '%s' is invalid\n", progname, idname);
 		exit(4);
 	}
@@ -274,8 +277,7 @@ static void show_dnskey(struct secret *s,
 		if (ttoaddr(gateway, strlen(gateway), AF_INET,
 			    &test) == NULL) {
 			gateway_type = 1;
-		} else
-		if (ttoaddr(gateway, strlen(gateway), AF_INET6,
+		} else if (ttoaddr(gateway, strlen(gateway), AF_INET6,
 			    &test) == NULL) {
 			gateway_type = 2;
 		} else {

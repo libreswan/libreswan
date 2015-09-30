@@ -36,6 +36,8 @@
 #include "lswlog.h"
 #include "id.h"
 #include "x509.h"
+#include "nss_copies.h"
+#include <cert.h>
 #include "certs.h"
 
 /*
@@ -76,6 +78,8 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 		id->kind = ID_FROMCERT;
 	} else if (!oe_only && streq("%none", src)) {
 		id->kind = ID_NONE;
+	} else if (!oe_only && streq("%null", src)) {
+		id->kind = ID_NULL;
 	} else if (!oe_only && strchr(src, '=') != NULL) {
 		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 		id->kind = ID_DER_ASN1_DN;
@@ -214,6 +218,9 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 	case ID_NONE:
 		n = snprintf(dst, dstlen, "%s", "(none)");
 		break;
+	case ID_NULL:
+		n = snprintf(dst, dstlen, "%s", "ID_NULL");
+		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
@@ -339,6 +346,7 @@ void unshare_id_content(struct id *id)
 	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
+	case ID_NULL:
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		break;
@@ -359,6 +367,7 @@ void free_id_content(struct id *id)
 	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
+	case ID_NULL:
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		break;
@@ -384,6 +393,7 @@ bool any_id(const struct id *a)
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
 	case ID_KEY_ID:
+	case ID_NULL:
 		return FALSE;
 
 	default:
@@ -404,15 +414,26 @@ bool same_id(const struct id *a, const struct id *b)
 	a = resolve_myid(a);
 	b = resolve_myid(b);
 
-	if (b->kind == ID_NONE || a->kind == ID_NONE)
+	if (b->kind == ID_NONE || a->kind == ID_NONE) {
+		DBG(DBG_PARSING, DBG_log("id type with ID_NONE means wildcard match"));
 		return TRUE; /* it's the wildcard */
+	}
 
-	if (a->kind != b->kind)
+	if (a->kind != b->kind) {
+		DBG(DBG_PARSING, DBG_log("id kind mismatch"));
 		return FALSE;
+	}
 
 	switch (a->kind) {
 	case ID_NONE:
 		return TRUE; /* repeat of above for completeness */
+
+	case ID_NULL:
+		if (a->kind == b->kind) {
+			DBG(DBG_PARSING, DBG_log("ID_NULL: id kind matches"));
+			return TRUE;
+		}
+		return FALSE;
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
@@ -439,6 +460,10 @@ bool same_id(const struct id *a, const struct id *b)
 				(char *)b->name.ptr, al);
 	}
 
+	case ID_FROMCERT:
+		DBG(DBG_CONTROL,
+			DBG_log("same_id() received ID_FROMCERT - unexpected"));
+		/* FALLTHROUGH */
 	case ID_DER_ASN1_DN:
 		return same_dn(a->name, b->name);
 
@@ -458,15 +483,16 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 {
 	bool match;
 
+	*wildcards = 0;
+
 	if (b->kind == ID_NONE) {
 		*wildcards = MAX_WILDCARDS;
 		match = TRUE;
 	} else if (a->kind != b->kind) {
 		match = FALSE;
 	} else if (a->kind == ID_DER_ASN1_DN) {
-		match = match_dn(a->name, b->name, wildcards);
+		match = match_dn_any_order_wild(a->name, b->name, wildcards);
 	} else {
-		*wildcards = 0;
 		match = same_id(a, b);
 	}
 
@@ -515,4 +541,140 @@ void duplicate_id(struct id *dst, const struct id *src)
 	dst->kind = src->kind;
 	dst->ip_addr = src->ip_addr;
 	clonetochunk(dst->name, src->name.ptr, src->name.len, "copy of id");
+}
+
+static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
+{
+	CERTAVA **avas_a;
+	CERTAVA **avas_a_head;
+	CERTAVA *ava_a;
+	CERTAVA **avas_b;
+	CERTAVA *ava_b;
+	SECItem *val_b;
+	int tag_b, tag_a;
+	int matched = 0;
+	int ava_num = 0;
+	bool ret = FALSE;
+
+	if (rdn_a == NULL || rdn_b == NULL)
+		return FALSE;
+
+	avas_a_head = rdn_a->avas;
+	avas_b = rdn_b->avas;
+
+	while ((ava_b = *avas_b++) != NULL) {
+		ava_num++;
+		tag_b = CERT_GetAVATag(ava_b);
+		avas_a = avas_a_head;
+		while ((ava_a = *avas_a++) != NULL) {
+			tag_a = CERT_GetAVATag(ava_a);
+			if (tag_a == tag_b) {
+				val_b = CERT_DecodeAVAValue(&ava_b->value);
+				if (has_wild && val_b != NULL &&
+						val_b->len == 1 &&
+						val_b->data[0] == '*') {
+					*has_wild = TRUE;
+					matched++;
+					SECITEM_FreeItem(val_b, PR_TRUE);
+					break;
+				} else if (NSSCERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+					matched++;
+					if (val_b != NULL)
+						SECITEM_FreeItem(val_b, PR_TRUE);
+					break;
+				}
+			}
+		}
+	}
+
+	if ((matched > 0 && ava_num > 0) && matched == ava_num)
+		ret = TRUE;
+
+	return ret;
+}
+
+/*
+ * match an equal number of RDNs, in any order
+ * if wildcards != NULL, wildcard matches are enabled
+ */
+static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
+{
+	char abuf[ASN1_BUF_LEN];
+	char bbuf[ASN1_BUF_LEN];
+	CERTName *a_name = NULL;
+	CERTName *b_name = NULL;
+	CERTRDN **rdns_a;
+	CERTRDN **rdns_a_head;
+	CERTRDN *rdn_a;
+	CERTRDN **rdns_b;
+	CERTRDN *rdn_b;
+	int rdn_num = 0;
+	int matched = 0;
+
+	dntoa(abuf, ASN1_BUF_LEN, a);
+	dntoa(bbuf, ASN1_BUF_LEN, b);
+
+	DBG(DBG_CONTROL,
+	    DBG_log("%s A: %s, B: %s", __FUNCTION__, abuf, bbuf));
+	a_name = CERT_AsciiToName(abuf);
+	b_name = CERT_AsciiToName(bbuf);
+
+	if (a_name == NULL || b_name == NULL)
+		return FALSE;
+
+	rdns_a_head = a_name->rdns;
+	rdns_b = b_name->rdns;
+
+	while ((rdn_b = *rdns_b++) != NULL) {
+		rdn_num++;
+		rdns_a = rdns_a_head;
+		while ((rdn_a = *rdns_a++) != NULL) {
+			bool has_wild = FALSE;
+			if (match_rdn(rdn_a, rdn_b,
+				      wildcards != NULL ? &has_wild : NULL)) {
+				matched++;
+				if (wildcards != NULL && has_wild)
+					(*wildcards)++;
+				break;
+			}
+		}
+	}
+
+	CERT_DestroyName(a_name);
+	CERT_DestroyName(b_name);
+	DBG(DBG_CONTROL,
+	    DBG_log("%s matched: %d, rdn_num: %d, wc %d",
+		    __FUNCTION__,
+		    matched,
+		    rdn_num,
+		    wildcards ? *wildcards : 0));
+
+	return ((matched > 0 && rdn_num > 0) && matched == rdn_num);
+}
+
+bool same_dn_any_order(chunk_t a, chunk_t b)
+{
+	bool ret = match_dn(a, b, NULL);
+	if (!ret) {
+		DBG(DBG_CONTROL,
+		    DBG_log("%s: not an exact match, now checking any RDN order",
+				 __FUNCTION__));
+		ret = match_dn_unordered(a, b, NULL);
+	}
+
+	return ret;
+}
+
+bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
+{
+	bool ret = match_dn(a, b, wildcards);
+	if (!ret) {
+		DBG(DBG_CONTROL,
+		    DBG_log("%s: not an exact match, now checking any RDN order with %d wildcards",
+				 __FUNCTION__, *wildcards));
+		/* recount wildcards */
+		*wildcards = 0;
+		ret = match_dn_unordered(a, b, wildcards);
+	}
+	return ret;
 }

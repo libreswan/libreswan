@@ -131,7 +131,7 @@ to an IPv4 address is always complete and does not contain leading zeros.</para>
 <para>Use of hexadecimal addresses is
 <emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
-the handful of perverted programs which already print 
+the handful of perverted programs which already print
 network addresses in hexadecimal.</para>
 
 <para>An IPv6 address is specified in text with
@@ -308,7 +308,7 @@ see DIAGNOSTICS.
 The binary-to-text functions return
 <literal>0</literal>
 for a failure, and otherwise
-always return the size of buffer which would 
+always return the size of buffer which would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of
@@ -371,7 +371,7 @@ particularly consistent or particularly useful.</para>
 
 <para>Ignoring leading zeros in dotted-decimal components and bit counts
 is arguably the most useful behavior in this application,
-but it might occasionally cause confusion with the historical use of leading 
+but it might occasionally cause confusion with the historical use of leading
 zeros to denote octal numbers.</para>
 
 <para><emphasis remap='I'>Ttoaddr</emphasis>

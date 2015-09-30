@@ -58,7 +58,14 @@ struct RSA_private_key {
 		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
 		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
 		qInv;				/* (q^-1) mod p */
-	unsigned char ckaid[HMAC_BUFSIZE];	/* ckaid for use in NSS */
+	/*
+	 * ckaid for use in NSS
+	 *
+	 * Value returned by PK11_GetLowLevelKeyIDForCert().
+	 * ??? Bound on size doesn't seem to be documented in NSS.
+	 * Empirically, 64 bytes is sufficient.
+	 */
+	unsigned char ckaid[64];
 	unsigned int ckaid_len;
 };
 
@@ -172,8 +179,5 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
-
-extern const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-							  x509cert_t *cert);
 
 #endif /* _SECRETS_H */

@@ -72,9 +72,9 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 		ip_address lip;
 
 		if (pluto_listen) {
-			err_t e;
-			e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
-			if (e) {
+			err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+
+			if (e != NULL) {
 				DBG_log("invalid listen= option ignored: %s",
 					e);
 				pluto_listen = NULL;
@@ -388,6 +388,6 @@ const struct kernel_ops klips_kernel_ops = {
 	.process_ifaces = klips_process_raw_ifaces,
 	.kern_name = "klips",
 	.overlap_supported = FALSE,
-	.sha2_truncbug_support = FALSE,
+	.sha2_truncbug_support = TRUE,
 };
 #endif /* KLIPS */

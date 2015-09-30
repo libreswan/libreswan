@@ -259,7 +259,7 @@ struct raw_iface *find_raw_ifaces4(void)
 					"realloc of %d in find_raw_ifaces4()",
 					ifconf.ifc_len));
 		}
-		memset(buf, 0x00, num * sizeof(struct ifreq));
+		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 
 		if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)

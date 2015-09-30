@@ -76,9 +76,6 @@
 #define CONFIG_KLIPS_ENC_CRYPTOAPI 1
 #endif
 
-#define CONFIG_KLIPS_ALG_CRYPTOAPI #error
-#define CONFIG_KLIPS_ALG_AES #error
-
 /* requires ocf kernel module - see http://ocf-linux.sf.net */
 #ifndef CONFIG_KLIPS_OCF
 # define CONFIG_KLIPS_OCF 1

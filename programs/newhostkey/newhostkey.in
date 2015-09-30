@@ -5,12 +5,12 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2014 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2014 Tuomo Soini <tis@foobar.fi>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -18,15 +18,15 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me [--output filename] [--random device] [--bits n] \\
+usage="Usage: $me [--output filename] [--seeddev device] [--bits n] \\
     [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] "
 
 bits=
 verbose=
 host=
-random="--random /dev/random"
+seeddev="--seeddev /dev/seeddev"
 output="@FINALCONFDIR@/ipsec.secrets"
-configdir="@FINALCONFDDIR@"
+configdir="@FINALNSSDIR@"
 password=
 for dummy; do
     case "$1" in
@@ -47,13 +47,18 @@ for dummy; do
 	    ;;
 	--verbose)
 	    verbose="--verbose"
- 	    ;;
+	    ;;
 	--version)
 	    echo "$me $IPSEC_VERSION"
 	    exit 0
 	    ;;
 	--random)
-	    random="--random ${2}"
+	    echo "$me warning: --random is obsoleted, using --seeddev"
+	    seeddev="--seeddev ${2}"
+	    shift
+	    ;;
+	--seeddev)
+	    seeddev="--seeddev ${2}"
 	    shift
 	    ;;
 	--configdir)
@@ -97,7 +102,7 @@ if [ ! -d ${configdir} ]; then
     exit 255
 fi
 
-certutil -L -d $configdir >/dev/null 2>/dev/null
+certutil -L -d sql:$configdir >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
     echo "NSS database in $configdir not initialized."
@@ -105,7 +110,7 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${random} --configdir ${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir sql:${configdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -eq 0 ]; then
     umask 077

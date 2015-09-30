@@ -100,7 +100,7 @@
 #endif
 
 #if defined(CONFIG_KLIPS_AH)
-#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
+#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1) || defined(CONFIG_KLIPS_ALG)
 static __u32 zeroes[64];
 #endif
 #endif
@@ -680,6 +680,11 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	switch (ixs->ipsp->ips_said.proto) {
 #ifdef CONFIG_KLIPS_AH
 	case IPPROTO_AH:
+#ifdef CONFIG_KLIPS_ALG
+		if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth)) {
+			ixs->authlen = AHHMAC_HASHLEN;
+		}
+#endif          /* CONFIG_KLIPS_ALG */
 		ixs->headroom += sizeof(struct ahhdr);
 		break;
 #endif          /* CONFIG_KLIPS_AH */
@@ -701,6 +706,10 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 				ixs->blocksize = 16;
 				ixs->headroom += ESP_HEADER_LEN +
 						 16 /* ivsize */;
+				break;
+			case ESP_NULL:
+				ixs->blocksize = 1;
+				ixs->headroom += ESP_HEADER_LEN + 0 /* ivsize */;
 				break;
 			default:
 				if (ixs->stats)
@@ -737,8 +746,7 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 #ifdef CONFIG_KLIPS_ALG
 
 		if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth)) {
-			ixs->tailroom += AHHMAC_HASHLEN;
-			ixs->authlen = AHHMAC_HASHLEN;
+			ixs->authlen = ixs->ixt_a->ixt_a_authlen;
 		} else
 #endif          /* CONFIG_KLIPS_ALG */
 		switch (ixs->ipsp->ips_authalg) {
@@ -1069,6 +1077,10 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 {
 	struct iphdr ipo;
 	struct ahhdr *ahp;
+#ifdef CONFIG_KLIPS_ALG
+	unsigned char *buf;
+	int len = 0;
+#endif
 
 #if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
 	__u8 hash[AH_AMAX];
@@ -1112,6 +1124,35 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 	ipo.check = 0;
 	dmp("ipo", (char*)&ipo, sizeof(ipo));
 
+#ifdef CONFIG_KLIPS_ALG
+	if (ixs->ixt_a) {
+
+		if (ixs->ipsp->ips_authalg != AH_SHA && ixs->ipsp->ips_authalg != AH_MD5) {
+			printk("KLIPS AH doesn't support authalg=%d yet\n",ixs->ipsp->ips_authalg);
+			return IPSEC_XMIT_AH_BADALG;
+		}
+		if ((buf = kmalloc(sizeof(struct iphdr)+ixs->skb->len, GFP_KERNEL)) == NULL)
+			return IPSEC_XMIT_ERRMEMALLOC;
+
+		memcpy(buf, (unsigned char *)&ipo,sizeof(struct iphdr));
+		len = sizeof(struct iphdr);
+		memcpy(buf+len, (unsigned char*)ahp,ixs->headroom - sizeof(ahp->ah_data));
+		len+=(ixs->headroom - sizeof(ahp->ah_data));
+		memcpy(buf+len, (unsigned char *)zeroes, AHHMAC_HASHLEN);
+		len+=AHHMAC_HASHLEN;
+		memcpy(buf+len,  ixs->dat + ixs->iphlen + ixs->headroom, ixs->len - ixs->iphlen - ixs->headroom);
+		len+=(ixs->len - ixs->iphlen - ixs->headroom);
+
+		ipsec_alg_sa_ah_hash(ixs->ipsp,
+				     (caddr_t)buf,
+				     len,
+				     ahp->ah_data,
+				     AHHMAC_HASHLEN);
+
+		if(buf)
+			kfree(buf);
+	} else
+#endif  /* CONFIG_KLIPS_ALG */
 	switch (ixs->ipsp->ips_authalg) {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 	case AH_MD5:
@@ -2129,6 +2170,10 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 					ixs->headroom += ESP_HEADER_LEN +
 							 16 /* ivsize */;
 					break;
+				case ESP_NULL:
+					ixs->blocksize = 16;
+					ixs->headroom += ESP_HEADER_LEN + 0 /* ivsize */;
+					break;
 				default:
 					if (ixs->stats)
 						ixs->stats->tx_errors++;
@@ -2167,7 +2212,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 #endif                  /* CONFIG_KLIPS_OCF */
 #ifdef CONFIG_KLIPS_ALG
 			if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth))
-				ixs->tailroom += AHHMAC_HASHLEN;
+				ixs->tailroom += ixs->ixt_a->ixt_a_authlen;
 			else
 #endif                  /* CONFIG_KLIPS_ALG */
 			switch (ixs->ipsp->ips_authalg) {
@@ -2498,7 +2543,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 		struct sk_buff *tskb;
 
 		tskb = skb_copy_expand(ixs->skb,
-		                       /* The need for 2 * link layer length here remains unexplained...RGB */
+				       /* The need for 2 * link layer length here remains unexplained...RGB */
 				       ixs->max_headroom + 2 * ixs->ll_headroom,
 				       ixs->max_tailroom,
 				       GFP_ATOMIC);
@@ -2734,7 +2779,7 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 				lsw_ip4_hdr(ixs)->daddr,
 				ixs->pass ? 0 : lsw_ip4_hdr(ixs)->saddr,
 				RT_TOS(lsw_ip4_hdr(ixs)->tos),
-	                        /* mcr->rgb: should this be 0 instead? */
+				/* mcr->rgb: should this be 0 instead? */
 				ixs->physdev->ifindex);
 	if (ixs->route)
 		dst = &ipsec_route_dst(ixs->route);
@@ -2852,7 +2897,7 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT, ixs->skb,
 				      NULL,
 				      ixs->route ?
-				        ipsec_route_dst(ixs->route).dev :
+					ipsec_route_dst(ixs->route).dev :
 					skb_dst(ixs->skb)->dev,
 				      ipsec_xmit_send2);
 		}

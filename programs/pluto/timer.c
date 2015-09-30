@@ -6,7 +6,7 @@
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,6 +29,8 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -50,8 +52,50 @@
 #include "ikev1_dpd.h"
 #include "ikev2.h"
 #include "pending.h" /* for flush_pending_by_connection */
+#include "ikev1_xauth.h"
+#include "kernel.h" /* for scan_shunts() */
+#include "kernel_pfkey.h" /* for pfkey_scan_shunts */
 
 #include "nat_traversal.h"
+
+static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
+{
+	struct connection *c = st->st_connection;
+	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
+	u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+
+	/*
+	 * Very carefully calculate capped exponential backoff.
+	 * The test is expressed as a right shift to avoid overflow.
+	 * Even then, we must avoid a right shift of the width of
+	 * the data or more since it is not defined by the C standard.
+	 * Surely a bound of 12 (factor of 2048) is safe and more than enough.
+	 */
+
+	delay_ms = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
+			delay_cap >> x < delay_ms) ?
+		delay_cap : delay_ms << x;
+
+	if (x > 1 && delay_ms == delay_cap)
+	{
+		/* if delay_ms > c->r_timeout no re-transmit */
+		x--;
+		unsigned long delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
+				delay_cap >> x < delay_ms) ?  delay_cap :
+			delay_ms << x;
+		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
+			delay_ms = 0;
+
+	}
+
+	if (delay_ms > 0) {
+		whack_log(RC_RETRANSMISSION,
+				"%s: retransmission; will wait %lums for response",
+				enum_name(&state_names, st->st_state),
+				(unsigned long)delay_ms);
+	}
+	return delay_ms;
+}
 
 /*
  * This file has the event handling routines. Events are
@@ -59,95 +103,6 @@
  * have information like event type, expiration time and a pointer
  * to event specific data (for example, to a state structure).
  */
-
-static struct event *evlist = (struct event *) NULL;
-
-static unsigned int event_retransmit_delay_0 = EVENT_RETRANSMIT_DELAY_0;
-static unsigned int maximum_retransmissions  = MAXIMUM_RETRANSMISSIONS;	/* exponent: must be small */
-unsigned int maximum_retransmissions_initial = MAXIMUM_RETRANSMISSIONS_INITIAL;	/* exponent: must be small */
-static unsigned int maximum_retransmissions_quick_r1 =
-	MAXIMUM_RETRANSMISSIONS_QUICK_R1;
-
-/*
- * This routine places an event in the event list.
- * Delay should really be a deltatime_t but this is easier
- */
-void event_schedule(enum event_type type, time_t delay, struct state *st)
-{
-	struct event *ev = alloc_thing(struct event,
-				"struct event in event_schedule()");
-
-	passert(delay >= 0);
-	ev->ev_type = type;
-	ev->ev_time = monotimesum(mononow(), deltatime(delay));
-	ev->ev_state = st;
-
-	/*
-	 * If the event is associated with a state, put a backpointer to the
-	 * event in the state object, so we can find and delete the event
-	 * if we need to (for example, if we receive a reply).
-	 * (There are actually three classes of event associated
-	 * with a state.)
-	 */
-	if (st != NULL) {
-		switch (type) {
-		case EVENT_DPD:
-		case EVENT_DPD_TIMEOUT:
-			passert(st->st_dpd_event == NULL);
-			st->st_dpd_event = ev;
-			break;
-		case EVENT_v2_LIVENESS:
-			passert(st->st_liveness_event == NULL);
-			st->st_liveness_event = ev;
-			break;
-		default:
-			passert(st->st_event == NULL);
-			st->st_event = ev;
-			break;
-		}
-	}
-
-	DBG(DBG_CONTROL, {
-			if (st == NULL) {
-				DBG_log("inserting event %s, timeout in %lu seconds",
-					enum_show(&timer_event_names, type),
-					(unsigned long)delay);
-			} else {
-				DBG_log("inserting event %s, timeout in %lu seconds for #%lu",
-					enum_show(&timer_event_names, type),
-					(unsigned long)delay,
-					ev->ev_state->st_serialno);
-			}
-		});
-
-	if (evlist == NULL || !monobefore(evlist->ev_time, ev->ev_time)) {
-		DBG(DBG_CONTROLMORE, DBG_log("event added at head of queue"));
-		ev->ev_next = evlist;
-		evlist = ev;
-	} else {
-		struct event *evt;
-
-		for (evt = evlist; evt->ev_next != NULL; evt = evt->ev_next)
-			if (!monobefore(evt->ev_next->ev_time, ev->ev_time))
-				break;
-
-		DBG(DBG_CONTROLMORE, {
-				if (evt->ev_state == NULL) {
-					DBG_log("event added after event %s",
-						enum_show(&timer_event_names,
-							evt->ev_type));
-				} else {
-					DBG_log("event added after event %s for #%lu",
-						enum_show(&timer_event_names,
-							evt->ev_type),
-						evt->ev_state->st_serialno);
-				}
-			});
-
-		ev->ev_next = evt->ev_next;
-		evt->ev_next = ev;
-	}
-}
 
 /* Time to retransmit, or give up.
  *
@@ -168,11 +123,12 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
  */
 static void retransmit_v1_msg(struct state *st)
 {
-	time_t delay = 0;	/* relative time; 0 means NO */
+	unsigned long delay_ms = 0;	/* relative time; 0 means NO */
 	struct connection *c = st->st_connection;
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -180,46 +136,21 @@ static void retransmit_v1_msg(struct state *st)
 			c->name, st->st_serialno, try, try_limit);
 	});
 
-	/* first calculate delay as the value BEFORE backoff */
-	if (st->st_retransmit < maximum_retransmissions) {
-		delay = event_retransmit_delay_0;
-	} else if ((st->st_state == STATE_MAIN_I1 ||
-			st->st_state == STATE_AGGR_I1) &&
-		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial) {
-		delay = event_retransmit_delay_0;
-	} else if (st->st_state == STATE_QUICK_R1 &&
-		st->st_retransmit < maximum_retransmissions_quick_r1) {
-		delay = event_retransmit_delay_0;
-	}
-
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
 			"supressing retransmit because IMPAIR_RETRANSMITS is set");
-		delay = 0;
+		delay_ms = 0;
 		try = 0;
+	} else {
+		delay_ms = c->r_interval;
 	}
 
-	if (delay != 0) {
-		/*
-		 * Very carefully calculate capped exponential backoff.
-		 * The test is expressed as a right shift to avoid overflow.
-		 * Even then, we must avoid a right shift of the width of
-		 * the data or more since it is not defined by the C standard.
-		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
-		 */
-		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+	if (delay_ms != 0)
+		delay_ms =  retrans_delay(st, delay_ms);
 
-		delay = (x > 8 ||
-			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
-			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
-
-		whack_log(RC_RETRANSMISSION,
-			"%s: retransmission; will wait %lus for response",
-			enum_name(&state_names, st->st_state),
-			(unsigned long)delay);
+	if (delay_ms != 0) {
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
-		event_schedule(EVENT_v1_RETRANSMIT, delay, st);
+		event_schedule_ms(EVENT_v1_RETRANSMIT, delay_ms, st);
 	} else {
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
@@ -249,7 +180,7 @@ static void retransmit_v1_msg(struct state *st)
 			st->st_retransmit,
 			enum_show(&state_names, st->st_state),
 			details);
-		if (try != 0 && try != try_limit) {
+		if (try != 0 && try <= try_limit) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -274,11 +205,11 @@ static void retransmit_v1_msg(struct state *st)
 						"%s, but releasing whack",
 						story);
 					release_pending_whacks(st, story);
-				} else {
-					/* no whack: just log to syslog */
+				} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+					/* no whack: just log */
 					libreswan_log("%s", story);
 				}
-			} else {
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				loglog(RC_COMMENT, "%s", story);
 			}
 
@@ -302,7 +233,7 @@ static void retransmit_v1_msg(struct state *st)
 
 static void retransmit_v2_msg(struct state *st)
 {
-	time_t delay = 0;
+	unsigned long delay_ms = 0;  /* relative time; 0 means NO */
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -313,6 +244,7 @@ static void retransmit_v2_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 	try = st->st_try + 1;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -320,47 +252,23 @@ static void retransmit_v2_msg(struct state *st)
 			st->st_serialno, try, try_limit);
 	});
 
-	/* first calculate delay as the value BEFORE backoff */
-	if (st->st_retransmit < maximum_retransmissions) {
-		delay = event_retransmit_delay_0;
-	} else if (st->st_state == STATE_PARENT_I1 &&
-		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial) {
-		delay = event_retransmit_delay_0;
-	} else if ((st->st_state == STATE_PARENT_I2 ||
-			st->st_state == STATE_PARENT_I3) &&
-		st->st_retransmit < maximum_retransmissions_quick_r1) {
-		delay = event_retransmit_delay_0;
-	}
-
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
 			"supressing retransmit because IMPAIR_RETRANSMITS is set");
-		delay = 0;
+		delay_ms = 0;
 		try = 0;
+	} else {
+		delay_ms = c->r_interval;
 	}
 
-	if (delay != 0) {
-		/*
-		 * Very carefully calculate capped exponential backoff.
-		 * The test is expressed as a right shift to avoid overflow.
-		 * Even then, we must avoid a right shift of the width of
-		 * the data or more since it is not defined by the C standard.
-		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
-		 */
-		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+	if (delay_ms != 0) {
+		delay_ms = retrans_delay(st, delay_ms);
 
-		delay = (x > 8 ||
-			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
-			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
-
-		whack_log(RC_RETRANSMISSION,
-			"%s: retransmission; will wait %lus for response",
-			enum_name(&state_names, st->st_state),
-			(unsigned long)delay);
-		send_ike_msg(st, "EVENT_v2_RETRANSMIT");
-		event_schedule(EVENT_v2_RETRANSMIT, delay, st);
-		return;
+		if (delay_ms != 0) {
+			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
+			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
+			return;
+		}
 	}
 
 	/*
@@ -379,13 +287,16 @@ static void retransmit_v2_msg(struct state *st)
 		break;
 	}
 
-	loglog(RC_NORETRANSMISSION,
-		"max number of retransmissions (%d) reached %s%s",
-		st->st_retransmit,
-		enum_show(&state_names, st->st_state),
-		details);
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		/* too spammy for OE */
+		loglog(RC_NORETRANSMISSION,
+			"max number of retransmissions (%d) reached %s%s",
+			st->st_retransmit,
+			enum_show(&state_names, st->st_state),
+			details);
+	}
 
-	if (try != 0 && try != try_limit) {
+	if (try != 0 && try <= try_limit) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
 		 * Since we know that st cannot be in use,
@@ -408,7 +319,7 @@ static void retransmit_v2_msg(struct state *st)
 				loglog(RC_COMMENT, "%s, but releasing whack",
 					story);
 				release_pending_whacks(st, story);
-			} else {
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log to syslog */
 				libreswan_log("%s", story);
 			}
@@ -416,8 +327,7 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if (try % 3 == 0 &&
-			(c->policy & POLICY_IKEV1_DISABLE) == LEMPTY) {
+		if (try % 3 == 0 && (c->policy & POLICY_IKEV1_ALLOW)) {
 			/*
 			 * so, let's retry with IKEv1, alternating every
 			 * three messages
@@ -426,20 +336,21 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
+	}
+
+	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
+		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
+
+		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
+
+		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
+		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
 	}
 
 	delete_state(st);
 	/* note: no md->st to clear */
-}
-
-/*
- * Handle events at head of list, if it is their time.
- */
-void handle_timer_event(void)
-{
-	while (evlist != NULL && !monobefore(mononow(), evlist->ev_time)) {
-		handle_next_timer_event();
-	}
 }
 
 static void liveness_check(struct state *st)
@@ -536,29 +447,62 @@ static void liveness_check(struct state *st)
 		st);
 }
 
-void handle_next_timer_event(void)
+static void ikev2_log_v2_sa_expired (struct state *st, enum event_type type)
 {
-	struct event *ev = evlist;
+	struct connection *c = st->st_connection;
+	deltatime_t last_used_age;
+
+	DBG(DBG_LIFECYCLE, {
+			char story[80] = "";
+			if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+			snprintf(story, sizeof(story),
+					"last used %lds ago < %ld ",
+					(long)deltasecs(last_used_age),
+					(long)deltasecs(c->sa_rekey_margin));
+			}
+			DBG_log("replacing stale %s SA %s",
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+					story);
+			});
+}
+
+static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
+{
+	struct connection *c = st->st_connection;
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	passert(pst != NULL); /* no orphan child allowed */
+
+	/* we observed no traffic, let IPSEC SA and IKE SA expire */
+	DBG(DBG_LIFECYCLE, DBG_log("not replacing unused IPSEC SA #%lu: "
+				"last used %lds ago > %ld "
+				"let it and the parent #%lu expire",
+				st->st_serialno,
+				(long)deltasecs(last_used_age),
+				(long)deltasecs(c->sa_rekey_margin),
+				pst->st_serialno));
+
+	delete_event(pst);
+	event_schedule(EVENT_SA_EXPIRE, 0, pst);
+}
+
+static event_callback_routine timer_event_cb;
+static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
+{
+	struct pluto_event *ev = arg;
 	enum event_type type;
 	struct state *st;
+	char statenum[32];
+	deltatime_t last_used_age;
 
-	passert(ev != NULL);
-
-	evlist = evlist->ev_next;	/* Ok, we'll handle this event */
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	DBG(DBG_CONTROL, {
-		DBG_log("handling event %s",
-			enum_show(&timer_event_names, type));
-		if (evlist != (struct event *) NULL) {
-			DBG_log("event after this is %s in %ld seconds",
-				enum_show(&timer_event_names, evlist->ev_type),
-				(long) deltasecs(monotimediff(evlist->ev_time, mononow())));
-		} else {
-			DBG_log("no more events are scheduled");
-		}
-	});
+	if (st != NULL) {
+		snprintf(statenum, sizeof(statenum), " for state #%lu", st->st_serialno);
+	}
+	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
+				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
+
 
 	passert(GLOBALS_ARE_RESET());
 
@@ -575,9 +519,7 @@ void handle_next_timer_event(void)
 	 */
 	switch (type) {
 	case EVENT_REINIT_SECRET:
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-#endif
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
 	case EVENT_LOG_DAILY:
@@ -585,16 +527,30 @@ void handle_next_timer_event(void)
 		passert(st == NULL);
 		break;
 
+	case EVENT_v1_SEND_XAUTH:
+		passert(st != NULL && st->st_send_xauth_event == ev);
+		DBG_log("event EVENT_v1_SEND_XAUTH #%lu %s", st->st_serialno,
+				enum_name(&state_names, st->st_state));
+		st->st_send_xauth_event = NULL;
+		break;
+
 	case EVENT_v1_RETRANSMIT:
 	case EVENT_v2_RETRANSMIT:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
 	case EVENT_CRYPTO_FAILED:
 		passert(st != NULL && st->st_event == ev);
 		st->st_event = NULL;
+		break;
+
+	case EVENT_v2_RELEASE_WHACK:
+		passert(st != NULL && st->st_rel_whack_event == ev);
+		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
+		st->st_rel_whack_event = NULL;
 		break;
 
 	case EVENT_v2_LIVENESS:
@@ -620,11 +576,15 @@ void handle_next_timer_event(void)
 		init_secret();
 		break;
 
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-		scan_proc_shunts();
+		if (!kernel_ops->policy_lifetime) {
+			/* KLIPS or MAST - scan eroutes */
+			pfkey_scan_shunts();
+		} else {
+			/* eventually obsoleted via policy expire msg from kernel */
+			expire_bare_shunts();
+		}
 		break;
-#endif
 
 	case EVENT_PENDING_DDNS:
 		connection_check_ddns();
@@ -642,8 +602,21 @@ void handle_next_timer_event(void)
 		nat_traversal_ka_event();
 		break;
 
+	case EVENT_v2_RELEASE_WHACK:
+		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock=%d)",
+					enum_show(&timer_event_names, type),
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					st->st_whack_sock));
+		release_pending_whacks(st, "realse whack");
+		break;
+
 	case EVENT_v1_RETRANSMIT:
 		retransmit_v1_msg(st);
+		break;
+
+	case EVENT_v1_SEND_XAUTH:
+		xauth_send_request(st);
 		break;
 
 	case EVENT_v2_RETRANSMIT:
@@ -656,20 +629,32 @@ void handle_next_timer_event(void)
 
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED:
 	{
 		struct connection *c = st->st_connection;
-		so_serial_t newest = IS_IKE_SA(st) ?
-			c->newest_isakmp_sa : c->newest_ipsec_sa;
+		so_serial_t newest;
+
+		if (IS_IKE_SA(st)) {
+			newest = c->newest_isakmp_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa"));
+		} else {
+			newest = c->newest_ipsec_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_ipsec_sa"));
+		}
 
 		if (newest != SOS_NOBODY && newest > st->st_serialno) {
 			/* not very interesting: no need to replace */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log(
+			DBG(DBG_LIFECYCLE, DBG_log(
 					"not replacing stale %s SA: #%lu will do",
 					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
+		} else if ((type == EVENT_v2_SA_REPLACE_IF_USED) &&
+				(get_sa_info(st, TRUE, &last_used_age) &&
+				 deltaless(c->sa_rekey_margin, last_used_age))) {
+			ikev2_expire_parent(st, last_used_age);
+			break;
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
-			!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
 			/*
 			 * we observed no recent use: no need to replace
 			 *
@@ -685,22 +670,13 @@ void handle_next_timer_event(void)
 			 * This is just an optimization: correctness is not
 			 * at stake.
 			 */
-			/* ??? we are abusing the DBG mechanism to control
-			 * normal log output.
-			 */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log(
+			DBG(DBG_LIFECYCLE, DBG_log(
 					"not replacing stale %s SA: inactive for %lds",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
-			/* ??? we are abusing the DBG mechanism to control
-			 * normal log output.
-			 */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log("replacing stale %s SA",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
+			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);
@@ -722,21 +698,28 @@ void handle_next_timer_event(void)
 		if (IS_IKE_SA(st)) {
 			satype = "ISAKMP";
 			latest = c->newest_isakmp_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_isakmp_sa"));
 		} else {
 			satype = "IPsec";
 			latest = c->newest_ipsec_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_ipsec_sa"));
 		}
 
 		if (st->st_serialno < latest) {
 			/* not very interesting: already superseded */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log("%s SA expired (superseded by #%lu)",
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"%s SA expired (superseded by #%lu)",
 					satype, latest));
+		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
+			/* not very interesting: failed IKE attempt */
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"un-established partial ISAKMP SA timeout (%s)",
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
 		} else {
-			libreswan_log("%s %s (%s)", satype,
-				type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-				(c->policy & POLICY_DONT_REKEY) ?
-					"--dontrekey" : "LATEST!");
+				libreswan_log("%s %s (%s)", satype,
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
+					(c->policy & POLICY_DONT_REKEY) ?
+						"--dontrekey" : "LATEST!");
 		}
 	}
 	/* FALLTHROUGH */
@@ -767,7 +750,7 @@ void handle_next_timer_event(void)
 		break;
 
 	case EVENT_CRYPTO_FAILED:
-		DBG(DBG_CONTROL,
+		DBG(DBG_LIFECYCLE,
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
 		delete_state(st);
@@ -782,40 +765,21 @@ void handle_next_timer_event(void)
 	reset_cur_state();
 }
 
-/*
- * Return the time until the next event in the queue
- * expires (positive), or 0 if one has expired, or -1 if no events in queue.
- */
-long next_event(void)
+static void delete_pluto_event(struct pluto_event **evp)
 {
-	monotime_t nw;
+	struct pluto_event *e = *evp;
 
-	if (evlist == (struct event *) NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("no pending events"));
-		return -1;
+	if (e == NULL) {
+		DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
+		return;
 	}
-
-	nw = mononow();
-
-	DBG(DBG_CONTROL, {
-			if (evlist->ev_state == NULL) {
-				DBG_log("next event %s in %ld seconds",
-					enum_show(&timer_event_names,
-						evlist->ev_type),
-					(long)deltasecs(monotimediff(evlist->ev_time, nw)));
-			} else {
-				DBG_log("next event %s in %ld seconds for #%lu",
-					enum_show(&timer_event_names,
-						evlist->ev_type),
-					(long)deltasecs(monotimediff(evlist->ev_time, nw)),
-					evlist->ev_state->st_serialno);
-			}
-		});
-
-	if (monobefore(nw, evlist->ev_time))
-		return deltasecs(monotimediff(evlist->ev_time, nw));
-	else
-		return 0;
+	/* ??? when would e->ev be NULL? */
+	if (e->ev != NULL) {
+		event_free(e->ev);
+		e->ev = NULL;
+	}
+	pfree(e);
+	*evp =  NULL;
 }
 
 /*
@@ -823,56 +787,36 @@ long next_event(void)
  */
 void delete_event(struct state *st)
 {
-	DBG(DBG_CONTROLMORE,
-		DBG_log("deleting event for #%ld", st->st_serialno));
-	if (st->st_event != (struct event *) NULL) {
-		struct event **ev;
-
-		for (ev = &evlist;; ev = &(*ev)->ev_next) {
-			if (*ev == NULL) {
-				DBG(DBG_CONTROL,
-					DBG_log("event %s to be deleted not found",
-						enum_show(&timer_event_names,
-							st->st_event->ev_type)));
-				break;
-			}
-			if ((*ev) == st->st_event) {
-				*ev = (*ev)->ev_next;
-
-				if (st->st_event->ev_type == EVENT_v1_RETRANSMIT)
-					st->st_retransmit = 0;
-				pfree(st->st_event);
-				st->st_event = (struct event *) NULL;
-
-				break;
-			}
-		}
+	/* ??? isn't this a bug?  Should we not passert? */
+	if (st->st_event == NULL) {
+		DBG(DBG_CONTROLMORE,
+				DBG_log("state: #%lu requesting to delete non existing event",
+					st->st_serialno));
+		return;
 	}
+	DBG(DBG_CONTROLMORE,
+			DBG_log("state: #%lu requesting %s to be deleted",
+				st->st_serialno,
+				enum_show(&timer_event_names,
+					st->st_event->ev_type)));
+
+	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT || st->st_event->ev_type == EVENT_v2_RETRANSMIT)
+		st->st_retransmit = 0;
+	delete_pluto_event(&st->st_event);
 }
 
 void delete_liveness_event(struct state *st)
 {
-	if (st->st_liveness_event != NULL) {
-		struct event **ev;
+	DBG(DBG_DPD | DBG_CONTROL,
+			DBG_log("state: #%lu requesting event %s to be deleted",
+				st->st_serialno,
+				(st->st_liveness_event != NULL ?
+				 enum_show(&timer_event_names,
+					 st->st_liveness_event->ev_type) :
+				 "none")));
 
-		DBG(DBG_CONTROL,
-			DBG_log("state %ld deleting liveness event",
-				st->st_serialno));
-
-		for (ev = &evlist;; ev = &(*ev)->ev_next) {
-			if (*ev == NULL) {
-				DBG(DBG_CONTROL,
-					DBG_log("liveness event not found"));
-				break;
-			}
-			if ((*ev) == st->st_liveness_event) {
-				*ev = (*ev)->ev_next;
-				pfree(st->st_liveness_event);
-				st->st_liveness_event = NULL;
-				break;
-			}
-		}
-	}
+	if (st->st_liveness_event != NULL)
+		delete_pluto_event(&st->st_liveness_event);
 }
 
 /*
@@ -881,32 +825,13 @@ void delete_liveness_event(struct state *st)
 void delete_dpd_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-		DBG_log("state: %ld requesting DPD event %s to be deleted",
+		DBG_log("state: %lu requesting DPD event %s to be deleted",
 			st->st_serialno,
 			(st->st_dpd_event != NULL ?
 				enum_show(&timer_event_names,
 					st->st_dpd_event->ev_type) :
 				"none")));
-
-	if (st->st_dpd_event != (struct event *) NULL) {
-		struct event **ev;
-
-		for (ev = &evlist;; ev = &(*ev)->ev_next) {
-			if (*ev == NULL) {
-				DBG(DBG_DPD | DBG_CONTROL,
-					DBG_log("DPD event %s to be deleted not found",
-						enum_show(&timer_event_names,
-							st->st_dpd_event->ev_type)));
-				break;
-			}
-			if ((*ev) == st->st_dpd_event) {
-				*ev = (*ev)->ev_next;
-				pfree(st->st_dpd_event);
-				st->st_dpd_event = (struct event *) NULL;
-				break;
-			}
-		}
-	}
+	delete_pluto_event(&st->st_dpd_event);
 }
 
 /*
@@ -914,10 +839,14 @@ void delete_dpd_event(struct state *st)
  */
 void timer_list(void)
 {
-	monotime_t nw;
-	struct event *ev = evlist;
+#if 0
+/* AA_2015 not yet ported to libevent */
 
-	if (ev == (struct event *) NULL) { /* Just paranoid */
+	monotime_t nw;
+	struct p_event *ev = evlist;
+
+	if (ev == (struct p_event *) NULL) {
+		/* Just paranoid */
 		whack_log(RC_LOG, "no events are queued");
 		return;
 	}
@@ -935,7 +864,7 @@ void timer_list(void)
 			enum_show(&timer_event_names, type),
 			(long)ev->ev_time.mono_secs,
 			(long)deltasecs(monotimediff(ev->ev_time, nw)),
-			st != NULL ? st->st_serialno : 0);
+			st == NULL ? SOS_NOBODY : st->st_serialno);
 
 		if (st != NULL && st->st_connection != NULL)
 			whack_log(RC_LOG, "    connection: \"%s\"",
@@ -943,6 +872,7 @@ void timer_list(void)
 
 		ev = ev->ev_next;
 	}
+#endif
 }
 
 /*
@@ -951,6 +881,7 @@ void timer_list(void)
  * level items, and all command line arguments go away.
  */
 
+#if 0 /* ??? no longer in use */
 static unsigned long envnumber(const char *name,
 			     unsigned long lwb, unsigned long upb,
 			     unsigned long def)
@@ -975,11 +906,112 @@ static unsigned long envnumber(const char *name,
 			name, res));
 	return res;
 }
+#endif
 
-void init_timer(void)
+/*
+ * This routine places an event in the event list.
+ * Delay should really be a deltatime_t but this is easier
+ */
+static void event_schedule_tv(enum event_type type, const struct timeval delay, struct state *st)
 {
-	event_retransmit_delay_0 = envnumber("PLUTO_EVENT_RETRANSMIT_DELAY", 1, secs_per_minute, event_retransmit_delay_0);
-	maximum_retransmissions = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS", 0, 20, maximum_retransmissions);
-	maximum_retransmissions_initial = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL", 0, 20, maximum_retransmissions_initial);
-	maximum_retransmissions_quick_r1 = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1", 0, 20, maximum_retransmissions_quick_r1);
+	const char *en = enum_name(&timer_event_names, type);
+	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
+
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
+		delay.tv_sec));
+
+	/*
+	 * Scheduling a month into the future is most likely a bug.
+	 * pexpect() causes us to flag this in our test cases
+	 * But do allow (unwise) people to set insame > 1m lifetimes
+	 */
+	pexpect(delay.tv_sec < 3600 * 24 * 31);
+
+	ev->ev_type = type;
+
+	/* ??? ev_time lacks required precision */
+	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
+
+	ev->ev_state = st;
+	ev->ev = pluto_event_new(NULL_FD, EV_TIMEOUT, timer_event_cb, ev, &delay);
+
+	/*
+	 * If the event is associated with a state, put a backpointer to the
+	 * event in the state object, so we can find and delete the event
+	 * if we need to (for example, if we receive a reply).
+	 * (There are actually three classes of event associated
+	 * with a state.)
+	 */
+	if (st != NULL) {
+		switch (type) {
+		case EVENT_DPD:
+		case EVENT_DPD_TIMEOUT:
+			passert(st->st_dpd_event == NULL);
+			st->st_dpd_event = ev;
+			break;
+
+		case EVENT_v2_LIVENESS:
+			passert(st->st_liveness_event == NULL);
+			st->st_liveness_event = ev;
+			break;
+
+		case EVENT_RETAIN:
+			/* no new event */
+			break;
+
+		case EVENT_v2_RELEASE_WHACK:
+			passert(st->st_rel_whack_event == NULL);
+			st->st_rel_whack_event = ev;
+			break;
+
+		case  EVENT_v1_SEND_XAUTH:
+			passert(st->st_send_xauth_event == NULL);
+			st->st_send_xauth_event = ev;
+			break;
+
+		default:
+			passert(st->st_event == NULL);
+			st->st_event = ev;
+			break;
+		}
+	}
+
+	DBG(DBG_CONTROL, {
+			if (st == NULL) {
+				DBG_log("inserting event %s, timeout in %lu.%06lu seconds",
+					en,
+					(unsigned long)delay.tv_sec,
+					(unsigned long)delay.tv_usec);
+			} else {
+				DBG_log("inserting event %s, timeout in %lu.%06lu seconds for #%lu",
+					en,
+					(unsigned long)delay.tv_sec,
+					(unsigned long)delay.tv_usec,
+					ev->ev_state->st_serialno);
+			}
+		});
+}
+
+void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct state *st)
+{
+	struct timeval delay;
+
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
+
+	delay.tv_sec =  delay_ms / 1000;
+	delay.tv_usec = (delay_ms % 1000) * 1000;
+	event_schedule_tv(type, delay, st);
+}
+
+void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
+{
+	struct timeval delay;
+
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
+
+	/* unexpectedly far away, pexpect will flag in test cases */
+	pexpect(delay_sec < 3600 * 24 * 31);
+	delay.tv_sec = delay_sec;
+	delay.tv_usec = 0;
+	event_schedule_tv(type, delay, st);
 }

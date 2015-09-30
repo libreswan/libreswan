@@ -1,0 +1,5 @@
+crl: west sends REVOKED cert
+     east sends OK cert
+
+using cacrlvalid.crl
+fail

@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 
-			error_s = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+			error_s = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
 			if (error_s == NULL && u < 0x100)
 				error_s = "values less than 0x100 are reserved";
 			if (error_s != NULL) {

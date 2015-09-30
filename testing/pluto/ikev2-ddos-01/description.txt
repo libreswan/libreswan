@@ -1,0 +1,4 @@
+A test to attempt to get many halfopen SA's. We are actually
+surprisingly good and cleaning up state on east :/
+
+Run this test manually for now

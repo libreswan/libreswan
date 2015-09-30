@@ -52,7 +52,7 @@ extern void set_debugging(lset_t deb);
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
  */
-#define DBG(cond, action)	do { if (DBGP(cond)) { action; } } while (0)
+#define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 
 #define DBG_log libreswan_DBG_log
 #define DBG_dump libreswan_DBG_dump
@@ -155,18 +155,18 @@ enum rc_type {
  * The first argument must be "e", the local variable that captures errno.
  */
 #define log_errno(a) \
-	do { \
+	{ \
 		int e = errno; \
 		libreswan_log_errno_routine a; \
-	} while (0)
+	}
 
 extern void libreswan_log_errno_routine(int e, const char *message,
 					...) PRINTF_LIKE(2);
 #define exit_log_errno(a) \
-	do { \
+	{ \
 		int e = errno; \
 		libreswan_exit_log_errno_routine a; \
-	} while (0)
+	}
 
 extern void libreswan_exit_log_errno_routine(int e, const char *message,
 					     ...) PRINTF_LIKE(2) NEVER_RETURNS;

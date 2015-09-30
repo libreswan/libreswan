@@ -1,0 +1,16 @@
+basic OE test, using road and east triggered by packet using NETKEY
+On road east is in private-or-clear, so IKE will be initiated.
+On east road is in clear-or-private, so it will respond to IKE, but
+east is impaired with --impair-send-no-ikev2-auth causing IKE to fail.
+
+road has in private-or-clear:
+
+   failureshunt=passthrough
+   negotiationshunt=hold
+
+and east has those values in clear-or-private
+
+So when road pings at fist, packets should be hold using negotiationshunt.
+After 1m (default retransmit-timeout), IKE has failed and the failureshunt
+should be installed, meaning pings will flow unencrypted.
+

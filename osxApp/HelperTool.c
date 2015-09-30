@@ -26,13 +26,13 @@ static OSStatus DoConnect(
 						  aslclient                   asl,
 						  aslmsg                      aslMsg
 )
-// Implements the kSampleLowNumberedPortsCommand.  Opens three low-numbered ports 
+// Implements the kSampleLowNumberedPortsCommand.  Opens three low-numbered ports
 // and adds them to the descriptor array in the response dictionary.
 {	
 	OSStatus		retval = noErr;
 	
 	// Pre-conditions
-    
+
 	assert(auth != NULL);
     // userData may be NULL
 	assert(request != NULL);
@@ -58,8 +58,8 @@ static OSStatus DoConnect(
 	
 	err2 = asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, command);
 	
-	CFStringRef	testString = CFStringCreateWithCString(NULL, 
-														command, 
+	CFStringRef	testString = CFStringCreateWithCString(NULL,
+														command,
 														CFStringGetSystemEncoding());
 	
 	if (retval == noErr) {
@@ -79,7 +79,7 @@ static OSStatus DoConnect(
 /*
  IMPORTANT
  ---------
- This array must be exactly parallel to the kCommandSet array 
+ This array must be exactly parallel to the kCommandSet array
  in "Common.c".
  */
 
@@ -93,9 +93,9 @@ int main(int argc, char **argv)
     // Go directly into BetterAuthorizationSampleLib code.
 	
     // IMPORTANT
-    // BASHelperToolMain doesn't clean up after itself, so once it returns 
+    // BASHelperToolMain doesn't clean up after itself, so once it returns
     // we must quit.
-    
+
 	return BASHelperToolMain(kCommandSet, kCommandProcs);
 }
 

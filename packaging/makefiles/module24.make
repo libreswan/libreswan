@@ -6,7 +6,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 export TOPDIR
 
-CONFIG_SHELL=/bin/sh 
+CONFIG_SHELL=/bin/sh
 export CONFIG_SHELL
 
 CONFIG_MODULES=true
@@ -26,8 +26,8 @@ EXTRA_CFLAGS += -DDISABLE_UDP_CHECKSUM
 EXTRA_CFLAGS += $(KLIPSCOMPILE)
 EXTRA_CFLAGS += -Wall -DIPCOMP_PREFIX
 #EXTRA_CFLAGS += -Werror
-#EXTRA_CFLAGS += -Wconversion 
-#EXTRA_CFLAGS += -Wmissing-prototypes 
+#EXTRA_CFLAGS += -Wconversion
+#EXTRA_CFLAGS += -Wmissing-prototypes
 # 'override CFLAGS' should really be 'EXTRA_CFLAGS'
 
 KERNEL_CFLAGS= $(shell $(MAKE) -C $(TOPDIR) --no-print-directory -s -f Makefile ARCH=$(ARCH) MAKEFLAGS= script SCRIPT='@echo $$(CFLAGS)'   )
@@ -39,7 +39,7 @@ EXTRA_CFLAGS += ${KERNEL_CFLAGS}
 EXTRA_CFLAGS += -I${KLIPS_TOP}/include
 EXTRA_CFLAGS += -I${KLIPSSRC}/.
 
-EXTRA_CFLAGS += -I${TOPDIR}/include 
+EXTRA_CFLAGS += -I${TOPDIR}/include
 EXTRA_CFLAGS += -I${LIBZLIBSRCDIR}
 
 version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver

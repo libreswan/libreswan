@@ -1,0 +1,5 @@
+basic OE test, using road and east triggered by packet using NETKEY
+on road east's /32 is in clear while /24 is in private-or-clear.
+on east road's /32 is in clear while /24 is in private-or-clear.
+
+the clear should take precedence and no IKE negotiation should be initiated

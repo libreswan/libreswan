@@ -52,8 +52,8 @@ east:~#
 000 "dns--westnet-eastnet": 192.0.2.0/24===192.1.2.23<east.uml.freeswan.org.>[@east]...192.1.2.45<west.uml.freeswan.org.>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "dns--westnet-eastnet":     myip=unset; hisip=unset;
 000 "dns--westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "dns--westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS; prio: 24,24; interface: eth1; 
-000 "dns--westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "dns--westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS; prio: 24,24; interface: eth1;
+000 "dns--westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000  
 east:~#

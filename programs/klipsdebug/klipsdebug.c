@@ -281,7 +281,7 @@ int main(int argc, char **argv)
 			usage(program_name);
 			exit(1);
 		case 'v':
-			fprintf(stdout, "klipsdebug (Libreswan %s) \n",
+			fprintf(stdout, "klipsdebug (Libreswan %s)\n",
 				ipsec_version_code());
 			fputs(copyright, stdout);
 			exit(0);

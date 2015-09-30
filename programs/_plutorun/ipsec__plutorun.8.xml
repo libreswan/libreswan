@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>_PLUTORUN</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>12 Nov 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec _plutorun</refname>
+<refpurpose>internal script to (re)start pluto on old SYSV initscript systems</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>_plutorun</emphasis>
+is called by
+<emphasis remap='B'>_realsetup</emphasis>
+to configure and bring up
+<emphasis remap='B'>pluto(8).</emphasis>
+It invokes pluto, and watches to makes sure that pluto is restarted if it fails, as
+the SYSV initscripts do not provide a restart facility. When other init systems are
+used, such as systemd or upstart, _plutorun is not used.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec__realsetup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+by Michael Richardson. Original program written by Henry Spencer.
+Updated for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt; by Paul Wouters</para>
+
+</refsect1>
+</refentry>
+

@@ -1,0 +1,15 @@
+basic OE test, using road and east triggered by packet using NETKEY on road
+
+this test is identical to newoe-2 except that it uses NETKEY.
+
+It uses negotiationshunt=pass and failureshunt=pass for private-or-clear
+and packetdefault
+
+This also triggers OE to 7.7.7.7, so that we can test it shows a
+proper %pass during/after IKE failure with opportunistic.
+
+keyingtries=1 in private-or-clear to trigger faster IKE failure
+
+unlike the KLIPS testcase, packetflow for 7.7.7.7 works properly with
+the %pass.
+

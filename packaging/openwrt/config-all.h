@@ -42,8 +42,6 @@
 #endif
 
 #define CONFIG_KLIPS_ENC_CRYPTOAPI 1
-#define CONFIG_KLIPS_ALG_CRYPTOAPI #error
-#define CONFIG_KLIPS_ALG_AES #error
 
 /* Requires OCF support be compiled in */
 #define CONFIG_KLIPS_OCF 1

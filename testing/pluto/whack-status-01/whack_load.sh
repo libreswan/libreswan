@@ -9,6 +9,6 @@ do
         --host "192.139.46.20"  --nexthop "192.139.46.17" --updown "ipsec _updown" --id "@east.uml.freeswan.org"  \
         --to --host "192.139.46.28"  --nexthop "%direct" --updown "ipsec _updown" --id "@west.uml.freeswan.org"  \
         --ipseclifetime "28800" --rekeymargin "540" \
-        --keyingtries "0"    
+        --keyingtries "0"
 done
 

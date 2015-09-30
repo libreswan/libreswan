@@ -5,9 +5,10 @@
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  * Copyright (C) 2003 - 2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 - 2011 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2014 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Greg Ungerer <gerg@uclinux.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -63,9 +64,14 @@
 # define RHEL_RELEASE_VERSION(x, y) 10
 #endif
 
+/* these seem debian/ubuntu specific and do not match fedora/rhel kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,15,10)
 # define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,17)
+# define IP_SELECT_IDENT_NEW
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,13,11)
+# define IP_SELECT_IDENT_NEW
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0)
 # define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,53)
 # define IP_SELECT_IDENT_NEW
@@ -74,6 +80,7 @@
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,3,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,63)
 # define IP_SELECT_IDENT_NEW
 #endif
+
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
 # define SK_FOR_EACH(a,c) sk_for_each(a,c)
@@ -372,6 +379,7 @@
 # define HAVE_NAMESPACES
 #endif
 
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
 # define l_inet_addr_type(a)    inet_addr_type(&init_net, a)
@@ -423,8 +431,8 @@
 						 dst_release((s)->dst); \
 					 (s)->dst = NULL; \
 				 })
-# define skb_dst_set(s, p)       (s)->dst = (p)
-# define skb_dst(s)             (s)->dst
+# define skb_dst_set(s, p)       ((s)->dst = (p))
+# define skb_dst(s)             ((s)->dst)
 #endif
 
 /* The SLES10 kernel is known to not have these defines */
@@ -524,6 +532,20 @@
 # define        HAVE_NETDEV_PRIV
 # define        HAVE_NET_DEVICE_OPS
 # define        HAVE_NETIF_QUEUE
+#endif
+
+#ifdef alloc_netdev
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0)
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,c,d)
+typedef struct ctl_table ctl_table;
+# else
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,d)
+# endif
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+# define memcpy_from_msg(a,b,c)        memcpy_fromiovec(a,(b)->msg_iov,c)
+# define skb_copy_datagram_msg(a,b,c,d) skb_copy_datagram_iovec(a,b,(c)->msg_iov,d)
 #endif
 
 #if !defined(DEFINE_RWLOCK)

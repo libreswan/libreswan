@@ -5,7 +5,7 @@ TESTNAME=west-ah-icmp-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
 
-PRIVATE_ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/08-sunrise-sunset-ah-md5.pcap
 REF_PRIV_OUTPUT=ah1-cleartext.txt

@@ -1,0 +1,2 @@
+like newoe-18-clear-clear but now road has a block for the /24 of east
+and a clear of the /32 of east, so it should pass traffic in the clear

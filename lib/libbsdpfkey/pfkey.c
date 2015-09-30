@@ -54,8 +54,8 @@
 
 unsigned int bsdpfkey_lib_debug = 0;
 libreswan_keying_debug_func_t pfkey_debug_func;
-#define PFKEY_DEBUG if (bsdpfkey_lib_debug) \
-		(*pfkey_debug_func)
+#define PFKEY_DEBUG { if (bsdpfkey_lib_debug) \
+		(*pfkey_debug_func); }
 
 static int findsupportedmap(int);
 static int setsupportedmap(const struct sadb_supported *sup, int properlen);
@@ -491,7 +491,7 @@ int pfkey_send_getspi(
 			return -1;
 		}
 
-		zero(&spirange);
+		zero(&spirange);	/* no pointer fields */
 		spirange.sadb_spirange_len = PFKEY_UNIT64(sizeof(spirange));
 		spirange.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
 		spirange.sadb_spirange_min = min;
@@ -1631,7 +1631,7 @@ u_int32_t spid;
 		free(newmsg);
 		return -1;
 	}
-	zero(&xpl);
+	zero(&xpl);	/* no pointer fields */
 	xpl.sadb_x_policy_len = PFKEY_UNIT64(sizeof(xpl));
 	xpl.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	xpl.sadb_x_policy_id = spid;
@@ -2011,7 +2011,7 @@ pid_t pid;
 		return NULL;
 	}
 
-	zero(p);
+	zero(p);	/* no pointer fields */
 	p->sadb_msg_version = PF_KEY_V2;
 	p->sadb_msg_type = type;
 	p->sadb_msg_errno = 0;
@@ -2042,7 +2042,7 @@ u_int wsize, auth, enc;
 		return NULL;
 	}
 
-	zero(p);
+	zero(p);	/* no pointer fields */
 	p->sadb_sa_len = PFKEY_UNIT64(len);
 	p->sadb_sa_exttype = SADB_EXT_SA;
 	p->sadb_sa_spi = spi;
@@ -2136,7 +2136,7 @@ u_int32_t l_alloc, l_bytes, l_addtime, l_usetime;
 		return NULL;
 	}
 
-	zero(p);
+	zero(p);	/* no pointer fields */
 	p->sadb_lifetime_len = PFKEY_UNIT64(len);
 	p->sadb_lifetime_exttype = type;
 
@@ -2181,7 +2181,7 @@ static caddr_t pfkey_setsadbxsa2(
 		return NULL;
 	}
 
-	zero(p);
+	zero(p);	/* no pointer fields */
 	p->sadb_x_sa2_len = PFKEY_UNIT64(len);
 	p->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	p->sadb_x_sa2_mode = mode;

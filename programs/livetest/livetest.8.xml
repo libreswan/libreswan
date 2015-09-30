@@ -22,7 +22,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>livetest</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>--force </arg></arg>
 </cmdsynopsis>
@@ -32,7 +32,7 @@
 <para>Invoked without argument,
 <emphasis remap='I'>livetest</emphasis>
 attempts to connect to livetest.xelerance.com in multiple secure fashions.
-It first attempts ping, then ikeping on udp port 500, ikeping on udp port 4500, 
+It first attempts ping, then ikeping on udp port 500, ikeping on udp port 4500,
 then configures a connection using a random ID, using a a custom HTTP-based protocol.
 </para>
 </refsect1>

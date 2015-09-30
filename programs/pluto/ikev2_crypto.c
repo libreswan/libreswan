@@ -49,15 +49,16 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "demux.h"
 #include "ikev2.h"
-#include "ikev2_prfplus.h"
+#include "ikev2_prf.h"
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "crypt_symkey.h"
+#include "crypt_dbg.h"
+#include "ikev2_prf.h"
 
-void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
+void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
-	struct v2prf_stuff childsacalc;
-
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -80,17 +81,6 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 
 	passert(ei != NULL);
 	ipi->attrs.transattrs.ei = ei;
-
-	zero(&childsacalc);
-	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
-
-	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(childsacalc.nr, st->st_nr.ptr, st->st_nr.len);
-	childsacalc.spii.len = 0;
-	childsacalc.spir.len = 0;
-
-	childsacalc.counter[0] = 1;
-	childsacalc.skeyseed = st->st_skey_d_nss;
 
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
@@ -149,22 +139,35 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
+	chunk_t ni;
+	chunk_t nr;
+	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
+	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
+	
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher,
+						   st->st_skey_d_nss,
+						   NULL/*dh*/, ni, nr,
+						   ipi->keymat_len * 2);
+	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
+	ikeymat = chunk_from_symkey("initiator keys", ikey);
+	free_any_symkey("ikey:", &ikey);
 
-	v2genbytes(&ikeymat, ipi->keymat_len,
-		   "initiator keys", &childsacalc);
+	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
+						 ipi->keymat_len);
+	rkeymat = chunk_from_symkey("responder keys:", rkey);
+	free_any_symkey("rkey:", &rkey);
 
-	v2genbytes(&rkeymat, ipi->keymat_len,
-		   "responder keys", &childsacalc);
+	free_any_symkey("keymat", &keymat);
 
-	if (role != O_INITIATOR) {
-		DBG(DBG_CRYPT, {
+	if (role != ORIGINAL_INITIATOR) {
+		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
 			    DBG_dump_chunk("peer keymat", rkeymat);
 		    });
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
 	} else {
-		DBG(DBG_CRYPT, {
+		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", rkeymat);
 			    DBG_dump_chunk("peer keymat", ikeymat);
 		    });

@@ -174,7 +174,7 @@ sub D_ENCRYPT
 	&xor(	$L,		$tmp1		);			# 2 9
 	&and(	$tmp2,		"0xfc"		);			# 3 4
 
-	&mov(	$tmp1,		$t		);			# 3 1 
+	&mov(	$tmp1,		$t		);			# 3 1
 	&shr(	$u,		8		);			# 3 6
 	&and(	$tmp1,		"0xfc"		);			# 3 3
 	&shr(	$t,		8		);			# 3 5

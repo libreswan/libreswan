@@ -120,7 +120,7 @@ int sysctl_ipsec_debug_ipcomp = 0;
 int sysctl_ipsec_icmp = 0;
 int sysctl_ipsec_tos = 1; /* hide per default, unless hidetos=no */
 
-#define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
+#define DECREMENT_UNSIGNED(X, amount) (((X) >= (amount)) ? (X) - (amount) : 0)
 
 #ifdef CONFIG_KLIPS_ALG
 extern int ipsec_xform_show(struct seq_file *seq, void *offset);
@@ -454,7 +454,7 @@ int ipsec_version_show(struct seq_file *seq, void *offset)
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
 		    "klips_debug:ipsec_version_show: seq=%p offset=%p\n",
 		    seq, offset);
-	seq_printf(seq, "Openswan version: %s\n", ipsec_version_code());
+	seq_printf(seq, "Libreswan version: %s\n", ipsec_version_code());
 	return 0;
 }
 

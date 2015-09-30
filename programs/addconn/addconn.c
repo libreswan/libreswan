@@ -157,7 +157,12 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 
 		/* Verify it's valid */
 		nlhdr = (struct nlmsghdr *) buf;
-		if (NLMSG_OK(nlhdr, readlen) == 0 ||
+		/*
+		 * CAST TO unsigned short IS TO AVOID netlink.h:NLMSG_OK error
+		 * which triggers a GCC warning in recent GCCs:
+		 * error: comparison between signed and unsigned integer expressions
+		 */
+		if (NLMSG_OK(nlhdr, (unsigned short)readlen) == 0 ||
 			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
@@ -336,7 +341,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
 		nlmsg->nlmsg_flags |= NLM_F_DUMP;
-        }
+	}
 
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
@@ -352,7 +357,12 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
-	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+	/*
+	 * CAST TO unsigned short IS TO AVOID netlink.h:NLMSG_OK error
+	 * which triggers a GCC warning in recent GCCs:
+	 * error: comparison between signed and unsigned integer expressions
+	 */
+	for (; NLMSG_OK(nlmsg,  (unsigned short)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		struct rtmsg *rtmsg;
 		struct rtattr *rtattr;
 		int rtlen;

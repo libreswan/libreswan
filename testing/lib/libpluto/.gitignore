@@ -30,7 +30,6 @@ seam_rnd
 seam_state
 seam_timer
 whackmsgtestlib
-Makefile.depend
 lib-refineconnection/OUTPUT
 parentR1duplicate
 lib-parentR1duplicate/OUTPUT

@@ -11,7 +11,7 @@ ipsec showhostkey --dump
 ipsec showhostkey --dump --verbose
 
 : error to load west.pem is expected
-ipsec showhostkey --file /testing/baseconfigs/west/etc/ipsec.secrets --dump 
+ipsec showhostkey --file /testing/baseconfigs/west/etc/ipsec.secrets --dump
 ipsec showhostkey --file /testing/baseconfigs/west/etc/ipsec.secrets --dump  --verbose
 
 ipsec showhostkey --left

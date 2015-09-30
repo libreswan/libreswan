@@ -50,10 +50,16 @@ char *myid_str[MYID_SPECIFIED + 1];     /* string form of IDs */
 
 const struct id *resolve_myid(const struct id *id)
 {
-	if ((id)->kind == ID_MYID)
+	// char tmpid[IDTOA_BUF];
+
+	// idtoa(id, tmpid, sizeof(tmpid));
+	// loglog(RC_LOG_SERIOUS,"resolve_myid() called for id:%s",tmpid);
+
+	if ((id)->kind == ID_MYID) {
 		return &myids[myid_state];
-	else
+	} else {
 		return id;
+	}
 }
 
 void show_myid_status(void)
@@ -160,8 +166,8 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 {
 	const struct id *id = resolve_myid(&end->id);
 
-	zero(hd);
-	zero(tl);
+	zero(hd);	/* OK: no pointer fields */
+	*tl = empty_chunk;
 	hd->isaiid_idtype = id->kind;
 	switch (id->kind) {
 	case ID_NONE:
@@ -178,6 +184,10 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		tl->len = addrbytesptr(&id->ip_addr, &tl->ptr); /* sets tl->ptr too */
+		break;
+	case ID_NULL:
+		tl->len = 0;
+		tl->ptr = NULL;
 		break;
 	default:
 		bad_case(id->kind);

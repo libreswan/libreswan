@@ -1,11 +1,11 @@
 # FreeS/WAN testing makefile
 # Copyright (C) 2002 Michael Richardson <mcr@freeswan.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -14,7 +14,7 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 export LIBRESWANSRCDIR
 include $(LIBRESWANSRCDIR)/Makefile.inc
-srcdir?=${LIBRESWANSRCDIR}/testing/scripts/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/scripts/
 
 SUBDIRS=
 UTILS=${LIBRESWANSRCDIR}/testing/utils
@@ -24,7 +24,7 @@ def:
 	@false
 
 check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
-	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ${srcdir}setup.sh; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
+	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ${SRCDIR}setup.sh; . ${UTILS}/functions.sh; . ${SRCDIR}TESTLIST
 
 one:
 	export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`
@@ -41,8 +41,3 @@ clean:
 cleanall: clean
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean
-

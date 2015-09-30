@@ -1,0 +1,10 @@
+CC=gcc
+PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include
+USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
+USERLINK=-mcygwin
+OSDEP=cygwin
+
+USE_KLIPS=false
+USE_NETKEY=false
+USE_WIN2K=true
+BUILD_KLIPS=false

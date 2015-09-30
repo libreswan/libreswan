@@ -157,14 +157,14 @@ west #
 000 "westnet-eastnet-6in4":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-6in4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-6in4":   labeled_ipsec:no, loopback:no; 
-000 "westnet-eastnet-6in4":    policy_label:unset; 
+000 "westnet-eastnet-6in4":   labeled_ipsec:no, loopback:no;
+000 "westnet-eastnet-6in4":    policy_label:unset;
 000 "westnet-eastnet-6in4":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-6in4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-6in4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-6in4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-6in4":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-6in4":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
-000 "westnet-eastnet-6in4":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
+000 "westnet-eastnet-6in4":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-6in4":   IKE algorithm newest: AES_CBC_128-SHA1-MODP2048
 000 "westnet-eastnet-6in4":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000  

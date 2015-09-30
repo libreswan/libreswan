@@ -221,6 +221,25 @@ static const struct aead_alg *get_aead_alg(int algid)
 }
 
 /*
+ * xfrm2ip - Take an xfrm and convert to an IP address
+ *
+ * @param xaddr xfrm_address_t
+ * @param addr ip_address IPv[46] Address from addr is copied here.
+ */
+static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
+{
+	if (family == AF_INET) {
+		/* an IPv4 address */
+		addr->u.v4.sin_family = AF_INET;
+		addr->u.v4.sin_addr.s_addr = xaddr->a4;
+	} else {
+		/* Must be IPv6 */
+		memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
+		addr->u.v4.sin_family = AF_INET6;
+	}
+}
+
+/*
  * ip2xfrm - Take an IP address and convert to an xfrm.
  *
  * @param addr ip_address
@@ -235,6 +254,10 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 		memcpy(xaddr->a6, &addr->u.v6.sin6_addr, sizeof(xaddr->a6));
 }
 
+/*
+ * XXX: This code is duplicated in ike_alg_aes.c.  When the latter is
+ * enabled, this should be deleted.
+ */
 
 static struct encrypt_desc algo_aes_ccm_8 =
 {
@@ -246,8 +269,12 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
-	.ivsize =  8,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -263,8 +290,12 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
-	.ivsize =  8,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -280,62 +311,15 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_8 =
-{
-	.common = {
-		.name = "aes_gcm_8",
-		.officname = "aes_gcm_8",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_12 =
-{
-	.common = {
-		.name = "aes_gcm_12",
-		.officname = "aes_gcm_12",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_16 =
-{
-	.common = {
-		.name = "aes_gcm_16",
-		.officname = "aes_gcm_16",
-		.algo_type =  IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
-		.algo_next =  NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 };
 
 /*
@@ -355,21 +339,21 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_A(8) for ESP");
 
 	alg.sadb_alg_ivlen = 12;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_B(12) for ESP");
 
 	alg.sadb_alg_ivlen = 16;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_C(16) for ESP");
 
 	/* keeping aes-ccm behaviour intact as before */
 	alg.sadb_alg_ivlen = 8;
@@ -377,29 +361,26 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_A(8) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_B(12) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
 
-	/* IKE algos (encryption and authentication combined) */
+	/*
+	 * XXX: This code is duplicated in ike_alg_aes.c.  When the
+	 * latter is enabled, this should be deleted.
+	 */
 	if (!ike_alg_register_enc(&algo_aes_ccm_8))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_12))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_16))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for IKE");
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
@@ -473,7 +454,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	size_t len;
 	ssize_t r;
@@ -594,7 +575,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	int error;
 
@@ -624,8 +605,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param that_host ip_address
  * @param that_client ip_subnet
  * @param spi
- * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
- * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
+ * @param sa_proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
+ * @param transport_proto unsigned int Contains protocol
+ *	(6=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
@@ -637,17 +619,18 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_subnet *this_client,
 			const ip_address *that_host,
 			const ip_subnet *that_client,
-			ipsec_spi_t spi,
-			unsigned int proto,
+			ipsec_spi_t cur_spi,	/* current SPI */
+			ipsec_spi_t new_spi,	/* new SPI */
+			int sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
 			deltatime_t use_lifetime UNUSED,
-			unsigned long sa_priority,
+			uint32_t sa_priority,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-			, char *policy_label
+			, const char *policy_label
 #endif
 	)
 {
@@ -657,7 +640,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			struct xfrm_userpolicy_info p;
 			struct xfrm_userpolicy_id id;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	int shift;
 	int dir;
@@ -693,27 +676,40 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	case ET_INT:
 		/* shunt route */
-		switch (ntohl(spi)) {
+		switch (ntohl(new_spi)) {
 		case SPI_PASS:
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
 			policy = IPSEC_POLICY_NONE;
 			break;
+		case SPI_HOLD:
+			/*
+			 * We don't know how to implement %hold, but it is okay
+			 * When we need a hold, the kernel XFRM acquire state
+			 * will do the job (by dropping, not holding the packet)
+			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
+			 * After expiration, the underlying policy causing the original acquire
+			 * will fire again, dropping further packets.
+			 */
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
+			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
-		default:
+		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			break;
 		case SPI_TRAP:
-		case SPI_TRAPSUBNET:
 			if (sadb_op == ERO_ADD_INBOUND ||
 				sadb_op == ERO_DEL_INBOUND)
 				return TRUE;
 
 			break;
-		/* Do we really need %hold under NETKEY? Seems not so we just ignore. */
-		case SPI_HOLD:
-			return TRUE;
+		case SPI_TRAPSUBNET: /* unused in our code */
+		default:
+			bad_case(ntohl(new_spi));
 		}
 		break;
+	default:
+		bad_case(esatype);
 	}
 	if (satype != 0) {
 		DBG(DBG_KERNEL,
@@ -732,7 +728,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * so eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || proto == SA_ESP) {
+	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == SA_ESP) {
 		/*
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
@@ -790,8 +786,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	}
 
-	req.u.p.sel.sport_mask = (req.u.p.sel.sport) ? ~0 : 0;
-	req.u.p.sel.dport_mask = (req.u.p.sel.dport) ? ~0 : 0;
+	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
+	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
 	ip2xfrm(&this_client->addr, &req.u.p.sel.saddr);
 	ip2xfrm(&that_client->addr, &req.u.p.sel.daddr);
 	req.u.p.sel.prefixlen_s = this_client->maskbits;
@@ -834,7 +830,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
 			req.u.p.action = XFRM_POLICY_BLOCK;
-		req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
+		// req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
 		req.u.p.lft.hard_byte_limit = XFRM_INF;
@@ -858,6 +854,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE) {
 		struct rtattr *attr;
+
 		struct xfrm_user_tmpl tmpl[4];
 		int i;
 
@@ -890,51 +887,47 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	{
-		if (policy_label) {
-			struct rtattr *attr;
-			struct xfrm_user_sec_ctx *uctx;
-			attr = (struct rtattr *)
-				((char *)&req + req.n.nlmsg_len);
-			attr->rta_type = XFRMA_SEC_CTX;
-			/* Passing null terminated sec label (strlen + '\0') */
-			DBG_log("passing security label %s (len=%zu +1) to kernel",
-				policy_label, strlen(policy_label));
-			attr->rta_len =
-				RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
-					strlen(policy_label) + 1);
-			uctx = RTA_DATA(attr);
-			uctx->exttype = XFRMA_SEC_CTX;
-			uctx->len = sizeof(struct xfrm_user_sec_ctx) +
-				strlen(policy_label) + 1;
-			uctx->ctx_doi = 1;
-			uctx->ctx_alg = 1;
-			uctx->ctx_len = strlen(policy_label) + 1;
-			memcpy(uctx + 1, policy_label, uctx->ctx_len);
-			req.n.nlmsg_len += attr->rta_len;
-		}
+	if (policy_label != NULL) {
+		size_t len = strlen(policy_label) + 1;
+		struct rtattr *attr = (struct rtattr *)
+			((char *)&req + req.n.nlmsg_len);
+		struct xfrm_user_sec_ctx *uctx;
+
+		passert(len <= MAX_SECCTX_LEN);
+		attr->rta_type = XFRMA_SEC_CTX;
+
+		DBG(DBG_KERNEL,
+			DBG_log("passing security label \"%s\" to kernel",
+				policy_label));
+		attr->rta_len =
+			RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + len);
+		uctx = RTA_DATA(attr);
+		uctx->exttype = XFRMA_SEC_CTX;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + len;
+		uctx->ctx_doi = 1;	/* ??? hardwired and nameless */
+		uctx->ctx_alg = 1;	/* ??? hardwired and nameless */
+		uctx->ctx_len = len;
+		memcpy(uctx + 1, policy_label, len);
+		req.n.nlmsg_len += attr->rta_len;
 	}
 #endif
 
-	enoent_ok = FALSE;
-	if (sadb_op == ERO_DEL_INBOUND)
-		enoent_ok = TRUE;
-	else if (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD)
-		enoent_ok = TRUE;
+	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
 	ok = netlink_policy(&req.n, enoent_ok, text_said);
 	switch (dir) {
 	case XFRM_POLICY_IN:
-		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY)
+		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY) {
 			req.u.id.dir = XFRM_POLICY_FWD;
-		else if (!ok)
+		} else if (!ok) {
 			break;
-		else if (proto_info[0].encapsulation !=
+		} else if (proto_info[0].encapsulation !=
 			ENCAPSULATION_MODE_TUNNEL &&
-			esatype != ET_INT)
+			esatype != ET_INT) {
 			break;
-		else
+		} else {
 			req.u.p.dir = XFRM_POLICY_FWD;
+		}
 		ok &= netlink_policy(&req.n, enoent_ok, text_said);
 		break;
 	}
@@ -954,7 +947,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info p;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct rtattr *attr;
 	const struct aead_alg *aead;
@@ -1033,7 +1026,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
 			IPPROTO_ICMPV6 == sa->transport_proto) {
-
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
 
@@ -1042,11 +1034,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.p.sel.sport = htons(icmp_type);
 			req.p.sel.dport = htons(icmp_code);
-
 		}
 
-		req.p.sel.sport_mask = (req.p.sel.sport) ? ~0 : 0;
-		req.p.sel.dport_mask = (req.p.sel.dport) ? ~0 : 0;
+		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
+		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		ip2xfrm(&src->addr, &req.p.sel.saddr);
 		ip2xfrm(&dst->addr, &req.p.sel.daddr);
 		req.p.sel.prefixlen_s = src->maskbits;
@@ -1058,6 +1049,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
 	req.p.reqid = sa->reqid;
+
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
 	req.p.lft.soft_packet_limit = XFRM_INF;
@@ -1068,11 +1060,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
-	if (sa->authkeylen) {
-		const char *name;
+	if (sa->authkeylen != 0) {
+		const char *name = sparse_name(aalg_list, sa->authalg);
 
-		name = sparse_name(aalg_list, sa->authalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"NETKEY/XFRM: unknown authentication algorithm: %u",
 				sa->authalg);
@@ -1098,6 +1089,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			struct xfrm_algo_auth algo;
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+
 			switch(sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 				algo.alg_trunc_len = 128;
@@ -1105,7 +1097,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
 				algo.alg_trunc_len = 96;
-				/* fixup to the real number, not our private number */
+				/*
+				 * fixup to the real number,
+				 * not our private number
+				 */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 				break;
 
@@ -1124,9 +1119,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			strcpy(algo.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo), sa->authkey,
-				sa->authkeylen);
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->authkey, sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1142,8 +1136,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 				sizeof(algo_old) + sa->authkeylen);
 			strcpy(algo_old.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo_old), sa->authkey,
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
+				sa->authkey,
 				sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
@@ -1153,13 +1147,16 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		}
 	}
 
+	/*
+	 * ??? why does IPCOMP trump aead and ESP?
+	 *  Shouldn't all be bundled?
+	 */
 	aead = get_aead_alg(sa->encalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
-		const char *name;
+		const char *name = sparse_name(calg_list, sa->encalg);
 
-		name = sparse_name(calg_list, sa->encalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown compression algorithm: %u",
 				sa->encalg);
@@ -1176,7 +1173,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-	} else if (aead) {
+	} else if (aead != NULL) {
 		struct xfrm_algo_aead algo;
 
 		strcpy(algo.alg_name, aead->name);
@@ -1194,10 +1191,9 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
 		struct xfrm_algo algo;
-		const char *name;
+		const char *name = sparse_name(ealg_list, sa->encalg);
 
-		name = sparse_name(ealg_list, sa->encalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %u",
 				sa->encalg);
@@ -1232,28 +1228,27 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);	/* ??? why is this not used? */
+		/* ??? why is this not used? */
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
+		size_t len = sa->sec_ctx->ctx.ctx_len;
 		struct xfrm_user_sec_ctx xuctx;
 
-		xuctx.len = sizeof(struct xfrm_user_sec_ctx) +
-			sa->sec_ctx->ctx_len;
+		xuctx.len = sizeof(struct xfrm_user_sec_ctx) + len;
 		xuctx.exttype = XFRMA_SEC_CTX;
-		xuctx.ctx_alg = 1;
-		xuctx.ctx_doi = 1;
-		xuctx.ctx_len = sa->sec_ctx->ctx_len;
+		xuctx.ctx_alg = 1;	/* ??? sa->sec_ctx.ctx_alg? */
+		xuctx.ctx_doi = 1;	/* ??? sa->sec_ctx.ctx_doi? */
+		xuctx.ctx_len = len;
 
 		attr->rta_type = XFRMA_SEC_CTX;
 		attr->rta_len = RTA_LENGTH(xuctx.len);
 
 		memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
-		memcpy((char *)RTA_DATA(
-				attr) + sizeof(xuctx),
-			sa->sec_ctx->sec_ctx_value,
-			sa->sec_ctx->ctx_len);
+		memcpy((char *)RTA_DATA(attr) + sizeof(xuctx),
+			sa->sec_ctx->sec_ctx_value, len);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1263,8 +1258,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	if (!ret && errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
-			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
-		return netlink_add_sa(sa, FALSE);
+			"Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
 }
@@ -1280,7 +1274,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_id id;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
 	zero(&req);
@@ -1358,17 +1352,13 @@ static void netlink_acquire(struct nlmsghdr *n)
 	err_t ugh = NULL;
 
 #ifdef HAVE_LABELED_IPSEC
-	struct rtattr *attr;
-	int remaining;
-	struct xfrm_user_sec_ctx *xuctx = NULL;
-	char sec_context_value[MAX_SECCTX_LEN];
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
-	bool found_sec_ctx = FALSE;
+	struct xfrm_user_sec_ctx_ike uctx_space;
+#endif
 
 	DBG(DBG_KERNEL,
 		DBG_log("xfrm netlink msg len %lu",
 			(unsigned long) n->nlmsg_len));
-#endif
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
 		libreswan_log(
@@ -1377,15 +1367,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 			(unsigned long) sizeof(*acquire));
 		return;
 	}
-
-#ifdef HAVE_LABELED_IPSEC
-	DBG(DBG_KERNEL,
-		DBG_log("xfrm:nlmsghdr= %lu", sizeof(struct nlmsghdr)));
-	DBG(DBG_KERNEL,
-		DBG_log("xfrm:acquire= %lu",
-			sizeof(struct xfrm_user_acquire)));
-	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
-#endif
 
 	/*
 	 * WARNING: netlink only guarantees 32-bit alignment.
@@ -1411,85 +1392,92 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	attr = (struct rtattr *)
+
+	/* Run through rtattributes looking for XFRMA_SEC_CTX */
+
+	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
-
-	DBG(DBG_KERNEL, DBG_log("rtattr len= %d", attr->rta_len));
-
-	if (attr->rta_type == XFRMA_TMPL) {
-		DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_TMPL"));
-	} else {
-		DBG(DBG_KERNEL, DBG_log("xfrm: not found XFRMA_TMPL"));
-		if (attr->rta_type == XFRMA_SEC_CTX) {
-			DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_SEC_CTX"));
-			found_sec_ctx = TRUE;
-		}
-	}
-
-	if (!found_sec_ctx) {
-		DBG(DBG_KERNEL,
-			DBG_log("xfrm: did not found XFRMA_SEC_CTX, trying next one"));
-		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
-
-		remaining = n->nlmsg_len -
+	size_t remaining = n->nlmsg_len -
 			NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
-		attr = RTA_NEXT(attr, remaining);
 
+	while (remaining > 0) {
 		DBG(DBG_KERNEL,
-			DBG_log("xfrm: remaining=%d , rta->len = %d",
-				remaining, attr->rta_len));
-		if (attr->rta_type == XFRMA_SEC_CTX) {
+			DBG_log("xfrm acquire rtattribute type %u", attr->rta_type));
+		switch (attr->rta_type) {
+		case XFRMA_TMPL:
+		case XFRMA_POLICY_TYPE:
+			/* discard */
+			break;
+		case XFRMA_SEC_CTX:
+		{
+			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
+			/* length of text of label */
+			size_t len = xuctx->ctx_len;
+
 			DBG(DBG_KERNEL,
-				DBG_log("xfrm: found XFRMA_SEC_CTX now"));
-			found_sec_ctx = TRUE;
-		} else {
-			if (attr->rta_type == XFRMA_POLICY_TYPE) {
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: found XFRMA_POLICY_TYPE"));
-			} else {
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: not found anything, seems wierd"));
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: not found sec ctx still, perhaps not a labeled ipsec connection"));
+				DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
+					xuctx->exttype, xuctx->len,
+					xuctx->ctx_doi, xuctx->ctx_alg,
+					len));
+
+			if (uctx != NULL) {
+				libreswan_log("Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
+				return;				
 			}
-		}
-	}
 
-	if (found_sec_ctx) {
-		xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
-		DBG(DBG_KERNEL,
-			DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d",
-				xuctx->exttype, xuctx->len,
-				xuctx->ctx_doi, xuctx->ctx_alg,
-				xuctx->ctx_len));
+			if (len > MAX_SECCTX_LEN) {
+				libreswan_log("Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
+					len);
+				return;
+			}
 
-		if (xuctx->ctx_len <= MAX_SECCTX_LEN) {
-			memcpy(sec_context_value, (xuctx + 1), xuctx->ctx_len);
-
+			/*
+			 * note: xuctx + 1 is tricky:
+			 * first byte after header
+			 */
 			DBG(DBG_KERNEL,
-				DBG_log("xfrm: xuctx security context value: %s",
-					sec_context_value));
+				DBG_log("xfrm: xuctx security context value: %.*s",
+					xuctx->ctx_len,
+					(const char *) (xuctx + 1)));
 
-			uctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
-					"struct xfrm_user_sec_ctx_ike");
-			uctx->len = xuctx->len;
-			uctx->exttype = xuctx->exttype;
-			uctx->ctx_alg = xuctx->ctx_alg;
-			uctx->ctx_doi = xuctx->ctx_doi;
-			uctx->ctx_len = xuctx->ctx_len;	/*Length includes '\0'*/
+			zero(&uctx_space);
+			uctx = &uctx_space;
 
 			memcpy(uctx->sec_ctx_value, (xuctx + 1),
 				xuctx->ctx_len);
-		} else {
-			DBG(DBG_KERNEL,
-				DBG_log("(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
-					xuctx->ctx_len));
-			DBG(DBG_KERNEL, DBG_log("ignoring ACQUIRE messages"));
-			goto ignore_acquire;
-		}
-	}
 
+			if (len == 0 || uctx->sec_ctx_value[len-1] != '\0') {
+				if (len == MAX_SECCTX_LEN) {
+					libreswan_log("Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
+					return;
+				}
+				libreswan_log("Sec Ctx label missing final NUL; we're adding it");
+				uctx->sec_ctx_value[len] = '\0';
+				len++;
+			}
+
+			if (strlen(uctx->sec_ctx_value) + 1 != len) {
+				libreswan_log("Sec Ctx label contains embedded NUL; ignoring Acquire message");
+				return;
+			}
+
+			uctx->ctx.ctx_alg = xuctx->ctx_alg;
+			uctx->ctx.ctx_doi = xuctx->ctx_doi;
+			/* Length includes '\0'*/
+			uctx->ctx.ctx_len = len;
+
+			break;
+		}
+		default:
+			DBG(DBG_KERNEL,
+				DBG_log("ignoring unkndown xfrm acquire payload type %u",
+					attr->rta_type));
+			break;
+		}
+		/* updates remaining too */
+		attr = RTA_NEXT(attr, remaining);
+	}
 #endif
 
 	src_proto = dst_proto = acquire->sel.proto;
@@ -1499,24 +1487,18 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 *     that they aren't v4 to v6 or something goofy
 	 */
 	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-	    NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-	    NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
-	    NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
-	    NULL == (ugh = src_proto == dst_proto ?
+		NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
+		NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
+		NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+		NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
-	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
-	    NULL == (ugh = addrtosubnet(&dst, &his)))
+		NULL == (ugh = addrtosubnet(&src, &ours)) &&
+		NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
 #endif
 						"%acquire-netlink");
-
-#ifdef HAVE_LABELED_IPSEC
-	pfreeany(uctx);
-
-ignore_acquire:
-#endif
 
 	if (ugh != NULL)
 		libreswan_log(
@@ -1526,32 +1508,37 @@ ignore_acquire:
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 {
-	const xfrm_address_t *srcx, *dstx;
+	const xfrm_address_t *srcx = &pol->sel.saddr;
+	const xfrm_address_t *dstx = &pol->sel.daddr;
+	unsigned family = pol->sel.family;
+	unsigned transport_proto = pol->sel.proto;
 	ip_address src, dst;
-	unsigned family;
-	unsigned transport_proto;
-	err_t ugh = NULL;
+	err_t ugh;
 
-	srcx = &pol->sel.saddr;
-	dstx = &pol->sel.daddr;
-	family = pol->sel.family;
-	transport_proto = pol->sel.proto;
-
-	if ((ugh = xfrm_to_ip_address(family, srcx, &src)) ||
-		(ugh = xfrm_to_ip_address(family, dstx, &dst))) {
+	ugh = xfrm_to_ip_address(family, srcx, &src);
+	if (ugh == NULL)
+		ugh = xfrm_to_ip_address(family, dstx, &dst);
+	if (ugh != NULL) {
 		libreswan_log(
 			"XFRM_MSG_POLEXPIRE message from kernel malformed: %s",
 			ugh);
 		return;
 	}
 
-	replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
-			transport_proto, "delete expired bare shunt");
+	if (delete_bare_shunt(&src, &dst,
+			transport_proto, SPI_HOLD /* why spi to use? */,
+			"delete expired bare shunt"))
+	{
+		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called delete_bare_shunt() with success"));
+	} else {
+		libreswan_log("netlink_shunt_expire() called delete_bare_shunt() which failed!");
+	}
 }
 
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
 	struct xfrm_user_polexpire *upe;
+	ip_address src, dst;
 
 	struct {
 		struct nlmsghdr n;
@@ -1560,7 +1547,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_info pol;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
@@ -1572,6 +1559,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 
 	upe = NLMSG_DATA(n);
+	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
+	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
+	DBG( DBG_KERNEL, {
+			ipstr_buf a;
+			ipstr_buf b;
+			DBG_log("%s src %s/%u dst %s/%u dir %d index %d",
+					__func__,
+					ipstr(&src, &a), upe->pol.sel.prefixlen_s,
+					ipstr(&dst, &b), upe->pol.sel.prefixlen_d,
+					upe->pol.dir, upe->pol.index);
+			});
+
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1579,6 +1578,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
+	/* ??? would next call ever succeed AA_2015 MAY */
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
 				"Get policy", "?")) {
 		return;
@@ -1612,19 +1612,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 }
 
+/* returns FALSE iff EAGAIN */
 static bool netlink_get(void)
 {
 	struct {
 		struct nlmsghdr n;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	ssize_t r;
 	struct sockaddr_nl addr;
-	socklen_t alen;
-
-	alen = sizeof(addr);
-	r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
+	socklen_t alen = sizeof(addr);
+	ssize_t r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
 		(struct sockaddr *)&addr, &alen);
+
 	if (r < 0) {
 		if (errno == EAGAIN)
 			return FALSE;
@@ -1632,7 +1631,7 @@ static bool netlink_get(void)
 		if (errno != EINTR)
 			log_errno((e, "recvfrom() failed in netlink_get"));
 		return TRUE;
-	} else if ((size_t) r < sizeof(rsp.n)) {
+	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(
 			"netlink_get read truncated message: %ld bytes; ignore message",
 			(long) r);
@@ -1645,7 +1644,7 @@ static bool netlink_get(void)
 						rsp.n.nlmsg_type),
 				addr.nl_pid));
 		return TRUE;
-	} else if ((size_t) r != rsp.n.nlmsg_len) {
+	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		libreswan_log(
 			"netlink_get read message with length %ld that doesn't equal nlmsg_len %lu bytes; ignore message",
 			(long) r,
@@ -1674,8 +1673,7 @@ static bool netlink_get(void)
 
 static void netlink_process_msg(void)
 {
-	while (netlink_get())
-		;
+	do {} while (netlink_get());
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
@@ -1697,9 +1695,8 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 			struct nlmsgerr e;
 			struct xfrm_usersa_info sa;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1716,21 +1713,27 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWSA;
 
-retry:
-	req.spi.min = get_cpi_bug ? htonl(min) : min;
-	req.spi.max = get_cpi_bug ? htonl(max) : max;
-
+	req.spi.min = min;
+	req.spi.max = max;
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
 				text_said)) {
 		return 0;
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP &&
-			!get_cpi_bug) {
-			get_cpi_bug = TRUE;
-			libreswan_log("netlink_get_spi: Enabling workaround for kernel CPI allocation bug");
-			goto retry;
-		}
+	}
 
+	if (rsp.n.nlmsg_type == NLMSG_ERROR &&
+		rsp.u.e.error == -EINVAL &&
+		proto == IPPROTO_COMP) {
+		libreswan_log("netlink_get_spi: trying workaround for kernel CPI allocation bug");
+
+		req.spi.min = htonl(min);
+		req.spi.max = htonl(max);
+		if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
+					text_said)) {
+			return 0;
+		}
+	}
+
+	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 			"ERROR: netlink_get_spi for %s failed with errno %d: %s",
 			text_said, -rsp.u.e.error, strerror(-rsp.u.e.error));
@@ -1757,6 +1760,7 @@ retry:
 static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 			unsigned op, const char *opname)
 {
+	struct connection *c = st->st_connection;
 	unsigned int inner_proto;
 	enum eroute_type inner_esatype;
 	ipsec_spi_t inner_spi;
@@ -1817,8 +1821,8 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	/* check for no transform at all */
-	passert(!(!st->st_ipcomp.present && !st->st_esp.present &&
-			!st->st_ah.present));
+	passert(st->st_ipcomp.present || st->st_esp.present ||
+			st->st_ah.present);
 
 	if (tunnel) {
 		int j;
@@ -1833,9 +1837,9 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 
-	return eroute_connection(sr, inner_spi, inner_proto,
+	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				op, opname
+				c->sa_priority, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				, st->st_connection->policy_label
 #endif
@@ -1852,10 +1856,8 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 	deltatime_t idle_time;
 
 	passert(st != NULL);
-	if (!get_sa_info(st, TRUE, &idle_time))
-		return TRUE;
-	else
-		return !deltaless(idle_time, idle_max);
+	return !get_sa_info(st, TRUE, &idle_time) ||
+		!deltaless(idle_time, idle_max);
 }
 
 static bool netlink_shunt_eroute(struct connection *c,
@@ -1919,7 +1921,10 @@ static bool netlink_shunt_eroute(struct connection *c,
 			eclipse_count--;
 			break;
 		case ERO_DELETE:
-			/* delete unnecessary: we don't actually have an eroute */
+			/*
+			 * delete unnecessary:
+			 * we don't actually have an eroute
+			 */
 			eclipse_count--;
 			return TRUE;
 
@@ -1949,6 +1954,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 		if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
 					&sr->that.host_addr,
 					&sr->that.client,
+					htonl(spi),
 					htonl(spi),
 					c->encapsulation ==
 						ENCAPSULATION_MODE_TRANSPORT ?
@@ -1983,6 +1989,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					&sr->that.client,
 					&sr->this.host_addr,
 					&sr->this.client,
+					htonl(spi),
 					htonl(spi),
 					c->encapsulation ==
 					ENCAPSULATION_MODE_TRANSPORT ?
@@ -2025,7 +2032,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		struct raw_iface fake_v;
+		struct raw_iface fake_v;	/* v might point here */
 		bool after = FALSE;	/* has vfp passed ifp on the list? */
 		bool bad = FALSE;
 		struct raw_iface *vfp;
@@ -2098,8 +2105,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
 			if (kern_interface == NO_KERNEL) {
-				/* kludge for testing: invent a virtual device */
+				/*
+				 * kludge for testing:
+				 * invent a virtual device
+				 */
 				static const char fvp[] = "virtual";
+
 				fake_v = *ifp;
 				passert(sizeof(fake_v.name) > sizeof(fvp));
 				strcpy(fake_v.name, fvp);
@@ -2149,7 +2160,10 @@ add_entry:
 
 				/* search is over if at end of list */
 				if (q == NULL) {
-					/* matches nothing -- create a new entry */
+					/*
+					 * matches nothing --
+					 * create a new entry
+					 */
 					ipstr_buf b;
 					int fd = create_socket(ifp, v->name,
 							pluto_port);
@@ -2210,7 +2224,7 @@ add_entry:
 
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_nat_port),
-							  &q->ip_addr);
+							&q->ip_addr);
 						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
@@ -2266,7 +2280,8 @@ add_entry:
 	}
 }
 
-/* netlink_get_sa - Get SA information from the kernel
+/*
+ * netlink_get_sa - Get SA information from the kernel
  *
  * @param sa Kernel SA to be queried
  * @return bool True if successful
@@ -2282,7 +2297,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info info;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	zero(&req);
@@ -2335,9 +2350,9 @@ static bool netkey_do_command(struct connection *c, struct spd_route *sr,
 					&sr->this.host_addr) ? hs : cs;
 	}
 
-	if (fmt_common_shell_out(common_shell_out_str,
-					sizeof(common_shell_out_str), c, sr,
-					st) == -1) {
+	if (-1 == fmt_common_shell_out(common_shell_out_str,
+					sizeof(common_shell_out_str),
+					c, sr, st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			verb_suffix);
 		return FALSE;
@@ -2387,7 +2402,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	 * We should implement netlink_remove_orphaned_holds
 	 * if netlink  specific changes are needed.
 	 */
-	.remove_orphaned_holds = pfkey_remove_orphaned_holds,
+	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };

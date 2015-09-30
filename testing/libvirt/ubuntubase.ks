@@ -10,13 +10,13 @@ url --url http://ftp.ubuntu.com/ubuntu/
 user --disabled
 timezone --utc America/New_York
 rootpw swan1234
-bootloader --location=mbr 
+bootloader --location=mbr
 zerombr
 clearpart --all --initlabel
 part / --fstype ext4 --size 7000 --asprimary
 part swap --size 1024
 #network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
-network --bootproto=dhcp --hostname swanbase 
+network --bootproto=dhcp --hostname swanbase
 auth  --useshadow  --enablemd5
 firewall --disabled --ssh
 skipx
@@ -30,7 +30,7 @@ skipx
 ip link set eth0 mtu 1400
 %end
 
-%post 
+%post
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 #/sbin/restorecon /etc/resolv.conf
 # Paul needs this due to broken isp
@@ -56,7 +56,7 @@ swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
 EOD
 
 
-cat << EOD > /etc/rc.local 
+cat << EOD > /etc/rc.local
 #!/bin/sh
 mount /testing
 mount /source

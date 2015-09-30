@@ -8,7 +8,7 @@ ping -q -c 4 -n 192.1.2.23
 ipsec eroute
 # "Time to shut down my computer!"...
 ipsec whack --shutdown
-# ...but unless the delete SA is acknowledged, this ping will fail, 
+# ...but unless the delete SA is acknowledged, this ping will fail,
 # as our peer still routed us
 sleep 5
 ping -q -c 4 -n 192.1.2.23

@@ -520,7 +520,7 @@ enum ipsec_xmit_value ipsec_tunnel_strip_hard_header(
 			printk("%c%02x", c, ixs->skb->data[i]);
 			c = ':';
 		}
-		printk(" \n");
+		printk("\n");
 	}
 
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
@@ -1726,8 +1726,6 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	if (!ctx)
 		goto error;
 
-	spin_lock_irqsave(&ipsec_tunnel_udp_encap_lock, flags);
-
 	/* setup the context */
 	ctx->magic           = IPSEC_TUNNEL_UDP_ENCAP_MAGIC;
 	ctx->sk              = sk;
@@ -1741,6 +1739,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	udp_encap_enable();
 #endif
 
+	spin_lock_irqsave(&ipsec_tunnel_udp_encap_lock, flags);
 	/* add the tunnel to our list so we can check on it later */
 	list_add(&ctx->link, &ipsec_tunnel_udp_encap_list);
 
@@ -2007,7 +2006,7 @@ int ipsec_tunnel_init(struct net_device *dev)
 		    (unsigned long) sizeof(struct ipsecpriv),
 		    dev->name ? dev->name : "NULL");
 
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 	dev->destructor         = free_netdev;
 #endif
 
@@ -2076,7 +2075,7 @@ int ipsec_tunnel_probe(struct net_device *dev)
 	return 0;
 }
 
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 static void ipsec_tunnel_netdev_setup(struct net_device *dev)
 {
 }
@@ -2109,8 +2108,8 @@ int ipsec_tunnel_createnum(int ifnum)
 
 	sprintf(name, IPSEC_DEV_FORMAT, ifnum);
 #ifdef alloc_netdev
-	dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), name,
-				 ipsec_tunnel_netdev_setup);
+	dev_ipsec = ipsec_alloc_netdev(sizeof(struct ipsecpriv), name,
+				 NET_NAME_UNKNOWN, ipsec_tunnel_netdev_setup);
 #else
 	dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device),
 						GFP_KERNEL);
@@ -2121,13 +2120,13 @@ int ipsec_tunnel_createnum(int ifnum)
 		       name);
 		return -ENOMEM;
 	}
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
 	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif
-#endif  /* alloc_netdev */
+#endif  /* ipsec_alloc_netdev */
 #ifndef USE_NETDEV_OPS
 	dev_ipsec->init = &ipsec_tunnel_probe;
 #else
@@ -2196,10 +2195,10 @@ int ipsec_tunnel_deletenum(int vifnum)
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;
-#endif  /* alloc_netdev */
+#endif  /* ipsec_alloc_netdev */
 
 	return 0;
 }
@@ -2239,10 +2238,10 @@ int ipsec_tunnel_cleanup_devices(void)
 			    dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
 		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv = NULL;
-#endif          /* alloc_netdev */
+#endif          /* ipsec_alloc_netdev */
 	}
 
 #ifdef HAVE_UDP_ENCAP_CONVERT

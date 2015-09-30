@@ -42,8 +42,9 @@ void get_cookie(bool initiator, u_int8_t *cookie, int length,
 	do {
 		if (initiator) {
 			get_rnd_bytes(cookie, length);
-		} else { /* Responder cookie */
-			 /* This looks as good as any way */
+		} else {
+			/* Responder cookie */
+			/* This looks as good as any way */
 			size_t addr_length;
 			static u_int32_t counter = 0;
 			unsigned char addr_buff[

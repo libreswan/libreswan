@@ -17,14 +17,14 @@ case "$1" in
 		# Load the module
 #		depmod -a
 #		modprobe ipsec
-		insmod -m ipsec >/lib/modules/loadmaps/ipsec.map 
+		insmod -m ipsec >/lib/modules/loadmaps/ipsec.map
 		klogd -i -p
 #		;;
 #	attach)
 		ipsec klipsdebug --all
 		# Attach and configure the interface
 		ipsec tncfg --attach --virtual $ipsecdev --physical eth0
-		ifconfig $ipsecdev $sg1 
+		ifconfig $ipsecdev $sg1
 		;;
 #	detach)
 #		ipsec tncfg --clear

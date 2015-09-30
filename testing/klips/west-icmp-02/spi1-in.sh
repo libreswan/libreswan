@@ -11,12 +11,12 @@ ipsec eroute --clear
 enckey1=0x43434545464649494a4a4c4c4f4f51515252545457575840
 authkey1=0x65876587658765876587658765876587
 
-# set up for outer key only, as inner stuff will just emerge 
+# set up for outer key only, as inner stuff will just emerge
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey1 --authkey $authkey1
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
 
-ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
+ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
 
 # we record second key here, but we will use it in the tcpdump.
 enckey2=0x434545464649494a4a4c4c4f4f5151525254545757584043

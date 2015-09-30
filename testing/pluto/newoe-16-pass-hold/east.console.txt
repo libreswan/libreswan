@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ # temp workaround for outgoing packet matching packetdefault instead of private-or-clear
+east #
+ ipsec auto --delete packetdefault
+002 "packetdefault": deleting connection
+east #
+ ipsec whack --debug-all --impair-send-no-ikev2-auth
+east #
+ echo "initdone"
+initdone
+east #
+ # should not show any hits
+east #
+ grep "negotiated tunnel" /tmp/pluto.log
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

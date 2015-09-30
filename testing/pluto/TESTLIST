@@ -22,6 +22,10 @@ kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
 kvmplutotest	basic-pluto-07	good
 
+kvmplutotest	netkey-audit-01	good
+
+kvmplutotest	ikev1-01-fuzzer	good
+
 #################################################################
 # IKEv2 tests
 #################################################################
@@ -37,6 +41,7 @@ kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
 kvmplutotest	ikev2-delete-03-valgrind		bad
+kvmplutotest	ikev2-delete-04				wip
 
 
 kvmplutotest	ikev2-09-rw-rsa				good
@@ -47,14 +52,22 @@ kvmplutotest	ikev2-12-transport-psk			good
 kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
-kvmplutotest	ikev2-17-rekey				good
+kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
+kvmplutotest	ikev2-41-rw-replace			good
+kvmplutotest	ikev2-42-rw-replace-responder		good
+kvmplutotest	ikev2-45-impair-gx-01			good
+kvmplutotest	ikev2-45-impair-gx-02			good
+kvmplutotest	ikev2-46-basic-psk-netkey		good
+kvmplutotest	ikev2-47-priority			wip
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
-kvmplutotest	ikev2-29-no-rekey			wip
+kvmplutotest	ikev2-29-no-rekey			good
+kvmplutotest	ikev2-ddns-01				good
+kvmplutotest	ikev2-ddns-02				good
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
 
@@ -64,6 +77,7 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 kvmplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
+kvmplutotest	ikev2-10-2behind-nat	wip
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
@@ -92,6 +106,9 @@ kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
+# interop tests for KLIPS-NETKEY with SHA2
+kvmplutotest	ikev1-algo-esp-sha2-01			good
+kvmplutotest	ikev1-algo-esp-sha2-02			good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
@@ -103,6 +120,8 @@ kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
+kvmplutotest	ikev1-impair-gx-01			good
+kvmplutotest	ikev1-impair-gx-02			good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -111,7 +130,7 @@ kvmplutotest	ikev2-minor-version-initiator		good
 kvmplutotest	ikev2-minor-version-responder		good
 kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
-kvmplutotest	ikev2-payload-reserved-flags-01		wip
+kvmplutotest	ikev2-payload-reserved-flags-01		good
 kvmplutotest	ikev2-allow-narrow-01			good
 kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
@@ -119,9 +138,82 @@ kvmplutotest	ikev2-allow-narrow-04			good
 kvmplutotest	ikev2-allow-narrow-05			good
 kvmplutotest	ikev2-allow-narrow-06			good
 kvmplutotest	ikev2-allow-narrow-07			good
+kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
+kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
+kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
+kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
+
+kvmplutotest	ikev2-auth-null-01			good
+
+kvmplutotest	ikev2-ddos-01				wip
+
+kvmplutotest	ikev2-switchnat-01			wip
+kvmplutotest	ikev1-switchnat-01			good
+
 kvmplutotest	pluto-ipcmp-01	good
+
+kvmplutotest	ikev1-connswitch-ports-01	wip
+
+kvmplutotest	ikev2-38-psk-65bytes			good
+kvmplutotest	ikev2-39-psk-64bytes 			good
+
+kvmplutotest	nflog-01-global				good
+kvmplutotest	nflog-02-conn				good
+kvmplutotest	nflog-03-conns				good
+
+kvmplutotest	ikev2-43-init-retransmit		good
+
+kvmplutotest	ikev2-frag-01				good
+kvmplutotest	ikev2-frag-02-ipv6			good
+
+# Opportunstic Encryption using AUTH NULL
+kvmplutotest	newoe-01-whack				good
+kvmplutotest	newoe-02-klips				wip
+kvmplutotest	newoe-03-oeself				good
+kvmplutotest	newoe-04-01				good
+kvmplutotest	newoe-04-pass-pass			good
+kvmplutotest	newoe-05-hold-pass			good
+kvmplutotest	newoe-06-prio				good
+kvmplutotest	newoe-07-ike-replace-initiator		good
+kvmplutotest	newoe-08-ike-replace-responder		good
+kvmplutotest	newoe-08-restart			good
+kvmplutotest	newoe-09-mutual				good
+kvmplutotest	newoe-10-expire-inactive		good
+kvmplutotest	newoe-11-failike			good
+kvmplutotest	newoe-12-clear				good
+kvmplutotest	newoe-13-block				good
+kvmplutotest	newoe-14-clear-in-block-clear		good
+kvmplutotest	newoe-15-portpass			good
+kvmplutotest	newoe-16-pass-hold			good
+kvmplutotest	newoe-17-block-in-clear-clear		good
+# 
+kvmplutotest 	newoe-18-poc-poc 			good
+kvmplutotest 	newoe-18-poc-cop 			good
+kvmplutotest 	newoe-18-poc-private 			good
+kvmplutotest 	newoe-18-poc-clear 			good
+kvmplutotest 	newoe-18-poc-block 			good
+kvmplutotest 	newoe-18-cop-poc 			good
+kvmplutotest 	newoe-18-cop-cop 			good
+kvmplutotest 	newoe-18-cop-private 			good
+kvmplutotest 	newoe-18-cop-clear 			good
+kvmplutotest 	newoe-18-cop-block 			good
+kvmplutotest 	newoe-18-private-poc 			good
+kvmplutotest 	newoe-18-private-cop 			good
+kvmplutotest 	newoe-18-private-private 		good
+kvmplutotest 	newoe-18-private-clear 			good
+kvmplutotest 	newoe-18-private-block 			good
+kvmplutotest 	newoe-18-clear-poc 			good
+kvmplutotest 	newoe-18-clear-cop 			good
+kvmplutotest 	newoe-18-clear-private 			good
+kvmplutotest 	newoe-18-clear-clear 			good
+kvmplutotest 	newoe-18-clear-block 			good
+kvmplutotest 	newoe-18-block-poc 			good
+kvmplutotest 	newoe-18-block-cop 			good
+kvmplutotest 	newoe-18-block-private 			good
+kvmplutotest 	newoe-18-block-clear 			good
+kvmplutotest 	newoe-18-block-block 			good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
@@ -193,6 +285,7 @@ ctltest	pluto-dontreky-expiry-01 good
 # Foodgroups orderly transition: policy groups must be transitioned properly
 # when changed
 # umlplutotest	food-groups-orderly-transition-01	good
+#
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
@@ -210,12 +303,13 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 
-# Delete SA test.
 kvmplutotest	delete-sa-01	good
+kvmplutotest	delete-sa-03	wip
 
 kvmplutotest	delete-state-01 good
 
-#
+kvmplutotest	ikev1-rekey-connswitch	wip
+
 # oe-snat-01 - do Source address NAT and then OE
 #
 # OE TEMP DISABLED umlplutotest	oe-snat-01	good
@@ -303,7 +397,6 @@ ctltest	 	vpn-dns-01		good
 #
 kvmplutotest	x509-pluto-01		good
 
-#umlplutotest	x509-pluto-frag-01		good
 #
 #
 # a test of sending and validating an X.509 cert
@@ -412,7 +505,7 @@ kvmplutotest	basic-pluto-01-valgrind	good
 kvmplutotest	basic-pluto-11		good
 
 # passthrough protoport tests
-kvmplutotest	basic-pluto-12		wip
+kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-12-netkey	wip
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
@@ -472,17 +565,14 @@ kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
 #
-# a test of using twofish with pluto, twofish for phase2
-#
-umlplutotest	basic-pluto-08		bad
-
-#
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
 kvmplutotest    algo-pluto-02          good
 kvmplutotest    algo-pluto-03          good
-kvmplutotest    algo-pluto-04          good
+#known bug
+kvmplutotest    algo-pluto-04          wip
+
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
 kvmplutotest    algo-pluto-08          good
@@ -491,6 +581,8 @@ kvmplutotest    algo-pluto-10          good
 kvmplutotest    algo-pluto-11          good
 kvmplutotest    algo-pluto-12-aes-default	good
 kvmplutotest    algo-pluto-13-invalid-3des	good
+kvmplutotest    algo-pluto-14-aes_ctr	good
+
 #
 # tests for usnig multiple subnets using conn aliases
 #
@@ -510,6 +602,7 @@ kvmplutotest	ah-pluto-02		good
 kvmplutotest	ah-pluto-03		good
 kvmplutotest	ah-pluto-04		good
 kvmplutotest	ah-pluto-05		good
+kvmplutotest	ah-pluto-07		good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
 kvmplutotest	ah-pluto-11		good
@@ -522,13 +615,12 @@ kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	good
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	good
-kvmplutotest	interop-ikev2-strongswan-24-esp-aes_ctr	good
+kvmplutotest	interop-ikev2-strongswan-24-aes_ctr	good
+kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
+kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
+kvmplutotest	interop-ikev1-strongswan-15-twofish		good
+kvmplutotest	interop-ikev1-strongswan-16-serpent		good
 
-
-# kernel does not yet support these algo's
-kvmplutotest	ah-pluto-06		wip
-kvmplutotest	ah-pluto-07		wip
-kvmplutotest	ah-pluto-08		wip
 
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
@@ -538,20 +630,17 @@ umlplutotest	protoport-02		good
 kvmplutotest    algo-pluto-07			good
 kvmplutotest    netkey-pluto-01			good
 kvmplutotest    netkey-pluto-02			good
+kvmplutotest    netkey-pluto-07			wip
+kvmplutotest    netkey-pluto-03			good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
+kvmplutotest    netkey-pluto-06			good
 umlplutotest    netkey-psk-pluto-06		good
 umlplutotest	netkey-psk-vhost-01		good
 umlplutotest	netkey-psk-vhost-02		good
 umlplutotest	netkey-psk-vhost-03		good
 umlplutotest	netkey-psk-vhost-04		good
 # Selinux / secure labeling tests (require netkey and selinux)
-kvmplutotest    loopback-pluto-01		good
-kvmplutotest    loopback-pluto-02		good
-kvmplutotest    loopback-pluto-03		good
-kvmplutotest    loopback-pluto-04		good
-kvmplutotest    loopback-pluto-05		good
-kvmplutotest    loopback-pluto-06		good
 kvmplutotest    labeled-ipsec-01		wip
 
 # compress tests, some use netkey
@@ -576,22 +665,24 @@ kvmplutotest	ipv6-transport-mode-01-klips-klips	incomplete
 kvmplutotest	ipv6-transport-mode-02-netkey-netkey	incomplete
 kvmplutotest	ipv6-transport-mode-03-klips-netkey	incomplete
 kvmplutotest	ipv6-tunnel-mode-01-klips-klips		incomplete
-kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	incomplete
+kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
 kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	incomplete
 kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	incomplete
-kvmplutotest	ipv6-tunnel-mode-03-rw			good
+kvmplutotest	ipv6-tunnel-mode-03-rw			wip
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
+
+kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	wip
 
 
 
 #################################################################
 # Interop tests
 #################################################################
-umlplutotest    interop-ikev2-racoon-01-noconn			good
+kvmplutotest    interop-ikev2-racoon-01-noconn			good
 kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
-umlplutotest    interop-ikev2-racoon-03-psk-initiator		good
-umlplutotest    interop-ikev2-racoon-04-x509-responder		good
-umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
+kvmplutotest    interop-ikev2-racoon-03-psk-initiator		good
+kvmplutotest    interop-ikev2-racoon-04-x509-responder		wip
+kvmplutotest    interop-ikev2-racoon-05-x509-initiator		good
 
 kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
@@ -602,7 +693,6 @@ kvmplutotest	interop-ikev1-strongswan-07-cast128		good
 # is broken for netkey/xfrm in strongswan itself too - kernel changed?
 kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 
-umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
@@ -619,10 +709,11 @@ kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	good
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
+kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
-# strongswan still broken in v5.1.1
-kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
+
+kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 
 
 #################################################################
@@ -638,19 +729,36 @@ kvmplutotest	dnssec-pluto-01					good
 umlplutotest	phase1-expire-01-reconnect-klips		good
 umlplutotest	phase1-expire-02-reconnect-netkey		good
 
-umlplutotest	x509-pluto-frag-00			good
-umlplutotest	x509-pluto-frag-01			good
-umlplutotest	x509-pluto-frag-02			good
-umlplutotest	x509-pluto-frag-03			good
-umlplutotest	x509-pluto-frag-04			good
+kvmplutotest	x509-pluto-frag-00			good
+kvmplutotest	x509-pluto-frag-01			good
+kvmplutotest	x509-pluto-frag-02			good
+kvmplutotest	x509-pluto-frag-03			good
+kvmplutotest	x509-pluto-frag-04			good
 
 kvmplutotest	replay-authip-01			good
 
 kvmplutotest	l2tp-01					good
 kvmplutotest	l2tp-02					good
 kvmplutotest	l2tp-02-netkey				good
+kvmplutotest	l2tp-05-netkey				wip
 
 kvmplutotest	ikeport-01				wip
+
+#################################################################
+# FIPS mode tests: Most require PLUTO built in FIPS mode
+#################################################################
+kvmplutotest	fips-default-ikev1-01-nofips-east	good
+kvmplutotest	fips-default-ikev2-01-nofips-east	good
+kvmplutotest	fips-default-ikev1-02-nofips-west	good
+kvmplutotest	fips-default-ikev2-02-nofips-west	good
+
+kvmplutotest	fips-03-ikev1-md5			good
+kvmplutotest	fips-04-ikev2-md5			good
+skiptest	fips-05-ikev1-gcm			wip
+kvmplutotest	fips-06-ikev1-3des-sha1			good
+kvmplutotest	fips-07-ikev2-3des-sha256		good
+kvmplutotest	fips-08-ikev2-x509			good
+kvmplutotest	fips-09-ikev2-gcm			good
 
 #################################################################
 # passthrough tests

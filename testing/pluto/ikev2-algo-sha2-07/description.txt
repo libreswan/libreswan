@@ -2,6 +2,6 @@ Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This is to verify we can use SHA2 for ESP, specifically esp=aes-sha2_512
 
-this test uses klips - it seems to fail 
+this test uses klips - it seems to fail
 
 

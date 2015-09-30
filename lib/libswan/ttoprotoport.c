@@ -161,14 +161,12 @@ char *pgm;
 {
 	struct artab *r;
 	int status = 0;
-	err_t err;
 
 	for (r = atodatatab; r->ascii != NULL; r++) {
 		u_int8_t proto;
 		u_int16_t port;
 		int has_port_wildcard;
-
-		err = ttoprotoport(r->ascii, strlen(r->ascii),
+		err_t err = ttoprotoport(r->ascii, strlen(r->ascii),
 				&proto, &port, &has_port_wildcard);
 
 		if (r->wild == -1) {
@@ -183,7 +181,7 @@ char *pgm;
 			}
 		}
 
-		if (err) {
+		if (err != NULL) {
 			printf("%s got error: %s\n", r->ascii, err);
 			status = 1;
 			continue;

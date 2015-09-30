@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>look</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>28 Oct 2006</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec look</refname>
+<refpurpose>get a quick summary of Libreswan status</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>look</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Look</emphasis>
+is used to get a quick overview of what the status of Libreswan is. It is
+the equivalent to running the commands
+<emphasis remap='I'>ipsec eroute</emphasis>,
+<emphasis remap='I'>ipsec spigrp</emphasis>,
+<emphasis remap='I'>ipsec tncfg</emphasis>,
+<emphasis remap='I'>ipsec spi</emphasis> and
+<emphasis remap='I'>netstat -rn</emphasis>. However a bit of processing is
+done to combine the outputs.
+</para>
+<para>Some of the above commands, and there for <emphasis remap='I'>ipsec look</emphasis>,
+are only supported with the KLIPS or MAST stack, and will give errors when used on BSD, Windows
+or Linux with NETKEY.</para>
+</refsect1>
+
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_tncfg</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_spigrp</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_eroute</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>netstat</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+by Michael Richardson. Original program written by Henry Spencer.</para>
+
+
+</refsect1>
+</refentry>
+

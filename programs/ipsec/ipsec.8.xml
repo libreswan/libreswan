@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>command</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
     <arg choice='plain'><replaceable>ipsec</replaceable></arg>

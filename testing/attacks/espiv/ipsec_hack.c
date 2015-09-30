@@ -112,10 +112,10 @@ int make_a_guess(u8 *guess, u8 *iv, u8 *old_iv, u8 *iph, option_data *opt)
 
 	/*
 	   if ((needed_block[0]&0xf0)>>4 != 4)
-	        return -1;
+		return -1;
 
 	   if ((needed_block[0]&0x0f) != 5)
-	        return -1;
+		return -1;
 
 	   u16_tmp = (needed_block[2]<<8) + needed_block[3];
 
@@ -123,7 +123,7 @@ int make_a_guess(u8 *guess, u8 *iv, u8 *old_iv, u8 *iph, option_data *opt)
 
 
 	   if (u16_tmp < ((needed_block[0]&0x0f)<<2) || u16_tmp > 1500)
-	        return -1;
+		return -1;
 	 */
 	/* Now the block has passed as a part of the packet. Create the
 	   rest of the packet. */
@@ -168,7 +168,8 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 
 	fflush(stdout);
 
-	if (ipH->protocol != 50) { /* Not an ESP packet */
+	if (ipH->protocol != 50) {
+		/* Not an ESP packet */
 		if (opt->verbose)
 			printf("not an ESP packet\n");
 		return;

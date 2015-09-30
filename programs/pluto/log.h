@@ -34,7 +34,9 @@ extern bool
 	log_to_stderr,          /* should log go to stderr? */
 	log_to_syslog,          /* should log go to syslog? */
 	log_to_perpeer,         /* should log go to per-IP file? */
-	log_with_timestamp;     /* prefix timestamp */
+	log_to_audit,         /* audit logs for kernel/auditd */
+	log_with_timestamp,     /* prefix timestamp */
+	log_append;
 
 extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
@@ -136,6 +138,32 @@ extern void daily_log_event(void);
 
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
+extern void show_global_status(void);
+
+#ifdef USE_LINUX_AUDIT
+#include <libaudit.h>
+#define AUDIT_LOG_SIZE 256
+/* should really be in libaudit.h */
+#define AUDIT_RESULT_FAIL 0
+#define AUDIT_RESULT_OK 1
+#ifndef AUDIT_CRYPTO_IKE_SA
+# define AUDIT_CRYPTO_IKE_SA 2408
+#endif
+#ifndef AUDIT_CRYPTO_IPSEC_SA
+# define AUDIT_CRYPTO_IPSEC_SA 2409
+#endif
+
+enum linux_audit_kind {
+	LAK_PARENT_START,
+	LAK_CHILD_START,
+	LAK_PARENT_DESTROY,
+	LAK_CHILD_DESTROY
+};
+extern void linux_audit_init();
+extern void linux_audit(const int type, const char *message,
+			const char *addr, const int result);
+extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
+#endif
 
 /*
  * some events are to be logged only occasionally.

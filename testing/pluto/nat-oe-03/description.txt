@@ -11,10 +11,10 @@ The network is configured as follows:
 SUNSET
 
 A NAT is setup on NIC that does traditional NAPT on the
-NORTH network. 
+NORTH network.
 
 This more complicate test has ROAD extrude a single IP address
-from EAST's network. 
+from EAST's network.
 
 WEST is running IPsec, doing OE for sunset, but it is NOT running
 with nat-traversal on. The idea is that ROAD can use the IP

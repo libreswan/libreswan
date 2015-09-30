@@ -1,0 +1,6 @@
+ocsp:
+
+This is not a proper ocsp chain test, in that it is a failure case because the
+OCSP server gives a response that the request was for an unknown CA (and that is
+a rejection)
+WIP, left out of TESTLIST for now

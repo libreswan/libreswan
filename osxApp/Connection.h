@@ -130,7 +130,7 @@
 *selLocalRSASigKey,
 *selRemoteRSASigKey;
 //Global Options
-@property (readwrite, retain) NSMutableString 
+@property (readwrite, retain) NSMutableString
 *selVirtualPrivate,
 *selForceKeepAlive,
 *selKeepAlive,
@@ -138,7 +138,7 @@
 *selMyID,
 *selPlutoDebug;
 
-@property (readwrite, retain) NSButton 
+@property (readwrite, retain) NSButton
 *selForceEncaps,
 *selNatTEnable,
 *selStrictCrlEnable,
@@ -146,7 +146,7 @@
 *selUniqueIDs;
 
 //Advanced Options
-@property (readwrite, retain) NSMutableString 
+@property (readwrite, retain) NSMutableString
 *selDPDDelay,
 *selDPDTimeout,
 *selDPDAction,

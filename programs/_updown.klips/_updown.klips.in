@@ -176,6 +176,7 @@ esac
 # utility functions for route manipulation
 # Meddling with this stuff should not be necessary and requires great care.
 uproute() {
+    doproxyarp add
     doroute add
     ip route flush cache
 }
@@ -183,6 +184,7 @@ uproute() {
 downroute() {
     doroute delete
     ip route flush cache
+    doproxyarp delete
 }
 
 uprule() {
@@ -450,6 +452,34 @@ dorule() {
     return ${st}
 }
 
+doproxyarp() {
+    # Check if client has a single ip only client net
+    if [ ${PLUTO_PEER_CLIENT#*/} = 32 -o ${PLUTO_PEER_CLIENT#*/} = 128 ]; then
+	# Skip OE special connections
+	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
+	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
+	    return 0
+	fi
+	# check if client is routeable
+	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+	    egrep -q -s -v " via |^local"; then
+	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+		awk '{print $3}')
+	    if [ -r /sys/class/net/${iface}/address ]; then
+		macaddr=$(cat /sys/class/net/${iface}/address)
+	    fi
+	    # add/remove arp entry for the client on ethernet devices only
+	    if [ -n "${macaddr}" ]; then
+		if [ "$1" = add ]; then
+		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
+			lladdr ${macaddr} nud permanent
+		else
+		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
+		fi
+	    fi
+	fi
+    fi
+}
 
 doroute() {
     st=0

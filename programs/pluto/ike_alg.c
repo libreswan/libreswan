@@ -6,8 +6,8 @@
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,7 +59,11 @@
 
 struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
-/*	check if IKE encrypt algo is present */
+bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
+{
+	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
+}
+
 bool ike_alg_enc_present(int ealg)
 {
 	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
@@ -189,9 +193,18 @@ struct ike_alg *ikev2_alg_find(unsigned algo_type,
 				   enum ikev2_trans_type_encr algo_v2id)
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
+	int search_algo_v2id = algo_v2id;
+
+	/*
+	 * these types are mixed up, so go along with it :(
+	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1
+	 * IKEv2_ENCR_CAMELLIA_CBC == ESP_CAMELLIA
+	 */
+	if (algo_type == IKE_ALG_ENCRYPT && algo_v2id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
+		search_algo_v2id = IKEv2_ENCR_CAMELLIA_CBC;
 
 	for (; e != NULL; e = e->algo_next) {
-		if (e->algo_v2id == algo_v2id)
+		if (e->algo_v2id == search_algo_v2id)
 			break;
 	}
 	return e;
@@ -304,8 +317,58 @@ const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 {
 	const struct oakley_group_desc * ret = NULL;
 
-	if ( (policy & POLICY_PFS) &&
+	if ((policy & POLICY_PFS) &&
 	     c->alg_info_esp && c->alg_info_esp->esp_pfsgroup)
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
 	return ret;
+}
+
+CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
+{
+	/* the best wey have for "undefined" */
+	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
+
+	switch (encrypter->common.algo_id) {
+	case OAKLEY_3DES_CBC:
+		mechanism = CKM_DES3_CBC;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_CAST_CBC:
+		mechanism = CKM_CAST5_CBC:
+		break;
+#endif
+	case OAKLEY_AES_CBC:
+		mechanism = CKM_AES_CBC;
+		break;
+	case OAKLEY_CAMELLIA_CBC:
+		mechanism = CKM_CAMELLIA_CBC;
+		break;
+	case OAKLEY_AES_CTR:
+		mechanism = CKM_AES_CTR;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_AES_CCM_8:
+	case OAKLEY_AES_CCM_12:
+	case OAKLEY_AES_CCM_16:
+		mechanism = CKM_AES_CCM;
+		break;
+#endif
+	case OAKLEY_AES_GCM_8:
+	case OAKLEY_AES_GCM_12:
+	case OAKLEY_AES_GCM_16:
+		mechanism = CKM_AES_GCM;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_TWOFISH_CBC:
+		mechanism = CKM_TWOFISH_CBC;
+		break;
+#endif
+	default:
+		loglog(RC_LOG_SERIOUS,
+			"NSS: Unsupported encryption mechanism for %s",
+			strip_prefix(enum_name(&oakley_enc_names,
+				encrypter->common.algo_id), "OAKLEY_"));
+		break;
+	}
+	return mechanism;
 }

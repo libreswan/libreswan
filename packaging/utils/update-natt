@@ -51,7 +51,7 @@ updatefake() {
 }
 
 cd nat-t
-find . -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file 
+find . -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file
 do
   base=`basename $file`
   dir=`dirname $file`
@@ -59,7 +59,7 @@ do
 
   #echo "File: $file" "PN: $pname"
 
-  case $base in 
+  case $base in
     TAGS) ;;
     tags) ;;
     .cvsignore) ;;

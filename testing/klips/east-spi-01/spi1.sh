@@ -22,16 +22,16 @@ dst=192.0.1.0/24
 # gateway is: 216.209.86.50
 
 # outbound SPI
-ipsec spi --af inet --edst $westip  --spi $outspi --proto esp --src $eastip --esp 3des --enckey $enckey 
+ipsec spi --af inet --edst $westip  --spi $outspi --proto esp --src $eastip --esp 3des --enckey $enckey
 ipsec spi --af inet --edst $westip  --spi $outspi --proto tun --src $eastip --dst $westip --ip4
-ipsec spigrp inet $westip $outspi tun inet $westip $outspi esp 
+ipsec spigrp inet $westip $outspi tun inet $westip $outspi esp
 
 ipsec eroute --add --eraf inet --src $source --dst $dst --said tun$inspi@$westip
 
 # inbound SPI
-ipsec spi --af inet --edst $eastip --spi $inspi  --proto esp --src $westip --esp 3des --enckey $enckey 
+ipsec spi --af inet --edst $eastip --spi $inspi  --proto esp --src $westip --esp 3des --enckey $enckey
 ipsec spi --af inet --edst $eastip --spi $inspi  --proto tun --src $westip --dst $eastip --ip4
-ipsec spigrp inet $eastip $inspi tun inet $eastip $inspi esp 
+ipsec spigrp inet $eastip $inspi tun inet $eastip $inspi esp
 
 ipsec tncfg --attach --virtual ipsec0 --physical eth1
 ifconfig ipsec0 inet 192.1.2.23 netmask 0xffffff00 broadcast 192.1.2.255 up

@@ -26,7 +26,7 @@ void update_pending(struct state *os, struct state *ns)
 	/* nothing */
 }
 
-struct connection *first_pending(struct state *st, lset_t *policy,
+struct connection *first_pending(const struct state *st, lset_t *policy,
 				 int *p_whack_sock)
 {
 

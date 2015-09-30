@@ -7,5 +7,5 @@ until [ $count -eq 0 ] || [ -n "`ip route list | grep default`" ]  >/dev/null 2>
 do
 	count=`expr $count - 1`
 	sleep 1
-done 
+done
 

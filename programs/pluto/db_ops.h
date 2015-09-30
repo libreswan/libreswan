@@ -20,7 +20,7 @@ struct db_context {
 /*
  *      Allocate a new db object
  */
-extern struct db_context * db_prop_new(u_int8_t protoid, int max_trans,
+extern struct db_context *db_prop_new(u_int8_t protoid, int max_trans,
 				int max_attrs);
 
 /*	Free all resourses for this db */
@@ -37,6 +37,7 @@ static __inline__ struct db_prop *db_prop_get(struct db_context *ctx)
 {
 	return &ctx->prop;
 }
+
 /*	Show stats (allocation, etc) */
 void db_ops_show_status(void);
 

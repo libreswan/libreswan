@@ -458,19 +458,30 @@ int ipsec_alg_auth_key_create(struct ipsec_sa *sa_p)
 		goto ixt_out;
 	}
 
-	/* will hold: 2 ctx and a blocksize buffer: kb */
-	if ((akp = (caddr_t)kmalloc(ixt_a->ixt_a_ctx_size,
-				    GFP_ATOMIC)) == NULL) {
-		ret = -ENOMEM;
-		goto ixt_out;
-	}
+	if (ixt_a->ixt_a_hmac_new_key){
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:ipsec_alg_auth_key_create: "
+			    "using ixt_a_new_key to generate key\n");
+		if ((akp =  ixt_a->ixt_a_hmac_new_key(ixt_a,
+						      sa_p->ips_key_a,
+						      sa_p->ips_key_bits_a/8)) == NULL) {
+		    ret = -ENOMEM;
+		    goto ixt_out;
+		}
+	} else if (ixt_a->ixt_a_hmac_set_key) {
+	    /* will hold: 2 ctx and a blocksize buffer: kb */
+		if ((akp = (caddr_t)kmalloc(ixt_a->ixt_a_ctx_size,
+					    GFP_ATOMIC)) == NULL) {
+			ret = -ENOMEM;
+			goto ixt_out;
+		}
+		/* zero-out key_a */
+		memset(akp, 0, ixt_a->ixt_a_ctx_size);
 
-	KLIPS_PRINT(debug_pfkey,
-		    "klips_debug:ipsec_alg_auth_key_create: about to call:"
-		    "hmac_set_key(key_ctx=%p, key=%p, key_size=%d)\n",
-		    akp, (caddr_t)sa_p->ips_key_a, sa_p->ips_key_bits_a / 8);
-
-	if (ixt_a->ixt_a_hmac_set_key) {
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:ipsec_alg_auth_key_create: about to call:"
+			    "hmac_set_key(key_ctx=%p, key=%p, key_size=%d)\n",
+			    akp, (caddr_t)sa_p->ips_key_a, sa_p->ips_key_bits_a/8);
 		ret = ixt_a->ixt_a_hmac_set_key(ixt_a,
 						akp, sa_p->ips_key_a,
 						sa_p->ips_key_bits_a / 8); /* XXX XXX */
@@ -482,7 +493,6 @@ int ipsec_alg_auth_key_create(struct ipsec_sa *sa_p)
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:ipsec_alg_auth_key_create: "
 			    "no hmac_set_key function available!\n");
-
 		ret = -EPROTO;
 		goto ixt_out;
 	}
@@ -526,6 +536,29 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 	ixt_a->ixt_a_hmac_hash(ixt_a,
 			       sa_p->ips_key_a,
 			       espp, len,
+			       hash, hashlen);
+	return 0;
+}
+
+int ipsec_alg_sa_ah_hash(const struct ipsec_sa *sa_p, const __u8 *ahp,
+			  int len, __u8 *hash, int hashlen)
+{
+	struct ipsec_alg_auth *ixt_a = sa_p->ips_alg_auth;
+
+	if (!ixt_a) {
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:ipsec_sa_ah_hash: "
+			    "NULL ipsec_alg_auth object\n");
+		return -EPROTO;
+	}
+	KLIPS_PRINT(debug_tunnel | debug_rcv,
+		    "klips_debug:ipsec_sa_ah_hash: "
+		    "hashing %p (%d bytes) to %p (%d bytes)\n",
+		    ahp, len,
+		    hash, hashlen);
+	ixt_a->ixt_a_hmac_hash(ixt_a,
+			       sa_p->ips_key_a,
+			       ahp, len,
 			       hash, hashlen);
 	return 0;
 }
@@ -614,8 +647,8 @@ zero_key_ok:
 	if (ixt->ixt_a_ctx_size == 0)
 		barf_out(KERN_ERR "invalid a_ctx_size=%d\n",
 			 ixt->ixt_a_ctx_size);
-	if (ixt->ixt_a_hmac_set_key == NULL)
-		barf_out(KERN_ERR "a_hmac_set_key() must be not NULL\n");
+	if (ixt->ixt_a_hmac_set_key==NULL && ixt->ixt_a_hmac_new_key == NULL)
+		barf_out(KERN_ERR "a_hmac_set_key() or a_hmac_new_key() must be not NULL\n");
 	if (ixt->ixt_a_hmac_hash == NULL)
 		barf_out(KERN_ERR "a_hmac_hash() must be not NULL\n");
 	ret = 0;
@@ -801,7 +834,7 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 	       "klips_info: ipsec_alg_test_encrypt: "
 	       "memcmp(dec,tmp) ret=%d: %s\n", ret,
 	       ret == 0 ?
-	           "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
+		   "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
 	{
 		/*	Shamelessly taken from drivers/md sources  O:)  */
 		unsigned long now;
@@ -888,12 +921,22 @@ static int ipsec_alg_test_auth(int auth_alg, int test)
 		    "klips_debug: ipsec_alg_test_auth: "
 		    "auth_alg=%d blocksize=%d key_a_size=%d keysize=%d\n",
 		    auth_alg, blocksize, key_a_size, keysize);
-	if ((buf = kmalloc(test_size, GFP_KERNEL)) == NULL) {
-		ret = -ENOMEM;
-		goto out;
+	if (ixt_a->ixt_a_hmac_new_key){
+		get_random_bytes(test_key, keysize);
+		if ((buf =  ixt_a->ixt_a_hmac_new_key(ixt_a,
+			test_key,
+			keysize)) == NULL) {
+			ret= -ENOMEM;
+			goto out;
+		}
+	} else {
+		if ((buf=kmalloc (test_size, GFP_KERNEL)) == NULL) {
+			ret= -ENOMEM;
+			goto out;
+		}
+		get_random_bytes(test_key, keysize);
+		ret = ixt_a->ixt_a_hmac_set_key(ixt_a, test_key_a, test_key, keysize);
 	}
-	get_random_bytes(test_key, keysize);
-	ret = ixt_a->ixt_a_hmac_set_key(ixt_a, test_key_a, test_key, keysize);
 	if (ret < 0 )
 		goto out;
 	get_random_bytes(test_auth, BUFSZ);

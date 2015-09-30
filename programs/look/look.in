@@ -2,33 +2,41 @@
 # quick look at current connections and related information
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 2012  Paul Wouters
-# 
+# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
 
-LC_ALL=C export LC_ALL
+LC_ALL=C
+export LC_ALL
 
 me="ipsec look"
 
 case "$1" in
---help)		echo "Usage: ipsec look" ; exit 0	;;
---version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
+    --help)
+	echo "Usage: ipsec look"
+	exit 0
+	;;
+    --version)
+	echo "$me $IPSEC_VERSION"
+	exit 0
+	;;
 esac
 
 # label it just to be sure
-echo "`hostname` `date`"
+echo "$(hostname) $(date)"
 
 # combine spigrp and eroute
 for file in /proc/net/ipsec_spigrp /proc/net/ipsec_eroute ; do
-	test -f $file && cat $file
+    [ -f ${file} ] && cat ${file}
 done | awk '
 		function pad(subnet) {
 			sub("/:", "..", subnet)
@@ -52,47 +60,53 @@ done | awk '
 	' | sort | sed 's/^[^~]*~//'
 
 # tncfg (mostly as a divider line)
-if test -f /proc/net/ipsec_tncfg ; then
-	egrep -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg |
-		paste -d % | sed 's/%/   /g' | sed 's/ -> /->/g'
+if [ -f /proc/net/ipsec_tncfg ]; then
+    egrep -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg | \
+	paste -d % | sed 's/%/   /g' | sed 's/ -> /->/g'
 fi
 
 # SAs
-if test -f /proc/net/ipsec_spi ; then
-	sort /proc/net/ipsec_spi
+if [ -f /proc/net/ipsec_spi ]; then
+    sort /proc/net/ipsec_spi
 fi
 
 # xfrm for netkey
-if test -f /proc/net/pfkey ; then
-	echo "XFRM state:"
-	ip xfrm state
-	echo "XFRM policy:"
-	ip xfrm policy
-	echo "XFRM done"
+if [ -f /proc/net/pfkey ]; then
+    echo "XFRM state:"
+    ip xfrm state
+    echo "XFRM policy:"
+    ip xfrm policy
+    echo "XFRM done"
 fi
 
 echo IPSEC mangle TABLES
-if test "$(grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null)" ; then
-	iptables -n -t mangle -L IPSEC
+if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
+    iptables -n -t mangle -L IPSEC
 fi
-if test "$(grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null)" ; then
-	ip6tables -n -t mangle -L IPSEC
+if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
+    ip6tables -n -t mangle -L IPSEC
 fi
 
 echo NEW_IPSEC_CONN mangle TABLES
-if test "$(grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null)" ; then
+if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
 	iptables -n -t mangle -L NEW_IPSEC_CONN
 fi
-if test "$(grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null)" ; then
+if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 	ip6tables -n -t mangle -L NEW_IPSEC_CONN
 fi
 
 echo ROUTING TABLES
-ip route 
-ip -6 route 
+ip -4 route
+ip -6 route
 
-if test -f @IPSEC_CONFDDIR@/cert8.db ; then
-	echo NSS_CERTIFICATES
-	certutil -L -d @IPSEC_CONFDDIR@ | head -4
-	certutil -L -d @IPSEC_CONFDDIR@ | egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+if [ -f @IPSEC_CONFDDIR@/cert9.db ]; then
+    echo NSS_CERTIFICATES
+    certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
+    certutil -L -d sql:@IPSEC_NSSDIR@ | \
+	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+elif [ -f @IPSEC_CONFDDIR@/cert8.db ]; then
+    echo NSS_CERTIFICATES
+    certutil -L -d @IPSEC_NSSDIR@ | head -4
+    certutil -L -d @IPSEC_NSSDIR@ | \
+	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 fi

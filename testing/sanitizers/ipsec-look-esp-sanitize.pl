@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #
-# this script sanitizes "ipsec look" output more thoroughly than 
+# this script sanitizes "ipsec look" output more thoroughly than
 # ipsec-look-sanitize. The former is suitable for static conns,
 # but dynamic ones come with random ESP SPIs, IVs, and presents the
 # data in seemingly random order.
@@ -25,7 +25,7 @@
 #192.1.2.0       0.0.0.0         255.255.255.0   U        40 0          0 ipsec0
 #east:~# kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
 #
-#OR 
+#OR
 #ROUTING TABLE
 
 #
@@ -66,7 +66,7 @@ while(<>) {
     $inroute=0;
     print;
     next;
-    
+
   } elsif(!$inlook) {
     print;
     next;
@@ -77,7 +77,7 @@ while(<>) {
     print;
     next;
   }
-  
+
   ## okay we are in the look itself.
 
   if($inlook) {
@@ -92,8 +92,8 @@ while(<>) {
       # 2001:db8:1:2::23/128 -> 2001:db8:1:2::45/128 => tun0x1001@2001:db8:1:2::45 esp0x7e46e5a3@2001:db8:1:2::45  (0)	    11111111111111111111111111111111111111111111111 22222-end
       #
       # regexp fills $1-$7 as above
-      # 
-      if((m,^([\d.]+/[\d:]+\s+\-\>\s+[\d.]+/[\d:]+\s+\=\>) (.*)$,) || 
+      #
+      if((m,^([\d.]+/[\d:]+\s+\-\>\s+[\d.]+/[\d:]+\s+\=\>) (.*)$,) ||
 	      (m,^(.*:.*\-\>.*:.*\=\>) (.*)$,)) {
 	# okay, rebuild $_ with sanitized versions, and record the order of the
 	# tunnels by dest IP $3.
@@ -160,18 +160,18 @@ while(<>) {
 	next;
       }
     }
-    
+
     if($intncfg) {
       if(/^ipsec.*->eth.* mtu=.*(.*)->.*/) {
 	print;
 	next;
       }
-      
+
       $intncfg=0;
       $inspigrp=1;
       # fall through
     }
-    
+
     if($inspigrp) {
       # suck up all of the spigrp entries, and sanitize them and emit them in
       # the order that we recorded above, and order in, then out.
@@ -217,7 +217,7 @@ while(<>) {
       }
       # tun0x1002@192.1.2.45 IPIP: dir=out src=192.1.2.23 life(c,s,h)=bytes(832,0,0)addtime(26,0,0)usetime(26,0,0)packets(8,0,0) idle=13 refcount=4 ref=16
       # 111112222 3333333333 44444444444444444444444444
-      
+
       elsif(m,^(tun0x)([0-9a-f]{1\,8})@([\d.]+)( IPIP:.*),) {
 	$rest = $4;
 	$tun1 = $1;
@@ -235,10 +235,10 @@ while(<>) {
 	#print "remembering that $key -> $tunline\n";
 	$spigrp{$key}=$tunline;
       }
-      
+
       # comp0x68dd@192.1.2.45 COMP_DEFLATE: dir=out src=192.1.2.23 life(c,s,h)=addtime(2,0,0) refcount=5 ref=16
       # 1111112222 3333333333 4444444-end
-      
+
       elsif(m,^(comp0x)([0-9a-f]{1\,4})@([\d.]+)( COMP_.*:.*),) {
 	$rest = $4;
 	$comp = $1;
@@ -256,7 +256,7 @@ while(<>) {
 	#print "remembering that $key -> $compline\n";
 	$spigrp{$key}=$compline;
       }
-      
+
       elsif(/^ROUTING TABLE/ || /^Destination/ || ($inspigrp && /^$/)) {
 	$inspigrp=0;
 	$inroute=1;
@@ -286,7 +286,7 @@ while(<>) {
 	
       }
     }
-    
+
     if($inroute) {
       #Destination Gateway         Genmask         Flags   MSS Window  irtt Iface
       #0.0.0.0     192.1.2.254     0.0.0.0         UG       40 0          0 eth1
@@ -308,7 +308,7 @@ sub sourcerecord {
       $srcip=$1;
       $bysource{$srcip.$xname}=$key;
     }
-    
+
     $ips{$srcip}++;
   }
 }

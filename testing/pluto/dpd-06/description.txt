@@ -1,7 +1,7 @@
 This tests the RFC3706 DPD implementation, with dpdaction=restart on east,
 and dpdaction=hold on west.
 
-West will trap, while east will attempt to restart the connection when 
+West will trap, while east will attempt to restart the connection when
 DPD times out.
 
 Order of Operations:

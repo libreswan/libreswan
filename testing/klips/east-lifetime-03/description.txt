@@ -1,5 +1,5 @@
 This test sets a hard byte lifetime of 800 bytes, and sends a number of
-packets. 
+packets.
 
 The console output, via "ipsec pf_key" shows a single expire message from the
 kernel:

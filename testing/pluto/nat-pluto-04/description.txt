@@ -7,10 +7,10 @@ The network is configured as follows:
       NIC---EAST--SUNRISE
 
 A NAT is setup on NIC that does traditional NAPT on the
-NORTH network. 
+NORTH network.
 
 This more complicate test has ROAD extrude a single IP address
-from EAST's network. 
+from EAST's network.
 
 East is configured with proxy_arp set, such that east will respond
 to ARPs' for addresses that it has a route for, that are in east's

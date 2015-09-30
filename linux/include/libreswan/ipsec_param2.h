@@ -20,7 +20,7 @@
 
 /* nicely, latest netdevice.h includes this define */
 #ifndef HAVE_NETDEV_PRIV
-#define netdev_priv(dev) (dev->priv)
+#define netdev_priv(dev) ((dev)->priv)
 #endif
 
 #if defined(IP_SELECT_IDENT_NEW)

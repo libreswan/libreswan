@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# 
+#
 # this script looks for a TXT resource record at a given name
 # It does so using lwdnsq in HEAD
-# and  
+# and
 # with dig in 2.xx
 #
 # arg #1 is name

@@ -1,24 +1,36 @@
 #!/bin/sh
 
-set -x
+# we run with -x so : works instead of echo for output (not logging)
+set -eux
 
-set -ue
+if [ -r kvmsetup.sh.sample ]; then
+    cat <<EOF
 
-cd /source
+${PWD} is a top-level source directory.
+Not CDing to /source
 
-# we don't trust all makefile dependancies, esp lib/
-rm -rf OBJ.linux.* modobj
-
-# sometimes left behind - an error in "make check"
-rm -f lib/libipsecconf/lex.yy.c lib/libipsecconf/parser.dot lib/libipsecconf/parser.output lib/libipsecconf/parser.tab.c lib/libipsecconf/parser.tab.h
-# these are not wiped when running rm -rf OBJ*
-rm -f lib/libswan/Makefile.depend lib/libipsecconf/Makefile.depend lib/libwhack/Makefile.depend programs/pluto/Makefile.depend
-
-echo ">>> $0 on `hostname` at `date`" >>compile-log.txt
-
-if ! make programs module >>compile-log.txt 2>&1
-then
-	echo '"make programs module"'" failed: $?; see compile-log.txt"
+EOF
+else
+    cd /source
 fi
 
-echo "$0 finished on `hostname` at `date`"
+if [ -f /usr/libexec/ipsec/pluto ]; then
+    : ABORT: existing pluto found at /usr/libexec/ipsec/pluto
+    exit 1
+fi
+
+# we don't trust all makefile dependancies, esp lib/
+rm -rf $(make showobjdir) modobj
+
+targets="base module"
+echo ">>> $0 'make $targets' on $(hostname) at $(date)" >>compile-log.txt
+if make "$@" $targets >>compile-log.txt 2>&1; then
+    : 'make $targets' success
+else
+    status=$?
+    tail -20 compile-log.txt
+    : 'make $targets' failed: ${status}\; see compile-log.txt for details
+    exit ${status}
+fi
+
+echo "$0 finished on $(hostname) at $(date)"

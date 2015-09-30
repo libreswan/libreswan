@@ -1,3 +1,3 @@
-This tests reception (decryption) of ESP-AES128-SHA1 packets with a source 
+This tests reception (decryption) of ESP-AES128-SHA1 packets with a source
 of encrypted ICMP packets.
 

@@ -6,7 +6,7 @@
  * Copyright (C) 2007-2008   Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Bart Trojanowski <bart@jukie.net>
- * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2012,2015  Paul Wouters  <paul@libreswan.org>
  * Copyright (C) 2011-2012 David McCullough <david_mccullough@mcafee.com>
  *
  * OCF/receive state machine written by
@@ -727,7 +727,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_IPV6
 		else if (ipp->version == 6) {
 			/* boilerplate macro for Bad Bits in address */
-#define BB(end, i) ((ipp6->end##addr.s6_addr32[0] & \
+#define BB(end, i) ((ipp6->end##addr.s6_addr32[i] & \
 		     ipsp->ips_mask_##end.u.v6.sin6_addr.s6_addr32[i]) ^ \
 		    ipsp->ips_flow_##end.u.v6.sin6_addr.s6_addr32[i])
 
@@ -798,6 +798,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 			    irs->ipdaddr_txt);
 	}
 #endif
+#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK)
 #if defined(CONFIG_NETFILTER)
 	skb->nfmark = IPSEC_NFMARK_IS_SAREF_BIT |
 		      (skb->nfmark &
@@ -808,7 +809,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		    "IPIP SA sets skb->nfmark=0x%x.\n",
 		    (unsigned)skb->nfmark);
 #endif	/* CONFIG_NETFILTER */
-
+#endif
 	result = IPSEC_RCV_OK;
 
 rcvleave:
@@ -1427,7 +1428,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_ALG
 	/* authenticate, if required */
 	if ((irs->ixt_a = irs->ipsp->ips_alg_auth)) {
-		irs->authlen = AHHMAC_HASHLEN;
+		irs->authlen = irs->ixt_a->ixt_a_authlen;
 		irs->authfuncs = NULL;
 		irs->ictx = NULL;
 		irs->octx = NULL;
@@ -1691,7 +1692,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 		nexthdroff =
 			ipsec_ipv6_skip_exthdr(irs->skb,
 					       (void *)(lsw_ip6_hdr(irs) + 1) -
-					         (void *)irs->skb->data,
+						 (void *)irs->skb->data,
 					       &nexthdr, &frag_off);
 		irs->iphlen = nexthdroff - (irs->iph - (void*)irs->skb->data);
 		skb_set_transport_header(skb,
@@ -1796,6 +1797,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	irs->ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
 	irs->ipsp->ips_life.ipl_packets.ipl_count += 1;
 
+#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK)
 #if defined(CONFIG_NETFILTER)
 	if (irs->proto == IPPROTO_ESP || irs->proto == IPPROTO_AH) {
 		skb->nfmark = IPSEC_NFMARK_IS_SAREF_BIT |
@@ -1809,7 +1811,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 			    (unsigned)skb->nfmark);
 	}
 #endif	/* CONFIG_NETFILTER */
-
+#endif
 	/* do we need to do more decapsulation */
 	if ((irs->proto == IPPROTO_ESP ||
 	     irs->proto == IPPROTO_AH ||
@@ -1849,7 +1851,7 @@ static enum ipsec_rcv_value ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 				(unsigned char *)irs->iph, lsw_ip4_hdr(
 					irs)->ihl);
 			KLIPS_PRINT(debug_rcv, "csum: %04x\n",
-			            lsw_ip4_hdr(irs)->check);
+				    lsw_ip4_hdr(irs)->check);
 		}
 /*
  * This fails when both systems are behind NAT

@@ -107,8 +107,8 @@ msgid_t generate_msgid(const struct state *st)
 
 		if (--timeout == 0) {
 			libreswan_log(
-				"gave up looking for unique msgid; using 0x%08lx",
-				(unsigned long) msgid);
+				"gave up looking for unique msgid; using %08" PRIx32,
+				msgid);
 			break;
 		}
 	}

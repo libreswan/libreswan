@@ -17,7 +17,7 @@ sleep 15
 sleep 15
 sleep 15
 sleep 15
-ssh 192.1.2.23 ip xfrm state flush 
+ssh 192.1.2.23 ip xfrm state flush
 echo "Waiting to see if we detect phase2 is gone - DPD restarts"
 sleep 15
 sleep 15

@@ -166,7 +166,7 @@ unsigned char tc3_results_skey_pr[] = {
 
 struct pluto_crypto_req;	/* forward */
 
-void finish_dh_v2(struct state *st,
+bool finish_dh_v2(struct state *st,
 		  struct pluto_crypto_req *r)
 {
 	//struct pcr_skeycalc_v2_r *dhv2 = &r->pcr_d.dhv2;
@@ -188,4 +188,5 @@ void finish_dh_v2(struct state *st,
 #undef CLONEIT
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
+	return TRUE;
 }

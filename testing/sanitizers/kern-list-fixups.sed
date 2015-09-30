@@ -94,7 +94,8 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*l2tp_ppp: PPPoL2TP kernel driver, V.*$/d
 /^.*PCLMULQDQ-NI instructions are not detected.*$/d
 /^Warning: found NETKEY\/XFRM stack loaded.*$/d
-/.*IPv4 over IPSec tunneling driver$/d
+/.*IPv4 over IPSec tunneling driver$/Id
 /^.* random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
+s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/

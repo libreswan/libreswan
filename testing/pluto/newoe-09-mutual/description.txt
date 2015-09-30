@@ -1,0 +1,7 @@
+basic OE test, using road and east triggered by packet using NETKEY on road
+
+This test has policies so that east and road have each other in private-or-clear,
+and each one will want to do OE. With negotiationshunt=pass, this means both
+ends will startup OE based on the ping packet.
+
+We should end up with one OE tunnel, and no crash :/

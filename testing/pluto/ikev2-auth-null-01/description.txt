@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 using auth NULL (PSK) on the initiator (west),
+and on the responder.
+
+

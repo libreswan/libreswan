@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>seedbits</emphasis></term>
+  <listitem>
+<para>
+Pluto uses the NSS crypto library as its random source. Some government
+Three Letter Agencies require that pluto reads additional bits from /dev/random
+and feed these into the NSS RNG before drawing random from the NSS library,
+despite the NSS library itself already seeding its internal state. This
+process can block pluto for an extended time during startup, depending on
+the entropy of the system. Therefor, the default is to not perform this
+redundant seeding. If specifying a value, it is recommended to specify at
+least 460 bits (for FIPS) or 440 bits (for BSI).
+</para>
+  </listitem>
+  </varlistentry>

@@ -124,38 +124,38 @@ whackwest --status
 000  
 000 "ike-algo-01": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-01":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-01":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-01":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-01":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-01":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-01":   IKE algorithms wanted: 5_000-1-5, 5_000-1-2, flags=-strict
 000 "ike-algo-01":   IKE algorithms found:  5_192-1_128-5, 5_192-1_128-2, 
 000 "ike-algo-02": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-02":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-02":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-02":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-02":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-02":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-02":   IKE algorithms wanted: 5_000-2-5, 5_000-2-2, flags=-strict
 000 "ike-algo-02":   IKE algorithms found:  5_192-2_160-5, 5_192-2_160-2, 
 000 "ike-algo-03": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-03":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-03":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-03":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-03":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-03":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-03":   IKE algorithms wanted: 5_000-2-5, 5_000-2-2, flags=-strict
 000 "ike-algo-03":   IKE algorithms found:  5_192-2_160-5, 5_192-2_160-2, 
 000 "ike-algo-04": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-04":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-04":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-04":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-04":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-04":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-04":   IKE algorithms wanted: 7_000-1-5, 7_000-1-2, flags=-strict
 000 "ike-algo-04":   IKE algorithms found:  7_128-1_128-5, 7_128-1_128-2, 
 000 "ike-algo-05": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-05":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-05":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-05":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-05":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-05":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-05":   IKE algorithms wanted: 7_000-2-5, 7_000-2-2, flags=-strict
 000 "ike-algo-05":   IKE algorithms found:  7_128-2_160-5, 7_128-2_160-2, 
 000 "ike-algo-06": 127.95.7.2:8500[S?C]...127.95.7.1:8500[S?C]; unrouted; eroute owner: #0
 000 "ike-algo-06":   ike_life: 900s; ipsec_life: 800s; rekey_margin: 350s; rekey_fuzz: 100%; keyingtries: 2
-000 "ike-algo-06":   policy: PSK; prio: 32,32; interface: ; 
-000 "ike-algo-06":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "ike-algo-06":   policy: PSK; prio: 32,32; interface: ;
+000 "ike-algo-06":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "ike-algo-06":   IKE algorithms wanted: 7_000-2-5, 7_000-2-2, flags=-strict
 000 "ike-algo-06":   IKE algorithms found:  7_128-2_160-5, 7_128-2_160-2, 
 000  

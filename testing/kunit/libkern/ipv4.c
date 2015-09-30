@@ -205,7 +205,7 @@ int ip_finish_output(struct sk_buff *skb)
 	skb->protocol = htons(ETH_P_IP);
 	/*
 	   if (skb->mac.ethernet)
-	        skb->mac.ethernet->h_proto = skb->protocol;
+		skb->mac.ethernet->h_proto = skb->protocol;
 	 */
 
 #if 0

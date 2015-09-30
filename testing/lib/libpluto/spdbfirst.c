@@ -52,7 +52,7 @@ main(int argc, char *argv[]){
 
 		sa_print(sa1);
 
-		free_sa(sa1);
+		free_sa(&sa1);
 
 		fflush(stdout);
 		report_leaks();

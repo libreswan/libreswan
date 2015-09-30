@@ -2,8 +2,8 @@
 # Scenario: To setup ipsec with certs in tunnel mode using NSS
 #########################################################################
 
-GW Mahine 1: w1.x1.y1.z1 
-GW Mahine 2: w2.x2.y2.z2 
+GW Mahine 1: w1.x1.y1.z1
+GW Mahine 2: w2.x2.y2.z2
 
 w1.x1.y1.z1 <---> w2.x2.y2.z2
 
@@ -16,11 +16,11 @@ certutil -N -d sql:<path-to-ipsec.d dir>/ipsec.d  (please note "sql:" in the beg
 2. Creating CA certs at both machines:
 
 On machine 1:
-certutil -S -k rsa -n cacert1 -s "CN=cacert1" -v 12 -d . -t "C,C,C" -x -d 
+certutil -S -k rsa -n cacert1 -s "CN=cacert1" -v 12 -d . -t "C,C,C" -x -d
 sql:<path-to-ipsec.d dir>/ipsec.d
 
 As we want to use the same certificate  "cacert1" at machine 2, it needs to be
-exported first. To export the cacert1, do the following at machine 1: 
+exported first. To export the cacert1, do the following at machine 1:
 
 pk12util -o cacert1.p12 -n cacert1 -d sql:/etc/ipsec.d
 
@@ -31,24 +31,24 @@ Import the "cacert1" as follows:
 
 cd /etc/ipsec.d
 pk12util -i cacert1.p12 -d sql:/etc/ipsec.d
-certutil -M -n cacert1 -t "C, C, C" -d sql:/etc/ipsec.d 
+certutil -M -n cacert1 -t "C, C, C" -d sql:/etc/ipsec.d
 
 Now machine 2 also has the CA certificates "cacert1" in its NSS database.
 
 3. Creating user certs at both machines:
 
 On machine 1:
-certutil -S -k rsa -c cacert1 -n usercert1 -s "CN=usercert1" -v 12 -t "u,u,u" 
+certutil -S -k rsa -c cacert1 -n usercert1 -s "CN=usercert1" -v 12 -t "u,u,u"
 -d sql:/etc/ipsec.d
 (Note this cert is signed by "cacert1")
 
 On machine 2:
-certutil -S -k rsa -c cacert1 -n usercert2 -s "CN=usercert2" -v 12 -t "u,u,u" 
+certutil -S -k rsa -c cacert1 -n usercert2 -s "CN=usercert2" -v 12 -t "u,u,u"
 -d sql:/etc/ipsec.d
 (Note this cert is signed by "cacert1" too)
 
 
-4. Preparing ipsec.conf at both machines 
+4. Preparing ipsec.conf at both machines
 
 ipsec.conf at machine 1:
 
@@ -91,7 +91,7 @@ conn    pluto-1-2
         ike="aes-sha1"
         auto=add
 
-5. Preparing ipsec.secrets at both machines 
+5. Preparing ipsec.secrets at both machines
 
 ipsec.secrets at machine 1:
 
@@ -104,30 +104,30 @@ ipsec.secrets at machine 1:
 
 
 #########################################################################
-# Import certificates 
+# Import certificates
 #########################################################################
 This example show how to import certificates in nss.
 Is useful if you want to migrate from openswan to libreswan.
 
-Import a CA:    
+Import a CA:
     certutil -A -i <ca_cert_file>  -n "<ca_cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
     example: certutil -A -i /etc/ipsec.d/cacerts/CaCert.pem  -n "CaCert" -t "C,C,C" -d /etc/ipsec.d/
 	
 	
 	
-Import a cert:  
+Import a cert:
     certutil -A -i <cert_file>  -n "<cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
     example: certutil -A -i /etc/ipsec.d/certs/serverCert.pemm  -n "serverCert" -t "C,C,C" -d /etc/ipsec.d/
 
-   
-   
-Import a client cert: 
+
+
+Import a client cert:
     certutil -A -i <cert_file>  -n "<cert_alias>" -t "u,u,u" -d /etc/ipsec.d/
     example: certutil -A -i /etc/ipsec.d/certs/userCert.pem  -n "userCert" -t "u,u,u" -d /etc/ipsec.d/
 Convert key:
     openssl pkcs12 -export -in /etc/ipsec.d/certs/userCert.pem -inkey /etc/ipsec.d/private/userKey.pem -name "userCert" -out /etc/ipsec.d/private/userKey.p12
-Import Key:            
-    pk12util -i /etc/ipsec.d/private/userKey.p12 -d /etc/ipsec.d       
+Import Key:
+    pk12util -i /etc/ipsec.d/private/userKey.p12 -d /etc/ipsec.d
 In your secret file you can use:
     : RSA  "userCert"	
 

@@ -41,16 +41,16 @@ git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libr
 
 # subshell for easier path
 (
-	cd release 
+	cd release
 	tar zxf libreswan-$VERSION.tar.gz
 	cd libreswan-$VERSION
-	echo "3.12?=$VERSION" > Makefile.ver
+	echo "IPSECBASEVERSION?=$VERSION" > Makefile.ver
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
-	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep 3.12 |sed "s/:.*$//"`
+	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
 	do
-		sed -i "s/3.12/$VERSION/" $file
+		sed -i "s/IPSECBASEVERSION/$VERSION/" $file
 	done
-	cd .. 
+	cd ..
 	tar zcf libreswan-$VERSION.tar.gz libreswan-$VERSION
 )
 ls -l release/libreswan-$VERSION.tar.gz

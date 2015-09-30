@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 	struct pluto_crypto_req r;
 	struct pcr_skeycalc_v2_r *skr = &r.pcr_d.dhv2;
 	struct pcr_skeyid_q    *skq = &r.pcr_d.dhq;
+	const char *story;
 
 	progname = argv[0];
 	cur_debugging = DBG_CRYPT;
@@ -99,9 +100,9 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	fflush(stderr);
 
-	calc_dh_v2(&r);
+	calc_dh_v2(&r, &story); /* ??? NSS may fail */
 
-	printf("\noutput:\n");
+	printf("\noutput: %s\n", story);
 
 	fflush(stdout);
 	fflush(stderr);

@@ -7,7 +7,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -224,36 +224,6 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 	*keysize = n.len;
 }
 
-struct pubkey *allocate_RSA_public_key(const cert_t cert)
-{
-	switch (cert.ty) {
-	case CERT_X509_SIGNATURE:
-	{
-		struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-		chunk_t e, n;
-
-		e = cert.u.x509->publicExponent;
-		n = cert.u.x509->modulus;
-
-		n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-		n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-		form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-		DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-
-		pk->alg = PUBKEY_ALG_RSA;
-		pk->id  = empty_id;
-		pk->issuer = empty_chunk;
-
-		return pk;
-	}
-	default:
-		libreswan_log("RSA public key allocation error");
-		return NULL;
-	}
-}
-
 void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	mpz_clear(&rsa->n);
@@ -464,6 +434,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					bool same = 0;
 
 					switch (kind) {
+					case PPK_NULL:
+							same = TRUE;
+						break;
 					case PPK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 						       best->pks.u.preshared_secret.len &&
@@ -596,6 +569,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 
 	rsak->pub.nssCert = nssCert;
 
+	passert(sizeof(rsak->ckaid) >= certCKAID->len);
 	rsak->ckaid_len = certCKAID->len;
 	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
 
@@ -702,18 +676,22 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	err_t ugh = NULL;
 	bool unexpected;
 
-	zero(&friendly_name);
-
 	/* we expect the NSS friendly name of a PKCS#1 private key in the NSS store */
 
-	if (*flp->tok == '"' || *flp->tok == '\'')	/* quoted friendly_name */
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		/* quoted friendly_name */
+		passert(flp->tok[0] == flp->cur[-1]);	/* both quotes the same */
+		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok - 2);
 		memcpy(friendly_name, flp->tok + 1, flp->cur - flp->tok - 2);
-	else
-		memcpy(friendly_name, flp->tok, flp->cur - flp->tok);
+		friendly_name[flp->cur - flp->tok - 2] = '\0';
+	} else {
+		passert((ptrdiff_t)sizeof(friendly_name) > flp->cur - flp->tok);
+		memcpy(friendly_name, flp->tok, flp->cur - flp->tok + 1);
+	}
 
 	unexpected = shift();
 	/* we used to recommend people to provide an empty passphrase for NSS keys */
-	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
+	if (unexpected && (streq(flp->tok, "\"\"") || streq(flp->tok, "''"))) {
 		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
 		unexpected = shift();
 	}
@@ -734,8 +712,12 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 	err_t ugh = NULL;
 
 	if (*flp->tok == '"' || *flp->tok == '\'') {
-		clonetochunk(*psk, flp->tok + 1, flp->cur - flp->tok  - 2,
-			"PSK");
+		size_t len = flp->cur - flp->tok  - 2;
+
+		if (len < 8) {
+			loglog(RC_LOG_SERIOUS,"WARNING: using a weak secret (PSK)");
+		}
+		clonetochunk(*psk, flp->tok + 1, len, "PSK");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -858,6 +840,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			return builddiag("RSA data malformed (%s): %s",
 					ugh, flp->tok);
 		} else if (streq(p->name, "CKAIDNSS")) {
+			passert(sizeof(rsak->ckaid) >= bvlen);
 			memcpy(rsak->ckaid, bv, bvlen);
 			rsak->ckaid_len = bvlen;
 		} else {
@@ -901,40 +884,11 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	}
 }
 
-/*
- * get the matching RSA private key belonging to a given X.509 certificate
- */
-const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-						x509cert_t *cert)
-{
-	struct secret *s;
-	const struct RSA_private_key *pri = NULL;
-	cert_t c;
-	struct pubkey *pubkey;
-
-	c.ty = CERT_X509_SIGNATURE;
-	c.u.x509 = cert;
-
-	pubkey = allocate_RSA_public_key(c);
-
-	if (pubkey == NULL)
-		return NULL;
-
-	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pubkey->u.rsa)) {
-			pri = &s->pks.u.RSA_private_key;
-			break;
-		}
-	}
-	free_public_key(pubkey);
-	return pri;
-}
-
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 static pthread_mutex_t authcert_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 /*
  * lock access to my certs and keys
@@ -1009,10 +963,12 @@ static void process_secret(struct secret **psecrets,
 		s->pks.kind = PPK_RSA;
 		if (!shift()) {
 			ugh = "ERROR: bad RSA key syntax";
-		} else if (tokeq("{")) { /* raw RSA key in NSS */
+		} else if (tokeq("{")) {
+			/* raw RSA key in NSS */
 			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
-		} else { /* RSA key in certificate in NSS */
+		} else {
+			/* RSA key in certificate in NSS */
 			ugh = lsw_process_rsa_keycert(
 				&s->pks.u.RSA_private_key);
 		}
@@ -1219,7 +1175,6 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	char **fnp;
 	glob_t globbuf;
 
-	zero(&globbuf);
 	pos.depth = flp == NULL ? 0 : flp->depth + 1;
 
 	if (pos.depth > 10) {

@@ -40,13 +40,16 @@
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+
 #include "sysdep.h"
 #include "lswconf.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
@@ -316,8 +319,9 @@ static void key_add_request(const struct whack_message *msg)
  */
 void whack_process(int whackfd, const struct whack_message msg)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
-
+	/* May be needed in future:
+	 * const struct lsw_conf_options *oco = lsw_init_options();
+	 */
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
@@ -396,6 +400,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 		for_each_state(v1_delete_state_by_xauth_name, msg.name);
 	}
 
+	if (msg.whack_deleteid) {
+		DBG_log("received whack to delete connection by id %s",
+				msg.name);
+		for_each_state(delete_state_by_id_name, msg.name);
+	}
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);
@@ -434,16 +444,17 @@ void whack_process(int whackfd, const struct whack_message msg)
 		listening = FALSE;
 	}
 
+	if (msg.whack_ddos != DDOS_undefined)
+		set_whack_pluto_ddos(msg.whack_ddos);
+
 	if (msg.whack_reread & REREAD_SECRETS)
 		load_preshared_secrets();
 
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
 
-	if (msg.whack_reread & REREAD_CACERTS) {
-		load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
-		load_authcerts_from_nss("CA cert", AUTH_CA);
-	}
+	if (msg.whack_purgeocsp)
+		clear_ocsp_cache();
 
 	if (msg.whack_reread & REREAD_CRLS)
 		load_crls();
@@ -452,13 +463,13 @@ void whack_process(int whackfd, const struct whack_message msg)
 		list_psks();
 
 	if (msg.whack_list & LIST_CERTS)
-		list_certs(msg.whack_utc);
+		list_certs();
 
 	if (msg.whack_list & LIST_CACERTS)
-		list_authcerts("CA", AUTH_CA, msg.whack_utc);
+		list_authcerts();
 
 	if (msg.whack_list & LIST_CRLS) {
-		list_crls(msg.whack_utc, strict_crl_policy);
+		list_crls();
 #if defined(LIBCURL) || defined(LDAP_VER)
 		list_crl_fetch_requests(msg.whack_utc);
 #endif
@@ -480,16 +491,15 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 			if (c != NULL) {
 				set_cur_connection(c);
-				if (!oriented(*c))
+
+				if (!oriented(*c)) {
 					whack_log(RC_ORIENT,
 						  "we cannot identify ourselves with either end of this connection");
-
-
-				else if (c->policy & POLICY_GROUP)
+				} else if (c->policy & POLICY_GROUP) {
 					route_group(c);
-				else if (!trap_connection(c))
+				} else if (!trap_connection(c)) {
 					whack_log(RC_ROUTE, "could not route");
-
+				}
 
 				reset_cur_connection();
 			}
@@ -538,7 +548,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			whack_log(RC_DEAF,
 				  "need --listen before opportunistic initiation");
 		} else {
-			(void)initiate_ondemand(&msg.oppo_my_client,
+			initiate_ondemand(&msg.oppo_my_client,
 						&msg.oppo_peer_client, 0,
 						FALSE,
 						msg.whack_async ?
@@ -557,12 +567,18 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_status)
 		show_status();
 
+	if (msg.whack_global_status)
+		show_global_status();
+
 	if (msg.whack_traffic_status)
 		show_states_status(TRUE);
 
+	if (msg.whack_shunt_status)
+		show_shunt_status();
+
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");
-		exit_pluto(0); /* delete lock and leave, with 0 status */
+		exit_pluto(PLUTO_EXIT_OK); /* delete lock and leave, with 0 status */
 	}
 
 done:
@@ -570,10 +586,18 @@ done:
 	close(whackfd);
 }
 
+static void whack_handle(int kernelfd);
+
+void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
+		void *arg UNUSED)
+{
+		whack_handle(fd);
+}
+
 /*
  * Handle a whack request.
  */
-void whack_handle(int whackctlfd)
+static void whack_handle(int whackctlfd)
 {
 	struct whack_message msg, msg_saved;
 	struct sockaddr_un whackaddr;
@@ -594,7 +618,17 @@ void whack_handle(int whackctlfd)
 		close(whackfd);
 		return;
 	}
+
+	/*
+	 * properly initialize msg
+	 *
+	 * - needed because short reads are sometimes OK
+	 *
+	 * - although struct whack_msg has pointer fields
+	 *   they don't appear on the wire so zero() should work.
+	 */
 	zero(&msg);
+
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		log_errno((e, "read() failed in whack_handle()"));
@@ -628,7 +662,7 @@ void whack_handle(int whackctlfd)
 			if (msg.whack_shutdown) {
 				libreswan_log("shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-				exit_pluto(0);  /* delete lock and leave, with 0 status */
+				exit_pluto(PLUTO_EXIT_OK);  /* delete lock and leave, with 0 status */
 			}
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
@@ -638,7 +672,7 @@ void whack_handle(int whackctlfd)
 				ugh = "";               /* bail early, but without complaint */
 			} else {
 				ugh = builddiag(
-					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools and KLIPS code.",
+					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
 					msg.magic, WHACK_MAGIC);
 			}
 		} else if ((ugh = unpack_whack_msg(&wp)) != NULL) {

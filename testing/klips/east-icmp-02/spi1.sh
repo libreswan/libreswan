@@ -5,7 +5,7 @@ TZ=GMT export TZ
 ipsec spi --clear
 ipsec eroute --clear
 
-# 0x12345678@192.1.2.45       
+# 0x12345678@192.1.2.45
 enckey1=0x43434545464649494a4a4c4c4f4f51515252545457575840
 authkey1=0x65876587658765876587658765876587
 
@@ -21,9 +21,9 @@ ipsec spi --af inet --edst 192.0.1.1 --spi 0xabcdabcd --proto esp --src 192.1.2.
 
 ipsec spi --af inet --edst 192.0.1.1 --spi 0xabcdabcd --proto tun --src 192.1.2.23 --dst 192.0.1.1 --ip4
 
-ipsec spigrp 	inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
-ipsec spigrp 	inet 192.0.1.1  0xabcdabcd esp inet 192.1.2.45 0x12345678 tun 
-ipsec spigrp    inet 192.0.1.1  0xabcdabcd tun inet 192.0.1.1  0xabcdabcd esp 
+ipsec spigrp 	inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
+ipsec spigrp 	inet 192.0.1.1  0xabcdabcd esp inet 192.1.2.45 0x12345678 tun
+ipsec spigrp    inet 192.0.1.1  0xabcdabcd tun inet 192.0.1.1  0xabcdabcd esp
 
 ipsec eroute --add --eraf inet --src 192.0.2.1/32 --dst 192.0.1.1/32 --said tun0xabcdabcd@192.0.1.1
 

@@ -41,7 +41,7 @@ enum {
 
 #if !defined(__KERNEL__)
 
-
+#include <sys/time.h>
 #include <time.h>
 
 /*
@@ -82,6 +82,10 @@ static inline deltatime_t deltatime(time_t secs) {
 	return d;
 }
 
+static inline unsigned long deltamillisecs(deltatime_t d) {
+	return d.delta_secs * 1000;
+}
+
 static inline time_t deltasecs(deltatime_t d) {
 	return d.delta_secs;
 }
@@ -94,6 +98,17 @@ static inline deltatime_t deltatimescale(int num, int denom, deltatime_t d) {
 static inline bool deltaless(deltatime_t a, deltatime_t b)
 {
 	return deltasecs(a) < deltasecs(b);
+}
+
+static inline bool deltaless_tv_tv(const struct timeval a, const struct timeval b)
+{
+	return a.tv_sec < b.tv_sec ||
+		( a.tv_sec == b.tv_sec && a.tv_usec < b.tv_usec);
+}
+
+static inline bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
+{
+	return a.tv_sec < deltasecs(b);
 }
 
 /* real time operations */
@@ -150,6 +165,7 @@ static inline bool monobefore(monotime_t a, monotime_t b)
 
 static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
 	deltatime_t d = { a.mono_secs - b.mono_secs };
+
 	return d;
 }
 
@@ -185,7 +201,7 @@ static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
 #include <linux/ctype.h>
 #include <libreswan/ipsec_kversion.h>
 #include <libreswan/ipsec_param.h>
-#define user_assert(foo)  /* nothing */
+#define user_assert(foo)  { } /* nothing */
 
 #else /* NOT in kernel */
 #include <sys/types.h>
@@ -391,10 +407,10 @@ typedef uint32_t IPsecSAref_t;
 #define IPSEC_SA_REF_MASK           ((1u << IPSEC_SA_REF_TABLE_IDX_WIDTH) - 1u)
 #define IPSEC_NFMARK_IS_SAREF_BIT 0x80000000u
 
-#define IPsecSAref2NFmark(x) (((x) & \
-			       IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
-#define NFmark2IPsecSAref(x) (((x) >> \
-			       IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
+#define IPsecSAref2NFmark(x) \
+	(((x) & IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
+#define NFmark2IPsecSAref(x) \
+	(((x) >> IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
 
 #define IPSEC_SAREF_NULL ((IPsecSAref_t)0u)
 /* Not representable as an nfmark */

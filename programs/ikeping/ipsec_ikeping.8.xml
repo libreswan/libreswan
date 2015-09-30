@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_IKEPING</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>8 Jul 2009</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec ikeping</refname>
+<refpurpose>send/receive ISAKMP/IKE echo requests/replies</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>ikeping</replaceable></arg>
+    <arg choice='opt'>--listen </arg>
+    <arg choice='opt'>--verbose </arg>
+    <arg choice='opt'><arg choice='plain'>--wait </arg><arg choice='plain'><replaceable>time</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--exchangenum </arg><arg choice='plain'><replaceable>num</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--ikeport </arg><arg choice='plain'><replaceable>localport</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--ikeaddress </arg><arg choice='plain'><replaceable>address</replaceable></arg></arg>
+    <arg choice='opt'>--inet </arg>
+    <arg choice='opt'>--inet6 </arg>
+    <arg choice='plain'><replaceable>destaddr</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>/dstport</replaceable></arg>
+
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Ikeping</emphasis>
+sends and receives ISAKMP/IKE echo request and echo reply packets. These
+packets are intended for diagnostics purposes, in a manner similar to
+<citerefentry><refentrytitle>ping</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+does for ICMP echo request/reply packets.</para>
+
+<para>
+At the time of this writing, the ISAKMP echo request/reply exchange is still
+an internet-draft (draft-richardson-ipsec-ikeping-00), and is therefore
+completely non-standard. The Libreswan IKE daemon pluto does implement this
+draft, so ikeping can be used to test connectivity to an libreswan ipsec
+server.
+
+</para>
+
+<para><emphasis remap='I'>Ikeping</emphasis>
+will bind to the local address given by
+<option>--ikeaddress</option>
+and the port number given by
+<option>--ikeport</option>
+defaulting to the wildcard address and the ISAKMP port 500. An ISAKMP
+exchange of type 244 (a private use number) is sent to each of the
+address/ports listed on the command line. The exchange number may be
+overridden by the
+<option>--exchangenum</option>
+option.</para>
+
+<para><emphasis remap='I'>Ikeping</emphasis>
+then listens for replies, printing them as they are received. Replies
+are of exchange type 245 or the specified exchange number plus 1.
+<emphasis remap='I'>Ikeping</emphasis>
+will keep listening until it either receives as many echo responses as it sent,
+or until the timeout period (5 seconds) has been reached. Receipt of a
+packet will reset the timer. The
+<option>--wait</option>
+option can be used to specify a different timeout period.</para>
+
+<para>If the
+<option>--listen</option>
+option is given, then
+<emphasis remap='I'>ikeping</emphasis>
+will not send any packets. Instead, it will listen for them and reply to
+each request received.</para>
+
+<para>If the
+<option>--natt</option>
+option is given, then
+<emphasis remap='I'>ikeping</emphasis>
+will set the socket to permit UDP encapsulated ESP packets.
+This is only useful in listen mode.</para>
+
+</refsect1>
+
+<refsect1 id='files'><title>FILES</title>
+<para>no external files</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ping</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the Linux FreeS/WAN project
+&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+by Michael Richardson.</para>
+</refsect1>
+</refentry>
+

@@ -23,7 +23,7 @@ while(<CALC>) {
     $reciprocal=$1;
 
     $reciprocal =~ y/a-f/A-Z/;
-    
+
     $bitlen = length($reciprocal) * 4;
     $i = 0;
     $str = substr($reciprocal, 0, 2);

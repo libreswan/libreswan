@@ -17,7 +17,7 @@ then
 	fi
 fi
 
-export PATH=$TESTING/pluto/bin:$PATH 
+export PATH=$TESTING/pluto/bin:$PATH
 
 if [ -z "${OBJDIR:-}" ]
 then
@@ -233,7 +233,7 @@ function grab_lifetimes() {
 
 ut() {
 	mount -o rw,remount /testing
-	for f 
+	for f
 	do
 		cp log/$f/wi-log log.ref/$f/wi-log
 	done

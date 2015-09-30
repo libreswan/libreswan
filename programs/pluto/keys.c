@@ -9,6 +9,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +62,7 @@
 #include "mpzfuncs.h"
 
 #include "fetch.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 #include "nat_traversal.h"
 
@@ -451,7 +452,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca(key->issuer, c->spd.that.ca,
+			    trusted_ca_nss(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
 
 				DBG(DBG_CONTROL, {
@@ -493,9 +494,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    take_a_crack(&s, gwp->key,
 						 "key from DNS TXT"))
 					return STF_OK;
-		}
 #ifdef USE_KEYRR
-		else if (keys_from_dns != NULL) {
+		} else if (keys_from_dns != NULL) {
 			/* KEY keys */
 			const struct pubkey_list *kr;
 
@@ -504,9 +504,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    take_a_crack(&s, kr->key,
 						 "key from DNS KEY"))
 					return STF_OK;
-		}
 #endif          /* USE_KEYRR */
-		else {
+		} else {
 			/* nothing yet: ask for asynch DNS lookup */
 			return STF_SUSPEND;
 		}
@@ -591,9 +590,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
-		struct pubkey *my_public_key = allocate_RSA_public_key(
-			c->spd.this.cert);
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+			c->spd.this.cert.u.nss_cert != NULL) {
+		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
+			c->spd.this.cert.u.nss_cert);
 
 		passert(my_public_key != NULL);
 
@@ -622,7 +622,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
 		    (id_is_ipaddr(&c->spd.that.id))
-	            /* Check if we are a road warrior instantiation, not a vnet: instantiation */
+		    /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		    && (isanyaddr(&c->spd.that.host_addr)))
 		  )
 		  ) {
@@ -662,7 +662,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	zero(&xa_id);
+	zero(&xa_id);	/* redundant */
 	xa_id.kind = ID_FQDN;
 	xa_id.name.ptr = (unsigned char *)xauthname;
 	xa_id.name.len = strlen(xauthname);
@@ -693,35 +693,22 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 					  PPK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
 
+	if (c->policy & POLICY_AUTH_NULL) {
+		DBG(DBG_PRIVATE, DBG_log("AUTH_NULl secret - returning empty_chunk"));
+		return &empty_chunk;
+	}
+
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
 	DBG(DBG_PRIVATE, {
-		    if (s == NULL)
-			    DBG_log("no Preshared Key Found");
-		    else
-			    DBG_dump_chunk("Preshared Key",
-					   pks->u.preshared_secret);
-	    });
+		if (s == NULL)
+			DBG_log("no Preshared Key Found");
+		else
+			DBG_dump_chunk("Preshared Key",
+				       pks->u.preshared_secret);
+	});
 	return s == NULL ? NULL : &pks->u.preshared_secret;
-}
-
-/* check the existence of an RSA private key matching an RSA public
- * key contained in an X.509
- */
-bool has_private_key(cert_t cert)
-{
-	bool has_key = FALSE;
-	struct pubkey *pubkey;
-
-	pubkey = allocate_RSA_public_key(cert);
-	if (pubkey == NULL)
-		return FALSE;
-
-	has_key = lsw_has_private_rawkey(pluto_secrets, pubkey);
-
-	free_public_key(pubkey);
-	return has_key;
 }
 
 /* find the appropriate RSA private key (see get_secret).
@@ -738,12 +725,12 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 		pks = lsw_get_pks(s);
 
 	DBG(DBG_PRIVATE, {
-		    if (s == NULL)
-			    DBG_log("no RSA key Found");
-		    else
-			    DBG_log("rsa key %s found",
-				    pks->u.RSA_private_key.pub.keyid);
-	    });
+		if (s == NULL)
+			DBG_log("no RSA key Found");
+		else
+			DBG_log("rsa key %s found",
+				pks->u.RSA_private_key.pub.keyid);
+	});
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 

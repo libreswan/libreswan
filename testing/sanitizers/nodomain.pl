@@ -17,7 +17,7 @@ while (<>) {
     if (/^arp/) {
 	$printit = 0;
 	next LINE;
-    } 
+    }
 }
 continue {
     if ($printit)

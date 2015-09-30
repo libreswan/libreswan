@@ -1,4 +1,4 @@
-This assumes that you have scripts to start each UML by name in 
+This assumes that you have scripts to start each UML by name in
 new window.
 
 If you are not online, or multicast is screwed for you, please
@@ -52,4 +52,4 @@ cut & paste the UML_*_CTL lines to your original window.
 Then, export them all.
 
 
-  
+

@@ -21,18 +21,18 @@ by specifying the interface ipsecX. This interface does not exist any more
 with the in-kernel implementation of IPsec support in kernel 2.6.
 
 To allow filtering specifically for IPsec packets, a new netfilter policy
-module has been created. To find out about it, enter 
+module has been created. To find out about it, enter
 ipsec -m policy --help
 
-You can match IPsec/non-IPsec traffic (--pol ipsec/none) by direction 
-(in/out), protocol (esp/ah/ipcomp), mode (tunnel/transport), ... and do 
-whatever you want with the matching packets (ACCEPT, DROP, ...) 
+You can match IPsec/non-IPsec traffic (--pol ipsec/none) by direction
+(in/out), protocol (esp/ah/ipcomp), mode (tunnel/transport), ... and do
+whatever you want with the matching packets (ACCEPT, DROP, ...)
 
-Here's an example that rejects all incoming packets from the interface 
+Here's an example that rejects all incoming packets from the interface
 $WLAN_IF that is are not IPsec ESP packets.
-iptables -A FORWARD -i $WLAN_IF -m policy --dir in --pol ipsec -j ACCEPT 
-iptables -A FORWARD -i $WLAN_IF -j LOG --log-prefix "NonESP: " 
-iptables -A FORWARD -i $WLAN_IF -j DROP 
- 
+iptables -A FORWARD -i $WLAN_IF -m policy --dir in --pol ipsec -j ACCEPT
+iptables -A FORWARD -i $WLAN_IF -j LOG --log-prefix "NonESP: "
+iptables -A FORWARD -i $WLAN_IF -j DROP
+
 					Your Novell/SUSE team.
 					http://www.suse.com/feedback/

@@ -63,8 +63,10 @@
 # include "ipsec_ocf.h"
 #endif
 
-#define ESP_DMP(_x, _y, _z) if (debug_rcv && sysctl_ipsec_debug_verbose) \
-		ipsec_dmp_block(_x, _y, _z)
+#define ESP_DMP(_x, _y, _z) { \
+		if (debug_rcv && sysctl_ipsec_debug_verbose) \
+			ipsec_dmp_block((_x), (_y), (_z)); \
+	}
 
 #ifdef CONFIG_KLIPS_ESP
 enum ipsec_rcv_value ipsec_rcv_esp_checks(struct ipsec_rcv_state *irs,
@@ -172,7 +174,7 @@ enum ipsec_rcv_value ipsec_rcv_esp_authcalc(struct ipsec_rcv_state *irs,
 		if (irs->said.proto == IPPROTO_ESP) {
 			ipsec_alg_sa_esp_hash(irs->ipsp,
 					      (caddr_t)espp, irs->ilen,
-					      irs->hash, AHHMAC_HASHLEN);
+					      irs->hash, irs->ixt_a->ixt_a_authlen);
 			return IPSEC_RCV_OK;
 		}
 		return IPSEC_RCV_BADPROTO;

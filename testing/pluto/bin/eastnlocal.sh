@@ -49,12 +49,12 @@ else
 
 	cp ${TESTING}/pluto/$TESTNAME/east.conf /tmp/$TESTNAME/ipsec.conf
 	cp /etc/ipsec.secrets                    /tmp/$TESTNAME
-	if [ -f ${TESTING}/pluto/$TESTNAME/east.secrets ] 
+	if [ -f ${TESTING}/pluto/$TESTNAME/east.secrets ]
 	then
     		cp ${TESTING}/pluto/$TESTNAME/east.secrets /tmp/$TESTNAME/ipsec.secrets
 	fi
 
-	if [ -f ${TESTING}/pluto/$TESTNAME/east.tpm.tcl ] 
+	if [ -f ${TESTING}/pluto/$TESTNAME/east.tpm.tcl ]
 	then
     		cp ${TESTING}/pluto/$TESTNAME/east.tpm.tcl /tmp/$TESTNAME/ipsec.d/tpm.tcl
 	fi

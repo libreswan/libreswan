@@ -77,13 +77,13 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
 ipsec_set_policy();
-function generates an IPsec policy specification structure, 
+function generates an IPsec policy specification structure,
 <literal>struct</literal> <literal>sadb_x_policy</literal>
 and/or
 <literal>struct</literal> <literal>sadb_x_ipsecrequest</literal>
 from a human-readable policy specification.
-The policy specification must be given as a C string, 
-passed in the 
+The policy specification must be given as a C string,
+passed in the
 <emphasis remap='Fa'>policy</emphasis>
 argument and the length of the string, given as
 <emphasis remap='Fa'>len</emphasis>.
@@ -123,7 +123,7 @@ It is the caller's responsibility to free the returned pointer using the
 <citerefentry><refentrytitle>free</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 library call.</para>
 
-<para>A 
+<para>A
 <emphasis remap='Fa'>policy</emphasis>
 is given in the following way:</para>
 <variablelist remap='Bl -tag -width discard'>
@@ -136,7 +136,7 @@ must be
 <literal>in</literal>
 or
 <literal>out</literal>
-and 
+and
 specifies which direction the policy needs to be applied, either on
 inbound or outbound packets.
 When the
@@ -157,7 +157,7 @@ in the kernel, as controlled by
 <varlistentry>
 <term><replaceable>direction</replaceable> <literal>bypass</literal></term>
 <listitem>
-<para>A direction of 
+<para>A direction of
 <literal>bypass</literal>
 indicates that IPsec processing should not occur and that the
 packet will be transmitted in clear.  The bypass option is only
@@ -207,7 +207,7 @@ is either
 <literal>transport</literal>
 or
 <literal>tunnel</literal>
-the meanings of both modes are described in 
+the meanings of both modes are described in
 <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>4</manvolnum></citerefentry>.</para>
 
 <para>The
@@ -254,7 +254,7 @@ defined by a set of
 <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 variables.  The relevant
 <citerefentry><refentrytitle>sysctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-variables are described in 
+variables are described in
 <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>4</manvolnum></citerefentry>.</para>
 
 <para>When
@@ -292,7 +292,7 @@ Put the decimal number as the identifier after the
 <literal>unique</literal>
 keyword in this way:
 <literal>unique</literal> <literal>:</literal> <literal>number</literal>,
-where 
+where
 <literal>number</literal>
 must be between 1 and 32767.</para>
 
@@ -316,7 +316,7 @@ is omitted, it will be interpreted as
 </variablelist>
 
 <para>Note that there is a difference between the specification allowed here
-and in 
+and in
 <citerefentry><refentrytitle>setkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 When specifying security policies with
 <citerefentry><refentrytitle>setkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -363,11 +363,11 @@ out ipsec esp/tunnel/10.1.1.2-10.1.1.1/require
 ipsec_set_policy();
 function returns a pointer to the allocated buffer containing a the
 policy specification if successful; otherwise a NULL pointer is
-returned.</para>  
+returned.</para>
 
 <para>The
 ipsec_get_policylen();
-function returns a positive value, 
+function returns a positive value,
 indicating the buffer size,
 on success, and a negative value on error.</para>
 

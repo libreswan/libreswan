@@ -1,2 +1,2 @@
 bt full
-quit 
+quit

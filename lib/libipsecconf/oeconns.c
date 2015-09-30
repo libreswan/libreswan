@@ -409,7 +409,7 @@ void add_any_oeconns(struct starter_config *cfg,
 		for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
 			if (streq((*oc)->oe_cn, sconn->name)) {
 				starter_log(LOG_LEVEL_DEBUG,
-					    "found non-implicit conn: %s\n",
+					    "found non-implicit conn: %s",
 					    sconn->name);
 				found_conns[i] = TRUE;
 			}
@@ -423,13 +423,13 @@ void add_any_oeconns(struct starter_config *cfg,
 
 			tconn = &((*oc)->oe_sc);
 			starter_log(LOG_LEVEL_DEBUG,
-				    "did not find conn: %s, loading implicit\n",
+				    "did not find conn: %s, loading implicit",
 				    (*oc)->oe_cn);
 
 			conn = alloc_add_conn(cfg, (*oc)->oe_cn);
 			if (conn == NULL) {
 				starter_log(LOG_LEVEL_INFO,
-					    "Can not create conn %s\n",
+					    "Can not create conn %s",
 					    (*oc)->oe_cn);
 				continue;
 			}

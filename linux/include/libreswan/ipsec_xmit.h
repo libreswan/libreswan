@@ -188,9 +188,10 @@ extern int ipsec_xmit_trap_sendcount;
 extern int debug_xmit;
 extern int debug_mast;
 
-#define ipsec_xmit_dmp(_x, _y, _z) if (debug_xmit && \
-				       sysctl_ipsec_debug_verbose) \
-		ipsec_dmp_block(_x, _y, _z)
+#define ipsec_xmit_dmp(_x, _y, _z) { \
+		if (debug_xmit && sysctl_ipsec_debug_verbose) \
+			ipsec_dmp_block(_x, _y, _z); \
+	}
 
 extern int sysctl_ipsec_debug_verbose;
 extern int sysctl_ipsec_icmp;

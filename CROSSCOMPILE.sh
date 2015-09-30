@@ -19,7 +19,7 @@ export STRIP=$PREFIX/bin/arm-elf-strip
 export LD_LIBRARY_PATH=$PREFIX/lib/gcc-lib/arm-elf/3.0/
 export PATH=$PATH:$PREFIX/bin
 export USERCOMPILE="-Wl,-elf2flt -DCOMPILER_HAS_NO_PRINTF_LIKE -O3 -g ${PORTDEFINE} -I$PREFIX/arm-elf/inc -L$PREFIX/lib/gcc-lib -DGCC_LINT -Dlinux -D__linux__"
-export WERROR=' ' 
+export WERROR=' '
 
 #now you can run:
 # make programs

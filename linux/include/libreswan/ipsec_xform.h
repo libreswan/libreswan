@@ -60,6 +60,7 @@
 #define AH_AES_192_GMAC         12      /* RFC4543 [Errata1821] */
 #define AH_AES_256_GMAC         13      /* RFC4543 [Errata1821] */
 #define AH_NULL                 251
+#define AH_SHA2_256_TRUNC       252     /* used for broken linux kernel behaviour */
 #define AH_MAX                  255     /* note Authentication Algorithm (Value 5) Reference: [RFC2407] has
 	                                 * two octets but IPSEC AH Transform Identifiers has one octet! */
 
@@ -146,14 +147,14 @@ static inline const char *auth_name_id(unsigned id)
 	(x)->ips_encalg == ESP_AES ? "_AES" : \
 	(x)->ips_encalg == ESP_SERPENT ? "_SERPENT" : \
 	(x)->ips_encalg == ESP_TWOFISH ? "_TWOFISH" : \
-	enc_name_id(x->ips_encalg) /* "_UNKNOWN_encr" */, \
+	enc_name_id((x)->ips_encalg) /* "_UNKNOWN_encr" */, \
 	(x)->ips_authalg == AH_NONE ? "" : \
 	(x)->ips_authalg == AH_MD5 ? "_HMAC_MD5" : \
 	(x)->ips_authalg == AH_SHA ? "_HMAC_SHA1" : \
 	(x)->ips_authalg == AH_SHA2_256 ? "_HMAC_SHA2_256" : \
 	(x)->ips_authalg == AH_SHA2_384 ? "_HMAC_SHA2_384" : \
 	(x)->ips_authalg == AH_SHA2_512 ? "_HMAC_SHA2_512" : \
-	auth_name_id(x->ips_authalg) /* "_UNKNOWN_auth" */ \
+	auth_name_id((x)->ips_authalg) /* "_UNKNOWN_auth" */ \
 
 #ifdef __KERNEL__
 #include <linux/skbuff.h>

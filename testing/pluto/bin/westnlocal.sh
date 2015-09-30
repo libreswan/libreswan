@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this script is used by "west" UMLs that want to have per-test
-# configuration files. 
+# configuration files.
 
 /testing/pluto/bin/wait-until-network-ready
 
@@ -49,7 +49,7 @@ else
 	
 	# this differs from westlocal.sh right here, where we copy
 	# rather than append.
-	if [ -f /testing/pluto/$TESTNAME/west.secrets ] 
+	if [ -f /testing/pluto/$TESTNAME/west.secrets ]
 	then
 	    	cp /testing/pluto/$TESTNAME/west.secrets /tmp/$TESTNAME/ipsec.secrets
 	fi

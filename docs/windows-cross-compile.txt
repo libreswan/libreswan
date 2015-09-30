@@ -7,7 +7,7 @@ But, binutils isn't needed anymore}
 Pick a directory to build in. In my case /0g/sandboxes
 
 0) download, ./configure, make and install cocom from
-   http://cocom.sourceforge.net/ 
+   http://cocom.sourceforge.net/
    (They have an RPM, but I didn't find a .deb)
    This gets you the "shakli" program. It is a program to help create
    fast parsers. I think it is used for the fs emulation layer.
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 g) build your favorite stuff, e.g:
    extract libgmp4,
    mkdir build/gmp4
-   cd build/gmp4        
+   cd build/gmp4
    PATH=/xelerance/cross/win2k/bin:$PATH export PATH
    CC=i686-pc-cygwin-gcc ../../gmp-4.1.2/configure --prefix=/xelerance/cross/win2k/i686-pc-cygwin/include --host=i686-pc-cygwin --with-pic
 
@@ -101,11 +101,11 @@ macros used in the makefiles for gcc are, it seems expanded a variable number
 of times in different paths, and the t=/echo $$t stuff got expanded by MAKE
 rather than by the shell script.
 
-I rebuilt again with the ln-s for binutils, and this didn't happen, because 
+I rebuilt again with the ln-s for binutils, and this didn't happen, because
 one never gets to that part of the condition for AR_FOR_TARGET. So there is
 still a bug there, but I didn't manage to fix it.
 
--- 
+--
 ] Michael Richardson          Xelerance Corporation, Ottawa, ON |  firewalls  [
 ] mcr @ xelerance.com           Now doing IPsec training, see   |net architect[
 ] http://www.sandelman.ca/mcr/    www.xelerance.com/training/   |device driver[

@@ -1,3 +1,3 @@
-This tests reception (decryption) of ESP-3DES-MD5 packets with a source 
-of encrypted ICMP packets. The SA directs that the packets should be 
+This tests reception (decryption) of ESP-3DES-MD5 packets with a source
+of encrypted ICMP packets. The SA directs that the packets should be
 received on the mast0 device, instead of the default ipsec0 device.

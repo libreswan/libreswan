@@ -6,7 +6,7 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 # confirm with a ping
 ping -n -c 4 192.0.2.254
 
-TESTNAME=fail-pluto-06 
+TESTNAME=fail-pluto-06
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start

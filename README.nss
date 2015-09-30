@@ -4,9 +4,9 @@
 # Based on initial documentation by Avesh Agarwal <avagarwa@redhat.com>
 #########################################################################
 
-For detailed developer information about NSS, see 
+For detailed developer information about NSS, see
 http://www.mozilla.org/projects/security/pki/nss/
- 
+
 The NSS crypto library is user space library. It is only used with the
 libreswan userspace IKE daemon pluto for cryptographic operations. NSS
 does not perform IPsec crypto operations inside the kernel (KLIPS
@@ -72,7 +72,7 @@ running in FIPS mode.
 
 To change the empty password, run:
 
-	certutil -W -d /etc/ipsec.d
+	certutil -W -d sql:/etc/ipsec.d
 
 Enter return for the "old password", then enter your new password.
 
@@ -87,7 +87,7 @@ file must exist for pluto to start.
 The syntax of the "nsspassword" file is:
 
 token_1_name:the_password
-token_2_name:the_password  
+token_2_name:the_password
 
 The name of NSS softtoken (the default software NSS db) when NOT running
 in FIPS mode is "NSS Certificate DB". If you wish to use software NSS
@@ -96,7 +96,7 @@ nsspassword file:
 
 NSS Certificate DB:secret
 
-If running NSS in FIPS mode, the name of NSS softtoken is 
+If running NSS in FIPS mode, the name of NSS softtoken is
 "NSS FIPS 140-2 Certificate DB". If there are smartcards in the system, the
 entries for passwords should be entered in this file as well.
 
@@ -111,7 +111,7 @@ creating raw RSA keys. If a non-default NSS directory is used, this can
 be specified using the -d option.
 
 	ipsec newhostkey --configdir /etc/ipsec.d [--password password] \
-		--output /etc/ipsec.secrets 
+		--output /etc/ipsec.secrets
 
 The password is only required if the NSS database is protected with a
 non-empty password.  All "private" compontents of the raw RSA key in
@@ -139,13 +139,14 @@ Below, we will be using the nss tools to generate certificates
 * To create a certificate authority (CA certficate):
 
 	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
-		-t "C,C,C" -x -d /etc/ipsec.d
+		-t "CT,," -x -d sql:/etc/ipsec.d
 
 It creates a certificate with RSA keys (-k rsa) with the nick name
 "ExampleCA", and with common name "Example CA Inc". The option
 "-w" specifies the certificates validy period. "-t" specifies the attributes
 of the certificate. "C" is required for creating a CA certificate. "-x" mean
-self signed. "-d" specifies the path of the database directory.
+self signed. "-d" specifies the path of the database directory. The directory
+path should be prefixed with 'sql:' in order to use the SQLite format.
 
 NOTE: It is not a requirement to create the CA in NSS database. The CA
 certificate can be obtained from anywhere in the world.
@@ -153,14 +154,14 @@ certificate can be obtained from anywhere in the world.
 * To create a user certificate signed by the above CA
 
 	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
-		-w 12 -t "u,u,u" -d /etc/ipsec.d 
+		-w 12 -t "u,u,u" -d sql:/etc/ipsec.d
 
 It creates a user cert with nick name "user1" with attributes
-"u,u,u" signed by the CA cert "ExampleCA". 
+"u,u,u" signed by the CA cert "ExampleCA".
 
 NOTE: You must provide a nick name when creating a user certificate,
 because pluto reads the user certificate from the NSS database based on
-the user certificate's nickname. 
+the user certificate's nickname.
 
 
 #########################################################################
@@ -233,13 +234,12 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
+	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 
 	ipsec import cacert1.p12
-	certutil -M -n cacert1 -t "C,C,C" -d /etc/ipsec.d
-
+	certutil -M -n cacert1 -t "CT,," -d sql:/etc/ipsec.d
 
 Example connection for ipsec.conf:
 
@@ -263,7 +263,7 @@ To make smartcard tokens visible through NSS
 
 	modutil -add <module_name> -libfile libcoolkeypk11.so \
 		-dbdir <nss_database_dir_name> \
-		-mechanisms  <mechanisms_separted_by_colons> 
+		-mechanisms  <mechanisms_separted_by_colons>
 
 An example of mechanisms can be
 RC2:RC4:DES:DH:SHA1:MD5:MD2:SSL:TLS:AES:CAMELLIA.

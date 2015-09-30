@@ -23,11 +23,9 @@
 #include "quirks.h"
 
 struct state;   /* forward declaration of tag */
+
 extern void init_demux(void);
-extern bool send_ike_msg(struct state *st, const char *where);
-extern bool resend_ike_v1_msg(struct state *st, const char *where);
-extern bool send_keepalive(struct state *st, const char *where);
-extern void comm_handle(const struct iface_port *ifp);
+extern event_callback_routine comm_handle_cb;
 
 extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
@@ -83,7 +81,7 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	enum phase1_role role;			/* (v2) */
+	enum original_role original_role;	/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
 	pb_stream rbody;			/* room for reply body (after header) */

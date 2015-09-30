@@ -2,7 +2,7 @@
 /^\(002 .*received Vendor ID Payload; ASCII hash: \).*/s//\1XXXXXXXXXXXX/
 s/ [({]using isakmp#.*[})]//
 /^\=\=\= /d
-/eer ID is ID_IPV4_ADDR/d  
+/eer ID is ID_IPV4_ADDR/d
 s/ {isakmp=#.*\/ipsec=#.*}//
 /Changing to directory /d
 /  Warning: empty directory/d

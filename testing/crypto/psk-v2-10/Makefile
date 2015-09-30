@@ -1,13 +1,9 @@
-LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-
 UNITTEST=psk-v2
 CFLAGS=-DUSE_3DES
-INCLUDES=-I${srcdir}${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir}${LIBRESWANSRCDIR}/testing/lib/libpluto
-VPATH += ${srcdir}
-LIBRESWANSRCDIRREL=../../..
+INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
+INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
 
-SOURCES=psk-v2.c packetsI1psk.c 
+SOURCES=psk-v2.c packetsI1psk.c
 
 # what we are testing
 OBJS+=${OBJDIRTOP}/programs/pluto/ikev2_psk.o
@@ -42,7 +38,7 @@ OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_aes.o
 OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_sha2.o
 OBJS+=${OBJDIRTOP}/programs/pluto/kernel_noklips.o
 
-OBJS+=${PLUTOLIB} 
+OBJS+=${PLUTOLIB}
 PROGLIBS=
 EXTRALIBS+=${PLUTOLIB} ${CRYPTOLIBS} ${WHACKLIB}
 
@@ -51,10 +47,13 @@ PROGRAM=psk-v2
 programs checkprograms: ${UNITTEST}
 	@true
 
-include ${LIBRESWANSRCDIR}/programs/Makefile.program
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
+endif
 
 packetsI1psk.c: ../../lib/libpluto/lib-parentI1psk/parentI1psk.pcap
-
 	../../utils/pcap2skb/pcap2skb $< >packetsI1psk.c
 
 #psk-v2.o: ${SOURCES}

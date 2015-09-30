@@ -36,16 +36,16 @@ while($operationCount < $maxOperations) {
   if($op < 1 && $saCount > 0) {
     # generate a free with probability 25%, if there are any to free
     # pick an SA to free.
-    
+
     $sanum=rand($saCount);
     $edst=$edst[$sanum];
     $spi=$spi[$sanum];
-    
+
     #print "free $edst $spi $proto $src\n";
     print "ipsec spi --af inet --edst $edst --spi $spi --proto $proto --del\n";
 
     $del=1;
-      
+
     if($sanum != $saCount-1) {
       # delete it, by copying one from end.
       $edst[$sanum]=$edst[$saCount-1];

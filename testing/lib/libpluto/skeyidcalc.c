@@ -181,7 +181,7 @@ main(int argc, char *argv[]){
 	init_crypto();
 	hasher = crypto_get_hasher(OAKLEY_SHA1);
 
-	zero(&expected);
+	expected = empty_chunk;
 
 	tool_init_log();
 
@@ -196,11 +196,17 @@ main(int argc, char *argv[]){
 	for (i = 0; i < elemsof(rsasc); i++) {
 		struct pcr_skeyid_q skq;
 		struct pcr_skeyid_q *dhq = &skq;
-		chunk_t skeyid, skeyid_d, skeyid_a, skeyid_e, new_iv, enc_key;
+		chunk_t
+			skeyid= empty_chunk,
+			skeyid_d = empty_chunk,
+			skeyid_a = empty_chunk,
+			skeyid_e = empty_chunk,
+			new_iv = empty_chunk,
+			enc_key = empty_chunk;
 
 		DBG_log("rsa test %d\n", i);
 
-		zero(&skq);
+		zero(&skq);	/* ??? pointer fields might not be NULLed */
 		dhq->thespace.start = 0;
 		dhq->thespace.len   = sizeof(dhq->space);
 
@@ -216,18 +222,16 @@ main(int argc, char *argv[]){
 		WIRE_CLONE_CHUNK(*dhq, icookie, rsasc[i].icookie);
 		WIRE_CLONE_CHUNK(*dhq, rcookie, rsasc[i].rcookie);
 
-		zero(&skeyid);
-		zero(&skeyid_d);
-		zero(&skeyid_a);
-		zero(&skeyid_e);
-		zero(&new_iv);
-		zero(&enc_key);
-
 		calc_skeyids_iv(&skq,
 				rsasc[i].shared,
 				skq.keysize,
-				&skeyid, &skeyid_d, &skeyid_a, &skeyid_e,
-				&new_iv, &enc_key);
+				&skeyid,	/* output */
+				&skeyid_d,	/* output */
+				&skeyid_a,	/* output */
+				&skeyid_e,	/* output */
+				&new_iv,	/* output */
+				&enc_key	/* output */
+				);
 
 		/* calc_dh_iv(dhq); */
 	}

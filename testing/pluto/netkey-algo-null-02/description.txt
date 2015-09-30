@@ -8,4 +8,4 @@ When using KLIPS, this apparently crashes pluto. This is bug #890
 
 The parameter "null" is apparently not evaluated and libreswan tries to
 generate a key with length 0. This is not a valid length value. The error
-message is: "Trouble building pfkey message, error=22"   
+message is: "Trouble building pfkey message, error=22"

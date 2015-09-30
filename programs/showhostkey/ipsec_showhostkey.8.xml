@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_SHOWHOSTKEY</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>29 April 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec showhostkey</refname>
+<refpurpose>show host's authentication key</refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+
+    <arg choice='plain'><replaceable>showhostkey</replaceable></arg>
+    <arg choice='opt'>--ipseckey </arg>
+    <arg choice='opt'>--left </arg>
+    <arg choice='opt'>--right </arg>
+    <arg choice='opt'>--dump </arg>
+    <arg choice='opt'>--verbose </arg>
+    <arg choice='opt'>--version </arg>
+    <arg choice='opt'>--list </arg>
+    <arg choice='opt'><arg choice='plain'>--gateway </arg><arg choice='plain'><replaceable>gateway</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--precedence </arg><arg choice='plain'><replaceable>precedence</replaceable></arg></arg>
+    <arg choice='opt'>--dhclient </arg>
+    <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>secretfile</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--keynum </arg><arg choice='plain'><replaceable>count</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--id </arg><arg choice='plain'><replaceable>identity</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Showhostkey</emphasis>
+outputs (on standard output) a public key suitable for this host,
+in the format specified,
+using the host key information stored in
+<filename>/etc/ipsec.secrets</filename>.
+In general only the super-user can run this command,
+since only he can read <emphasis remap='I'>ipsec.secrets</emphasis>.</para>
+
+<para>The
+<option>--left</option>
+and
+<option>--right</option>
+options cause the output to be in
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format, as a
+<emphasis remap='B'>leftrsasigkey</emphasis>
+or
+<emphasis remap='B'>rightrsasigkey</emphasis>
+parameter respectively.
+Generation information is included if available.  For example,
+<option>--left</option>
+might give (with the key data trimmed down for clarity):</para>
+
+<literallayout remap='.nf'>
+  # RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
+  leftrsasigkey=0sAQOF8tZ2...+buFuFn/
+</literallayout> <!-- .fi -->
+
+<para>The <option>--ipseckey</option>
+option causes the output to be in opportunistic-encryption DNS IPSECKEY record
+format (RFC 4025). A gateway can be specified with the <option>--gateway</option>,
+which currently supports IPv4 and IPv6 addresses. The host name is the one included in the key information
+(or, if that is not available, the output of
+<userinput>hostname&nbsp;--fqdn</userinput>),
+with a <emphasis remap='B'>.</emphasis> appended.
+
+For example,
+<option>--ipseckey --gateway 10.11.12.13</option>
+might give (with the key data trimmed for clarity):</para>
+
+<literallayout remap='.nf'>
+      IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
+</literallayout> <!-- .fi -->
+
+<para>The <option>--version</option> option causes the version of the binary to be emitted, and nothing else.</para>
+
+<para>The <option>--verbose</option> may be present one or more times. Each occurance increases the verbosity level. </para>
+
+<para>The <option>--dhclient</option>
+option cause the output to be suitable for inclusion in
+<citerefentry><refentrytitle>dhclient.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+as part of configuring WAVEsec.
+See &lt;<ulink url='http://www.wavesec.org'>http://www.wavesec.org</ulink>&gt;.</para>
+
+
+<para>Normally, the default key for this host
+(the one with no host identities specified for it) is the one extracted.
+The
+<option>--id</option>
+option overrides this,
+causing extraction of the key labeled with the specified
+<emphasis remap='I'>identity</emphasis>,
+if any.
+The specified
+<emphasis remap='I'>identity</emphasis>
+must
+<emphasis remap='I'>exactly</emphasis>
+match the identity in the file;
+in particular, the comparison is case-sensitive.</para>
+
+<para>There may also be multiple keys with the same identity. All keys are
+numbered based upon their linear sequence in the file (including all include
+directives)
+</para>
+
+<para>The
+<option>--file</option>
+option overrides the default for where the key information should be
+found, and takes it from the specified
+<emphasis remap='I'>secretfile</emphasis>.</para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>A complaint about &ldquo;no pubkey line found&rdquo; indicates that the
+host has a key but it was generated with an old version of FreeS/WAN
+and does not contain the information that
+<emphasis remap='I'>showhostkey</emphasis>
+needs.</para>
+</refsect1>
+
+<refsect1 id='files'><title>FILES</title>
+<para>/etc/ipsec.secrets</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>ipsec.<citerefentry><refentrytitle>secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>, ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the Linux FreeS/WAN project
+&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+by Henry Spencer. Updated by Paul Wouters for the IPSECKEY format.</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>Arguably,
+rather than just reporting the no-IN-KEY-line-found problem,
+<emphasis remap='I'>showhostkey</emphasis>
+should be smart enough to run the existing key through
+<emphasis remap='I'>rsasigkey</emphasis>
+with the
+<option>--oldkey</option>
+option, to generate a suitable output line.</para>
+
+<para>The
+<option>--id</option>
+option assumes that the
+<emphasis remap='I'>identity</emphasis>
+appears on the same line as the
+<emphasis remap='B'>:&nbsp;RSA&nbsp;{</emphasis>
+that begins the key proper.</para>
+</refsect1>
+</refentry>
+

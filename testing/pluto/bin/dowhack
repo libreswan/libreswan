@@ -760,7 +760,7 @@ dclear-neg-nc-pl)
 		--pass
 	;;
 xclear-neg-nc-pl)
-	me --initiate --name isakmp-rsa 
+	me --initiate --name isakmp-rsa
 	him --route --name clear
 	;;
 
@@ -778,7 +778,7 @@ dclear-neg-fc-pl)
 		--pass
 	;;
 xclear-neg-fc-pl)
-	me --initiate --name isakmp-rsa 
+	me --initiate --name isakmp-rsa
 	him --route --name clear
 	;;
 

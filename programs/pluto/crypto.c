@@ -41,6 +41,8 @@
 
 #include "pem.h"
 
+#include "lswconf.h" /* for libreswan_fipsmode() */
+
 /* moduli and generator. */
 
 static MP_INT
@@ -77,7 +79,8 @@ static struct encrypt_desc crypto_encrypter_3des =
 		    .algo_next =     NULL, },
 	.enc_ctxsize =      sizeof(des_key_schedule) * 3,
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
-	.ivsize =           DES_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size =           DES_CBC_BLOCK_SIZE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
@@ -114,7 +117,7 @@ static struct hash_desc crypto_hasher_md5 =
 	.hash_key_size = MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_integ_len = 0,    /* Not applicable */
-	.hash_block_size = HMAC_BUFSIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = lsMD5Init_thunk,
 	.hash_update = lsMD5Update_thunk,
 	.hash_final = lsMD5Final_thunk,
@@ -132,7 +135,7 @@ static struct hash_desc crypto_integ_md5 =
 	.hash_key_size =   MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_integ_len = MD5_DIGEST_SIZE_96,
-	.hash_block_size = HMAC_BUFSIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = lsMD5Init_thunk,
 	.hash_update = lsMD5Update_thunk,
 	.hash_final = lsMD5Final_thunk,
@@ -173,7 +176,7 @@ struct hash_desc crypto_hasher_sha1 =
 	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_integ_len = 0,	/* Not applicable */
-	.hash_block_size = HMAC_BUFSIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = SHA1Init_thunk,
 	.hash_update = SHA1Update_thunk,
 	.hash_final = SHA1Final_thunk,
@@ -191,7 +194,7 @@ static struct hash_desc crypto_integ_sha1 =
 	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_integ_len = SHA1_DIGEST_SIZE_96,
-	.hash_block_size = HMAC_BUFSIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = SHA1Init_thunk,
 	.hash_update = SHA1Update_thunk,
 	.hash_final = SHA1Final_thunk,
@@ -201,6 +204,12 @@ static struct hash_desc crypto_integ_sha1 =
 
 void init_crypto(void)
 {
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+
 	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
 	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
 				 16) != 0 ||
@@ -223,11 +232,13 @@ void init_crypto(void)
 		exit_log("mpz_init_set_str() failed in init_crypto()");
 
 #ifdef USE_TWOFISH
-	ike_alg_twofish_init();
+	if (!fips)
+		ike_alg_twofish_init();
 #endif
 
 #ifdef USE_SERPENT
-	ike_alg_serpent_init();
+	if (!fips)
+		ike_alg_serpent_init();
 #endif
 
 #ifdef USE_AES
@@ -235,7 +246,8 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_CAMELLIA
-	ike_alg_camellia_init();
+	if (!fips)
+		ike_alg_camellia_init();
 #endif
 
 #ifdef USE_3DES
@@ -252,8 +264,10 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_MD5
-	ike_alg_add(&crypto_hasher_md5.common);
-	ike_alg_add(&crypto_integ_md5.common);
+	if (!fips) {
+		ike_alg_add(&crypto_hasher_md5.common);
+		ike_alg_add(&crypto_integ_md5.common);
+	}
 #endif
 }
 
@@ -376,6 +390,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
 		case IKEv2_ENCR_CAMELLIA_CBC:
 		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
 			return AES_KEY_DEF_LEN;

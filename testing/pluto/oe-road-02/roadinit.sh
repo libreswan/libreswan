@@ -3,7 +3,7 @@
 : ==== start ====
 
 ifconfig eth0 inet 192.1.3.210
-route delete -net default 
+route delete -net default
 route add -net default gw 192.1.3.254
 
 netstat -rne

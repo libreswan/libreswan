@@ -1,2 +1,0 @@
-Testing AH with md5 with NETKEY
-

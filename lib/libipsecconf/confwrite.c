@@ -1,8 +1,8 @@
 /*
  * Libreswan config file writer (confwrite.c)
  * Copyright (C) 2004-2006 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
@@ -401,7 +401,7 @@ static void confwrite_conn(FILE *out,
 		    struct starter_conn *conn)
 {
 	/* short-cut for writing out a field (string-valued, indented, on its own line) */
-#	define cwf(name, value)	do fprintf(out, "\t" name "=%s\n", (value)); while (0)
+#	define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
 
 	fprintf(out, "# begin conn %s\n", conn->name);
 
@@ -421,10 +421,13 @@ static void confwrite_conn(FILE *out,
 	}
 	confwrite_side(out, &conn->left,  "left");
 	confwrite_side(out, &conn->right, "right");
+	/* fprintf(out, "# confwrite_int:\n"); */
 	confwrite_int(out, "", kv_conn, kv_auto,
 		      conn->options, conn->options_set, conn->strings);
+	/* fprintf(out, "# confwrite_str:\n"); */
 	confwrite_str(out, "", kv_conn, kv_auto,
 		      conn->strings, conn->strings_set);
+	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
 	if (conn->connalias)
@@ -461,7 +464,6 @@ static void confwrite_conn(FILE *out,
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
-		lset_t failure_policy = (conn->policy & POLICY_FAIL_MASK);
 		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
 		lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
@@ -469,8 +471,8 @@ static void confwrite_conn(FILE *out,
 		/* short-cuts for writing out a field that is a policy bit.
 		 * cwpbf flips the sense of teh bit.
 		 */
-#		define cwpb(name, p)  do cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); while (0)
-#		define cwpbf(name, p)  do cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); while (0)
+#		define cwpb(name, p)  { cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); }
+#		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 
 		switch (shunt_policy) {
 		case POLICY_SHUNT_TRAP:
@@ -480,9 +482,6 @@ static void confwrite_conn(FILE *out,
 
 			cwpb("pfs", POLICY_PFS);
 			cwpbf("ikepad", POLICY_NO_IKEPAD);
-			/* ??? the following used to write out "rekey=no  #duplicate?" */
-			cwpbf("rekey", POLICY_DONT_REKEY);
-			cwpbf("overlapip", POLICY_OVERLAPIP);
 
 			{
 				const char *abs = "UNKNOWN";
@@ -494,6 +493,14 @@ static void confwrite_conn(FILE *out,
 
 				case POLICY_RSASIG:
 					abs = "rsasig";
+					break;
+
+				case POLICY_PSK | POLICY_RSASIG:
+					abs = "secret|rsasig";
+					break;
+
+				case POLICY_AUTH_NULL:
+					abs = "null";
 					break;
 
 				default:
@@ -525,53 +532,24 @@ static void confwrite_conn(FILE *out,
 				cwf("phase2", p2ps);
 			}
 
-			{
-				const char *fps = "UNKNOWN";
-
-				switch (failure_policy) {
-				case POLICY_FAIL_NONE:
-					fps = NULL;	/* uninteresting */
-					break;
-
-				case POLICY_FAIL_PASS:
-					fps = "passthrough";
-					break;
-
-				case POLICY_FAIL_DROP:
-					fps = "drop";
-					break;
-
-				case POLICY_FAIL_REJECT:
-					fps = "reject";
-					break;
-
-				default:
-					fps = "UNKNOWN";
-					break;
-				}
-				if (fps != NULL)
-					cwf("failureshunt", fps);
-			}
-
+			/* ikev2= */
 			{
 				const char *v2ps = "UNKNOWN";
 
 				switch (ikev2_policy) {
-				case 0:
+				case POLICY_IKEV1_ALLOW:
 					v2ps = "never";
 					break;
 
-				case POLICY_IKEV2_ALLOW:
-					/* it's the default, do not print anything */
-					/* fprintf(out, "\tikev2=permit\n"); */
-					v2ps = NULL;
+				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW:
+					v2ps = "permit";
 					break;
 
-				case POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
-					v2ps = "never";
+				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+					v2ps = "propose";
 					break;
 
-				case POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+				case                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
 					v2ps = "insist";
 					break;
 				}
@@ -580,24 +558,24 @@ static void confwrite_conn(FILE *out,
 			}
 
 			{
-				const char *fps = "UNKNOWN";
+				const char *ifp = "UNKNOWN";
 
 				switch (ike_frag_policy) {
-				case 0:
-					fps = "never";
+				case LEMPTY:
+					ifp = "never";
 					break;
 
 				case POLICY_IKE_FRAG_ALLOW:
 					/* it's the default, do not print anything */
-					fps = NULL;
+					ifp = NULL;
 					break;
 
 				case POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE:
-					fps = "force";
+					ifp = "force";
 					break;
 				}
-				if (fps != NULL)
-					cwf("ike_frag", fps);
+				if (ifp != NULL)
+					cwf("ike_frag", ifp);
 			}
 
 			break; /* end of case POLICY_SHUNT_TRAP */

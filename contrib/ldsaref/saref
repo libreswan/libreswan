@@ -13,7 +13,7 @@ END
 
 [ -z "$1" ] && do_help
 
-case "$1" in 
+case "$1" in
 -h|--help)
         do_help
         ;;
