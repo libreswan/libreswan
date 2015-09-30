@@ -1,9 +1,8 @@
-# block policy causing ping to hang?
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
 sleep 10
 # send a ping that still hits negotiationshunt=hold and fails
 # wait on OE retransmits and rekeying
-ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -w 2 -c 1 -I 192.1.3.209 192.1.2.23
 sleep 10
 # sleep to let timers install failureshunt=pass
 sleep 30
