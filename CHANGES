@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v3.13 (June 1, 2015)
+* SECURITY: CVE-2015-3204 malicious payload causing restart [Javantea/Hugh]
+
 v3.12 (November 6, 2014)
 * IKEv2: CP payload now installs internal address and dns [Antony]
 * IKEv2: Don't try to decrypt if DH is incomplete [Antony]

@@ -22,6 +22,8 @@ kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
 kvmplutotest	basic-pluto-07	good
 
+kvmplutotest	ikev1-01-fuzzer	good
+
 #################################################################
 # IKEv2 tests
 #################################################################
