@@ -1,0 +1,6 @@
+this is a special test using lxc namespaces.
+
+A simple pluto with IKEv2 using PSK west -- east.
+This test does not include any other conf files. It is an odd one just to test simple cases.
+
+

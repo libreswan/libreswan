@@ -7,19 +7,40 @@
 # The result is, for each test, a one-line report on the latest result.
 # The set of tests is specified by testing/pluto/TESTLIST.
 #
-# Bonus: the flag --re-sanitize will run ../../utils/re-sanitize.sh
-# for each test (but the output will clutter the report).
+# Bonus:
 #
-# Copyright 2014 D. Hugh Redelmeier
+# --re-sanitize will run ../../utils/re-sanitize.sh
+#   for each test (but the output will clutter the report).
+#
+# --meld will cause meld to be invoked where a diff is found
+#
+# --meld-show will report meld commands worth running
+#
+# Copyright 2014,2015 D. Hugh Redelmeier
 
 set -ue
 
 # capture path to my script as anchor for $me.dumb-cert-fragment
 me=`readlink -f $0`
 
-cd ~/libreswan/testing/pluto
+# be flexible about current directory
+if [ -f TESTLIST ] ; then
+	if [ ! TESTLIST -ef ../../testing/pluto/TESTLIST ] ; then
+		echo "$me: may not be in correct directory" >&2
+	fi
+elif [ -f pluto/TESTLIST -a pluto/TESTLIST -ef ../testing/pluto/TESTLIST ] ; then
+	cd pluto
+elif [ -f testing/pluto/TESTLIST ] ; then
+	cd testing/pluto
+else
+	echo "$me: not in correct directory" >&2
+	exit 1
+fi
 
 export preprocess=""
+
+# : is a command that does nothing
+export meldop=":"
 
 previous=""
 
@@ -32,10 +53,9 @@ commontest() {
 	if [ ! -d "$testname/OUTPUT" ] ; then
 		notes="$notes,NO-OUTPUT"
 	else
-		(
-			cd $testname
-			$preprocess
-		)
+		if ! ( cd $testname ; $preprocess ) ; then
+		    notes="$notes,SANITIZE-FAILED"
+		fi
 	fi
 
 	if [ -f "$testname/OUTPUT/RESULT" ] ; then
@@ -67,9 +87,9 @@ commontest() {
 
 	if [ ! -f "$testname/OUTPUT/RESULT" ] ; then
 		result=none
-	elif grep '"result":"passed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
+	elif grep '"result": *"passed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
 		result=good
-	elif grep '"result":"failed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
+	elif grep '"result": *"failed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
 		result=bad
 		for i in west east north road ; do
 			if [ ! -f "$testname/OUTPUT/$i.console.diff" ] ; then
@@ -87,6 +107,7 @@ commontest() {
 					notes="$notes,$i:authenc-noise"
 				else
 					notes="$notes,$i:bad"
+					$meldop "$testname/$i.console.txt" "$testname/OUTPUT/$i.console.diff"
 				fi
 			fi
 		done
@@ -133,6 +154,12 @@ for arg ; do
 	case "$arg" in
 	--re-sanitize)
 		preprocess="../../utils/re-sanitize.sh"
+		;;
+	--meld)
+		meldop="meld"
+		;;
+	--meld-show)
+		meldop="echo meld"
 		;;
 	*)
 		echo "$me: unexpected operand: $arg" >&2

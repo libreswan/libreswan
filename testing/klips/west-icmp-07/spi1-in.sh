@@ -18,7 +18,7 @@ ipsec spi --af inet --edst 192.1.2.45 --spi 0xded12345 --proto esp --src 192.1.2
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0xded12345 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
 
-ipsec spigrp inet 192.1.2.45 0xded12345 tun inet 192.1.2.45 0xded12345 esp 
+ipsec spigrp inet 192.1.2.45 0xded12345 tun inet 192.1.2.45 0xded12345 esp
 
 ipsec tncfg --attach --virtual ipsec0 --physical eth1
 ifconfig ipsec0 inet 192.1.2.45 netmask 0xffffff00 broadcast 192.1.2.255 up

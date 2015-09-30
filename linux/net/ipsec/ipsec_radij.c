@@ -241,7 +241,7 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 				b2 += 2;
 			}
 			KLIPS_PRINT(debug_eroute,
-				    "klips_debug:ipsec_makeroute: %s / %s \n",
+				    "klips_debug:ipsec_makeroute: %s / %s\n",
 				    buf1, buf2);
 		}
 

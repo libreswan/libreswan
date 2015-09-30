@@ -242,7 +242,7 @@ static void _capi_destroy_key(struct ipsec_alg_enc *alg, __u8 *key_e)
 
 	if (debug > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_destroy_key:"
-		       "name=%s key_e=%p \n",
+		       "name=%s key_e=%p\n",
 		       alg->ixt_name, key_e);
 	if (!key_e) {
 		printk(KERN_ERR "klips_debug: _capi_destroy_key:"
@@ -377,7 +377,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 			}
 		} else {
 			if (debug > 0)
-				printk(KERN_INFO "setup_cipher_list(): lookup for ciphername=%s: not found \n",
+				printk(KERN_INFO "setup_cipher_list(): lookup for ciphername=%s: not found\n",
 					cptr->ciphername);
 		}
 	}

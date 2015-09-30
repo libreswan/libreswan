@@ -3,7 +3,7 @@ Build a host-host network where routing works, but the nexthop is
 wrong, and therefor _updown fails to add the route, but the eroute
 is created, and traffic flows encrypted one way, but not the other.
 
-Reported by Hugh Daniel that 
+Reported by Hugh Daniel that
 1) Packets go out in the clear on the misconfigured key
 2) On the rightly configured side plaintext packets are accepted
 

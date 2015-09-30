@@ -1,0 +1,7 @@
+pluto RSA test with east in FIPS mode using forbidden MD5 and IKEv1
+
+East is placed in fips mode, allowing for tests of non-fips proposals by west
+
+This test requires compilation with USE_FIPSCHECK=true
+This test requires installing by rpm so the .hmac FIPS verification passes
+This test fakes the kernel being in FIPS mode

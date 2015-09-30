@@ -61,8 +61,8 @@ west #
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=8, v1name=DISABLED-OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=13, v1name=DISABLED-OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
@@ -88,9 +88,9 @@ west #
 000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-6in6":   prio: 64,64; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -171,10 +171,10 @@ west #
 west NOW
 2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1000@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0xafaae4b1@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x1483f5c8aaaed18e6a2cc546be56993a ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=4 refhim=1  PAUL: sanitizer missed this line
+esp0xafaae4b1@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x1483f5c8aaaed18e6a2cc546be56993a ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=4 refhim=0  PAUL: sanitizer missed this line
 esp0xf2818484@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0x97575aec5a12c28975cb588e3c0684a3 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(752,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=0  PAUL: sanitizer missed this line
 tun0x1000@2001:db8:1:2::23 IPIP: dir=out src=2001:db8:1:2::45 life(c,s,h)=bytes(576,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
-tun0x1001@2001:db8:1:2::45 IPIP: dir=in  src=2001:db8:1:2::23 policy=2001:db8:0:2::/64->2001:db8:0:1::/64 flags=0x8<> life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
+tun0x1001@2001:db8:1:2::45 IPIP: dir=in  src=2001:db8:1:2::23 policy=2001:db8:0:2::/64->2001:db8:0:1::/64 flags=0x8<> life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=0
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
 ip6tables: No chain/target/match by that name.

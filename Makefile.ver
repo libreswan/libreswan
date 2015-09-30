@@ -1,1 +1,2 @@
-IPSECBASEVERSION?=3.13
+# For compatibility, new code should include mk/version.mk directly.
+include ${LIBRESWANSRCDIR}/mk/version.mk

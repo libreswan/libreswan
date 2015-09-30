@@ -73,6 +73,9 @@ main(int argc, char *argv[]) {
 	do_test("aes-sha", PROTO_IPSEC_ESP);
 	do_test("aes-sha1", PROTO_IPSEC_ESP);
 	do_test("aes-sha2", PROTO_IPSEC_ESP);
+	do_test("aes-sha256", PROTO_IPSEC_ESP);
+	do_test("aes-sha384", PROTO_IPSEC_ESP);
+	do_test("aes-sha512", PROTO_IPSEC_ESP);
 	do_test("aes128-sha1", PROTO_IPSEC_ESP);
 	do_test("aes128-aes_xcbc", PROTO_IPSEC_ESP);
 	do_test("aes192-sha1", PROTO_IPSEC_ESP);
@@ -172,6 +175,9 @@ main(int argc, char *argv[]) {
 	do_test("sha", PROTO_IPSEC_AH);
 	do_test("sha1", PROTO_IPSEC_AH);
 	do_test("sha2", PROTO_IPSEC_AH);
+	do_test("sha256", PROTO_IPSEC_AH);
+	do_test("sha384", PROTO_IPSEC_AH);
+	do_test("sha512", PROTO_IPSEC_AH);
 	do_test("sha2_256", PROTO_IPSEC_AH);
 	do_test("sha2_384", PROTO_IPSEC_AH);
 	do_test("sha2_512", PROTO_IPSEC_AH);

@@ -4,12 +4,12 @@
 # Copyright (C) 1998, 1999, 2000,2001  Richard Guy Briggs.
 # Copyright (C) 2002,2003	Michael Richardson <mcr@freeswan.org>
 # Copyright (C) 2004		Michael Richardson <mcr@xelerance.com>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -40,8 +40,8 @@ export TOPDIR
 
 endif
 
-subdir-  := 
-subdir-n := 
+subdir-  :=
+subdir-n :=
 subdir-y :=
 subdir-m :=
 export-objs :=
@@ -67,9 +67,9 @@ O_TARGET := ipsec.o
 obj-y := ipsec_init.o ipsec_sa.o ipsec_radij.o radij.o
 obj-y += ipsec_life.o ipsec_proc.o ipsec_mast.o
 obj-y += ipsec_tunnel.o ipsec_xmit.o ipsec_rcv.o ipsec_ipip.o
-obj-y += sysctl_net_ipsec.o 
+obj-y += sysctl_net_ipsec.o
 obj-y += ipsec_snprintf.o ipsec_kern24.o
-obj-y += pfkey_v2.o pfkey_v2_parser.o pfkey_v2_ext_process.o 
+obj-y += pfkey_v2.o pfkey_v2_parser.o pfkey_v2_ext_process.o
 obj-y += version.o
 obj-$(CONFIG_KLIPS_ESP)     += ipsec_esp.o
 obj-$(CONFIG_KLIPS_OCF)     += ipsec_ocf.o
@@ -78,7 +78,7 @@ obj-$(CONFIG_KLIPS_IPCOMP)  += ipsec_ipcomp.o
 # AH, if you really think you need it.
 obj-$(CONFIG_KLIPS_AH) += ipsec_ah.o
 
-CFLAGS_ipsec_alg.o += -DEXPORT_SYMTAB 
+CFLAGS_ipsec_alg.o += -DEXPORT_SYMTAB
 obj-$(CONFIG_KLIPS_ALG)           += ipsec_alg.o
 
 obj-$(CONFIG_KLIPS_ENC_AES)       += ipsec_alg_aes.o
@@ -120,23 +120,23 @@ endif
 
 obj-y += satot.o
 obj-y += addrtot.o
-obj-y += ultot.o 
+obj-y += ultot.o
 obj-y += addrtypeof.o
 obj-y += anyaddr.o
 obj-y += initaddr.o
-obj-y += addrtoa.o 
-obj-y += subnettoa.o 
-obj-y += subnetof.o 
-obj-y += goodmask.o 
-obj-y += datatot.o 
-obj-y += prng.o 
-obj-y += pfkey_v2_parse.o 
-obj-y += pfkey_v2_build.o 
-obj-y += pfkey_v2_debug.o 
-obj-y += pfkey_v2_ext_bits.o 
+obj-y += addrtoa.o
+obj-y += subnettoa.o
+obj-y += subnetof.o
+obj-y += goodmask.o
+obj-y += datatot.o
+obj-y += prng.o
+obj-y += pfkey_v2_parse.o
+obj-y += pfkey_v2_build.o
+obj-y += pfkey_v2_debug.o
+obj-y += pfkey_v2_ext_bits.o
 
 # IPcomp stuff
-obj-$(CONFIG_KLIPS_IPCOMP) += ipcomp.o 
+obj-$(CONFIG_KLIPS_IPCOMP) += ipcomp.o
 
 obj-$(CONFIG_KLIPS_IPCOMP) += adler32.o
 obj-$(CONFIG_KLIPS_IPCOMP) += deflate.o
@@ -174,16 +174,16 @@ obj-m += $(O_TARGET)
 # cannot use both -Wpointer-arith and -Werror with CONFIG_HIGHMEM
 # include/linux/highmem.h has an inline function definition that uses void* arithmentic.
 ifeq ($(CONFIG_NOHIGHMEM),y)
-#EXTRA_CFLAGS += -Wpointer-arith 
+#EXTRA_CFLAGS += -Wpointer-arith
 endif
-#EXTRA_CFLAGS += -Wcast-qual 
-#EXTRA_CFLAGS += -Wmissing-declarations 
+#EXTRA_CFLAGS += -Wcast-qual
+#EXTRA_CFLAGS += -Wmissing-declarations
 #EXTRA_CFLAGS += -Wstrict-prototypes
 #EXTRA_CFLAGS += -pedantic
 #EXTRA_CFLAGS += -O3
 #EXTRA_CFLAGS += -W
-#EXTRA_CFLAGS += -Wwrite-strings 
-#EXTRA_CFLAGS += -Wbad-function-cast 
+#EXTRA_CFLAGS += -Wwrite-strings
+#EXTRA_CFLAGS += -Wbad-function-cast
 EXTRA_CFLAGS += -DIPCOMP_PREFIX
 ifneq ($(wildcard ${TOPDIR}/crypto/ocf),)
 EXTRA_CFLAGS += -I${TOPDIR}/crypto/ocf
@@ -192,10 +192,10 @@ EXTRA_CFLAGS += -DKLIPS=1
 
 ifneq ($(strip $(KLIPSMODULE)),)
 # for when we aren't building in the kernel tree
-EXTRA_CFLAGS += -DARCH=${ARCH} 
+EXTRA_CFLAGS += -DARCH=${ARCH}
 EXTRA_CFLAGS += -DMODVERSIONS
 EXTRA_CFLAGS += -include ${TOPDIR}/include/linux/modversions.h
-EXTRA_CFLAGS += ${MODULE_CFLAGS} 
+EXTRA_CFLAGS += ${MODULE_CFLAGS}
 endif
 
 # GCC 3.2 (and we presume any other 3.x) wants -falign-functions

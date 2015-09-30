@@ -1,0 +1,10 @@
+basic OE test triggered by whack (not a packet)
+
+The test sets retransmit-interval=2000 to prevent retransmits
+from interfering with the reference output.
+
+West has put in east in "private-or-clear", so the whack command
+shows that this is the right foodgroup being hit:
+
+"private-or-clear#192.1.2.0/24"
+

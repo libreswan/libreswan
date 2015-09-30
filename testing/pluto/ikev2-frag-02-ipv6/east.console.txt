@@ -1,0 +1,137 @@
+/testing/guestbin/swan-prep --46 --x509
+Preparing X.509 files
+east #
+ certutil -A -n key4096 -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/key4096.crt
+east #
+ ifconfig eth1 mtu 1480
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add v6-tunnel
+002 added connection description "v6-tunnel"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+XFRM state:
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 2001:2222:222:2200::/56 dst 2001:111:1111::/48 
+	dir out priority 26832 ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+src 2001:111:1111::/48 dst 2001:2222:222:2200::/56 
+	dir fwd priority 26832 ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src 2001:111:1111::/48 dst 2001:2222:222:2200::/56 
+	dir in priority 26832 ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
+2001:db8:1:2::45 dev eth1  metric 0 
+    cache 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         u,u,u
+hashsha2                                                     P,,  
+key4096                                                      P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -170,19 +170,21 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 	ip_address lip; /* --listen filter option */
 
 	if (pluto_listen) {
-		err_t e;
-		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
-		if (e) {
+		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+
+		if (e != NULL) {
 			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 	}
 
 	strcpy(useful_mast_name, "useless");
-	{ int new_useful = recalculate_mast_device_list(rifaces);
 
-	  if (new_useful != -1)
-		  useful_mastno = new_useful;
+	{
+		int new_useful = recalculate_mast_device_list(rifaces);
+
+		if (new_useful != -1)
+			useful_mastno = new_useful;
 	}
 
 	DBG_log("useful mast device %d", useful_mastno);
@@ -286,8 +288,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						"struct iface_port");
 				id = alloc_thing(struct iface_dev,
 						 "struct iface_dev");
-				zero(q);
-				zero(id);
+
 				if (firstq == NULL)
 					firstq = q;
 
@@ -446,28 +447,28 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	return invoke_command(verb, verb_suffix, cmd);
 }
 
-static bool mast_raw_eroute(const ip_address *this_host UNUSED,
-			    const ip_subnet *this_client UNUSED,
-			    const ip_address *that_host UNUSED,
-			    const ip_subnet *that_client UNUSED,
-			    ipsec_spi_t spi UNUSED,
-			    unsigned int proto UNUSED,
-			    unsigned int transport_proto UNUSED,
-			    unsigned int satype UNUSED,
-			    const struct pfkey_proto_info *proto_info UNUSED,
-			    deltatime_t use_lifetime UNUSED,
-			    unsigned long sa_priority UNUSED,
-			    enum pluto_sadb_operations op UNUSED,
-			    const char *text_said UNUSED
+static bool mast_raw_eroute(const ip_address *this_host,
+			    const ip_subnet *this_client,
+			    const ip_address *that_host,
+			    const ip_subnet *that_client,
+			    ipsec_spi_t spi,
+			    int sa_proto,
+			    unsigned int transport_proto,
+			    unsigned int satype,
+			    const struct pfkey_proto_info *proto_info,
+			    deltatime_t use_lifetime,
+			    unsigned long sa_priority,
+			    enum pluto_sadb_operations op,
+			    const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-			    , char *policy_label UNUSED
+			    , const char *policy_label
 #endif
 			    )
 {
 	/* actually, we did all the work with iptables in _updown */
 	DBG_log("mast_raw_eroute called op=%u said=%s", op, text_said);
 	return pfkey_raw_eroute(this_host, this_client, that_host, that_client,
-				spi, proto, transport_proto, satype,
+				spi, sa_proto, transport_proto, satype,
 				proto_info, use_lifetime, sa_priority, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 				, policy_label
@@ -512,12 +513,12 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 	if (!old_st)
 		old_st = st;
 
-	DBG_log("mast_sag_eroute_replace state #%d{ref=%d refhim=%d} "
-		"with #%d{ref=%d refhim=%d}",
-		(int)old_st->st_serialno,
+	DBG_log("mast_sag_eroute_replace state #%lu{ref=%d refhim=%d} "
+		"with #%lu{ref=%d refhim=%d}",
+		old_st->st_serialno,
 		(int)old_st->st_ref,
 		(int)old_st->st_refhim,
-		(int)st->st_serialno,
+		st->st_serialno,
 		(int)st->st_ref,
 		(int)st->st_refhim);
 

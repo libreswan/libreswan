@@ -112,8 +112,8 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 		st->st_maxsz = size;
 	return ptr;
 }
-#define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &st);
-#define PFREE_ST(p, st)         do { st.st_curr_cnt--; pfree(p);  } while (0);
+#define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &(st));
+#define PFREE_ST(p, st)         { st.st_curr_cnt--; pfree(p);  }
 
 #else /* NO_DB_OPS_STATS */
 
@@ -134,14 +134,14 @@ static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans
 	ctx->trans0 = NULL;
 	ctx->attrs0 = NULL;
 
-	if (max_trans > 0) { /* quite silly if not */
+	if (max_trans > 0) {
 		ctx->trans0 = ALLOC_BYTES_ST(
 			sizeof(struct db_trans) * max_trans,
 			"db_context->trans",
 			db_trans_st);
 	}
 
-	if (max_attrs > 0) { /* quite silly if not */
+	if (max_attrs > 0) {
 		ctx->attrs0 = ALLOC_BYTES_ST(
 			sizeof(struct db_attr) * max_attrs,
 			"db_context->attrs", db_attrs_st);
@@ -161,7 +161,7 @@ static void db_trans_expand(struct db_context *ctx, int delta_trans)
 {
 	int max_trans = ctx->max_trans + delta_trans;
 	struct db_trans *const old_trans = ctx->trans0;
-	struct db_trans *const new_trans = ALLOC_BYTES_ST( sizeof(struct db_trans) * max_trans,
+	struct db_trans *const new_trans = ALLOC_BYTES_ST(sizeof(struct db_trans) * max_trans,
 				    "db_context->trans (expand)", db_trans_st);
 
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
@@ -188,7 +188,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	unsigned int ti;
 	int max_attrs = ctx->max_attrs + delta_attrs;
 	struct db_attr *const old_attrs = ctx->attrs0;
-	struct db_attr *const new_attrs = ALLOC_BYTES_ST( sizeof(struct db_attr) * max_attrs,
+	struct db_attr *const new_attrs = ALLOC_BYTES_ST(sizeof(struct db_attr) * max_attrs,
 				    "db_context->attrs (expand)", db_attrs_st);
 
 	memcpy(new_attrs, old_attrs, ctx->max_attrs * sizeof(struct db_attr));
@@ -213,7 +213,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 /* Allocate a new db object */
 struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 {
-	struct db_context *ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
+	struct db_context *ctx = ALLOC_BYTES_ST(sizeof(struct db_context), "db_context",
 			      db_context_st);
 
 	db_prop_init(ctx, protoid, max_trans, max_attrs);
@@ -311,7 +311,7 @@ static void db_prop_print(struct db_prop *p)
 
 	DBG_log("protoid=\"%s\"", enum_name(&protocol_names, p->protoid));
 	for (ti = 0, t = p->trans; ti < p->trans_cnt; ti++, t++) {
-		switch ( p->protoid) {
+		switch (p->protoid) {
 		case PROTO_ISAKMP:
 			n = &isakmp_transformid_names;
 			break;
@@ -329,7 +329,7 @@ static void db_prop_print(struct db_prop *p)
 		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
 
-			switch ( p->protoid) {
+			switch (p->protoid) {
 			case PROTO_ISAKMP:
 				n_at = &oakley_attr_names;
 				i = a->type.oakley | ISAKMP_ATTR_AF_TV;

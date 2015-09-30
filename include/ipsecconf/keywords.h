@@ -38,6 +38,7 @@
 enum keyword_string_config_field {
 	KSF_INTERFACES    = 0, /* loose_enum eventually */
 	/* KSF_PACKETDEFAULT = 5, */
+	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
@@ -60,19 +61,23 @@ enum keyword_string_config_field {
 	KSF_MODECFGDNS2,
 	KSF_MODECFGDOMAIN,
 	KSF_MODECFGBANNER,
+	KSF_OCSPURI,
+	KSF_OCSPTRUSTNAME,
 	KSF_MAX
 };
 
 /* Numeric fields also include boolean fields */
 /* and do not come in right/left variants */
 enum keyword_numeric_config_field {
-	KBF_DPDACTION        = 0,
-	KBF_FAILURESHUNT = 1,
-	KBF_TYPE         = 2,
+	KBF_DPDACTION,
+	KBF_FAILURESHUNT,
+	KBF_NEGOTIATIONSHUNT,
+	KBF_TYPE,
 	KBF_FRAGICMP,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_PLUTOSTDERRLOGTIME,
+	KBF_PLUTOSTDERRLOGAPPEND,
 	KBF_IKEPORT,
 	KBF_PLUTOFORK,
 	KBF_PERPEERLOG,
@@ -80,9 +85,15 @@ enum keyword_numeric_config_field {
 	KBF_CONNMTU,
 	KBF_PRIORITY,
 	KBF_REQID,
+	KBF_XFRMLIFETIME,
 	KBF_STRICTCRLPOLICY,
+	KBF_STRICTOCSPPOLICY,
+	KBF_OCSPENABLE,
+	KBF_OCSPTIMEOUT,
+	KBF_CURLTIMEOUT,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
+	KBF_SEEDBITS,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
 	KBF_CRLCHECKINTERVAL,
@@ -107,17 +118,22 @@ enum keyword_numeric_config_field {
 	KBF_KEYINGTRIES,
 	KBF_ARRIVALCHECK,
 	KBF_IKELIFETIME,
+	KBF_SHUNTLIFETIME,
+	KBF_RETRANSMIT_TIMEOUT,
+	KBF_RETRANSMIT_INTERVAL,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
 	KBF_FORCEENCAP,
 	KBF_IKEv2,
 	KBF_IKEv2_ALLOW_NARROWING,
+	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
-	KBF_FORCEBUSY,
+	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
+	KBF_DDOS_IKE_TRESHOLD,
+	KBF_MAX_HALFOPEN_IKE,
 	KBF_OVERLAPIP,
 	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /*Network Manager support */
-	KBF_LOOPBACK,
 	KBF_LABELED_IPSEC,
 	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
@@ -131,6 +147,9 @@ enum keyword_numeric_config_field {
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
+	KBF_NFLOG_ALL,
+	KBF_NFLOG_CONN,
+	KBF_DDOS_MODE,
 	KBF_MAX
 };
 
@@ -184,10 +203,13 @@ enum keyword_numeric_conn_field {
 	KNCF_MAX
 };
 
-#define KEY_STRINGS_MAX ((int)KSF_MAX > \
-			 (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX) + 1
-#define KEY_NUMERIC_MAX ((int)KBF_MAX > \
-			 (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX) + 1
+/* ??? seems a little funny that KEY_STRINGS_MAX is really +1 */
+#define KEY_STRINGS_MAX (((int)KSF_MAX > \
+			  (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX) + 1)
+
+/* ??? seems a little funny that KEY_NUMERIC_MAX is really +1 */
+#define KEY_NUMERIC_MAX (((int)KBF_MAX > \
+			  (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX) + 1)
 
 /* these are bits set in a word */
 enum keyword_valid {
@@ -224,6 +246,18 @@ enum keyword_satype {
 	KS_PASSTHROUGH=2,
 	KS_DROP      = 3,
 	KS_REJECT    = 4,
+};
+
+enum keyword_failure_shunt {
+	KFS_FAIL_NONE,
+	KFS_FAIL_PASS,
+	KFS_FAIL_DROP,
+	KFS_FAIL_REJECT
+};
+
+enum keyword_negotiation_shunt {
+	KNS_FAIL_PASS,
+	KNS_FAIL_DROP
 };
 
 enum keyword_type {

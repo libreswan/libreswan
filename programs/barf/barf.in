@@ -1,12 +1,12 @@
 #! /bin/sh
 # dump assorted information of use in debugging
 # Copyright (C) 1998, 1999  Henry Spencer.
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -21,7 +21,7 @@ me="ipsec barf"
 maxlines=100
 
 # kludge to produce no barf output mentioning policygroups if none are present.
-# This will not catch ".file" policygroups. 
+# This will not catch ".file" policygroups.
 PREPOLICIES=/etc/ipsec.d/policies
 if [ `ls $PREPOLICIES 2> /dev/null | wc -l` -ne 0 ]
 then
@@ -99,7 +99,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 
 # try to guess where logs are
 findlog "$fstart" "klips" messages syslog auth.log daemon.log
-if test " $findlog_file" = " /dev/null" 
+if test " $findlog_file" = " /dev/null"
 then
 echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
 fi
@@ -107,10 +107,10 @@ klog=$findlog_file
 kline=$findlog_startline
 
 findlog "$pstart" "Pluto" secure auth.log daemon.log debug
-if test " $findlog_file" = " /dev/null" 
+if test " $findlog_file" = " /dev/null"
 then
 echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
-fi 
+fi
 plog=$findlog_file
 pline=$findlog_startline
 
@@ -218,10 +218,10 @@ ip rule list
 _________________________ ipsec_verify
 ipsec verify --nocolour
 _________________________ mii-tool
-if [ -x /sbin/mii-tool ] 
+if [ -x /sbin/mii-tool ]
 then
     /sbin/mii-tool -v
-elif [ -x /usr/sbin/mii-tool ] 
+elif [ -x /usr/sbin/mii-tool ]
 then
     /usr/sbin/mii-tool -v
 else
@@ -356,7 +356,7 @@ fi
 _________________________ usr/src/linux/.config
 if test -f /proc/config.gz
 then
-	zcat /proc/config.gz | egrep 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM' 
+	zcat /proc/config.gz | egrep 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
 elif test -f /lib/modules/`uname -r`/build/.config
 then
 	cat /lib/modules/`uname -r`/build/.config | egrep 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'

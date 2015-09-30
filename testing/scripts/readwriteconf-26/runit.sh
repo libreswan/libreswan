@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# assumes that 
+# assumes that
 #          ROOTDIR=    set to root of source code.
 #          OBJDIRTOP=  set to location of object files
 #
 
 exe=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
-conf="--config ${ROOTDIR}/testing/scripts/readwriteconf-25/ipv6.conf"
-args="--rootdir=${ROOTDIR}/testing/scripts/readwriteconf-25 $conf "
+conf="--config ${ROOTDIR}/testing/scripts/readwriteconf-26/noeol.conf"
+args="--rootdir=${ROOTDIR}/testing/scripts/readwriteconf-26 $conf "
 #args="$args --verbose --verbose --verbose --verbose"
 echo "file $exe" >.gdbinit
 echo "set args $args " >>.gdbinit

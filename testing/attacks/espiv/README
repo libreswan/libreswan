@@ -68,7 +68,7 @@ parameters:
 ipsec_hack file=settings.txt
 
 settings.txt contains following information:
-sif=eth0 
+sif=eth0
 lif=eth1
 src=10.0.0.1
 dst=10.0.0.2
@@ -84,15 +84,15 @@ These parameter define following things:
 "sif" 		the interface through which the attack packet are sent.
 "lif" 		the interface in which the IPsec protected packets are seen.
 "src" 		the source address of the IPsec connection.
-"dst" 		the destination address of the IPsec connection. 
+"dst" 		the destination address of the IPsec connection.
 "fake_src" 	the source address of the attack packet. In this example it
 	   	is some bogus address from the 192.168.137.0/24 network.
 "fake_dst" 	the destination address of the attack packet. Some
 		computer that can be reached through the IPsec tunnel
-		between G1 and G2. 
+		between G1 and G2.
 "dmac" 		the MAC address of the gateway through which the attack packet
        		are sent. In the example it is the 192.168.137.100
-		interface of GW1. 
+		interface of GW1.
 "guess"		Guess about the contents of the IPsec protected
 		block. In this example it is the first block of the
 		ping packet plus the IPsec ESP default padding.

@@ -1,10 +1,10 @@
-# Minimal Kickstart file - updated for fedora 19
+# Minimal Kickstart file - updated for fedora 21
 install
 text
 reboot
 lang en_US.UTF-8
 keyboard us
-network --bootproto=dhcp --hostname swanbase 
+network --bootproto=dhcp --hostname swanbase
 # static network does not work with recent dracut, use kernel args instead
 #network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
@@ -15,40 +15,40 @@ timezone --utc America/New_York
 bootloader --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH"
 zerombr
 clearpart --all --initlabel
-part / --asprimary --grow 
+part / --asprimary --grow
 part swap --size 1024
 services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 #Just core packages
 #ensure we never accidentally get the openswan package
 %packages
+
 @core
+
+# Note: The install repo is a cut-down version of "Everything", stuff
+# is missing.  Consequently leave installing most stuff to the POST
+# stage where YUM is available and pointing at the repo "Everything".
+
+# To avoid an accidental kernel upgrade (KLIPS doesn't build with the
+# 4.x kernels), install everything kernel dependent here.  If you find
+# the kernel still being upgraded look at the log files in /var/tmp.
+
+kernel-devel
+kernel-headers
+kernel-core
+kernel-modules
+kernel-modules-extra
+glibc-devel
+xl2tpd
+
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
 -sendmail
-gdb
-tcpdump
+
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
-# to compile openswan
-gcc
-make
-flex
-bison
-gmp-devel
-nss-devel
-nspr-devel
-openldap-devel
-curl-devel 
-pam-devel
-redhat-rpm-config
-# not available at install time in this repo??
-#racoon2
-#nc6
-#unbound-devel
-#fipscheck-devel
-#libcap-ng-devel
+
 %end
 
 #%pre
@@ -58,7 +58,7 @@ redhat-rpm-config
 #%end
 
 
-%post 
+%post
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 /sbin/restorecon /etc/resolv.conf
 # Paul needs this due to broken isp
@@ -66,9 +66,105 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
+# Install everything in the yum repo here.  Since some of these RPMs
+# are only found in the Everything repository it is easier to to do it
+# during POST when yum is set up and pointing at the latest Everything
+# repository.
+
+# There is also extra stuff, not in a repo, being installed at the
+# very end of this file.
+
+# Capture a before "yum install" log.  If something (such as a 4.x
+# kernel) is inadvertently installed, check this and yum-install.log
+# for what triggered it.
+
+rpm -qa > /var/tmp/rpm-qa.log
+
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind ElectricFence yum-utils screen xl2tpd
-debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr nss 
+
+yum install -y 2>&1 \
+    ElectricFence \
+    audit-libs-devel \
+    bind-utils \
+    bison \
+    curl-devel \
+    fipscheck-devel \
+    flex \
+    gcc \
+    gdb \
+    git \
+    gmp-devel \
+    gmp-devel \
+    hping3 \
+    ipsec-tools \
+    libcap-ng-devel \
+    libevent-devel \
+    lsof \
+    make \
+    mtr \
+    nc \
+    nc6 \
+    net-tools \
+    nmap \
+    nspr-devel \
+    nss-devel \
+    nss-tools \
+    openldap-devel \
+    pam-devel \
+    pexpect \
+    psmisc \
+    python3-pexpect \
+    python3-setproctitle \
+    pyOpenSSL \
+    racoon2 \
+    redhat-rpm-config \
+    rpm-build \
+    screen \
+    strace \
+    strongswan \
+    tcpdump \
+    unbound \
+    unbound-devel \
+    unbound-libs \
+    valgrind \
+    vim-enhanced \
+    wget \
+    xmlto \
+    yum-utils \
+    | tee /var/tmp/yum-install.log
+
+debuginfo-install -y \
+    ElectricFence \
+    audit-libs \
+    cyrus-sasl \
+    glibc \
+    gmp \
+    keyutils \
+    krb5-libs \
+    ldns \
+    libcap-ng \
+    libcom_err \
+    libcurl \
+    libevent \
+    libevent-devel \
+    libgcc \
+    libidn \
+    libselinux \
+    libssh2 \
+    nspr \
+    nss \
+    nss-softokn \
+    nss-softokn-freebl \
+    nss-util \
+    openldap \
+    openssl-libs \
+    pam \
+    pcre \
+    python-libs \
+    sqlite \
+    unbound-libs \
+    xz-libs \
+    zlib
 
 mkdir /testing /source
 
@@ -88,7 +184,7 @@ sysfs                   /sys                    sysfs   defaults        0 0
 proc                    /proc                   proc    defaults        0 0
 EOD
 
-cat << EOD >> /etc/rc.d/rc.local 
+cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
 mount /testing
 mount /source
@@ -140,14 +236,6 @@ WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 systemctl enable sshd-shutdown.service
 
-# Needed for newer nss
-yum update -y 
-
-# Instal libreswan
-mount /source
-cd /source
-make programs module install module_install
-
 # ensure pluto does not get restarted by systemd on crash
 sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
 
@@ -170,5 +258,20 @@ cat << EOD >> /etc/hosts
 192.1.3.209 road
 192.1.2.254 nic
 EOD
+
+# Extra yum stuff
+
+# Do this last so that should something barf or hang the install is
+# still essentially OK.
+
+# Need pyOpenSSL with ability to dump all certificates
+yum upgrade -y 2>&1 \
+    https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm \
+    | tee /var/tmp/pyOpenSSL.log
+
+# Need strongswan with CTR, GCM, and other fixes
+yum upgrade -y 2>&1 \
+    https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc21.x86_64.rpm \
+    | tee /var/tmp/strongswan.log
 
 %end

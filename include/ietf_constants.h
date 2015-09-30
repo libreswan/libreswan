@@ -6,7 +6,7 @@
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -526,9 +526,15 @@ enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2V = 43,	/* Vendor ID */
 	ISAKMP_NEXT_v2TSi = 44,	/* Traffic Selector - initiator */
 	ISAKMP_NEXT_v2TSr = 45,	/* Traffic Selector - responder */
-	ISAKMP_NEXT_v2E = 46,	/* Encrypted payload */
+	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
+	ISAKMP_NEXT_v2GSPM = 49, /* RFC-6467 Generic Secure Password Method */
+	ISAKMP_NEXT_v2IDG = 50, /* Group Identification draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2GSA = 51, /* Group Security Association draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2KD = 52, /* Key Download draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2SKF = 53,	/* Encrypted and Authenticated Fragment fragment */
+	/* 54-127 Unassigned */
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
@@ -825,6 +831,9 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_INVALID = 65536,
 };
 
+#define IKEv2_ENCR_CAMELLIA_CBC_ikev1 IKEv2_RESERVED_IEEE_P1619_XTS_AES
+
+
 enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */
 	IKEv2_PRF_HMAC_SHA1 = 2, /* RFC2104 */
@@ -937,8 +946,8 @@ enum ikev1_ipsec_attr {
 	KEY_ROUNDS = 7,
 	COMPRESS_DICT_SIZE = 8,
 	COMPRESS_PRIVATE_ALG = 9, /* B/V */
-	ECN_TUNNEL = 10, /* B */ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
-	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407*/
+	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
+	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 
 /*
@@ -961,6 +970,8 @@ enum ikev1_ipsec_attr {
 
 #define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
 #define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
+#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute ) /* our policy */
 #define SA_LIFE_DURATION_MAXIMUM secs_per_day
 
 #define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
@@ -1017,6 +1028,7 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
+/* XXX These are not IETF constants but pluto constants */
 #define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
 #define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
@@ -1025,11 +1037,22 @@ typedef u_int16_t ipsec_auth_t;
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
 
-/* HMAC (see rfc2104.txt) */
-
+/*
+ * HMAC
+ * - see RFC 2104 for the definition of the HMAC procedure for early hash algorithms
+ * - see RFC 4868 for how to construct HMAC for SHA2 functions
+ */
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5C
-#define HMAC_BUFSIZE 64
+
+/*
+ * Largest HMAC hash function blocksize ("B" in RFC 2104).
+ *
+ * Needs to be a compile-time constant for array allocation.
+ * Must be as large as the largest value that appears in a
+ * struct hash_desc's hash_block_size field.
+ */
+#define MAX_HMAC_BLOCKSIZE	128	/* RFC 4868 specifies this for SHA512 */
 
 /*
  * IKEv1 Oakley Encryption Algorithm attribute
@@ -1109,7 +1132,7 @@ enum ikev1_auth_method {
 	OAKLEY_ECDSA_P384 = 10, /* RFC 4754 */
 	OAKLEY_ECDSA_P521 = 11, /* RFC 4754 */
 	/* 12 - 65000 Unassigned */
-
+	OAKLEY_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/*
 	 * Note: the below xauth names are mapped via xauth_calcbaseauth()
 	 * to the base functions 1-4
@@ -1173,15 +1196,25 @@ enum ikev2_cp_type {
 	IKEv2_CP_CFG_ACK = 4
 };
 
-/* extern enum_names ikev2_auth_names; */
+/*
+ * extern enum_names ikev2_auth_names;
+ * http://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
+ * IKEv2 Authentication Method
+ */
+
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
-	IKEv2_AUTH_P256 = 9,
-	IKEv2_AUTH_P384 = 10,
-	IKEv2_AUTH_P521 = 11,
+	/* 4 - 8 unassigned */
+	IKEv2_AUTH_P256 = 9, /* RFC 4754 */
+	IKEv2_AUTH_P384 = 10, /* RFC 4754 */
+	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
+	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
+	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	/* 15 - 200 unassigned */
+	/* 201 - 255 private use */
 };
 
 /*
@@ -1353,8 +1386,10 @@ typedef enum {
 	v2N_UNACCEPTABLE_ADDRESSES = 40,
 	v2N_UNEXPECTED_NAT_DETECTED = 41,
 	v2N_USE_ASSIGNED_HoA = 42, /* RFC 5026 */
-	v2N_TEMPORARY_FAILURE = 43,
-	v2N_CHILD_SA_NOT_FOUND = 44,
+	v2N_TEMPORARY_FAILURE = 43, /* RFC 7296 */
+	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
+	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
+	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,
@@ -1400,8 +1435,15 @@ typedef enum {
 	v2N_IKEV2_MESSAGE_ID_SYNC = 16422, /* RFC-6311 */
 	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423, /* RFC-6311 */
 	v2N_SECURE_PASSWORD_METHODS = 16424, /* RFC-6467 */
+	v2N_PSK_PERSIST = 16425, /* RFC-6631 */
+	v2N_PSK_CONFIRM = 16426, /* RFC-6631 */
+	v2N_ERX_SUPPORTED = 16427, /* RFC-6867 */
+	v2N_IFOM_CAPABILITY = 16428, /* 3GPP TS 24.303 v10.6.0 annex B.2 */
+	v2N_SENDER_REQUEST_ID = 16429, /* draft-yeung-g-ikev2 */
+	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
+	v2N_SIGNATURE_HASH_ALGORITHMS = 16431, /* RFC-7427 */
 
-	/* 16425 - 40969 Unassigned */
+	/* 16432 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 
@@ -1446,8 +1488,9 @@ enum ike_id_type {
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
 	ID_FC_NAME = 12,	/* RFC 4595 */
+	ID_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
-	/* 13-248 Unassigned */
+	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };
 

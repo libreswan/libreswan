@@ -22,7 +22,7 @@ ipsec auto $CFG --up japan--wavesec
 /testing/pluto/co-terminal-02/eroutewait.sh tun0
 ipsec eroute | sed -e 's/^[0-9]* /n /'
 
-ipsec whack --debug-oppo --debug-control --debug-controlmore 
+ipsec whack --debug-oppo --debug-control --debug-controlmore
 
 ipsec auto  $CFG --add private-or-clear
 ipsec whack --listen

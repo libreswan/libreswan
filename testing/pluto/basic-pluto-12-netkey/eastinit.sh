@@ -7,6 +7,4 @@ ipsec setup start
 ipsec auto --add westnet-eastnet
 ipsec auto --add westnet-eastnet-22
 ipsec auto --route westnet-eastnet-22
-# SHOULD NOT see 222 (but ESP) and SHOULD see 22 (from passthrough)
-tcpdump -nn -i eth1 esp or port 22 or port 222 &
 echo "initdone"

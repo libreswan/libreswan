@@ -1,0 +1,277 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ # confirm that the network is alive
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec setup start
+[ 00.00] registered KLIPS /proc/sys/net
+[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] 
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add TUNNEL-C
+002 added connection description "TUNNEL-C"
+west #
+ ipsec auto --add TUNNEL-A
+002 added connection description "TUNNEL-A"
+west #
+ ipsec auto --add TUNNEL-B
+002 added connection description "TUNNEL-B"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up TUNNEL-A
+002 "TUNNEL-A" #1: initiating Main Mode
+104 "TUNNEL-A" #1: STATE_MAIN_I1: initiate
+003 "TUNNEL-A" #1: received Vendor ID payload [Dead Peer Detection]
+003 "TUNNEL-A" #1: received Vendor ID payload [FRAGMENTATION]
+003 "TUNNEL-A" #1: received Vendor ID payload [RFC 3947]
+002 "TUNNEL-A" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
+106 "TUNNEL-A" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "TUNNEL-A" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
+002 "TUNNEL-A" #1: I am sending my cert
+002 "TUNNEL-A" #1: I am sending a certificate request
+108 "TUNNEL-A" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "TUNNEL-A" #1: received Vendor ID payload [CAN-IKEv2]
+002 "TUNNEL-A" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "TUNNEL-A" #1: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
+004 "TUNNEL-A" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
+002 "TUNNEL-A" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+117 "TUNNEL-A" #2: STATE_QUICK_I1: initiate
+004 "TUNNEL-A" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up TUNNEL-B
+002 "TUNNEL-B" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+117 "TUNNEL-B" #3: STATE_QUICK_I1: initiate
+004 "TUNNEL-B" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up TUNNEL-C
+002 "TUNNEL-C" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+117 "TUNNEL-C" #4: STATE_QUICK_I1: initiate
+004 "TUNNEL-C" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.244
+PING 192.0.2.244 (192.0.2.244) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.244: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.244: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.244: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.244: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.244 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.234
+PING 192.0.2.234 (192.0.2.234) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.234: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.234: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.234: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.234: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.234 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ #IKE sa will be on TUNNEL-A
+west #
+ ipsec auto --status | grep ISAKMP
+000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "TUNNEL-C":   newest ISAKMP SA: #1; newest IPsec SA: #4;
+000 #1: "TUNNEL-A":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
+west #
+ sleep 60
+west #
+ #IKE sa will be on TUNNEL-B
+west #
+ ipsec auto --status | grep ISAKMP
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
+000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3;
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
+000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
+west #
+ ipsec auto --down TUNNEL-B
+002 "TUNNEL-B": terminating SAs using this connection
+002 "TUNNEL-B" #3: deleting state #3 (STATE_QUICK_I2)
+005 "TUNNEL-B" #3: ESP traffic information: in=0B out=0B
+002 "TUNNEL-B": Connection has a shared IKE state: not removing
+west #
+ #One IKE will remain on TUNNEL-B
+west #
+ ipsec auto --status | grep TUNNEL
+000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-A":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "TUNNEL-A":   labeled_ipsec:no;
+000 "TUNNEL-A":   policy_label:unset;
+000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
+000 "TUNNEL-A":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "TUNNEL-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
+000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-B":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "TUNNEL-B":   labeled_ipsec:no;
+000 "TUNNEL-B":   policy_label:unset;
+000 "TUNNEL-B":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #0;
+000 "TUNNEL-B":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
+000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-C":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "TUNNEL-C":   labeled_ipsec:no;
+000 "TUNNEL-C":   policy_label:unset;
+000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
+000 "TUNNEL-C":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27976s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 
+000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
+000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27757s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=0 Traffic:! ESPmax=4194303B 
+west #
+ ipsec auto --delete TUNNEL-B
+002 "TUNNEL-B": deleting connection
+002 "TUNNEL-B" #5: deleting state #5 (STATE_MAIN_R3)
+west #
+ #TUNNEL-A and TUNNEL-C IPsec states remain. TUNNEL-B should be gone.
+west #
+ ipsec auto --status | grep TUNNEL
+000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-A":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "TUNNEL-A":   labeled_ipsec:no;
+000 "TUNNEL-A":   policy_label:unset;
+000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2;
+000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
+000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-C":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "TUNNEL-C":   labeled_ipsec:no;
+000 "TUNNEL-C":   policy_label:unset;
+000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4;
+000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27975s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in 27756s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=11 refhim=0 Traffic:! ESPmax=4194303B 
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+192.0.1.254/32     -> 192.0.2.234/32     => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+192.0.1.254/32     -> 192.0.2.254/32     => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=9
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.234/32->192.0.1.254/32 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=9
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.0.2.234 dev ipsec0  scope link 
+192.0.2.254 dev ipsec0  scope link 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     ,,   
+east                                                         P,,  
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+north                                                        P,,  
+west                                                         u,u,u
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

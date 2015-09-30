@@ -77,9 +77,9 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type, chunk_t ca, pb_stream *out
 	return FALSE;
 }
 
-bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
+generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
-	return FALSE;
+	return NULL;
 }
 
 bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)

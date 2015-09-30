@@ -1,0 +1,28 @@
+basic netkey test but now using auto=route for on-demand
+
+It can be seen that the bare shunt remains active under reqid 0,
+so replace_bare_shunt() seems broken even for the non-OE case.
+
+This test currently fails due to the bare shunt not being replaced:
+
+src 192.0.1.254 dst 192.0.2.254
+        proto esp spi 0xSPISPIXX reqid REQID mode transport
+        replay-window 0
+        sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1
+
+The strange thing is that the logs do not indicate an error in replacing the bare shunt:
+
+| add bare shunt 0x7f126d8c7f68 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 state: fos_start because: acquire
+| find_connection: looking for policy for connection: 192.0.1.254:1/8 -> 192.0.2.254:1/0
+| find_connection: conn "ondemand" has compatible peers: 192.0.1.0/24 -> 192.0.2.0/24 [pri: 12632074]
+| find_connection: comparing best "ondemand" [pri:12632074]{0x7f126d899b28} (child none) to "ondemand" [pri:12632074]{0x7f126d899b28} (child none)
+| find_connection: concluding with "ondemand" [pri:12632074]{0x7f126d899b28} kind=CK_PERMANENT
+| assign hold, routing was prospective erouted, needs to be erouted HOLD
+| eroute_connection replace %trap with broad %hold eroute 192.0.1.0/24:0 --0-> 192.0.2.0/24:0 => %hold (raw_eroute)
+| raw_eroute result=1
+| adding specific host-to-host bare shunt
+| delete narrow %hold eroute 192.0.1.254/32:8 --1-> 192.0.2.254/32:0 => %hold (raw_eroute)
+| raw_eroute result=1
+| delete bare shunt 0x7f126d8c7f68 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| creating state object #5 at 0x7f126d8c7838

@@ -1,29 +1,29 @@
-include ${srcdir}../Makefile.unit-settings
+include ${SRCDIR}../Makefile.unit-settings
 
 ${TESTCASE}:	${TESTCASE}.o ${IPSEC_OBJS} Makefile
 	${CC} -g -o ${TESTCASE} ${TESTCASE}.o ${IPSEC_OBJS} ${KUTILLIB} ${LIBRESWANLIB} -lefence
 
-${TESTCASE}.o: ${srcdir}${TESTCASE}.c 
-	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${srcdir}${TESTCASE}.c
+${TESTCASE}.o: ${SRCDIR}${TESTCASE}.c
+	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${SRCDIR}${TESTCASE}.c
 
-%.o: %.c 
-	${CC} ${UCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $< 
+%.o: %.c
+	${CC} ${UCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $<
 
 %.o: ${KLIPSSRC}/%.c
-	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $< 
+	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $<
 
 %.o: ${KLIPSSRC}/des/%.c
-	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $< 
+	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $<
 
 %.o: ${KLIPSSRC}/aes/%.c
-	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $< 
+	${CC} ${KCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $<
 
 # build version.c using version number from Makefile.ver
 version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
 	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${KLIPSSRC}/version.in.c >$@
 
 ifneq (${PACKFILE},)
-${TESTCASE}.o: ${PACKFILE}.c 
+${TESTCASE}.o: ${PACKFILE}.c
 endif
 
 ${PACKFILE}.c: ${INPUTS}
@@ -33,5 +33,5 @@ clean:
 	rm -rf *.o ${PACKFILE}.c
 
 check:	${TESTCASE}
-	(./${TESTCASE} && echo done)| sed -f ${srcdir}../fixup.sed | tee ${TESTCASE}-check.txt | diff - ${srcdir}${TESTCASE}.out
+	(./${TESTCASE} && echo done)| sed -f ${SRCDIR}../fixup.sed | tee ${TESTCASE}-check.txt | diff - ${SRCDIR}${TESTCASE}.out
 

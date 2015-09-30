@@ -73,7 +73,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 	if (write(sock, buf, len) != len) {
 		int e = errno;
 
-		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)\n",
+		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)",
 			e, strerror(e));
 		return RC_WHACK_PROBLEM;
 	}
@@ -128,7 +128,7 @@ static int starter_whack_read_reply(int sock,
 				write(STDOUT_FILENO, ls, le - ls) == -1) {
 				int e = errno;
 				starter_log(LOG_LEVEL_ERR,
-					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.\n",
+					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
 					e, strerror(e));
 			}
 			/*
@@ -236,7 +236,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 	ugh = pack_whack_msg(&wp);
 
-	if (ugh) {
+	if (ugh != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
@@ -283,7 +283,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	zero(msg);
+	/* properly initialzes pointers to NULL */
+	static const struct whack_message zwm;
+
+	*msg = zwm;
 	msg->magic = WHACK_MAGIC;
 }
 
@@ -513,6 +516,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 
+	msg.r_interval = conn->options[KBF_RETRANSMIT_INTERVAL];
+	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);
+
 	msg.policy = conn->policy;
 
 	msg.connalias = conn->connalias;
@@ -520,9 +526,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.metric = conn->options[KBF_METRIC];
 
 	if (conn->options_set[KBF_CONNMTU])
-		msg.connmtu   = conn->options[KBF_CONNMTU];
+		msg.connmtu = conn->options[KBF_CONNMTU];
 	if (conn->options_set[KBF_PRIORITY])
-		msg.sa_priority   = conn->options[KBF_PRIORITY];
+		msg.sa_priority = conn->options[KBF_PRIORITY];
+	if (conn->options_set[KBF_NFLOG_CONN])
+		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
 	if (conn->options_set[KBF_REQID]) {
 		if (conn->options[KBF_REQID] <= 0 ||
@@ -609,11 +617,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #ifdef HAVE_LABELED_IPSEC
 	/* Labeled ipsec support */
-	if (conn->options_set[KBF_LOOPBACK])
-		msg.loopback = conn->options[KBF_LOOPBACK];
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" loopback=%d", conn->name,
-		msg.loopback);
-
 	if (conn->options_set[KBF_LABELED_IPSEC])
 		msg.labeled_ipsec = conn->options[KBF_LABELED_IPSEC];
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" labeled_ipsec=%d",
@@ -702,7 +705,7 @@ static bool one_subnet_from_string(struct starter_conn *conn,
 		subnets++;
 
 	e = ttosubnet(eln, subnets - eln, af, sn);
-	if (e) {
+	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
 			conn->name,
@@ -793,7 +796,8 @@ int starter_permutate_conns(int
 		sc.right.subnet = rnet;
 		sc.right.has_client = TRUE;
 
-		snprintf(tmpconnname, 256, "%s/%ux%u", conn->name, lc, rc);
+		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
+			conn->name, lc, rc);
 		sc.name = tmpconnname;
 
 		sc.connalias = conn->name;

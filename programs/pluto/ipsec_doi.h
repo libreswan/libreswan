@@ -16,13 +16,14 @@
  * for more details.
  */
 
+struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
 			      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			      , struct xfrm_user_sec_ctx_ike *
+			      , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			      );
 
@@ -39,11 +40,13 @@ extern state_transition_fn
 	main_inR2_outI3,
 	main_inI3_outR3,
 	main_inR3,
-	aggr_inI1_outR1_psk,
-	aggr_inI1_outR1_rsasig,
+	aggr_inI1_outR1,
 	aggr_inR1_outI2,
 	aggr_inI2;
-
+/*
+ * forward
+ */
+struct oakley_group_desc;
 extern bool send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);

@@ -1,0 +1,8 @@
+nflog on a per-conn basis using nflog=
+
+This starts two tunnels with different nflog= numbers which
+should result in only seeing packets from one tunnel.
+
+Note: if the two tunnels share the same phase1, it seems to pick
+the old nflog number? Not sure why as it goes to check c->nflog_group
+

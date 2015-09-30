@@ -74,9 +74,12 @@ int pfkeyfd = NULL_FD;
 typedef u_int32_t pfkey_seq_t;
 static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messages */
 
-/* The orphaned_holds table records %holds for which we
- * scan_proc_shunts found no representation of in any connection.
+
+/* The orphaned_holds table records %holds for which
+ * klips_scan_shunts() found no representation of in any connection.
  * The corresponding ACQUIRE message might have been lost.
+ *
+ * Paul: this concept is KLIPS-centric and not used on other stacks
  */
 static struct eroute_info *orphaned_holds = NULL;
 
@@ -304,9 +307,9 @@ static bool pfkey_get(pfkey_buf *buf)
 				(unsigned) buf->msg.sadb_msg_len,
 				(unsigned) IPSEC_PFKEYv2_ALIGN);
 		} else if (!(buf->msg.sadb_msg_pid == (unsigned)pid
-		             /*	for now, unsolicited messages can be:
-		              *	K_SADB_ACQUIRE, K_SADB_REGISTER, K_SADB_X_NAT_T_NEW_MAPPING
-		              */
+			     /*	for now, unsolicited messages can be:
+			      *	K_SADB_ACQUIRE, K_SADB_REGISTER, K_SADB_X_NAT_T_NEW_MAPPING
+			      */
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type == SADB_ACQUIRE)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
@@ -445,7 +448,7 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 	    !(ugh = src_proto == dst_proto ?
 		NULL : "src and dst protocols differ") &&
 	    !(ugh = addrtypeof(src) == addrtypeof(dst) ?
-	        NULL : "conflicting address types") &&
+		NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, 0,
@@ -664,8 +667,8 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					case ENOENT:
 						loglog(RC_LOG_SERIOUS,
 						       "requested algorithm is not available in the kernel");
-					/* fall through to get error message */
-
+					/* to get error message, */
+					/* FALL THROUGH */
 					default:
 logerr:
 						libreswan_log_errno_routine(e1, "pfkey write() of %s message %u"
@@ -850,8 +853,9 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t spi,
-		      unsigned int proto UNUSED,
+		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t new_spi,
+		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
@@ -860,7 +864,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-		      , char *policy_label UNUSED
+		      , const char *policy_label UNUSED
 #endif
 		      )
 {
@@ -899,10 +903,16 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		ERO_DELETE);
 #endif
 
+
+// temp squash a warning
+
+	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
+		cur_spi, new_spi));
+
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 new_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa add flow", text_said, extensions)
@@ -915,19 +925,18 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 					  "pfkey_addr_d add flow", text_said,
 					  extensions)))
 			return FALSE;
-	}
 #if defined(KLIPS_MAST)
-	/* in mast mode, deletes also include the extension flags */
-	else if (kernel_ops->type == USE_MASTKLIPS) {
+	} else if (kernel_ops->type == USE_MASTKLIPS) {
+		/* in mast mode, deletes also include the extension flags */
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 cur_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa del flow", text_said, extensions)))
 			return FALSE;
-	}
 #endif
+	}
 
 	if (!pfkeyext_address(K_SADB_X_EXT_ADDRESS_SRC_FLOW, &sflow_ska,
 			      "pfkey_addr_sflow", text_said, extensions))
@@ -1218,7 +1227,8 @@ void pfkey_close(void)
 	pfkeyfd = NULL_FD;
 }
 
-/* Add/replace/delete a shunt eroute.
+/*
+ * Add/replace/delete a shunt eroute.
  * Such an eroute determines the fate of packets without the use
  * of any SAs.  These are defaults, in effect.
  * If a negotiation has not been attempted, use %trap.
@@ -1343,6 +1353,7 @@ bool pfkey_shunt_eroute(struct connection *c,
 					fam->any,
 					&sr->that.client,
 					htonl(spi),
+					htonl(spi),
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
@@ -1436,7 +1447,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	return eroute_connection(sr,
-				 inner_spi, inner_proto,
+				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
 				 op, opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1512,13 +1523,15 @@ static const char *read_proto(const char * s, size_t * len,
  * searching for each is sequential.  If this becomes a problem, faster
  * searches could be implemented (hash or radix tree, for example).
  */
-void scan_proc_shunts(void)
+void pfkey_scan_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
 	monotime_t nw = mononow();
 	int lino;
 	struct eroute_info *expired = NULL;
+
+	passert(kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS);
 
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
@@ -1746,11 +1759,15 @@ void scan_proc_shunts(void)
 
 		networkof(&p->ours, &src);
 		networkof(&p->his, &dst);
-		(void) replace_bare_shunt(&src, &dst,
-					  BOTTOM_PRIO,  /* not used because we are deleting.  This value is a filler */
-					  SPI_PASS,     /* not used because we are deleting.  This value is a filler */
-					  FALSE, p->transport_proto,
-					  "delete expired bare shunts");
+
+		if (delete_bare_shunt(&src, &dst,
+				p->transport_proto, SPI_HOLD, /* what spi to use? */
+				"delete expired bare shunts"))
+		{
+			DBG(DBG_CONTROL, DBG_log("pfkey_scan_shunts() called delete_bare_shunt() with success"));
+		} else {
+			libreswan_log("pfkey_scan_shunts() called delete_bare_shunt() which failed!");
+		}
 		expired = p->next;
 		pfree(p);
 	}
@@ -1770,7 +1787,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 	passert(st != NULL);
 
 	f = fopen(procname, "r");
-	if (f == NULL) { /** Can't open the file, perhaps were are on 26sec? */
+	if (f == NULL) {
+		/** Can't open the file, perhaps were are on 26sec? */
 		ret = TRUE;
 	} else {
 		for (;;) {
@@ -1804,7 +1822,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			satot(&said, 'x', text_said, SATOT_BUF);
 
 			line = fgets(buf, sizeof(buf), f);
-			if (line == NULL) { /* Reached end of list */
+			if (line == NULL) {
+				/* Reached end of list */
 				ret = TRUE;
 				break;
 			}
@@ -1813,8 +1832,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				/* we found a match, now try to find idle= */
 				char *p = strstr(line, idle);
 
-				if (p == NULL) {        /* SAs which haven't been used yet
-					                   don't have it */
+				if (p == NULL) {
+					/* unused SA: no "idle=" */
 					ret = TRUE;     /* it didn't have traffic */
 					break;
 				}

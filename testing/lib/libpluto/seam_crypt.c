@@ -9,12 +9,11 @@ struct pluto_crypto_req rd;
 struct pluto_crypto_req *r = &rd;
 
 stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
-		    struct state *st,
 		    const struct oakley_group_desc *group,
 		    enum crypto_importance importance)
 {
 	continuation = cn;
-	zero(&rd);
+	zero(&rd);	/* ??? pointer fields might not be NULLed */
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_build_ke_and_nonce;
@@ -33,7 +32,7 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	continuation = cn;
-	zero(&rd);
+	zero(&rd);	/* ??? pointer fields might not be NULLed */
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_compute_dh_v2;
@@ -84,7 +83,9 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 stf_status ikev2_verify_rsa_sha1(struct state *st,
 				 enum phase1_role role,
 				 unsigned char *idhash,
+#ifdef USE_KEYRR
 				 const struct pubkey_list *keys_from_dns,
+#endif
 				 const struct gw_info *gateways_from_dns,
 				 pb_stream *sig_pbs)
 {

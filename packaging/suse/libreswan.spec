@@ -5,7 +5,7 @@
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan
-Version: 3.13
+Version: IPSECBASEVERSION
 # Build KLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 0}}
 
@@ -32,11 +32,11 @@ BuildRequires: %kernel_module_package_buildreqs
 Prefix:         /usr
 
 %description
-Libreswan is a free implementation of IPSEC & IKE for Linux.  IPSEC is 
+Libreswan is a free implementation of IPSEC & IKE for Linux.  IPSEC is
 the Internet Protocol Security and uses strong cryptography to provide
 both authentication and encryption services.  These services allow you
 to build secure tunnels through untrusted networks.  Everything passing
-through the untrusted net is encrypted by the ipsec gateway machine and 
+through the untrusted net is encrypted by the ipsec gateway machine and
 decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
@@ -129,7 +129,7 @@ done
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 
-%files 
+%files
 %defattr(-,root,root)
 %doc CHANGES COPYING CREDITS README LICENSE
 %doc OBJ.linux.*/programs/examples/*.conf
@@ -166,7 +166,7 @@ exit 0
 %{restart_on_update ipsec}
 %{insserv_cleanup}
 
-%post 
+%post
 %{fillup_and_insserv ipsec}
 # don't create host keys on install - might be no entropy!
 # libreswan automatically does it on 'start' if no ipsec.secrets is found
@@ -185,7 +185,7 @@ exit 0
 - Cleaned up spec file
 
 * Mon Oct 10 2005 Paul Wouters <paul@xelerance.com>
-- Updated for klips on xen 
+- Updated for klips on xen
 - added ldconfig for post klips to obtain ipsec module dependancies
 - Run 'make include' since on FC4 kernel source does not have the links yet.
 
@@ -196,7 +196,7 @@ exit 0
 - Updated for libreswan
 
 * Fri Aug 22 2003 Sam Sgro <sam@freeswan.org>
-- Juggling release/source package names to allow for 
+- Juggling release/source package names to allow for
   -pre/-rc releases to build.
 
 * Thu Aug 14 2003 Sam Sgro <sam@freeswan.org>

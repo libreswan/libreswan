@@ -40,6 +40,43 @@
 
 #define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */
 
+
+/*
+ * min()/max() macros that also do
+ * strict type-checking.. See the
+ * "unnecessary" pointer comparison.
+ * Note: re-evaluation is avoided.
+ * Copied from include/linux/kernel.h
+ * Copyright Torvalds et al.
+ */
+#define min(x, y) ({				\
+	typeof(x) _min1 = (x);			\
+	typeof(y) _min2 = (y);			\
+	(void) (&_min1 == &_min2);		\
+	_min1 < _min2 ? _min1 : _min2; })
+
+#define max(x, y) ({				\
+	typeof(x) _max1 = (x);			\
+	typeof(y) _max2 = (y);			\
+	(void) (&_max1 == &_max2);		\
+	_max1 > _max2 ? _max1 : _max2; })
+
+/*
+ * Alternate MIN/MAX implementation.
+ *
+ * These have more macro-like behaviour (hence NAMING):
+ * - if the arguments are compile-time constants, then so is the result
+ *   so this can be used (for example) in array bound calculation.
+ * - one of the arguments will be evaluated twice.
+ * - type errors are probably not detected.
+ * - does not depend on GCC extensions to C language
+ *
+ * The P prefix is required because <sys/param.h> defines MIN and MAX
+ */
+
+#define PMIN(x,y) ((x) <= (y) ? (x) : (y))
+#define PMAX(x,y) ((x) >= (y) ? (x) : (y))
+
 /* Many routines return only success or failure, but wish to describe
  * the failure in a message.  We use the convention that they return
  * a NULL on success and a pointer to constant string on failure.
@@ -67,7 +104,7 @@ typedef int bool;
 
 #include <inttypes.h>
 
-#include <prcpucfg.h>
+#include <prcpucfg.h>	/* from nspr4 devel */
 
 #ifndef BITS_PER_BYTE
 # define BITS_PER_BYTE  8
@@ -84,11 +121,43 @@ typedef int bool;
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
 
 
-/* zero an object given a pointer to it.
- * Note: this won't work on an array without an explicit &
- * (it will appear to work but it will only zero the first element).
+/*
+ * zero an object given a pointer to it.
+ *
+ * Note: this won't work on a pointer to the first element of an
+ * array since sizeof() will only give the length of the first element.
+ * Unfortunately, no compiler diagnostic will flag this.
+ * Any array will have to be prefixed with an & to yield a pointer
+ * to the whole array.  The normal representation for a string or pointer
+ * to a raw buffer is a pointer to the first element, so they cannot be zeroed.
+ *
+ * Simple form of this rule:
+ * The argument to zero must be prefixed by & unless it is a pointer
+ * to the object you wish to zero.  A pointer to an object must be
+ * a pointer to the whole object, not just the first element.
+ *
+ * Note also that zeroing a pointer is not guaranteed to make it NULL
+ * (read the C standard).  This problem is mostly theoretical since
+ * on almost all real architectures it works.
+ * ??? there are many calls that are intended to set pointers to NULL.
+ * ??? there are many calls to zero that are not needed and thus confusing.
+ *     Often we would be better served if calls to messup were used:
+ *     actual bugs might be detected.
  */
 #define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
+
+/*
+ * messup: set memory to a deterministic useless value
+ *
+ * Like zero macro, but sets object to likely wrong value.
+ * The intent is that memory that is supposed to not be used
+ * without futher initialization will not accidentally have a
+ * plausible value (eg. zero, or the previous value, or some
+ * secret that might be leaked).
+ */
+
+#define messupn(x, n) memset((x), 0xFB, (n))	/* set n bytes to wrong value */
+#define messup(x) messupn((x), sizeof(*(x)))	/* set all bytes to wrong value */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
@@ -108,6 +177,9 @@ typedef uint_fast64_t lset_t;
 #define LHAS(set, elem)  (((set) & LELEM(elem)) != LEMPTY)
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
+/* LFIRST: find first element of a set (tricky use of twos complement) */
+#define LFIRST(s) ((s) & -(s))
+#define LSINGLETON(s) ((s) != LEMPTY && LFIRST(s) == (s))
 
 /* Routines to check and display values.
  *

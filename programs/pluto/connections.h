@@ -112,31 +112,30 @@
  * - a bias of 1 is added to allow prio BOTTOM_PRIO to be less than all
  *   normal priorities
  * - other bias values are created on the fly to give mild preference
- *   to certaion conditions (eg. routedness)
+ *   to certain conditions (eg. routedness)
  * - priority is inherited -- an instance of a policy has the same priority
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
  */
 typedef unsigned long policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
+
 #define set_policy_prio(c) { (c)->prio = \
-				     ((policy_prio_t)(c)->spd.this.client. \
-				      maskbits << 16) \
-				     | ((policy_prio_t)(c)->spd.that.client. \
-					maskbits << 8) \
-				     | (policy_prio_t)1; }
+		  ((policy_prio_t)(c)->spd.this.client.maskbits << 16) \
+		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
+		|  (policy_prio_t)1; }
+
 #define POLICY_PRIO_BUF (3 + 1 + 3 + 1)
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 #ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>	/* needed for pam_handle_t */
+# include <security/pam_appl.h>	/* from pam devel; needed for pam_handle_t */
 #endif
 
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
 #include "x509.h"
-#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -150,7 +149,7 @@ struct end {
 	bool left;
 
 	enum keyword_host host_type;
-	char  *host_addr_name;	/* string version from whack */
+	char *host_addr_name;	/* string version from whack */
 	ip_address
 		host_addr,
 		host_nexthop,
@@ -169,10 +168,9 @@ struct end {
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	char   *cert_filename;		/* where we got the certificate */
+	char *cert_nickname;		/* NSS certificate nickname */
 	cert_t cert;			/* end certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
-	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 
@@ -205,6 +203,8 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
+	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
+	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
 
@@ -226,7 +226,6 @@ struct connection {
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;
 #endif
@@ -282,7 +281,7 @@ struct connection {
 	generalName_t *requested_ca;	/* collected certificate requests */
 	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
-	pam_handle_t  *pamh;		/*  PAM handle for that connection  */
+	pam_handle_t *pamh;		/*  PAM handle for that connection  */
 #endif
 	char *dnshostname;
 
@@ -296,6 +295,7 @@ struct connection {
 	u_int8_t metric;	/* metric for tunnel routes */
 	u_int16_t connmtu;	/* mtu for tunnel routes */
 	u_int32_t statsval;	/* track what we have told statsd */
+	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 };
 
 #define oriented(c) ((c).interface != NULL)
@@ -325,13 +325,13 @@ extern void restart_connections_by_peer(struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 #endif
 
-extern bool initiate_ondemand(const ip_address *our_client,
+extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
 			     int whackfd
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike *uctx
+			     , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     , err_t why);
 extern void terminate_connection(const char *nm);
@@ -366,12 +366,18 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
 *con_by_name(const char *nm, bool strict);
 
+stf_status ikev2_find_host_connection(struct connection **cp,
+		const ip_address *me, u_int16_t my_port, const ip_address *him,
+		u_int16_t his_port, lset_t req_policy);
+
 extern struct connection
 	*find_host_connection(const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
-		       lset_t policy),
-	*refine_host_connection(const struct state *st, const struct id *id,
-			bool initiator, bool aggrmode, bool *fromcert),
+		       lset_t req_policy, lset_t policy_exact_mask),
+	*find_next_host_connection(struct connection *c,
+		       lset_t req_policy, lset_t policy_exact_mask),
+	*refine_host_connection(const struct state *st, const struct id *peer_id,
+			bool initiator, lset_t auth_policy, bool *fromcert),
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
@@ -395,9 +401,9 @@ extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_subnet *his_net,
 					 const struct id *his_id);
 
-extern struct connection * instantiate(struct connection *c,
-				       const ip_address *him,
-				       const struct id *his_id);
+extern struct connection *instantiate(struct connection *c,
+				      const ip_address *him,
+				      const struct id *his_id);
 
 extern struct connection *oppo_instantiate(struct connection *c,
 					   const ip_address *him,
@@ -406,10 +412,10 @@ extern struct connection *oppo_instantiate(struct connection *c,
 					   const ip_address *our_client,
 					   const ip_address *peer_client);
 
-extern struct connection
-*build_outgoing_opportunistic_connection(struct gw_info *gw,
-					 const ip_address *our_client,
-					 const ip_address *peer_client);
+extern struct connection *build_outgoing_opportunistic_connection(
+		struct gw_info *gw,
+		const ip_address *our_client,
+		const ip_address *peer_client);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
 #define CONN_INST_BUF \
@@ -431,7 +437,7 @@ extern void add_pending(int whack_sock,
 			unsigned long try,
 			so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike * uctx
+			, const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			);
 
@@ -454,8 +460,8 @@ extern struct connection *eclipsed(struct connection *c, struct spd_route **);
 
 extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
-extern int  connection_compare(const struct connection *ca,
-			       const struct connection *cb);
+extern int connection_compare(const struct connection *ca,
+			      const struct connection *cb);
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,

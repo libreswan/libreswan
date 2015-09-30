@@ -40,7 +40,7 @@ CONFIG_KLIPS_ALG=y
 CONFIG_KLIPS_ENC_3DES=y
 CONFIG_KLIPS_ENC_AES=y
 
-# Use CryptoAPI for ALG? 
+# Use CryptoAPI for ALG?
 CONFIG_KLIPS_ENC_CRYPTOAPI=y
 
 # IP Compression: new, probably still has minor bugs.

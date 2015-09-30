@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-aes_ctr
+002 added connection description "westnet-eastnet-aes_ctr"
+east #
+ echo "initdone"
+initdone
+east #
+ grep -A 1 KEY_LENGTH /tmp/pluto.log
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
+--
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -231,8 +231,11 @@ void stop_adns(void)
 }
 
 /* tricky macro to pass any hot potato */
-#define TRY(x)  { err_t ugh = x; if (ugh != NULL) \
-			  return ugh; }
+#define TRY(x)  { \
+		err_t ugh = (x); \
+		if (ugh != NULL) \
+			  return ugh; \
+	}
 
 /* Process TXT X-IPsec-Server record, accumulating relevant ones
  * in cr->gateways_from_dns, a list sorted by "preference".
@@ -355,7 +358,8 @@ static err_t process_txt_rr_body(char *str,
 
 	/* Decode iii (Security Gateway ID). */
 
-	zero(&gi);                      /* before first use */
+	static const struct gw_info zgi;	/* zeros and NULLs */
+	gi = zgi;	/* before first use */
 
 	TRY(decode_iii(&p, &gi.gw_id)); /* will need to unshare_id_content */
 
@@ -1267,6 +1271,10 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 	/* note: all end in "." to suppress relative searches */
 	id = resolve_myid(id);
 	switch (id->kind) {
+	case ID_NULL:
+		/* ok */
+		return NULL;
+
 	case ID_IPV4_ADDR:
 	{
 		/* XXX: this is really ugly and only temporary until addrtot can
@@ -1507,7 +1515,7 @@ err_t start_adns_query(const struct id *id,     /* domain to query */
 
 	idtoa(&cr->sgw_id, gwidb, sizeof(gwidb));
 
-	zero(&cr->query);
+	zero(&cr->query);	/* struct adns_query has no pointer fields */
 
 	{
 		err_t ugh = build_dns_name(cr->query.name_buf, cr->qtid,
@@ -1694,10 +1702,11 @@ static err_t process_lwdnsq_answer(char *ts)
 			cr->cont_fn(cr, rest);
 			cr->used = TRUE;
 		}
-	} else if (strcaseeq(atype, "TIMEOUT")) { /* for now, treat as if it was a fatal error, and run failure
-		                                   * shunt. Later, we will consider a valid answer and re-evaluate
-		                                   * life, the universe and everything
-		                                   */
+	} else if (strcaseeq(atype, "TIMEOUT")) {
+		/* for now, treat as if it was a fatal error, and run failure
+		 * shunt. Later, we will consider a valid answer and re-evaluate
+		 * life, the universe and everything
+		 */
 		if (!cr->used) {
 			cr->cont_fn(cr, rest);
 			cr->used = TRUE;
@@ -1749,9 +1758,8 @@ static err_t process_lwdnsq_answer(char *ts)
 		/* ignore */
 	} else if (strcaseeq(atype, "PTR")) {
 		/* ignore */
-	}
 #ifdef USE_KEYRR
-	else if (strcaseeq(atype, "KEY")) {
+	} else if (strcaseeq(atype, "KEY")) {
 		err_t key_ugh = process_lwdnsq_key(rest,
 						   AuthenticatedData ? DAL_SIGNED : DAL_NOTSEC,
 						   cr);
@@ -1763,9 +1771,8 @@ static err_t process_lwdnsq_answer(char *ts)
 			cr->cont_fn(cr, key_ugh);
 			cr->used = TRUE;
 		}
-	}
 #endif  /* USE_KEYRR */
-	else {
+	} else {
 		ugh = "lwdnsq: unrecognized type";
 	}
 	return ugh;
@@ -1900,14 +1907,14 @@ void handle_adns_answer(void)
 					typename, name_buf, ugh);
 		}
 		DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL | DBG_DNS, {
-			    if (ugh == NULL)
-				    DBG_log("asynch DNS answer %lu for %s of %s",
-					    cr->query.serial, typename,
-					    name_buf);
-			    else
-				    DBG_log("asynch DNS answer %lu %s",
-					    cr->query.serial, ugh);
-		    });
+			if (ugh == NULL)
+				DBG_log("asynch DNS answer %lu for %s of %s",
+					cr->query.serial, typename,
+					name_buf);
+			else
+				DBG_log("asynch DNS answer %lu %s",
+					cr->query.serial, ugh);
+		});
 
 		passert(GLOBALS_ARE_RESET());
 		cr->cont_fn(cr, ugh);

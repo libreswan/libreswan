@@ -92,7 +92,7 @@ int warningsarefatal = 0;
 - (NSString *) pathForDataFile
 {
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-    
+
 	NSString *folder = @"~/Library/Application Support/Libreswan/";
 	folder = [folder stringByExpandingTildeInPath];
 	
@@ -100,7 +100,7 @@ int warningsarefatal = 0;
 	{
 		[fileManager createDirectoryAtPath: folder attributes: nil];
 	}
-    
+
 	NSString *fileName = @"Libreswan.data";
 	return [folder stringByAppendingPathComponent:fileName];
 }
@@ -112,7 +112,7 @@ int warningsarefatal = 0;
 	
 	NSMutableDictionary* rootObject;
 	rootObject = [NSMutableDictionary dictionary];
-    
+
 	[rootObject setValue:[self db] forKey:@"db"];
 	[NSKeyedArchiver archiveRootObject:rootObject toFile:path];
 }
@@ -122,7 +122,7 @@ int warningsarefatal = 0;
 	NSLog(@"Loading data from disk");
 	NSString* path        = [self pathForDataFile];
 	NSDictionary* rootObject;
-    
+
 	rootObject = [NSKeyedUnarchiver unarchiveObjectWithFile:path];
 	[self setDb:[rootObject valueForKey:@"db"]];
 	
@@ -145,8 +145,8 @@ int warningsarefatal = 0;
 //Helper Tool
 
 static OSStatus DoConnect(CFStringRef reqConnName)
-// This code shows how to do a typical BetterAuthorizationSample privileged operation 
-// in straight C.  In this case, it does the low-numbered ports operation, which 
+// This code shows how to do a typical BetterAuthorizationSample privileged operation
+// in straight C.  In this case, it does the low-numbered ports operation, which
 // returns three file descriptors that are bound to low-numbered TCP ports.
 {
     OSStatus        err;
@@ -158,24 +158,24 @@ static OSStatus DoConnect(CFStringRef reqConnName)
     CFDictionaryRef request;
     CFDictionaryRef response;
     BASFailCode     failCode;
-    
+
     // Pre-conditions
 
 	
     // Get our bundle information.
-    
+
     bundle = CFBundleGetMainBundle();
     assert(bundle != NULL);
-    
+
     bundleID = CFBundleGetIdentifier(bundle);
     assert(bundleID != NULL);
-    
-    // Create the request.  The request always contains the kBASCommandKey that 
-    // describes the command to do.  It also, optionally, contains the 
-	// kSampleLowNumberedPortsForceFailure key that tells the tool to always return 
-	// an error.  The purpose of this is to test our error handling path (do we leak 
-	// descriptors, for example). 
-    
+
+    // Create the request.  The request always contains the kBASCommandKey that
+    // describes the command to do.  It also, optionally, contains the
+	// kSampleLowNumberedPortsForceFailure key that tells the tool to always return
+	// an error.  The purpose of this is to test our error handling path (do we leak
+	// descriptors, for example).
+
     keyCount = 0;
     keys[keyCount]   = CFSTR(kBASCommandKey);
     values[keyCount] = CFSTR(kConnectCommand);
@@ -186,24 +186,24 @@ static OSStatus DoConnect(CFStringRef reqConnName)
     keyCount += 1;
 	
     request = CFDictionaryCreate(
-								 NULL, 
-								 (const void **) keys, 
-								 (const void **) values, 
-								 keyCount, 
-								 &kCFTypeDictionaryKeyCallBacks, 
+								 NULL,
+								 (const void **) keys,
+								 (const void **) values,
+								 keyCount,
+								 &kCFTypeDictionaryKeyCallBacks,
 								 &kCFTypeDictionaryValueCallBacks
 								 );
     assert(request != NULL);
-    
+
     response = NULL;
-    
+
     // Execute it.
 	
 	err = BASExecuteRequestInHelperTool(
-										gAuth, 
-										kCommandSet, 
-										bundleID, 
-										request, 
+										gAuth,
+										kCommandSet,
+										bundleID,
+										request,
 										&response
 										);
 	
@@ -211,28 +211,28 @@ static OSStatus DoConnect(CFStringRef reqConnName)
 	
     if ( (err != noErr) && (err != userCanceledErr) ) {
         int alertResult;
-        
+
         failCode = BASDiagnoseFailure(gAuth, bundleID);
-        
-        // At this point we tell the user that something has gone wrong and that we need 
-        // to authorize in order to fix it.  Ideally we'd use failCode to describe the type of 
+
+        // At this point we tell the user that something has gone wrong and that we need
+        // to authorize in order to fix it.  Ideally we'd use failCode to describe the type of
         // error to the user.
 		
         alertResult = NSRunAlertPanel(@"Needs Install", @"BAS needs to install", @"Install", @"Cancel", NULL);
-        
+
         if ( alertResult == NSAlertDefaultReturn ) {
             // Try to fix things.
-            
+
             err = BASFixFailure(gAuth, (CFStringRef) bundleID, CFSTR("InstallTool"), CFSTR("HelperTool"), failCode);
 			
             // If the fix went OK, retry the request.
-            
+
             if (err == noErr) {
                 err = BASExecuteRequestInHelperTool(
-													gAuth, 
-													kCommandSet, 
-													bundleID, 
-													request, 
+													gAuth,
+													kCommandSet,
+													bundleID,
+													request,
 													&response
 													);
             }
@@ -241,24 +241,24 @@ static OSStatus DoConnect(CFStringRef reqConnName)
         }
     }
 	
-    // If all of the above went OK, it means that the IPC to the helper tool worked.  We 
-    // now have to check the response dictionary to see if the command's execution within 
+    // If all of the above went OK, it means that the IPC to the helper tool worked.  We
+    // now have to check the response dictionary to see if the command's execution within
     // the helper tool was successful.
-    
+
     if (err == noErr) {
         err = BASGetErrorFromResponse(response);
     }
-    
+
     // Extract the descriptors from the response and copy them out to our caller.
-    
+
     if (err == noErr) {
 		CFStringRef returnString;
 		
 		returnString = (CFStringRef) CFDictionaryGetValue(response, CFSTR(kBASTestString));
 		NSLog(@"Command ran: %@", returnString);
     }
-		 
-    
+		
+
     if (response != NULL) {
         CFRelease(response);
     }
@@ -272,9 +272,9 @@ static OSStatus DoConnect(CFStringRef reqConnName)
 		[self setConnTime:[NSDate date]];
 		
 		NSTimer *tmpTimer = [NSTimer scheduledTimerWithTimeInterval:1
-															 target:self 
+															 target:self
 														   selector:@selector(updateConnDuration:)
-														   userInfo:nil 
+														   userInfo:nil
 															repeats:YES];
 		[self setTimer:tmpTimer];
 	}
@@ -312,12 +312,12 @@ static OSStatus DoConnect(CFStringRef reqConnName)
 		//////////////
 		
 		[GrowlApplicationBridge
-		 notifyWithTitle:@"Connected" 
-		 description:@"Connection was established" 
-		 notificationName:@"Libreswan Growl Notification" 
-		 iconData:nil 
-		 priority:0 
-		 isSticky:NO 
+		 notifyWithTitle:@"Connected"
+		 description:@"Connection was established"
+		 notificationName:@"Libreswan Growl Notification"
+		 iconData:nil
+		 priority:0
+		 isSticky:NO
 		 clickContext:nil];
 	}
 	else{
@@ -341,12 +341,12 @@ static OSStatus DoConnect(CFStringRef reqConnName)
 		*/
 		
 		[GrowlApplicationBridge
-		 notifyWithTitle:@"Disconnected" 
-		 description:@"Connection was closed" 
-		 notificationName:@"Libreswan Growl Notification" 
-		 iconData:nil 
-		 priority:0 
-		 isSticky:NO 
+		 notifyWithTitle:@"Disconnected"
+		 description:@"Connection was closed"
+		 notificationName:@"Libreswan Growl Notification"
+		 iconData:nil
+		 priority:0
+		 isSticky:NO
 		 clickContext:nil];
 	}
 }
@@ -380,9 +380,9 @@ static OSStatus DoConnect(CFStringRef reqConnName)
 int main(int argc, char *argv[])
 {
     OSStatus    junk;
-    
-    // Create the AuthorizationRef that we'll use through this application.  We ignore 
-    // any error from this.  A failure from AuthorizationCreate is very unusual, and if it 
+
+    // Create the AuthorizationRef that we'll use through this application.  We ignore
+    // any error from this.  A failure from AuthorizationCreate is very unusual, and if it
     // happens there's no way to recover; Authorization Services just won't work.
 	
     junk = AuthorizationCreate(NULL, NULL, kAuthorizationFlagDefaults, &gAuth);
@@ -392,13 +392,13 @@ int main(int argc, char *argv[])
 	// For each of our commands, check to see if a right specification exists and, if not,
     // create it.
     //
-    // The last parameter is the name of a ".strings" file that contains the localised prompts 
+    // The last parameter is the name of a ".strings" file that contains the localised prompts
     // for any custom rights that we use.
-    
+
 	BASSetDefaultRules(
-					   gAuth, 
-					   kCommandSet, 
-					   CFBundleGetIdentifier(CFBundleGetMainBundle()), 
+					   gAuth,
+					   kCommandSet,
+					   CFBundleGetIdentifier(CFBundleGetMainBundle()),
 					   CFSTR("AuthorizationPrompts")
 					   );
 
@@ -461,7 +461,7 @@ int main(int argc, char *argv[])
 	
 	file = fopen(cPath,"w");
 	confwrite(cfg, file);
-	fclose(file); 	 
+	fclose(file); 	
 }
 
 

@@ -11,27 +11,24 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-$(info info: addcon/Makefile: MAKECMDGOALS="$(MAKECMDGOALS)")
-
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} 
+PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
 #EXTRALIBS=-lefence
-
-ifeq ($(USE_DNSSEC),true)
-CFLAGS+= -DDNSSEC
-PROGLIBS+=-lunbound
-endif
 
 PROGRAM=addconn
 
 # reach into pluto for now.
 INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir}
+INCLUDES+=-I${SRCDIR}
 
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif
 
-include ${srcdir}../Makefile.program
+ifeq ($(USE_DNSSEC),true)
+PROGLIBS+=-lunbound
+endif
 
 TAGS:	$(DISTSRC)
 	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]

@@ -127,7 +127,7 @@
 #define ARC4_MAX_KEY_LEN                256
 
 /* Max size of data that can be processed */
-#define CRYPTO_MAX_DATA_LEN             64 * 1024 - 1
+#define CRYPTO_MAX_DATA_LEN             (64 * 1024 - 1)
 
 #define CRYPTO_ALGORITHM_MIN    1
 /* #define CRYPTO_DES_CBC                  1 */

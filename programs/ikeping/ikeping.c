@@ -34,7 +34,7 @@
 #include "libreswan/pfkeyv2.h"
 
 #include "constants.h"
-#include "packet.h"
+#include <isakmp_hdr.h>
 
 #include "natt_defines.h"
 
@@ -426,7 +426,7 @@ int main(int argc, char **argv)
 
 		case 'b':
 			errstr = ttoaddr(optarg, strlen(optarg),
-				         afamily, &laddr);
+					 afamily, &laddr);
 			if (errstr != NULL) {
 				fprintf(stderr,
 					"%s: Invalid local address '%s': %s\n",

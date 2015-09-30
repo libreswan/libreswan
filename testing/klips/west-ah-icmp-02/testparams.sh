@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-ah-icmp-02
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-PRIVATE_ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/08-sunrise-sunset-ah-sha1.pcap
 REF_PRIV_OUTPUT=ah2-cleartext.txt

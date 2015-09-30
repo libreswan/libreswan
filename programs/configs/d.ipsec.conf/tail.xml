@@ -1,5 +1,5 @@
 <refsect1 id='choosing_a_connection'><title>CHOOSING A CONNECTION [THIS SECTION IS EXTREMELY OUT OF DATE</title>
-<para>When choosing a connection to apply to an outbound packet caught with a 
+<para>When choosing a connection to apply to an outbound packet caught with a
 <emphasis remap='B'>%trap,</emphasis>
 the system prefers the one with the most specific eroute that
 includes the packet's source and destination IP addresses.
@@ -42,15 +42,15 @@ the latest kernel code for your IPsec stack.</para>
 
 <para>When
 <emphasis remap='B'>type</emphasis>
-or 
+or
 <emphasis remap='B'>failureshunt</emphasis>
 is set to
 <emphasis remap='B'>drop</emphasis>
 or
 <emphasis remap='B'>reject,</emphasis>
 Libreswan blocks outbound packets using eroutes, but assumes inbound
-blocking is handled by the firewall. Libreswan offers firewall hooks 
-via an &ldquo;updown&rdquo; script.  However, the default 
+blocking is handled by the firewall. Libreswan offers firewall hooks
+via an &ldquo;updown&rdquo; script.  However, the default
 <emphasis remap='B'>ipsec _updown</emphasis>
 provides no help in controlling a modern firewall.</para>
 
@@ -79,8 +79,8 @@ errors. This affects Opportunistic Encryption and DPD. Functionality on the BSD
 and Windows stacks is unknown.</para>
 
 <para>Some state information is only available when using KLIPS, and will
-return errors on other IPsec stacks. These include 
-<emphasis remap='I'>ipsec eroute</emphasis>, 
+return errors on other IPsec stacks. These include
+<emphasis remap='I'>ipsec eroute</emphasis>,
 <emphasis remap='I'>ipsec spi</emphasis> and
 <emphasis remap='I'>ipsec look</emphasis>.</para>
 

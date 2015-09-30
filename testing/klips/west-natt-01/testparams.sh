@@ -5,7 +5,7 @@ TESTNAME=west-natt-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
 
-PRIVATE_ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/08-sunrise-sunset-udpesp-ping.pcap
 REF_PRIV_OUTPUT=spi1-cleartext.txt

@@ -58,8 +58,8 @@ void calc_ke(struct pluto_crypto_req *r)
 {
 	SECKEYDHParams dhp;
 	PK11SlotInfo *slot = NULL;
-	SECKEYPrivateKey *privk = NULL;
-	SECKEYPublicKey   *pubk = NULL;
+	SECKEYPrivateKey *privk;
+	SECKEYPublicKey *pubk;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
 	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
 	chunk_t base  = mpz_to_n_autosize(group->generator);
@@ -80,6 +80,7 @@ void calc_ke(struct pluto_crypto_req *r)
 	passert(slot != NULL);
 
 	for (;;) {
+		pubk = NULL;	/* ??? is this needed? Output-only from next call? */
 		privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN,
 					     &dhp, &pubk, PR_FALSE, PR_TRUE,
 					     lsw_return_nss_password_file_info());
@@ -88,7 +89,7 @@ void calc_ke(struct pluto_crypto_req *r)
 			       "NSS: DH private key creation failed (err %d)",
 			       PR_GetError());
 		}
-		passert(privk != NULL);
+		passert(privk != NULL && pubk != NULL);
 
 		if (group->bytes == pubk->u.dh.publicValue.len) {
 			DBG(DBG_CRYPT,
@@ -97,17 +98,10 @@ void calc_ke(struct pluto_crypto_req *r)
 			break;
 		} else {
 			DBG(DBG_CRYPT,
-			    DBG_log("NSS: generating dh priv and pub keys"));
+			    DBG_log("NSS: generating dh priv and pub keys again"));
 
-			if (privk != NULL) {
-				SECKEY_DestroyPrivateKey(privk);
-				privk = NULL;
-			}
-
-			if (pubk != NULL) {
-				SECKEY_DestroyPublicKey(pubk);
-				pubk = NULL;
-			}
+			SECKEY_DestroyPrivateKey(privk);
+			SECKEY_DestroyPublicKey(pubk);
 		}
 	}
 
@@ -160,27 +154,30 @@ void calc_nonce(struct pluto_crypto_req *r)
 /* Note: not all cn's are the same subtype */
 stf_status build_ke_and_nonce(
 	struct pluto_crypto_req_cont *cn,
-	struct state *st,
 	const struct oakley_group_desc *group,
 	enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
 
+	/*
+	 * tricky assertion uses indirection for speed:
+	 * The only way to get the state from the cn is to look up
+	 * cn->pcrc_serialno but that is a bit expensive.
+	 * We exploit the fact(?) that cur_state is right (we hope and check).
+	 */
+	passert(cur_state->st_serialno == cn->pcrc_serialno && !cur_state->st_sec_in_use);
 	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
 	rd.pcr_d.kn.oakley_group = group->group;
 
-	cn->pcrc_serialno = st->st_serialno;
 	return send_crypto_helper_request(&rd, cn);
 }
 
 stf_status build_nonce(struct pluto_crypto_req_cont *cn,
-		       struct state *st,
 		       enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
 
 	pcr_nonce_init(&rd, pcr_build_nonce, importance);
 
-	cn->pcrc_serialno = st->st_serialno;
 	return send_crypto_helper_request(&rd, cn);
 }

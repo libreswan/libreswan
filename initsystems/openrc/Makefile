@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/openrc/
+SRCDIR?=${LIBRESWANSRCDIR}/initsystems/openrc/
 
 INITDFILE=ipsec.init
 SUBDIRS=
@@ -8,9 +8,10 @@ INITDDIR=$(RCDIR)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
-programs:     ipsec.init 
+programs:     ipsec.init
 initdfiles:   $(INITDFILE)
 install:      programs doinstall
+install-programs: doinstall
 
 doinstall: programs installinitfiles checkenabled
 
@@ -21,7 +22,7 @@ installinitfiles:
 checkenabled:
 	@echo checkenabled not yet implemented
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

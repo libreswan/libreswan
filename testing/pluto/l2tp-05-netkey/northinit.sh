@@ -2,7 +2,7 @@
 iptables -F INPUT
 iptables -F OUTPUT
 # make sure that clear text does not get through
-iptables -A INPUT -o eth1 -d 192.1.2.23/32 -p udp --dport 1701 -j LOGDROP
+iptables -A INPUT -i eth1 -d 192.1.2.23/32 -p udp --dport 1701 -j LOGDROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

@@ -14,7 +14,7 @@ ipsec spi --af inet --edst 192.1.2.45 --spi 0xD1234567 --proto esp --src 192.1.2
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0xD1234567 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
 
-ipsec spigrp inet 192.1.2.45 0xD1234567 tun inet 192.1.2.45 0xD1234567 esp 
+ipsec spigrp inet 192.1.2.45 0xD1234567 tun inet 192.1.2.45 0xD1234567 esp
 
 ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0xD1234567@192.1.2.45
 

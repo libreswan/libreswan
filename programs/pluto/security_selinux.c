@@ -42,7 +42,8 @@ int within_range(security_context_t sl, security_context_t range)
 	security_class_t tclass;
 	access_vector_t av;
 
-	if (!selinux_ready) {  /* mls may not be enabled */
+	if (!selinux_ready) {
+		/* mls may not be enabled */
 		DBG_log("selinux check failed");
 		return 0;
 	}

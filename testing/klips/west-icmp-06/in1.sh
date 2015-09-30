@@ -7,5 +7,5 @@ ipsec spi --af inet --edst 205.150.200.180 --spi 0xed123456 --proto esp --src 20
 
 ipsec spi --af inet --edst 205.150.200.180 --spi 0xed123456 --proto tun --src 205.150.200.246 --dst 205.150.200.180 --ip4
 
-ipsec spigrp inet 205.150.200.180 0xed123456 tun inet 205.150.200.180 0xed123456 esp 
+ipsec spigrp inet 205.150.200.180 0xed123456 tun inet 205.150.200.180 0xed123456 esp
 

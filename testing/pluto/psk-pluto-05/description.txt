@@ -17,7 +17,7 @@ I have attached the pluto log file.
 
 
 
-2005:06:16-13:51:15 (none) pluto[26118]: |  
+2005:06:16-13:51:15 (none) pluto[26118]: |
 2005:06:16-13:51:15 (none) pluto[26118]: | *received 756 bytes from 192.168.2.96:500 on eth0 (port=500)
 2005:06:16-13:51:15 (none) pluto[26118]: |   11 ec a0 34  0f 1b 5e 38  00 00 00 00  00 00 00 00
 2005:06:16-13:51:15 (none) pluto[26118]: |   01 10 02 00  00 00 00 00  00 00 02 f4  0d 00 02 34
@@ -119,17 +119,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:15 (none) pluto[26118]: packet from 192.168.2.96:500: ignoring unknown Vendor ID payload [101fb0b35c5a4f4c08b919f1cb9777af]
 2005:06:16-13:51:15 (none) pluto[26118]: packet from 192.168.2.96:500: received Vendor ID payload [Cisco-Unity]
 2005:06:16-13:51:15 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:15 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0 
+2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=3
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=3
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=4
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=4
-2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:15 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:15 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:15 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:15 (none) pluto[26118]: | instantiated "S_roadie_0" for 192.168.2.96
 2005:06:16-13:51:15 (none) pluto[26118]: | creating state object #1 at 0x8114288
 2005:06:16-13:51:15 (none) pluto[26118]: | processing connection S_roadie_0[1] 192.168.2.96
@@ -518,17 +518,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:15 (none) pluto[26118]: |    Notify Message Type: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:15 (none) pluto[26118]: | emitting 0 raw bytes of spi into ISAKMP Notification Payload
 2005:06:16-13:51:15 (none) pluto[26118]: | spi
-2005:06:16-13:51:15 (none) pluto[26118]: "S_roadie_0"[1] 192.168.2.96 #1: failed to build notification for spisize=0 
+2005:06:16-13:51:15 (none) pluto[26118]: "S_roadie_0"[1] 192.168.2.96 #1: failed to build notification for spisize=0
 2005:06:16-13:51:15 (none) pluto[26118]: | state transition function for STATE_MAIN_R0 failed: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:15 (none) pluto[26118]: | next event EVENT_SO_DISCARD in 0 seconds for #1
-2005:06:16-13:51:15 (none) pluto[26118]: |  
+2005:06:16-13:51:15 (none) pluto[26118]: |
 2005:06:16-13:51:15 (none) pluto[26118]: | *time to handle event
 2005:06:16-13:51:15 (none) pluto[26118]: | handling event EVENT_SO_DISCARD
 2005:06:16-13:51:15 (none) pluto[26118]: | event after this is EVENT_SHUNT_SCAN in 105 seconds
 2005:06:16-13:51:15 (none) pluto[26118]: | processing connection S_roadie_0[1] 192.168.2.96
 2005:06:16-13:51:15 (none) pluto[26118]: | deleting state #1
 2005:06:16-13:51:15 (none) pluto[26118]: | processing connection S_roadie_0[1] 192.168.2.96
-2005:06:16-13:51:15 (none) pluto[26118]: | no suspended cryptographic state for 1 
+2005:06:16-13:51:15 (none) pluto[26118]: | no suspended cryptographic state for 1
 2005:06:16-13:51:15 (none) pluto[26118]: | ICOOKIE:  11 ec a0 34  0f 1b 5e 38
 2005:06:16-13:51:15 (none) pluto[26118]: | RCOOKIE:  d2 2a 6b e0  16 38 c1 2f
 2005:06:16-13:51:15 (none) pluto[26118]: | peer:  c0 a8 02 60
@@ -538,7 +538,7 @@ I have attached the pluto log file.
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_delref(0x8112988) alg_info->ref_cnt=4
 2005:06:16-13:51:15 (none) pluto[26118]: | alg_info_delref(0x81121d8) alg_info->ref_cnt=4
 2005:06:16-13:51:15 (none) pluto[26118]: | next event EVENT_SHUNT_SCAN in 105 seconds
-2005:06:16-13:51:17 (none) pluto[26118]: |  
+2005:06:16-13:51:17 (none) pluto[26118]: |
 2005:06:16-13:51:17 (none) pluto[26118]: | *received 756 bytes from 192.168.2.96:500 on eth0 (port=500)
 2005:06:16-13:51:17 (none) pluto[26118]: |   11 ec a0 34  0f 1b 5e 38  00 00 00 00  00 00 00 00
 2005:06:16-13:51:17 (none) pluto[26118]: |   01 10 02 00  00 00 00 00  00 00 02 f4  0d 00 02 34
@@ -640,17 +640,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:17 (none) pluto[26118]: packet from 192.168.2.96:500: ignoring unknown Vendor ID payload [101fb0b35c5a4f4c08b919f1cb9777af]
 2005:06:16-13:51:17 (none) pluto[26118]: packet from 192.168.2.96:500: received Vendor ID payload [Cisco-Unity]
 2005:06:16-13:51:17 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:17 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0 
+2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=4
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=4
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=5
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=5
-2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:17 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:17 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:17 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:17 (none) pluto[26118]: | instantiated "S_roadie_0" for 192.168.2.96
 2005:06:16-13:51:17 (none) pluto[26118]: | creating state object #2 at 0x8114288
 2005:06:16-13:51:17 (none) pluto[26118]: | processing connection S_roadie_0[2] 192.168.2.96
@@ -1039,17 +1039,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:17 (none) pluto[26118]: |    Notify Message Type: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:17 (none) pluto[26118]: | emitting 0 raw bytes of spi into ISAKMP Notification Payload
 2005:06:16-13:51:17 (none) pluto[26118]: | spi
-2005:06:16-13:51:17 (none) pluto[26118]: "S_roadie_0"[2] 192.168.2.96 #2: failed to build notification for spisize=0 
+2005:06:16-13:51:17 (none) pluto[26118]: "S_roadie_0"[2] 192.168.2.96 #2: failed to build notification for spisize=0
 2005:06:16-13:51:17 (none) pluto[26118]: | state transition function for STATE_MAIN_R0 failed: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:17 (none) pluto[26118]: | next event EVENT_SO_DISCARD in 0 seconds for #2
-2005:06:16-13:51:17 (none) pluto[26118]: |  
+2005:06:16-13:51:17 (none) pluto[26118]: |
 2005:06:16-13:51:17 (none) pluto[26118]: | *time to handle event
 2005:06:16-13:51:17 (none) pluto[26118]: | handling event EVENT_SO_DISCARD
 2005:06:16-13:51:17 (none) pluto[26118]: | event after this is EVENT_SHUNT_SCAN in 103 seconds
 2005:06:16-13:51:17 (none) pluto[26118]: | processing connection S_roadie_0[2] 192.168.2.96
 2005:06:16-13:51:17 (none) pluto[26118]: | deleting state #2
 2005:06:16-13:51:17 (none) pluto[26118]: | processing connection S_roadie_0[2] 192.168.2.96
-2005:06:16-13:51:17 (none) pluto[26118]: | no suspended cryptographic state for 2 
+2005:06:16-13:51:17 (none) pluto[26118]: | no suspended cryptographic state for 2
 2005:06:16-13:51:17 (none) pluto[26118]: | ICOOKIE:  11 ec a0 34  0f 1b 5e 38
 2005:06:16-13:51:17 (none) pluto[26118]: | RCOOKIE:  33 1e e0 6e  57 80 01 ab
 2005:06:16-13:51:17 (none) pluto[26118]: | peer:  c0 a8 02 60
@@ -1059,7 +1059,7 @@ I have attached the pluto log file.
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_delref(0x8112988) alg_info->ref_cnt=5
 2005:06:16-13:51:17 (none) pluto[26118]: | alg_info_delref(0x81121d8) alg_info->ref_cnt=5
 2005:06:16-13:51:17 (none) pluto[26118]: | next event EVENT_SHUNT_SCAN in 103 seconds
-2005:06:16-13:51:21 (none) pluto[26118]: |  
+2005:06:16-13:51:21 (none) pluto[26118]: |
 2005:06:16-13:51:21 (none) pluto[26118]: | *received 756 bytes from 192.168.2.96:500 on eth0 (port=500)
 2005:06:16-13:51:21 (none) pluto[26118]: |   11 ec a0 34  0f 1b 5e 38  00 00 00 00  00 00 00 00
 2005:06:16-13:51:21 (none) pluto[26118]: |   01 10 02 00  00 00 00 00  00 00 02 f4  0d 00 02 34
@@ -1161,17 +1161,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:21 (none) pluto[26118]: packet from 192.168.2.96:500: ignoring unknown Vendor ID payload [101fb0b35c5a4f4c08b919f1cb9777af]
 2005:06:16-13:51:21 (none) pluto[26118]: packet from 192.168.2.96:500: received Vendor ID payload [Cisco-Unity]
 2005:06:16-13:51:21 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:21 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0 
+2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=5
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=5
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=6
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=6
-2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:21 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:21 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:21 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:21 (none) pluto[26118]: | instantiated "S_roadie_0" for 192.168.2.96
 2005:06:16-13:51:21 (none) pluto[26118]: | creating state object #3 at 0x8114288
 2005:06:16-13:51:21 (none) pluto[26118]: | processing connection S_roadie_0[3] 192.168.2.96
@@ -1560,17 +1560,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:21 (none) pluto[26118]: |    Notify Message Type: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:21 (none) pluto[26118]: | emitting 0 raw bytes of spi into ISAKMP Notification Payload
 2005:06:16-13:51:21 (none) pluto[26118]: | spi
-2005:06:16-13:51:21 (none) pluto[26118]: "S_roadie_0"[3] 192.168.2.96 #3: failed to build notification for spisize=0 
+2005:06:16-13:51:21 (none) pluto[26118]: "S_roadie_0"[3] 192.168.2.96 #3: failed to build notification for spisize=0
 2005:06:16-13:51:21 (none) pluto[26118]: | state transition function for STATE_MAIN_R0 failed: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:21 (none) pluto[26118]: | next event EVENT_SO_DISCARD in 0 seconds for #3
-2005:06:16-13:51:21 (none) pluto[26118]: |  
+2005:06:16-13:51:21 (none) pluto[26118]: |
 2005:06:16-13:51:21 (none) pluto[26118]: | *time to handle event
 2005:06:16-13:51:21 (none) pluto[26118]: | handling event EVENT_SO_DISCARD
 2005:06:16-13:51:21 (none) pluto[26118]: | event after this is EVENT_SHUNT_SCAN in 99 seconds
 2005:06:16-13:51:21 (none) pluto[26118]: | processing connection S_roadie_0[3] 192.168.2.96
 2005:06:16-13:51:21 (none) pluto[26118]: | deleting state #3
 2005:06:16-13:51:21 (none) pluto[26118]: | processing connection S_roadie_0[3] 192.168.2.96
-2005:06:16-13:51:21 (none) pluto[26118]: | no suspended cryptographic state for 3 
+2005:06:16-13:51:21 (none) pluto[26118]: | no suspended cryptographic state for 3
 2005:06:16-13:51:21 (none) pluto[26118]: | ICOOKIE:  11 ec a0 34  0f 1b 5e 38
 2005:06:16-13:51:21 (none) pluto[26118]: | RCOOKIE:  b6 ef f7 3f  e6 e3 f9 22
 2005:06:16-13:51:21 (none) pluto[26118]: | peer:  c0 a8 02 60
@@ -1580,7 +1580,7 @@ I have attached the pluto log file.
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_delref(0x8112988) alg_info->ref_cnt=6
 2005:06:16-13:51:21 (none) pluto[26118]: | alg_info_delref(0x81121d8) alg_info->ref_cnt=6
 2005:06:16-13:51:21 (none) pluto[26118]: | next event EVENT_SHUNT_SCAN in 99 seconds
-2005:06:16-13:51:26 (none) pluto[26118]: |  
+2005:06:16-13:51:26 (none) pluto[26118]: |
 2005:06:16-13:51:26 (none) pluto[26118]: | *received 756 bytes from 192.168.2.96:500 on eth0 (port=500)
 2005:06:16-13:51:26 (none) pluto[26118]: |   11 ec a0 34  0f 1b 5e 38  00 00 00 00  00 00 00 00
 2005:06:16-13:51:26 (none) pluto[26118]: |   01 10 02 00  00 00 00 00  00 00 02 f4  0d 00 02 34
@@ -1682,17 +1682,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:26 (none) pluto[26118]: packet from 192.168.2.96:500: ignoring unknown Vendor ID payload [101fb0b35c5a4f4c08b919f1cb9777af]
 2005:06:16-13:51:26 (none) pluto[26118]: packet from 192.168.2.96:500: received Vendor ID payload [Cisco-Unity]
 2005:06:16-13:51:26 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:26 (none) pluto[26118]: | find_host_connection called from main_inI1_outR1
-2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0 
+2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair_conn (find_host_connection2): 192.168.6.21:500 %any:500 -> hp:S_roadie_0
 2005:06:16-13:51:26 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=6
 2005:06:16-13:51:26 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=6
 2005:06:16-13:51:26 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=7
 2005:06:16-13:51:26 (none) pluto[26118]: | alg_info_addref() alg_info->ref_cnt=7
-2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500 
-2005:06:16-13:51:26 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none 
+2005:06:16-13:51:26 (none) pluto[26118]: | find_host_pair: comparing to 192.168.6.21:500 0.0.0.0:500
+2005:06:16-13:51:26 (none) pluto[26118]: | connect_to_host_pair: 192.168.6.21:500 192.168.2.96:500 -> hp:none
 2005:06:16-13:51:26 (none) pluto[26118]: | instantiated "S_roadie_0" for 192.168.2.96
 2005:06:16-13:51:26 (none) pluto[26118]: | creating state object #4 at 0x8114288
 2005:06:16-13:51:26 (none) pluto[26118]: | processing connection S_roadie_0[4] 192.168.2.96
@@ -2081,17 +2081,17 @@ I have attached the pluto log file.
 2005:06:16-13:51:26 (none) pluto[26118]: |    Notify Message Type: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:26 (none) pluto[26118]: | emitting 0 raw bytes of spi into ISAKMP Notification Payload
 2005:06:16-13:51:26 (none) pluto[26118]: | spi
-2005:06:16-13:51:26 (none) pluto[26118]: "S_roadie_0"[4] 192.168.2.96 #4: failed to build notification for spisize=0 
+2005:06:16-13:51:26 (none) pluto[26118]: "S_roadie_0"[4] 192.168.2.96 #4: failed to build notification for spisize=0
 2005:06:16-13:51:26 (none) pluto[26118]: | state transition function for STATE_MAIN_R0 failed: NO_PROPOSAL_CHOSEN
 2005:06:16-13:51:26 (none) pluto[26118]: | next event EVENT_SO_DISCARD in 0 seconds for #4
-2005:06:16-13:51:26 (none) pluto[26118]: |  
+2005:06:16-13:51:26 (none) pluto[26118]: |
 2005:06:16-13:51:26 (none) pluto[26118]: | *time to handle event
 2005:06:16-13:51:26 (none) pluto[26118]: | handling event EVENT_SO_DISCARD
 2005:06:16-13:51:26 (none) pluto[26118]: | event after this is EVENT_SHUNT_SCAN in 94 seconds
 2005:06:16-13:51:26 (none) pluto[26118]: | processing connection S_roadie_0[4] 192.168.2.96
 2005:06:16-13:51:26 (none) pluto[26118]: | deleting state #4
 2005:06:16-13:51:26 (none) pluto[26118]: | processing connection S_roadie_0[4] 192.168.2.96
-2005:06:16-13:51:26 (none) pluto[26118]: | no suspended cryptographic state for 4 
+2005:06:16-13:51:26 (none) pluto[26118]: | no suspended cryptographic state for 4
 2005:06:16-13:51:26 (none) pluto[26118]: | ICOOKIE:  11 ec a0 34  0f 1b 5e 38
 2005:06:16-13:51:26 (none) pluto[26118]: | RCOOKIE:  8b 6a e9 00  68 a7 4e d0
 2005:06:16-13:51:26 (none) pluto[26118]: | peer:  c0 a8 02 60

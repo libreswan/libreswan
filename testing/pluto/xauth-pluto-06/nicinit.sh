@@ -1,3 +1,3 @@
-# Display the table, so we know it's correct.
+# Display the table, so we know it is correct.
 iptables -t nat -L
 echo "initdone"

@@ -53,7 +53,7 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		keydata = PK11_GetKeyData(key);
 		bare_key_ptr = keydata->data;
 		bare_key_len = keydata->len;
-		SECITEM_FreeItem(keydata, PR_TRUE);
+		// SECITEM_FreeItem(keydata, PR_TRUE);
 	}
 
 	twofish_set_key(&twofish_ctx, bare_key_ptr, bare_key_len);
@@ -88,7 +88,8 @@ static struct encrypt_desc encrypt_desc_twofish =
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.ivsize = TWOFISH_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
@@ -107,7 +108,8 @@ static struct encrypt_desc encrypt_desc_twofish_ssh =
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.ivsize = TWOFISH_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,

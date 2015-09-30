@@ -86,6 +86,7 @@ struct ipsec_sadb ipsec_sadb;
 /* the sub table must be narrower (or equal) in bits than the variable type
    in the main table to count the number of unused entries in it. */
 typedef struct {
+	/* kind of compile-time, but not preprocessor time, assertion */
 	int testSizeOf_refSubTable :
 	((sizeof(IPsecRefTableUnusedCount) * 8) <
 	 IPSEC_SA_REF_SUBTABLE_IDX_WIDTH ? -1 : 1);
@@ -94,6 +95,7 @@ typedef struct {
 /* The field where the saref will be hosted in the skb must be wide enough to
    accomodate the information it needs to store. */
 typedef struct {
+	/* kind of compile-time, but not preprocessor time, assertion */
 	int testSizeOf_refField :
 	(IPSEC_SA_REF_HOST_FIELD_WIDTH <
 	 IPSEC_SA_REF_TABLE_IDX_WIDTH ? -1 : 1 );
@@ -122,7 +124,7 @@ static int ipsec_SAref_recycle(void)
 		    "recycling, continuing from SAref=%d (0p%p), table=%d, entry=%d.\n",
 		    ipsec_sadb.refFreeListCont,
 		    (ipsec_sadb.refTable[IPsecSAref2table(ipsec_sadb.
-		        refFreeListCont)] != NULL) ?
+			refFreeListCont)] != NULL) ?
 			    IPsecSAref2SA(ipsec_sadb.refFreeListCont) : NULL,
 		    IPsecSAref2table(ipsec_sadb.refFreeListCont),
 		    IPsecSAref2entry(ipsec_sadb.refFreeListCont));
@@ -967,6 +969,9 @@ int ipsec_sadb_free(void)
 
 int ipsec_sa_wipe(struct ipsec_sa *ips)
 {
+	int hashval;
+	struct ipsec_sa **tpp;
+
 	if (ips == NULL)
 		return -ENODATA;
 
@@ -1039,8 +1044,18 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	ips->ips_natt_oa = NULL;
 
 	if (ips->ips_key_a != NULL) {
-		memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
-		kfree(ips->ips_key_a);
+#ifdef CONFIG_KLIPS_ALG
+		if (ips->ips_alg_auth &&
+		    ips->ips_alg_auth->ixt_a_destroy_key)
+		{
+			ips->ips_alg_auth->ixt_a_destroy_key(ips->ips_alg_auth,
+							     ips->ips_key_a);
+		} else
+#endif
+		{
+			memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
+			kfree(ips->ips_key_a);
+		}
 	}
 	ips->ips_key_a = NULL;
 
@@ -1105,6 +1120,14 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	ips->ips_next = NULL;
 	ips->ips_prev = NULL;
 
+	hashval = IPS_HASH(&ips->ips_said);
+	tpp = &ipsec_sadb_hash[hashval];
+	while (*tpp) {
+		if (*tpp == ips)
+			*tpp = ips->ips_hnext;
+		else
+			tpp = &((*tpp)->ips_hnext);
+	}
 	if (ips->ips_hnext)
 		ipsec_sa_put(ips->ips_hnext, IPSEC_REFALLOC);
 	ips->ips_hnext = NULL;
@@ -1202,6 +1225,17 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0))
 			break;
 #endif
+
+#ifdef CONFIG_KLIPS_ALG
+		error = ipsec_alg_auth_key_create(ipsp);
+		if ((error < 0) && (error != -EPROTO))
+			SENDERR(-error);
+
+		if (error == -EPROTO) {
+			/* perform manual key generation,
+			   ignore this particular error */
+			error = 0;
+#endif              /* CONFIG_KLIPS_ALG */
 
 		switch (ipsp->ips_authalg) {
 # ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
@@ -1370,6 +1404,10 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				    ipsp->ips_authalg);
 			SENDERR(EINVAL);
 		}
+#ifdef CONFIG_KLIPS_ALG
+			/* closure of the -EPROTO condition above */
+		}
+#endif
 		break;
 #endif          /* CONFIG_KLIPS_AH */
 

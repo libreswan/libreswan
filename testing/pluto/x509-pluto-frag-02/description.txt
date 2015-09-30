@@ -3,3 +3,6 @@ road has ike_frag=force set so it should send out MAIN_I3
 in fragments on the first run, but as east has no fragmentation
 support enabled, the missing FRAGMENTATION support vendorid
 should cause road to not use fragmentation.
+
+It will show up as one less packet blocked in the firewall
+compared to x509-pluto-frag-01

@@ -91,7 +91,7 @@ bsdi:
 netbsd:
 	make -e $(ALL) $(MFLAGS) XFLAGS='-DNETBSD' STATIC=-static
 
-# finally got to an hpux box, which turns out to be *really* warped. 
+# finally got to an hpux box, which turns out to be *really* warped.
 # STATIC here means "linker subprocess gets args '-a archive'" which causes
 # /lib/libc.a to be searched ahead of '-a shared', or /lib/libc.sl.
 hpux:

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>_STACKMANAGER</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>16 Nov 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec _stackmanager</refname>
+<refpurpose>internal script to bring up kernel components for Libreswan</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+
+  <refsynopsisdiv id="synopsis">
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+      <arg choice="plain"><replaceable>_stackmanager start</replaceable>
+<arg choice="opt">--netkey</arg></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+      <arg choice="plain"><replaceable>_stackmanager stop</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>ipsec _stackmanager</emphasis> is called
+from within the init sub-system (systemd, upstart, sysv initscripts)
+to bring up the Libreswan kernel component as configured via the
+<emphasis remap='I'>protostack=</emphasis> option in the <emphasis
+remap='I'>ipsec.conf</emphasis> configuration file.</para>
+
+<para>This involves loading and optionally unloading of the required
+kernel modules. Because the Linux kernel cannot autodetect most crypto
+related drivers on-demand, _stackmanager handles loading the hardware
+random number (RNG) device drivers, OpenBSD/FreeBSD Cryptographic
+Framework (OCF) drivers, CryptoAPI drivers, and the modules for the
+specific stack (Linux NETKEY/XFM or KLIPS/MAST). Probing for OCF supported
+hardware is not supported - those modules must be loaded by the system
+before the start of the Libreswan sub system.</para>
+<para>When the --netkey option is given to the start command, the netkey stack is
+loaded regardless of the existence or contents of the ipsec.conf file. This is used
+for docker tests where the host system, which might not have libreswan installed,
+needs to run _stackmanager from the source tree to load the modules on the host so
+the modules are available inside the containers.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_tncfg</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_addconn</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>This script was introduced in Libreswan. On the older Openswan systems, this functionality was split
+over various script files such as ipsec _startnetkey, ipsec _startklips, ipsec _realsetup and ipsec setup.
+Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt;
+by Paul Wouters. </para>
+
+</refsect1>
+</refentry>
+

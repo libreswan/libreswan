@@ -38,8 +38,8 @@ conn me-to-anyone
 	right=%opportunistic
 	keylife=1h
 	rekey=no
-	# for initiator only OE, uncomment and uncomment this 
-	# after putting your key in your forward map 
+	# for initiator only OE, uncomment and uncomment this
+	# after putting your key in your forward map
 	#leftid=@myhostname.example.com
 	# uncomment this next line to enable it
 	#auto=route

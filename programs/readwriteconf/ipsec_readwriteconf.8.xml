@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+  <refmeta>
+    <refentrytitle>ipsec readwriteconf</refentrytitle>
+    <manvolnum>8</manvolnum>
+<refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id='name'>
+    <refname>ipsec readwriteconf</refname>
+
+    <refpurpose>validate and output an Libreswan IPsec configuration
+    file</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>ipsec readwriteconf </command>
+
+      <arg>--config <option>file</option></arg>
+
+      <arg>--debug</arg>
+
+      <arg>--verbose</arg>
+
+      <arg>--rootdir <option>dir</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+
+    <para>This program reads the given ipsec.conf style configuration file,
+    interpreting the also= options, and outputs an equivalent ipsec.conf file.
+    The purpose of this program is to validate the input processing. This can
+    also be used to validate the syntax of a configuration file.</para>
+
+    <para>The options --debug and --verbose are currently synonyms. </para>
+
+    <para>The --rootdir option changes the programs idea of what "/" is when
+    processing include directives. This is useful when validating a
+    configuration which is not installed on a target system yet.</para>
+
+  </refsect1>
+</refentry>

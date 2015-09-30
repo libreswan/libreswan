@@ -8,7 +8,7 @@ interoperate with other devices, unless they have also been explicitly configure
 non-standard IKE/NATT port. There might also be other subtle assumptions within the kernel
 that port 4500 is used. Changing this port is strongly discouraged, and should probably
 only be done for testing or when required to circumvent VPN blocking technologies as
-employed by certain commercial companies and national governments. See also 
+employed by certain commercial companies and national governments. See also
 <emphasis remap='B'>ikeport</emphasis>.
 </para>
   </listitem>

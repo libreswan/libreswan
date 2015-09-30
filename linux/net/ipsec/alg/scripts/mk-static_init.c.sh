@@ -7,7 +7,7 @@ $(for i in $*; do
 	test -z "$i" && continue
 	echo "extern int $i(void);"
 done)
-void ipsec_alg_static_init(void){ 
+void ipsec_alg_static_init(void){
 	int __attribute__ ((unused)) err=0;
 $(for i in $*; do
 	test -z "$i" && continue

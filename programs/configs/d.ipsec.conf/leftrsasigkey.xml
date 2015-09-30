@@ -35,7 +35,7 @@ The identity used for the left participant
 must be a specific host, not
 <emphasis remap='B'>%any</emphasis>
 or another magic value.
-The value 
+The value
 <emphasis remap='B'>%cert</emphasis>
 will load the information required from a certificate defined in
 <emphasis remap='B'>%leftcert</emphasis>

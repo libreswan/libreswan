@@ -1,0 +1,5 @@
+IKEv2 test with an explicit DH-group that isn't in the responder's defaults
+
+West's explicitly selected DH-group doesn't match any thing in east's
+default policy list.  East responds with an INVALID_KE message and
+valid group

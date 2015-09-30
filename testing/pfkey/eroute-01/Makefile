@@ -10,4 +10,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 TESTCASE=eroute01
 
-include ${srcdir}../Makefile.pfkey
+include ${SRCDIR}../Makefile.pfkey

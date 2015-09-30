@@ -4,8 +4,8 @@
 
 The Libreswan Project   https://libreswan.org/
 
-Libreswan is an IPsec implementation for Linux. It has support for most 
-of the extensions (RFC + IETF drafts) related to IPsec, including 
+Libreswan is an IPsec implementation for Linux. It has support for most
+of the extensions (RFC + IETF drafts) related to IPsec, including
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
 Libreswan uses the native Linux IPsec stack (NETKEY/XFRM) per default.
 For more information about the alternative Libreswan kernel IPsec stack,
@@ -52,7 +52,7 @@ For Debian/Ubuntu
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl4-nss-dev libgmp3-dev flex bison gcc make \
-		libunbound-dev libnss3-tools
+		libunbound-dev libnss3-tools libevent-dev
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
@@ -61,7 +61,9 @@ For Fedora/RHEL/CentOS
 	yum install nss-devel nspr-devel pkg-config pam-devel \
 		libcap-ng-devel libselinux-devel \
 		curl-devel gmp-devel flex bison gcc make \
-		fipscheck-devel unbound-devel
+		fipscheck-devel unbound-devel libevent-devel
+
+(note: for rhel6/centos6 use libevent2-devel)
 
 Runtime requirements (usually already present on the system)
 
@@ -155,7 +157,7 @@ Wiki:
 
 IRC:
 
-    Libreswan developers and users can be found on IRC, on #swan 
+    Libreswan developers and users can be found on IRC, on #swan
     irc.freenode.net.
 
 #########################################################################

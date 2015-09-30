@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>retransmit-timeout</emphasis></term>
+  <listitem>
+<para>how long a single packet, including retransmits of that packet,
+may take before the IKE attempt is aborted. If rekeying is enabled,
+a new IKE attempt is started.  The default set by
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+currently is
+<emphasis remap='B'>60s</emphasis>.
+See also: <emphasis remap='I'>retransmit-interval</emphasis>, <emphasis remap='I'>rekey</emphasis>
+and <emphasis remap='I'>keyingtries</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

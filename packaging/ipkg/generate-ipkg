@@ -8,36 +8,36 @@
 
 # set -x
 
-cd $DESTDIR 
-rm -f *.tar.gz 
+cd $DESTDIR
+rm -f *.tar.gz
 
 mkdir -p $LIBRESWANSRCDIR/packaging/ipkg/ipkg
-cp $LIBRESWANSRCDIR/packaging/ipkg/debian-binary . 
-cp $LIBRESWANSRCDIR/packaging/ipkg/conffiles . 
+cp $LIBRESWANSRCDIR/packaging/ipkg/debian-binary .
+cp $LIBRESWANSRCDIR/packaging/ipkg/conffiles .
 
-cat $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan.dist | sed s/VERSION/$IPSECVERSION/ |sed s/ARCH/$ARCH/ > $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan 
+cat $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan.dist | sed s/VERSION/$IPSECVERSION/ |sed s/ARCH/$ARCH/ > $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan
 
-cp $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan control 
+cp $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan control
 
-tar -czf ./control.tar.gz ./conffiles ./control  
+tar -czf ./control.tar.gz ./conffiles ./control
 
-tar -czf ./data.tar.gz ./* --exclude=control.tar.gz --exclude=conffiles --exclude=control --exclude=debian-binary 
+tar -czf ./data.tar.gz ./* --exclude=control.tar.gz --exclude=conffiles --exclude=control --exclude=debian-binary
 
-tar -czf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/libreswan-utils-$IPSECVERSION.$ARCH.ipk ./debian-binary ./control.tar.gz ./data.tar.gz  
-mkdir -p $LIBRESWANSRCDIR/packaging/ipkg/kernel-module 
-cd $LIBRESWANSRCDIR/packaging/ipkg/kernel-module 
+tar -czf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/libreswan-utils-$IPSECVERSION.$ARCH.ipk ./debian-binary ./control.tar.gz ./data.tar.gz
+mkdir -p $LIBRESWANSRCDIR/packaging/ipkg/kernel-module
+cd $LIBRESWANSRCDIR/packaging/ipkg/kernel-module
 
-rm -f *.tar.gz 
-cp $LIBRESWANSRCDIR/packaging/ipkg/debian-binary . 
+rm -f *.tar.gz
+cp $LIBRESWANSRCDIR/packaging/ipkg/debian-binary .
 
-cat $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module.dist | sed s/VERSION/$IPSECVERSION/ |sed s/ARCH/$ARCH/ > $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module 
+cat $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module.dist | sed s/VERSION/$IPSECVERSION/ |sed s/ARCH/$ARCH/ > $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module
 
-cp $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module control 
+cp $LIBRESWANSRCDIR/packaging/ipkg/control-libreswan-module control
 
-tar czf ./control.tar.gz ./control  
+tar czf ./control.tar.gz ./control
 
-tar czf ./data.tar.gz * --exclude=control.tar.gz --exclude=control --exclude=debian-binary 
+tar czf ./data.tar.gz * --exclude=control.tar.gz --exclude=control --exclude=debian-binary
 
-tar czf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/libreswan-module-$IPSECVERSION.$ARCH.ipk ./debian-binary ./control.tar.gz ./data.tar.gz  
-rm -rf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/binaries/* 
+tar czf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/libreswan-module-$IPSECVERSION.$ARCH.ipk ./debian-binary ./control.tar.gz ./data.tar.gz
+rm -rf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/binaries/*
 rm -rf $LIBRESWANSRCDIR/packaging/ipkg/ipkg/kernel-module/*

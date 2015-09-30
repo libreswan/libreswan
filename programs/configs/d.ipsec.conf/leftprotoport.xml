@@ -13,7 +13,16 @@ or as a name (eg smtp) which will be looked up in
 <emphasis remap='I'>%any</emphasis> can be used to allow all ports of a certain
 protocol. The most common use of this option is for L2TP connections to only
 allow l2tp packets (UDP port 1701), eg:
-<emphasis remap='I'>leftprotoport=17/1701</emphasis>. Some clients, notably
+<emphasis remap='I'>leftprotoport=17/1701</emphasis>.</para>
+
+<para> To filter on specific icmp type and code, use the higher 8 bits for type
+and the lower 8 bits for port. For example, to allow icmp echo packets (type 8,
+code 0) the 'port' would be 0x0800, or 2048 in decimal, so you configure
+<emphasis remap='I'>leftprotoport=icmp/2048</emphasis>. Similarly, to allow ipv6-icmp
+Neighbour Discovery which has type 136 (0x88) and code 0(0x00) this becomes 0x8800
+or in decimal 34816 resulting in <emphasis remap='I'>leftprotoport=ipv6-icmp/34816</emphasis> . </para>
+
+<para>Some clients, notably
 older Windows XP and some Mac OSX clients, use a random high port as source
 port. In those cases <emphasis remap='I'>rightprotoport=17/%any</emphasis> can
 be used to allow all UDP traffic on the connection.

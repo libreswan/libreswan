@@ -53,7 +53,7 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		keydata = PK11_GetKeyData(key);
 		bare_key_ptr = keydata->data;
 		bare_key_len = keydata->len;
-		SECITEM_FreeItem(keydata, PR_TRUE);
+		// SECITEM_FreeItem(keydata, PR_TRUE);
 	}
 
 	serpent_set_key(&serpent_ctx, bare_key_ptr, bare_key_len);
@@ -84,7 +84,8 @@ static struct encrypt_desc encrypt_desc_serpent =
 	},
 	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
-	.ivsize = SERPENT_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,
 	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.keymaxlen = SERPENT_KEY_MAX_LEN,
@@ -95,5 +96,5 @@ void ike_alg_serpent_init(void)
 {
 	if (!ike_alg_register_enc(&encrypt_desc_serpent))
 		libreswan_log(
-                        "ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
+			"ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
 }

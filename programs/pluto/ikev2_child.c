@@ -42,7 +42,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -64,18 +64,19 @@
 #include "hostpair.h"
 #include "addresspool.h"
 
-/* ??? this routine only produces DBG output.  Calls should be conditional but they are not */
 void ikev2_print_ts(struct traffic_selector *ts)
 {
 	ipstr_buf b;
 
-	DBG_log("printing contents struct traffic_selector");
-	DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
-	DBG_log("  ipprotoid: %d", ts->ipprotoid);
-	DBG_log("  startport: %d", ts->startport);
-	DBG_log("  endport: %d", ts->endport);
-	DBG_log("  ip low: %s", ipstr(&ts->low, &b));
-	DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("printing contents struct traffic_selector");
+		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
+		DBG_log("  ipprotoid: %d", ts->ipprotoid);
+		DBG_log("  startport: %d", ts->startport);
+		DBG_log("  endport: %d", ts->endport);
+		DBG_log("  ip low: %s", ipstr(&ts->low, &b));
+		DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	);
 }
 
 /* rewrite me with addrbytesptr() */
@@ -84,7 +85,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
 
-	zero(&ts);
+	zero(&ts);	/* OK: no pointer fields */
 
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
@@ -139,7 +140,7 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
 			 unsigned int lt,
 			 struct traffic_selector *ts,
-			 enum phase1_role role UNUSED)
+			 enum original_role role UNUSED)
 {
 	struct ikev2_ts its;
 	struct ikev2_ts1 its1;
@@ -213,7 +214,7 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 
 stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 			      pb_stream *outpbs,
-			      enum phase1_role role,
+			      enum original_role role,
 			      struct connection *c0,
 			      lset_t policy UNUSED)
 {
@@ -222,7 +223,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 	struct spd_route *sr;
 	stf_status ret;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ts_i = &st->st_ts_this;
 		ts_r = &st->st_ts_that;
 	} else {
@@ -232,14 +233,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 	for (sr = &c0->spd; sr != NULL; sr = sr->next) {
 		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
-				    ts_i, O_INITIATOR);
+				    ts_i, ORIGINAL_INITIATOR);
 		if (ret != STF_OK)
 			return ret;
 
-		if (role == O_INITIATOR) {
+		if (role == ORIGINAL_INITIATOR) {
 			ret = ikev2_emit_ts(md, outpbs,
 					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
-					    ts_r, O_RESPONDER);
+					    ts_r, ORIGINAL_RESPONDER);
 		} else {
 			struct payload_digest *p;
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
@@ -249,14 +250,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					DBG_log("Received v2N_USE_TRANSPORT_MODE from the other end, next payload is v2N_USE_TRANSPORT_MODE notification");
 					ret = ikev2_emit_ts(md, outpbs,
 							    ISAKMP_NEXT_v2N,
-							    ts_r, O_RESPONDER);
+							    ts_r, ORIGINAL_RESPONDER);
 					break;
 				}
 			}
 			if (!p) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
-						    ts_r, O_RESPONDER);
+						    ts_r, ORIGINAL_RESPONDER);
 			}
 		}
 
@@ -284,7 +285,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		if (i >= array_max)
 			return -1;
 
-		zero(&array[i]);
+		zero(&array[i]);	/* OK: no pointer fields */
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
@@ -392,7 +393,7 @@ static int ikev2_match_protocol(u_int8_t proto, u_int8_t ts_proto,
  */
 int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 					   const struct spd_route *sr,
-					   enum phase1_role role,
+					   enum original_role role,
 					   const struct traffic_selector *tsi,
 					   const struct traffic_selector *tsr,
 					   int tsi_n,
@@ -405,7 +406,7 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 	const struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -418,8 +419,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 		int tsr_ni;
 
 		int fitrange_i = ikev2_match_protocol(ei->protocol, tsi[tsi_ni].ipprotoid,
-			role == O_RESPONDER && narrowing,
-			role == O_INITIATOR && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -427,8 +428,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_protocol(er->protocol, tsr[tsr_ni].ipprotoid,
-				role == O_RESPONDER && narrowing,
-				role == O_INITIATOR && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			int matchiness;
@@ -499,7 +500,7 @@ static int ikev2_match_port_range(u_int16_t port, struct traffic_selector ts,
  */
 int ikev2_evaluate_connection_port_fit(const struct connection *d,
 				       const struct spd_route *sr,
-				       enum phase1_role role,
+				       enum original_role role,
 				       const struct traffic_selector *tsi,
 				       const struct traffic_selector *tsr,
 				       int tsi_n,
@@ -512,7 +513,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	const struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -524,8 +525,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		int tsr_ni;
 		int fitrange_i = ikev2_match_port_range(ei->port, tsi[tsi_ni],
-			role == O_RESPONDER && narrowing,
-			role == O_INITIATOR && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -533,8 +534,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_port_range(er->port, tsr[tsr_ni],
-				role == O_RESPONDER && narrowing,
-				role == O_INITIATOR && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			int matchiness;
@@ -566,7 +567,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
  */
 int ikev2_evaluate_connection_fit(const struct connection *d,
 				  const struct spd_route *sr,
-				  enum phase1_role role,
+				  enum original_role role,
 				  const struct traffic_selector *tsi,
 				  const struct traffic_selector *tsr,
 				  int tsi_n,
@@ -576,7 +577,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 	int bestfit = -1;
 	const struct end *ei, *er;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -590,7 +591,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 		subnettot(&ei->client,  0, ei3, sizeof(ei3));
 		subnettot(&er->client,  0, er3, sizeof(er3));
 		DBG_log("  ikev2_evaluate_connection_fit evaluating our "
-			"I=%s:%s:%d/%d R=%s:%d/%d %s to their:",
+			"conn=\"%s\" I=%s:%d/%d R=%s:%d/%d %s to their:",
 			d->name, ei3, ei->protocol, ei->port,
 			er3, er->protocol, er->port,
 			is_virtual_connection(d) ? "(virt)" : "");
@@ -691,7 +692,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 static stf_status ikev2_create_responder_child_state(
 	struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
-	enum phase1_role role, enum isakmp_xchg_types isa_xchg)
+	enum original_role role, enum isakmp_xchg_types isa_xchg)
 {
 	/*
 	 * parent state. only for AUTH exchange. for CREATE_CHILD_SA exchange
@@ -832,7 +833,7 @@ static stf_status ikev2_create_responder_child_state(
 				      &d->spd.this.id) &&
 			      match_id(&c->spd.that.id,
 				       &d->spd.that.id, &wildcards) &&
-			      trusted_ca(c->spd.that.ca,
+			      trusted_ca_nss(c->spd.that.ca,
 					 d->spd.that.ca, &pathlen)))
 				continue;
 
@@ -910,7 +911,7 @@ static stf_status ikev2_create_responder_child_state(
 
 	if (bsr == NULL) {
 		/* ??? why do we act differently based on role? */
-		if (role == O_INITIATOR)
+		if (role == ORIGINAL_INITIATOR)
 			return STF_FAIL;
 		else
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -924,7 +925,7 @@ static stf_status ikev2_create_responder_child_state(
 	}
 	cst->st_connection = c;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		memcpy(&cst->st_ts_this, &tsi[best_tsi_i],
 		       sizeof(struct traffic_selector));
 		memcpy(&cst->st_ts_that, &tsr[best_tsr_i],
@@ -977,11 +978,12 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
-				  enum phase1_role role,
+				  enum original_role role,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
+	struct state *pst = md->st;	/* parent state */
 	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret;
@@ -1006,10 +1008,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
+		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
 			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
 
@@ -1029,7 +1032,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		struct ikev2_generic in;
 		pb_stream pb_nr;
 
-		zero(&in);
+		zero(&in);	/* OK: no pointer fields */
 		in.isag_np = ISAKMP_NEXT_v2TSi;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -1050,7 +1053,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return ret;	/* should we delete_state cst? */
 	}
 
-	if (role == O_RESPONDER) {
+	if (role == ORIGINAL_RESPONDER) {
 		struct payload_digest *p;
 
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
@@ -1090,40 +1093,39 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	ikev2_derive_child_keys(cst, role);
 
+	ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
+
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
 
 	/* mark the connection as now having an IPsec SA associated with it. */
 	cst->st_connection->newest_ipsec_sa = cst->st_serialno;
+	log_newest_sa_change("inR2", cst);
 
 	return STF_OK;
 }
 
-static bool ikev2_set_dns (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
+static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 {
 	ip_address ip;
 	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
+	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), AF_INET, &ip);
 
-	if (len != sizeof(uint32_t)) {
-		libreswan_log("ERROR INTERNAL_IP4_DNS length is not %zu instead %u",
-				sizeof(uint32_t), len);
+	if (ugh != NULL) {
+		libreswan_log("ERROR INTERNAL_IP4_DNS malformed: %s", ugh);
 		return FALSE;
 	}
-
-	initaddr((const unsigned char *)cp_a_pbs->cur, sizeof(uint32_t),
-			AF_INET, &ip);
-	libreswan_log("received INTERNAL_IP4_DNS %s",
-			ipstr(&ip, &ip_str));
 
 	if (isanyaddr(&ip)) {
-		DBG(DBG_CONTROL, DBG_log("ERROR INTERNAL_IP4_DNS %s is invalid"
-					" #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
+		libreswan_log("ERROR INTERNAL_IP4_DNS %s is invalid",
+				ipstr(&ip, &ip_str));
 		return FALSE;
 	}
+
+	libreswan_log("received INTERNAL_IP4_DNS %s",
+			ipstr(&ip, &ip_str));
 
 	char *old = c->cisco_dns_info;
 
@@ -1136,51 +1138,48 @@ static bool ikev2_set_dns (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
 		 */
 		size_t sz_old = strlen(old);
 		size_t sz_added = strlen(ip_str.buf) + 1;
-		char *new = alloc_bytes(sz_old + 1 + sz_added, 
+		char *new = alloc_bytes(sz_old + 1 + sz_added,
 				"ikev2 cisco_dns_info+");
+
 		memcpy(new, old, sz_old);
-		*(new + sz_old) = ' ';
+		new[sz_old] = ' ';
 		memcpy(new + sz_old + 1, ip_str.buf, sz_added);
 		c->cisco_dns_info = new;
-		pfreeany(old);
+		pfree(old);
 	}
 	return TRUE;
 }
 
-static bool ikev2_set_ia (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
+static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 {
 	ip_address ip;
 	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
+	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), AF_INET, &ip);
 
-	if (len != sizeof(uint32_t)) {
-		libreswan_log("ERROR INTERNAL_IP4_ADDRESS length is not %zu instead %u",
-				sizeof(uint32_t), len);
+	if (ugh != NULL) {
+		libreswan_log("ERROR INTERNAL_IP4_ADDRESS malformed: %s", ugh);
 		return FALSE;
 	}
 
-	initaddr((const unsigned char *)cp_a_pbs->cur, sizeof(uint32_t),
-			AF_INET, &ip);
+	if (isanyaddr(&ip)) {
+		libreswan_log("ERROR INTERNAL_IP4_ADDRESS %s is invalid",
+			ipstr(&ip, &ip_str));
+		return FALSE;
+	}
+
 	libreswan_log("received INTERNAL_IP4_ADDRESS %s",
 			ipstr(&ip, &ip_str));
 
-	if (isanyaddr(&ip)) {
-		DBG(DBG_CONTROL, DBG_log("ERROR INTERNAL_IP4_ADDRESS %s is invalid "
-					"as host source address #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
-		return FALSE;
-	}
-
 	addrtosubnet(&ip, &c->spd.this.client);
-	setportof(0, &c->spd.this.client.addr);
+	setportof(0, &c->spd.this.client.addr);	/* ??? redundant? */
 
 	c->spd.this.has_client = TRUE;
+	/* ??? the following test seems obscure.  What's it about? */
 	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
-		DBG(DBG_CONTROL, DBG_log( "setting host source IP address to %s #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
+		DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
+					ipstr(&ip, &ip_str)));
 		c->spd.this.host_srcip = ip;
 	}
 	return TRUE;
@@ -1211,20 +1210,20 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		}
 
 		switch (cp_a.type) {
-		case INTERNAL_IP4_ADDRESS:
-			if (!ikev2_set_ia(&cp_a_pbs, cp_a.len, st))
+		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+			if (!ikev2_set_ia(&cp_a_pbs, st))
 				return FALSE;
 			break;
 
-		case INTERNAL_IP4_DNS:
-			if (!ikev2_set_dns(&cp_a_pbs, cp_a.len, st))
+		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			if (!ikev2_set_dns(&cp_a_pbs, st))
 				return FALSE;
 			break;
 		default:
 			libreswan_log("unknown attribute %s length %u",
-					enum_name(&ikev2_cp_attribute_type_names,
-						cp_a.type),
-					cp_a.len);
+				enum_name(&ikev2_cp_attribute_type_names,
+					cp_a.type),
+				cp_a.len);
 			break;
 		}
 	}

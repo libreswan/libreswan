@@ -84,14 +84,14 @@ each group encoding the value of one binary byte, high-order digit first.
 A single
 <emphasis remap='B'>_</emphasis>
 (underscore)
-between consecutive groups is ignored, permitting punctuation to improve 
+between consecutive groups is ignored, permitting punctuation to improve
 readability; doing this every eight digits seems about right.</para>
 
 <para>A base64 text value begins with a
 <emphasis remap='B'>0s</emphasis>
 (or
 <emphasis remap='B'>0S</emphasis>)
-prefix 
+prefix
 and continues with four-digit groups of base64 digits (A-Z, a-z, 0-9, +, and /),
 each group encoding the value of three binary bytes as described in
 section 6.8 of RFC 2045.
@@ -109,7 +109,7 @@ to indicate that fewer than three binary bytes are encoded.</para>
 (or
 <emphasis remap='B'>0T</emphasis>)
 prefix
-and continues with text characters, each being the value of one binary byte.</para> 
+and continues with text characters, each being the value of one binary byte.</para>
 
 <para>All these functions basically copy data from
 <varname role='parameter'>src</varname>
@@ -301,6 +301,7 @@ the result supplied by
 is always NUL-terminated,
 and its needed-size return value includes space for the terminating NUL.</para>
 
+</refsect1>
 <refsect1 id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>

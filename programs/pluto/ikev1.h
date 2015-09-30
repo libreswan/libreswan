@@ -53,7 +53,7 @@ extern stf_status main_outI1(int whack_sock,
 			     unsigned long try,
 			     enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike * uctx
+			     , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     );
 
@@ -64,7 +64,7 @@ extern stf_status aggr_outI1(int whack_sock,
 			     unsigned long try,
 			     enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike * uctx
+			     , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     );
 
@@ -124,6 +124,10 @@ static inline stf_status aggr_id_and_auth(struct msg_digest *md,
 {
 	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
+
+extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
+					     u_int8_t type,
+					     u_int8_t setnp);
 
 #if 0	/* not yet disentangled from spdb.h */
 extern bool ikev1_out_sa(pb_stream *outs,

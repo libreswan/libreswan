@@ -174,7 +174,7 @@ typedef enum __ns_opcode {
 	ns_o_query = 0,         /* Standard query. */
 	ns_o_iquery = 1,        /* Inverse query (deprecated/unsupported). */
 	ns_o_status = 2,        /* Name server status query (unsupported). */
-	                        /* Opcode 3 is undefined/reserved. */
+				/* Opcode 3 is undefined/reserved. */
 	ns_o_notify = 4,        /* Zone change notification. */
 	ns_o_update = 5,        /* Zone update message. */
 	ns_o_max = 6
@@ -238,9 +238,9 @@ typedef struct ns_tcp_tsig_state ns_tcp_tsig_state;
 #define NS_TSIG_TCP_COUNT 100
 #define NS_TSIG_ALG_HMAC_MD5 "HMAC-MD5.SIG-ALG.REG.INT"
 
-#define NS_TSIG_ERROR_NO_TSIG -10
-#define NS_TSIG_ERROR_NO_SPACE -11
-#define NS_TSIG_ERROR_FORMERR -12
+#define NS_TSIG_ERROR_NO_TSIG (-10)
+#define NS_TSIG_ERROR_NO_SPACE (-11)
+#define NS_TSIG_ERROR_FORMERR (-12)
 
 /*
  * Currently defined type values for resources and queries.

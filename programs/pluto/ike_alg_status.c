@@ -88,7 +88,9 @@ void ike_alg_show_status(void)
 			  enum_name(&oakley_hash_names, algo->algo_id),
 			  ((struct hash_desc *)algo)->hash_digest_len);
 	}
-#define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
+
+#define IKE_DH_ALG_FOR_EACH(idx) for ((idx) = 0; (idx) != oakley_group_size; (idx)++)
+
 	IKE_DH_ALG_FOR_EACH(i) {
 		const struct oakley_group_desc *gdesc = oakley_group + i;
 
@@ -133,23 +135,25 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 	if (st != NULL) {
 		struct esb_buf encbuf, prfbuf, integbuf, groupbuf;
 
-		if (!st->st_ikev2) { /* IKEv1 */
+		if (!st->st_ikev2) {
+			/* IKEv1 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
 			  c->name,
 			  instance,
 			  strip_prefix(enum_showb(&oakley_enc_names, st->st_oakley.encrypt, &encbuf), "OAKLEY_"),
-		          /* st->st_oakley.encrypter->keydeflen, */
+			  /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
 			  strip_prefix(enum_showb(&oakley_hash_names, st->st_oakley.prf_hash, &prfbuf), "OAKLEY_"),
 			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, &groupbuf), "OAKLEY_GROUP_"));
-		} else { /* IKEv2 */
+		} else {
+			/* IKEv2 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKEv2 algorithm newest: %s_%03d-%s-%s-%s",
 			  c->name,
 			  instance,
 			  enum_showb(&ikev2_trans_type_encr_names, st->st_oakley.encrypt, &encbuf),
-		          /* st->st_oakley.encrypter->keydeflen, */
+			  /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
 			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
 			  enum_showb(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash, &prfbuf),

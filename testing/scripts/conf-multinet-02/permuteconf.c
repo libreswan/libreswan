@@ -59,7 +59,7 @@ static int verbose = 0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
-				  "Usage: permuteconn [--config file] \n";
+				  "Usage: permuteconn [--config file]\n";
 
 static void usage(void)
 {

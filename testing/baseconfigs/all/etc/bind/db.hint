@@ -5,5 +5,5 @@
 ;
 ;
 $TTL	3600000
-.                         3600000  IN  NS	beet.root-servers.net.
-beet.root-servers.net.    3600000  IN   A     192.1.2.129
+.                         3600000  IN  NS	nic.root-servers.net.
+nic.root-servers.net.    3600000  IN   A     192.1.2.254

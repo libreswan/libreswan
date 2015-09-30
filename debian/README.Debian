@@ -31,20 +31,20 @@ If you still want to create an old style plain RSA key, you can create it with
 where $KEYLENGTH should be >= 2048. The resulting private key must be inserted
 into /etc/ipsec.secrets and enclosed with a ": RSA { .... }" marker. The
 following commands can be used to create a correctly formatted block:
-    echo -e ': RSA\t{' >> /etc/ipsec.secrets; 
-    cat $TMPFILE >> /etc/ipsec.secrets; 
+    echo -e ': RSA\t{' >> /etc/ipsec.secrets;
+    cat $TMPFILE >> /etc/ipsec.secrets;
     echo -e '\t}' >> /etc/ipsec.secrets;
 Afterwards, it is recommended to remove $TMPFILE in a secure manner (using
 something line srm, shred, wipe...) and create a public key line for insertation
-into the "conn" section of ipsec.conf with 
-    ipsec showhostkey --left 
+into the "conn" section of ipsec.conf with
+    ipsec showhostkey --left
 (or "--right" depending on which side you want to use it). For further
 information please take a closer look at the manpages ipsec_rsasigkey,
 ipsec.secrets, ipsec_showhostkey and ipsec.conf.
 
 3) IPsec Kernel Support
 
-Note: This package per default uses the in-kernel IPsec stack, which is 
+Note: This package per default uses the in-kernel IPsec stack, which is
 available in all recent stock Debian kernel images. The advantage of this
 in-kernel stack is that it is well supported and does not require external
 modules to be built. The disadvantage is that it no longer uses virtual ipsecX
@@ -70,15 +70,15 @@ the NAT Traversal patches have both been dropped. On the other hand, please note
 that there are two packages available, each gearing towards a different group
 of users:
 
-* libreswan-modules-dkms is suitable for end users to use KLIPS on on the same 
-  machine where the package is being installed. The module will be built 
-  automatically upon installing a new kernel and its respective headers 
+* libreswan-modules-dkms is suitable for end users to use KLIPS on on the same
+  machine where the package is being installed. The module will be built
+  automatically upon installing a new kernel and its respective headers
   package. No further documentation is necessary, as the build and installation
-  process is fully automatic when this package and the kernel headers are 
+  process is fully automatic when this package and the kernel headers are
   installed.
 
-* libreswan-modules-source targets the system administrators wishing to 
-  distribute pre-built KLIPS modules to multiple machines as a standard Debian 
+* libreswan-modules-source targets the system administrators wishing to
+  distribute pre-built KLIPS modules to multiple machines as a standard Debian
   package. This approach takes more work but is also a lot more flexible.
 
 4) Building KLIPS from libreswan-modules-source
@@ -91,7 +91,7 @@ can be used:
       module-assistant build libreswan
   to build the package.
   Please note that when compiling modules for a kernel version which differs
-  from the one running on the compilation host then the option --kvers-list 
+  from the one running on the compilation host then the option --kvers-list
   must be supplied to the module-assistant command.
 
 * When invoking make-kpkg from kernel-package to do the module compilation the
@@ -112,8 +112,8 @@ can be used:
   which provides the --revision argument.
 
 * Invoking debian/rules directly is the third and most flexible approach to
-  compile and package the module, but this method also leaves the task of 
-  cleaning up to the administrator. After extracting libreswan-modules.tar.gz 
+  compile and package the module, but this method also leaves the task of
+  cleaning up to the administrator. After extracting libreswan-modules.tar.gz
   change to /usr/src/modules/libreswan and issue the command
       debian/rules binary-modules
   to start building the module. Some variables that might need to be set in
@@ -134,7 +134,7 @@ can be used:
 In order to use the SAref feature allowing users to connect multiple clients
 from behind the same NAT device and multiple clients using the same internal IP
 behind different NAT devices, the Linux kernel needs to be patched. At the time
-of this writing there are patches available for kernel version 2.6.32 from 
+of this writing there are patches available for kernel version 2.6.32 from
 Lenny/Sid and 2.6.35-rc6 from experimental which are shipped in the
 libreswan-modules.tar.bz2 file from libreswan-modules-source.
 The recommended method for creating a patched kernel is using the make-kpkg

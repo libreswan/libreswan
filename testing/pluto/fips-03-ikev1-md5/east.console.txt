@@ -1,0 +1,89 @@
+/testing/guestbin/swan-prep --fips
+certutil out:Password changed successfully.
+east #
+ ipsec checknss
+east #
+ PATH/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force
+FIPS mode enabled.
+east #
+ PATH/bin/modutil -dbdir sql:/etc/ipsec.d -chkfips true
+FIPS mode enabled.
+east #
+ fipscheck
+usage: fipscheck [-s <hmac-suffix>] <paths-to-files>
+fips mode is on
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ grep FIPS /tmp/pluto.log
+Setting all FIPS checks to true to emulate FIPS mode
+FIPS Product detected (/etc/system-fips)
+FIPS Kernel Mode detected
+FIPS HMAC integrity verification test passed
+FIPS: pluto daemon running in FIPS mode
+Starting Pluto (Libreswan Version )
+Warning: IMPAIR_FORCE_FIPS enabled
+east #
+ ipsec auto --add westnet-eastnet-md5
+002 added connection description "westnet-eastnet-md5"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+XFRM state:
+XFRM policy:
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

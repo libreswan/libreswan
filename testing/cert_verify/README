@@ -1,0 +1,44 @@
+The usage_test program will generate a CA and end certificate
+(and sub CA if desired) with the specified extensions. The end
+certificate is then verified under a certUsage profile. The
+purpose is to identify how the KUs and EKUs on a certificate
+are treated by NSS.
+
+--usage option is one of:
+	certUsageSSLClient
+	certUsageSSLServer
+	certUsageSSLServerWithStepUp
+	certUsageSSLCA
+	certUsageEmailSigner
+	certUsageEmailRecipient
+	certUsageObjectSigner
+	certUsageUserCertImport
+	certUsageVerifyCA
+	certUsageProtectedObjectSigner
+	certUsageStatusResponder
+	certUsageAnyCA
+
+--rootku/--rooteku --subku/--subeku --endku/--endeku options are a string of the x509v3_config(5) type.
+
+Examples:
+
+$ ./usage_test -v --rootku 'digitalSignature,keyCertSign,cRLSign' --endku 'digitalSignature,nonRepudiation' --usage 'certUsageSSLClient'
+setting keyUsage 'digitalSignature,keyCertSign,cRLSign' on ca.libreswan.org - crit: False
+setting keyUsage 'digitalSignature,nonRepudiation' on end.libreswan.org - crit: False
+OK
+
+$ ./usage_test -v --rootku 'digitalSignature,keyCertSign,cRLSign' --endku 'digitalSignature,nonRepudiation' --usage 'certUsageSSLServer'
+setting keyUsage 'digitalSignature,keyCertSign,cRLSign' on ca.libreswan.org - crit: False
+setting keyUsage 'digitalSignature,nonRepudiation' on end.libreswan.org - crit: False
+SEC_ERROR_INADEQUATE_KEY_USAGE : Certificate key usage inadequate for attempted operation.
+
+$ ./usage_test -v --rootku 'digitalSignature,keyCertSign,cRLSign' --endeku 'serverAuth' --usage 'certUsageSSLClient' --roottrust 'CT,CT,CT'
+setting keyUsage 'digitalSignature,keyCertSign,cRLSign' on ca.libreswan.org - crit: False
+setting extendedKeyUsage 'serverAuth' on end.libreswan.org - crit: False
+SEC_ERROR_INADEQUATE_CERT_TYPE : Certificate type not approved for application.
+
+$ ./usage_test -v --rootku 'digitalSignature,keyCertSign,cRLSign' --endeku 'serverAuth' --usage 'certUsageAnyCA' --roottrust 'CT,CT,CT'
+setting keyUsage 'digitalSignature,keyCertSign,cRLSign' on ca.libreswan.org - crit: False
+setting extendedKeyUsage 'serverAuth' on end.libreswan.org - crit: False
+OK
+

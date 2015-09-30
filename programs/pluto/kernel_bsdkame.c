@@ -454,7 +454,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const ip_address *that_host,
 			       const ip_subnet *that_client,
 			       ipsec_spi_t spi,
-			       unsigned int proto,
+			       int sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
@@ -463,7 +463,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       enum pluto_sadb_operations op,
 			       const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-			       , char *policy_label UNUSED
+			       , const char *policy_label UNUSED
 #endif
 			       )
 {
@@ -523,7 +523,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		policy = IPSEC_POLICY_IPSEC;
 	}
 
-	zero(&pbuf);
+	zero(&pbuf);	/* OK: no pointer fields */
 
 	/* this is sanity check that it got set properly */
 	passert(this_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
@@ -727,7 +727,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
-		zero(&pbuf);
+		zero(&pbuf);	/* OK: no pointer fields */
 
 		/* XXX need to fix this for v6 */
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
@@ -1060,7 +1060,7 @@ static bool bsdkame_except_socket(int socketfd, int family)
 		return FALSE;
 	}
 
-	zero(&policy);
+	zero(&policy);	/* OK: no pointer fields */
 	policy.sadb_x_policy_len = PFKEY_UNIT64(sizeof(policy));
 	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;

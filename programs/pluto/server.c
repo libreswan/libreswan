@@ -49,6 +49,10 @@
 #include <sys/wait.h>
 #include <resolv.h>
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/thread.h>
+
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 #  include <asm/types.h>        /* for __u8, __u32 */
 #  include <linux/errqueue.h>
@@ -100,6 +104,9 @@ static pid_t addconn_child_pid = 0;
 
 /* list of interface devices */
 struct iface_list interface_dev;
+
+/* pluto's main Libevent event_base */
+static struct event_base *pluto_eb =  NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -188,7 +195,12 @@ void delete_ctl_socket(void)
 	unlink(ctl_addr.sun_path);
 }
 
-bool listening = FALSE;                 /* should we pay attention to IKE messages? */
+bool listening = FALSE;  /* should we pay attention to IKE messages? */
+
+enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
+unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
+unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -244,6 +256,12 @@ static void free_dead_ifaces(void)
 				struct iface_dev *id;
 
 				*pp = p->next; /* advance *pp */
+
+				if (p->ev != NULL) {
+					event_del(p->ev);
+					p->ev = NULL;
+				}
+
 				close(p->fd);
 
 				id = p->ip_dev;
@@ -332,6 +350,13 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	}
 #endif
 
+/*
+ * NETKEY requires us to poke an IPsec policy hole that allows IKE packets,
+ * unlike KLIPS which implicitly always allows plaintext IKE.
+ * This installs one IPsec policy per socket but this function is called for each:
+ * IPv4 port 500 and 4500
+ * IPv6 port 500
+ */
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	if (kern_interface == USE_NETKEY) {
 		struct sadb_x_policy policy;
@@ -401,8 +426,23 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	return fd;
 }
 
+/* a wrapper for libevent's event_new + event_add; any error is fatal */
+struct event *pluto_event_new(evutil_socket_t fd, short events,
+		event_callback_fn cb, void *arg, const struct timeval *t)
+{
+	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
+	int r;
+
+	passert(ev != NULL);
+	r = event_add(ev, t);
+	passert(r >= 0);
+	return ev;
+}
+
 void find_ifaces(void)
 {
+	struct iface_port *ifp;
+
 	mark_ifaces_dead();
 
 	if (kernel_ops->process_ifaces != NULL) {
@@ -417,6 +457,24 @@ void find_ifaces(void)
 
 	if (interfaces == NULL)
 		loglog(RC_LOG_SERIOUS, "no public interfaces found");
+
+	if (listening) {
+		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+			if (ifp->ev != NULL) {
+				event_del(ifp->ev);
+				ifp->ev = NULL;
+				DBG_log("refresh. setup callback for interface %s:%u %d",
+						ifp->ip_dev->id_rname,ifp->port,
+						ifp->fd);
+			}
+			ifp->ev = pluto_event_new(ifp->fd,
+					EV_READ | EV_PERSIST, comm_handle_cb,
+					ifp, NULL);
+			DBG_log("setup callback for interface %s:%u fd %d",
+					ifp->ip_dev->id_rname, ifp->port,
+					ifp->fd);
+		}
+	}
 }
 
 void show_ifaces_status(void)
@@ -453,6 +511,16 @@ static void termhandler(int sig UNUSED)
 	sigtermflag = TRUE;
 }
 
+static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+	libreswan_log("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+}
+
+static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+	exit_pluto(PLUTO_EXIT_OK);
+}
+
 static volatile sig_atomic_t sigchildflag = FALSE;
 
 static void childhandler(int sig UNUSED)
@@ -461,6 +529,7 @@ static void childhandler(int sig UNUSED)
 }
 
 /* perform waitpid() for any children */
+#if 0	/* ??? no longer used because of libevent? */
 static void reapchildren(void)
 {
 	pid_t child;
@@ -490,14 +559,56 @@ static void reapchildren(void)
 			      errno, strerror(errno));
 	}
 }
+#endif
+
+void init_event_base(void) {
+	DBG(DBG_CONTROLMORE, DBG_log("Initialize up libevent base"));
+	pluto_eb = event_base_new();
+	passert(pluto_eb != NULL);
+	passert(evthread_use_pthreads() >= 0);
+	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
+}
+
+static void main_loop(void)
+{
+	int r;
+	struct event *ev_ctl ; /* AA_2015 don't forget to free it */
+	struct event *ev_sig_hup;
+	struct event *ev_sig_term;
+
+	/*
+	 * new lbevent setup and loop
+	 * setup basic events
+	 */
+
+	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
+
+	ev_ctl = event_new(pluto_eb, ctl_fd, EV_READ | EV_PERSIST,
+			whack_handle_cb, NULL);
+
+	passert(ev_ctl != NULL);
+	passert(event_add(ev_ctl, NULL) >= 0);
+
+	ev_sig_term = event_new(pluto_eb, SIGTERM, EV_SIGNAL,termhandler_cb, NULL);
+	passert(ev_sig_term != NULL);
+	passert(event_add(ev_sig_term, NULL) >= 0);
+
+	ev_sig_hup = event_new(pluto_eb, SIGHUP, EV_SIGNAL|EV_PERSIST,
+			huphandler_cb, NULL);
+
+	passert(ev_sig_hup != NULL);
+	passert(event_add(ev_sig_hup, NULL) >= 0);
+
+	r = event_base_loop(pluto_eb, 0);
+	passert (r == 0);
+	return;
+}
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
  * and handles timer events.
  */
 void call_server(void)
 {
-	struct iface_port *ifp;
-
 	/* catch SIGHUP and SIGTERM */
 	{
 		int r;
@@ -589,191 +700,7 @@ void call_server(void)
 		}
 		/* parent continues */
 	}
-
-	for (;; ) {
-		lsw_fd_set readfds;
-		lsw_fd_set writefds;
-		int ndes;
-
-		/* wait for next interesting thing */
-
-		for (;; ) {
-			long next_time = next_event(); /* time to any pending timer event */
-			int maxfd = ctl_fd;
-
-			if (sigtermflag)
-				exit_pluto(0);
-
-			if (sighupflag) {
-				/* Ignorant folks think poking any daemon with SIGHUP
-				 * is polite.  We catch it and tell them otherwise.
-				 * There is one use: unsticking a hung recvfrom.
-				 * This sticking happens sometimes -- kernel bug?
-				 */
-				sighupflag = FALSE;
-				libreswan_log(
-					"Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
-			}
-
-			if (sigchildflag)
-				reapchildren();
-
-			LSW_FD_ZERO(&readfds);
-			LSW_FD_ZERO(&writefds);
-			LSW_FD_SET(ctl_fd, &readfds);
-
-			/* the only write file-descriptor of interest */
-			if (adns_qfd != NULL_FD && unsent_ADNS_queries) {
-				if (maxfd < adns_qfd)
-					maxfd = adns_qfd;
-				LSW_FD_SET(adns_qfd, &writefds);
-			}
-
-			if (adns_afd != NULL_FD) {
-				if (maxfd < adns_afd)
-					maxfd = adns_afd;
-				LSW_FD_SET(adns_afd, &readfds);
-			}
-
-#ifdef KLIPS
-			if (kern_interface != NO_KERNEL) {
-				int fd = *kernel_ops->async_fdp;
-
-				if (kernel_ops->process_queue != NULL)
-					kernel_ops->process_queue();
-				if (maxfd < fd)
-					maxfd = fd;
-				passert(!LSW_FD_ISSET(fd, &readfds));
-				LSW_FD_SET(fd, &readfds);
-			}
-#endif
-
-			if (listening) {
-				for (ifp = interfaces; ifp != NULL;
-				     ifp = ifp->next) {
-					if (maxfd < ifp->fd)
-						maxfd = ifp->fd;
-					passert(!LSW_FD_ISSET(ifp->fd,
-							      &readfds));
-					LSW_FD_SET(ifp->fd, &readfds);
-				}
-			}
-
-			/* see if helpers need attention */
-			enumerate_crypto_helper_response_sockets(&readfds);
-
-			if (next_time < 0) {
-				/* select without timer */
-
-				ndes = lsw_select(maxfd + 1, &readfds,
-						  &writefds, NULL, NULL);
-			} else if (next_time == 0) {
-				/* timer without select: there is a timer event pending,
-				 * and it should fire now so don't bother to do the select.
-				 */
-				ndes = 0; /* signify timer expiration */
-			} else {
-				/* select with timer */
-
-				struct timeval tm;
-
-				tm.tv_sec = next_time;
-				tm.tv_usec = 0;
-				ndes = lsw_select(maxfd + 1, &readfds,
-						  &writefds, NULL, &tm);
-			}
-
-			if (ndes != -1)
-				break; /* success */
-
-			if (errno != EINTR)
-				exit_log_errno((e,
-						"select() failed in call_server()"));
-
-
-			/* retry if terminated by signal */
-		}
-
-		DBG(DBG_CONTROL, DBG_log(" "));
-
-		/* figure out what is interesting */
-		/* do FD's before events are processed */
-
-		if (ndes > 0) {
-			/* at least one file descriptor is ready */
-
-			if (adns_qfd != NULL_FD &&
-			    LSW_FD_ISSET(adns_qfd, &writefds)) {
-				passert(ndes > 0);
-				send_unsent_ADNS_queries();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-			if (adns_afd != NULL_FD &&
-			    LSW_FD_ISSET(adns_afd, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received adns message"));
-				handle_adns_answer();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-#ifdef KLIPS
-			if (kern_interface != NO_KERNEL &&
-			    LSW_FD_ISSET(*kernel_ops->async_fdp, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received kernel message"));
-				kernel_ops->process_msg();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-#endif
-
-			for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-				if (LSW_FD_ISSET(ifp->fd, &readfds)) {
-					/* comm_handle will print DBG_CONTROL intro,
-					 * with more info than we have here.
-					 */
-
-					passert(ndes > 0);
-					comm_handle(ifp);
-					passert(GLOBALS_ARE_RESET());
-					ndes--;
-				}
-			}
-
-			if (LSW_FD_ISSET(ctl_fd, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received whack message"));
-				whack_handle(ctl_fd);
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-			/* note we process helper things last on purpose */
-			{
-				int helpers = pluto_crypto_helper_response_ready(
-					&readfds);
-				DBG(DBG_CONTROL,
-				    DBG_log("* processed %d messages from cryptographic helpers",
-					    helpers));
-
-				ndes -= helpers;
-			}
-
-			passert(ndes == 0);
-		}
-		if (next_event() == 0) {
-			/* timer event ready */
-			DBG(DBG_CONTROL, DBG_log("*time to handle event"));
-			handle_timer_event();
-			passert(GLOBALS_ARE_RESET());
-		}
-	}
+	main_loop();
 }
 
 /* Process any message on the MSG_ERRQUEUE
@@ -875,12 +802,12 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 				   "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
 				   ifp->ip_dev->id_rname));
 			break;
-		} else if (packet_len == sizeof(buffer)) {
+		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
 				"MSG_ERRQUEUE message longer than %lu bytes; truncated",
 				(unsigned long) sizeof(buffer));
-		} else {
-			sender = find_sender((size_t) packet_len, buffer);
+		} else if (packet_len >= (ssize_t)sizeof(struct isakmp_hdr)) {
+			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
 		DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
@@ -1008,10 +935,23 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
-					/* don't log NAT-T keepalive related errors unless NATT debug is
+					/*
+					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else {
+				} else if (DBGP(DBG_OPPO) ||
+					   (sender != NULL && sender->st_connection != NULL &&
+					    LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)))
+				{
+					/*
+					 * We are selective about printing this
+					 * diagnostic since it pours out when
+					 * we are doing unrequited authnull OE.
+					 * That's the point of the condition
+					 * above.
+					 * ??? the condition treats all authnull as OE.
+					 */
+					/* ??? DBGP is controlling non-DBG logging! */
 					struct state *old_state = cur_state;
 
 					cur_state = sender;
@@ -1020,28 +960,27 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 * if we know what state to blame.
 					 */
 					libreswan_log((sender != NULL) + "~"
-						      "ERROR: asynchronous network error report on %s (sport=%d)"
-						      "%s"
-						      ", complainant %s"
-						      ": %s"
-						      " [errno %lu, origin %s"
-					                /* ", pad %d, info %ld" */
-					                /* ", data %ld" */
-						      "]",
-						      ifp->ip_dev->id_rname,
-						      ifp->port,
-						      fromstr,
-						      offstr,
-						      strerror(ee->ee_errno),
-						      (unsigned long) ee->ee_errno,
-						      orname
-					                /* , ee->ee_pad, (unsigned long)ee->ee_info */
-					                /* , (unsigned long)ee->ee_data */
-						      );
+						"ERROR: asynchronous network error report on %s (sport=%d)"
+						"%s"
+						", complainant %s"
+						": %s"
+						" [errno %lu, origin %s"
+						/* ", pad %d, info %ld" */
+						/* ", data %ld" */
+						"]",
+						ifp->ip_dev->id_rname, ifp->port,
+						fromstr,
+						offstr,
+						strerror(ee->ee_errno),
+						(unsigned long) ee->ee_errno, orname
+						/* , ee->ee_pad, (unsigned long)ee->ee_info */
+						/* , (unsigned long)ee->ee_data */
+						);
 					cur_state = old_state;
 				}
-			} else if (cm->cmsg_level == SOL_IP   &&
+			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {
+				/* do nothing */
 			} else {
 				/* .cmsg_len is a kernel_size_t(!), but the value
 				 * certainly ought to fit in an unsigned long.
@@ -1090,7 +1029,14 @@ static bool send_packet(struct state *st, const char *where,
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
-	const size_t natt_bonus = !just_a_keepalive &&
+	size_t natt_bonus;
+
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	natt_bonus = !just_a_keepalive &&
 				  st->st_interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
@@ -1216,7 +1162,7 @@ static bool send_frags(struct state *st, const char *where)
 	 */
 	const size_t max_data_len =
 		((st->st_connection->addr_family ==
-		  AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+		  AF_INET) ? ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6)
 		-
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
@@ -1289,32 +1235,93 @@ static bool send_frags(struct state *st, const char *where)
 	return TRUE;
 }
 
+bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
+{
+	if (st->st_interface != NULL && st->st_interface->ike_float)
+		len += NON_ESP_MARKER_SIZE;
+
+	/* This condition is complex.  Formatting is meant to help reader.
+	 *
+	 * Hugh thinks his banished style would make this earlier version
+	 * a little clearer:
+	 * len + natt_bonus
+	 *    >= (st->st_connection->addr_family == AF_INET
+	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+	 * && ((  resending
+	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
+	 *        && st->st_seen_fragvid)
+	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
+	 *     || st->st_seen_fragments))
+	 *
+	 * ??? the following test does not account for natt_bonus
+	 */
+	return len >= (st->st_connection->addr_family == AF_INET ?
+		       ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6) &&
+	    (   (resending &&
+			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
+			st->st_seen_fragvid) ||
+		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
+		st->st_seen_fragments   );
+}
+
+static bool send_ikev2_frags(struct state *st, const char *where)
+{
+	struct ikev2_frag *frag;
+
+	for (frag = st->st_tfrags; frag != NULL; frag = frag->next)
+		if (!send_packet(st, where, FALSE,
+				 frag->cipher.ptr, frag->cipher.len, NULL, 0))
+			return FALSE;
+
+	return TRUE;
+}
+
 static bool send_or_resend_ike_msg(struct state *st, const char *where,
 				   bool resending)
 {
-	size_t len = st->st_tpacket.len;
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	const size_t natt_bonus =
-		st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-
-	/* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
-	if (!st->st_ikev2 &&
-	    st->st_state != STATE_MAIN_I1 &&
-	    len + natt_bonus >=
-		(st->st_connection->addr_family == AF_INET ?
-		 ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
-	    ((resending &&
-	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
-	      st->st_seen_fragvid) ||
-	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments))) {
-		return send_frags(st, where);
-	} else {
-		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
-				   st->st_tpacket.len, NULL, 0);
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
 	}
+
+	if (st->st_tfrags != NULL) {
+		/* if a V2 packet needs fragmenting it would have already happened */
+		passert(st->st_ikev2);
+		passert(st->st_tpacket.ptr == NULL);
+		return send_ikev2_frags(st, where);
+	} else {
+		/*
+		 * Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+		 * natt_bonus is the size of the addition (0 if not needed).
+		 */
+		size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+		size_t len = st->st_tpacket.len;
+
+		passert(len != 0);
+
+		/*
+		 * Decide of whether we're to fragment.
+		 * Only for IKEv1 (V2 fragments earlier).
+		 * ??? why can't we fragment in STATE_MAIN_I1?
+		 */
+		if (!st->st_ikev2 &&
+		    st->st_state != STATE_MAIN_I1 &&
+		    should_fragment_ike_msg(st, len + natt_bonus, resending))
+		{
+			return send_frags(st, where);
+		} else {
+			return send_packet(st, where, FALSE, st->st_tpacket.ptr,
+					   st->st_tpacket.len, NULL, 0);
+		}
+	}
+}
+
+void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	passert(pbs_offset(pbs) != 0);
+	release_v2fragments(st);
+	freeanychunk(st->st_tpacket);
+	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);
 }
 
 bool send_ike_msg(struct state *st, const char *where)
@@ -1322,12 +1329,31 @@ bool send_ike_msg(struct state *st, const char *where)
 	return send_or_resend_ike_msg(st, where, FALSE);
 }
 
+bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	record_outbound_ike_msg(st, pbs, what);
+	return send_ike_msg(st, what);
+}
+
+/* hack!  Leaves st->st_tpacket as it was found. */
+bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char *where)
+{
+	chunk_t saved_tpacket = st->st_tpacket;
+	bool r;
+
+	setchunk(st->st_tpacket, pbs->start, pbs_offset(pbs));
+	r = send_ike_msg(st, where);
+	st->st_tpacket = saved_tpacket;
+	return r;
+}
+
 bool resend_ike_v1_msg(struct state *st, const char *where)
 {
 	return send_or_resend_ike_msg(st, where, TRUE);
 }
 
-/* send keepalive is special in two ways:
+/*
+ * send keepalive is special in two ways:
  * We don't want send errors logged (too noisy).
  * We don't want the packet prefixed with a non-ESP Marker.
  */
@@ -1337,4 +1363,24 @@ bool send_keepalive(struct state *st, const char *where)
 
 	return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload),
 			   NULL, 0);
+}
+
+bool ev_before(struct pluto_event *pev, deltatime_t delay) {
+	struct timeval timeout;
+
+	return (event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT) &&
+		deltaless_tv_dt(timeout, delay);
+}
+void set_whack_pluto_ddos(enum ddos_mode mode)
+{
+	if (mode == pluto_ddos_mode) {
+		loglog(RC_LOG,"pluto DDoS protection remains in %s mode",
+		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+		return;
+	}
+
+	pluto_ddos_mode = mode;
+	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
+		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+
 }

@@ -8,7 +8,7 @@ road #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
@@ -43,7 +43,7 @@ road #
 003 "xauth-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
 004 "xauth-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "xauth-road-eastnet-psk" #1: Dead Peer Detection (RFC 3706): enabled
-002 "xauth-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "xauth-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "xauth-road-eastnet-psk" #2: STATE_QUICK_I1: initiate
 002 "xauth-road-eastnet-psk" #2: Dead Peer Detection (RFC 3706): enabled
 004 "xauth-road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active XAUTHuser=use2}

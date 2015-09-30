@@ -19,7 +19,7 @@ echo SA1 $sa1
 sa2=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x88447755 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref | cut -d '=' -f2`
 echo SA2 $sa2
 
-ipsec spigrp inet 192.1.2.45 0x88447755 tun inet 192.1.2.45 0x88447755 esp 
+ipsec spigrp inet 192.1.2.45 0x88447755 tun inet 192.1.2.45 0x88447755 esp
 
 
 : set up SPI 2
@@ -29,7 +29,7 @@ echo SA3 $sa3
 sa4=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref | cut -d '=' -f2`
 echo SA4 $sa4
 
-ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
+ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
 
 ipsec look
 

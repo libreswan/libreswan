@@ -13,6 +13,13 @@ config setup
 	# For MacOSX use "bsd"
 	protostack=netkey
 	#
+	# Normally, pluto logs via syslog. If you want to log to a file,
+	# specify below or to disable logging, eg for embedded systems, use
+	# the file name /dev/null
+	# Note: SElinux policies might prevent pluto writing to a log file at
+	#       an unusual location.
+	#logfile=/var/log/pluto.log
+	#
 	# The interfaces= line is only required for the klips/mast stack
 	#interfaces="%defaultroute"
 	#interfaces="ipsec0=eth0 ipsec1=ppp0"
@@ -27,20 +34,13 @@ config setup
 	# "raw crypt parsing emitting control kernel pfkey natt x509 dpd
 	#  private".
 	# Note: "crypt" is not included with "all", as it can show confidential
-	#       information. It must be specifically specified 
+	#       information. It must be specifically specified
 	# examples:
 	# plutodebug="control parsing"
 	# plutodebug="all crypt"
 	# Again: only enable plutodebug or klipsdebug when asked by a developer
 	#plutodebug=none
 	#klipsdebug=none
-	#
-	# Normally, pluto logs via syslog. If you want to log to a file,
-	# specify below or to disable logging, eg for embedded systems, use
-	# the file name /dev/null
-	# Note: SElinux policies might prevent pluto writing to a log file at
-	#       an unusual location.
-	#plutostderrlog=/var/log/pluto.log
 	#
 	# Enable core dumps (might require system changes, like ulimit -C)
 	# This is required for abrtd to work properly
@@ -52,18 +52,13 @@ config setup
 	# exclude networks used on server side by adding %v4:!a.b.c.0/24
 	# It seems that T-Mobile in the US and Rogers/Fido in Canada are
 	# using 25/8 as "private" address space on their wireless networks.
-	# This range has not been announced via BGP (at least upto 2010-12-21)
-	nat_traversal=yes
+	# This range has never been announced via BGP (at least upto 2015)
 	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
 
-# Add connections here
-
 # For example connections, see your distribution's documentation directory,
-# or the documentation which could be located at
-#  /usr/share/docs/libreswan-3.*/ or look at https://www.libreswan.org/
+# or https://libreswan.org/wiki/
 #
 # There is also a lot of information in the manual page, "man ipsec.conf"
-
-# You may put your configuration (.conf) file in the "/etc/ipsec.d/" directory
-# by uncommenting this line
+#
+# It is best to add your IPsec connections as separate files in /etc/ipsec.d/
 #include /etc/ipsec.d/*.conf

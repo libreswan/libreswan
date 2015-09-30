@@ -1,4 +1,5 @@
 /* demultiplex incoming IKE messages
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
@@ -10,6 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,6 +46,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -59,11 +62,16 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-
+#include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
-
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
+
+#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+
+#include "ietf_constants.h"
+
+#include "plutoalg.h" /* for default_ike_groups */
 
 /* Note: same definition appears in programs/pluto/ikev2_parent.c */
 #define SEND_V2_NOTIFICATION(t) { \
@@ -72,24 +80,58 @@
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
 
-struct state_v2_microcode {
-	const char *const story;
-	enum state_kind state, next_state;
-	enum isakmp_xchg_types recv_type;
-	lset_t flags;
-	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
-	enum event_type timeout_event;
-	state_transition_fn *processor;
-};
-
 enum smf2_flags {
-	SMF2_INITIATOR = LELEM(1),
-	SMF2_STATENEEDED = LELEM(2),
-	SMF2_REPLY = LELEM(3),
-	SMF2_CONTINUE_MATCH = LELEM(4)	/* multiple SMC entries for this state: try the next if payloads don't work */
+	/*
+	 * Check the value of the IKE_I flag in the header.
+	 *
+	 * The original initiator receives packets with the IKE_I bit
+	 * clear, while the original resonder receives packets with
+	 * the bit set.  Confused?
+	 *
+	 * The initial IKE_I value should also be saved in "struct
+	 * state" so it can be later validated.  Unfortunately there
+	 * is no such field so, instead, the value is implicitly
+	 * verified by the by the state machine being split into
+	 * original initiator and original responder halves.
+	 *
+	 * Don't assume this flag is present.  If initiator and
+	 * responder share states then this value will absent.
+	 *
+	 * Do not use this to determine ORIGINAL_INITIATOR vs ORIGINAL_RESPONDER.
+	 * Instead use either md->original_role or st->st_original_role field.
+	 *
+	 * Arguably, this could be made a separate 3 state variable.
+	 */
+	SMF2_IKE_I_SET = LELEM(1),
+	SMF2_IKE_I_CLEAR = LELEM(2),
+
+	SMF2_SEND = LELEM(3),
+
+	/*
+	 * Is the MSG_R bit set.
+	 *
+	 * Requests have the bit clear, and responses have it set.
+	 *
+	 * Don't assume one of these flags are present.  Some state
+	 * processors internally deal with both the request and the
+	 * reply.
+	 *
+	 * In general, the relationship MSG_R != IKE_I does not hold
+	 * (it just holds during the initial exchange).
+	 */
+	SMF2_MSG_R_SET = LELEM(5),
+	SMF2_MSG_R_CLEAR = LELEM(6),
+
+	/*
+	 * Should the SK (secured-by-key) payload be unpacked and
+	 * verified?
+	 *
+	 * The original responder, in R2 state isn't able to decrypt
+	 * incomming messages.
+	 *
+	 * Some state transition processes do their own decryption.
+	 */
+	SMF2_UNPACK_SK = LELEM(7),
 };
 
 /*
@@ -188,10 +230,15 @@ enum smf2_flags {
  *                            <--  HDR, SK {SA, Nr, KEr}
  */
 
+/*
+ * Convert a payload type into a set index.
+ */
+#define PINDEX(N) ((N) - ISAKMP_v2PAYLOAD_TYPE_BASE)
+
 /* Short forms for building payload type sets */
 
 #define PT(n) ISAKMP_NEXT_v2 ## n
-#define P(n) LELEM(PT(n) - ISAKMP_v2PAYLOAD_TYPE_BASE)
+#define P(N) LELEM(PINDEX(PT(N)))
 
 /* From RFC 5996:
  *
@@ -225,9 +272,9 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	{ .story      = "initiate IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_INITIATOR,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_NULL, };
+	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
@@ -239,12 +286,12 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process anti-spoofing cookie",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY | SMF2_CONTINUE_MATCH,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -255,12 +302,12 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
@@ -270,8 +317,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2parent_inR2,
@@ -285,7 +332,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
-	  .flags =  /* not SMF2_INITIATOR, not SMF2_STATENEEDED */ SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
@@ -303,53 +350,13 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
-	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2parent_inI2outR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
-
-	/* Informational Exchange */
-
-	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
-	 *
-	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
-	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
-	 */
-
-	{ .story      = "I2: process INFORMATIONAL",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I2,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
-
-	/* Informational Exchange */
-	{ .story      = "R1: process INFORMATIONAL",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
-
-	/* Informational Exchange */
-	{ .story      = "I3: INFORMATIONAL",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
 
 	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
@@ -365,8 +372,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_child_inIoutR,
@@ -377,8 +384,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_child_inIoutR,
@@ -386,26 +393,62 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Informational Exchange */
+
+	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
+	 *
+	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
+	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
+	 */
+
+	{ .story      = "I2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_PARENT_I2,
+	  .flags      = SMF2_IKE_I_CLEAR,
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "I3: INFORMATIONAL",
+	  .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_IKE_I_CLEAR,
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "R1: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_PARENT_R1,
+	  .flags      = SMF2_IKE_I_SET,
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
 	{ .story      = "R2: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .flags      = SMF2_IKE_I_SET,
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
-	/* Informational Exchange */
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .flags      = 0,
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* last entry */
 	{ .story      = "roof",
@@ -416,25 +459,25 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 #undef PT
 
 /*
- * split up an incoming message into payloads
- *
- * Warning: may change md->svm based on payload matching.
+ * split an incoming message into payloads
  */
-stf_status ikev2_process_payloads(struct msg_digest *md,
-				  pb_stream    *in_pbs,
-				  enum next_payload_types_ikev2 np,
-				  bool enc)
+struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
+						    pb_stream    *in_pbs,
+						    enum next_payload_types_ikev2 np)
 {
 	struct payload_digest *pd = md->digest_roof;
-	const struct state_v2_microcode *svm = md->svm;
-	lset_t seen = LEMPTY;
-	lset_t repeated = LEMPTY;
+	struct ikev2_payloads_summary summary = {
+		.status = STF_OK,
+		.seen = LEMPTY,
+		.repeated = LEMPTY,
+	};
 
-	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2E digest! */
+	/*
+	 * ??? zero out the digest descriptors -- might nuke
+	 * ISAKMP_NEXT_v2SK digest!
+	 */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
-		struct_desc *sd = payload_desc(np);
-
 		DBG(DBG_CONTROL,
 		    DBG_log("Now let's proceed with payload (%s)",
 			    enum_show(&ikev2_payload_names, np)));
@@ -443,31 +486,38 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %d payloads in message; ignored",
 			       PAYLIMIT);
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			break;
 		}
-
 		zero(pd);	/* ??? is this needed? */
 
-		if (sd == NULL || np < ISAKMP_v2PAYLOAD_TYPE_BASE) {
-			/* This payload is unknown to us.
-			 * RFCs 4306 and 5996 2.5 say that if the payload
-			 * has the Critical Bit, we should be upset
-			 * but if it does not, we should just ignore it.
+		struct_desc *sd = v2_payload_desc(np);
+
+		if (sd == NULL) {
+			/*
+			 * This payload is unknown to us.  RFCs 4306
+			 * and 5996 2.5 say that if the payload has
+			 * the Critical Bit, we should be upset but if
+			 * it does not, we should just ignore it.
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+				break;
 			}
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
-				/* It was critical.
-				 * See RFC 5996 1.5 "Version Numbers and Forward Compatibility"
-				 * ??? we are supposed to send the offending np byte back in the
-				 * notify payload.
+				/*
+				 * It was critical.  See RFC 5996 1.5
+				 * "Version Numbers and Forward
+				 * Compatibility" ??? we are supposed
+				 * to send the offending np byte back
+				 * in the notify payload.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
 				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				summary.status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				break;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
@@ -476,18 +526,14 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			continue;
 		}
 
-		passert(np - ISAKMP_v2PAYLOAD_TYPE_BASE < LELEM_ROOF);
-
-		{
-			lset_t s = LELEM(np - ISAKMP_v2PAYLOAD_TYPE_BASE);
-
-			repeated |= seen & s;
-			seen |= s;
-		}
+		passert(PINDEX(np) < LELEM_ROOF);
+		summary.repeated |= summary.seen & LELEM(PINDEX(np));
+		summary.seen |= LELEM(PINDEX(np));
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			break;
 		}
 
 		DBG(DBG_PARSING,
@@ -507,7 +553,8 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		}
 
 		switch (np) {
-		case ISAKMP_NEXT_v2E:
+		case ISAKMP_NEXT_v2SK:
+		case ISAKMP_NEXT_v2SKF:
 			/* RFC 5996 2.14 "Encrypted Payload":
 			 *
 			 * Next Payload - The payload type of the
@@ -532,48 +579,187 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		pd++;
 	}
 
-	for (;;) {
-		lset_t req_payloads = enc ? svm->req_enc_payloads : svm->req_clear_payloads;
-		lset_t opt_payloads = enc ? svm->opt_enc_payloads : svm->opt_clear_payloads;
-		lset_t bad_repeat = repeated & ~repeatable_payloads;
-		lset_t missing = req_payloads & ~seen;
-		lset_t unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads;
+	md->digest_roof = pd;
+	return summary;
+}
 
-		if ((bad_repeat | missing | unexpected) == LEMPTY)
-			break;	/* all good */
+struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+						  const struct state_v2_microcode *svm, bool enc)
+{
+	lset_t req_payloads = enc ? svm->req_enc_payloads : svm->req_clear_payloads;
+	lset_t opt_payloads = enc ? svm->opt_enc_payloads : svm->opt_clear_payloads;
+	struct ikev2_payload_errors errors = {
+		.status = STF_OK,
+		.bad_repeat = summary.repeated & ~repeatable_payloads,
+		.missing = req_payloads & ~summary.seen,
+		.unexpected = summary.seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
+	};
 
-		if (svm->flags & SMF2_CONTINUE_MATCH) {
-			/* try the next microcode entry */
-			svm++;
-			DBG(DBG_CONTROL,
-				DBG_log("ikev2_process_payload trying next svm: %s",
-					svm->story));
-			continue;
-		}
+	if ((errors.bad_repeat | errors.missing | errors.unexpected) != LEMPTY) {
+		errors.status = STF_FAIL + v2N_INVALID_SYNTAX;
+	}
+	return errors;
+}
 
-		/* report problems */
-		if (missing) {
-			loglog(RC_LOG_SERIOUS,
-			       "missing payload(s) (%s). Message dropped.",
-			       bitnamesof(payload_name_ikev2_main, missing));
-		}
-		if (unexpected) {
-			loglog(RC_LOG_SERIOUS,
-			       "payload(s) (%s) unexpected. Message dropped.",
-			       bitnamesof(payload_name_ikev2_main, unexpected));
-		}
-		if (bad_repeat) {
-			loglog(RC_LOG_SERIOUS,
-				"payload(s) (%s) unexpectedly repeated. Message dropped.",
-				bitnamesof(payload_name_ikev2_main, bad_repeat));
-		}
-		return STF_FAIL + v2N_INVALID_SYNTAX;
+/* report problems - but less so when OE */
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *st)
+{
+	if (!st && !DBGP(DBG_OPPO))
+		return;
+
+	else if (st != NULL && st->st_connection != NULL &&
+ 		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
+			return;
 	}
 
-	md->svm = svm;	/* might have changed! */
+	if (errors.missing) {
+		loglog(RC_LOG_SERIOUS,
+		       "missing payload(s) (%s). Message dropped.",
+		       bitnamesof(payload_name_ikev2_main,
+				  errors.missing));
+	}
+	if (errors.unexpected) {
+		loglog(RC_LOG_SERIOUS,
+		       "payload(s) (%s) unexpected. Message dropped.",
+		       bitnamesof(payload_name_ikev2_main,
+				  errors.unexpected));
+	}
+	if (errors.bad_repeat) {
+		loglog(RC_LOG_SERIOUS,
+		       "payload(s) (%s) unexpectedly repeated. Message dropped.",
+		       bitnamesof(payload_name_ikev2_main,
+				  errors.bad_repeat));
+	}
+}
 
-	md->digest_roof = pd;
-	return STF_OK;
+static bool ikev2_check_fragment(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	struct ikev2_frag *i;
+
+	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
+		DBG(DBG_CONTROL, DBG_log(
+			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
+		return FALSE;
+	}
+
+	DBG(DBG_CONTROL, DBG_log(
+		"received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+		    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np));
+
+	/*
+	 * Sanity check:
+	 * fragment number must be 1 or greater (not 0)
+	 * fragment number must be no greater than the total number of fragments
+	 * total number of fragments must be no more than MAX_IKE_FRAGMENTS
+	 * first fragment's next payload must not be ISAKMP_NEXT_v2NONE.
+	 * later fragments' next payload must be ISAKMP_NEXT_v2NONE.
+	 */
+	if (!(skf->isaskf_number != 0 &&
+	      skf->isaskf_number <= skf->isaskf_total &&
+	      skf->isaskf_total <= MAX_IKE_FRAGMENTS &&
+	      (skf->isaskf_number == 1) != (skf->isaskf_np == ISAKMP_NEXT_v2NONE)))
+	{
+		DBG(DBG_CONTROL, DBG_log(
+			"ignoring invalid IKE encrypted fragment"));
+		return FALSE;
+	}
+
+	i = st->ikev2_frags;
+
+	if (i != NULL && skf->isaskf_total != i->total) {
+		/*
+		 * total number of fragments changed.
+		 * Either this fragment is wrong or all the
+		 * stored fragments are wrong or superseded.
+		 * The only reason the other end would have
+		 * started over with a different number of fragments
+		 * is because it decided to ratchet down the packet size
+		 * (and thus increase total).
+		 * OK: skf->isaskf_total > i->total
+		 * Bad: skf->isaskf_total < i->total
+		 */
+		if (skf->isaskf_total > i->total) {
+			DBG(DBG_CONTROL, DBG_log(
+				"discarding saved fragments because this fragment has larger total"));
+			do {
+				st->ikev2_frags = i->next;
+				freeanychunk(i->cipher);
+				pfree(i);
+				i = st->ikev2_frags;
+			} while (i != NULL);
+			return TRUE;
+		} else {
+			DBG(DBG_CONTROL, DBG_log(
+				"ignoring odd IKE encrypted fragment (total shrank)"));
+			return FALSE;
+		}
+	}
+
+	for (; i != NULL; i = i->next) {
+		if (i->index == skf->isaskf_number) {
+			DBG(DBG_CONTROL, DBG_log(
+				"ignoring duplicate IKE encrypted fragment"));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static bool ikev2_collect_fragment(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+	struct ikev2_frag *frag, **i;
+	int num_frags;
+
+	if (!ikev2_check_fragment(md))
+		return FALSE;
+
+	frag = alloc_thing(struct ikev2_frag, "ikev2_frag");
+	frag->np = skf->isaskf_np;
+	frag->index = skf->isaskf_number;
+	frag->total = skf->isaskf_total;
+	frag->iv = e_pbs->cur - md->packet_pbs.start;
+	clonetochunk(frag->cipher, md->packet_pbs.start,
+		     e_pbs->roof - md->packet_pbs.start,
+		     "IKEv2 encrypted fragment");
+
+	/*
+	 * Loop for two purposes:
+	 * - Add frag into ordered linked list
+	 * - set num_frags to lenght ot the list
+	 */
+	num_frags = 0;
+	for (i = &st->ikev2_frags; ; i = &(*i)->next) {
+		if (frag != NULL) {
+			/* Still looking for a place to insert frag */
+			if (*i == NULL || (*i)->index > frag->index) {
+				frag->next = *i;
+				*i = frag;
+				frag = NULL;
+			}
+		}
+
+		if (*i == NULL)
+			break;
+
+		num_frags++;
+	}
+
+	if (num_frags < skf->isaskf_total)
+		return FALSE;
+
+	/* if receiving fragments, respond with fragments too */
+	st->st_seen_fragments = TRUE;
+
+	DBG(DBG_CONTROL,
+	    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+
+	return TRUE;
 }
 
 /*
@@ -590,10 +776,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct state *st = NULL;
-	enum state_kind from_state = STATE_UNDEFINED; /* state we started in */
 	const struct state_v2_microcode *svm;
-	enum isakmp_xchg_types ix;
 
 	/* Look for an state which matches the various things we know:
 	 *
@@ -602,33 +785,99 @@ void process_v2_packet(struct msg_digest **mdp)
 	 */
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
+	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+	const bool msg_r = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
+	const bool ike_i = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
-		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
-	else
-		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
+	DBG(DBG_CONTROL, {
+		if (msg_r)
+			DBG_log("I am receiving an IKE Response");
+		else
+			DBG_log("I am receiving an IKE Request");
+	});
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
+	if (ike_i) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
-		md->role = O_RESPONDER;
+		md->original_role = ORIGINAL_RESPONDER;
+	} else {
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
+		md->original_role = ORIGINAL_INITIATOR;
+	}
 
-		st = find_state_ikev2_parent(md->hdr.isa_icookie,
-					     md->hdr.isa_rcookie);
-
-		if (st == NULL) {
-			/* first time for this cookie, it's a new state! */
-			st = find_state_ikev2_parent_init(md->hdr.isa_icookie);
+	/*
+	 * Find the corresponding state
+	 */
+	struct state *st;
+	if (ix == ISAKMP_v2_SA_INIT) {
+		/*
+		 * For INIT messages, need to lookup using the ICOOKIE
+		 * and the expected state.  The RCOOKIE probably won't
+		 * match.
+		 *
+		 * An INIT-request has RCOOKIE=0.  In the case of a
+		 * re-transmit, where the original responder is in
+		 * state STATE_PARENT_R1 and has set its RCOOKIE to
+		 * something non-zero, that won't match.
+		 *
+		 * An INIT-response as RCOOKIE!=0 (lets ignore
+		 * INVALID_KE).  Since the original responder, which
+		 * is in state STATE_PARENT_i1, still has RCOOKIE=0
+		 * that won't match.
+		 */
+		enum state_kind expected_state = (ike_i ? STATE_PARENT_R1 : STATE_PARENT_I1);
+		st = find_state_ikev2_parent_init(md->hdr.isa_icookie,
+						  expected_state);
+		if (st != NULL && md->original_role == ORIGINAL_INITIATOR) {
+			/*
+			 * Responder provided a cookie, record it.
+			 *
+			 * XXX: This is being done far too early.  The
+			 * packet should first get some validation.
+			 * It also might be an INVALID_KE in which
+			 * case the cookie shouldn't be updated at
+			 * all.
+			 */
+			rehash_state(st, md->hdr.isa_rcookie);
 		}
 
+
+		/*
+		 * We need to check if this IKE_INIT is a retransmit
+		 */
+		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
+			if (st->st_msgid_lastrecv == md->msgid_received) {
+				/* this is a recent retransmit. */
+				set_cur_state(st);
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
+				if (st->st_suspended_md != NULL) {
+					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
+				} else {
+					send_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
+				}
+				return;
+			}
+			/* update lastrecv later on */
+		}
+
+	} else if (!msg_r) {
+		/*
+		 * A request; send it to the parent.
+		 */
+		st = find_state_ikev2_parent(md->hdr.isa_icookie,
+					     md->hdr.isa_rcookie);
 		if (st != NULL) {
 			/*
 			 * XXX: This solution is broken. If two exchanges (after the
 			 * initial exchange) are interleaved, we ignore the first
 			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
+			 *
+			 * Beware of unsigned arrithmetic.
 			 */
 			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 			    st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
+				set_cur_state(st);
 				libreswan_log(
 					"received too old retransmit: %u < %u",
 					md->msgid_received,
@@ -637,119 +886,181 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
-				send_ike_msg(st, "ikev2-responder-retransmit");
+				set_cur_state(st);
+				if (st->st_suspended_md != NULL) {
+					libreswan_log("retransmission ignored: we're still working on the previous one");
+				} else {
+					send_ike_msg(st, "ikev2-responder-retransmit");
+				}
 				return;
 			}
 			/* update lastrecv later on */
 		}
 	} else {
-		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
-		md->role = O_INITIATOR;
-
-		if (md->msgid_received == v2_INITIAL_MSGID) {
+		/*
+		 * A reply; find the child that made the request and
+		 * send it to that.
+		 */
+		st = find_state_ikev2_child(md->hdr.isa_icookie,
+					    md->hdr.isa_rcookie,
+					    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
+		if (st == NULL) {
+			/*
+			 * Didn't find a child waiting on that message
+			 * ID so presumably it isn't valid.
+			 */
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
-			if (st == NULL) {
-				st = find_state_ikev2_parent(
-					md->hdr.isa_icookie, zero_cookie);
-				if (st != NULL) {
-					/* responder inserted its cookie, record it */
-					unhash_state(st);
-					memcpy(st->st_rcookie,
-					       md->hdr.isa_rcookie,
-					       COOKIE_SIZE);
-					insert_state(st);
+			if (st != NULL) {
+				/*
+				 * Check if it's an old packet being
+				 * returned, and if so, drop it.
+				 * NOTE: in_struct() changed the byte
+				 * order.  *
+				 *
+				 * Beware of unsigned arrithmetic.
+				 */
+
+				if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
+					/* Response to our request */
+					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+					    st->st_msgid_lastack > md->msgid_received)
+					{
+						DBG(DBG_CONTROL, DBG_log(
+							"dropping retransmitted response with msgid %u from peer - we already processed %u.",
+						    md->msgid_received, st->st_msgid_lastack));
+						return;
+					}
+					if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
+					    md->msgid_received >= st->st_msgid_nextuse) {
+						/*
+						 * A reply for an unknown request.  Huh!
+						 */
+						DBG(DBG_CONTROL, DBG_log(
+							"dropping unasked response with msgid %u from peer (our last used msgid is %u)",
+						      md->msgid_received,
+						      st->st_msgid_nextuse - 1));
+						return;
+					}
+
+				} else {
+					/* We always need to respond to peer's request - else retransmits */
 				}
 			}
-		} else {
-			st = find_state_ikev2_child(md->hdr.isa_icookie,
-						    md->hdr.isa_rcookie,
-						    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
-
-			if (st != NULL) {
-				/* found this child state, so we'll use it */
-				/* note we update the st->st_msgid_lastack *AFTER* decryption */
-			} else {
-				/*
-				 * didn't find something with the msgid, so maybe it's
-				 * not valid?
-				 */
-				st = find_state_ikev2_parent(
-					md->hdr.isa_icookie,
-					md->hdr.isa_rcookie);
-			}
-		}
-
-		if (st != NULL) {
-			/*
-			 * then there is something wrong with the msgid, so
-			 * maybe they retransmitted for some reason.
-			 * Check if it's an old packet being returned, and
-			 * if so, drop it.
-			 * NOTE: in_struct() changed the byte order.
-			 */
-			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-			    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
-			    md->msgid_received <= st->st_msgid_lastack) {
-				/* it's fine, it's just a retransmit */
-				DBG(DBG_CONTROL,
-				    DBG_log("responding peer retransmitted msgid %u",
-					    md->msgid_received));
-				return;
-			}
-#if 0
-			libreswan_log("last msgid ack is %u, received: %u",
-				      st->st_msgid_lastack,
-				      md->msgid_received);
-			return;
-
-#endif
 		}
 	}
 
-	ix = md->hdr.isa_xchg;
+	/*
+	 * Is the original role correct?
+	 */
 	if (st != NULL) {
-		from_state = st->st_state;
-		DBG(DBG_CONTROL,
-		    DBG_log("state found and its state is %s",
-			    enum_show(&state_names, from_state)));
+		if (st->st_original_role != md->original_role) {
+			DBG(DBG_CONTROL,
+			    DBG_log("state and md roles conflict; dropping packet"));
+			return;
+		}
 	}
+
+	/*
+	 * There is no "struct state" object if-and-only-if we're in
+	 * the start-state (STATE_UNDEFINED).  The start-state
+	 * transition will, likely, create the object.
+	 *
+	 * But what about when pluto, as the initial responder, is
+	 * fending of an attack attack by sending back and requiring
+	 * cookies - won't the cookie need a "struct state"?
+	 * According to the RFC: no.  Instead a small table of
+	 * constants can be used to generate cookies on the fly.
+	 */
+	const enum state_kind from_state =
+		st == NULL ? STATE_UNDEFINED : st->st_state;
+	DBG(DBG_CONTROL,
+	    if (st != NULL) {
+		    DBG_log("found state #%lu", st->st_serialno);
+	    }
+	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+	passert((st == NULL) == (from_state == STATE_UNDEFINED));
+
+	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
+	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		if (svm->flags & SMF2_STATENEEDED) {
-			if (st == NULL)
-				continue;
-		} else {
-			if (st != NULL)
-				continue;
-		}
 		if (svm->state != from_state)
 			continue;
-
 		if (svm->recv_type != ix)
 			continue;
-
-		/* ??? not sure that this is necessary, but it ought to be correct */
-		/* This check cannot apply for an informational exchange since one
-		 * can be initiated by the initial responder.
+		/*
+		 * Does the original initiator flag match?
 		 */
-		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0)))
+		if ((svm->flags & SMF2_IKE_I_SET) && !ike_i)
 			continue;
+		if ((svm->flags & SMF2_IKE_I_CLEAR) && ike_i)
+			continue;
+		/*
+		 * Does the message reply flag match?
+		 */
+		if ((svm->flags & SMF2_MSG_R_SET) && !msg_r)
+			continue;
+		if ((svm->flags & SMF2_MSG_R_CLEAR) && msg_r)
+			continue;
+		/*
+		 * Since there's a state that, at least, looks like it
+		 * will accept the packet, unpack the clear payload
+		 * and continue matching.
+		 */
+		if (clear_payload_summary.status != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
+			clear_payload_summary = ikev2_decode_payloads(md, &md->message_pbs,
+								      md->hdr.isa_np);
+			if (clear_payload_summary.status != STF_OK) {
+				complete_v2_state_transition(mdp, clear_payload_summary.status);
+				return;
+			}
 
+			if (clear_payload_summary.seen &
+			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
+				clear_payload_summary.seen ^=
+					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
+					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
+			if (clear_payload_summary.repeated &
+			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
+				clear_payload_summary.repeated ^=
+					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
+					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
+		}
+		struct ikev2_payload_errors clear_payload_errors
+			= ikev2_verify_payloads(clear_payload_summary, svm, FALSE);
+		if (clear_payload_errors.status != STF_OK) {
+			/* Save this failure for later logging. */
+			clear_payload_status = clear_payload_errors;
+			continue;
+		}
 		/* must be the right state machine entry */
 		break;
 	}
 
 	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
+	if (st != NULL)
+		set_cur_state(st);
+	md->from_state = from_state;
+	md->st = st;
+	md->svm = svm;
 
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
-
 		/* no useful state microcode entry */
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
-			/* We are responder for this message exchange */
+		if (clear_payload_status.status != STF_OK) {
+			ikev2_log_payload_errors(clear_payload_status, st);
+			complete_v2_state_transition(mdp, clear_payload_status.status);
+		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+			/*
+			 * We are the responder to this message so
+			 * return someting.
+			 *
+			 * XXX: Returning INVALID_MESSAGE_ID seems
+			 * pretty bogus.
+			 */
 			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
@@ -758,24 +1069,8 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (state_busy(st))
 		return;
 
-	if (st != NULL)
-		set_cur_state(st);
-	md->svm = svm;
-	md->from_state = from_state;
-	md->st = st;
-
-	{
-		stf_status stf = ikev2_process_payloads(md, &md->message_pbs,
-			md->hdr.isa_np, FALSE);
-
-		svm = md->svm;	/* ikev2_process_payloads updates */
-
-		if (stf != STF_OK) {
-			complete_v2_state_transition(mdp, stf);
-			/* our caller with release_any_md(mdp) */
-			return;
-		}
-	}
+	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL && !ikev2_collect_fragment(md))
+		return;
 
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)
@@ -794,15 +1089,18 @@ void process_v2_packet(struct msg_digest **mdp)
 	/* our caller with release_any_md(mdp) */
 }
 
-bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
+bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
-	unsigned int hisID = role == O_INITIATOR ?
-			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
+	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
+
+	unsigned int hisID = initiator ? ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
+	struct state *const st = md->st;
 	struct payload_digest *const id_him = md->chain[hisID];
 	struct connection *c = md->st->st_connection;
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
 	struct id peer;
+	char idbuf[IDTOA_BUF];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -818,21 +1116,129 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 		return FALSE;
 	}
 
-	if (peer.kind == ID_DER_ASN1_DN && peer.name.ptr != NULL &&
-			c->spd.that.id.kind == ID_FROMCERT) {
-		DBG(DBG_CONTROL, DBG_log("copying ID_DER_ASN1_DN name type for the peer ID"));
-		c->spd.that.id.kind = peer.kind;
-		clonereplacechunk(c->spd.that.id.name, peer.name.ptr,
-						       peer.name.len,
-						       "peer ID");
+	if (!ikev2_decode_cert(md))
+		return FALSE;
+
+	/* check for certificate requests */
+	ikev2_decode_cr(md, &c->requested_ca);
+
+	/*
+	 * Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+	if (initiator) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+			id_kind(&st->st_connection->spd.that.id) !=
+			ID_FROMCERT) {
+
+			char expect[IDTOA_BUF],
+			     found[IDTOA_BUF];
+
+			idtoa(&st->st_connection->spd.that.id, expect,
+				sizeof(expect));
+			idtoa(&peer, found, sizeof(found));
+			loglog(RC_LOG_SERIOUS,
+				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
+				expect, found);
+			return FALSE;
+	} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+		if (id_kind(&peer) != ID_DER_ASN1_DN) {
+			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+			return FALSE;
+		}
+		duplicate_id(&st->st_connection->spd.that.id, &peer);
 	}
 
-	{
-		char buf[IDTOA_BUF];
+	} else {
+		struct connection *r = NULL;
+		bool fromcert = FALSE;
+		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
+		lset_t auth_policy = LEMPTY;
 
-		idtoa(&peer, buf, sizeof(buf));
+		switch(auth) {
+		case IKEv2_AUTH_RSA:
+			auth_policy = POLICY_RSASIG;
+			break;
+		case IKEv2_AUTH_PSK:
+			auth_policy = POLICY_PSK;
+			break;
+		case IKEv2_AUTH_NULL:
+			/* we cannot switch, parts of SKEYSEED are used as PSK */
+			break;
+		case IKEv2_AUTH_NONE:
+		default:
+			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
+		}
+
+		if (auth_policy != LEMPTY) {
+			/* should really return c if no better match found */
+			r = refine_host_connection(md->st, &peer, FALSE /*initiator*/, auth_policy, &fromcert);
+			if (r == NULL) {
+				char buf[IDTOA_BUF];
+
+				idtoa(&peer, buf, sizeof(buf));
+				DBG(DBG_CONTROL, DBG_log(
+					"no refined connection for peer '%s'", buf));
+				r = c; /* ??? is this safe? */
+			}
+
+			if (r != c) {
+				char b1[CONN_INST_BUF];
+				char b2[CONN_INST_BUF];
+
+				/* apparently, r is an improvement on c -- replace */
+
+				libreswan_log("switched from \"%s\"%s to \"%s\"%s",
+					c->name,
+					fmt_conn_instance(c, b1),
+					r->name,
+					fmt_conn_instance(r, b2));
+				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+					/* instantiate it, filling in peer's ID */
+					r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL, &peer);
+				}
+
+				md->st->st_connection = r; /* kill reference to c */
+
+				/* this ensures we don't move cur_connection from NULL to
+				* something, requiring a reset_cur_connection()
+				*/
+				if (cur_connection == c)
+					set_cur_connection(r);
+
+				connection_discard(c);
+			} else if (c->spd.that.has_id_wildcards) {
+				free_id_content(&c->spd.that.id);
+				c->spd.that.id = peer;
+				c->spd.that.has_id_wildcards = FALSE;
+				unshare_id_content(&c->spd.that.id);
+			} else if (fromcert) {
+				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+				duplicate_id(&r->spd.that.id, &peer);
+			}
+		}
+	}
+
+	DBG(DBG_CONTROL, {
+
+		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
+		DBG_log("offered CA: '%s'", idbuf);
+	});
+
+	idtoa(&peer, idbuf, sizeof(idbuf));
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf);
+	} else {
+		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf));
 	}
 
 	return TRUE;
@@ -895,6 +1301,23 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
+void send_v2_notification_invalid_ke_from_state(struct state *st)
+{
+	passert(st->st_oakley.group != NULL);
+	DBG(DBG_CONTROL,
+	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",
+		    strip_prefix(enum_show(&oakley_group_names,
+					   st->st_oakley.group->group),
+				 "OAKLEY_GROUP_"),
+		    st->st_oakley.group->group));
+	const u_int16_t gr = htons(st->st_oakley.group->group);
+	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
+
+	/* RFC 7296 Section-2.6.1 recommends clearing rcookie */
+	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
+			     st->st_icookie, NULL /* rcookie */, &nd);
+}
+
 void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t type,
 				     chunk_t *data)
@@ -921,8 +1344,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 */
 	passert(md != NULL);
 
-	zero(&st);
-	zero(&cnx);
+	zero(&st);	/* ??? might not NULL pointer fields */
+	zero(&cnx);	/* ??? might not NULL pointer fields */
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;
@@ -938,8 +1361,14 @@ void send_v2_notification_from_md(struct msg_digest *md,
 void ikev2_update_msgid_counters(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct state *ikesa = IS_CHILD_SA(st) ?
-		state_with_serialno(st->st_clonedfrom) : st;
+	struct state *ikesa;
+
+	if (st == NULL) {
+		/* current processer deleted the state, nothing to update */
+		return;
+	}
+
+	ikesa = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
 		/* we were initiator for this message exchange */
@@ -954,13 +1383,14 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 }
 
 time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		enum phase1_role role)
+		enum original_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st)) {
+	if (IS_PARENT_SA(st)) /* workaround for child appearing as parent */
+	{
 		/* Note: we will defer to the "negotiated" (dictated)
 		 * lifetime if we are POLICY_DONT_REKEY.
 		 * This allows the other side to dictate
@@ -968,11 +1398,20 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		 * but it prevents us from having to initiate
 		 * rekeying.  The negative consequences seem
 		 * minor.
+		 *
+		 * We cleanup halfopen IKE SAs fast, could be spoofed packets
 		 */
-		delay = deltasecs(c->sa_ike_life_seconds);
+		if (IS_IKE_SA_ESTABLISHED(st)) {
+			delay = deltasecs(c->sa_ike_life_seconds);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%lu", delay));
+		} else {
+			delay = PLUTO_HALFOPEN_SA_LIFE;
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%lu", delay));
+		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
 		delay = deltasecs(c->sa_ipsec_life_seconds);
+		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lu", delay));
 	}
 
 	/* By default, we plan to rekey.
@@ -1001,7 +1440,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if (role == O_INITIATOR) {
+		if (role == ORIGINAL_INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -1016,9 +1455,12 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 
-		if (c->policy & POLICY_DONT_REKEY) {
-                        *pkind = kind = EVENT_SA_EXPIRE;
-                }
+		if ((c->policy & POLICY_OPPORTUNISTIC) &&
+				(IS_CHILD_SA_ESTABLISHED(st))) {
+			*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED;
+		} else if (c->policy & POLICY_DONT_REKEY) {
+			*pkind = kind = EVENT_SA_EXPIRE;
+		}
 	}
 	return delay;
 }
@@ -1028,12 +1470,13 @@ static void success_v2_state_transition(struct msg_digest *md)
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	enum rc_type w;
 
 	if (from_state != svm->next_state) {
-		libreswan_log("transition from state %s to state %s",
+		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, svm->next_state));
+			      enum_name(&state_names, svm->next_state)));
 	}
 
 	change_state(st, svm->next_state);
@@ -1069,54 +1512,49 @@ static void success_v2_state_transition(struct msg_digest *md)
 						 sizeof(sadetails));
 			/* log our success */
 			w = RC_SUCCESS;
-		} else if (IS_PARENT_SA_ESTABLISHED(st->st_state)) {
+		} else if (st->st_state == STATE_PARENT_I2 || st->st_state == STATE_PARENT_R1) {
 			fmt_isakmp_sa_established(st, sadetails,
 						  sizeof(sadetails));
 		}
 
-		/* tell whack and logs our progress */
-		loglog(w,
-		       "%s: %s%s",
-		       enum_name(&state_names, st->st_state),
-		       enum_name(&state_stories, st->st_state),
-		       sadetails);
+		/* tell whack and logs our progress - unless OE, then be quiet*/
+		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
+			loglog(w, "%s: %s%s",
+				enum_name(&state_names, st->st_state),
+				enum_name(&state_stories, st->st_state),
+				sadetails);
 	}
 
 	/* if requested, send the new reply packet */
-	if (svm->flags & SMF2_REPLY) {
-		/* free previously transmitted packet */
-		freeanychunk(st->st_tpacket);
-
-		if (nat_traversal_enabled && from_state != STATE_PARENT_I1) {
+	if (svm->flags & SMF2_SEND) {
+		/*
+		 * Adjust NAT but not for initial state
+		 *
+		 * STATE_IKEv2_BASE is used when an md is invented
+		 * for an initial outbound message that is not a response.
+		 * ??? why should STATE_PARENT_I1 be excluded?
+		 */
+		if (nat_traversal_enabled &&
+		    from_state != STATE_IKEv2_BASE &&
+		    from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
 
 		DBG(DBG_CONTROL, {
 			    ipstr_buf b;
-			    DBG_log("sending reply packet to %s:%u (from port %u)",
+			    DBG_log("sending V2 reply packet to %s:%u (from port %u)",
 				    ipstr(&st->st_remoteaddr, &b),
 				    st->st_remoteport,
 				    st->st_interface->port);
 		    });
 
-		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
-
-		clonetochunk(st->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream), "reply packet");
-
-		/* actually send the packet
-		 * Note: this is a great place to implement "impairments"
-		 * for testing purposes.  Suppress or duplicate the
-		 * send_ike_msg call depending on st->st_state.
-		 */
-
 		send_ike_msg(st, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {
-		DBG_log("releasing whack for #%lu (sock=%d)",
-			st->st_serialno, st->st_whack_sock);
+		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock=%d)",
+			st->st_serialno, st->st_whack_sock));
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */
@@ -1124,8 +1562,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			/* with failed child sa, we end up here with an orphan?? */
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
 
-			DBG_log("releasing whack and unpending for parent #%lu",
-				pst->st_serialno);
+			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
+				pst->st_serialno));
 			unpend(pst);
 			release_whack(pst);
 		}
@@ -1138,27 +1576,53 @@ static void success_v2_state_transition(struct msg_digest *md)
 		struct connection *c = st->st_connection;
 
 		switch (kind) {
-		case EVENT_SA_REPLACE: /* SA replacement event */
-			delay = ikev2_replace_delay(st, &kind,
-					(svm->flags & SMF2_INITIATOR) ?
-					O_INITIATOR : O_RESPONDER);
+		case EVENT_v2_RETRANSMIT:
+			delete_event(st);
+			if (DBGP(IMPAIR_RETRANSMITS)) {
+				libreswan_log("supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				if (st->st_rel_whack_event != NULL) {
+					pfreeany(st->st_rel_whack_event);
+					st->st_rel_whack_event = NULL;
+				}
+				event_schedule(EVENT_v2_RELEASE_WHACK,
+						EVENT_RELEASE_WHACK_DELAY, st);
+				kind = EVENT_SA_REPLACE;
+				delay = ikev2_replace_delay(st, &kind, md->original_role);
+				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
+				event_schedule(kind, delay, st);
+
+			}  else {
+				DBG(DBG_LIFECYCLE,DBG_log(
+					"success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
+					c->r_interval));
+				event_schedule_ms(EVENT_v2_RETRANSMIT,
+						c->r_interval, st);
+			}
+			break;
+		case EVENT_SA_REPLACE: /* IKE or IPsec SA replacement event */
+			delay = ikev2_replace_delay(st, &kind, md->original_role);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
+				IS_IKE_SA(st) ? "parent" : "child", delay));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);
-			event_schedule(kind,
-				MAXIMUM_RETRANSMISSIONS_INITIAL *
-					EVENT_RETRANSMIT_DELAY_0,
-				st);
+			event_schedule(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
 
 		case EVENT_NULL:
-			/* XXX: Is there really no case where we want to set no timer? */
-			/* dos_cookie is one 'valid' event, but it is used more? */
+			/*
+			 * Is there really no case where we want to set no  timer?
+			 * more likely an accident?
+			 */
 			DBG_log("V2 microcode entry (%s) has unspecified timeout_event",
-				svm->story);
+					svm->story);
+			break;
+
+		case EVENT_RETAIN:
+			/* the previous event is retained */
 			break;
 
 		default:
@@ -1184,10 +1648,34 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 /* complete job started by the state-specific state transition function
  *
+ * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
+ * So, for example, it does not make sense for state transitions that are
+ * not provoked by a packet.
+ *
  * This routine will not release_any_md(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
+ *
+ * md is used to:
+ * - find st
+ * - success_v2_state_transition(md);
+ *   - for svm:
+ *     - svm->next_state,
+ *     - svm->flags & SMF2_SEND,
+ *     - svm->timeout_event,
+ *     -svm->flags, story
+ *   - find from_state (st might be gone)
+ *   - ikev2_update_msgid_counters(md);
+ *   - nat_traversal_change_port_lookup(md, st)
+ * - !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) to gate Notify payloads/exchanges [WRONG]
+ * - find note for STF_INTERNAL_ERROR
+ * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ *
+ * We don't use these but complete_v1_state_transition does:
+ * - record md->event_already_set
+ * - remember_received_packet(st, md);
+ * - fragvid, dpd, nortel
  */
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
@@ -1246,11 +1734,12 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 */
 
 	DBG(DBG_CONTROL,
-	    DBG_log("complete v2 state transition from %s with %s",
-		from_state_name,
-		result > STF_FAIL ?
-		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
-		    enum_name(&stfstatus_name, result)));
+	    DBG_log("#%lu complete v2 state transition from %s with %s",
+		    (st == NULL ? SOS_NOBODY : st->st_serialno),
+		    from_state_name,
+		    (result > STF_FAIL
+		     ? enum_name(&ikev2_notify_names, result - STF_FAIL)
+		     : enum_name(&stfstatus_name, result))));
 
 	switch (result) {
 	case STF_OK:
@@ -1316,18 +1805,31 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG) {
-			/*
-			 * Only send a notify is this packet was a request,
-			 * not if it was a reply.
-			 * ??? is this a reasonable choice?
-			 */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R))
-				/*
-				 * ??? if this can be sent as part of an
-				 * existing exchange, rather than a new
-				 * Informational Exchange, should it not be?
-				 */
-				SEND_V2_NOTIFICATION(md->note);
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+				/* We are the exchange responder */
+				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
+				/* Check if this is an IKE_INIT reply w INVALID_KE */
+				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
+				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
+					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
+					send_v2_notification_invalid_ke_from_state(st);
+				} else {
+					SEND_V2_NOTIFICATION(md->note);
+				}
+
+				if (st != NULL) {
+					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
+						delete_state(st);
+					} else {
+						delete_event(st);
+						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
+					}
+				}
+			} else {
+				/* We are the exchange initiator */
+				pexpect(st !=  NULL && st->st_event != NULL &&
+						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
+			}
 		}
 
 		DBG(DBG_CONTROL,
@@ -1361,4 +1863,59 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return v2N_NOTHING_WRONG;
+}
+
+
+bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
+{
+
+	if (lookup_group(received) == NULL) {
+		DBG(DBG_CONTROL, DBG_log(
+			"Received DH group %d not supported", received));
+		return FALSE;
+	}
+
+	if (ai_list != NULL) {
+		struct ike_info *ike_info;
+		int cnt;
+
+		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
+			if (received == ike_info->ike_modp)
+				return TRUE;
+		}
+		DBG(DBG_CONTROL, DBG_log(
+			"received DH group %d not in our proposal set", received));
+		return FALSE;
+	} else {
+		const enum ike_trans_type_dh *group;
+
+		DBG(DBG_CONTROL,DBG_log("check our default proposal for received DH group"));
+		for (group = IKEv2_oakley_sadb_groups;
+		     *group != OAKLEY_GROUP_invalid; group++) {
+			if (received == (*group))
+				return TRUE;
+		}
+		DBG(DBG_CONTROL,DBG_log("received DH group not in our default proposal"));
+		return FALSE;
+	}
+}
+
+oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
+{
+
+	if (ai_list != NULL) {
+		struct ike_info *ike_info;
+		int cnt;
+
+		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
+			if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
+				/* confirm we support it */
+				if (lookup_group(ike_info->ike_modp) != NULL)
+					return ike_info->ike_modp;
+			}
+		}
+	}
+
+	/* no valid groups, again pick first from default list */
+	return IKEv2_oakley_sadb_default_group;
 }

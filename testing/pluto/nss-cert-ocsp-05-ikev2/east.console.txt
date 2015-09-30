@@ -1,0 +1,63 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -d sql:/etc/ipsec.d -D -n west
+east #
+ ipsec setup start
+[ 00.00] registered KLIPS /proc/sys/net
+[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
+[ 00.00] 
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add nss-cert-ocsp
+002 added connection description "nss-cert-ocsp"
+east #
+ ipsec auto --status |grep nss-cert-ocsp
+000 "nss-cert-ocsp": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "nss-cert-ocsp":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east
+000 "nss-cert-ocsp":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "nss-cert-ocsp":   labeled_ipsec:no;
+000 "nss-cert-ocsp":   policy_label:unset;
+000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+192.0.2.254/32     -> 192.0.1.254/32     => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.254/32->192.0.2.254/32 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.1.254 dev ipsec0  scope link  src 192.0.2.254 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

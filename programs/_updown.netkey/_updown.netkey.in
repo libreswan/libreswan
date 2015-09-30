@@ -189,6 +189,7 @@ done
 # utility functions for route manipulation
 # Meddling with this stuff should not be necessary and requires great care.
 uproute() {
+    doproxyarp add
     doroute replace
     ip route flush cache
 }
@@ -197,6 +198,7 @@ uproute() {
 downroute() {
     doroute del
     ip route flush cache
+    doproxyarp delete
 }
 
 downrule() {
@@ -386,6 +388,34 @@ delsource() {
     return ${st}
 }
 
+doproxyarp() {
+    # Check if client has a single ip only client net
+    if [ ${PLUTO_PEER_CLIENT#*/} = 32 -o ${PLUTO_PEER_CLIENT#*/} = 128 ]; then
+	# Skip OE special connections
+	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
+	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
+	    return 0
+	fi
+	# check if client is routeable
+	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+	    egrep -q -s -v " via |^local"; then
+	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+		awk '{print $3}')
+	    if [ -r /sys/class/net/${iface}/address ]; then
+		macaddr=$(cat /sys/class/net/${iface}/address)
+	    fi
+	    # add/remove arp entry for the client on ethernet devices only
+	    if [ -n "${macaddr}" ]; then
+		if [ "$1" = add ]; then
+		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
+			lladdr ${macaddr} nud permanent
+		else
+		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
+		fi
+	    fi
+	fi
+    fi
+}
 
 doroute() {
     st=0
@@ -453,6 +483,26 @@ doroute() {
     return ${st}
 }
 
+# TODO: We need to specify CIDR mask but our _MASK variables are in old school format
+# TODO: Exclude udp 4500 traffic
+addnflog() {
+    if [ -n "${NFLOG}" ]; then
+	iptables -I OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+	iptables -I INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+    fi
+}
+
+delnflog() {
+    if [ -n "${NFLOG}" ]; then
+	iptables -D OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+	iptables -D INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+    fi
+}
+
 
 # the big choice
 case "${PLUTO_VERB}" in
@@ -463,6 +513,7 @@ case "${PLUTO_VERB}" in
     route-host|route-client)
 	# connection to me or my client subnet being routed
 	uproute
+	addnflog
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -475,6 +526,7 @@ case "${PLUTO_VERB}" in
     down-host)
 	# connection to me going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	;;
     up-client)
@@ -485,6 +537,7 @@ case "${PLUTO_VERB}" in
     down-client)
 	# connection to my client subnet going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
 	;;

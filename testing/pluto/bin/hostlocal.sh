@@ -12,7 +12,7 @@ mkdir -p /tmp/$TESTNAME/ipsec.d/certs
 mkdir -p /tmp/$TESTNAME/ipsec.d/private
 cp /testing/pluto/$TESTNAME/$HOST.conf /tmp/$TESTNAME/ipsec.conf
 cp /etc/ipsec.secrets                    /tmp/$TESTNAME
-if [ -f /testing/pluto/$TESTNAME/$HOST.secrets ] 
+if [ -f /testing/pluto/$TESTNAME/$HOST.secrets ]
 then
     cat /testing/pluto/$TESTNAME/$HOST.secrets >>/tmp/$TESTNAME/ipsec.secrets
 fi

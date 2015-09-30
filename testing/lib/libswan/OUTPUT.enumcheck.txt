@@ -55,7 +55,7 @@ OK: [   42] -> ISAKMP_NEXT_v2D -> 42
 OK: [   43] -> ISAKMP_NEXT_v2V -> 43
 OK: [   44] -> ISAKMP_NEXT_v2TSi -> 44
 OK: [   45] -> ISAKMP_NEXT_v2TSr -> 45
-OK: [   46] -> ISAKMP_NEXT_v2E -> 46
+OK: [   46] -> ISAKMP_NEXT_v2SK -> 46
 OK: [   47] -> ISAKMP_NEXT_v2CP -> 47
 OK: [   48] -> ISAKMP_NEXT_v2EAP -> 48
 OK: [  132] -> ISAKMP_NEXT_v2IKE_FRAGMENTATION -> 132
@@ -96,7 +96,7 @@ OK: [   42] -> ISAKMP_NEXT_v2D -> 42
 OK: [   43] -> ISAKMP_NEXT_v2V -> 43
 OK: [   44] -> ISAKMP_NEXT_v2TSi -> 44
 OK: [   45] -> ISAKMP_NEXT_v2TSr -> 45
-OK: [   46] -> ISAKMP_NEXT_v2E -> 46
+OK: [   46] -> ISAKMP_NEXT_v2SK -> 46
 OK: [   47] -> ISAKMP_NEXT_v2CP -> 47
 OK: [   48] -> ISAKMP_NEXT_v2EAP -> 48
 OK: [  130] -> ISAKMP_NEXT_NATD_DRAFTS -> 130

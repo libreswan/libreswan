@@ -87,7 +87,7 @@ do
 
 	    $DOWHACK listen
 
-	    if $SETUPONLY 
+	    if $SETUPONLY
 	    then
 		echo "Now do $DOWHACK x$t" >&2
 		exit 2
@@ -135,7 +135,7 @@ do
 
 	) >$LD/wi-log
 
-	if $SETUPONLY 
+	if $SETUPONLY
         then
 		exit 2
         fi

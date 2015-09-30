@@ -61,7 +61,7 @@ generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
-generating ID_PROT request 0 [ ID HASH ]
+generating ID_PROT request 0 [ ID HASH N(INITIAL_CONTACT) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ ID HASH ]
@@ -134,7 +134,7 @@ west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev1[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, AH SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, reqid 1, AH SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev1{1}:   192.0.1.0/24 === 192.0.2.0/24 
 west #
 west #

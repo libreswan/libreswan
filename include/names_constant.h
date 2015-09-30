@@ -13,7 +13,6 @@ extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;
-extern const char *const state_story[];
 extern enum_names state_stories;
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
@@ -83,7 +82,18 @@ extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
 
 #ifdef HAVE_LABELED_IPSEC
-extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! */
+/*
+ * Attribute Type "constant" for Security Context
+ *
+ * ??? NOT A CONSTANT!
+ * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
+ * We then assigned 32001 which is in the private range RFC 2407.
+ * Unfortunately, we feel we have to support 10 as an option for backward
+ * compatibility.
+ * This variable specifies (globally!!) which we support: 10 or 32001.
+ * ??? surely that makes migration to 32001 all or nothing.
+ */
+extern u_int16_t secctx_attr_type;
 #endif
 
 extern const char *const natt_bit_names[];

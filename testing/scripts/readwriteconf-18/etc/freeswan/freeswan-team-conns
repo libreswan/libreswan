@@ -310,7 +310,7 @@ conn mrcharlie-host
 
 # marajade (Palpatine's hand, later turned to the light by Luke. Eventually
 #		marries him.)
-# MCR's notebook. 
+# MCR's notebook.
 # Runs NetBSD, KAME+Racoon. Key extracted with fswcert.
 #
 conn    marajade-host

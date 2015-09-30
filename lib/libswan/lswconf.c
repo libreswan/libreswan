@@ -63,8 +63,9 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 static void lsw_conf_setdefault(void)
 {
 	char buf[PATH_MAX];
+	static const struct lsw_conf_options zero_oco;	/* full of null pointers */
 
-	zero(&global_oco);
+	global_oco = zero_oco;
 
 	/* allocate them all to make it consistent */
 	global_oco.rootdir = clone_str("","rootdir");
@@ -72,6 +73,7 @@ static void lsw_conf_setdefault(void)
 	global_oco.vardir  = clone_str(IPSEC_VARDIR, "default vardir");
 	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
+	global_oco.nssdir = clone_str(IPSEC_NSSDIR, "default nssdir");
 
 	/* path to NSS password file */
 	snprintf(buf, sizeof(buf), "%s/nsspassword", global_oco.confddir);
@@ -90,18 +92,18 @@ void lsw_conf_free_oco(void)
 	pfree(global_oco.policies_dir);
 	pfree(global_oco.cacerts_dir);
 	pfree(global_oco.crls_dir);
+	pfree(global_oco.nssdir);
 	pfree(NSSPassword.data);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
 {
-	if (setup)
-		return &global_oco;
+	if (!setup) {
+		setup = TRUE;
 
-	setup = TRUE;
-
-	lsw_conf_setdefault();
-	lsw_conf_calculate(&global_oco);
+		lsw_conf_setdefault();
+		lsw_conf_calculate(&global_oco);
+	}
 
 	return &global_oco;
 }
@@ -122,6 +124,7 @@ void lsw_init_ipsecdir(const char *ipsec_dir)
 	if (!setup)
 		lsw_conf_setdefault();
 	global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
+	global_oco.nssdir = clone_str(ipsec_dir, "override nssdir");
 	lsw_conf_calculate(&global_oco);
 	setup = TRUE;
 
@@ -250,7 +253,6 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	secuPWData *pwdInfo = (secuPWData *)arg;
 	PRFileDesc *fd;
 	PRInt32 nb;	/* number of bytes */
-	char *strings;
 	char *token;
 	int toklen;
 	const long maxPwdFileSize = NSSpwdfilesize;
@@ -259,42 +261,43 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	if (slot == NULL)
 		return NULL;
 
+	if (pwdInfo == NULL)
+		return NULL;
+
 	token = PK11_GetTokenName(slot);
 	if (token == NULL)
 		return NULL;
 
 	toklen = PORT_Strlen(token);
 
-	/*
-	 * libreswan_log("authentication needed for token name %s with length %d", token, toklen);
-	 */
+	/* Start all log messages with "NSS Password ..."! */
+	DBG(DBG_CRYPT, DBG_log("NSS Password for token '%s' required", token));
 
 	if (retry)
 		return NULL;
 
-	strings = PORT_ZAlloc(maxPwdFileSize);
+	if (pwdInfo->source != PW_FROMFILE) {
+		libreswan_log("NSS Password source is not a file");
+		return NULL;
+	}
+
+	if (pwdInfo->data == NULL) {
+		libreswan_log("NSS Password file name not provided");
+		return NULL;
+	}
+
+	char *strings = PORT_ZAlloc(maxPwdFileSize);
 	if (strings == NULL) {
-		libreswan_log("Not able to allocate memory for reading NSS password file");
+		libreswan_log("NSS Password file could not be loaded, NSS memory allocate failed");
 		return NULL;
 	}
 
 	/* From here on, every return must be preceded by PORT_Free(strings) */
 
-	if (pwdInfo->source != PW_FROMFILE) {
-		libreswan_log("NSS password source is not specified as file");
-		PORT_Free(strings);
-		return NULL;
-	}
-
-	if (pwdInfo->data == NULL) {
-		libreswan_log("Name of file with Password to NSS DB is not provided");
-		PORT_Free(strings);
-		return NULL;
-	}
-
 	fd = PR_Open(pwdInfo->data, PR_RDONLY, 0);
 	if (fd == NULL) {
-		libreswan_log("No password file \"%s\" exists.", pwdInfo->data);
+		libreswan_log("NSS Password file \"%s\" could not be opened for reading",
+			      pwdInfo->data);
 		PORT_Free(strings);
 		return NULL;
 	}
@@ -335,15 +338,17 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 		    p[toklen] == ':') {
 			/* we have a winner! */
 			p = PORT_Strdup(&p[toklen + 1]);
-			/*
-			 * libreswan_log("Password passed to NSS is %s with length %d", p, PORT_Strlen(p));
-			 */
+			DBG(DBG_PRIVATE, DBG_log(
+				"Password passed to NSS is %s with length %zu",
+				 p, PORT_Strlen(p)));
 			PORT_Free(strings);
 			return p;
 		}
 	}
 
 	/* no match found in password file */
+	libreswan_log("NSS Password file \"%s\" does not contain token '%s'",
+		      pwdInfo->data, token);
 	PORT_Free(strings);
 	return NULL;
 }

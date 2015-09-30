@@ -7,14 +7,14 @@ TZ=GMT export TZ
 ipsec spi --clear
 ipsec eroute --clear
 
-enckey=0xaaaabbbbccccdddd4043434545464649 
+enckey=0xaaaabbbbccccdddd4043434545464649
 authkey=0x8765876587658765876587658765876587658765
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0xDED12345 --proto esp --src 192.1.2.23 --esp twofish128-sha1-96 --enckey $enckey --authkey $authkey
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0xDED12345 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
 
-ipsec spigrp inet 192.1.2.45 0xDED12345 tun inet 192.1.2.45 0xDED12345 esp 
+ipsec spigrp inet 192.1.2.45 0xDED12345 tun inet 192.1.2.45 0xDED12345 esp
 
 ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0xDED12345@192.1.2.45
 

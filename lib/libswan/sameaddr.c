@@ -93,7 +93,7 @@ const ip_subnet * a;
  * samesaid - are two SA IDs the same?
  */
 bool samesaid(a, b)
-const ip_said * a;
+const ip_said *a;
 const ip_said *b;
 {
 	if (a->spi != b->spi)	/* test first, most likely to be different */

@@ -35,7 +35,13 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
@@ -59,9 +65,9 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default": deleting connection
-002 "westnet-eastnet-aes-default" #2: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-default" #2: deleting state #2 (STATE_PARENT_I3)
 005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-default" #1: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-default" #1: deleting state #1 (STATE_PARENT_I3)
 west #
  #
 west #
@@ -79,9 +85,9 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128": deleting connection
-002 "westnet-eastnet-aes-128" #4: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-128" #4: deleting state #4 (STATE_PARENT_I3)
 005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-128" #3: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-128" #3: deleting state #3 (STATE_PARENT_I3)
 west #
  #
 west #
@@ -99,9 +105,9 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256": deleting connection
-002 "westnet-eastnet-aes-256" #6: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-256" #6: deleting state #6 (STATE_PARENT_I3)
 005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-256" #5: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-256" #5: deleting state #5 (STATE_PARENT_I3)
 west #
  #
 west #
@@ -119,9 +125,9 @@ west #
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1": deleting connection
-002 "westnet-eastnet-aes-mix-1" #8: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-mix-1" #8: deleting state #8 (STATE_PARENT_I3)
 005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-1" #7: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-mix-1" #7: deleting state #7 (STATE_PARENT_I3)
 west #
  #
 west #
@@ -139,130 +145,130 @@ west #
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2": deleting connection
-002 "westnet-eastnet-aes-mix-2" #10: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-mix-2" #10: deleting state #10 (STATE_PARENT_I3)
 005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-2" #9: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-aes-mix-2" #9: deleting state #9 (STATE_PARENT_I3)
 west #
  echo done
 done
 west #
  grep -A 1 KEY_LENGTH /tmp/pluto.log
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
---
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
+--
+| IKEv2_KEY_LENGTH attribute 128
+| encrid(12), keylen(128), encr_keylen(128)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
 | IKEv2_KEY_LENGTH attribute 256
 | encrid(12), keylen(256), encr_keylen(256)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 256
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
 | IKEv2_KEY_LENGTH attribute 256
 | encrid(12), keylen(256), encr_keylen(256)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH
-|    length/value: 128
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

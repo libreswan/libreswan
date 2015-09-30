@@ -5,6 +5,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,9 +50,9 @@ struct parser_context {
 	char ealg_buf[16];
 	char aalg_buf[16];
 	char modp_buf[16];
-	int (*ealg_getbyname)(const char *const str, size_t len);
-	int (*aalg_getbyname)(const char *const str, size_t len);
-	int (*modp_getbyname)(const char *const str, size_t len);
+	int (*ealg_getbyname)(const char *const str);
+	int (*aalg_getbyname)(const char *const str);
+	int (*modp_getbyname)(const char *const str);
 	char *ealg_str;
 	char *aalg_str;
 	char *modp_str;
@@ -110,7 +111,7 @@ extern enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_int
 
 extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
-extern void alg_info_delref(struct alg_info **alg_info);
+extern void alg_info_delref(struct alg_info *alg_info);
 
 extern struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 						   char *err_buf, size_t err_buf_len);
@@ -132,8 +133,7 @@ extern void alg_info_snprint_ike(char *buf, size_t buflen,
 	for ((i) = (aii)->ai.alg_info_cnt, (ai_ike) = (aii)->ike; (i)--; (ai_ike)++)
 
 extern int alg_enum_search(enum_names *ed, const char *prefix,
-			   const char *postfix, const char *name,
-			   size_t name_len);
+			   const char *postfix, const char *name);
 
 struct oakley_group_desc;	/* so it isn't local to the function prototype */
 

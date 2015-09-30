@@ -69,8 +69,9 @@ static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
 			       const ip_subnet *this_client UNUSED,
 			       const ip_address *that_host UNUSED,
 			       const ip_subnet *that_client UNUSED,
-			       ipsec_spi_t spi UNUSED,
-			       unsigned int proto UNUSED,
+			       ipsec_spi_t cur_spi UNUSED,
+			       ipsec_spi_t new_spi UNUSED,
+			       int sa_proto UNUSED,
 			       unsigned int transport_proto UNUSED,
 			       unsigned int satype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
@@ -79,7 +80,7 @@ static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
 			       unsigned int op UNUSED,
 			       const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-			       , char *policy_label UNUSED
+			       , const char *policy_label UNUSED
 #endif
 			       )
 {

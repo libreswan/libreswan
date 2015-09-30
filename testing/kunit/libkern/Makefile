@@ -1,11 +1,11 @@
 # Libreswan library for faking out the kernel
 # Copyright (C) 2005 Xelerance Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -40,8 +40,8 @@ CFLAGS=-I. -I${KLIPSSRCDIR}/include -I${LIBRESWANSRCDIR}
 CFLAGS+=-DHAVE_IP_PKTINFO
 CFLAGS+= -I${LIBRESWANSRCDIR}/testing/kunit/include
 CFLAGS+= -I${LIBRESWANSRCDIR}/include -g -O2
-#KLIPS_FLAGS+=-D__KERNEL__ 
-#KLIPS_FLAGS+=-O2 -U__i386__ -Ui386  -D__arch_um__ -DSUBARCH=\"i386\" 
+#KLIPS_FLAGS+=-D__KERNEL__
+#KLIPS_FLAGS+=-O2 -U__i386__ -Ui386  -D__arch_um__ -DSUBARCH=\"i386\"
 #KLIPS_FLAGS+=-I${UMLPLAIN}/include
 #KLIPS_FLAGS+=-I${UMLPLAIN}/arch/um/include
 #KLIPS_FLAGS+=-I${UMLPLAIN}/arch/um/kernel/tt/include
@@ -73,8 +73,8 @@ $(OBJS):	$(HDRS)
 $(LOGOBJS):	$(HDRS)
 
 # build version.c using version number from Makefile.ver
-version.c:	${srcdir}version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
-	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${srcdir}version.in.c >$@
+version.c:	${SRCDIR}version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
+	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${SRCDIR}version.in.c >$@
 
 clean:
 	rm -f $(LIB) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c

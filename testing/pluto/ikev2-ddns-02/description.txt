@@ -1,0 +1,10 @@
+This tests the (oddly designed) EVENT_PENDING_DDNS
+
+- load a connection with an unresolvable name
+- once loaded, fix so the name resolves
+- wait and a minute later the connection will initiate
+
+This test differs in that the underlying resolving finds
+the entry via a DNS server on localhost instead of via
+/etc/hosts (ttoaddr uses gethostbyname which goes via
+/etc/hosts before doing DNS via /etc/resolv.conf)

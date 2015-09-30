@@ -42,6 +42,8 @@
 #endif
 
 #include <signal.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #include <libreswan.h>
 
@@ -63,6 +65,50 @@
 #include "lswconf.h"
 
 #include "lsw_select.h"
+#include  "server.h"
+#include "ikev2_prf.h"
+#include "crypt_dh.h"
+#include "ikev1_prf.h"
+
+struct pluto_crypto_req_cont *new_pcrc(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md)
+{
+	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
+
+	r->pcrc_func = fn;
+	r->pcrc_serialno = st->st_serialno;
+	r->pcrc_md = md;
+	r->pcrc_name = name;
+	r->pcrc_replacing = SOS_NOBODY;
+
+	passert(md == NULL || md->st == st);
+	passert(st->st_suspended_md == NULL);
+
+	/*
+	 * There is almost always a non-NULL md.
+	 * Exception: main_inI2_outR2_tail initiates DH calculation
+	 * in parallel with normal processing that needs the md exclusively.
+	 */
+	if (md != NULL)
+		set_suspended(st, md);
+	return r;
+}
+
+struct pluto_crypto_req_cont *new_pcrc_repl(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md,
+	so_serial_t replacing)
+{
+	struct pluto_crypto_req_cont *r = new_pcrc(fn, name, st, md);
+
+	r->pcrc_replacing = replacing;
+	return r;
+}
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
@@ -100,7 +146,8 @@ struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
 
-	/* socketpair's file descriptors
+	/*
+	 * socketpair's file descriptors
 	 * Each socket is bidirectional and they are cross-connected.
 	 */
 	int pcw_master_fd;	/* master's fd (-1 if none) */
@@ -111,6 +158,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
+	struct event *evm;      /* pointer to master_fd event. AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
@@ -144,7 +192,7 @@ static void pcr_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,
 			    enum crypto_importance pcr_pcim)
 {
-	zero(r);
+	messup(r);
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_type;
 	r->pcr_pcim = pcr_pcim;
@@ -178,6 +226,10 @@ static int crypto_helper_delay;
 
 static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
+	struct timeval tv0;
+	gettimeofday(&tv0, NULL);
+	const char *story = NULL;
+
 	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d doing %s; request ID %u",
 		    helpernum,
@@ -207,9 +259,22 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		break;
 
 	case pcr_compute_dh_v2:
-		calc_dh_v2(r);
+		calc_dh_v2(r, &story);
 		break;
 	}
+
+	DBG(DBG_CONTROL, {
+			struct timeval tv1;
+			unsigned long tv_diff;
+			gettimeofday(&tv1, NULL);
+			tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+			DBG_log("crypto helper %d finished %s%s; request ID %u time elapsed %ld usec",
+					helpernum,
+					enum_show(&pluto_cryptoop_names, r->pcr_type),
+					(story != NULL) ? story : "",
+					r->pcr_id, tv_diff));
+	}
+
 }
 
 /* IN A HELPER THREAD */
@@ -235,8 +300,6 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 	for (;;) {
 		size_t sz;
-
-		zero(&req);
 
 		errno = 0;
 		sz = fread(&req, sizeof(char), sizeof(req), in);
@@ -732,8 +795,6 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	/* read from the socketpair in one gulp */
 
-	zero(&rr);
-
 	errno = 0;
 	actlen = read(w->pcw_master_fd, (void *)&rr, sizeof(rr));
 
@@ -823,6 +884,17 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	pfree(cn);
 }
 
+static event_callback_routine handle_helper_answer_cb;
+
+static void handle_helper_answer_cb(evutil_socket_t fd UNUSED, const short event UNUSED,
+		void *arg)
+{
+	handle_helper_answer((struct pluto_crypto_worker *) arg);
+}
+
+#define MAX_HELPER_BASIC_WORK 200
+#define MAX_HELPER_CRIT_WORK 400
+
 /*
  * initialize a helper.
  */
@@ -835,6 +907,11 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
 
+	if(w->evm != NULL) {
+		event_del(w->evm);
+		w->evm = NULL;
+	}
+
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "could not create socketpair for crypto helper %d: %s",
@@ -844,8 +921,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
 	w->pcw_master_fd = fds[0];
 	w->pcw_helper_fd = fds[1];
-	w->pcw_maxbasicwork = 2;
-	w->pcw_maxcritwork = 4;
+	w->pcw_maxbasicwork = MAX_HELPER_BASIC_WORK;
+	w->pcw_maxcritwork = MAX_HELPER_CRIT_WORK;
 	w->pcw_work = 0;
 	w->pcw_dead = FALSE;
 	TAILQ_INIT(&w->pcw_active);
@@ -884,6 +961,15 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	} else {
 		libreswan_log("started thread for crypto helper %d (master fd %d)",
 			      n, w->pcw_master_fd);
+	}
+	{
+		/* setup call back crypto helper fd */
+		/* EV_WRITE event is ignored do we care about EV_WRITE AA_2015 ??? */
+
+		DBG(DBG_CONTROL, DBG_log("setup helper callback for master fd %d",
+				w->pcw_master_fd));
+		w->evm = pluto_event_new(w->pcw_master_fd, EV_READ | EV_PERSIST,
+				handle_helper_answer_cb, w, NULL);
 	}
 }
 

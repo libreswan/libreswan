@@ -1,0 +1,5 @@
+This tests the (oddly designed) EVENT_PENDING_DDNS
+
+- load a connection with an unresolvable name
+- once loaded, fix so the name resolves
+- wait and a minute later the connection will initiate

@@ -11,7 +11,7 @@
 while(<>) {
   chomp;
 
-  #  192.0.2.254 > 192.0.2.1: icmp: host 192.0.1.1 unreachable - admin prohibited filter [tos 0xc0] 
+  #  192.0.2.254 > 192.0.2.1: icmp: host 192.0.1.1 unreachable - admin prohibited filter [tos 0xc0]
 
 
   if(/(.*) \> (.*)\: icmp: .* .* unreachable/) {

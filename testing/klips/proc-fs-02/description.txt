@@ -1,4 +1,4 @@
 This test loads/unloads the KLIPS module three times.
-It verifies that the right /proc/net/ entries are created and removed 
+It verifies that the right /proc/net/ entries are created and removed
 upon loading/unloading of the module.
 

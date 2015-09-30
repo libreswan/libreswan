@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>retransmit-interval</emphasis></term>
+  <listitem>
+<para>the initial interval time period, specified in msecs, that pluto waits before retransmitting an IKE packet. This
+interval is doubled for each attempt (exponential back-off).
+The default set by
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+currently is
+<emphasis remap='B'>500</emphasis>.
+See also: <emphasis remap='I'>retransmit-timeout</emphasis>, <emphasis remap='I'>rekey</emphasis>
+and <emphasis remap='I'>keyingtries</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

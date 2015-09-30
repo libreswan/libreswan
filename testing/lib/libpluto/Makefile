@@ -1,25 +1,24 @@
 # FreeS/WAN testing makefile
 # Copyright (C) 2002 Michael Richardson <mcr@freeswan.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/testing/lib/libpluto/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/lib/libpluto/
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
 SUBDIRS=
-SRCDIR=${srcdir}
 UTILS=${LIBRESWANSRCDIR}/testing/utils
 
-TESTS=$(shell awk '{print $$2;}' ${srcdir}TESTLIST)
+TESTS=$(shell awk '{print $$2;}' ${SRCDIR}TESTLIST)
 
 all: ${TESTS}
 	echo ${TESTS}
@@ -35,14 +34,14 @@ def:
 	@false
 
 check:
-	@ECHO=: REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
+	@ECHO=: REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ${SRCDIR}TESTLIST
 	@echo */core.*
 
 install install_file_list checkprograms programs:
 	@true
 
 clean:
-	cat ${srcdir}TESTLIST | while read testtype name status; \
+	cat ${SRCDIR}TESTLIST | while read testtype name status; \
 	do\
 		rm -rf `basename $$name .c`;\
 	done
@@ -53,16 +52,6 @@ ike-secrets.txt: OUTPUT.parentI2.txt
 cleanall: clean
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean
-
-Makefile.depend: *.c ${srcdir}Makefile
-	(ls $(wildcard $(addprefix $(srcdir),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
-
--include Makefile.depend
-
 
 east.record: ${LIBRESWANSRCDIR}/programs/pluto/rcv_whack.c
 	(cd ${LIBRESWANSRCDIR}/programs/pluto && unset LIBRESWANSRCDIR && pl_inst.sh)

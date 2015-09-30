@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>perpeerlogdir</emphasis></term>
   <listitem>
 <para>in what directory the per-peer log should be created, if enabled via
-the <emphasis remap='B'>perpeerlog</emphasis> option. This will result in 
+the <emphasis remap='B'>perpeerlog</emphasis> option. This will result in
 sub directories in the structure /192/0/2.
 
 The default value is <emphasis remap='I'>/var/log/pluto/peer/</emphasis>. When SELinux

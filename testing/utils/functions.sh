@@ -3,7 +3,7 @@
 #
 #  Root out incorrect shell invocations by failing if invoked with the wrong shell.
 #  This script uses extended BASH syntax, so it is NOT POSIX "/bin/sh" compliant.
-if test -z "${BASH_VERSION}" ; then 
+if test -z "${BASH_VERSION}" ; then
 	echo >&2 "Fatal-Error: testing/utils/functions.sh MUST be run under \"/bin/bash\"."
 	exit 55
 fi
@@ -21,41 +21,15 @@ consolediff() {
     output=$2
     ref=$3
 
-    cleanups="cat $output "
     success=${success-true}
-
-    for fixup in `echo $REF_CONSOLE_FIXUPS`
-    do
-	if [ -f $FIXUPDIR/$fixup ]
-	then
-	    case $fixup in
-		*.sed) cleanups="$cleanups | sed -f $FIXUPDIR/$fixup";;
-		*.pl)  cleanups="$cleanups | perl $FIXUPDIR/$fixup";;
-		*.awk) cleanups="$cleanups | awk -f $FIXUPDIR/$fixup";;
-		    *) echo Unknown fixup type: $fixup;;
-            esac
-	elif [ -f $FIXUPDIR2/$fixup ]
-	then
-	    case $fixup in
-		*.sed) cleanups="$cleanups | sed -f $FIXUPDIR2/$fixup";;
-		*.pl)  cleanups="$cleanups | perl $FIXUPDIR2/$fixup";;
-		*.awk) cleanups="$cleanups | awk -f $FIXUPDIR2/$fixup";;
-		    *) echo Unknown fixup type: $fixup;;
-            esac
-	else
-	    echo Fixup $fixup not found.
-	    success="missing fixup"
-	    return
-        fi
-    done
-
     fixedoutput=OUTPUT/${prefix}.console.txt
     rm -f $fixedoutput OUTPUT/${prefix}.console.diff
-    $CONSOLEDIFFDEBUG && echo Cleanups is $cleanups
-    eval $cleanups >$fixedoutput
 
-    # stick terminating newline in for fun.
-    echo >>$fixedoutput
+    ${LIBRESWANSRCDIR}/testing/utils/sanitizer.sh \
+		      ${output} \
+		      $PWD \
+		      ${FIXUPDIR} ${FIXUPDIR2:-} \
+		      > ${fixedoutput}
 
     if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
@@ -81,7 +55,7 @@ kvmplutotest () {
 	else
 		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
 		if [ -d $testdir ] ; then
-			cd $testdir 
+			cd $testdir
 			${UTILS}/swantest
 			cd ../
 		else
@@ -136,7 +110,7 @@ complibtest() {
     unset FILE
     SRCDIR=${SRCDIR-./}
 
-    if [ -f ${SRCDIR}$testsrc ] 
+    if [ -f ${SRCDIR}$testsrc ]
     then
 	FILE=${SRCDIR}$testsrc
     elif [ -f ${LIBRESWANSRCDIR}/lib/libswan/$testsrc ]
@@ -159,7 +133,7 @@ complibtest() {
     EXTRALIBS=
     UNITTESTARGS=-r
 
-    if [ -f ${SRCDIR}FLAGS ]; then 
+    if [ -f ${SRCDIR}FLAGS ]; then
         ${ECHO} "   "Sourcing ${SRCDIR}FLAGS
 	. ${SRCDIR}FLAGS
     fi
@@ -443,7 +417,7 @@ recordresults() {
 		# this code is run only when success is false, so that we have
 		# a record of why the test failed. If it succeeded, then the
 		# possibly volumnous output is not interesting.
-		# 
+		#
 		# NOTE: ${KLIPS_MODULE} is part of $REPORT_NAME
 		rm -rf $REGRESSRESULTS/$REPORT_NAME/OUTPUT
 		mkdir -p $REGRESSRESULTS/$REPORT_NAME/OUTPUT
@@ -518,11 +492,11 @@ lookforcore() {
 #
 # testparams.sh should specify a script to be run as $TESTSCRIPT
 #          REF_CONSOLE_OUTPUT= name of reference output
-#    
+#
 # The script will be started with:
 #          ROOTDIR=    set to root of source code.
 #          OBJDIRTOP=  set to location of object files
-# 
+#
 #
 # testparams.sh should set PROGRAMS= to a list of subdirs of programs/
 #                that must be built before using the test. This allows
@@ -530,12 +504,12 @@ lookforcore() {
 #
 # If there is a Makefile in the subdir, it will be invoked as
 # "make checkprograms". It will have the above variables as well,
-# and make get the build environment with 
+# and make get the build environment with
 #    include ${ROOTDIR}/programs/Makefile.program
 #
 # The stdout of the script will be set to an output file, which will then
 # be sanitized using the normal set of fixup scripts.
-#          
+#
 #
 ###################################
 

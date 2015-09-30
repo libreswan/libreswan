@@ -1,0 +1,4 @@
+west sends revoked cert, with a bogus OCSP uri on east.
+strict mode, so fail
+
+Error is -8071 ocsp server error

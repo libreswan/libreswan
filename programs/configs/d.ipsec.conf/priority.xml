@@ -13,7 +13,7 @@ protocol and port selectors. A lower value means a higher priority.
 </para>
 <para>
 Typical values are about the 2000 range. These can be seen on the NETKEY stack using
-<emphasis remap='B'>ip xfrm policy</emphasis> when the connection is up. For "anonymous IPsec" or Opportunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec. 
+<emphasis remap='B'>ip xfrm policy</emphasis> when the connection is up. For "anonymous IPsec" or Opportunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec.
 </para>
   </listitem>
   </varlistentry>

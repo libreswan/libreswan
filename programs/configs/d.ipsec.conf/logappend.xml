@@ -1,0 +1,14 @@
+  <varlistentry>
+
+  <term><emphasis remap='B'>logappend</emphasis></term>
+  <listitem>
+<para>If pluto is instructed to log to a file using  <emphasis remap='B'>logfile=</emphasis>,
+this option determines whether the log file should be appended to or overwritten. Valid options are
+<emphasis remap='B'>yes</emphasis> (the default) to append and <emphasis remap='B'>no</emphasis>
+to overwrite. Since on modern systems, pluto is restarted by other daemons, such as systemd,
+this option should be left at its default yes value to preserve the log entries of previous
+runs of pluto. The option is mainly of use for running the test suite, which needs to create
+new log files from scratch.
+</para>
+  </listitem>
+  </varlistentry>

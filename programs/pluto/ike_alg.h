@@ -22,7 +22,30 @@ struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
 	size_t enc_blocksize;
-	size_t ivsize;
+	/*
+	 * Does this algorithm require padding to the above
+	 * ENC_BLOCKSIZE bytes?
+	 *
+	 * This shouldn't be confused with the need to pad things to
+	 * 4-bytes (ESP) or not at all (IKE).
+	 */
+	bool pad_to_blocksize;
+	/*
+	 * Number of additional bytes that should be extracted from
+	 * the initial shared-secret.
+	 *
+	 * CTR calls this nonce; CCM calls it salt.
+	 */
+	size_t salt_size;
+	/*
+	 * The IV sent across the wire; this is random material.
+	 *
+	 * The WIRE-IV which will be sent across the wire in public.
+	 * The SALT, WIRE-IV, and who-knows what else are concatenated
+	 * to form a ENC_BLOCKSIZE-byte starting-variable (aka IV).
+	 */
+	size_t wire_iv_size;
+
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;
@@ -31,6 +54,33 @@ struct encrypt_desc {
 			 PK11SymKey *key,
 			 u_int8_t *iv,
 			 bool enc);
+
+	/*
+	 * For Authenticated Encryption with Associated Data (AEAD),
+	 * the size (in 8-bit bytes) of the authentication tag
+	 * appended to the end of the encrypted data.
+	*/
+	size_t aead_tag_size;
+
+	/*
+	 * Perform Authenticated Encryption with Associated Data
+	 * (AEAD).
+	 *
+	 * The salt and wire-IV are concatenated to form the NONCE
+	 * (aka. counter variable; IV; ...).
+	 *
+	 * The Additional Authentication Data (AAD) and the
+	 * cipher-text are concatenated when generating/validating the
+	 * tag (which is appended to the text).
+	 *
+	 * All sizes are in 8-bit bytes.
+	 */
+	bool (*do_aead_crypt_auth)(u_int8_t *salt, size_t salt_size,
+				   u_int8_t *wire_iv, size_t wire_iv_size,
+				   u_int8_t *aad, size_t aad_size,
+				   u_int8_t *text_and_tag,
+				   size_t text_size, size_t tag_size,
+				   PK11SymKey *key, bool enc);
 };
 
 union hash_ctx;	/* forward declaration */
@@ -67,6 +117,7 @@ extern void ike_alg_show_connection(struct connection *c, const char *instance);
 
 extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
+extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
 extern bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		    struct alg_info_ike *alg_info_ike, const char **, char *,
 		    size_t);
@@ -135,5 +186,6 @@ extern void ike_alg_camellia_init(void);
 extern void ike_alg_sha2_init(void);
 #endif
 
+CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter);
 
 #endif /* _IKE_ALG_H */

@@ -1,16 +1,12 @@
 The network is configured as follows:
 
-    POLE
-      |
-    NORTH
-      |
-      NIC---EAST--SUNRISE
+    NORTH--NIC---EAST
 
-East does not have north's certificate cached. East will send a CR to north, 
-and north will transmit its certificate to east via nic. 
+East does not have north's certificate cached. East will send a CR to north,
+and north will transmit its certificate to east via nic.
 East has to set "leftca=" so that it will know which CA to ask for.
 
-East specifies a peer ID wildcard for CN and E. 
+East specifies a peer ID wildcard for CN and E.
 NIC serves as a simple router between NORTH and EAST.
 
 The simple test is to connect the POLE and SUNRISE networks

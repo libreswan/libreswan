@@ -24,7 +24,7 @@
 #include <string.h>
 
 #ifdef LIBCURL
-#include <curl/curl.h>
+#include <curl/curl.h>	/* from libcurl devel */
 #endif
 
 #include <libreswan.h>
@@ -78,6 +78,9 @@ static pthread_mutex_t crl_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
+
+extern char *curl_iface;
+extern long curl_timeout;
 
 /* lock access to the chained crl list
  * ??? declared in x509.h
@@ -173,6 +176,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
 	chunk_t response = empty_chunk;	/* managed by realloc/free */
+	long timeout = FETCH_CMD_TIMEOUT;
 	CURLcode res;
 
 	/* get it with libcurl */
@@ -184,18 +188,24 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		memcpy(uri, url.ptr, url.len);
 		*(uri + url.len) = '\0';
 
+		if (curl_timeout > 0)
+			timeout = curl_timeout;
+
 		DBG(DBG_CONTROL,
-		    DBG_log("Trying cURL '%s'", uri));
+		    DBG_log("Trying cURL '%s' with connect timeout of %ld",
+			uri, timeout));
 
 		curl_easy_setopt(curl, CURLOPT_URL, uri);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
 		curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
-				 FETCH_CMD_TIMEOUT);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * FETCH_CMD_TIMEOUT);
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * timeout);
 		/* work around for libcurl signal bug */
 		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+		if (curl_iface != NULL)
+			curl_easy_setopt(curl, CURLOPT_INTERFACE, curl_iface);
+
 		res = curl_easy_perform(curl);
 
 		if (res == CURLE_OK) {
@@ -422,7 +432,7 @@ static void fetch_crls(void)
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
 					     gn->name.len, "crl uri");
-				if (insert_crl(blob, crl_uri)) {
+				if (insert_crl_nss(&blob, &crl_uri, NULL)) {
 					DBG(DBG_CONTROL,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
@@ -489,9 +499,9 @@ static void *fetch_thread(void *arg UNUSED)
  */
 void init_fetch(void)
 {
-	int status;
-
 	if (deltasecs(crl_check_interval) > 0) {
+		int status;
+
 #ifdef LIBCURL
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -499,10 +509,10 @@ void init_fetch(void)
 			libreswan_log("libcurl could not be initialized, status = %d",
 			     status);
 #endif
-		status = pthread_create( &thread, NULL, fetch_thread, NULL);
+		status = pthread_create(&thread, NULL, fetch_thread, NULL);
 		if (status != 0)
 			libreswan_log(
-				"fetching thread could not be started, status = %d",
+				"could not start thread for fetching certificate, status = %d",
 				status);
 	}
 }
@@ -567,27 +577,76 @@ void add_distribution_points(const generalName_t *newPoints,
 /*
  * add a crl fetch request to the chained list
  */
-void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
+void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 {
+	CERTCertificate *ca = NULL;
+	generalName_t *new_dp = NULL;
 	fetch_req_t *req;
+	chunk_t idn;
+
+	DBG(DBG_CONTROL, DBG_log("attempting to add a new CRL fetch request"));
+
+	if (issuer_dn == NULL || issuer_dn->data == NULL ||
+				 issuer_dn->len < 1) {
+		DBG(DBG_CONTROL,
+		    DBG_log("no issuer dn to gather fetch information from"));
+		return;
+	}
+
+	if ((ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
+							issuer_dn)) == NULL) {
+		DBG_log("no CA cert found to add fetch request: [%d]",
+							       PORT_GetError());
+		return;
+	}
+
+	idn = secitem_to_chunk(*issuer_dn);
 
 	lock_crl_fetch_list("add_crl_fetch_request");
 	req = crl_fetch_reqs;
 
 	while (req != NULL) {
-		if (same_dn(issuer, req->issuer)) {
+		if (same_dn(idn, req->issuer)) {
 			/* there is already a fetch request */
 			DBG(DBG_CONTROL,
 			    DBG_log("crl fetch request already exists"));
 
 			/* there might be new distribution points */
-			add_distribution_points(gn, &req->distributionPoints);
-
+			if ((new_dp = gndp_from_nss_cert(ca)) != NULL) {
+				DBG(DBG_CONTROL,
+				    DBG_log("new distribution point available"));
+				add_distribution_points(new_dp,
+						      &req->distributionPoints);
+			} else if (end_dp != NULL) {
+				DBG(DBG_CONTROL,
+					DBG_log("no CA crl DP available, adding provided DP"));
+				add_distribution_points(end_dp, &req->distributionPoints);
+			}
 			unlock_crl_fetch_list("add_crl_fetch_request");
+			if (ca != NULL)
+				CERT_DestroyCertificate(ca);
 			return;
 		}
 		req = req->next;
 	}
+
+	if (new_dp == NULL) {
+		if ((new_dp = gndp_from_nss_cert(ca)) == NULL) {
+			if (end_dp != NULL) {
+				DBG(DBG_CONTROL,
+					DBG_log("no CA crl DP available, using provided DP"));
+				new_dp = end_dp;
+			} else {
+				DBG(DBG_CONTROL,
+					DBG_log("no distribution point available for new fetch request"));
+				unlock_crl_fetch_list("add_crl_fetch_request");
+				if (ca != NULL)
+					CERT_DestroyCertificate(ca);
+				return;
+			}
+		}
+	}
+
 	/* create a new fetch request */
 	req = alloc_thing(fetch_req_t, "fetch request");
 	*req = empty_fetch_req;
@@ -596,10 +655,10 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	req->installed = realnow();
 
 	/* clone issuer */
-	clonetochunk(req->issuer, issuer.ptr, issuer.len, "issuer dn");
+	clonetochunk(req->issuer, idn.ptr, idn.len, "issuer dn");
 
 	/* copy distribution points */
-	add_distribution_points(gn, &req->distributionPoints);
+	add_distribution_points(new_dp, &req->distributionPoints);
 
 	/* insert new fetch request at the head of the queue */
 	req->next = crl_fetch_reqs;
@@ -608,6 +667,10 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	DBG(DBG_CONTROL,
 	    DBG_log("crl fetch request added"));
 	unlock_crl_fetch_list("add_crl_fetch_request");
+
+	if (ca != NULL)
+		CERT_DestroyCertificate(ca);
+
 }
 
 /*
@@ -658,5 +721,5 @@ void list_crl_fetch_requests(bool utc)
 }
 
 #else
-#warning no LIBCURL or LDAP defined, file should not be used
+/* we'll just ignore for now - this is all going away anyway */
 #endif

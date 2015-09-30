@@ -20,17 +20,17 @@
 
 struct state;   /* forward declaration */
 
-struct event {
-	monotime_t ev_time;
+struct pluto_event {
 	enum event_type ev_type;        /* Event type */
 	struct state   *ev_state;       /* Pointer to relevant state (if any) */
-	struct event   *ev_next;        /* Pointer to next event */
+	struct event *ev;               /* libevent data structure */
+	monotime_t ev_time;
 };
 
-
-extern void event_schedule(enum event_type type, time_t delay, struct state *st);
-extern void handle_timer_event(void);
-extern long next_event(void);
+extern void event_schedule(enum event_type type, time_t delay_sec,
+		struct state *st);
+extern void event_schedule_ms(enum event_type type, unsigned long delay_ms,
+		struct state *st);
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);

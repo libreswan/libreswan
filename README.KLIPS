@@ -26,9 +26,9 @@ with the required tools to compile kernel modules.
     sudo make module_install
 
 This builds a module against the running kernel. It is the equivalent of
-running: 
+running:
 
-    make KERNELSRC=/lib/modules/`uname -r`/build module 
+    make KERNELSRC=/lib/modules/`uname -r`/build module
     sudo make KERNELSRC=/lib/modules/`uname -r`/build module_install
 
 To compile a module for another kernel, one can set KERNELSRC to point to
@@ -108,7 +108,7 @@ Wiki:
 
 IRC:
 
-    Libreswan developers and users can be found on IRC, on #swan 
+    Libreswan developers and users can be found on IRC, on #swan
     irc.freenode.net.
 
 #########################################################################
@@ -125,7 +125,7 @@ https://bugs.libreswan.org
 All security vulnerabilities found that require public disclosure will
 receive proper CVE tracking numbers (see http://mitre.org/) and co-ordinated
 via the vendor-sec (or successor) mailing list. A complete list of known
-security vulnerabilities is available at: https://www.libreswan.org/security/ 
+security vulnerabilities is available at: https://www.libreswan.org/security/
 
 #########################################################################
 # DEVELOPMENT

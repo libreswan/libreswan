@@ -18,6 +18,9 @@
 #define _SERVER_H
 
 #include <sysqueue.h>
+#include <event2/event.h>	/* from libevent devel */
+#include <event2/event_struct.h>
+#include "timer.h"
 
 extern char *pluto_vendorid;
 
@@ -31,6 +34,10 @@ extern err_t init_ctl_socket(void);
 extern void delete_ctl_socket(void);
 
 extern bool listening;  /* should we pay attention to IKE messages? */
+extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
+extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before refusing */
+extern unsigned int pluto_ddos_treshold; /* Max incoming IKE before activating DCOOKIES */
+extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shunts (for OE) */
 
 /* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
@@ -59,9 +66,11 @@ struct iface_port {
 	struct iface_port *next;
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
+	struct event *ev;
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */
+extern enum pluto_ddos_mode ddos_mode;
 
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(void);
@@ -69,5 +78,22 @@ extern void show_ifaces_status(void);
 extern void free_ifaces(void);
 extern void show_debug_status(void);
 extern void call_server(void);
+extern void init_event_base(void);
+typedef void event_callback_routine(evutil_socket_t, const short, void *);
+extern struct event *pluto_event_new(evutil_socket_t ft, short events,
+		event_callback_fn cb, void *arg, const struct timeval *t);
+bool ev_before(struct pluto_event *pev, deltatime_t delay);
+extern void set_pluto_busy(bool busy);
+extern void set_whack_pluto_ddos(enum ddos_mode mode);
+extern bool should_fragment_ike_msg(struct state *st, size_t len,
+				    bool resending);
+
+struct packet_byte_stream;	/* forward decl of tag */
+extern void record_outbound_ike_msg(struct state *st, struct packet_byte_stream *pbs, const char *what);
+extern bool send_ike_msg(struct state *st, const char *where);
+extern bool record_and_send_ike_msg(struct state *st, struct packet_byte_stream *pbs, const char *what);
+extern bool send_ike_msg_without_recording(struct state *st, struct packet_byte_stream *pbs, const char *where);
+extern bool resend_ike_v1_msg(struct state *st, const char *where);
+extern bool send_keepalive(struct state *st, const char *where);
 
 #endif /* _SERVER_H */

@@ -3,12 +3,12 @@
 # Copyright (C) 2012 - 2013 Paul Wouters <pwouters@redhat.com>
 #
 # Based on old perl and shell code:
-# Copyright (C) 2003 Sam Sgro <sam@freeswan.org> 
+# Copyright (C) 2003 Sam Sgro <sam@freeswan.org>
 # Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2005-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
 #
-# Based on "verify" from the FreeS/WAN distribution, (C) 2001 Michael 
+# Based on "verify" from the FreeS/WAN distribution, (C) 2001 Michael
 # Richardson <mcr@freeswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -50,14 +50,14 @@ if not os.path.isfile(conffile):
 # Should we print in colour by default?
 colour = 0
 try:
-	p = subprocess.Popen("consoletype", stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+	p = subprocess.Popen("consoletype", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
 	output = output.decode(prefencoding).strip()
 	if output in ("vc","tty","pty"):
 		colour = 1
 except:
 	try:
-		p = subprocess.Popen("tput colors", stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen("tput colors", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate()
 		if int(output) > 0:
 			colour = 1
@@ -106,7 +106,7 @@ def print_result(rcode, rtext):
 def plutocheck():
 	global retcode
 	printfun("Checking that pluto is running")
-	p = subprocess.Popen(["pidof", "pluto"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+	p = subprocess.Popen(["pidof", "pluto"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
 	if not output:
 		retcode += 1
@@ -177,7 +177,7 @@ def cmdchecks():
 	   and not os.path.isfile("/bin/ip"):
 		print_result("FAIL","FAILED")
 		retcode += 1
-	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
 	err = err.decode(prefencoding)
 	if not "XFRM" in err:
@@ -204,7 +204,7 @@ def udp500check():
 	global retcode
 	printfun(" Pluto listening for IKE on udp 500")
 	try:
-		p = subprocess.Popen(["ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen(["ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate()
 		output = output.decode(prefencoding)
 		if ":500" in output:
@@ -225,7 +225,7 @@ def udp4500check():
 		print("(install the 'ss' command to activate this test)")
 		return
 	try:
-		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate()
 		output = output.decode(prefencoding)
 		if ":4500" in output:
@@ -241,7 +241,7 @@ def installstartcheck():
 	print("Verifying installed system and configuration files\n")
 	printfun("Version check and ipsec on-path")
 	try:
-		p = subprocess.Popen(["ipsec", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen(["ipsec", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate()
 		output = output.decode(prefencoding)
 		if "swan" in output:
@@ -319,7 +319,7 @@ def installchecknetkey():
 	global retcode
 	print(" NETKEY: Testing XFRM related proc values")
 	for option in ( "send_redirects", "accept_redirects"):
-		printfun("         ICMP default/%s"%option) 
+		printfun("         ICMP default/%s"%option)
 		try:
 			redir = open("/proc/sys/net/ipv4/conf/default/%s"%option,"r").read().strip()
 		except:
@@ -346,10 +346,10 @@ def randomdevcheck():
 	global retcode
 	printfun("Hardware random device")
 	if os.path.isfile("/dev/hw_random") or os.path.isfile("/dev/hwrng"):
-		p = subprocess.Popen(["pidof", "rngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen(["pidof", "rngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		output, err = p.communicate()
 		if not output:
-			p = subprocess.Popen(["pidof", "clrngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+			p = subprocess.Popen(["pidof", "clrngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			output, err = p.communicate()
 			if not output:
 				print_result("FAIL","NO RUNNING (cl)rngd DAEMON FOR HW")

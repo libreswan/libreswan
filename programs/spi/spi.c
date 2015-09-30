@@ -117,7 +117,7 @@ static const char *usage_string =
 	"Usage:\n"
 	"	in the following, <SA> is: --af <inet | inet6> --edst <dstaddr> --spi <spi> --proto <proto>\n"
 	"                               OR: --said <proto><.|:><spi>@<dstaddr>\n"
-	"	                  <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
+	"                         <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
 	"spi --clear\n"
 	"spi --help\n"
 	"spi --version\n"
@@ -126,7 +126,7 @@ static const char *usage_string =
 	"spi --ip4 <SA> --src <encap-src> --dst <encap-dst>\n"
 	"spi --ip6 <SA> --src <encap-src> --dst <encap-dst>\n"
 	"spi --ah <algo> <SA> [<life> ][ --replay_window <replay_window> ] --authkey <key>\n"
-	"	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded \n"
+	"	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded\n"
 	"spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey> --authkey <akey>\n"
 	"	where <algo> is one of:	3des-md5-96 | 3des-sha1-96\n | something-loaded"
 	"	also, --natt will enable UDP encapsulation, and --sport/--dport will set\n"
@@ -138,7 +138,7 @@ static const char *usage_string =
 	"[ --sarefme=XXX ]  set the saref to use for this SA\n"
 	"[ --sarefhim=XXX ] set the saref to use for paired SA\n"
 	"[ --dumpsaref ] show the saref allocated\n"
-	"[ --outif=XXX ] set the outgoing interface to use \n"
+	"[ --outif=XXX ] set the outgoing interface to use\n"
 	"[ --debug ] is optional to any spi command.\n"
 	"[ --label <label> ] is optional to any spi command.\n"
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
@@ -427,8 +427,8 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 	size_t len;
 	/*
 	 * err_t ttodatav(const char *src, size_t srclen, int base,
-         *                char *dst, size_t dstlen, size_t *lenp,
-         *                char *errp, size_t errlen, int flags);
+	 *                char *dst, size_t dstlen, size_t *lenp,
+	 *                char *errp, size_t errlen, int flags);
 	 */
 	err_t ugh = ttodatav(optarg, 0, 0, NULL, 0, &len, err_buf, sizeof(err_buf), 0);
 
@@ -517,7 +517,7 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	zero(&said);
+	zero(&said);	/* OK: no pointer fields */
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
 		src_opt = NULL;
 	{
@@ -780,7 +780,7 @@ int main(int argc, char *argv[])
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFFFFFFFFF, &u);
+			ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
 			if (ugh == NULL && u < 0x100)
 				ugh = "0 - 0xFF are reserved";
 			if (ugh != NULL) {
@@ -806,15 +806,15 @@ int main(int argc, char *argv[])
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-			if (streq(optarg, "ah"))
+			if (streq(optarg, "ah")) {
 				proto = SA_AH;
-			else if (streq(optarg, "esp"))
+			} else if (streq(optarg, "esp")) {
 				proto = SA_ESP;
-			else if (streq(optarg, "tun"))
+			} else if (streq(optarg, "tun")) {
 				proto = SA_IPIP;
-			else if (streq(optarg, "comp"))
+			} else if (streq(optarg, "comp")) {
 				proto = SA_COMP;
-			else {
+			} else {
 				fprintf(stderr,
 					"%s: Invalid PROTO parameter: %s\n",
 					progname, optarg);
@@ -1004,7 +1004,7 @@ int main(int argc, char *argv[])
 			} else {
 				/* ??? what does this do?  Where is it documented? */
 				unsigned long u;
-				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
 
 				if (ugh != NULL) {
 					fprintf(stderr,
@@ -1429,6 +1429,13 @@ int main(int argc, char *argv[])
 
 		switch (alg) {
 		case XF_OTHER_ALG:
+			if (enckeylen == 0) {
+				if (debug)
+					fprintf(stdout, "%s: key not provided (NULL alg?).\n",
+						progname);
+				break;
+
+			}
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
 						SADB_EXT_KEY_ENCRYPT,
 						enckeylen * 8,
@@ -1624,7 +1631,7 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if (pfkey_msg) {
+	if (pfkey_msg != NULL) {
 		pfkey_extensions_free(extensions);
 		pfkey_msg_free(&pfkey_msg);
 	}
@@ -1632,16 +1639,16 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%s: pfkey message buffer freed.\n",
 			progname);
 	}
-	if (authkey) {
-		memset((caddr_t)authkey, 0, authkeylen);
+	if (authkey != NULL) {
+		memset(authkey, 0, authkeylen);
 		free(authkey);
 	}
-	if (enckey) {
-		memset((caddr_t)enckey, 0, enckeylen);
+	if (enckey != NULL) {
+		memset(enckey, 0, enckeylen);
 		free(enckey);
 	}
-	if (iv) {
-		memset((caddr_t)iv, 0, ivlen);
+	if (iv != NULL) {
+		memset(iv, 0, ivlen);
 		free(iv);
 	}
 
@@ -1702,11 +1709,11 @@ int main(int argc, char *argv[])
 						progname);
 				}
 				continue;
-			} else {
-				if (debug) {
-					printf("%s: parseable PF_KEY message.\n",
-						progname);
-				}
+			}
+
+			if (debug) {
+				printf("%s: parseable PF_KEY message.\n",
+					progname);
 			}
 			if ((pid_t)pfkey_msg->sadb_msg_pid == mypid) {
 				if (saref_me || dumpsaref) {
@@ -1714,7 +1721,8 @@ int main(int argc, char *argv[])
 						(struct sadb_x_saref *)
 						extensions[
 							K_SADB_X_EXT_SAREF];
-					if (s) {
+
+					if (s != NULL) {
 						printf("%s: saref=%d/%d\n",
 						       progname,
 						       s->sadb_x_saref_me,

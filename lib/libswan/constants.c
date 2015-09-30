@@ -1,6 +1,6 @@
 /*
  * tables of names for values defined in constants.h
- * Copyright (C) 2012 Paul Wouteirs <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
  *
@@ -179,24 +179,22 @@ const char *const debug_bit_names[] = {
 	"dpd",
 	"oppoinfo",	/* 14 */
 	"whackwatch",
-	"res16",
-	"res17",
-	"res18",
-	"res19",
-	"private",	/* 20 */
-	"impair-delay-adns-key-answer",	/* 21 */
-	"impair-delay-adns-txt-answer",	/* 22 */
-	"impair-bust-mi2",	/* 23 */
-	"impair-bust-mr2",	/* 24 */
-	"impair-sa-creation",	/* 25 */
-	"impair-die-oninfo",	/* 26 */
-	"impair-jacob-two-two",	/* 27 */
-	"impair-major-version-bump",	/* 28 */
-	"impair-minor-version-bump",	/* 29 */
-	"impair-retransmits",	/* 30 */
-	"impair-send-bogus-isakmp-flag",	/* 31 */
-	"impair-send-ikev2-ke",	/* 32 */
-	"impair-send-key-size-check", /* 33 */
+	"private",
+	"impair-bust-mi2",
+	"impair-bust-mr2",
+	"impair-sa-creation",
+	"impair-die-oninfo",
+	"impair-jacob-two-two",
+	"impair-major-version-bump",
+	"impair-minor-version-bump",
+	"impair-retransmits",
+	"impair-send-bogus-payload-flag",
+	"impair-send-bogus-isakmp-flag",
+	"impair-send-ikev2-ke",
+	"impair-send-no-delete",
+	"impair-send-no-ikev2-auth",
+	"impair-force-fips",
+	"impair-send-key-size-check",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -270,6 +268,7 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 /* dual-use: for enum_name and for bitnamesof */
 const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
@@ -285,15 +284,20 @@ const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2V",
 	"ISAKMP_NEXT_v2TSi",
 	"ISAKMP_NEXT_v2TSr",
-	"ISAKMP_NEXT_v2E",
+	"ISAKMP_NEXT_v2SK",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
+	"ISAKMP_NEXT_v2GSPM", /* RFC 6467 */
+	"ISAKMP_NEXT_v2IDG", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2GSA", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2KD", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2SKF", /* RFC 7383 */
 	NULL	/* termination for bitnamesof() */
 };
 
 /*
- * Old IKEv1 method, different from
- * draft-smyslov-ipsecme-ikev2-fragmentation-01
+ * Old IKEv1 method applied to IKEv2, different from IKEv2's RFC7383
+ * Can be removed
  */
 static const char *const payload_name_ikev2_private_use[] = {
 	"ISAKMP_NEXT_v2IKE_FRAGMENTATION",
@@ -308,7 +312,7 @@ static enum_names payload_names_ikev2_private_use = {
 
 static enum_names payload_names_ikev2_main = {
 	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2EAP,
+	ISAKMP_NEXT_v2SKF,
 	payload_name_ikev2_main,
 	&payload_names_ikev2_private_use
 };
@@ -323,7 +327,7 @@ enum_names ikev2_payload_names = {
 /* either V1 or V2 payload kind */
 static enum_names payload_names_ikev2copy_main = {
 	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2EAP,
+	ISAKMP_NEXT_v2SKF,
 	payload_name_ikev2_main,
 	&payload_names_ikev1_private_use
 };
@@ -382,15 +386,16 @@ static const char *const exchange_name_doi[] = {
 	"ISAKMP_XCHG_NGRP",
 };
 
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
-	"ISAKMP_v2_SA_INIT",
+	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
 	"ISAKMP_v2_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
-	"ISAKMP_v2_IKE_SESSION_RESUME",
-	"ISAKMP_v2_GSA_AUTH",
-	"ISAKMP_v2_GSA_REGISTRATION",
-	"ISAKMP_v2_GSA_REKEY",
+	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
+	"ISAKMP_v2_GSA_AUTH", /* draft-yeung-g-ikev2 */
+	"ISAKMP_v2_GSA_REGISTRATION", /* draft-yeung-g-ikev2 */
+	"ISAKMP_v2_GSA_REKEY", /* draft-yeung-g-ikev2 */
 };
 
 static const char *const exchange_name_private_use[] = {
@@ -660,6 +665,7 @@ static const char *const ike_idtype_name[] = {
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
 	"ID_FC_NAME", /* RFC 3554 */
+	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
 };
 
 /* IKEv1 */
@@ -670,7 +676,7 @@ enum_names ike_idtype_names = {
 };
 
 static enum_names ikev2_idtype_names_3 = {
-	ID_DER_ASN1_DN, ID_FC_NAME,
+	ID_DER_ASN1_DN, ID_NULL,
 	&ike_idtype_name[ID_DER_ASN1_DN],
 	NULL
 };
@@ -1159,12 +1165,12 @@ static const char *const oakley_enc_name[] = {
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"DISABLED-OAKLEY_CAMELLIA_CBC", /* 8 */
+	"OAKLEY_CAMELLIA_CBC", /* 8 */
 	"UNUSED_9",
 	"UNUSED_10",
 	"UNUSED_11",
 	"UNUSED_12",
-	"DISABLED-OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"OAKLEY_AES_CTR", /* stolen from IKEv2 */
 	"OAKLEY_AES_CCM_A",
 	"OAKLEY_AES_CCM_B",
 	"OAKLEY_AES_CCM_16",
@@ -1363,11 +1369,12 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_ECDSA_P384",
 	"IKEv2_AUTH_ECDSA_P521",
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
+	"IKEv2_AUTH_NULL",
 };
 
 enum_names ikev2_auth_names = {
 	IKEv2_AUTH_RSA,
-	IKEv2_AUTH_GSPM,
+	IKEv2_AUTH_NULL,
 	ikev2_auth_name,
 	NULL
 };
@@ -1603,12 +1610,19 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED",
 	"v2N_IKEV2_MESSAGE_ID_SYNC",
 	"v2N_IPSEC_REPLAY_COUNTER_SYNC",
-	"v2N_SECURE_PASSWORD_METHODS",    /* 16423 */
+	"v2N_SECURE_PASSWORD_METHODS",
+	"v2N_PSK_PERSIST",
+	"v2N_PSK_CONFIRM",
+	"v2N_ERX_SUPPORTED",
+	"v2N_IFOM_CAPABILITY",
+	"v2N_SENDER_REQUEST_ID",
+	"v2N_IKEV2_FRAGMENTATION_SUPPORTED",    /* 16430 */
+	"v2N_SIGNATURE_HASH_ALGORITHMS",
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_SECURE_PASSWORD_METHODS,
+	v2N_SIGNATURE_HASH_ALGORITHMS,
 	ikev2_notify_name_16384,
 	NULL
 };
@@ -1659,11 +1673,13 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_USE_ASSIGNED_HoA",
 	"v2N_TEMPORARY_FAILURE",
 	"v2N_CHILD_SA_NOT_FOUND",	/* 45 */
+	"v2N_INVALID_GROUP_ID",
+	"v2N_AUTHORIZATION_FAILED",
 };
 
 enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
-	v2N_CHILD_SA_NOT_FOUND,
+	v2N_AUTHORIZATION_FAILED,
 	ikev2_notify_name,
 	&ikev2_notify_names_16384
 };
@@ -2053,12 +2069,13 @@ static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_RSA",
 	"PPK_XAUTH",
+	"PPK_NULL",
 	NULL
 };
 
 enum_names ppk_names = {
 	PPK_PSK,
-	PPK_XAUTH,
+	PPK_NULL,
 	ppk_name,
 	NULL
 };
@@ -2214,7 +2231,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
  */
 const char *bitnamesof(const char *const table[], lset_t val)
 {
-	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
 
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }

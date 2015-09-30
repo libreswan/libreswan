@@ -1,6 +1,7 @@
-/* state and event objects
+/* state and event objects, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2001,2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -9,6 +10,9 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,7 +23,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #ifndef _STATE_H
@@ -39,6 +42,9 @@
 #ifdef XAUTH_HAVE_PAM
 # include <signal.h>
 #endif
+
+#include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
+#include "state_entry.h"
 
 /* Message ID mechanism.
  *
@@ -143,6 +149,17 @@ struct ike_frag {
 	size_t size;
 };
 
+struct ikev2_frag {
+	struct ikev2_frag *next;
+	chunk_t cipher;
+	/* the rest are only used in re-assembly */
+	int np;
+	int index;
+	int total;
+	unsigned int iv;
+	chunk_t plain;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -164,24 +181,24 @@ struct hidden_variables {
 						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
 	lset_t st_nat_traversal;                /* bit field of permitted
-	                                         * methods. If non-zero, then
-	                                         * NAT-T has been detected, and
-	                                         * should be used. */
+						 * methods. If non-zero, then
+						 * NAT-T has been detected, and
+						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
 };
 
 #define unset_suspended(st) { \
-	st->st_suspended_md = NULL; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	(st)->st_suspended_md = NULL; \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 #define set_suspended(st, md) { \
-	passert(st->st_suspended_md == NULL); \
-	st->st_suspended_md = md; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	passert((st)->st_suspended_md == NULL); \
+	(st)->st_suspended_md = (md); \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
@@ -193,21 +210,6 @@ struct traffic_selector {
 	ip_address low;
 	ip_address high;
 };
-
-#ifdef HAVE_LABELED_IPSEC
-/* security label length should not exceed 256 in most cases,
- * (discussed with kernel and selinux people).
- */
-#define MAX_SECCTX_LEN    257 /* including '\0'*/
-struct xfrm_user_sec_ctx_ike {
-	u_int16_t len;
-	u_int16_t exttype;
-	u_int8_t ctx_alg; /* LSMs: e.g., selinux == 1 */
-	u_int8_t ctx_doi;
-	u_int16_t ctx_len;
-	char sec_ctx_value[MAX_SECCTX_LEN];
-};
-#endif
 
 /* state object: record the state of a (possibly nascent) SA
  *
@@ -222,23 +224,28 @@ struct state {
 
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
+	bool has_pam_thread;                    /* per state PAM thread flag */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
-	                                         * to be replaced with IKEv2
+						 * to be replaced with IKEv2
 						 */
 
 	struct connection *st_connection;       /* connection for this SA */
 	int st_whack_sock;                      /* fd for our Whack TCP socket.
-	                                         * Single copy: close when
-	                                         * freeing struct.
-	                                         */
+						 * Single copy: close when
+						 * freeing struct.
+						 */
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	struct ike_frag *ike_frags;		/* collected ike fragments */
+	/* collected ike fragments */
+	union {
+		struct ike_frag *ike_frags;
+		struct ikev2_frag *ikev2_frags;
+	};
 
 	struct trans_attrs st_oakley;
 
@@ -264,12 +271,12 @@ struct state {
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
 
-	struct db_sa *st_sadb;
+	struct db_sa *st_sadb;			/* note: owner of heap allocation */
 
 	/** IKEv1-only things **/
 
 	msgid_t st_msgid;                       /* MSG-ID from header.
-	                                           Network Order! */
+						   Network Order! */
 	bool st_msgid_reserved;			/* is msgid reserved yet? */
 
 	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
@@ -292,6 +299,9 @@ struct state {
 	/* end of IKEv1-only things */
 
 	/** IKEv2-only things **/
+
+	/* Am I the original initator, or orignal responder (v2 IKE_I flag). */
+	enum original_role st_original_role;
 
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
@@ -320,6 +330,7 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
+	struct ikev2_frag *st_tfrags;		/* Transmitted fragments */
 
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -344,20 +355,45 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	/*
+	 * Diffie-Hellman exchange values
+	 *
+	 * st_sec_nss is our local ephemeral secret.  Its sole use is an input
+	 * in the calculation of the shared secret.
+	 *
+	 * st_gi and st_gr (above) are the initiator and responder public
+	 * values that are shipped in KE payloads.
+	 * On initiator: st_gi = GROUP_GENERATOR ^ st_sec_nss
+	 *               st_gr comes from KE
+	 * On responder: st_gi comes from KE
+	 *               st_gr = GROUP_GENERATOR ^ st_sec_nss
+	 *
+	 * st_pubk_nss is ???
+	 *
+	 * st_shared_nss is the output of the DH: an ephemeral secret
+	 * shared by the two ends.  Of course the other end might
+	 * be a man in the middle unless we authenticate.
+	 * st_shared_nss = GROUP_GENERATOR ^ (initiator's st_sec_nss * responder's st_sec_nss)
+	 *               = st_gr ^ initiator's st_sec_nss
+	 *               = sg_gi ^ responder's st_sec_nss
+	 */
 
-	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
+	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
+
+	SECKEYPrivateKey *st_sec_nss;	/* our secret (owned by NSS) */
 
 	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
 
 	PK11SymKey *st_shared_nss;	/* Derived shared secret
-	                                 * Note: during Quick Mode,
+					 * Note: during Quick Mode,
 					 * presence indicates PFS
 					 * selected.
 					 */
+	/* end of DH values */
+
 	enum crypto_importance st_import;       /* relative priority of crypto
-	                                         * operations
-	                                         */
+						 * operations
+						 */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
@@ -375,10 +411,10 @@ struct state {
 					 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
-	                                         * performing cryptographic
-	                                         * operations on this state at
-	                                         * this time
-	                                         */
+							 * performing cryptographic
+							 * operations on this state at
+							 * this time
+							 */
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
@@ -395,6 +431,10 @@ struct state {
 	PK11SymKey *st_skey_er_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
+	chunk_t st_skey_initiator_salt;
+	chunk_t st_skey_responder_salt;
+	chunk_t st_skey_chunk_SK_pi;
+	chunk_t st_skey_chunk_SK_pr;
 
 	/* connection included in AUTH */
 	struct traffic_selector st_ts_this;
@@ -402,10 +442,18 @@ struct state {
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct event *st_event;		/* timer event for this state object */
+	struct pluto_event *st_event;		/* timer event for this state object */
 
-	struct state *st_hashchain_next;	/* next in state hashbucket chain */
-	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
+	/*
+	 * hash table entry indexed by ICOOKIE+RCOOKIE
+	 */
+	struct state_entry st_hash_entry;
+	/*
+	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
+	 *
+	 * Used to robustly find a state based only on ICOOKIE.
+	 */
+	struct state_entry st_icookie_hash_entry;
 
 	struct hidden_variables hidden_variables;
 
@@ -414,16 +462,18 @@ struct state {
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
-	struct event *st_liveness_event;
+	struct pluto_event *st_liveness_event;
+	struct pluto_event *st_rel_whack_event;
+	struct pluto_event *st_send_xauth_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
 	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
-	                                           to receive */
+						   to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct event *st_dpd_event;		/* backpointer for DPD events */
+	struct pluto_event *st_dpd_event;		/* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
@@ -436,6 +486,8 @@ struct state {
 
 extern u_int16_t pluto_port;		/* Pluto's port */
 extern u_int16_t pluto_nat_port;	/* Pluto's NATT floating port */
+extern u_int16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
+extern u_int16_t pluto_xfrmlifetime;	/* only used to display in status */
 
 extern bool states_use_connection(const struct connection *c);
 
@@ -444,8 +496,7 @@ extern bool states_use_connection(const struct connection *c);
 extern struct state *new_state(void);
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void unhash_state(struct state *st);
-extern void rehash_state(struct state *st);
+extern void rehash_state(struct state *st, const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
@@ -465,18 +516,13 @@ extern struct state
 	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
-	*find_sender(size_t packet_len, u_char * packet);
+	*find_likely_sender(size_t packet_len, u_char * packet);
 
-#ifdef HAVE_LABELED_IPSEC
-extern struct state *find_state_ikev1_loopback(const u_char *icookie,
-					       const u_char *rcookie,
-					       msgid_t msgid,
-					       const struct msg_digest *md);
-#endif
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
-extern struct state *find_state_ikev2_parent_init(const u_char *icookie);
+extern struct state *find_state_ikev2_parent_init(const u_char *icookie,
+						  enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,
@@ -516,7 +562,9 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
+extern void release_v2fragments(struct state *st);
 extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
+extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,
 				    struct connection *c);
@@ -529,16 +577,19 @@ extern bool dpd_active_locally(const struct state *st);
  * use these to change state, this gives us a handle on all state changes
  * which is good for tracking bugs, logging and anything else you might like
  */
-#define refresh_state(st) log_state(st, st->st_state)
-#define fake_state(st, new_state) log_state(st, new_state)
-#define change_state(st, new_state) \
-	do { \
-		if ((new_state) != (st)->st_state) { \
-			log_state((st), (new_state)); \
-			(st)->st_state = (new_state); \
-		} \
-	} while (0)
+#define refresh_state(st) log_state((st), (st)->st_state)
+#define fake_state(st, new_state) log_state((st), (new_state))
+extern void change_state(struct state *st, enum state_kind new_state);
 
 extern bool state_busy(const struct state *st);
+extern void clear_dh_from_state(struct state *st);
+extern bool drop_new_exchanges(void);
+extern bool require_ddos_cookies(void);
+extern void show_globalstate_status(void);
+extern void log_newest_sa_change(char *f, struct state *const st);
+
+#ifdef XAUTH_HAVE_PAM
+void ikev2_free_auth_pam(so_serial_t st_serialno);
+#endif
 
 #endif /* _STATE_H */

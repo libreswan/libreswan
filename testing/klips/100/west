@@ -42,7 +42,7 @@ case "$1" in
 		modprobe ipsec
 		ipsec tncfg --attach --virtual $ipsecdev --physical eth2
 		ifconfig $ipsecdev $sg1 broadcast $bcast1 netmask $nmask1
-#		ifconfig $ipsecdev $sg1 
+#		ifconfig $ipsecdev $sg1
 		;;
 	unload)
 		ipsec tncfg --detach --virtual $ipsecdev
