@@ -1,0 +1,4 @@
+this test requires that the clear-or-private policy has a
+hardcoded lower priority (higher number) than the tunnel
+priority, or else east will reply in clear which would be
+dropped by road.

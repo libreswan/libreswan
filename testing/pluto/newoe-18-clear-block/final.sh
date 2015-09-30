@@ -1,3 +1,4 @@
+ipsec look
 # should not show any hits
 grep "fos_" /tmp/pluto.log
 : ==== cut ====

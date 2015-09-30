@@ -177,7 +177,7 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	int connmtu;
 
-	int sa_priority;
+	uint32_t sa_priority;
 	reqid_t sa_reqid;
 	int nflog_group;
 

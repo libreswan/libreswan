@@ -570,6 +570,7 @@ static const struct option long_opts[] = {
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
+	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -1483,16 +1484,6 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 
-		if (startswith(&vc[2], "git")) {
-			/*
-			 * when people build RPMs from GIT, make sure they
-			 * get blamed appropriately, and that we get some way
-			 * to identify who did it, and when they did it.
-			 */
-			libreswan_log(
-				"@(#) built on "__DATE__
-				":" __TIME__ " by " BUILDER);
-		}
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
@@ -1571,7 +1562,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_FORCE_FIPS enabled");
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
 		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
-
+	if (DBGP(IMPAIR_SEND_ZERO_GX))
+		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
 
 /* Initialize all of the various features */
 

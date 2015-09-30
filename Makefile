@@ -611,11 +611,19 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 deb:
-	#cp debian/changelog.in debian/changelog
-	#cp debian/NEWS.in debian/NEWS
-	#sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
+	cp debian/changelog.in debian/changelog
+	cp debian/NEWS.in debian/NEWS
+	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
 	debuild -i -us -uc -b
 	#debuild -S -sa
+	@echo "to build optional KLIPS kernel module, run make deb-klips"
+
+deb-klips:
+	sudo module-assistant prepare -u .
+	sudo dpkg -i ../libreswan-modules-source_`make -s showdebversion`_all.deb
+	sudo module-assistant -u . prepare
+	sudo module-assistant -u . build libreswan
+
 
 release:
 	packaging/utils/makerelease

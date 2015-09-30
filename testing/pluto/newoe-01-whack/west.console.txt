@@ -2,7 +2,7 @@
 west #
  cp policies/* /etc/ipsec.d/policies/
 west #
- echo "192.0.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
+ echo "192.1.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
 west #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
@@ -30,6 +30,13 @@ PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # should show traffic
+west #
+ ipsec whack --trafficstatus
+000  
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL'
+000  
 west #
  echo done
 done
@@ -65,10 +72,6 @@ src 192.1.2.45/32 dst 0.0.0.0/0
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.0/24 
-	dir out priority 2088 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.1.2.45/32 dst 192.0.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport

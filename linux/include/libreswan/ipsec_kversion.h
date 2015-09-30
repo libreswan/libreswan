@@ -5,9 +5,10 @@
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  * Copyright (C) 2003 - 2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 - 2011 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2014 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Greg Ungerer <gerg@uclinux.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -540,6 +541,11 @@ typedef struct ctl_table ctl_table;
 # else
 #  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,d)
 # endif
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+# define memcpy_from_msg(a,b,c)        memcpy_fromiovec(a,(b)->msg_iov,c)
+# define skb_copy_datagram_msg(a,b,c,d) skb_copy_datagram_iovec(a,b,(c)->msg_iov,d)
 #endif
 
 #if !defined(DEFINE_RWLOCK)

@@ -210,7 +210,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	-DBUILDER=\"${BUILDER}\" \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
@@ -259,7 +258,6 @@ OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 SYSDEP_SRC=sysdep_${OSDEP}.c
 SYSDEP_OBJ=sysdep_${OSDEP}.o
 
-BUILDER=${shell echo ${USER}@`hostname` }
 # End of configuration coping options.
 
 LDFLAGS+=${NSSLIBS}
@@ -370,6 +368,7 @@ DISTSRC = \
 	nss_cert_vfy.c nss_cert_vfy.h \
 	nss_ocsp.c nss_ocsp.h \
 	nss_crl_import.c nss_crl_import.h \
+	nss_err.c nss_err.h \
 	${UDPFROMTO_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
@@ -410,6 +409,7 @@ OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
 OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
 OBJSPLUTO += nss_ocsp.o nss_crl_import.o
+OBJSPLUTO += nss_err.o
 OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
 
 OBJSADNS = adns.o

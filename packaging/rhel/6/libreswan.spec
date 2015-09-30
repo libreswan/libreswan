@@ -6,7 +6,7 @@
 %global USE_NM true
 %global USE_LINUX_AUDIT true
 
-%global fipscheck_version 1.2.0-1
+%global fipscheck_version 1.2.0-7
 %global buildefence 0
 %global development 0
 %global cavstests 0
@@ -15,7 +15,7 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.14
+Version: 3.15
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -210,6 +210,6 @@ fi
 %endif
 
 %changelog
-* Tue Aug 11 2015 Team Libreswan <team@libreswan.org> - 3.14-1
+* Mon Aug 24 2015 Team Libreswan <team@libreswan.org> - 3.15-1
 - Automated build from release tar ball
 

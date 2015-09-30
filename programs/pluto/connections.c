@@ -1337,9 +1337,6 @@ void add_connection(const struct whack_message *wm)
 #endif
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
-		c->sa_priority = wm->sa_priority;
-		c->nflog_group = wm->nflog_group;
-
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;
@@ -1355,8 +1352,10 @@ void add_connection(const struct whack_message *wm)
 		c->modecfg_domain = wm->modecfg_domain;
 		c->modecfg_banner = wm->modecfg_banner;
 
-		}
+		} /* !NEVER_NEGOTIATE() */
 
+		c->nflog_group = wm->nflog_group;
+		c->sa_priority = wm->sa_priority;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
@@ -1436,7 +1435,7 @@ void add_connection(const struct whack_message *wm)
 		/* force all oppo connections to have a client */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			c->spd.that.has_client = TRUE;
-			c->spd.that.client.maskbits = 0;
+			c->spd.that.client.maskbits = 0; /* shouldn't this be 32 for v4? */
 		}
 
 		if (c->policy & POLICY_GROUP) {
@@ -2462,8 +2461,9 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			ipstr_buf b;
 
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-					" but \"%s\" forbids connection",
-					ipstr(me, &b), pluto_port, c->name);
+					" but \"%s\" kind=%s forbids connection",
+					ipstr(me, &b), pluto_port, c->name,
+					enum_name(&connection_kind_names, c->kind));
 			*cp = NULL;
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -3680,7 +3680,7 @@ void show_one_connection(struct connection *c)
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority != 0)
-		snprintf(sapriostr, sizeof(sapriostr), "%lu", c->sa_priority);
+		snprintf(sapriostr, sizeof(sapriostr), "%u", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 

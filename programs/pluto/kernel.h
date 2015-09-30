@@ -116,7 +116,7 @@ struct kernel_sa {
 #endif
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
-	unsigned long sa_priority;
+	uint32_t sa_priority;
 };
 
 struct raw_iface {
@@ -165,7 +165,7 @@ struct kernel_ops {
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
 			   deltatime_t use_lifetime,
-			   unsigned long sa_priority,
+			   uint32_t sa_priority,
 			   enum pluto_sadb_operations op,
 			   const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -379,6 +379,7 @@ extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t new_spi,
 			      int proto, enum eroute_type esatype,
 			      const struct pfkey_proto_info *proto_info,
+			      uint32_t sa_priority,
 			      unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
 			      , const char *policy_label
@@ -431,7 +432,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       deltatime_t use_lifetime,
-		       unsigned long sa_priority,
+		       uint32_t sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC

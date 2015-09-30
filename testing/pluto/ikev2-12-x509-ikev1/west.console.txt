@@ -157,7 +157,7 @@ west #
 010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 16000ms for response
 010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 32000ms for response
 031 "westnet-eastnet-ikev2" #1: max number of retransmissions (6) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
-000 "westnet-eastnet-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-ikev2" #1: deleting state #1 (STATE_MAIN_I1)
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -184,6 +184,7 @@ east-ec                                                      P,,
 hashsha2                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
+road                                                         P,,  
 west                                                         u,u,u
 west #
  echo done
@@ -207,6 +208,7 @@ east-ec                                                      P,,
 hashsha2                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
+road                                                         P,,  
 west                                                         u,u,u
 west #
 west #

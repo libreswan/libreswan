@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --debug-all --impair-send-zero-gx --impair-retransmits
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

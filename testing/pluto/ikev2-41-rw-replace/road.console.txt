@@ -25,8 +25,8 @@ road #
 133 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I1: initiate
 133 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha group=MODP2048}
-002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,ST=Ontario,C=ca OK
-002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated tunnel [192.0.2.100,192.0.2.100:0-65535 0] -> [0.0.0.0,255.255.255.255:0-65535 0]
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
@@ -124,13 +124,13 @@ road #
 000  
 000 Connection list:
 000  
-000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
+000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east
 000 "road-east-x509-ipv4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
-000 "road-east-x509-ipv4":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -138,13 +138,13 @@ road #
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "road-east-x509-ipv4":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-x509-ipv4":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
+000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
 000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset; mycert=road; hiscert=east
 000 "road-east-x509-ipv4"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
-000 "road-east-x509-ipv4"[1]:   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -280,13 +280,13 @@ road #
 000  
 000 Connection list:
 000  
-000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
+000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east
 000 "road-east-x509-ipv4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
-000 "road-east-x509-ipv4":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -294,13 +294,13 @@ road #
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "road-east-x509-ipv4":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-x509-ipv4":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #4
+000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #4
 000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset; mycert=road; hiscert=east
 000 "road-east-x509-ipv4"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
-000 "road-east-x509-ipv4"[1]:   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -381,10 +381,10 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
 east                                                         P,,  
 east-ec                                                      P,,  
 hashsha2                                                     P,,  
-mainca                                                       ,,   
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         u,u,u

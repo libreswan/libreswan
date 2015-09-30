@@ -1,0 +1,39 @@
+/testing/guestbin/swan-prep
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.3.0/24" >> /etc/ipsec.d/policies/clear-or-private
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add road-east-ikev2
+002 added connection description "road-east-ikev2"
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+000  
+006 #2: "road-east-ikev2", type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='@road'
+000  
+east #
+ # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
+east #
+ ipsec status | grep road-east | sed 's/"road-east-ikev2".*/"road-east-ikev2" --- cut ---/' | grep "#"
+000 #2: "road-east-ikev2" --- cut ---
+000 #2: "road-east-ikev2" --- cut ---
+000 #1: "road-east-ikev2" --- cut ---
+000 #1: "road-east-ikev2" --- cut ---
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

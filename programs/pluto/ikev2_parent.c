@@ -376,8 +376,15 @@ static bool justship_v2KE(struct state *st UNUSED,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (!out_chunk(*g, &kepbs, "ikev2 g^x"))
-		return FALSE;
+	if (DBGP(IMPAIR_SEND_ZERO_GX))	{
+		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
+		/* Only used to test sending/receiving bogus g^x */
+		if (!out_zero(g->len, &kepbs, "ikev2 impair g^x == 0"))
+			return FALSE;
+	} else {
+		if (!out_chunk(*g, &kepbs, "ikev2 g^x"))
+			return FALSE;
+	}
 
 	close_output_pbs(&kepbs);
 	return TRUE;
@@ -2105,7 +2112,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct state *const pst = md->st;	/* parent's state object */
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 
-	finish_dh_v2(pst, r);
+	if (!finish_dh_v2(pst, r))
+		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
@@ -2692,7 +2700,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	/* extract calculated values from r */
-	finish_dh_v2(st, r);
+	if (!finish_dh_v2(st, r))
+		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))

@@ -1,0 +1,5 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder,
+using RAW RSA keys for authentication.
+
+SA priority is set manually to 1001 on bothsides
+

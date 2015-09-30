@@ -195,6 +195,7 @@ const char *const debug_bit_names[] = {
 	"impair-send-no-ikev2-auth",
 	"impair-force-fips",
 	"impair-send-key-size-check",
+	"impair-send-zero-gx",
 	NULL	/* termination for bitnamesof() */
 };
 

@@ -68,6 +68,7 @@
 #include "nss_cert_load.h"
 #include "nss_cert_vfy.h"
 #include "nss_crl_import.h"
+#include "nss_err.h"
 
 /* NSS */
 #include <prtime.h>
@@ -371,45 +372,11 @@ char *make_crl_uri_str(chunk_t *uri)
 	return uri_str;
 }
 
-static void log_crl_import_err(int err)
+static void dbg_crl_import_err(int err)
 {
-	switch(err) {
-	case SEC_ERROR_CRL_EXPIRED:
-		DBG_log("CRL is expired");
-		break;
-	case SEC_ERROR_CRL_BAD_SIGNATURE:
-		DBG_log("CRL has a bad signature");
-		break;
-	case SEC_ERROR_CRL_INVALID:
-		DBG_log("CRL has an invalid format");
-		break;
-	case SEC_ERROR_OLD_CRL:
-		DBG_log("CRL is too old");
-		break;
-	case SEC_ERROR_REVOKED_CERTIFICATE_CRL:
-		DBG_log("CRL is from a revoked certificate!");
-		break;
-	case SEC_ERROR_CRL_NOT_YET_VALID:
-		DBG_log("CRL is not yet valid");
-		break;
-	case SEC_ERROR_CRL_NOT_FOUND:
-		DBG_log("CRL was not found?");
-		break;
-	case SEC_ERROR_CRL_INVALID_VERSION:
-	case SEC_ERROR_CRL_V1_CRITICAL_EXTENSION:
-	case SEC_ERROR_CRL_UNKNOWN_CRITICAL_EXTENSION:
-		DBG_log("CRL has an invalid version or critical extension");
-		break;
-	case SEC_ERROR_CRL_ALREADY_EXISTS:
-		DBG_log("CRL already exists");
-		break;
-	case SEC_ERROR_CRL_IMPORT_FAILED:
-		DBG_log("CRL import failure");
-		break;
-	default:
-		DBG_log("Other NSS error [%d]", err);
-		break;
-	}
+	DBG(DBG_X509,
+	    DBG_log("CRL import error: %s",
+		    nss_err_str((PRInt32)err)));
 }
 
 bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
@@ -440,7 +407,7 @@ bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
 		DBG_log("_import_crl internal error");
 		ret = FALSE;
 	} else if (r != 0) {
-		log_crl_import_err(r);
+		dbg_crl_import_err(r);
 		ret = FALSE;
 	} else {
 		DBG_log("CRL imported");

@@ -457,7 +457,7 @@ static bool mast_raw_eroute(const ip_address *this_host,
 			    unsigned int satype,
 			    const struct pfkey_proto_info *proto_info,
 			    deltatime_t use_lifetime,
-			    unsigned long sa_priority,
+			    uint32_t sa_priority,
 			    enum pluto_sadb_operations op,
 			    const char *text_said
 #ifdef HAVE_LABELED_IPSEC

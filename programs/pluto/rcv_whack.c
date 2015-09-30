@@ -672,7 +672,7 @@ static void whack_handle(int whackctlfd)
 				ugh = "";               /* bail early, but without complaint */
 			} else {
 				ugh = builddiag(
-					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools and KLIPS code.",
+					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
 					msg.magic, WHACK_MAGIC);
 			}
 		} else if ((ugh = unpack_whack_msg(&wp)) != NULL) {

@@ -699,6 +699,8 @@ static const struct option long_opts[] = {
 	 */
 	{ "impair-send-key-size-check", no_argument, NULL,
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
+	{ "impair-send-zero-gx", no_argument, NULL,
+		IMPAIR_SEND_ZERO_GX_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },

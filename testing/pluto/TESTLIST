@@ -57,6 +57,10 @@ kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
+kvmplutotest	ikev2-45-impair-gx-01			good
+kvmplutotest	ikev2-45-impair-gx-02			good
+kvmplutotest	ikev2-46-basic-psk-netkey		good
+kvmplutotest	ikev2-47-priority			wip
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -116,6 +120,8 @@ kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
+kvmplutotest	ikev1-impair-gx-01			good
+kvmplutotest	ikev1-impair-gx-02			good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -164,12 +170,12 @@ kvmplutotest	ikev2-frag-02-ipv6			good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
-kvmplutotest	newoe-02-klips				good
+kvmplutotest	newoe-02-klips				wip
 kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-01				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
-kvmplutotest	newoe-06-prio				wip
+kvmplutotest	newoe-06-prio				good
 kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
@@ -178,9 +184,10 @@ kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-11-failike			good
 kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good
-kvmplutotest	newoe-15-poc-block			good
-kvmplutotest	newoe-16-poc-pass-hold			good
-kvmplutotest	newoe-17-poc-clear			good
+kvmplutotest	newoe-14-clear-in-block-clear		good
+kvmplutotest	newoe-15-portpass			good
+kvmplutotest	newoe-16-pass-hold			good
+kvmplutotest	newoe-17-block-in-clear-clear		good
 # 
 kvmplutotest 	newoe-18-poc-poc 			good
 kvmplutotest 	newoe-18-poc-cop 			good
