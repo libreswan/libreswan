@@ -1,12 +1,17 @@
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
+ipsec whack --shuntstatus
 sleep 10
 # send a ping that still hits negotiationshunt=hold and fails
 # wait on OE retransmits and rekeying
 ping -n -w 2 -c 1 -I 192.1.3.209 192.1.2.23
+ipsec whack --shuntstatus
 sleep 10
+ipsec whack --shuntstatus
 # sleep to let timers install failureshunt=pass
 sleep 30
+ipsec whack --shuntstatus
 sleep 30
+ipsec whack --shuntstatus
 # ping should go out in the clear now and get a reply
 ping -n -c 4 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus

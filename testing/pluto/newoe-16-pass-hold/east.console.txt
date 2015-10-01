@@ -13,11 +13,6 @@ east #
 east #
  sleep 5
 east #
- # temp workaround for outgoing packet matching packetdefault instead of private-or-clear
-east #
- ipsec auto --delete packetdefault
-002 "packetdefault": deleting connection
-east #
  ipsec whack --debug-all --impair-send-no-ikev2-auth
 east #
  echo "initdone"
