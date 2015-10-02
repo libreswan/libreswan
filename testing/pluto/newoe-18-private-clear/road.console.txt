@@ -25,10 +25,8 @@ initdone
 road #
  ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+3 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -52,12 +50,6 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority 1568 ptype main 
-src 192.1.3.209/32 dst 0.0.0.0/0 
-	dir out priority 2112 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -121,10 +113,8 @@ road #
 road #
  ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+3 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  echo done
 done
@@ -137,12 +127,6 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority 1568 ptype main 
-src 192.1.3.209/32 dst 0.0.0.0/0 
-	dir out priority 2112 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
