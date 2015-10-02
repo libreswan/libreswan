@@ -743,9 +743,14 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			if ((tmp->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				if (tmp->kind == CK_INSTANCE) {
 					if (addrinsubnet(&md->sender, &tmp->spd.that.client)) {
-						DBG(DBG_OPPO, DBG_log("passthrough conn %s was a match - suppressing NO_PROPSAL_CHOSEN reply",
-							tmp->name));
-						return STF_DROP;
+						DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
+
+						if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
+							DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
+								tmp->spd.that.client.maskbits,
+								c->spd.that.client.maskbits));
+							return STF_DROP;
+						}
 					}
 				}
 			}
