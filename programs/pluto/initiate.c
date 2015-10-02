@@ -1366,8 +1366,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
-				break;
 #endif
+				break;
 			case fos_his_client: /* IPSECKEY for his client */
 #ifdef USE_ADNS
 				/* note: {unshare|free}_id_content not needed for id: ephemeral */
@@ -1380,8 +1380,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
-				break;
 #endif
+				break;
 			default:
 				bad_case(next_step);
 			}
