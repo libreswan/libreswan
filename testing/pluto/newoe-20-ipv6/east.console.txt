@@ -50,10 +50,6 @@ src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
 	dir in priority 17536 ptype main 
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
-src 2001:db8:1:2::23/128 dst ::/0 
-	dir out priority 17664 ptype main 
-	tmpl src :: dst ::
-		proto esp reqid REQID mode transport
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::/64 
 	dir out priority 17600 ptype main 
 	tmpl src :: dst ::
