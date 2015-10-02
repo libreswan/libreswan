@@ -389,55 +389,20 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 }
 
-static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
-				  u_int16_t auth,
-				  enum ike_cert_type certtype,
-				  enum certpolicy policy,
-				  bool gotcertrequest,
-				  bool send_cert)
-{
-	DBG(DBG_CONTROL,
-	    DBG_log("thinking about whether to send my certificate:"));
-
-	DBG(DBG_CONTROL, {
-		struct esb_buf esb;
-
-		DBG_log("  I have RSA key: %s cert.type: %s ",
-		    enum_showb(&oakley_auth_names, auth, &esb),
-		    enum_show(&ike_cert_type_names, certtype));
-	});
-
-	DBG(DBG_CONTROL,
-	    DBG_log("  sendcert: %s and I did%s get a certificate request ",
-		    enum_show(&certpolicy_type_names, policy),
-		    gotcertrequest ? "" : " not"));
-
-	DBG(DBG_CONTROL,
-	    DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
-
-	if (!send_cert) {
-		DBG(DBG_CONTROL, {
-			if (auth == OAKLEY_PRESHARED_KEY)
-				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
-			else if (certtype == CERT_NONE)
-				DBG_log("I did not send a certificate because I do not have one.");
-			else if (policy == cert_sendifasked)
-				DBG_log("I did not send my certificate because I was not asked to.");
-			/* ??? should there be an additional else catch-all? */
-		});
-	}
-}
-
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
 	generalName_t *requested_ca = NULL;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	int auth_payload;
 	cert_t mycert = st->st_connection->spd.this.cert;
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	pb_stream r_sa_pbs;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
@@ -467,12 +432,26 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend);
 
-	doi_log_cert_thinking(md,
-			      st->st_oakley.auth,
+	send_authcerts = (send_cert &&
+		st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+		st->st_connection->send_ca == CA_SEND_ALL);
+
+	if (send_authcerts) {
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
+				mycert.u.nss_cert,
+				send_full_chain ? TRUE : FALSE);
+	}
+
+	if (chain_len < 1)
+		send_authcerts = FALSE;
+
+	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
 			      st->st_connection->spd.this.sendcert,
 			      st->hidden_variables.st_got_certrequest,
-			      send_cert);
+			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
 	send_cr = send_cert && !has_preloaded_public_key(st);
