@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --x509 --certchain
 Preparing X.509 files
 west #
- certutil -A -n "east_chain_intermediate_2" -d /etc/ipsec.d -t 'c,,' -a -i /testing/x509/cacerts/east_chain_intermediate_2.crt
+ certutil -A -n "east_chain_intermediate_2" -d sql:/etc/ipsec.d -t 'c,,' -a -i /testing/x509/cacerts/east_chain_intermediate_2.crt
 west #
- certutil -A -n "east_chain_intermediate_1" -d /etc/ipsec.d -t 'c,,' -a -i /testing/x509/cacerts/east_chain_intermediate_1.crt
+ certutil -A -n "east_chain_intermediate_1" -d sql:/etc/ipsec.d -t 'c,,' -a -i /testing/x509/cacerts/east_chain_intermediate_1.crt
 west #
  # confirm that the network is alive
 west #
