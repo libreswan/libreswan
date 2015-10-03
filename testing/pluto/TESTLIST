@@ -226,6 +226,7 @@ kvmplutotest	newoe-18-private-pocall			good
 kvmplutotest 	newoe-19-poc-poc-clear			good
 kvmplutotest 	newoe-20-ipv6				good
 kvmplutotest 	newoe-21-livenss-clear			good
+kvmplutotest	newoe-22-nat-poc-cop			good
 
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
