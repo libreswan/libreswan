@@ -129,6 +129,13 @@ extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 					     u_int8_t type,
 					     u_int8_t setnp);
 
+void doi_log_cert_thinking(u_int16_t auth,
+			   enum ike_cert_type certtype,
+			   enum certpolicy policy,
+			   bool gotcertrequest,
+			   bool send_cert,
+			   bool send_chain);
+
 #if 0	/* not yet disentangled from spdb.h */
 extern bool ikev1_out_sa(pb_stream *outs,
 		struct db_sa *sadb,

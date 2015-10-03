@@ -27,8 +27,6 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- export PLUTO_EVENT_RETRANSMIT_DELAY=2
-west #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
