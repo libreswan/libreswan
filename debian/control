@@ -19,7 +19,6 @@ Build-Depends: bison,
                libnss3-dev,
                libnss3-tools,
                libpam0g-dev,
-               libssl-dev (>= 0.9.8),
                libunbound-dev,
                man2html,
                po-debconf
@@ -35,7 +34,6 @@ Depends: bsdmainutils,
          libnss3,
          libnss3-tools,
          libunbound2,
-         openssl,
          ${misc:Depends},
          ${shlibs:Depends}
 Recommends: python
