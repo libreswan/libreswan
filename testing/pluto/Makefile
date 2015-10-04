@@ -38,7 +38,6 @@ endif
 ifeq ($(UPDATEONLY),)
 	rm -rf */OUTPUT
 	../utils/swantest
-	../utils/swantest --scancwd
 endif
 
 ${LIBRESWANSRCDIR}/testing/x509/keys/mainca.key: ${LIBRESWANSRCDIR}/testing/x509/dist_certs.py

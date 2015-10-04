@@ -91,7 +91,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
-	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
@@ -1418,7 +1417,7 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 struct starter_config *confread_load(const char *file,
 				     err_t *perr,
 				     bool resolvip,
-				     char *ctlbase,
+				     const char *ctlbase,
 				     bool setuponly)
 {
 	struct starter_config *cfg = NULL;

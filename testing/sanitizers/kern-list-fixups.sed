@@ -81,6 +81,8 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*AVX or AES-NI instructions are not detected.*$/d
 /^.*Neither AVX nor SSSE3 is available.*$/d
 /^.*sha1_ssse3: Neither AVX nor AVX2 nor SSSE3 is available\/usable\.$/d
+/^.*sha512_ssse3: Using AVX2 optimized SHA.*$/d
+/^.*sha256_ssse3: Using AVX2 optimized SHA-256.*$/d
 /^.*ipsec: module verification failed.*$/d
 /^.*ip6_tables: (C) 2000-2006 Netfilter Core Team$/d
 /^.*NET: Registered protocol family 24$/d

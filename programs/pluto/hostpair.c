@@ -1,4 +1,4 @@
-/* information about connections between hosts and clients
+/* information about connections between hosts
  *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
@@ -189,8 +189,7 @@ void remove_host_pair(struct host_pair *hp)
 }
 
 /* find head of list of connections with this pair of hosts */
-struct connection *find_host_pair_connections(const char *func,
-					      const ip_address *myaddr,
+struct connection *find_host_pair_connections(const ip_address *myaddr,
 					      u_int16_t myport,
 					      const ip_address *hisaddr,
 					      u_int16_t hisport)
@@ -202,8 +201,7 @@ struct connection *find_host_pair_connections(const char *func,
 		ipstr_buf bm;
 		ipstr_buf bh;
 
-		DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s",
-			func,
+		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s",
 			ipstr(myaddr, &bm), myport,
 			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
 			hisport,
@@ -284,7 +282,8 @@ void release_dead_interfaces(void)
 					 */
 					passert(p == *pp);
 
-					p->interface = NULL;
+					terminate_connection(p->name);
+					p->interface = NULL; /* withdraw orientation */
 
 					*pp = p->hp_next; /* advance *pp */
 					p->host_pair = NULL;

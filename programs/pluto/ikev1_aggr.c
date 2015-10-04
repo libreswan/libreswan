@@ -226,10 +226,9 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  That's the one justification for Aggressive Mode.
 	 */
-	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
-       if (drop_new_exchanges()) {
+	if (drop_new_exchanges()) {
 		return STF_IGNORE;
 	}
 
@@ -280,9 +279,12 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		loglog(RC_LOG_SERIOUS,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
+
 	/* Set up state */
-	cur_state = md->st = st = new_state();  /* (caller will reset cur_state) */
-	st->st_connection = c;
+	struct state *st = new_state();
+
+	cur_state = md->st = st;  /* (caller will reset cur_state) */
+	st->st_connection = c;	/* safe: from new_state */
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
 	st->st_localaddr = md->iface->ip_addr;
@@ -387,55 +389,20 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 }
 
-static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
-				  u_int16_t auth,
-				  enum ike_cert_type certtype,
-				  enum certpolicy policy,
-				  bool gotcertrequest,
-				  bool send_cert)
-{
-	DBG(DBG_CONTROL,
-	    DBG_log("thinking about whether to send my certificate:"));
-
-	DBG(DBG_CONTROL, {
-		struct esb_buf esb;
-
-		DBG_log("  I have RSA key: %s cert.type: %s ",
-		    enum_showb(&oakley_auth_names, auth, &esb),
-		    enum_show(&ike_cert_type_names, certtype));
-	});
-
-	DBG(DBG_CONTROL,
-	    DBG_log("  sendcert: %s and I did%s get a certificate request ",
-		    enum_show(&certpolicy_type_names, policy),
-		    gotcertrequest ? "" : " not"));
-
-	DBG(DBG_CONTROL,
-	    DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
-
-	if (!send_cert) {
-		DBG(DBG_CONTROL, {
-			if (auth == OAKLEY_PRESHARED_KEY)
-				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
-			else if (certtype == CERT_NONE)
-				DBG_log("I did not send a certificate because I do not have one.");
-			else if (policy == cert_sendifasked)
-				DBG_log("I did not send my certificate because I was not asked to.");
-			/* ??? should there be an additional else catch-all? */
-		});
-	}
-}
-
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
 	generalName_t *requested_ca = NULL;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	int auth_payload;
 	cert_t mycert = st->st_connection->spd.this.cert;
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	pb_stream r_sa_pbs;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
@@ -465,12 +432,26 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend);
 
-	doi_log_cert_thinking(md,
-			      st->st_oakley.auth,
+	send_authcerts = (send_cert &&
+		st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+		st->st_connection->send_ca == CA_SEND_ALL);
+
+	if (send_authcerts) {
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
+				mycert.u.nss_cert,
+				send_full_chain ? TRUE : FALSE);
+	}
+
+	if (chain_len < 1)
+		send_authcerts = FALSE;
+
+	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
 			      st->st_connection->spd.this.sendcert,
 			      st->hidden_variables.st_got_certrequest,
-			      send_cert);
+			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
 	send_cr = send_cert && !has_preloaded_public_key(st);
@@ -1142,7 +1123,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	/* set up new state */
 	cur_state = st = new_state();
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from new_state */
 #ifdef HAVE_LABELED_IPSEC
 	st->sec_ctx = NULL;
 #endif
@@ -1158,7 +1139,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	st->st_import = importance;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next) {
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name != NULL) {
 				jam_str(st->st_xauth_username,
@@ -1179,7 +1160,7 @@ stf_status aggr_outI1(int whack_sock,
 		 * should tell the user to add a proper proposal policy
 		 */
 		loglog(RC_AGGRALGO,
-		       "no IKE proposal policy specified in config!  Can not initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
+		       "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		reset_globals();
 		return STF_FAIL;
 	}

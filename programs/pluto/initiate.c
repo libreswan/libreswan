@@ -80,12 +80,10 @@
 
 bool orient(struct connection *c)
 {
-	struct spd_route *sr;
-
 	if (!oriented(*c)) {
-		struct iface_port *p;
+		struct spd_route *sr;
 
-		for (sr = &c->spd; sr; sr = sr->next) {
+		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			/* There can be more then 1 spd policy associated - required
 			 * for cisco split networking when remote_peer_type=cisco
 			 */
@@ -95,6 +93,8 @@ bool orient(struct connection *c)
 			/* Note: this loop does not stop when it finds a match:
 			 * it continues checking to catch any ambiguity.
 			 */
+			const struct iface_port *p;
+
 			for (p = interfaces; p != NULL; p = p->next) {
 				if (p->ike_float)
 					continue;
@@ -119,6 +119,7 @@ bool orient(struct connection *c)
 									c->name, c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
+							terminate_connection(c->name);
 							c->interface = NULL; /* withdraw orientation */
 							return FALSE;
 						}
@@ -320,40 +321,47 @@ static bool same_in_some_sense(const struct connection *a,
 			b->dnshostname, &b->spd.that.host_addr);
 }
 
-void restart_connections_by_peer(struct connection *c)
+void restart_connections_by_peer(struct connection *const c)
 {
-	struct connection *d;
-	/* if c is an CK_INSTANCE, it removed. keep copy of necessary bits */
-	char *dnshostname;
-	ip_address host_addr;
-	struct host_pair *hp = c->host_pair;
-	enum connection_kind kind  = c->kind;
+	/*
+	 * Iff c is a CK_INSTANCE, it will be removed by terminate_connection.
+	 * Any parts of c we need after that must be copied first.
+	 */
 
+	const struct host_pair *const hp = c->host_pair;
+	enum connection_kind c_kind  = c->kind;
+
+	pexpect(hp != NULL);	/* ??? why would this happen? */
 	if (hp == NULL)
 		return;
 
-	dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
-	host_addr = c->spd.that.host_addr;
+	char *dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
 
-	for (d = c->host_pair->connections; d != NULL;) {
-		struct connection *next = d->hp_next; /* copy beofre d is deleteed, CK_INSTANCE */
-		if (same_host(dnshostname, &host_addr, d->dnshostname,
-					&d->spd.that.host_addr))
+	ip_address host_addr = c->spd.that.host_addr;
+
+	struct connection *d;
+
+	for (d = hp->connections; d != NULL;) {
+		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
+
+		if (same_host(dnshostname, &host_addr,
+				d->dnshostname, &d->spd.that.host_addr))
+		{
+			/* This might delete c if CK_INSTANCE */
+			/* ??? is there a chance hp becomes dangling? */
 			terminate_connection(d->name);
+		}
 		d = next;
 	}
 
-	if (kind != CK_INSTANCE)
+	if (c_kind != CK_INSTANCE) {
+		/* reference to c is OK because not CK_INSTANCE */
 		update_host_pairs(c);
-
-	if (hp->connections == NULL) {
-		pfreeany(dnshostname);
-		return;
 	}
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		if (same_host(dnshostname, &host_addr, d->dnshostname,
-					&d->spd.that.host_addr))
+		if (same_host(dnshostname, &host_addr,
+				d->dnshostname, &d->spd.that.host_addr))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					pcim_demand_crypto);
 	}
@@ -437,18 +445,16 @@ static void cannot_oppo(struct connection *c,
 	addrtot(&b->our_client, 0, ocb, sizeof(ocb));
 
 	DBG(DBG_OPPO,
-	    libreswan_log("Can not opportunistically initiate for %s to %s: %s",
+	    libreswan_log("Cannot opportunistically initiate for %s to %s: %s",
 			  ocb, pcb, ughmsg));
 
 	whack_log(RC_OPPOFAILURE,
-		  "Can not opportunistically initiate for %s to %s: %s",
+		  "Cannot opportunistically initiate for %s to %s: %s",
 		  ocb, pcb, ughmsg);
 
 	if (c != NULL && c->policy_next != NULL) {
 		/* there is some policy that comes afterwards */
-		struct spd_route *shunt_spd;
 		struct connection *nc = c->policy_next;
-		struct state *st;
 
 		passert(c->kind == CK_TEMPLATE);
 		passert(nc->kind == CK_PERMANENT);
@@ -464,10 +470,10 @@ static void cannot_oppo(struct connection *c,
 		 * situation that we have.
 		 */
 
-		shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
+		struct spd_route *shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
 
-		shunt_spd->next = nc->spd.next;
-		nc->spd.next = shunt_spd;
+		shunt_spd->spd_next = nc->spd.spd_next;
+		nc->spd.spd_next = shunt_spd;
 
 		happy(addrtosubnet(&b->peer_client, &shunt_spd->that.client));
 
@@ -480,15 +486,15 @@ static void cannot_oppo(struct connection *c,
 		 */
 		shunt_spd->that.host_addr = nc->spd.that.host_addr;
 
-		/* now, lookup the state, and poke it up.
-		 */
+		/* now, lookup the state, and poke it up. */
 
-		st = state_with_serialno(nc->newest_ipsec_sa);
+		struct state *st = state_with_serialno(nc->newest_ipsec_sa);
 
 		/* XXX what to do if the IPSEC SA has died? */
 		passert(st != NULL);
 
-		/* link the new connection instance to the state's list of
+		/*
+		 * link the new connection instance to the state's list of
 		 * connections
 		 */
 
@@ -518,6 +524,7 @@ static void cannot_oppo(struct connection *c,
 	if (b->held) {
 		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
 		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
+
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
@@ -530,12 +537,13 @@ static void cannot_oppo(struct connection *c,
 					  b->transport_proto,
 					  ughmsg))
 		{
-			DBG(DBG_CONTROL, DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-				(b->failure_shunt == SPI_PASS) ? "pass" :
-					(b->failure_shunt == SPI_HOLD) ? "hold" : "very-unexpected"
-			));
+			DBG(DBG_CONTROL,
+				DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+					(b->failure_shunt == SPI_PASS) ? "pass" :
+					(b->failure_shunt == SPI_HOLD) ? "hold" :
+					"very-unexpected"));
 		} else {
-		 libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+			libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -577,6 +585,7 @@ void initiate_ondemand(const ip_address *our_client,
 				      );
 }
 
+#ifdef USE_ADNS
 static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 {
 	struct find_oppo_continuation *cr = (void *)acr; /* inherit, damn you! */
@@ -642,6 +651,7 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 	whack_log_fd = NULL_FD;
 	close_any(whackfd);
 }
+#endif
 
 static err_t check_txt_recs(enum myid_state try_state,
 			    const struct connection *c,
@@ -862,6 +872,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		enum find_oppo_step next_step;
 		err_t ugh = ac_ugh;
 		char mycredentialstr[IDTOA_BUF];
+		struct gw_info nullgw;
 
 		DBG(DBG_CONTROL, {
 			    char cib[CONN_INST_BUF];
@@ -889,8 +900,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				portof(&b->our_client) != 0 ||
 				portof(&b->peer_client) != 0))
 			{
-				char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-				char *addwidemsg = "oe-negotiating";
+				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+				const char *const addwidemsg = "oe-negotiating";
 				ip_subnet this_client, that_client;
 	
 				happy(addrtosubnet(&b->our_client, &this_client));
@@ -936,15 +947,16 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			}
 
 			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
+				ipstr_buf b1;
+
 				/* no dns queries to find the gateway. create one here */
 				if (c->policy & POLICY_AUTH_NULL) {
-					struct gw_info nullgw;
 
-					DBG(DBG_OPPO, DBG_log("setting c->gw_info for POLICY_AUTH_NULL"));
+					DBG(DBG_OPPO, DBG_log("use POLICY_AUTH_NULL to initiate to  %s",
+								ipstr(&b->peer_client, &b1)));
 					nullgw.client_id.kind = ID_NULL;
 					nullgw.gw_id.kind = ID_NULL;
 					nullgw.gw_id.ip_addr = b->peer_client;
-					c->gw_info = clone_thing(nullgw, "nullgw info");
 				}
 
 				b->step = fos_his_client;
@@ -1135,7 +1147,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				(ac == NULL) ? c->gw_info : ac->gateways_from_dns,
+				(ac == NULL) ? &nullgw : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
 
@@ -1145,6 +1157,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				 */
 				ipstr_buf b1, b2, b3;
 
+				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
 				passert(id_is_ipaddr(&ac->gateways_from_dns->
 						     gw_id));
 				loglog(RC_OPPOFAILURE,
@@ -1220,6 +1233,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		DBG(DBG_OPPO | DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
+			/* ??? CLANG 3.5 thinks c might be NULL */
 			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
 				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 				ipstr(&b->our_client, &b1),
@@ -1245,7 +1259,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,
 				"opportunistic continuation");
+#ifdef USE_ADNS
 			struct id id;
+#endif
 
 			b->policy_prio = c->prio;
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
@@ -1257,7 +1273,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			for (sr = &c->spd
 			     ; sr != NULL &&
 			      !sameaddr(&sr->this.host_addr, &b->our_client)
-			     ; sr = sr->next)
+			     ; sr = sr->spd_next)
 				;
 
 			if (sr == NULL)
@@ -1287,6 +1303,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 			switch (next_step) {
 			case fos_myid_ip_txt:
+#ifdef USE_ADNS
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = TRUE;
@@ -1299,9 +1316,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
+#endif
 				cr->b.step = fos_myid_hostname_txt;
 			/* FALL THROUGH */
 			case fos_myid_hostname_txt:
+#ifdef USE_ADNS
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = FALSE;
@@ -1315,10 +1334,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
-
+#endif
 				cr->b.step = fos_our_client;
 			/* FALL THROUGH */
 			case fos_our_client: /* IPSECKEY for our client */
+#ifdef USE_ADNS
 				if (!sameaddr(&c->spd.this.host_addr,
 					      &b->our_client)) {
 					/* Check that at least one IPSECKEY(reverse(b->our_client)) is workable.
@@ -1334,9 +1354,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							       &cr->ac);
 					break;
 				}
+#endif
 				cr->b.step = fos_our_txt;
 			/* FALL THROUGH */
 			case fos_our_txt: /* IPSECKEY for us */
+#ifdef USE_ADNS
 				cr->b.failure_ok = b->failure_ok = TRUE;
 				cr->b.want = b->want = "our IPSECKEY record";
 				ugh = start_adns_query(&sr->this.id,
@@ -1344,9 +1366,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
+#endif
 				break;
-
 			case fos_his_client: /* IPSECKEY for his client */
+#ifdef USE_ADNS
 				/* note: {unshare|free}_id_content not needed for id: ephemeral */
 				cr->b.want = b->want =
 						     "target's IPSECKEY record";
@@ -1357,8 +1380,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
+#endif
 				break;
-
 			default:
 				bad_case(next_step);
 			}
@@ -1454,10 +1477,11 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 {
 	struct connection *c;
-	struct spd_route *sr;
 
 	for (c = connections; c != NULL; c = c->ac_next) {
-		for (sr = &c->spd; sr; sr = sr->next) {
+		const struct spd_route *sr;
+
+		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
 			    samesubnet(ours, &sr->this.client) &&
 			    samesubnet(his, &sr->that.client))
@@ -1541,7 +1565,8 @@ static void connection_check_ddns1(struct connection *c)
 	update_host_pairs(c);
 	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto);
 
-	/* no host pairs,  no more to do */
+	/* no host pairs, no more to do */
+	pexpect(c->host_pair != NULL);	/* ??? surely */
 	if (c->host_pair == NULL)
 		return;
 

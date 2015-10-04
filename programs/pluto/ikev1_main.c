@@ -702,14 +702,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
 				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.has_id_wildcards) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
 			DBG(DBG_CONTROL,
 				DBG_log("remote end has wildcard ID, needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -721,7 +721,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	passert(!st->st_oakley.doing_xauth);
 
-	st->st_connection = c;
+	st->st_connection = c;	/* safe: from new_state */
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
 	st->st_localaddr = md->iface->ip_addr;
@@ -988,18 +988,14 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 bool justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
-	if (DBGP(IMPAIR_SEND_ZERO_GX))  {
+	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
+		pb_stream z;
+
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
                /* Only used to test sending/receiving bogus g^x */
-		chunk_t gzero;
-		bool ret;
-
-		gzero.ptr = alloc_bytes(g->len, "impair gzero"); /* alloc_bytes uses zeros */
-		gzero.len = g->len;
-		ret = out_generic_chunk(np, &isakmp_keyex_desc, outs, gzero,
-				"impaired zero keyex value");
-		pfree(gzero.ptr);
-		return ret;
+		return out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+			out_zero(g->len, &z, "fake g^x") &&
+			(close_output_pbs(&z), TRUE);
 	} else {
 		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
@@ -1385,54 +1381,6 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	return STF_OK;
 }
 
-static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
-				u_int16_t auth,
-				enum ike_cert_type certtype,
-				enum certpolicy policy,
-				bool gotcertrequest,
-				bool send_cert,
-				bool send_chain)
-{
-	DBG(DBG_CONTROL,
-		DBG_log("thinking about whether to send my certificate:"));
-
-	DBG(DBG_CONTROL, {
-		struct esb_buf esb;
-
-		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_showb(&oakley_auth_names, auth, &esb),
-			enum_show(&ike_cert_type_names, certtype));
-	});
-
-	DBG(DBG_CONTROL,
-		DBG_log("  sendcert: %s and I did%s get a certificate request ",
-			enum_show(&certpolicy_type_names, policy),
-			gotcertrequest ? "" : " not"));
-
-	DBG(DBG_CONTROL,
-		DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
-
-	if (!send_cert) {
-		if (auth == OAKLEY_PRESHARED_KEY) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate "
-					"because digital signatures are not "
-					"being used. (PSK)"));
-		} else if (certtype == CERT_NONE) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate because "
-					"I do not have one."));
-		} else if (policy == cert_sendifasked) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send my certificate "
-					"because I was not asked to."));
-		}
-	}
-	if (send_chain)
-		DBG(DBG_CONTROL, DBG_log("Sending one or more authcerts"));
-
-}
-
 /*
  * STATE_MAIN_I2:
  * SMF_PSK_AUTH: HDR, KE, Nr --> HDR*, IDi1, HASH_I
@@ -1496,8 +1444,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	if (chain_len < 1)
 		send_authcerts = FALSE;
 
-	doi_log_cert_thinking(md,
-			st->st_oakley.auth,
+	doi_log_cert_thinking(st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
@@ -1777,7 +1724,11 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 stf_status oakley_id_and_auth(struct msg_digest *md,
 			bool initiator, /* are we the Initiator? */
 			bool aggrmode, /* aggressive mode? */
+#ifdef USE_ADNS
 			cont_fn_t cont_fn, /* continuation function */
+#else
+			cont_fn_t cont_fn UNUSED, /* continuation function */
+#endif
 			/* current state, can be NULL */
 			const struct key_continuation *kc)
 {
@@ -1842,7 +1793,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 					"key continuation");
 			enum key_oppo_step step_done =
 				kc == NULL ? kos_null : kc->step;
-			err_t ugh;
+			err_t ugh = NULL;
 
 			/* Record that state is used by a suspended md */
 			passert(st->st_suspended_md == NULL);
@@ -1858,6 +1809,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 #ifdef USE_KEYRR
 				nkc->failure_ok = TRUE;
 #endif
+#ifdef USE_ADNS
 				ugh = start_adns_query(
 					&st->st_connection->spd.that.id,
 					/* SG itself */
@@ -1865,18 +1817,21 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 					ns_t_txt,
 					cont_fn,
 					&nkc->ac);
+#endif
 				break;
 
 #ifdef USE_KEYRR
 			case kos_his_txt:
 				/* second try: look for the KEY records */
 				nkc->step = kos_his_key;
+#ifdef USE_ADNS
 				ugh = start_adns_query(
 					&st->st_connection->spd.that.id,
 					NULL, /* no sgw for KEY */
 					ns_t_key,
 					cont_fn,
 					&nkc->ac);
+#endif
 				break;
 #endif /* USE_KEYRR */
 
@@ -2066,8 +2021,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	if (chain_len < 1)
 		send_authcerts = FALSE;
 
-	doi_log_cert_thinking(md,
-			st->st_oakley.auth,
+	doi_log_cert_thinking(st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
@@ -2655,8 +2609,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	struct state st;
-	struct connection cnx;
+	struct state st;	/* note: not a pointer! */
+	struct connection cnx;	/* note: not a pointer! */
 
 	passert(md);
 
@@ -2979,13 +2933,12 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-			bool bogus;
-			struct state *dst;
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 				return self_delete;
 
-			dst = find_phase2_state_to_delete(st,
+			bool bogus;
+			struct state *dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
 							spi,
 							&bogus);
@@ -2993,14 +2946,19 @@ bool accept_delete(struct msg_digest *md,
 			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
-					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					ntohl(spi),
-					bogus ?
-						"our SPI - bogus implementation" :
-						"maybe expired");
+					ntohl(spi));
 			} else {
+				if (bogus) {
+					loglog(RC_LOG_SERIOUS,
+						"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
+						enum_show(&protocol_names,
+							d->isad_protoid),
+						ntohl(spi));
+				}
+
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc = cur_connection;
 

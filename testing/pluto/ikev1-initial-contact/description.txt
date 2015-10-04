@@ -1,0 +1,2 @@
+Basic pluto test, west and east has initial-contact enabled.
+West kill pluto and restart ipsec and establish again.

@@ -113,7 +113,9 @@ void do_whacklisten()
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
 	daily_log_reset();
+#ifdef USE_ADNS
 	reset_adns_restart_count();
+#endif
 	set_myFQDN();
 	find_ifaces();
 	load_preshared_secrets();
@@ -216,6 +218,7 @@ static bool openwhackrecordfile(char *file)
 	return TRUE;
 }
 
+#ifdef USE_ADNS
 static void key_add_continue(struct adns_continuation *ac, err_t ugh)
 {
 	struct key_add_continuation *kc = (void *) ac;
@@ -239,6 +242,7 @@ static void key_add_continue(struct adns_continuation *ac, err_t ugh)
 	key_add_merge(oc, &ac->id);
 	whack_log_fd = NULL_FD;
 }
+#endif
 
 static void key_add_request(const struct whack_message *msg)
 {
@@ -275,19 +279,23 @@ static void key_add_request(const struct whack_message *msg)
 				kc->lookingfor = kaa;
 				switch (kaa) {
 				case ka_TXT:
+#ifdef USE_ADNS
 					ugh = start_adns_query(&keyid,
 							       &keyid, /* same */
 							       ns_t_txt,
 							       key_add_continue,
 							       &kc->ac);
+#endif
 					break;
 #ifdef USE_KEYRR
 				case ka_KEY:
+#ifdef USE_ADNS
 					ugh = start_adns_query(&keyid,
 							       NULL,
 							       ns_t_key,
 							       key_add_continue,
 							       &kc->ac);
+#endif
 					break;
 #endif                                                  /* USE_KEYRR */
 				default:
@@ -510,12 +518,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 		struct connection *c = con_by_name(msg.name, TRUE);
 
 		if (c != NULL) {
-			struct spd_route *sr;
+			const struct spd_route *sr;
 			int fail = 0;
 
 			set_cur_connection(c);
 
-			for (sr = &c->spd; sr != NULL; sr = sr->next) {
+			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 				if (sr->routing >= RT_ROUTED_TUNNEL)
 					fail++;
 			}

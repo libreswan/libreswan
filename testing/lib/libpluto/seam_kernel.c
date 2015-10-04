@@ -18,7 +18,7 @@ ipsec_spi_t spis[4] = { 0x12345678,
 			0x78123456 };
 static int spinext = 0;
 ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid UNUSED,
-			  int proto UNUSED, struct spd_route *sr UNUSED,
+			  int proto UNUSED, const struct spd_route *sr UNUSED,
 			  bool tunnel UNUSED)
 {
 	if (spinext == 4)

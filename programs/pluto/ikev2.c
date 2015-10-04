@@ -638,6 +638,7 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	struct ikev2_frag *i;
 
+	/* ??? CLANG 3.5 thinks st might be NULL */
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
 		DBG(DBG_CONTROL, DBG_log(
 			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
@@ -1202,15 +1203,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 						   NULL, &peer);
 				}
 
-				md->st->st_connection = r; /* kill reference to c */
-
-				/* this ensures we don't move cur_connection from NULL to
-				* something, requiring a reset_cur_connection()
-				*/
-				if (cur_connection == c)
-					set_cur_connection(r);
-
-				connection_discard(c);
+				update_state_connection(md->st, r);
 			} else if (c->spd.that.has_id_wildcards) {
 				free_id_content(&c->spd.that.id);
 				c->spd.that.id = peer;
@@ -1303,6 +1296,7 @@ void ikev2_log_parentSA(struct state *st)
 
 void send_v2_notification_invalid_ke_from_state(struct state *st)
 {
+	/* ??? CLANG 3.5 thinks that st might be NULL */
 	passert(st->st_oakley.group != NULL);
 	DBG(DBG_CONTROL,
 	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",
@@ -1330,8 +1324,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
 				  chunk_t *data)
 {
-	struct state st;
-	struct connection cnx;
+	struct state st;	/* note: not a pointer */
+	struct connection cnx;	/* note: not a pointer */
 
 	/**
 	 * Create a dummy state to be able to use send_ike_msg in
@@ -1776,6 +1770,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		 * ??? Perhaps we have half-computed crypto and perhaps
 		 * that is a problem if we try to advance the state later.
 		 */
+		break;
+
+	case STF_DROP:
+		/* be vewy vewy quiet */
+		if (st != NULL) {
+			delete_state(st);
+			md->st = st = NULL;
+		}
 		break;
 
 	case STF_FATAL:

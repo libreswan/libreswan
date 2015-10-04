@@ -73,8 +73,8 @@ east:~#
 000 initiate on demand from 192.1.2.23:0 to 192.0.1.3:0 proto=0 state: fos_start because: whack
 000 initiate on demand from 192.1.2.23:0 to 192.0.1.3:0 proto=0 state: fos_our_txt because: our TXT record
 000 initiate on demand from 192.1.2.23:0 to 192.0.1.3:0 proto=0 state: fos_our_key because: our KEY record
-002 Can not opportunistically initiate for 192.1.2.23 to 192.0.1.3: all our KEY RRs have the wrong public key (and no good TXT RR)
-033 Can not opportunistically initiate for 192.1.2.23 to 192.0.1.3: all our KEY RRs have the wrong public key (and no good TXT RR)
+002 Cannot opportunistically initiate for 192.1.2.23 to 192.0.1.3: all our KEY RRs have the wrong public key (and no good TXT RR)
+033 Cannot opportunistically initiate for 192.1.2.23 to 192.0.1.3: all our KEY RRs have the wrong public key (and no good TXT RR)
 east:~#
  ipsec eroute
 0          0.0.0.0/0          -> 0.0.0.0/0          => %trap

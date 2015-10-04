@@ -74,28 +74,6 @@ static struct fg_targets *targets = NULL;
 
 static struct fg_targets *new_targets;
 
-/* ipcmp compares the two ip_address values a and b.
- * It returns -1, 0, or +1 if a is, respectively,
- * less than, equal to, or greater than b.
- */
-static int ipcmp(ip_address *a, ip_address *b)
-{
-	if (addrtypeof(a) != addrtypeof(b)) {
-		return addrtypeof(a) < addrtypeof(b) ? -1 : 1;
-	} else if (sameaddr(a, b)) {
-		return 0;
-	} else {
-		const struct sockaddr *sa = sockaddrof(a),
-		*sb = sockaddrof(b);
-
-		passert(addrtypeof(a) == AF_INET); /* not yet implemented IPv6 version :-( */
-		return (ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr)
-			<
-			ntohl(((const struct sockaddr_in *)sb)->sin_addr.s_addr))
-		       ?
-		       -1 : 1;
-	}
-}
 
 /* subnetcmp compares the two ip_subnet values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
@@ -110,9 +88,9 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	maskof(a, &maska);
 	networkof(b, &netb);
 	maskof(b, &maskb);
-	r = ipcmp(&neta, &netb);
+	r = addrcmp(&neta, &netb);
 	if (r == 0)
-		r = ipcmp(&maska, &maskb);
+		r = addrcmp(&maska, &maskb);
 	return r;
 }
 
@@ -171,7 +149,7 @@ static void read_foodgroup(struct fg_groups *g)
 					       "\"%s\" line %d: %s \"%s\"",
 					       flp->filename, flp->lino, ugh,
 					       flp->tok);
-				} else if (afi->af != AF_INET) {
+				} else if ((afi->af != AF_INET) && (afi->af != AF_INET6)) {
 					loglog(RC_LOG_SERIOUS,
 					       "\"%s\" line %d: unsupported Address Family \"%s\"",
 					       flp->filename, flp->lino,
@@ -223,9 +201,9 @@ static void read_foodgroup(struct fg_groups *g)
 						*pp = f;
 					}
 				}
-			}
 				(void)shift(); /* next */
 				continue;
+			}
 
 			case B_record:
 				flp->bdry = B_none;     /* eat the Record Boundary */

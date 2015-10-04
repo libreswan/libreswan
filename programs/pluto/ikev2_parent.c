@@ -70,6 +70,8 @@
 
 #include "ietf_constants.h"
 
+#include "hostpair.h"
+
 /* Note: same definition appears in programs/pluto/ikev2.c */
 #define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
@@ -695,7 +697,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
+	static const lset_t policies[] = { POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
 	struct state *st = md->st;
 	lset_t policy;
@@ -703,6 +705,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	stf_status e;
 	unsigned int i;
 
+	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
 	for (i=0; i < elemsof(policies); i++){
 		policy = policies[i] | POLICY_IKEV2_ALLOW;
 		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
@@ -712,14 +715,47 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			break;
 	}
 
-	if (e != STF_OK)
+	if (e != STF_OK) {
+		ipstr_buf b;
+
+		/* we might want to change this to a debug log message only */
+		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy",
+			ipstr(&md->iface->ip_addr, &b),
+			ntohs(portof(&md->iface->ip_addr)));
 		return e;
+	}
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
 	DBG(DBG_CONTROL,
 		DBG_log("found connection: %s with policy %s",
 			c->name, bitnamesof(sa_policy_bit_names, policy)));
+
+	/*
+	 * Did we overlook a type=passthrough foodgroup?
+	 */
+	{
+		struct connection *tmp = find_host_pair_connections(
+			&md->iface->ip_addr, md->iface->port,
+			(ip_address *)NULL, md->sender_port);
+
+		for (; tmp != NULL; tmp = tmp->hp_next) {
+			if ((tmp->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+				if (tmp->kind == CK_INSTANCE) {
+					if (addrinsubnet(&md->sender, &tmp->spd.that.client)) {
+						DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
+
+						if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
+							DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
+								tmp->spd.that.client.maskbits,
+								c->spd.that.client.maskbits));
+							return STF_DROP;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
@@ -1590,7 +1626,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	 */
 	u_char *payload_end = chunk->ptr + chunk->len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
-		libreswan_log("encrypted payload impossibly short (%zu)",
+		libreswan_log("encrypted payload impossibly short (%tu)",
 			      payload_end - wire_iv_start);
 		return STF_FAIL;
 	}
@@ -1601,16 +1637,21 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	size_t enc_size = integ_start - enc_start;
 
 	/*
-	 * Check if block-size is valid.  Do this before the payload's
-	 * integrity has been verified as block-alignment requirements
-	 * aren't exactly secret (originally this was being done
-	 * beteen integrity and decrypt).
+	 * Check that the payload is block-size aligned.
+	 *
+	 * Per rfc7296 "the recipient MUST accept any length that
+	 * results in proper alignment".
+	 *
+	 * Do this before the payload's integrity has been verified as
+	 * block-alignment requirements aren't exactly secret
+	 * (originally this was being done between integrity and
+	 * decrypt).
 	 */
 	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
 	bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
 	if (pad_to_blocksize) {
 		if (enc_size % enc_blocksize != 0) {
-			libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
+			libreswan_log("discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
 				      enc_size, enc_blocksize);
 			return STF_FAIL;
 		}
@@ -1707,17 +1748,47 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size + integ_size));
 	}
 
-
-	u_char padlen = enc_start[enc_size - 1] + 1;
-	if (padlen > enc_blocksize || padlen > enc_size) {
-		libreswan_log("invalid padding-length octet: 0x%2x", padlen - 1);
+	/*
+	 * Check the padding.
+	 *
+	 * Per rfc7296 "The sender SHOULD set the Pad Length to the
+	 * minimum value that makes the combination of the payloads,
+	 * the Padding, and the Pad Length a multiple of the block
+	 * size, but the recipient MUST accept any length that results
+	 * in proper alignment."
+	 *
+	 * Notice the "should".  RACOON, for instance, sends extra
+	 * blocks of padding that contain random bytes.
+	 */
+	u_int8_t padlen = enc_start[enc_size - 1] + 1;
+	if (padlen > enc_size) {
+		libreswan_log("discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
+			      padlen, padlen - 1, enc_size);
 		return STF_FAIL;
 	}
+	if (pad_to_blocksize) {
+		if (padlen > enc_blocksize) {
+			/* probably racoon */
+			DBG(DBG_CRYPT,
+			    DBG_log("payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
+				    (padlen - 1) / enc_blocksize,
+				    padlen, padlen - 1, enc_blocksize));
+		}
+	} else {
+		if (padlen > 1) {
+			DBG(DBG_CRYPT,
+			    DBG_log("payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
+				    padlen - 1, padlen, padlen - 1));
+		}
+	}
 
-	/* don't bother to check any other pad octets */
-	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
-
+	/*
+	 * Don't check the contents of the pad octets; racoon, for
+	 * instance, sets them to random values.
+	 */
+	DBG(DBG_CRYPT, DBG_log("stripping %u octets as pad", padlen));
 	setchunk(*chunk, enc_start, enc_size - padlen);
+
 	return STF_OK;
 }
 
@@ -1779,6 +1850,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 
 	if (md->chain[ISAKMP_NEXT_v2SKF]) {
 		status = ikev2_reassemble_fragments(md, &chunk);
+		/* note: if status is SFT_OK, chunk is set */
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
@@ -1793,6 +1865,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 		return status;
 	}
 
+	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
 	init_pbs(&md->clr_pbs, chunk.ptr, chunk.len, "cleartext");
 
 	unsigned np = md->chain[ISAKMP_NEXT_v2SK] ?
@@ -2295,10 +2368,13 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
 	 * for it.
 	 */
+
 	/* so far child's connection is same as parent's */
 	passert(pc == cst->st_connection);
+
 	{
 		lset_t policy = pc->policy;
+
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
 
@@ -2307,7 +2383,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s Reauthentication so use the original policy",
 				cc->name));
 		}
-		cst->st_connection = cc;
+
+		/* ??? this seems very late to change the connection */
+		cst->st_connection = cc;	/* safe: from duplicate_state */
 
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
 				ISAKMP_NEXT_v2TSi, cc, policy);
@@ -2382,7 +2460,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
 	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	p->pam_status = ikev2_do_pam_authentication(&p->pam);
+	p->pam_status = do_pam_authentication(&p->pam);
 	gettimeofday(&p->done_time, NULL);
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
@@ -2545,6 +2623,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	p->pam.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
 	p->pam.c_instance_serial = st->st_connection->instance_serial;
 	p->pam.st_serialno = st->st_serialno;
+	p->pam.atype = "IKEv2";
 
 	p->next = pluto_v2_pam_helpers;
 	pluto_v2_pam_helpers = p;
@@ -2578,7 +2657,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 
 	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback"
 				" for master fd %d", p->master_fd));
-	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb,p, NULL);
+	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb, p, NULL);
 
 	return STF_SUSPEND;
 }
@@ -3270,8 +3349,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			tsi_n, tsr_n));
 
 		{
-			struct spd_route *sra;
-			sra = &c->spd;
+			const struct spd_route *sra = &c->spd;
 			int bfit_n = ikev2_evaluate_connection_fit(c, sra,
 								   ORIGINAL_INITIATOR,
 								   tsi, tsr,
@@ -4063,7 +4141,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				}
 
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-					libreswan_log("IPsec Delete Notification payload size is %tu but %u is required",
+					libreswan_log("IPsec Delete Notification payload size is %zu but %u is required",
 						pbs_left(&p->pbs),
 						v2del->isad_nrspi * v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;

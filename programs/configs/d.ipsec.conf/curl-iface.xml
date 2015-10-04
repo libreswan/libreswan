@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>curl-iface</emphasis></term>
+  <listitem>
+<para>
+The name of the interface that is used for CURL lookups. This is needed
+on rare situations where the interface needs to be forced to be different
+from the default interface used based on the routing table.
+</para>
+  </listitem>
+  </varlistentry>
+

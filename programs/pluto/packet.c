@@ -1323,12 +1323,12 @@ struct_desc sec_ctx_desc = {
 
 #endif
 
-const struct_desc *v1_payload_desc(unsigned p)
+struct_desc *v1_payload_desc(unsigned p)
 {
 	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
 }
 
-const struct_desc *v2_payload_desc(unsigned p)
+struct_desc *v2_payload_desc(unsigned p)
 {
 	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 		return NULL;

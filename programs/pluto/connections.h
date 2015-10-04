@@ -164,8 +164,8 @@ struct end {
 	char *updown;
 	u_int16_t host_port;		/* where the IKE port is */
 	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
-	u_int16_t port;			/* port number, if per-port keying. */
-	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
+	u_int16_t port;			/* port number, if per-port keying */
+	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	char *cert_nickname;		/* NSS certificate nickname */
@@ -185,7 +185,7 @@ struct end {
 };
 
 struct spd_route {
-	struct spd_route *next;
+	struct spd_route *spd_next;
 	struct end this;
 	struct end that;
 	so_serial_t eroute_owner;
@@ -273,8 +273,9 @@ struct connection {
 	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
-	struct host_pair *host_pair;	/* opaque type outside of connections.c/hostpair.c */
-	struct connection *hp_next;	/* host pair list link */
+	/* host_pair linkage */
+	struct host_pair *host_pair;
+	struct connection *hp_next;
 
 	struct connection *ac_next;	/* all connections list link */
 
@@ -287,7 +288,7 @@ struct connection {
 
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
-	struct ip_pool *pool; /*v4 addresspool as a range, start end */
+	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
 	char *cisco_dns_info; /* scratchpad for writing IP addresses */
 	char *modecfg_domain;
 	char *modecfg_banner;
@@ -346,7 +347,7 @@ extern void remove_group_instance(const struct connection *group,
 extern void release_dead_interfaces(void);
 extern void check_orientations(void);
 extern struct connection *route_owner(struct connection *c,
-				      struct spd_route *cur_spd,
+				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,
 				      struct connection **erop,
 				      struct spd_route **esrp);
@@ -390,10 +391,8 @@ extern struct connection
 				      const ip_address *peer_client,
 				      int transport_proto);
 
-/* instantiating routines
- * Note: connection_discard() is in state.h because all its work
- * is looking through state objects.
- */
+/* instantiating routines */
+
 struct gw_info;         /* forward declaration of tag (defined in dnskey.h) */
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
 extern struct connection *rw_instantiate(struct connection *c,
@@ -445,7 +444,9 @@ extern void release_pending_whacks(struct state *st, err_t story);
 extern void unpend(struct state *st);
 extern void update_pending(struct state *os, struct state *ns);
 extern void flush_pending_by_state(struct state *st);
+
 extern void connection_discard(struct connection *c);
+extern void update_state_connection(struct state *st, struct connection *c);
 
 /* A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
@@ -454,11 +455,11 @@ extern void connection_discard(struct connection *c);
 #define eclipsable(sr) (subnetishost(&(sr)->this.client) && \
 			subnetishost(&(sr)->that.client))
 extern long eclipse_count;
-extern struct connection *eclipsed(struct connection *c, struct spd_route **);
+extern struct connection *eclipsed(const struct connection *c, struct spd_route ** /*OUT*/);
 
 /* print connection status */
 
-extern void show_one_connection(struct connection *c);
+extern void show_one_connection(const struct connection *c);
 extern void show_connections_status(void);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
@@ -485,6 +486,6 @@ extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
 
-extern void unshare_connection_end_strings(struct end *e);
+extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);

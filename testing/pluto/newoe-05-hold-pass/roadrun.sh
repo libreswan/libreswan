@@ -1,7 +1,7 @@
 ping -n -c 4 -I 192.1.3.209 192.1.2.23
 ping -n -c 2 -I 192.1.3.209 7.7.7.7
 # wait on OE retransmits and rekeying - shuntstatus is empty because shunt not bare
-sleep 1
+sleep 3
 ipsec whack --shuntstatus
 ipsec whack --trafficstatus
 # 7.7.7.7 shunt is not bare and its conn negotiationshunt=hold, so ping should fail

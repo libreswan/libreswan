@@ -1,0 +1,6 @@
+as newoe-18-private-clear, but now east only allows OE from RFC1918
+space, and has 0.0.0.0/0 in clear. road comes from "the internet"
+(its regular 192.1.3.x address)
+
+east should not allow OE and road should block all traffic due to private
+

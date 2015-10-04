@@ -18,7 +18,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.15
+Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -114,6 +114,7 @@ make %{?_smp_mflags} \
     USE_LDAP=true \
     USE_LIBCURL=true \
 %endif
+    USE_ADNS=false \
     USE_DNSSEC="%{USE_DNSSEC}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
@@ -227,5 +228,5 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Mon Aug 24 2015 Team Libreswan <team@libreswan.org> - 3.15-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball

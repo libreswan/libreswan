@@ -265,6 +265,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 				string, c->name);
 			return NULL;
 		}
+		/* clang 3.5 thinks that next might be NULL; wrong */
 		str = *next != '\0' ? next + 1 : NULL;
 	}
 
@@ -316,7 +317,7 @@ bool is_virtual_connection(const struct connection *c)
 {
 	const struct spd_route *sr;
 
-	for (sr = &c->spd; sr != NULL; sr = sr->next)
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next)
 		if (sr->that.virt != NULL)
 			return TRUE;
 

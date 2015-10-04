@@ -15,6 +15,10 @@
  * for more details.
  */
 
+#ifndef USE_ADNS
+#error this file should not be used without USE_ADNS
+#endif
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>

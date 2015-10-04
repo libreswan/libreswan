@@ -182,7 +182,7 @@ do_gen:
 		if (*p == '0')
 			if (*(p + 1) == 'x')    /* 0x?? */
 				goto hex;
-		x = atoi(p);                    /* reg'lar decimal number */
+		x = atoi(p);                    /* regular decimal number */
 		goto stuff;
 
 hex:

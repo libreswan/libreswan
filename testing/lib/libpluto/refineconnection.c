@@ -80,7 +80,7 @@ main(int argc, char *argv[]){
 		sscanf(idbuf, "%s %u %u", id1, &initiate, &aggrmode);
 
 		/* set it to the first connection, there may be only one?? */
-		st1->st_connection = connections;
+		st1->st_connection = connections;	/* safe: from new_state */
 		st1->st_oakley.auth = OAKLEY_RSA_SIG;
 
 		passert(connections != NULL);

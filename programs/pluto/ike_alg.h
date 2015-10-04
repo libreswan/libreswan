@@ -105,7 +105,7 @@ struct alg_info_esp;
 extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy);
 
 extern void ike_alg_show_status(void);
-extern void ike_alg_show_connection(struct connection *c, const char *instance);
+extern void ike_alg_show_connection(const struct connection *c, const char *instance);
 
 /* ??? a is type struct ike_alg * but should be struct encrypt_desc * */
 #define IKE_EALG_FOR_EACH(a) \

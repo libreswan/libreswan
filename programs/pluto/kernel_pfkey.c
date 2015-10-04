@@ -961,7 +961,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	return finish_pfkey_msg(extensions, "flow", text_said, NULL);
 }
 
-bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
+bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 {
 	unsigned klips_satype;
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
@@ -1235,8 +1235,8 @@ void pfkey_close(void)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-bool pfkey_shunt_eroute(struct connection *c,
-			struct spd_route *sr,
+bool pfkey_shunt_eroute(const struct connection *c,
+			const struct spd_route *sr,
 			enum routing_t rt_kind,
 			enum pluto_sadb_operations op, const char *opname)
 {
@@ -1317,12 +1317,10 @@ bool pfkey_shunt_eroute(struct connection *c,
 
 #if 0
 	{
-		bool ok;
-		enum pluto_sadb_operations inop;
+		enum pluto_sadb_operations inop =
+			op + ERO_ADD_INBOUND - ERO_ADD;
 
-		inop = op + ERO_ADD_INBOUND - ERO_ADD;
-
-		ok = pfkey_raw_eroute(&c->spd.that.host_addr,
+		bool ok = pfkey_raw_eroute(&c->spd.that.host_addr,
 				      &c->spd.that.client,
 				      &c->spd.this.host_addr,
 				      &c->spd.this.client,
@@ -1368,7 +1366,7 @@ bool pfkey_shunt_eroute(struct connection *c,
 }
 
 /* install or remove eroute for SA Group */
-bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
+bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		      unsigned op, const char *opname)
 {
 	unsigned int inner_proto;
@@ -1382,7 +1380,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	 * for the innermost transformation.
 	 */
 
-	i = sizeof(proto_info) / sizeof(proto_info[0]) - 1;
+	i = elemsof(proto_info) - 1;
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
@@ -1430,7 +1428,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
 
-	if (i == sizeof(proto_info) / sizeof(proto_info[0]) - 1)
+	if (i == elemsof(proto_info) - 1)
 		impossible(); /* no transform at all! */
 
 	if (tunnel) {

@@ -6,6 +6,7 @@ Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   auto=add
+  fragmentation=yes
   keyexchange=ikev2
   left=192.1.2.45
   leftid=@west

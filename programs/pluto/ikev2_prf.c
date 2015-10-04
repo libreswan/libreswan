@@ -181,7 +181,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	SK_pr_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pr_k for later use in authnull */
 	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k);
-	next_byte += skp_bytes;
+	next_byte += skp_bytes;	/* next_byte not subsequently used */
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));

@@ -1,0 +1,4 @@
+east only allows responding to OE from a small subnet including road.
+The default 0.0.0.0/0 is added to clear
+
+the tunnel priority should win from the clear policy

@@ -226,7 +226,6 @@ extern void barf(const char *fmt, ...);
 #define KERN_INFO       "INFO:"         /* informational			*/
 #define KERN_DEBUG      "DEBUG:"        /* debug-level messages			*/
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define ALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
 
 /* err.h */

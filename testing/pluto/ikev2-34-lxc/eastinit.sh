@@ -10,8 +10,8 @@ ipsec version |grep klips && echo you need netkey
 # prep host for two pluto's
 mkdir -p /tmp/west/ipsec.d /tmp/east/ipsec.d
 echo hit return a few times for certutil
-certutil -N -d /tmp/west/ipsec.d
-certutil -N -d /tmp/east/ipsec.d
+certutil -N -d sql:/tmp/west/ipsec.d
+certutil -N -d sql:/tmp/east/ipsec.d
 echo setting up namespaces for east and west with a single interface
 #create name space  nswest and nseast
 ip netns add nswest

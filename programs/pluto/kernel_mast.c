@@ -374,35 +374,12 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		init_useful_mast(firstq->ip_addr, useful_mast_name, sizeof(useful_mast_name));
 }
 
-static bool mast_do_command(struct connection *c, struct spd_route *sr,
-			    const char *verb, struct state *st)
+static bool mast_do_command(const struct connection *c, const struct spd_route *sr,
+			    const char *verb, const char *verb_suffix, struct state *st)
 {
 	char cmd[2048]; /* arbitrary limit on shell command length */
 	char common_shell_out_str[2048];
-	const char *verb_suffix;
 	IPsecSAref_t ref, refhim;
-
-	/* figure out which verb suffix applies */
-	{
-		const char *hs, *cs;
-
-		switch (addrtypeof(&sr->this.host_addr)) {
-		case AF_INET:
-			hs = "-host";
-			cs = "-client";
-			break;
-		case AF_INET6:
-			hs = "-host-v6";
-			cs = "-client-v6";
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "unknown address family");
-			return FALSE;
-		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					   &sr->this.host_addr) ?
-			      hs : cs;
-	}
 
 	if (fmt_common_shell_out(common_shell_out_str,
 				 sizeof(common_shell_out_str), c, sr,
@@ -414,7 +391,7 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 
 	ref = refhim = IPSEC_SAREF_NULL;
 	if (st != NULL) {
-		ref   = st->st_ref;
+		ref = st->st_ref;
 		refhim = st->st_refhim;
 		DBG(DBG_KERNEL,
 		    DBG_log("Using saref=%u/%u for verb=%s", ref, refhim,
@@ -445,6 +422,38 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	}
 
 	return invoke_command(verb, verb_suffix, cmd);
+}
+
+static bool mast_do_command_vs(const struct connection *c, const struct spd_route *sr,
+			    const char *verb, struct state *st)
+{
+	const char *verb_suffix;
+
+	/*
+	 * Figure out which verb suffix applies.
+	 * NOTE: this is a duplicate of code in do_command.
+	 */
+	{
+		const char *hs, *cs;
+
+		switch (addrtypeof(&sr->this.host_addr)) {
+		case AF_INET:
+			hs = "-host";
+			cs = "-client";
+			break;
+		case AF_INET6:
+			hs = "-host-v6";
+			cs = "-client-v6";
+			break;
+		default:
+			loglog(RC_LOG_SERIOUS, "unknown address family");
+			return FALSE;
+		}
+		verb_suffix = subnetisaddr(&sr->this.client,
+					   &sr->this.host_addr) ?
+			      hs : cs;
+	}
+	return mast_do_command(c, sr, verb, verb_suffix, st);
 }
 
 static bool mast_raw_eroute(const ip_address *this_host,
@@ -483,8 +492,8 @@ static bool mast_raw_eroute(const ip_address *this_host,
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool mast_shunt_eroute(struct connection *c UNUSED,
-			      struct spd_route *sr UNUSED,
+static bool mast_shunt_eroute(const struct connection *c UNUSED,
+			      const struct spd_route *sr UNUSED,
 			      enum routing_t rt_kind UNUSED,
 			      enum pluto_sadb_operations op UNUSED,
 			      const char *opname UNUSED)
@@ -499,7 +508,7 @@ static bool mast_shunt_eroute(struct connection *c UNUSED,
  * @param sr - new route
  * @return TRUE if add was successful, FALSE otherwise
  */
-static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
+static bool mast_sag_eroute_replace(const struct state *st, const struct spd_route *sr)
 {
 	struct connection *c = st->st_connection;
 	struct state *old_st;
@@ -523,17 +532,17 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 		(int)st->st_refhim);
 
 	/* add the new rule */
-	success = mast_do_command(c, sr, "spdadd", st);
+	success = mast_do_command_vs(c, sr, "spdadd", st);
 
 	/* drop the old rule -- we ignore failure */
 	if (old_st->st_serialno != st->st_serialno)
-		(void)mast_do_command(c, sr, "spddel", old_st);
+		(void)mast_do_command_vs(c, sr, "spddel", old_st);
 
 	return success;
 }
 
 /* install or remove eroute for SA Group */
-static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
+static bool mast_sag_eroute(const struct state *st, const struct spd_route *sr,
 			    enum pluto_sadb_operations op,
 			    const char *opname UNUSED)
 {
@@ -580,10 +589,10 @@ static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
 		return TRUE;
 
 	case ERO_ADD:
-		return mast_do_command(st->st_connection, sr, "spdadd", st);
+		return mast_do_command_vs(st->st_connection, sr, "spdadd", st);
 
 	case ERO_DELETE:
-		return mast_do_command(st->st_connection, sr, "spddel", st);
+		return mast_do_command_vs(st->st_connection, sr, "spddel", st);
 
 	case ERO_REPLACE:
 		return mast_sag_eroute_replace(st, sr);

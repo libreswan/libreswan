@@ -681,14 +681,9 @@ static stf_status informational(struct msg_digest *md)
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
 			if (st != NULL && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				char *tmp_name;
-				int tmp_whack_sock;
-				struct connection *tmp_c;
-				ip_address old_addr;
-
 				/* Saving connection name and whack sock id */
-				tmp_name = st->st_connection->name;
-				tmp_whack_sock = dup_any(st->st_whack_sock);
+				const char *tmp_name = st->st_connection->name;
+				int tmp_whack_sock = dup_any(st->st_whack_sock);
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
@@ -696,7 +691,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
-				tmp_c = con_by_name(tmp_name, FALSE);
+				struct connection *tmp_c = con_by_name(tmp_name, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
@@ -706,14 +701,13 @@ static stf_status informational(struct msg_digest *md)
 				{
 
 					ipstr_buf b;
-					struct spd_route *tmp_spd =
+					const struct spd_route *tmp_spd =
 						&tmp_c->spd;
 					int count_spd = 0;
 
 					do {
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "spd route number: %d",
+						    DBG_log("spd route number: %d",
 							    ++count_spd));
 
 						/**that info**/
@@ -762,7 +756,7 @@ static stf_status informational(struct msg_digest *md)
 							    tmp_spd->that.
 							    has_id_wildcards));
 
-						tmp_spd = tmp_spd->next;
+						tmp_spd = tmp_spd->spd_next;
 					} while (tmp_spd != NULL);
 
 					if (tmp_c->interface != NULL) {
@@ -783,7 +777,7 @@ static stf_status informational(struct msg_digest *md)
 				}
 
 				/* storing old address for comparison purposes */
-				old_addr = tmp_c->spd.that.host_addr;
+				ip_address old_addr = tmp_c->spd.that.host_addr;
 
 				/* Decoding remote peer address info where connection has to be redirected to */
 				memcpy(&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
@@ -2090,7 +2084,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	if (self_delete) {
 		accept_self_delete(md);
-		st = md->st;	/* st not subseqently used */
+		st = md->st;	/* st not subsequently used */
 		/* note: st ought to be NULL from here on */
 	}
 
@@ -2877,15 +2871,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 						   &peer);
 			}
 
-			st->st_connection = r; /* kill reference to c */
-
-			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection()
-			 */
-			if (cur_connection == c)
-				set_cur_connection(r);
-
-			connection_discard(c);
+			update_state_connection(st, r);
 		} else if (c->spd.that.has_id_wildcards) {
 			free_id_content(&c->spd.that.id);
 			c->spd.that.id = peer;
@@ -2916,4 +2902,51 @@ bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 	}
 
 	return TRUE;
+}
+
+void doi_log_cert_thinking(u_int16_t auth,
+				enum ike_cert_type certtype,
+				enum certpolicy policy,
+				bool gotcertrequest,
+				bool send_cert,
+				bool send_chain)
+{
+	DBG(DBG_CONTROL,
+		DBG_log("thinking about whether to send my certificate:"));
+
+	DBG(DBG_CONTROL, {
+		struct esb_buf esb;
+
+		DBG_log("  I have RSA key: %s cert.type: %s ",
+			enum_showb(&oakley_auth_names, auth, &esb),
+			enum_show(&ike_cert_type_names, certtype));
+	});
+
+	DBG(DBG_CONTROL,
+		DBG_log("  sendcert: %s and I did%s get a certificate request ",
+			enum_show(&certpolicy_type_names, policy),
+			gotcertrequest ? "" : " not"));
+
+	DBG(DBG_CONTROL,
+		DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
+
+	if (!send_cert) {
+		if (auth == OAKLEY_PRESHARED_KEY) {
+			DBG(DBG_CONTROL,
+				DBG_log("I did not send a certificate "
+					"because digital signatures are not "
+					"being used. (PSK)"));
+		} else if (certtype == CERT_NONE) {
+			DBG(DBG_CONTROL,
+				DBG_log("I did not send a certificate because "
+					"I do not have one."));
+		} else if (policy == cert_sendifasked) {
+			DBG(DBG_CONTROL,
+				DBG_log("I did not send my certificate "
+					"because I was not asked to."));
+		}
+		/* ??? should there be an additional else catch-all? */
+	}
+	if (send_chain)
+		DBG(DBG_CONTROL, DBG_log("Sending one or more authcerts"));
 }

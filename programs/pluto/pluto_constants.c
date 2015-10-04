@@ -53,8 +53,8 @@
  */
 
 static const char *const kern_interface_name[] = {
-	"none",
-	"auto-pick",
+	"no-kernel", /* run without stack */
+	"auto-pick", /* obsoleted but punts to netkey */
 	"klips",
 	"netkey",
 	"win2k",
@@ -278,7 +278,7 @@ static const char *const stfstatus_names[] = {
 	"STF_INTERNAL_ERROR",
 	"STF_TOOMUCHCRYPTO",
 	"STF_FATAL",
-	"STF_STOLEN",
+	"STF_DROP",
 	"STF_FAIL"
 };
 

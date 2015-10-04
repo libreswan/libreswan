@@ -119,7 +119,7 @@ bool cert_exists_in_nss(const char *nickname)
 	return TRUE;
 }
 
-static CERTCertificate *get_cert_from_nss(const char *nickname)
+CERTCertificate *get_cert_from_nss(const char *nickname)
 {
 	CERTCertificate *cert;
 	cert = PK11_FindCertFromNickname(nickname,

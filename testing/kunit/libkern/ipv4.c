@@ -522,7 +522,7 @@ static void init_fraglist(void)
 {
 	unsigned int i;
 
-	for (i = 0; i < ARRAY_SIZE(fraglist); i++)
+	for (i = 0; i < elemsof(fraglist); i++)
 		INIT_LIST_HEAD(&fraglist[i]);
 }
 init_call(init_fraglist);
@@ -535,7 +535,7 @@ static struct sk_buff *gather_frag(struct fraglist *f, struct sk_buff *skb)
 	char filled[70000] = { 0 };
 	char data[70000];
 
-	for (i = 0; i < ARRAY_SIZE(f->frags); i++) {
+	for (i = 0; i < elemsof(f->frags); i++) {
 		if (!f->frags[i]) {
 			if (!skb)
 				break;

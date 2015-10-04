@@ -36,6 +36,7 @@ Loading conn 'westnet-eastnet-ikev2'
   ah=sha256-modp1536
   authby=secret
   auto=add
+  fragmentation=yes
   keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
@@ -50,7 +51,7 @@ initdone
 west #
  strongswan up westnet-eastnet-ikev2
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) N(HASH_ALG) ]
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]

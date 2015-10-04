@@ -79,7 +79,6 @@ enum keyword_numeric_config_field {
 	KBF_PLUTOSTDERRLOGTIME,
 	KBF_PLUTOSTDERRLOGAPPEND,
 	KBF_IKEPORT,
-	KBF_PLUTOFORK,
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
@@ -305,8 +304,7 @@ struct keyword {
 struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
-	char        *string;
-	double decimal;
+	char *string;
 	unsigned int number;
 };
 
