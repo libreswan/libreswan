@@ -111,7 +111,7 @@ list-local-base:
 # set values for implicit rules.
 LOADLIBS=${OBJS}
 
-LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
+LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 
 
 %: %.o $(OBJS) ${LIBS}

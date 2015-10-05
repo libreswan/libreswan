@@ -14,11 +14,11 @@
 
 PROGRAM=showhostkey
 
+
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../mk/program.mk
 endif
 
-# Enable for workaround for bug in nspr 4.8.2
-#CFLAGS+=-Wno-strict-prototypes
+LDLIBS+=${NSSLIBS} -lgmp

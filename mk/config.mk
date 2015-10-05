@@ -222,7 +222,8 @@ BISONOSFLAGS?=
 # after -I$(top_srcdir)/include and fixing that is an entirely
 # separate cleanup.
 NSSFLAGS?=$(shell pkg-config --cflags nss)
-NSSLIBS?=$(shell pkg-config --libs nss)
+# We don't want to link against every library pkg-config --libs nss returns
+NSSLIBS=-lnss3 -lnspr4
 
 # To build with clang, use: scan-build make programs
 #GCC=clang
