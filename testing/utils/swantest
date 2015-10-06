@@ -532,8 +532,7 @@ class scantests:
         if graphsums:
             g = dict()
             for o in graphsums:
-                logging.debug("AA dir %s new %s " % (o["dir"] , g_sum["dir"]))
-                if o["dir"] != g_sum["dir"] and  (not o["dir"] in g):
+                if o["dir"] != g_sum["dir"] and (not o["dir"] in g):
                     g[o["dir"]] = True
                     self.graphsums.append(o)
 
@@ -558,7 +557,8 @@ class scantests:
         self.graphsums = sorted(self.graphsums, key=lambda k: k['dir'])
 
         self.htmlsums["rows"].append(h_sum)
-        self.htmlsums["rows"] = sorted(self.htmlsums["rows"], key=lambda k: k[0], reverse=True)
+        self.htmlsums["rows"] = sorted(
+            self.htmlsums["rows"], key=lambda k: k[0], reverse=True)
 
     def write_node_sum(self):
         gfile = self.npath + '/' + 'graph.json'
@@ -685,7 +685,7 @@ class scantests:
             re_write_result(sanity=s)
 
         os.chdir("..")
-        os.chdir(ocwd);
+        os.chdir(ocwd)
 
         if self.nopath:
             rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
@@ -1365,7 +1365,7 @@ DEFAULTCONFIG = {
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
-    'initshwait' : 600,
+    'initshwait': 600,
     'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
     'newrun': None,
     'node': platform.node(),
@@ -1438,6 +1438,9 @@ def cmdline():
 
     parser.add_argument('--noreboot', default=None, action="store_true",
                         help='Dont reboot vm. Default reboot')
+
+    parser.add_argument("--rerun", default=None,
+                        help="<directory> continue previous run")
 
     parser.add_argument("--resanitize", default=False, action="store_true",
                         help="re-sanitize results, run it from ~/libreswan/testing/pluto directory")
@@ -1924,7 +1927,7 @@ def do_kvmplutotest(args, start, test, st):
 
     # now wait for the threads to finish their job
     th_responder.join(timeout=args.initshwait)
-    th_initiator.join(timeout=args.initshwait);
+    th_initiator.join(timeout=args.initshwait)
     if "nic" in test:
         th_nic.join(timeout=args.initshwait)
 
@@ -2233,7 +2236,6 @@ def do_test_list(args, start, tried, output_dir):
     if st["ktorun"]:
         run_kvm_q(args, tests, st)
 
-    logging.info("AA ran the Qs")
     if os.path.isdir(st["odir"]) and ((st["dtorun"] + st["ktorun"]) > 0):
         endscan = scantests(args, stdir=st["odir"], to_append=True)
         endscan.scan_test_runs()
@@ -2263,17 +2265,22 @@ def setup_result_dir(args, to_create):
         if not makedirs_log(output_dir, 0o775):
             return
 
-    if args.node:
-        output_dir = output_dir + '/' + date_dir + '-' + args.node
-    else:
-        output_dir = output_dir + '/' + date_dir
-
     ipsecversion = ''
-    try:
-        # inside 'make check' IPSECVERSION is set
-        ipsecversion = os.environ["IPSECVERSION"]
-    except:
-        pass
+
+    if args.rerun:  # this is continuation of previous run
+        ipsecversion = args.rerun
+        output_dir = output_dir + '/'
+    else:
+        if args.node:
+            output_dir = output_dir + '/' + date_dir + '-' + args.node
+        else:
+            output_dir = output_dir + '/' + date_dir
+
+        try:
+            # inside 'make check' IPSECVERSION is set
+            ipsecversion = os.environ["IPSECVERSION"]
+        except:
+            pass
 
     if not ipsecversion:
         # Lets assume the path is <LIBRESWANSRC>/testing/utis
@@ -2288,7 +2295,9 @@ def setup_result_dir(args, to_create):
     else:
         logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
 
-    if ipsecversion:
+    if ipsecversion and args.rerun:
+        output_dir = output_dir + ipsecversion
+    else:
         output_dir = output_dir + '-' + ipsecversion
 
     if (args.resanitize):
