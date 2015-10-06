@@ -1,107 +1,32 @@
-This package was debianized by Rene Mayrhofer <rene.mayrhofer@gibraltar.at> on
-Thu, 10 Aug 2000 10:50:33 +0200.
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libreswan
+Upstream-Contact: The Libreswan Project <swan-dev@lists.libreswan.org>
+Source: https://download.libreswan.org/
+License: GPL-2 and ......
+Comment: Security contact: security@libreswan.org
+Comment: Libreswan derives its copyright from Openswan. See CREDITS.openswan
+Comment: Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
 
-The Debian package was created from scratch with some hints taken from
-previous freeswan packages by Tommi Virtanen and Aaron Johnson.
-The upstream software was originally downloaded from http://www.freeswan.org
-and http://www.openswan.org/ while newer versions use the fork
-from http://www.libreswan.org .
-Debian packaging is Copyright © 2000-2010 Rene Mayrhofer.
-
-Libreswan's code is DFSG-free. See CREDITS.
-
-Libreswan derives its copyright from  Openswan. See CREDITS.openswan
-
-Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
-
-The contents of this LICENSE file are:
-------------------------------------------------------------------------------
-
- GNU GPL License
- ===============
-
- This program is free software; you can redistribute it and/or modify it
- under the terms of the GNU General Public License as published by the Free
- Software Foundation; either version 2 of the License, or (at your option)
- any later version.
-
- This program is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- more details.
-
- You should have received a copy of the GNU General Public License along
- with this program; if not, write to the Free Software
- Foundation, Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-
+Files: *
+Copyright: 2011-2015 The Libreswan Project or their individual authors
+License: GPL-2 or LGPL-2
  On Debian systems, a copy of the GNU General Public License, version 2,
  can be found in the file /usr/share/common-licenses/GPL-2.
 
-Files with different copyrights/licenses:
+ On Debian systems, a copy of the GNU Lesser General Public License,
+ version 2, can be found in the file /usr/share/common-licenses/LGPL-2.
 
- * lib/libcrypto/libserpent/serpent.c,
-   lib/libswan/atoaddr.c, lib/libswan/atoasr.c,
-   lib/libswan/atosubnet.c, lib/libswan/atoul.c,
-   lib/libswan/initsaid.c, lib/libswan/initsubnet.c,
-   lib/libswan/internal.h, lib/libswan/iprange.c,
-   lib/libswan/keyblobtoid.c, lib/libswan/optionsfrom.c,
-   lib/libswan/pfkey_error.c, lib/libswan/pfkey_sock.c,
-   lib/libswan/portof.c, lib/libswan/rangetosubnet.c,
-   lib/libswan/sameaddr.c, lib/libswan/sanitizestring.c,
-   lib/libswan/satoa.c, lib/libswan/subnettot.c,
-   lib/libswan/subnettypeof.c, lib/libswan/ttoaddr.c,
-   lib/libswan/ttodata.c, lib/libswan/ttosa.c,
-   lib/libswan/ttosubnet.c, lib/libswan/ttoul.c,
-   lib/libswan/udpfromto.c, lib/libswan/version.in.c,
-   linux/include/libreswan.h, linux/include/libreswan/ipsec_kversion.h,
-   linux/include/libreswan/ipsec_param2.h,
-   linux/include/libreswan/ipsec_policy.h, linux/include/libreswan/passert.h,
-   linux/include/libreswan/pfkey_debug.h, linux/net/ipsec/addrtoa.c,
-   linux/net/ipsec/addrtot.c, linux/net/ipsec/addrtypeof.c,
-   linux/net/ipsec/anyaddr.c, linux/net/ipsec/datatot.c,
-   linux/net/ipsec/goodmask.c, linux/net/ipsec/initaddr.c,
-   linux/net/ipsec/prng.c, linux/net/ipsec/rangetoa.c,
-   linux/net/ipsec/satot.c, linux/net/ipsec/subnetof.c,
-   linux/net/ipsec/subnettoa.c, linux/net/ipsec/ultoa.c,
-   linux/net/ipsec/ultot.c, linux/net/ipsec/version.in.c,
-   testing/kunit/libkern/version.in.c, testing/utils/ike-scan/getopt.c,
-   testing/utils/ike-scan/getopt.h, testing/utils/ike-scan/getopt1.c
-   Copyright: 1998-2001 Henry Spencer
-   Copyright: 1999-2001 Richard Guy Briggs
-   Copyright: 2003, 2005-2007, 2009 Michael Richardson
-   Copyright: 2003-2009 Paul Wouters
-   Copyright: 1998-2002 D. Hugh Redelmeier
-   Copyright: 2008-2009 David McCullough
-   Copyright: 2002 Miquel van Smoorenburg
-
-   This library is free software; you can redistribute it and/or modify
-   it under the terms of the GNU Lesser General Public License as published
-   by the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
-
-   You should have received a copy of the GNU Lesser General Public License
-   along with Foobar; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-
-   On Debian systems, a copy of the GNU Lesser General Public License,
-   version 2, can be found in the file /usr/share/common-licenses/LGPL-2.
-
- * linux/include/zlib/*, linux/net/ipsec/zutil.c, linux/net/ipsec/infutil.c,
-   linux/net/ipsec/infutil.h, linux/net/ipsec/inflate.c,
-   linux/net/ipsec/infcodes.c, linux/net/ipsec/infcodes.h,
-   linux/net/ipsec/deflate.c, linux/net/ipsec/deflate.h,
-   linux/net/ipsec/trees.c, linux/net/ipsec/infblock.c,
-   linux/net/ipsec/inffast.c, linux/net/ipsec/infblock.h,
-   linux/net/ipsec/inffast.h, linux/net/ipsec/inftrees.c,
-   linux/net/ipsec/inftrees.h, linux/net/ipsec/adler32.c
-   testing/utils/ike-scan/md5.c, testing/utils/ike-scan/md5.h
-   Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
-
+Files: linux/include/zlib/*, linux/net/ipsec/zutil.c, linux/net/ipsec/infutil.c,
+       linux/net/ipsec/infutil.h, linux/net/ipsec/inflate.c,
+       linux/net/ipsec/infcodes.c, linux/net/ipsec/infcodes.h,
+       linux/net/ipsec/deflate.c, linux/net/ipsec/deflate.h,
+       linux/net/ipsec/trees.c, linux/net/ipsec/infblock.c,
+       linux/net/ipsec/inffast.c, linux/net/ipsec/infblock.h,
+       linux/net/ipsec/inffast.h, linux/net/ipsec/inftrees.c,
+       linux/net/ipsec/inftrees.h, linux/net/ipsec/adler32.c
+       testing/utils/ike-scan/md5.c, testing/utils/ike-scan/md5.h
+Copyright: 1995-2002 Jean-loup Gailly and Mark Adler
+License: public-domain
    This software is provided 'as-is', without any express or implied
    warranty.  In no event will the authors be held liable for any damages
    arising from the use of this software.
@@ -121,39 +46,10 @@ Files with different copyrights/licenses:
    Jean-loup Gailly        Mark Adler
    jloup@gzip.org          madler@alumni.caltech.edu
 
- * include/arpa/nameser.h, lib/libdns/*, lib/libisc/*, lib/liblwres/*
-   (except lib/liblwres/include/lwres/async.h)
-   Copyright: 2004-2007 by Internet Systems Consortium, Inc. ("ISC")
-              1995-2003 by Internet Software Consortium
- * lib/liblwres/async.c, lib/liblwres/include/lwres/async.h
-   Copyright: 2003 Michael Richardson
-   License:
-
-   Permission to use, copy, modify, and distribute this software for any
-   purpose with or without fee is hereby granted, provided that the above
-   copyright notice and this permission notice appear in all copies.
-
-   THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
-   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-   MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
-   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-   OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-     Internet Systems Consortium, Inc.
-     950 Charter Street
-     Redwood City, CA 94063
-     <info@isc.org>
-     http://www.isc.org/
-
- * include/arpa/nameser.h, include/sysqueue.h, lib/libisc/inet_aton.c,
-   lib/liblwres/herror.c, lib/liblwres/lwinetaton.c,
-   linux/include/libreswan/radij.h, linux/net/ipsec/radij.c,
-   testing/utils/uml_netjig/getopt_long.c
-   Copyright (c) 1983, 1987, 1988, 1989, 1990, 1991, 1993, 1994, 1996
+Files: include/sysqueue.h, linux/include/libreswan/radij.h, linux/net/ipsec/radij.c,
+Copyright: 1983, 1987, 1988, 1989, 1990, 1991, 1993, 1994, 1996
       The Regents of the University of California.  All rights reserved.
-
+License:
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
    are met:
@@ -182,42 +78,9 @@ Files with different copyrights/licenses:
    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
    SUCH DAMAGE.
 
- * lib/libdns/dst_internal.h
-   Portions Copyright (C) 1995-2000 by Network Associates, Inc.
-
-   Permission to use, copy, modify, and distribute this software for any
-   purpose with or without fee is hereby granted, provided that the above
-   copyright notice and this permission notice appear in all copies.
-
-   THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
-   ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-   WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
-   FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-   IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
- * lib/libisc/inet_aton.c, lib/liblwres/lwinetaton.c
-   Portions Copyright (c) 1993 by Digital Equipment Corporation.
-
-   Permission to use, copy, modify, and distribute this software for any
-   purpose with or without fee is hereby granted, provided that the above
-   copyright notice and this permission notice appear in all copies, and that
-   the name of Digital Equipment Corporation not be used in advertising or
-   publicity pertaining to distribution of the document or software without
-   specific, written prior permission.
-
-   THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
-   WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
-   OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
-   CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-   DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-   PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
-   ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-   SOFTWARE.
-
- * include/libbsdkame/libpfkey.h, lib/libbsdpfkey/*, lib/liblwres/getnameinfo.c
-   Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+Files: include/libbsdkame/libpfkey.h, lib/libbsdpfkey/*
+Copyright: 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+License: BSD-2-clause
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -244,14 +107,12 @@ Files with different copyrights/licenses:
    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
    SUCH DAMAGE.
 
- * lib/libcrypto/libdes/speed.c, lib/libcrypto/libdes/fcrypt_b.c,
-   lib/libcrypto/libdes/destest.c, lib/libcrypto/libblowfish/bf_skey.c,
-   lib/libcrypto/libblowfish/blowfish.h, lib/libcrypto/libblowfish/bf_pi.h,
-   lib/libcrypto/libblowfish/bf_locl.h, lib/libcrypto/libblowfish/bf_enc.c,
-   linux/include/des/*, linux/include/klips-crypto/des.h,
+Files: linux/include/des/*, linux/include/klips-crypto/des.h,
    linux/net/ipsec/des/cbc_enc.c, linux/net/ipsec/des/des_enc.c,
    linux/net/ipsec/des/des_opts.c, linux/net/ipsec/des/ecb_enc.c,
    linux/net/ipsec/des/set_key.c
+Copyright: 1995-1998 Eric Young
+License:
    Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
    All rights reserved.
 
@@ -308,7 +169,12 @@ Files with different copyrights/licenses:
    copied and put under another distribution licence
    [including the GNU Public Licence.]
 
- * include/crypto/cryptodev.h
+Files: include/crypto/cryptodev.h
+Copyright: 2006-2007 David McCullough, 2004-2005 Intel Corporation,
+           2000 Angelos D. Keromytis
+           2002-2006 Sam Leffler, Errno Consulting
+           2001 Theo de Raadt
+License:
    Copyright (C) 2006-2007 David McCullough
    Copyright (C) 2004-2005 Intel Corporation.
    The license and original author are listed below.
@@ -362,7 +228,9 @@ Files with different copyrights/licenses:
    Agency (DARPA) and Air Force Research Laboratory, Air Force
    Materiel Command, USAF, under agreement number F30602-01-2-0537.
 
- * lib/libcrypto/liblswcrypto/cryptodev.c
+Files: lib/libcrypto/liblswcrypto/cryptodev.c
+Copyright: 2008 David McCullough,  2004-2005 Intel Corporation
+License:
    Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
 
    Daniel Djamaludin
@@ -413,12 +281,10 @@ Files with different copyrights/licenses:
    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
    for more details.
 
- * linux/include/libreswan/pfkeyv2.h
+Files: linux/include/libreswan/pfkeyv2.h
+Copyright:  U.S. Naval Research Laboratory
+License: public-domain
    This file defines structures and symbols for the PF_KEY Version 2
    key management interface. It was written at the U.S. Naval Research
    Laboratory. This file is in the public domain. The authors ask that
    you leave this credit intact on any copies of this file.
-
-------------------------------------------------------------------------------
-
-Harald Jenny and Rene Mayrhofer, 2010-03-27
