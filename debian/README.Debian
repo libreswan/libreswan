@@ -7,31 +7,37 @@ This package has been created by dkg with some reference/guidance from
 previous packaging work by several other packagers of both libreswan
 and other historical *swan projects (freeswan, openswan, etc).
 
-2) Plain RSA key creation
+2) openswan to libreswan migration
 
-Note: Usage of such keys is deprecated in favour of newer X.509 certificates.
+See:
+* https://libreswan.org/wiki/Migrating_from_Openswan
+* https://libreswan.org/wiki/Using_NSS_with_libreswan
 
-If you still want to create an old style plain RSA key, you can create it with
-    ipsec rsasigkey $KEYLENGTH > $TMPFILE
-where $KEYLENGTH should be >= 2048. The resulting private key must be inserted
-into /etc/ipsec.secrets and enclosed with a ": RSA { .... }" marker. The
-following commands can be used to create a correctly formatted block:
-    echo -e ': RSA\t{' >> /etc/ipsec.secrets;
-    cat $TMPFILE >> /etc/ipsec.secrets;
-    echo -e '\t}' >> /etc/ipsec.secrets;
-Afterwards, it is recommended to remove $TMPFILE in a secure manner (using
-something line srm, shred, wipe...) and create a public key line for insertation
-into the "conn" section of ipsec.conf with
-    ipsec showhostkey --left
-(or "--right" depending on which side you want to use it). For further
-information please take a closer look at the manpages ipsec_rsasigkey,
-ipsec.secrets, ipsec_showhostkey and ipsec.conf.
+2) Raw RSA key creation
 
-3) IPsec Kernel Support
+Raw RSA keys can be generated with
+    ipsec newhostkey
+
+To display the key identifier of the key for use in leftrsasigkey/rightrsasigkey
+in the "conn" section of ipsec.conf, use:
+    ipsec showhostkey --left    (or --right)
+
+For further information please take a closer look at the manpages
+ipsec_rsasigkey, ipsec.secrets, ipsec_showhostkey and ipsec.conf.
+
+3) X.509 support
+
+All certificate material, including CA certificates, CRLs and private keys
+are now stored in the NSS database in /etc/ipsec.d
+
+When migrating from pre-NSS openswan, the files from /etc/ipsec.d/private,
+/etc/ipsec.d/cacerts, /etc/ipsec.d/crls and /etc/ipsec.d/certs need to be
+imported into NSS using certutil, crlutil or pk12util. For more information
+see https://libreswan.org/wiki/Using_NSS_with_libreswan
+
+4) IPsec Kernel Support
 
 Note: This package uses the in-kernel IPsec stack, which is available
 in all recent stock Debian kernel images.  This packaging does not
-support the KLIPS or any other custom kernel modules at the moment for
-simplicity's sake.
+support KLIPS or KLIPS/MAST.
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Wed, 30 Sep 2015 00:19:42 -0700
