@@ -30,7 +30,6 @@ esac
 
 if [ "$1" = "purge" ] ; then
 	rm -rf /etc/ipsec.d/
-	rm -rf /var/lib/libreswan/
 	rm -rf /var/run/pluto/
 
 	if [ -e /usr/share/debconf/confmodule ]; then

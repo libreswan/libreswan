@@ -4,11 +4,6 @@
 	dh $@
 
 override_dh_auto_build:
-	# create a dummy ipsec.secrets file before building the package so
-	# that no RSA keys are created during the build process
-	# (a package should not include a RSA key, it should produce the key
-	# on demand, e.g. in the postinst script)
-	touch $(CURDIR)/debian/ipsec.secrets
 	$(MAKE) programs INC_USRLOCAL=/usr \
 			 FINALBINDIR=/usr/lib/ipsec \
 			 FINALLIBEXECDIR=/usr/lib/ipsec \
@@ -16,7 +11,6 @@ override_dh_auto_build:
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
 			 INITSYSTEM=systemd \
-			 NSSLIBS="-lnss3 -lnspr4" \
 			 USE_LDAP=true \
 			 USE_LIBCURL=true \
 			 USE_XAUTHPAM=true \
@@ -26,9 +20,6 @@ override_dh_auto_build:
 			 USE_ADNS=false \
 			 USE_DNSSEC=true \
 
-
-	# remove the temporary file, it will be created during install
-	rm -f $(CURDIR)/debian/ipsec.secrets
 
 override_dh_auto_install:
 	# Add here commands to install the package into debian/tmp.
@@ -42,10 +33,6 @@ override_dh_auto_install:
 	install --mode=0600 $(CURDIR)/debian/ipsec.secrets.proto $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 
 	rm -f $(CURDIR)/debian/libreswan/etc/init.d/ipsec?*
-	rm -f $(CURDIR)/debian/libreswan/usr/lib/ipsec/_plutorun?*
-
-	# this is handled by update-rc.d
-	rm -rf $(CURDIR)/debian/libreswan/etc/rc?.d
 
 	# delete var/lock/subsys and var/run to satisfy lintian
 	rm -rf $(CURDIR)/debian/libreswan/var/lock
@@ -65,16 +52,10 @@ override_dh_auto_install:
 	# set permissions on ipsec.secrets
 	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.conf
-	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/private/
-	# don't know why they come with +x set by default...
-	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies/*
-
-	# create /var/lib/libreswan with permissions similar to ipsec.secrets
-	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
-	chmod 700 -R $(CURDIR)/debian/libreswan/var/lib/libreswan
+	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/
 
 override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
 
 override_dh_fixperms:
-	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d/private -X var/lib/libreswan
+	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d

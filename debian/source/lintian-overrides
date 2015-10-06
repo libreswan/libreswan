@@ -1,2 +1,0 @@
-# this symlink to /dev/null is part of the upstream test suite:
-source-contains-unsafe-symlink testing/baseconfigs/all/etc/sysctl.d/coredump.conf

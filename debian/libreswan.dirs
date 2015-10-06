@@ -1,15 +1,11 @@
 /etc
 /etc/ipsec.d
-/etc/ipsec.d/cacerts
-/etc/ipsec.d/crls
-/etc/ipsec.d/private
 /etc/ipsec.d/policies
-/etc/init.d
-/etc/init
 /etc/logcheck/ignore.d.paranoid
 /etc/logcheck/ignore.d.server
 /etc/logcheck/ignore.d.workstation
 /etc/logcheck/violations.ignore.d
+/lib/systemd/system
+/usr/lib/ipsec
 /usr/bin
 /usr/sbin
-/var/lib/libreswan
