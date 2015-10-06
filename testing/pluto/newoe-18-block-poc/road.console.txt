@@ -23,6 +23,8 @@ road #
  echo "initdone"
 initdone
 road #
+ # use -w due to local block policy
+road #
  ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
@@ -108,7 +110,7 @@ road #
 road #
  # ping should fail on outgoing block rule
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -w 2 -n -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 0 packets transmitted, 0 received

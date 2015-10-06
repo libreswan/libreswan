@@ -30,7 +30,7 @@ road #
  echo "initdone"
 initdone
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
@@ -43,7 +43,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---

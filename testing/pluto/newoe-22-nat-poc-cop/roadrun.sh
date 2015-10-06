@@ -1,4 +1,4 @@
-ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -c 1 -I 192.1.3.209 192.1.2.23
 # wait on OE retransmits and rekeying
 sleep 15
 # should show %pass bare shunt
