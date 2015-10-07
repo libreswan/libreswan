@@ -68,6 +68,8 @@ done
 west #
  grep INVALID_MAJOR_VERSION /tmp/pluto.log
 west #
+ grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
+west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #

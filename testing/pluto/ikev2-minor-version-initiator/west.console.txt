@@ -100,7 +100,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- grep "minor version" /tmp/pluto.log
+ grep "minor version" /tmp/pluto.log >/dev/null && echo payload found
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
