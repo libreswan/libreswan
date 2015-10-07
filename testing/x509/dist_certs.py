@@ -609,6 +609,9 @@ def create_nss_pw():
 	f.close()
 
 def main():
+	outdir = os.path.dirname(sys.argv[0])
+	cwd = os.getcwd()
+	os.chdir(outdir)
 	global dates
 	reset_files()
 	dates = gen_gmtime_dates()
@@ -620,6 +623,7 @@ def main():
 	run_dist_certs()
 
 	create_nss_pw()
+	os.chdir(cwd)
 	print "finished!"
 
 
