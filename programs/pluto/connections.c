@@ -1201,8 +1201,14 @@ void add_connection(const struct whack_message *wm)
 	case LEMPTY:
 		if (!NEVER_NEGOTIATE(wm->policy)) {
 			loglog(RC_LOG_SERIOUS,
-				"Connection without AH or ESP cannot negotiate");
+				"Connection without either AH or ESP cannot negotiate");
 			return;
+		} else {
+			if (wm->policy & POLICY_TUNNEL) {
+				loglog(RC_LOG_SERIOUS,
+					"connection with type=tunnel cannot have authby=never");
+				return;
+			}
 		}
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
@@ -1229,9 +1235,18 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
-	if ((wm->ike == NULL || alg_info_ike != NULL) &&
-		check_connection_end(&wm->right, &wm->left, wm) &&
-		check_connection_end(&wm->left, &wm->right, wm))
+	/* we could complain about a lot more whack strings */
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		if (wm->ike != NULL) {
+			loglog(RC_INFORMATIONAL, "Ignored ike= option for type=passthrough connection");
+		}
+		if (wm->esp != NULL) {
+			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
+		}
+	}
+
+	if (check_connection_end(&wm->right, &wm->left, wm) &&
+	    check_connection_end(&wm->left, &wm->right, wm))
 	{
 
 		/*
@@ -1362,15 +1377,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->sha2_truncbug = wm->sha2_truncbug;
 
-		/* Network Manager support */
-#ifdef HAVE_NM
-		c->nmconfigured = wm->nmconfigured;
-#endif
-
-#ifdef HAVE_LABELED_IPSEC
-		c->labeled_ipsec = wm->labeled_ipsec;
-		c->policy_label = wm->policy_label;
-#endif
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->forceencaps = wm->forceencaps;
@@ -1390,6 +1396,14 @@ void add_connection(const struct whack_message *wm)
 
 		} /* !NEVER_NEGOTIATE() */
 
+#ifdef HAVE_NM
+		c->nmconfigured = wm->nmconfigured;
+#endif
+
+#ifdef HAVE_LABELED_IPSEC
+		c->labeled_ipsec = wm->labeled_ipsec;
+		c->policy_label = wm->policy_label;
+#endif
 		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
 		c->addr_family = wm->addr_family;
