@@ -166,7 +166,7 @@ endif
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
-XAUTHPAM_LIBS=-lpam -ldl
+XAUTHPAM_LIBS=-lpam
 endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
