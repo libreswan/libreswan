@@ -31,7 +31,7 @@ Architecture: any
 Pre-Depends: debconf | debconf-2.0
 Depends: bsdmainutils,
          host,
-         iproute (>=20041019-0.1),
+         iproute2,
          libnspr4,
          libnss3,
          libnss3-tools,
