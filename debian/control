@@ -11,7 +11,7 @@ Build-Depends: bison,
                debhelper (>= 9),
                flex,
                htmldoc,
-               libcurl4-nss-dev,
+               libcurl4-openssl-dev,
                libgmp3-dev,
                libkrb5-dev,
                libldap2-dev,
@@ -21,6 +21,7 @@ Build-Depends: bison,
                libpam0g-dev,
                libunbound-dev,
                man2html,
+               xmlto,
                po-debconf
 Homepage: https://libreswan.org/
 
