@@ -1,2 +1,2 @@
 do-not-use-git-version.patch
-allow-linebreaks-in-man-pages.patch
+#allow-linebreaks-in-man-pages.patch

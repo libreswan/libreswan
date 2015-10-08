@@ -1,4 +1,4 @@
-libreswan (IPSECBASEVERSION-1) UNRELEASED; urgency=low
+libreswan (3.16rc1-1) UNRELEASED; urgency=low
 
   * Initial upload to debian (Closes: #773459)
 
