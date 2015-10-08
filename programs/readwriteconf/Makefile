@@ -14,7 +14,7 @@
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
 #EXTRALIBS=-lefence
 
-LDFLAGS+=-lnssutil3 -lnspr4 -lnss3
+LDFLAGS+=-lnspr4 -lnss3
 PROGRAM=readwriteconf
 
 # reach into pluto for now.
