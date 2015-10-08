@@ -62,6 +62,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "mpzfuncs.h"
+#include "hostpair.h" /* for find_host_pair_connections */
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -611,18 +612,10 @@ void load_crls(void)
 	}
 }
 
-/* forward */
-extern struct connection *find_host_pair_connections(const char *func,
-						     const ip_address *myaddr,
-						     u_int16_t myport,
-						     const ip_address *hisaddr,
-						     u_int16_t hisport);
-
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
 	struct connection *d = find_host_pair_connections(
-		__FUNCTION__,
 		&md->iface->ip_addr, pluto_port,
 		(ip_address *)NULL, md->sender_port);
 
@@ -729,6 +722,7 @@ void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 
 static void replace_public_key(struct pubkey *pk)
 {
+	/* ??? clang 3.5 thinks pk might be NULL */
 	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
 	install_public_key(pk, &pluto_pubkeys);
 }

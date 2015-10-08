@@ -789,7 +789,7 @@ void delete_state(struct state *st)
 	/* tell the other side of any IPSEC SAs that are going down */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
 			IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-		if (IS_CHILD_SA(st) &&
+		if (st->st_ikev2 && IS_CHILD_SA(st) &&
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
 			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
@@ -971,8 +971,8 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					    DBG_log("index %d state #%lu", i,
 						    this->st_serialno));
 
-				/* on pass 2, ignore phase2 states */
-				if (pass == 1 &&
+				/* on pass 1, ignore established ISAKMP SA's */
+				if (pass == 0 &&
 				    IS_ISAKMP_SA_ESTABLISHED(this->st_state))
 					continue;
 

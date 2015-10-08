@@ -1,0 +1,4 @@
+This is a standard private-or-clear to clear-or-private OE
+connection, but there is a NAT in between. Currently, this
+is not yet supported so a %pass should be installed on road
+and traffic flows in cleartext.

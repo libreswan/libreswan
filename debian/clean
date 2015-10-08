@@ -1,0 +1,9 @@
+lib/libipsecconf/lex.yy.c
+lib/libipsecconf/parser.dot
+lib/libipsecconf/parser.output
+lib/libipsecconf/parser.tab.c
+lib/libipsecconf/parser.tab.h
+lib/libipsecconf/Makefile.depend
+lib/libswan/Makefile.depend
+lib/libwhack/Makefile.depend
+programs/configs/ipsec.conf.5.xml

@@ -1047,8 +1047,7 @@ static bool check_connection_end(const struct whack_end *this,
 			 * outset.
 			 */
 			const struct connection *c =
-				find_host_pair_connections(__FUNCTION__,
-						&this->host_addr,
+				find_host_pair_connections(&this->host_addr,
 						this->host_port,
 						(const ip_address *)NULL,
 						that->host_port);
@@ -1202,8 +1201,14 @@ void add_connection(const struct whack_message *wm)
 	case LEMPTY:
 		if (!NEVER_NEGOTIATE(wm->policy)) {
 			loglog(RC_LOG_SERIOUS,
-				"Connection without AH or ESP cannot negotiate");
+				"Connection without either AH or ESP cannot negotiate");
 			return;
+		} else {
+			if (wm->policy & POLICY_TUNNEL) {
+				loglog(RC_LOG_SERIOUS,
+					"connection with type=tunnel cannot have authby=never");
+				return;
+			}
 		}
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
@@ -1230,9 +1235,18 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
-	if ((wm->ike == NULL || alg_info_ike != NULL) &&
-		check_connection_end(&wm->right, &wm->left, wm) &&
-		check_connection_end(&wm->left, &wm->right, wm))
+	/* we could complain about a lot more whack strings */
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		if (wm->ike != NULL) {
+			loglog(RC_INFORMATIONAL, "Ignored ike= option for type=passthrough connection");
+		}
+		if (wm->esp != NULL) {
+			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
+		}
+	}
+
+	if (check_connection_end(&wm->right, &wm->left, wm) &&
+	    check_connection_end(&wm->left, &wm->right, wm))
 	{
 
 		/*
@@ -1363,15 +1377,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->sha2_truncbug = wm->sha2_truncbug;
 
-		/* Network Manager support */
-#ifdef HAVE_NM
-		c->nmconfigured = wm->nmconfigured;
-#endif
-
-#ifdef HAVE_LABELED_IPSEC
-		c->labeled_ipsec = wm->labeled_ipsec;
-		c->policy_label = wm->policy_label;
-#endif
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->forceencaps = wm->forceencaps;
@@ -1391,6 +1396,14 @@ void add_connection(const struct whack_message *wm)
 
 		} /* !NEVER_NEGOTIATE() */
 
+#ifdef HAVE_NM
+		c->nmconfigured = wm->nmconfigured;
+#endif
+
+#ifdef HAVE_LABELED_IPSEC
+		c->labeled_ipsec = wm->labeled_ipsec;
+		c->policy_label = wm->policy_label;
+#endif
 		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
 		c->addr_family = wm->addr_family;
@@ -2212,7 +2225,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		 * We cannot know what port the peer would use, so we assume
 		 * that it is pluto_port (makes debugging easier).
 		 */
-		struct connection *c = find_host_pair_connections(__FUNCTION__,
+		struct connection *c = find_host_pair_connections(
 			&p->ip_addr, pluto_port,
 			(ip_address *) NULL, pluto_port);
 
@@ -2456,8 +2469,7 @@ struct connection *find_host_connection(
 	});
 
 	return find_next_host_connection(
-		find_host_pair_connections(__FUNCTION__,
-			me, my_port, him, his_port),
+		find_host_pair_connections(me, my_port, him, his_port),
 		req_policy, policy_exact_mask);
 }
 stf_status ikev2_find_host_connection( struct connection **cp,
@@ -2521,11 +2533,11 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			ipstr_buf b;
 
 			DBG(DBG_CONTROL, DBG_log(
-				"initial parent SA message received on %s:%u but \"%s\" kind=%s forbids connection",
+				"initial parent SA message received on %s:%u for \"%s\" with kind=%s dropped",
 				ipstr(me, &b), pluto_port, c->name,
 				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
 		}
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			/* opporstunistic */
@@ -2980,8 +2992,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Look on list of connections for host pair with wildcard
 		 * Peer IP.
 		 */
-		d = find_host_pair_connections(__FUNCTION__,
-					&c->spd.this.host_addr,
+		d = find_host_pair_connections(&c->spd.this.host_addr,
 					c->spd.this.host_port,
 					(ip_address *)NULL,
 					c->spd.that.host_port);
@@ -3401,6 +3412,11 @@ struct connection *find_client_connection(struct connection *const c,
 {
 	struct connection *d;
 
+	/* weird things can happen to our interfaces */
+	if (!oriented(*c)) {
+		return NULL;
+	}
+
 	DBG(DBG_CONTROLMORE, {
 		char s1[SUBNETTOT_BUF];
 		char d1[SUBNETTOT_BUF];
@@ -3447,7 +3463,6 @@ struct connection *find_client_connection(struct connection *const c,
 				(sr->that.protocol == peer_protocol) &&
 				(!sr->that.port ||
 					sr->that.port == peer_port)) {
-				passert(oriented(*c));
 				if (routed(sr->routing))
 					return c;
 

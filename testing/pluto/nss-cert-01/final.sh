@@ -1,4 +1,3 @@
-ipsec look
 certutil -L -d sql:/etc/ipsec.d/
 : ==== cut ====
 ipsec auto --status

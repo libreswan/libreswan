@@ -1,4 +1,3 @@
-ipsec look
 # this test should log that west's certificate is revoked
 grep "certificate revoked" /tmp/pluto.log
 : ==== cut ====

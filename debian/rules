@@ -1,42 +1,16 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+%:
+	dh $@
 
-export DH_OPTIONS
-
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	# Add here commands to configure the package.
-
-	touch configure-stamp
-
-patch:
-	dh_testdir
-	dpatch apply-all
-
-unpatch:
-	dpatch deapply-all
-
-build-arch: build
-build-indep: build
-build: build-stamp
-build-stamp: patch
-	# create a dummy ipsec.secrets file before building the package so
-	# that no RSA keys are created during the build process
-	# (a package should not include a RSA key, it should produce the key
-	# on demand, e.g. in the postinst script)
-	touch $(CURDIR)/debian/ipsec.secrets
+override_dh_auto_build:
 	$(MAKE) programs INC_USRLOCAL=/usr \
 			 FINALBINDIR=/usr/lib/ipsec \
 			 FINALLIBEXECDIR=/usr/lib/ipsec \
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
-			 SYSVINIT_DEFAULT_START="2 3 4 5" \
+			 INITSYSTEM=systemd \
 			 USE_LDAP=true \
 			 USE_LIBCURL=true \
 			 USE_XAUTHPAM=true \
@@ -47,47 +21,7 @@ build-stamp: patch
 			 USE_DNSSEC=true \
 
 
-	# remove the temporary file, it will be created during install
-	rm -f $(CURDIR)/debian/ipsec.secrets
-
-	touch build-stamp
-
-clean: unpatch
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp configure-stamp
-
-	[ ! -f Makefile ] || $(MAKE) clean
-
-	# after a make clean, no binaries _should_ be left, but ....
-	-find $(CURDIR) -name "*.o" | xargs --no-run-if-empty rm
-	-find $(CURDIR)/lib/libcrypto -name "*.a" | xargs --no-run-if-empty rm
-
-	rm -rf debian/libreswan-modules-source-build/
-
-	# Really clean (#356716)
-	# This is a hack: should be better implemented
-	rm -f lib/libswan/libswan.a || true
-	rm -f lib/libswan/liblswlog.a || true
-	rm -rf OBJ.* || true
-
-	# just in case something went wrong
-	rm -f $(CURDIR)/debian/ipsec.secrets
-
-	# and make sure that template are up-to-date
-	debconf-updatepo
-
-	dh_clean
-
-	rm -rf debian/patched || true
-
-install-libreswan: DH_OPTIONS=-a
-install-libreswan: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-
+override_dh_auto_install:
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) install INC_USRLOCAL=/usr \
 			FINALBINDIR=/usr/lib/ipsec \
@@ -99,17 +33,10 @@ install-libreswan: build
 	install --mode=0600 $(CURDIR)/debian/ipsec.secrets.proto $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 
 	rm -f $(CURDIR)/debian/libreswan/etc/init.d/ipsec?*
-	rm -f $(CURDIR)/debian/libreswan/usr/lib/ipsec/_plutorun?*
-
-	# this is handled by update-rc.d
-	rm -rf $(CURDIR)/debian/libreswan/etc/rc?.d
 
 	# delete var/lock/subsys and var/run to satisfy lintian
 	rm -rf $(CURDIR)/debian/libreswan/var/lock
 	rm -rf $(CURDIR)/debian/libreswan/var/run
-
-	# remove the already installed docs
-	rm -rf "$(CURDIR)/debian/libreswan/usr/share/doc"
 
 	# fix some manpage issues
 	for oldname in `find $(CURDIR)/debian/libreswan/usr/share/man -name "ipsec_ipsec*"`; \
@@ -122,172 +49,13 @@ install-libreswan: build
 	    fi; \
 	done
 
-	dh_installdocs -plibreswan -n
-	dh_installchangelogs CHANGES
-
-	# libreswan-dbg depends on libreswan so no need to ship doc twice
-	rm -rf $(CURDIR)/debian/libreswan-dbg/usr/share/doc/libreswan-dbg
-
-	# the logcheck ignore files
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.paranoid $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.paranoid/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.server $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.server/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.server $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.workstation/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.violations.ignore $(CURDIR)/debian/libreswan/etc/logcheck/violations.ignore.d/libreswan
-
 	# set permissions on ipsec.secrets
 	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.conf
-	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/private/
-	# don't know why they come with +x set by default...
-	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies/*
+	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/
 
-	# create /var/lib/libreswan with permissions similar to ipsec.secrets
-	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
-	chmod 700 -R $(CURDIR)/debian/libreswan/var/lib/libreswan
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-	# Empty directory
-	rmdir $(CURDIR)/debian/libreswan/usr/bin
-
-install-libreswan-doc: DH_OPTIONS=-plibreswan-doc
-install-libreswan-doc: build
-	dh_testdir
-	dh_testroot
-
-	dh_installdocs -plibreswan-doc -n
-	dh_installchangelogs CHANGES
-
-	# fix some doc issues
-	for oldname in `find $(CURDIR)/debian/libreswan-doc/usr/share/doc -name "ipsec_ipsec*"`; \
-	do \
-	    newname=`echo "$$oldname" | sed 's/ipsec_ipsec_/ipsec_/'`; \
-	    if [ -f "$$newname" ]; then \
-		rm -f "$$oldname"; \
-	    else \
-		mv "$$oldname" "$$newname"; \
-	    fi; \
-	done
-
-	# change the paths in the installed doc files (but only in regular
-	# files, not in links to the outside of the build tree !)
-	( cd $(CURDIR)/debian/libreswan-doc/; \
-	  for f in `grep "/usr/local/" --recursive --files-with-match *`; \
-	  do \
-		if [ -f $$f -a ! -L $$f ]; then \
-		    cp $$f $$f.old; \
-		    sed 's/\/usr\/local\//\/usr\//' $$f.old > $$f; \
-		    rm $$f.old; \
-		fi; \
-	  done )
-	# but remove the doc/src dir, which just duplicates the HTML files
-	rm -rf $(CURDIR)/debian/libreswan-doc/usr/share/doc/libreswan-doc/doc/src
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan-doc -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-install-libreswan-modules-source: DH_OPTIONS=-plibreswan-modules-source
-install-libreswan-modules-source: PKGDIR=$(CURDIR)/debian/libreswan-modules-source
-install-libreswan-modules-source: BUILDDIR=$(CURDIR)/debian/libreswan-modules-source-build
-install-libreswan-modules-source: patch
-	dh_testdir
-	dh_testroot
-	dh_installdirs
-	mkdir -p "$(BUILDDIR)/modules/libreswan"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/lib"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/debian"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/packaging"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/patches/kernel"
-	cp -r CHANGES CREDITS Makefile Makefile.top Makefile.inc Makefile.ver linux/ \
-		"$(BUILDDIR)/modules/libreswan"
-	cp -r lib/libcrypto "$(BUILDDIR)/modules/libreswan/lib/"
-	cp -r packaging/makefiles packaging/linus packaging/utils packaging/defaults/ packaging/ocf \
-		"$(BUILDDIR)/modules/libreswan/packaging/"
-	cp -r patches/kernel/2.6.32 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.34 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.35 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.38 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/3.0.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/3.2.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	find "$(BUILDDIR)/modules/libreswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
-	install --mode=644 debian/libreswan-modules-source.kernel-config "$(BUILDDIR)/modules/libreswan/config-all.h"
-	install --mode=755 debian/libreswan-modules-source.rules "$(BUILDDIR)/modules/libreswan/debian/rules"
-	install --mode=644 debian/libreswan-modules-source.control.in "$(BUILDDIR)/modules/libreswan/debian/control.in"
-	install --mode=644 debian/libreswan-modules-source.docs "$(BUILDDIR)/modules/libreswan/debian/docs.in"
-	install --mode=644 debian/libreswan-modules-source.lintian-overrides.in "$(BUILDDIR)/modules/libreswan/debian/lintian-overrides.in"
-	install --mode=644 debian/compat "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/changelog "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/copyright "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/NEWS "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/README.Debian "$(BUILDDIR)/modules/libreswan/debian/"
-
-	tar -C $(BUILDDIR) -c modules/ | bzip2 -9 > \
-		"$(PKGDIR)/usr/src/libreswan-modules.tar.bz2"
-
-	dh_installdocs -plibreswan-modules-source -n
-	dh_installchangelogs CHANGES
-
-	# more lintian cleanups
-	find $(PKGDIR) -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-install-libreswan-modules-dkms: DH_OPTIONS=-plibreswan-modules-dkms
-install-libreswan-modules-dkms: VERSION:=$(shell dpkg-parsechangelog | grep '^Version: ' | cut -d: -f3 | cut -d- -f1)
-install-libreswan-modules-dkms: patch
-	dh_testdir
-	dh_testroot
-	dh_installdirs
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib"
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/debian"
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/packaging"
-	cp -r Makefile Makefile.top Makefile.inc Makefile.ver linux/ \
-		"$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)"
-	cp -r lib/libcrypto "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib"
-	cp -r packaging/makefiles packaging/linus packaging/utils packaging/defaults/ packaging/ocf \
-		"$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/packaging/"
-	find "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib" -name "*.o" | xargs --no-run-if-empty rm
-	install --mode=644 debian/libreswan-modules-source.kernel-config "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/config-all.h"
-	sed -e "s/#VERSION#/$(VERSION)/g" debian/libreswan-modules-dkms.dkms.conf.in > "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/dkms.conf"
-
-	dh_installdocs -plibreswan-modules-dkms -n
-	dh_installchangelogs CHANGES
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan-modules-dkms -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-	# Ensure +x for scrips
-	find $(CURDIR)/debian/libreswan-modules-dkms -type f -name "*.sh" -o -name "*.pl" | xargs --no-run-if-empty chmod 755
-
-	# remove empty dir
-	find $(CURDIR)/debian/libreswan-modules-dkms -type d -name debian | xargs --no-run-if-empty rmdir
-
-	# These are not executable scripts, more like "shell source" files
-	find $(CURDIR)/debian/libreswan-modules-dkms -name sshenv -o -name setup | xargs --no-run-if-empty chmod 644
-
-binary-common:
-	dh_testdir
-	dh_testroot
-	dh_installdebconf
-	dh_link
+override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
-	dh_compress
-	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d/private -X var/lib/libreswan
 
-	dh_lintian
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-# Build architecture-independent files here.
-binary-indep: install-libreswan-doc
-	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
-
-# Build architecture-dependent files here.
-binary-arch: install-libreswan
-	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
-
-binary: binary-indep binary-arch
-.PHONY: clean binary-indep binary-arch binary-common \
-        install-libreswan-doc install-libreswan
+override_dh_fixperms:
+	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d

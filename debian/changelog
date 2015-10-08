@@ -1,11 +1,5 @@
-libreswan (1:IPSECBASEVERSION-1) precise; urgency=low
+libreswan (IPSECBASEVERSION-1) UNRELEASED; urgency=low
 
-  * Update to IPSECBASEVERSION-1
+  * Initial upload to debian (Closes: #773459)
 
-  The real changelog is in /usr/share/doc/libreswan/changelog.gz
-
-  This package is NOT an official Debian/Ubuntu package. Please do
-  not file any Debian/Ubuntu bug reports for this package but contact
-  <dev@libreswan.org> if you have a problem.
-
- -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Fri, 20 Mar 2015 02:12:56 -0400

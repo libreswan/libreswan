@@ -41,9 +41,11 @@ east #
  ipsec look
 east NOW
 192.0.2.234/32     -> 192.0.1.254/32     => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
-192.0.2.244/32     -> 192.0.1.254/32     => %trap
+192.0.2.244/32     -> 192.0.1.254/32     => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 192.0.2.254/32     -> 192.0.1.254/32     => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
@@ -60,10 +62,12 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     ,,   
+Libreswan test CA for mainca - Libreswan                     CT,, 
 east                                                         u,u,u
 hashsha2                                                     P,,  
+nic                                                          P,,  
 north                                                        P,,  
+road                                                         P,,  
 west                                                         P,,  
 west-ec                                                      P,,  
 east #

@@ -6,6 +6,7 @@ Loading config setup
 Loading conn 'road-eastnet-ikev2'
   authby=secret
   auto=add
+  fragmentation=yes
   keyexchange=ikev2
   left=%any
   leftid=@road

@@ -1315,11 +1315,10 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 				transport_proto);
 
 			free_bare_shunt(bs_pp);
-			libreswan_log("raw_eroute() to op='%s'  with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
+			libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
 				repl ? "replace" : "delete",
 				transport_proto);
-			
-			
+
 			return FALSE;
 		}
 	}
@@ -1415,15 +1414,22 @@ bool assign_holdpass(const struct connection *c,
 		    enum_name(&routing_story, rn)));
 
 	if (eclipsable(sr)) {
-		DBG(DBG_CONTROL,
-			DBG_log("assign_holdpass() removing bare shunt"));
 		/*
 		 * Although %hold or %pass is appropriately broad, it will
-		 * no longer be bare * so we must ditch it from the bare table
+		 * no longer be bare so we must ditch it from the bare table
 		 */
-		free_bare_shunt(bare_shunt_ptr(&sr->this.client,
-					       &sr->that.client,
-					       sr->this.protocol));
+		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+
+		if (old == NULL) {
+			/* ??? should this happen?  It does. */
+			DBG(DBG_CONTROL,
+				DBG_log("assign_holdpass() no bare shunt to remove"));
+		} else {
+			/* ??? should this happen? */
+			DBG(DBG_CONTROL,
+				DBG_log("assign_holdpass() removing bare shunt"));
+			free_bare_shunt(old);
+		}
 	} else {
 		DBG(DBG_CONTROL,
 			DBG_log("assign_holdpass() need broad(er) shunt"));
@@ -2335,16 +2341,16 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * so deleting any one will do.  So we just delete the
 	 * first one found.  It may or may not be the only one.
 	 */
-	struct connection *c = st->st_connection;
+	struct connection *const c = st->st_connection;
 
 	struct {
 		unsigned proto;
 		struct ipsec_proto_info *info;
 	} protos[4];
-	int i;
+	int i = 0;
 	bool result;
 
-	i = 0;
+	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr, &c->spd.that.client,

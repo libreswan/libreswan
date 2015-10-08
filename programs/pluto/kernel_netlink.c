@@ -2314,6 +2314,10 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 				sa->text_said))
 		return FALSE;
 
+	/*
+	 * ??? CLANG 3.5 think that "Assigned value is garbage or undefined".
+	 * It's right.  See <linux/xfrm.h>: bytes has type __u64.
+	 */
 	*bytes = (u_int) rsp.info.curlft.bytes;
 	*add_time = rsp.info.curlft.add_time;
 	return TRUE;

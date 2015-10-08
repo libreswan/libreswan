@@ -1,165 +1,43 @@
-  This package is NOT an official Debian package from the Debian libreswan
-  maintainers.
-
 libreswan for Debian
-----------------------
+--------------------
 
 1) General Remarks
 
-This package has been created from scratch with some ideas from the
-freeswan 1.3 package by Tommi Virtanen and the freeswan 1.5 package by
-Aaron Johnson merged in. Most of the (already removed) code in debian/rules
-for creating the linux-patch-libreswan package was initially taken from Tommi
-Virtanen's package, but had been mostly rewritten to fit the needs of different
-kernel versions (since version 1.9-1).
+This package has been created by dkg with some reference/guidance from
+previous packaging work by several other packagers of both libreswan
+and other historical *swan projects (freeswan, openswan, etc).
 
-After the decision of the FreeS/WAN project to cease the development of
-FreeS/WAN, the Debian package team decided to switch over to the Openswan fork.
-This code base included all the patches that had to be applied manually before,
-which made packaging simple. Alexander List prepared the first preliminary
-openswan package based on Rene Mayrhofer's freeswan packaging, who in turn
-updated to the relevant parts of the last freeswan package.
+2) openswan to libreswan migration
 
-The libreswan package is forked from openswan-2.6.38
+See:
+* https://libreswan.org/wiki/Migrating_from_Openswan
+* https://libreswan.org/wiki/Using_NSS_with_libreswan
 
-2) Plain RSA key creation
+2) Raw RSA key creation
 
-Note: Usage of such keys is deprecated in favour of newer X.509 certificates.
+Raw RSA keys can be generated with
+    ipsec newhostkey
 
-If you still want to create an old style plain RSA key, you can create it with
-    ipsec rsasigkey $KEYLENGTH > $TMPFILE
-where $KEYLENGTH should be >= 2048. The resulting private key must be inserted
-into /etc/ipsec.secrets and enclosed with a ": RSA { .... }" marker. The
-following commands can be used to create a correctly formatted block:
-    echo -e ': RSA\t{' >> /etc/ipsec.secrets;
-    cat $TMPFILE >> /etc/ipsec.secrets;
-    echo -e '\t}' >> /etc/ipsec.secrets;
-Afterwards, it is recommended to remove $TMPFILE in a secure manner (using
-something line srm, shred, wipe...) and create a public key line for insertation
-into the "conn" section of ipsec.conf with
-    ipsec showhostkey --left
-(or "--right" depending on which side you want to use it). For further
-information please take a closer look at the manpages ipsec_rsasigkey,
-ipsec.secrets, ipsec_showhostkey and ipsec.conf.
+To display the key identifier of the key for use in leftrsasigkey/rightrsasigkey
+in the "conn" section of ipsec.conf, use:
+    ipsec showhostkey --left    (or --right)
 
-3) IPsec Kernel Support
+For further information please take a closer look at the manpages
+ipsec_rsasigkey, ipsec.secrets, ipsec_showhostkey and ipsec.conf.
 
-Note: This package per default uses the in-kernel IPsec stack, which is
-available in all recent stock Debian kernel images. The advantage of this
-in-kernel stack is that it is well supported and does not require external
-modules to be built. The disadvantage is that it no longer uses virtual ipsecX
-network interfaces and therefore makes debugging IPsec connections slightly
-harder (e.g., tcpdump can not be used separately on encrypted and unencrypted
-traffic).
+3) X.509 support
 
-If you want to use the libreswan utilities, you will need the appropriate
-kernel modules. The Debian default kernel native IPsec stack can be used
-out-of-the-box with libreswan pluto, the key management daemon. This native Linux
-IPsec stack is of high quality, has all of the features of the latest Debian
-freeswan and libreswan packages (i.e. support for other ciphers like AES and NAT
-Traversal support) and is well integrated into the kernel networking subsystem
-(which is not true for the libreswan kernel modules). The easiest way to get
-IPsec support in Debian is to use the default kernels (or recompile from the
-Debian kernel sources).
+All certificate material, including CA certificates, CRLs and private keys
+are now stored in the NSS database in /etc/ipsec.d
 
-If you do not want to use the in-kernel IPsec stack, then the libreswan kernel
-part can be compiled as stand-alone module. Starting with kernel >= 2.6.23 and
-libreswan >= 2.6.22, NAT Traversal will work without patching the kernel, also
-with KLIPS compiled as a module. Therefore, the linux-patch-libreswan package and
-the NAT Traversal patches have both been dropped. On the other hand, please note
-that there are two packages available, each gearing towards a different group
-of users:
+When migrating from pre-NSS openswan, the files from /etc/ipsec.d/private,
+/etc/ipsec.d/cacerts, /etc/ipsec.d/crls and /etc/ipsec.d/certs need to be
+imported into NSS using certutil, crlutil or pk12util. For more information
+see https://libreswan.org/wiki/Using_NSS_with_libreswan
 
-* libreswan-modules-dkms is suitable for end users to use KLIPS on on the same
-  machine where the package is being installed. The module will be built
-  automatically upon installing a new kernel and its respective headers
-  package. No further documentation is necessary, as the build and installation
-  process is fully automatic when this package and the kernel headers are
-  installed.
+4) IPsec Kernel Support
 
-* libreswan-modules-source targets the system administrators wishing to
-  distribute pre-built KLIPS modules to multiple machines as a standard Debian
-  package. This approach takes more work but is also a lot more flexible.
+Note: This package uses the in-kernel IPsec stack, which is available
+in all recent stock Debian kernel images.  This packaging does not
+support KLIPS or KLIPS/MAST.
 
-4) Building KLIPS from libreswan-modules-source
-
-For building modules with libreswan-modules-source three different approaches
-can be used:
-
-* The easiest way consists of installing module-assistant and the needed
-  linux-headers packages, then simply issuing
-      module-assistant build libreswan
-  to build the package.
-  Please note that when compiling modules for a kernel version which differs
-  from the one running on the compilation host then the option --kvers-list
-  must be supplied to the module-assistant command.
-
-* When invoking make-kpkg from kernel-package to do the module compilation the
-  linux-source package has to be installed and the libreswan-modules.tar.gz
-  from libreswan-modules-source needs to be extracted under /usr/src. Keep in
-  mind that it is not enough to just put the the linux source tree in place,
-  but it also needs to be configured and a successful kernel build process
-  must be completed before the command
-      make-kpkg --added_modules libreswan modules_image
-  can be used to actually compile and package the module.
-  Note that, in order to work with a specific kernel version, it's likely that
-  also the options --append_to_version and --revision will need to be set. For
-  getting example values of the running kernel, issue the command
-      uname -r | sed 's/.*\.[0-9]*-/-/'
-  to retrieve the --append_to_version parameter and look at the Version column
-  in the output of the line
-      dpkg --list linux-image-`uname -r`
-  which provides the --revision argument.
-
-* Invoking debian/rules directly is the third and most flexible approach to
-  compile and package the module, but this method also leaves the task of
-  cleaning up to the administrator. After extracting libreswan-modules.tar.gz
-  change to /usr/src/modules/libreswan and issue the command
-      debian/rules binary-modules
-  to start building the module. Some variables that might need to be set in
-  order to make the process run correctly:
-      KVERS: the complete kernel version (as retrieved by 'uname -r')
-      KDREV: the kernel revision (equal --revision argument)
-      KSRC: the location of the kernel tree (/usr/src/linux-headers-`uname -r`
-                                             for example)
-      KMAINT: the binary package maintainer (defaults to Rene Mayrhofer)
-      KEMAIL: the maintainer's mailaddress (defaults to rmayr@debian.org)
-  Please remember to clean up completely after building the binary package by
-  calling
-      debian/rules kdist_clean
-  Otherwise, future build processes might lead to incorrect results.
-
-5) Using Libreswan with SAref
-
-In order to use the SAref feature allowing users to connect multiple clients
-from behind the same NAT device and multiple clients using the same internal IP
-behind different NAT devices, the Linux kernel needs to be patched. At the time
-of this writing there are patches available for kernel version 2.6.32 from
-Lenny/Sid and 2.6.35-rc6 from experimental which are shipped in the
-libreswan-modules.tar.bz2 file from libreswan-modules-source.
-The recommended method for creating a patched kernel is using the make-kpkg
-approach which is documented in the above section. After extracting the linux
-and the libreswan source in /usr/src change to the to the kernel source
-directory and patch the source code by issuing the commands
-    patch -p1 < /usr/src/modules/libreswan/patches/kernel/$VERSION/0001-SAREF-add-support-for-SA-selection-through-sendmsg.patch
-    patch -p1 < /usr/src/modules/libreswan/patches/kernel/$VERSION/0002-SAREF-implement-IP_IPSEC_BINDREF.patch
-where $VERSION is the base kernel version (without the --append_to_version
-suffix). To enable the new feature in the kernel config, compile the kernel
-and the libreswan module, you may also want to install libncurses5-dev and then
-call make-kpkg this way:
-    make-kpkg --append_to_version APPEND_PARAM --revision REVISION_PARAM \
-    --added_modules libreswan --initrd --config menuconfig configure kernel_\
-    image modules_image
-In the displayed menu first enter "Networking support", then proceed to
-"Networking options", there select "IP: IPsec SAref interface (KLIPS)". When
-exiting answer yes to save your new kernel configuration so that make-kpkg
-uses it when compiling the new kernel. Afterwards install the newly created
-linux-image and libreswan-modules packages and then reboot the computer.
-To finally activate the SAref feature the ipsec.conf file must be modified: In
-the config setup section protostack=mast has to be specified and overlapip=yes
-needs to be added to the affected conn descriptions. Also note that the MAST
-stack does not use "eroutes", so the
-    ipsec eroute
-command no longer returns tunnel information, at the moment please issue
-    ipsec auto --status
-to retrieve connection details.

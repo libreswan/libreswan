@@ -201,9 +201,9 @@ static void read_foodgroup(struct fg_groups *g)
 						*pp = f;
 					}
 				}
-			}
 				(void)shift(); /* next */
 				continue;
+			}
 
 			case B_record:
 				flp->bdry = B_none;     /* eat the Record Boundary */

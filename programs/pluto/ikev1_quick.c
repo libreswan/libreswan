@@ -1557,6 +1557,7 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		iptoid(&c->spd.this.host_addr, &our_id_space);
 		our_id = &our_id_space;
 	}
+	/* ??? our_id not subsequently used */
 
 	switch (next_step) {
 	case vos_our_client:

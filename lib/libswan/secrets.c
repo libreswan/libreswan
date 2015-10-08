@@ -1345,11 +1345,11 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	 * chunk_t n = secitem_to_chunk(nsspk->u.rsa.modulus);
 	 */
 	chunk_t e, n;
+
 	e.ptr = nsspk->u.rsa.publicExponent.data;
 	e.len = nsspk->u.rsa.publicExponent.len;
 	n.ptr = nsspk->u.rsa.modulus.data;
 	n.len = nsspk->u.rsa.modulus.len;
-
 
 	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
 	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);

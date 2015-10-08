@@ -146,7 +146,7 @@ static void retransmit_v1_msg(struct state *st)
 	}
 
 	if (delay_ms != 0)
-		delay_ms =  retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st, delay_ms);
 
 	if (delay_ms != 0) {
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
@@ -287,7 +287,7 @@ static void retransmit_v2_msg(struct state *st)
 		break;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+	if (DBGP(DBG_OPPO) || ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
 		/* too spammy for OE */
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
@@ -343,9 +343,11 @@ static void retransmit_v2_msg(struct state *st)
 	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 
-		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
+		DBG(DBG_CONTROL, DBG_log("timeout for AUTHNULL OE, orphaning hold with failureshunt"));
 
-		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
+		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
+			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
+		}
 		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
 	}
 
@@ -448,23 +450,24 @@ static void liveness_check(struct state *st)
 		st);
 }
 
-static void ikev2_log_v2_sa_expired (struct state *st, enum event_type type)
+static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 {
-	struct connection *c = st->st_connection;
-	deltatime_t last_used_age;
-
 	DBG(DBG_LIFECYCLE, {
-			char story[80] = "";
-			if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+		struct connection *c = st->st_connection;
+		char story[80] = "";
+		if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+			deltatime_t last_used_age;
+			/* ??? why do we only care about inbound traffic? */
+			get_sa_info(st, TRUE, &last_used_age);
 			snprintf(story, sizeof(story),
-					"last used %lds ago < %ld ",
-					(long)deltasecs(last_used_age),
-					(long)deltasecs(c->sa_rekey_margin));
-			}
-			DBG_log("replacing stale %s SA %s",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					story);
-			});
+				"last used %lds ago < %ld ",
+				(long)deltasecs(last_used_age),
+				(long)deltasecs(c->sa_rekey_margin));
+		}
+		DBG_log("replacing stale %s SA %s",
+				IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+				story);
+		});
 }
 
 static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
@@ -474,13 +477,12 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	passert(pst != NULL); /* no orphan child allowed */
 
 	/* we observed no traffic, let IPSEC SA and IKE SA expire */
-	DBG(DBG_LIFECYCLE, DBG_log("not replacing unused IPSEC SA #%lu: "
-				"last used %lds ago > %ld "
-				"let it and the parent #%lu expire",
-				st->st_serialno,
-				(long)deltasecs(last_used_age),
-				(long)deltasecs(c->sa_rekey_margin),
-				pst->st_serialno));
+	DBG(DBG_LIFECYCLE,
+		DBG_log("not replacing unused IPSEC SA #%lu: last used %lds ago > %ld let it and the parent #%lu expire",
+			st->st_serialno,
+			(long)deltasecs(last_used_age),
+			(long)deltasecs(c->sa_rekey_margin),
+			pst->st_serialno));
 
 	delete_event(pst);
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
@@ -493,7 +495,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	enum event_type type;
 	struct state *st;
 	char statenum[32];
-	deltatime_t last_used_age;
 
 	type = ev->ev_type;
 	st = ev->ev_state;
@@ -634,6 +635,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	{
 		struct connection *c = st->st_connection;
 		so_serial_t newest;
+		deltatime_t last_used_age;
 
 		if (IS_IKE_SA(st)) {
 			newest = c->newest_isakmp_sa;
@@ -716,6 +718,18 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			DBG(DBG_LIFECYCLE, DBG_log(
 				"un-established partial ISAKMP SA timeout (%s)",
 					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/* XXX there is code duplication with retransmit_v2_msg() */
+				ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
+				ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
+
+				DBG(DBG_OPPO, DBG_log("negotiationshunt=%s, failureshunt=%s",
+					nego_shunt == SPI_PASS ? "passthrough" : "hold",
+					failure_shunt == SPI_PASS ? "passthrough" : "hold"));
+				if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
+					loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
+				}
+			}
 		} else {
 				libreswan_log("%s %s (%s)", satype,
 					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
@@ -780,7 +794,7 @@ static void delete_pluto_event(struct pluto_event **evp)
 		e->ev = NULL;
 	}
 	pfree(e);
-	*evp =  NULL;
+	*evp = NULL;
 }
 
 /*
@@ -999,7 +1013,7 @@ void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct stat
 
 	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
 
-	delay.tv_sec =  delay_ms / 1000;
+	delay.tv_sec = delay_ms / 1000;
 	delay.tv_usec = (delay_ms % 1000) * 1000;
 	event_schedule_tv(type, delay, st);
 }

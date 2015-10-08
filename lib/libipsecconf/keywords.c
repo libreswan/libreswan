@@ -341,14 +341,14 @@ static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(k
 const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "interfaces",     kv_config, kt_string, KSF_INTERFACES, NOT_ENUM },
 	{ "curl-iface",     kv_config, kt_string, KSF_CURLIFACE, NOT_ENUM },
-	{ "curl-timeout",   kv_config, kt_number, KBF_CURLTIMEOUT, NOT_ENUM },
+	{ "curl-timeout",   kv_config, kt_time, KBF_CURLTIMEOUT, NOT_ENUM },
 	/*
 	 * These two aliases are needed because "-" versions could not work
 	 * on openswan shell scripts. They only exist on rhel openwan 6.7+
 	 * So they are needed to support RHEL openswan -> libreswan migration.
 	 */
-	{ "curl_iface",     kv_config | kv_alias, kt_filename,  KSF_CURLIFACE, NOT_ENUM },
-	{ "curl_timeout",   kv_config | kv_alias, kt_filename,  KBF_CURLTIMEOUT, NOT_ENUM },
+	{ "curl_iface",     kv_config | kv_alias, kt_string,  KSF_CURLIFACE, NOT_ENUM },
+	{ "curl_timeout",   kv_config | kv_alias, kt_time,  KBF_CURLTIMEOUT, NOT_ENUM },
 	{ "myid",           kv_config, kt_string,    KSF_MYID, NOT_ENUM },
 	{ "myvendorid",     kv_config, kt_string,    KSF_MYVENDORID, NOT_ENUM },
 	{ "syslog",         kv_config, kt_string,    KSF_SYSLOG, NOT_ENUM },

@@ -29,7 +29,7 @@ east #
  echo "initdone"
 initdone
 east #
- grep INVALID_MAJOR_VERSION /tmp/pluto.log
+ grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

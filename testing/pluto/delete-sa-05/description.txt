@@ -1,0 +1,9 @@
+Test for ikev1 delete/notify send from responder.
+
+This test uses auto=start on east and auto=add on west,
+so that west can become the "responder" to send the --down
+command.
+
+This test brings up two connections, then we send a delete
+for "first" one. Ideally, the ISAKMP SA should not be
+terminated as it is used for the second connection.

@@ -119,6 +119,7 @@ bool orient(struct connection *c)
 									c->name, c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
+							terminate_connection(c->name);
 							c->interface = NULL; /* withdraw orientation */
 							return FALSE;
 						}
@@ -1156,6 +1157,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				 */
 				ipstr_buf b1, b2, b3;
 
+				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
 				passert(id_is_ipaddr(&ac->gateways_from_dns->
 						     gw_id));
 				loglog(RC_OPPOFAILURE,
@@ -1231,6 +1233,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		DBG(DBG_OPPO | DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
+			/* ??? CLANG 3.5 thinks c might be NULL */
 			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
 				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 				ipstr(&b->our_client, &b1),
@@ -1363,8 +1366,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
-				break;
 #endif
+				break;
 			case fos_his_client: /* IPSECKEY for his client */
 #ifdef USE_ADNS
 				/* note: {unshare|free}_id_content not needed for id: ephemeral */
@@ -1377,8 +1380,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						       ns_t_txt,
 						       continue_oppo,
 						       &cr->ac);
-				break;
 #endif
+				break;
 			default:
 				bad_case(next_step);
 			}

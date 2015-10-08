@@ -23,12 +23,10 @@ road #
  echo "initdone"
 initdone
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -38,11 +36,11 @@ road #
 road #
  ipsec whack --trafficstatus
 000  
-000  
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
+000 192.1.3.209/32:0 -0-> 192.1.2.23/32:0 => %pass 0    oe-failing
 road #
  ipsec look
 road NOW
@@ -54,10 +52,6 @@ src 192.1.3.209 dst 192.1.2.23
 XFRM policy:
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 1568 ptype main 
-src 192.1.3.209/32 dst 0.0.0.0/0 
-	dir out priority 2112 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -119,11 +113,12 @@ road #
 road #
  # ping should succeed in the clear
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time XXXX
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  # should show for our failed attempt at OE
@@ -144,10 +139,6 @@ src 192.1.3.209 dst 192.1.2.23
 XFRM policy:
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 1568 ptype main 
-src 192.1.3.209/32 dst 0.0.0.0/0 
-	dir out priority 2112 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0

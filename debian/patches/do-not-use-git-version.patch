@@ -1,0 +1,13 @@
+diff --git a/packaging/utils/setlibreswanversion b/packaging/utils/setlibreswanversion
+index b2b489a..7a32ba6 100755
+--- a/packaging/utils/setlibreswanversion
++++ b/packaging/utils/setlibreswanversion
+@@ -14,7 +14,7 @@ baseversion=$1
+ 
+ cd "${2:-.}" || usage
+ 
+-if test -d .git
++if false
+ then
+ 	gitcheck="`git version 2> /dev/null`"
+ 	if test -z "$gitcheck"

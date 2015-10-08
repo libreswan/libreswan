@@ -29,9 +29,7 @@ case "$1" in
 esac
 
 if [ "$1" = "purge" ] ; then
-	update-rc.d ipsec remove >/dev/null
 	rm -rf /etc/ipsec.d/
-	rm -rf /var/lib/libreswan/
 	rm -rf /var/run/pluto/
 
 	if [ -e /usr/share/debconf/confmodule ]; then
