@@ -1493,7 +1493,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 			/* but if this is the parent st, this information is not set! you need to check the child sa! */
 			libreswan_log(
-				"negotiated tunnel [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]",
+				"negotiated connection [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]",
 				ipstr(&st->st_ts_this.low, &bul),
 				ipstr(&st->st_ts_this.high, &buh),
 				st->st_ts_this.startport, st->st_ts_this.endport, st->st_ts_this.ipprotoid,
