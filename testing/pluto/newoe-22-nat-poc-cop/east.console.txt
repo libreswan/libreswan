@@ -85,7 +85,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  # a tunnel should have established
 east #
- grep "negotiated tunnel" /tmp/pluto.log
+ grep "negotiated connection" /tmp/pluto.log
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

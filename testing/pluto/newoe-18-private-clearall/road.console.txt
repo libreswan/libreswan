@@ -183,7 +183,7 @@ Certificate Nickname                                         Trust Attributes
 road #
  # should not show any hits
 road #
- grep "negotiated tunnel" /tmp/pluto.log
+ grep "negotiated connection" /tmp/pluto.log
 road #
 road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
