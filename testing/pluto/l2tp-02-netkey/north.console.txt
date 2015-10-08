@@ -136,7 +136,7 @@ SSH-2.0-OpenSSH_XXX
 Protocol mismatch.
 north #
  ip addr show dev ppp0
-5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395 qdisc pfifo_fast state UNKNOWN group default qlen 3
+5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395 qdisc fq_codel state UNKNOWN group default qlen 3
     link/ppp 
     inet 192.0.2.128 peer 192.0.2.254/32 scope global ppp0
        valid_lft forever preferred_lft forever
