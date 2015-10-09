@@ -1049,7 +1049,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	md->svm = svm;
 
 	if (svm->state == STATE_IKEv2_ROOF) {
-		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
+		DBG(DBG_CONTROL, DBG_log("no useful state microcode entry found"));
 		/* no useful state microcode entry */
 		if (clear_payload_status.status != STF_OK) {
 			ikev2_log_payload_errors(clear_payload_status, st);
@@ -1057,7 +1057,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
-			 * return someting.
+			 * return something.
 			 *
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
