@@ -1,3 +1,3 @@
-This is a hub-and-spoke test using IKEv2. The subnet behind west can ping the subnet behind north. 
+This is a hub-and-spoke test using IKEv1. The subnet behind west can ping the subnet behind north. 
 via east, which is the hub.
 
