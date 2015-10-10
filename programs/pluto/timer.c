@@ -340,17 +340,6 @@ static void retransmit_v2_msg(struct state *st)
 		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
 	}
 
-	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
-		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
-
-		DBG(DBG_CONTROL, DBG_log("timeout for AUTHNULL OE, orphaning hold with failureshunt"));
-
-		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
-			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
-		}
-		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
-	}
-
 	delete_state(st);
 	/* note: no md->st to clear */
 }
@@ -718,18 +707,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			DBG(DBG_LIFECYCLE, DBG_log(
 				"un-established partial ISAKMP SA timeout (%s)",
 					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/* XXX there is code duplication with retransmit_v2_msg() */
-				ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
-				ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
-
-				DBG(DBG_OPPO, DBG_log("negotiationshunt=%s, failureshunt=%s",
-					nego_shunt == SPI_PASS ? "passthrough" : "hold",
-					failure_shunt == SPI_PASS ? "passthrough" : "hold"));
-				if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
-					loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
-				}
-			}
 		} else {
 				libreswan_log("%s %s (%s)", satype,
 					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",

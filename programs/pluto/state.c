@@ -671,6 +671,7 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
+
 	/* reduce logging of OE failures */
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
 		DBG(DBG_LIFECYCLE, DBG_log("deleting state #%lu (%s)",
@@ -696,6 +697,23 @@ void delete_state(struct state *st)
 	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 #endif
+
+	/* If we are failed OE initiator, make shunt bare */
+	if ((c->policy & POLICY_OPPORTUNISTIC) &&
+	    (st->st_state == STATE_PARENT_I1 || st->st_state == STATE_PARENT_I2)) {
+		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
+		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
+
+		DBG(DBG_OPPO, DBG_log("OE: orphaning hold with failureshunt"));
+		DBG(DBG_OPPO, DBG_log("negotiationshunt=%s, failureshunt=%s",
+			nego_shunt == SPI_PASS ? "passthrough" : "hold",
+			failure_shunt == SPI_PASS ? "passthrough" : "hold"));
+
+		DBG(DBG_OPPO, DBG_log("OE: delete_state needs to bare the shunt"));
+		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
+			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
+		}
+	}
 
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/*

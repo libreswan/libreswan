@@ -2722,8 +2722,6 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		ikev2_parent_inI2outR2_continue);
 }
 
-/* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI2outR2_continue; */
-
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
