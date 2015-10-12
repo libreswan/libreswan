@@ -420,7 +420,6 @@ bool same_id(const struct id *a, const struct id *b)
 	}
 
 	if (a->kind != b->kind) {
-		DBG(DBG_PARSING, DBG_log("id kind mismatch"));
 		return FALSE;
 	}
 
