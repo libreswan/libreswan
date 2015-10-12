@@ -1,4 +1,0 @@
-OE test with dpd enabled. east has clear.
-road kill the pluto and restart ipsec. 
-east will have two SA, an old and new IKE and ESP SA.
-Old IKE and ESP will timeout/dpd clear eventually.
