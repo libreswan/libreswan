@@ -138,9 +138,6 @@ bool load_nss_cert_from_db(const char *nickname, cert_t *cert)
 	cert->u.nss_cert = get_cert_from_nss(nickname);
 
 	if (cert->u.nss_cert == NULL) {
-		libreswan_log(
-			"could not find cert with nickname '%s' in NSS",
-			nickname);
 		return FALSE;
 	}
 	cert->ty = CERT_X509_SIGNATURE;

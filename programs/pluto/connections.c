@@ -798,55 +798,41 @@ static void unshare_connection(struct connection *c)
 		reference_addresspool(c->pool);
 }
 
-static bool load_end_nss_certificate(const char *name, struct end *dst)
+static void load_end_nss_certificate(const char *name, struct end *dst)
 {
 	cert_t cert;
 
-	zero(&dst->cert);	/* redundant */
 	dst->cert.ty = CERT_NONE;
 	dst->cert.u.nss_cert = NULL;
-
-	if (name == NULL)
-		return FALSE;
 
 	if (!load_nss_cert_from_db(name, &cert)) {
 		whack_log(RC_FATAL, "cannot load certificate \'%s\'", name);
 		/* No cert, default to IP ID */
 		dst->id.kind = ID_NONE;
-		return FALSE;
+		return;
+	}
+
+	/* check validity of cert */
+	if (CERT_CheckCertValidTimes(cert.u.nss_cert,
+				     PR_Now(),
+				     FALSE) != secCertTimeValid) {
+		loglog(RC_LOG_SERIOUS,"certificate \'%s\' is expired/invalid",
+				      name);
+		CERT_DestroyCertificate(cert.u.nss_cert);
+		return;
 	}
 
 	dst->cert_nickname = (char *)name;
-	DBG(DBG_CONTROL, DBG_log("loaded certificate \'%s\'", name));
+	DBG(DBG_X509, DBG_log("loaded certificate \'%s\'", name));
 
-	switch (cert.ty) {
-	case CERT_X509_SIGNATURE:
-		/* check validity of cert */
-		if (CERT_CheckCertValidTimes(cert.u.nss_cert,
-					     PR_Now(),FALSE) !=
-						secCertTimeValid) {
-			loglog(RC_LOG_SERIOUS,"certificate time is expired/invalid");
-			CERT_DestroyCertificate(cert.u.nss_cert);
-			cert.ty = CERT_NONE;
-			return FALSE;
-		}
+	select_nss_cert_id(cert.u.nss_cert, &dst->id);
+	add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
+	dst->cert = cert;
 
-		select_nss_cert_id(cert.u.nss_cert, &dst->id);
-
-		DBG(DBG_CONTROL, DBG_log("certificate is valid"));
-		add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
-		dst->cert = cert;
-
-		/* if no CA is defined, use issuer as default */
-		if (dst->ca.ptr == NULL)
-			dst->ca = secitem_to_chunk(
-					    cert.u.nss_cert->derIssuer);
-		break;
-	default:
-		bad_case(cert.ty);
+	/* if no CA is defined, use issuer as default */
+	if (dst->ca.ptr == NULL) {
+		dst->ca = secitem_to_chunk(cert.u.nss_cert->derIssuer);
 	}
-
-	return TRUE;
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -887,12 +873,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	/* load local end certificate and extract ID, if any */
-	if (!load_end_nss_certificate(src->cert, dst)) {
-		DBG_log("certificate not loaded for this end");
+	if (src->cert != NULL) {
+		load_end_nss_certificate(src->cert, dst);
 	}
-
-	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id have wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
