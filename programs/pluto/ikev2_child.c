@@ -906,7 +906,10 @@ static stf_status ikev2_create_responder_child_state(
 	/* b is now the best connection (if there is one!) */
 
 	if (bsr == NULL) {
-		/* ??? why do we act differently based on role? */
+		/* ??? why do we act differently based on role?
+		 * Paul: that's wrong. prob the idea was to not
+		 * send a notify if we are message initiator
+		 */
 		if (role == ORIGINAL_INITIATOR)
 			return STF_FAIL;
 		else

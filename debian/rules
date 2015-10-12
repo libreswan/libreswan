@@ -10,7 +10,6 @@ override_dh_auto_build:
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
-			 INITSYSTEM=systemd \
 			 USE_LDAP=true \
 			 USE_LIBCURL=true \
 			 USE_XAUTHPAM=true \
@@ -59,3 +58,6 @@ override_dh_strip:
 
 override_dh_fixperms:
 	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d
+
+override_dh_auto_test:
+	 echo "Skip dh_auto_test"

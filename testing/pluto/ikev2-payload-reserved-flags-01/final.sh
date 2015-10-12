@@ -1,6 +1,6 @@
 ipsec look
 # Should be XX hits for both west (sending) and east (receiving)
-grep "flags: RESERVED" /tmp/pluto.log | wc -l
+grep "flags: RESERVED" /tmp/pluto.log >/dev/null && echo payload found
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

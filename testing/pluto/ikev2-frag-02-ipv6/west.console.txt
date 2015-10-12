@@ -19,7 +19,7 @@ west #
 134 "v6-tunnel" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=OAKLEY_SHA2_256 group=MODP2048}
 002 "v6-tunnel" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 002 "v6-tunnel" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "v6-tunnel" #2: negotiated tunnel [2001:111:1111::,2001:111:1111:ffff:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:2222:222:2200::,2001:2222:222:22ff:ffff:ffff:ffff:ffff:0-65535 0]
+002 "v6-tunnel" #2: negotiated connection [2001:111:1111::,2001:111:1111:ffff:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:2222:222:2200::,2001:2222:222:22ff:ffff:ffff:ffff:ffff:0-65535 0]
 004 "v6-tunnel" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  grep "fragment number" /tmp/pluto.log

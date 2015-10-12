@@ -3,8 +3,8 @@ Section: net
 Priority: optional
 Maintainer: Paul Wouters <paul@libreswan.org>
 Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
-Vcs-Browser: http://git.libreswan.org/libreswan.git/.git;a=summary
-Vcs-Git: git://git.libreswan.org//libreswan.git
+Vcs-Browser: https://github.com/libreswan/libreswan
+Vcs-Git: https://github.com/libreswan/libreswan.git
 Standards-Version: 3.9.6
 Build-Depends: bison,
                bzip2,
@@ -16,11 +16,13 @@ Build-Depends: bison,
                libkrb5-dev,
                libldap2-dev,
                libnspr4-dev,
-               libnss3-dev,
+               libnss3-dev (>= 3.16-1),
                libnss3-tools,
                libpam0g-dev,
                libunbound-dev,
+               libevent-dev (>= 2.0-1),
                man2html,
+               xmlto,
                po-debconf
 Homepage: https://libreswan.org/
 
@@ -29,9 +31,9 @@ Architecture: any
 Pre-Depends: debconf | debconf-2.0
 Depends: bsdmainutils,
          host,
-         iproute (>=20041019-0.1),
+         iproute2 | iproute (>= 20071016-1),
          libnspr4,
-         libnss3,
+         libnss3 (>= 3.16-1),
          libnss3-tools,
          libunbound2,
          ${misc:Depends},

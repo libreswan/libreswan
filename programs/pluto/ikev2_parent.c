@@ -1200,6 +1200,11 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			/*
 			 * ??? At least NO_PROPOSAL_CHOSEN
 			 * is legal and should keep us in this state.
+			 *
+			 * Note initial child SA might have failed but an incoming
+			 * CREATE_CHILD_SA for another range might succeed, so do not
+			 * delete childless parent state.
+			 *
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
@@ -2717,8 +2722,6 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		ikev2_parent_inI2outR2_continue);
 }
 
-/* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI2outR2_continue; */
-
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
@@ -2762,6 +2765,17 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 	} else if (e != STF_OK) {
 		DBG_log("ikev2_parent_inI2outR2_tail returned %s",
 			enum_name(&stfstatus_name, e));
+	}
+
+	/*
+	 * if failed OE, delete state completly, no create_child_sa
+	 * allowed so childless parent makes no sense.
+	 */
+	if (e >= STF_FAIL &&
+	    (st->st_connection->policy & POLICY_OPPORTUNISTIC)) {
+		DBG(DBG_OPPO,
+			DBG_log("Deleting opportunistic Parent with no Child SA"));
+		e = STF_FATAL;
 	}
 
 	passert(dh->pcrc_md != NULL);

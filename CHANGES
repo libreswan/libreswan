@@ -16,8 +16,12 @@ v3.16 (unreleased)
 * pluto: Don't reject IPv6 family for OE foodgroups [Antony]
 * pluto: fix eclipsed to iterate over connection's spd_routes [Hugh]
 * pluto: accept delete payload with wrong side's SPI (CISCO bug) [Paul+Hugh]
-* pluto: No longer require :RSA entries for X.509 cers in ipsec.secrets [Mat]
+* pluto: No longer require :RSA entries for X.509 certs in ipsec.secrets [Mat]
 * building: obsolete USE_ADNS and disable building adns helpers [Paul]
+* building: Do not link all binaries with nss,nspr and gmp [Paul]
+* packaging: debian/ directory update [Paul/Daniel]
+* Bugtracker bugs fixed:
+   #233 pluto sends delete SAs in wrong order and reconnection issues [Wolfgang]
 
 v3.15 (August 24, 2015)
 * SECURITY: CVE-2015-3240 IKE daemon restart when receiving a bad DH gx [Hugh]
