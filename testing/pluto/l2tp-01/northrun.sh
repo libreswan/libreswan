@@ -8,5 +8,5 @@ cat /tmp/xl2tpd.log
 ping -c 4 -n 192.0.2.254
 # testing passthrough conn
 echo quit | nc 192.0.2.254 22
-ip addr show dev ppp0
+ip addr show dev ppp0 | sed "s/ qdisc.*$//"
 echo done
