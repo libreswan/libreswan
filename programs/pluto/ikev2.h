@@ -235,3 +235,9 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
 			      struct state *st);
 
+#define SEND_V2_NOTIFICATION(t) { \
+	if (st != NULL) \
+		send_v2_notification_from_state(st, t, NULL); \
+	else \
+		send_v2_notification_from_md(md, t, NULL); }
+

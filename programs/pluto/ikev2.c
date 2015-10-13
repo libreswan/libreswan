@@ -73,13 +73,6 @@
 
 #include "plutoalg.h" /* for default_ike_groups */
 
-/* Note: same definition appears in programs/pluto/ikev2_parent.c */
-#define SEND_V2_NOTIFICATION(t) { \
-		if (st != NULL) \
-			send_v2_notification_from_state(st, t, NULL); \
-		else \
-			send_v2_notification_from_md(md, t, NULL); }
-
 enum smf2_flags {
 	/*
 	 * Check the value of the IKE_I flag in the header.

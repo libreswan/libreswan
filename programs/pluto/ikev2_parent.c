@@ -72,14 +72,6 @@
 
 #include "hostpair.h"
 
-/* Note: same definition appears in programs/pluto/ikev2.c */
-#define SEND_V2_NOTIFICATION(t) { \
-		if (st != NULL) \
-			send_v2_notification_from_state(st, t, NULL); \
-		else \
-			send_v2_notification_from_md(md, t, NULL); \
-	}
-
 #ifdef XAUTH_HAVE_PAM
 struct ikev2_pam_helper {
 	struct pam_thread_arg pam;	/* writable inside thread */
