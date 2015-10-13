@@ -2761,13 +2761,17 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 
 	/*
 	 * if failed OE, delete state completly, no create_child_sa
-	 * allowed so childless parent makes no sense.
+	 * allowed so childless parent makes no sense. That is also
+	 * the reason why we send v2N_AUTHENTICATION_FAILED, even
+	 * though authenticated succeeded. It shows the remote end
+	 * we have deleted the SA from our end.
 	 */
 	if (e >= STF_FAIL &&
 	    (st->st_connection->policy & POLICY_OPPORTUNISTIC)) {
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 	}
 
 	passert(dh->pcrc_md != NULL);
