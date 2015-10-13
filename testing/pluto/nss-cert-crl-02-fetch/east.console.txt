@@ -33,29 +33,14 @@ east #
  crlutil -L -d sql:/etc/ipsec.d | grep mainca
 Libreswan test CA for mainca - Libreswan CRL  
 east #
- ipsec auto --listcrls
+ ipsec auto --listcrls | egrep -v 'this|next'
 000  
 000 List of CRLs:
 000  
 000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000 revoked certs: 2
-000 updates: this Thu Jun 18 21:36:28 2015
-000          next Fri Jul 03 21:36:28 2015
 east #
  grep "CRL imported" /tmp/pluto.log
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
-| CRL imported
 | CRL imported
 east #
 east #

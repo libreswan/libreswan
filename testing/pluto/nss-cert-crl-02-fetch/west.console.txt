@@ -84,7 +84,7 @@ done
 west #
  crlutil -L -d sql:/etc/ipsec.d | grep mainca
 west #
- ipsec auto --listcrls
+ ipsec auto --listcrls | egrep -v 'this|next'
 000  
 000 List of CRLs:
 west #
