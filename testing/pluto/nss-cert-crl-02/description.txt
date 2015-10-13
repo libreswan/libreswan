@@ -1,5 +1,5 @@
 crl: west sends REVOKED cert
      east sends OK cert
 
-using cacrlvalid.crl
+using cacrlvalid.crl, with no fetching enabled
 fail
