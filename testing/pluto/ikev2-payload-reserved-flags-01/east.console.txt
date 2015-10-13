@@ -48,8 +48,8 @@ Certificate Nickname                                         Trust Attributes
 east #
  # Should be XX hits for both west (sending) and east (receiving)
 east #
- grep "flags: RESERVED" /tmp/pluto.log | wc -l
-8
+ grep "flags: RESERVED" /tmp/pluto.log >/dev/null && echo payload found
+payload found
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

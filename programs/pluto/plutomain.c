@@ -160,7 +160,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef KLIPS
 	" KLIPS"
 #endif
-#ifdef KLIPSMAST
+#ifdef KLIPS_MAST
 	" MAST"
 #endif
 

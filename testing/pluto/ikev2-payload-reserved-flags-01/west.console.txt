@@ -64,6 +64,7 @@ west #
 002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
 002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
 002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
+002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
 002 "westnet-eastnet-ikev2" #1:  setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload
@@ -110,8 +111,8 @@ Certificate Nickname                                         Trust Attributes
 west #
  # Should be XX hits for both west (sending) and east (receiving)
 west #
- grep "flags: RESERVED" /tmp/pluto.log | wc -l
-8
+ grep "flags: RESERVED" /tmp/pluto.log >/dev/null && echo payload found
+payload found
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

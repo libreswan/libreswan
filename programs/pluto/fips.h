@@ -22,32 +22,40 @@
 
 const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto",
 				IPSEC_EXECDIR "/setup",
+#ifdef USE_ADNS
+				IPSEC_EXECDIR "/_pluto_adns",
+#endif
 				IPSEC_EXECDIR "/addconn",
 				IPSEC_EXECDIR "/auto",
 				IPSEC_EXECDIR "/barf",
-				IPSEC_EXECDIR "/eroute",
 				IPSEC_EXECDIR "/ikeping",
 				IPSEC_EXECDIR "/readwriteconf",
 				IPSEC_EXECDIR "/_keycensor",
-				IPSEC_EXECDIR "/klipsdebug",
 				IPSEC_EXECDIR "/look",
 				IPSEC_EXECDIR "/newhostkey",
-				IPSEC_EXECDIR "/pf_key",
-				IPSEC_EXECDIR "/_pluto_adns",
 				IPSEC_EXECDIR "/_plutorun",
-				IPSEC_EXECDIR "/rsasigkey",
 				IPSEC_EXECDIR "/_secretcensor",
+				IPSEC_EXECDIR "/rsasigkey",
 				IPSEC_EXECDIR "/secrets",
 				IPSEC_EXECDIR "/showhostkey",
-				IPSEC_EXECDIR "/spi",
-				IPSEC_EXECDIR "/spigrp",
 				IPSEC_EXECDIR "/_stackmanager",
-				IPSEC_EXECDIR "/tncfg",
 				IPSEC_EXECDIR "/_updown",
-				IPSEC_EXECDIR "/_updown.klips",
-				IPSEC_EXECDIR "/_updown.mast",
-				IPSEC_EXECDIR "/_updown.netkey",
 				IPSEC_EXECDIR "/verify",
 				IPSEC_EXECDIR "/whack",
 				IPSEC_SBINDIR "/ipsec",
+#ifdef KLIPS
+				IPSEC_EXECDIR "/pf_key",
+				IPSEC_EXECDIR "/klipsdebug",
+				IPSEC_EXECDIR "/eroute",
+				IPSEC_EXECDIR "/spi",
+				IPSEC_EXECDIR "/spigrp",
+				IPSEC_EXECDIR "/_updown.klips",
+				IPSEC_EXECDIR "/tncfg",
+#ifdef KLIPS_MAST
+				IPSEC_EXECDIR "/_updown.mast",
+#endif
+#endif
+#ifdef NETKEY_SUPPORT
+				IPSEC_EXECDIR "/_updown.netkey",
+#endif
 				NULL };

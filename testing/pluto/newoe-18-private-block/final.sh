@@ -1,6 +1,6 @@
 ipsec look
 # should not show any hits
-grep "negotiated tunnel" /tmp/pluto.log
+grep "negotiated connection" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
