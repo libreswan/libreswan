@@ -79,7 +79,8 @@ rundir=/var/run/pluto
 plutopid=${rundir}/pluto.pid
 plutoctl=${rundir}/pluto.ctl
 lockdir=/var/lock/subsys
-lockfile=${lockdir}/ipsec
+lockfile=ipsec
+lockpath=${lockdir}/${lockfile}
 ipsecversion=/proc/net/ipsec_version
 kamepfkey=/proc/net/pfkey
 
@@ -127,7 +128,7 @@ start() {
     # This script will enter an endless loop to ensure pluto restarts on crash
     ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
-    touch ${lockfile}
+    touch ${lockpath}
     # Because _plutorun starts pluto at background we need to make sure pluto is started
     # before we know if start was successful or not
     for waitsec in 1 2 3 4 5; do
@@ -143,7 +144,7 @@ start() {
     if [ ${RETVAL} -eq 0 ]; then
 	success
     else
-	rm -f ${lockfile}
+	rm -f ${lockpath}
 	failure
     fi
     echo
@@ -188,7 +189,7 @@ stop() {
 	rm -f  ${LIBRESWAN_RESOLV_CONF}
     fi
 
-    rm -f ${lockfile}
+    rm -f ${lockpath}
     return ${RETVAL}
 }
 
@@ -200,7 +201,7 @@ restart() {
 }
 
 condrestart() {
-    if [ -f ${lockfile} ]; then
+    if [ -f ${lockpath} ]; then
 	restart
 	return $?
     fi
