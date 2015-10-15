@@ -333,7 +333,7 @@ static void retransmit_v2_msg(struct state *st)
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 	} else {
-		DBG(DBG_CONTRROL, DBG_log("maximum number of keyingtries reached - deleting state"));
+		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
 
 	delete_state(st);
