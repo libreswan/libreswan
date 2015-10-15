@@ -23,7 +23,7 @@ import csv
 import operator
 
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, islink
 from multiprocessing import Process, Queue
 from json import encoder
 from contextlib import contextmanager
@@ -1105,6 +1105,38 @@ def shut_down_hosts(args, test_hosts):
         return e
 
 
+def find_other_hosts(test, test_hosts):
+
+    cwd = os.getcwd()
+    onlyfiles = []
+    for f in listdir(cwd):
+        if isfile(join(cwd, f)) or islink(join(cwd, f)):
+            onlyfiles.append(f)
+
+    iinit = "%sinit.sh" % (test["initiator"])
+    rinit = "%sinit.sh" % (test["responder"])
+    if "nic" in test:
+        ninit = "%sinit.sh" % (test["nic"])
+
+    for f in onlyfiles:
+        host = re.search(r'(.*)init.sh', f)
+        if not host:
+            continue
+        elif iinit == f:
+            continue
+        elif rinit == f:
+            continue
+        elif "nic" in test and ninit == f:
+            continue
+
+        if not "others" in test:
+            test["others"] = []
+
+        test_hosts.append(host.group(1))
+        test["others"].append(host.group(1))
+        logging.debug("add others %s", host.group(1))
+
+
 def orient(args, test):
     test_hosts = []
     log_line = ''
@@ -1159,9 +1191,6 @@ def orient(args, test):
     test_hosts.append(test["initiator"])
     test_hosts.append(test["responder"])
 
-    logging.debug("test hosts are initiator %s responder %s %s",
-                  test["initiator"], test["responder"], log_line)
-
     cmds = []
 
     if test["type"] == 'kvmplutotest':
@@ -1178,6 +1207,13 @@ def orient(args, test):
             if cmd:
                 cmds.append(cmd)
 
+    find_other_hosts(test, test_hosts)
+
+    if "others" in test:
+        log_line = log_line + " also " + " ".join(test["others"])
+
+    logging.debug("test hosts are initiator %s responder %s %s",
+                  test["initiator"], test["responder"], log_line)
     return cmds, test_hosts
 
 
@@ -1923,6 +1959,12 @@ def do_kvmplutotest(args, start, test, st):
     else:
         n_init.set()
 
+    if "others" in test:
+        others = dict()
+        for host in test["others"]:
+            others[host] = guest(host, "other", test["name"], args)
+            others[host].start()
+
     th_initiator.start()
 
     # now wait for the threads to finish their job
@@ -1930,6 +1972,10 @@ def do_kvmplutotest(args, start, test, st):
     th_initiator.join(timeout=args.initshwait)
     if "nic" in test:
         th_nic.join(timeout=args.initshwait)
+
+    if "others" in test:
+        for host in test["others"]:
+            others[host].join(timeout=args.initshwait)
 
     kill_zombie_tcpdump()
 
