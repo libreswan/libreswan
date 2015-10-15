@@ -1,0 +1,6 @@
+# our console IPs used with ssh
+192.1.2.253
+192.1.3.253
+# disabled as we are now using nic's port forward in this test
+# 192.1.3.254
+192.1.2.254
