@@ -1321,7 +1321,7 @@ bool ikev2_send_cert_decision(struct state *st)
 
 	if (!(c->policy & POLICY_RSASIG)) {
 		DBG(DBG_CONTROL,
-			DBG_log("IKEv2 CERT: policy does not have RSASIG! %s",
+			DBG_log("IKEv2 CERT: policy does not have RSASIG %s",
 						      prettypolicy(c->policy)));
 		return FALSE;
 	}
