@@ -284,6 +284,7 @@ static void retransmit_v2_msg(struct state *st)
 		details = ".  No response (or no acceptable response) to our first IKEv2 message";
 		break;
 	default:
+		details = ".  No response (or no acceptable response) to our IKEv2 message";
 		break;
 	}
 
@@ -309,22 +310,17 @@ static void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
-		/* ??? DBG and real-world code mixed */
-		if (!DBGP(DBG_WHACKWATCH)) {
-			if (st->st_whack_sock != NULL_FD) {
-				/*
-				 * Release whack because the observer will
-				 * get bored.
-				 */
-				loglog(RC_COMMENT, "%s, but releasing whack",
-					story);
-				release_pending_whacks(st, story);
-			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				/* no whack: just log to syslog */
-				libreswan_log("%s", story);
-			}
-		} else {
-			loglog(RC_COMMENT, "%s", story);
+		if (st->st_whack_sock != NULL_FD) {
+			/*
+			 * Release whack because the observer will
+			 * get bored.
+			 */
+			loglog(RC_COMMENT, "%s, but releasing whack",
+				story);
+			release_pending_whacks(st, story);
+		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			/* no whack: just log to syslog */
+			libreswan_log("%s", story);
 		}
 
 		if (try % 3 == 0 && (c->policy & POLICY_IKEV1_ALLOW)) {
@@ -336,8 +332,8 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
-	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
+	} else {
+		DBG(DBG_CONTRROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
 
 	delete_state(st);
