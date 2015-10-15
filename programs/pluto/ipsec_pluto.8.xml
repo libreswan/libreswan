@@ -129,7 +129,7 @@
 
       <arg choice="opt">--host <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--cert <replaceable>path</replaceable></arg>
+      <arg choice="opt">--cert <replaceable>friendly_name</replaceable></arg>
 
       <arg choice="opt">--ca <replaceable>distinguished
       name</replaceable></arg>
@@ -206,7 +206,7 @@
 
       <arg choice="opt">--host <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--cert <replaceable>path</replaceable></arg>
+      <arg choice="opt">--cert <replaceable>friendly_name</replaceable></arg>
 
       <arg choice="opt">--ca <replaceable>distinguished
       name</replaceable></arg>
@@ -963,16 +963,14 @@
       <emphasis remap="I">port floating</emphasis>, and Libreswan enables this
       per default.</para>
 
-      <para>Pluto supports the use of X.509 certificates and sends it
-      certificate when needed. This can confuse IKE implementations that do
+      <para>Pluto supports the use of X.509 certificates and sends
+      certificates when needed. This can confuse IKE implementations that do
       not implement this, such as the old FreeS/WAN implementation. The
-      <option>--nocrsend</option> prevents pluto from sending these. At
-      startup, pluto loads all the X.509 related files from the directories
-      <filename>/etc/ipsec.d/certs</filename>,
-      <filename>/etc/ipsec.d/cacerts</filename>,
-      <filename>/etc/ipsec.d/aacerts</filename>,
-      <filename>/etc/ipsec.d/private</filename> and
-      <filename>/etc/ipsec.d/crls</filename>. The <emphasis
+      <option>--nocrsend</option> prevents pluto from sending these. Pluto
+      uses NSS for all X.509 related data, including CAcerts, certs, CRLs and
+      private keys.
+
+      The <emphasis
       remap="I">Certificate Revocation Lists</emphasis> can also be retrieved
       from an URL. The option <option>--crlcheckinterval</option> sets the
       time between checking for CRL expiration and issuing new fetch commands.
@@ -1054,9 +1052,13 @@
       the terminology is needed to decipher some of the diagnostic
       messages.</para>
 
-      <para>Pluto supports <emphasis remap="B">food groups</emphasis>, and
-      X.509 certificates. These are located in /etc/ipsec.d, or another
+      <para>Pluto supports <emphasis remap="B">food groups</emphasis> for Opportunistic
+      IPsec. The policies for these are located in /etc/ipsec.d/policies, or another
       directory as specified by <option>--ipsecdir</option>.</para>
+
+      <para>Pluto supports X.509 Certificates. All certificate handling is done using
+      the NSS library and all certificate material is stored in an NSS database in
+      /etc/ipsec.d or another directory as specified by <option>--ipsecdir</option>.</para>
 
       <para>Pluto may core dump. It will normally do so into the current
       working directory. You can specify the --coredir option for pluto, or
@@ -1327,12 +1329,12 @@
 
         <varlistentry>
           <term><option>--cert</option>&nbsp;<emphasis
-          remap="I">filename</emphasis></term>
+          remap="I">friendly_name</emphasis></term>
 
           <listitem>
-            <para>The filename of the X.509 certificate. This must be the
-            public key certificate only, and cannot be the PKCS#12 certificate
-            file. See <citerefentry>
+            <para>The friendly_name (or nickname) of the X.509 certificate that was used
+            when imported the certificate into the NSS database.
+            See <citerefentry>
                 <refentrytitle>ipsec.conf</refentrytitle>
 
                 <manvolnum>5</manvolnum>
