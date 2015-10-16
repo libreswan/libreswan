@@ -2192,6 +2192,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	/* XXX This is to early and many failures could lead to not needing a child state */
 	struct state *cst = duplicate_state(pst);	/* child state */
 
+	/* XXX because the early child state ends up with the try counter check, we need to copy it */
+	cst->st_try = pst->st_try;
+
 	cst->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
 	insert_state(cst);
 	md->st = cst;
