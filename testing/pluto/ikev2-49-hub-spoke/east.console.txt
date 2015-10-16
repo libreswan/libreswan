@@ -141,6 +141,12 @@ east #
  echo "initdone"
 initdone
 east #
+ ipsec whack --trafficstatus
+000  
+006 #2: "northnet-westnet-ipv4-psk", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@north'
+006 #4: "westnet-northnet-ipv4-psk", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+000  
+east #
  ipsec look
 east NOW
 XFRM state:
