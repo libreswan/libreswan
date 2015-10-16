@@ -1,6 +1,6 @@
-ipsec look
-# No tunnels should have established
-grep "negotiated connection" /tmp/pluto.log
+# No tunnels should have established but a shunt should exist
+ipsec whack --trafficstatus
+ipsec whack --shuntstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
