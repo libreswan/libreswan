@@ -699,7 +699,7 @@ void delete_state(struct state *st)
 #endif
 
 	/* If we are failed OE initiator, make shunt bare */
-	if ((c->policy & POLICY_OPPORTUNISTIC) &&
+	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
 	    (st->st_state == STATE_PARENT_I1 || st->st_state == STATE_PARENT_I2)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
