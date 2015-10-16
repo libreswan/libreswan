@@ -2189,6 +2189,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
 		ikev2_log_parentSA(pst);
 
+	/* XXX This is to early and many failures could lead to not needing a child state */
 	struct state *cst = duplicate_state(pst);	/* child state */
 
 	cst->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
@@ -2225,6 +2226,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	struct isakmp_hdr hdr;
 
+	/* XXX it should pick the cookies from the parent state! */
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
 	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
 	hdr.isa_np = ISAKMP_NEXT_v2SK;
@@ -2232,6 +2234,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	hdr.isa_xchg = ISAKMP_v2_AUTH;
 	/* set original initiator; all other flags clear */
 	hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
+	/* XXX same here, use parent */
 	hdr.isa_msgid = cst->st_msgid;
 
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -2276,6 +2279,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* decide whether to send CERT payload */
 
+	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(cst);
 
 	/* send out the IDi payload */
