@@ -393,30 +393,10 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
 	 */
 
-	{ .story      = "I2: process INFORMATIONAL",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I2,
-	  .flags      = SMF2_IKE_I_CLEAR,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
 	{ .story      = "I3: INFORMATIONAL",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_CLEAR,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "R1: process INFORMATIONAL",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
-	  .flags      = SMF2_IKE_I_SET,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
