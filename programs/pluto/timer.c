@@ -238,6 +238,7 @@ static void retransmit_v2_msg(struct state *st)
 	unsigned long try;
 	unsigned long try_limit;
 	const char *details = "";
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(st != NULL);
 	c = st->st_connection;
@@ -250,6 +251,10 @@ static void retransmit_v2_msg(struct state *st)
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b), c->name,
 			st->st_serialno, try, try_limit);
+		if (pst != NULL)
+			DBG_log("and parent for %s \"%s\" #%lu attempt %lu of %lu",
+				ipstr(&c->spd.that.host_addr, &b), c->name,
+				pst->st_serialno, pst->st_try, try_limit);
 	});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -297,6 +302,7 @@ static void retransmit_v2_msg(struct state *st)
 			details);
 	}
 
+	/* XXX try can never be 0?! */
 	if (try != 0 && try <= try_limit) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
@@ -335,8 +341,16 @@ static void retransmit_v2_msg(struct state *st)
 	} else {
 		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
+	/*
+	 * XXX There should not have been a child sa unless this was a timeout of
+	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
+	 */
+	// passert(IS_PARENT_SA(st)); in the glorious future
 
 	delete_state(st);
+	if (pst != NULL) {
+		delete_state(pst);
+	}
 	/* note: no md->st to clear */
 }
 
@@ -479,13 +493,15 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	struct pluto_event *ev = arg;
 	enum event_type type;
 	struct state *st;
-	char statenum[32];
+	char statenum[64];
 
 	type = ev->ev_type;
 	st = ev->ev_state;
 
 	if (st != NULL) {
-		snprintf(statenum, sizeof(statenum), " for state #%lu", st->st_serialno);
+		snprintf(statenum, sizeof(statenum), " for %s state #%lu",
+			(st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
+			st->st_serialno);
 	}
 	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
 				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
