@@ -46,7 +46,6 @@ west #
 108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
-003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 002 "nss-cert" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "nss-cert" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "nss-cert" #1: deleting state #1 (STATE_MAIN_I3)
