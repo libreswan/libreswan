@@ -361,11 +361,17 @@ static int setup_socket()
 		exit(RC_WHACK_PROBLEM);
 	}
 
-	/* give up all root priveledges, if we had any */
-	setuid(getuid());
+	/* give up all user privileges, if we had any */
+	if (setuid(getuid()) < 0) {
+		perror("whack: setuid(getuid()) failed");
+		exit(RC_WHACK_PROBLEM);
+	}
 
-	/* give up any group priveledges, if we had any */
-	setgid(getgid());
+	/* give up any group privileges, if we had any */
+	if (setgid(getgid()) < 0) {
+		perror("whack: setgid(getgid()) failed");
+		exit(RC_WHACK_PROBLEM);
+	}
 
 	return sock;
 }
