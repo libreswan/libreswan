@@ -77,7 +77,7 @@ def main():
                               "; default is to select not-started tests"))
     parser.add_argument("--dry-run", "-n", action="store_true")
     parser.add_argument("--verbose", "-v", action="count", default=0)
-    parser.add_argument("directories", metavar="DIRECTORY", nargs="*",
+    parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help=("Either a testsuite directory or"
                               " a list of test directories"))
     testsuite.add_arguments(parser)
