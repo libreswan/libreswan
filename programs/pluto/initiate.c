@@ -1395,7 +1395,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	close_any(b->whackfd);
 }
 
-/* an ISAKMP SA has been established.
+/*
+ * an ISAKMP SA has been established.
  * Note the serial number, and release any connections with
  * the same peer ID but different peer IP address.
  */
@@ -1426,18 +1427,23 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			struct connection *next = d->ac_next;
 
 			/*
-			 * ??? is the sense oc the last clause inverted?
+			 * We try to find duplicate instances of same
+			 * connection to clean up old ones when uniqueids=yes
+			 *
 			 * We are testing for all of:
 			 * 1: an appropriate kind to consider
 			 * 2: same ids, left and right
 			 * 3: same address family
-			 * 4: but different IP address or port
-			 * 5: differing dnsnames (sort of)
+			 * 4: same connection name
+			 * 5: but different IP address or port
+			 * 6: differing dnsnames (sort of)
 			 *
+			 * DHR (2014-10-29):
+			 * Is the sense of the last clause inverted?
 			 * The logic kind of suggests that in fact the
 			 * same dnsnames should be the same, not different.
 			 *
-			 * Let's make 5 clearer:
+			 * Let's make 6 clearer:
 			 *   if BOTH have dnsnames, they must be unequal.
 			 *
 			 * I suspect that it should be:
@@ -1446,23 +1452,21 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			 * In other words the streq result should be negated.
 			 */
 			if ((d->kind == CK_PERMANENT ||
-			     d->kind == CK_INSTANCE ||
-			     d->kind == CK_GOING_AWAY) &&
-			    same_id(&c->spd.this.id, &d->spd.this.id) &&
-			    same_id(&c->spd.that.id, &d->spd.that.id) &&
-			    addrtypeof(&c->spd.that.host_addr) ==
+				d->kind == CK_INSTANCE ||
+				d->kind == CK_GOING_AWAY) &&
+				(c->name == d->name) &&
+				same_id(&c->spd.this.id, &d->spd.this.id) &&
+				same_id(&c->spd.that.id, &d->spd.that.id) &&
+				addrtypeof(&c->spd.that.host_addr) ==
 				addrtypeof(&d->spd.that.host_addr) &&
-			    (!sameaddr(&c->spd.that.host_addr,
-				  &d->spd.that.host_addr) ||
-			      c->spd.that.host_port !=
-				  d->spd.that.host_port) &&
-			    !(c->dnshostname != NULL && d->dnshostname != NULL &&
-			      streq(c->dnshostname, d->dnshostname))) {
-				/*
-				 * Paul and AA  tried to delete phase2
-				 * didn't really work.
-				 * delete_p2states_by_connection(d);
-				 */
+				(!sameaddr(&c->spd.that.host_addr,
+					&d->spd.that.host_addr) ||
+				c->spd.that.host_port !=
+					d->spd.that.host_port) &&
+				!(c->dnshostname != NULL &&
+					d->dnshostname != NULL &&
+					streq(c->dnshostname,
+						d->dnshostname))) {
 				release_connection(d, FALSE);
 			}
 			d = next;
