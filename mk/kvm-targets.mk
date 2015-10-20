@@ -79,35 +79,41 @@ $(KVM_SHUTDOWN_TARGETS):
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
 
-# Run the testsuite.
+# [re]run the testsuite.
 #
-# The problem is that it is never really clear, when re-running tests,
-# what the intent of a user really is.  For instance, should running
-# check twice be incremental, and if so, what exactly does incremental
-# mean?
-#
-# For the moment provide the rules below, each with subtlely different
-# behaviour and names.
+# If the testsuite is being run a second time (for instance,
+# re-started or re-run) what should happen: run all tests regardless;
+# just run tests that have never been started; run tests that haven't
+# yet passed?  Since each alternative has merit, let the user decide.
 
-# "check" only runs tests that have never been started (it skips
-# failed and crashed tests).
+KVM_TESTS = testing/pluto
+
+# "check" runs any test that has not yet passed (for instance, failed,
+# incomplete and not started).  This is probably the safest option.
 .PHONY: kvm-check kvm-check-good kvm-check-all
 kvm-check: kvm-check-good
 kvm-check-good: $(KVM_KEYS)
-	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good"     testing/pluto
+	: KVM_TESTS = $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good"     $(KVM_TESTS)
 kvm-check-all: $(KVM_KEYS)
-	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good|wip" testing/pluto
-# "recheck" re-runs any test that didn't pass.
-.PHONY: kvm-recheck-good kvm-recheck-all
-kvm-recheck: kvm-recheck-good
-kvm-recheck: $(KVM_KEYS)
-	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good"     testing/pluto
-kvm-recheck-all: $(KVM_KEYS)
-	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" testing/pluto
+	: KVM_TESTS = $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" $(KVM_TESTS)
+
+# "test" runs tests that have not been started.  This unfortunately
+# means that an incomplete test isn't re-tried.
+.PHONY: kvm-test-good kvm-test-all
+kvm-test: kvm-test-good
+kvm-test: $(KVM_KEYS)
+	: KVM_TESTS = $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good"     $(KVM_TESTS)
+kvm-test-all: $(KVM_KEYS)
+	: KVM_TESTS = $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good|wip" $(KVM_TESTS)
+
 # clean up
-.PHONY: kvm-clean-check
-kvm-clean-check:
-	rm -rf testing/pluto/*/OUTPUT*
+.PHONY: kvm-clean-check clean-kvm-check kvm-clean-test clean-kvm-test
+kvm-clean-check clean-kvm-check kvm-clean-test clean-kvm-test:
+	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
 
 # Hide a make call
