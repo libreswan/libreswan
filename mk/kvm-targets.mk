@@ -27,6 +27,9 @@ KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
+# file to mark keys are up-to-date
+KVM_KEYS = testing/x509/keys/up-to-date
+
 # Uses "$@" to determine the current make target's indented host.
 # Assumes the target looks like xxx-yyy-HOST, defaults to 'east' (the
 # choice is arbitrary).
@@ -90,16 +93,16 @@ kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 # failed and crashed tests).
 .PHONY: kvm-check kvm-check-good kvm-check-all
 kvm-check: kvm-check-good
-kvm-check-good: testing/x509/keys/mainca.key
+kvm-check-good: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good"     testing/pluto
-kvm-check-all: testing/x509/keys/mainca.key
+kvm-check-all: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good|wip" testing/pluto
 # "recheck" re-runs any test that didn't pass.
 .PHONY: kvm-recheck-good kvm-recheck-all
 kvm-recheck: kvm-recheck-good
-kvm-recheck: testing/x509/keys/mainca.key
+kvm-recheck: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good"     testing/pluto
-kvm-recheck-all: testing/x509/keys/mainca.key
+kvm-recheck-all: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" testing/pluto
 # clean up
 .PHONY: kvm-clean-check
@@ -131,26 +134,15 @@ kvm-checksum:
 		cp kvm-checksum.new kvm-checksum ; \
 	fi
 
-# Re-build the keys/certificates.
-#
-# Strangely, dist_certs.py can't create a directory called "certs/" on
-# a 9p mounted file system (OSError: [Errno 13] Permission denied:
-# 'certs/').  Get around it by first creating the certs in /tmp and
-# then copying them over.
-#
-# By copying "dist_certs.py" to /tmp the need to compute the remote
-# path to the local dist_certs.py is avoided (do not assume it is
-# under /testing).  Better might be for dist_certs.py to take an
-# output directory argument.
-kvm-keys testing/x509/keys/mainca.key: testing/x509/dist_certs.py
-	$(KVMSH_COMMAND) --chdir .         east 'rm -f /etc/system-fips'
-	$(KVMSH_COMMAND) --chdir .         east './testing/guestbin/fipsoff'
-	$(KVMSH_COMMAND) --chdir .         east 'rm -rf /tmp/x509'
-	$(KVMSH_COMMAND) --chdir .         east 'mkdir /tmp/x509'
-	$(KVMSH_COMMAND) --chdir .         east 'cp -f testing/x509/dist_certs.py /tmp'
-	$(KVMSH_COMMAND) --chdir /tmp/x509 east '../dist_certs.py'
-	rm -f testing/x509/x509.tar
-	$(KVMSH_COMMAND) --chdir .         east '( cd /tmp && tar cf - x509 ) > testing/x509.tar'
-	cd testing && tar xpvf x509.tar
-	rm testing/x509.tar
-.PHONY: kvm-keys
+# Build the keys/certificates using the KVM.
+KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
+.PHONY: kvm-keys clean-kvm-keys kvm-clean-keys
+kvm-keys: $(KVM_KEYS)
+$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
+	: always remove old keys - create xxx/ so */ always works
+	mkdir -p testing/x509/xxx/ && rm -r testing/x509/*/
+	$(KVM_KEYS_SCRIPT) east testing/x509
+	touch $(KVM_KEYS)
+
+kvm-clean-keys clean-kvm-keys:
+	rm -rf testing/x509/*/
