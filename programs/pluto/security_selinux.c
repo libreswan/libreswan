@@ -68,8 +68,8 @@ int within_range(security_context_t sl, security_context_t range)
 	/*
 	** Straight up test between sl and range
 	**/
-	tclass = SECCLASS_ASSOCIATION;
-	av = ASSOCIATION__POLMATCH;
+	tclass = string_to_security_class("association");
+	av = string_to_av_perm(tclass, "polmatch");
 	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
 	if (rtn != 0) {
 		DBG_log("within_range: The sl (%s) is not within range of (%s)", sl,
