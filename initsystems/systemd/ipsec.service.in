@@ -12,6 +12,7 @@ EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
 #Environment=IPSEC_EXECDIR=@FINALSBINDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
+Sockets=pluto.socket
 #
 # Check configuration file
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
@@ -31,3 +32,4 @@ ExecReload=@FINALLIBEXECDIR@/whack --listen
 
 [Install]
 WantedBy=multi-user.target
+Also=pluto.socket
