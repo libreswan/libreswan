@@ -16,8 +16,6 @@
 #define _SECURITY_SELINUX_H
 
 #include <selinux/selinux.h>
-#include <selinux/flask.h>
-#include <selinux/av_permissions.h>
 #include <selinux/avc.h>
 #include <selinux/context.h>
 
