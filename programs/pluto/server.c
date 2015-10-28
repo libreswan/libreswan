@@ -123,7 +123,7 @@ struct sockaddr_un ctl_addr = {
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
-	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
+	.sun_path  = ""
 };
 
 struct sockaddr_un info_addr = {
@@ -133,6 +133,29 @@ struct sockaddr_un info_addr = {
 #endif
 	.sun_path  = DEFAULT_CTLBASE INFO_SUFFIX
 };
+
+/* If we're socket-activated by systemd, return the control socket fd. */
+static int activated_socket()
+{
+	char *s;
+
+	s = getenv("LISTEN_PID");
+	if (!s)
+		return -1;
+	if (atoi(s) != getpid ()) {
+		loglog(RC_INFORMATIONAL, "Socket activation, but not for us %d != %d?", atoi(s), getpid ());
+		return -1;
+	}
+
+	s = getenv("LISTEN_FDS");
+	if (atoi(s) != 1) {
+		loglog(RC_INFORMATIONAL, "Too many sockets to activate on.");
+		return -1;
+	}
+
+	loglog(RC_INFORMATIONAL, "Activated with the control socket.");
+	return 3;
+}
 
 /* Initialize the control socket.
  * Note: this is called very early, so little infrastructure is available.
@@ -145,28 +168,39 @@ err_t init_ctl_socket(void)
 
 	LIST_INIT(&interface_dev);
 
-	delete_ctl_socket();    /* preventative medicine */
-	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	ctl_fd = activated_socket();
 	if (ctl_fd == -1) {
-		failed = "create";
-	} else if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		failed = "fcntl FD+CLOEXEC";
-	} else if (setsockopt(ctl_fd, SOL_SOCKET, SO_REUSEADDR,
-			      (const void *)&on, sizeof(on)) < 0) {
-		failed = "setsockopt";
-	} else {
+		delete_ctl_socket();    /* preventative medicine */
+		ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+
+		if (ctl_fd == -1) {
+			failed = "create";
+		} else if (setsockopt(ctl_fd, SOL_SOCKET, SO_REUSEADDR,
+				      (const void *)&on, sizeof(on)) < 0) {
+			failed = "setsockopt";
+		} else {
 		/* to keep control socket secure, use umask */
 #ifdef PLUTO_GROUP_CTL
-		mode_t ou = umask(~(S_IRWXU | S_IRWXG));
+			mode_t ou = umask(~(S_IRWXU | S_IRWXG));
 #else
-		mode_t ou = umask(~S_IRWXU);
+			mode_t ou = umask(~S_IRWXU);
 #endif
+			if (!ctl_addr.sun_path)
+				strncpy(ctl_addr.sun_path, DEFAULT_CTLBASE CTL_SUFFIX,
+					sizeof(ctl_addr.sun_path));
 
-		if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
-			 offsetof(struct sockaddr_un,
-				  sun_path) + strlen(ctl_addr.sun_path)) < 0)
-			failed = "bind";
-		umask(ou);
+			if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
+				 offsetof(struct sockaddr_un,
+					  sun_path) + strlen(ctl_addr.sun_path)) < 0)
+				failed = "bind";
+			umask(ou);
+		}
+	}
+
+	if (ctl_fd != -1 && fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
+		failed = "fcntl FD+CLOEXEC";
+		close(ctl_fd);
+		ctl_fd = -1;
 	}
 
 #ifdef PLUTO_GROUP_CTL
@@ -199,7 +233,8 @@ err_t init_ctl_socket(void)
 void delete_ctl_socket(void)
 {
 	/* Is noting failure useful?  Not when used as preventative medicine. */
-	unlink(ctl_addr.sun_path);
+	if (*ctl_addr.sun_path)
+		unlink(ctl_addr.sun_path);
 }
 
 bool listening = FALSE;  /* should we pay attention to IKE messages? */
