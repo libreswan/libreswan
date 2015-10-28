@@ -1475,7 +1475,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-	while (pbs_left(attrs) > 0) {
+	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 		size_t sz;
@@ -1656,7 +1656,7 @@ stf_status modecfg_inR0(struct msg_digest *md)
 		break;
 
 	case ISAKMP_CFG_REQUEST:
-		while (pbs_left(attrs) > 0) {
+		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			/* ??? this looks kind of fishy:
 			 * - what happens if attributes are repeated (resp cannot record that)?
 			 * - who actually parses the subattributes to see if they are OK?
@@ -1746,7 +1746,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-	while (pbs_left(attrs) > 0) {
+	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
@@ -1896,7 +1896,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 	case ISAKMP_CFG_ACK:
 		/* CHECK that ACK has been received. */
-		while (pbs_left(attrs) > 0) {
+		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 
 			if (!in_struct(&attr,
@@ -1926,7 +1926,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 		break;
 
 	case ISAKMP_CFG_REPLY:
-		while (pbs_left(attrs) > 0) {
+		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
@@ -2522,7 +2522,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 		break;
 	}
 
-	while (pbs_left(attrs) > 0) {
+	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
@@ -2779,7 +2779,7 @@ stf_status xauth_inI1(struct msg_digest *md)
 
 	case ISAKMP_CFG_SET:
 		/* CHECK that SET has been received. */
-		while (pbs_left(attrs) > 0) {
+		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
