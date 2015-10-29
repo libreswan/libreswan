@@ -686,10 +686,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 
 	/*
 	   KSCF_SUBNETWITHIN    --- not sure what to do with it.
-	   KSCF_ESPENCKEY       --- todo (manual keying)
-	   KSCF_ESPAUTHKEY      --- todo (manual keying)
 	   KSCF_SOURCEIP     = 16,
-	   KSCF_MAX          = 19
 	 */
 
 	if (err)
@@ -958,7 +955,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	if (err)
 		return err;
 
-	if (conn->strings[KSF_ALSO] != NULL &&
+	if (conn->strings[KSCF_ALSO] != NULL &&
 	    !alsoprocessing) {
 		starter_log(LOG_LEVEL_INFO,
 			    "also= is not valid in section '%s'",
@@ -969,7 +966,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	/* now, process the also's */
 	if (conn->alsos)
 		FREE_LIST(conn->alsos);
-	conn->alsos = new_list(conn->strings[KSF_ALSO]);
+	conn->alsos = new_list(conn->strings[KSCF_ALSO]);
 
 	if (alsoprocessing && conn->alsos != NULL) {
 		struct section_list *sl1;
@@ -1016,18 +1013,18 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			 * there, then process it.
 			 */
 			if (sl1 && !sl1->beenhere) {
-				conn->strings_set[KSF_ALSO] = FALSE;
-				pfreeany(conn->strings[KSF_ALSO]);
-				conn->strings[KSF_ALSO] = NULL;
+				conn->strings_set[KSCF_ALSO] = FALSE;
+				pfreeany(conn->strings[KSCF_ALSO]);
+				conn->strings[KSCF_ALSO] = NULL;
 				sl1->beenhere = TRUE;
 
 				/* translate things, but do not replace earlier settings!*/
 				err |= translate_conn(conn, sl1, k_set, perr);
 
-				if (conn->strings[KSF_ALSO] != NULL) {
-					/* now, check out the KSF_ALSO, and extend list if we need to */
+				if (conn->strings[KSCF_ALSO] != NULL) {
+					/* now, check out the KSCF_ALSO, and extend list if we need to */
 					char **newalsos = new_list(
-						conn->strings[KSF_ALSO]);
+						conn->strings[KSCF_ALSO]);
 
 					if (newalsos != NULL) {
 						char **ra;
@@ -1207,35 +1204,35 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
 		       POLICY_IKEV2_PAM_AUTHORIZE);
 
-	if (conn->strings_set[KSF_ESP])
-		conn->esp = clone_str(conn->strings[KSF_ESP],"KSF_ESP");
+	if (conn->strings_set[KSCF_ESP])
+		conn->esp = clone_str(conn->strings[KSCF_ESP],"KSCF_ESP");
 
 #ifdef HAVE_LABELED_IPSEC
-	if (conn->strings_set[KSF_POLICY_LABEL])
-		conn->policy_label = clone_str(conn->strings[KSF_POLICY_LABEL],"KSF_POLICY_LABEL");
+	if (conn->strings_set[KSCF_POLICY_LABEL])
+		conn->policy_label = clone_str(conn->strings[KSCF_POLICY_LABEL],"KSCF_POLICY_LABEL");
 	if (conn->policy_label != NULL)
 		starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
 				conn->policy_label);
 #endif
 
-	if (conn->strings_set[KSF_IKE])
-		conn->ike = clone_str(conn->strings[KSF_IKE],"KSF_IKE");
+	if (conn->strings_set[KSCF_IKE])
+		conn->ike = clone_str(conn->strings[KSCF_IKE],"KSCF_IKE");
 
-	if (conn->strings_set[KSF_MODECFGDNS1]) {
-		conn->modecfg_dns1 = clone_str(conn->strings[KSF_MODECFGDNS1],"KSF_MODECFGDNS1");
+	if (conn->strings_set[KSCF_MODECFGDNS1]) {
+		conn->modecfg_dns1 = clone_str(conn->strings[KSCF_MODECFGDNS1],"KSCF_MODECFGDNS1");
 	}
-	if (conn->strings_set[KSF_MODECFGDNS2]) {
-		conn->modecfg_dns2 = clone_str(conn->strings[KSF_MODECFGDNS2], "KSF_MODECFGDNS2");
+	if (conn->strings_set[KSCF_MODECFGDNS2]) {
+		conn->modecfg_dns2 = clone_str(conn->strings[KSCF_MODECFGDNS2], "KSCF_MODECFGDNS2");
 	}
-	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
-		conn->modecfg_domain = clone_str(conn->strings[KSF_MODECFGDOMAIN],"KSF_MODECFGDOMAIN");
+	if (conn->strings_set[KSCF_MODECFGDOMAIN]) {
+		conn->modecfg_domain = clone_str(conn->strings[KSCF_MODECFGDOMAIN],"KSCF_MODECFGDOMAIN");
 	}
-	if (conn->strings_set[KSF_MODECFGBANNER]) {
-		conn->modecfg_banner = clone_str(conn->strings[KSF_MODECFGBANNER],"KSF_MODECFGBANNER");
+	if (conn->strings_set[KSCF_MODECFGBANNER]) {
+		conn->modecfg_banner = clone_str(conn->strings[KSCF_MODECFGBANNER],"KSCF_MODECFGBANNER");
 	}
 
-	if (conn->strings_set[KSF_CONNALIAS])
-		conn->connalias = clone_str(conn->strings[KSF_CONNALIAS],"KSF_CONNALIAS");
+	if (conn->strings_set[KSCF_CONNALIAS])
+		conn->connalias = clone_str(conn->strings[KSCF_CONNALIAS],"KSCF_CONNALIAS");
 
 	if (conn->options_set[KBF_PHASE2]) {
 		conn->policy &= ~(POLICY_AUTHENTICATE | POLICY_ENCRYPT);

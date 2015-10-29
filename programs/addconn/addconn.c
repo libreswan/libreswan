@@ -836,10 +836,10 @@ int main(int argc, char *argv[])
 				for (conn = cfg->conns.tqh_first;
 					conn != NULL;
 					conn = conn->link.tqe_next) {
-					if (conn->strings_set[KSF_CONNALIAS] &&
+					if (conn->strings_set[KSCF_CONNALIAS] &&
 						lsw_alias_cmp(connname,
 							conn->
-							strings[KSF_CONNALIAS]
+							strings[KSCF_CONNALIAS]
 							)) {
 						if (conn->state ==
 							STATE_ADDED) {

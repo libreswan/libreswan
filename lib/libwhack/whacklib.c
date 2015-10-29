@@ -192,8 +192,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    || !unpack_str(wp, &wp->msg->policy_label)          /* string 27 */
 #endif
-	    || !unpack_str(wp, &wp->msg->modecfg_domain)	/* string 28 */
-	    || !unpack_str(wp, &wp->msg->modecfg_banner)	/* string 29 */
+	    || !unpack_str(wp, &wp->msg->modecfg_domain)        /* string 28 */
+	    || !unpack_str(wp, &wp->msg->modecfg_banner)        /* string 29 */
 	    || wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)
 		ugh = "message from whack contains bad string";
 

@@ -3764,7 +3764,8 @@ void show_one_connection(const struct connection *c)
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr, sapriostr, nflogstr);
+		  mtustr, sapriostr, nflogstr
+	);
 
 	/* slightly complicated stuff to avoid extra crap */
 	/* ??? real-world and DBG control flow mixed */
