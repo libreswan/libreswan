@@ -179,6 +179,7 @@ enum keyword_string_conn_field {
 	KSCF_ALSOFLIP,
 	KSCF_CONNALIAS,
 	KSCF_POLICY_LABEL,
+	KSCF_CONN_MARK,
 	KSCF_MAX
 };
 

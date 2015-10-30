@@ -145,6 +145,10 @@ export LC_ALL
 #	XAUTH_FAILED
 #		If xauthfail=soft this will be set to 1 if XAUTH authentication
 #		failed. If xauthfail=hard, the updown scripts never run.
+#
+#	CONNMARK
+#		If mark= is set on the connection, this variable will be set with
+#		the value. It can be used for iptables or VTI.
 
 # rpm based systems
 if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then

@@ -325,6 +325,8 @@
 
       <arg choice="opt">--nflog-group <replaceable>nflognum</replaceable></arg>
 
+      <arg choice="opt">--conn-mark <replaceable>mark/mask</replaceable></arg>
+
       <group choice="opt">
         <arg choice="opt">--dpddelay <replaceable>seconds</replaceable></arg>
 

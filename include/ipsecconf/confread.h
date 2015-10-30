@@ -104,6 +104,7 @@ struct starter_conn {
 	char *modecfg_domain;
 	char *modecfg_banner;
 	char *policy_label;
+	char *conn_mark;
 };
 
 struct starter_config {

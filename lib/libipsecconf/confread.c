@@ -1230,6 +1230,9 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	if (conn->strings_set[KSCF_MODECFGBANNER]) {
 		conn->modecfg_banner = clone_str(conn->strings[KSCF_MODECFGBANNER],"KSCF_MODECFGBANNER");
 	}
+	if (conn->strings_set[KSCF_CONN_MARK]) {
+		conn->conn_mark = clone_str(conn->strings[KSCF_CONN_MARK], "KSCF_CONN_MARK");
+	}
 
 	if (conn->strings_set[KSCF_CONNALIAS])
 		conn->connalias = clone_str(conn->strings[KSCF_CONNALIAS],"KSCF_CONNALIAS");
@@ -1361,6 +1364,7 @@ static void conn_default(struct starter_conn *conn,
 	conn->modecfg_dns2 = clone_str(def->modecfg_dns2, "conn default dns2");
 	conn->modecfg_domain = clone_str(def->modecfg_domain, "conn default domain");
 	conn->modecfg_banner = clone_str(def->modecfg_banner, "conn default banner");
+	conn->conn_mark = clone_str(def->conn_mark, "conn default conn_mark");
 #ifdef HAVE_LABELED_IPSEC
 	conn->policy_label = clone_str(def->policy_label, "conn default policy_label");
 #endif

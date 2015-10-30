@@ -292,6 +292,7 @@ struct connection {
 	char *cisco_dns_info; /* scratchpad for writing IP addresses */
 	char *modecfg_domain;
 	char *modecfg_banner;
+	char *conn_mark;
 
 	u_int8_t metric;	/* metric for tunnel routes */
 	u_int16_t connmtu;	/* mtu for tunnel routes */

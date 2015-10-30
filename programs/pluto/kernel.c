@@ -376,7 +376,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		secure_xauth_username_str[IDTOA_BUF] = "",
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
-		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
+		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "",
+		connmarkstr[sizeof("CONNMARK='' ") +  2 * sizeof("0xffffffff")+1] = "";
 #undef MAX_DISPLAY_BYTES
 
 	ipstr_buf bme, bpeer;
@@ -441,6 +442,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	if (c->nflog_group != 0) {
 		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
 			c->nflog_group);
+	}
+
+	connmarkstr[0] = '\0';
+	if (c->conn_mark != NULL) {
+		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK=%s ",
+			c->conn_mark);
 	}
 
 	srcip_str[0] = '\0';
@@ -517,6 +524,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* traffic in stats - if any */
 			"%s" /* traffic out stats - if any */
 			"%s" /* nflog-group - if any */
+			"%s" /* conn-mark - if any */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -560,7 +568,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 #endif
 		traffic_in_str,
 		traffic_out_str,
-		nflogstr
+		nflogstr,
+		connmarkstr
 		);
 	/*
 	 * works for both old and new way of snprintf() returning

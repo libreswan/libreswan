@@ -633,6 +633,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
+	msg.conn_mark = conn->conn_mark;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
+		conn->name, msg.conn_mark);
+
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])

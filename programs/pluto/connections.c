@@ -305,6 +305,7 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
 	pfreeany(c->modecfg_banner);
+	pfreeany(c->conn_mark);
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
 #endif
@@ -771,6 +772,8 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domain");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
+	c->conn_mark = clone_str(c->conn_mark,
+				"connection conn_mark");
 #ifdef HAVE_LABELED_IPSEC
 	c->policy_label = clone_str(c->policy_label,
 				    "connection policy_label");
@@ -1376,6 +1379,7 @@ void add_connection(const struct whack_message *wm)
 		c->modecfg_dns2 = wm->modecfg_dns2;
 		c->modecfg_domain = wm->modecfg_domain;
 		c->modecfg_banner = wm->modecfg_banner;
+		c->conn_mark = wm->conn_mark;
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -3759,12 +3763,13 @@ void show_one_connection(const struct connection *c)
 
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s;",
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s; mark: %s;",
 		  c->name, instance,
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr, sapriostr, nflogstr
+		  mtustr, sapriostr, nflogstr,
+		  (c->conn_mark == NULL) ? "unset" : c->conn_mark
 	);
 
 	/* slightly complicated stuff to avoid extra crap */
