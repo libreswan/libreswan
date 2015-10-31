@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>replay-window</emphasis></term>
+  <listitem>
+<para>The size of the IPsec SA replay window protection. The default is kernel stack
+specific, but usually 32. Linux NETKEY/XFRM and Linux KLIPS support up to 64. A value
+of 0 disables replay protection. Disabling of replay protection is sometimes used on
+a pair of IPsec servers in a High Availability setup. Note that technically, at least
+the Linux kernel can install IPsec SA's with an IPsec SA Sequence Number, but this is
+currently not supported by libreswan.
+</para>
+  </listitem>
+  </varlistentry>

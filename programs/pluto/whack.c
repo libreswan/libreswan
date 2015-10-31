@@ -91,6 +91,7 @@ static void help(void)
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
 		"	[--keyingtries <count>] \\\n"
+		"	[--replay-window <num>] \\\n"
 		"	[--esp <esp-algos>] \\\n"
 		"	[--remote-peer-type <cisco>] \\\n"
 		"	[--mtu <mtu>] \\\n"
@@ -370,6 +371,7 @@ enum option_enums {
 	CD_RKMARGIN,
 	CD_RKFUZZ,
 	CD_KTRIES,
+	CD_REPLAY_W,
 	CD_DPDDELAY,
 	CD_DPDTIMEOUT,
 	CD_DPDACTION,
@@ -614,6 +616,7 @@ static const struct option long_opts[] = {
 	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
 	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
 	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
+	{ "replay-window", required_argument, NULL, CD_REPLAY_W + OO + NUMERIC_ARG },
 	{ "ike",    required_argument, NULL, CD_IKE + OO },
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
@@ -888,6 +891,8 @@ int main(int argc, char **argv)
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
+	/* whack cannot access kernel_ops->replay_window */
+	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
 	msg.r_interval = RETRANSMIT_INTERVAL_DEFAULT;
 
@@ -1545,6 +1550,10 @@ int main(int argc, char **argv)
 
 		case CD_KTRIES:	/* --keyingtries <count> */
 			msg.sa_keying_tries = opt_whole;
+			continue;
+
+		case CD_REPLAY_W: /* --replay-window <num> */
+			msg.sa_replay_window = opt_whole;
 			continue;
 
 		case CD_SEND_CA:

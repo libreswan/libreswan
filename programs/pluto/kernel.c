@@ -1620,6 +1620,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_boilerplate.add_selector = add_selector;
 	said_boilerplate.transport_proto = c->spd.this.protocol;
 	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
+	said_boilerplate.replay_window = c->sa_replay_window;
 	said_boilerplate.outif = -1;
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;

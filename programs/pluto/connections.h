@@ -203,6 +203,8 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	uint32_t sa_priority;
+	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
+				   /* See also kernel_ops->replay_window */
 	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;

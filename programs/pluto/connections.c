@@ -1336,6 +1336,7 @@ void add_connection(const struct whack_message *wm)
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
+		c->sa_replay_window = wm->sa_replay_window;
 		c->r_timeout = wm->r_timeout;
 		c->r_interval = wm->r_interval;
 
@@ -1570,12 +1571,13 @@ void add_connection(const struct whack_message *wm)
 			DBG_log("ike_life: %lds; ipsec_life: %lds; "
 				"rekey_margin: %lds; "
 				"rekey_fuzz: %lu%%; "
-				"keyingtries: %lu; policy: %s",
+				"keyingtries: %lu; replay_window: %u; policy: %s",
 				(long) deltasecs(c->sa_ike_life_seconds),
 				(long) deltasecs(c->sa_ipsec_life_seconds),
 				(long) deltasecs(c->sa_rekey_margin),
 				c->sa_rekey_fuzz,
 				c->sa_keying_tries,
+				c->sa_replay_window,
 				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
@@ -3707,12 +3709,13 @@ void show_one_connection(const struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds;"
+		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds; replay_window: %u;"
 		" rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
 		(long) deltasecs(c->sa_ike_life_seconds),
 		(long) deltasecs(c->sa_ipsec_life_seconds),
+		c->sa_replay_window,
 		(long) deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);

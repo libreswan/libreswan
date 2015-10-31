@@ -147,6 +147,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_IKELIFETIME] =
 		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 
+	cfg->conn_default.options[KBF_REPLAY_WINDOW] =
+		IPSEC_SA_DEFAULT_REPLAY_WINDOW;
+
 	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
 	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
 
@@ -155,6 +158,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		SA_REPLACEMENT_MARGIN_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYFUZZ]   =
 		SA_REPLACEMENT_FUZZ_DEFAULT;
+
+	/* should be stack specific but lib/ can't check kernel_ops->replay_window */
 	cfg->conn_default.options[KBF_KEYINGTRIES] =
 		SA_REPLACEMENT_RETRIES_DEFAULT;
 

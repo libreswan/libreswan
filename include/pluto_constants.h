@@ -208,6 +208,8 @@ typedef enum {
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
 #define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
 
+#define IPSEC_SA_DEFAULT_REPLAY_WINDOW 32
+
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
  * but they are shared with whack.

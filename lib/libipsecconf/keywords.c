@@ -604,6 +604,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "keyingtries",    kv_conn | kv_auto, kt_number, KBF_KEYINGTRIES,
 	  NOT_ENUM },
+	{ "replay-window",    kv_conn | kv_auto, kt_number, KBF_REPLAY_WINDOW,
+	  NOT_ENUM },
 	{ "ikelifetime",    kv_conn | kv_auto, kt_time,   KBF_IKELIFETIME,
 	  NOT_ENUM },
 	{ "disablearrivalcheck", kv_conn | kv_auto, kt_invertbool,

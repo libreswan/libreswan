@@ -515,6 +515,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);
 	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
+	msg.sa_replay_window = conn->options[KBF_REPLAY_WINDOW];
 
 	msg.r_interval = conn->options[KBF_RETRANSMIT_INTERVAL];
 	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);

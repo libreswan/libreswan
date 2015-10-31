@@ -1047,7 +1047,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	}
 
-	req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
 	req.p.reqid = sa->reqid;
 
 	/* TODO expose limits to kernel_sa via config */
@@ -1055,6 +1054,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	req.p.lft.soft_packet_limit = XFRM_INF;
 	req.p.lft.hard_byte_limit = XFRM_INF;
 	req.p.lft.hard_packet_limit = XFRM_INF;
+	req.p.replay_window = sa->replay_window;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
@@ -2357,7 +2357,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	.inbound_eroute =  TRUE,
 	.policy_lifetime = TRUE,
 	.async_fdp = &netlink_bcast_fd,
-	.replay_window = 32,
+	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
 	.init = init_netlink,
 	.pfkey_register = linux_pfkey_register,
