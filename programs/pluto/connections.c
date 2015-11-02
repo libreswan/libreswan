@@ -815,6 +815,8 @@ static void load_end_nss_certificate(const char *name, struct end *dst)
 		return;
 	}
 
+	select_nss_cert_id(cert.u.nss_cert, &dst->id);
+
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert.u.nss_cert,
 				     PR_Now(),
@@ -828,7 +830,6 @@ static void load_end_nss_certificate(const char *name, struct end *dst)
 	dst->cert_nickname = (char *)name;
 	DBG(DBG_X509, DBG_log("loaded certificate \'%s\'", name));
 
-	select_nss_cert_id(cert.u.nss_cert, &dst->id);
 	add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
 	dst->cert = cert;
 
