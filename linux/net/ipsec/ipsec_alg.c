@@ -891,7 +891,7 @@ out:
  */
 static int ipsec_alg_test_auth(int auth_alg, int test)
 {
-	int ret;
+	int ret = 0;
 	caddr_t buf = NULL;
 	int blocksize, keysize, key_a_size;
 	struct ipsec_alg_auth *ixt_a;
