@@ -548,6 +548,10 @@ typedef struct ctl_table ctl_table;
 # define skb_copy_datagram_msg(a,b,c,d) skb_copy_datagram_iovec(a,b,(c)->msg_iov,d)
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+# define HAVE_REBUILD_HEADER
+#endif
+
 #if !defined(DEFINE_RWLOCK)
 # define DEFINE_RWLOCK(x) rwlock_t x = RW_LOCK_UNLOCKED
 #endif

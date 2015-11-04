@@ -317,6 +317,7 @@ int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 	return ret;
 }
 
+#ifdef HAVE_REBUILD_HEADER
 DEBUG_NO_STATIC int klips_rebuild_header(struct sk_buff *skb)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(skb->dev);
@@ -377,6 +378,7 @@ DEBUG_NO_STATIC int klips_rebuild_header(struct sk_buff *skb)
 	skb->dev = tmp;
 	return ret;
 }
+#endif
 
 int klips_header_cache(const struct neighbour *neigh,
 		       struct hh_cache *hh
@@ -476,7 +478,9 @@ DEBUG_NO_STATIC void klips_header_cache_update(struct hh_cache *hh,
 const struct header_ops klips_header_ops ____cacheline_aligned = {
 	.create         = klips_header,
 	.parse          = klips_header_parse,
+#ifdef HAVE_REBUILD_HEADER
 	.rebuild        = klips_rebuild_header,
+#endif
 	.cache          = klips_header_cache,
 	.cache_update   = klips_header_cache_update,
 };
@@ -1189,6 +1193,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_hard_header(struct sk_buff *skb,
 	return ret;
 }
 
+#ifdef HAVE_REBUILD_HEADER
 DEBUG_NO_STATIC int ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(skb->dev);
@@ -1259,6 +1264,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 	skb->dev = tmp;
 	return ret;
 }
+#endif
 
 #ifdef HAVE_SET_MAC_ADDR
 DEBUG_NO_STATIC int ipsec_tunnel_set_mac_address(struct net_device *dev,
@@ -1371,7 +1377,9 @@ DEBUG_NO_STATIC void ipsec_tunnel_cache_update(struct hh_cache *hh,
 #ifdef HAVE_NETDEV_HEADER_OPS
 const struct header_ops ipsec_tunnel_header_ops = {
 	.create         = ipsec_tunnel_hard_header,
+#ifdef HAVE_REBUILD_HEADER
 	.rebuild        = ipsec_tunnel_rebuild_header,
+#endif
 	.cache_update   = ipsec_tunnel_cache_update,
 };
 #endif
@@ -1455,7 +1463,9 @@ DEBUG_NO_STATIC int ipsec_tunnel_detach(struct net_device *dev)
 	prv->header_ops = NULL;
 #else
 	prv->hard_header = NULL;
+#ifdef HAVE_REBUILD_HEADER
 	prv->rebuild_header = NULL;
+#endif
 	prv->header_cache_update = NULL;
 #endif
 	prv->set_mac_address = NULL;
@@ -1466,7 +1476,9 @@ DEBUG_NO_STATIC int ipsec_tunnel_detach(struct net_device *dev)
 	dev->header_ops = NULL;
 #else
 	dev->hard_header = NULL;
+#ifdef HAVE_REBUILD_HEADER
 	dev->rebuild_header = NULL;
+#endif
 	dev->header_cache_update = NULL;
 	dev->neigh_setup        = NULL;
 #endif
@@ -2031,7 +2043,9 @@ int ipsec_tunnel_init(struct net_device *dev)
 	dev->header_ops         = NULL;
 #else
 	dev->hard_header        = NULL;
+#ifdef HAVE_REBUILD_HEADER
 	dev->rebuild_header     = NULL;
+#endif
 	dev->header_cache_update = NULL;
 #endif
 #ifdef HAVE_NET_DEVICE_OPS
