@@ -331,7 +331,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 
 		idtoa(end_id, email, IDTOA_BUF);
 		if (cert->emailAddr == NULL || !streq(cert->emailAddr, email)) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("no email \'%s\' for cert, using ASN1 subjectName",
 						email));
 			use_dn = TRUE;
@@ -345,7 +345,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 			char idb[IDTOA_BUF];
 
 			idtoa(end_id, idb, IDTOA_BUF);
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("no subject \'%s\' for cert, using ASN1 subjectName \'%s\'",
 						idb, cert->subjectName));
 			use_dn = TRUE;
@@ -353,7 +353,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 
 	if (end_id->kind == ID_FROMCERT || end_id->kind == ID_NONE || use_dn) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'",
 			    cert->subjectName));
 		end_id->name = secitem_to_chunk(cert->derSubject);
@@ -407,13 +407,13 @@ bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
 
 	r = send_crl_to_import(blob->ptr, blob->len, uri_str);
 	if (r == -1) {
-		DBG_log("_import_crl internal error");
+		libreswan_log("_import_crl internal error");
 		ret = FALSE;
 	} else if (r != 0) {
 		dbg_crl_import_err(r);
 		ret = FALSE;
 	} else {
-		DBG_log("CRL imported");
+		DBG(DBG_X509, DBG_log("CRL imported"));
 		ret = TRUE;
 	}
 
@@ -500,8 +500,9 @@ char *find_dercrl_uri(chunk_t *dercrl)
 		goto out;
 	}
 
+	DBG(DBG_X509,
 	DBG_log("crl issuer found %s : nick %s", cacert->nickname,
-						 cacert->subjectName);
+						 cacert->subjectName));
 
 	if (CERT_FindCertExtension(cacert, SEC_OID_X509_CRL_DIST_POINTS,
 						       &crlval) != SECSuccess) {
@@ -540,8 +541,8 @@ char *find_dercrl_uri(chunk_t *dercrl)
 			chunk_t uri_chunk = secitem_to_chunk(*name);
 			uri = make_crl_uri_str(&uri_chunk);
 			if (uri != NULL) {
-				DBG_log("using URI:%s from CA %s", uri,
-							   cacert->subjectName);
+				DBG(DBG_X509, DBG_log("using URI:%s from CA %s", uri,
+							   cacert->subjectName));
 			}
 		}
 	}
@@ -570,12 +571,12 @@ void load_crls(void)
 	char *save_dir = getcwd(buf, PATH_MAX);
 
 	if (chdir(oco->crls_dir) == -1) {
-		DBG(DBG_CONTROL, DBG_log("Could not change to legacy CRL directory '%s': %d %s",
+		DBG(DBG_X509, DBG_log("Could not change to legacy CRL directory '%s': %d %s",
 			      oco->crls_dir, errno, strerror(errno)));
 	} else {
 		struct dirent **filelist;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("Changing to directory '%s'", oco->crls_dir));
 
 		int n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
@@ -1057,7 +1058,7 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		ca_name.len = pbs_left(&p->pbs);
 		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-		DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
+		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
 
 		if (cr->isacr_type == CERT_X509_SIGNATURE) {
 
@@ -1075,7 +1076,7 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 				*requested_ca = gn;
 			}
 
-			DBG(DBG_PARSING | DBG_CONTROL, {
+			DBG(DBG_X509 | DBG_CONTROL, {
 					char buf[IDTOA_BUF];
 					dntoa_or_null(buf, IDTOA_BUF, ca_name,
 						"%any");
@@ -1107,7 +1108,7 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		ca_name.len = pbs_left(&p->pbs);
 		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-		DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
+		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
 
 		if (cr->isacertreq_enc == CERT_X509_SIGNATURE) {
 
@@ -1126,7 +1127,7 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 				*requested_ca = gn;
 			}
 
-			DBG(DBG_PARSING | DBG_CONTROL, {
+			DBG(DBG_X509 | DBG_CONTROL, {
 					char buf[IDTOA_BUF];
 					dntoa_or_null(buf, IDTOA_BUF, ca_name,
 						"%any");
@@ -1317,17 +1318,17 @@ bool ikev2_send_cert_decision(struct state *st)
 	struct connection *c = st->st_connection;
 	cert_t cert = c->spd.this.cert;
 
-	DBG(DBG_CONTROL, DBG_log("IKEv2 CERT: send a certificate?"));
+	DBG(DBG_X509, DBG_log("IKEv2 CERT: send a certificate?"));
 
 	if (!(c->policy & POLICY_RSASIG)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: policy does not have RSASIG %s",
 						      prettypolicy(c->policy)));
 		return FALSE;
 	}
 
 	if (cert.ty == CERT_NONE || cert.u.nss_cert == NULL) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no certificate to send"));
 		return FALSE;
 	}
@@ -1336,12 +1337,12 @@ bool ikev2_send_cert_decision(struct state *st)
 	      !st->hidden_variables.st_got_certrequest) &&
 			c->spd.this.sendcert != cert_alwayssend)
 	{
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no cert requested or told not to send"));
 		return FALSE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("IKEv2 CERT: OK to send a certificate"));
+	DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate"));
 
 	return TRUE;
 }
@@ -1352,7 +1353,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     pb_stream *outpbs)
 {
 	if (st->st_connection->kind == CK_PERMANENT) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("connection->kind is CK_PERMANENT so send CERTREQ"));
 
 		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
@@ -1362,11 +1363,11 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 	} else {
 		generalName_t *ca = NULL;
 		generalName_t *gn = NULL;
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
 
 		if ((gn = collect_rw_ca_candidates(md)) != NULL) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
 			for (ca = gn; ca != NULL; ca = ca->next) {
@@ -1378,7 +1379,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			}
 			free_generalNames(ca, FALSE);
 		} else {
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
 			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					       empty_chunk,
@@ -1392,10 +1393,10 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 static bool ikev2_send_certreq_INIT_decision(struct state *st,
 					     enum original_role role)
 {
-	DBG(DBG_CONTROL, DBG_log("IKEv2 CERTREQ: send a cert request?"));
+	DBG(DBG_X509, DBG_log("IKEv2 CERTREQ: send a cert request?"));
 
 	if (role != ORIGINAL_INITIATOR) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 			DBG_log("IKEv2 CERTREQ: not the original initiator"));
 		return FALSE;
 	}
@@ -1403,25 +1404,25 @@ static bool ikev2_send_certreq_INIT_decision(struct state *st,
 	struct connection *c = st->st_connection;
 
 	if (!(c->policy & POLICY_RSASIG)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		       DBG_log("IKEv2 CERTREQ: policy does not have RSASIG! %s",
 						      prettypolicy(c->policy)));
 		return FALSE;
 	}
 
 	if (has_preloaded_public_key(st)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		       DBG_log("IKEv2 CERTREQ: public key already known"));
 		return FALSE;
 	}
 
 	if (c->spd.that.ca.ptr == NULL || c->spd.that.ca.len < 1) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		       DBG_log("IKEv2 CERTREQ: no CA DN known to send"));
 		return FALSE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("IKEv2 CERTREQ: OK to send a certificate request"));
+	DBG(DBG_X509, DBG_log("IKEv2 CERTREQ: OK to send a certificate request"));
 
 	return TRUE;
 }
@@ -1467,8 +1468,8 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 	{
 		pb_stream cert_pbs;
 
-		DBG_log("Sending [CERT] of certificate: %s",
-					mycert.u.nss_cert->subjectName);
+		DBG(DBG_X509, DBG_log("Sending [CERT] of certificate: %s",
+					mycert.u.nss_cert->subjectName));
 
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs))
@@ -1485,7 +1486,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 	if (send_certreq) {
 		char buf[IDTOA_BUF];
 		dntoa(buf, IDTOA_BUF, c->spd.that.ca);
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("Sending [CERTREQ] of %s", buf));
 		ikev2_send_certreq(st, md, role, np, outpbs);
 	}
