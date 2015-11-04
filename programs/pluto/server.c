@@ -123,7 +123,7 @@ struct sockaddr_un ctl_addr = {
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
-	.sun_path  = ""
+	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
 };
 
 struct sockaddr_un info_addr = {
@@ -140,8 +140,10 @@ static int activated_socket()
 	char *s;
 
 	s = getenv("LISTEN_PID");
-	if (!s)
+	if (!s) {
+		loglog(RC_INFORMATIONAL, "No Socket activation");
 		return -1;
+	}
 	if (atoi(s) != getpid ()) {
 		loglog(RC_INFORMATIONAL, "Socket activation, but not for us %d != %d?", atoi(s), getpid ());
 		return -1;
