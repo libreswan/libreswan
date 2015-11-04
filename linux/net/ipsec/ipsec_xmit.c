@@ -2618,7 +2618,11 @@ void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs)
 	}
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
 static inline int ipsec_xmit_send2(struct sk_buff *skb)
+#else
+static inline int ipsec_xmit_send2(struct sock *sk, struct sk_buff *skb)
+#endif
 {
 #ifdef NET_26   /* 2.6 kernels */
 	return dst_output(skb);
@@ -2638,7 +2642,11 @@ static inline int ipsec_xmit_send2_mast(struct sk_buff *skb)
 		skb->nfmark = 0;
 # endif
 #endif
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
 	return ipsec_xmit_send2(skb);
+#else
+	return ipsec_xmit_send2(skb->sk, skb);
+#endif
 
 }
 
@@ -2888,14 +2896,20 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			err = ipsec_xmit_send2_mast(ixs->skb);
 		} else if (ip_hdr(ixs->skb)->version == 6) {
 			err = NF_HOOK(PF_INET6, LSW_NF_INET_LOCAL_OUT,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+					ixs->skb->sk,
+#endif
 				      ixs->skb, NULL,
 				      ixs->route ?
 					 ipsec_route_dst(ixs->route).dev :
 					 skb_dst(ixs->skb)->dev,
 				      ipsec_xmit_send2);
 		} else {
-			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT, ixs->skb,
-				      NULL,
+			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+				      ixs->skb->sk,
+#endif
+				      ixs->skb, NULL,
 				      ixs->route ?
 					ipsec_route_dst(ixs->route).dev :
 					skb_dst(ixs->skb)->dev,

@@ -125,11 +125,19 @@ DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);
 DEBUG_NO_STATIC int pfkey_release(struct socket *sock);
 
 #ifdef NET_26
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+DEBUG_NO_STATIC int pfkey_sendmsg(struct socket *sock,
+				  struct msghdr *msg, size_t len);
+DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock,
+				  struct msghdr *msg,
+				  size_t size, int flags);
+# else
 DEBUG_NO_STATIC int pfkey_sendmsg(struct kiocb *iocb, struct socket *sock,
 				  struct msghdr *msg, size_t len);
 DEBUG_NO_STATIC int pfkey_recvmsg(struct kiocb *kiocb, struct socket *sock,
 				  struct msghdr *msg,
 				  size_t size, int flags);
+# endif
 #else
 DEBUG_NO_STATIC int pfkey_sendmsg(struct socket *sock, struct msghdr *msg,
 				  int len, struct scm_cookie *scm);
@@ -864,8 +872,13 @@ DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode)
 
 DEBUG_NO_STATIC int
 #ifdef NET_26
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+pfkey_sendmsg(struct socket *sock, struct msghdr *msg,
+	      size_t len)
+#else
 pfkey_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg,
 	      size_t len)
+#endif
 #else
 pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len,
 	      struct scm_cookie *scm)
@@ -1055,11 +1068,18 @@ errlab:
 
 DEBUG_NO_STATIC int
 #ifdef NET_26
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+pfkey_recvmsg(struct socket *sock,
+	      struct msghdr *msg,
+	      size_t size,
+	      int flags)
+# else
 pfkey_recvmsg(struct kiocb *kiocb,
 	      struct socket *sock,
 	      struct msghdr *msg,
 	      size_t size,
 	      int flags)
+# endif
 #else
 pfkey_recvmsg(struct socket *sock,
 	      struct msghdr *msg,

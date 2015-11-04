@@ -24,9 +24,13 @@
 #endif
 
 #if defined(IP_SELECT_IDENT_NEW)
-#define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(iph, 1)
+# if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
+#  define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(iph, 1)
+# else
+#  define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(dev_net(skb->dev), iph, 1)
+# endif
 #else
-#define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(iph, skb_dst(skb), 0)
+# define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(iph, skb_dst(skb), 0)
 #endif
 
 #if !defined(HAVE_CURRENT_UID)
