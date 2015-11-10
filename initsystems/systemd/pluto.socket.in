@@ -1,9 +1,0 @@
-[Unit]
-Description=Libreswan IPsec Control Socket
-
-[Socket]
-ListenStream=@FINALVARDIR@/run/pluto/pluto.ctl
-Service=ipsec.service
-
-[Install]
-WantedBy=sockets.target
