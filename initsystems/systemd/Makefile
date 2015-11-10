@@ -2,7 +2,7 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
-SYSTEMDFILES=ipsec.service pluto.socket
+SYSTEMDFILE=ipsec.service
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
 ifeq ($(DESTDIR),)
@@ -16,7 +16,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     systemdfiles sysconfigfiles
-systemdfiles: $(SYSTEMDFILES)
+systemdfiles: $(SYSTEMDFILE)
 sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall postcheck
 install-programs: doinstall postcheck
@@ -25,7 +25,7 @@ doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILES) $(SYSTEMDDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
 		systemctl --system daemon-reload ; \
 	fi
