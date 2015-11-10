@@ -891,7 +891,7 @@ out:
  */
 static int ipsec_alg_test_auth(int auth_alg, int test)
 {
-	int ret = 0;
+	int ret;
 	caddr_t buf = NULL;
 	int blocksize, keysize, key_a_size;
 	struct ipsec_alg_auth *ixt_a;
@@ -936,9 +936,9 @@ static int ipsec_alg_test_auth(int auth_alg, int test)
 		}
 		get_random_bytes(test_key, keysize);
 		ret = ixt_a->ixt_a_hmac_set_key(ixt_a, test_key_a, test_key, keysize);
+		if (ret < 0 )
+			goto out;
 	}
-	if (ret < 0 )
-		goto out;
 	get_random_bytes(test_auth, BUFSZ);
 	ret = ixt_a->ixt_a_hmac_hash(ixt_a, test_key_a, test_auth, BUFSZ,
 				     test_hash, AHHMAC_HASHLEN);
