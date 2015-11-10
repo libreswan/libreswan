@@ -197,8 +197,6 @@ err_t init_ctl_socket(void)
 				failed = "bind";
 			umask(ou);
 		}
-	} else {
-		ctl_addr.sun_path[0] = '\0';
 	}
 
 	if (ctl_fd != -1 && fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
