@@ -1397,6 +1397,7 @@ int main(int argc, char **argv)
 		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
 		/* for google authenticator pam */
 		CAP_SETGID, CAP_SETUID,
+		CAP_DAC_READ_SEARCH,
 		-1);
 	/*
 	 * We need to retain some capabilities for our children (updown):
