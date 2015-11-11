@@ -180,7 +180,7 @@ static void retransmit_v1_msg(struct state *st)
 			st->st_retransmit,
 			enum_show(&state_names, st->st_state),
 			details);
-		if (try != 0 && try <= try_limit) {
+		if (try != 0 && (try <= try_limit || try_limit == 0)) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -303,7 +303,7 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	/* XXX try can never be 0?! */
-	if (try != 0 && try <= try_limit) {
+	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
 		 * Since we know that st cannot be in use,
