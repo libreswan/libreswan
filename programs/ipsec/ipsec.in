@@ -239,6 +239,7 @@ case "${1}" in
             else
 		IPSEC_NSSDIR="${2}"
 	    fi
+	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	fi
 	if [ ! -d "${IPSEC_NSSDIR}" ]; then
 	    mkdir -p "${IPSEC_NSSDIR}"
