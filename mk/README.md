@@ -123,3 +123,33 @@ The following are querks in the test infrastructure:
 - simplify fips check
 
 - eliminate test results "incomplete" and "bad"
+
+- switch to vfork
+
+- add a minimal config for small systems
+
+- make building individual programs configurable
+
+- don't have /etc/ipsec.conf refer to /testing
+
+- don't have tests run scripts in /testing
+
+- download fedora.iso and build the test rpms using that
+  (seems to work locally), something like:
+
+    sudo virt-install --connect=qemu:///system \
+       --network=network:swandefault,model=virtio \
+       --initrd-inject=./"${OSTYPE}"base.ks \
+       --extra-args="swanname=swan${OSTYPE}base ks=file:/${OSTYPE}base.ks \
+          console=tty0 console=ttyS0,115200" \
+       --name=swan"${OSTYPE}"base \
+       --disk path=$base.img \
+       --ram 1024 \
+       --vcpus=1 \
+       --check-cpu \
+       --accelerate \
+       --location=${LIBRESWANSRCDIR}/Fedora-Server-DVD-x86_64-21.iso \
+       --nographics \
+       --autostart \
+       --noreboot \
+       $cpu
