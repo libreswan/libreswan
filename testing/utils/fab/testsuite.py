@@ -19,36 +19,44 @@ from fab import utils
 
 class Test:
 
-    def __init__(self, directory, kind, expected_result, old_output_directory=None):
+    def __init__(self, test_directory, kind, expected_result, old_output_directory=None, testsuite_directory=None):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
         self.expected_result = expected_result
-        # The test's name is always identical to the test's directory
-        # name (aka basename).  However, since directory could be
+        # The test's name is always identical to the test directory's
+        # name (aka basename).  However, since TEST_DIRECTORY could be
         # relative (for instance "."  or "./..") it first needs to be
-        # converted to absolute before the basename can be extracted.
-        directory = os.path.abspath(directory)
-        self.name = os.path.basename(directory)
+        # made absolute before the basename can be extracted.
+        test_directory = os.path.abspath(test_directory)
+        # The test's name is the same as the directory's basename.
+        self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
-        # Construct a relative directory path such that it always
-        # contains the actual test directory name.  For instance: "."
-        # gets rewritten as ../TEST; and ".." gets rewritten as
-        # "../../TEST".  This prevents optuse paths appearing in the
-        # output.  For instance, it prevents "kvmresult.py ../OUTPUT"
-        # printing just ".. passed".
-        self.directory = os.path.join(os.path.relpath(os.path.dirname(directory)), self.name)
-        # Need to juggle two directories: first, there is the
-        # directory containing the OLD output from a previous test
-        # run; and second, there is the directory that will contain
-        # the [NEW] output from the next test run.  It makes a
-        # difference when an old output directory is explicitly
-        # specified. For instance, "kvmresults.py test/OUTPUT.OLD/"
-        # should output the results for that directory and not
-        # "test/OUTPUT/".
+        # Construct the test's relative directory path such that it
+        # always contains the test directory name (i.e., the test
+        # name) as context.  For instance: "."  gets rewritten as
+        # ../<test>; and ".." gets rewritten as "../../<test>".  This
+        # ensures that displayed paths always include some context.
+        # For instance, given "kvmresult.py .", "../<test> passed"
+        # (and not ". passed") will be displayed.
+        self.directory = os.path.join(os.path.relpath(os.path.dirname(test_directory)), self.name)
+        # Directory where the next test run's output should be
+        # written.
         self.output_directory = os.path.join(self.directory, "OUTPUT")
         self.result_file = os.path.join(self.output_directory, "RESULT")
-        self.old_output_directory = old_output_directory or self.output_directory
+        # Directory containing saved output from a previous test run.
+        # If the test's output directory was explicitly specified, say
+        # as a parameter to kvmrunner.py vis:
+        #
+        #   kvmresults.py testing/pluto/<test>/OUTPUT.OLD
+        #   kvmresults.py testing/pluto/OUTPUT/<test>
+        #
+        # than that directory, and not the next output-directory,
+        # should be used as a source of test results.
+        self.old_output_directory = old_output_directory
+        # The testsuite directory, if known.  Tests outside of a
+        # testsuite do not have a testsuite_directory.
+        self.testsuite_directory = testsuite_directory
         # will be filled in later
         self.domains = None
         self.initiators = None
@@ -75,16 +83,16 @@ class Test:
         return self.initiators
 
 
-class TestIterator:
+class TestsuiteIterator:
 
-    def __init__(self, testsuite, error_level):
-        self.error_level = error_level
+    def __init__(self, testsuite):
         self.logger = logutil.getLogger(__name__)
         self.testsuite = testsuite
-        self.test_list = open(testsuite.testlist, 'r')
+        self.logger.debug("opening '%s'", self.testsuite.testlist)
+        self.testlist = open(testsuite.testlist, 'r')
 
     def __next__(self):
-        for line in self.test_list:
+        for line in self.testlist:
             line = line.strip()
             self.logger.debug("input: %s", line)
             if not line:
@@ -95,35 +103,40 @@ class TestIterator:
                 continue
             try:
                 kind, name, expected_result = line.split()
-                test = Test(directory=os.path.join(self.testsuite.directory, name),
+                old_output_directory = self.testsuite.old_output_directory and os.path.join(self.testsuite.old_output_directory, name)
+                test = Test(testsuite_directory=self.testsuite.directory,
+                            test_directory=os.path.join(self.testsuite.directory, name),
+                            old_output_directory=old_output_directory,
                             kind=kind, expected_result=expected_result)
             except ValueError:
                 # This is serious
-                self.logger.log(self.error_level,
+                self.logger.log(self.testsuite.error_level,
                                 "****** malformed line: %s", line)
                 continue
             self.logger.debug("test directory: %s", test.directory)
             if not os.path.exists(test.directory):
                 # This is serious
-                self.logger.log(self.error_level,
+                self.logger.log(self.testsuite.error_level,
                                 "****** invalid test %s: directory not found: %s",
                                 test.name, test.directory)
                 continue
             return test
 
-        self.test_list.close()
+        self.testlist.close()
+        self.logger.debug("closing '%s'", self.testsuite.testlist)
         raise StopIteration
 
 
 class Testsuite:
 
-    def __init__(self, directory, testlist, error_level):
+    def __init__(self, directory, testlist, error_level, old_output_directory=None):
         self.error_level = error_level
         self.directory = directory
         self.testlist = testlist
+        self.old_output_directory = old_output_directory
 
     def __iter__(self):
-        return TestIterator(self, self.error_level)
+        return TestsuiteIterator(self)
 
 
 def add_arguments(parser):
@@ -161,24 +174,37 @@ TESTLIST = "TESTLIST"
 def load(logger, directory, error_level=logutil.ERROR):
     """Load the testsuite (TESTLIST) found in DIRECTORY"""
 
+    # Is DIRECTORY a testsuite?  For instance: testing/pluto.
     testlist = os.path.join(directory, TESTLIST)
     if os.path.exists(testlist):
-        logger.debug("loading testsuite in '%s'", directory)
-        return Testsuite(directory, testlist, error_level=error_level)
+        logger.debug("'%s' is a testsuite directory", directory)
+        return Testsuite(directory, testlist, error_level)
 
+    # Is DIRECTORY a testsuite sub-directory containing testsuite
+    # results?  For instance: testing/pluto/OUTPUT.  Exclude the
+    # possibility that the sub-directory is a single test (i.e.,
+    # "testing/pluto/<test>") by checking that the file
+    # description.txt is absent.
+    testlist = os.path.join(directory, "..", TESTLIST)
+    if os.path.exists(testlist) \
+    and not os.path.exists(os.path.join(directory, "description.txt")):
+        logger.debug("'%s' is an output sub-directory under a testsuite", directory)
+        return Testsuite(os.path.join(directory, ".."), testlist, error_level,
+                         old_output_directory=directory)
+
+    logger.debug("'%s' does not appear to be a testsuite directory", directory)
     return None
 
 
 def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
 
     # If there is only one directory then, perhaps, it contains a full
-    # testsuite.  The easiest way to find out is to simply try loading
-    # it.
+    # testsuite.  The easiest way to find out is to try opening it.
     if len(directories) == 1:
-        tests = load(logger, directories[0])
-        if tests:
-            logger.log(log_level, "tests loaded from testsuite '%s'", tests.directory)
-            return tests
+        testsuite = load(logger, directories[0])
+        if testsuite:
+            logger.log(log_level, "testsuite: %s", testsuite.directory)
+            return testsuite
 
     # There are multiple directories so, presumably, each one
     # specifies a single test that need to be "loaded".  Form a list
@@ -189,42 +215,63 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
         # returns "" and not "foo" - get around this.
         if not os.path.basename(directory):
             directory = os.path.dirname(directory)
-        # Apply some heuristics to detect a DIRECTORY specifying an
-        # the test output sub-directory and not the test directory
-        # proper.
+        test_directory = None
         old_output_directory = None
-        if not os.path.exists(os.path.join(directory, "description.txt")) \
-        and os.path.exists(os.path.join(directory, "..", "description.txt")):
-            # DIRECTORY specifies an existing output sub-directory.
-            # The test directory proper is just one level up. Note
-            # that the relative path DIRECTORY/.. only works when
-            # DIRECTORY exists.
+        # Use heuristics to differentiate between a directory that
+        # contains a test, and an old-output directory that contains
+        # test output (hopefully, for the latter, there is a test
+        # directory close by).
+        if os.path.exists(os.path.join(directory, "description.txt")):
+            # easy case, directory is a test
+            logger.debug("'%s' matches <test> - a test directory", directory)
+            test_directory = directory
+        elif os.path.exists(os.path.join(directory, "..", "description.txt")):
+            # DIRECTORY is a sub-directory of a test so, presumably,
+            # it contains old test output.  Note that the test for the
+            # path DIRECTORY/.. only works when DIRECTORY exists.  See
+            # also next test.
+            logger.debug("'%s' matches <test>/OUTPUT - a test output sub-directory", directory)
             old_output_directory = directory
-            directory = os.path.join(directory, "..")
+            test_directory = os.path.join(directory, "..")
         elif os.path.basename(directory).startswith("OUTPUT") \
         and os.path.exists(os.path.join(os.path.dirname(directory), "description.txt")):
-            # DIRECTORY doesn't exist (if it did the first test would
-            # pass) yet it really looks like a test OUTPUT directory.
-            # The test directory proper is just dirname of DIRECTORY.
+            # DIRECTORY doesn't exist, yet it really really looks like
+            # a test output sub-directory (if DIRECTORY did exist the
+            # earlier test would have succeeded).  The sequence:
             #
-            # A sequence like:
-            #
+            #   cd testing/pluto/<TEST>
             #   rm -rf OUTPUT
             #   kvmrunner.py !$
             #
-            # will trigger this case
+            # will cause this.
+            logger.debug("'%s' matches <test>/OUTPUT.* - a deleted test output sub-directory", directory)
             old_output_directory = directory
-            directory = os.path.dirname(directory)
-        # one last sanity check
-        if not os.path.exists(os.path.join(directory, "description.txt")):
-            logger.error("invalid test directory: %s", old_output_directory or directory)
-            return None
-        # explain what is going on
-        if old_output_directory:
-            logger.log(log_level, "adding test directory '%s' with old output directory '%s')", directory, old_output_directory)
+            test_directory = os.path.dirname(directory)
+        elif os.path.exists(os.path.join(directory, "..", "..", TESTLIST)) \
+        and os.path.exists(os.path.join(directory, "..", "..", os.path.basename(directory), "description.txt")):
+            # DIRECTORY is old saved test output under a testsuite
+            # sub-directory.  The sequence:
+            #
+            #   mkdir testing/pluto/OUTPUT.YYMMDD
+            #   mv testing/pluto/<TEST>/OUTPUT testing/pluto/OUTPUT.YYMMDD/<TEST>
+            #   kvmrunner.py !$
+            #
+            # will cause this.  In the future this may be kvmrunner's
+            # default behaviour.
+            logger.debug("'%s' matches OUTPUT/<test>  - a test output directory saved in a testsuite directory", directory)
+            old_output_directory = directory
+            test_directory = os.path.join(directory, "..", "..", os.path.basename(directory))
         else:
-            logger.log(log_level, "adding test directory '%s'", directory)
-        tests.append(Test(directory=directory, old_output_directory=old_output_directory,
+            logger.error("directory '%s' is invalid", directory)
+            return None
+        # Now try to find the test testsuite.
+        if os.path.exists(os.path.dirname(test_directory), TESTLIST):
+            testsuite_directory = os.path.dirname(directory)
+        else:
+            testsuite_directory = None
+        tests.append(Test(testsuite_directory = testsuite_directory,
+                          test_directory=test_directory,
+                          old_output_directory=old_output_directory,
                           kind="kvmplutotest", expected_result="good"))
 
     return tests

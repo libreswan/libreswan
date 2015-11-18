@@ -44,6 +44,7 @@ def main():
     parser.add_argument("--print-result", action="store_true")
     parser.add_argument("--print-diff", action="store_true")
     parser.add_argument("--print-args", action="store_true")
+    parser.add_argument("--print-output-directory", action="store_true")
 
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
@@ -72,14 +73,12 @@ def main():
     args.print_directory = args.print_directory or args.verbose > v
     args.print_name = args.print_name or args.verbose > v
     v += 1
+    args.print_output_directory = args.print_output_directory or args.verbose > v
+    v += 1
     args.list_untested = args.list_untested or args.verbose > v ; v += 1
     args.list_ignored = args.list_ignored or args.verbose > v ; v += 1
     v += 1
     args.print_args = args.print_args or args.verbose > v
-
-    # By default print the relative directory path.
-    if not args.print_directory and not args.print_name:
-        args.print_directory = True
 
     if args.print_args:
         post.log_arguments(logger, args)
@@ -87,22 +86,30 @@ def main():
         logutil.log_arguments(logger, args)
         return 1
 
-    # If there is more than one directory then the last might be the
-    # baseline.  Try loading it as a testsuite (baselines are
-    # testsuites) to see if that is the case.
-    basetests = None
-    tests = None
+    # Is the last argument some sort of baseline?  If it is, pre-load
+    # it.
+    baseline = None
+    baseline_testsuite = None
     if len(args.directories) > 1:
-        # Perhaps the last argument is the baseline?  Suppress any
-        # nasty errors.
-        basetests = testsuite.load(logger, args.directories[-1],
-                                   error_level=logutil.DEBUG)
-        if basetests:
-            logger.debug("basetests loaded from '%s'", basetests.directory)
-            args.directories.pop()
+        # If there is more than one directory then, perhaps, the last
+        # one is a baseline.  A baseline might be: a complete
+        # testsuite snapshot; or just output saved as
+        # testing/pluto/OUTPUT/TESTDIR.
+        baseline_testsuite = testsuite.load(logger, args.directories[-1],
+                                            error_level=logutil.DEBUG)
+    if baseline_testsuite:
+        # discard the last argument as consumed above.
+        logger.debug("baseline testsuite found in '%s'", baseline_testsuite.directory)
+        args.directories.pop()
+        # Preload the baseline.  This avoids re-scanning the TESTLIST.
+        # Also, passing the full baseline to Test.results() lets that
+        # function differentiate between a baseline missing results or
+        # being entirely absent.
+        baseline = {}
+        for test in baseline_testsuite:
+            baseline[test.name] = test
+
     tests = testsuite.load_testsuite_or_tests(logger, args.directories)
-    logger.debug("basetests=%s", basetests)
-    logger.debug("tests=%s", tests)
     # And check
     if not tests:
         logger.error("Invalid testsuite or test directories")
@@ -112,16 +119,6 @@ def main():
     # all of them (otherwise, tests seem to get lost).
     if isinstance(tests, list):
         args.list_untested = True
-
-    # Preload the baseline.  This avoids re-scanning the TESTLIST.
-    # Also, passing the full baseline to Test.results() lets that
-    # function differentiate between a baseline missing results or
-    # being entirely absent.
-    baseline = None
-    if basetests:
-        baseline = {}
-        for test in basetests:
-            baseline[test.name] = test
 
     for test in tests:
 
@@ -150,6 +147,16 @@ def main():
 
             sep = ""
 
+            # Default to printing either the test directory, or, when
+            # explicitly specified, the test's output directory.
+            if not args.print_directory and not args.print_name and not args.print_output_directory:
+                print(sep, end="")
+                if test.old_output_directory:
+                    print(test.old_output_directory, end="")
+                else:
+                    print(test.directory, end="")
+                sep = " "
+
             if args.print_name:
                 print(sep, end="")
                 print(test.name, end="")
@@ -158,6 +165,11 @@ def main():
             if args.print_directory:
                 print(sep, end="")
                 print(test.directory, end="")
+                sep = " "
+
+            if args.print_output_directory:
+                print(sep, end="")
+                print(test.old_output_directory and test.old_output_directory or test.output_directory, end="")
                 sep = " "
 
             if ignore:
