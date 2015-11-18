@@ -60,7 +60,7 @@ struct parser_context {
 	int aklen;
 	bool ealg_permit;
 	bool aalg_permit;
-	int ch;
+	int ch;	/* character that stopped parsing */
 	const char *err;
 };
 

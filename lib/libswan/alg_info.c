@@ -44,7 +44,7 @@ struct oakley_group_desc;
 #define MAX_ALG_ALIASES 16
 
 struct alg_alias {
-	const char *alg;
+	const char *const alg;
 	const char *const alias_set[MAX_ALG_ALIASES];
 };
 
@@ -52,10 +52,12 @@ struct alg_alias {
 static const char *find_alg_alias(const struct alg_alias *alias, const char *str)
 {
 	const struct alg_alias *aa;
+
 	for (aa = alias; aa->alg != NULL; aa++) {
 		const char *const *aset;
+
 		for (aset = aa->alias_set; *aset != NULL; aset++) {
-			if (strcaseeq(str, (*aset))) {
+			if (strcaseeq(str, *aset)) {
 				return aa->alg;
 			}
 		}
@@ -67,17 +69,14 @@ static int alg_getbyname_or_alias(const struct alg_alias *aliases, const char *s
 				  int (*getbyname)(const char *const str))
 {
 	const char *alias = find_alg_alias(aliases, str);
-	if (alias != NULL) {
-		return getbyname(alias);
-	} else {
-		return getbyname(str);
-	}
+
+	return getbyname(alias == NULL ? str : alias);
 }
 
 static int aalg_getbyname_or_alias(const struct parser_context *context,
 				   const char *str)
 {
-	static struct alg_alias aliases[] = {
+	static const struct alg_alias aliases[] = {
 		/* alg */	/* aliases */
 		{ "sha2_256",	{ "sha2", NULL } },
 		{ "sha2_256",	{ "sha256", NULL } },
@@ -87,6 +86,7 @@ static int aalg_getbyname_or_alias(const struct parser_context *context,
 		{ "sha1",	{ "sha1_96", NULL } },
 		{ NULL, { NULL } }
 	};
+
 	return alg_getbyname_or_alias(aliases, str, context->aalg_getbyname);
 }
 
@@ -112,6 +112,7 @@ static int ealg_getbyname_or_alias(const struct parser_context *context,
 		{ "aes",	{ "aes_cbc", NULL } },
 		{ NULL, { NULL } }
 	};
+
 	return alg_getbyname_or_alias(aliases, str, context->ealg_getbyname);
 }
 
@@ -591,7 +592,9 @@ static err_t parser_machine(struct parser_context *p_ctx)
 				break;
 			}
 			if (isdigit(ch)) {
-				p_ctx->eklen = p_ctx->eklen * 10 + ch - '0';
+				if (p_ctx->eklen >= INT_MAX / 10)
+					return "enc keylen WAY too big";
+				p_ctx->eklen = p_ctx->eklen * 10 + (ch - '0');
 				break;
 			}
 			return "Non digit or valid separator found while reading enc keylen";
@@ -641,7 +644,9 @@ static err_t parser_machine(struct parser_context *p_ctx)
 				break;
 			}
 			if (isdigit(ch)) {
-				p_ctx->aklen = p_ctx->aklen * 10 + ch - '0';
+				if (p_ctx->aklen >= INT_MAX / 10)
+					return "auth keylen WAY too big";
+				p_ctx->aklen = p_ctx->aklen * 10 + (ch - '0');
 				break;
 			}
 			return "Non digit found for auth keylen";
@@ -722,7 +727,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			const struct oakley_group_desc *(*lookup_group)
 			(u_int16_t group))
 {
-#define COMMON_KEY_LENGTHS(x) (x == 0 || x == 128 || x == 192 || x == 256)
+#	define COMMON_KEY_LENGTH(x) (x == 0 || x == 128 || x == 192 || x == 256)
 	int ealg_id, aalg_id;
 	int modp_id = 0;
 
@@ -798,7 +803,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case OAKLEY_CAMELLIA_CCM_A:
 				case OAKLEY_CAMELLIA_CCM_B:
 				case OAKLEY_CAMELLIA_CCM_C:
-					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
 						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
 					}
 					break;
@@ -811,7 +816,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case ESP_NULL:
 					return "NULL does not take variable key lengths";
 				case ESP_CAST:
-					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
@@ -827,7 +832,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case ESP_AES_CCM_16:
 				case ESP_TWOFISH:
 				case ESP_SERPENT:
-					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
 						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
 					}
 					break;
@@ -939,7 +944,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 
-		if (! DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
+		if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(aalg_id) {
 			case AH_NULL:
 				if (ealg_id == -1)
@@ -971,8 +976,8 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			aalg_id, p_ctx->aklen,
 			modp_id);
 	return NULL;
+#	undef COMMON_KEY_LENGTH
 }
-#undef COMMON_KEY_LENGTHS
 
 /*
  * on success: returns alg_info
@@ -1047,7 +1052,8 @@ struct alg_info *alg_info_parse_str(
 			pfree(alg_info);
 			return NULL;
 		default:
-			if (!ctx.ch)
+			/* ??? this is nonsense: in either case, break will happen */
+			if (ctx.ch != '\0')
 				break;
 		}
 	} while (ret < ST_EOF);
