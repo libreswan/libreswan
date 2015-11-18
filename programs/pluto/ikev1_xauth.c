@@ -2081,6 +2081,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				if (!last_spd->that.has_client) {
 					ip_address any;
 
+					passert(last_spd->spd_next == NULL);
 					anyaddr(AF_INET, &any);
 					initsubnet(&any, 0, '0',
 						&last_spd->that.client);
