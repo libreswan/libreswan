@@ -83,62 +83,47 @@ class Test:
         return self.initiators
 
 
-class TestsuiteIterator:
-
-    def __init__(self, testsuite):
-        self.logger = logutil.getLogger(__name__)
-        self.testsuite = testsuite
-        self.logger.debug("opening '%s'", self.testsuite.testlist)
-        self.testlist = open(testsuite.testlist, 'r')
-
-    def __next__(self):
-        for line in self.testlist:
-            line = line.strip()
-            self.logger.debug("input: %s", line)
-            if not line:
-                self.logger.debug("ignore blank line")
-                continue
-            if line[0] == '#':
-                self.logger.debug("ignore comment line")
-                continue
-            try:
-                kind, name, expected_result = line.split()
-                old_output_directory = self.testsuite.old_output_directory and os.path.join(self.testsuite.old_output_directory, name)
-                test = Test(testsuite_directory=self.testsuite.directory,
-                            test_directory=os.path.join(self.testsuite.directory, name),
-                            old_output_directory=old_output_directory,
-                            kind=kind, expected_result=expected_result)
-            except ValueError:
-                # This is serious
-                self.logger.log(self.testsuite.error_level,
-                                "****** malformed line: %s", line)
-                continue
-            self.logger.debug("test directory: %s", test.directory)
-            if not os.path.exists(test.directory):
-                # This is serious
-                self.logger.log(self.testsuite.error_level,
-                                "****** invalid test %s: directory not found: %s",
-                                test.name, test.directory)
-                continue
-            return test
-
-        self.testlist.close()
-        self.logger.debug("closing '%s'", self.testsuite.testlist)
-        raise StopIteration
-
-
 class Testsuite:
 
-    def __init__(self, directory, testlist, error_level, old_output_directory=None):
-        self.error_level = error_level
+    def __init__(self, logger, directory, testlist, error_level, old_output_directory=None):
         self.directory = directory
-        self.testlist = testlist
         self.old_output_directory = old_output_directory
+        self.testlist = []
+        with open(testlist, 'r') as testlist_file:
+            for line in testlist_file:
+                line = line.strip()
+                if not line:
+                    logger.debug("skip blank line: ", line)
+                    continue
+                if line[0] == '#':
+                    logger.debug("skip comment line: %s", line)
+                    continue
+                logger.debug("input: %s", line)
+                try:
+                    kind, name, expected_result = line.split()
+                    old_output_directory = self.old_output_directory and os.path.join(self.old_output_directory, name)
+                    test = Test(testsuite_directory=self.directory,
+                                test_directory=os.path.join(self.directory, name),
+                                old_output_directory=old_output_directory,
+                                kind=kind, expected_result=expected_result)
+                except ValueError:
+                    # This is serious
+                    logger.log(error_level,
+                                    "****** malformed line: %s", line)
+                    continue
+                logger.debug("test directory: %s", test.directory)
+                if not os.path.exists(test.directory):
+                    # This is serious
+                    logger.log(error_level,
+                                    "****** invalid test %s: directory not found: %s",
+                                    test.name, test.directory)
+                    continue
+                self.testlist.append(test)
 
     def __iter__(self):
-        return TestsuiteIterator(self)
+        return self.testlist.__iter__()
 
-
+                
 def add_arguments(parser):
 
     group = parser.add_argument_group("Test arguments",
@@ -178,7 +163,7 @@ def load(logger, directory, error_level=logutil.ERROR):
     testlist = os.path.join(directory, TESTLIST)
     if os.path.exists(testlist):
         logger.debug("'%s' is a testsuite directory", directory)
-        return Testsuite(directory, testlist, error_level)
+        return Testsuite(logger, directory, testlist, error_level)
 
     # Is DIRECTORY a testsuite sub-directory containing testsuite
     # results?  For instance: testing/pluto/OUTPUT.  Exclude the
@@ -189,7 +174,7 @@ def load(logger, directory, error_level=logutil.ERROR):
     if os.path.exists(testlist) \
     and not os.path.exists(os.path.join(directory, "description.txt")):
         logger.debug("'%s' is an output sub-directory under a testsuite", directory)
-        return Testsuite(os.path.join(directory, ".."), testlist, error_level,
+        return Testsuite(logger, os.path.join(directory, ".."), testlist, error_level,
                          old_output_directory=directory)
 
     logger.debug("'%s' does not appear to be a testsuite directory", directory)
