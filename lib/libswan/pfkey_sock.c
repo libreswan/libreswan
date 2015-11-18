@@ -27,9 +27,9 @@ extern char *progname;
 
 int pfkey_open_sock_with_error(void)
 {
-	int pfkey_sock = -1;
+	int pfkey_sock = safe_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
-	if ((pfkey_sock = safe_socket(PF_KEY, SOCK_RAW, PF_KEY_V2) ) < 0) {
+	if (pfkey_sock < 0) {
 		fprintf(stderr,
 			"%s: Trouble opening PF_KEY family socket with error: ",
 			progname);
@@ -43,13 +43,9 @@ int pfkey_open_sock_with_error(void)
 			if (getuid() == 0)
 				fprintf(stderr,
 					"Check permissions. Should be 600.\n");
-
-
 			else
 				fprintf(stderr,
 					"You must be root to open this file.\n");
-
-
 			break;
 #ifdef EUNATCH
 		case EUNATCH:

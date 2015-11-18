@@ -251,7 +251,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 					alg_p->sadb_alg_minbits,
 					alg_p->sadb_alg_maxbits);
 			}
-
 		}
 
 		if (ugh != NULL) {
@@ -286,7 +285,6 @@ bool kernel_alg_proc_read(void)
 	int alg_id, ivlen, minbits, maxbits;
 	char name[20];
 	struct sadb_alg sadb_alg;
-	int ret;
 	char buf[128];
 	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
 
@@ -311,7 +309,8 @@ bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-				ret = kernel_alg_add(satype, supp_exttype,
+
+				int ret = kernel_alg_add(satype, supp_exttype,
 						&sadb_alg);
 				DBG(DBG_CRYPT,
 					DBG_log("kernel_alg_proc_read() alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
