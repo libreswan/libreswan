@@ -2079,12 +2079,19 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 				DBG_log("Received Cisco Split tunnel route(s)");
 				if (!last_spd->that.has_client) {
-					ttosubnet("0.0.0.0/0.0.0.0", 0,
-						  AF_INET,
-						  &last_spd->that.client);
+					ip_address any;
+
+					anyaddr(AF_INET, &any);
+					initsubnet(&any, 0, '0',
+						&last_spd->that.client);
 					last_spd->that.has_client = TRUE;
 					last_spd->that.has_client_wildcard =
 						FALSE;
+				}
+
+				while (last_spd->spd_next != NULL) {
+					/* ??? we should print out spd */
+					last_spd = last_spd->spd_next;
 				}
 
 				/*
