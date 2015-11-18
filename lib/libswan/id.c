@@ -398,9 +398,9 @@ bool any_id(const struct id *a)
 
 	default:
 		bad_case(a->kind);
+		/* NOTREACHED */
+		return FALSE;
 	}
-	/* NOTREACHED */
-	return FALSE;
 }
 
 int id_kind(const struct id *id)
@@ -472,9 +472,9 @@ bool same_id(const struct id *a, const struct id *b)
 
 	default:
 		bad_case(a->kind);
+		/* NOTREACHED */
+		return FALSE;
 	}
-	/* NOTREACHED */
-	return FALSE;
 }
 
 /* compare two struct id values, DNs can contain wildcards */
