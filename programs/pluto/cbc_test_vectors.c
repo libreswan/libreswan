@@ -150,7 +150,7 @@ static int test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	/* do_crypt modifies the data and IV in place.  */
 	encrypt_desc->do_crypt(tmp.ptr, tmp.len,
 			       sym_key, iv.ptr, encrypt);
-	
+
 	if (!compare_chunks(op, expected, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: output does not match", description, op));
 		ok = 0;

@@ -581,7 +581,7 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 		return;
 
 	else if (st != NULL && st->st_connection != NULL &&
- 		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
+		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
 			return;
 	}
 

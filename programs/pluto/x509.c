@@ -512,7 +512,7 @@ char *find_dercrl_uri(chunk_t *dercrl)
 		goto out;
 	}
 
-	CERTCrlDistributionPoints *dps = 
+	CERTCrlDistributionPoints *dps =
 		CERT_DecodeCRLDistributionPoints(cacert->arena, &crlval);
 
 	if (dps == NULL) {

@@ -1747,7 +1747,7 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 					      alg_a),
 				extensions_reply)) &&
 	      (alg_num_e == 0 ||
-	        pfkey_safe_build(error =
+	       pfkey_safe_build(error =
 			pfkey_supported_build(&extensions_reply[
 						  K_SADB_EXT_SUPPORTED_ENCRYPT],
 					      K_SADB_EXT_SUPPORTED_ENCRYPT,

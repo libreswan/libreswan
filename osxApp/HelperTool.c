@@ -28,9 +28,9 @@ static OSStatus DoConnect(
 )
 // Implements the kSampleLowNumberedPortsCommand.  Opens three low-numbered ports
 // and adds them to the descriptor array in the response dictionary.
-{	
+{
 	OSStatus		retval = noErr;
-	
+
 	// Pre-conditions
 
 	assert(auth != NULL);
@@ -39,13 +39,13 @@ static OSStatus DoConnect(
 	assert(response != NULL);
     // asl may be NULL
     // aslMsg may be NULL
-	
+
 #pragma mark ipsec
 	int err2;
 	int ret;
 	retval = system("/usr/local/sbin/ipsec --version");
 	err2 = asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, "Run ipsec --version. ret: %d", ret);
-	
+
 	CFStringRef nameString;
 	nameString = (CFStringRef) CFDictionaryGetValue(request, CFSTR("connName"));
 	char command[100];
@@ -55,21 +55,21 @@ static OSStatus DoConnect(
 	if (n >= sizeof(command) {
 		/* ??? what should we do when the string buffer was too short? */
 	}
-	
+
 	err2 = asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, command);
-	
+
 	CFStringRef	testString = CFStringCreateWithCString(NULL,
 														command,
 														CFStringGetSystemEncoding());
-	
+
 	if (retval == noErr) {
-        CFDictionaryAddValue(response, CFSTR(kBASTestString), testString);
+		CFDictionaryAddValue(response, CFSTR(kBASTestString), testString);
 	}
-	
-    // Clean up.
+
+	// Clean up.
 	// ...
-	
-	
+
+
 	return retval;
 }
 
@@ -91,7 +91,7 @@ static const BASCommandProc kCommandProcs[] = {
 int main(int argc, char **argv)
 {
     // Go directly into BetterAuthorizationSampleLib code.
-	
+
     // IMPORTANT
     // BASHelperToolMain doesn't clean up after itself, so once it returns
     // we must quit.

@@ -154,7 +154,8 @@ struct ipsec_sa {
 
 	struct net_device *ips_out;             /* what interface to emerge on */
 	__u8 ips_transport_direct;              /* if true, punt directly to
-	                                         * the protocol layer */
+						 * the protocol layer
+						 */
 	struct socket  *ips_sock;               /* cache of transport socket */
 
 	ip_said ips_said;                       /* SA ID */

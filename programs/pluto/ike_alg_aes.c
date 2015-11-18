@@ -193,14 +193,14 @@ bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
 	passert(sizeof iv >= wire_iv_size + salt_size);
 	memcpy(iv, salt, salt_size);
 	memcpy(iv + salt_size, wire_iv, wire_iv_size);
-	
+
 	CK_GCM_PARAMS gcm_params;
 	gcm_params.pIv = iv;
 	gcm_params.ulIvLen = salt_size + wire_iv_size;
 	gcm_params.pAAD = aad;
 	gcm_params.ulAADLen = aad_size;
 	gcm_params.ulTagBits = tag_size * 8;
-	
+
 	SECItem param;
 	param.type = siBuffer;
 	param.data = (void*)&gcm_params;

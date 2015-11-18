@@ -300,7 +300,7 @@ struct pluto_crypto_req_cont {
 	struct msg_digest *pcrc_md;
 
 	const char *pcrc_name;
-	
+
 	/*
 	 * For IKEv1 Quick Mode Key Exchange:
 	 * pcrc_replacing identifies the state object that

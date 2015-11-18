@@ -606,7 +606,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			DBG(DBG_CONTROL,
 			    DBG_log("Private key for cert %s not found. Attempting to load on-demand",
 				    c->spd.this.cert_nickname));
-		        err = load_nss_cert_secret(c->spd.this.cert_nickname);
+			err = load_nss_cert_secret(c->spd.this.cert_nickname);
 			if (err == NULL) {
 				best = lsw_find_secret_by_public_key(pluto_secrets,
 						my_public_key, kind);

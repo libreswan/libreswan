@@ -26,14 +26,14 @@ static void _NSSCPY_canonicalize(SECItem * foo)
     /* strip trailing whitespace. */
     len = foo->len;
     while (len > 0 && ((ch = foo->data[len - 1]) == ' ' ||
-           ch == '\t' || ch == '\r' || ch == '\n')) {
+	   ch == '\t' || ch == '\r' || ch == '\n')) {
 	len--;
     }
 
     src = 0;
     /* strip leading whitespace. */
     while (src < len && ((ch = foo->data[src]) == ' ' ||
-           ch == '\t' || ch == '\r' || ch == '\n')) {
+	   ch == '\t' || ch == '\r' || ch == '\n')) {
 	src++;
     }
     dest = 0; lastch = ' ';

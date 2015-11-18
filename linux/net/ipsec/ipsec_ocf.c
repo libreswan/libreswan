@@ -511,7 +511,7 @@ static int ipsec_ocf_rcv_cb(struct cryptop *crp)
 									 ipcomphdr)));
 		skb_set_transport_header(irs->skb,
 					 ipsec_skb_offset(irs->skb,
-					                  ((unsigned char *)
+							  ((unsigned char *)
 							  skb_transport_header(irs->skb))
 								    +
 								    sizeof(struct

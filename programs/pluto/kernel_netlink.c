@@ -1418,7 +1418,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			if (uctx != NULL) {
 				libreswan_log("Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
-				return;				
+				return;
 			}
 
 			if (len > MAX_SECCTX_LEN) {

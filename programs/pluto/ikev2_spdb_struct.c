@@ -391,7 +391,7 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA1:
 		return IKEv2_PRF_HMAC_SHA1;
-	
+
 	/* OAKLEY_TIGER not in IKEv2 */
 
 	case OAKLEY_SHA2_256:
@@ -715,7 +715,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			prfid = 0,
 			dhid = 0;
 		unsigned int integid = 0;
-				
+
 		int
 			encrwin = -2,
 			integwin = -2,

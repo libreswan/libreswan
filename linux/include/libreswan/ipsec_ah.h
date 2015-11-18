@@ -42,8 +42,9 @@ struct ahhdr                            /* Generic AH header */
 	__u8 ah_data[AHHMAC_HASHLEN];   /* Authentication hash */
 };
 #define AH_BASIC_LEN 8                  /* basic AH header is 8 bytes, nh,hl,rv,spi
-	                                 * and the ah_hl, says how many bytes after that
-	                                 * to cover. */
+					 * and the ah_hl, says how many bytes after that
+					 * to cover.
+					 */
 
 extern struct xform_functions ah_xform_funcs[];
 

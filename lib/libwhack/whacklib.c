@@ -127,7 +127,7 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->string1) ||                                 /* string 23 */
 	    !pack_str(wp, &wp->msg->string2) ||                                 /* string 24 */
 	    !pack_str(wp, &wp->msg->string3) ||                                 /* string 25 */
-	    !pack_str(wp, &wp->msg->dnshostname) ||                             /* string 26 */ 
+	    !pack_str(wp, &wp->msg->dnshostname) ||                             /* string 26 */
 #ifdef HAVE_LABELED_IPSEC
 	    !pack_str(wp, &wp->msg->policy_label) ||                            /* string 27 */
 #endif

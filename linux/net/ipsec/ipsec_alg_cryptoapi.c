@@ -687,7 +687,7 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 	struct hash_desc desc;
 	int ret = 0;
 	char hash_buf[512];
-	
+
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_hmac_hash:"
 				"name=%s key_a=%p hash=%p dat=%p len=%d keylen=%d\n",

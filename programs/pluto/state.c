@@ -196,7 +196,7 @@ static struct state_category *categorize_state(struct state *st,
 	 * states get a -Wswitch diagnostic
 	 */
 	switch (state) {
-		
+
 		/*
 		 * IKEv2 initiators, while the INIT packet is being
 		 * constructed, are in STATE_IKEv2_BASE.  Only when
@@ -209,7 +209,7 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_UNDEFINED:
 	case STATE_IKE_ROOF:
 		return &category.ignore;
-		
+
 		/*
 		 * Count I1 as half-open too because with OE,
 		 * a plaintext packet (that is spoofed) will
@@ -296,7 +296,7 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_MODE_CFG_R1:
 	case STATE_MODE_CFG_R2:
 		return established_ike;
-		
+
 	case STATE_INFO:
 	case STATE_INFO_PROTECTED:
 	case STATE_MODE_CFG_R0:
@@ -484,7 +484,7 @@ struct state *new_state(void)
 	    DBG_log("%s state #%lu: new > %s(%s)",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
 		    enum_show(&state_names, st->st_state), category->description));
-	
+
 	return st;
 }
 
@@ -2003,7 +2003,7 @@ void show_states_status(bool list_traffic)
 		whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
 			require_ddos_cookies() ? "REQUIRED" : "not required",
 			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
-		
+
 		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
 			  total_ike(),
 			  category.half_open_ike.count,

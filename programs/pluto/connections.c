@@ -2576,7 +2576,7 @@ struct connection *find_next_host_connection(
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
-		        lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
+			lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
 			if (shunt) {
 				/*
 				 * We need to match block/clear so we can send back

@@ -121,7 +121,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
 	skeyseed_k = ikev2_ike_sa_skeyseed(prf_hasher, ni, nr, shared);
 	passert(skeyseed_k != NULL);
-	
+
 	/* now we have to generate the keys for everything */
 
 	/* need to know how many bits to generate */
@@ -160,10 +160,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 							       salt_size);
 	initiator_salt = chunk_from_symkey("initiator salt", initiator_salt_key);
 	free_any_symkey("initiator salt key:", &initiator_salt_key);
-						
+
 	next_byte += salt_size;
 
-	/* The encryption key and salt are extracted together. */	
+	/* The encryption key and salt are extracted together. */
 	SK_er_k = encrypt_key_from_symkey_bytes(finalkey, encrypter,
 						next_byte, key_size);
 	next_byte += key_size;

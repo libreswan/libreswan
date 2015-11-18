@@ -992,7 +992,7 @@ bool justship_KE(chunk_t *g,
 		pb_stream z;
 
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
-               /* Only used to test sending/receiving bogus g^x */
+		/* Only used to test sending/receiving bogus g^x */
 		return out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);

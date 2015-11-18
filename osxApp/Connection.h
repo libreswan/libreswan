@@ -12,22 +12,22 @@
 @interface Connection : NSObject <NSCoding> {
 
 	NSMutableString* connName;
-	
+
 	//Connection Options
 	NSMutableString* selAuto;
 	NSMutableString* selType;
 	NSMutableString* selMode;
-	
+
 	NSMutableString* selLocalHost;
 	NSMutableString* selLocalID;
 	NSMutableString* selLocalSubnets;
 	NSMutableString* selLocalProtocolPort;
-	
+
 	NSMutableString* selRemoteHost;
 	NSMutableString* selRemoteID;
 	NSMutableString* selRemoteSubnets;
 	NSMutableString* selRemoteProtocolPort;
-	
+
 	//Auth Options
 	NSMutableString* selAuthBy;
 	NSMutableString* selPSK;
@@ -35,67 +35,67 @@
 	NSMutableString* selSendCert;
 	NSMutableString* selLocalRSASigKey;
 	NSMutableString* selRemoteRSASigKey;
-	
+
 	//Global Options
 	NSButton* selNatTEnable;
 	NSMutableString* selVirtualPrivate;
 	NSMutableString* selForceKeepAlive;
 	NSMutableString* selKeepAlive;
 	NSButton* selForceEncaps;
-	
+
 	NSMutableString* selCrlCheckIntvl;
 	NSButton* selStrictCrlEnable;
-	
+
 	NSButton* selOppEncEnable;
 	NSMutableString* selMyID;
-	
+
 	NSMutableString* selPlutoDebug;
 	NSButton* selUniqueIDs;
-	
+
 	//Advanced Options
 	NSButton* selDPDEnable;
 	NSMutableString* selDPDDelay;
 	NSMutableString* selDPDTimeout;
 	NSMutableString* selDPDAction;
-	
+
 	NSMutableString* selIKE1Enc;
 	NSMutableString* selIKE1Hash;
 	NSMutableString* selIKE2Enc;
 	NSMutableString* selIKE2Hash;
-	
+
 	NSMutableString* selIKEv2;
 	NSMutableString* selIKELifetime;
-	
+
 	NSButton* selCompressEnable;
 	NSButton* selPfsEnable;
 	NSButton* selRekeyEnable;
-	
+
 	NSMutableString* selPhase2;
 	NSMutableString* selPhase2Alg;
 	NSMutableString* selSALifetime;
 	NSMutableString* selRekeyMargin;
 	NSMutableString* selRekeyFuzz;
 	NSMutableString* selKeyingTries;
-	
+
 	NSButton* selLocalXauthServer;
 	NSButton* selLocalXauthClient;
 	NSButton* selLocalModeCfgServer;
 	NSButton* selLocalModeCfgClient;
 	NSMutableString* selLocalXauthUsername;
-	
+
 	NSButton* selRemoteXauthServer;
 	NSButton* selRemoteXauthClient;
 	NSButton* selRemoteModeCfgServer;
 	NSButton* selRemoteModeCfgClient;
 	NSMutableString* selRemoteXauthUsername;
-	
+
 	NSMutableString* selModeCfgDNS1;
 	NSMutableString* selModeCfgDNS2;
 	NSMutableString* selModeCfgWins1;
 	NSMutableString* selModeCfgWins2;
-	
+
 	NSButton* selModeCfgPullEnable;
-	
+
 	NSMutableString* selNHelpers;
 	NSMutableString* selSyslog;
 	NSMutableString* selPlutoOpts;
@@ -104,12 +104,12 @@
 	NSMutableString* selNextHop;
 	NSMutableString* selSourceIP;
 	NSMutableString* selUpdownScript;
-	
+
 }
 
 @property (readwrite, retain) NSMutableString *connName;
 //Connection Options
-@property (readwrite, retain) NSMutableString	
+@property (readwrite, retain) NSMutableString
 *selAuto,
 *selType,
 *selMode,
@@ -122,7 +122,7 @@
 *selRemoteSubnets,
 *selRemoteProtocolPort;
 //Auth Options
-@property (readwrite, retain) NSMutableString	
+@property (readwrite, retain) NSMutableString
 *selAuthBy,
 *selPSK,
 *selPKCS,

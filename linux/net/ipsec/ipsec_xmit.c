@@ -2410,7 +2410,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 		}
 #ifdef CONFIG_KLIPS_IPV6
 		else if (ixs->cur_mtu < tot_len &&
-		         lsw_ip_hdr_version(ixs) == 6) {
+			 lsw_ip_hdr_version(ixs) == 6) {
 			IPSEC_FRAG_OFF_DECL(frag_off)
 			int nexthdroff;
 			unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
@@ -2495,7 +2495,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 			    "allocating %d bytes for hardheader.\n",
 			    ixs->hard_header_len);
 		if ((ixs->saved_header = kmalloc(ixs->hard_header_len,
-					         GFP_ATOMIC)) == NULL) {
+						 GFP_ATOMIC)) == NULL) {
 			printk(KERN_WARNING "klips_debug:ipsec_xmit_init2: "
 			       "Failed, tried to allocate %d bytes for temp hard_header.\n",
 			       ixs->hard_header_len);

@@ -221,8 +221,8 @@ static int initiate_a_connection(struct connection *c,
 				c->policy |= POLICY_UP;
 			} else {
 				loglog(RC_NOPEERIP,
-			       		"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			       		enum_show(&connection_kind_names,
+					"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+					enum_show(&connection_kind_names,
 						c->kind),
 			       (c->policy &
 				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
@@ -903,19 +903,19 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 				const char *const addwidemsg = "oe-negotiating";
 				ip_subnet this_client, that_client;
-	
+
 				happy(addrtosubnet(&b->our_client, &this_client));
 				happy(addrtosubnet(&b->peer_client, &that_client));
 				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
 				setportof(0, &this_client.addr);
 				setportof(0, &that_client.addr);
-	
+
 				DBG(DBG_OPPO,
 					DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
 						(b->negotiation_shunt == SPI_PASS) ? "pass" :
 						(b->negotiation_shunt == SPI_HOLD) ? "hold" :
 						"unknown?"));
-	
+
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 				if (!raw_eroute(&b->our_client, &this_client,
 					&b->peer_client, &that_client,

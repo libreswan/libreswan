@@ -189,7 +189,7 @@ static bool test_gcm_vectors(CK_MECHANISM_TYPE cipher_mechanism,
 						   size_t text_size, size_t tag_size,
 						   PK11SymKey *key, bool enc),
 			     const struct gcm_test_vector *tests)
-{	
+{
 	bool ok = TRUE;
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {

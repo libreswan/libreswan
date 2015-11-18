@@ -22,7 +22,7 @@
 	IBOutlet NSView* dpdView;
 	IBOutlet NSPopUpButton* selConn;
 	IBOutlet NSWindow *changeNameSheet;
-	
+
 	NSMutableString* prevConnName;
 	NSInteger selItemIndex;
 }

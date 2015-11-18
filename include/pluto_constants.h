@@ -176,13 +176,13 @@ typedef enum {
 	STF_OK,                 /* success */
 	STF_INTERNAL_ERROR,     /* discard everything, we failed */
 	STF_TOOMUCHCRYPTO,      /* at this time, we can't do any more crypto,
-	                         * so just ignore the message, and let them retransmit.
-	                         */
+				 * so just ignore the message, and let them retransmit.
+				 */
 	STF_FATAL,              /* just stop. we can't continue. */
 	STF_DROP,               /* just stop, delete any state, and don't log or respond */
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
-	                         * values STF_FAIL + x are notifications.
-	                         */
+				 * values STF_FAIL + x are notifications.
+				 */
 } stf_status;
 
 /* Misc. stuff */

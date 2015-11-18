@@ -74,12 +74,12 @@ static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 		ikev1_skeyid_d(hasher, skeyid,
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_d", skeyid_d, 0);
-	
+
 	PK11SymKey *skeyid_a =
 		ikev1_skeyid_a(hasher, skeyid, skeyid_d,
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_a", skeyid_a, 0);
-	
+
 	PK11SymKey *skeyid_e =
 		ikev1_skeyid_e(hasher, skeyid, skeyid_a,
 			       g_xy, cky_i, cky_r);

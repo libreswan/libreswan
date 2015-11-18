@@ -22,13 +22,13 @@ static AuthorizationRef gAuth;
 @interface MainMenuController : NSWindowController <GrowlApplicationBridgeDelegate> {
 	AdvMenuController* advMenuController;
 	PreferenceController *preferenceController;
-	
+
 	ConnectionsDB* db;
-	
+
 	IBOutlet NSView* discView;
 	IBOutlet NSView* connView;
 	IBOutlet NSPopUpButton* selConn;
-	
+
 	NSDate* connTime;
 	NSTimer* timer;
 	NSTimeInterval connDuration;

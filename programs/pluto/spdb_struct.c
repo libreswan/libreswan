@@ -245,9 +245,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (halg > 0) {
 				hash->val = halg;
 				if (ike_alg_enc_requires_integ(enc_desc)) {
-					hash->type.oakley = OAKLEY_HASH_ALGORITHM;	
+					hash->type.oakley = OAKLEY_HASH_ALGORITHM;
 				} else {
-					hash->type.oakley = OAKLEY_PRF;	
+					hash->type.oakley = OAKLEY_PRF;
 				}
 			}
 

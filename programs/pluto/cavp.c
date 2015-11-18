@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 		usage();
 		exit(1);
 	}
-	
+
 	setbuf(stdout, NULL);
 
 	NSS_NoDB_Init(".");

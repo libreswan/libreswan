@@ -251,13 +251,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 	PK11SymKey *enc_key = appendix_b_keymat_e(hasher, encrypter,
 						  skeyid_e, keysize);
-	
+
 	*skeyid_out = skeyid;
 	*skeyid_d_out = skeyid_d;
 	*skeyid_a_out = skeyid_a;
 	*skeyid_e_out = skeyid_e;
 	*enc_key_out = enc_key;
-	
+
 	DBG(DBG_CRYPT, DBG_log("NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
 			       skeyid_d, skeyid_a, skeyid_e, enc_key));
 

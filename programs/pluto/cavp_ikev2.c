@@ -89,7 +89,7 @@ static void run_ikev2(void)
 	print_symkey("g^ir (new)", g_ir_new, 0);
 	print_chunk("SPIi", spi_i, 0);
 	print_chunk("SPIr", spi_r, 0);
-	
+
 	if (hasher == NULL) {
 		print_line(hasher_name);
 		return;

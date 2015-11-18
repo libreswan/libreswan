@@ -62,7 +62,8 @@
 #define AH_NULL                 251
 #define AH_SHA2_256_TRUNC       252     /* used for broken linux kernel behaviour */
 #define AH_MAX                  255     /* note Authentication Algorithm (Value 5) Reference: [RFC2407] has
-	                                 * two octets but IPSEC AH Transform Identifiers has one octet! */
+					 * two octets but IPSEC AH Transform Identifiers has one octet!
+					 */
 
 /* IPsec ESP transform values */
 
