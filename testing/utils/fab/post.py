@@ -306,9 +306,9 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         base = baseline[test.name]
 
         raw_baseline_file = os.path.join(base.output_directory, domain + ".console.verbose.txt")
-        test.logger.debug("domain %s raw baseline output: %s", raw_baseline_file)
+        test.logger.debug("domain %s raw baseline file: %s", domain, raw_baseline_file)
         sanitized_baseline_file = os.path.join(base.output_directory, domain + ".console.txt")
-        test.logger.debug("domain %s sanitzed baseline output: %s", raw_baseline_file)
+        test.logger.debug("domain %s sanitzed baseline file: %s", domain, sanitized_baseline_file)
 
         if not os.path.exists(raw_baseline_file):
             errors.add("baseline-missing", domain)
