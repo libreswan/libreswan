@@ -52,8 +52,6 @@ size_t dstlen;
 		break;
 	default:
 		return 0;
-
-		break;
 	}
 
 	for (tn = typenames; tn->name != NULL; tn++)

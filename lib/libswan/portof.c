@@ -27,15 +27,11 @@ const ip_address * src;
 	case AF_INET:
 		return src->u.v4.sin_port;
 
-		break;
 	case AF_INET6:
 		return src->u.v6.sin6_port;
 
-		break;
 	default:
 		return -1;	/* "can't happen" */
-
-		break;
 	}
 }
 
@@ -66,15 +62,11 @@ ip_address *src;
 	case AF_INET:
 		return (struct sockaddr *)&src->u.v4;
 
-		break;
 	case AF_INET6:
 		return (struct sockaddr *)&src->u.v6;
 
-		break;
 	default:
 		return NULL;	/* "can't happen" */
-
-		break;
 	}
 }
 
@@ -89,14 +81,10 @@ const ip_address * src;
 	case AF_INET:
 		return sizeof(src->u.v4);
 
-		break;
 	case AF_INET6:
 		return sizeof(src->u.v6);
 
-		break;
 	default:
 		return 0;
-
-		break;
 	}
 }

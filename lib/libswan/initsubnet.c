@@ -47,8 +47,6 @@ ip_subnet *dst;
 		break;
 	default:
 		return "unknown clash-control value in initsubnet";
-
-		break;
 	}
 
 	c = count / 8;

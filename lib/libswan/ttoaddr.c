@@ -123,12 +123,9 @@ ip_address *dst;
 
 		return "does not appear to be either IPv4 or IPv6 numeric address";
 
-		break;
-
 	case AF_INET6:
 		return colon(src, srclen, dst);
 
-		break;
 	case AF_INET:
 		oops = trydotted(src, srclen, dst);
 		if (oops == NULL)
@@ -139,11 +136,8 @@ ip_address *dst;
 
 		return "does not appear to be numeric address";
 
-		break;
 	default:
 		return "unknown address family in tnatoaddr";
-
-		break;
 	}
 }
 

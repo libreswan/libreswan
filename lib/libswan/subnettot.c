@@ -36,8 +36,6 @@ size_t dstlen;
 		break;
 	default:
 		return 0;
-
-		break;
 	}
 
 	len = addrtot(&sub->addr, format, dst, dstlen);
