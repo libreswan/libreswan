@@ -727,7 +727,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			const struct oakley_group_desc *(*lookup_group)
 			(u_int16_t group))
 {
-#	define COMMON_KEY_LENGTH(x) (x == 0 || x == 128 || x == 192 || x == 256)
+#	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
 	int ealg_id, aalg_id;
 	int modp_id = 0;
 
