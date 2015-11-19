@@ -93,13 +93,14 @@ class Testsuite:
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
                 line = line.strip()
+                # these three log lines are ment to align
                 if not line:
-                    logger.debug("skip blank line: ", line)
+                    logger.debug("%7s: ", "blank")
                     continue
                 if line[0] == '#':
-                    logger.debug("skip comment line: %s", line)
+                    logger.debug("%7s: %s", "comment", line)
                     continue
-                logger.debug("input: %s", line)
+                logger.debug("%7s: %s", "input", line)
                 try:
                     kind, name, expected_result = line.split()
                     old_output_directory = self.old_output_directory and os.path.join(self.old_output_directory, name)
