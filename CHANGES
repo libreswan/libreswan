@@ -5,6 +5,7 @@ v3.16 (unreleased)
 * libipsecconf: allow time with no unit suffix (openswan compat) [Hugh]
 * libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
 * libipsecconf: re-introduce strictcrlpolicy= as alias for crl-strict= [Paul]
+* libipsecconf: Allow time specification for dpdtimeout= / dpddelay= [Paul]
 * pluto: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
 * PAM: Fix some IKEv1 XAUTH methods always returning "denied" [Antony]
 * newhostkey: fix seedev device [Paul]
@@ -23,6 +24,7 @@ v3.16 (unreleased)
 * packaging: debian/ directory update [Paul/Daniel]
 * Bugtracker bugs fixed:
    #233 pluto sends delete SAs in wrong order and reconnection issues [Wolfgang]
+   #247 KLIPS: fix pluto can't add ipv6 addresses to ipsec devices [Wolfgang]
    #248 keyingtries=%forever doesn't work anymore [Wolfgang]
 
 v3.15 (August 24, 2015)
