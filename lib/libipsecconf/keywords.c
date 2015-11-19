@@ -640,9 +640,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 
 	/* DPD */
-	{ "dpddelay",       kv_conn | kv_auto, kt_number, KBF_DPDDELAY,
+	{ "dpddelay",       kv_conn | kv_auto, kt_time, KBF_DPDDELAY,
 	  NOT_ENUM },
-	{ "dpdtimeout",     kv_conn | kv_auto, kt_number, KBF_DPDTIMEOUT,
+	{ "dpdtimeout",     kv_conn | kv_auto, kt_time, KBF_DPDTIMEOUT,
 	  NOT_ENUM },
 	{ "dpdaction",      kv_conn | kv_auto, kt_enum, KBF_DPDACTION,
 	  &kw_dpdaction_list },
