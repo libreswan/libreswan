@@ -2043,7 +2043,7 @@ int main(int argc, char **argv)
 		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 	switch (msg.dpd_action) {
-	case DPD_ACTION_uninitialized:
+	case DPD_ACTION_DISABLED:
 	case DPD_ACTION_CLEAR:
 	case DPD_ACTION_HOLD:
 	case DPD_ACTION_RESTART:

@@ -66,13 +66,14 @@ enum_names kern_interface_names =
 
 /* DPD actions */
 static const char *const dpd_action_name[] = {
+	"action:disabled",
 	"action:clear",
 	"action:hold",
 	"action:restart",
 };
 
 enum_names dpd_action_names =
-	{ DPD_ACTION_CLEAR, DPD_ACTION_RESTART, dpd_action_name, NULL };
+	{ DPD_ACTION_DISABLED, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
