@@ -142,8 +142,23 @@ kvm-checksum:
 
 # Build the keys/certificates using the KVM.
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
+KVM_KEYS_EXPIRATION_DAY = 14
+KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
 .PHONY: kvm-keys clean-kvm-keys kvm-clean-keys
+
 kvm-keys: $(KVM_KEYS)
+	$(MAKE) --no-print-directory kvm-keys-up-to-date
+
+# For moment don't force keys to be re-built.
+.PHONY: kvm-keys-up-to-date
+kvm-keys-up-to-date:
+	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
+		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
+		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
+		echo "run 'make kvm-clean-keys kvm-keys' to force an update" ; \
+		exit 1 ; \
+	fi
+
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 	: always remove old keys - create xxx/ so */ always works
 	mkdir -p testing/x509/xxx/ && rm -r testing/x509/*/
