@@ -14,6 +14,7 @@
 
 import os
 import re
+import collections
 from fab import logutil
 from fab import utils
 
@@ -88,7 +89,7 @@ class Testsuite:
     def __init__(self, logger, directory, testlist, error_level, old_output_directory=None):
         self.directory = directory
         self.old_output_directory = old_output_directory
-        self.testlist = []
+        self.testlist = collections.OrderedDict()
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
                 line = line.strip()
@@ -118,12 +119,19 @@ class Testsuite:
                                     "****** invalid test %s: directory not found: %s",
                                     test.name, test.directory)
                     continue
-                self.testlist.append(test)
+                # an OrderedDict which saves insertion order
+                self.testlist[test.name] = test
 
     def __iter__(self):
-        return self.testlist.__iter__()
+        return self.testlist.values().__iter__()
 
-                
+    def __contains__(self, index):
+        return index in self.testlist
+
+    def __getitem__(self, index):
+        return self.testlist[index]
+
+
 def add_arguments(parser):
 
     group = parser.add_argument_group("Test arguments",

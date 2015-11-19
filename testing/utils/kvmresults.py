@@ -88,26 +88,21 @@ def main():
 
     # Is the last argument some sort of baseline?  If it is, pre-load
     # it.
-    baseline_testsuite = None
+    #
+    # XXX: Should also support something like --baseline-testsuite and
+    # --baseline-output parameters.
+    baseline = None
     if len(args.directories) > 1:
         # If there is more than one directory then, perhaps, the last
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline_testsuite = testsuite.load(logger, args.directories[-1],
-                                            error_level=logutil.DEBUG)
-    baseline = None
-    if baseline_testsuite:
-        # discard the last argument as consumed above.
-        logger.debug("baseline testsuite found in '%s'", baseline_testsuite.directory)
-        args.directories.pop()
-        # If there is a baseline, use it to create a dictionary
-        # indexed by test name.  post.mortem() uses this dictionary to
-        # differentiate between: between a baseline test missing
-        # output and a baseline test being absent.
-        baseline = {}
-        for test in baseline_testsuite:
-            baseline[test.name] = test
+        baseline = testsuite.load(logger, args.directories[-1],
+                                  error_level=logutil.DEBUG)
+        if baseline:
+            # discard the last argument as consumed above.
+            logger.debug("discarding baseline testsuite argument '%s'", args.directories[-1])
+            args.directories.pop()
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories)
     # And check
