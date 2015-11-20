@@ -20,12 +20,20 @@
 # XXX: For compatibility
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
+KVM_OS = fedora
+KVM_POOL = /home/build/pool
+KVM_BASE_DOMAIN = swan$(KVM_OS)base
+KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
+KVM_BUILD_DOMAIN = east
+KVM_MODULE_DOMAIN = west
+KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
+KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
+
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 
 KVM_OBJDIR = OBJ.kvm
-KVM_HOSTS = east west road north
 
 # file to mark keys are up-to-date
 KVM_KEYS = testing/x509/keys/up-to-date
@@ -33,49 +41,50 @@ KVM_KEYS = testing/x509/keys/up-to-date
 # Uses "$@" to determine the current make target's indented host.
 # Assumes the target looks like xxx-yyy-HOST, defaults to 'east' (the
 # choice is arbitrary).
-KVM_HOST = $(firstword $(filter $(KVM_HOSTS),$(lastword $(subst -, ,$@))) east)
+KVM_DOMAIN = $(firstword $(filter $(KVM_DOMAINS),$(lastword $(subst -, ,$@))) $(KVM_BUILD_DOMAIN))
 
-# Run "make $(1)" on $(KVM_HOST); see $(KVM_HOST) above for how the
-# host is identified.
+# Run "make $(1)" on $(2).
 define kvm-make
-	: KVM_HOST: '$(KVM_HOST)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(KVMSH_COMMAND) \
 		--output ++compile-log.txt \
 		--chdir . \
-		'$(KVM_HOST)' \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(1)'
+		'$(strip $(2))' \
+		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"'
 endef
 
-# Standard targets; just mirror the local target names.
+# Standard make targets; just mirror the local target names.  Most
+# things get run on "east", but module gets run on west!
 
-KVM_MAKE_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean
-.PHONY: $(KVM_MAKE_TARGETS)
-$(KVM_MAKE_TARGETS):
-	$(call kvm-make, $(patsubst kvm-%,%,$@))
+KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean
+.PHONY: $(KVM_BUILD_TARGETS)
+$(KVM_BUILD_TARGETS):
+	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
+.PHONY: kvm-module
+kvm-module:
+	$(call kvm-make, module, $(KVM_MODULE_DOMAIN))
+
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
 # needs to use the swan-install script.  Also, to avoid parallel
 # builds getting in the way, this uses sub-makes to explicitly
 # serialize things.
-KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
+KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
 PHONY: kvm-install $(KVM_INSTALL_TARGETS)
 $(KVM_INSTALL_TARGETS):
-	: KVM_HOST: '$(KVM_HOST)'
+	: KVM_DOMAIN: '$(KVM_DOMAIN)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-kvm-install:
-	$(MAKE) --no-print-directory kvm-base
-	$(MAKE) --no-print-directory kvm-module
+	$(KVMSH_COMMAND) --chdir . '$(KVM_DOMAIN)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+kvm-install: kvm-base kvm-module
 	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
 
 
 # Some useful kvm wide commands.
-KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_HOSTS))
+KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
 .PHONY: kvm-shutdown $(KVM_SHUTDOWN_TARGETS)
 $(KVM_SHUTDOWN_TARGETS):
-	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --shutdown '$(KVM_HOST)'
+	: KVM_DOMAIN: '$(KVM_DOMAIN)'
+	$(KVMSH_COMMAND) --shutdown '$(KVM_DOMAIN)'
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
 
