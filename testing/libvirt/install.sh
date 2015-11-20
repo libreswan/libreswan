@@ -107,7 +107,6 @@ if [ ! -f $base.qcow2 ]; then
 	--accelerate \
 	--location=${OSMEDIA} \
 	--nographics \
-	--autostart \
 	--noreboot \
 	$cpu || exit $?
 
