@@ -176,3 +176,105 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 
 kvm-clean-keys clean-kvm-keys:
 	rm -rf testing/x509/*/
+
+#
+# Build KVM domains from scratch
+#
+
+# Where to get the install image.
+KVM_ISO_URL_fedora = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
+KVM_ISO_URL = $(value KVM_ISO_URL_$(KVM_OS))
+KVM_ISO = $(notdir $(KVM_ISO_URL))
+$(KVM_ISO):
+	wget $(KVM_ISO_URL)
+
+# XXX: Needed?
+KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
+
+# Build the base disk image.  Don't use the .img as the marker as
+# re-booting the domain touches it making a potentially circular
+# dependency.
+KVM_BASE_DOMAIN_IMAGE = $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
+$(KVM_POOL)/$(KVM_BASE_DOMAIN).xml: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
+	-@$(MAKE) --no-print-directory kvm-destroy-$(KVM_BASE_DOMAIN)
+	-@$(MAKE) --no-print-directory kvm-undefine-$(KVM_BASE_DOMAIN)
+	rm -f $(KVM_BASE_DOMAIN_IMAGE)
+	fallocate -l 8G '$(KVM_BASE_DOMAIN_IMAGE)'
+	sudo virt-install \
+		--connect=qemu:///system \
+		--network=network:swandefault,model=virtio \
+		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
+		--name=$(KVM_BASE_DOMAIN) \
+		--disk path='$(KVM_BASE_DOMAIN_IMAGE)' \
+		--ram 1024 \
+		--vcpus=1 \
+		--check-cpu \
+		--accelerate \
+		--location=$(KVM_ISO) \
+		--nographics \
+		--noreboot \
+		$(KVM_HVM)
+	touch $@
+# XXX: fsck the disk and shutdown base before cloning it?
+#
+# XXX: If someone boots $(KVM_BASE_DOMAIN) then the .img file will be
+# modified causing everything to rebuild.
+KVM_BASE_DOMAIN_DISK = $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
+$(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).xml
+	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'touch /forcefsck'
+	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'true'
+	rm -f $(KVM_BASE_DOMAIN_DISK)
+	sudo qemu-img convert -O qcow2 '$(KVM_BASE_DOMAIN_IMAGE)' '$(KVM_BASE_DOMAIN_DISK)'
+# Mainly for debugging
+.PHONY: kvm-base-domain
+kvm-base-domain: $(KVM_BASE_DOMAIN_DISK)
+
+# Since running a domain will likely modify its disk (changing MTIME),
+# the domain's disk isn't a good indicator that a domain needs
+# updating.  Instead use a scratch file to track the domain's creation
+# time.
+$(KVM_POOL)/%.xml: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
+	-@$(MAKE) --no-print-directory kvm-destroy-$*
+	-@$(MAKE) --no-print-directory kvm-undefine-$*
+	rm -f '$(KVM_POOL)/$*.qcow2'
+	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASE_DOMAIN_DISK)' '$(KVM_POOL)/$*.qcow2'
+	sed \
+		-e "s:@@TESTINGDIR@@:$(abs_top_srcdir)/testing:" \
+		-e "s:@@SOURCEDIR@@:$(abspath $(abs_top_srcdir)/..):" \
+		-e "s:@@POOLSPACE@@:$(KVM_POOL):" \
+		-e "s:@@USER@@:$$(id -u):" \
+		-e "s:@@GROUP@@:$$(id -g qemu):" \
+		testing/libvirt/vm/$* \
+		> '$@.tmp'
+	sudo virsh define '$@.tmp'
+	mv '$@.tmp' '$@'
+
+# XXX: Should destroy and undefine be merged?
+KVM_DESTROY_TARGETS = $(patsubst %,kvm-destroy-%,$(KVM_DOMAINS))
+.PHONY: kvm-destroy-domains $(KVM_DESTROY_TARGETS)
+$(KVM_DESTROY_TARGETS):
+	: KVM_DOMAIN: '$(KVM_DOMAIN)'
+	sudo virsh destroy $(KVM_DOMAIN)
+kvm-destroy-domains: $(KVM_DESTROY_TARGETS)
+
+KVM_UNDEFINE_TARGETS = $(patsubst %,kvm-undefine-%,$(KVM_DOMAINS))
+.PHONY: kvm-undefine $(KVM_UNDEFINE_TARGETS)
+# XXX: --remove-all-storage doesn't work when the disk was created
+# outside of the domain.
+$(KVM_UNDEFINE_TARGETS):
+	: KVM_DOMAIN: '$(KVM_DOMAIN)'
+	sudo virsh undefine $(KVM_DOMAIN) --remove-all-storage
+kvm-undefine-domains: $(KVM_UNDEFINE_TARGETS)
+
+.PHONY: 
+kvm-clean-domains:
+	$(MAKE) $(KVM_DESTROY_TARGETS)
+	$(MAKE) $(KVM_UNDEFINE_TARGETS)
+
+KVM_DOMAIN_TARGETS = $(patsubst %,kvm-domain-%,$(KVM_DOMAINS))
+.PHONY: $(KVM_TEST_DOMAIN_TARGETS)
+$(KVM_DOMAIN_TARGETS):
+	@$(MAKE) --no-print-directory $(KVM_POOL)/$(KVM_DOMAIN).xml
+.PHONY: kvm-domains
+kvm-domains: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_DOMAINS))
