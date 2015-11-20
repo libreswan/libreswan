@@ -59,6 +59,8 @@ def main():
                         choices=set(["interactive", "batch"]),
                         help=("enter mode"
                               " (default: if there is no command enter interactive mode)"))
+    parser.add_argument("--hostname", default=None,
+                        help="Domain's host name")
 
     parser.add_argument("domain", action="store",
                         help="domain (virtual machine) to connect to")
@@ -70,7 +72,7 @@ def main():
     logutil.config(args)
 
     # Get things started
-    domain = virsh.Domain(args.domain)
+    domain = virsh.Domain(args.domain, hostname=args.hostname)
 
     status = 0
     console = None
