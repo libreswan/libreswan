@@ -6,6 +6,7 @@ v3.16 (unreleased)
 * libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
 * libipsecconf: re-introduce strictcrlpolicy= as alias for crl-strict= [Paul]
 * libipsecconf: Allow time specification for dpdtimeout= / dpddelay= [Paul]
+* libswan: Fix memory leak in match_rdn() [Valeriu Goldberger]
 * pluto: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
 * PAM: Fix some IKEv1 XAUTH methods always returning "denied" [Antony]
 * newhostkey: fix seedev device [Paul]
