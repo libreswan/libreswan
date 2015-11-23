@@ -582,6 +582,10 @@ static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
 						SECITEM_FreeItem(val_b, PR_TRUE);
 					break;
 				}
+				if (val_b != NULL) {
+					/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
+					SECITEM_FreeItem(val_b, PR_TRUE);
+				}
 			}
 		}
 	}
