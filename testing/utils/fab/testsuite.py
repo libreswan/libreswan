@@ -132,6 +132,8 @@ class Testsuite:
     def __getitem__(self, index):
         return self.testlist[index]
 
+    def __len__(self):
+        return self.testlist.__len__()
 
 def add_arguments(parser):
 

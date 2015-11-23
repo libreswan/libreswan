@@ -119,8 +119,12 @@ def main():
     try:
         logger.info("run started at %s", datetime.now())
 
+        test_count = 0
         for test in tests:
             stats.add("total", test)
+            test_count += 1
+            # Would the number of tests to be [re]run be better?
+            test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
 
             ignore = testsuite.ignore(test, args)
             if ignore:
@@ -129,7 +133,7 @@ def main():
                 # explicit sub-set of tests is being run.  For
                 # instance, when running just one test.
                 if not args.test_name:
-                    logger.info("*** %s: ignore (%s)", test.name, ignore)
+                    logger.info("%s: ignore (%s)", test_prefix, ignore)
                 continue
 
             # Implement "--retry" as described above: if retry is -ve,
@@ -141,16 +145,18 @@ def main():
                 result = post.mortem(test, args)
                 if result:
                     if result.passed:
-                        logger.info("*** %s: passed", test.name)
+                        logger.info("%s: passed", test_prefix)
                         stats.add("skipped", test)
                         results.add(result)
                         continue
                     if retry == 0:
-                        logger.info("*** %s: %s (delete '%s' to re-test)", test.name,
+                        logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
                                     result.value, test.output_directory)
                         stats.add("skipped", test)
                         results.add(result)
                         continue
+
+            logger.info("%s: starting ...", test_prefix)
             stats.add("tests", test)
 
             debugfile = None
