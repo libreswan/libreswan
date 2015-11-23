@@ -1625,6 +1625,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;
 #endif
+	if (c->sa_replay_window)
+		said_boilerplate.replay_window = c->sa_replay_window;
+	else
+		said_boilerplate.replay_window = kernel_ops->replay_window;
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = SPI_PASS;

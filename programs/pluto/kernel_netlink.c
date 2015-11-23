@@ -1048,6 +1048,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
+	/* most stacks allow up to 32, linux up to 64? */
+	if (sa->replay_window)
+		req.p.replay_window = sa->replay_window;
+	else
+		req.p.replay_window = kernel_ops->replay_window;
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
