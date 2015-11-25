@@ -20,7 +20,9 @@ from fab import utils
 
 class Test:
 
-    def __init__(self, test_directory, kind, expected_result, old_output_directory=None, testsuite_directory=None):
+    def __init__(self, test_directory, kind, expected_result,
+                 saved_test_output_directory=None,
+                 testsuite_directory=None):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
@@ -52,9 +54,10 @@ class Test:
         #   kvmresults.py testing/pluto/<test>/OUTPUT.OLD
         #   kvmresults.py testing/pluto/OUTPUT/<test>
         #
-        # than that directory, and not the next output-directory,
-        # should be used as a source of test results.
-        self.old_output_directory = old_output_directory
+        # than that directory, and not the next output-directory, will
+        # be passed in and saved here.  Otherwise it is None, and the
+        # OUTPUT_DIRECTORY should be used.
+        self.saved_output_directory = saved_test_output_directory
         # The testsuite directory, if known.  Tests outside of a
         # testsuite do not have a testsuite_directory.
         self.testsuite_directory = testsuite_directory
@@ -103,10 +106,10 @@ class Testsuite:
                 logger.debug("%7s: %s", "input", line)
                 try:
                     kind, name, expected_result = line.split()
-                    old_output_directory = self.old_output_directory and os.path.join(self.old_output_directory, name)
+                    saved_test_output_directory = self.old_output_directory and os.path.join(self.old_output_directory, name)
                     test = Test(testsuite_directory=self.directory,
                                 test_directory=os.path.join(self.directory, name),
-                                old_output_directory=old_output_directory,
+                                saved_test_output_directory=saved_test_output_directory,
                                 kind=kind, expected_result=expected_result)
                 except ValueError:
                     # This is serious
@@ -212,7 +215,7 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
         if not os.path.basename(directory):
             directory = os.path.dirname(directory)
         test_directory = None
-        old_output_directory = None
+        saved_test_output_directory = None
         # Use heuristics to differentiate between a directory that
         # contains a test, and an old-output directory that contains
         # test output (hopefully, for the latter, there is a test
@@ -227,7 +230,7 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
             # path DIRECTORY/.. only works when DIRECTORY exists.  See
             # also next test.
             logger.debug("'%s' matches <test>/OUTPUT - a test output sub-directory", directory)
-            old_output_directory = directory
+            saved_test_output_directory = directory
             test_directory = os.path.join(directory, "..")
         elif os.path.basename(directory).startswith("OUTPUT") \
         and os.path.exists(os.path.join(os.path.dirname(directory), "description.txt")):
@@ -241,7 +244,7 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
             #
             # will cause this.
             logger.debug("'%s' matches <test>/OUTPUT.* - a deleted test output sub-directory", directory)
-            old_output_directory = directory
+            saved_test_output_directory = directory
             test_directory = os.path.dirname(directory)
         elif os.path.exists(os.path.join(directory, "..", "..", TESTLIST)) \
         and os.path.exists(os.path.join(directory, "..", "..", os.path.basename(directory), "description.txt")):
@@ -255,7 +258,7 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
             # will cause this.  In the future this may be kvmrunner's
             # default behaviour.
             logger.debug("'%s' matches OUTPUT/<test>  - a test output directory saved in a testsuite directory", directory)
-            old_output_directory = directory
+            saved_test_output_directory = directory
             test_directory = os.path.join(directory, "..", "..", os.path.basename(directory))
         else:
             logger.error("directory '%s' is invalid", directory)
@@ -267,7 +270,7 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
             testsuite_directory = None
         tests.append(Test(testsuite_directory = testsuite_directory,
                           test_directory=test_directory,
-                          old_output_directory=old_output_directory,
+                          saved_test_output_directory=saved_test_output_directory,
                           kind="kvmplutotest", expected_result="good"))
 
     return tests

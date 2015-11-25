@@ -131,7 +131,7 @@ def main():
             result = None
             if not ignore:
                 result = post.mortem(test, args, baseline=baseline,
-                                     output_directory=test.old_output_directory,
+                                     output_directory=test.saved_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,
                                      update=args.update,
@@ -142,30 +142,33 @@ def main():
 
             sep = ""
 
-            # Default to printing either the test directory, or, when
-            # explicitly specified, the test's output directory.
+            # Print the test's name/path
             if not args.print_directory and not args.print_name and not args.print_output_directory:
+                # By default: when the path given on the command line
+                # explicitly specifies a test's output directory
+                # (found in TEST.SAVED_OUTPUT_DIRECTORY), print that;
+                # otherwise print the path to the test's directory.
                 print(sep, end="")
-                if test.old_output_directory:
-                    print(test.old_output_directory, end="")
-                else:
+                print((test.saved_output_directory
+                       and test.saved_output_directory
+                       or test.directory), end="")
+                sep = " "
+            else:
+                # Print the test name/path per command line
+                if args.print_name:
+                    print(sep, end="")
+                    print(test.name, end="")
+                    sep = " "
+                if args.print_directory:
+                    print(sep, end="")
                     print(test.directory, end="")
-                sep = " "
-
-            if args.print_name:
-                print(sep, end="")
-                print(test.name, end="")
-                sep = " "
-
-            if args.print_directory:
-                print(sep, end="")
-                print(test.directory, end="")
-                sep = " "
-
-            if args.print_output_directory:
-                print(sep, end="")
-                print(test.old_output_directory and test.old_output_directory or test.output_directory, end="")
-                sep = " "
+                    sep = " "
+                if args.print_output_directory:
+                    print(sep, end="")
+                    print((test.saved_output_directory
+                           and test.saved_output_directory
+                           or test.output_directory), end="")
+                    sep = " "
 
             if ignore:
                 print(sep, end="")
