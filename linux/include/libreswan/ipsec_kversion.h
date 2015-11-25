@@ -556,8 +556,10 @@ typedef struct ctl_table ctl_table;
 # define DEFINE_RWLOCK(x) rwlock_t x = RW_LOCK_UNLOCKED
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+# define HAVE_USER_NS
 /* CONFIG_USER_NS is now on in Fedora 20 kernels */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 # if defined(CONFIG_USER_NS)
 #  define HAVE_USER_NS
 # endif
