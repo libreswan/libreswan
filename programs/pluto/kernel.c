@@ -1620,15 +1620,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_boilerplate.add_selector = add_selector;
 	said_boilerplate.transport_proto = c->spd.this.protocol;
 	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
-	said_boilerplate.replay_window = c->sa_replay_window;
 	said_boilerplate.outif = -1;
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;
 #endif
-	if (c->sa_replay_window)
-		said_boilerplate.replay_window = c->sa_replay_window;
-	else
-		said_boilerplate.replay_window = kernel_ops->replay_window;
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = SPI_PASS;
@@ -1981,7 +1976,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->esatype = ET_ESP;
-		said_next->replay_window = kernel_ops->replay_window;
+		said_next->replay_window = c->sa_replay_window;
+		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
+			c->sa_replay_window));
+
 		said_next->authalg = ei->authalg;
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 		    st->st_connection->sha2_truncbug) {
@@ -2162,13 +2160,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
-		said_next->replay_window = kernel_ops->replay_window;
 		said_next->authalg = authalg;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
 		said_next->encapsulation = encap_oneshot;
 		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->text_said = text_ah;
+		said_next->replay_window = c->sa_replay_window;
+		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
+			c->sa_replay_window));
 
 		DBG(DBG_CRYPT, {
 			DBG_dump("AH authkey:", said_next->authkey,

@@ -1048,18 +1048,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
-	/* most stacks allow up to 32, linux up to 64? */
-	if (sa->replay_window)
-		req.p.replay_window = sa->replay_window;
-	else
-		req.p.replay_window = kernel_ops->replay_window;
+	/* most stacks allow up to 32, klips and netkey and bsd up to 64? */
+	req.p.replay_window = sa->replay_window;
+	DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d",
+		req.p.replay_window));
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
 	req.p.lft.soft_packet_limit = XFRM_INF;
 	req.p.lft.hard_byte_limit = XFRM_INF;
 	req.p.lft.hard_packet_limit = XFRM_INF;
-	req.p.replay_window = sa->replay_window;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
