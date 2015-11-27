@@ -22,7 +22,7 @@ class Test:
 
     def __init__(self, test_directory, kind, expected_result,
                  saved_test_output_directory=None,
-                 testsuite_directory=None):
+                 testsuite_output_directory=None):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
@@ -44,8 +44,12 @@ class Test:
         # (and not ". passed") will be displayed.
         self.directory = os.path.join(os.path.relpath(os.path.dirname(test_directory)), self.name)
         # Directory where the next test run's output should be
-        # written.
-        self.output_directory = os.path.join(self.directory, "OUTPUT")
+        # written.  If a common testsuite output directory was
+        # specified, use that.
+        self.output_directory = (
+            testsuite_output_directory
+            and os.path.join(testsuite_output_directory, self.name)
+            or os.path.join(self.directory, "OUTPUT"))
         self.result_file = os.path.join(self.output_directory, "RESULT")
         # Directory containing saved output from a previous test run.
         # If the test's output directory was explicitly specified, say
@@ -58,9 +62,6 @@ class Test:
         # be passed in and saved here.  Otherwise it is None, and the
         # OUTPUT_DIRECTORY should be used.
         self.saved_output_directory = saved_test_output_directory
-        # The testsuite directory, if known.  Tests outside of a
-        # testsuite do not have a testsuite_directory.
-        self.testsuite_directory = testsuite_directory
         # will be filled in later
         self.domains = None
         self.initiators = None
@@ -89,9 +90,10 @@ class Test:
 
 class Testsuite:
 
-    def __init__(self, logger, directory, testlist, error_level, old_output_directory=None):
-        self.directory = directory
-        self.old_output_directory = old_output_directory
+    def __init__(self, logger, testlist, error_level,
+                 testsuite_output_directory=None,
+                 saved_testsuite_output_directory=None):
+        self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
@@ -106,16 +108,17 @@ class Testsuite:
                 logger.debug("%7s: %s", "input", line)
                 try:
                     kind, name, expected_result = line.split()
-                    saved_test_output_directory = self.old_output_directory and os.path.join(self.old_output_directory, name)
-                    test = Test(testsuite_directory=self.directory,
-                                test_directory=os.path.join(self.directory, name),
-                                saved_test_output_directory=saved_test_output_directory,
-                                kind=kind, expected_result=expected_result)
                 except ValueError:
                     # This is serious
                     logger.log(error_level,
                                     "****** malformed line: %s", line)
                     continue
+                test = Test(kind=kind, expected_result=expected_result,
+                            test_directory=os.path.join(self.directory, name),
+                            saved_test_output_directory=(
+                                saved_testsuite_output_directory
+                                and os.path.join(saved_testsuite_output_directory, name)),
+                            testsuite_output_directory=testsuite_output_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
                     # This is serious
@@ -170,14 +173,15 @@ def log_arguments(logger, args):
 TESTLIST = "TESTLIST"
 
 
-def load(logger, directory, error_level=logutil.ERROR):
+def load(logger, directory, testsuite_output_directory=None, error_level=logutil.ERROR):
     """Load the testsuite (TESTLIST) found in DIRECTORY"""
 
     # Is DIRECTORY a testsuite?  For instance: testing/pluto.
     testlist = os.path.join(directory, TESTLIST)
     if os.path.exists(testlist):
         logger.debug("'%s' is a testsuite directory", directory)
-        return Testsuite(logger, directory, testlist, error_level)
+        return Testsuite(logger, testlist, error_level,
+                         testsuite_output_directory=testsuite_output_directory)
 
     # Is DIRECTORY a testsuite sub-directory containing testsuite
     # results?  For instance: testing/pluto/OUTPUT.  Exclude the
@@ -188,21 +192,23 @@ def load(logger, directory, error_level=logutil.ERROR):
     if os.path.exists(testlist) \
     and not os.path.exists(os.path.join(directory, "description.txt")):
         logger.debug("'%s' is an output sub-directory under a testsuite", directory)
-        return Testsuite(logger, os.path.join(directory, ".."), testlist, error_level,
-                         old_output_directory=directory)
+        return Testsuite(logger, testlist, error_level,
+                         testsuite_output_directory=testsuite_output_directory,
+                         saved_testsuite_output_directory=directory)
 
     logger.debug("'%s' does not appear to be a testsuite directory", directory)
     return None
 
 
-def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
+def load_testsuite_or_tests(logger, directories, testsuite_output_directory=None, log_level=logutil.DEBUG):
 
     # If there is only one directory then, perhaps, it contains a full
     # testsuite.  The easiest way to find out is to try opening it.
     if len(directories) == 1:
-        testsuite = load(logger, directories[0])
+        testsuite_directory = directories[0]
+        testsuite = load(logger, testsuite_directory, testsuite_output_directory=testsuite_output_directory)
         if testsuite:
-            logger.log(log_level, "testsuite: %s", testsuite.directory)
+            logger.log(log_level, "testsuite: %s", testsuite_directory)
             return testsuite
 
     # There are multiple directories so, presumably, each one
@@ -263,15 +269,10 @@ def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
         else:
             logger.error("directory '%s' is invalid", directory)
             return None
-        # Now try to find the test testsuite.
-        if os.path.exists(os.path.dirname(test_directory), TESTLIST):
-            testsuite_directory = os.path.dirname(directory)
-        else:
-            testsuite_directory = None
-        tests.append(Test(testsuite_directory = testsuite_directory,
+        tests.append(Test(kind="kvmplutotest", expected_result="good",
                           test_directory=test_directory,
                           saved_test_output_directory=saved_test_output_directory,
-                          kind="kvmplutotest", expected_result="good"))
+                          testsuite_output_directory=testsuite_output_directory))
 
     return tests
 
