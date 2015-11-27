@@ -506,7 +506,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, family, &(end->subnet));
+			er = ttosubnet(value, 0, AF_UNSPEC, &(end->subnet));
 		}
 		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
@@ -524,9 +524,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
-			if (tnatoaddr(value, strlen(value), AF_INET,
-				      &(end->nexthop)) != NULL &&
-			    tnatoaddr(value, strlen(value), AF_INET6,
+			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 				      &(end->nexthop)) != NULL) {
 #ifdef DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
@@ -541,7 +539,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
-				er = ttoaddr(value, 0, family,
+				er = ttoaddr(value, 0, AF_UNSPEC,
 						&(end->nexthop));
 				if (er != NULL)
 					ERR_FOUND("bad value for %snexthop=%s [%s]",
@@ -605,9 +603,9 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
 
-		if (tnatoaddr(value, strlen(value), AF_INET,
+		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &(end->sourceip)) != NULL &&
-		    tnatoaddr(value, strlen(value), AF_INET6,
+		    tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &(end->sourceip)) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
@@ -622,13 +620,13 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
 #else
-			er = ttoaddr(value, 0, family, &(end->sourceip));
+			er = ttoaddr(value, 0, AF_UNSPEC, &(end->sourceip));
 			if (er != NULL)
 				ERR_FOUND("bad addr %ssourceip=%s [%s]",
 					  leftright, value, er);
 #endif
 		} else {
-			er = tnatoaddr(value, 0, family, &(end->sourceip));
+			er = tnatoaddr(value, 0, AF_UNSPEC, &(end->sourceip));
 			if (er != NULL)
 				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
 					leftright, value, er);
