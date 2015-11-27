@@ -2095,8 +2095,7 @@
           <listitem>
             <para>how many times <emphasis remap="B">pluto</emphasis> should
             try to negotiate an SA, either for the first time or for rekeying.
-            A value of 0 is interpreted as a very large number: never give up.
-            The default is three.</para>
+            The default value of 0 means to keep trying forever. </para>
           </listitem>
         </varlistentry>
 
