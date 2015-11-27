@@ -52,6 +52,7 @@ d.ipsec.conf/forceencaps.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
+d.ipsec.conf/fake-strongswan.xml
 d.ipsec.conf/send-vendorid.xml
 d.ipsec.conf/overlapip.xml
 d.ipsec.conf/reqid.xml

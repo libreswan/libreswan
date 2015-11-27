@@ -107,7 +107,7 @@ static void help(void)
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggrmode] \\\n"
-		"	[--initialcontact] [--cisco-unity] \\\n"
+		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
 		"	[--forceencaps] [--no-nat-keepalive] \\\n"
 		"	[--ikev1natt <both|rfc|drafts> \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
@@ -380,6 +380,7 @@ enum option_enums {
 	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
+	CD_FAKE_STRONGSWAN,
 	CD_IKE,
 	CD_SEND_CA,
 	CD_PFSGROUP,
@@ -574,6 +575,7 @@ static const struct option long_opts[] = {
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
+	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -1590,6 +1592,10 @@ int main(int argc, char **argv)
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
 			msg.cisco_unity = TRUE;
+			continue;
+
+		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan */
+			msg.fake_strongswan = TRUE;
 			continue;
 
 		case CD_DPDDELAY:

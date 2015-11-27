@@ -617,6 +617,10 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
+	if (st->st_connection->fake_strongswan) {
+		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_STRONGSWAN))
+			return STF_INTERNAL_ERROR;
+	}
 
 	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
 		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
@@ -1308,6 +1312,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 		numvidtosend++;
 	if(c->cisco_unity)
 		numvidtosend++;
+	if(c->fake_strongswan)
+		numvidtosend++;
 
 	if(c->send_vendorid)
 		numvidtosend++;
@@ -1340,6 +1346,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	if(c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if(c->fake_strongswan) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 

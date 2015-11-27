@@ -602,6 +602,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_CISCO_UNITY])
 		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
 
+	if (conn->options_set[KBF_VID_STRONGSWAN])
+		msg.fake_strongswan = conn->options[KBF_VID_STRONGSWAN];
+
 	/* Active our Cisco interop code if set */
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];

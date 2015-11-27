@@ -284,7 +284,7 @@ static struct vid_struct vid_tab[] = {
 
 	/* misc */
 
-	/* draft-ietf-ipsra-isakmp-xauth-06.txt? */
+	/* MD5("draft-ietf-ipsra-isakmp-xauth-06.txt") */
 	{ VID_MISC_XAUTH, VID_KEEP, NULL, "XAUTH",
 	  "\x09\x00\x26\x89\xdf\xd6\xb7\x12", 8 },
 
@@ -322,6 +322,8 @@ static struct vid_struct vid_tab[] = {
 	/*
 	 * strongSwan
 	 */
+
+	DEC_MD5_VID(VID_STRONGSWAN, "strongSwan"),
 	DEC_MD5_VID(VID_STRONGSWAN_4_0_0, "strongSwan 4.0.0"),
 	DEC_MD5_VID(VID_STRONGSWAN_4_0_1, "strongSwan 4.0.1"),
 	DEC_MD5_VID(VID_STRONGSWAN_4_0_2, "strongSwan 4.0.2"),

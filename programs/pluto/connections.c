@@ -1372,6 +1372,7 @@ void add_connection(const struct whack_message *wm)
 		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
+		c->fake_strongswan = wm->fake_strongswan;
 		c->send_vendorid = wm->send_vendorid;
 		c->send_ca = wm->send_ca;
 		c->xauthby = wm->xauthby;
@@ -3729,11 +3730,12 @@ void show_one_connection(const struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; send_vendorid:%s;",
+		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; fake_strongswan:%s; send_vendorid:%s;",
 		  c->name, instance,
 		  (c->sha2_truncbug) ? "yes" : "no",
 		  (c->initial_contact) ? "yes" : "no",
 		  (c->cisco_unity) ? "yes" : "no",
+		  (c->fake_strongswan) ? "yes" : "no",
 		  (c->send_vendorid) ? "yes" : "no");
 
 	if (c->policy_next) {

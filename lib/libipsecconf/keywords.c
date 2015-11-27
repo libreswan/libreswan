@@ -519,6 +519,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },	/* obsolete _ */
 	{ "cisco-unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
 	  NOT_ENUM },
+	{ "fake-strongswan", kv_conn | kv_auto, kt_bool,   KBF_VID_STRONGSWAN,
+	  NOT_ENUM },
 	{ "send_vendorid", kv_conn | kv_auto | kv_alias, kt_bool,   KBF_SEND_VENDORID,
 	  NOT_ENUM },	/* obsolete _ */
 	{ "send-vendorid", kv_conn | kv_auto, kt_bool,   KBF_SEND_VENDORID,

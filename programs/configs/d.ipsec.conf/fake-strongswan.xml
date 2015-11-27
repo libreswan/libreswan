@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>fake-strongswan</emphasis></term>
+  <listitem>
+<para>whether to send a STRONGSWAN Vendor ID payload to the peer.
+Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
+<emphasis remap='B'>yes</emphasis>.
+Strongswan rejects certain proposals with private use numbers such as
+esp=twofish or esp=serpent unless it receives a strongswan vendorid by
+the peer. This option sends such an (unversioned) vendor id.
+</para>
+  </listitem>
+  </varlistentry>

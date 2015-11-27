@@ -160,6 +160,9 @@ struct whack_message {
 	 */
 	bool cisco_unity;
 
+	/* Option to send strongswan VID to allowe better interop */
+	bool fake_strongswan;
+
 	/* send our own libreswan vendorid or not */
 	bool send_vendorid;
 

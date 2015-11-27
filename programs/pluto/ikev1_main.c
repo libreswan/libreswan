@@ -126,8 +126,11 @@ stf_status main_outI1(int whack_sock,
 	if (nat_traversal_enabled)
 		numvidtosend++;
 
-	/* add one for sending CISCO-UNITY */
 	if (c->cisco_unity) {
+		numvidtosend++;
+	}
+
+	if (c->fake_strongswan) {
 		numvidtosend++;
 	}
 
@@ -239,6 +242,16 @@ stf_status main_outI1(int whack_sock,
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_vid(np, &md.rbody, VID_CISCO_UNITY)) {
+			reset_cur_state();
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	if (c->fake_strongswan) {
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
+		if (!out_vid(np, &md.rbody, VID_STRONGSWAN)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}

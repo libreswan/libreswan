@@ -217,7 +217,8 @@ struct connection {
 
 	bool nat_keepalive;		/* Suppress sending NAT-T Keep-Alives */
 	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
-	bool cisco_unity;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool cisco_unity;		/* Send Unity VID for cisco compatibility */
+	bool fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
