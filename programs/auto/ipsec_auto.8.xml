@@ -49,19 +49,25 @@ connection</replaceable></arg>
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
-    <arg choice='plain'>{ --add | --delete | --replace | --up | --down }</arg>
+    <arg choice='plain'>{ --add | --delete | --replace | --start }</arg>
     <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
-    <arg choice='plain'>{ --status | --ready  }</arg>
+    <arg choice='plain'>{ --up | --down }</arg>
+    <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='plain'>{ --route | --unroute  }</arg>
     <arg choice='plain'><replaceable>connection</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>auto</replaceable></arg>
+    <arg choice='plain'>{ --status | --ready  }</arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>ipsec</command>
@@ -94,6 +100,7 @@ is
 <option>--add</option>,
 <option>--delete</option>,
 <option>--replace</option>,
+<option>--start</option>,
 <option>--up</option>,
 <option>--down</option>,
 <option>--route</option>,
@@ -136,6 +143,13 @@ internal specification to match an external one.
 (Note that a
 <option>--rereadsecrets</option>
 may also be needed.)
+The
+<option>--start</option>
+operation is equivalent to running first with
+<option>--add</option>
+and then with
+<option>--up</option>, causing same effect as connection configuration option
+<option>auto=start</option>.
 The
 <option>--rereadgroups</option>
 operation causes any changes to the policy group files to take effect

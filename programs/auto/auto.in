@@ -16,8 +16,8 @@
 
 me='ipsec auto'
 usage="Usage:
-	${me} [--showonly] [--asynchronous] --up connectionname
-	${me} [--showonly] --{add|delete|replace|down} connectionname
+	${me} [--showonly] [--asynchronous] --{up|down} connectionname
+	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
 	${me} [--showonly] --{rereadcacerts|rereadcrls|rereadall}
@@ -65,7 +65,7 @@ do
 	--verbose)
 	    verbose=" --verbose "
 	    ;;
-	--up|--down|--add|--delete|--replace|--route|--unroute)
+	--up|--down|--add|--delete|--replace|--start|--route|--unroute)
 	    if [ " ${op}" != " " ]; then
 		echo "${usage}" >&2
 		exit 2
@@ -103,7 +103,8 @@ done
 
 names=
 case "${op}$#:$1:$2" in
-    2:*:up|2:*:down|2:*:add|2:*:delete|2:*:replace|2:*:route|2:*:unroute)
+    2:*:up|2:*:down|2:*:add|2:*:delete|2:*:replace|2:*:start|\
+    2:*:route|2:*:unroute)
 	echo "${me}: warning: obsolete command syntax used" >&2
 	names="$1"
 	op="--$2"
@@ -187,7 +188,12 @@ case "${op}" in
 	exit
 	;;
     --up)
-	${showonly} ipsec whack $async --name ${names} --initiate
+	${showonly} ipsec whack ${async} --name ${names} --initiate
+	exit
+	;;
+    --start)
+	${showonly} ipsec addconn ${verbose} ${config} ${names}
+	${showonly} ipsec whack ${async} --name ${names} --initiate
 	exit
 	;;
     --down)
