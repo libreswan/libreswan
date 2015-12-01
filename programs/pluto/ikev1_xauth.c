@@ -2541,11 +2541,14 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 		switch (attr.isaat_af_type) {
 		case XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
-			DBG_log("Received Cisco XAUTH status");
 			got_status = TRUE;
 			switch (attr.isaat_lv) {
 			case XAUTH_STATUS_FAIL:
+				libreswan_log("Received Cisco XAUTH status: FAIL");
+				status = attr.isaat_lv;
+				break;
 			case XAUTH_STATUS_OK:
+				DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH status: OK"));
 				status = attr.isaat_lv;
 				break;
 			default:
@@ -2635,6 +2638,9 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 			return STF_OK;
 		} else {
+			libreswan_log("xauth: xauth_client_ackstatus() returned %s",
+				enum_name(&stfstatus_name, stat));
+			libreswan_log("XAUTH: aborting entire IKE Exchange");
 			return STF_FATAL;
 		}
 	}
