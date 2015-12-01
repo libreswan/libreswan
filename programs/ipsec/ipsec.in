@@ -233,10 +233,14 @@ case "${1}" in
     initnss|--initnss|checknss|--checknss)
 	if [ -n "${2}" ]; then
 	    # A lot of nss commands use -d or --configdir to specify
-	    # NSS db location
-	    if [ "${2}" = "-d" -o "${2}" = "--configdir" ]; then
+	    # NSS db location. We use --ipsecdir so we are consistent
+	    # with pluto options
+	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
+		"${2}" = "--ipsecdir" ]
+	    then
 		IPSEC_NSSDIR="${3}"
-            else
+	    else
 		IPSEC_NSSDIR="${2}"
 	    fi
 	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
