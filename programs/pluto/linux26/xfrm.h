@@ -223,6 +223,11 @@ enum xfrm_attr_type_t {
 
 #define XFRMA_MAX (__XFRMA_MAX - 1)
 };
+struct xfrm_mark {
+   __u32 v;
+   __u32 m;
+};
+
 
 struct xfrm_usersa_info {
 	struct xfrm_selector sel;

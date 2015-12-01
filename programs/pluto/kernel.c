@@ -445,9 +445,9 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	}
 
 	connmarkstr[0] = '\0';
-	if (c->conn_mark != NULL) {
-		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK=%s ",
-			c->conn_mark);
+	if (c->sa_mark.val != 0) {
+		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK=%"PRIu32"/%#010x ",
+			c->sa_mark.val, c->sa_mark.mask);
 	}
 
 	srcip_str[0] = '\0';
@@ -1095,6 +1095,7 @@ bool raw_eroute(const ip_address *this_host,
 		       const struct pfkey_proto_info *proto_info,
 		       deltatime_t use_lifetime,
 		       uint32_t sa_priority,
+		       const struct sa_mark *sa_mark,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1153,7 +1154,7 @@ bool raw_eroute(const ip_address *this_host,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, sa_priority, op, text_said
+					use_lifetime, sa_priority, sa_mark, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 					, policy_label
 #endif
@@ -1277,6 +1278,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			       ET_INT, null_proto_info,
 			       deltatime(SHUNT_PATIENCE),
 			       DEFAULT_IPSEC_SA_PRIORITY,
+			       NULL, /* sa_mark */
 			       op, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
@@ -1357,6 +1359,7 @@ bool eroute_connection(const struct spd_route *sr,
 		       int sa_proto, enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       uint32_t sa_priority,
+		       const struct sa_mark *sa_mark,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
 		       , const char *policy_label
@@ -1381,7 +1384,7 @@ bool eroute_connection(const struct spd_route *sr,
 			  esatype,
 			  proto_info,
 			  deltatime(0),
-			  sa_priority, op, buf2
+			  sa_priority, sa_mark, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -1465,6 +1468,7 @@ bool assign_holdpass(const struct connection *c,
 					       SA_INT, ET_INT,
 					       null_proto_info,
 					       DEFAULT_IPSEC_SA_PRIORITY,
+					       NULL,
 					       op,
 					       reason
 #ifdef HAVE_LABELED_IPSEC
@@ -2290,6 +2294,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				  proto_info,			/* " */
 				  deltatime(0),			/* lifetime */
 				  c->sa_priority,		/* IPsec SA prio */
+				  &c->sa_mark,			/* IPsec SA mark mask */
 				  ERO_ADD_INBOUND,		/* op */
 				  "add inbound"			/* opname */
 #ifdef HAVE_LABELED_IPSEC
@@ -2375,7 +2380,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
 				  null_proto_info,
 				  deltatime(0),
-				  c->sa_priority,
+				  c->sa_priority, &c->sa_mark,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
@@ -2997,6 +3002,7 @@ bool route_and_eroute(struct connection *c,
 						  null_proto_info,
 						  deltatime(SHUNT_PATIENCE),
 						  DEFAULT_IPSEC_SA_PRIORITY,
+						  NULL,
 						  ERO_REPLACE, "restore"
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* bare shunt are not associated with any connection so no security label*/

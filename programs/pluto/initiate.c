@@ -925,6 +925,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					ET_INT, null_proto_info,
 					deltatime(SHUNT_PATIENCE),
 					DEFAULT_IPSEC_SA_PRIORITY,
+					NULL,
 					ERO_ADD, addwidemsg
 	#ifdef HAVE_LABELED_IPSEC
 					, NULL

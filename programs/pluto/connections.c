@@ -305,7 +305,6 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
 	pfreeany(c->modecfg_banner);
-	pfreeany(c->conn_mark);
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
 #endif
@@ -772,8 +771,6 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domain");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-	c->conn_mark = clone_str(c->conn_mark,
-				"connection conn_mark");
 #ifdef HAVE_LABELED_IPSEC
 	c->policy_label = clone_str(c->policy_label,
 				    "connection policy_label");
@@ -1382,7 +1379,29 @@ void add_connection(const struct whack_message *wm)
 		c->modecfg_dns2 = wm->modecfg_dns2;
 		c->modecfg_domain = wm->modecfg_domain;
 		c->modecfg_banner = wm->modecfg_banner;
-		c->conn_mark = wm->conn_mark;
+
+		/*
+		 * parse mark and mask values form the mark/mask string
+		 * acceptable string formats are
+		 * (<int>|<hex>)[/ <int>| <hex>]
+		 * examples:
+		 *   10
+		 *   10/0xffffffff
+		 *   0xA/0xFFFFFFFF
+		 *
+		 * defaults:
+		 *  if mark is provided and mask is not mask will default to 0xFFFFFFFF
+		 *  if nothing is provided mark and mask are set to 0;
+		 */
+		if (wm->conn_mark != NULL) {
+			char *mask_start = strstr(wm->conn_mark, "/");
+
+			c->sa_mark.val = strtol(wm->conn_mark, &mask_start, 0);
+			if (mask_start != wm->conn_mark && *mask_start == '/')
+				c->sa_mark.mask = strtol(mask_start + 1, NULL, 0);
+			else
+				c->sa_mark.mask = 0xffffffff;
+		}
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -2314,6 +2333,17 @@ struct connection *route_owner(struct connection *c,
 			if (compatible_overlapping_connections(c, d))
 				continue;
 #endif
+
+		/*
+		 * allow policies different by mark/mask
+		 */
+		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x -- conn %s mark %"PRIu32"/%#010x",
+			c->name,
+			c->sa_mark.val, c->sa_mark.mask,
+			d->name,
+			d->sa_mark.val, d->sa_mark.mask));
+		if ((c->sa_mark.val & c->sa_mark.mask) != (d->sa_mark.val & d->sa_mark.mask))
+			continue;
 
 		struct spd_route *srd;
 
@@ -3677,6 +3707,7 @@ void show_one_connection(const struct connection *c)
 	char mtustr[8];
 	char sapriostr[13];
 	char nflogstr[8];
+	char markstr[2 * strlen("0xffffffff") + strlen("/")];
 
 	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
 
@@ -3767,6 +3798,12 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(nflogstr, "unset");
 
+	if (c->sa_mark.val != 0)
+		snprintf(markstr, sizeof(markstr), "%"PRIu32"/%#010x",
+			c->sa_mark.val, c->sa_mark.mask);
+	else
+		strcpy(markstr, "unset");
+
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s; mark: %s;",
@@ -3774,8 +3811,7 @@ void show_one_connection(const struct connection *c)
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr, sapriostr, nflogstr,
-		  (c->conn_mark == NULL) ? "unset" : c->conn_mark
+		  mtustr, sapriostr, nflogstr, markstr
 	);
 
 	/* slightly complicated stuff to avoid extra crap */

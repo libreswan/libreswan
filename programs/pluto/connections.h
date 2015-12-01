@@ -193,6 +193,11 @@ struct spd_route {
 	reqid_t reqid;
 };
 
+struct sa_mark {
+	uint32_t val;
+	uint32_t mask;
+};
+
 struct connection {
 	char *name;
 	char *connalias;
@@ -205,6 +210,7 @@ struct connection {
 	uint32_t sa_priority;
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */
+	struct sa_mark sa_mark; /* contains a MARK values and MASK value for IPsec SA */
 	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
@@ -295,13 +301,14 @@ struct connection {
 	char *cisco_dns_info; /* scratchpad for writing IP addresses */
 	char *modecfg_domain;
 	char *modecfg_banner;
-	char *conn_mark;
 
 	u_int8_t metric;	/* metric for tunnel routes */
 	u_int16_t connmtu;	/* mtu for tunnel routes */
 	u_int32_t statsval;	/* track what we have told statsd */
 	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 };
+
+extern void parse_mark_mask(const struct connection* c,int * mark, int * mask);
 
 #define oriented(c) ((c).interface != NULL)
 extern bool orient(struct connection *c);

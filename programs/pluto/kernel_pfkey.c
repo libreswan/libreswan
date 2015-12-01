@@ -861,6 +861,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const struct pfkey_proto_info *proto_info UNUSED,
 		      deltatime_t use_lifetime UNUSED,
 		      uint32_t sa_priority UNUSED,
+		      const struct sa_mark *sa_mark UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -1357,7 +1358,9 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority, op, buf2
+					c->sa_priority,
+					&c->sa_mark,
+					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
 #endif
@@ -1447,7 +1450,7 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 DEFAULT_IPSEC_SA_PRIORITY, op, opname
+				 DEFAULT_IPSEC_SA_PRIORITY, NULL, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				 , NULL
 #endif

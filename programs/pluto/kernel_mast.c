@@ -467,6 +467,7 @@ static bool mast_raw_eroute(const ip_address *this_host,
 			    const struct pfkey_proto_info *proto_info,
 			    deltatime_t use_lifetime,
 			    uint32_t sa_priority,
+			    const struct sa_mark *sa_mark,
 			    enum pluto_sadb_operations op,
 			    const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -478,7 +479,7 @@ static bool mast_raw_eroute(const ip_address *this_host,
 	DBG_log("mast_raw_eroute called op=%u said=%s", op, text_said);
 	return pfkey_raw_eroute(this_host, this_client, that_host, that_client,
 				spi, sa_proto, transport_proto, satype,
-				proto_info, use_lifetime, sa_priority, op, text_said
+				proto_info, use_lifetime, sa_priority, sa_mark, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 				, policy_label
 #endif
