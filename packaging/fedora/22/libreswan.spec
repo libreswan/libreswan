@@ -147,7 +147,7 @@ make \
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
-install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
+install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
@@ -213,7 +213,7 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0755,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
