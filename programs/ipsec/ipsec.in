@@ -341,7 +341,6 @@ case "${1}" in
 	fi
 
 	echo "Initializing NSS database"
-	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
 	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
