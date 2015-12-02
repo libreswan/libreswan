@@ -133,7 +133,7 @@ west #
 000 "ipv4-psk-ikev2-transport":   policy_label:unset;
 000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "ipv4-psk-ikev2-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "ipv4-psk-ikev2-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "ipv4-psk-ikev2-transport":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
