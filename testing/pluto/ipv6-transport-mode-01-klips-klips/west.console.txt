@@ -202,8 +202,8 @@ west #
 west NOW
 2001:db8:1:2::45/128 -> 2001:db8:1:2::23/128 => esp0x43952d72@2001:db8:1:2::23  (8)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x41aba629@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x4a3edae1b3c687e351d7e4917b1f45d0 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
-esp0x43952d72@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0xb7c52f7d337a0b4e12162af1005eb234 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)=bytes(624,0,0) idle=12 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
+esp0x41aba629@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x4a3edae1b3c687e351d7e4917b1f45d0 ooowin=32 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
+esp0x43952d72@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0xb7c52f7d337a0b4e12162af1005eb234 ooowin=32 seq=4 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)=bytes(624,0,0) idle=12 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

@@ -33,8 +33,8 @@ east NOW
 0.0.0.0/0          -> 192.0.2.100/32     => tun0xIPIP@192.1.2.254 esp0xESPSPI@192.1.2.254
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.254 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.254 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.2.254 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
 tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.254 policy=192.0.2.100/32->0.0.0.0/0 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

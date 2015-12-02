@@ -69,8 +69,8 @@ west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=1
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32  alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=1
 tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=nonesp natsport=4500 natdport=4500   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
@@ -102,8 +102,8 @@ west #
 west Fri Sep  6 15:36:48 EDT 2013
 192.0.1.0/24       -> 192.0.2.0/24       => tun0x1000@192.1.2.23 esp0xba622cda@192.1.2.23  (4)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x9c99b5ad@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xd8cb4788266b61fa8e47337f3eea01fc ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(336,0,0)addtime(99,0,0)usetime(99,0,0)packets
-esp0xba622cda@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xf75b5fb2be5e2a8a034c95137ab581e8 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(608,0,0)addtime(99,0,0)usetime(99,0,0)packets(4,0,0)
+esp0x9c99b5ad@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xd8cb4788266b61fa8e47337f3eea01fc ooowin=32 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(336,0,0)addtime(99,0,0)usetime(99,0,0)packets
+esp0xba622cda@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xf75b5fb2be5e2a8a034c95137ab581e8 ooowin=32 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(608,0,0)addtime(99,0,0)usetime(99,0,0)packets(4,0,0)
 tun0x1000@192.1.2.23 IPIP: dir=out src=192.1.2.45 life(c,s,h)=bytes(416,0,0)addtime(99,0,0)usetime(99,0,0)packets(4,0,0) idle=96 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
 tun0x1001@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> life(c,s,h)=bytes(336,0,0)addtime(99,0,0)usetime(99,0,0)packets(4,0,0) idle=96 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES

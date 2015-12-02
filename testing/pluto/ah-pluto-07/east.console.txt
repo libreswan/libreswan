@@ -38,10 +38,10 @@ east NOW
 192.0.2.111/32     -> 192.0.1.111/32     => tun0xIPIP@192.1.2.45 ah0xAHSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-ah0xSPISPI@192.1.2.45 AH_HMAC_SHA1: dir=out src=192.1.2.23 ooowin=64  alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+ah0xSPISPI@192.1.2.45 AH_HMAC_SHA1: dir=out src=192.1.2.23 ooowin=32  alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-ah0xSPISPI@192.1.2.45 AH_HMAC_MD5: dir=out src=192.1.2.23 ooowin=64  alen=128 aklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-ah0xSPISPI@192.1.2.23 AH_HMAC_SHA1: dir=in  src=192.1.2.45 ooowin=64   alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+ah0xSPISPI@192.1.2.45 AH_HMAC_MD5: dir=out src=192.1.2.23 ooowin=32  alen=128 aklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+ah0xSPISPI@192.1.2.23 AH_HMAC_SHA1: dir=in  src=192.1.2.45 ooowin=32   alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

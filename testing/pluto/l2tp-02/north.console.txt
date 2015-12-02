@@ -74,7 +74,7 @@ north NOW
 192.1.3.33/32:1701 -> 192.1.2.23/32:1701 => esp0xESPSPI@192.1.2.23:17
 ipsec0->eth1 mtu=16260(9999)->1500
 
-esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
 192.0.1.0/24 via 192.1.3.254 dev eth1 
@@ -121,7 +121,7 @@ north NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 
 
-esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
 192.0.1.0/24 via 192.1.3.254 dev eth1 
