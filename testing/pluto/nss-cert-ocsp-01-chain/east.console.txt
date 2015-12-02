@@ -17,7 +17,7 @@ east #
 000 "nss-cert-ocsp":   labeled_ipsec:no;
 000 "nss-cert-ocsp":   policy_label:unset;
 000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=testing@libreswan.org'...'%any'
-000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;

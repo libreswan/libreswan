@@ -37,7 +37,7 @@ east #
 000 "westnet-eastnet-x509-cr":   labeled_ipsec:no;
 000 "westnet-eastnet-x509-cr":   policy_label:unset;
 000 "westnet-eastnet-x509-cr":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "westnet-eastnet-x509-cr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-x509-cr":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-x509-cr":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-x509-cr":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;

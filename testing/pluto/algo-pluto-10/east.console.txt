@@ -33,7 +33,7 @@ east #
 000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-aes256":   labeled_ipsec:no;
 000 "westnet-eastnet-aes256":   policy_label:unset;
-000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-aes256":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-aes256":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-aes256":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
