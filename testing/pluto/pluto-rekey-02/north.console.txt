@@ -121,7 +121,7 @@ north #
 000 "northnet-eastnet-nat":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "northnet-eastnet-nat":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "northnet-eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
-000 "northnet-eastnet-nat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "northnet-eastnet-nat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "northnet-eastnet-nat":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "northnet-eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  

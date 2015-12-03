@@ -109,7 +109,7 @@ east #
 000 "westnet-eastnet-esp-null-alg":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-esp-null-alg":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
-000 "westnet-eastnet-esp-null-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "westnet-eastnet-esp-null-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-esp-null-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-esp-null-alg":   ESP algorithms wanted: NULL(11)_000-SHA1(2)_000
 000 "westnet-eastnet-esp-null-alg":   ESP algorithms loaded: NULL(11)_000-SHA1(2)_000
