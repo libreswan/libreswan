@@ -86,10 +86,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	/* config setup */
 	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
-	cfg->setup.options[KBF_HIDETOS]  = TRUE;
-	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
-	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = TRUE;
-	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND]  = TRUE;
+	cfg->setup.options[KBF_HIDETOS] = TRUE;
+	cfg->setup.options[KBF_PLUTORESTARTONCRASH] = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
@@ -154,10 +154,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
 	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
 
-	cfg->conn_default.options[KBF_SALIFETIME]  = SA_LIFE_DURATION_DEFAULT;
+	cfg->conn_default.options[KBF_SALIFETIME] = SA_LIFE_DURATION_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYMARGIN] =
 		SA_REPLACEMENT_MARGIN_DEFAULT;
-	cfg->conn_default.options[KBF_REKEYFUZZ]   =
+	cfg->conn_default.options[KBF_REKEYFUZZ] =
 		SA_REPLACEMENT_FUZZ_DEFAULT;
 
 	/* should be stack specific but lib/ can't check kernel_ops->replay_window */
@@ -171,7 +171,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.left.addr_family = AF_INET;
 	anyaddr(AF_INET, &cfg->conn_default.left.addr);
-	cfg->conn_default.left.nexttype  = KH_NOTSET;
+	cfg->conn_default.left.nexttype = KH_NOTSET;
 	anyaddr(AF_INET, &cfg->conn_default.left.nexthop);
 
 	cfg->conn_default.right.addr_family = AF_INET;
@@ -215,23 +215,16 @@ static bool error_append(char **perr, const char *fmt, ...)
 }
 
 #define KW_POLICY_FLAG(val, fl) { \
-		if (conn->options_set[val]) { \
-			if (conn->options[val]) { \
-				conn->policy |= (fl); \
-			} else { \
-				conn->policy &= ~(fl); \
-			} \
-		} \
+		if (conn->options_set[val]) \
+			conn->policy = (conn->policy & ~(fl)) | \
+				(conn->options[val] ? (fl) : LEMPTY); \
 	}
 
 #define KW_POLICY_NEGATIVE_FLAG(val, fl) { \
 		if (conn->options_set[val]) { \
-			if (!conn->options[val]) { \
-				conn->policy |= (fl); \
-			} else { \
-				conn->policy &= ~(fl); \
-			} \
-		}\
+			conn->policy = (conn->policy & ~(fl)) | \
+				(!conn->options[val] ? (fl) : LEMPTY); \
+		} \
 	}
 
 #define FREE_LIST(v) { if ((v) != NULL) { free_list(v); (v) = NULL; } }
@@ -257,7 +250,7 @@ static void free_list(char **list)
  * @param value string to be broken up at spaces, creating strings for list
  * @return new_list (pointer to NULL-terminated array of pointers to strings)
  */
-static char **new_list(char *value)
+static char **new_list(const char *value)
 {
 	char *val, *b, *e, *end, **nlist;
 	int count;
@@ -304,10 +297,10 @@ static char **new_list(char *value)
  * @return bool TRUE if unsuccessfull
  */
 static bool load_setup(struct starter_config *cfg,
-		      struct config_parsed *cfgp)
+		       const struct config_parsed *cfgp)
 {
 	bool err = FALSE;
-	struct kw_list *kw;
+	const struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw; kw = kw->next) {
 
@@ -372,8 +365,8 @@ static bool load_setup(struct starter_config *cfg,
 				    kw->keyword.keydef->keyname);
 			break;
 		default:
-		    /* NEVER HAPPENS */
-		    break;
+			/* NEVER HAPPENS */
+			break;
 		}
 	}
 
@@ -428,7 +421,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 	/* validate the KSCF_IP/KNCF_IP */
 	switch (end->addrtype) {
 	case KH_ANY:
-		anyaddr(family, &(end->addr));
+		anyaddr(family, &end->addr);
 		break;
 
 	case KH_IFACE:
@@ -452,7 +445,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		}
 
 		er = ttoaddr_num(end->strings[KNCF_IP], 0, family,
-				    &(end->addr));
+				&end->addr);
 		if (er != NULL) {
 			/* not numeric, so set the type to the string type */
 			end->addrtype = KH_IPHOSTNAME;
@@ -507,7 +500,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, AF_UNSPEC, &(end->subnet));
+			er = ttosubnet(value, 0, AF_UNSPEC, &end->subnet);
 		}
 		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
@@ -526,22 +519,22 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-				      &(end->nexthop)) != NULL) {
+				      &end->nexthop) != NULL) {
 #ifdef DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
 				if (!unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET,
-						&(end->nexthop)) &&
+						&end->nexthop) &&
 				    !unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET6,
-						&(end->nexthop)))
+						&end->nexthop))
 					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
 				er = ttoaddr(value, 0, AF_UNSPEC,
-						&(end->nexthop));
+						&end->nexthop);
 				if (er != NULL)
 					ERR_FOUND("bad value for %snexthop=%s [%s]",
 						leftright, value,
@@ -605,29 +598,29 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		char *value = end->strings[KSCF_SOURCEIP];
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &(end->sourceip)) != NULL &&
+			      &end->sourceip) != NULL &&
 		    tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &(end->sourceip)) != NULL) {
+			      &end->sourceip) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
 			if (!unbound_resolve(dnsctx, value,
 					strlen(value), AF_INET,
-					&(end->sourceip)) &&
+					&end->sourceip) &&
 			    !unbound_resolve(dnsctx, value,
 					strlen(value), AF_INET6,
-					&(end->sourceip)))
+					&end->sourceip))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
 #else
-			er = ttoaddr(value, 0, AF_UNSPEC, &(end->sourceip));
+			er = ttoaddr(value, 0, AF_UNSPEC, &end->sourceip);
 			if (er != NULL)
 				ERR_FOUND("bad addr %ssourceip=%s [%s]",
 					  leftright, value, er);
 #endif
 		} else {
-			er = tnatoaddr(value, 0, AF_UNSPEC, &(end->sourceip));
+			er = tnatoaddr(value, 0, AF_UNSPEC, &end->sourceip);
 			if (er != NULL)
 				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
 					leftright, value, er);
@@ -675,7 +668,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
 				leftright, leftright);
 		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  %saddresspool set to: %s",
+			    "connection's %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
 		er = ttorange(addresspool, 0, AF_INET, &end->pool_range, TRUE);
@@ -689,8 +682,8 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		conn_st->policy |= POLICY_XAUTH;
 
 	/*
-	   KSCF_SUBNETWITHIN    --- not sure what to do with it.
-	   KSCF_SOURCEIP     = 16,
+	 * KSCF_SUBNETWITHIN    --- not sure what to do with it.
+	 * KSCF_SOURCEIP = 16,
 	 */
 
 	if (err)
@@ -712,23 +705,22 @@ static bool validate_end(struct ub_ctx *dnsctx ,
  * @return bool TRUE if unsuccessfull
  */
 static bool translate_conn(struct starter_conn *conn,
-		    struct section_list *sl,
+		    const struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *error)
 {
 	bool err = FALSE;
-	struct kw_list *kw;
+	const struct kw_list *kw;
 
 	for (kw = sl->kw; kw; kw = kw->next) {
 		ksf *the_strings = &conn->strings;
 		str_set *set_strings = &conn->strings_set;
 		knf *the_options = &conn->options;
 		int_set *set_options = &conn->options_set;
-		unsigned int field;
 
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
-			*error = (const char *)tmp_err;
+			*error = tmp_err;
 
 			snprintf(tmp_err, sizeof(tmp_err),
 				 "keyword '%s' is not valid in a conn (%s)\n",
@@ -738,20 +730,16 @@ static bool translate_conn(struct starter_conn *conn,
 		}
 
 		if (kw->keyword.keydef->validity & kv_leftright) {
-			if (kw->keyword.keyleft) {
-				the_strings = &conn->left.strings;
-				the_options = &conn->left.options;
-				set_strings = &conn->left.strings_set;
-				set_options = &conn->left.options_set;
-			} else {
-				the_strings = &conn->right.strings;
-				the_options = &conn->right.options;
-				set_strings = &conn->right.strings_set;
-				set_options = &conn->right.options_set;
-			}
+			struct starter_end *this = kw->keyword.keyleft ?
+				&conn->left : &conn->right;
+
+			the_strings = &this->strings;
+			the_options = &this->options;
+			set_strings = &this->strings_set;
+			set_options = &this->options_set;
 		}
 
-		field = kw->keyword.keydef->field;
+		unsigned int field = kw->keyword.keydef->field;
 
 #ifdef PARSER_TYPE_DEBUG
 		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
@@ -931,7 +919,7 @@ static void move_comment_list(struct starter_comments_list *to,
 }
 
 static bool load_conn_basic(struct starter_conn *conn,
-		    struct section_list *sl,
+		    const struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *perr)
 {
@@ -942,7 +930,7 @@ static bool load_conn_basic(struct starter_conn *conn,
 
 static bool load_conn(struct ub_ctx *dnsctx,
 		     struct starter_conn *conn,
-		     struct config_parsed *cfgp,
+		     const struct config_parsed *cfgp,
 		     struct section_list *sl,
 		     bool alsoprocessing,
 		     bool defaultconn,
@@ -1164,7 +1152,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
-	KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
+	KW_POLICY_FLAG(KBF_PFS, POLICY_PFS);
 
 	/* reset authby flags */
 	if (conn->options_set[KBF_AUTHBY]) {
@@ -1208,38 +1196,29 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
 		       POLICY_IKEV2_PAM_AUTHORIZE);
 
-	if (conn->strings_set[KSCF_ESP])
-		conn->esp = clone_str(conn->strings[KSCF_ESP],"KSCF_ESP");
+#	define str_to_conn(member, kscf) { \
+		if (conn->strings_set[kscf]) \
+			conn->member = clone_str(conn->strings[kscf], #kscf); \
+	}
+
+	str_to_conn(esp, KSCF_ESP);
 
 #ifdef HAVE_LABELED_IPSEC
-	if (conn->strings_set[KSCF_POLICY_LABEL])
-		conn->policy_label = clone_str(conn->strings[KSCF_POLICY_LABEL],"KSCF_POLICY_LABEL");
+	str_to_conn(policy_label, KSCF_POLICY_LABEL);
 	if (conn->policy_label != NULL)
-		starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
+		starter_log(LOG_LEVEL_DEBUG, "connection's policy label: %s",
 				conn->policy_label);
 #endif
 
-	if (conn->strings_set[KSCF_IKE])
-		conn->ike = clone_str(conn->strings[KSCF_IKE],"KSCF_IKE");
+	str_to_conn(ike, KSCF_IKE);
+	str_to_conn(modecfg_dns1, KSCF_MODECFGDNS1);
+	str_to_conn(modecfg_dns2, KSCF_MODECFGDNS2);
+	str_to_conn(modecfg_domain, KSCF_MODECFGDOMAIN);
+	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
+	str_to_conn(conn_mark, KSCF_CONN_MARK);
+	str_to_conn(connalias, KSCF_CONNALIAS);
 
-	if (conn->strings_set[KSCF_MODECFGDNS1]) {
-		conn->modecfg_dns1 = clone_str(conn->strings[KSCF_MODECFGDNS1],"KSCF_MODECFGDNS1");
-	}
-	if (conn->strings_set[KSCF_MODECFGDNS2]) {
-		conn->modecfg_dns2 = clone_str(conn->strings[KSCF_MODECFGDNS2], "KSCF_MODECFGDNS2");
-	}
-	if (conn->strings_set[KSCF_MODECFGDOMAIN]) {
-		conn->modecfg_domain = clone_str(conn->strings[KSCF_MODECFGDOMAIN],"KSCF_MODECFGDOMAIN");
-	}
-	if (conn->strings_set[KSCF_MODECFGBANNER]) {
-		conn->modecfg_banner = clone_str(conn->strings[KSCF_MODECFGBANNER],"KSCF_MODECFGBANNER");
-	}
-	if (conn->strings_set[KSCF_CONN_MARK]) {
-		conn->conn_mark = clone_str(conn->strings[KSCF_CONN_MARK], "KSCF_CONN_MARK");
-	}
-
-	if (conn->strings_set[KSCF_CONNALIAS])
-		conn->connalias = clone_str(conn->strings[KSCF_CONNALIAS],"KSCF_CONNALIAS");
+#	undef str_to_conn
 
 	if (conn->options_set[KBF_PHASE2]) {
 		conn->policy &= ~(POLICY_AUTHENTICATE | POLICY_ENCRYPT);
@@ -1308,7 +1287,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
-	err |= validate_end(dnsctx, conn, &conn->left,  "left",  resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->left, "left", resolvip, perr);
 	err |= validate_end(dnsctx, conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
@@ -1328,7 +1307,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 }
 
 static void conn_default(struct starter_conn *conn,
-		  struct starter_conn *def)
+		  const struct starter_conn *def)
 {
 	int i;
 
@@ -1375,11 +1354,9 @@ static void conn_default(struct starter_conn *conn,
 	conn->policy = def->policy;
 }
 
-struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name)
+struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name)
 {
-	struct starter_conn *conn;
-
-	conn = (struct starter_conn *)alloc_bytes(sizeof(struct starter_conn),"add_conn starter_conn");
+	struct starter_conn *conn = alloc_bytes(sizeof(struct starter_conn),"add_conn starter_conn");
 
 	conn_default(conn, &cfg->conn_default);
 	conn->name = clone_str(name, "add conn name");
@@ -1394,20 +1371,17 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name)
 
 static bool init_load_conn(struct ub_ctx *dnsctx,
 		   struct starter_config *cfg,
-		   struct config_parsed *cfgp,
+		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
 		   bool defaultconn,
 		   bool resolvip,
 		   err_t *perr)
 {
-	bool connerr;
-	struct starter_conn *conn;
-
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
-	conn = alloc_add_conn(cfg, sconn->name);
+	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
+	bool connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
 			    defaultconn, resolvip, perr);
 
 	if (connerr) {
@@ -1425,14 +1399,11 @@ struct starter_config *confread_load(const char *file,
 				     const char *ctlbase,
 				     bool setuponly)
 {
-	struct starter_config *cfg = NULL;
-	struct config_parsed *cfgp;
-	struct section_list *sconn;
 	bool err = FALSE;
 	bool connerr;
 
 #ifdef DNSSEC
-	struct ub_ctx *dnsctx =  ub_ctx_create();
+	struct ub_ctx *dnsctx = ub_ctx_create();
 	unbound_init(dnsctx);
 #else
 	struct ub_ctx *dnsctx = NULL;
@@ -1440,18 +1411,20 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	cfgp = parser_load_conf(file, perr);
-	if (!cfgp)
+	struct config_parsed *cfgp = parser_load_conf(file, perr);
+
+	if (cfgp == NULL)
 		return NULL;
 
-	cfg = (struct starter_config *)alloc_bytes(sizeof(struct starter_config),"starter_config cfg");
+	struct starter_config *cfg =
+		alloc_bytes(sizeof(struct starter_config), "starter_config cfg");
 
 	/**
 	 * Set default values
 	 */
 	ipsecconf_default_values(cfg);
 
-	if (ctlbase) {
+	if (ctlbase != NULL) {
 		pfree(cfg->ctlbase);
 		cfg->ctlbase = clone_str(ctlbase, "control socket");
 	}
@@ -1472,6 +1445,8 @@ struct starter_config *confread_load(const char *file,
 		 * Find %default and %oedefault conn
 		 *
 		 */
+		struct section_list *sconn;
+
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
@@ -1567,19 +1542,21 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	int i;
-	struct starter_conn *conn, *c;
-
 	FREE_LIST(cfg->setup.interfaces);
 	pfree(cfg->ctlbase);
+
+	int i;
 
 	for (i = 0; i < KSF_MAX; i++)
 		pfreeany(cfg->setup.strings[i]);
 
-	confread_free_conn(&(cfg->conn_default));
+	confread_free_conn(&cfg->conn_default);
+
+	struct starter_conn *conn;
 
 	for (conn = cfg->conns.tqh_first; conn != NULL; ) {
-		c = conn;
+		struct starter_conn *c = conn;
+
 		conn = conn->link.tqe_next;
 		confread_free_conn(c);
 		pfree(c);

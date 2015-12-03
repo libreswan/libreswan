@@ -136,7 +136,7 @@ extern struct starter_config *confread_load(const char *file,
 					    const char *ctlbase,
 					    bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
-					   char *name);
+					   const char *name);
 void confread_free(struct starter_config *cfg);
 
 void ipsecconf_default_values(struct starter_config *cfg);
