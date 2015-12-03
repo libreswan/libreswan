@@ -1,5 +1,6 @@
 # Makefile for miscelaneous programs
 # Copyright (C) 2002  Michael Richardson	<mcr@freeswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,8 +14,11 @@
 
 PROGRAM=ipsec
 PROGRAMDIR=${SBINDIR}
-# Do not prefix man page with "ipsec_"
+# Do not prefix $(PROGRAM) man page with "ipsec_"
 MANPROGPREFIX=
+
+MANPAGES += ipsec_initnss.8
+MANPAGES += ipsec_import.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
