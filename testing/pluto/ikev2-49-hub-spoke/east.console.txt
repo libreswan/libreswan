@@ -108,7 +108,7 @@ east #
 000 "northnet-westnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "northnet-westnet-ipv4-psk":   labeled_ipsec:no;
 000 "northnet-westnet-ipv4-psk":   policy_label:unset;
-000 "northnet-westnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet-westnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "northnet-westnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "northnet-westnet-ipv4-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "northnet-westnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -121,7 +121,7 @@ east #
 000 "westnet-northnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-northnet-ipv4-psk":   labeled_ipsec:no;
 000 "westnet-northnet-ipv4-psk":   policy_label:unset;
-000 "westnet-northnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-northnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-northnet-ipv4-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "westnet-northnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;

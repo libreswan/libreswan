@@ -131,7 +131,7 @@ road #
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -145,7 +145,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -287,7 +287,7 @@ road #
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -301,7 +301,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW;
