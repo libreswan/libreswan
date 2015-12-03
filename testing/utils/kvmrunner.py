@@ -77,6 +77,8 @@ def main():
                               "; default is to select not-started tests"))
     parser.add_argument("--dry-run", "-n", action="store_true")
     parser.add_argument("--verbose", "-v", action="count", default=0)
+    parser.add_argument("--output-directory", default=None, metavar="DIRECTORY",
+                        help="save test results as %(metavar)/<test> instead of <test>/OUTPUT")
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help=("Either a testsuite directory or"
                               " a list of test directories"))
@@ -92,6 +94,7 @@ def main():
     logger.info("Options:")
     logger.info("  retry: %s", args.retry or "0 (default)")
     logger.info("  dry-run: %s", args.dry_run)
+    logger.info("  output-directory: %s", args.output_directory or "<testsuite>/<test>/OUTPUT (default)")
     logger.info("  directories: %s", args.directories)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
@@ -99,6 +102,7 @@ def main():
     logutil.log_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories,
+                                              testsuite_output_directory=args.output_directory,
                                               log_level=logutil.INFO)
     if not tests:
         logger.error("test or testsuite directory invalid: %s", args.directory)
