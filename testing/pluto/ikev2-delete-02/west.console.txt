@@ -127,7 +127,7 @@ west #
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; send_vendorid:no;
+000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
@@ -242,7 +242,7 @@ west #
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; send_vendorid:no;
+000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
@@ -358,7 +358,7 @@ west #
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; send_vendorid:no;
+000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
@@ -465,7 +465,7 @@ west #
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; replay_window: 32; replay_window: 32; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; fake_strongswan:no; send_vendorid:no;
+000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
