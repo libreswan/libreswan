@@ -99,20 +99,35 @@ The following are querks in the build system:
 - eliminate Makefile.ver: this is really messy as scripts do all sorts
   of wierd and wonderful stuff with it.
 
+- make building individual programs configurable
+
+- add a minimal config for small systems
+
 The following are querks inside of pluto:
 
 - log, as a separate line, the file's basename, line and function
 
 - enable -std=gnu99; hopefully just slog
 
+- switch to vfork
+
+The following are querks with /testing:
+
+- don't have /etc/ipsec.conf refer to /testing
+
+- don't have tests run scripts in /testing
+
+- write pluto logs to the current output directory and not
+  /testing/...
+
+- run ../../../testing/guestbin/swan-init (a relative path within the
+  current test tree), and not /testing/guestbin/swan-init
+
 The following are querks in the test infrastructure:
 
 - have *init.sh et.al. scripts always succeed.  This means that
   commands like ping that are expected to fail (demonstrating no
   conectivity) will need a "!" prefix so the failure is success.
-
-- run ../../../testing/guestbin/swan-init (a relative path within the
-  current test tree), and not /testing/guestbin/swan-init
 
 - support multiple run files (for instance run1east.sh, run2west.sh,
   ...); this will allow more complicated tests such as where west
@@ -123,13 +138,3 @@ The following are querks in the test infrastructure:
 - simplify fips check
 
 - eliminate test results "incomplete" and "bad"
-
-- switch to vfork
-
-- add a minimal config for small systems
-
-- make building individual programs configurable
-
-- don't have /etc/ipsec.conf refer to /testing
-
-- don't have tests run scripts in /testing
