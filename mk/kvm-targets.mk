@@ -97,8 +97,8 @@ kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
 KVM_TESTS = testing/pluto
 
-# "check" runs any test that has not yet passed (for instance, failed,
-# incomplete and not started).  This is probably the safest option.
+# "check" runs any test that has not yet passed (that is: failed,
+# incomplete, and not started).  This is probably the safest option.
 .PHONY: kvm-check kvm-check-good kvm-check-all
 kvm-check: kvm-check-good
 kvm-check-good: $(KVM_KEYS)
@@ -108,16 +108,16 @@ kvm-check-all: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
 	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" $(KVM_TESTS)
 
-# "test" runs tests that have not been started.  This unfortunately
-# means that an incomplete test isn't re-tried.
+# "test" runs tests regardless.  It is best used with the KVM_TESTS
+# varible.
 .PHONY: kvm-test-good kvm-test-all
 kvm-test: kvm-test-good
 kvm-test: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good"     $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good"     $(KVM_TESTS)
 kvm-test-all: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry 0 --test-result "good|wip" $(KVM_TESTS)
+	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good|wip" $(KVM_TESTS)
 
 # clean up
 .PHONY: kvm-clean-check clean-kvm-check kvm-clean-test clean-kvm-test
