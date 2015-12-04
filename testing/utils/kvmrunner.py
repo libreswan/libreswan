@@ -69,19 +69,13 @@ def main():
     # This argument's behaviour is overloaded; the shorter word "try"
     # is a python word.
     parser.add_argument("--retry", type=int, metavar="COUNT",
-                        help=("number of times a test should be attempted before giving up"
-                              " (tests are categorised as not-started (no OUTPUT directory), incomplete, failed, passed)"
-                              "; a negative %(metavar)s selects all tests"
-                              "; a zero %(metavar)s selects not-started tests"
-                              "; a positive %(metavar)s selects not-started, incomplete and failing tests"
-                              "; default is to select not-started tests"))
+                        help="number of times a test should be attempted before giving up (tests are categorised as not-started (no OUTPUT directory), incomplete, failed, passed); a negative %(metavar)s selects all tests; a zero %(metavar)s selects not-started tests; a positive %(metavar)s selects not-started, incomplete and failing tests; default is to select not-started tests")
     parser.add_argument("--dry-run", "-n", action="store_true")
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--output-directory", default=None, metavar="DIRECTORY",
-                        help="save test results as %(metavar)/<test> instead of <test>/OUTPUT")
+                        help="save test results as %(metavar)s/<test> instead of <test>/OUTPUT")
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help=("Either a testsuite directory or"
-                              " a list of test directories"))
+                        help="either a testsuite directory or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
     post.add_arguments(parser)
