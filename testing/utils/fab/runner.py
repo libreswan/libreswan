@@ -105,8 +105,7 @@ class TestDomain:
     def login(self):
         remote.login(self.domain, self.console)
         test_directory = remote.directory(self.domain, self.console,
-                                          self.test.directory,
-                                          default="/testing/pluto/" + self.test.name)
+                                          self.test.directory)
         self.logger.info("'cd' to %s", test_directory)
         self.console.chdir(test_directory)
 

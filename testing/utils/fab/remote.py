@@ -74,6 +74,7 @@ def mount_point(domain, console, device):
     return mount
 
 def directory(domain, console, directory, default=None):
+    directory = os.path.abspath(directory)
     for target, source in mounts(domain).items():
         if os.path.commonprefix([source, directory]) == source:
             # found a suitable mount point, now find were it is

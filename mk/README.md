@@ -117,9 +117,6 @@ The following are querks with /testing:
 
 - don't have tests run scripts in /testing
 
-- write pluto logs to the current output directory and not
-  /testing/...
-
 - run ../../../testing/guestbin/swan-init (a relative path within the
   current test tree), and not /testing/guestbin/swan-init
 
