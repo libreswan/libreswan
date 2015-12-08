@@ -1,2 +1,2 @@
-east and west send their entire certificate chains
+test connection switching of road warrior with certificate chain
 	pass
