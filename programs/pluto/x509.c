@@ -268,28 +268,26 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
 		*pathlen = (a.ptr == NULL) ? 0 : MAX_CA_PATH_LEN;
-		match = TRUE;
-		goto end;
+		return TRUE;
 	}
 
 	/* no CA a specified -> trust cannot be established */
 	if (a.ptr == NULL) {
 		*pathlen = MAX_CA_PATH_LEN;
-		goto end;
+		return FALSE;
 	}
 
 	*pathlen = 0;
 
 	/* CA a equals CA b -> we have a match */
 	if (same_dn_any_order(a, b)) {
-		match = TRUE;
-		goto end;
+		return TRUE;
 	}
 
 	handle = CERT_GetDefaultCertDB();
 	if (handle == NULL) {
 		libreswan_log("trusted_ca_nss handle failure");
-		goto end;
+		return FALSE;
 	}
 
 	/* CA a might be a subordinate CA of b */
@@ -322,7 +320,6 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		cacert = NULL;
 	}
 
-end:
 	DBG(DBG_X509 | DBG_CONTROLMORE,
 		DBG_log("%s: returning %s at pathlen %d", __FUNCTION__,
 			match ? "trusted":"untrusted", *pathlen));
