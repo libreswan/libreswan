@@ -196,7 +196,7 @@ clean-local-base: moduleclean
 #
 # Since "clean" is a recursive target and requires the existance of
 # $(OBJDIR), "distclean" does not depend on it.  If it did, "make
-# distclean" would have the querky behaviour of first creating
+# distclean" would have the quirky behaviour of first creating
 # $(OBJDIR) only to then delete it.
 distclean: clean-local-base module24clean module26clean
 	rm -f out.kpatch

@@ -63,7 +63,7 @@ sub-directory clean/build, that should work.
 TODO: a.k.a. what needs fixing
 ------------------------------
 
-The following are querks in the build system:
+The following are quirks in the build system:
 
 - stop library.mk switching to $(builddir)
 
@@ -103,7 +103,7 @@ The following are querks in the build system:
 
 - add a minimal config for small systems
 
-The following are querks inside of pluto:
+The following are quirks inside of pluto:
 
 - log, as a separate line, the file's basename, line and function
 
@@ -111,7 +111,7 @@ The following are querks inside of pluto:
 
 - switch to vfork
 
-The following are querks with /testing:
+The following are quirks with /testing:
 
 - don't have /etc/ipsec.conf refer to /testing
 
@@ -120,7 +120,7 @@ The following are querks with /testing:
 - run ../../../testing/guestbin/swan-init (a relative path within the
   current test tree), and not /testing/guestbin/swan-init
 
-The following are querks in the test infrastructure:
+The following are quirks in the test infrastructure:
 
 - have *init.sh et.al. scripts always succeed.  This means that
   commands like ping that are expected to fail (demonstrating no

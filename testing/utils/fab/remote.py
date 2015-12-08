@@ -42,7 +42,7 @@ def mounts(domain):
         match = re.compile("<source dir='([^']*)'").search(line)
         if match:
             source = match.group(1)
-            # Strip trailing "/" along with other potential querks
+            # Strip trailing "/" along with other potential quirks
             source = os.path.abspath(source)
             continue
         match = re.compile("<target dir='([^']*)'").search(line)
