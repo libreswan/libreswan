@@ -1,26 +1,27 @@
 /testing/guestbin/swan-prep
 road #
-cp policies/* /etc/ipsec.d/policies/
+ cp policies/* /etc/ipsec.d/policies/
 road #
-ipsec setup start
+ ipsec setup start
 Redirecting to: systemctl start ipsec.service
 road #
-# ensure for tests acquires expire before our failureshunt=2m
+ # ensure for tests acquires expire before our failureshunt=2m
 road #
-echo 30 > /proc/sys/net/core/xfrm_acq_expires
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
 road #
-/testing/pluto/bin/wait-until-pluto-started
+ /testing/pluto/bin/wait-until-pluto-started
 road #
-# give OE policies time to load
+ # give OE policies time to load
 road #
-sleep 5
+ sleep 5
 road #
-ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
 road #
-echo "initdone"
+ echo "initdone"
 initdone
 road #
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
@@ -29,11 +30,11 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
-# wait on OE retransmits and rekeying
+ # wait on OE retransmits and rekeying
 road #
-sleep 20
+ sleep 20
 road #
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -43,9 +44,9 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
-sleep 20
+ sleep 20
 road #
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -55,9 +56,9 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
-sleep 20
+ sleep 20
 road #
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -67,9 +68,9 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
-sleep 20
+ sleep 20
 road #
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -79,23 +80,24 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
-# Should state state #4 to indicate it has rekeyed
+ # Should state state #4 to indicate it has rekeyed
 road #
-ipsec whack --trafficstatus
+ ipsec whack --trafficstatus
 000  
 006 #4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=420, outBytes=420, id='ID_NULL'
 000  
 road #
-ipsec whack --shuntstatus
+ ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 road #
-killall ip > /dev/null 2> /dev/null
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
 road #
-echo done
+ echo done
 done
 road #
-ipsec look
+ ipsec look
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -171,9 +173,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
-iptables: No chain/target/match by that name.
 NEW_IPSEC_CONN mangle TABLES
-iptables: No chain/target/match by that name.
 ROUTING TABLES
 default via 192.1.3.254 dev eth0 
 192.1.3.0/24 dev eth0  proto kernel  scope link  src 192.1.3.209 
@@ -182,8 +182,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
 road #
-if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 road #
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
