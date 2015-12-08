@@ -78,6 +78,8 @@ extern stf_status ikev2_parse_child_sa_body(
 				 * tranform can appear.
 				 */
 
+extern stf_status ikev2_process_sa_payload(pb_stream sa_payload,
+					   bool ike, bool initial, bool accepted);
 
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,

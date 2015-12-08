@@ -1,4 +1,5 @@
 /* Security Policy Data Base/structure output
+ *
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
@@ -1961,4 +1962,397 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	free_sa(&p2alg);
 
 	return STF_OK;
+}
+
+struct transform {
+	int id;
+	/* for moment there's only one attribute.  */
+	int attr_keylen;
+};
+
+/*
+ * Keep it simple, 0 is ignored.
+ */
+#define MAX_TRANS_TYPES (IKEv2_TRANS_TYPE_ESN + 1)
+struct proposal {
+	struct transform **transforms[MAX_TRANS_TYPES];
+};
+
+struct proposals {
+	struct proposal *proposal;
+};
+
+struct transform aes_cbc_128 = { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, };
+struct transform aes_cbc_256 = { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, };
+struct transform aes_gcm16_128 = { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, };
+struct transform aes_gcm16_256 = { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, };
+
+struct transform *encr__aes_gcm16_256__aes_gcm16_128[] = {
+	&aes_gcm16_256, &aes_gcm16_128, NULL,
+};
+struct transform *encr__aes_cbc_256__aes_cbc_256[] = {
+	&aes_cbc_256, &aes_cbc_128, NULL,
+};
+
+struct transform prf_sha2_256 = { .id = IKEv2_PRF_HMAC_SHA2_256, };
+struct transform prf_aes128_xcbc = { .id = IKEv2_PRF_AES128_XCBC, };
+struct transform prf_sha1 = { .id = IKEv2_PRF_HMAC_SHA1, };
+
+struct transform *prf__sha2_256__sha1[] = {
+	&prf_sha2_256, &prf_sha1, NULL,
+};
+struct transform *prf__sha2_256__aes128_xcbc__sha1[] = {
+	&prf_sha2_256, &prf_aes128_xcbc, &prf_sha1, NULL,
+};
+
+struct transform auth_none = { .id = IKEv2_AUTH_NONE, };
+struct transform auth_sha2_256_128 = { .id = IKEv2_AUTH_HMAC_SHA2_256_128, };
+struct transform auth_aes_xcbc_96 = { .id = IKEv2_AUTH_AES_XCBC_96, };
+struct transform auth_sha1_96 = { .id = IKEv2_AUTH_HMAC_SHA1_96, };
+
+struct transform *auth__none[] = {
+	&auth_none, NULL,
+};
+
+struct transform *auth__sha2_256_128__aes_xcbc_96__sha1_96[] = {
+	&auth_sha2_256_128, &auth_aes_xcbc_96, &auth_sha1_96, NULL,
+};
+
+struct transform modp1536 = { .id = OAKLEY_GROUP_MODP1536, };
+struct transform modp2048 = { .id = OAKLEY_GROUP_MODP2048, };
+struct transform modp4096 = { .id = OAKLEY_GROUP_MODP4096, };
+struct transform modp8192 = { .id = OAKLEY_GROUP_MODP8192, };
+
+struct transform *dh__modp2048__modp4096__modp8192[] = {
+	&modp2048, &modp4096, &modp8192, NULL,
+};
+struct transform *dh__modp1536__modp2048[] = {
+	&modp1536, &modp2048, NULL,
+};
+
+/*
+ * IKEv2 proposal #0:
+ * AES_GCM[256]
+ * NULL
+ * SHA1,SHA2_256
+ * MODP2048, MODP4096, MODP8192
+ *
+ * IKEv2 proposal #1:
+ * AES_GCM[128]
+ * NULL
+ * SHA1,SHA2_256
+ * MODP2048, MODP4096, MODP8192
+ */
+struct proposal prop01 = {
+	.transforms = {
+		[IKEv2_TRANS_TYPE_ENCR] = encr__aes_gcm16_256__aes_gcm16_128,
+		[IKEv2_TRANS_TYPE_INTEG] = auth__none, /* XXX */
+		[IKEv2_TRANS_TYPE_PRF] = prf__sha2_256__sha1,
+		[IKEv2_TRANS_TYPE_DH] = dh__modp2048__modp4096__modp8192,
+	},
+};
+
+/*
+ * IKEv2 proposal #2:
+ * AES_CBC[256]
+ * SHA1, SHA2_256, AES_XCBC
+ * MODP1536, MODP2048
+ *
+ * IKEv2 proposal #3:
+ * AES_CBC[128]
+ * SHA1, SHA2_256, AES_XCBC
+ * MODP1536, MODP2048
+ *
+ * INTEG????
+ */
+struct proposal prop23 = {
+	.transforms = {
+		[IKEv2_TRANS_TYPE_ENCR] = encr__aes_cbc_256__aes_cbc_256,
+		[IKEv2_TRANS_TYPE_INTEG] = auth__sha2_256_128__aes_xcbc_96__sha1_96,
+		[IKEv2_TRANS_TYPE_PRF] = prf__sha2_256__aes128_xcbc__sha1,
+		[IKEv2_TRANS_TYPE_DH] = dh__modp1536__modp2048,
+	},
+};
+
+struct proposal *proposals[] = {
+	&prop01,
+	&prop23,
+	NULL,
+};
+
+static stf_status process_transforms(const int num_transforms,
+				     pb_stream *prop_pbs)
+{
+	DBG(DBG_CONTROL, DBG_log("XXX: start processing transforms"));
+
+	int transforms_found[MAX_TRANS_TYPES];
+	memset(transforms_found, 0, sizeof(transforms_found));
+
+	/*
+	 * XXX: Better way of determining number of proposals, and
+	 * allocating matches structure?
+	 */
+	int num_proposals = 0;
+	while (proposals[num_proposals] != NULL) {
+		num_proposals++;
+	}
+	int matches[num_proposals][MAX_TRANS_TYPES];
+	/*
+	 * XXX: memset(matches, -1, sizeof(matches) gets an error
+	 * about length parameter being zero yet the below does not.
+	 */
+	memset(matches, 0, sizeof(matches));
+
+	int transform_num;
+	for (transform_num = 0; transform_num < num_transforms; transform_num++) {
+
+		/* the transform */
+		struct ikev2_trans trans;
+		pb_stream trans_pbs;
+		if (!in_struct(&trans, &ikev2_trans_desc,
+			       prop_pbs, &trans_pbs))
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+
+		/* followed by attributes */
+		int keylen = 0;
+		while (pbs_left(&trans_pbs) != 0) {
+			pb_stream attr_pbs;
+			struct ikev2_trans_attr attr;
+			if (!in_struct(&attr, &ikev2_trans_attr_desc,
+				       &trans_pbs,
+				       &attr_pbs))
+				return STF_FAIL + v2N_INVALID_SYNTAX;
+
+			switch (attr.isatr_type) {
+			case IKEv2_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+				keylen = attr.isatr_lv;
+				break;
+			default:
+				libreswan_log(
+					"ikev2_process_transforms(): Ignored unknown IKEv2 Transform Attribute: %d",
+					attr.isatr_type);
+				break;
+			}
+		}
+
+		/*
+		 * XXX: Is this valid here?
+		 *
+		 * XXX: Is the key_length expected / required?
+		 *
+		 * XXX: Allowed for IKE, ESP, EH?
+		 *
+		 * XXX: AEAD vs INTEG?
+		 */
+
+		/*
+		 * Once either AEAD or INTEG, is known proposals of
+		 * the wrong type can be skipped.
+		 */
+
+		/*
+		 * Remember the transform types found.
+		 */
+		transforms_found[trans.isat_type] = 1;
+
+		/*
+		 * Find the proposals that match and flag them.
+		 */
+		int p;
+		for (p = 0; p < num_proposals; p++) {
+			/*
+			 * Don't bother looking for second or further
+			 * matches of a transform.
+			 */
+			if (matches[p][trans.isat_type] > 0) {
+				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d already matched transform", p));
+				continue;
+			}
+			/*
+			 * Search the proposal for transforms of this
+			 * type that match.
+			 */
+			struct proposal *proposal = proposals[p];
+			struct transform **transforms = proposal->transforms[trans.isat_type];
+			if (transforms != NULL) {
+				int t = 0;
+				for (t = 0; transforms[t]; t++) {
+					struct transform *transform = transforms[t];
+					if (transform->id != trans.isat_transid) {
+						/* XXX: Print strings? */
+						DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d id %d does not match %d",
+									 p, trans.isat_type, t, transform->id, trans.isat_transid));
+						continue;
+					}
+					/* XXX: more robust logic? */
+					if (transform->attr_keylen != keylen) {
+						DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d keylen %d does not match %d",
+									 p, trans.isat_type, t, transform->attr_keylen, keylen));
+						continue;
+					}
+					DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d matches",
+								 p, trans.isat_type, t));
+					/* something non-zero.  */
+					matches[p][trans.isat_type] = t + 1;
+					break;
+				}
+			}
+		}
+	}
+
+	/*
+	 * Better way to find the match?  What to do with it?
+	 */
+	DBG(DBG_CONTROL, DBG_log("XXX: looking for successful match"));
+	int p;
+	for (p = 0; p < num_proposals; p++) {
+		int type;
+		for (type = 1; type < MAX_TRANS_TYPES; type++) {
+			if ((transforms_found[type] != 0) == (matches[p][type] > 0)) {
+				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d good",
+							 p, type));
+				continue;
+			} else {
+				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d bad",
+							 p, type));
+				break;
+			}
+		}
+		/* loop finished? */
+		if (type == MAX_TRANS_TYPES) {
+			DBG(DBG_CONTROL,
+			    DBG_log("XXX: proposal %d good!", p);
+			    for (type = 1; type < MAX_TRANS_TYPES; type++) {
+				    /* see "something non-zero" above.  */
+				    DBG_log("XXX: type %d transform %d", type, matches[p][type]);
+			    });
+			return STF_OK;
+		}
+	}
+
+	DBG(DBG_CONTROL, DBG_log("XXX: stop processing transforms"));
+	return 0;
+}
+
+stf_status ikev2_process_sa_payload(pb_stream sa_payload,
+				    bool ike, bool initial, bool accepted)
+{
+	DBG(DBG_CONTROL, DBG_log("XXX: start processing proposals"));
+
+	int next_propnum = 1;
+	struct ikev2_prop proposal;
+	do {
+		/* Read the next proposal */
+		pb_stream proposal_pbs;
+		if (!in_struct(&proposal, &ikev2_prop_desc, &sa_payload,
+			       &proposal_pbs)) {
+			loglog(RC_LOG_SERIOUS, "corrupted proposal");
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+
+		/*
+		 * Validate the Last Substruc and Proposal Num.
+		 *
+		 * RFC 7296: 3.3.1. Proposal Substructure: When a
+		 * proposal is made, the first proposal in an SA
+		 * payload MUST be 1, and subsequent proposals MUST be
+		 * one more than the previous proposal (indicating an
+		 * OR of the two proposals).  When a proposal is
+		 * accepted, the proposal number in the SA payload
+		 * MUST match the number on the proposal sent that was
+		 * accepted.
+		 */
+		if (accepted) {
+			/* There can be only one accepted proposal.  */
+			if (proposal.isap_lp != v2_PROPOSAL_NON_LAST) {
+				libreswan_log("Error: more than one proposal received from responder.");
+				return STF_FAIL + v2N_INVALID_SYNTAX;
+			}
+		} else {
+			if (next_propnum != proposal.isap_propnum) {
+				loglog(RC_LOG_SERIOUS,
+				       "proposal number was %u but %u expected",
+				       proposal.isap_propnum,
+				       next_propnum);
+				return STF_FAIL + v2N_INVALID_SYNTAX;
+			}
+			next_propnum++;
+		}
+
+		/*
+		 * Validate the Protocol ID
+		 *
+		 * RFC 7296: 3.3.1. Proposal Substructure: Specifies
+		 * the IPsec protocol identifier for the current
+		 * negotiation.
+		 */
+		if (ike && proposal.isap_protoid != PROTO_v2_ISAKMP) {
+			loglog(RC_LOG_SERIOUS,
+			       "unexpected Protocol ID %d, expected ISAKMP",
+			       (unsigned)proposal.isap_protoid);
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+
+		/*
+		 * Validate the Security Parameter Index (SPI):
+		 *
+		 * RFC 7296: 3.3.1. Proposal Substructure: For an
+		 * initial IKE SA negotiation, this field MUST be
+		 * zero; the SPI is obtained from the outer header.
+		 * During subsequent negotiations, it is equal to the
+		 * size, in octets, of the SPI of the corresponding
+		 * protocol (8 for IKE, 4 for ESP and AH).
+		 */
+		int spi_size;
+		switch (proposal.isap_protoid) {
+		case PROTO_v2_ISAKMP:
+			spi_size = initial ? 0 : 8;
+			break;
+		case PROTO_v2_AH:
+		case PROTO_v2_ESP:
+			spi_size = 4;
+			break;
+		default:
+			spi_size = -1;
+		}
+		if (spi_size < 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "unrecognized Protocol ID %u, skipping proposal",
+			       (unsigned)proposal.isap_protoid);
+			continue;
+		}
+		if (proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE) {
+			loglog(RC_LOG_SERIOUS,
+			       "huge SPI size (%u) in SA proposal",
+			       (unsigned)proposal.isap_spisize);
+			return STF_FAIL + v2N_INVALID_SPI;
+		}
+		/*
+		 * XXX: For initial IKE SA, the old code complained
+		 * but ignored a non-empty SPI.
+		 *
+		 * XXX: For EH and ESP, the code relied on sizeof
+		 * our_spi.  I suspect it is 4.
+		 */
+		if (proposal.isap_spisize > spi_size) {
+			loglog(RC_LOG_SERIOUS,
+			       "large SPI size (%u) in SA proposal",
+			       (unsigned)proposal.isap_spisize);
+			return STF_FAIL + v2N_INVALID_SPI;
+		}
+		/* Read any SPI.  Save it where?  */
+		u_char spi[MAX_ISAKMP_SPI_SIZE];
+		if (!in_raw(spi, proposal.isap_spisize,
+			    &proposal_pbs,
+			    "SA PROPOSAL SPI")) {
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+
+		process_transforms(proposal.isap_numtrans, &proposal_pbs);
+
+	} while (proposal.isap_lp == v2_PROPOSAL_NON_LAST);
+
+	DBG(DBG_CONTROL, DBG_log("XXX: stop processing proposals"));
+	return 0;
+
 }

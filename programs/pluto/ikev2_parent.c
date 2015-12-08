@@ -944,9 +944,16 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
+		/* XXXXXXXXX testing ! */
+		/*stf_status newret =*/ikev2_process_sa_payload(sa_pd->pbs,
+								PROTO_v2_ISAKMP,
+								TRUE, FALSE);
+
 		/* SA body in and out */
 		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						&r_sa_pbs, st, FALSE);
+
+		// XXX: pexpect(ret == newret);
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
