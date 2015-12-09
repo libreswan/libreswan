@@ -629,7 +629,7 @@ void release_whack(struct state *st)
 	close_any(st->st_whack_sock);
 }
 
-void release_v2fragments(struct state *st)
+static void release_v2fragments(struct state *st)
 {
 	struct ikev2_frag *frag = st->st_tfrags;
 
@@ -644,7 +644,7 @@ void release_v2fragments(struct state *st)
 	st->st_tfrags = NULL;
 }
 
-void release_v1fragments(struct state *st)
+static void release_v1fragments(struct state *st)
 {
 	struct ike_frag *frag = st->ike_frags;
 
@@ -668,8 +668,8 @@ void release_v1fragments(struct state *st)
  */
 void release_fragments(struct state *st)
 {
-	release_v1fragments();
-	release_v2fragments();
+	release_v1fragments(st);
+	release_v2fragments(st);
 }
 
 /* delete a state object */
