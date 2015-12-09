@@ -644,11 +644,7 @@ void release_v2fragments(struct state *st)
 	st->st_tfrags = NULL;
 }
 
-/*
- * Release both V1 and V2 fragments
- * (of course only one kind could appear in a state)
- */
-void release_fragments(struct state *st)
+void release_v1fragments(struct state *st)
 {
 	struct ike_frag *frag = st->ike_frags;
 
@@ -661,8 +657,19 @@ void release_fragments(struct state *st)
 	}
 
 	st->ike_frags = NULL;
+}
 
-	release_v2fragments(st);
+/*
+ * Release stored IKE fragments.
+ * XXX A state could have both types of fragments when it has
+ * switched between IKEv1 and IKEv2. This is considered a bug,
+ * as we should really start with a clean state between full
+ * IKE attempts.
+ */
+void release_fragments(struct state *st)
+{
+	release_v1fragments();
+	release_v2fragments();
 }
 
 /* delete a state object */
