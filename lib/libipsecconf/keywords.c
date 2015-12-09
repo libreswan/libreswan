@@ -169,7 +169,7 @@ static const struct keyword_enum_value kw_connaddrfamily_values[] = {
 static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALIZER(kw_connaddrfamily_values);
 
 /*
- * Values for type={tunnel,transport,udpencap}
+ * Values for type={tunnel,transport,etc}
  */
 static const struct keyword_enum_value kw_type_values[] = {
 	{ "tunnel",    KS_TUNNEL },
