@@ -1973,9 +1973,9 @@ struct transform {
 /*
  * Keep it simple, 0 is ignored.
  */
-#define MAX_TRANS_TYPES (IKEv2_TRANS_TYPE_ESN + 1)
+
 struct proposal {
-	struct transform **transforms[MAX_TRANS_TYPES];
+	struct transform **transforms[IKEv2_TRANS_TYPE_ROOF];
 };
 
 struct proposals {
@@ -2085,7 +2085,7 @@ static stf_status process_transforms(const int num_transforms,
 {
 	DBG(DBG_CONTROL, DBG_log("XXX: start processing transforms"));
 
-	int transforms_found[MAX_TRANS_TYPES];
+	int transforms_found[IKEv2_TRANS_TYPE_ROOF];
 	memset(transforms_found, 0, sizeof(transforms_found));
 
 	/*
@@ -2096,7 +2096,7 @@ static stf_status process_transforms(const int num_transforms,
 	while (proposals[num_proposals] != NULL) {
 		num_proposals++;
 	}
-	int matches[num_proposals][MAX_TRANS_TYPES];
+	int matches[num_proposals][IKEv2_TRANS_TYPE_ROOF];
 	/*
 	 * XXX: memset(matches, -1, sizeof(matches) gets an error
 	 * about length parameter being zero yet the below does not.
@@ -2207,7 +2207,7 @@ static stf_status process_transforms(const int num_transforms,
 	int p;
 	for (p = 0; p < num_proposals; p++) {
 		int type;
-		for (type = 1; type < MAX_TRANS_TYPES; type++) {
+		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 			if ((transforms_found[type] != 0) == (matches[p][type] > 0)) {
 				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d good",
 							 p, type));
@@ -2219,10 +2219,10 @@ static stf_status process_transforms(const int num_transforms,
 			}
 		}
 		/* loop finished? */
-		if (type == MAX_TRANS_TYPES) {
+		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
 			    DBG_log("XXX: proposal %d good!", p);
-			    for (type = 1; type < MAX_TRANS_TYPES; type++) {
+			    for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 				    /* see "something non-zero" above.  */
 				    DBG_log("XXX: type %d transform %d", type, matches[p][type]);
 			    });

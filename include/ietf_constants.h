@@ -790,6 +790,11 @@ enum ikev2_trans_type {
 };
 
 /*
+ * Assume indexing is 1..IKEv2_TRANS_TYPE_ESN.
+ */
+#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN + 1)
+
+/*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * (TODO: rename this to ikev2_encr_esp_ike)
