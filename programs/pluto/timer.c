@@ -673,8 +673,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					delete_event(cst);
 					event_schedule(EVENT_SA_EXPIRE, 0, cst);
 					ikev2_expire_parent(cst, last_used_age);
+					break;
+				} else {
+					ikev2_log_v2_sa_expired(st, type);
+					ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 				}
-			break;
 
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
 				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
