@@ -19,6 +19,7 @@ import os
 import re
 import pexpect
 import argparse
+import shutil
 import subprocess
 import time
 from datetime import datetime
@@ -44,6 +45,14 @@ def main():
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--output-directory", default=None, metavar="DIRECTORY",
                         help="save test results as %(metavar)s/<test> instead of <test>/OUTPUT")
+
+    # Default to BACKUP under the current directory.  Name is
+    # arbitrary, chosen for its hopefully unique first letter
+    # (avoiding Makefile, OBJ, README, ... :-).
+    parser.add_argument("--backup-directory", metavar="DIRECTORY",
+                        default=os.path.join("BACKUP", time.strftime("%Y%m%d%H%M%S", time.localtime())),
+                        help="backup existing <test>/OUTPUT to %(metavar)s/<test> (default: %(default)s)")
+
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="either a testsuite directory or a list of test directories")
     testsuite.add_arguments(parser)
@@ -60,6 +69,7 @@ def main():
     logger.info("  attempts: %s", args.attempts)
     logger.info("  dry-run: %s", args.dry_run)
     logger.info("  output-directory: %s", args.output_directory or "<testsuite>/<test>/OUTPUT (default)")
+    logger.info("  backup-directory: %s", args.backup_directory)
     logger.info("  directories: %s", args.directories)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
@@ -75,7 +85,23 @@ def main():
 
     test_stats = stats.Tests()
     result_stats = stats.Results()
-    start_time = time.localtime()
+
+    # Save the previous test results.  Do it up-front so that the
+    # saved results are always a complete copy of the original test
+    # output.
+    logger.info("copying existing results to %s ...", args.backup_directory)
+    saved_tests = 0
+    for test in tests:
+        if os.path.exists(test.output_directory):
+            backup_directory = os.path.join(args.backup_directory, test.name)
+            level = logutil.DEBUG
+            logger.debug("copying '%s' in '%s'",
+                         test.output_directory, backup_directory)
+            if not args.dry_run:
+                saved_tests += 1
+                os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
+                shutil.copytree(test.output_directory, backup_directory)
+    logger.info("... %d test results saved", saved_tests)
 
     try:
         logger.info("run started at %s", datetime.now())
