@@ -97,14 +97,14 @@ def main():
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline = testsuite.load(logger, args.directories[-1],
+        baseline = testsuite.load(logger, args.directories[-1], args,
                                   error_level=logutil.DEBUG)
         if baseline:
             # discard the last argument as consumed above.
             logger.debug("discarding baseline testsuite argument '%s'", args.directories[-1])
             args.directories.pop()
 
-    tests = testsuite.load_testsuite_or_tests(logger, args.directories)
+    tests = testsuite.load_testsuite_or_tests(logger, args.directories, args)
     # And check
     if not tests:
         logger.error("Invalid testsuite or test directories")

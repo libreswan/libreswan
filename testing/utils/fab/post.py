@@ -250,7 +250,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         if skip_sanitize:
             sanitized_console_output = load_output(test.logger, sanitized_console_file)
         if not sanitized_console_output:
-            sanitized_console_output = sanitize_output(test.logger, raw_console_file, test.directory)
+            sanitized_console_output = sanitize_output(test.logger, raw_console_file, test.sanitize_directory)
         if not sanitized_console_output:
             errors.add("sanitizer-failed", domain)
             continue
@@ -318,7 +318,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         if skip_sanitize:
             sanitized_baseline_output = load_output(sanitized_baseline_file)
         if not sanitized_baseline_output:
-            sanitized_baseline_output = sanitize_output(test.logger, raw_baseline_file, test.directory)
+            sanitized_baseline_output = sanitize_output(test.logger, raw_baseline_file, test.sanitize_directory)
         if not sanitized_baseline_output:
             errors.add("baseline-sanitizer-failed", domain)
             continue

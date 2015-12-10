@@ -95,7 +95,7 @@ def main():
     post.log_arguments(logger, args)
     logutil.log_arguments(logger, args)
 
-    tests = testsuite.load_testsuite_or_tests(logger, args.directories,
+    tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
                                               testsuite_output_directory=args.output_directory,
                                               log_level=logutil.INFO)
     if not tests:
