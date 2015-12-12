@@ -1964,72 +1964,71 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	return STF_OK;
 }
 
-struct transform {
+struct ikev2_transform {
 	int id;
 	/* for moment there's only one attribute.  */
 	int attr_keylen;
 };
 
+struct ikev2_transforms {
+	struct ikev2_transform *transforms;
+	int nr;
+};
+
 /*
- * Keep it simple, 0 is ignored.
+ * Define macros to save some typing, and to, hopefully avoid some
+ * duplication errors.
  */
+#define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, }
+#define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, }
+#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, }
+#define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, }
 
-struct proposal {
-	struct transform **transforms[IKEv2_TRANS_TYPE_ROOF];
+struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
+	ENCR_AES_GCM16_256, ENCR_AES_GCM16_128,
+};
+struct ikev2_transform encr__aes_cbc_256__aes_cbc_256[] = {
+	ENCR_AES_CBC_256, ENCR_AES_CBC_128,
 };
 
-struct proposals {
-	struct proposal *proposal;
+#define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, }
+#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, }
+#define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, }
+
+struct ikev2_transform prf__sha2_256__sha1[] = {
+	PRF_SHA2_256, PRF_SHA1,
+};
+struct ikev2_transform prf__sha2_256__aes128_xcbc__sha1[] = {
+	PRF_SHA2_256, PRF_AES128_XCBC, PRF_SHA1,
 };
 
-struct transform aes_cbc_128 = { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, };
-struct transform aes_cbc_256 = { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, };
-struct transform aes_gcm16_128 = { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, };
-struct transform aes_gcm16_256 = { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, };
+#define AUTH_NONE { .id = IKEv2_AUTH_NONE, }
+#define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, }
+#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, }
+#define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, }
 
-struct transform *encr__aes_gcm16_256__aes_gcm16_128[] = {
-	&aes_gcm16_256, &aes_gcm16_128, NULL,
+struct ikev2_transform auth__none[] = {
+	AUTH_NONE,
 };
-struct transform *encr__aes_cbc_256__aes_cbc_256[] = {
-	&aes_cbc_256, &aes_cbc_128, NULL,
-};
-
-struct transform prf_sha2_256 = { .id = IKEv2_PRF_HMAC_SHA2_256, };
-struct transform prf_aes128_xcbc = { .id = IKEv2_PRF_AES128_XCBC, };
-struct transform prf_sha1 = { .id = IKEv2_PRF_HMAC_SHA1, };
-
-struct transform *prf__sha2_256__sha1[] = {
-	&prf_sha2_256, &prf_sha1, NULL,
-};
-struct transform *prf__sha2_256__aes128_xcbc__sha1[] = {
-	&prf_sha2_256, &prf_aes128_xcbc, &prf_sha1, NULL,
+struct ikev2_transform auth__sha2_256_128__aes_xcbc_96__sha1_96[] = {
+	AUTH_SHA2_256_128, AUTH_AES_XCBC_96, AUTH_SHA1_96,
 };
 
-struct transform auth_none = { .id = IKEv2_AUTH_NONE, };
-struct transform auth_sha2_256_128 = { .id = IKEv2_AUTH_HMAC_SHA2_256_128, };
-struct transform auth_aes_xcbc_96 = { .id = IKEv2_AUTH_AES_XCBC_96, };
-struct transform auth_sha1_96 = { .id = IKEv2_AUTH_HMAC_SHA1_96, };
+#define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, }
+#define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, }
+#define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, }
+#define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, }
 
-struct transform *auth__none[] = {
-	&auth_none, NULL,
+struct ikev2_transform dh__modp2048__modp4096__modp8192[] = {
+	DH_MODP2048, DH_MODP4096, DH_MODP8192,
+};
+struct ikev2_transform dh__modp1536__modp2048[] = {
+	DH_MODP1536, DH_MODP2048,
 };
 
-struct transform *auth__sha2_256_128__aes_xcbc_96__sha1_96[] = {
-	&auth_sha2_256_128, &auth_aes_xcbc_96, &auth_sha1_96, NULL,
-};
+#define TRANSFORMS(T) { .transforms = T, .nr = sizeof(T) / sizeof(T[0]) }
 
-struct transform modp1536 = { .id = OAKLEY_GROUP_MODP1536, };
-struct transform modp2048 = { .id = OAKLEY_GROUP_MODP2048, };
-struct transform modp4096 = { .id = OAKLEY_GROUP_MODP4096, };
-struct transform modp8192 = { .id = OAKLEY_GROUP_MODP8192, };
-
-struct transform *dh__modp2048__modp4096__modp8192[] = {
-	&modp2048, &modp4096, &modp8192, NULL,
-};
-struct transform *dh__modp1536__modp2048[] = {
-	&modp1536, &modp2048, NULL,
-};
-
+struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
 /*
  * IKEv2 proposal #0:
  * AES_GCM[256]
@@ -2043,15 +2042,12 @@ struct transform *dh__modp1536__modp2048[] = {
  * SHA1,SHA2_256
  * MODP2048, MODP4096, MODP8192
  */
-struct proposal prop01 = {
-	.transforms = {
-		[IKEv2_TRANS_TYPE_ENCR] = encr__aes_gcm16_256__aes_gcm16_128,
-		[IKEv2_TRANS_TYPE_INTEG] = auth__none, /* XXX */
-		[IKEv2_TRANS_TYPE_PRF] = prf__sha2_256__sha1,
-		[IKEv2_TRANS_TYPE_DH] = dh__modp2048__modp4096__modp8192,
+	{
+		[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_gcm16_256__aes_gcm16_128),
+		[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__none), /* XXX */
+		[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__sha1),
+		[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp2048__modp4096__modp8192),
 	},
-};
-
 /*
  * IKEv2 proposal #2:
  * AES_CBC[256]
@@ -2065,19 +2061,12 @@ struct proposal prop01 = {
  *
  * INTEG????
  */
-struct proposal prop23 = {
-	.transforms = {
-		[IKEv2_TRANS_TYPE_ENCR] = encr__aes_cbc_256__aes_cbc_256,
-		[IKEv2_TRANS_TYPE_INTEG] = auth__sha2_256_128__aes_xcbc_96__sha1_96,
-		[IKEv2_TRANS_TYPE_PRF] = prf__sha2_256__aes128_xcbc__sha1,
-		[IKEv2_TRANS_TYPE_DH] = dh__modp1536__modp2048,
+	{
+		[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_cbc_256__aes_cbc_256),
+		[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__sha2_256_128__aes_xcbc_96__sha1_96),
+		[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__aes128_xcbc__sha1),
+		[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp1536__modp2048),
 	},
-};
-
-struct proposal *proposals[] = {
-	&prop01,
-	&prop23,
-	NULL,
 };
 
 static stf_status process_transforms(const int num_transforms,
@@ -2090,18 +2079,21 @@ static stf_status process_transforms(const int num_transforms,
 
 	/*
 	 * XXX: Better way of determining number of proposals, and
-	 * allocating matches structure?
+	 * allocating match structure?
+	 *
+	 * The proposal list and their number should be passed in.
 	 */
-	int num_proposals = 0;
-	while (proposals[num_proposals] != NULL) {
-		num_proposals++;
-	}
+	int num_proposals = sizeof(proposals) / sizeof(proposals[0]);
 	int matches[num_proposals][IKEv2_TRANS_TYPE_ROOF];
-	/*
-	 * XXX: memset(matches, -1, sizeof(matches) gets an error
-	 * about length parameter being zero yet the below does not.
-	 */
-	memset(matches, 0, sizeof(matches));
+	{
+		int p;
+		for (p = 0; p < num_proposals; p++) {
+			int t;
+			for (t = 0; t < IKEv2_TRANS_TYPE_ROOF; t++) {
+				matches[p][t] = proposals[p][t].nr;
+			}
+		}
+	}
 
 	int transform_num;
 	for (transform_num = 0; transform_num < num_transforms; transform_num++) {
@@ -2161,41 +2153,31 @@ static stf_status process_transforms(const int num_transforms,
 		int p;
 		for (p = 0; p < num_proposals; p++) {
 			/*
-			 * Don't bother looking for second or further
-			 * matches of a transform.
-			 */
-			if (matches[p][trans.isat_type] > 0) {
-				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d already matched transform", p));
-				continue;
-			}
-			/*
 			 * Search the proposal for transforms of this
-			 * type that match.
+			 * type that match.  Limit the search to
+			 * transforms before the last match.
 			 */
-			struct proposal *proposal = proposals[p];
-			struct transform **transforms = proposal->transforms[trans.isat_type];
-			if (transforms != NULL) {
-				int t = 0;
-				for (t = 0; transforms[t]; t++) {
-					struct transform *transform = transforms[t];
-					if (transform->id != trans.isat_transid) {
-						/* XXX: Print strings? */
-						DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d id %d does not match %d",
-									 p, trans.isat_type, t, transform->id, trans.isat_transid));
-						continue;
-					}
-					/* XXX: more robust logic? */
-					if (transform->attr_keylen != keylen) {
-						DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d keylen %d does not match %d",
-									 p, trans.isat_type, t, transform->attr_keylen, keylen));
-						continue;
-					}
-					DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d matches",
-								 p, trans.isat_type, t));
-					/* something non-zero.  */
-					matches[p][trans.isat_type] = t + 1;
-					break;
+			struct ikev2_transform *transforms = proposals[p][trans.isat_type].transforms;
+			int t;
+			for (t = 0; t < matches[p][trans.isat_type]; t++) {
+				struct ikev2_transform *transform = &transforms[t];
+				if (transform->id != trans.isat_transid) {
+					/* XXX: Print strings? */
+					DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d id %d does not match %d",
+								 p, trans.isat_type, t, transform->id, trans.isat_transid));
+					continue;
 				}
+				/* XXX: more robust logic? */
+				if (transform->attr_keylen != keylen) {
+					DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d keylen %d does not match %d",
+								 p, trans.isat_type, t, transform->attr_keylen, keylen));
+					continue;
+				}
+				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d matches",
+							 p, trans.isat_type, t));
+				/* something non-zero.  */
+				matches[p][trans.isat_type] = t;
+				break;
 			}
 		}
 	}
@@ -2208,7 +2190,7 @@ static stf_status process_transforms(const int num_transforms,
 	for (p = 0; p < num_proposals; p++) {
 		int type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			if ((transforms_found[type] != 0) == (matches[p][type] > 0)) {
+			if ((transforms_found[type] != 0) == (matches[p][type] < proposals[p][type].nr)) {
 				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d good",
 							 p, type));
 				continue;
