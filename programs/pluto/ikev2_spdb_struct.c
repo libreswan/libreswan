@@ -2069,41 +2069,51 @@ struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
 	},
 };
 
-static stf_status process_transforms(const int num_transforms,
-				     pb_stream *prop_pbs)
+/*
+ * Compare the initiator's proposal's transforms against the first
+ * NUM_RESPONDER_PROPOSALS finding the earliest match.
+ *
+ * Return the matching proposal # or a -STF_FAIL status or
+ * NUM_RESPONDER_PROPOSALS for no match.
+ */
+
+static int process_transforms(pb_stream *prop_pbs, int num_initiator_transforms,
+			      /*const*/struct ikev2_transforms (*responder_proposals)[IKEv2_TRANS_TYPE_ROOF],
+			      const int num_responder_proposals,
+			      int (*matching_responder_proposals)[IKEv2_TRANS_TYPE_ROOF])
 {
-	DBG(DBG_CONTROL, DBG_log("XXX: start processing transforms"));
+	DBG(DBG_CONTROL,
+	    DBG_log("Start processing transforms");
+	    DBG_log("Matching %d initiator transforms against %d responder proposals",
+		    num_initiator_transforms, num_responder_proposals));
 
 	int transforms_found[IKEv2_TRANS_TYPE_ROOF];
 	memset(transforms_found, 0, sizeof(transforms_found));
 
 	/*
-	 * XXX: Better way of determining number of proposals, and
-	 * allocating match structure?
-	 *
-	 * The proposal list and their number should be passed in.
+	 * Use the number of transforms(type) for a proposal as a
+	 * search upper bound.  That way, as a match is found, that
+	 * can be made the new search upper bound.
 	 */
-	int num_proposals = sizeof(proposals) / sizeof(proposals[0]);
-	int matches[num_proposals][IKEv2_TRANS_TYPE_ROOF];
 	{
 		int p;
-		for (p = 0; p < num_proposals; p++) {
+		for (p = 0; p < num_responder_proposals; p++) {
 			int t;
 			for (t = 0; t < IKEv2_TRANS_TYPE_ROOF; t++) {
-				matches[p][t] = proposals[p][t].nr;
+				matching_responder_proposals[p][t] = responder_proposals[p][t].nr;
 			}
 		}
 	}
 
-	int transform_num;
-	for (transform_num = 0; transform_num < num_transforms; transform_num++) {
+	int initiator_transform;
+	for (initiator_transform = 0; initiator_transform < num_initiator_transforms; initiator_transform++) {
 
-		/* the transform */
+		/* first the transform */
 		struct ikev2_trans trans;
 		pb_stream trans_pbs;
 		if (!in_struct(&trans, &ikev2_trans_desc,
 			       prop_pbs, &trans_pbs))
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			return -(STF_FAIL + v2N_INVALID_SYNTAX);
 
 		/* followed by attributes */
 		int keylen = 0;
@@ -2113,17 +2123,17 @@ static stf_status process_transforms(const int num_transforms,
 			if (!in_struct(&attr, &ikev2_trans_attr_desc,
 				       &trans_pbs,
 				       &attr_pbs))
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				return -(STF_FAIL + v2N_INVALID_SYNTAX);
 
 			switch (attr.isatr_type) {
 			case IKEv2_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 				keylen = attr.isatr_lv;
 				break;
 			default:
-				libreswan_log(
-					"ikev2_process_transforms(): Ignored unknown IKEv2 Transform Attribute: %d",
-					attr.isatr_type);
-				break;
+				libreswan_log("ikev2_process_transforms(): Ignored unknown IKEv2 Transform Attribute: %d",
+					      attr.isatr_type);
+				/* no improvement */
+				return num_responder_proposals;
 			}
 		}
 
@@ -2151,16 +2161,16 @@ static stf_status process_transforms(const int num_transforms,
 		 * Find the proposals that match and flag them.
 		 */
 		int p;
-		for (p = 0; p < num_proposals; p++) {
+		for (p = 0; p < num_responder_proposals; p++) {
 			/*
 			 * Search the proposal for transforms of this
 			 * type that match.  Limit the search to
 			 * transforms before the last match.
 			 */
-			struct ikev2_transform *transforms = proposals[p][trans.isat_type].transforms;
+			struct ikev2_transform *responder_transforms = responder_proposals[p][trans.isat_type].transforms;
 			int t;
-			for (t = 0; t < matches[p][trans.isat_type]; t++) {
-				struct ikev2_transform *transform = &transforms[t];
+			for (t = 0; t < matching_responder_proposals[p][trans.isat_type]; t++) {
+				struct ikev2_transform *transform = &responder_transforms[t];
 				if (transform->id != trans.isat_transid) {
 					/* XXX: Print strings? */
 					DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d id %d does not match %d",
@@ -2176,7 +2186,7 @@ static stf_status process_transforms(const int num_transforms,
 				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d transform %d matches",
 							 p, trans.isat_type, t));
 				/* something non-zero.  */
-				matches[p][trans.isat_type] = t;
+				matching_responder_proposals[p][trans.isat_type] = t;
 				break;
 			}
 		}
@@ -2187,10 +2197,10 @@ static stf_status process_transforms(const int num_transforms,
 	 */
 	DBG(DBG_CONTROL, DBG_log("XXX: looking for successful match"));
 	int p;
-	for (p = 0; p < num_proposals; p++) {
+	for (p = 0; p < num_responder_proposals; p++) {
 		int type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			if ((transforms_found[type] != 0) == (matches[p][type] < proposals[p][type].nr)) {
+			if ((transforms_found[type] != 0) == (matching_responder_proposals[p][type] < responder_proposals[p][type].nr)) {
 				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d good",
 							 p, type));
 				continue;
@@ -2206,21 +2216,37 @@ static stf_status process_transforms(const int num_transforms,
 			    DBG_log("XXX: proposal %d good!", p);
 			    for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 				    /* see "something non-zero" above.  */
-				    DBG_log("XXX: type %d transform %d", type, matches[p][type]);
+				    DBG_log("XXX: type %d transform %d", type, matching_responder_proposals[p][type]);
 			    });
-			return STF_OK;
+			return p;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("XXX: stop processing transforms"));
-	return 0;
+	DBG(DBG_CONTROL, DBG_log("Stop processing transforms"));
+	return num_responder_proposals;
 }
 
 stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 				    bool ike, bool initial, bool accepted)
 {
-	DBG(DBG_CONTROL, DBG_log("XXX: start processing proposals"));
+	DBG(DBG_CONTROL, DBG_log("Processing proposals"));
 
+	/* what if there are none? */
+	int num_responder_proposals = sizeof(proposals) / sizeof(proposals[0]);
+
+	/* Must be released.  */
+	int (*matching_responder_proposals)[IKEv2_TRANS_TYPE_ROOF];
+	matching_responder_proposals = alloc_bytes(sizeof(matching_responder_proposals[0]) * num_responder_proposals,
+						   "matching_responder_proposals");
+
+	/*
+	 * This loop never returns.  Result is one of:
+	 *
+	 *    -ve - the STF_FAIL status
+	 *    [0..NUM_RESPONDER_PROPOSALS) - chosen proposal
+	 *    NUM_RESPONDER_PROPOSALS - no proposal chosen
+	 */
+	int best_responder_proposal = num_responder_proposals;
 	int next_propnum = 1;
 	struct ikev2_prop proposal;
 	do {
@@ -2229,7 +2255,8 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 		if (!in_struct(&proposal, &ikev2_prop_desc, &sa_payload,
 			       &proposal_pbs)) {
 			loglog(RC_LOG_SERIOUS, "corrupted proposal");
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			best_responder_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+			break;
 		}
 
 		/*
@@ -2248,7 +2275,8 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 			/* There can be only one accepted proposal.  */
 			if (proposal.isap_lp != v2_PROPOSAL_NON_LAST) {
 				libreswan_log("Error: more than one proposal received from responder.");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				best_responder_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				break;
 			}
 		} else {
 			if (next_propnum != proposal.isap_propnum) {
@@ -2256,7 +2284,8 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 				       "proposal number was %u but %u expected",
 				       proposal.isap_propnum,
 				       next_propnum);
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				best_responder_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				break;
 			}
 			next_propnum++;
 		}
@@ -2272,7 +2301,7 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected Protocol ID %d, expected ISAKMP",
 			       (unsigned)proposal.isap_protoid);
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			continue;
 		}
 
 		/*
@@ -2307,7 +2336,8 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 			loglog(RC_LOG_SERIOUS,
 			       "huge SPI size (%u) in SA proposal",
 			       (unsigned)proposal.isap_spisize);
-			return STF_FAIL + v2N_INVALID_SPI;
+			best_responder_proposal = -(STF_FAIL + v2N_INVALID_SPI);
+			break;
 		}
 		/*
 		 * XXX: For initial IKE SA, the old code complained
@@ -2330,11 +2360,33 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
-		process_transforms(proposal.isap_numtrans, &proposal_pbs);
+		int match = process_transforms(&proposal_pbs, proposal.isap_numtrans,
+					       proposals, best_responder_proposal,
+					       matching_responder_proposals);
+		if (match < 0) {
+			/* capture the error and bail */
+			best_responder_proposal = match;
+			break;
+		} else if (match < best_responder_proposal) {
+			/* capture the new best proposal  */
+			best_responder_proposal = match;
+		} else {
+			/* no improvement */
+			passert(match == best_responder_proposal);
+		}
 
 	} while (proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
-	DBG(DBG_CONTROL, DBG_log("XXX: stop processing proposals"));
-	return 0;
-
+	pfree(matching_responder_proposals);
+	
+	if (best_responder_proposal < 0) {
+		/* STF_FAIL status indicating corruption */
+		return -best_responder_proposal;
+	} else if (best_responder_proposal >= num_responder_proposals) {
+		/* no luck */
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	} else {
+		/* proposal chosen, how to return it? */
+		return STF_OK;
+	}
 }
