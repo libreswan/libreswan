@@ -57,7 +57,7 @@ west #
 003 "nss-cert-ocsp" #1: received and ignored informational message
 003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
 031 "nss-cert-ocsp" #1: max number of retransmissions (4) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-002 "nss-cert-ocsp" #1: deleting state #1 (STATE_MAIN_I3)
+000 "nss-cert-ocsp" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo done
 done
