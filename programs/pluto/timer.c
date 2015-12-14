@@ -668,7 +668,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				DBG(DBG_LIFECYCLE, DBG_log( "#%lu check last used on newest IPSec SA #%lu",
 							st->st_serialno, cst->st_serialno));
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
-					deltaless(c->sa_rekey_margin, last_used_age)) {
+					deltaless(c->sa_rekey_margin, last_used_age))
+				{
 					delete_liveness_event(cst);
 					delete_event(cst);
 					event_schedule(EVENT_SA_EXPIRE, 0, cst);
@@ -680,7 +681,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				}
 
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
-				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin)))
+		{
 			/*
 			 * we observed no recent use: no need to replace
 			 *
@@ -705,6 +707,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
+
+
 		delete_liveness_event(st);
 		delete_dpd_event(st);
 		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
