@@ -2087,8 +2087,7 @@ static int process_transforms(pb_stream *prop_pbs, int num_initiator_transforms,
 	    DBG_log("Matching %d initiator transforms against %d responder proposals",
 		    num_initiator_transforms, num_responder_proposals));
 
-	int transforms_found[IKEv2_TRANS_TYPE_ROOF];
-	memset(transforms_found, 0, sizeof(transforms_found));
+	lset_t transform_types_found = LEMPTY;
 
 	/*
 	 * Use the number of transforms(type) for a proposal as a
@@ -2152,10 +2151,8 @@ static int process_transforms(pb_stream *prop_pbs, int num_initiator_transforms,
 		 * the wrong type can be skipped.
 		 */
 
-		/*
-		 * Remember the transform types found.
-		 */
-		transforms_found[trans.isat_type] = 1;
+		/* Remember each transform type found. */
+		transform_types_found |= LELEM(trans.isat_type);
 
 		/*
 		 * Find the proposals that match and flag them.
@@ -2195,34 +2192,30 @@ static int process_transforms(pb_stream *prop_pbs, int num_initiator_transforms,
 	/*
 	 * Better way to find the match?  What to do with it?
 	 */
-	DBG(DBG_CONTROL, DBG_log("XXX: looking for successful match"));
 	int p;
 	for (p = 0; p < num_responder_proposals; p++) {
+		DBG(DBG_CONTROLMORE, DBG_log("Seeing if responder proposal %d matched", p));
 		int type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			if ((transforms_found[type] != 0) == (matching_responder_proposals[p][type] < responder_proposals[p][type].nr)) {
-				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d good",
-							 p, type));
+			int type_found = ((transform_types_found & LELEM(type)) != 0);
+			int type_matched = (matching_responder_proposals[p][type] < responder_proposals[p][type].nr);
+			if (type_found == type_matched) {
+				DBG(DBG_CONTROLMORE, DBG_log("Proposal %d type %d good", p, type));
 				continue;
 			} else {
-				DBG(DBG_CONTROL, DBG_log("XXX: proposal %d type %d bad",
-							 p, type));
+				DBG(DBG_CONTROLMORE, DBG_log("Proposal %d type %d bad", p, type));
 				break;
 			}
 		}
 		/* loop finished? */
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
-			    DBG_log("XXX: proposal %d good!", p);
-			    for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-				    /* see "something non-zero" above.  */
-				    DBG_log("XXX: type %d transform %d", type, matching_responder_proposals[p][type]);
-			    });
+			    DBG_log("Returning good responder proposal %d", p));
 			return p;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("Stop processing transforms"));
+	DBG(DBG_CONTROL, DBG_log("Stop processing transforms (no matching proposals found)"));
 	return num_responder_proposals;
 }
 
