@@ -1086,7 +1086,10 @@ void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
 
-	DBG(DBG_CONTROL, DBG_log("Deleting states for connection"));
+	DBG(DBG_CONTROL, DBG_log("Deleting states for connection - %s",
+		relations ? "including all other IPsec SA's of this IKE SA" :
+			"not including other IPsec SA's"
+		));
 
 	/*
 	 * save this connection's isakmp SA,
@@ -1160,9 +1163,7 @@ void delete_p2states_by_connection(struct connection *c)
 /*
  * Walk through the state table, and delete each state whose phase 1 (IKE)
  * peer is among those given.
- * TODO: This function is only called for ipsec whack --crash peer, but
- * it currently does not work for IKEv2, since IS_PHASE1() only works on IKEv1
- * Filed as bug http://bugs.xelerance.com/view.php?id=971
+ * This function is only called for ipsec whack --crash peer
  */
 void delete_states_by_peer(const ip_address *peer)
 {
