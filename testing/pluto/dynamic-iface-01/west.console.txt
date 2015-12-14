@@ -89,7 +89,7 @@ west #
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 20000ms for response
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 40000ms for response
 031 "west-float" #5: max number of retransmissions (4) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
-002 "west-float" #5: deleting state #5 (STATE_MAIN_I1)
+000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  # wait for pending cleanups
 west #
