@@ -192,6 +192,8 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 192.1.3.209/32 dst 7.7.7.7/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
@@ -269,6 +271,7 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
+000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failed
 road #
  sleep 60
 road #
@@ -286,6 +289,8 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 192.1.3.209/32 dst 7.7.7.7/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
@@ -363,6 +368,7 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
+000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failed
 road #
  sleep 60
 road #
@@ -380,6 +386,8 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 192.1.3.209/32 dst 7.7.7.7/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
@@ -457,6 +465,7 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
+000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failed
 road #
  killall ip > /dev/null 2> /dev/null
 [1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
@@ -480,6 +489,8 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 192.1.3.209/32 dst 7.7.7.7/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
