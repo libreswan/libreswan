@@ -125,6 +125,10 @@ west #
  echo "initdone"
 initdone
 west #
+ # sleep a little to allow north to establish tunnel to east
+west #
+ sleep 20
+west #
  ipsec auto --up westnet-northnet-ipv4-psk
 002 "westnet-northnet-ipv4-psk" #1: initiating v2 parent SA
 133 "westnet-northnet-ipv4-psk" #1: STATE_PARENT_I1: initiate
