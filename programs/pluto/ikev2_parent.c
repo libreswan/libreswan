@@ -944,16 +944,20 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
-		/* XXXXXXXXX testing ! */
-		/*stf_status newret =*/ikev2_process_sa_payload(sa_pd->pbs,
-								PROTO_v2_ISAKMP,
-								TRUE, FALSE);
+		struct ikev2_chosen_proposal chosen;
+		ret = ikev2_process_sa_payload(sa_pd->pbs, PROTO_v2_ISAKMP,
+					       TRUE, FALSE, &chosen);
+		if (ret == STF_OK) {
+			DBG(DBG_CONTROL, DBG_log("proposal %d chosen",
+						 chosen.proposal.isap_propnum));
+			ikev2_emit_chosen_proposal(&r_sa_pbs, &chosen);
+			/* internalize */
+		} else {
+			DBG(DBG_CONTROL, DBG_log("no proposal chosen (%d)", ret));
+		}
 
 		/* SA body in and out */
-		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&r_sa_pbs, st, FALSE);
-
-		// XXX: pexpect(ret == newret);
+		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs, NULL, st, FALSE);
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
