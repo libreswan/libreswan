@@ -46,7 +46,7 @@ west #
 002 adding interface eth1/eth1 192.1.2.66:500
 002 adding interface eth1/eth1 192.1.2.66:4500
 003 two interfaces match "west-float" (eth1, eth1)
-002 "west-float": terminating SAs using this connection
+002 "west-float": terminating SAs using the connection west-float
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
@@ -77,7 +77,7 @@ west #
 002 "float-east" #4: deleting state #4 (STATE_QUICK_I2)
 005 "float-east" #4: ESP traffic information: in=0B out=0B
 002 "float-east" #3: deleting state #3 (STATE_MAIN_I4)
-002 "float-east": terminating SAs using this connection
+002 "float-east": terminating SAs using the connection float-east
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
