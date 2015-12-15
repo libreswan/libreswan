@@ -2179,6 +2179,7 @@ static int process_transforms(pb_stream *prop_pbs,
 		}
 	}
 
+	/* XXX: Use a set to speed up the comparison?  */
 	int local_proposal;
 	for (local_proposal = 0; local_proposal < num_local_proposals; local_proposal++) {
 		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_proposal));
@@ -2207,6 +2208,18 @@ static int process_transforms(pb_stream *prop_pbs,
 	return num_local_proposals;
 }
 
+/*
+ * Compare all remote proposals against all local proposals finding
+ * and returning the "first" local proposal to match.
+ *
+ * The need to load all the remote proposals into buffers is avoided
+ * by processing them in a single.  This is a tradeoff.  Since each
+ * remote proposal in turn is compared against all local proposals
+ * (and not each local proposal in turn compared against all remote
+ * proposals) a local proposal matching only the last remote proposal
+ * takes more comparisons.  Othe other and mallocing an pointer
+ * jugging is avoided.
+ */
 stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 				    bool ike, bool initial, bool accepted,
 				    struct ikev2_chosen_proposal *best)
@@ -2373,6 +2386,13 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 					best->proposal.isap_numtrans++;
 					best->transforms[type] = proposals[best_local_proposal][type].transforms[tt];
 				} else {
+					/*
+					 * An accepted NULL INTEG
+					 * algorithm has .id=0 so
+					 * choose something even
+					 * smaller as an invalid
+					 * value.
+					 */
 					best->transforms[type].id = -1;
 				}
 			}
@@ -2465,39 +2485,52 @@ stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs, struct ikev2_chosen_p
 	return STF_OK;
 }
 
-#if 0
-void unpack_winnings()
+struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen)
 {
-
-	if (best_local_proposal >= 0 && best_local_proposal < num_local_proposals) {
-		/* Matching transforms.  */
-		int t;
-		/*
-		 * Internalize the best proposal.
-		 */
-		ta.encrypt = itl0.encr_transforms[itl0.encr_i];
-		ta.enckeylen = itl0.encr_keylens[itl0.encr_i] > 0 ?
-			itl0.encr_keylens[itl0.encr_i] : 0;
-		ta.integ_hash = itl0.integ_transforms[itl0.integ_i];
-		ta.prf_hash = itl0.prf_transforms[itl0.prf_i];
-		ta.groupnum = itl0.dh_transforms[itl0.dh_i];
-		
-		ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
-			IKE_ALG_ENCRYPT,
-			ta.encrypt);
-		passert(ta.encrypter != NULL);
-		if (ta.enckeylen <= 0)
-			ta.enckeylen = ta.encrypter->keydeflen;
-
-		ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-								     ta.integ_hash);
-
-		ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-								   ta.prf_hash);
-		passert(ta.prf_hasher != NULL);
-
-		ta.group = lookup_group(ta.groupnum);
+	DBG(DBG_CONTROL, DBG_log("internalizing chosen proposal"))
+	struct trans_attrs ta = {0};
+	int type;
+	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+		struct ikev2_transform *transform = &chosen->transforms[type];
+		if (transform->id >= 0) {
+			switch (type) {
+			case IKEv2_TRANS_TYPE_ENCR:
+				ta.encrypt = transform->id;
+				ta.enckeylen = transform->attr_keylen;
+				ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
+										     ta.encrypt);
+				passert(ta.encrypter != NULL);
+				if (ta.enckeylen <= 0) {
+					ta.enckeylen = ta.encrypter->keydeflen;
+				}
+				break;
+			case IKEv2_TRANS_TYPE_PRF:
+				ta.prf_hash = transform->id;
+				ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+										   ta.prf_hash);
+				passert(ta.prf_hasher != NULL);
+				break;
+			case IKEv2_TRANS_TYPE_INTEG:
+				if (transform->id == 0) {
+					/*passert(ikev2_encr_aead(chosen->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
+					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
+				} else {
+					ta.integ_hash = transform->id;
+					ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+											     ta.integ_hash);
+					passert(ta.integ_hasher != NULL);
+				}
+				break;
+			case IKEv2_TRANS_TYPE_DH:
+				ta.groupnum = transform->id;
+				ta.group = lookup_group(ta.groupnum);
+				break;
+			case IKEv2_TRANS_TYPE_ESN:
+				/* not implemented, fall through */
+			default:
+				bad_case(type);
+			}
+		}
 	}
-
+	return ta;
 }
-#endif

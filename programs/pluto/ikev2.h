@@ -102,6 +102,8 @@ extern stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 extern stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs,
 					     struct ikev2_chosen_proposal *chosen);
 
+struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen);
+
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,
 					    chunk_t *data);

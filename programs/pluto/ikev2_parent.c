@@ -947,22 +947,19 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		struct ikev2_chosen_proposal chosen;
 		ret = ikev2_process_sa_payload(sa_pd->pbs, PROTO_v2_ISAKMP,
 					       TRUE, FALSE, &chosen);
-		if (ret == STF_OK) {
-			DBG(DBG_CONTROL, DBG_log("proposal %d chosen",
-						 chosen.proposal.isap_propnum));
-			ikev2_emit_chosen_proposal(&r_sa_pbs, &chosen);
-			/* internalize */
-		} else {
-			DBG(DBG_CONTROL, DBG_log("no proposal chosen (%d)", ret));
-		}
-
-		/* SA body in and out */
-		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs, NULL, st, FALSE);
-
 		if (ret != STF_OK) {
-			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
+			DBG(DBG_CONTROL, DBG_log("no remote proposal chosen (%d)", ret));
 			return ret;
 		}
+
+		DBG(DBG_CONTROL, DBG_log("remote proposal %d chosen", chosen.proposal.isap_propnum));
+		ret = ikev2_emit_chosen_proposal(&r_sa_pbs, &chosen);
+		if (ret != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+			return ret;
+		}
+
+		st->st_oakley = ikev2_internalize_chosen_proposal(&chosen);
 	}
 
 	/* KE in */
