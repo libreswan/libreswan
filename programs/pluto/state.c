@@ -2299,6 +2299,8 @@ void show_globalstate_status(void)
 {
 	enum state_kind s;
 
+	whack_log(RC_COMMENT, "~shunts.total %d", show_shunt_count());
+
 	whack_log(RC_COMMENT, "~states.total %d", total());
 	whack_log(RC_COMMENT, "~states.child %d", total_ipsec());
 	whack_log(RC_COMMENT, "~states.ike %d", total_ike());

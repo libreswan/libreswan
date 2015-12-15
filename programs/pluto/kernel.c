@@ -1050,7 +1050,20 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-void show_shunt_status(void)
+int show_shunt_count()
+{
+	int i = 0;
+	const struct bare_shunt *bs;
+
+	for (bs = bare_shunts; bs != NULL; bs = bs->next)
+	{
+		i++;
+	}
+
+	return i;
+}
+
+void show_shunt_status()
 {
 	const struct bare_shunt *bs;
 
