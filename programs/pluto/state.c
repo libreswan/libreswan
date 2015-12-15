@@ -633,6 +633,7 @@ static void release_v2fragments(struct state *st)
 {
 	struct ikev2_frag *frag = st->st_tfrags;
 
+	passert(st->st_ikev2);
 	while (frag != NULL) {
 		struct ikev2_frag *this = frag;
 
@@ -648,6 +649,7 @@ static void release_v1fragments(struct state *st)
 {
 	struct ike_frag *frag = st->ike_frags;
 
+	passert(!st->st_ikev2);
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
@@ -660,16 +662,14 @@ static void release_v1fragments(struct state *st)
 }
 
 /*
- * Release stored IKE fragments.
- * XXX A state could have both types of fragments when it has
- * switched between IKEv1 and IKEv2. This is considered a bug,
- * as we should really start with a clean state between full
- * IKE attempts.
+ * Release stored IKE fragments. This is a union in st so only call one!
  */
 void release_fragments(struct state *st)
 {
-	release_v1fragments(st);
-	release_v2fragments(st);
+	if (!st->st_ikev2)
+		release_v1fragments(st);
+	else
+		release_v2fragments(st);
 }
 
 /* delete a state object */

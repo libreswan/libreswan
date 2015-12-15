@@ -1,2 +1,5 @@
 west sends OK cert
 east sends OK cert
+
+PAUL: is this test  only to test missing :RSA entry in ipsec.secrets ??
+
