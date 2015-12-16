@@ -1965,8 +1965,18 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 }
 
 struct ikev2_transforms {
-	struct ikev2_transform *transforms;
+	struct ikev2_transform *transform;
 	int nr;
+};
+
+struct ikev2_proposal {
+	struct ikev2_transforms transforms[IKEv2_TRANS_TYPE_ROOF];
+};
+
+struct ikev2_proposals {
+	bool dynamic;
+	int nr;
+	struct ikev2_proposal *proposal;
 };
 
 /*
@@ -2020,9 +2030,9 @@ struct ikev2_transform dh__modp1536__modp2048[] = {
 	DH_MODP1536, DH_MODP2048,
 };
 
-#define TRANSFORMS(T) { .transforms = T, .nr = sizeof(T) / sizeof(T[0]) }
+#define TRANSFORMS(T) { .transform = T, .nr = sizeof(T) / sizeof(T[0]) }
 
-struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
+struct ikev2_proposal proposals[] = {
 /*
  * IKEv2 proposal #0:
  * AES_GCM[256]
@@ -2037,10 +2047,12 @@ struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
  * MODP2048, MODP4096, MODP8192
  */
 	{
-		[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_gcm16_256__aes_gcm16_128),
-		[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__none), /* XXX */
-		[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__sha1),
-		[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp2048__modp4096__modp8192),
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_gcm16_256__aes_gcm16_128),
+			[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__none), /* XXX */
+			[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__sha1),
+			[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp2048__modp4096__modp8192),
+		},
 	},
 /*
  * IKEv2 proposal #2:
@@ -2056,10 +2068,12 @@ struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
  * INTEG????
  */
 	{
-		[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_cbc_256__aes_cbc_256),
-		[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__sha2_256_128__aes_xcbc_96__sha1_96),
-		[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__aes128_xcbc__sha1),
-		[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp1536__modp2048),
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_cbc_256__aes_cbc_256),
+			[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__sha2_256_128__aes_xcbc_96__sha1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha2_256__aes128_xcbc__sha1),
+			[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp1536__modp2048),
+		},
 	},
 };
 
@@ -2073,7 +2087,7 @@ struct ikev2_transforms proposals[][IKEv2_TRANS_TYPE_ROOF] = {
 
 static int process_transforms(pb_stream *prop_pbs,
 			      int remote_proposal, int num_remote_transforms,
-			      /*const*/struct ikev2_transforms (*local_proposals)[IKEv2_TRANS_TYPE_ROOF],
+			      struct ikev2_proposal *local_proposals,
 			      const int num_local_proposals,
 			      int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF])
 {
@@ -2089,11 +2103,12 @@ static int process_transforms(pb_stream *prop_pbs,
 	 * can be made the new search upper bound.
 	 */
 	{
-		int p;
-		for (p = 0; p < num_local_proposals; p++) {
-			int t;
-			for (t = 0; t < IKEv2_TRANS_TYPE_ROOF; t++) {
-				matching_local_proposals[p][t] = local_proposals[p][t].nr;
+		int lp;
+		for (lp = 0; lp < num_local_proposals; lp++) {
+			struct ikev2_proposal *local_proposal = &local_proposals[lp];
+			int type;
+			for (type = 0; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+				matching_local_proposals[lp][type] = local_proposal->transforms[type].nr;
 			}
 		}
 	}
@@ -2102,9 +2117,9 @@ static int process_transforms(pb_stream *prop_pbs,
 	for (remote_transform = 0; remote_transform < num_remote_transforms; remote_transform++) {
 
 		/* first the transform */
-		struct ikev2_trans trans;
+		struct ikev2_trans remote_trans;
 		pb_stream trans_pbs;
-		if (!in_struct(&trans, &ikev2_trans_desc,
+		if (!in_struct(&remote_trans, &ikev2_trans_desc,
 			       prop_pbs, &trans_pbs)) {
 			libreswan_log("remote proposal %d transform %d is corrupt",
 				      remote_proposal, remote_transform);
@@ -2152,27 +2167,28 @@ static int process_transforms(pb_stream *prop_pbs,
 		 */
 
 		/* Remember each transform type found. */
-		transform_types_found |= LELEM(trans.isat_type);
+		transform_types_found |= LELEM(remote_trans.isat_type);
 
 		/*
 		 * Find the proposals that match and flag them.
 		 */
-		int local_proposal;
-		for (local_proposal = 0; local_proposal < num_local_proposals; local_proposal++) {
+		int lp;
+		for (lp = 0; lp < num_local_proposals; lp++) {
+			struct ikev2_proposal *local_proposal = &local_proposals[lp];
 			/*
 			 * Search the proposal for transforms of this
 			 * type that match.  Limit the search to
 			 * transforms before the last match.
 			 */
-			struct ikev2_transform *local_transforms = local_proposals[local_proposal][trans.isat_type].transforms;
-			int local_transform;
-			for (local_transform = 0; local_transform < matching_local_proposals[local_proposal][trans.isat_type]; local_transform++) {
-				struct ikev2_transform *transform = &local_transforms[local_transform];
-				if (transform->id == trans.isat_transid
-				    && transform->attr_keylen == remote_keylen) {
+			struct ikev2_transforms *local_transforms = &local_proposal->transforms[remote_trans.isat_type];
+			int lt;
+			for (lt = 0; lt < matching_local_proposals[lp][remote_trans.isat_type]; lt++) {
+				struct ikev2_transform *local_transform = &local_transforms->transform[lt];
+				if (local_transform->id == remote_trans.isat_transid
+				    && local_transform->attr_keylen == remote_keylen) {
 					DBG(DBG_CONTROL, DBG_log("remote proposal %d transform %d of type %d matches local proposal %d transform %d",
-								 remote_proposal, remote_transform, trans.isat_type, local_proposal, local_transform));
-					matching_local_proposals[local_proposal][trans.isat_type] = local_transform;
+								 remote_proposal, remote_transform, remote_trans.isat_type, lp, lt));
+					matching_local_proposals[lp][remote_trans.isat_type] = lt;
 					break;
 				}
 			}
@@ -2180,18 +2196,19 @@ static int process_transforms(pb_stream *prop_pbs,
 	}
 
 	/* XXX: Use a set to speed up the comparison?  */
-	int local_proposal;
-	for (local_proposal = 0; local_proposal < num_local_proposals; local_proposal++) {
-		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_proposal));
+	int lp;
+	for (lp = 0; lp < num_local_proposals; lp++) {
+		struct ikev2_proposal *local_proposal = &local_proposals[lp];
+		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", lp));
 		int type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 			int type_found = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = (matching_local_proposals[local_proposal][type] < local_proposals[local_proposal][type].nr);
+			int type_matched = (matching_local_proposals[lp][type] < local_proposal->transforms[type].nr);
 			if (type_found == type_matched) {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %d good", local_proposal, type));
+				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %d good", lp, type));
 				continue;
 			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %d bad", local_proposal, type));
+				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %d bad", lp, type));
 				break;
 			}
 		}
@@ -2199,8 +2216,8 @@ static int process_transforms(pb_stream *prop_pbs,
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
 			    DBG_log("remote proposal %d matches local proposal %d",
-				    remote_proposal, local_proposal));
-			return local_proposal;
+				    remote_proposal, lp));
+			return lp;
 		}
 	}
 
@@ -2224,7 +2241,6 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 				    bool ike, bool initial, bool accepted,
 				    struct ikev2_chosen_proposal *best)
 {
-
 	/* what if there are none? */
 	int num_local_proposals = sizeof(proposals) / sizeof(proposals[0]);
 
@@ -2382,9 +2398,9 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 			int type;
 			for (type = 1 ; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 				int tt = matching_local_proposals[best_local_proposal][type];
-				if (tt < proposals[best_local_proposal][type].nr) {
+				if (tt < proposals[best_local_proposal].transforms[type].nr) {
 					best->proposal.isap_numtrans++;
-					best->transforms[type] = proposals[best_local_proposal][type].transforms[tt];
+					best->transforms[type] = proposals[best_local_proposal].transforms[type].transform[tt];
 				} else {
 					/*
 					 * An accepted NULL INTEG
