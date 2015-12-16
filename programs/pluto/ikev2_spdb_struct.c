@@ -1175,6 +1175,8 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 						    ipprotoid,
 						    &st->st_connection->spd,
 						    TRUE /* tunnel */);
+		proto_info->our_lastused = mononow();
+		proto_info->peer_lastused = mononow();
 	}
 
 	r_proposal.isap_lp = v2_PROPOSAL_LAST;
@@ -1918,6 +1920,8 @@ stf_status ikev2_parse_child_sa_body(
 	 */
 	proto_info->attrs.transattrs.integ_hash = alg_info_esp_v2tov1aa(ta.integ_hash);
 	proto_info->present = TRUE;
+	proto_info->our_lastused = mononow();
+	proto_info->peer_lastused = mononow();
 
 	proto_info->attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL;
 
