@@ -1,0 +1,11 @@
+As newoe-18-poc-poc, but now the ping bursts out a few packets so that
+there are packets during the initial IKE. This test case should show
+that there are not two IPsec SA's started but only one.
+
+  icmp ->  X
+  IKE_INIT_REQ A ->
+   icmp ---->
+               X <-- icmp reply
+            <- IKE_INIT_REQ B
+
+And two IPsec SA's establish
