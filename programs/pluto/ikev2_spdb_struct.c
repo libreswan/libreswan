@@ -1972,7 +1972,7 @@ struct ikev2_transform {
 	/*
 	 * A +ve value indicates that it was present.
 	 */
-	int attr_keylen;
+	unsigned attr_keylen;
 };
 
 struct ikev2_transforms {
@@ -2053,17 +2053,20 @@ static bool print_transforms(struct print *buf, int type,
 	return TRUE;
 }
 
-static void DBG_log_ikev2_proposal(struct ikev2_proposal *proposal)
+static void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal)
 {
 	struct print buf = {0};
 	int type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		if (!print_string(&buf, " "))
-			break;
-		if (!print_transforms(&buf, type, &proposal->transforms[type]))
-			break;
+		struct ikev2_transforms *transforms = &proposal->transforms[type];
+		if (transforms->nr > 0) {
+			if (!print_string(&buf, " "))
+				break;
+			if (!print_transforms(&buf, type, transforms))
+				break;
+		}
 	}
-	DBG_log("proposal:%s", buf.buf);
+	DBG_log("%s ikev2_proposal:%s", prefix, buf.buf);
 }
 
 void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals)
@@ -2259,7 +2262,7 @@ static int process_transforms(pb_stream *prop_pbs,
 		}
 
 		/* followed by attributes */
-		int remote_keylen = 0;
+		unsigned remote_keylen = 0;
 		while (pbs_left(&trans_pbs) != 0) {
 			pb_stream attr_pbs;
 			struct ikev2_trans_attr attr;
@@ -2694,16 +2697,20 @@ struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposa
 	return ta;
 }
 
-static struct ikev2_transforms single_transform(int id, int attr_keylen)
+static void append_transform(struct ikev2_proposal *proposal,
+			     int type, int id, unsigned attr_keylen)
 {
-	struct ikev2_transform *transform = alloc_thing(struct ikev2_transform, "transform");
-	transform->id = id;
-	transform->attr_keylen = attr_keylen;
-	struct ikev2_transforms transforms = {
-		.nr = 1,
-		.transform = transform,
+	struct ikev2_transforms *transforms = &proposal->transforms[type];
+	size_t old_size = sizeof(struct ikev2_transform) * transforms->nr;
+	size_t new_size = sizeof(struct ikev2_transform) * transforms->nr + 1;
+	struct ikev2_transform *new_transforms = alloc_bytes(new_size, "transforms");
+	memcpy(new_transforms, transforms->transform, old_size);
+	new_transforms[transforms->nr++] = (struct ikev2_transform) {
+		.id = id,
+		.attr_keylen = attr_keylen,
 	};
-	return transforms;
+	pfreeany(transforms->transform);
+	transforms->transform = new_transforms;
 }
 
 /*
@@ -2733,27 +2740,56 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg != NULL) {
-			proposal->transforms[IKEv2_TRANS_TYPE_ENCR]
-				= single_transform(ealg->common.algo_v2id,
-						   ike_info->ike_eklen);
+			if (ike_info->ike_eklen) {
+				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+						 ealg->common.algo_v2id, ike_info->ike_eklen);
+			} else {
+				/*
+				 * XXX: The parser, or something else,
+				 * should have taken care of this.  If
+				 * a keylen of zero makes it all the
+				 * way through to here then, isn't
+				 * that the intent?
+				 *
+				 * XXX: There's a rumor that
+				 * strongswan proposes AES_000, this
+				 * won't match that.
+				 *
+				 * XXX: What about algorithms like
+				 * BLOWFISH where keylen of zero is
+				 * valid.
+				 */
+				if (ealg->keymaxlen) {
+					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
+					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+							 ealg->common.algo_v2id, ealg->keymaxlen);
+				}
+				if (ealg->keydeflen > 0 && ealg->keydeflen < ealg->keymaxlen) {
+					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
+								 ealg->keydeflen));
+					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+							 ealg->common.algo_v2id, ealg->keydeflen);
+				}
+			}
 		}
 
 		struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
 		if (halg != NULL) {
-			proposal->transforms[IKEv2_TRANS_TYPE_PRF]
-				= single_transform(halg->common.algo_v2id, 0);
+			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
+					 halg->common.algo_v2id, 0);
 			if (ike_alg_enc_requires_integ(ealg)) {
-				proposal->transforms[IKEv2_TRANS_TYPE_INTEG]
-					= single_transform(v1tov2_integ(ike_info->ike_halg), 0);
+				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+						 v1tov2_integ(ike_info->ike_halg), 0);
 			}
 		}
 
 		if (ike_info->ike_modp > 0) {
-			proposal->transforms[IKEv2_TRANS_TYPE_DH]
-				= single_transform(ike_info->ike_modp, 0);
+			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
+					 ike_info->ike_modp, 0);
 		}
+
 		DBG(DBG_CONTROL,
-		    DBG_log_ikev2_proposal(proposal));
+		    DBG_log_ikev2_proposal("... ", proposal));
 		proposal++;
 	}
 	return proposals;
