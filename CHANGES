@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.16 (unreleased)
+v3.16 (December 18, 2015)
 * auto: add new option --start which is like auto=start [Tuomo]
 * libipsecconf: allow time with no unit suffix (openswan compat) [Hugh]
 * libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
