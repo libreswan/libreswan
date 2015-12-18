@@ -358,50 +358,64 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 	}
 }
 
+static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
+			    bool fix_zero)
+{
+	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
+	passert(!fix_zero || enc_desc != NULL);
+	struct hash_desc *hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
+	passert(!fix_zero || hash_desc != NULL);
+
+	int eklen = ike_info->ike_eklen;
+	if (fix_zero && !eklen)
+		eklen = enc_desc->keydeflen;
+	int aklen = ike_info->ike_hklen;
+	if (fix_zero && !aklen)
+		aklen = hash_desc->hash_digest_len * BITS_PER_BYTE;
+
+	struct esb_buf enc_buf, hash_buf, group_buf;
+	return snprintf(buf, buflen,
+			"%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
+			strip_prefix(enum_showb(&oakley_enc_names,
+						ike_info->ike_ealg, &enc_buf),
+				     "OAKLEY_"),
+			ike_info->ike_ealg, eklen,
+			strip_prefix(enum_showb(&oakley_hash_names,
+						ike_info->ike_halg, &hash_buf),
+				     "OAKLEY_"),
+			ike_info->ike_halg, aklen,
+			strip_prefix(enum_showb(&oakley_group_names,
+						ike_info->ike_modp, &group_buf),
+				     "OAKLEY_GROUP_"),
+			ike_info->ike_modp);
+}
+
+void alg_info_snprint_ike_info(char *buf, size_t buflen,
+			       struct ike_info *ike_info)
+{
+	snprint_ike_info(buf, buflen, ike_info, FALSE);
+}
+
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
 	char *ptr = buf;
-	int ret;
 	struct ike_info *ike_info;
 	int cnt;
-	int eklen, aklen;
 	const char *sep = "";
-	struct encrypt_desc *enc_desc;
-	struct hash_desc *hash_desc;
 
 	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
 		if (ike_alg_enc_present(ike_info->ike_ealg) &&
 		    (ike_alg_hash_present(ike_info->ike_halg)) &&
 		    (lookup_group(ike_info->ike_modp) != NULL)) {
-
-			enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
-			passert(enc_desc != NULL);
-			hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
-			passert(hash_desc != NULL);
-
-			eklen = ike_info->ike_eklen;
-			if (!eklen)
-				eklen = enc_desc->keydeflen;
-			aklen = ike_info->ike_hklen;
-			if (!aklen)
-				aklen = hash_desc->hash_digest_len *
-					BITS_PER_BYTE;
-			ret = snprintf(ptr, buflen,
-				       "%s%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
-				       sep,
-				       strip_prefix(enum_name(&oakley_enc_names,
-						 ike_info->ike_ealg),
-						"OAKLEY_"),
-				       ike_info->ike_ealg, eklen,
-				       strip_prefix(enum_name(&oakley_hash_names,
-						 ike_info->ike_halg),
-						"OAKLEY_"),
-				       ike_info->ike_halg, aklen,
-				       strip_prefix(enum_name(&oakley_group_names,
-						 ike_info->ike_modp),
-						"OAKLEY_GROUP_"),
-				       ike_info->ike_modp);
+			if (strlen(sep) >= buflen) {
+				DBG_log("alg_info_snprint_ike: buffer too short for seperator");
+				break;
+			}
+			strcpy(ptr, sep);
+			ptr += strlen(sep);
+			buflen -= strlen(sep);
+			int ret = snprint_ike_info(ptr, buflen, ike_info, TRUE);
 			if (ret < 0 || (size_t)ret >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
 				break;
