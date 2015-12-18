@@ -944,9 +944,15 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
+
 		struct ikev2_chosen_proposal chosen;
-		ret = ikev2_process_sa_payload(sa_pd->pbs, PROTO_v2_ISAKMP,
-					       TRUE, FALSE, &chosen);
+		{
+			struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+			passert(proposals != NULL);
+			ret = ikev2_process_sa_payload(sa_pd->pbs, PROTO_v2_ISAKMP,
+						       TRUE, FALSE, &chosen, proposals);
+			free_ikev2_proposals(proposals);
+		}
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROL, DBG_log("no remote proposal chosen (%d)", ret));
 			return ret;

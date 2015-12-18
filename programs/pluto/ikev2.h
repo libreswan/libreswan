@@ -95,14 +95,21 @@ struct ikev2_chosen_proposal {
 	struct ikev2_transform transforms[IKEv2_TRANS_TYPE_ROOF];
 };
 
+struct ikev2_proposals;
+
 extern stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 					   bool ike, bool initial, bool accepted,
-					   struct ikev2_chosen_proposal *best);
+					   struct ikev2_chosen_proposal *best,
+					   struct ikev2_proposals *local_proposals);
 
 extern stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs,
 					     struct ikev2_chosen_proposal *chosen);
 
 struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen);
+
+struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike);
+
+void free_ikev2_proposals(struct ikev2_proposals *);
 
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,
