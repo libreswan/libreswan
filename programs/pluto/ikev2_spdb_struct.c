@@ -1964,6 +1964,17 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	return STF_OK;
 }
 
+/*
+ * Raw (IETF numbered) chosen proposal/transform.
+ */
+struct ikev2_transform {
+	int id;
+	/*
+	 * A +ve value indicates that it was present.
+	 */
+	int attr_keylen;
+};
+
 struct ikev2_transforms {
 	struct ikev2_transform *transform;
 	int nr;
@@ -1978,6 +1989,122 @@ struct ikev2_proposals {
 	struct ikev2_proposal *proposal;
 	bool on_heap;
 };
+
+struct ikev2_chosen_proposal {
+	struct ikev2_prop proposal;
+	uint8_t spi[MAX_ISAKMP_SPI_SIZE];
+	struct ikev2_transform transforms[IKEv2_TRANS_TYPE_ROOF];
+};
+
+struct print {
+	size_t pos;
+	char buf[1024];
+};
+
+static bool print_string(struct print *buf, const char *string)
+{
+	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s", string);
+	if (n < 0 || buf->pos + n >= sizeof(buf->buf))
+		return FALSE;
+	buf->pos += n;
+	return TRUE;
+}
+
+static bool print_transform(struct print *buf, int type,
+			    struct ikev2_transform *transform)
+{
+	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s(%d)",
+			 enum_name(ikev2_transid_val_descs[type], transform->id),
+			 transform->id);
+	if (n < 0 || buf->pos + n > sizeof(buf->buf))
+		return FALSE;
+	buf->pos += n;
+	if (transform->attr_keylen > 0) {
+		n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			     "_%d", transform->attr_keylen);
+		if (n < 0 || buf->pos + n > sizeof(buf->buf))
+			return FALSE;
+		buf->pos += n;
+	}
+	return TRUE;
+}
+
+static const char *trans_type_name(int type)
+{
+	return strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_");
+}
+
+static bool print_transforms(struct print *buf, int type,
+			     struct ikev2_transforms *transforms)
+{
+	if (!print_string(buf, trans_type_name(type)))
+		return FALSE;
+	int tn;
+	char *sep = "=";
+	for (tn = 0; tn < transforms->nr; tn++) {
+		if (!print_string(buf, sep))
+			return FALSE;
+		sep = ",";
+		if (!print_transform(buf, type, &transforms->transform[tn]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static void DBG_log_ikev2_proposal(struct ikev2_proposal *proposal)
+{
+	struct print buf = {0};
+	int type;
+	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+		if (!print_string(&buf, " "))
+			break;
+		if (!print_transforms(&buf, type, &proposal->transforms[type]))
+			break;
+	}
+	DBG_log("proposal:%s", buf.buf);
+}
+
+void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals)
+{
+	int p;
+	DBG_log("%s ikev2_proposals:", prefix);
+	for (p = 0; p < proposals->nr; p++) {
+		DBG_log("  proposal %d:", p);
+		struct ikev2_proposal *proposal = &proposals->proposal[p];
+		int type;
+		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+			struct print buf = {0};
+			print_transforms(&buf, type, &proposal->transforms[type]);
+			DBG_log("    %s", buf.buf);
+		}
+	}
+}
+
+void DBG_log_ikev2_chosen_proposal(const char *prefix,
+				   struct ikev2_chosen_proposal *chosen)
+{
+	if (chosen == NULL) {
+		DBG_log("%s ikev2_chosen_proposal: NULL", prefix);
+		return;
+	}
+	struct print buf = {0};
+	int type;
+	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+		if (chosen->transforms[type].id >= 0) {
+			if (!print_string(&buf, " "))
+				break;
+			if (!print_string(&buf, trans_type_name(type)))
+				break;
+			if (!print_string(&buf, "="))
+				break;
+			if (!print_transform(&buf, type, &chosen->transforms[type]))
+				break;
+		}
+	}
+	DBG_log("%s ikev2_chosen_proposal:%s", prefix, buf.buf);
+}
 
 /*
  * Define macros to save some typing, and to, hopefully avoid some
@@ -2081,41 +2208,6 @@ struct ikev2_proposals default_ikev2_proposals = {
 	.proposal = proposal,
 	.nr = sizeof(proposal) / sizeof(proposal[0]),
 };
-
-static void DBG_log_ikev2_transforms(int type, struct ikev2_transforms *transforms)
-{
-	char buf[1024];
-	char *p = buf;
-	char *end = p + sizeof(buf) - 1;
-	int tn;
-	for (tn = 0; tn < transforms->nr; tn++) {
-		struct ikev2_transform *transform = &transforms->transform[tn];
-		int n = snprintf(p, end - p, " %s(%d)",
-				 enum_name(ikev2_transid_val_descs[type], transform->id),
-				 transform->id);
-		if (n < 0 || p + n >= end)
-			break;
-		p += n;
-		if (transform->attr_keylen > 0) {
-			n = snprintf(p, end  - p, "_%d", transform->attr_keylen);
-			if (n < 0 || p + n >= end)
-				break;
-			p += n;
-		}
-	}
-	DBG_log("type %s transforms %d:%s",
-		strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_"),
-		transforms->nr,
-		buf);
-}
-
-static void DBG_log_ikev2_proposal(struct ikev2_proposal *proposal)
-{
-	int type;
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		DBG_log_ikev2_transforms(type, &proposal->transforms[type]);
-	}
-}
 
 /*
  * Compare the initiator's proposal's transforms against the first
@@ -2228,7 +2320,7 @@ static int process_transforms(pb_stream *prop_pbs,
 				    && local_transform->attr_keylen == remote_keylen) {
 					DBG(DBG_CONTROL, DBG_log("remote proposal %d transform %d of type %s matches local proposal %d transform %d",
 								 remote_proposal, remote_transform,
-								 strip_prefix(enum_name(&ikev2_trans_type_names, remote_trans.isat_type), "TRANS_TYPE_"),
+								 trans_type_name(remote_trans.isat_type),
 								 lp, lt));
 					matching_local_proposals[lp][remote_trans.isat_type] = lt;
 					break;
@@ -2248,11 +2340,11 @@ static int process_transforms(pb_stream *prop_pbs,
 			int type_matched = (matching_local_proposals[lp][type] < local_proposal->transforms[type].nr);
 			if (type_found == type_matched) {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s good", lp,
-							     strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_")));
+							     trans_type_name(type)));
 				continue;
 			} else {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s bad", lp,
-							     strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_")));
+							     trans_type_name(type)));
 				break;
 			}
 		}
@@ -2283,11 +2375,14 @@ static int process_transforms(pb_stream *prop_pbs,
  */
 stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 				    bool ike, bool initial, bool accepted,
-				    struct ikev2_chosen_proposal *best,
+				    struct ikev2_chosen_proposal **chosen,
 				    struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %d local proposals",
 				 local_proposals->nr));
+
+	/* Return when STF_OK only!  */
+	struct ikev2_chosen_proposal *best = alloc_thing(struct ikev2_chosen_proposal, "best proposal");
 
 	/* Must be released.  */
 	int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF];
@@ -2466,12 +2561,14 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 	
 	if (best_local_proposal < 0) {
 		/* STF_FAIL status indicating corruption */
+		pfree(best);
 		return -best_local_proposal;
 	} else if (best_local_proposal >= local_proposals->nr) {
 		/* no luck */
+		pfree(best);
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	} else {
-		/* proposal chosen, how to return it? */
+		*chosen = best;
 		return STF_OK;
 	}		
 }
@@ -2633,7 +2730,6 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		    char buf[1024];
 		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
 		    DBG_log("converting ike_info %s to ikev2 ...", buf));
-		pexpect(!ike_info->ike_default); /* TODO */
 
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg != NULL) {
@@ -2676,4 +2772,13 @@ void free_ikev2_proposals(struct ikev2_proposals *proposals)
 		pfree(proposals->proposal);
 		pfree(proposals);
 	}
+}
+
+void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
+{
+	if (chosen == NULL || *chosen == NULL) {
+		return;
+	}
+	pfree(*chosen);
+	*chosen = NULL;
 }
