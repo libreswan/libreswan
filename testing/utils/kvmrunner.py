@@ -99,7 +99,7 @@ def main():
                                               testsuite_output_directory=args.output_directory,
                                               log_level=logutil.INFO)
     if not tests:
-        logger.error("test or testsuite directory invalid: %s", args.directory)
+        logger.error("test or testsuite directory invalid: %s", args.directories)
         return 1
 
     # A list of test directories was specified (i.e, not a testsuite),
