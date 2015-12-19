@@ -110,9 +110,9 @@ kvm-check-all: $(KVM_KEYS)
 
 # "test" runs tests regardless.  It is best used with the KVM_TESTS
 # varible.
-.PHONY: kvm-test-good kvm-test-all
+.PHONY: kvm-test kvm-test-good kvm-test-all
 kvm-test: kvm-test-good
-kvm-test: $(KVM_KEYS)
+kvm-test-good: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
 	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good"     $(KVM_TESTS)
 kvm-test-all: $(KVM_KEYS)
