@@ -223,6 +223,8 @@ int sign_hash(const struct RSA_private_key *k,
 		}
 	}
 
+	SECKEY_DestroyPrivateKey(privateKey);
+
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Ended using NSS"));
 	return signature.len;
 }
