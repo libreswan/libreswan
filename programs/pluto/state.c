@@ -905,7 +905,7 @@ void delete_state(struct state *st)
 
 
 #    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
-	/* ??? free_any_nss_symkey(st->st_shared_nss); */
+	free_any_nss_symkey(st->st_shared_nss);
 
 	/* same as st_skeyid_nss */
 	free_any_nss_symkey(st->st_skeyseed_nss);
