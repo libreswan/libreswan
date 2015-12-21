@@ -2341,13 +2341,11 @@ static int process_transforms(pb_stream *prop_pbs,
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 			int type_found = ((transform_types_found & LELEM(type)) != 0);
 			int type_matched = (matching_local_proposals[lp][type] < local_proposal->transforms[type].nr);
-			if (type_found == type_matched) {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s good", lp,
-							     trans_type_name(type)));
-				continue;
-			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s bad", lp,
-							     trans_type_name(type)));
+			if (type_found != type_matched) {
+				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed %s and %s",
+							     lp, trans_type_name(type),
+							     type_found ? "found" : "not-found",
+							     type_matched ? "matched" : "not-matched"));
 				break;
 			}
 		}
@@ -2738,6 +2736,11 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
 		    DBG_log("converting ike_info %s to ikev2 ...", buf));
 
+		/*
+		 * XXX: This lookup should include the key size.
+		 * Should keylen be zero then, instead a search for
+		 * matching algs be made.
+		 */
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg != NULL) {
 			if (ike_info->ike_eklen) {
@@ -2754,19 +2757,26 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 				 * XXX: There's a rumor that
 				 * strongswan proposes AES_000, this
 				 * won't match that.
-				 *
-				 * XXX: What about algorithms like
-				 * BLOWFISH where keylen of zero is
-				 * valid.
 				 */
 				if (ealg->keymaxlen) {
 					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keymaxlen);
 				}
-				if (ealg->keydeflen > 0 && ealg->keydeflen < ealg->keymaxlen) {
+				if ((0 < ealg->keydeflen) && (ealg->keydeflen < ealg->keymaxlen)) {
 					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
 								 ealg->keydeflen));
+					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+							 ealg->common.algo_v2id, ealg->keydeflen);
+				}
+				/*
+				 * XXX: For the moment this seems to
+				 * be the best way to determine if the
+				 * algo allows proposals with no
+				 * keylen.
+				 */
+				if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
+					DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keydeflen);
 				}

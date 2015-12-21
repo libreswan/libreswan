@@ -944,6 +944,16 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
+#ifndef QUICK_PROPOSALS
+		/* SA body in and out */
+		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
+						&r_sa_pbs, st, FALSE);
+
+		if (ret != STF_OK) {
+			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
+			return ret;
+		}
+#else
 		struct ikev2_chosen_proposal *chosen = NULL;
 		{
 			struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
@@ -969,6 +979,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			return ret;
 		}
+#endif
 	}
 
 	/* KE in */
