@@ -2248,6 +2248,12 @@ static int process_transforms(pb_stream *prop_pbs,
 		}
 	}
 
+	/*
+	 * Track the first integrity transform seen, needed to check
+	 * for a mixup of NULL and non-NULL integrity transforms.
+	 */
+	int first_integrity = -1;
+
 	int remote_transform;
 	for (remote_transform = 0; remote_transform < num_remote_transforms; remote_transform++) {
 
@@ -2287,18 +2293,22 @@ static int process_transforms(pb_stream *prop_pbs,
 		}
 
 		/*
-		 * XXX: Is this valid here?
-		 *
-		 * XXX: Is the key_length expected / required?
-		 *
-		 * XXX: Allowed for IKE, ESP, EH?
-		 *
-		 * XXX: AEAD vs INTEG?
+		 * Detect/reject things like: INTEG=NULL INTEG=HASH
+		 * INTEG=NULL
 		 */
+		if (remote_trans.isat_type == IKEv2_TRANS_TYPE_INTEG) {
+			if (first_integrity < 0) {
+				first_integrity = remote_trans.isat_transid;
+			} else if (first_integrity == 0 || remote_trans.isat_transid == 0) {
+				libreswan_log("remote proposal %d transform %d has too much NULL integrity %d %d",
+					      remote_proposal, remote_transform,
+					      first_integrity, remote_trans.isat_transid);
+				return num_local_proposals;
+			}
+		}
 
 		/*
-		 * Once either AEAD or INTEG, is known proposals of
-		 * the wrong type can be skipped.
+		 * XXX: Allowed for IKE, ESP, EH?
 		 */
 
 		/* Remember each transform type found. */
@@ -2339,8 +2349,25 @@ static int process_transforms(pb_stream *prop_pbs,
 		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", lp));
 		int type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+			struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
+			/*
+			 * HACK to allow missing NULL integrity:
+			 * 
+			 * If the proposal lacks integrity and the
+			 * only local transform is null-integrity then
+			 * ignore the problem.  Presumably all the
+			 * local auth transforms are AEAD and so will
+			 * only match something valid.
+			 */
+			if (type == IKEv2_TRANS_TYPE_INTEG
+			    && !(transform_types_found & LELEM(type))
+			    && local_transforms->nr == 1
+			    && local_transforms->transform[0].id == 0) {
+				DBG(DBG_CONTROL, DBG_log("allowing no NULL integrity"));
+				continue;
+			}
 			int type_found = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = (matching_local_proposals[lp][type] < local_proposal->transforms[type].nr);
+			int type_matched = (matching_local_proposals[lp][type] < local_transforms->nr);
 			if (type_found != type_matched) {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed %s and %s",
 							     lp, trans_type_name(type),
@@ -2790,6 +2817,15 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 			if (ike_alg_enc_requires_integ(ealg)) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
 						 v1tov2_integ(ike_info->ike_halg), 0);
+			} else {
+				/*
+				 * Include NULL integrity in the
+				 * proposal so that if it is proposed
+				 * there is something to match and
+				 * send back.
+				 */
+				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+						 0, 0);
 			}
 		}
 
