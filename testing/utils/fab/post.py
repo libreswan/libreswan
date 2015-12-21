@@ -252,7 +252,7 @@ def result(test, skip_diff, skip_sanitize, output_directory=None,
             errors.add("sanitizer-failed", domain)
             continue
         if update_sanitize:
-            test.logger.debug("domain %s updating sanitized output file: %s", domain, sanitized_file)
+            test.logger.debug("domain %s updating sanitized output file: %s", domain, sanitized_console_file)
             with open(sanitized_console_file, "w") as f:
                 f.write(sanitized_output)
 
