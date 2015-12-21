@@ -43,10 +43,11 @@ def log_arguments(logger, args):
 
 class TestResult:
 
-    def __init__(self, test, errors={}, diffs={}):
+    def __init__(self, test, errors={}, diffs={}, sanitized_console_output={}):
         self.errors = errors
         self.diffs = diffs
         self.test = test
+        self.sanitized_console_output = sanitized_console_output
         test.logger.debug("%s: %s", test.name, self)
 
     def __str__(self):
@@ -146,14 +147,14 @@ def fuzzy_diff(logger, ln, l, rn, r,
                                      lineterm=""))
     logger.debug("fuzzy_diff: %s", diff)
     if not diff:
-        return diff, "same"
+        return diff, "passed"
     # see if the problem was just white space
     if not strip_spaces and not strip_blank_lines:
         l = strip_blank_line(strip_space(l))
         r = strip_blank_line(strip_space(r))
         if l == r:
             return diff, "whitespace"
-    return diff, "different"
+    return diff, "failed"
 
 
 def sanitize_output(logger, raw_file, test_directory):
@@ -182,23 +183,19 @@ def load_output(logger, output_file):
     return None
 
 
-def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
-           output_directory=None,
-           update=False, update_diff=False, update_sanitize=False):
-
-    update_diff = update or update_diff
-    update_sanitize = update or update_sanitize
-
-    strip_spaces = args.ignore_all_spaces
-    strip_blank_lines = args.ignore_blank_lines
+def result(test, skip_diff, skip_sanitize, output_directory=None,
+           update_diff=False, update_sanitize=False,
+           strip_spaces=False, strip_blank_lines=False):
 
     output_directory = output_directory or test.output_directory
+
     if not os.path.exists(output_directory):
         test.logger.debug("output directory missing: %s", output_directory)
         return None
 
     errors = Errors(test.logger)
     diffs = {}
+    sanitized_console_output = {}
 
     # Check the pluto logs for markers indicating that there was a
     # crash or other unexpected behaviour.
@@ -209,7 +206,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", domain)
             errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", domain)
 
-    # Check the console output for problems and that it matches
+    # Check the raw console output for problems and that it matches
     # expected output.
     finished = True
     for domain in test.domain_names():
@@ -246,18 +243,20 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         sanitized_console_file = os.path.join(output_directory,
                                               domain + ".console.txt")
         test.logger.debug("domain %s sanitize console output '%s'", domain, sanitized_console_file)
-        sanitized_console_output = None
+        sanitized_output = None
         if skip_sanitize:
-            sanitized_console_output = load_output(test.logger, sanitized_console_file)
-        if not sanitized_console_output:
-            sanitized_console_output = sanitize_output(test.logger, raw_console_file, test.sanitize_directory)
-        if not sanitized_console_output:
+            sanitized_output = load_output(test.logger, sanitized_console_file)
+        if not sanitized_output:
+            sanitized_output = sanitize_output(test.logger, raw_console_file, test.sanitize_directory)
+        if not sanitized_output:
             errors.add("sanitizer-failed", domain)
             continue
         if update_sanitize:
-            test.logger.debug("domain %s updating sanitized output file: %s", domain, sanitized_console_file)
+            test.logger.debug("domain %s updating sanitized output file: %s", domain, sanitized_file)
             with open(sanitized_console_file, "w") as f:
-                f.write(sanitized_console_output)
+                f.write(sanitized_output)
+
+        sanitized_console_output[domain] = sanitized_output
 
         expected_output_file = os.path.join(test.directory, domain + ".console.txt")
         test.logger.debug("domain %s comparing against known-good output '%s'", domain, expected_output_file)
@@ -276,7 +275,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             if not console_diff:
                 console_diff, different = fuzzy_diff(test.logger,
                                                      domain + ".console.txt", expected_output,
-                                                     "OUTPUT/" + domain + ".console.txt", sanitized_console_output,
+                                                     "OUTPUT/" + domain + ".console.txt", sanitized_output,
                                                      strip_spaces=strip_spaces,
                                                      strip_blank_lines=strip_blank_lines)
             if update_diff:
@@ -296,49 +295,73 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         else:
             errors.add("unchecked", domain)
 
-        # Perhaps the baseline gives a better diff?
-        if not baseline:
+    # The final result
+    if not finished:
+        return TestIncomplete(test, errors=errors, diffs=diffs, sanitized_console_output=sanitized_console_output)
+    elif errors:
+        return TestFailed(test, errors=errors, diffs=diffs, sanitized_console_output=sanitized_console_output)
+    else:
+        return TestPassed(test, errors=errors, diffs=diffs, sanitized_console_output=sanitized_console_output)
+
+
+def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
+           output_directory=None,
+           update=False, update_diff=False, update_sanitize=False):
+
+    update_diff = update or update_diff
+    update_sanitize = update or update_sanitize
+
+    strip_spaces = args.ignore_all_spaces
+    strip_blank_lines = args.ignore_blank_lines
+
+    test_result = result(test, skip_diff, skip_sanitize, output_directory,
+                         update_diff=update_diff, update_sanitize=update_sanitize,
+                         strip_spaces=strip_spaces, strip_blank_lines=strip_blank_lines)
+
+    if not baseline:
+        return test_result
+
+    if not test.name in baseline:
+        test_result.errors.add("absent", "baseline")
+        return test_result
+
+    base = baseline[test.name]
+    baseline_result = result(base, skip_diff, skip_sanitize,
+                             strip_spaces=strip_spaces, strip_blank_lines=strip_blank_lines)
+
+    if test_result.passed:
+        if not baseline_result.passed:
+            test_result.errors.add(baseline_result.value, "baseline")
+        return test_result
+
+    for domain in test.domain_names():
+
+        if domain is "nic":
             continue
 
-        if not test.name in baseline:
-            errors.add("baseline-absent")
-            continue
-        base = baseline[test.name]
-
-        raw_baseline_file = os.path.join(base.output_directory, domain + ".console.verbose.txt")
-        test.logger.debug("domain %s raw baseline file: %s", domain, raw_baseline_file)
-        sanitized_baseline_file = os.path.join(base.output_directory, domain + ".console.txt")
-        test.logger.debug("domain %s sanitzed baseline file: %s", domain, sanitized_baseline_file)
-
-        if not os.path.exists(raw_baseline_file):
-            errors.add("baseline-missing", domain)
+        if not domain in test_result.sanitized_console_output:
             continue
 
-        sanitized_baseline_output = None
-        if skip_sanitize:
-            sanitized_baseline_output = load_output(sanitized_baseline_file)
-        if not sanitized_baseline_output:
-            sanitized_baseline_output = sanitize_output(test.logger, raw_baseline_file, test.sanitize_directory)
-        if not sanitized_baseline_output:
-            errors.add("baseline-sanitizer-failed", domain)
+        if not domain in baseline_result.sanitized_console_output:
+            test_result.errors.add("baseline-missing", domain)
             continue
-        # Update?
+
+        if not domain in test_result.diffs:
+            continue
+
+        if not domain in baseline_result.diffs:
+            test_result.errors.add("baseline-passed", domain)
+            continue
 
         baseline_diff, different = fuzzy_diff(test.logger,
-                                              "BASELINE/" + domain + ".console.txt", sanitized_baseline_output,
-                                              "OUTPUT/" + domain + ".console.txt", sanitized_console_output,
+                                              "BASELINE/" + domain + ".console.txt", baseline_result.sanitized_console_output[domain],
+                                              "OUTPUT/" + domain + ".console.txt", test_result.sanitized_console_output[domain],
                                               strip_spaces=strip_spaces,
                                               strip_blank_lines=strip_blank_lines)
         if baseline_diff:
-            errors.add("baseline-" + different, domain)
-            diffs[domain] = baseline_diff
+            test_result.errors.add("baseline-different", domain)
+            # update the diff to something hopefully closer?
+            test_result.diffs[domain] = baseline_diff
 
-        # end-loop
+    return test_result
 
-    # The final result
-    if not finished:
-        return TestIncomplete(test, errors=errors, diffs=diffs)
-    elif errors:
-        return TestFailed(test, errors=errors, diffs=diffs)
-    else:
-        return TestPassed(test)
