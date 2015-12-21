@@ -2805,7 +2805,7 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 				if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
 					DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keydeflen);
+							 ealg->common.algo_v2id, 0);
 				}
 			}
 		}
