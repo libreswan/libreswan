@@ -2053,7 +2053,8 @@ static bool print_transforms(struct print *buf, int type,
 	return TRUE;
 }
 
-static void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal)
+static void DBG_log_ikev2_proposal(const char *prefix,
+				   struct ikev2_proposal *proposal)
 {
 	struct print buf = {0};
 	int type;
@@ -2069,7 +2070,8 @@ static void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *pr
 	DBG_log("%s ikev2_proposal:%s", prefix, buf.buf);
 }
 
-void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals)
+static void DBG_log_ikev2_proposals(const char *prefix,
+				    struct ikev2_proposals *proposals)
 {
 	int p;
 	DBG_log("%s ikev2_proposals:", prefix);
@@ -2085,8 +2087,8 @@ void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposa
 	}
 }
 
-void DBG_log_ikev2_chosen_proposal(const char *prefix,
-				   struct ikev2_chosen_proposal *chosen)
+static void DBG_log_ikev2_chosen_proposal(const char *prefix,
+					  struct ikev2_chosen_proposal *chosen)
 {
 	if (chosen == NULL) {
 		DBG_log("%s ikev2_chosen_proposal: NULL", prefix);
@@ -2401,10 +2403,10 @@ static int process_transforms(pb_stream *prop_pbs,
  * takes more comparisons.  Othe other and mallocing an pointer
  * jugging is avoided.
  */
-stf_status ikev2_process_sa_payload(pb_stream sa_payload,
-				    bool ike, bool initial, bool accepted,
-				    struct ikev2_chosen_proposal **chosen,
-				    struct ikev2_proposals *local_proposals)
+static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
+					   bool ike, bool initial, bool accepted,
+					   struct ikev2_chosen_proposal **chosen,
+					   struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %d local proposals",
 				 local_proposals->nr));
@@ -2430,7 +2432,7 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 	do {
 		/* Read the next proposal */
 		pb_stream proposal_pbs;
-		if (!in_struct(&remote_proposal, &ikev2_prop_desc, &sa_payload,
+		if (!in_struct(&remote_proposal, &ikev2_prop_desc, sa_payload,
 			       &proposal_pbs)) {
 			libreswan_log("proposal %d corrupt", next_propnum);
 			best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
@@ -2451,7 +2453,7 @@ stf_status ikev2_process_sa_payload(pb_stream sa_payload,
 		 */
 		if (accepted) {
 			/* There can be only one accepted proposal.  */
-			if (remote_proposal.isap_lp != v2_PROPOSAL_NON_LAST) {
+			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
 				libreswan_log("Error: more than one proposal received.");
 				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
@@ -2630,8 +2632,10 @@ static stf_status emit_transform(pb_stream *r_proposal_pbs,
 	return STF_OK;
 }
 
-stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs, struct ikev2_chosen_proposal *chosen)
+static stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs,
+					     struct ikev2_chosen_proposal *chosen)
 {
+	passert(r_sa_pbs != NULL);
 	stf_status status;
 
 	pb_stream r_proposal_pbs;
@@ -2672,7 +2676,7 @@ stf_status ikev2_emit_chosen_proposal(pb_stream *r_sa_pbs, struct ikev2_chosen_p
 	return STF_OK;
 }
 
-struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen)
+static struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen)
 {
 	DBG(DBG_CONTROL, DBG_log("internalizing chosen proposal"))
 	struct trans_attrs ta = {0};
@@ -2743,7 +2747,7 @@ static void append_transform(struct ikev2_proposal *proposal,
  *
  * WARNING: alg_info_ike is IKEv1
  */
-struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike)
+static struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike)
 {
 	if (alg_info_ike == NULL) {
 		return &default_ikev2_proposals;
@@ -2841,7 +2845,7 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 	return proposals;
 }
 
-void free_ikev2_proposals(struct ikev2_proposals *proposals)
+static void free_ikev2_proposals(struct ikev2_proposals *proposals)
 {
 	if (proposals->on_heap) {
 		int p;
@@ -2856,11 +2860,49 @@ void free_ikev2_proposals(struct ikev2_proposals *proposals)
 	}
 }
 
-void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
+static void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
 {
 	if (chosen == NULL || *chosen == NULL) {
 		return;
 	}
 	pfree(*chosen);
 	*chosen = NULL;
+}
+
+stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
+					struct alg_info_ike *alg_info_ike,
+					bool accepted,
+					struct trans_attrs *trans_attrs,
+					pb_stream *r_sa_pbs)
+{
+	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(alg_info_ike);
+	passert(proposals != NULL);
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+
+	struct ikev2_chosen_proposal *chosen = NULL;
+	stf_status ret = ikev2_process_sa_payload(sa_payload,
+						  /*ike*/ TRUE,
+						  /*initial*/ TRUE,
+						  /*accepted*/ accepted,
+						  &chosen, proposals);
+	free_ikev2_proposals(proposals);
+
+	if (ret != STF_OK) {
+		passert(chosen == NULL);
+		return ret;
+	}
+	passert(chosen != NULL);
+	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
+
+	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
+
+	if (r_sa_pbs != NULL) {
+		ret = ikev2_emit_chosen_proposal(r_sa_pbs, chosen);
+		if (ret != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+		}
+	}
+
+	free_ikev2_chosen_proposal(&chosen);
+	return ret;
 }
