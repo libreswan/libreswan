@@ -318,6 +318,9 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
                          update_diff=update_diff, update_sanitize=update_sanitize,
                          strip_spaces=strip_spaces, strip_blank_lines=strip_blank_lines)
 
+    if not test_result:
+        return test_result
+
     if not baseline:
         return test_result
 
@@ -328,10 +331,12 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     base = baseline[test.name]
     baseline_result = result(base, skip_diff, skip_sanitize,
                              strip_spaces=strip_spaces, strip_blank_lines=strip_blank_lines)
+    if not baseline_result:
+        if not test_result.passed:
+            test_result.errors.add("missing", "baseline")
+        return test_result
 
-    if test_result.passed:
-        if not baseline_result.passed:
-            test_result.errors.add(baseline_result.value, "baseline")
+    if test_result.passed and baseline_result.passed:
         return test_result
 
     for domain in test.domain_names():
@@ -347,6 +352,8 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             continue
 
         if not domain in test_result.diffs:
+            if domain in baseline_result.diffs:
+                test_result.errors.add("baseline-failed", domain)
             continue
 
         if not domain in baseline_result.diffs:
@@ -362,6 +369,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             test_result.errors.add("baseline-different", domain)
             # update the diff to something hopefully closer?
             test_result.diffs[domain] = baseline_diff
+        else:
+            test_result.errors.add("baseline-failed", domain)
 
     return test_result
-
