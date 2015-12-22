@@ -103,6 +103,10 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 		crl_node = crl_node->next;
 	}
 
+	if (crl == NULL && crl_list) {
+		PORT_FreeArena(crl_list->arena, PR_FALSE);
+	}
+
 	return crl;
 }
 
@@ -111,8 +115,19 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 {
 	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
 
-	if (crl != NULL && crl_is_current(crl))
-		return TRUE;
+	if (crl != NULL) {
+	       if (crl_is_current(crl)) {
+		       if (crl->arena) {
+			       PORT_FreeArena(crl->arena, PR_FALSE);
+		       }
+
+		       return TRUE;
+	       }
+
+	       if (crl->arena) {
+		       PORT_FreeArena(crl->arena, PR_FALSE);
+	       }
+	}
 
 	return FALSE;
 }
@@ -237,9 +252,13 @@ static CERTCertList *get_all_root_certs(void)
 
 	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
 						node = CERT_LIST_NEXT(node)) {
-		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot)
+		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
+			CERT_DupCertificate(node->cert);
 			CERT_AddCertToListTail(roots, node->cert);
+		}
 	}
+
+	CERT_DestroyCertList(allcerts);
 
 	if (roots == NULL || CERT_LIST_EMPTY(roots))
 		return NULL;
@@ -393,6 +412,12 @@ retry:
 		fin = VERIFY_RET_OK;
 	}
 	CERT_DestroyCertList(trustcl);
+	PORT_FreeArena(vfy_log.arena, PR_FALSE);
+	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
+
+	if (cvout[1].value.pointer.chain) {
+		CERT_DestroyCertList(cvout[1].value.pointer.chain);
+	}
 
 	return fin;
 }
