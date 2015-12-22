@@ -6,6 +6,6 @@
 /etc/logcheck/ignore.d.workstation
 /etc/logcheck/violations.ignore.d
 /lib/systemd/system
-/usr/lib/ipsec
 /usr/bin
+/usr/lib/ipsec
 /usr/sbin

@@ -12,6 +12,7 @@ Build-Depends: bison,
                flex,
                htmldoc,
                libcurl4-nss-dev,
+               libevent-dev (>= 2.0-1),
                libgmp3-dev,
                libkrb5-dev,
                libldap2-dev,
@@ -20,10 +21,9 @@ Build-Depends: bison,
                libnss3-tools,
                libpam0g-dev,
                libunbound-dev,
-               libevent-dev (>= 2.0-1),
                man2html,
-               xmlto,
-               po-debconf
+               po-debconf,
+               xmlto
 Homepage: https://libreswan.org/
 
 Package: libreswan
