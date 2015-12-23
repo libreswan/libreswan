@@ -78,7 +78,6 @@ struct esp_info {
 };
 
 struct ike_info {
-	bool ike_default;
 	u_int16_t ike_ealg;             /* encryption algorithm - bit 15 set for reserved */
 	u_int8_t ike_halg;              /* hash algorithm */
 	size_t ike_eklen;               /* how many bits required by encryption algo */

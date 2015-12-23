@@ -25,7 +25,6 @@ KVM_POOL = /home/build/pool
 KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BUILD_DOMAIN = east
-KVM_MODULE_DOMAIN = west
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
 
@@ -56,27 +55,26 @@ endef
 # Standard make targets; just mirror the local target names.  Most
 # things get run on "east", but module gets run on west!
 
-KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean
+KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean kvm-module
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
 	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
-.PHONY: kvm-module
-kvm-module:
-	$(call kvm-make, module, $(KVM_MODULE_DOMAIN))
 
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
 # needs to use the swan-install script.  Also, to avoid parallel
 # builds getting in the way, this uses sub-makes to explicitly
-# serialize things.
+# serialize building "base" and "modules".
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
-PHONY: kvm-install $(KVM_INSTALL_TARGETS)
-$(KVM_INSTALL_TARGETS):
+.PHONY: kvm-install kvm-build $(KVM_INSTALL_TARGETS)
+$(KVM_INSTALL_TARGETS): kvm-build
 	: KVM_DOMAIN: '$(KVM_DOMAIN)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(KVMSH_COMMAND) --chdir . '$(KVM_DOMAIN)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-kvm-install: kvm-base kvm-module
-	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
+kvm-install: $(KVM_INSTALL_TARGETS)
+kvm-build:
+	$(MAKE) --no-print-directory kvm-base
+	$(MAKE) --no-print-directory kvm-module
 
 
 # Some useful kvm wide commands.

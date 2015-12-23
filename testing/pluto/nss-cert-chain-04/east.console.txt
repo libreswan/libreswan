@@ -1,29 +1,70 @@
-/testing/guestbin/swan-prep --x509 --certchain
+/testing/guestbin/swan-prep --x509
 Preparing X.509 files
+east #
+ pk12util -i /testing/x509/pkcs12/east.p12 -d sql:/etc/ipsec.d -W "foobar"
+pk12util: File Open failed: /testing/x509/pkcs12/east.p12: PR_FILE_NOT_FOUND_ERROR: File not found
+east #
+ # east MUST NOT have intermediate ceritificates available - they are changing target like end target
+east #
+ #certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -d sql:/etc/ipsec.d -t "CT,,"
+east #
+ #certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -d sql:/etc/ipsec.d -t "CT,,"
+east #
+ certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -d sql:/etc/ipsec.d -t "CT,,"
 east #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add nss-cert-chain
-002 added connection description "nss-cert-chain"
+ ipsec auto --add road-chain-B
+002 added connection description "road-chain-B"
 east #
- ipsec auto --status |grep nss-cert-chain
-000 "nss-cert-chain": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
-000 "nss-cert-chain":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east_chain_endcert
-000 "nss-cert-chain":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
-000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "nss-cert-chain":   labeled_ipsec:no;
-000 "nss-cert-chain":   policy_label:unset;
-000 "nss-cert-chain":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=cA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "nss-cert-chain":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "nss-cert-chain":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "nss-cert-chain":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
-000 "nss-cert-chain":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
-000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
-000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "nss-cert-chain":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+ ipsec auto --add road-A
+002 added connection description "road-A"
+east #
+ ipsec auto --status |grep road
+000 "road-A": 192.0.2.254/32===192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "road-A":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
+000 "road-A":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-A":   labeled_ipsec:no;
+000 "road-A":   policy_label:unset;
+000 "road-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
+000 "road-A":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "road-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "road-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-A":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-chain-B": 192.0.2.254/32===192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "road-chain-B":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
+000 "road-chain-B":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-chain-B":   labeled_ipsec:no;
+000 "road-chain-B":   policy_label:unset;
+000 "road-chain-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-chain-B":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "road-chain-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "road-chain-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+east #
+ certutil -L -d sql:/etc/ipsec.d
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+west                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+hashsha2                                                     P,,  
+west-ec                                                      P,,  
+nic                                                          P,,  
+otherca                                                      CT,, 
 east #
  echo "initdone"
 initdone
@@ -31,11 +72,15 @@ east #
  certutil -L -d sql:/etc/ipsec.d
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
+east                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+west                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+hashsha2                                                     P,,  
+west-ec                                                      P,,  
 nic                                                          P,,  
-east_chain_endcert                                           u,u,u
-east_chain_int_2                                             ,,   
-east_chain_int_1                                             ,,   
+otherca                                                      CT,, 
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

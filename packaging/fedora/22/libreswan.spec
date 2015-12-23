@@ -228,5 +228,5 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball

@@ -15,11 +15,11 @@
 import os
 import sys
 
-def _dir():
-    return os.path.dirname(sys.argv[0])
+def directory(*util):
+    return os.path.join(os.path.dirname(sys.argv[0]), *util)
 
-def abspath(util=""):
-    return os.path.abspath(os.path.join(_dir(), util))
+def abspath(*util):
+    return os.path.abspath(directory(util))
 
 def relpath(util=""):
-    return os.path.relpath(os.path.join(_dir(), util))
+    return os.path.relpath(directory(util))

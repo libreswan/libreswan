@@ -189,6 +189,7 @@ kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
 kvmplutotest	newoe-10-expire-inactive		good
+kvmplutotest	newoe-10-expire-inactive-ike		good
 kvmplutotest	newoe-11-failike			good
 kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good

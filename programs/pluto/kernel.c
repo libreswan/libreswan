@@ -1050,7 +1050,20 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-void show_shunt_status(void)
+int show_shunt_count()
+{
+	int i = 0;
+	const struct bare_shunt *bs;
+
+	for (bs = bare_shunts; bs != NULL; bs = bs->next)
+	{
+		i++;
+	}
+
+	return i;
+}
+
+void show_shunt_status()
 {
 	const struct bare_shunt *bs;
 
@@ -3336,6 +3349,9 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		return FALSE;
 
 	p2->add_time = add_time;
+
+	passert(p2->our_lastused.mono_secs != 0);
+	passert(p2->peer_lastused.mono_secs != 0);
 
 	if (inbound) {
 		if (bytes > p2->our_bytes) {

@@ -1335,7 +1335,7 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
 	passert(pbs_offset(pbs) != 0);
-	release_v2fragments(st);
+	release_fragments(st);
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);
 }

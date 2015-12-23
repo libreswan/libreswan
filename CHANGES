@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.16 (unreleased)
+v3.17 (unrelease)
+
+v3.16 (December 18, 2015)
 * auto: add new option --start which is like auto=start [Tuomo]
 * libipsecconf: allow time with no unit suffix (openswan compat) [Hugh]
 * libipsecconf: cleanup parser.y to work on old/new GCC and 32/64bit [Hugh]
@@ -21,7 +23,9 @@ v3.16 (unreleased)
 * pluto: cleanup struct spd_route and related tidying [Hugh]
 * pluto: fix eclipsed to iterate over connection's spd_routes [Hugh]
 * pluto: accept delete payload with wrong side's SPI (CISCO bug) [Paul+Hugh]
-* pluto: Add support for ESP replay-window= [Paul]
+* pluto: initialise phase2 our_lastused/peer_lastused on creation [Paul+Hugh]
+* pluto: pluto: OE: add shunts.total count to ipsec whack --globalstatus [Paul]
+* pluto: Add keyword  replay-window= (default 32, 0 means disable) [Paul]
 * pluto: Add fake-strongswan=yes|no (default no) to send strongswan VID [Paul]
 * pluto: Add support for XFRM marking cia mark=val/mask [Amir Naftali]
 * pluto: Use selinux dynamic class/perm discovery, not old API [Lubomir Rintel]
@@ -29,8 +33,10 @@ v3.16 (unreleased)
 * pluto: Don't refuse to load passthrough conn with ike= / esp= settings [Paul]
 * pluto: Free the event struct initialzed in main loop and tidy [Antony]
 * pluto: Add event for child handling of addconn [Wolfgang/Antony]
+* pluto: release_fragments() cannot try both IKEv1 and IKEv2 fragments [Paul]
 * X509: load_end_nss_certificate() cleanup [Matt]
 * X509: Add on-demand loading of NSS certificate private keys [Matt]
+* X509: Fix possible NSS cert leaks in trusted_ca_nss() [Matt]
 * IKEv2: delete_state() should only handle shunt of real parent SA [Paul]
 * IKEv2: retransmit_v2_msg() should delete parent and child SA on failure [Paul]
 * IKEv2: mixup in parent/child SA caused keyingtries to be lost [Paul]
@@ -44,9 +50,11 @@ v3.16 (unreleased)
 * OE: Call orphan_holdpass() for opportunistic conns for EVENT_SA_EXPIRE [Paul]
 * OE: Do not answer IKE request if we matched authby=never conn [Paul]
 * OE: Fix memory leaks in nullgw and bs->why [Antony]
+* OE: At IKE rekey time, delete the IKE/IPsec SA when idle [Antony]
 * FIPS: fips.h should only require compiled libexec/ components [Paul]
 * XAUTH: Fix for connection going up->down->up causing passert [Hugh]
 * XAUTH: Do not interpret padding as incomplete attribute [Lubomir Rintel]
+* XAUTH: Improve failure logging [Paul]
 * XFRM: Workaround bug in Linux kernel NLMSG_OK's definition [Hugh]
 * KLIPS: kernels 4.1.x+ always use the same interface to uids [Roel van Meer]
 * KLIPS: Various changes to support 4.1.x kernels [Wolfgang]
@@ -55,8 +63,10 @@ v3.16 (unreleased)
 * addconn: tidy [Hugh]
 * building: obsolete USE_ADNS and disable building adns helpers [Paul]
 * building: Do not link all binaries with nss,nspr and gmp [Paul]
+* building install "ipsec_initnss.8" and "ipsec_import.8" man pages [Andrew]
 * packaging: debian/ directory update [Paul/Daniel]
 * testing: Various testing updates and improvements [Antony/Paul/Andrew]
+* documentation: added CODE_OF_CONDUCT.d [Paul]
 * Bugtracker bugs fixed:
    #216 No longer require :RSA entries for X.509 certs in ipsec.secrets [Matt]
    #233 pluto sends delete SAs in wrong order and reconnection issues [Wolfgang]

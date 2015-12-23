@@ -254,13 +254,16 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 {
 	bool match = FALSE;
 	CERTCertDBHandle *handle;
+	CERTCertificate *cacert = NULL;
 	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
 
 	dntoa(abuf, ASN1_BUF_LEN, a);
 	dntoa(bbuf, ASN1_BUF_LEN, b);
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca_nss called with a=%s b=%s", abuf, bbuf));
+	    DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
+	DBG(DBG_X509 | DBG_CONTROLMORE,
+	    DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
 
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -277,8 +280,9 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	*pathlen = 0;
 
 	/* CA a equals CA b -> we have a match */
-	if (same_dn_any_order(a, b))
+	if (same_dn_any_order(a, b)) {
 		return TRUE;
+	}
 
 	handle = CERT_GetDefaultCertDB();
 	if (handle == NULL) {
@@ -288,33 +292,41 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	/* CA a might be a subordinate CA of b */
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
-		CERTCertificate *cacert = NULL;
 		SECItem a_dn = chunk_to_secitem(a);
 		chunk_t i_dn = empty_chunk;
 
 		cacert = CERT_FindCertByName(handle, &a_dn);
 
 		/* cacert not found or self-signed root cacert-> exit */
-		if (cacert == NULL || CERT_IsRootDERCert(&cacert->derCert))
+		if (cacert == NULL || CERT_IsRootDERCert(&cacert->derCert)) {
 			break;
+		}
 
 		/* does the issuer of CA a match CA b? */
 		i_dn = secitem_to_chunk(cacert->derIssuer);
 		match = same_dn_any_order(i_dn, b);
 
 		/* we have a match and exit the loop */
-		if (match)
+		if (match) {
+			DBG(DBG_X509 | DBG_CONTROLMORE,
+			    DBG_log("%s: A is a subordinate of B",
+				    __FUNCTION__));
 			break;
+		}
 
 		/* go one level up in the CA chain */
 		a = i_dn;
 		CERT_DestroyCertificate(cacert);
+		cacert = NULL;
 	}
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca_nss returning with %s",
-			match ? "match" : "failed"));
+		DBG_log("%s: returning %s at pathlen %d", __FUNCTION__,
+			match ? "trusted":"untrusted", *pathlen));
 
+	if (cacert != NULL) {
+		CERT_DestroyCertificate(cacert);
+	}
 	return match;
 }
 

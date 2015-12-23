@@ -33,6 +33,7 @@ east #
  # this test should log that west's certificate is revoked
 east #
  grep "certificate revoked" /tmp/pluto.log
+"nss-cert-ocsp" #1: certificate revoked!
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

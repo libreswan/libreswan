@@ -1,2 +1,2 @@
-ipsec auto --up chain-B
+ipsec auto --up road-chain-B
 echo done

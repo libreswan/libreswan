@@ -46,6 +46,8 @@ should be specified vis:
 If the .xml file specifies multiple <refname></refname> entries then
 they will all be installed (see packaging/utils/refname.sh).
 
+TODO: Invert this rule, instead of specifying the output, specify the source files: MANPAGES += foo.3.xml
+
 mk/find.sh
 ----------
 

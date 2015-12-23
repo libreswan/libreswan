@@ -23,7 +23,7 @@ from fab import post
 def main():
 
     parser = argparse.ArgumentParser(description="list all tests in the form: <test> [ <directory> ] [ <result> <details...> ]",
-                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).")
+                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).  If a BASELINE directory is specified, anywhere a test result is different to the baseline is also identified.")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
     parser.add_argument("--quick", action="store_true",
@@ -41,7 +41,7 @@ def main():
 
     parser.add_argument("--print-directory", action="store_true")
     parser.add_argument("--print-name", action="store_true")
-    parser.add_argument("--print-result", action="store_true")
+    # parser.add_argument("--print-result", action="store_true")
     parser.add_argument("--print-diff", action="store_true")
     parser.add_argument("--print-args", action="store_true")
     parser.add_argument("--print-output-directory", action="store_true")
@@ -97,14 +97,14 @@ def main():
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline = testsuite.load(logger, args.directories[-1],
+        baseline = testsuite.load(logger, args.directories[-1], args,
                                   error_level=logutil.DEBUG)
         if baseline:
             # discard the last argument as consumed above.
             logger.debug("discarding baseline testsuite argument '%s'", args.directories[-1])
             args.directories.pop()
 
-    tests = testsuite.load_testsuite_or_tests(logger, args.directories)
+    tests = testsuite.load_testsuite_or_tests(logger, args.directories, args)
     # And check
     if not tests:
         logger.error("Invalid testsuite or test directories")
@@ -175,10 +175,12 @@ def main():
                 print("ignored", ignore, end="")
                 sep = " "
 
-            if result:
-                print(sep, end="")
+            print(sep, end="")
+            if result.errors:
+                print(result, result.errors, end="")
+            else:
                 print(result, end="")
-                sep = " "
+            sep = " "
 
             print()
 

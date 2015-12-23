@@ -629,10 +629,11 @@ void release_whack(struct state *st)
 	close_any(st->st_whack_sock);
 }
 
-void release_v2fragments(struct state *st)
+static void release_v2fragments(struct state *st)
 {
 	struct ikev2_frag *frag = st->st_tfrags;
 
+	passert(st->st_ikev2);
 	while (frag != NULL) {
 		struct ikev2_frag *this = frag;
 
@@ -644,14 +645,11 @@ void release_v2fragments(struct state *st)
 	st->st_tfrags = NULL;
 }
 
-/*
- * Release both V1 and V2 fragments
- * (of course only one kind could appear in a state)
- */
-void release_fragments(struct state *st)
+static void release_v1fragments(struct state *st)
 {
 	struct ike_frag *frag = st->ike_frags;
 
+	passert(!st->st_ikev2);
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
@@ -661,8 +659,17 @@ void release_fragments(struct state *st)
 	}
 
 	st->ike_frags = NULL;
+}
 
-	release_v2fragments(st);
+/*
+ * Release stored IKE fragments. This is a union in st so only call one!
+ */
+void release_fragments(struct state *st)
+{
+	if (!st->st_ikev2)
+		release_v1fragments(st);
+	else
+		release_v2fragments(st);
 }
 
 /* delete a state object */
@@ -898,7 +905,7 @@ void delete_state(struct state *st)
 
 
 #    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
-	/* ??? free_any_nss_symkey(st->st_shared_nss); */
+	free_any_nss_symkey(st->st_shared_nss);
 
 	/* same as st_skeyid_nss */
 	free_any_nss_symkey(st->st_skeyseed_nss);
@@ -1079,7 +1086,10 @@ void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
 
-	DBG(DBG_CONTROL, DBG_log("Deleting states for connection"));
+	DBG(DBG_CONTROL, DBG_log("Deleting states for connection - %s",
+		relations ? "including all other IPsec SA's of this IKE SA" :
+			"not including other IPsec SA's"
+		));
 
 	/*
 	 * save this connection's isakmp SA,
@@ -1153,9 +1163,7 @@ void delete_p2states_by_connection(struct connection *c)
 /*
  * Walk through the state table, and delete each state whose phase 1 (IKE)
  * peer is among those given.
- * TODO: This function is only called for ipsec whack --crash peer, but
- * it currently does not work for IKEv2, since IS_PHASE1() only works on IKEv1
- * Filed as bug http://bugs.xelerance.com/view.php?id=971
+ * This function is only called for ipsec whack --crash peer
  */
 void delete_states_by_peer(const ip_address *peer)
 {
@@ -2290,6 +2298,8 @@ bool drop_new_exchanges()
 void show_globalstate_status(void)
 {
 	enum state_kind s;
+
+	whack_log(RC_COMMENT, "~shunts.total %d", show_shunt_count());
 
 	whack_log(RC_COMMENT, "~states.total %d", total());
 	whack_log(RC_COMMENT, "~states.child %d", total_ipsec());

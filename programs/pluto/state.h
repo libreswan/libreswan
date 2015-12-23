@@ -562,7 +562,6 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
-extern void release_v2fragments(struct state *st);
 extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 

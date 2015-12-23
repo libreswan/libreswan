@@ -1,5 +1,6 @@
-libreswan (3.16rc1-1) UNRELEASED; urgency=low
+libreswan (IPSECBASEVERSION-1) UNRELEASED; urgency=low
 
-  * Initial upload to debian (Closes: #773459)
+  * Release IPSECBASEVERSION-1
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Fri, 20 Mar 2015 02:12:56 -0400
+ -- Unknown User <unknown@libreswan.org>  Fri, 18 Dec 2015 01:00:00 +0200
+

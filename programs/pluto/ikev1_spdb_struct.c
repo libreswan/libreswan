@@ -2744,16 +2744,25 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		/* save decoded version of winning SA in state */
 
 		st->st_ah.present = ah_seen;
-		if (ah_seen)
+		if (ah_seen) {
 			st->st_ah.attrs = ah_attrs;
+			st->st_ah.our_lastused = mononow();
+			st->st_ah.peer_lastused = mononow();
+		}
 
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
 			st->st_esp.attrs = esp_attrs;
+			st->st_esp.our_lastused = mononow();
+			st->st_esp.peer_lastused = mononow();
 		}
+
 		st->st_ipcomp.present = ipcomp_seen;
-		if (ipcomp_seen)
+		if (ipcomp_seen) {
 			st->st_ipcomp.attrs = ipcomp_attrs;
+			st->st_ipcomp.our_lastused = mononow();
+			st->st_ipcomp.peer_lastused = mononow();
+		}
 
 		return NOTHING_WRONG;
 	}

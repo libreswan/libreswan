@@ -45,7 +45,7 @@ west #
 003 "nss-cert-crl" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-crl" #1: received and ignored informational message
 003 "nss-cert-crl" #1: discarding duplicate packet; already STATE_MAIN_I3
-010 "nss-cert-crl" #1: STATE_MAIN_I3: retransmission; will wait 500ms for response
+010 "nss-cert-crl" #1: STATE_MAIN_I3: retransmission; will wait 10000ms for response
 003 "nss-cert-crl" #1: received Vendor ID payload [CAN-IKEv2]
 002 "nss-cert-crl" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "nss-cert-crl" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK

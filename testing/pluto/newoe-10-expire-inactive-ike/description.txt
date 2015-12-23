@@ -1,0 +1,7 @@
+basic OE test, using road and east triggered by packet using NETKEY on road.
+road has short ikelifetime << salifetime,  and no traffic after the ping. 
+The rekeymargin is also relatively short O(20) seconds.
+IKE SA will expire, when it will expire will check if IPSEC was recently used,
+if not delete parent/IKE and child/IPSEC SA.
+
+New ping will initiate a new IKE negotiation and setup a new IPSEC SA.

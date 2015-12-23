@@ -542,6 +542,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
@@ -633,6 +634,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	{
 		struct connection *c = st->st_connection;
 		so_serial_t newest;
@@ -640,10 +642,12 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 		if (IS_IKE_SA(st)) {
 			newest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa"));
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa #%lu",
+						newest));
 		} else {
 			newest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_ipsec_sa"));
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_ipsec_sa #%lu",
+						newest));
 		}
 
 		if (newest != SOS_NOBODY && newest > st->st_serialno) {
@@ -657,8 +661,28 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				deltaless(c->sa_rekey_margin, last_used_age)) {
 			ikev2_expire_parent(st, last_used_age);
 			break;
+		} else if (type == EVENT_v2_SA_REPLACE_IF_USED_IKE) {
+				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+				if (cst == NULL)
+					break;
+				DBG(DBG_LIFECYCLE, DBG_log( "#%lu check last used on newest IPSec SA #%lu",
+							st->st_serialno, cst->st_serialno));
+				if (get_sa_info(cst, TRUE, &last_used_age) &&
+					deltaless(c->sa_rekey_margin, last_used_age))
+				{
+					delete_liveness_event(cst);
+					delete_event(cst);
+					event_schedule(EVENT_SA_EXPIRE, 0, cst);
+					ikev2_expire_parent(cst, last_used_age);
+					break;
+				} else {
+					ikev2_log_v2_sa_expired(st, type);
+					ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
+				}
+
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
-				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin)))
+		{
 			/*
 			 * we observed no recent use: no need to replace
 			 *
@@ -683,6 +707,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
+
+
 		delete_liveness_event(st);
 		delete_dpd_event(st);
 		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);

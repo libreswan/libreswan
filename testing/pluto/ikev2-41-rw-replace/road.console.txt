@@ -184,7 +184,7 @@ road #
 | ikev2 case EVENT_SA_REPLACE for child state for 28783 seconds
 | inserting event EVENT_SA_REPLACE, timeout in 28783.000000 seconds for #2
 | handling event EVENT_SA_REPLACE for parent state #1
-| EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa
+| EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa #1
 | inserting event EVENT_SA_EXPIRE, timeout in 13.000000 seconds for #1
 | inserting event EVENT_SA_REPLACE, timeout in 71.000000 seconds for #3
 | ikev2 case EVENT_SA_REPLACE for child state for 28789 seconds
