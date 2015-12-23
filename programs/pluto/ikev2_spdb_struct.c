@@ -2833,16 +2833,22 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
 		    DBG_log("converting ike_info %s to ikev2 ...", buf));
 
-		/*
-		 * XXX: This lookup should include the key size.
-		 * Should keylen be zero then, instead a search for
-		 * matching algs be made.
-		 */
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg != NULL) {
 			if (ike_info->ike_eklen) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 						 ealg->common.algo_v2id, ike_info->ike_eklen);
+			} else if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
+				/*
+				 * XXX: crypto_req_keysize(), seems to
+				 * be the easiest way to determine if
+				 * a zero keylen is valid in a
+				 * proposal.  If it is, just propose
+				 * that.
+				 */
+				DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
+				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+						 ealg->common.algo_v2id, 0);
 			} else {
 				/*
 				 * XXX: The parser, or something else,
@@ -2860,22 +2866,11 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keymaxlen);
 				}
-				if ((0 < ealg->keydeflen) && (ealg->keydeflen < ealg->keymaxlen)) {
+				if (ealg->keydeflen && (ealg->keydeflen < ealg->keymaxlen)) {
 					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
 								 ealg->keydeflen));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keydeflen);
-				}
-				/*
-				 * XXX: For the moment this seems to
-				 * be the best way to determine if the
-				 * algo allows proposals with no
-				 * keylen.
-				 */
-				if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
-					DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, 0);
 				}
 			}
 		}
