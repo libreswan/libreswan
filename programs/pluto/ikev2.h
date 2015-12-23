@@ -78,11 +78,24 @@ extern stf_status ikev2_parse_child_sa_body(
 				 * tranform can appear.
 				 */
 
+struct ikev2_proposals;
+
+struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike);
+
+void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals);
+
+void free_ikev2_proposals(struct ikev2_proposals **proposals);
+
 stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct alg_info_ike *alg_info_ike,
+					struct ikev2_proposals *local_proposals,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
 					pb_stream *r_sa_pbs /* if non-NULL, where to emit winning SA */);
+
+bool ikev2_emit_proposals(pb_stream *outs,
+			  struct ikev2_proposals *proposals,
+			  enum ikev2_sec_proto_id protoid,
+			  enum next_payload_types_ikev2 next_payload_type);
 
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,

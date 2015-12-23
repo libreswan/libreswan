@@ -470,6 +470,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		sa_v2_convert(&st->st_sadb);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
+#ifdef OLD_PROPOSALS
 			if (!ikev2_out_sa(&md->rbody, PROTO_v2_ISAKMP, st->st_sadb, st,
 				  TRUE, /* parentSA */
 				  ISAKMP_NEXT_v2KE)) {
@@ -477,6 +478,21 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 				reset_cur_state();
 				return STF_INTERNAL_ERROR;
 			}
+#else
+			DBG_log("XXX: should cache proposals in st");
+			struct ikev2_proposals *proposals
+				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+			bool ret = ikev2_emit_proposals(&md->rbody, proposals,
+							PROTO_v2_ISAKMP,
+							ISAKMP_NEXT_v2KE);
+			free_ikev2_proposals(&proposals);
+			if (!ret) {
+				libreswan_log("outsa fail");
+				reset_cur_state();
+				return STF_INTERNAL_ERROR;
+			}
+#endif
 		} else {
 			libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
 		}
@@ -945,14 +961,26 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 
 		/* SA body in and out */
-		ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
-						   st->st_connection->alg_info_ike,
+#ifdef OLD_PROPOSALS
+		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
+						&r_sa_pbs, st, FALSE);
+#else
+		DBG_log("XXX: should cache proposals in st");
+		struct ikev2_proposals *proposals
+			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		ret = ikev2_process_ike_sa_payload(&sa_pd->pbs, proposals,
 						   /*accepted*/FALSE,
 						   &st->st_oakley, &r_sa_pbs);
+		free_ikev2_proposals(&proposals);
+#endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
 			return ret;
 		}
+#ifndef OLD_PROPOSALS
+		close_output_pbs(&r_sa_pbs);
+#endif
 	}
 
 	/* KE in */
@@ -1293,10 +1321,20 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
+#ifdef OLD_PROPOSALS
+		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
+						NULL, st, TRUE);
+#else
+		DBG_log("XXX: should cache proposals in st");
+		struct ikev2_proposals *proposals
+			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
 		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
-							      st->st_connection->alg_info_ike,
+							      proposals,
 							      /*ACCEPTED*/TRUE,
 							      &st->st_oakley, NULL);
+		free_ikev2_proposals(&proposals);
+#endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return ret;
