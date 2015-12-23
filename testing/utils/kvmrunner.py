@@ -59,9 +59,9 @@ class Stats(Counts):
 
 class Results(Counts):
     def add(self, result):
-        Counts.add(self, result.value, result.test.name)
+        Counts.add(self, str(result), result.test.name)
         for error in result.errors:
-            Counts.add(self, "%s(%s)" % (result.value, error), result.test.name)
+            Counts.add(self, "%s(%s)" % (result, error), result.test.name)
 
 def main():
     parser = argparse.ArgumentParser(description="Run tests")
@@ -149,7 +149,7 @@ def main():
                         continue
                     if retry == 0:
                         logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
-                                    result.value, test.output_directory)
+                                    result, test.output_directory)
                         stats.add("skipped", test)
                         results.add(result)
                         continue
@@ -220,17 +220,14 @@ def main():
                             # pluto-testlist-scan.sh.
                             logger.info("storing result in '%s'", test.result_file)
                             with open(test.result_file, "w") as f:
-                                f.write('"result": "')
-                                f.write(result.value)
-                                f.write('"')
-                                f.write("\n")
+                                f.write('"result": "%s"\n' % result)
                     except pexpect.TIMEOUT as e:
                         ending = "timeout"
                         logger.exception("**** test %s timed out ****", test.name)
                         result = post.mortem(test, args, update=(not args.dry_run))
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
-                    stats.add("attempts(%s:%s)" % (ending, result.value), test)
+                    stats.add("attempts(%s:%s)" % (ending, result), test)
                     logger.info("****** test %s %s ******", test.name, result)
                     if result.passed:
                         break
@@ -238,7 +235,7 @@ def main():
             # Above will have set RESULT (don't reach here during
             # cntrl-c or crash).
             results.add(result)
-            stats.add("tests(%s)" % result.value, test)
+            stats.add("tests(%s)" % result, test)
 
     except KeyboardInterrupt:
         logger.exception("**** test %s interrupted ****", test.name)
