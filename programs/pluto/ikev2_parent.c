@@ -483,9 +483,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			struct ikev2_proposals *proposals
 				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
-			bool ret = ikev2_emit_proposals(&md->rbody, proposals,
-							PROTO_v2_ISAKMP,
-							ISAKMP_NEXT_v2KE);
+			bool ret = ikev2_emit_sa_proposals(&md->rbody, proposals,
+							   PROTO_v2_ISAKMP,
+							   ISAKMP_NEXT_v2KE);
 			free_ikev2_proposals(&proposals);
 			if (!ret) {
 				libreswan_log("outsa fail");
@@ -943,6 +943,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
+#ifdef OLD_PROPOSALS
 		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
@@ -961,26 +962,34 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 
 		/* SA body in and out */
-#ifdef OLD_PROPOSALS
 		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						&r_sa_pbs, st, FALSE);
 #else
+		stf_status ret;
 		DBG_log("XXX: should cache proposals in st");
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+
+		enum next_payload_types_ikev2 next_payload_type;
+		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
+			/* normal case */
+			next_payload_type = ISAKMP_NEXT_v2KE;
+		} else {
+			/* We are faking not sending a KE, we'll just call it a Notify */
+			next_payload_type = ISAKMP_NEXT_v2N;
+		}
+
 		ret = ikev2_process_ike_sa_payload(&sa_pd->pbs, proposals,
 						   /*accepted*/FALSE,
-						   &st->st_oakley, &r_sa_pbs);
+						   &st->st_oakley, &md->rbody,
+						   next_payload_type);
 		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
 			return ret;
 		}
-#ifndef OLD_PROPOSALS
-		close_output_pbs(&r_sa_pbs);
-#endif
 	}
 
 	/* KE in */
@@ -1332,7 +1341,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
 							      proposals,
 							      /*ACCEPTED*/TRUE,
-							      &st->st_oakley, NULL);
+							      &st->st_oakley,
+							      NULL, 0);
 		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
