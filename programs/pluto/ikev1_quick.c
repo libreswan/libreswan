@@ -1107,7 +1107,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 		}
 
 		/* Ni out */
-		if (!ship_nonce(&st->st_ni, r, &rbody,
+		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
 				np,
 				"Ni")) {
 			reset_cur_state();
@@ -1117,7 +1117,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ship_KE(st, r, &st->st_gi,
+		if (!ikev1_ship_KE(st, r, &st->st_gi,
 			     &rbody,
 			     has_client ? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE)) {
 			reset_cur_state();
@@ -2395,7 +2395,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			np = ISAKMP_NEXT_NONE;
 
 		/* Nr out */
-		if (!justship_nonce(&st->st_nr, &md->rbody, np, "Nr"))
+		if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, np, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
@@ -2419,7 +2419,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			else
 				np = ISAKMP_NEXT_NONE;
 
-			if (!out_generic(np,
+			if (!ikev1_out_generic(np,
 					 &isakmp_vendor_id_desc, &md->rbody,
 					 &vid_pbs))
 				return STF_INTERNAL_ERROR;
@@ -2434,7 +2434,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && r != NULL) {
-		if (!justship_KE(&st->st_gr,
+		if (!ikev1_justship_KE(&st->st_gr,
 				 &md->rbody,
 				 id_pd != NULL ?
 					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
@@ -2704,7 +2704,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody,
 								   ISAKMP_NEXT_VID);
 
-				if (!out_generic(ISAKMP_NEXT_NONE,
+				if (!ikev1_out_generic(ISAKMP_NEXT_NONE,
 						 &isakmp_vendor_id_desc,
 						 &md->rbody, &vid_pbs))
 					return STF_INTERNAL_ERROR;

@@ -67,10 +67,13 @@
 #include "pam_conv.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
+#include "vendor.h"
 
 #include "ietf_constants.h"
 
 #include "hostpair.h"
+
+extern bool pluto_drop_oppo_null;
 
 #ifdef XAUTH_HAVE_PAM
 struct ikev2_pam_helper {
@@ -415,10 +418,20 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st)
 {
 	struct connection *c = st->st_connection;
+	int vids = 0;
 
 	/* set up reply */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
+
+	/* remember how many VID's we are going to send */
+	if (c->policy & POLICY_AUTH_NULL)
+		vids++;
+	if (c->send_vendorid)
+		vids++;
+	if (c->fake_strongswan)
+		vids++;
+
 
 	/* HDR out */
 	{
@@ -489,6 +502,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		}
 	}
 
+
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
@@ -531,7 +545,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
 		zero(&in);	/* OK: no pointer fields */
@@ -541,22 +555,38 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Send VendorID VID if needed.  Only one. */
+	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		int np = c->fake_strongswan ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
 				     pluto_vendorid, strlen(pluto_vendorid),
-				     "Vendor ID"))
+				     "VID_LIBRESWANSELF"))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
-		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
 				     "strongSwan", strlen("strongSwan"),
-				     "Vendor ID"))
+				     "VID_STRONGSWAN"))
 			return STF_INTERNAL_ERROR;
 	}
+
+	if (c->policy & POLICY_AUTH_NULL) {
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
+				     "VID_OPPORTUNISTIC"))
+			return STF_INTERNAL_ERROR;
+	}
+
+	passert(vids == 0); /* Ensure we built a valid chain */
 
 	if (!close_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -760,6 +790,29 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
+	/* check if we would drop the packet based on VID before we create a state */
+	if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
+		struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V];
+
+		DBG(DBG_CONTROLMORE, DBG_log("received at least one VID"));
+                while (p != NULL) {
+                        if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
+				DBG(DBG_CONTROLMORE, DBG_log("received VID_OPPORTUNISTIC"));
+				if (pluto_drop_oppo_null) {
+					DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
+					return STF_DROP; /* no state to delete */
+				} else {
+					DBG(DBG_OPPO, DBG_log("Processing IKE request for Opportunistic IPsec"));
+				}
+				break;
+			}
+                        p = p->next;
+                }
+
+	} else {
+		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
+	}
+
 	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
@@ -778,6 +831,22 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->from_state = STATE_IKEv2_BASE;
 	} else {
 		/* ??? should st->st_connection be changed to c? */
+	}
+
+	/* Vendor ID processing */
+	{
+		if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
+			struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V];
+
+			DBG(DBG_CONTROL, DBG_log("Processing VIDs"));
+			while (v != NULL) {
+				handle_vendorid(md, (char *)v->pbs.cur,
+					pbs_left(&v->pbs), TRUE);
+				v = v->next;
+			}
+		} else {
+			DBG(DBG_CONTROL, DBG_log("no VIDs received"));
+		}
 	}
 
 	{
@@ -892,6 +961,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
+	int vids = 0;
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -905,6 +975,14 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
+
+	/* remember how many VID's we are going to send */
+	if (c->policy & POLICY_AUTH_NULL)
+		vids++;
+	if (c->send_vendorid)
+		vids++;
+	if (c->fake_strongswan)
+		vids++;
 
 	/* HDR out */
 	{
@@ -1028,11 +1106,10 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		close_output_pbs(&pb);
 	}
-	{
-		 /* decide to send a CERTREQ */
-		send_certreq = (c->policy & POLICY_RSASIG) &&
-			!has_preloaded_public_key(st);
-	}
+
+	/* decide to send a CERTREQ */
+	send_certreq = (c->policy & POLICY_RSASIG) &&
+		!has_preloaded_public_key(st);
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
@@ -1049,7 +1126,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	{
 		struct ikev2_generic in;
 		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
-			c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
@@ -1060,18 +1137,43 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* send CERTREQ  */
 	if (send_certreq) {
-		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
 		ikev2_send_certreq(st, md, ORIGINAL_RESPONDER, np, &md->rbody);
 	}
 
-	/* Send VendorID VID if needed.  Only one. */
+	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
 				     pluto_vendorid, strlen(pluto_vendorid),
-				     "Vendor ID"))
+				     "VID_LIBRESWANSELF"))
 			return STF_INTERNAL_ERROR;
 	}
+
+	if (c->fake_strongswan) {
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+				     "strongSwan", strlen("strongSwan"),
+				     "VID_STRONGSWAN"))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (c->policy & POLICY_AUTH_NULL) {
+		vids--;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
+				     "VID_OPPORTUNISTIC"))
+			return STF_INTERNAL_ERROR;
+	}
+
+	passert(vids == 0); /* Ensure we built a valid chain */
 
 	if (!close_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -2885,7 +2987,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 		if (authstat != STF_OK) {
 			libreswan_log(
-				"PSK authentication failed AUTH mismatch!");
+				"Authentication failed AUTH mismatch!");
 			/*
 			 * ??? this could be
 			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
@@ -3269,7 +3371,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
 		if (authstat != STF_OK) {
-			libreswan_log("PSK authentication failed");
+			libreswan_log("Authentication failed");
 			/*
 			 * ??? this could be
 			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED

@@ -121,15 +121,20 @@ extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MU
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
 		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool out_generic(u_int8_t np, struct_desc *sd,
+extern bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
+extern bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
+			    pb_stream *outs, const void *bytes, size_t len,
+			    const char *name) MUST_USE_RESULT;
+extern bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
+			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
+extern bool ikev2_out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
 			    const char *name) MUST_USE_RESULT;
 extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
 
-#define out_generic_chunk(np, sd, outs, ch, name) \
-	out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
+#define ikev1_out_generic_chunk(np, sd, outs, ch, name) \
+	ikev1_out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
 extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		    const char *name) MUST_USE_RESULT;
@@ -986,6 +991,26 @@ struct ikev2_skf {
 };
 
 extern struct_desc ikev2_skf_desc;
+
+/*
+ * 3.12.  Vendor ID Payload
+ *
+ *  The Vendor ID Payload fields are defined as follows:
+ *
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    ! Next Payload  !C!  RESERVED   !         Payload Length        !
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    !                                                               !
+ *    ~                        Vendor ID (VID)                        ~
+ *    !                                                               !
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ */
+extern struct_desc ikev2_vendor_id_desc;
+
+
 
 /* union of all payloads */
 

@@ -219,7 +219,7 @@ stf_status main_outI1(int whack_sock,
 		int np = --numvidtosend >0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
+		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
 			return STF_INTERNAL_ERROR;
@@ -848,7 +848,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	if (c->send_vendorid) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
@@ -998,7 +998,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
  * package up the calculate KE value, and emit it as a KE payload.
  * used by IKEv1: main, aggressive, and quick (in PFS mode).
  */
-bool justship_KE(chunk_t *g,
+bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
 	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
@@ -1006,22 +1006,22 @@ bool justship_KE(chunk_t *g,
 
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
 		/* Only used to test sending/receiving bogus g^x */
-		return out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
 	} else {
-		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
+		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
 	}
 }
 
-bool ship_KE(struct state *st,
+bool ikev1_ship_KE(struct state *st,
 	struct pluto_crypto_req *r,
 	chunk_t *g,
 	pb_stream *outs, u_int8_t np)
 {
 	unpack_KE_from_helper(st, r, g);
-	return justship_KE(g, outs, np);
+	return ikev1_justship_KE(g, outs, np);
 }
 
 /*
@@ -1054,12 +1054,12 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
-	if (!ship_KE(st, r, &st->st_gi,
+	if (!ikev1_ship_KE(st, r, &st->st_gi,
 			&md->rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ship_nonce(&st->st_ni, r, &md->rbody,
+	if (!ikev1_ship_nonce(&st->st_ni, r, &md->rbody,
 				(cur_debugging &
 					IMPAIR_BUST_MI2) ? ISAKMP_NEXT_VID :
 				ISAKMP_NEXT_NONE,
@@ -1073,7 +1073,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		 */
 		pb_stream vid_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
+		if (!ikev1_out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
 					&md->rbody,
 					&vid_pbs))
 			return STF_INTERNAL_ERROR;
@@ -1088,7 +1088,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1260,7 +1260,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
-	if (!ship_KE(st, r, &st->st_gr,
+	if (!ikev1_ship_KE(st, r, &st->st_gr,
 			&md->rbody, ISAKMP_NEXT_NONCE)) {
 		lsw_abort();
 		return STF_INTERNAL_ERROR;
@@ -1275,7 +1275,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			next_payload = ISAKMP_NEXT_VID;
 		if (send_cr)
 			next_payload = ISAKMP_NEXT_CR;
-		if (!ship_nonce(&st->st_nr, r,
+		if (!ikev1_ship_nonce(&st->st_nr, r,
 					&md->rbody,
 					next_payload,
 					"Nr"))
@@ -1288,7 +1288,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			 */
 			pb_stream vid_pbs;
 
-			if (!out_generic((send_cr) ? ISAKMP_NEXT_CR :
+			if (!ikev1_out_generic((send_cr) ? ISAKMP_NEXT_CR :
 					ISAKMP_NEXT_NONE,
 					&isakmp_vendor_id_desc, &md->rbody,
 					&vid_pbs))
@@ -1336,7 +1336,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1577,7 +1577,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
+			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
 						ISAKMP_NEXT_NONE,
 						&isakmp_hash_desc,
 						&md->rbody,
@@ -1597,7 +1597,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
+			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
 						ISAKMP_NEXT_NONE,
 						&isakmp_signature_desc,
 						&md->rbody,
@@ -2116,7 +2116,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!out_generic_raw(np, &isakmp_hash_desc, &md->rbody,
+			if (!ikev1_out_generic_raw(np, &isakmp_hash_desc, &md->rbody,
 						hash_val, hash_len, "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -2133,7 +2133,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(np, &isakmp_signature_desc,
+			if (!ikev1_out_generic_raw(np, &isakmp_signature_desc,
 						&md->rbody, sig_val, sig_len,
 						"SIG_R"))
 				return STF_INTERNAL_ERROR;
@@ -2506,7 +2506,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	/* HASH -- value to be filled later */
 	if (encst) {
 		pb_stream hash_pbs;
-		if (!out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
+		if (!ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2724,7 +2724,7 @@ bool ikev1_delete_out(struct state *st)
 	{
 		pb_stream hash_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
+		if (!ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */

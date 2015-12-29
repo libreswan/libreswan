@@ -40,7 +40,6 @@
 #include "vendor.h"
 #include "quirks.h"
 #include "kernel.h"
-#include "state.h"
 
 #include "nat_traversal.h"
 
@@ -282,8 +281,6 @@ static struct vid_struct vid_tab[] = {
 	{ VID_SONICWALL_2, VID_KEEP, NULL, "Sonicwall 2 (3.1.0.12-86s?)",
 	  "\xda\x8e\x93\x78\x80\x01\x00\x00", 8 },
 
-	/* misc */
-
 	/* MD5("draft-ietf-ipsra-isakmp-xauth-06.txt") */
 	{ VID_MISC_XAUTH, VID_KEEP, NULL, "XAUTH",
 	  "\x09\x00\x26\x89\xdf\xd6\xb7\x12", 8 },
@@ -297,6 +294,7 @@ static struct vid_struct vid_tab[] = {
 	  "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49",
 	  16 },
 
+	/* Used by libreswan and openswan to detect bid-down attacks */
 	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
 	  0 },
 
@@ -310,6 +308,15 @@ static struct vid_struct vid_tab[] = {
 	{ VID_MACOSX, VID_STRING | VID_SUBSTRING_DUMPHEXA, "Mac OSX 10.x",
 	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62",
 	  NULL, 0 },
+
+	/*
+	 * We send this VID to let people know this opportunistic ipsec
+	 * (we hope people thinking they are under attack will google for
+	 *  this string and find information about it)
+	 */
+	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
+	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
+	  NULL, 0},
 
 	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
@@ -572,36 +579,103 @@ void init_vendorid(void)
 	}
 }
 
-/**
- * Handle Known VendorID's.  This function parses what the remote peer
+static void vidlog(const char *vidstr, size_t len, struct vid_struct *vid, bool vid_useful)
+{
+	char vid_dump[128];
+
+	if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
+		/* Dump description + Hexa */
+		size_t i, j;
+
+		snprintf(vid_dump, sizeof(vid_dump), "%s ",
+			 vid->descr ? vid->descr : "");
+		for (i = strlen(vid_dump), j = vid->vid_len
+		     ; (j < len) && (i < sizeof(vid_dump) - 2)
+		     ; i += 2, j++) {
+			vid_dump[i] = hexdig[(vidstr[j] >> 4) & 0xF];
+			vid_dump[i + 1] = hexdig[vidstr[j] & 0xF];
+		}
+		vid_dump[i] = '\0';
+	} else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
+		/* Dump ASCII content */
+		size_t i;
+
+		for (i = 0; i < len && i < sizeof(vid_dump) - 1; i++)
+			vid_dump[i] = isprint(vidstr[i]) ? vidstr[i] : '.';
+		vid_dump[i] = '\0';
+	} else {
+		/* Dump description (descr) */
+		snprintf(vid_dump, sizeof(vid_dump), "%s",
+			 vid->descr ? vid->descr : "");
+	}
+
+	DBG(DBG_CONTROL, DBG_log("%s Vendor ID payload [%s]",
+	       vid_useful ? "received" : "ignoring", vid_dump));
+}
+
+/*
+ * Handle IKEv2 Known VendorID's.
+ * We don't know about any real IKEv2 vendor id strings yet
+ */
+
+static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
+				  const char *vidstr,
+				  size_t len,
+				  struct vid_struct *vid)
+{
+	bool vid_useful = TRUE; /* tentatively TRUE */
+
+	/* IKEv2 VID processing */
+	switch (vid->id) {
+	case VID_LIBRESWANSELF:
+	case VID_LIBRESWAN:
+	case VID_LIBRESWAN_OLD:
+	case VID_OPPORTUNISTIC:
+		/* not really useful, but it changes the msg from "ignored" to "received" */
+		break;
+	default:
+		vid_useful = FALSE;
+		break;
+	}
+
+	vidlog(vidstr, len, vid, vid_useful);
+}
+
+/*
+ * Handle IKEv1 Known VendorID's.  This function parses what the remote peer
  * sends us, and enables/disables features based on it.  As we go along,
  * we set vid_useful to TRUE if we did something based on this VendorID.  This
  * supresses the 'Ignored VendorID ...' log message.
  *
- * @param md UNUSED - Deprecated
+ * @param md message_digest
  * @param vidstr VendorID String
  * @param len Length of vidstr
  * @param vid VendorID Struct (see vendor.h)
  * @param st State Structure (Hopefully initialized)
  * @return void
  */
-static void handle_known_vendorid(struct msg_digest *md,
+static void handle_known_vendorid_v1(struct msg_digest *md,
 				  const char *vidstr,
 				  size_t len,
-				  struct vid_struct *vid,
-				  struct state *st UNUSED)
+				  struct vid_struct *vid)
 {
-	char vid_dump[128];
 	bool vid_useful = TRUE; /* tentatively TRUE */
 
 	switch (vid->id) {
-	/**
+	/*
 	 * Use most recent supported NAT-Traversal method and ignore
 	 * the other ones (implementations will send all supported
 	 * methods but only one will be used)
 	 *
 	 * Note: most recent == higher id in vendor.h
 	 */
+
+	case VID_LIBRESWANSELF:
+	case VID_LIBRESWAN:
+	case VID_LIBRESWAN_OLD:
+	case VID_OPPORTUNISTIC:
+		/* not really useful, but it changes the msg from "ignored" to "received" */
+		break;
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
@@ -659,16 +733,8 @@ static void handle_known_vendorid(struct msg_digest *md,
 		md->quirks.xauth_vid = TRUE;
 		break;
 
-	case VID_LIBRESWANSELF:
-	case VID_LIBRESWAN:
-	case VID_LIBRESWAN_OLD:
-		/* not really useful, but it changes the msg from "ignored" to "received" */
-		break;
-
 	case VID_CISCO_IKE_FRAGMENTATION:
 	case VID_IKE_FRAGMENTATION:
-		/* TODO we should really use st->st_seen_vendorid but no one else is */
-		/* does the md bits survive packet processing? shouldn't this be on the state? */
 		md->fragvid = TRUE;
 		break;
 
@@ -676,38 +742,23 @@ static void handle_known_vendorid(struct msg_digest *md,
 		vid_useful = FALSE;
 		break;
 	}
-
-	if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
-		/* Dump description + Hexa */
-		size_t i, j;
-
-		snprintf(vid_dump, sizeof(vid_dump), "%s ",
-			 vid->descr ? vid->descr : "");
-		for (i = strlen(vid_dump), j = vid->vid_len
-		     ; (j < len) && (i < sizeof(vid_dump) - 2)
-		     ; i += 2, j++) {
-			vid_dump[i] = hexdig[(vidstr[j] >> 4) & 0xF];
-			vid_dump[i + 1] = hexdig[vidstr[j] & 0xF];
-		}
-		vid_dump[i] = '\0';
-	} else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
-		/* Dump ASCII content */
-		size_t i;
-
-		for (i = 0; i < len && i < sizeof(vid_dump) - 1; i++)
-			vid_dump[i] = isprint(vidstr[i]) ? vidstr[i] : '.';
-		vid_dump[i] = '\0';
-	} else {
-		/* Dump description (descr) */
-		snprintf(vid_dump, sizeof(vid_dump), "%s",
-			 vid->descr ? vid->descr : "");
-	}
-
-	loglog(RC_LOG_SERIOUS, "%s Vendor ID payload [%s]",
-	       vid_useful ? "received" : "ignoring", vid_dump);
+	vidlog(vidstr, len, vid, vid_useful);
 }
 
-/**
+
+static void handle_known_vendorid(struct msg_digest *md,
+				  const char *vidstr,
+				  size_t len,
+				  struct vid_struct *vid,
+				  bool ikev2)
+{
+	if (ikev2)
+		handle_known_vendorid_v2(md, vidstr, len, vid);
+	else
+		handle_known_vendorid_v1(md, vidstr, len, vid);
+}
+
+/*
  * Handle VendorID's.  This function parses what the remote peer
  * sends us, calls handle_known_vendorid on each VID we received
  *
@@ -721,7 +772,7 @@ static void handle_known_vendorid(struct msg_digest *md,
  * @return void
  */
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
-		     struct state *st)
+		     bool ikev2)
 {
 	struct vid_struct *pvid;
 
@@ -733,14 +784,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 			if (pvid->vid_len == len) {
 				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
-							      len, pvid, st);
+							      len, pvid, ikev2);
 					return;
 				}
 			} else if ((pvid->vid_len < len) &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
-							      pvid, st);
+							      pvid, ikev2);
 					return;
 				}
 			}
@@ -769,7 +820,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 }
 
 /**
- * Add a vendor id payload to the msg
+ * Add an IKEv1 (!)  vendor id payload to the msg
  *
  * @param np
  * @param outs PB stream
@@ -780,13 +831,40 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	for (pvid = vid_tab; pvid->id != vid; pvid++)
-		if (pvid->id == 0)
-			return FALSE; /* not found */
+	for (pvid = vid_tab; pvid->id != vid; pvid++) /* stop at right vid */
+
+	passert(pvid->id != 0); /* we must find what we are trying to send */
 
 	DBG(DBG_EMITTING,
 	    DBG_log("out_vid(): sending [%s]", pvid->descr));
 
-	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,
+	return ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
 }
+
+/*
+ * The VID table or entries are static
+ */
+bool vid_is_oppo(const char *vid, size_t len)
+{
+	struct vid_struct *pvid;
+
+	/* stop at right vid in vidtable */
+	for (pvid = vid_tab; pvid->id != VID_OPPORTUNISTIC; pvid++)
+
+	passert(pvid->id != 0); /* we must find VID_OPPORTUNISTIC */
+
+	if (pvid->vid_len != len) {
+		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: length differs"));
+		return FALSE;
+	}
+
+	if (memeq(vid, pvid->vid, len)) {
+		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
+		return TRUE;
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: content differs"));
+		return FALSE;
+	}
+}
+

@@ -24,23 +24,23 @@ extern void process_v1_packet(struct msg_digest **mdp);
 /* continue with encrypted packet */
 extern void process_packet_tail(struct msg_digest **mdp);
 
-extern bool justship_nonce(chunk_t *n,
+extern bool ikev1_justship_nonce(chunk_t *n,
 			   pb_stream *outs, u_int8_t np,
 			   const char *name);
 
 /* calls previous two routines */
-extern bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
+extern bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 		       pb_stream *outs, u_int8_t np,
 		       const char *name);
 
 extern notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 				      const char *name);
 
-extern bool justship_KE(chunk_t *g,
+extern bool ikev1_justship_KE(chunk_t *g,
 			pb_stream *outs, u_int8_t np);
 
 /* just calls previous two routines now */
-extern bool ship_KE(struct state *st,
+extern bool ikev1_ship_KE(struct state *st,
 		    struct pluto_crypto_req *r,
 		    chunk_t *g,
 		    pb_stream *outs, u_int8_t np);

@@ -120,6 +120,7 @@ extern bool strict_ocsp_policy;
 extern bool ocsp_enable;
 extern char *curl_iface;
 extern long curl_timeout;
+extern bool pluto_drop_oppo_null;
 
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
@@ -837,6 +838,10 @@ int main(int argc, char **argv)
 			log_append = FALSE;
 			continue;
 
+		case '8':	/* --drop-oppo-null */
+			pluto_drop_oppo_null = TRUE;
+			continue;
+
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
 			continue;
@@ -1075,6 +1080,7 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
+			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* force-busy is obsoleted, translate to ddos-mode= */

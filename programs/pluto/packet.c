@@ -1101,7 +1101,7 @@ struct_desc ikev2_notify_desc = { "IKEv2 Notify Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-static struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
+struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
 				     ikev2generic_fields,
 				     sizeof(struct ikev2_generic) };
 
@@ -1987,7 +1987,17 @@ void out_modify_previous_np(u_int8_t np, pb_stream *outs)
 	}
 }
 
-bool out_generic(u_int8_t np, struct_desc *sd,
+bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
+		 pb_stream *outs, pb_stream *obj_pbs)
+{
+	struct ikev2_generic gen;
+
+	passert(sd->fields == ikev2generic_fields);
+	gen.isag_np = np;
+	return out_struct(&gen, sd, outs, obj_pbs);
+}
+
+bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
 	struct isakmp_generic gen;
@@ -1997,13 +2007,26 @@ bool out_generic(u_int8_t np, struct_desc *sd,
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
-bool out_generic_raw(u_int8_t np, struct_desc *sd,
+bool ikev2_out_generic_raw(u_int8_t np, struct_desc *sd,
 		     pb_stream *outs, const void *bytes, size_t len,
 		     const char *name)
 {
 	pb_stream pbs;
 
-	if (!out_generic(np, sd, outs, &pbs) ||
+	if (!ikev2_out_generic(np, sd, outs, &pbs) ||
+	    !out_raw(bytes, len, &pbs, name))
+		return FALSE;
+
+	close_output_pbs(&pbs);
+	return TRUE;
+}
+bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
+		     pb_stream *outs, const void *bytes, size_t len,
+		     const char *name)
+{
+	pb_stream pbs;
+
+	if (!ikev1_out_generic(np, sd, outs, &pbs) ||
 	    !out_raw(bytes, len, &pbs, name))
 		return FALSE;
 

@@ -397,7 +397,7 @@ static stf_status modecfg_resp(struct state *st,
 	{
 		pb_stream hash_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_MCFG_ATTR, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(ISAKMP_NEXT_MCFG_ATTR, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2245,7 +2245,7 @@ static stf_status xauth_client_resp(struct state *st,
 		pb_stream hash_pbs;
 		int np = ISAKMP_NEXT_MCFG_ATTR;
 
-		if (!out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2708,7 +2708,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		pb_stream hash_pbs;
 		int np = ISAKMP_NEXT_MCFG_ATTR;
 
-		if (!out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */

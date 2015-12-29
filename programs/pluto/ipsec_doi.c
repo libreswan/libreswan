@@ -155,18 +155,18 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 		     DEFAULT_NONCE_SIZE, "initiator nonce");
 }
 
-bool justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
+bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
 		    const char *name)
 {
-	return out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
+	return ikev1_out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
 }
 
-bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
+bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 		pb_stream *outs, u_int8_t np,
 		const char *name)
 {
 	unpack_nonce(n, r);
-	return justship_nonce(n, outs, np, name);
+	return ikev1_justship_nonce(n, outs, np, name);
 }
 
 /*

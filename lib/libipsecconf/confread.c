@@ -104,6 +104,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_SHUNTLIFETIME] = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
+	cfg->setup.options[KBF_DROP_OPPO_NULL] = FALSE;
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;

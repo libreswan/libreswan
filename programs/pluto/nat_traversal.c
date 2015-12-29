@@ -286,15 +286,15 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 
 void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-T: %s and %d",
+	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %s and %d",
 				     nat_traversal_enabled ? "enabled" : "disabled",
 				     md->quirks.qnat_traversal_vid));
 	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
 		st->hidden_variables.st_nat_traversal = LELEM(v);
-		libreswan_log("enabling possible NAT-traversal with method %s",
-			      enum_name(&natt_method_names, v));
+		DBG(DBG_NATT, DBG_log("enabling possible NAT-traversal with method %s",
+			      enum_name(&natt_method_names, v)));
 	}
 }
 
@@ -408,7 +408,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	natd_lookup_common(st, &md->sender, found_me, found_him);
 }
 
-bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
+bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 			struct msg_digest *md)
 {
 	unsigned char hash[MAX_DIGEST_LEN];
@@ -458,7 +458,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		st->st_rcookie, first, firstport);
 
-	if (!out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
+	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
 				st->st_oakley.prf_hasher->hash_digest_len,
 				"NAT-D"))
 		return FALSE;
@@ -470,7 +470,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		st->st_icookie, is_zero_cookie(st->st_rcookie) ?
 		md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
-	return out_generic_raw(np, &isakmp_nat_d, outs,
+	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs,
 			hash, st->st_oakley.prf_hasher->hash_digest_len,
 			"NAT-D");
 }
@@ -672,7 +672,7 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
 		"no NAT detected";
 
-	loglog(RC_LOG_SERIOUS,
+	DBG(DBG_NATT, DBG_log(
 		"NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
 		LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
 			enum_name(&natt_method_names,
@@ -682,12 +682,12 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 				  NAT_TRAVERSAL_METHOD_IETF_02_03) :
 		"unknown or unsupported method",
 		sport,
-		rslt);
+		rslt));
 }
 
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_NATT,
 	    DBG_log("checking NAT-t: %s and %s",
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
@@ -944,7 +944,7 @@ static int nat_traversal_new_mapping(struct state *st,
 {
 	struct new_mapp_nfo nfo;
 
-	DBG(DBG_CONTROLMORE, {
+	DBG(DBG_NATT, {
 		ipstr_buf b;
 		DBG_log("state #%lu NAT-T: new mapping %s:%d",
 			st->st_serialno,

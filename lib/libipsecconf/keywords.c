@@ -415,6 +415,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "protostack",     kv_config, kt_string,    KSF_PROTOSTACK,
 	  &kw_proto_stack },
 	{ "nhelpers", kv_config, kt_number, KBF_NHELPERS, NOT_ENUM },
+	{ "drop-oppo-null",  kv_config, kt_bool, KBF_DROP_OPPO_NULL, NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
 	/* ??? AN ATTRIBUTE TYPE, NOT VALUE! */
 	{ "secctx_attr_value", kv_config | kv_alias, kt_number, KBF_SECCTX, NOT_ENUM },	/* obsolete _ */

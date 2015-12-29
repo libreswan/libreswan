@@ -150,7 +150,7 @@ stf_status dpd_init(struct state *st)
 
 	/* if it was enabled, and we haven't turned it on already */
 	if (p1st->hidden_variables.st_peer_supports_dpd) {
-		libreswan_log("Dead Peer Detection (RFC 3706): enabled");
+		DBG(DBG_DPD, DBG_log("Dead Peer Detection (RFC 3706): enabled"));
 		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
 					st->st_connection->dpd_delay)){
 			if (st->st_dpd_event != NULL)
@@ -160,8 +160,8 @@ stf_status dpd_init(struct state *st)
 					st);
 		}
 	} else {
-		libreswan_log(
-			"Dead Peer Detection (RFC 3706): not enabled because peer did not advertise it");
+		loglog(RC_LOG_SERIOUS,
+			"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
 	}
 
 	if (p1st != st) {
