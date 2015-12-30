@@ -54,14 +54,8 @@ west #
  ipsec auto --up  west-east
 002 "west-east" #1: initiating Main Mode
 104 "west-east" #1: STATE_MAIN_I1: initiate
-003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
-003 "west-east" #1: received Vendor ID payload [FRAGMENTATION]
-003 "west-east" #1: received Vendor ID payload [RFC 3947]
-002 "west-east" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "west-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "west-east" #1: received Vendor ID payload [CAN-IKEv2]
 002 "west-east" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW

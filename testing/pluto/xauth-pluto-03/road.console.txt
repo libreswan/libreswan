@@ -36,15 +36,8 @@ road #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #1: initiating Main Mode
 104 "xauth-road-eastnet" #1: STATE_MAIN_I1: initiate
-003 "xauth-road-eastnet" #1: received Vendor ID payload [Dead Peer Detection]
-003 "xauth-road-eastnet" #1: received Vendor ID payload [FRAGMENTATION]
-003 "xauth-road-eastnet" #1: received Vendor ID payload [XAUTH]
-003 "xauth-road-eastnet" #1: received Vendor ID payload [RFC 3947]
-002 "xauth-road-eastnet" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "xauth-road-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "xauth-road-eastnet" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "xauth-road-eastnet" #1: received Vendor ID payload [CAN-IKEv2]
 002 "xauth-road-eastnet" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP1536}
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:

@@ -53,16 +53,12 @@ road #
 003 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
-002 "modecfg-road-eastnet-psk" #1: initiating Aggressive Mode #1, connection "modecfg-road-eastnet-psk"
+002 "modecfg-road-eastnet-psk" #1: initiating Aggressive Mode
 003 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "modecfg-road-eastnet-psk" #1: STATE_AGGR_I1: initiate
-003 "modecfg-road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
-003 "modecfg-road-eastnet-psk" #1: received Vendor ID payload [RFC 3947]
 002 "modecfg-road-eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
-002 "modecfg-road-eastnet-psk" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
-003 "modecfg-road-eastnet-psk" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 004 "modecfg-road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 integ=sha group=MODP1536}
 041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
 040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:
