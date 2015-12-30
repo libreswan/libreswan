@@ -1073,6 +1073,11 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		 */
 		pb_stream vid_pbs;
 
+		/*
+		 * This next payload value will get rewritten to one of the two
+		 * NAT payload types when needed, using out_modify_previous_np()
+		 * in the below call to ikev1_nat_traversal_add_natd()
+		 */
 		if (!ikev1_out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
 					&md->rbody,
 					&vid_pbs))
