@@ -8,6 +8,7 @@ v3.17 (unrelease)
 * IKEv2: ikev2_out_generic{_raw}() functions [Paul]
 * IKEv1: Minor logging changes for DPD/NAT-T/AGGR [Paul]
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
+* pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
 
 v3.16 (December 18, 2015)
 * auto: add new option --start which is like auto=start [Tuomo]
