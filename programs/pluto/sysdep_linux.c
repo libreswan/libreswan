@@ -33,6 +33,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <linux/if_addr.h>
+
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -295,7 +297,7 @@ struct raw_iface *find_raw_ifaces6(void)
 			unsigned int if_idx;            /* proc field, not used */
 			unsigned int plen;              /* proc field, not used */
 			unsigned int scope;             /* proc field, used to exclude link-local */
-			unsigned int dad_status;        /* proc field, not used */
+			unsigned int dad_status;        /* proc field */
 			/* ??? I hate and distrust scanf -- DHR */
 			int r = fscanf(proc_sock,
 				       "%4hx%4hx%4hx%4hx%4hx%4hx%4hx%4hx"
@@ -315,6 +317,9 @@ struct raw_iface *find_raw_ifaces6(void)
 			 * IPV6_ADDR_SCOPE_MASK	0x00f0U
 			 */
 			if ((scope & 0x00f0U) == 0x0020U)
+				continue;
+
+			if (dad_status & (IFA_F_TENTATIVE | IFA_F_DADFAILED))
 				continue;
 
 			snprintf(sb, sizeof(sb),
