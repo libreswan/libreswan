@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015,2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2125,109 +2125,6 @@ static void DBG_log_ikev2_chosen_proposal(const char *prefix,
 }
 
 /*
- * Define macros to save some typing, and to, hopefully avoid some
- * duplication errors.
- */
-#define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, }
-#define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, }
-#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, }
-#define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, }
-
-struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
-	ENCR_AES_GCM16_256, ENCR_AES_GCM16_128,
-};
-struct ikev2_transform encr__aes_cbc_256__aes_cbc_256[] = {
-	ENCR_AES_CBC_256, ENCR_AES_CBC_128,
-};
-
-#define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, }
-#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, }
-#define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, }
-
-struct ikev2_transform prf__sha1__sha2_256[] = {
-	PRF_SHA1, PRF_SHA2_256,
-};
-struct ikev2_transform prf__sha1__sha2_256__aes128_xcbc[] = {
-	PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC,
-};
-
-#define AUTH_NONE { .id = IKEv2_AUTH_NONE, }
-#define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, }
-#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, }
-#define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, }
-
-struct ikev2_transform auth__none[] = {
-	AUTH_NONE,
-};
-struct ikev2_transform auth__sha1_96__sha2_256_128__aes_xcbc_96[] = {
-	AUTH_SHA1_96, AUTH_SHA2_256_128, AUTH_AES_XCBC_96,
-};
-
-#define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, }
-#define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, }
-#define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, }
-#define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, }
-
-struct ikev2_transform dh__modp2048__modp4096__modp8192[] = {
-	DH_MODP2048, DH_MODP4096, DH_MODP8192,
-};
-struct ikev2_transform dh__modp1536__modp2048[] = {
-	DH_MODP1536, DH_MODP2048,
-};
-
-#define TRANSFORMS(T) { .transform = T, .nr = sizeof(T) / sizeof(T[0]) }
-
-struct ikev2_proposal proposal[] = {
-/*
- * IKEv2 proposal #0:
- * AES_GCM[256]
- * NULL
- * SHA1,SHA2_256
- * MODP2048, MODP4096, MODP8192
- *
- * IKEv2 proposal #1:
- * AES_GCM[128]
- * NULL
- * SHA1,SHA2_256
- * MODP2048, MODP4096, MODP8192
- */
-	{
-		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_gcm16_256__aes_gcm16_128),
-			[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__none),
-			[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha1__sha2_256),
-			[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp2048__modp4096__modp8192),
-		},
-	},
-/*
- * IKEv2 proposal #2:
- * AES_CBC[256]
- * SHA1, SHA2_256, AES_XCBC
- * MODP1536, MODP2048
- *
- * IKEv2 proposal #3:
- * AES_CBC[128]
- * SHA1, SHA2_256, AES_XCBC
- * MODP1536, MODP2048
- *
- * INTEG????
- */
-	{
-		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TRANSFORMS(encr__aes_cbc_256__aes_cbc_256),
-			[IKEv2_TRANS_TYPE_INTEG] = TRANSFORMS(auth__sha1_96__sha2_256_128__aes_xcbc_96),
-			[IKEv2_TRANS_TYPE_PRF] = TRANSFORMS(prf__sha1__sha2_256__aes128_xcbc),
-			[IKEv2_TRANS_TYPE_DH] = TRANSFORMS(dh__modp1536__modp2048),
-		},
-	},
-};
-
-struct ikev2_proposals default_ikev2_proposals = {
-	.proposal = proposal,
-	.nr = sizeof(proposal) / sizeof(proposal[0]),
-};
-
-/*
  * Compare the initiator's proposal's transforms against the first
  * NUM_LOCAL_PROPOSALS finding the earliest match.
  *
@@ -2825,6 +2722,177 @@ static void append_transform(struct ikev2_proposal *proposal,
 	transforms->transform = new_transforms;
 }
 
+void free_ikev2_proposals(struct ikev2_proposals **proposals)
+{
+	if ((*proposals) != NULL && (*proposals)->on_heap) {
+		int p;
+		for (p = 0; p < (*proposals)->nr; p++) {
+			enum ikev2_trans_type type;
+			for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+				pfreeany((*proposals)->proposal[p].transforms[type].transform);
+			}
+		}
+		pfree((*proposals)->proposal);
+		pfree((*proposals));
+		*proposals = NULL;
+	}
+}
+
+static void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
+{
+	if (chosen == NULL || *chosen == NULL) {
+		return;
+	}
+	pfree(*chosen);
+	*chosen = NULL;
+}
+
+stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
+					struct ikev2_proposals *proposals,
+					bool accepted,
+					struct trans_attrs *trans_attrs,
+					pb_stream *emit_pbs,
+					enum next_payload_types_ikev2 next_payload_type)
+{
+	passert(proposals != NULL);
+
+	struct ikev2_chosen_proposal *chosen = NULL;
+	stf_status ret = ikev2_process_sa_payload(sa_payload,
+						  /*ike*/ TRUE,
+						  /*initial*/ TRUE,
+						  /*accepted*/ accepted,
+						  &chosen, proposals);
+
+	if (ret != STF_OK) {
+		passert(chosen == NULL);
+		return ret;
+	}
+	passert(chosen != NULL);
+	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
+
+	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
+
+	if (emit_pbs != NULL) {
+		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
+						   next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+			ret = STF_INTERNAL_ERROR;
+		}
+	}
+
+	/*
+	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
+	 * as the former point into the latter.
+	 */
+	free_ikev2_chosen_proposal(&chosen);
+	return ret;
+}
+
+/*
+ * Define macros to save some typing, perhaps avoid some duplication
+ * errors, and ease the pain of occasionally rearanging these data
+ * structures.
+ */
+
+#define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, }
+#define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, }
+#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, }
+#define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, }
+
+static struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
+	ENCR_AES_GCM16_256, ENCR_AES_GCM16_128,
+};
+static struct ikev2_transform encr__aes_cbc_256__aes_cbc_256[] = {
+	ENCR_AES_CBC_256, ENCR_AES_CBC_128,
+};
+
+#define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, }
+#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, }
+#define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, }
+
+static struct ikev2_transform prf__sha1__sha2_256[] = {
+	PRF_SHA1, PRF_SHA2_256,
+};
+static struct ikev2_transform prf__sha1__sha2_256__aes128_xcbc[] = {
+	PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC,
+};
+
+#define AUTH_NONE { .id = IKEv2_AUTH_NONE, }
+#define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, }
+#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, }
+#define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, }
+
+static struct ikev2_transform auth__none[] = {
+	AUTH_NONE,
+};
+static struct ikev2_transform auth__sha1_96__sha2_256_128__aes_xcbc_96[] = {
+	AUTH_SHA1_96, AUTH_SHA2_256_128, AUTH_AES_XCBC_96,
+};
+
+#define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, }
+#define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, }
+#define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, }
+#define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, }
+
+static struct ikev2_transform dh__modp2048__modp4096__modp8192[] = {
+	DH_MODP2048, DH_MODP4096, DH_MODP8192,
+};
+static struct ikev2_transform dh__modp1536__modp2048[] = {
+	DH_MODP1536, DH_MODP2048,
+};
+
+#define TR(T) { .transform = T, .nr = sizeof(T) / sizeof(T[0]) }
+
+static struct ikev2_proposal default_ikev2_ike_proposal[] = {
+/*
+ * IKEv2 proposal #0:
+ * AES_GCM[256]
+ * NULL
+ * SHA1,SHA2_256
+ * MODP2048, MODP4096, MODP8192
+ *
+ * IKEv2 proposal #1:
+ * AES_GCM[128]
+ * NULL
+ * SHA1,SHA2_256
+ * MODP2048, MODP4096, MODP8192
+ */
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_gcm16_256__aes_gcm16_128),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__none),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp2048__modp4096__modp8192),
+		},
+	},
+/*
+ * IKEv2 proposal #2:
+ * AES_CBC[256]
+ * SHA1, SHA2_256, AES_XCBC
+ * MODP1536, MODP2048
+ *
+ * IKEv2 proposal #3:
+ * AES_CBC[128]
+ * SHA1, SHA2_256, AES_XCBC
+ * MODP1536, MODP2048
+ *
+ * INTEG????
+ */
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_256__aes_cbc_256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__sha2_256_128__aes_xcbc_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256__aes128_xcbc),
+			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp1536__modp2048),
+		},
+	},
+};
+
+static struct ikev2_proposals default_ikev2_ike_proposals = {
+	.proposal = default_ikev2_ike_proposal,
+	.nr = elemsof(default_ikev2_ike_proposal),
+};
+
 /*
  * Transform an alg_info_ike into an array of ikev2 proposals.
  *
@@ -2833,7 +2901,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike)
 {
 	if (alg_info_ike == NULL) {
-		return &default_ikev2_proposals;
+		return &default_ikev2_ike_proposals;
 	}
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
@@ -2922,70 +2990,4 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		proposal++;
 	}
 	return proposals;
-}
-
-void free_ikev2_proposals(struct ikev2_proposals **proposals)
-{
-	if ((*proposals) != NULL && (*proposals)->on_heap) {
-		int p;
-		for (p = 0; p < (*proposals)->nr; p++) {
-			enum ikev2_trans_type type;
-			for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-				pfreeany((*proposals)->proposal[p].transforms[type].transform);
-			}
-		}
-		pfree((*proposals)->proposal);
-		pfree((*proposals));
-		*proposals = NULL;
-	}
-}
-
-static void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
-{
-	if (chosen == NULL || *chosen == NULL) {
-		return;
-	}
-	pfree(*chosen);
-	*chosen = NULL;
-}
-
-stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct ikev2_proposals *proposals,
-					bool accepted,
-					struct trans_attrs *trans_attrs,
-					pb_stream *emit_pbs,
-					enum next_payload_types_ikev2 next_payload_type)
-{
-	passert(proposals != NULL);
-
-	struct ikev2_chosen_proposal *chosen = NULL;
-	stf_status ret = ikev2_process_sa_payload(sa_payload,
-						  /*ike*/ TRUE,
-						  /*initial*/ TRUE,
-						  /*accepted*/ accepted,
-						  &chosen, proposals);
-
-	if (ret != STF_OK) {
-		passert(chosen == NULL);
-		return ret;
-	}
-	passert(chosen != NULL);
-	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
-
-	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
-
-	if (emit_pbs != NULL) {
-		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
-						   next_payload_type)) {
-			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
-			ret = STF_INTERNAL_ERROR;
-		}
-	}
-
-	/*
-	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
-	 * as the former point into the latter.
-	 */
-	free_ikev2_chosen_proposal(&chosen);
-	return ret;
 }
