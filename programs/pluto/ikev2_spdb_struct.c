@@ -2798,6 +2798,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 #define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, }
 #define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, }
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, }
+#define ENCR_3DES { .id = IKEv2_ENCR_3DES, }
 
 static struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
 	ENCR_AES_GCM16_256, ENCR_AES_GCM16_128,
@@ -2805,10 +2806,17 @@ static struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
 static struct ikev2_transform encr__aes_cbc_256__aes_cbc_256[] = {
 	ENCR_AES_CBC_256, ENCR_AES_CBC_128,
 };
+static struct ikev2_transform encr__aes_cbc_128[] = {
+	ENCR_AES_CBC_128,
+};
+static struct ikev2_transform encr__3des[] = {
+	ENCR_3DES,
+};
 
 #define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, }
 #define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, }
 #define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, }
+#define PRF_MD5 { .id = IKEv2_PRF_HMAC_MD5, }
 
 static struct ikev2_transform prf__sha1__sha2_256[] = {
 	PRF_SHA1, PRF_SHA2_256,
@@ -2816,17 +2824,30 @@ static struct ikev2_transform prf__sha1__sha2_256[] = {
 static struct ikev2_transform prf__sha1__sha2_256__aes128_xcbc[] = {
 	PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC,
 };
+static struct ikev2_transform prf__sha1[] = {
+	PRF_SHA1,
+};
+static struct ikev2_transform prf__md5[] = {
+	PRF_MD5,
+};
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, }
 #define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, }
 #define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, }
+#define AUTH_MD5_96 { .id = IKEv2_AUTH_HMAC_MD5_96, }
 
 static struct ikev2_transform auth__none[] = {
 	AUTH_NONE,
 };
 static struct ikev2_transform auth__sha1_96__sha2_256_128__aes_xcbc_96[] = {
 	AUTH_SHA1_96, AUTH_SHA2_256_128, AUTH_AES_XCBC_96,
+};
+static struct ikev2_transform auth__sha1_96[] = {
+	AUTH_SHA1_96,
+};
+static struct ikev2_transform auth__md5_96[] = {
+	AUTH_MD5_96,
 };
 
 #define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, }
@@ -2840,6 +2861,21 @@ static struct ikev2_transform dh__modp2048__modp4096__modp8192[] = {
 static struct ikev2_transform dh__modp1536__modp2048[] = {
 	DH_MODP1536, DH_MODP2048,
 };
+
+#define ESN_NO { .id = IKEv2_ESN_DISABLED, }
+#define ESN_YES { .id = IKEv2_ESN_ENABLED, }
+
+static struct ikev2_transform esn__no[] = {
+	ESN_NO,
+};
+#if 0
+static struct ikev2_transform esn__yes[] = {
+	ESN_YES,
+};
+static struct ikev2_transform esn__yes_no[] = {
+	ESN_YES, ESN_NO,
+};
+#endif
 
 #define TR(T) { .transform = T, .nr = sizeof(T) / sizeof(T[0]) }
 
@@ -2990,4 +3026,176 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		proposal++;
 	}
 	return proposals;
+}
+
+static struct ikev2_proposal default_ikev2_esp_proposal[] = {
+#if 0 /* PROTO_IPSEC_ESP */
+	{ AD_TR(ESP_AES, espasha1_attr) }, static struct db_attr espasha1_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
+		{ .type.ipsec = KEY_LENGTH, 128 },
+	};
+	{ AD_TR(ESP_AES, espamd5_attr) }, static struct db_attr espamd5_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
+		{ .type.ipsec = KEY_LENGTH, 128 },
+	};
+	{ AD_TR(ESP_3DES, espsha1_attr) }, static struct db_attr espsha1_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
+	};
+	{ AD_TR(ESP_3DES, espmd5_attr) }, static struct db_attr espmd5_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
+	};
+#endif
+#if 0 /* XXX: compact proposal */
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128__3des),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__md5_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__md5),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+#else
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__3des),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__3des),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+#endif
+};
+static struct ikev2_proposals default_ikev2_esp_proposals = {
+	.proposal = default_ikev2_esp_proposal,
+	.nr = elemsof(default_ikev2_esp_proposal),
+};
+
+static struct ikev2_proposal default_ikev2_ah_proposal[] = {
+#if 0 /* PROTO_IPSEC_AH */
+	{ AD_TR(AH_SHA, ah_HMAC_SHA1_attr) }, static struct db_attr ah_HMAC_SHA1_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
+	};
+	{ AD_TR(AH_MD5, ah_HMAC_MD5_attr) }, static struct db_attr ah_HMAC_MD5_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
+	};
+#endif
+#if 0 /* XXX: compact proposal */
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__md5_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__md5),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+#else
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+	{
+		.transforms = {
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
+			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
+		},
+	},
+#endif
+#if 0 /* PROTO_IPSEC_ESP+ESPNULL */
+	{ AD_TR(ESP_NULL, espsha1_attr) }, static struct db_attr espsha1_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
+	};
+	{ AD_TR(ESP_NULL, espmd5_attr) }, static struct db_attr espmd5_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
+	};
+#endif
+};
+static struct ikev2_proposals default_ikev2_ah_proposals = {
+	.proposal = default_ikev2_ah_proposal,
+	.nr = elemsof(default_ikev2_ah_proposal),
+};
+
+#if 0
+static struct ikev2_proposal default_ikev2_esp_or_ah_proposal[] = {
+#if 0 /* PROTO_IPSEC_AH */
+	{ AD_TR(AH_SHA, ah_HMAC_SHA1_attr) }, static struct db_attr ah_HMAC_SHA1_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
+	};
+	{ AD_TR(AH_MD5, ah_HMAC_MD5_attr) }, static struct db_attr ah_HMAC_MD5_attr[] = {
+		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
+	};
+#endif
+#if 0 /* PROTO_IPSEC_ESP */
+	{ .transid = ESP_3DES, .attrs = NULL },
+#endif
+};
+static struct ikev2_proposals default_ikev2_esp_or_ah_proposals = {
+	.proposal = default_ikev2_esp_or_ah_proposal,
+	.nr = elemsof(default_ikev2_esp_or_ah_proposal),
+};
+#endif
+
+struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
+{
+#if 0
+	/* ??? this code won't support AH + ESP */
+	if (c->policy & POLICY_ENCRYPT)
+		proto = PROTO_v2_ESP;
+	else if (c->policy & POLICY_AUTHENTICATE)
+		proto = PROTO_v2_AH;
+	else
+		return STF_FATAL;
+#endif
+
+	DBG_log("XXX: esn ignored, always NO");
+	if (alg_info_esp == NULL) {
+		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
+		switch (esp_eh) {
+		case POLICY_ENCRYPT:
+			return &default_ikev2_esp_proposals;
+		case POLICY_AUTHENTICATE:
+			return &default_ikev2_ah_proposals;
+		case POLICY_ENCRYPT|POLICY_AUTHENTICATE:
+			/*
+			 * Rumor has it that whack doesn't allow the
+			 * combination of ENCRYPT and AUTHENTICATE
+			 * when IKEv2.  Assert this assumption.
+			 */
+#if 0
+			return &default_ikev2_esp_or_ah_proposals;
+#else
+			bad_case(policy);
+#endif
+		default:
+			bad_case(policy);
+		}
+	}
+	bad_case(policy);
+	return NULL;
 }
