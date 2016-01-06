@@ -484,7 +484,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
 			bool ret = ikev2_emit_sa_proposals(&md->rbody, proposals,
-							   PROTO_v2_ISAKMP,
 							   ISAKMP_NEXT_v2KE);
 			free_ikev2_proposals(&proposals);
 			if (!ret) {
@@ -2450,8 +2449,17 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
 
+#if 1 // #ifdef OLD_PROPOSALS
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
 				ISAKMP_NEXT_v2TSi, cc, policy);
+#else
+		struct ikev2_proposals *proposals
+			= ikev2_proposals_from_alg_info_esp(cc->alg_info_esp,
+							    cc->policy);
+		ikev2_emit_sa_proposals(&e_pbs_cipher, proposals,
+					ISAKMP_NEXT_v2TSi);
+		free_ikev2_proposals(&proposals);
+#endif
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);

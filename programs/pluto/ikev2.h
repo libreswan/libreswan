@@ -97,7 +97,6 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 
 bool ikev2_emit_sa_proposals(pb_stream *outs,
 			     struct ikev2_proposals *proposals,
-			     enum ikev2_sec_proto_id protoid,
 			     enum next_payload_types_ikev2 next_payload_type);
 
 extern void send_v2_notification_from_state(struct state *st,
