@@ -902,7 +902,7 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_gr);
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
-
+	freeanychunk(st->st_dcookie);
 
 #    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
 	free_any_nss_symkey(st->st_shared_nss);
