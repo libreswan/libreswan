@@ -1,0 +1,7 @@
+Same as ikev2-dcookie-01 but now west uses an impair to send a mangled dcookie
+and east is NOT in busy mode so it does not expect to receive a DCOOKIE.
+
+Contrary to the RFC, we _do_ process and validate the dcookie.
+
+The connection should fail. Note this testcase cannot be sped up using
+impair-rentransmits because cookies rely on the retransmit.
