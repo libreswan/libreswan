@@ -6,6 +6,8 @@ v3.17 (unrelease)
 * IKEv2: Send VID_OPPORTUNISTIC when doing AUTH-NULL Opportunistc IPsec [Paul]
 * IKEv2: New keyword drop-oppo-null=no|yes (default no) [Paul]
 * IKEv2: ikev2_out_generic{_raw}() functions [Paul]
+* IKEv2: Harden dcookies and nonces [Paul]
+* IKEv2: Fix memory leak of dcookies [Paul]
 * IKEv1: Minor logging changes for DPD/NAT-T/AGGR [Paul]
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
 * pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
