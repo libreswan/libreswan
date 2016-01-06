@@ -196,6 +196,7 @@ const char *const debug_bit_names[] = {
 	"impair-force-fips",
 	"impair-send-key-size-check",
 	"impair-send-zero-gx",
+	"impair-send-bogus-dcookie",
 	NULL	/* termination for bitnamesof() */
 };
 

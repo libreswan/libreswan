@@ -270,10 +270,29 @@
 
 #define LOCALSECRETSIZE BYTES_FOR_BITS(256)
 
-/* limits on nonce sizes. See RFC2409 "The internet key exchange (IKE)" 5 */
-#define MINIMUM_NONCE_SIZE 8 /* bytes */
-#define DEFAULT_NONCE_SIZE 16 /* bytes */
-#define MAXIMUM_NONCE_SIZE 256 /* bytes */
+
+/* Limits on nonce sizes */
+
+/*
+ * IKEv1 RFC-2409:
+ * The length of nonce payload MUST be between 8 and 256 bytes inclusive.
+ */
+#define IKEv1_MINIMUM_NONCE_SIZE 8 /* bytes */
+#define IKEv1_MAXIMUM_NONCE_SIZE 256 /* bytes */
+
+/*
+ * IKEv2 RFC-7296:
+ * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128 bits
+ * in size, and MUST be at least half the key size of the negotiated
+ * pseudorandom function (PRF). However, the initiator chooses the nonce
+ * before the outcome of the negotiation is known.  Because of that, the
+ * nonce has to be long enough for all the PRFs being proposed.
+ */
+#define IKEv2_MINIMUM_NONCE_SIZE 16 /* bytes */
+#define IKEv2_MAXIMUM_NONCE_SIZE 256 /* bytes */
+
+/* Default is based on minimum IKEv2 requirement */
+#define DEFAULT_NONCE_SIZE 32 /* bytes */
 
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16

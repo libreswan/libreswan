@@ -1834,9 +1834,22 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
 	len = pbs_left(nonce_pbs);
 
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+	/*
+	 * RFC 7296 Section 2.10:
+	 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128
+	 * bits in size, and MUST be at least half the key size of the
+	 * negotiated pseudorandom function (PRF).  However, the initiator
+	 * chooses the nonce before the outcome of the negotiation is known.
+	 * Because of that, the nonce has to be long enough for all the PRFs
+	 * being proposed.
+	 *
+	 * We will check for a minimum/maximum here. Once the PRF is selected,
+	 * we verify the nonce is big enough.
+	 */
+
+	if (len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length %zu not between %d and %d",
+			name, len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");

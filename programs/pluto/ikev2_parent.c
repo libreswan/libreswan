@@ -99,7 +99,7 @@ static crypto_req_cont_func ikev2_parent_outI1_continue;	/* type assertion */
 static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 					  struct pluto_crypto_req *r);
 
-static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
+static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 			      ip_address *addr, chunk_t spiI);
 
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
@@ -432,6 +432,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	if (c->fake_strongswan)
 		vids++;
 
+	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE)) {
+		/* add or mangle a dcookie so what we will send is bogus */
+		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
+		freeanychunk(st->st_dcookie);
+		st->st_dcookie.ptr = alloc_bytes(1, "mangled dcookie");
+		st->st_dcookie.len = 1;
+		messupn(st->st_dcookie.ptr, 1);
+	}
 
 	/* HDR out */
 	{
@@ -441,7 +449,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		/* Impair function will raise major/minor by 1 for testing */
 		hdr.isa_version = build_ikev2_version();
 
-		hdr.isa_np = st->st_dcookie.ptr != NULL?
+		hdr.isa_np = st->st_dcookie.ptr != NULL ?
 			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA;
 		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 		/* add original initiator flag - version flag could be set */
@@ -648,14 +656,33 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 {
+	bool got_dcookie = FALSE;
+	bool require_dcookie = require_ddos_cookies();
+	struct payload_digest *ntfy;
+
 	if (drop_new_exchanges()) {
 		/* only log for debug to prevent disk filling up */
 		DBG(DBG_CONTROL,DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
 		return STF_IGNORE;
 	}
 
-	if (require_ddos_cookies()) {
-		u_char dcookie[SHA1_DIGEST_SIZE];
+	/* Did we receive a DCOOKIE? */
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
+			DBG(DBG_CONTROLMORE, DBG_log(
+				"Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
+			got_dcookie = TRUE;
+			break;
+		}
+	}
+
+	/*
+	 * The RFC states we should ignore unexpected cookies. We purposefully
+	 * violate the RFC and validate the cookie anyway. This prevents an
+	 * attacker from being able to inject a lot of data used later to HMAC
+	 */
+	if (got_dcookie || require_dcookie) {
+		u_char dcookie[SHA2_256_DIGEST_SIZE];
 		chunk_t dc, ni, spiI;
 
 		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
@@ -668,7 +695,14 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		 * size of the negotiated pseudorandom function (PRF).
 		 * (We can check for minimum 128bit length)
 		 */
-		if (ni.len < BYTES_FOR_BITS(128)) {
+
+		/*
+		 * XXX: Note that we check the nonce size in accept_v2_nonce() so this
+		 * check is extra. I guess since we need to extract the nonce to calculate
+		 * the cookie, it is cheap to check here and reject.
+		 */
+
+		if (ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < ni.len) {
 			/*
 			 * If this were a DDOS, we cannot afford to log.
 			 * We do log if we are debugging.
@@ -679,11 +713,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		ikev2_get_dcookie(dcookie, ni, &md->sender, spiI);
 		dc.ptr = dcookie;
-		dc.len = SHA1_DIGEST_SIZE;
+		dc.len = SHA2_256_DIGEST_SIZE;
 
-		/* check a v2N payload with type COOKIE */
-		if (md->chain[ISAKMP_NEXT_v2N] != NULL &&
-			md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
+		if (ntfy != NULL) {
 			const pb_stream *dc_pbs;
 			chunk_t idc;
 
@@ -703,19 +735,19 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			DBG(DBG_CONTROLMORE,
 			    DBG_dump_chunk("received dcookie", idc);
 			    DBG_dump("dcookie computed", dcookie,
-				     SHA1_DIGEST_SIZE));
+				     SHA2_256_DIGEST_SIZE));
 
-			if (idc.len != SHA1_DIGEST_SIZE ||
-				!memeq(idc.ptr, dcookie, SHA1_DIGEST_SIZE)) {
+			if (idc.len != SHA2_256_DIGEST_SIZE ||
+				!memeq(idc.ptr, dcookie, SHA2_256_DIGEST_SIZE)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
-					"mismatch in DOS v2N_COOKIE: dropping message (possible DoS attack)"
+					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
 				));
 				return STF_IGNORE;
 			}
 			DBG(DBG_CONTROLMORE, DBG_log(
 				"dcookie received matched computed one"));
 		} else {
-			/* we are under DOS attack I1 contains no DOS COOKIE */
+			/* we are under DOS attack and I1 contains no COOKIE */
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("busy mode on. received I1 without a valid dcookie");
 			    DBG_log("send a dcookie and forget this state"));
@@ -724,7 +756,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	} else {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("anti-DDoS cookies not required"));
+		    DBG_log("anti-DDoS cookies not required (and no cookie received)"));
 	}
 
 	/* authentication policy alternatives in order of decreasing preference */
@@ -1203,8 +1235,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
  *
  */
 /* STATE_PARENT_I1: R1B --> I1B
- *                     <--  HDR, N
- * HDR, N, SAi1, KEi, Ni -->
+ *                     <--  HDR, N(COOKIE)
+ * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
 stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 {
@@ -3649,45 +3681,38 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 /*
  * Cookie = <VersionIDofSecret> | Hash(Ni | IPi | SPIi | <secret>)
- * where <secret> is a randomly generated secret known only to the
- * in LSW implementation <VersionIDofSecret> is not used.
+ * where <secret> is a randomly generated secret known only to us
+ *
+ * Our implementation does not use <VersionIDofSecret> which means
+ * once a day and while under DOS attack, we could fail a few cookies
+ * until the peer restarts from scratch.
  */
-static bool ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
+static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
 			      ip_address *addr, chunk_t spiI)
 {
 	size_t addr_length;
-	SHA1_CTX ctx_sha1;
+	sha256_context ctx_sha256;
 	unsigned char addr_buff[
 		sizeof(union { struct in_addr A;
 			       struct in6_addr B;
 		       })];
 
 	addr_length = addrbytesof(addr, addr_buff, sizeof(addr_buff));
-	SHA1Init(&ctx_sha1);
-	SHA1Update(&ctx_sha1, ni.ptr, ni.len);
-	SHA1Update(&ctx_sha1, addr_buff, addr_length);
-	SHA1Update(&ctx_sha1, spiI.ptr, spiI.len);
-	SHA1Update(&ctx_sha1, ikev2_secret_of_the_day,
-		   SHA1_DIGEST_SIZE);
-	SHA1Final(dcookie, &ctx_sha1);
+	sha256_init(&ctx_sha256);
+	sha256_write(&ctx_sha256, ni.ptr, ni.len);
+	sha256_write(&ctx_sha256, addr_buff, addr_length);
+	sha256_write(&ctx_sha256, spiI.ptr, spiI.len);
+	sha256_write(&ctx_sha256, ikev2_secret_of_the_day,
+		   SHA2_256_DIGEST_SIZE);
+	sha256_final(dcookie, &ctx_sha256);
 	DBG(DBG_PRIVATE,
 	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
 		    ikev2_secret_of_the_day,
-		    SHA1_DIGEST_SIZE));
+		    SHA2_256_DIGEST_SIZE));
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("computed dcookie: HASH(Ni | IPi | SPIi | <secret>)",
-		     dcookie, SHA1_DIGEST_SIZE));
-#if 0
-	ikev2_secrets_recycle++;
-	if (ikev2_secrets_recycle >= 32768) {
-		/* handed out too many cookies, cycle secrets */
-		ikev2_secrets_recycle = 0;
-		/* can we call init_secrets() without adding an EVENT? */
-		init_secrets();
-	}
-#endif
-	return TRUE;
+		     dcookie, SHA2_256_DIGEST_SIZE));
 }
 
 /*

@@ -505,9 +505,9 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
 	size_t len = pbs_left(nonce_pbs);
 
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
 		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		       name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");

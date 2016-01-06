@@ -574,6 +574,7 @@ static const struct option long_opts[] = {
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
+	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -1574,6 +1575,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
 	if (DBGP(IMPAIR_SEND_ZERO_GX))
 		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
+	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE))
+		libreswan_log("Warning: IMPAIR_SEND_BOGUS_DCOOKIE enabled");
 
 /* Initialize all of the various features */
 
