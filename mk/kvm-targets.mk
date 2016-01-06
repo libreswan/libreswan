@@ -42,6 +42,10 @@ KVM_KEYS = testing/x509/keys/up-to-date
 # choice is arbitrary).
 KVM_DOMAIN = $(firstword $(filter $(KVM_DOMAINS),$(lastword $(subst -, ,$@))) $(KVM_BUILD_DOMAIN))
 
+# Hack to map common typos on to real clean-kvm target
+kvm-%-clean: clean-kvm-% ; @:
+kvm-clean-%: clean-kvm-% ; @:
+
 # Run "make $(1)" on $(2).
 define kvm-make
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
@@ -55,7 +59,7 @@ endef
 # Standard make targets; just mirror the local target names.  Most
 # things get run on "east", but module gets run on west!
 
-KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean kvm-module
+KVM_BUILD_TARGETS = kvm-all kvm-base clean-kvm kvm-manpages clean-kvm-base clean-kvm-manpages kvm-distclean kvm-module
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
 	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
@@ -118,8 +122,8 @@ kvm-test-all: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good|wip" $(KVM_TESTS)
 
 # clean up
-.PHONY: kvm-clean-check clean-kvm-check kvm-clean-test clean-kvm-test
-kvm-clean-check clean-kvm-check kvm-clean-test clean-kvm-test:
+.PHONY: clean-kvm-check clean-kvm-test
+clean-kvm-check clean-kvm-test:
 	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
 
@@ -151,18 +155,18 @@ kvm-checksum:
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
 KVM_KEYS_EXPIRATION_DAY = 14
 KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-.PHONY: kvm-keys clean-kvm-keys kvm-clean-keys
+.PHONY: kvm-keys clean-kvm-keys
 
 kvm-keys: $(KVM_KEYS)
 	$(MAKE) --no-print-directory kvm-keys-up-to-date
 
 # For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date
+.PHONY: kvm-keys-up-to-date clean-kvm-keys
 kvm-keys-up-to-date:
 	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
 		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
 		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
-		echo "run 'make kvm-clean-keys kvm-keys' to force an update" ; \
+		echo "run 'make clean-kvm-keys kvm-keys' to force an update" ; \
 		exit 1 ; \
 	fi
 
@@ -172,8 +176,9 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 	$(KVM_KEYS_SCRIPT) east testing/x509
 	touch $(KVM_KEYS)
 
-kvm-clean-keys clean-kvm-keys:
+clean-kvm-keys:
 	rm -rf testing/x509/*/
+
 
 #
 # Build KVM domains from scratch
@@ -189,22 +194,25 @@ $(KVM_ISO):
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
-# Build the base disk image.  Don't use the .img as the marker as
-# re-booting the domain touches it making a potentially circular
-# dependency.
+# Build the base disk image.
+#
+# Use a pattern rule so that GNU make knows that two things are built.
+#
+# Create and use the .ks file as the hard-dependency indicating that
+# the target finished.  The .img file, a soft-dependency, is left in
+# an incomplete state if the rule is aborted.
 KVM_BASE_DOMAIN_IMAGE = $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
-$(KVM_POOL)/$(KVM_BASE_DOMAIN).xml: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
-	-@$(MAKE) --no-print-directory kvm-destroy-$(KVM_BASE_DOMAIN)
-	-@$(MAKE) --no-print-directory kvm-undefine-$(KVM_BASE_DOMAIN)
-	rm -f $(KVM_BASE_DOMAIN_IMAGE)
-	fallocate -l 8G '$(KVM_BASE_DOMAIN_IMAGE)'
+$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
+	@$(MAKE) clean-kvm-domain-$(KVM_BASE_DOMAIN)
+	rm -f '$(KVM_POOL)/$*.img'
+	fallocate -l 8G '$(KVM_POOL)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
 		--network=network:swandefault,model=virtio \
 		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk path='$(KVM_BASE_DOMAIN_IMAGE)' \
+		--disk path='$(KVM_POOL)/$*.img' \
 		--ram 1024 \
 		--vcpus=1 \
 		--check-cpu \
@@ -213,13 +221,18 @@ $(KVM_POOL)/$(KVM_BASE_DOMAIN).xml: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
-	touch $@
-# XXX: fsck the disk and shutdown base before cloning it?
+	cp testing/libvirt/$(KVM_OS)base.ks $(KVM_POOL)/$*.ks
+
+# Create the base domain's .qcow2 disk image (ready for cloning)
 #
-# XXX: If someone boots $(KVM_BASE_DOMAIN) then the .img file will be
-# modified causing everything to rebuild.
+# The base domain's .img file is a only soft dependency since its
+# modification date isn't a reliable indicator that it is up-to-date,
+# instead the .ks file is used for that.
+#
+# XXX: should the base domain be rebooted and then fsck'd before
+# cloning it?
 KVM_BASE_DOMAIN_DISK = $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
-$(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).xml
+$(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks | $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
 	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'touch /forcefsck'
 	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'true'
 	rm -f $(KVM_BASE_DOMAIN_DISK)
@@ -228,13 +241,22 @@ $(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).xml
 .PHONY: kvm-base-domain
 kvm-base-domain: $(KVM_BASE_DOMAIN_DISK)
 
-# Since running a domain will likely modify its disk (changing MTIME),
-# the domain's disk isn't a good indicator that a domain needs
-# updating.  Instead use a scratch file to track the domain's creation
-# time.
-$(KVM_POOL)/%.xml: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
-	-@$(MAKE) --no-print-directory kvm-destroy-$*
-	-@$(MAKE) --no-print-directory kvm-undefine-$*
+# Create the test domains
+#
+# Use a pattern rule so that GNU make knows that both the .xml and the
+# .qcow2 files are created.
+#
+# Since running a domain will likely modify its .qcow2 disk image
+# (changing MTIME), the domain's disk isn't a good indicator that a
+# domain needs updating.  Instead use the .xml file to track the
+# domain's creation time.
+.PHONY: kvm-domains
+kvm-domains: $(patsubst %,kvm-domain-%,$(KVM_TEST_DOMAINS))
+kvm-domain-%: $(KVM_POOL)/%.xml | $(KVM_POOL)/%.qcow2 ; @:
+.PRECIOUS: $(patsubst %,$(KVM_POOL)/%.qcow2,$(KVM_TEST_DOMAINS))
+.PRECIOUS: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_TEST_DOMAINS))
+$(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
+	@$(MAKE) --no-print-directory clean-kvm-domain-$*
 	rm -f '$(KVM_POOL)/$*.qcow2'
 	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASE_DOMAIN_DISK)' '$(KVM_POOL)/$*.qcow2'
 	sed \
@@ -243,36 +265,40 @@ $(KVM_POOL)/%.xml: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
 		-e "s:@@POOLSPACE@@:$(KVM_POOL):" \
 		-e "s:@@USER@@:$$(id -u):" \
 		-e "s:@@GROUP@@:$$(id -g qemu):" \
-		testing/libvirt/vm/$* \
-		> '$@.tmp'
-	sudo virsh define '$@.tmp'
-	mv '$@.tmp' '$@'
+		'testing/libvirt/vm/$*' \
+		> '$(KVM_POOL)/$*.tmp'
+	sudo virsh define '$(KVM_POOL)/$*.tmp'
+	mv '$(KVM_POOL)/$*.tmp' '$(KVM_POOL)/$*.xml'
 
-# XXX: Should destroy and undefine be merged?
-KVM_DESTROY_TARGETS = $(patsubst %,kvm-destroy-%,$(KVM_DOMAINS))
-.PHONY: kvm-destroy-domains $(KVM_DESTROY_TARGETS)
-$(KVM_DESTROY_TARGETS):
-	: KVM_DOMAIN: '$(KVM_DOMAIN)'
-	sudo virsh destroy $(KVM_DOMAIN)
-kvm-destroy-domains: $(KVM_DESTROY_TARGETS)
+# XXX: Be smarter with this target and avoid the errors when the
+# commands fail?
+.PHONY: clean-kvm-domains
+clean-kvm-domains: $(patsubst %,clean-kvm-domain-%,$(KVM_DOMAINS))
+clean-kvm-domain-%:
+	-sudo virsh destroy '$*'
+	-sudo virsh undefine '$*' --remove-all-storage
+	rm -f $(KVM_POOL)/$*.xml   $(KVM_POOL)/$*.ks
+	rm -f $(KVM_POOL)/$*.qcow2 $(KVM_POOL)/$*.img
 
-KVM_UNDEFINE_TARGETS = $(patsubst %,kvm-undefine-%,$(KVM_DOMAINS))
-.PHONY: kvm-undefine $(KVM_UNDEFINE_TARGETS)
-# XXX: --remove-all-storage doesn't work when the disk was created
-# outside of the domain.
-$(KVM_UNDEFINE_TARGETS):
-	: KVM_DOMAIN: '$(KVM_DOMAIN)'
-	sudo virsh undefine $(KVM_DOMAIN) --remove-all-storage
-kvm-undefine-domains: $(KVM_UNDEFINE_TARGETS)
 
-.PHONY: 
-kvm-clean-domains:
-	$(MAKE) $(KVM_DESTROY_TARGETS)
-	$(MAKE) $(KVM_UNDEFINE_TARGETS)
+#
+# Build networks from scratch
+#
+# XXX: This deletes each network before creating it; should it?
 
-KVM_DOMAIN_TARGETS = $(patsubst %,kvm-domain-%,$(KVM_DOMAINS))
-.PHONY: $(KVM_TEST_DOMAIN_TARGETS)
-$(KVM_DOMAIN_TARGETS):
-	@$(MAKE) --no-print-directory $(KVM_POOL)/$(KVM_DOMAIN).xml
-.PHONY: kvm-domains
-kvm-domains: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_DOMAINS))
+KVM_NETDIR = testing/libvirt/net
+.PHONY: kvm-networks
+kvm-networks: $(patsubst $(KVM_NETDIR)/%,kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
+kvm-network-%: clean-kvm-network-%
+	sudo virsh net-define $(KVM_NETDIR)/$*
+	sudo virsh net-autostart $*
+	sudo virsh net-start $*
+.PHONY: clean-kvm-networks
+clean-kvm-networks: $(patsubst $(KVM_NETDIR)/%,clean-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
+clean-kvm-network-%:
+	if sudo virsh net-info $* 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy $* ; \
+	fi
+	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine $* ; \
+	fi
