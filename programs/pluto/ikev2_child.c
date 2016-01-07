@@ -1035,29 +1035,18 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
 		 ? ISAKMP_NEXT_v2Nr
 		 : ISAKMP_NEXT_v2TSi);
-	struct ikev2_spi spi = {
-		.size = sizeof(cst->st_esp.our_spi),
-	};
-	get_rnd_bytes(spi.bytes, spi.size);
+
 	/* ??? this code won't support AH + ESP */
-	struct ipsec_proto_info *proto_info;
-	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	case POLICY_ENCRYPT:
-		proto_info = &cst->st_esp;
-		break;
-	case POLICY_AUTHENTICATE:
-		proto_info = &cst->st_ah;
-		break;
-	default:
-		bad_case(c->policy);
-	}
-	memcpy(&proto_info->our_spi, spi.bytes, spi.size);
-	ret = ikev2_process_espah_sa_payload(&sa_pd->pbs,
-					     c->alg_info_esp, c->policy,
-					     /*accepted*/FALSE,
-					     proto_info,
-					     &spi, outpbs,
-					     next_payload_type);
+	struct ipsec_proto_info *proto_info
+		= ikev2_esp_or_ah_proto_info(cst, c->policy);
+
+	ret = ikev2_process_esp_or_ah_sa_payload(&sa_pd->pbs,
+						 c->alg_info_esp,
+						 c->policy,
+						 /*accepted*/FALSE,
+						 proto_info, &c->spd,
+						 outpbs,
+						 next_payload_type);
 	if (ret != STF_OK)
 		return ret;
 #endif

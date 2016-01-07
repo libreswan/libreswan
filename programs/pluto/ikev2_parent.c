@@ -487,10 +487,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			 * Since this is an initial IKE exchange, the
 			 * SPI is emitted as is part of the packet
 			 * header and not the proposal.  Hence the
-			 * NULL SPI.
+			 * NULL SPIs.
 			 */
 			bool ret = ikev2_emit_sa_proposals(&md->rbody, proposals,
-							   (struct ikev2_spi *)NULL,
+							   (chunk_t*)NULL,
 							   ISAKMP_NEXT_v2KE);
 			free_ikev2_proposals(&proposals);
 			if (!ret) {
@@ -989,7 +989,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 							      st->st_connection->alg_info_ike,
 							      /*accepted*/FALSE,
 							      &st->st_oakley,
-							      (struct ikev2_spi *)NULL,
+							      (chunk_t*)NULL,
+							      (chunk_t*)NULL,
 							      &md->rbody, next_payload_type);
 #endif
 		if (ret != STF_OK) {
@@ -1344,7 +1345,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 							      st->st_connection->alg_info_ike,
 							      /*accepted*/TRUE,
 							      &st->st_oakley,
-							      (struct ikev2_spi*)NULL,
+							      (chunk_t*)NULL,
+							      (chunk_t*)NULL,
 							      NULL, 0);
 #endif
 		if (ret != STF_OK) {
@@ -2456,28 +2458,20 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
 				ISAKMP_NEXT_v2TSi, cc, policy);
 #else
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(cst, cc->policy);
+		proto_info->our_spi = ikev2_esp_or_ah_spi(&cc->spd, cc->policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+			 sizeof(proto_info->our_spi));
+		
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_esp(cc->alg_info_esp,
 							    cc->policy);
-		/* Always the same size.  */
-		struct ikev2_spi spi = {
-			.size = sizeof(cst->st_esp.our_spi),
-		};
-		get_rnd_bytes(spi.bytes, spi.size);
 		ikev2_emit_sa_proposals(&e_pbs_cipher, proposals,
-					&spi, ISAKMP_NEXT_v2TSi);
+					&local_spi, ISAKMP_NEXT_v2TSi);
 		free_ikev2_proposals(&proposals);
-		/* ??? this code won't support AH + ESP */
-		switch (cc->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-		case POLICY_ENCRYPT:
-			memcpy(&cst->st_esp.our_spi, spi.bytes, spi.size);
-			break;
-		case POLICY_AUTHENTICATE:
-			memcpy(&cst->st_ah.our_spi, spi.bytes, spi.size);
-			break;
-		default:
-			bad_case(cc->policy);
-		}
 #endif
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);

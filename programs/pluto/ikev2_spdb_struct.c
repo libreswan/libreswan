@@ -1985,6 +1985,14 @@ struct ikev2_transforms {
 	int nr;
 };
 
+struct ikev2_spi {
+	uint8_t bytes[8];
+	/*
+	 * Number of meaningful bytes in above.
+	 */
+	size_t size;
+};
+
 struct ikev2_proposal {
 	/*
 	 * The proposal number for this proposal, or zero implying
@@ -2574,7 +2582,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
  * passing the correct value/size in for the SPI.
  */
 static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
-			  unsigned propnum, struct ikev2_spi *spi,
+			  unsigned propnum, chunk_t *local_spi,
 			  enum ikev2_last_proposal last_proposal)
 {
 	int numtrans = 0;
@@ -2586,7 +2594,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 		.isap_lp = last_proposal,
 		.isap_propnum = propnum,
 		.isap_protoid = proposal->protoid,
-		.isap_spisize = (spi != NULL ? spi->size : 0),
+		.isap_spisize = (local_spi != NULL ? local_spi->len : 0),
 		.isap_numtrans = numtrans,
 	};
 
@@ -2595,9 +2603,10 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 		return FALSE;
 	}
 
-	if (spi != NULL) {
-		passert(spi != NULL);
-		if (!out_raw(spi->bytes, spi->size, &proposal_pbs, "our spi"))
+	if (local_spi != NULL) {
+		pexpect(local_spi->len > 0);
+		pexpect(local_spi->len == proto_spi_size(proposal->protoid));
+		if (!out_chunk(*local_spi, &proposal_pbs, "our spi"))
 			return FALSE;
 	}
 
@@ -2618,7 +2627,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
 			     struct ikev2_proposals *proposals,
-			     struct ikev2_spi *spi,
+			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposals ..."));
@@ -2640,7 +2649,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	for (lp = 0; lp < proposals->nr; lp++) {
 		struct ikev2_proposal *proposal = &proposals->proposal[lp];
 		int protonum = lp + 1;
-		if (!emit_proposal(&sa_pbs, proposal, protonum, spi,
+		if (!emit_proposal(&sa_pbs, proposal, protonum, local_spi,
 				   (lp < proposals->nr - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST))) {
@@ -2652,9 +2661,8 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	return TRUE;
 }
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs,
-			    struct ikev2_proposal *proposal,
-			    struct ikev2_spi *local_spi,
+bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
+			    chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG_log("XXX: emit-proposal-proposal should deal with SA header");
@@ -2761,7 +2769,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					struct alg_info_ike *alg_info_ike,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
-					struct ikev2_spi *spi,
+					chunk_t *local_spi, chunk_t *remote_spi,
 					pb_stream *emit_pbs,
 					enum next_payload_types_ikev2 next_payload_type)
 {
@@ -2773,7 +2781,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	struct ikev2_proposal *chosen = NULL;
 	stf_status ret = ikev2_process_sa_payload(sa_payload,
 						  /*ike*/ TRUE,
-						  /*initial*/ spi == NULL,
+						  /*initial*/ local_spi == NULL,
 						  /*accepted*/ accepted,
 						  &chosen, proposals);
 
@@ -2786,8 +2794,13 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", chosen));
 
 	*trans_attrs = ikev2_internalize_ike_proposal(chosen);
+	if (remote_spi) {
+		passert(remote_spi->len == chosen->remote_spi.size);
+		memcpy(remote_spi->ptr, chosen->remote_spi.bytes,
+		       remote_spi->len);
+	}
 	if (emit_pbs != NULL) {
-		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, spi,
+		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, local_spi,
 					    next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
@@ -2812,13 +2825,13 @@ static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_pro
 	}
 }
 
-stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
-					  struct alg_info_esp *alg_info_esp, lset_t policy,
-					  bool accepted,
-					  struct ipsec_proto_info *proto_info,
-					  struct ikev2_spi *spi,
-					  pb_stream *emit_pbs,
-					  enum next_payload_types_ikev2 next_payload_type)
+stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
+					      struct alg_info_esp *alg_info_esp, lset_t policy,
+					      bool accepted,
+					      struct ipsec_proto_info *proto_info,
+					      const struct spd_route *spd_route,
+					      pb_stream *emit_pbs,
+					      enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG_log("XXX: should cache proposals in st");
 	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(alg_info_esp, policy);
@@ -2827,8 +2840,8 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 
 	struct ikev2_proposal *chosen = NULL;
 	stf_status ret = ikev2_process_sa_payload(sa_payload,
-						  /*ike*/ TRUE,
-						  /*initial*/ spi == NULL,
+						  /*ike*/ FALSE,
+						  /*initial*/ FALSE,
 						  /*accepted*/ accepted,
 						  &chosen, proposals);
 
@@ -2842,7 +2855,13 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 
 	*proto_info = ikev2_internalize_espah_proposal(chosen);
 	if (emit_pbs != NULL) {
-		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, spi,
+		passert(proto_info != NULL);
+		passert(spd_route != NULL);
+		proto_info->our_spi = ikev2_esp_or_ah_spi(spd_route, policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+			 sizeof(proto_info->our_spi));
+		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, &local_spi,
 					    next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
@@ -3286,4 +3305,37 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 	}
 	bad_case(policy);
 	return NULL;
+}
+
+
+struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy)
+{
+	/* ??? this code won't support AH + ESP */
+	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	case POLICY_ENCRYPT:
+		return &st->st_esp;
+	case POLICY_AUTHENTICATE:
+		return &st->st_ah;
+	default:
+		bad_case(policy);
+		return NULL;
+	}
+}
+
+ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy)
+{
+	int ipprotoid;
+	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	case POLICY_ENCRYPT:
+		ipprotoid = IPPROTO_ESP;
+		break;
+	case POLICY_AUTHENTICATE:
+		ipprotoid = IPPROTO_AH;
+		break;
+	default:
+		bad_case(policy);
+	}
+	return get_ipsec_spi(0 /* avoid this # */,
+			     ipprotoid, spd_route,
+			     TRUE /* tunnel */);
 }

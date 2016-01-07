@@ -87,14 +87,6 @@ void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposa
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
-struct ikev2_spi {
-	uint8_t bytes[8];
-	/*
-	 * Number of meaningful bytes in above.
-	 */
-	size_t size;
-};
-
 struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike);
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy);
@@ -103,26 +95,30 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					struct alg_info_ike *alg_info_ike,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
-					struct ikev2_spi *spi,
+					chunk_t *local_spi, chunk_t *remote_spi,
 					pb_stream *emit_pbs, /* if non-NULL, where to emit winning SA */
 					enum next_payload_types_ikev2 next_payload_type);
 
-stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
-					  struct alg_info_esp *alg_info_esp,
-					  lset_t policy, bool accepted,
-					  struct ipsec_proto_info *proto_info,
-					  struct ikev2_spi *spi,
-					  pb_stream *emit_pbs,
-					  enum next_payload_types_ikev2 next_payload_type);
+stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
+					      struct alg_info_esp *alg_info_esp,
+					      lset_t policy, bool accepted,
+					      struct ipsec_proto_info *proto_info,
+					      const struct spd_route *spd_route,
+					      pb_stream *emit_pbs,
+					      enum next_payload_types_ikev2 next_payload_type);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    struct ikev2_proposal *proposal,
-			    struct ikev2_spi *local_spi,
+			    chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type);
 
 bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
-			     struct ikev2_spi *local_spi,
+			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
+
+struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
+
+ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy);
 
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,
