@@ -971,12 +971,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						&r_sa_pbs, st, FALSE);
 #else
-		stf_status ret;
-		DBG_log("XXX: should cache proposals in st");
-		struct ikev2_proposals *proposals
-			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
-
 		enum next_payload_types_ikev2 next_payload_type;
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
@@ -991,12 +985,12 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
-		ret = ikev2_process_ike_sa_payload(&sa_pd->pbs, proposals,
-						   /*accepted*/FALSE,
-						   &st->st_oakley,
-						   (struct ikev2_spi *)NULL,
-						   &md->rbody, next_payload_type);
-		free_ikev2_proposals(&proposals);
+		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
+							      st->st_connection->alg_info_ike,
+							      /*accepted*/FALSE,
+							      &st->st_oakley,
+							      (struct ikev2_spi *)NULL,
+							      &md->rbody, next_payload_type);
 #endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
@@ -1346,22 +1340,12 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						NULL, st, TRUE);
 #else
-		DBG_log("XXX: should cache proposals in st");
-		struct ikev2_proposals *proposals
-			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
-		/*
-		 * Since this is the initial IKE exchange, the SPI is
-		 * emitted as part of the packet header, and not as
-		 * part of the proposal.  Hence the NULL SPI.
-		 */
 		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
-							      proposals,
+							      st->st_connection->alg_info_ike,
 							      /*accepted*/TRUE,
 							      &st->st_oakley,
 							      (struct ikev2_spi*)NULL,
 							      NULL, 0);
-		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));

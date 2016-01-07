@@ -2786,13 +2786,16 @@ static void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
 }
 
 stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct ikev2_proposals *proposals,
+					struct alg_info_ike *alg_info_ike,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
 					struct ikev2_spi *spi,
 					pb_stream *emit_pbs,
 					enum next_payload_types_ikev2 next_payload_type)
 {
+	DBG_log("XXX: should cache proposals in st");
+	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(alg_info_ike);
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
 	passert(proposals != NULL);
 
 	struct ikev2_chosen_proposal *chosen = NULL;
@@ -2804,6 +2807,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 
 	if (ret != STF_OK) {
 		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
 		return ret;
 	}
 	passert(chosen != NULL);
@@ -2823,6 +2827,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	 * as the former point into the latter.
 	 */
 	free_ikev2_chosen_proposal(&chosen);
+	free_ikev2_proposals(&proposals);
 	return ret;
 }
 

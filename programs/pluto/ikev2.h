@@ -97,7 +97,7 @@ void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposa
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct ikev2_proposals *local_proposals,
+					struct alg_info_ike *alg_info_ike,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
 					struct ikev2_spi *spi,
