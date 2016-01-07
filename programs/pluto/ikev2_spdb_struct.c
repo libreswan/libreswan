@@ -1986,7 +1986,26 @@ struct ikev2_transforms {
 };
 
 struct ikev2_proposal {
+	/*
+	 * The proposal number for this proposal, or zero implying
+	 * that the propnum should be auto-assigned.
+	 *
+	 * A chosen proposal always has a non-zero propnum.
+	 */
+	int propnum;
+	/*
+	 * The protocol ID.
+	 */
 	enum ikev2_sec_proto_id protoid;
+	/*
+	 * The SPI received from the remote end.
+	 *
+	 * Only used when capturing the chosen proposal.
+	 */
+	struct ikev2_spi remote_spi;
+	/*
+	 * The transforms.
+	 */
 	struct ikev2_transforms transforms[IKEv2_TRANS_TYPE_ROOF];
 };
 
@@ -1994,32 +2013,6 @@ struct ikev2_proposals {
 	int nr;
 	struct ikev2_proposal *proposal;
 	bool on_heap;
-};
-
-struct ikev2_chosen_proposal {
-	/*
-	 * The SPI from the accepted proposal.
-	 */
-	struct ikev2_spi spi;
-	size_t spi_size;
-	/*
-	 * The proposal number from the accepted proposal.
-	 */
-	int propnum;
-	/*
-	 * Accepted proposal and its transforms.
-	 *
-	 * NOTE: The transforms are pointers into the PROPOSALS object
-	 * below.
-	 */
-	struct ikev2_proposal proposal;
-	/*
-	 * While a handle on this isn't strictly necessary, the above
-	 * PROPOSAL points into transforms found in the below.  Keep a
-	 * pointer as a reminder that this structure needs to be freed
-	 * first.
-	 */
-	struct ikev2_proposals *proposals;
 };
 
 struct print {
@@ -2104,12 +2097,13 @@ static bool print_protoid(struct print *buf, const char *prefix,
 	return TRUE;
 }
 
-static void DBG_log_ikev2_proposal(const char *prefix,
-				   struct ikev2_proposal *proposal)
+void DBG_log_ikev2_proposal(const char *prefix,
+			    struct ikev2_proposal *proposal)
 {
 	struct print buf = {0};
 	if (!print_protoid(&buf, "", proposal->protoid))
 		return;
+	DBG_log("XXX: print SPI and protonum");
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
@@ -2140,26 +2134,6 @@ void DBG_log_ikev2_proposals(const char *prefix,
 			DBG_log("    %s", buf.buf);
 		}
 	}
-}
-
-static void DBG_log_ikev2_chosen_proposal(const char *prefix,
-					  struct ikev2_chosen_proposal *chosen)
-{
-	if (chosen == NULL) {
-		DBG_log("%s ikev2_chosen_proposal: NULL", prefix);
-		return;
-	}
-	struct print buf = {0};
-	print_protoid(&buf, " ", chosen->proposal.protoid);
-	enum ikev2_trans_type type;
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &chosen->proposal.transforms[type];
-		if (transforms->nr > 0) {
-			if (!print_transforms(&buf, " ", type, transforms))
-				break;
-		}
-	}
-	DBG_log("%s ikev2_chosen_proposal:%s", prefix, buf.buf);
 }
 
 /*
@@ -2390,15 +2364,14 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
  */
 static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 					   bool ike, bool initial, bool accepted,
-					   struct ikev2_chosen_proposal **chosen,
+					   struct ikev2_proposal **chosen,
 					   struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %d local proposals",
 				 local_proposals->nr));
 
 	/* Return when STF_OK only!  */
-	struct ikev2_chosen_proposal *best = alloc_thing(struct ikev2_chosen_proposal, "best proposal");
-	best->proposals = local_proposals;
+	struct ikev2_proposal *best = alloc_thing(struct ikev2_proposal, "best proposal");
 
 	/* Must be released.  */
 	int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF];
@@ -2480,33 +2453,33 @@ static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 		 * protocol (8 for IKE, 4 for ESP and AH).
 		 */
 		/* Read any SPI.  */
-		struct ikev2_spi spi = {
+		struct ikev2_spi remote_spi = {
 			.size = (initial ? 0 : proto_spi_size(remote_proposal.isap_protoid)), 
 		};
-		if (!initial && spi.size == 0) {
+		if (!initial && remote_spi.size == 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "proposal %d has unrecognized Protocol ID %u; ignored",
 			       remote_proposal.isap_propnum,
 			       (unsigned)remote_proposal.isap_protoid);
 			continue;
 		}
-		if (remote_proposal.isap_spisize > sizeof(spi.bytes)) {
+		if (remote_proposal.isap_spisize > sizeof(remote_spi.bytes)) {
 			libreswan_log("proposal %d has huge SPI size (%u); ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_spisize);
 			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SPI); */
 			continue;
 		}
-		if (remote_proposal.isap_spisize != spi.size) {
+		if (remote_proposal.isap_spisize != remote_spi.size) {
 			libreswan_log("proposal %d has incorrect SPI size (%u), expected %zd; ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_spisize,
-				      spi.size);
+				      remote_spi.size);
 			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SPI); */
 			continue;
 		}
-		if (spi.size > 0) {
-			if (!in_raw(spi.bytes, spi.size, &proposal_pbs, "remote SPI")) {
+		if (remote_spi.size > 0) {
+			if (!in_raw(remote_spi.bytes, remote_spi.size, &proposal_pbs, "remote SPI")) {
 				libreswan_log("proposal %d contains corrupt SPI",
 					      remote_proposal.isap_propnum);
 				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
@@ -2529,19 +2502,17 @@ static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 			/* capture the new best proposal  */
 			best_local_proposal = match;
 			/* blat best with a new value */
-			*best = (struct ikev2_chosen_proposal) {
-				.spi = spi,
+			*best = (struct ikev2_proposal) {
 				.propnum = remote_proposal.isap_protoid,
-				.proposal = {
-					.protoid = remote_proposal.isap_protoid,
-				},
+				.protoid = remote_proposal.isap_protoid,
+				.remote_spi = remote_spi,
 			};
 			enum ikev2_trans_type type;
 			for (type = 1 ; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 				int tt = matching_local_proposals[best_local_proposal][type];
 				if (tt < local_proposals->proposal[best_local_proposal].transforms[type].nr) {
-					best->proposal.transforms[type].nr = 1;
-					best->proposal.transforms[type].transform = &local_proposals->proposal[best_local_proposal].transforms[type].transform[tt];
+					best->transforms[type].nr = 1;
+					best->transforms[type].transform = &local_proposals->proposal[best_local_proposal].transforms[type].transform[tt];
 				}
 			}
 		} else {
@@ -2681,13 +2652,13 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	return TRUE;
 }
 
-static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
-					  struct ikev2_chosen_proposal *chosen,
-					  struct ikev2_spi *spi,
-					  enum next_payload_types_ikev2 next_payload_type)
+bool ikev2_emit_sa_proposal(pb_stream *pbs,
+			    struct ikev2_proposal *proposal,
+			    struct ikev2_spi *local_spi,
+			    enum next_payload_types_ikev2 next_payload_type)
 {
-	DBG_log("XXX: emit-chosen-proposal should deal with SA header");
-	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_chosen_proposal ..."));
+	DBG_log("XXX: emit-proposal-proposal should deal with SA header");
+	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal_proposal ..."));
 	passert(pbs != NULL);
 
 	/* SA header out */
@@ -2700,8 +2671,8 @@ static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 		return FALSE;
 	}
 
-	if (!emit_proposal(&sa_pbs, &chosen->proposal, chosen->propnum,
-			   spi, v2_PROPOSAL_LAST)) {
+	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
+			   local_spi, v2_PROPOSAL_LAST)) {
 		return FALSE;
 	}
 
@@ -2709,14 +2680,14 @@ static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 	return TRUE;
 }
 
-static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_chosen_proposal *chosen)
+static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal)
 {
-	DBG_log("XXX: internalize the chosen remote SPI");
-	DBG(DBG_CONTROL, DBG_log("internalizing chosen proposal"))
+	DBG_log("XXX: internalize the proposal remote SPI");
+	DBG(DBG_CONTROL, DBG_log("internalizing proposal proposal"))
 	struct trans_attrs ta = {0};
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &chosen->proposal.transforms[type];
+		struct ikev2_transforms *transforms = &proposal->transforms[type];
 		if (transforms->nr == 1) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
@@ -2738,7 +2709,7 @@ static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_chosen_pro
 				break;
 			case IKEv2_TRANS_TYPE_INTEG:
 				if (transform->id == 0) {
-					/*passert(ikev2_encr_aead(chosen->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
+					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 				} else {
 					ta.integ_hash = transform->id;
@@ -2777,13 +2748,13 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals)
 	}
 }
 
-static void free_ikev2_chosen_proposal(struct ikev2_chosen_proposal **chosen)
+void free_ikev2_proposal(struct ikev2_proposal **proposal)
 {
-	if (chosen == NULL || *chosen == NULL) {
+	if (proposal == NULL || *proposal == NULL) {
 		return;
 	}
-	pfree(*chosen);
-	*chosen = NULL;
+	pfree(*proposal);
+	*proposal = NULL;
 }
 
 stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
@@ -2799,7 +2770,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
 	passert(proposals != NULL);
 
-	struct ikev2_chosen_proposal *chosen = NULL;
+	struct ikev2_proposal *chosen = NULL;
 	stf_status ret = ikev2_process_sa_payload(sa_payload,
 						  /*ike*/ TRUE,
 						  /*initial*/ spi == NULL,
@@ -2812,12 +2783,12 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 		return ret;
 	}
 	passert(chosen != NULL);
-	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", chosen));
 
 	*trans_attrs = ikev2_internalize_ike_proposal(chosen);
 	if (emit_pbs != NULL) {
-		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
-						   spi, next_payload_type)) {
+		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, spi,
+					    next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
 		}
@@ -2827,12 +2798,12 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
 	 * as the former point into the latter.
 	 */
-	free_ikev2_chosen_proposal(&chosen);
+	free_ikev2_proposal(&chosen);
 	free_ikev2_proposals(&proposals);
 	return ret;
 }
 
-static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_chosen_proposal *chosen)
+static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_proposal *chosen)
 {
 	if (chosen) {
 		return (struct ipsec_proto_info) {0};
@@ -2854,7 +2825,7 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
 	passert(proposals != NULL);
 
-	struct ikev2_chosen_proposal *chosen = NULL;
+	struct ikev2_proposal *chosen = NULL;
 	stf_status ret = ikev2_process_sa_payload(sa_payload,
 						  /*ike*/ TRUE,
 						  /*initial*/ spi == NULL,
@@ -2867,12 +2838,12 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 		return ret;
 	}
 	passert(chosen != NULL);
-	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("ESP/AH", chosen));
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", chosen));
 
 	*proto_info = ikev2_internalize_espah_proposal(chosen);
 	if (emit_pbs != NULL) {
-		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
-						   spi, next_payload_type)) {
+		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, spi,
+					    next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
 		}
@@ -2882,7 +2853,7 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
 	 * as the former point into the latter.
 	 */
-	free_ikev2_chosen_proposal(&chosen);
+	free_ikev2_proposal(&chosen);
 	free_ikev2_proposals(&proposals);
 	return ret;
 }

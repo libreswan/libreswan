@@ -78,7 +78,14 @@ extern stf_status ikev2_parse_child_sa_body(
 				 * tranform can appear.
 				 */
 
+struct ikev2_proposal;
 struct ikev2_proposals;
+
+void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal);
+void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals);
+
+void free_ikev2_proposal(struct ikev2_proposal **proposal);
+void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 struct ikev2_spi {
 	uint8_t bytes[8];
@@ -91,10 +98,6 @@ struct ikev2_spi {
 struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike);
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy);
-
-void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals);
-
-void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					struct alg_info_ike *alg_info_ike,
@@ -112,8 +115,13 @@ stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
 					  pb_stream *emit_pbs,
 					  enum next_payload_types_ikev2 next_payload_type);
 
+bool ikev2_emit_sa_proposal(pb_stream *pbs,
+			    struct ikev2_proposal *proposal,
+			    struct ikev2_spi *local_spi,
+			    enum next_payload_types_ikev2 next_payload_type);
+
 bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
-			     struct ikev2_spi *spi,
+			     struct ikev2_spi *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
 extern void send_v2_notification_from_state(struct state *st,
