@@ -2468,28 +2468,28 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
 
-#if 1 // #ifdef OLD_PROPOSALS
+#ifdef OLD_PROPOSALS
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
 				ISAKMP_NEXT_v2TSi, cc, policy);
 #else
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_esp(cc->alg_info_esp,
 							    cc->policy);
-		struct ikev2_spi spi;
+		/* Always the same size.  */
+		struct ikev2_spi spi = {
+			.size = sizeof(cst->st_esp.our_spi),
+		};
+		get_rnd_bytes(spi.bytes, spi.size);
 		ikev2_emit_sa_proposals(&e_pbs_cipher, proposals,
 					&spi, ISAKMP_NEXT_v2TSi);
 		free_ikev2_proposals(&proposals);
 		/* ??? this code won't support AH + ESP */
 		switch (cc->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
-			passert(sizeof(cst->st_ah.our_spi) >= spi.size);
-			pexpect(sizeof(cst->st_ah.our_spi) == spi.size);
-			memcpy(&cst->st_ah.our_spi, spi.bytes, spi.size);
+			memcpy(&cst->st_esp.our_spi, spi.bytes, spi.size);
 			break;
 		case POLICY_AUTHENTICATE:
-			passert(sizeof(cst->st_esp.our_spi) >= spi.size);
-			pexpect(sizeof(cst->st_esp.our_spi) == spi.size);
-			memcpy(&cst->st_esp.our_spi, spi.bytes, spi.size);
+			memcpy(&cst->st_ah.our_spi, spi.bytes, spi.size);
 			break;
 		default:
 			bad_case(cc->policy);

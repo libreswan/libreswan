@@ -2603,7 +2603,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
  * passing the correct value/size in for the SPI.
  */
 static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
-			  unsigned propnum, struct ikev2_spi *spi, size_t spi_size,
+			  unsigned propnum, struct ikev2_spi *spi,
 			  enum ikev2_last_proposal last_proposal)
 {
 	int numtrans = 0;
@@ -2615,7 +2615,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 		.isap_lp = last_proposal,
 		.isap_propnum = propnum,
 		.isap_protoid = proposal->protoid,
-		.isap_spisize = spi_size,
+		.isap_spisize = (spi != NULL ? spi->size : 0),
 		.isap_numtrans = numtrans,
 	};
 
@@ -2624,9 +2624,9 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 		return FALSE;
 	}
 
-	if (spi_size > 0) {
+	if (spi != NULL) {
 		passert(spi != NULL);
-		if (!out_raw(spi->bytes, spi_size, &proposal_pbs, "our spi"))
+		if (!out_raw(spi->bytes, spi->size, &proposal_pbs, "our spi"))
 			return FALSE;
 	}
 
@@ -2668,10 +2668,8 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	int lp;
 	for (lp = 0; lp < proposals->nr; lp++) {
 		struct ikev2_proposal *proposal = &proposals->proposal[lp];
-		size_t spi_size = (spi == NULL ? 0 : proto_spi_size(proposal->protoid));
 		int protonum = lp + 1;
-		if (!emit_proposal(&sa_pbs, proposal, protonum,
-				   spi, spi_size,
+		if (!emit_proposal(&sa_pbs, proposal, protonum, spi,
 				   (lp < proposals->nr - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST))) {
@@ -2685,7 +2683,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 
 static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 					  struct ikev2_chosen_proposal *chosen,
-					  struct ikev2_spi *spi, size_t spi_size,
+					  struct ikev2_spi *spi,
 					  enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG_log("XXX: emit-chosen-proposal should deal with SA header");
@@ -2703,7 +2701,7 @@ static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 	}
 
 	if (!emit_proposal(&sa_pbs, &chosen->proposal, chosen->propnum,
-			   spi, spi_size, v2_PROPOSAL_LAST)) {
+			   spi, v2_PROPOSAL_LAST)) {
 		return FALSE;
 	}
 
@@ -2813,19 +2811,8 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 
 	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
 	if (emit_pbs != NULL) {
-		size_t spi_size = 0;
-		if (spi != NULL) {
-			spi_size = proto_spi_size(chosen->proposal.protoid);
-			*spi = (struct ikev2_spi) {
-				.size = spi_size,
-			};
-			passert(spi_size <= sizeof(spi->bytes));
-			get_rnd_bytes(spi->bytes, spi_size);
-		}
-		DBG_log("XXX: check SPI's value is non-zero and, perhaps, more than some minimum value; like old code did");
 		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
-						   spi, spi_size,
-						   next_payload_type)) {
+						   spi, next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
 		}
