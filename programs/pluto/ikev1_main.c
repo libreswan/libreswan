@@ -142,7 +142,7 @@ stf_status main_outI1(int whack_sock,
 		numvidtosend++;
 
 	/* set up new state */
-	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
+	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
 	initialize_new_state(st, c, policy, try, whack_sock, importance);
 	change_state(st, STATE_MAIN_I1);
 
@@ -748,7 +748,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	change_state(st, STATE_MAIN_R0);
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_cookie(FALSE, st->st_rcookie, COOKIE_SIZE, &md->sender);
+	get_cookie(FALSE, st->st_rcookie, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 

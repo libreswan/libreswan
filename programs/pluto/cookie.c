@@ -23,7 +23,7 @@
 
 #include "constants.h"
 #include "defs.h"
-#include "sha1.h"
+#include "sha2.h"
 #include "rnd.h"
 #include "cookie.h"
 
@@ -40,35 +40,35 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-void get_cookie(bool initiator, u_int8_t *cookie, int length,
+void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 		const ip_address *addr)
 {
-	u_char buffer[SHA1_DIGEST_SIZE];
-	SHA1_CTX ctx;
 
 	do {
 		if (initiator) {
-			get_rnd_bytes(cookie, length);
+			get_rnd_bytes(cookie, COOKIE_SIZE);
 		} else {
-			size_t addr_length;
-			static u_int32_t counter = 0;
+			static u_int32_t counter = 0; /* STATIC */
 			unsigned char addr_buff[
 				sizeof(union { struct in_addr A;
 					       struct in6_addr B;
 				       })];
+			u_char buffer[SHA2_256_DIGEST_SIZE];
+			sha256_context ctx;
 
-			addr_length =
+			size_t addr_length =
 				addrbytesof(addr, addr_buff,
 					    sizeof(addr_buff));
-			SHA1Init(&ctx);
-			SHA1Update(&ctx, addr_buff, addr_length);
-			SHA1Update(&ctx, secret_of_the_day,
+			sha256_init(&ctx);
+			sha256_write(&ctx, addr_buff, addr_length);
+			sha256_write(&ctx, secret_of_the_day,
 				   sizeof(secret_of_the_day));
 			counter++;
-			SHA1Update(&ctx, (const void *) &counter,
+			sha256_write(&ctx, (const void *) &counter,
 				   sizeof(counter));
-			SHA1Final(buffer, &ctx);
-			memcpy(cookie, buffer, length);
+			sha256_final(buffer, &ctx);
+			/* cookie size is smaller than any hash output sizes */
+			memcpy(cookie, buffer, COOKIE_SIZE);
 		}
 	} while (is_zero_cookie(cookie)); /* probably never loops */
 }
