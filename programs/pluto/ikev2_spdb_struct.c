@@ -60,6 +60,7 @@
 #include "db_ops.h"
 #include "demux.h"
 #include "ikev2.h"
+#include "rnd.h"
 
 #include "nat_traversal.h"
 
@@ -1996,13 +1997,27 @@ struct ikev2_proposals {
 };
 
 struct ikev2_chosen_proposal {
-	struct ikev2_prop prop;
-	uint8_t spi[MAX_ISAKMP_SPI_SIZE];
+	/*
+	 * The SPI from the accepted proposal.
+	 */
+	struct ikev2_spi spi;
+	size_t spi_size;
+	/*
+	 * The proposal number from the accepted proposal.
+	 */
+	int propnum;
+	/*
+	 * Accepted proposal and its transforms.
+	 *
+	 * NOTE: The transforms are pointers into the PROPOSALS object
+	 * below.
+	 */
 	struct ikev2_proposal proposal;
 	/*
 	 * While a handle on this isn't strictly necessary, the above
-	 * PROPOSAL has pointers into this object so keep it as a
-	 * reminder.
+	 * PROPOSAL points into transforms found in the below.  Keep a
+	 * pointer as a reminder that this structure needs to be freed
+	 * first.
 	 */
 	struct ikev2_proposals *proposals;
 };
@@ -2347,6 +2362,20 @@ static int process_transforms(pb_stream *prop_pbs,
 	return num_local_proposals;
 }
 
+static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
+{
+	switch (protoid) {
+	case IKEv2_SEC_PROTO_IKE:
+		return 8;
+	case IKEv2_SEC_PROTO_AH:
+	case IKEv2_SEC_PROTO_ESP:
+		return 4;
+	default:
+		return 0;
+	}
+}
+
+
 /*
  * Compare all remote proposals against all local proposals finding
  * and returning the "first" local proposal to match.
@@ -2433,7 +2462,7 @@ static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 		 * the IPsec protocol identifier for the current
 		 * negotiation.
 		 */
-		if (ike && remote_proposal.isap_protoid != PROTO_v2_ISAKMP) {
+		if (ike && remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
 			libreswan_log("proposal %d has unexpected Protocol ID %d, expected ISAKMP",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_protoid);
@@ -2450,53 +2479,34 @@ static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 		 * size, in octets, of the SPI of the corresponding
 		 * protocol (8 for IKE, 4 for ESP and AH).
 		 */
-		int spi_size;
-		switch (remote_proposal.isap_protoid) {
-		case PROTO_v2_ISAKMP:
-			spi_size = initial ? 0 : 8;
-			break;
-		case PROTO_v2_AH:
-		case PROTO_v2_ESP:
-			spi_size = 4;
-			break;
-		default:
-			spi_size = -1;
-		}
-		if (spi_size < 0) {
+		/* Read any SPI.  */
+		struct ikev2_spi spi = {
+			.size = (initial ? 0 : proto_spi_size(remote_proposal.isap_protoid)), 
+		};
+		if (!initial && spi.size == 0) {
 			loglog(RC_LOG_SERIOUS,
-			       "proposal %d has unrecognized Protocol ID %u",
+			       "proposal %d has unrecognized Protocol ID %u; ignored",
 			       remote_proposal.isap_propnum,
 			       (unsigned)remote_proposal.isap_protoid);
 			continue;
 		}
-		if (remote_proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE) {
-			libreswan_log("proposal %d has huge SPI size (%u)",
+		if (remote_proposal.isap_spisize > sizeof(spi.bytes)) {
+			libreswan_log("proposal %d has huge SPI size (%u); ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_spisize);
-			best_local_proposal = -(STF_FAIL + v2N_INVALID_SPI);
-			break;
-		}
-
-		/*
-		 * XXX: For initial IKE SA, the old code complained
-		 * but ignored a non-empty SPI.
-		 *
-		 * XXX: For EH and ESP, the code relied on sizeof
-		 * our_spi.  I suspect it is 4.
-		 */
-		if (remote_proposal.isap_spisize > spi_size) {
-			libreswan_log("proposal %d has large SPI size (%u)",
-				      remote_proposal.isap_propnum,
-				      (unsigned)remote_proposal.isap_spisize);
-			/* try the next one? Why? */
+			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SPI); */
 			continue;
 		}
-		/* Read any SPI.  */
-		u_char spi[MAX_ISAKMP_SPI_SIZE] = {};
-		if (spi_size > 0) {
-			if (!in_raw(spi, remote_proposal.isap_spisize,
-				    &proposal_pbs,
-				    "SA proposal SPI")) {
+		if (remote_proposal.isap_spisize != spi.size) {
+			libreswan_log("proposal %d has incorrect SPI size (%u), expected %zd; ignored",
+				      remote_proposal.isap_propnum,
+				      (unsigned)remote_proposal.isap_spisize,
+				      spi.size);
+			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SPI); */
+			continue;
+		}
+		if (spi.size > 0) {
+			if (!in_raw(spi.bytes, spi.size, &proposal_pbs, "remote SPI")) {
 				libreswan_log("proposal %d contains corrupt SPI",
 					      remote_proposal.isap_propnum);
 				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
@@ -2518,10 +2528,14 @@ static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 		} else if (match < best_local_proposal) {
 			/* capture the new best proposal  */
 			best_local_proposal = match;
-			best->prop = remote_proposal;
-			memcpy(best->spi, spi, sizeof(spi));
-			memset(&best->proposal, 0, sizeof(best->proposal));
-			best->proposal.protoid = remote_proposal.isap_protoid;
+			/* blat best with a new value */
+			*best = (struct ikev2_chosen_proposal) {
+				.spi = spi,
+				.propnum = remote_proposal.isap_protoid,
+				.proposal = {
+					.protoid = remote_proposal.isap_protoid,
+				},
+			};
 			enum ikev2_trans_type type;
 			for (type = 1 ; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 				int tt = matching_local_proposals[best_local_proposal][type];
@@ -2582,8 +2596,14 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 	return TRUE;
 }
 
+/*
+ * Emit the proposal exactly as specified.
+ *
+ * It's assumed the caller knows what they are doing.  For instance
+ * passing the correct value/size in for the SPI.
+ */
 static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
-			  unsigned propnum,
+			  unsigned propnum, struct ikev2_spi *spi, size_t spi_size,
 			  enum ikev2_last_proposal last_proposal)
 {
 	int numtrans = 0;
@@ -2595,17 +2615,21 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 		.isap_lp = last_proposal,
 		.isap_propnum = propnum,
 		.isap_protoid = proposal->protoid,
-		.isap_spisize = 0 /*XXX*/,
+		.isap_spisize = spi_size,
 		.isap_numtrans = numtrans,
 	};
-	DBG_log("XXX: spisize!");
 
 	pb_stream proposal_pbs;
 	if (!out_struct(&prop, &ikev2_prop_desc, sa_pbs, &proposal_pbs)) {
 		return FALSE;
 	}
 
-	DBG_log("XXX: SPI!");
+	if (spi_size > 0) {
+		passert(spi != NULL);
+		if (!out_raw(spi->bytes, spi_size, &proposal_pbs, "our spi"))
+			return FALSE;
+	}
+
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
 		int lt;
@@ -2623,6 +2647,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
 			     struct ikev2_proposals *proposals,
+			     struct ikev2_spi *spi,
 			     enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposals ..."));
@@ -2643,7 +2668,10 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	int lp;
 	for (lp = 0; lp < proposals->nr; lp++) {
 		struct ikev2_proposal *proposal = &proposals->proposal[lp];
-		if (!emit_proposal(&sa_pbs, proposal, lp + 1,
+		size_t spi_size = (spi == NULL ? 0 : proto_spi_size(proposal->protoid));
+		int protonum = lp + 1;
+		if (!emit_proposal(&sa_pbs, proposal, protonum,
+				   spi, spi_size,
 				   (lp < proposals->nr - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST))) {
@@ -2657,6 +2685,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 
 static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 					  struct ikev2_chosen_proposal *chosen,
+					  struct ikev2_spi *spi, size_t spi_size,
 					  enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG_log("XXX: emit-chosen-proposal should deal with SA header");
@@ -2673,8 +2702,8 @@ static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 		return FALSE;
 	}
 
-	if (!emit_proposal(&sa_pbs, &chosen->proposal, chosen->prop.isap_propnum,
-			   v2_PROPOSAL_LAST)) {
+	if (!emit_proposal(&sa_pbs, &chosen->proposal, chosen->propnum,
+			   spi, spi_size, v2_PROPOSAL_LAST)) {
 		return FALSE;
 	}
 
@@ -2733,22 +2762,6 @@ static struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_
 	return ta;
 }
 
-static void append_transform(struct ikev2_proposal *proposal,
-			     enum ikev2_trans_type type, int id, unsigned attr_keylen)
-{
-	struct ikev2_transforms *transforms = &proposal->transforms[type];
-	size_t old_size = sizeof(struct ikev2_transform) * transforms->nr;
-	size_t new_size = sizeof(struct ikev2_transform) * transforms->nr + 1;
-	struct ikev2_transform *new_transforms = alloc_bytes(new_size, "transforms");
-	memcpy(new_transforms, transforms->transform, old_size);
-	new_transforms[transforms->nr++] = (struct ikev2_transform) {
-		.id = id,
-		.attr_keylen = attr_keylen,
-	};
-	pfreeany(transforms->transform);
-	transforms->transform = new_transforms;
-}
-
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
 {
 	if ((*proposals) != NULL && (*proposals)->on_heap) {
@@ -2778,6 +2791,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					struct ikev2_proposals *proposals,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
+					struct ikev2_spi *spi,
 					pb_stream *emit_pbs,
 					enum next_payload_types_ikev2 next_payload_type)
 {
@@ -2786,7 +2800,7 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	struct ikev2_chosen_proposal *chosen = NULL;
 	stf_status ret = ikev2_process_sa_payload(sa_payload,
 						  /*ike*/ TRUE,
-						  /*initial*/ TRUE,
+						  /*initial*/ spi == NULL,
 						  /*accepted*/ accepted,
 						  &chosen, proposals);
 
@@ -2798,9 +2812,19 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
 
 	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
-
 	if (emit_pbs != NULL) {
+		size_t spi_size = 0;
+		if (spi != NULL) {
+			spi_size = proto_spi_size(chosen->proposal.protoid);
+			*spi = (struct ikev2_spi) {
+				.size = spi_size,
+			};
+			passert(spi_size <= sizeof(spi->bytes));
+			get_rnd_bytes(spi->bytes, spi_size);
+		}
+		DBG_log("XXX: check SPI's value is non-zero and, perhaps, more than some minimum value; like old code did");
 		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
+						   spi, spi_size,
 						   next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
 			ret = STF_INTERNAL_ERROR;
@@ -2813,6 +2837,23 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	 */
 	free_ikev2_chosen_proposal(&chosen);
 	return ret;
+}
+
+static void append_transform(struct ikev2_proposal *proposal,
+			     enum ikev2_trans_type type, int id,
+			     unsigned attr_keylen)
+{
+	struct ikev2_transforms *transforms = &proposal->transforms[type];
+	size_t old_size = sizeof(struct ikev2_transform) * transforms->nr;
+	size_t new_size = sizeof(struct ikev2_transform) * transforms->nr + 1;
+	struct ikev2_transform *new_transforms = alloc_bytes(new_size, "transforms");
+	memcpy(new_transforms, transforms->transform, old_size);
+	new_transforms[transforms->nr++] = (struct ikev2_transform) {
+		.id = id,
+		.attr_keylen = attr_keylen,
+	};
+	pfreeany(transforms->transform);
+	transforms->transform = new_transforms;
 }
 
 /*
@@ -3202,16 +3243,6 @@ static struct ikev2_proposals default_ikev2_esp_or_ah_proposals = {
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
 {
-#if 0
-	/* ??? this code won't support AH + ESP */
-	if (c->policy & POLICY_ENCRYPT)
-		proto = PROTO_v2_ESP;
-	else if (c->policy & POLICY_AUTHENTICATE)
-		proto = PROTO_v2_AH;
-	else
-		return STF_FATAL;
-#endif
-
 	DBG_log("XXX: esn ignored, always NO");
 	if (alg_info_esp == NULL) {
 		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
@@ -3222,9 +3253,8 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 			return &default_ikev2_ah_proposals;
 		case POLICY_ENCRYPT|POLICY_AUTHENTICATE:
 			/*
-			 * Rumor has it that whack doesn't allow the
-			 * combination of ENCRYPT and AUTHENTICATE
-			 * when IKEv2.  Assert this assumption.
+			 * For moment this function does not support
+			 * AH+ESP.  Assert the assumption.
 			 */
 #if 0
 			return &default_ikev2_esp_or_ah_proposals;

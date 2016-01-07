@@ -483,7 +483,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			struct ikev2_proposals *proposals
 				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+			/*
+			 * Since this is an initial IKE exchange, the
+			 * SPI is emitted as is part of the packet
+			 * header and not the proposal.  Hence the
+			 * NULL SPI.
+			 */
 			bool ret = ikev2_emit_sa_proposals(&md->rbody, proposals,
+							   (struct ikev2_spi *)NULL,
 							   ISAKMP_NEXT_v2KE);
 			free_ikev2_proposals(&proposals);
 			if (!ret) {
@@ -979,10 +986,16 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
+		/*
+		 * Since this is the initial IKE exchange, the SPI is
+		 * emitted as part of the packet header and not as
+		 * part of the proposal.  Hence the NULL SPI.
+		 */
 		ret = ikev2_process_ike_sa_payload(&sa_pd->pbs, proposals,
 						   /*accepted*/FALSE,
-						   &st->st_oakley, &md->rbody,
-						   next_payload_type);
+						   &st->st_oakley,
+						   (struct ikev2_spi *)NULL,
+						   &md->rbody, next_payload_type);
 		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
@@ -1337,10 +1350,16 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		/*
+		 * Since this is the initial IKE exchange, the SPI is
+		 * emitted as part of the packet header, and not as
+		 * part of the proposal.  Hence the NULL SPI.
+		 */
 		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
 							      proposals,
-							      /*ACCEPTED*/TRUE,
+							      /*accepted*/TRUE,
 							      &st->st_oakley,
+							      (struct ikev2_spi*)NULL,
 							      NULL, 0);
 		free_ikev2_proposals(&proposals);
 #endif
@@ -2456,9 +2475,25 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_esp(cc->alg_info_esp,
 							    cc->policy);
+		struct ikev2_spi spi;
 		ikev2_emit_sa_proposals(&e_pbs_cipher, proposals,
-					ISAKMP_NEXT_v2TSi);
+					&spi, ISAKMP_NEXT_v2TSi);
 		free_ikev2_proposals(&proposals);
+		/* ??? this code won't support AH + ESP */
+		switch (cc->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+		case POLICY_ENCRYPT:
+			passert(sizeof(cst->st_ah.our_spi) >= spi.size);
+			pexpect(sizeof(cst->st_ah.our_spi) == spi.size);
+			memcpy(&cst->st_ah.our_spi, spi.bytes, spi.size);
+			break;
+		case POLICY_AUTHENTICATE:
+			passert(sizeof(cst->st_esp.our_spi) >= spi.size);
+			pexpect(sizeof(cst->st_esp.our_spi) == spi.size);
+			memcpy(&cst->st_esp.our_spi, spi.bytes, spi.size);
+			break;
+		default:
+			bad_case(cc->policy);
+		}
 #endif
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);

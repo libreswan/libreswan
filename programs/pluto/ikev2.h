@@ -80,6 +80,14 @@ extern stf_status ikev2_parse_child_sa_body(
 
 struct ikev2_proposals;
 
+struct ikev2_spi {
+	uint8_t bytes[8];
+	/*
+	 * Number of meaningful bytes in above.
+	 */
+	size_t size;
+};
+
 struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike);
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy);
@@ -92,11 +100,12 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					struct ikev2_proposals *local_proposals,
 					bool accepted,
 					struct trans_attrs *trans_attrs,
+					struct ikev2_spi *spi,
 					pb_stream *emit_pbs, /* if non-NULL, where to emit winning SA */
 					enum next_payload_types_ikev2 next_payload_type);
 
-bool ikev2_emit_sa_proposals(pb_stream *outs,
-			     struct ikev2_proposals *proposals,
+bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
+			     struct ikev2_spi *spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
 extern void send_v2_notification_from_state(struct state *st,
