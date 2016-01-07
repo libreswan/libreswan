@@ -328,7 +328,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_v1_cookie(FALSE, st->st_rcookie, &md->sender);
+	get_cookie(FALSE, st->st_rcookie, COOKIE_SIZE, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -1139,7 +1139,7 @@ stf_status aggr_outI1(int whack_sock,
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
 
-	get_v1_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
+	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
 
 	st->st_import = importance;
 

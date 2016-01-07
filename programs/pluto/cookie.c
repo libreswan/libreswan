@@ -30,7 +30,7 @@
 const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
 
 /*
- * Generate a v1 cookie (aka SPI)
+ * Generate a cookie (aka SPI)
  * First argument is true if we're to create an Initiator cookie.
  * Length SHOULD be a multiple of sizeof(u_int32_t).
  *
@@ -40,25 +40,26 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-void get_v1_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
+void get_cookie(bool initiator, u_int8_t *cookie, int length,
 		const ip_address *addr)
 {
+	u_char buffer[SHA1_DIGEST_SIZE];
+	SHA1_CTX ctx;
+
 	do {
 		if (initiator) {
-			get_rnd_bytes(cookie, COOKIE_SIZE);
+			get_rnd_bytes(cookie, length);
 		} else {
-			static u_int32_t counter = 0;	/* STATIC */
+			size_t addr_length;
+			static u_int32_t counter = 0;
 			unsigned char addr_buff[
 				sizeof(union { struct in_addr A;
 					       struct in6_addr B;
 				       })];
-			SHA1_CTX ctx;
-			u_char buffer[SHA1_DIGEST_SIZE];
 
-			size_t addr_length =
+			addr_length =
 				addrbytesof(addr, addr_buff,
 					    sizeof(addr_buff));
-
 			SHA1Init(&ctx);
 			SHA1Update(&ctx, addr_buff, addr_length);
 			SHA1Update(&ctx, secret_of_the_day,
@@ -67,8 +68,7 @@ void get_v1_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 			SHA1Update(&ctx, (const void *) &counter,
 				   sizeof(counter));
 			SHA1Final(buffer, &ctx);
-			/* ??? assumption: COOKIE_SIZE <= SHA1_DIGEST_SIZE */
-			memcpy(cookie, buffer, COOKIE_SIZE);
+			memcpy(cookie, buffer, length);
 		}
 	} while (is_zero_cookie(cookie)); /* probably never loops */
 }
