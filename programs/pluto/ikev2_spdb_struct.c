@@ -2709,8 +2709,9 @@ static bool ikev2_emit_chosen_sa_proposal(pb_stream *pbs,
 	return TRUE;
 }
 
-static struct trans_attrs ikev2_internalize_chosen_proposal(struct ikev2_chosen_proposal *chosen)
+static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_chosen_proposal *chosen)
 {
+	DBG_log("XXX: internalize the chosen remote SPI");
 	DBG(DBG_CONTROL, DBG_log("internalizing chosen proposal"))
 	struct trans_attrs ta = {0};
 	enum ikev2_trans_type type;
@@ -2813,7 +2814,62 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 	passert(chosen != NULL);
 	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("IKE", chosen));
 
-	*trans_attrs = ikev2_internalize_chosen_proposal(chosen);
+	*trans_attrs = ikev2_internalize_ike_proposal(chosen);
+	if (emit_pbs != NULL) {
+		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
+						   spi, next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+			ret = STF_INTERNAL_ERROR;
+		}
+	}
+
+	/*
+	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
+	 * as the former point into the latter.
+	 */
+	free_ikev2_chosen_proposal(&chosen);
+	free_ikev2_proposals(&proposals);
+	return ret;
+}
+
+static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_chosen_proposal *chosen)
+{
+	if (chosen) {
+		return (struct ipsec_proto_info) {0};
+	} else {
+		return (struct ipsec_proto_info) {0};
+	}
+}
+
+stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
+					  struct alg_info_esp *alg_info_esp, lset_t policy,
+					  bool accepted,
+					  struct ipsec_proto_info *proto_info,
+					  struct ikev2_spi *spi,
+					  pb_stream *emit_pbs,
+					  enum next_payload_types_ikev2 next_payload_type)
+{
+	DBG_log("XXX: should cache proposals in st");
+	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(alg_info_esp, policy);
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+	passert(proposals != NULL);
+
+	struct ikev2_chosen_proposal *chosen = NULL;
+	stf_status ret = ikev2_process_sa_payload(sa_payload,
+						  /*ike*/ TRUE,
+						  /*initial*/ spi == NULL,
+						  /*accepted*/ accepted,
+						  &chosen, proposals);
+
+	if (ret != STF_OK) {
+		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
+		return ret;
+	}
+	passert(chosen != NULL);
+	DBG(DBG_CONTROL, DBG_log_ikev2_chosen_proposal("ESP/AH", chosen));
+
+	*proto_info = ikev2_internalize_espah_proposal(chosen);
 	if (emit_pbs != NULL) {
 		if (!ikev2_emit_chosen_sa_proposal(emit_pbs, chosen,
 						   spi, next_payload_type)) {

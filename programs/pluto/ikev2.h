@@ -104,6 +104,14 @@ stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
 					pb_stream *emit_pbs, /* if non-NULL, where to emit winning SA */
 					enum next_payload_types_ikev2 next_payload_type);
 
+stf_status ikev2_process_espah_sa_payload(pb_stream *sa_payload,
+					  struct alg_info_esp *alg_info_esp,
+					  lset_t policy, bool accepted,
+					  struct ipsec_proto_info *proto_info,
+					  struct ikev2_spi *spi,
+					  pb_stream *emit_pbs,
+					  enum next_payload_types_ikev2 next_payload_type);
+
 bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
 			     struct ikev2_spi *spi,
 			     enum next_payload_types_ikev2 next_payload_type);
