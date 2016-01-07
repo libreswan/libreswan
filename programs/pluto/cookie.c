@@ -29,9 +29,16 @@
 
 const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
 
-/* Generate a cookie.
+/*
+ * Generate a cookie (aka SPI)
  * First argument is true if we're to create an Initiator cookie.
  * Length SHOULD be a multiple of sizeof(u_int32_t).
+ *
+ * As responder, we use a hashing method to get a pseudo random
+ * value instead of using our own random pool. It will prevent
+ * an attacker from gaining raw data from our random pool and
+ * it will prevent an attacker from depleting our random pool
+ * or entropy.
  */
 void get_cookie(bool initiator, u_int8_t *cookie, int length,
 		const ip_address *addr)
@@ -43,8 +50,6 @@ void get_cookie(bool initiator, u_int8_t *cookie, int length,
 		if (initiator) {
 			get_rnd_bytes(cookie, length);
 		} else {
-			/* Responder cookie */
-			/* This looks as good as any way */
 			size_t addr_length;
 			static u_int32_t counter = 0;
 			unsigned char addr_buff[
