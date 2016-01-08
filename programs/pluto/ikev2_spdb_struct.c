@@ -2688,56 +2688,143 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-void ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal,
-				    struct trans_attrs *ta)
+struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal)
 {
-	DBG_log("XXX: internalize the proposal remote SPI");
-	DBG(DBG_CONTROL, DBG_log("internalizing proposal proposal"));
-	*ta = (struct trans_attrs) {0};
+	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
+	struct trans_attrs ta = (struct trans_attrs) {0};
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
+		pexpect(transforms->nr <= 1);
 		if (transforms->nr == 1) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR:
-				ta->encrypt = transform->id;
-				ta->enckeylen = transform->attr_keylen;
-				ta->encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
-										      ta->encrypt);
-				passert(ta->encrypter != NULL);
-				if (ta->enckeylen <= 0) {
-					ta->enckeylen = ta->encrypter->keydeflen;
+				ta.encrypt = transform->id;
+				ta.enckeylen = transform->attr_keylen;
+				ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
+										     ta.encrypt);
+				pexpect(ta.encrypter != NULL); /* might fail for ESP/AH */
+				if (ta.encrypter != NULL && ta.enckeylen <= 0) {
+					ta.enckeylen = ta.encrypter->keydeflen;
 				}
 				break;
 			case IKEv2_TRANS_TYPE_PRF:
-				ta->prf_hash = transform->id;
-				ta->prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-										    ta->prf_hash);
-				passert(ta->prf_hasher != NULL);
+				ta.prf_hash = transform->id;
+				ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+										   ta.prf_hash);
+				passert(ta.prf_hasher != NULL);
 				break;
 			case IKEv2_TRANS_TYPE_INTEG:
 				if (transform->id == 0) {
 					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 				} else {
-					ta->integ_hash = transform->id;
-					ta->integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-											      ta->integ_hash);
-					passert(ta->integ_hasher != NULL);
+					ta.integ_hash = transform->id;
+					ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+											     ta.integ_hash);
+					passert(ta.integ_hasher != NULL);
 				}
 				break;
 			case IKEv2_TRANS_TYPE_DH:
-				ta->groupnum = transform->id;
-				ta->group = lookup_group(ta->groupnum);
+				ta.groupnum = transform->id;
+				ta.group = lookup_group(ta.groupnum);
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
-				/* not implemented, fall through */
+				DBG_log("ignoring ESN");
+				break;
 			default:
 				bad_case(type);
 			}
 		}
 	}
+	return ta;
+}
+
+bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
+				  struct ipsec_proto_info *proto_info)
+{
+	/*
+	 * Quick hack to convert much of the stuff.
+	 */
+	struct trans_attrs ta = ikev2_proposal_to_trans_attrs(proposal);
+
+	pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size);
+	memcpy(&proto_info->attrs.spi, proposal->remote_spi.bytes,
+	       sizeof(proto_info->attrs.spi));
+
+	/*
+	 * This is REALLY not correct, because this is not an IKE
+	 * algorithm
+	 *
+	 * XXX maybe we can leave this to ikev2 child key derivation
+	 */
+	DBG_log("XXX: All algorithms should be in our database, even when not implemented");
+	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
+		if (ta.encrypter != NULL) {
+			err_t ugh;
+			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
+			if (ugh != NULL) {
+				libreswan_log("ESP algo %d with key_len %d is not valid (%s)", ta.encrypt, ta.enckeylen, ugh);
+				/*
+				 * Only realising that the algorithm
+				 * is invalid now is pretty lame!
+				 */
+				return FALSE;
+			}
+		} else {
+			/*
+			 * We did not find a userspace encrypter, so
+			 * we should be esp=null or a kernel-only
+			 * algorithm without userland struct.
+			 */
+			switch(ta.encrypt) {
+			case IKEv2_ENCR_NULL:
+				break; /* ok */
+			case IKEv2_ENCR_CAST:
+				break; /* CAST is ESP only, not IKE */
+			case IKEv2_ENCR_AES_CTR:
+			case IKEv2_ENCR_CAMELLIA_CTR:
+			case IKEv2_ENCR_CAMELLIA_CCM_A:
+			case IKEv2_ENCR_CAMELLIA_CCM_B:
+			case IKEv2_ENCR_CAMELLIA_CCM_C:
+				/* no IKE struct encrypt_desc yet */
+				/* FALL THROUGH */
+			case IKEv2_ENCR_AES_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
+				/* these all have mandatory key length attributes */
+				if (ta.enckeylen == 0) {
+					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
+					return FALSE;
+				}
+				break;
+			default:
+				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter for %d - refusing proposal", ta.encrypt);
+				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
+				return FALSE;
+			}
+		}
+	}
+
+	/*
+	 * this is really a mess having so many different numbers for
+	 * auth algorithms.
+	 */
+	proto_info->attrs.transattrs = ta;
+
+	/*
+	 * here we obtain auth value for esp, but lose what is correct
+	 * to be sent in the proposal
+	 */
+	proto_info->attrs.transattrs.integ_hash = alg_info_esp_v2tov1aa(ta.integ_hash);
+	proto_info->present = TRUE;
+	proto_info->our_lastused = mononow();
+	proto_info->peer_lastused = mononow();
+
+	proto_info->attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL;
+
+	return TRUE;
 }
 
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
@@ -2763,67 +2850,6 @@ void free_ikev2_proposal(struct ikev2_proposal **proposal)
 	}
 	pfree(*proposal);
 	*proposal = NULL;
-}
-
-static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_proposal *chosen)
-{
-	if (chosen) {
-		return (struct ipsec_proto_info) {0};
-	} else {
-		return (struct ipsec_proto_info) {0};
-	}
-}
-
-stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
-					      struct alg_info_esp *alg_info_esp, lset_t policy,
-					      bool accepted,
-					      struct ipsec_proto_info *proto_info,
-					      const struct spd_route *spd_route,
-					      pb_stream *emit_pbs,
-					      enum next_payload_types_ikev2 next_payload_type)
-{
-	DBG_log("XXX: should cache proposals in st");
-	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(alg_info_esp, policy);
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
-	passert(proposals != NULL);
-
-	struct ikev2_proposal *chosen = NULL;
-	stf_status ret = ikev2_process_sa_payload(sa_payload,
-						  /*ike*/ FALSE,
-						  /*initial*/ FALSE,
-						  /*accepted*/ accepted,
-						  &chosen, proposals);
-
-	if (ret != STF_OK) {
-		passert(chosen == NULL);
-		free_ikev2_proposals(&proposals);
-		return ret;
-	}
-	passert(chosen != NULL);
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", chosen));
-
-	*proto_info = ikev2_internalize_espah_proposal(chosen);
-	if (emit_pbs != NULL) {
-		passert(proto_info != NULL);
-		passert(spd_route != NULL);
-		proto_info->our_spi = ikev2_esp_or_ah_spi(spd_route, policy);
-		chunk_t local_spi;
-		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-			 sizeof(proto_info->our_spi));
-		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, &local_spi,
-					    next_payload_type)) {
-			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
-			ret = STF_INTERNAL_ERROR;
-		}
-	}
-
-	/*
-	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
-	 * as the former point into the latter.
-	 */
-	free_ikev2_proposal(&chosen);
-	free_ikev2_proposals(&proposals);
-	return ret;
 }
 
 static void append_transform(struct ikev2_proposal *proposal,

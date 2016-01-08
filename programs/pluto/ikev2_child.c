@@ -1010,8 +1010,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	/* start of SA out */
-#if 1//#ifdef OLD_PROPOSALS
 	{
+#ifdef OLD_PROPOSALS
 		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
@@ -1026,30 +1026,58 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* SA body in and out */
 		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 						&r_sa_pbs, cst, FALSE);
+#else
+		enum next_payload_types_ikev2 next_payload_type =
+			(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
+			 ? ISAKMP_NEXT_v2Nr
+			 : ISAKMP_NEXT_v2TSi);
 
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(cst, c->policy);
+
+		DBG_log("XXX: should cache proposals in state or connection");
+		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(c->alg_info_esp, c->policy);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local ESP/AH", proposals));
+		passert(proposals != NULL);
+
+		struct ikev2_proposal *chosen = NULL;
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ FALSE,
+							  /*initial*/ FALSE,
+							  /*accepted*/ FALSE,
+							  &chosen, proposals);
+
+		if (ret == STF_OK) {
+			passert(chosen != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", chosen));
+			if (!ikev2_proposal_to_proto_info(chosen, proto_info)) {
+				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
+				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			} else {
+				proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+				chunk_t local_spi;
+				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+					 sizeof(proto_info->our_spi));
+				if (!ikev2_emit_sa_proposal(outpbs, chosen, &local_spi,
+							    next_payload_type)) {
+					DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+					ret = STF_INTERNAL_ERROR;
+				}
+			}
+			/*
+			 * NOTE: the CHOSEN proposals are released
+			 * before PROPOSALS, as the former point into
+			 * the latter.
+			 */
+			free_ikev2_proposal(&chosen);
+		}
+		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
+#endif
 		if (ret != STF_OK)
 			return ret;
 	}
-#else
-	enum next_payload_types_ikev2 next_payload_type =
-		(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
-		 ? ISAKMP_NEXT_v2Nr
-		 : ISAKMP_NEXT_v2TSi);
-
-	/* ??? this code won't support AH + ESP */
-	struct ipsec_proto_info *proto_info
-		= ikev2_esp_or_ah_proto_info(cst, c->policy);
-
-	ret = ikev2_process_esp_or_ah_sa_payload(&sa_pd->pbs,
-						 c->alg_info_esp,
-						 c->policy,
-						 /*accepted*/FALSE,
-						 proto_info, &c->spd,
-						 outpbs,
-						 next_payload_type);
-	if (ret != STF_OK)
-		return ret;
-#endif
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */

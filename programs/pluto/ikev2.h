@@ -100,21 +100,15 @@ bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
 			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
-stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
-					      struct alg_info_esp *alg_info_esp,
-					      lset_t policy, bool accepted,
-					      struct ipsec_proto_info *proto_info,
-					      const struct spd_route *spd_route,
-					      pb_stream *emit_pbs,
-					      enum next_payload_types_ikev2 next_payload_type);
-
 stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 				    bool ike, bool initial, bool accepted,
 				    struct ikev2_proposal **chosen,
 				    struct ikev2_proposals *local_proposals);
 
-void ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal,
-				    struct trans_attrs *trans_attrs);
+bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
+				  struct ipsec_proto_info *proto_info);
+
+struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen);
 
 struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
 

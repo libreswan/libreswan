@@ -482,7 +482,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			DBG_log("XXX: should cache proposals in st");
 			struct ikev2_proposals *proposals
 				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local IKE", proposals));
+			passert(proposals != NULL);
+
 			/*
 			 * Since this is an initial IKE exchange, the
 			 * SPI is emitted as is part of the packet
@@ -982,7 +984,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		DBG_log("XXX: should cache proposals in state or connection");
 		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local IKE", proposals));
 		passert(proposals != NULL);
 
 		DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here");
@@ -996,7 +998,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		if (ret == STF_OK) {
 			passert(chosen != NULL);
 			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", chosen));
-			ikev2_internalize_ike_proposal(chosen, &st->st_oakley);
+			st->st_oakley = ikev2_proposal_to_trans_attrs(chosen);
 			/*
 			 * Since this is the initial IKE exchange, the
 			 * SPI is emitted as part of the packet header
@@ -1368,7 +1370,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 #else
 		DBG_log("XXX: should cache proposals in STATE or CONNECTION");
 		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local IKE", proposals));
 		passert(proposals != NULL);
 
 		struct ikev2_proposal *chosen = NULL;
@@ -1379,7 +1381,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 							  &chosen, proposals);
 		if (ret == STF_OK) {
 			passert(chosen != NULL);
-			ikev2_internalize_ike_proposal(chosen, &st->st_oakley);
+			st->st_oakley = ikev2_proposal_to_trans_attrs(chosen);
 			/*
 			 * NOTE: the CHOSEN proposals are released
 			 * before PROPOSALS, as the former point into
@@ -2507,11 +2509,17 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
 		
+
+		DBG_log("XXX: should cache proposals in state or connection");
 		struct ikev2_proposals *proposals
 			= ikev2_proposals_from_alg_info_esp(cc->alg_info_esp,
 							    cc->policy);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local ESP/AH", proposals));
+		passert(proposals != NULL);
+
 		ikev2_emit_sa_proposals(&e_pbs_cipher, proposals,
 					&local_spi, ISAKMP_NEXT_v2TSi);
+
 		free_ikev2_proposals(&proposals);
 #endif
 
