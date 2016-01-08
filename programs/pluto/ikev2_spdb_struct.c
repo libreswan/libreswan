@@ -2038,6 +2038,27 @@ static bool print_string(struct print *buf, const char *string)
 	return TRUE;
 }
 
+static bool print_value(struct print *buf, const char *prefix, int value)
+{
+	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s%d", prefix, value);
+	if (n < 0 || buf->pos + n > sizeof(buf->buf))
+		return FALSE;
+	buf->pos += n;
+	return TRUE;
+}
+
+static bool print_name_value(struct print *buf, const char *prefix,
+			     const char *name, int value)
+{
+	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s%s(%d)", prefix, name, value);
+	if (n < 0 || buf->pos + n > sizeof(buf->buf))
+		return FALSE;
+	buf->pos += n;
+	return TRUE;
+}
+
 /*
  * Pretty print a single transform to the buffer.
  */
@@ -2045,16 +2066,14 @@ static bool print_transform(struct print *buf, const char *prefix,
 			    enum ikev2_trans_type type,
 			    struct ikev2_transform *transform)
 {
-	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s%s(%d)", prefix,
-			 enum_name(ikev2_transid_val_descs[type], transform->id),
-			 transform->id);
-	if (n < 0 || buf->pos + n > sizeof(buf->buf))
+	if (!print_name_value(buf, prefix,
+			      enum_name(ikev2_transid_val_descs[type],
+					transform->id),
+			      transform->id))
 		return FALSE;
-	buf->pos += n;
 	if (transform->attr_keylen > 0) {
-		n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			     "_%d", transform->attr_keylen);
+		int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "_%d", transform->attr_keylen);
 		if (n < 0 || buf->pos + n > sizeof(buf->buf))
 			return FALSE;
 		buf->pos += n;
@@ -2094,24 +2113,30 @@ static bool print_transforms(struct print *buf, const char *prefix,
 	return TRUE;
 }
 
-static bool print_protoid(struct print *buf, const char *prefix,
-			   enum ikev2_sec_proto_id protoid)
-{
-	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%sprotoid=%s(%d)", prefix,
-			 protoid_name(protoid), protoid);
-	if (n < 0 || buf->pos + n > sizeof(buf->buf))
-		return FALSE;
-	return TRUE;
-}
-
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
 	struct print buf = {0};
-	if (!print_protoid(&buf, "", proposal->protoid))
+	if (!print_name_value(&buf, "PROTOID=", protoid_name(proposal->protoid),
+			      proposal->protoid))
 		return;
-	DBG_log("XXX: print SPI and protonum");
+	if (proposal->propnum > 0) {
+		if (!print_value(&buf, " PROTONUM=", proposal->propnum))
+			return;
+	}
+	if (proposal->remote_spi.size > 0) {
+		if (!print_string(&buf, " SPI="))
+			return;
+		size_t i;
+		const char *sep = "[";
+		for (i = 0; i < proposal->remote_spi.size; i++) {
+			if (!print_value(&buf, sep, proposal->remote_spi.bytes[i]))
+				return;
+			sep = " ";
+		}
+		if (!print_string(&buf, "]"))
+			return;
+	}
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
@@ -2132,7 +2157,10 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		DBG_log("  proposal %d:", p);
 		struct ikev2_proposal *proposal = &proposals->proposal[p];
 		struct print buf0 = {0};
-		print_protoid(&buf0, "", proposal->protoid);
+		if (!print_name_value(&buf0, "protoid=",
+				      protoid_name(proposal->protoid),
+				      proposal->protoid))
+			break;
 		DBG_log("    %s", buf0.buf);
 		enum ikev2_trans_type type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
@@ -2665,7 +2693,6 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 			    chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type)
 {
-	DBG_log("XXX: emit-proposal-proposal should deal with SA header");
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal_proposal ..."));
 	passert(pbs != NULL);
 
@@ -2731,7 +2758,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				ta.group = lookup_group(ta.groupnum);
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
-				DBG_log("ignoring ESN");
+				DBG_log("XXX: ignoring ESN");
 				break;
 			default:
 				bad_case(type);
@@ -3256,7 +3283,7 @@ static struct ikev2_proposals default_ikev2_esp_or_ah_proposals = {
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
 {
-	DBG_log("XXX: esn ignored, always NO");
+	DBG_log("XXX: deal with esp=...");
 	if (alg_info_esp == NULL) {
 		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		switch (esp_eh) {
