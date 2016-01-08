@@ -251,3 +251,6 @@ The following are quirks in the test infrastructure:
 - simplify fips check
 
 - eliminate test results "incomplete" and "bad"
+
+- swan-transmogrify runs chcon -R testing/pluto, it should only run
+  that over the current test directory
