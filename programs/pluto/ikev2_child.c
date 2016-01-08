@@ -1010,7 +1010,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	/* start of SA out */
-#if 1 //#ifdef OLD_PROPOSALS
+#if 1//#ifdef OLD_PROPOSALS
 	{
 		struct ikev2_sa r_sa;
 		stf_status ret;

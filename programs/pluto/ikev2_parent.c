@@ -980,18 +980,43 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
-		/*
-		 * Since this is the initial IKE exchange, the SPI is
-		 * emitted as part of the packet header and not as
-		 * part of the proposal.  Hence the NULL SPI.
-		 */
-		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
-							      st->st_connection->alg_info_ike,
-							      /*accepted*/FALSE,
-							      &st->st_oakley,
-							      (chunk_t*)NULL,
-							      (chunk_t*)NULL,
-							      &md->rbody, next_payload_type);
+		DBG_log("XXX: should cache proposals in state or connection");
+		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		passert(proposals != NULL);
+
+		DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here");
+		struct ikev2_proposal *chosen = NULL;
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ TRUE,
+							  /*initial*/ TRUE,
+							  /*accepted*/ FALSE,
+							  &chosen, proposals);
+
+		if (ret == STF_OK) {
+			passert(chosen != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", chosen));
+			ikev2_internalize_ike_proposal(chosen, &st->st_oakley);
+			/*
+			 * Since this is the initial IKE exchange, the
+			 * SPI is emitted as part of the packet header
+			 * and not as part of the proposal.  Hence the
+			 * NULL SPI.
+			 */
+			if (!ikev2_emit_sa_proposal(&md->rbody, chosen, NULL,
+						    next_payload_type)) {
+				DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+				ret = STF_INTERNAL_ERROR;
+			}
+			/*
+			 * NOTE: the CHOSEN proposals are released
+			 * before PROPOSALS, as the former point into
+			 * the latter.
+			 */
+			free_ikev2_proposal(&chosen);
+		}
+		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
@@ -1341,13 +1366,29 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						NULL, st, TRUE);
 #else
-		stf_status ret = ikev2_process_ike_sa_payload(&sa_pd->pbs,
-							      st->st_connection->alg_info_ike,
-							      /*accepted*/TRUE,
-							      &st->st_oakley,
-							      (chunk_t*)NULL,
-							      (chunk_t*)NULL,
-							      NULL, 0);
+		DBG_log("XXX: should cache proposals in STATE or CONNECTION");
+		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
+		passert(proposals != NULL);
+
+		struct ikev2_proposal *chosen = NULL;
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ TRUE,
+							  /*initial*/ TRUE,
+							  /*accepted*/ TRUE,
+							  &chosen, proposals);
+		if (ret == STF_OK) {
+			passert(chosen != NULL);
+			ikev2_internalize_ike_proposal(chosen, &st->st_oakley);
+			/*
+			 * NOTE: the CHOSEN proposals are released
+			 * before PROPOSALS, as the former point into
+			 * the latter.
+			 */
+			free_ikev2_proposal(&chosen);
+		}
+		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
 #endif
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));

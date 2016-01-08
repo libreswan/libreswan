@@ -91,13 +91,14 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy);
 
-stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct alg_info_ike *alg_info_ike,
-					bool accepted,
-					struct trans_attrs *trans_attrs,
-					chunk_t *local_spi, chunk_t *remote_spi,
-					pb_stream *emit_pbs, /* if non-NULL, where to emit winning SA */
-					enum next_payload_types_ikev2 next_payload_type);
+bool ikev2_emit_sa_proposal(pb_stream *pbs,
+			    struct ikev2_proposal *proposal,
+			    chunk_t *local_spi,
+			    enum next_payload_types_ikev2 next_payload_type);
+
+bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
+			     chunk_t *local_spi,
+			     enum next_payload_types_ikev2 next_payload_type);
 
 stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
 					      struct alg_info_esp *alg_info_esp,
@@ -107,14 +108,13 @@ stf_status ikev2_process_esp_or_ah_sa_payload(pb_stream *sa_payload,
 					      pb_stream *emit_pbs,
 					      enum next_payload_types_ikev2 next_payload_type);
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs,
-			    struct ikev2_proposal *proposal,
-			    chunk_t *local_spi,
-			    enum next_payload_types_ikev2 next_payload_type);
+stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
+				    bool ike, bool initial, bool accepted,
+				    struct ikev2_proposal **chosen,
+				    struct ikev2_proposals *local_proposals);
 
-bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
-			     chunk_t *local_spi,
-			     enum next_payload_types_ikev2 next_payload_type);
+void ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal,
+				    struct trans_attrs *trans_attrs);
 
 struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
 

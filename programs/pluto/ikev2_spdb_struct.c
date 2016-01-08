@@ -2370,10 +2370,10 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
  * takes more comparisons.  Othe other and mallocing an pointer
  * jugging is avoided.
  */
-static stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
-					   bool ike, bool initial, bool accepted,
-					   struct ikev2_proposal **chosen,
-					   struct ikev2_proposals *local_proposals)
+stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
+				    bool ike, bool initial, bool accepted,
+				    struct ikev2_proposal **chosen,
+				    struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %d local proposals",
 				 local_proposals->nr));
@@ -2688,11 +2688,12 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal)
+void ikev2_internalize_ike_proposal(struct ikev2_proposal *proposal,
+				    struct trans_attrs *ta)
 {
 	DBG_log("XXX: internalize the proposal remote SPI");
-	DBG(DBG_CONTROL, DBG_log("internalizing proposal proposal"))
-	struct trans_attrs ta = {0};
+	DBG(DBG_CONTROL, DBG_log("internalizing proposal proposal"));
+	*ta = (struct trans_attrs) {0};
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
@@ -2700,35 +2701,35 @@ static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_proposal *
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR:
-				ta.encrypt = transform->id;
-				ta.enckeylen = transform->attr_keylen;
-				ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
-										     ta.encrypt);
-				passert(ta.encrypter != NULL);
-				if (ta.enckeylen <= 0) {
-					ta.enckeylen = ta.encrypter->keydeflen;
+				ta->encrypt = transform->id;
+				ta->enckeylen = transform->attr_keylen;
+				ta->encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
+										      ta->encrypt);
+				passert(ta->encrypter != NULL);
+				if (ta->enckeylen <= 0) {
+					ta->enckeylen = ta->encrypter->keydeflen;
 				}
 				break;
 			case IKEv2_TRANS_TYPE_PRF:
-				ta.prf_hash = transform->id;
-				ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-										   ta.prf_hash);
-				passert(ta.prf_hasher != NULL);
+				ta->prf_hash = transform->id;
+				ta->prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+										    ta->prf_hash);
+				passert(ta->prf_hasher != NULL);
 				break;
 			case IKEv2_TRANS_TYPE_INTEG:
 				if (transform->id == 0) {
 					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 				} else {
-					ta.integ_hash = transform->id;
-					ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-											     ta.integ_hash);
-					passert(ta.integ_hasher != NULL);
+					ta->integ_hash = transform->id;
+					ta->integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+											      ta->integ_hash);
+					passert(ta->integ_hasher != NULL);
 				}
 				break;
 			case IKEv2_TRANS_TYPE_DH:
-				ta.groupnum = transform->id;
-				ta.group = lookup_group(ta.groupnum);
+				ta->groupnum = transform->id;
+				ta->group = lookup_group(ta->groupnum);
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
 				/* not implemented, fall through */
@@ -2737,7 +2738,6 @@ static struct trans_attrs ikev2_internalize_ike_proposal(struct ikev2_proposal *
 			}
 		}
 	}
-	return ta;
 }
 
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
@@ -2763,57 +2763,6 @@ void free_ikev2_proposal(struct ikev2_proposal **proposal)
 	}
 	pfree(*proposal);
 	*proposal = NULL;
-}
-
-stf_status ikev2_process_ike_sa_payload(pb_stream *sa_payload,
-					struct alg_info_ike *alg_info_ike,
-					bool accepted,
-					struct trans_attrs *trans_attrs,
-					chunk_t *local_spi, chunk_t *remote_spi,
-					pb_stream *emit_pbs,
-					enum next_payload_types_ikev2 next_payload_type)
-{
-	DBG_log("XXX: should cache proposals in st");
-	struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(alg_info_ike);
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local", proposals));
-	passert(proposals != NULL);
-
-	struct ikev2_proposal *chosen = NULL;
-	stf_status ret = ikev2_process_sa_payload(sa_payload,
-						  /*ike*/ TRUE,
-						  /*initial*/ local_spi == NULL,
-						  /*accepted*/ accepted,
-						  &chosen, proposals);
-
-	if (ret != STF_OK) {
-		passert(chosen == NULL);
-		free_ikev2_proposals(&proposals);
-		return ret;
-	}
-	passert(chosen != NULL);
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", chosen));
-
-	*trans_attrs = ikev2_internalize_ike_proposal(chosen);
-	if (remote_spi) {
-		passert(remote_spi->len == chosen->remote_spi.size);
-		memcpy(remote_spi->ptr, chosen->remote_spi.bytes,
-		       remote_spi->len);
-	}
-	if (emit_pbs != NULL) {
-		if (!ikev2_emit_sa_proposal(emit_pbs, chosen, local_spi,
-					    next_payload_type)) {
-			DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
-			ret = STF_INTERNAL_ERROR;
-		}
-	}
-
-	/*
-	 * NOTE: the CHOSEN proposals are released before PROPOSALS,
-	 * as the former point into the latter.
-	 */
-	free_ikev2_proposal(&chosen);
-	free_ikev2_proposals(&proposals);
-	return ret;
 }
 
 static struct ipsec_proto_info ikev2_internalize_espah_proposal(struct ikev2_proposal *chosen)
