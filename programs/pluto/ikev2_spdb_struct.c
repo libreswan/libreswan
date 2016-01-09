@@ -3283,14 +3283,14 @@ static struct ikev2_proposals default_ikev2_esp_or_ah_proposals = {
 
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
 {
-	DBG_log("XXX: deal with esp=...");
 	if (alg_info_esp == NULL) {
 		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
+		struct ikev2_proposals *proposals;
 		switch (esp_eh) {
 		case POLICY_ENCRYPT:
-			return &default_ikev2_esp_proposals;
+			proposals = &default_ikev2_esp_proposals;
 		case POLICY_AUTHENTICATE:
-			return &default_ikev2_ah_proposals;
+			proposals = &default_ikev2_ah_proposals;
 		case POLICY_ENCRYPT|POLICY_AUTHENTICATE:
 			/*
 			 * For moment this function does not support
@@ -3304,9 +3304,108 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 		default:
 			bad_case(policy);
 		}
+		return proposals;
 	}
-	bad_case(policy);
-	return NULL;
+
+
+	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
+	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * alg_info_esp->ai.alg_info_cnt, "propsal");
+	proposals->on_heap = TRUE;
+
+	const struct esp_info *esp_info;
+	int ixxxx;
+	ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, ixxxx) {
+		DBG(DBG_CONTROL,
+		    char buf[1024];
+		    alg_info_snprint_esp_info(buf, sizeof(buf), esp_info);
+		    DBG_log("converting esp_info %s to ikev2 ...", buf));
+
+		unsigned protoid;
+		unsigned ealg;
+		unsigned ekeylen;
+		unsigned ekeylen2 = 0;
+		unsigned integ;
+
+		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+		case POLICY_ENCRYPT:
+			protoid = IKEv2_SEC_PROTO_ESP;
+
+			unsigned v1e = esp_info->transid;
+			if (!ESP_EALG_PRESENT((unsigned)v1e)) {
+				loglog(RC_LOG_SERIOUS, "requested kernel enc ealg_id=%d not present",
+				        v1e);
+				continue;
+			}
+			ealg = v1tov2_encr(esp_info->transid);
+
+			ekeylen = esp_info->enckeylen;
+			if (ekeylen == 0) {
+				/*
+				 * no key length - if required add
+				 * default here and add another max
+				 * entry
+				 */
+				ekeylen = crypto_req_keysize(CRK_ESPorAH,
+							     esp_info->transid);
+				if (ekeylen) {
+					ekeylen2 = BITS_PER_BYTE * kernel_alg_esp_enc_max_keylen(esp_info->transid);
+					if (ekeylen2 == ekeylen) {
+						ekeylen2 = 0; /* not unique */
+					}
+				}
+			}
+			
+			/* add ESP auth attr (if present) */
+			if (esp_info->auth == AUTH_ALGORITHM_NONE) {
+				integ = 0;
+			} else {
+				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
+				if (!ESP_AALG_PRESENT(aalg)) {
+					loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
+					       aalg);
+					continue;
+				}
+				integ = v1tov2_integ(esp_info->auth);
+			}
+			break;
+
+		case POLICY_AUTHENTICATE:
+			protoid = IKEv2_SEC_PROTO_AH;
+
+			ealg = ekeylen = 0; /* no encryption */
+			int aalg = alg_info_esp_aa2sadb(esp_info->auth);
+			if (!ESP_AALG_PRESENT(aalg)) {
+				loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
+				       aalg);
+				continue;
+			}
+			integ = v1tov2_integ(esp_info->auth);
+			break;
+
+		default:
+			bad_case(policy);
+
+		}
+
+		/* FAB, allocate and create the proposal. */
+		struct ikev2_proposal *proposal = &proposals->proposal[proposals->nr++];
+		proposal->protoid = protoid;
+		if (ealg != 0) {
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen);
+			if (ekeylen2 != 0) {
+				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen2);
+			}
+		}
+		if (integ != 0) {
+			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
+		}
+		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_DISABLED, 0);
+
+		DBG(DBG_CONTROL,
+		    DBG_log_ikev2_proposal("... ", proposal));		
+	}
+
+	return proposals;
 }
 
 
