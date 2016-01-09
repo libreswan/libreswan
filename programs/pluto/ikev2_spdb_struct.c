@@ -3314,7 +3314,13 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 				        v1e);
 				continue;
 			}
-			ealg = v1tov2_encr(esp_info->transid);
+
+			/* IANA ikev1 / ipsec-v3 fixup */
+			if (esp_info->transid == IKEv2_ENCR_CAMELLIA_CBC_ikev1) {
+				ealg = IKEv2_ENCR_CAMELLIA_CBC;
+			} else {
+				ealg = esp_info->transid;
+			}
 
 			ekeylen = esp_info->enckeylen;
 			if (ekeylen == 0) {
