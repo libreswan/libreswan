@@ -1742,13 +1742,10 @@
 
           <listitem>
             <para>There should be Perfect Forward Secrecy - new keying
-            material will be generated for each IPsec SA rather than being
-            derived from the ISAKMP SA keying material. Since the group to be
-            used cannot be negotiated (a dubious feature of the standard),
-            <emphasis remap="B">pluto</emphasis> will propose the same group
-            that was used during Phase 1. We don't implement a stronger form
-            of PFS which would require that the ISAKMP SA be deleted after the
-            IPSEC SA is negotiated.</para>
+            material will be generated for each IPsec SA when running Quick Mode in IKEv1
+            or Create Child in IKEv2. Without this option, the SAKMP SA keying material is
+            used instead.  <emphasis remap="B">pluto</emphasis> will propose the same group
+            that was used with the original IKE SA. </para>
           </listitem>
         </varlistentry>
 
