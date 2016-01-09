@@ -3261,26 +3261,6 @@ static struct ikev2_proposals default_ikev2_ah_proposals = {
 	.nr = elemsof(default_ikev2_ah_proposal),
 };
 
-#if 0
-static struct ikev2_proposal default_ikev2_esp_or_ah_proposal[] = {
-#if 0 /* PROTO_IPSEC_AH */
-	{ AD_TR(AH_SHA, ah_HMAC_SHA1_attr) }, static struct db_attr ah_HMAC_SHA1_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
-	};
-	{ AD_TR(AH_MD5, ah_HMAC_MD5_attr) }, static struct db_attr ah_HMAC_MD5_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
-	};
-#endif
-#if 0 /* PROTO_IPSEC_ESP */
-	{ .transid = ESP_3DES, .attrs = NULL },
-#endif
-};
-static struct ikev2_proposals default_ikev2_esp_or_ah_proposals = {
-	.proposal = default_ikev2_esp_or_ah_proposal,
-	.nr = elemsof(default_ikev2_esp_or_ah_proposal),
-};
-#endif
-
 struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
 {
 	if (alg_info_esp == NULL) {
@@ -3289,18 +3269,16 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 		switch (esp_eh) {
 		case POLICY_ENCRYPT:
 			proposals = &default_ikev2_esp_proposals;
+			break;
 		case POLICY_AUTHENTICATE:
 			proposals = &default_ikev2_ah_proposals;
+			break;
 		case POLICY_ENCRYPT|POLICY_AUTHENTICATE:
 			/*
 			 * For moment this function does not support
 			 * AH+ESP.  Assert the assumption.
 			 */
-#if 0
-			return &default_ikev2_esp_or_ah_proposals;
-#else
 			bad_case(policy);
-#endif
 		default:
 			bad_case(policy);
 		}
