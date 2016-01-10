@@ -2723,7 +2723,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		struct ikev2_transforms *transforms = &proposal->transforms[type];
 		pexpect(transforms->nr <= 1);
-		if (transforms->nr == 1) {
+		if (transforms->nr > 0) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR:
@@ -2731,16 +2731,26 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				ta.enckeylen = transform->attr_keylen;
 				ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
 										     ta.encrypt);
-				pexpect(ta.encrypter != NULL); /* might fail for ESP/AH */
-				if (ta.encrypter != NULL && ta.enckeylen <= 0) {
-					ta.enckeylen = ta.encrypter->keydeflen;
+				if (ta.encrypter == NULL) {
+					/* everything should be in alg_info.  */
+					DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, missing algorithm, hopefully ESP/AH", ta.encrypt));
 				}
-				break;
+				if (ta.enckeylen <= 0) {
+					if (ta.encrypter != NULL) {
+						ta.enckeylen = ta.encrypter->keydeflen;
+					} else {
+						DBG(DBG_CONTROL, DBG_log("XXX: unknown key size for ENCRYPT algorithm %d", ta.encrypt));
+					}
+				}
+			break;
 			case IKEv2_TRANS_TYPE_PRF:
 				ta.prf_hash = transform->id;
 				ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
 										   ta.prf_hash);
-				passert(ta.prf_hasher != NULL);
+				if (ta.prf_hasher == NULL) {
+					/* everything should be in alg_info.  */
+					DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_HASH,%d) failed, missing algorithm, hopefully ESP/AH", ta.prf_hash));
+				}
 				break;
 			case IKEv2_TRANS_TYPE_INTEG:
 				if (transform->id == 0) {
@@ -2750,15 +2760,23 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					ta.integ_hash = transform->id;
 					ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
 											     ta.integ_hash);
-					passert(ta.integ_hasher != NULL);
+					if (ta.integ_hasher == NULL) {
+						/* everything should be in alg_info.  */
+						DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_INTEG,%d) failed, missing algorithm, hopefully ESP/AH", ta.integ_hash));
+					}
 				}
 				break;
 			case IKEv2_TRANS_TYPE_DH:
 				ta.groupnum = transform->id;
 				ta.group = lookup_group(ta.groupnum);
+				if (ta.group == NULL) {
+					/* everything should be in alg_info.  */
+					DBG(DBG_CONTROL, DBG_log("XXX: lookup_group(%d) failed, missing algorithm, hopefully ESP/AH", ta.integ_hash));
+				}
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
-				DBG_log("XXX: ignoring ESN");
+				DBG(DBG_CONTROL, DBG_log("XXX: assuming ESN disabled"));
+				pexpect(transform->id == IKEv2_ESN_DISABLED);
 				break;
 			default:
 				bad_case(type);
