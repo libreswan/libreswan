@@ -171,13 +171,12 @@ kvm-keys-up-to-date:
 	fi
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
-	: always remove old keys - create xxx/ so */ always works
-	mkdir -p testing/x509/xxx/ && rm -r testing/x509/*/
+	$(MAKE) clean-kvm-keys
 	$(KVM_KEYS_SCRIPT) east testing/x509
 	touch $(KVM_KEYS)
 
 clean-kvm-keys:
-	rm -rf testing/x509/*/
+	rm -rf testing/x509/*/ testing/x509/nss-pw
 
 
 #
