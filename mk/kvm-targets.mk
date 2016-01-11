@@ -56,13 +56,15 @@ define kvm-make
 		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"'
 endef
 
-# Standard make targets; just mirror the local target names.  Most
-# things get run on "east", but module gets run on west!
-
-KVM_BUILD_TARGETS = kvm-all kvm-base clean-kvm kvm-manpages clean-kvm-base clean-kvm-manpages kvm-distclean kvm-module
+# Standard make targets; just mirror the local target names.
+# Everything is run on $(KVM_BUILD_DOMAIN).
+KVM_BUILD_TARGETS = kvm-all kvm-base clean-kvm-base kvm-manpages clean-kvm-manpages kvm-module kvm-clean kvm-distclean
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
-	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
+	$(call kvm-make, $(patsubst clean-kvm-%,clean-%,$(patsubst kvm-%,%,$@)), $(KVM_BUILD_DOMAIN))
+.PHONY: clean-kvm distclean-kvm
+clean-kvm: kvm-clean
+distclean-kvm: kvm-distclean
 
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
