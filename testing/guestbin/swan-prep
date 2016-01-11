@@ -126,7 +126,7 @@ if os.path.isfile("/var/log/audit/audit.log"):
 	fp = open("/var/log/audit/audit.log","w")
 	fp.close()
 	if os.path.isfile("/lib/systemd/system/auditd.service"):
-		commands.getoutput("/usr/bin/systemctl auditd restart")
+		commands.getoutput("/usr/bin/systemctl restart auditd.service")
 
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
