@@ -325,6 +325,8 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
+	"ESN_NO",
+	"ESN_YES",
 	NULL	/* end for bitnamesof() */
 };
 

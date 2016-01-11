@@ -28,6 +28,7 @@ d.ipsec.conf/ah.xml
 d.ipsec.conf/fragmentation.xml
 d.ipsec.conf/ikepad.xml
 d.ipsec.conf/ikev2.xml
+d.ipsec.conf/esn.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml
 d.ipsec.conf/leftid.xml
