@@ -200,6 +200,8 @@ def log_arguments(logger, args):
     logger.info("  test-exclude: '%s'" , args.test_exclude.pattern)
 
 
+def is_test_directory(directory):
+    return os.path.exists(os.path.join(directory, "description.txt")) or os.path.exists(os.path.join(directory, "eastinit.sh"))
 
 TESTLIST = "TESTLIST"
 
@@ -209,6 +211,13 @@ def load(logger, directory, args,
          error_level=logutil.ERROR):
     """Load the testsuite (TESTLIST) found in DIRECTORY"""
 
+    # Is DIRECTORY a simple test?  Exclude this before considering
+    # others.  If the directory contains "description.txt" or
+    # "eastinit.sh" then its a simple test.
+    if is_test_directory(directory):
+        logger.debug("'%s' looks like a single test", directory)
+        return None
+
     # Is DIRECTORY a testsuite?  For instance: testing/pluto.
     testlist = os.path.join(directory, TESTLIST)
     if os.path.exists(testlist):
@@ -217,14 +226,9 @@ def load(logger, directory, args,
                          testing_directory=args.testing_directory,
                          testsuite_output_directory=testsuite_output_directory)
 
-    # Is DIRECTORY a testsuite sub-directory containing testsuite
-    # results?  For instance: testing/pluto/OUTPUT.  Exclude the
-    # possibility that the sub-directory is a single test (i.e.,
-    # "testing/pluto/<test>") by checking that the file
-    # description.txt is absent.
+    # Is DIRECTORY some other sub-directory of a testsuite?
     testlist = os.path.join(directory, "..", TESTLIST)
-    if os.path.exists(testlist) \
-    and not os.path.exists(os.path.join(directory, "description.txt")):
+    if os.path.exists(testlist):
         logger.debug("'%s' is an output sub-directory under a testsuite", directory)
         return Testsuite(logger, testlist, error_level,
                          testing_directory=args.testing_directory,
@@ -263,11 +267,11 @@ def load_testsuite_or_tests(logger, directories, args,
         # contains a test, and an old-output directory that contains
         # test output (hopefully, for the latter, there is a test
         # directory close by).
-        if os.path.exists(os.path.join(directory, "description.txt")):
-            # easy case, directory is a test
+        if is_test_directory(directory):
+            # easy case, directory is a single test
             logger.debug("'%s' matches <test> - a test directory", directory)
             test_directory = directory
-        elif os.path.exists(os.path.join(directory, "..", "description.txt")):
+        elif is_test_directory(os.path.join(directory, "..")):
             # DIRECTORY is a sub-directory of a test so, presumably,
             # it contains old test output.  Note that the test for the
             # path DIRECTORY/.. only works when DIRECTORY exists.  See
@@ -276,7 +280,7 @@ def load_testsuite_or_tests(logger, directories, args,
             saved_test_output_directory = directory
             test_directory = os.path.join(directory, "..")
         elif os.path.basename(directory).startswith("OUTPUT") \
-        and os.path.exists(os.path.join(os.path.dirname(directory), "description.txt")):
+        and is_test_directory(os.path.dirname(directory)):
             # DIRECTORY doesn't exist, yet it really really looks like
             # a test output sub-directory (if DIRECTORY did exist the
             # earlier test would have succeeded).  The sequence:
@@ -290,7 +294,7 @@ def load_testsuite_or_tests(logger, directories, args,
             saved_test_output_directory = directory
             test_directory = os.path.dirname(directory)
         elif os.path.exists(os.path.join(directory, "..", "..", TESTLIST)) \
-        and os.path.exists(os.path.join(directory, "..", "..", os.path.basename(directory), "description.txt")):
+        and is_test_directory(os.path.join(directory, "..", "..", os.path.basename(directory))):
             # DIRECTORY is old saved test output under a testsuite
             # sub-directory.  The sequence:
             #
