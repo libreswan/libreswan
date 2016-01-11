@@ -35,8 +35,11 @@ def main():
 
     # This argument's behaviour is overloaded; the shorter word "try"
     # is a python word.
-    parser.add_argument("--retry", type=int, metavar="COUNT",
-                        help="number of times a test should be attempted before giving up (tests are categorised as not-started (no OUTPUT directory), incomplete, failed, passed); a negative %(metavar)s selects all tests; a zero %(metavar)s selects not-started tests; a positive %(metavar)s selects not-started, incomplete and failing tests; default is to select not-started tests")
+    parser.add_argument("--retry", type=int, metavar="COUNT", default=1,
+                        help="which previously run tests should be retried: 0 selects not-started tests; 1 selects not-started+failed tests; -1 selects not-started+failed+passed tests (default is %(default)s)")
+    parser.add_argument("--attempts", type=bool, default=1,
+                        help="number of times to attempt a test before giving up; default %(default)s")
+
     parser.add_argument("--dry-run", "-n", action="store_true")
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--output-directory", default=None, metavar="DIRECTORY",
@@ -53,7 +56,8 @@ def main():
 
     logger = logutil.getLogger("kvmrunner")
     logger.info("Options:")
-    logger.info("  retry: %s", args.retry or "0 (default)")
+    logger.info("  retry: %s", args.retry)
+    logger.info("  attempts: %s", args.attempts)
     logger.info("  dry-run: %s", args.dry_run)
     logger.info("  output-directory: %s", args.output_directory or "<testsuite>/<test>/OUTPUT (default)")
     logger.info("  directories: %s", args.directories)
@@ -68,12 +72,6 @@ def main():
     if not tests:
         logger.error("test or testsuite directory invalid: %s", args.directories)
         return 1
-
-    # A list of test directories was specified (i.e, not a testsuite),
-    # then force the tests to run.
-    if isinstance(tests, list) and args.retry is None:
-        args.retry = 1;
-        logger.info("Explicit directory list; forcing --retry=%d (retry failed tests)", args.retry)
 
     test_stats = stats.Tests()
     result_stats = stats.Results()
@@ -104,18 +102,18 @@ def main():
             # the test is always run; if there's no result, the test
             # is always run; skip passed tests; else things get a
             # little wierd.
-            retry = args.retry or 0
+
             # Be lazy with gathering the results, don't run the
             # sanitizer or diff.
             old_result = post.mortem(test, args, skip_diff=True, skip_sanitize=True)
-            if retry >= 0:
+            if args.retry >= 0:
                 if old_result:
                     if old_result.passed:
                         logger.info("%s: passed", test_prefix)
                         test_stats.add("skipped", test)
                         result_stats.add_skip(old_result)
                         continue
-                    if retry == 0:
+                    if args.retry == 0:
                         logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
                                     result, test.output_directory)
                         test_stats.add("skipped", test)
@@ -131,8 +129,7 @@ def main():
 
             # At least one iteration; above will have filtered out
             # skips and ignores
-            attempts = max(abs(retry), 1)
-            for attempt in range(attempts):
+            for attempt in range(args.attempts):
                 test_stats.add("attempts", test)
 
                 # On first attempt (attempt == 0), empty the
@@ -180,7 +177,7 @@ def main():
                 # timing for this specific test attempt.
                 with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
                     logger.info("****** test %s attempt %d of %d started at %s ******",
-                                test.name, attempt+1, attempts, datetime.now())
+                                test.name, attempt+1, args.attempts, datetime.now())
 
                     ending = "undefined"
                     try:
