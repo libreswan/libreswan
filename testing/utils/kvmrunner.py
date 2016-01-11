@@ -193,7 +193,7 @@ def main():
                         os.mkdir(test.output_directory)
                     except FileExistsError:
                         saved_output_directory = os.path.join(test.output_directory, str(attempt))
-                        logger.info("emptying directory '%s'", saved_output_directory)
+                        logger.info("emptying directory '%s'", test.output_directory)
                         for name in os.listdir(test.output_directory):
                             src = os.path.join(test.output_directory, name)
                             if attempt == 0:
