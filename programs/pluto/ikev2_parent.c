@@ -2976,7 +2976,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("has a v2CERTREQ payload; going to decode it"));
-		ikev2_decode_cr(md, &st->requested_ca);
+		ikev2_decode_cr(md, &st->st_requested_ca);
 	}
 
 	/* process AUTH payload now */

@@ -2745,7 +2745,7 @@ struct connection *refine_host_connection(const struct state *st,
 		peer_pathlen = 0,
 		best_peer_pathlen = 0;
 	const chunk_t *psk = NULL;
-	generalName_t *requested_ca = st->requested_ca;
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	*fromcert = FALSE;
 

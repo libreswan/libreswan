@@ -1094,7 +1094,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 
 	/* check for certificate requests */
-	ikev2_decode_cr(md, &st->requested_ca);
+	ikev2_decode_cr(md, &st->st_requested_ca);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
