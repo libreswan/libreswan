@@ -1059,9 +1059,11 @@ bool ikev2_decode_cert(struct msg_digest *md)
  *  treat such payloads as synonymous with "X.509 Certificate -
  *  Signature".
  */
-void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev1_decode_cr(struct msg_digest *md)
 {
 	struct payload_digest *p;
+	struct state *st = md->st;
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	for (p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next) {
 		struct isakmp_cr *const cr = &p->payload.cr;
@@ -1084,8 +1086,8 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 				clonetochunk(gn->name, ca_name.ptr, ca_name.len,
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = *requested_ca;
-				*requested_ca = gn;
+				gn->next = requested_ca;
+				requested_ca = gn;
 			}
 
 			DBG(DBG_X509 | DBG_CONTROL, {
@@ -1109,20 +1111,23 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
  * This needs to handle the SHA-1 hashes instead. However, receiving CRs
  * does nothing ATM.
  */
-void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev2_decode_cr(struct msg_digest *md)
 {
 	struct payload_digest *p;
+	struct state *st = md->st;
+
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	for (p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next) {
 		struct ikev2_certreq *const cr = &p->payload.v2certreq;
 		chunk_t ca_name;
 
-		ca_name.len = pbs_left(&p->pbs);
-		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
+		switch(cr->isacertreq_enc) {
+		case CERT_X509_SIGNATURE:
 
-		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
-
-		if (cr->isacertreq_enc == CERT_X509_SIGNATURE) {
+			ca_name.len = pbs_left(&p->pbs);
+			ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
+			DBG_cond_dump_chunk(DBG_X509, "CERT_X509_SIGNATURE CR:", ca_name);
 
 			if (ca_name.len > 0) {
 				generalName_t *gn;
@@ -1135,19 +1140,29 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->name = ca_name;
-				gn->next = *requested_ca;
-				*requested_ca = gn;
+				gn->next = requested_ca;
+				requested_ca = gn;
 			}
 
-			DBG(DBG_X509 | DBG_CONTROL, {
+			DBG(DBG_X509, {
 					char buf[IDTOA_BUF];
 					dntoa_or_null(buf, IDTOA_BUF, ca_name,
 						"%any");
 					DBG_log("requested CA: '%s'", buf);
 				});
-		} else {
+			break;
+#ifdef USE_GSSAPI
+		case CERT_KERBEROS_TOKENS:
+			if ((st->st_connection->policy & POLICY_GSSAPI) == LEMPTY) {
+				DBG(DBG_CONTROL, DBG_log("Ignoring CERTREQ payload of type GSS token for non-kerberos connection"));
+				continue;
+			}
+			libreswan_log("CERTREQ: GSS Token received: need to handle it");
+			break;
+#endif
+		default:
 			loglog(RC_LOG_SERIOUS,
-				"ignoring %s certificate request payload",
+				"ignoring CERTREQ payload of unsupported type %s",
 				enum_show(&ikev2_cert_type_names,
 					cr->isacertreq_enc));
 		}
@@ -1364,6 +1379,23 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs)
 {
+#ifdef USE_GSSAPI
+	if (st->st_connection->policy & POLICY_GSSAPI) {
+		chunk_t token;
+
+		/* XXX placeholder code */
+		token.ptr = alloc_bytes(10, "fake GSS token");
+		token.len = 10;
+
+		if (!ikev2_build_and_ship_CR(CERT_KERBEROS_TOKENS,
+			token, outpbs, np)) {
+			return STF_INTERNAL_ERROR;
+		} else {
+			return STF_OK;
+		}
+	}
+#endif
+
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_X509,
 		    DBG_log("connection->kind is CK_PERMANENT so send CERTREQ"));

@@ -1139,9 +1139,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		close_output_pbs(&pb);
 	}
 
-	/* decide to send a CERTREQ */
-	send_certreq = (c->policy & POLICY_RSASIG) &&
-		!has_preloaded_public_key(st);
+	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
+	send_certreq = (((c->policy & POLICY_RSASIG) &&
+		!has_preloaded_public_key(st))
+#ifdef USE_GSSAPI
+	 || (c->policy & POLICY_GSSAPI)
+#endif
+		);
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
@@ -2975,8 +2979,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("has a v2CERTREQ payload; going to decode it"));
-		ikev2_decode_cr(md, &st->st_requested_ca);
+		    DBG_log("received CERTREQ payload; going to decode it"));
+		ikev2_decode_cr(md);
 	}
 
 	/* process AUTH payload now */

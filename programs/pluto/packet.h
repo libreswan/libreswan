@@ -879,7 +879,7 @@ struct ikev2_cert {
 #define IKEV2_CERT_SIZE		5
 extern struct_desc ikev2_certificate_desc;
 
-/* rfc4306 section 3.6 CERTREQ Payload */
+/* RFC-7296 section 3.10 CERTREQ Payload */
 struct ikev2_certreq {
 	u_int8_t isacertreq_np;		/* Next payload */
 	u_int8_t isacertreq_critical;

@@ -397,7 +397,6 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	bool send_cr = FALSE;
 	bool send_authcerts = FALSE;
 	bool send_full_chain = FALSE;
-	generalName_t *requested_ca = NULL;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	int auth_payload;
 	cert_t mycert = st->st_connection->spd.this.cert;
@@ -415,9 +414,9 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md);
 
-	if (requested_ca != NULL)
+	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	/*
@@ -464,7 +463,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 * free collected certificate requests since as initiator
 	 * we don't heed them anyway
 	 */
-	free_generalNames(requested_ca, TRUE);
+	free_generalNames(st->st_requested_ca, TRUE);
 
 	/* done parsing; initialize crypto  */
 

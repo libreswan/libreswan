@@ -2830,7 +2830,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			auth_policy |=  POLICY_AGGRESSIVE;
 
 		/* check for certificate requests */
-		ikev1_decode_cr(md, &st->st_requested_ca);
+		ikev1_decode_cr(md);
 
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
 			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);

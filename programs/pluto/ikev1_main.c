@@ -1175,7 +1175,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &st->st_requested_ca);
+	ikev1_decode_cr(md);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1422,7 +1422,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	bool send_authcerts = FALSE;
 	bool send_full_chain = FALSE;
 	bool initial_contact = FALSE;
-	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
@@ -1431,9 +1430,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md);
 
-	if (requested_ca != NULL)
+	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	/*
@@ -1484,7 +1483,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * note: when we are able to ship based on the request
 	 * contents, we'll need them then.
 	 */
-	free_generalNames(requested_ca, TRUE);
+	free_generalNames(st->st_requested_ca, TRUE);
 
 	/*
 	 * Determine if we need to send INITIAL_CONTACT payload

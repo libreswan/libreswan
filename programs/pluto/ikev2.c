@@ -1093,8 +1093,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (!ikev2_decode_cert(md))
 		return FALSE;
 
-	/* check for certificate requests */
-	ikev2_decode_cr(md, &st->st_requested_ca);
+	/* process any CERTREQ payloads */
+	ikev2_decode_cr(md);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
