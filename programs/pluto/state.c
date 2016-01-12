@@ -893,6 +893,8 @@ void delete_state(struct state *st)
 
 	clear_dh_from_state(st);
 
+	free_generalNames(st->st_requested_ca, TRUE);
+
 	freeanychunk(st->st_firstpacket_me);
 	freeanychunk(st->st_firstpacket_him);
 	freeanychunk(st->st_tpacket);

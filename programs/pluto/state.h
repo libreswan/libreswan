@@ -38,6 +38,7 @@
 
 #include <nss.h>
 #include <pk11pub.h>
+#include <x509.h>
 
 #ifdef XAUTH_HAVE_PAM
 # include <signal.h>
@@ -480,6 +481,7 @@ struct state {
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
+	generalName_t *st_requested_ca;	/* collected certificate requests */
 };
 
 /* global variables */

@@ -338,8 +338,6 @@ void delete_connection(struct connection *c, bool relations)
 		sr = next_sr;
 	}
 
-	free_generalNames(c->requested_ca, TRUE);
-
 #ifdef USE_ADNS
 	if ((c->policy & POLICY_AUTH_NULL) == LEMPTY)
 		gw_delref(&c->gw_info);
@@ -2747,6 +2745,7 @@ struct connection *refine_host_connection(const struct state *st,
 		peer_pathlen = 0,
 		best_peer_pathlen = 0;
 	const chunk_t *psk = NULL;
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	*fromcert = FALSE;
 
@@ -2766,7 +2765,7 @@ struct connection *refine_host_connection(const struct state *st,
 		peer_ca.ptr != NULL &&
 		trusted_ca_nss(peer_ca, c->spd.that.ca, &peer_pathlen) &&
 		peer_pathlen == 0 &&
-		match_requested_ca(c->requested_ca, c->spd.this.ca,
+		match_requested_ca(requested_ca, c->spd.this.ca,
 				&our_pathlen) &&
 		our_pathlen == 0) {
 
@@ -2830,7 +2829,7 @@ struct connection *refine_host_connection(const struct state *st,
 					&wildcards);
 			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
 						&peer_pathlen);
-			bool match3 = match_requested_ca(c->requested_ca,
+			bool match3 = match_requested_ca(requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
 

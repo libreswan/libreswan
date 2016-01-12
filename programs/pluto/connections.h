@@ -288,7 +288,6 @@ struct connection {
 
 	struct connection *ac_next;	/* all connections list link */
 
-	generalName_t *requested_ca;	/* collected certificate requests */
 	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t *pamh;		/*  PAM handle for that connection  */
