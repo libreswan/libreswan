@@ -1175,9 +1175,9 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &st->st_connection->requested_ca);
+	ikev1_decode_cr(md, &st->requested_ca);
 
-	if (st->st_connection->requested_ca != NULL)
+	if (st->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	ikev1_natd_init(st, md);
