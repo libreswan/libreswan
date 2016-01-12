@@ -1,5 +1,119 @@
 Overview
---------
+========
+
+This directory contains the new build and test framework that is
+gradually being merged into the existing build environment.
+
+The first section of this README describes how to use this framework.
+Following sections get into more technical detail.
+
+Just keep in mind that some is experimental.
+
+
+Building and testing - mk/kvm-targets.mk
+----------------------------------------
+
+mk/kvm-targets.mk implements an alternative to "make check" for using
+KVM to build and test libreswan.
+
+
+Setting up virtual machines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This requires two steps:
+
+    make kvm-networks
+    make kvm-domains
+
+To build an individual domain use the target "kvm-domain-east" for
+instance.  To delete the domains or networks use the targets
+"clean-kvm-domains" and "clean-kvm-networks".
+
+(This replaces the script ./testing/libvirt/install.sh)
+
+
+Logging into a domain
+~~~~~~~~~~~~~~~~~~~~~
+
+To get a shell prompt on a domain, such as east, use:
+
+    ./testing/utils/kvmsh.py east
+
+
+Installing libreswan
+~~~~~~~~~~~~~~~~~~~~
+
+Use:
+
+    make kvm-install
+
+To install/update a single domain use a target like
+"kvm-install-east".  To clean the build directory use "clean-kvm".
+
+(This replaces something like "make check UPDATEONLY=1")
+
+
+Creating test keys
+~~~~~~~~~~~~~~~~~~
+
+The tests requires custom keys.  They can be generated, using a test
+domain, with:
+
+    make kvm-keys
+
+Please note that they are not currently automatically re-generated
+(this is because of concern that critical keys may accidently be
+deleted).  To manually re-build the keys use "make clean-kvm-keys
+kvm-keys".
+
+(This replaces directly running scripts in testing/x509 directory)
+
+
+Running the tests
+~~~~~~~~~~~~~~~~~
+
+There are two targets available for running the testsuite.  The
+difference is in how previously run tests are handled.
+
+- run tests unconditionally:
+
+      make kvm-test
+
+  This target is best suited for the iterative build test cycle where
+  a limited set of tests need to be run.  For instance, to update the
+  domain east with the latest changes and then run a subset of tests,
+  use:
+
+      make kvm-install-east kvm-test KVM_TESTS=testing/pluto/ikev2-algo-*
+
+- to run tests that haven't passed (i.e, un-tested and failed tests):
+
+      make kvm-check
+
+  This target is best suited for running or updating the entire
+  testsuite.  For instance, because some tests fail intermittently, a
+  second kvm-check will likely improve the test results.
+
+(This replaces and better focuses the functionality found in "make
+check" and the script testing/utils/swantest.)
+
+(If you forget to run kvm-keys it doesn't matter, both kvm-test and
+kvm-check depend on the kvm-keys target.)
+
+
+Examining test results
+~~~~~~~~~~~~~~~~~~~~~~
+
+The script kvmresults can be used to examine the results from the
+current test run:
+
+    ./testing/utils/kvmresults.py testing/pluto
+
+(even while the testsuite is still running) and compare the results
+with an earlier baseline vis:
+
+    ./testing/utils/kvmresults.py testing/pluto ../saved-testing-pluto-directory
+
 
 Where is this code going?
 -------------------------
@@ -137,3 +251,6 @@ The following are quirks in the test infrastructure:
 - simplify fips check
 
 - eliminate test results "incomplete" and "bad"
+
+- swan-transmogrify runs chcon -R testing/pluto, it should only run
+  that over the current test directory

@@ -167,47 +167,52 @@ def main():
             for attempt in range(attempts):
                 stats.add("attempts", test)
 
-                # Create an output directory.  If there's already an
-                # existing OUTPUT directory copy its contents to:
+                # On first attempt (attempt == 0), empty the
+                # <test>/OUTPUT/ directory of all contents.  On
+                # subsequent attempts, move the files from the
+                # previous attempt to <test>/OUTPUT/<attempt>/.
                 #
-                #     OUTPUT/YYYYMMDDHHMMSS.ATTEMPT
+                # XXX: Don't just delete the OUTPUT/ directory as
+                # this, for a short period, changes the status of the
+                # test to never-run.
                 #
-                # so, when re-running, earlier attempts are saved.  Do
-                # this before the OUTPUT/debug.log is started so that
-                # each test attempt has its own log, and otherwise, it
-                # too would be moved away.
-                saved_output_directory = None
-                saved_output = []
+                # XXX: During boot, swan-transmogrify runs "chcon -R
+                # testing/pluto".  Of course this means that each time
+                # a test is added and/or a test is run (adding files
+                # under <test>/OUTPUT), the boot process (and
+                # consequently the time taken to run a test) keeps
+                # increasing.
+                #
+                # Mitigate this slightly by emptying <test>/OUTPUT
+                # before starting any test attempts.  It's assumed
+                # that the previous test run was already captured
+                # above with save-directory.
+
                 if not args.dry_run:
                     try:
                         os.mkdir(test.output_directory)
                     except FileExistsError:
-                        # Include the time this test run started in
-                        # the suffix - that way all saved results can
-                        # be matched using a wild card.
-                        saved_output_directory = os.path.join(test.output_directory,
-                                                              "%s.%d" % (time.strftime("%Y%m%d%H%M%S", start_time), attempt))
-                        logger.debug("moving existing OUTPUT to '%s'", saved_output_directory)
+                        saved_output_directory = os.path.join(test.output_directory, str(attempt))
+                        logger.info("emptying directory '%s'", saved_output_directory)
                         for name in os.listdir(test.output_directory):
                             src = os.path.join(test.output_directory, name)
-                            dst = os.path.join(saved_output_directory, name)
-                            if os.path.isfile(src):
+                            if attempt == 0:
+                                logger.debug("  remove '%s'", src)
+                                if os.path.isfile(src):
+                                    os.remove(src)
+                                else:
+                                    shutil.rmtree(src)
+                            elif os.path.isfile(src):
+                                dst = os.path.join(saved_output_directory, name)
+                                logger.debug("  move '%s' to '%s'", src, dst)
                                 os.makedirs(saved_output_directory, exist_ok=True)
                                 os.rename(src, dst)
-                                saved_output.append(name)
-                                logger.debug("  moved '%s' to '%s'", src, dst)
 
                 # Start a debug log in the OUTPUT directory; include
                 # timing for this specific test attempt.
                 with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
                     logger.info("****** test %s attempt %d of %d started at %s ******",
                                 test.name, attempt+1, attempts, datetime.now())
-
-                    # Add a log message about any saved output
-                    # directory to the per-test-attempt debug log.  It
-                    # just looks better.
-                    if saved_output:
-                        logger.info("saved existing '%s' in '%s'", saved_output, saved_output_directory)
 
                     ending = "undefined"
                     try:

@@ -146,6 +146,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;         /* sareftrack=yes */
 	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW;      /* ike_frag=yes */
 
+	cfg->conn_default.policy |= POLICY_ESN_NO;      /* esn=no */
+
 	cfg->conn_default.options[KBF_IKELIFETIME] =
 		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 
@@ -1248,6 +1250,25 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			break;
 		}
 		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | policy;
+	}
+
+	if (conn->options_set[KBF_ESN]) {
+
+		switch (conn->options[KBF_ESN]) {
+		case esn_yes:
+			conn->policy |= POLICY_ESN_YES;
+			break;
+
+		case esn_no:
+			/* this is the default for now */
+			conn->policy |= POLICY_ESN_NO;
+			break;
+
+		case esn_either:
+			conn->policy |= POLICY_ESN_NO;
+			conn->policy |= POLICY_ESN_YES;
+			break;
+		}
 	}
 
 	if (conn->options_set[KBF_IKE_FRAG]) {

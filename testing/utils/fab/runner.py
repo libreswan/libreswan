@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -108,6 +108,10 @@ class TestDomain:
                                           self.test.directory)
         self.logger.info("'cd' to %s", test_directory)
         self.console.chdir(test_directory)
+
+    def boot_and_login(self):
+        self.boot()
+        self.login()
 
     def read_file_run(self, basename):
         self.logger.info("running: %s", basename)
@@ -235,22 +239,34 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
         initiator_domains.add(all_test_domains[test_domain])
     logger.debug("initiator domains: %s", initiator_domains)
 
-    logger.info("orienting domains")
+    logger.info("idleing domains")
     for test_domain in all_test_domains.values():
-        if test_domain in test_domains:
-            run_job_on_domain(executor, jobs, logger, test_domain,
-                              TestDomain.boot)
-        else:
+        if test_domain not in test_domains:
             run_job_on_domain(executor, jobs, logger, test_domain,
                               TestDomain.shutdown)
     wait_for_jobs(jobs, logger)
+    
+    # There's a tradeoff here between speed and reliability.
+    #
+    # In theory, since booting is largely I/O bound, and the host has
+    # multiple cores, it should be possible to have several domains
+    # booting in parallel; hence separate boot and login jobs (domains
+    # continue to boot after the boot jobs finish).
+    #
+    # In reality, the boot process sometimes becomes gets bogged down,
+    # taking longer than expected, and resulting in timeouts.  For
+    # instance, if more than two domains are booting at once, or the
+    # host is busy with other jobs.
 
-    # At this point, since boot() only waits for basic startup, things
-    # are still going on in the background.  Consequently, merging the
-    # boot() and login() steps can result in a slowdown - the next
-    # domain isn't even started until after the first has logged in.
-    logger.info("login into domains")
-    execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
+    boot_and_login = True
+    if boot_and_login:
+        logger.info("boot and login domains")
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot_and_login)
+    else:
+        logger.info("boot domains")
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot)
+        logger.info("login domains")
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
 
     # re-direct the test-result log file
     for test_domain in test_domains:

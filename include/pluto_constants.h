@@ -590,6 +590,11 @@ enum four_options {
 	fo_insist  = 3          /* propose, and only accept if peer agrees */
 };
 
+enum esn_options {
+	esn_no = 1, /* default */
+	esn_yes = 2,
+	esn_either = 3,
+};
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
@@ -707,8 +712,10 @@ enum sa_policy_bits {
 	POLICY_IKE_FRAG_ALLOW_IX,
 	POLICY_IKE_FRAG_FORCE_IX,
 #define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
-	POLICY_NO_IKEPAD_IX	/* pad ike packets to 4 bytes or not */
-#define POLICY_IX_LAST	POLICY_NO_IKEPAD_IX
+	POLICY_NO_IKEPAD_IX,	/* pad ike packets to 4 bytes or not */
+	POLICY_ESN_NO_IX,		/* send/accept ESNno */
+	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
+#define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
@@ -745,6 +752,8 @@ enum sa_policy_bits {
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
+#define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
+#define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 

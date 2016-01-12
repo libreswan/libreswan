@@ -98,6 +98,13 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 };
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
+static const struct keyword_enum_value kw_esn_values[] = {
+	{ "yes",     esn_yes  },
+	{ "no",    esn_no },
+	{ "either",   esn_either },
+};
+static const struct keyword_enum_values kw_esn_list = VALUES_INITIALIZER(kw_esn_values);
+
 static const struct keyword_enum_value kw_ddos_values[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
@@ -492,6 +499,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_keyexchange_list },
 	{ "ikev2",          kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEv2, &kw_fourvalued_list },
+	{ "esn",          kv_conn | kv_auto | kv_processed, kt_enum,
+	  KBF_ESN, &kw_esn_list },
 	{ "ike_frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
 	  KBF_IKE_FRAG, &kw_ynf_list },	/* obsolete _ */
 	{ "ike-frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,

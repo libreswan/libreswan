@@ -553,8 +553,25 @@ static void confwrite_conn(FILE *out,
 					v2ps = "insist";
 					break;
 				}
-				if (v2ps != NULL)
-					cwf("ikev2", v2ps);
+				cwf("ikev2", v2ps);
+			}
+
+			/* esn= */
+			{
+				const char *esn = "UNKNOWN";
+
+				if ((conn->policy & POLICY_ESN_NO)) {
+					if ((conn->policy & POLICY_ESN_YES) == LEMPTY)
+						esn = "no";
+					else
+						esn = "either";
+
+				} else {
+						/* both cannot be unset */
+						esn = "yes";
+					}
+
+				cwf("esn", esn);
 			}
 
 			{

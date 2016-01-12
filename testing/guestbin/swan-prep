@@ -12,6 +12,13 @@ except ImportError , e:
 	module = str(e)[16:]
 	sys.exit("we requires the python argparse module")
 
+def shell(command):
+        """Run command as a sub-process and report failures"""
+        status, output = commands.getstatusoutput(command)
+        if status:
+                print("command '%s' failed with status %d: %s" % (command, status, output))
+        return output
+
 # prevent double installs from going unnoticed
 if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
 	if os.path.isfile("/usr/local/sbin/ipsec"):
@@ -126,7 +133,7 @@ if os.path.isfile("/var/log/audit/audit.log"):
 	fp = open("/var/log/audit/audit.log","w")
 	fp.close()
 	if os.path.isfile("/lib/systemd/system/auditd.service"):
-		commands.getoutput("/usr/bin/systemctl auditd restart")
+		commands.getoutput("/usr/bin/systemctl restart auditd.service")
 
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
@@ -214,14 +221,14 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if args.fips:
 		fp = open("/etc/system-fips","w")
 		fp.close()
-		commands.getoutput("/testing/guestbin/fipson")
+		shell("/testing/guestbin/fipson")
 		# the test also requires using a modutil cmd which we cannot run here
 		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
 		# passwd required
 		fp = open("/tmp/pw","w")
 		fp.write("\n")
 		fp.close()
-		out = commands.getoutput("certutil -W -f /tmp/pw -@ /etc/ipsec.d/nsspassword -d sql:/etc/ipsec.d")
+		out = shell("certutil -W -f /tmp/pw -@ /etc/ipsec.d/nsspassword -d sql:/etc/ipsec.d")
 		print "certutil out:%s"%out
 	else:
 		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto")
@@ -246,7 +253,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			oldfiles = glob.glob("/etc/ipsec.d/*db")
 			for oldfile in oldfiles:
 				os.unlink(oldfile)
-			commands.getoutput("certutil -N --empty-password -d sql:/etc/ipsec.d")
+			shell("certutil -N --empty-password -d sql:/etc/ipsec.d")
 
 			if not os.path.isfile("/testing/x509/keys/mainca.key"):
 				print("\n\n---------------------------------------------------------------------\n"
@@ -279,38 +286,38 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				# 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
 				#mainca and nic import
-				commands.getoutput("certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
-				commands.getoutput("certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
+				shell("certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
+				shell("certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
 
 				# install ee
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
+				shell("pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
 
 				# install intermediates
 				for i in range(1, icanum+1):
 					acrt = ica_p + str(i)
-					commands.getoutput("certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ \
+					shell("certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ \
 										-a -i /testing/x509/certs/%s.crt%s" % (acrt,acrt, util_pw))
 				if args.revoked:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
+					shell("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
 
 			else:
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -K '' -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
+				shell("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -K '' -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
 				# install all other public certs
 				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
 
 				if args.revoked:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+					shell("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
 				if args.signedbyother:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+					shell("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
 				# fix trust import from p12
 				# is pw needed?
-				commands.getoutput("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'")
+				shell("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'")
 
 				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
 					if not hostname in certname:
-						commands.getoutput("certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
+						shell("certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
 		elif userland == "strongswan":
 			if args.eccert:
 				ca = "curveca"
