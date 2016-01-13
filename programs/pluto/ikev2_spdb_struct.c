@@ -2874,7 +2874,10 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
 {
-	if ((*proposals) != NULL && (*proposals)->on_heap) {
+	if (proposals == NULL || *proposals == NULL) {
+		return;
+	}
+	if ((*proposals)->on_heap) {
 		int p;
 		for (p = 0; p < (*proposals)->nr; p++) {
 			enum ikev2_trans_type type;
