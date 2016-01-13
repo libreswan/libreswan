@@ -75,19 +75,23 @@ class Errors:
         self.errors[who].add(what)
         self.logger.debug("domain %s has %s", who, what)
 
-    def search(self, regex, line, what, who):
-        if re.search(regex, line):
-            self.add(what, who)
+    def search(self, regex, string, what, domain):
+        self.logger.debug("searching for '%s' (%s) for domain '%s'", regex, what, domain)
+        if re.search(regex, string):
+            self.logger.debug("'%s' matched for domain '%s'", regex, domain)
+            self.add(what, domain)
             return True
         else:
             return False
 
-    def grep(self, regex, filename, what, who):
+    def grep(self, regex, filename, what, domain):
+        self.logger.debug("grepping for '%s' (%s) in '%s' for domain '%s'", regex, what, filename, domain)
         command = ['grep', '-e', regex, filename]
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode == 0:
-            self.add(what, who)
+            self.logger.debug("'%s' matched for domain '%s'", regex, domain)
+            self.add(what, domain)
             return True
         else:
             return False
