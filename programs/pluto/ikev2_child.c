@@ -1011,22 +1011,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-#ifdef OLD_PROPOSALS
-		struct ikev2_sa r_sa;
-		stf_status ret;
-		pb_stream r_sa_pbs;
-
-		zero(&r_sa);	/* OK: no pointer fields */
-		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
-			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
-
-		if (!out_struct(&r_sa, &ikev2_sa_desc, outpbs, &r_sa_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/* SA body in and out */
-		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-						&r_sa_pbs, cst, FALSE);
-#else
 		enum next_payload_types_ikev2 next_payload_type =
 			(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
 			 ? ISAKMP_NEXT_v2Nr
@@ -1074,7 +1058,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		}
 		passert(chosen == NULL);
 		free_ikev2_proposals(&proposals);
-#endif
+
 		if (ret != STF_OK)
 			return ret;
 	}

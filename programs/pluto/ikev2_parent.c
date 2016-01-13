@@ -470,15 +470,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		sa_v2_convert(&st->st_sadb);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-#ifdef OLD_PROPOSALS
-			if (!ikev2_out_sa(&md->rbody, PROTO_v2_ISAKMP, st->st_sadb, st,
-				  TRUE, /* parentSA */
-				  ISAKMP_NEXT_v2KE)) {
-				libreswan_log("outsa fail");
-				reset_cur_state();
-				return STF_INTERNAL_ERROR;
-			}
-#else
 			DBG_log("XXX: should cache proposals in st");
 			struct ikev2_proposals *proposals
 				= ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
@@ -500,7 +491,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 				reset_cur_state();
 				return STF_INTERNAL_ERROR;
 			}
-#endif
 		} else {
 			libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
 		}
@@ -951,28 +941,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-#ifdef OLD_PROPOSALS
-		struct ikev2_sa r_sa;
-		stf_status ret;
-		pb_stream r_sa_pbs;
-
-		zero(&r_sa);	/* OK: no pointers */
-
-		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			/* normal case */
-			r_sa.isasa_np = ISAKMP_NEXT_v2KE;
-		} else {
-			/* We are faking not sending a KE, we'll just call it a Notify */
-			r_sa.isasa_np = ISAKMP_NEXT_v2N;
-		}
-
-		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/* SA body in and out */
-		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&r_sa_pbs, st, FALSE);
-#else
 		enum next_payload_types_ikev2 next_payload_type;
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
@@ -1019,7 +987,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		}
 		passert(chosen == NULL);
 		free_ikev2_proposals(&proposals);
-#endif
+
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
 			return ret;
@@ -1364,10 +1332,6 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-#ifdef OLD_PROPOSALS
-		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						NULL, st, TRUE);
-#else
 		DBG_log("XXX: should cache proposals in STATE or CONNECTION");
 		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_ike(st->st_connection->alg_info_ike);
 		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local IKE", proposals));
@@ -1391,7 +1355,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		}
 		passert(chosen == NULL);
 		free_ikev2_proposals(&proposals);
-#endif
+
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return ret;
@@ -2497,10 +2461,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
 
-#ifdef OLD_PROPOSALS
-		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
-				ISAKMP_NEXT_v2TSi, cc, policy);
-#else
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, cc->policy);
@@ -2521,7 +2481,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 					&local_spi, ISAKMP_NEXT_v2TSi);
 
 		free_ikev2_proposals(&proposals);
-#endif
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
@@ -3597,10 +3556,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	{
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-#ifdef OLD_PROPOSALS
-		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       NULL, st, TRUE);
-#else
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(st, c->policy);
@@ -3633,7 +3588,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 		passert(chosen == NULL);
 		free_ikev2_proposals(&proposals);
-#endif
+
 		if (ret != STF_OK)
 			return ret;
 	}
