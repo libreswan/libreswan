@@ -72,6 +72,7 @@
 #include "crypto.h"	/* requires sha1.h and md5.h */
 #include "crypt_symkey.h"
 #include "spdb.h"
+#include "ikev2.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -890,6 +891,15 @@ void delete_state(struct state *st)
 	release_fragments(st);
 
 	free_sa(&st->st_sadb);
+
+	/*
+	 * Free the accepted proposal first, it points into the
+	 * proposals.
+	 */
+	free_ikev2_proposal(&st->st_accepted_ike_proposal);
+	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
+	free_ikev2_proposals(&st->st_ike_proposals);
+	free_ikev2_proposals(&st->st_esp_or_ah_proposals);
 
 	clear_dh_from_state(st);
 

@@ -3062,12 +3062,23 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
  *
  * WARNING: alg_info_ike is IKEv1
  */
-struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *alg_info_ike)
+void ikev2_proposals_from_alg_info_ike(const char *what,
+				       struct alg_info_ike *alg_info_ike,
+				       struct ikev2_proposals **result)
 {
-	if (alg_info_ike == NULL) {
-		return &default_ikev2_ike_proposals;
+	if (*result != NULL) {
+		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		return;
 	}
 
+	if (alg_info_ike == NULL) {
+		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
+		*result = &default_ikev2_ike_proposals;
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+		return;
+	}
+
+	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	proposals->nr = alg_info_ike->ai.alg_info_cnt;
 	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * proposals->nr, "propsal");
@@ -3155,7 +3166,8 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_ike(struct alg_info_ike *a
 		    DBG_log_ikev2_proposal("... ", proposal));
 		proposal++;
 	}
-	return proposals;
+	*result = proposals;
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
 }
 
 static struct ikev2_proposal default_ikev2_esp_proposal[] = {
@@ -3279,9 +3291,18 @@ static struct ikev2_proposals default_ikev2_ah_proposals = {
 	.nr = elemsof(default_ikev2_ah_proposal),
 };
 
-struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *alg_info_esp, lset_t policy)
+void ikev2_proposals_from_alg_info_esp(const char *what,
+				       struct alg_info_esp *alg_info_esp,
+				       lset_t policy,
+				       struct ikev2_proposals **result)
 {
+	if (*result != NULL) {
+		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		return;
+	}
+
 	if (alg_info_esp == NULL) {
+		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
 		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *proposals;
 		switch (esp_eh) {
@@ -3300,9 +3321,12 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 		default:
 			bad_case(policy);
 		}
-		return proposals;
+		*result = proposals;
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+		return;
 	}
 
+	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * alg_info_esp->ai.alg_info_cnt, "propsal");
@@ -3407,7 +3431,8 @@ struct ikev2_proposals *ikev2_proposals_from_alg_info_esp(struct alg_info_esp *a
 		    DBG_log_ikev2_proposal("... ", proposal));		
 	}
 
-	return proposals;
+	*result = proposals;
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
 }
 
 

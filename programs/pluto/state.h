@@ -300,6 +300,11 @@ struct state {
 
 	/** IKEv2-only things **/
 
+	struct ikev2_proposals *st_ike_proposals;
+	struct ikev2_proposals *st_esp_or_ah_proposals;
+	struct ikev2_proposal *st_accepted_ike_proposal;
+	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
+
 	/* Am I the original initator, or orignal responder (v2 IKE_I flag). */
 	enum original_role st_original_role;
 

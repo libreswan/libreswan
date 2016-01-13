@@ -1020,22 +1020,22 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
 
-		DBG_log("XXX: should cache proposals in state or connection");
-		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(c->alg_info_esp, c->policy);
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local ESP/AH", proposals));
-		passert(proposals != NULL);
+		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
+						  c->alg_info_esp, c->policy,
+						  &cst->st_esp_or_ah_proposals);
+		passert(cst->st_esp_or_ah_proposals != NULL);
 
-		struct ikev2_proposal *chosen = NULL;
 		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
 							  /*ike*/ FALSE,
 							  /*initial*/ FALSE,
 							  /*accepted*/ FALSE,
-							  &chosen, proposals);
+							  &cst->st_accepted_esp_or_ah_proposal,
+							  cst->st_esp_or_ah_proposals);
 
 		if (ret == STF_OK) {
-			passert(chosen != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", chosen));
-			if (!ikev2_proposal_to_proto_info(chosen, proto_info)) {
+			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", cst->st_accepted_esp_or_ah_proposal));
+			if (!ikev2_proposal_to_proto_info(cst->st_accepted_esp_or_ah_proposal, proto_info)) {
 				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
 				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			} else {
@@ -1043,21 +1043,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				chunk_t local_spi;
 				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 					 sizeof(proto_info->our_spi));
-				if (!ikev2_emit_sa_proposal(outpbs, chosen, &local_spi,
-							    next_payload_type)) {
-					DBG(DBG_CONTROL, DBG_log("problem emitting chosen proposal (%d)", ret));
+				if (!ikev2_emit_sa_proposal(outpbs,
+							    cst->st_accepted_esp_or_ah_proposal,
+							    &local_spi, next_payload_type)) {
+					DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
 					ret = STF_INTERNAL_ERROR;
 				}
 			}
-			/*
-			 * NOTE: the CHOSEN proposals are released
-			 * before PROPOSALS, as the former point into
-			 * the latter.
-			 */
-			free_ikev2_proposal(&chosen);
 		}
-		passert(chosen == NULL);
-		free_ikev2_proposals(&proposals);
 
 		if (ret != STF_OK)
 			return ret;
