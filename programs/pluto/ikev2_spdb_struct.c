@@ -3391,7 +3391,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 					       aalg);
 					continue;
 				}
-				integ = v1tov2_integ(esp_info->auth);
+				integ = v1phase2tov2child_integ(esp_info->auth);
 			}
 			break;
 
