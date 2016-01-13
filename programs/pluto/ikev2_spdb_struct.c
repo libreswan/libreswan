@@ -2929,11 +2929,24 @@ static void append_transform(struct ikev2_proposal *proposal,
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, }
 #define ENCR_3DES { .id = IKEv2_ENCR_3DES, }
 
+#if 0
 static struct ikev2_transform encr__aes_gcm16_256__aes_gcm16_128[] = {
 	ENCR_AES_GCM16_256, ENCR_AES_GCM16_128,
 };
+#endif
+static struct ikev2_transform encr__aes_gcm16_256[] = {
+	ENCR_AES_GCM16_256,
+};
+static struct ikev2_transform encr__aes_gcm16_128[] = {
+	ENCR_AES_GCM16_128,
+};
+#if 0
 static struct ikev2_transform encr__aes_cbc_256__aes_cbc_256[] = {
 	ENCR_AES_CBC_256, ENCR_AES_CBC_128,
+};
+#endif
+static struct ikev2_transform encr__aes_cbc_256[] = {
+	ENCR_AES_CBC_256,
 };
 static struct ikev2_transform encr__aes_cbc_128[] = {
 	ENCR_AES_CBC_128,
@@ -2953,12 +2966,16 @@ static struct ikev2_transform prf__sha1__sha2_256[] = {
 static struct ikev2_transform prf__sha1__sha2_256__aes128_xcbc[] = {
 	PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC,
 };
+#if 0
 static struct ikev2_transform prf__sha1[] = {
 	PRF_SHA1,
 };
+#endif
+#if 0
 static struct ikev2_transform prf__md5[] = {
 	PRF_MD5,
 };
+#endif
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, }
@@ -3009,45 +3026,81 @@ static struct ikev2_transform esn__yes_no[] = {
 #define TR(T) { .transform = T, .nr = sizeof(T) / sizeof(T[0]) }
 
 static struct ikev2_proposal default_ikev2_ike_proposal[] = {
-/*
- * IKEv2 proposal #0:
- * AES_GCM[256]
- * NULL
- * SHA1,SHA2_256
- * MODP2048, MODP4096, MODP8192
- *
- * IKEv2 proposal #1:
- * AES_GCM[128]
- * NULL
- * SHA1,SHA2_256
- * MODP2048, MODP4096, MODP8192
- */
+	/*
+	 * IKEv2 proposal #0:
+	 * AES_GCM[256]
+	 * NULL
+	 * SHA1,SHA2_256
+	 * MODP2048, MODP4096, MODP8192
+	 *
+	 * Note: Strongswan cherry-picks proposals (for instance will
+	 * pick AES_128 over AES_256 when both are in the same
+	 * proposal) so, for moment, don't merge things.
+	 */
 	{
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_gcm16_256__aes_gcm16_128),
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_gcm16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__none),
 			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256),
 			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp2048__modp4096__modp8192),
 		},
 	},
-/*
- * IKEv2 proposal #2:
- * AES_CBC[256]
- * SHA1, SHA2_256, AES_XCBC
- * MODP1536, MODP2048
- *
- * IKEv2 proposal #3:
- * AES_CBC[128]
- * SHA1, SHA2_256, AES_XCBC
- * MODP1536, MODP2048
- *
- * INTEG????
- */
+        /*
+	 * IKEv2 proposal #1:
+	 * AES_GCM[128]
+	 * NULL
+	 * SHA1,SHA2_256
+	 * MODP2048, MODP4096, MODP8192
+	 *
+	 * Note: Strongswan cherry-picks proposals (for instance will
+	 * pick AES_128 over AES_256 when both are in the same
+	 * proposal) so, for moment, don't merge things.
+	 */
 	{
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_256__aes_cbc_256),
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_gcm16_128),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__none),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp2048__modp4096__modp8192),
+		},
+	},
+        /*
+	 * IKEv2 proposal #2:
+	 * AES_CBC[256]
+	 * SHA1, SHA2_256, AES_XCBC
+	 * MODP1536, MODP2048
+	 * INTEG????
+	 *
+	 * Note: Strongswan cherry-picks proposals (for instance will
+	 * pick AES_128 over AES_256 when both are in the same
+	 * proposal) so, for moment, don't merge things.
+	 */
+	{
+		.protoid = IKEv2_SEC_PROTO_IKE,
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__sha2_256_128__aes_xcbc_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256__aes128_xcbc),
+			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp1536__modp2048),
+		},
+	},
+        /*
+	 * IKEv2 proposal #3:
+	 * AES_CBC[128]
+	 * SHA1, SHA2_256, AES_XCBC
+	 * MODP1536, MODP2048
+	 * INTEG????
+	 *
+	 * Note: Strongswan cherry-picks proposals (for instance will
+	 * pick AES_128 over AES_256 when both are in the same
+	 * proposal) so, for moment, don't merge things.
+	 */
+	{
+		.protoid = IKEv2_SEC_PROTO_IKE,
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__sha2_256_128__aes_xcbc_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256__aes128_xcbc),
 			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp1536__modp2048),
@@ -3190,23 +3243,11 @@ static struct ikev2_proposal default_ikev2_esp_proposal[] = {
 		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
 	},
 #endif
-#if 0 /* XXX: compact proposal */
-	{
-		.protoid = IKEv2_SEC_PROTO_ESP,
-		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128__3des),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__md5_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__md5),
-			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
-		},
-	},
-#else
 	{
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
@@ -3215,7 +3256,6 @@ static struct ikev2_proposal default_ikev2_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
@@ -3224,7 +3264,6 @@ static struct ikev2_proposal default_ikev2_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__3des),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
@@ -3233,11 +3272,9 @@ static struct ikev2_proposal default_ikev2_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__3des),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
-#endif
 };
 static struct ikev2_proposals default_ikev2_esp_proposals = {
 	.proposal = default_ikev2_esp_proposal,
@@ -3253,21 +3290,10 @@ static struct ikev2_proposal default_ikev2_ah_proposal[] = {
 		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
 	};
 #endif
-#if 0 /* XXX: compact proposal */
-	{
-		.protoid = IKEv2_SEC_PROTO_AH,
-		.transforms = {
-			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__md5_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__md5),
-			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
-		},
-	},
-#else
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
@@ -3275,19 +3301,9 @@ static struct ikev2_proposal default_ikev2_ah_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__md5_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(prf__md5),
 			[IKEv2_TRANS_TYPE_ESN] = TR(esn__no),
 		},
 	},
-#endif
-#if 0 /* PROTO_IPSEC_ESP+ESPNULL */
-	{ AD_TR(ESP_NULL, espsha1_attr) }, static struct db_attr espsha1_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
-	};
-	{ AD_TR(ESP_NULL, espmd5_attr) }, static struct db_attr espmd5_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
-	};
-#endif
 };
 static struct ikev2_proposals default_ikev2_ah_proposals = {
 	.proposal = default_ikev2_ah_proposal,
