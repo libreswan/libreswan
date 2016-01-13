@@ -3597,9 +3597,43 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	{
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
+#ifdef OLD_PROPOSALS
 		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 					       NULL, st, TRUE);
+#else
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(st, c->policy);
 
+		DBG_log("XXX: should cache proposals in state or connection");
+		struct ikev2_proposals *proposals = ikev2_proposals_from_alg_info_esp(c->alg_info_esp, c->policy);
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposals("local ESP/AH", proposals));
+		passert(proposals != NULL);
+
+		struct ikev2_proposal *chosen = NULL;
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ FALSE,
+							  /*initial*/ FALSE,
+							  /*accepted*/ TRUE,
+							  &chosen, proposals);
+
+		if (ret == STF_OK) {
+			passert(chosen != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", chosen));
+			if (!ikev2_proposal_to_proto_info(chosen, proto_info)) {
+				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
+				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			}
+			/*
+			 * NOTE: the CHOSEN proposals are released
+			 * before PROPOSALS, as the former point into
+			 * the latter.
+			 */
+			free_ikev2_proposal(&chosen);
+		}
+		passert(chosen == NULL);
+		free_ikev2_proposals(&proposals);
+#endif
 		if (ret != STF_OK)
 			return ret;
 	}
