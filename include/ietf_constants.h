@@ -1540,7 +1540,8 @@ enum ike_cert_type {
 	CERT_X509_CERT_URL = 12,
 	CERT_X509_BUNDLE_URL = 13,
 	CERT_OCSP_CONTENT = 14, /* RFC 4806 */
-	/* 15 - 200 Unassigned */
+	CERT_RAW_PUBLIC_KEY = 15, /* RFC 7670 */
+	/* 16 - 200 Unassigned */
 	/* 201 - 255 Private use */
 };
 

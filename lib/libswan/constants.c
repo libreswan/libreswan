@@ -715,7 +715,9 @@ static const char *const ike_cert_type_name[] = {
 	"CERT_X509_CERT_URL",
 	"CERT_X509_BUNDLE_URL",
 	"CERT_OCSP_CONTENT", /* 14 */
-	/* 15 - 200 Reserved */
+	"CERT_RAW_PUBLIC_KEY",
+
+	/* 16 - 200 Reserved */
 	/* 201 - 255 Private use */
 };
 
@@ -727,7 +729,7 @@ enum_names ike_cert_type_names = {
 
 
 static enum_names ikev2_cert_type_names_2 = {
-	CERT_KERBEROS_TOKENS, CERT_OCSP_CONTENT,
+	CERT_KERBEROS_TOKENS, CERT_RAW_PUBLIC_KEY,
 	&ike_cert_type_name[CERT_KERBEROS_TOKENS],
 	NULL
 };
