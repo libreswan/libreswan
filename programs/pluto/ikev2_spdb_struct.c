@@ -3117,6 +3117,9 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
  * Transform an alg_info_ike into an array of ikev2 proposals.
  *
  * WARNING: alg_info_ike is IKEv1
+ *
+ * If alg_info_ike includes unknown algorithms those get dropped,
+ * which can lead to empty proposals.
  */
 void ikev2_proposals_from_alg_info_ike(const char *what,
 				       struct alg_info_ike *alg_info_ike,
@@ -3152,7 +3155,11 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 		proposal->protoid = IKEv2_SEC_PROTO_IKE;
 
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
-		if (ealg != NULL) {
+		if (ealg == NULL) {
+			if (ike_info->ike_ealg) {
+				loglog(RC_LOG_SERIOUS, "dropping unknown encrypt algorithm %d", ike_info->ike_ealg);
+			}
+		} else {
 			if (ike_info->ike_eklen) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 						 ealg->common.algo_v2id, ike_info->ike_eklen);
@@ -3195,7 +3202,11 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 		}
 
 		struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
-		if (halg != NULL) {
+		if (halg == NULL) {
+			if (ike_info->ike_halg) {
+				loglog(RC_LOG_SERIOUS, "dropping unknown hash algorithm %d", ike_info->ike_halg);
+			}
+		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
 					 halg->common.algo_v2id, 0);
 			if (ike_alg_enc_requires_integ(ealg)) {
@@ -3213,7 +3224,12 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 			}
 		}
 
-		if (ike_info->ike_modp > 0) {
+		const struct oakley_group_desc *group = lookup_group(ike_info->ike_modp);
+		if (group == NULL) {
+			if (ike_info->ike_modp > 0) {
+				loglog(RC_LOG_SERIOUS, "dropping unknown modp group %d", ike_info->ike_modp);
+			}
+		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
 					 ike_info->ike_modp, 0);
 		}
