@@ -3100,7 +3100,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	{
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_256),
+			[IKEv2_TRANS_TYPE_ENCR] = TR(encr__aes_cbc_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(auth__sha1_96__sha2_256_128__aes_xcbc_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(prf__sha1__sha2_256__aes128_xcbc),
 			[IKEv2_TRANS_TYPE_DH] = TR(dh__modp1536__modp2048),
