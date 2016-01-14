@@ -397,10 +397,10 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 				    DBG_log("  fetched blob coded in PEM format"));
 			} else {
 				ugh = "Blob coded in unknown format";
-				pfree(blob->ptr);
+				pfreeany(blob->ptr);
 			}
 		} else {
-			pfree(blob->ptr);
+			pfreeany(blob->ptr);
 		}
 	}
 	return ugh;
