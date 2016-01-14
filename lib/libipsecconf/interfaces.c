@@ -51,7 +51,7 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 	if (sock < 0)
 		return FALSE;
 
-	strncpy(req.ifr_name, iface, IFNAMSIZ);
+	strncpy(req.ifr_name, iface, IFNAMSIZ - 1);
 	if (ioctl(sock, SIOCGIFFLAGS, &req) != 0 ||
 	    (req.ifr_flags & IFF_UP) == 0x0) {
 		close(sock);
