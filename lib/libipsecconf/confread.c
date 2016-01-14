@@ -263,7 +263,8 @@ static char **new_list(const char *value)
 
 	/* avoid damaging original string */
 	val = clone_str(value, "new_list value");
-	end = val + strlen(val);
+	if (val != NULL) /* silence a coverity warning */
+		end = val + strlen(val);
 
 	/* count number of items in string */
 	for (b = val, count = 0; b < end; ) {
