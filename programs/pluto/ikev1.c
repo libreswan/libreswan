@@ -2680,27 +2680,25 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    enum_name(&state_names, from_state),
 			    enum_name(&ikev1_notify_names, md->note)));
 
-		if (st != NULL) {
 #ifdef HAVE_NM
-			if (st->st_connection->remotepeertype == CISCO &&
-			    st->st_connection->nmconfigured) {
-				if (!do_command(st->st_connection,
-						&st->st_connection->spd,
-						"disconnectNM", st))
-					DBG(DBG_CONTROL,
-					    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-			}
+		if (st->st_connection->remotepeertype == CISCO &&
+		    st->st_connection->nmconfigured) {
+			if (!do_command(st->st_connection,
+					&st->st_connection->spd,
+					"disconnectNM", st))
+				DBG(DBG_CONTROL,
+				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
+		}
 #endif
-			if (IS_PHASE1_INIT(st->st_state)) {
-				delete_event(st);
-				release_whack(st);
-			}
-			if (IS_QUICK(st->st_state)) {
-				delete_state(st);
-				/* wipe out dangling pointer to st */
-				if (md != NULL && st == md->st)
-					md->st = NULL;
-			}
+		if (IS_PHASE1_INIT(st->st_state)) {
+			delete_event(st);
+			release_whack(st);
+		}
+		if (IS_QUICK(st->st_state)) {
+			delete_state(st);
+			/* wipe out dangling pointer to st */
+			if (md != NULL && st == md->st)
+				md->st = NULL;
 		}
 		break;
 	}
