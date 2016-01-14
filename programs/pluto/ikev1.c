@@ -994,14 +994,12 @@ void process_v1_packet(struct msg_digest **mdp)
 				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
 
 			if (st == NULL) {
-				if (!quiet) {
-					libreswan_log(
+				DBG(DBG_CONTROL, DBG_log(
 						"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
-							(unsigned long)md->hdr.isa_msgid);
-				}
+							(unsigned long)md->hdr.isa_msgid));
 
 				/* Let's try to log some info about these to track them down */
-				DBG(DBG_PARSING, {
+				DBG(DBG_CONTROL, {
 					    DBG_dump("- unknown SA's md->hdr.isa_icookie:",
 						    md->hdr.isa_icookie,
 						    COOKIE_SIZE);
