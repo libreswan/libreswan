@@ -85,8 +85,10 @@ monotime_t mononow(void)
 		break;
 	case EINVAL:
 		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
+		break;
 	case EPERM:
 		libreswan_log("No permission for clock_gettime()");
+		break;
 	case EFAULT:
 		libreswan_log("Invalid address space return by clock_gettime()");
 		break;
