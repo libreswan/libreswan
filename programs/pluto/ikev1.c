@@ -2169,6 +2169,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	enum state_kind from_state;
 	struct state *st;
 
+	passert(md != NULL);
+
 	/* handle oddball/meta results now */
 
 	switch (result) {
@@ -2697,8 +2699,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (IS_QUICK(st->st_state)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
-			if (md != NULL && st == md->st)
-				md->st = NULL;
+			md->st = NULL;
 		}
 		break;
 	}
