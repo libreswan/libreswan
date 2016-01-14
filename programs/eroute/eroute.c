@@ -611,6 +611,7 @@ int main(int argc, char **argv)
 				progname);
 			exit(1);
 		}
+		break;
 	case EMT_DELEROUTE:
 		if (!src_opt) {
 			fprintf(stderr,
@@ -626,6 +627,7 @@ int main(int argc, char **argv)
 				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
+		break;
 	case EMT_CLREROUTE:
 		break;
 	default:
