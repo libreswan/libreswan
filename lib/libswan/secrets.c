@@ -962,7 +962,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 
 				if (tokeq(":")) {
 					/* found key part */
-					shift();	/* eat ":" */
+					(void) shift();	/* eat ":" */
 					process_secret(psecrets, s);
 					break;
 				}
