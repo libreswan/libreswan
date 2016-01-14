@@ -22,13 +22,6 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern bool ikev2_delete_out(struct state *st);
 
-extern bool ikev2_out_sa(pb_stream *outs,
-			 enum ikev2_sec_proto_id protoid,
-			 struct db_sa *sadb,
-			 struct state *st,
-			 bool parentSA,
-			 enum next_payload_types_ikev2 np);
-
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 
@@ -61,22 +54,6 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		  return STF_FAIL + res; \
 	} \
 }
-
-extern stf_status ikev2_parse_parent_sa_body(
-	pb_stream *sa_pbs,	/* body of input SA Payload */
-	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-	struct state *st,	/* current state object */
-	bool selection);	/* if this SA is a selection, only one
-				 * tranform can appear.
-				 */
-
-extern stf_status ikev2_parse_child_sa_body(
-	pb_stream *sa_pbs,	/* body of input SA Payload */
-	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-	struct state *st,	/* current state object */
-	bool selection);	/* if this SA is a selection, only one
-				 * tranform can appear.
-				 */
 
 struct ikev2_proposal;
 struct ikev2_proposals;
@@ -161,12 +138,6 @@ extern stf_status ikev2_verify_psk_auth(struct state *st,
 					unsigned char *idhash,
 					pb_stream *sig_pbs);
 
-extern stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
-				      pb_stream *outpbs,
-				      enum next_payload_types_ikev2 np,
-				      struct connection *c,
-				      lset_t policy);
-
 extern void ikev2_derive_child_keys(struct state *st,
 				    enum original_role role);
 
@@ -241,8 +212,6 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
 void send_v2_notification_invalid_ke_from_state(struct state *st);
-bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
-oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
 
 struct ikev2_payloads_summary {
 	stf_status status;

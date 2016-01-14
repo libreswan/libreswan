@@ -257,18 +257,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 			  enum_name(&state_names, st->st_state));
 	}
 
-	/* inscrutable dance of the sadbs (see ikev2_parse_parent_sa_body) */
-	passert(st->st_sadb == NULL);	/* because we just created st */
-	{
-		struct db_sa *t = IKEv2_oakley_sadb(policy);
-		struct db_sa *u = oakley_alg_makedb(
-			st->st_connection->alg_info_ike, t, FALSE);
-
-		/* ??? why is u often NULL? */
-		st->st_sadb = u == NULL ? t : u;
-	}
-	sa_v2_convert(&st->st_sadb);
-
 	/*
 	 * Initialize st->st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
@@ -467,8 +455,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* SA out */
 	{
 		u_char *sa_start = md->rbody.cur;
-
-		sa_v2_convert(&st->st_sadb);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			ikev2_proposals_from_alg_info_ike("IKE initiator",

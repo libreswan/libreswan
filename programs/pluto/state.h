@@ -271,8 +271,6 @@ struct state {
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
 
-	struct db_sa *st_sadb;			/* note: owner of heap allocation */
-
 	/** IKEv1-only things **/
 
 	msgid_t st_msgid;                       /* MSG-ID from header.
