@@ -838,7 +838,9 @@ static stf_status informational(struct msg_digest *md)
 						    LEMPTY, pcim_demand_crypto);
 				return STF_IGNORE;
 			}
-
+			loglog(RC_LOG_SERIOUS,
+			       "received and ignored informational message with ISAKMP_N_CISCO_LOAD_BALANCE for unestablished state.");
+			return STF_IGNORE;
 		default:
 			if (st != NULL &&
 			    (st->st_connection->extra_debugging &
