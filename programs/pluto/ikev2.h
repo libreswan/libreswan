@@ -104,6 +104,11 @@ bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
 			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
+const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposals *proposals);
+
+bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
+				  oakley_group_t modp);
+
 stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 				    bool ike, bool initial, bool accepted,
 				    struct ikev2_proposal **chosen,

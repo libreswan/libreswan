@@ -274,17 +274,18 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		oakley_group_t groupnum = first_modp_from_propset(c->alg_info_ike);
-		stf_status e;
-
-		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
-		passert(st->st_oakley.group != NULL);
-		st->st_oakley.groupnum = groupnum;
+		ikev2_proposals_from_alg_info_ike("initial IKE modp",
+						  c->alg_info_ike,
+						  &st->st_ike_proposals);
+		passert(st->st_ike_proposals != NULL);
+		st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+		passert(st->st_oakley.group != NULL); /* known! */
+		st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 
 		/*
 		 * Calculate KE and Nonce.
 		 */
-		e = crypto_helper_build_ke(st);
+		stf_status e = crypto_helper_build_ke(st);
 		reset_globals();
 		return e;
 	}
@@ -807,8 +808,13 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			 * cost, a legitimate initiator gets a hint as
 			 * to the problem.
 			 */
-			st->st_oakley.groupnum = first_modp_from_propset(c->alg_info_ike);
-			st->st_oakley.group = lookup_group(st->st_oakley.groupnum);
+			ikev2_proposals_from_alg_info_ike("initial IKE invalid KE",
+							  c->alg_info_ike,
+							  &st->st_ike_proposals);
+			passert(st->st_ike_proposals != NULL);
+			st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+			passert(st->st_oakley.group != NULL); /* known! */
+			st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
 				ke->isak_group,
 				st->st_oakley.group->group));
@@ -1202,8 +1208,11 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			if (modp_in_propset(sg.sg_group,
-				st->st_connection->alg_info_ike)) {
+			ikev2_proposals_from_alg_info_ike("initial IKE validating invalid KE",
+							  st->st_connection->alg_info_ike,
+							  &st->st_ike_proposals);
+			passert(st->st_ike_proposals != NULL);
+			if (ikev2_proposals_include_modp(st->st_ike_proposals, sg.sg_group)) {
 
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;

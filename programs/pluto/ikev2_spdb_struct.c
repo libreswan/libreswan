@@ -3486,3 +3486,60 @@ ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy
 			     ipprotoid, spd_route,
 			     TRUE /* tunnel */);
 }
+
+/*
+ * Return the first valid MODP proposal that is supported.
+ */
+const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposals *proposals)
+{
+	int p;
+	for (p = 0; p < proposals->nr; p++) {
+		struct ikev2_proposal *proposal = &proposals->proposal[p];
+		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
+		int t;
+		for (t = 0; t < transforms->nr; t++) {
+			int groupnum = transforms->transform[t].id;
+			const struct oakley_group_desc *group = lookup_group(groupnum);
+			if (group == NULL) {
+				/*
+				 * Things screwed up (this group
+				 * should have been pruned earlier),
+				 * rather than crash, continue looking
+				 * for a valid group.
+				 */
+				DBG(DBG_CONTROL, DBG_log("proposals include unsupported group %d", groupnum));
+				continue;
+			}
+			return group;
+		}
+	}
+	DBG(DBG_CONTROL, DBG_log("No valid MODP (DH) transform found"));
+	/* return something that should be supported.  */
+	const struct oakley_group_desc *group = lookup_group(OAKLEY_GROUP_MODP2048);
+	passert(group != NULL);
+	return group;
+}
+
+/*
+ * Is the modp group in the proposal set?
+ *
+ * It's the caller's problem to check that it is actually supported.
+ */
+bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
+				  oakley_group_t modp)
+{
+	int p;
+	for (p = 0; p < proposals->nr; p++) {
+		struct ikev2_proposal *proposal = &proposals->proposal[p];
+		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
+		int t;
+		for (t = 0; t < transforms->nr; t++) {
+			unsigned groupnum = transforms->transform[t].id;
+			if (groupnum == modp) {
+				return TRUE;
+			}
+		}
+	}
+	DBG(DBG_CONTROL, DBG_log("No first MODP (DH) transform found"));
+	return FALSE;
+}
