@@ -9,6 +9,11 @@
 # left  = other stuff.
 #
 
+# Having re-transmits randomly occure in the middle of most tests just
+# adds to test result noise.
+conn slow-retransmits
+        retransmit-interval=2000
+
 conn us-to-anyone
 	also=us
 	also=me-to-anyone
