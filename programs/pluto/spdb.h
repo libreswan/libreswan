@@ -26,8 +26,6 @@
 
 /* Attribute type and value pair.
  * Note: only "basic" values are represented so far.
- * v2 is drastically simplified: there is only one attribute type
- * and it applies to any v2 protocols.
  * ??? this use of union is very scary.
  */
 struct db_attr {
@@ -36,7 +34,6 @@ struct db_attr {
 						 * 0 for end
 						 */
 		enum ikev1_ipsec_attr ipsec;
-		enum ikev2_trans_attr_type v2;	/* all v2 protocols */
 	} type;
 	u_int16_t val;
 };
@@ -96,109 +93,26 @@ struct db_prop_conj {
 };
 
 /*
- * The logic of IKEv2 Security Association Payloads is described in
- * RFC5996bis section 3.3.
- * An SA may contain multiple proposals; these are alternatives,
- * in decreasing preference order.
- * Each proposal contains a single IPsec protocol (IKE, ESP, or AH).
- * Each proposal may contain multiple transforms.
- * Each transform may contain multiple attributes.
- *
- * Each proposal is numbered, starting from one and increasing by one.
- * Within each proposal, transforms of the same type (eg. ENCR, INTEG, ESN)
- * are alternatives and each of the types that appear in the SA
- * must appear in the matching SA.
- *
- * Combined-mode ciphers handle both integrity and encryption in a single
- * (encryption) algorithm and thus their proposal must offer either no
- * integrity algorithm or the "none" integrity algorithm.
- *
- * To offer both combined-mode and non-combined mode ciphers, separate
- * proposals are required.
- */
-
-/* IKEv2 transform */
-struct db_v2_trans {
-	enum ikev2_trans_type transform_type;
-	u_int16_t transid;	/* Transform-Id */
-	struct db_attr *attrs;	/* [attr_cnt] attributes */
-	unsigned int attr_cnt;	/* number of attributes */
-};
-
-/*
- * IKEv2 proposal
- * transforms are OR of each unique transform_type
- * ??? that description is suspect.  How about:
- * ??? A proposal A matches a proposal B iff
- * ??? (1) all transform types present in A are present in the B, and
- * ??? (2) for each transform type present in A, at least one
- * ???     of the transforms of that type in A matches a transform in B.
- * ??? In other words, all of the transforms with a particular
- * ??? type form a disjunction, and the proposal is a conjunction
- * ??? of these disjunctions.
- *
- * ??? if this is a disjunction (OR) why is it called *_conj?
- * ??? this should probably be called db_v2_prop.
- */
-
-struct db_v2_prop_conj {
-	u_int8_t propnum;
-	u_int8_t protoid;	/* Protocol-Id: enum ikev2_trans_type */
-	struct db_v2_trans *trans;	/* [trans_cnt] transforms (OR) */
-	unsigned int trans_cnt;	/* number of transforms */
-	/* SPI size and value isn't part of DB */
-};
-
-/*
- * conjunction (AND) of proposals - IKEv2
- * this is, for instance, ESP+AH, etc.
- * ??? If this is multiple proposals why is it called *_prop?
- * ??? This should probably be called db_v2_prop_conj
- */
-struct db_v2_prop {
-	struct db_v2_prop_conj *props;	/* [prop_cnt] conjunctive proposals (AND) */
-	unsigned int prop_cnt;		/* number of conjunctive proposals */
-};
-
-/*
  * Security Association
  *
  * Heap memory is owned by one pointer, usually st->st_sadb.
  * Other pointers' lifetimes must nest within this allocation duration.
  * If "dynamic" is false, things are not on the heap and must not be mutated.
- * V2 uses the V1 substructures and then converts them with sa_v2_convert().
- * If the v2 substructures are present, they are based on the v1 substructures
- * and conversion will not be required.
  */
 struct db_sa {
 	bool dynamic;	/* set if these items were unshared on heap */
 	bool parentSA;	/* set if this is a parent/oakley */
 	struct db_prop_conj *prop_conjs;	/* v1: [prop_conj_cnt] conjunctions of proposals (disjunction) */
 	unsigned int prop_conj_cnt;	/* v1: number of conjunctions of proposals */
-
-	struct db_v2_prop *v2_prop_disj;	/* v2: [v2_prop_disj_cnt] */
-	unsigned int v2_prop_disj_cnt;	/* v2: number of elements... OR */
 };
 
 /*
  * IKE policies.
  *
- * For IKEv2, it is described using IKEv1 constructs (e.g., constants
- * such as OAKLEY_...), and then converted to IKEv2 using
- * sa_v2_convert().  There really should be a pure IKEv2 table.
- *
  * am == agressive mode
  */
 extern struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
 extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
-extern struct db_sa *IKEv2_oakley_sadb(lset_t x);
-
-/*
- * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
- * in IKEv2_oakley_sadb.
- */
-extern const enum ike_trans_type_dh IKEv2_oakley_sadb_groups[];
-extern const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group;
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
@@ -259,10 +173,5 @@ extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */
 extern void sa_log(struct db_sa *f);
-
-extern void sa_v2_log(struct db_sa *f);
-
-/* IKEv1 <-> IKEv2 things */
-extern void sa_v2_convert(struct db_sa **sapp);
 
 #endif /*  _SPDB_H_ */

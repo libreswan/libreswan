@@ -260,34 +260,23 @@ stf_status ikev2parent_outI1(int whack_sock,
 			  enum_name(&state_names, st->st_state));
 	}
 
-	/* inscrutable dance of the sadbs (see ikev2_parse_parent_sa_body) */
-	passert(st->st_sadb == NULL);	/* because we just created st */
-	{
-		struct db_sa *t = IKEv2_oakley_sadb(policy);
-		struct db_sa *u = oakley_alg_makedb(
-			st->st_connection->alg_info_ike, t, FALSE);
-
-		/* ??? why is u often NULL? */
-		st->st_sadb = u == NULL ? t : u;
-	}
-	sa_v2_convert(&st->st_sadb);
-
 	/*
 	 * Initialize st->st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		oakley_group_t groupnum = first_modp_from_propset(c->alg_info_ike);
-		stf_status e;
-
-		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
-		passert(st->st_oakley.group != NULL);
-		st->st_oakley.groupnum = groupnum;
+		ikev2_proposals_from_alg_info_ike("initial IKE modp",
+						  c->alg_info_ike,
+						  &st->st_ike_proposals);
+		passert(st->st_ike_proposals != NULL);
+		st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+		passert(st->st_oakley.group != NULL); /* known! */
+		st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 
 		/*
 		 * Calculate KE and Nonce.
 		 */
-		e = crypto_helper_build_ke(st);
+		stf_status e = crypto_helper_build_ke(st);
 		reset_globals();
 		return e;
 	}
@@ -488,12 +477,22 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-		sa_v2_convert(&st->st_sadb);
-
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			if (!ikev2_out_sa(&md->rbody, PROTO_v2_ISAKMP, st->st_sadb, st,
-				  TRUE, /* parentSA */
-				  ISAKMP_NEXT_v2KE)) {
+			ikev2_proposals_from_alg_info_ike("IKE initiator",
+							  st->st_connection->alg_info_ike,
+							  &st->st_ike_proposals);
+			passert(st->st_ike_proposals != NULL);
+			/*
+			 * Since this is an initial IKE exchange, the
+			 * SPI is emitted as is part of the packet
+			 * header and not the proposal.  Hence the
+			 * NULL SPIs.
+			 */
+			bool ret = ikev2_emit_sa_proposals(&md->rbody,
+							   st->st_ike_proposals,
+							   (chunk_t*)NULL,
+							   ISAKMP_NEXT_v2KE);
+			if (!ret) {
 				libreswan_log("outsa fail");
 				reset_cur_state();
 				return STF_INTERNAL_ERROR;
@@ -896,8 +895,13 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			 * cost, a legitimate initiator gets a hint as
 			 * to the problem.
 			 */
-			st->st_oakley.groupnum = first_modp_from_propset(c->alg_info_ike);
-			st->st_oakley.group = lookup_group(st->st_oakley.groupnum);
+			ikev2_proposals_from_alg_info_ike("initial IKE invalid KE",
+							  c->alg_info_ike,
+							  &st->st_ike_proposals);
+			passert(st->st_ike_proposals != NULL);
+			st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+			passert(st->st_oakley.group != NULL); /* known! */
+			st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
 				ke->isak_group,
 				st->st_oakley.group->group));
@@ -1037,26 +1041,44 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-		struct ikev2_sa r_sa;
-		stf_status ret;
-		pb_stream r_sa_pbs;
-
-		zero(&r_sa);	/* OK: no pointers */
-
+		enum next_payload_types_ikev2 next_payload_type;
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
-			r_sa.isasa_np = ISAKMP_NEXT_v2KE;
+			next_payload_type = ISAKMP_NEXT_v2KE;
 		} else {
 			/* We are faking not sending a KE, we'll just call it a Notify */
-			r_sa.isasa_np = ISAKMP_NEXT_v2N;
+			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
-		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
-			return STF_INTERNAL_ERROR;
+		ikev2_proposals_from_alg_info_ike("IKE responder",
+						  st->st_connection->alg_info_ike,
+						  &st->st_ike_proposals);
+		passert(st->st_ike_proposals != NULL);
 
-		/* SA body in and out */
-		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&r_sa_pbs, st, FALSE);
+		DBG(DBG_CONTROL, DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here"));
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ TRUE,
+							  /*initial*/ TRUE,
+							  /*accepted*/ FALSE,
+							  &st->st_accepted_ike_proposal,
+							  st->st_ike_proposals);
+
+		if (ret == STF_OK) {
+			passert(st->st_accepted_ike_proposal != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", st->st_accepted_ike_proposal));
+			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
+			/*
+			 * Since this is the initial IKE exchange, the
+			 * SPI is emitted as part of the packet header
+			 * and not as part of the proposal.  Hence the
+			 * NULL SPI.
+			 */
+			if (!ikev2_emit_sa_proposal(&md->rbody, st->st_accepted_ike_proposal,
+						    NULL, next_payload_type)) {
+				DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+				ret = STF_INTERNAL_ERROR;
+			}
+		}
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
@@ -1310,8 +1332,11 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			if (modp_in_propset(sg.sg_group,
-				st->st_connection->alg_info_ike)) {
+			ikev2_proposals_from_alg_info_ike("initial IKE validating invalid KE",
+							  st->st_connection->alg_info_ike,
+							  &st->st_ike_proposals);
+			passert(st->st_ike_proposals != NULL);
+			if (ikev2_proposals_include_modp(st->st_ike_proposals, sg.sg_group)) {
 
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
@@ -1430,8 +1455,21 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						NULL, st, TRUE);
+		ikev2_proposals_from_alg_info_ike("IKE initiator (accepting)",
+						  st->st_connection->alg_info_ike,
+						  &st->st_ike_proposals);
+		passert(st->st_ike_proposals != NULL);
+
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ TRUE,
+							  /*initial*/ TRUE,
+							  /*accepted*/ TRUE,
+							  &st->st_accepted_ike_proposal,
+							  st->st_ike_proposals);
+		if (ret == STF_OK) {
+			passert(st->st_accepted_ike_proposal != NULL);
+			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
+		}
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
@@ -2538,8 +2576,22 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
 
-		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
-				ISAKMP_NEXT_v2TSi, cc, policy);
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(cst, cc->policy);
+		proto_info->our_spi = ikev2_esp_or_ah_spi(&cc->spd, cc->policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+			 sizeof(proto_info->our_spi));
+		
+		ikev2_proposals_from_alg_info_esp("ESP/AH initiator",
+						  cc->alg_info_esp,
+						  cc->policy,
+						  &cst->st_esp_or_ah_proposals);
+		passert(cst->st_esp_or_ah_proposals != NULL);
+
+		ikev2_emit_sa_proposals(&e_pbs_cipher, cst->st_esp_or_ah_proposals,
+					&local_spi, ISAKMP_NEXT_v2TSi);
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
@@ -3615,8 +3667,30 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	{
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       NULL, st, TRUE);
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(st, c->policy);
+
+		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
+						  c->alg_info_esp, c->policy,
+						  &st->st_esp_or_ah_proposals);
+		passert(st->st_esp_or_ah_proposals != NULL);
+
+		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+							  /*ike*/ FALSE,
+							  /*initial*/ FALSE,
+							  /*accepted*/ TRUE,
+							  &st->st_accepted_esp_or_ah_proposal,
+							  st->st_esp_or_ah_proposals);
+
+		if (ret == STF_OK) {
+			passert(st->st_accepted_esp_or_ah_proposal != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", st->st_accepted_esp_or_ah_proposal));
+			if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
+				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
+				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			}
+		}
 
 		if (ret != STF_OK)
 			return ret;

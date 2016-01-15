@@ -125,6 +125,12 @@ extern void alg_info_snprint(char *buf, size_t buflen,
 extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
 
+void alg_info_snprint_ike_info(char *buf, size_t buflen,
+			       struct ike_info *alg_info);
+
+void alg_info_snprint_esp_info(char *buf, size_t buflen,
+			       const struct esp_info *esp_info);
+
 #define ALG_INFO_ESP_FOREACH(aie, ai_esp, i) \
 	for ((i) = (aie)->ai.alg_info_cnt, (ai_esp) = (aie)->esp; (i)--; (ai_esp)++)
 

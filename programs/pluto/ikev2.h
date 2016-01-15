@@ -22,13 +22,6 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern bool ikev2_delete_out(struct state *st);
 
-extern bool ikev2_out_sa(pb_stream *outs,
-			 enum ikev2_sec_proto_id protoid,
-			 struct db_sa *sadb,
-			 struct state *st,
-			 bool parentSA,
-			 enum next_payload_types_ikev2 np);
-
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 
@@ -62,22 +55,50 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
-extern stf_status ikev2_parse_parent_sa_body(
-	pb_stream *sa_pbs,	/* body of input SA Payload */
-	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-	struct state *st,	/* current state object */
-	bool selection);	/* if this SA is a selection, only one
-				 * tranform can appear.
-				 */
+struct ikev2_proposal;
+struct ikev2_proposals;
 
-extern stf_status ikev2_parse_child_sa_body(
-	pb_stream *sa_pbs,	/* body of input SA Payload */
-	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-	struct state *st,	/* current state object */
-	bool selection);	/* if this SA is a selection, only one
-				 * tranform can appear.
-				 */
+void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal);
+void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals);
 
+void free_ikev2_proposal(struct ikev2_proposal **proposal);
+void free_ikev2_proposals(struct ikev2_proposals **proposals);
+
+void ikev2_proposals_from_alg_info_ike(const char *what,
+				       struct alg_info_ike *alg_info_ike,
+				       struct ikev2_proposals **proposals);
+
+void ikev2_proposals_from_alg_info_esp(const char *what,
+				       struct alg_info_esp *alg_info_esp, lset_t policy,
+				       struct ikev2_proposals **proposals);
+
+bool ikev2_emit_sa_proposal(pb_stream *pbs,
+			    struct ikev2_proposal *proposal,
+			    chunk_t *local_spi,
+			    enum next_payload_types_ikev2 next_payload_type);
+
+bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
+			     chunk_t *local_spi,
+			     enum next_payload_types_ikev2 next_payload_type);
+
+const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposals *proposals);
+
+bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
+				  oakley_group_t modp);
+
+stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
+				    bool ike, bool initial, bool accepted,
+				    struct ikev2_proposal **chosen,
+				    struct ikev2_proposals *local_proposals);
+
+bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
+				  struct ipsec_proto_info *proto_info);
+
+struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen);
+
+struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
+
+ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy);
 
 extern void send_v2_notification_from_state(struct state *st,
 					    v2_notification_t type,
@@ -116,12 +137,6 @@ extern stf_status ikev2_verify_psk_auth(struct state *st,
 					enum original_role role,
 					unsigned char *idhash,
 					pb_stream *sig_pbs);
-
-extern stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
-				      pb_stream *outpbs,
-				      enum next_payload_types_ikev2 np,
-				      struct connection *c,
-				      lset_t policy);
 
 extern void ikev2_derive_child_keys(struct state *st,
 				    enum original_role role);
@@ -197,8 +212,6 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
 void send_v2_notification_invalid_ke_from_state(struct state *st);
-bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
-oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
 
 struct ikev2_payloads_summary {
 	stf_status status;
