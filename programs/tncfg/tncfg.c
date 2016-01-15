@@ -308,6 +308,7 @@ int main(int argc, char *argv[])
 				progname);
 			exit(1);
 		}
+		break;
 	case IPSEC_DEL_DEV:
 		if (!ifr.ifr_name[0]) {
 			fprintf(stderr, "%s: virtual I/F parameter missing.\n",
