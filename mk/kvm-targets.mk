@@ -20,8 +20,11 @@
 # XXX: For compatibility
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
-KVM_OS = fedora
-KVM_POOL = /home/build/pool
+KVM_OS ?= fedora
+KVM_POOL ?= /home/build/pool
+KVM_SOURCEDIR ?= $(abspath $(abs_top_srcdir)/..)
+KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+
 KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BUILD_DOMAIN = east
@@ -261,8 +264,8 @@ $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/v
 	rm -f '$(KVM_POOL)/$*.qcow2'
 	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASE_DOMAIN_DISK)' '$(KVM_POOL)/$*.qcow2'
 	sed \
-		-e "s:@@TESTINGDIR@@:$(abs_top_srcdir)/testing:" \
-		-e "s:@@SOURCEDIR@@:$(abspath $(abs_top_srcdir)/..):" \
+		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
+		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
 		-e "s:@@POOLSPACE@@:$(KVM_POOL):" \
 		-e "s:@@USER@@:$$(id -u):" \
 		-e "s:@@GROUP@@:$$(id -g qemu):" \
