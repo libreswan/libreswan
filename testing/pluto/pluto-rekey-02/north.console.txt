@@ -120,7 +120,7 @@ north #
 000 "northnet-eastnet-nat":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "northnet-eastnet-nat":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "northnet-eastnet-nat":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
-000 "northnet-eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "northnet-eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "northnet-eastnet-nat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "northnet-eastnet-nat":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "northnet-eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
@@ -144,7 +144,7 @@ north #
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "northnet-eastnet-nat" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "northnet-eastnet-nat" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "northnet-eastnet-nat" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "northnet-eastnet-nat" #2: STATE_QUICK_I1: initiate
 004 "northnet-eastnet-nat" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 north #
@@ -165,7 +165,7 @@ north #
 108 "northnet-eastnet-nat" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "northnet-eastnet-nat" #3: Main mode peer ID is ID_FQDN: '@east'
 004 "northnet-eastnet-nat" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "northnet-eastnet-nat" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "northnet-eastnet-nat" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "northnet-eastnet-nat" #4: STATE_QUICK_I1: initiate
 004 "northnet-eastnet-nat" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 north #
@@ -187,7 +187,7 @@ north #
 108 "northnet-eastnet-nat" #5: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "northnet-eastnet-nat" #5: Main mode peer ID is ID_FQDN: '@east'
 004 "northnet-eastnet-nat" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "northnet-eastnet-nat" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "northnet-eastnet-nat" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "northnet-eastnet-nat" #6: STATE_QUICK_I1: initiate
 004 "northnet-eastnet-nat" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 north #

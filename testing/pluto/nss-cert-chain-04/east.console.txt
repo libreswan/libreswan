@@ -34,7 +34,7 @@ east #
 000 "road-A":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
-000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "road-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-A":   newest ISAKMP SA: #0; newest IPsec SA: #0;
@@ -48,7 +48,7 @@ east #
 000 "road-chain-B":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-chain-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
-000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "road-chain-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;

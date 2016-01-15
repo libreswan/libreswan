@@ -137,7 +137,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-ipv4-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
-000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
