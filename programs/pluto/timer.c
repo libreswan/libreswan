@@ -468,9 +468,9 @@ static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 					"unknown usage - get_sa_info() failed");
 			}
 
-				DBG_log("replacing stale %s SA %s",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					story);
+			DBG_log("replacing stale %s SA %s",
+				IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+				story);
 		}
 	});
 }
