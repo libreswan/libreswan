@@ -544,56 +544,47 @@ void duplicate_id(struct id *dst, const struct id *src)
 
 static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
 {
-	CERTAVA **avas_a;
-	CERTAVA **avas_a_head;
-	CERTAVA *ava_a;
-	CERTAVA **avas_b;
-	CERTAVA *ava_b;
-	SECItem *val_b;
-	int tag_b, tag_a;
-	int matched = 0;
-	int ava_num = 0;
-	bool ret = FALSE;
-
 	if (rdn_a == NULL || rdn_b == NULL)
 		return FALSE;
 
-	avas_a_head = rdn_a->avas;
-	avas_b = rdn_b->avas;
+	int matched = 0;
+	int ava_num = 0;
 
-	while ((ava_b = *avas_b++) != NULL) {
+	CERTAVA **avas_b;
+	for (avas_b = rdn_b->avas; *avas_b != NULL; avas_b++) {
+		CERTAVA *const ava_b = *avas_b;
+		const SECOidTag tag_b = CERT_GetAVATag(ava_b);
+
 		ava_num++;
-		tag_b = CERT_GetAVATag(ava_b);
-		avas_a = avas_a_head;
-		while ((ava_a = *avas_a++) != NULL) {
-			tag_a = CERT_GetAVATag(ava_a);
-			if (tag_a == tag_b) {
-				val_b = CERT_DecodeAVAValue(&ava_b->value);
-				if (has_wild && val_b != NULL &&
-						val_b->len == 1 &&
-						val_b->data[0] == '*') {
-					*has_wild = TRUE;
-					matched++;
-					SECITEM_FreeItem(val_b, PR_TRUE);
-					break;
-				} else if (NSSCERT_CompareAVA(ava_a, ava_b) == SECEqual) {
-					matched++;
-					if (val_b != NULL)
-						SECITEM_FreeItem(val_b, PR_TRUE);
-					break;
-				}
+
+		CERTAVA **avas_a;
+		for (avas_a = rdn_a->avas; *avas_a != NULL; avas_a++) {
+			CERTAVA *const ava_a = *avas_a;
+
+			if (CERT_GetAVATag(ava_a) == tag_b) {
+				SECItem *val_b = CERT_DecodeAVAValue(&ava_b->value);
+
+				/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
 				if (val_b != NULL) {
-					/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
+					if (has_wild != NULL &&
+					    val_b->len == 1 &&
+					    val_b->data[0] == '*') {
+						*has_wild = TRUE;
+						matched++;
+						SECITEM_FreeItem(val_b, PR_TRUE);
+						break;
+					}
 					SECITEM_FreeItem(val_b, PR_TRUE);
+				}
+				if (NSSCERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+					matched++;
+					break;
 				}
 			}
 		}
 	}
 
-	if ((matched > 0 && ava_num > 0) && matched == ava_num)
-		ret = TRUE;
-
-	return ret;
+	return matched > 0 && matched == ava_num;
 }
 
 /*
@@ -604,13 +595,6 @@ static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
 {
 	char abuf[ASN1_BUF_LEN];
 	char bbuf[ASN1_BUF_LEN];
-	CERTName *a_name = NULL;
-	CERTName *b_name = NULL;
-	CERTRDN **rdns_a;
-	CERTRDN **rdns_a_head;
-	CERTRDN *rdn_a;
-	CERTRDN **rdns_b;
-	CERTRDN *rdn_b;
 	int rdn_num = 0;
 	int matched = 0;
 
@@ -619,20 +603,24 @@ static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("%s A: %s, B: %s", __FUNCTION__, abuf, bbuf));
-	a_name = CERT_AsciiToName(abuf);
-	b_name = CERT_AsciiToName(bbuf);
+
+	CERTName *a_name = CERT_AsciiToName(abuf);
+	CERTName *b_name = CERT_AsciiToName(bbuf);
 
 	if (a_name == NULL || b_name == NULL)
 		return FALSE;
 
-	rdns_a_head = a_name->rdns;
-	rdns_b = b_name->rdns;
+	CERTRDN **rdns_b;
+	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
+		CERTRDN *rdn_b = *rdns_b;
 
-	while ((rdn_b = *rdns_b++) != NULL) {
 		rdn_num++;
-		rdns_a = rdns_a_head;
-		while ((rdn_a = *rdns_a++) != NULL) {
+
+		CERTRDN **rdns_a;
+		for (rdns_a = a_name->rdns; *rdns_a != NULL; rdns_a++) {
+			CERTRDN *rdn_a = *rdns_a++;
 			bool has_wild = FALSE;
+
 			if (match_rdn(rdn_a, rdn_b,
 				      wildcards != NULL ? &has_wild : NULL)) {
 				matched++;
@@ -652,12 +640,13 @@ static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
 		    rdn_num,
 		    wildcards ? *wildcards : 0));
 
-	return ((matched > 0 && rdn_num > 0) && matched == rdn_num);
+	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
 
 bool same_dn_any_order(chunk_t a, chunk_t b)
 {
 	bool ret = match_dn(a, b, NULL);
+
 	if (!ret) {
 		DBG(DBG_CONTROL,
 		    DBG_log("%s: not an exact match, now checking any RDN order",
@@ -671,6 +660,7 @@ bool same_dn_any_order(chunk_t a, chunk_t b)
 bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
 {
 	bool ret = match_dn(a, b, wildcards);
+
 	if (!ret) {
 		DBG(DBG_CONTROL,
 		    DBG_log("%s: not an exact match, now checking any RDN order with %d wildcards",

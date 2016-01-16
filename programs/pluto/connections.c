@@ -1707,7 +1707,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
 	if (his_id != NULL) {
-		int wildcards;
+		int wildcards;	/* ??? ignored? */
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(his_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *his_id;
@@ -2735,16 +2735,6 @@ struct connection *refine_host_connection(const struct state *st,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
-	struct connection *best_found = NULL;
-	const struct RSA_private_key *my_RSA_pri = NULL;
-	bool wcpip; /* wildcard Peer IP? */
-	int wildcards = 0,
-		best_wildcards = 0;
-	int our_pathlen = 0,
-		best_our_pathlen = 0,
-		peer_pathlen = 0,
-		best_peer_pathlen = 0;
-	const chunk_t *psk = NULL;
 	generalName_t *requested_ca = st->st_requested_ca;
 
 	*fromcert = FALSE;
@@ -2761,21 +2751,28 @@ struct connection *refine_host_connection(const struct state *st,
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
-	if (same_id(&c->spd.that.id, peer_id) &&
-		peer_ca.ptr != NULL &&
-		trusted_ca_nss(peer_ca, c->spd.that.ca, &peer_pathlen) &&
-		peer_pathlen == 0 &&
-		match_requested_ca(requested_ca, c->spd.this.ca,
-				&our_pathlen) &&
-		our_pathlen == 0) {
+	{
+		int opl;
+		int ppl;
 
-		DBG(DBG_CONTROLMORE,
-			DBG_log("refine_host_connection: happy with starting point: %s",
-				c->name));
+		if (same_id(&c->spd.that.id, peer_id) &&
+			peer_ca.ptr != NULL &&
+			trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
+			ppl == 0 &&
+			match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
+			opl == 0) {
 
-		/* peer ID matches current connection -- look no further */
-		return c;
+			DBG(DBG_CONTROLMORE,
+				DBG_log("refine_host_connection: happy with starting point: %s",
+					c->name));
+
+			/* peer ID matches current connection -- look no further */
+			return c;
+		}
 	}
+
+	const chunk_t *psk = NULL;
+	const struct RSA_private_key *my_RSA_pri = NULL;
 
 	if (auth_policy & POLICY_PSK) {
 		if (initiator) {
@@ -2822,13 +2819,21 @@ struct connection *refine_host_connection(const struct state *st,
 
 	struct connection *d = c->host_pair->connections;
 
+	int best_our_pathlen = 0;
+	int best_peer_pathlen = 0;
+	struct connection *best_found = NULL;
+	int best_wildcards = 0;
+
+	bool wcpip; /* wildcard Peer IP? */
 	for (wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
-			bool d_fromcert = FALSE;
+			int wildcards = 0;
 			bool match1 = match_id(peer_id, &d->spd.that.id,
 					&wildcards);
+			int peer_pathlen;
 			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
 						&peer_pathlen);
+			int our_pathlen;
 			bool match3 = match_requested_ca(requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
@@ -2844,7 +2849,7 @@ struct connection *refine_host_connection(const struct state *st,
 					fmt_conn_instance(c, b1),
 					d->name,
 					fmt_conn_instance(d, b2),
-					best_found ?
+					best_found != NULL ?
 						best_found->name : "(none)",
 					match1 && match2 && match3,
 					match1, match2, match3);});
@@ -2862,6 +2867,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * Check for the match but also check to see if it's
 			 * the %fromcert + peer id match result. - matt
 			 */
+			bool d_fromcert = FALSE;
 			if (!match1) {
 				d_fromcert = id_kind(&d->spd.that.id) ==
 					ID_FROMCERT;
@@ -2912,8 +2918,7 @@ struct connection *refine_host_connection(const struct state *st,
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_host_connection: checked %s%s "
-					"against %s%s, now for see if best",
+				DBG_log("refine_host_connection: checked %s%s against %s%s, now for see if best",
 					c->name,
 					fmt_conn_instance(c, b1),
 					d->name,
