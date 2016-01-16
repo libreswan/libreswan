@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015,2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -250,6 +250,11 @@ struct ikev2_proposal {
 	struct ikev2_transforms transforms[IKEv2_TRANS_TYPE_ROOF];
 };
 
+#define FOR_EACH_TRANSFORMS_TYPE(TYPE,TRANSFORMS,PROPOSAL)		\
+	for ((TYPE) = 1, (TRANSFORMS) = &(PROPOSAL)->transforms[(TYPE)];	\
+	     (TYPE) < elemsof((PROPOSAL)->transforms);			\
+	     (TYPE)++, (TRANSFORMS)++)
+
 struct ikev2_proposals {
 	int nr;
 	struct ikev2_proposal *proposal;
@@ -387,8 +392,8 @@ void DBG_log_ikev2_proposal(const char *prefix,
 		print_string(buf, "]");
 	}
 	enum ikev2_trans_type type;
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		const struct ikev2_transforms *transforms = &proposal->transforms[type];
+	const struct ikev2_transforms *transforms;
+	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
 			print_transforms(buf, " ", type, transforms);
@@ -415,10 +420,10 @@ void DBG_log_ikev2_proposals(const char *prefix,
 			pfree(buf);
 		}
 		enum ikev2_trans_type type;
-		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+		const struct ikev2_transforms *transforms;
+		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 			struct print *buf = print_buf();
-			print_transforms(buf, "", type,
-					 &proposal->transforms[type]);
+			print_transforms(buf, "", type, transforms);
 			DBG_log("    %s", buf->buf);
 			pfree(buf);
 		}
@@ -464,8 +469,8 @@ static int process_transforms(pb_stream *prop_pbs,
 		     local_proposal_nr++) {
 			struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
 			enum ikev2_trans_type type;
-			for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-				struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
+			struct ikev2_transforms *local_transforms;
+			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
 				struct ikev2_transform *local_transform;
 				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
 					matching_local_proposals[local_proposal_nr][type]++;
@@ -604,8 +609,8 @@ static int process_transforms(pb_stream *prop_pbs,
 		struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
 		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_proposal_nr));
 		enum ikev2_trans_type type;
-		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
+		struct ikev2_transforms *local_transforms;
+		FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
 			/*
 			 * HACK to allow missing NULL integrity:
 			 * 
@@ -674,14 +679,14 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
  */
 stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 				    bool ike, bool initial, bool accepted,
-				    struct ikev2_proposal **chosen,
+				    struct ikev2_proposal **chosen_proposal,
 				    struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %d local proposals",
 				 local_proposals->nr));
 
 	/* Return when STF_OK only!  */
-	struct ikev2_proposal *best = alloc_thing(struct ikev2_proposal, "best proposal");
+	struct ikev2_proposal *best_proposal = alloc_thing(struct ikev2_proposal, "best proposal");
 
 	/* Must be released.  */
 	int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF];
@@ -812,17 +817,18 @@ stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 			/* capture the new best proposal  */
 			best_local_proposal = match;
 			/* blat best with a new value */
-			*best = (struct ikev2_proposal) {
+			*best_proposal = (struct ikev2_proposal) {
 				.propnum = remote_proposal.isap_protoid,
 				.protoid = remote_proposal.isap_protoid,
 				.remote_spi = remote_spi,
 			};
 			enum ikev2_trans_type type;
-			for (type = 1 ; type < IKEv2_TRANS_TYPE_ROOF; type++) {
+			struct ikev2_transforms *best_transforms;
+			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
 				int tt = matching_local_proposals[best_local_proposal][type];
 				struct ikev2_transform *matching_transform = &local_proposals->proposal[best_local_proposal].transforms[type].transform[tt];
 				if (matching_transform->valid) {
-					best->transforms[type].transform[0] = *matching_transform;
+					best_transforms->transform[0] = *matching_transform;
 				}
 			}
 		} else {
@@ -836,14 +842,14 @@ stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
 	
 	if (best_local_proposal < 0) {
 		/* STF_FAIL status indicating corruption */
-		pfree(best);
+		pfree(best_proposal);
 		return -best_local_proposal;
 	} else if (best_local_proposal >= local_proposals->nr) {
 		/* no luck */
-		pfree(best);
+		pfree(best_proposal);
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	} else {
-		*chosen = best;
+		*chosen_proposal = best_proposal;
 		return STF_OK;
 	}		
 }
@@ -889,8 +895,9 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 {
 	int numtrans = 0;
 	enum ikev2_trans_type type;
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &proposal->transforms[type];
+	struct ikev2_transforms *transforms;
+
+	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			numtrans++;
@@ -916,8 +923,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 			return FALSE;
 	}
 
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &proposal->transforms[type];
+	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			bool last = --numtrans == 0;
@@ -996,8 +1002,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
 	struct trans_attrs ta = (struct trans_attrs) {0};
 	enum ikev2_trans_type type;
-	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &proposal->transforms[type];
+	struct ikev2_transforms *transforms;
+	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		pexpect(!transforms->transform[1].valid); /* zero or 1 */
 		if (transforms->transform[0].valid) {
 			struct ikev2_transform *transform = transforms->transform;
