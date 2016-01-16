@@ -107,9 +107,15 @@ static bool ikev2_out_attr(int type,
 	return TRUE;
 }
 
-static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakley)
+/*
+ * Convert an IKEv1 HASH algorithm to IKEv2 INTEG.
+ *
+ * Not to be confused with converting an IKEv1 HASH algorithm to an
+ * IKEv2 PRF, which is handled by ike_alg.h.
+ */
+static enum ikev2_trans_type_integ v1hash_to_v2integ(enum ikev1_hash_attribute hash)
 {
-	switch (oakley) {
+	switch (hash) {
 	case OAKLEY_MD5:
 		return IKEv2_AUTH_HMAC_MD5_96;
 
@@ -129,13 +135,22 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
+		loglog(RC_LOG_SERIOUS, "IKEv1 HASH %d -> IKEv2 INTEG failed",
+		       hash);
 		return IKEv2_AUTH_INVALID;
 	}
 }
 
-static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
+/*
+ * Convert an IKEv1 (ESP/AH/CHILD) payload AUTH attribute to IKEv2
+ * INTEG.
+ *
+ * Not to be confused with converting the IKEv1 HASH algorithm to
+ * IKEv2 INTEG as performed by the above.
+ */
+static enum ikev2_trans_type_integ v1auth_to_v2integ(enum ikev1_auth_attribute auth)
 {
-	switch (ikev1_phase2_auth) {
+	switch (auth) {
 	case AUTH_ALGORITHM_HMAC_MD5:
 		return IKEv2_AUTH_HMAC_MD5_96;
 
@@ -155,6 +170,8 @@ static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth
 		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
+		loglog(RC_LOG_SERIOUS, "IKEv1 AUTH %d -> IKEv2 INTEG failed",
+		       auth);
 		return IKEv2_AUTH_INVALID;
 	}
 }
@@ -971,13 +988,17 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 										     ta.encrypt);
 				if (ta.encrypter == NULL) {
 					/* everything should be in alg_info.  */
-					DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, missing algorithm, hopefully ESP/AH", ta.encrypt));
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
+						    ta.encrypt));
 				}
 				if (ta.enckeylen <= 0) {
 					if (ta.encrypter != NULL) {
 						ta.enckeylen = ta.encrypter->keydeflen;
 					} else {
-						DBG(DBG_CONTROL, DBG_log("XXX: unknown key size for ENCRYPT algorithm %d", ta.encrypt));
+						DBG(DBG_CONTROL,
+						    DBG_log("unknown key size for ENCRYPT algorithm %d",
+							    ta.encrypt));
 					}
 				}
 			break;
@@ -987,7 +1008,9 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 										   ta.prf_hash);
 				if (ta.prf_hasher == NULL) {
 					/* everything should be in alg_info.  */
-					DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_HASH,%d) failed, missing algorithm, hopefully ESP/AH", ta.prf_hash));
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_find(IKG_ALG_HASH,%d) failed, assuming ESP/AH",
+						    ta.prf_hash));
 				}
 				break;
 			case IKEv2_TRANS_TYPE_INTEG:
@@ -1000,7 +1023,9 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 											     ta.integ_hash);
 					if (ta.integ_hasher == NULL) {
 						/* everything should be in alg_info.  */
-						DBG(DBG_CONTROL, DBG_log("XXX: ikev2_alg_find(IKG_ALG_INTEG,%d) failed, missing algorithm, hopefully ESP/AH", ta.integ_hash));
+						DBG(DBG_CONTROLMORE,
+						    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
+							    ta.integ_hash));
 					}
 				}
 				break;
@@ -1008,8 +1033,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				ta.groupnum = transform->id;
 				ta.group = lookup_group(ta.groupnum);
 				if (ta.group == NULL) {
-					/* everything should be in alg_info.  */
-					DBG(DBG_CONTROL, DBG_log("XXX: lookup_group(%d) failed, missing algorithm, hopefully ESP/AH", ta.integ_hash));
+					/*
+					 * Assuming pluto, and not the
+					 * kernel, is going to do the
+					 * DH calculation, then not
+					 * finding the DH group is
+					 * likely really bad.
+					 *
+					 * Stumble on as caller will
+					 * quickly passert.
+					 */
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("lookup_group(%d) failed",
+						    ta.integ_hash));
 				}
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
@@ -1375,8 +1411,13 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
 					 halg->common.algo_v2id, 0);
 			if (ike_alg_enc_requires_integ(ealg)) {
+				/*
+				 * Use the IKEv1 HASH algorithm,
+				 * projected onto IKEv2 INTEG, as the
+				 * integrity.
+				 */
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 v1tov2_integ(ike_info->ike_halg), 0);
+						 v1hash_to_v2integ(ike_info->ike_halg), 0);
 			} else {
 				/*
 				 * Include NULL integrity in the
@@ -1598,7 +1639,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 					       aalg);
 					continue;
 				}
-				unsigned integ = v1phase2tov2child_integ(esp_info->auth);
+				enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
 			}
 			break;
@@ -1611,7 +1652,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 				       aalg);
 				continue;
 			}
-			unsigned integ = v1phase2tov2child_integ(esp_info->auth);
+			enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
 			if (integ != 0) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
 			}
