@@ -198,6 +198,7 @@ static st_jbuf_t *alloc_st_jbuf(void)
 				ptrdiff_t n = ptr - st_jbuf_mem;	/* number of entries, excluding end marker */
 
 				/* allocate n entries, plus one new entry, plus new endmarker */
+				/* ??? why are we using reealloc instead of Pluto's functions? */
 				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
 				if (st_jbuf_mem == NULL)
 					lsw_abort();

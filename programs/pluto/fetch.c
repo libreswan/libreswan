@@ -158,6 +158,7 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 
 	/* note: memory allocated by realloc(3) */
 	mem->ptr = realloc(mem->ptr, mem->len + realsize);
+	/* ??? what should we do on realloc failure? */
 	if (mem->ptr != NULL) {
 		memcpy(&(mem->ptr[mem->len]), ptr, realsize);
 		mem->len += realsize;

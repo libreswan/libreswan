@@ -146,18 +146,18 @@ struct raw_iface *find_raw_ifaces4(void)
 
 	/* a million interfaces is probably the maximum, ever... */
 	for (; num < (1024 * 1024); num *= 2) {
-		struct ifreq *tmpbuf = NULL;	/* make coverity happy for realloc() */
 		/* Get num local interfaces.  See netdevice(7). */
 		ifconf.ifc_len = num * sizeof(struct ifreq);
-		tmpbuf = realloc(buf, ifconf.ifc_len);
+
+		struct ifreq *tmpbuf = realloc(buf, ifconf.ifc_len);
+
 		if (tmpbuf == NULL) {
 			free(buf);
 			exit_log_errno((e,
 					"realloc of %d in find_raw_ifaces4()",
 					ifconf.ifc_len));
-		} else {
-		buf = tmpbuf;
 		}
+		buf = tmpbuf;
 		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 
