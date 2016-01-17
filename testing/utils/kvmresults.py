@@ -2,7 +2,7 @@
 
 # Print a test result summary gathered by scanning the OUTPUT.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@ import sys
 from fab import testsuite
 from fab import logutil
 from fab import post
+from fab import stats
 
 def main():
 
@@ -115,6 +116,22 @@ def main():
     if isinstance(tests, list):
         args.list_untested = True
 
+    result_stats = stats.Results()
+    try:
+        results(logger, tests, baseline, args, result_stats)
+    finally:
+        result_stats.log_summary(stderr_log, prefix="  ")
+
+    return 0
+
+
+def stderr_log(fmt, *args):
+    sys.stderr.write(fmt % args)
+    sys.stderr.write("\n")
+
+
+def results(logger, tests, baseline, args, result_stats):
+
     for test in tests:
 
         # Produce separate runtimes for each test.
@@ -124,6 +141,8 @@ def main():
 
             # Filter out tests that are being ignored?
             ignore = testsuite.ignore(test, args)
+            if ignore:
+                result_stats.add_ignore(test, ignore)
             if ignore and not args.list_ignored:
                 continue
 
@@ -139,6 +158,8 @@ def main():
                                      update_diff=args.update_diff)
                 if not result and not args.list_untested:
                     continue
+
+            result_stats.add_result(result)
 
             sep = ""
 
@@ -193,8 +214,6 @@ def main():
             sys.stdout.flush()
 
             logger.debug("stop processing test %s", test.name)
-
-    return 0
 
 
 if __name__ == "__main__":

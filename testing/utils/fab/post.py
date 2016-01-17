@@ -1,6 +1,6 @@
 # Perform post.mortem on a test result, for libreswan.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -69,7 +69,7 @@ class Errors:
             values |= errors
         return values.__iter__()
 
-    def add(self, what, who="all"):
+    def add(self, what, who=None):
         if not who in self.errors:
             self.errors[who] = set()
         self.errors[who].add(what)
@@ -126,14 +126,14 @@ def fuzzy_diff(logger, ln, l, rn, r,
                                      lineterm=""))
     logger.debug("fuzzy_diff: %s", diff)
     if not diff:
-        return diff, "passed"
+        return diff, "same"
     # see if the problem was just white space
     if not strip_spaces and not strip_blank_lines:
         l = strip_blank_line(strip_space(l))
         r = strip_blank_line(strip_space(r))
         if l == r:
-            return diff, "whitespace"
-    return diff, "failed"
+            return diff, "different-whitespace"
+    return diff, "different"
 
 
 def sanitize_output(logger, raw_file, test_directory):
@@ -168,28 +168,27 @@ def load_output(logger, output_file):
 class TestResult:
 
     def __str__(self):
-        if self.finished is None:
-            return "missing"
-        elif not self.finished:
-            return "incomplete"
-        elif not self.passed:
+        if self.passed is None:
+            return "not-tested"
+        elif self.passed is False:
             return "failed"
-        else:
+        elif self.passed is True:
             return "passed"
+        else:
+            return "undefined"
 
     def __bool__(self):
         # was a result found?
-        return self.finished is not None
+        return self.passed is not None
 
     def __init__(self, test, skip_diff, skip_sanitize, output_directory=None,
                  update_diff=False, update_sanitize=False,
                  strip_spaces=False, strip_blank_lines=False):
 
-        # The result could be: missing, incomplete, fail, pass.
-
         self.test = test
-        self.finished = None
+        # Start with not-tested
         self.passed = None
+
         self.errors = Errors(test.logger)
         self.diffs = {}
         self.sanitized_console_output = {}
@@ -199,20 +198,20 @@ class TestResult:
         if not os.path.exists(output_directory):
             test.logger.debug("output directory missing: %s", output_directory)
             return
+
         # Be optimistic about the result.
-        self.finished = True
         self.passed = True
 
         # Check the pluto logs for markers indicating that there was a
         # crash or other unexpected behaviour.
         for domain in test.domain_names():
             pluto_log = os.path.join(output_directory, domain + ".pluto.log")
-            test.logger.debug("checking '%s' for markers", pluto_log)
             if os.path.exists(pluto_log):
+                test.logger.debug("checking '%s' for errors", pluto_log)
                 if self.errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", domain):
                     self.passed = False
-                if self.errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", domain):
-                    self.passed = False
+                # XXX: allow expection failures?
+                self.errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", domain)
 
         # Check the raw console output for problems and that it
         # matches expected output.
@@ -226,8 +225,8 @@ class TestResult:
                                             domain + ".console.verbose.txt")
             test.logger.debug("domain %s raw console output '%s'", domain, raw_console_file)
             if not os.path.exists(raw_console_file):
-                self.errors.add("missing", domain)
-                self.finished = False
+                self.errors.add("output-missing", domain)
+                self.passed = False
                 continue
 
             test.logger.debug("domain %s loading raw console output", domain)
@@ -236,20 +235,25 @@ class TestResult:
 
             test.logger.debug("domain %s checking raw console output for signs of a crash", domain)
             if self.errors.search(r"[\r\n]CORE FOUND", raw_console_output, "CORE", domain):
+                # keep None
                 self.passed = False
             if self.errors.search(r"SEGFAULT", raw_console_output, "SEGFAULT", domain):
+                # keep None
                 self.passed = False
             if self.errors.search(r"GPFAULT", raw_console_output, "GPFAULT", domain):
+                # keep None
                 self.passed = False
 
-            # Truncated output won't match expected output so skip any
-            # comparisons.
-            test.logger.debug("domain %s checking if raw console output was truncated", domain)
-            if not "# : ==== end ====" in raw_console_output:
-                self.errors.add("truncated", domain)
-                self.passed = False
-                self.finished = False
-                continue
+            # Incomplete output won't match expected output so skip
+            # any comparisons.
+            #
+            # For moment skip this as the marker for complete output isn't reliable?
+            
+            #test.logger.debug("domain %s checking if raw console output was incomplete", domain)
+            #if not "# : ==== end ====" in raw_console_output:
+            #    self.errors.add("output-incomplete", domain)
+            #    self.passed = False
+            #    continue
 
             sanitized_console_file = os.path.join(output_directory,
                                                   domain + ".console.txt")
@@ -276,13 +280,14 @@ class TestResult:
                     expected_sanitized_console_output = f.read()
                 sanitized_console_diff_file = os.path.join(output_directory, domain + ".console.diff")
                 sanitized_console_diff = None
-                different = "different"
+                different = None
                 if skip_diff:
                     sanitized_console_diff = load_output(test.logger, sanitized_console_diff_file)
                     # be consistent with fuzzy_diff which returns a list
                     # of lines.
                     if sanitized_console_diff:
                         sanitized_console_diff = sanitized_console_diff.splitlines()
+                        different = "different"
                 if not sanitized_console_diff:
                     sanitized_console_diff, different = fuzzy_diff(test.logger,
                                                                    domain + ".console.txt", expected_sanitized_console_output,
@@ -298,14 +303,14 @@ class TestResult:
                 if not sanitized_console_diff:
                     test.logger.debug("%s console and expected output match", domain)
                     continue
-                self.errors.add(different, domain)
+                self.errors.add("output-" + different, domain)
                 self.diffs[domain] = sanitized_console_diff
                 self.passed = False
             elif domain == "nic":
                 # NIC never gets its console output checked.
                 test.logger.debug("domain %s has unchecked console output", domain)
             else:
-                self.errors.add("unchecked", domain)
+                self.errors.add("output-unchecked", domain)
 
 
 def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,

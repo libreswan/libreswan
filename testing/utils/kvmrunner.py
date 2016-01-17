@@ -2,7 +2,7 @@
 
 # Run the pluto testsuite, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -21,7 +21,6 @@ import pexpect
 import argparse
 import subprocess
 import time
-from collections import defaultdict
 from datetime import datetime
 from distutils import util
 from concurrent import futures
@@ -29,39 +28,7 @@ from fab import runner
 from fab import testsuite
 from fab import logutil
 from fab import post
-
-class Counts:
-
-    def __init__(self):
-        self.counts = defaultdict(list)
-
-    def add(self, key, value):
-        self.counts[key].append(value)
-
-    def log_summary(self, logger, level=logutil.INFO, prefix=""):
-        for key, values in sorted(self.counts.items()):
-            logger.log(level, "%s%s: %d", prefix, key, len(values))
-
-    def log_details(self, logger, level=logutil.DEBUG, prefix=""):
-        for key in sorted(self.counts):
-            values = self.counts[key]
-            line = ""
-            for value in sorted(values):
-                if value:
-                    line += " "
-                    line += value
-            logger.log(level, "%s%s:%s", prefix, key, line)
-
-
-class Stats(Counts):
-    def add(self, stat, test):
-        Counts.add(self, stat, test.name)
-
-class Results(Counts):
-    def add(self, result):
-        Counts.add(self, str(result), result.test.name)
-        for error in result.errors:
-            Counts.add(self, "%s(%s)" % (result, error), result.test.name)
+from fab import stats
 
 def main():
     parser = argparse.ArgumentParser(description="Run tests")
@@ -108,10 +75,8 @@ def main():
         args.retry = 1;
         logger.info("Explicit directory list; forcing --retry=%d (retry failed tests)", args.retry)
 
-    # Use a default dict so no need to worry about initializing values
-    # to zero.
-    stats = Stats()
-    results = Results()
+    test_stats = stats.Tests()
+    result_stats = stats.Results()
     start_time = time.localtime()
 
     try:
@@ -119,14 +84,15 @@ def main():
 
         test_count = 0
         for test in tests:
-            stats.add("total", test)
+            test_stats.add("total", test)
             test_count += 1
             # Would the number of tests to be [re]run be better?
             test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
 
             ignore = testsuite.ignore(test, args)
             if ignore:
-                stats.add("ignored", test)
+                result_stats.add_ignore(test, ignore)
+                test_stats.add("ignored", test)
                 # No need to log all the ignored tests when an
                 # explicit sub-set of tests is being run.  For
                 # instance, when running just one test.
@@ -139,24 +105,26 @@ def main():
             # is always run; skip passed tests; else things get a
             # little wierd.
             retry = args.retry or 0
+            # Be lazy with gathering the results, don't run the
+            # sanitizer or diff.
+            old_result = post.mortem(test, args, skip_diff=True, skip_sanitize=True)
             if retry >= 0:
-                result = post.mortem(test, args)
-                if result:
-                    if result.passed:
+                if old_result:
+                    if old_result.passed:
                         logger.info("%s: passed", test_prefix)
-                        stats.add("skipped", test)
-                        results.add(result)
+                        test_stats.add("skipped", test)
+                        result_stats.add_skip(old_result)
                         continue
                     if retry == 0:
                         logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
                                     result, test.output_directory)
-                        stats.add("skipped", test)
-                        results.add(result)
+                        test_stats.add("skipped", test)
+                        result_stats.add_skip(old_result)
                         continue
-                    stats.add("retry", test)
+                    test_stats.add("retry", test)
 
             logger.info("%s: starting ...", test_prefix)
-            stats.add("tests", test)
+            test_stats.add("tests", test)
 
             debugfile = None
             result = None
@@ -165,7 +133,7 @@ def main():
             # skips and ignores
             attempts = max(abs(retry), 1)
             for attempt in range(attempts):
-                stats.add("attempts", test)
+                test_stats.add("attempts", test)
 
                 # On first attempt (attempt == 0), empty the
                 # <test>/OUTPUT/ directory of all contents.  On
@@ -232,15 +200,22 @@ def main():
                         result = post.mortem(test, args, update=(not args.dry_run))
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
-                    stats.add("attempts(%s:%s)" % (ending, result), test)
-                    logger.info("****** test %s %s ******", test.name, result)
+                    test_stats.add("attempts(%s:%s)" % (ending, result), test)
+                    if result.errors:
+                        logger.info("****** test %s %s %s ******", test.name, result, result.errors)
+                    else:
+                        logger.info("****** test %s %s ******", test.name, result)
                     if result.passed:
                         break
 
             # Above will have set RESULT (don't reach here during
             # cntrl-c or crash).
-            results.add(result)
-            stats.add("tests(%s)" % result, test)
+
+            test_stats.add("tests(%s)" % result, test)
+            result_stats.add_result(result, old_result)
+
+            logger.info("Results so far:")
+            result_stats.log_summary(logger.info, prefix="  ")
 
     except KeyboardInterrupt:
         logger.exception("**** test %s interrupted ****", test.name)
@@ -249,17 +224,17 @@ def main():
     finally:
         logger.info("run finished at %s", datetime.now())
 
-        level = args.verbose and logutil.INFO or logutil.DEBUG
-        logger.log(level, "stat details:")
-        stats.log_details(logger, level=level, prefix="  ")
+        level = args.verbose and logger.info or logger.debug
+        level("stat details:")
+        test_stats.log_details(level, prefix="  ")
 
         logger.info("result details:")
-        results.log_details(logger, level=logutil.INFO, prefix="  ")
+        result_stats.log_details(logger.info, prefix="  ")
 
         logger.info("stat summary:")
-        stats.log_summary(logger, level=logutil.INFO, prefix="  ")
+        test_stats.log_summary(logger.info, prefix="  ")
         logger.info("result summary:")
-        results.log_summary(logger, level=logutil.INFO, prefix="  ")
+        result_stats.log_summary(logger.info, prefix="  ")
 
     return 0
 
