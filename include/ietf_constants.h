@@ -294,8 +294,12 @@
 /* Default is based on minimum IKEv2 requirement */
 #define DEFAULT_NONCE_SIZE 32 /* bytes */
 
+/* This really means SPI size */
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
+
+/* IKEv2 DOS COOKIE */
+#define IKEv2_MAX_COOKIE_SIZE 64
 
 /* Various IETF defined key lengths */
 

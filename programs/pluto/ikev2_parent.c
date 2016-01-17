@@ -1289,6 +1289,16 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 */
 			const pb_stream *dc_pbs;
 
+			/*
+			 * RFC-7296 Sesction 2.6:
+			 * The data associated with this notification MUST be
+			 * between 1 and 64 octets in length (inclusive)
+			 */
+			if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
+				DBG(DBG_CONTROL, DBG_log("v2N_COOKIE notify payload too big - packet dropped"));
+				return STF_IGNORE; /* avoid DDOS / reflection attacks */
+			}
+
 			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
 				DBG(DBG_CONTROL, DBG_log("non-v2N_COOKIE notify payload(s) ignored "));
 			}
