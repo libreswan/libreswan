@@ -408,9 +408,15 @@ void DBG_log_ikev2_proposals(const char *prefix,
 {
 	int p;
 	DBG_log("%s ikev2_proposals:", prefix);
+	DBG_log("  allocation: %s", (proposals->on_heap ? "heap" : "static"));
 	for (p = 0; p < proposals->nr; p++) {
-		DBG_log("  proposal %d:", p);
+		int propnum = p + 1;
 		const struct ikev2_proposal *proposal = &proposals->proposal[p];
+		if (proposal->propnum) {
+			DBG_log("  proposal: %d (%d)", propnum, proposal->propnum);
+		} else {
+			DBG_log("  proposal: %d", propnum);
+		}
 		{
 			struct print *buf = print_buf();
 			print_name_value(buf, "protoid=",
@@ -1076,8 +1082,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				}
 				break;
 			case IKEv2_TRANS_TYPE_ESN:
-				DBG(DBG_CONTROL, DBG_log("XXX: assuming ESN disabled"));
-				pexpect(transform->id == IKEv2_ESN_DISABLED);
+				switch (transform->id) {
+				case IKEv2_ESN_ENABLED:
+					ta.esn_enabled = TRUE;
+					break;
+				case IKEv2_ESN_DISABLED:
+					ta.esn_enabled = FALSE;
+					break;
+				default:
+					ta.esn_enabled = FALSE;
+					loglog(RC_LOG_SERIOUS, "accepted proposal contains invalid ESN %d",
+					       transform->id);
+					break;
+				}
 				break;
 			default:
 				bad_case(type);
@@ -1476,23 +1493,7 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
 }
 
-static struct ikev2_proposal default_ikev2_esp_proposal[] = {
-#if 0 /* PROTO_IPSEC_ESP */
-	{ AD_TR(ESP_AES, espasha1_attr) }, static struct db_attr espasha1_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
-		{ .type.ipsec = KEY_LENGTH, 128 },
-	};
-	{ AD_TR(ESP_AES, espamd5_attr) }, static struct db_attr espamd5_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
-		{ .type.ipsec = KEY_LENGTH, 128 },
-	};
-	{ AD_TR(ESP_3DES, espsha1_attr) }, static struct db_attr espsha1_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
-	};
-	{ AD_TR(ESP_3DES, espmd5_attr) }, static struct db_attr espmd5_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
-	},
-#endif
+static struct ikev2_proposal ikev2_esn_no_esp_proposal[] = {
 	{
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
@@ -1526,20 +1527,12 @@ static struct ikev2_proposal default_ikev2_esp_proposal[] = {
 		},
 	},
 };
-static struct ikev2_proposals default_ikev2_esp_proposals = {
-	.proposal = default_ikev2_esp_proposal,
-	.nr = elemsof(default_ikev2_esp_proposal),
+static struct ikev2_proposals ikev2_esn_no_esp_proposals = {
+	.proposal = ikev2_esn_no_esp_proposal,
+	.nr = elemsof(ikev2_esn_no_esp_proposal),
 };
 
-static struct ikev2_proposal default_ikev2_ah_proposal[] = {
-#if 0 /* PROTO_IPSEC_AH */
-	{ AD_TR(AH_SHA, ah_HMAC_SHA1_attr) }, static struct db_attr ah_HMAC_SHA1_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1 },
-	};
-	{ AD_TR(AH_MD5, ah_HMAC_MD5_attr) }, static struct db_attr ah_HMAC_MD5_attr[] = {
-		{ .type.ipsec = AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_MD5 },
-	};
-#endif
+static struct ikev2_proposal ikev2_esn_no_ah_proposal[] = {
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
@@ -1555,10 +1548,21 @@ static struct ikev2_proposal default_ikev2_ah_proposal[] = {
 		},
 	},
 };
-static struct ikev2_proposals default_ikev2_ah_proposals = {
-	.proposal = default_ikev2_ah_proposal,
-	.nr = elemsof(default_ikev2_ah_proposal),
+static struct ikev2_proposals ikev2_esn_no_ah_proposals = {
+	.proposal = ikev2_esn_no_ah_proposal,
+	.nr = elemsof(ikev2_esn_no_ah_proposal),
 };
+
+static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
+{
+	passert(!proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0].valid);
+	if (policy & POLICY_ESN_YES) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_ENABLED, 0);
+	}
+	if (policy & POLICY_ESN_NO) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_DISABLED, 0);
+	}
+}
 
 void ikev2_proposals_from_alg_info_esp(const char *what,
 				       struct alg_info_esp *alg_info_esp,
@@ -1572,25 +1576,53 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 
 	if (alg_info_esp == NULL) {
 		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
-		lset_t esp_eh = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
-		struct ikev2_proposals *proposals;
-		switch (esp_eh) {
+		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
+		struct ikev2_proposals *esn_no_proposals;
+		switch (esp_ah) {
 		case POLICY_ENCRYPT:
-			proposals = &default_ikev2_esp_proposals;
+			esn_no_proposals = &ikev2_esn_no_esp_proposals;
 			break;
 		case POLICY_AUTHENTICATE:
-			proposals = &default_ikev2_ah_proposals;
+			esn_no_proposals = &ikev2_esn_no_ah_proposals;
 			break;
-		case POLICY_ENCRYPT|POLICY_AUTHENTICATE:
+		default:
 			/*
 			 * For moment this function does not support
 			 * AH+ESP.  Assert the assumption.
 			 */
 			bad_case(policy);
+		}
+		switch (policy & (POLICY_ESN_NO | POLICY_ESN_YES)) {
+		case 0: /* screwup */
+		case POLICY_ESN_NO:
+			*result = esn_no_proposals;
+			break;
+		case POLICY_ESN_YES:
+		case (POLICY_ESN_YES|POLICY_ESN_NO): {
+			/*
+			 * Clone the ESN_NO proposals and fix up the
+			 * ESN bits.
+			 */
+			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposal,
+									"cloned ESP/AH proposals");
+			proposals->on_heap = TRUE;
+			proposals->nr = esn_no_proposals->nr;
+			proposals->proposal = clone_bytes(esn_no_proposals->proposal,
+							  sizeof(esn_no_proposals->proposal[0]) * esn_no_proposals->nr,
+							  "ESP/AH proposals");
+			struct ikev2_proposal *proposal;
+			for (proposal = &proposals->proposal[0];
+			     proposal < &proposals->proposal[proposals->nr];
+			     proposal++) {
+				/* zap the existing ESN */
+				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) {0};
+				add_esn_transforms(proposal, policy);
+			}
+			*result = proposals;
+		}
 		default:
 			bad_case(policy);
 		}
-		*result = proposals;
 		DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
 		return;
 	}
@@ -1691,7 +1723,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 
 		}
 
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_DISABLED, 0);
+		add_esn_transforms(proposal, policy);
 
 		DBG(DBG_CONTROL,
 		    DBG_log_ikev2_proposal("... ", proposal));

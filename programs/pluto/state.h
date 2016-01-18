@@ -91,6 +91,8 @@ struct trans_attrs {
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
+	bool esn_enabled;               /* IKEv2 ESN (extended sequence numbers) */
+
 	oakley_group_t groupnum;		/* for IKEv2 */
 
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
