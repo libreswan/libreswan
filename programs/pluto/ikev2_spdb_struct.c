@@ -261,35 +261,40 @@ struct print {
 	char buf[1024];
 };
 
-static bool print_string(struct print *buf, const char *string)
+static void print_init(struct print *buf)
 {
-	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s", string);
-	if (n < 0 || buf->pos + n >= sizeof(buf->buf))
+	buf->pos = 0;
+	buf->buf[0] = '\0';
+}
+
+static bool print_join(struct print *buf, int n)
+{
+	if (n < 0 || buf->pos + n > sizeof(buf->buf))
 		return FALSE;
 	buf->pos += n;
 	return TRUE;
 }
 
+static bool print_string(struct print *buf, const char *string)
+{
+	return print_join(buf,
+		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s", string));
+}
+
 static bool print_value(struct print *buf, const char *prefix, int value)
 {
-	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s%d", prefix, value);
-	if (n < 0 || buf->pos + n > sizeof(buf->buf))
-		return FALSE;
-	buf->pos += n;
-	return TRUE;
+	return print_join(buf,
+		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s%d", prefix, value));
 }
 
 static bool print_name_value(struct print *buf, const char *prefix,
 			     const char *name, int value)
 {
-	int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s%s(%d)", prefix, name, value);
-	if (n < 0 || buf->pos + n > sizeof(buf->buf))
-		return FALSE;
-	buf->pos += n;
-	return TRUE;
+	return print_join(buf,
+		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+			 "%s%s(%d)", prefix, name, value));
 }
 
 /*
@@ -305,11 +310,9 @@ static bool print_transform(struct print *buf, const char *prefix,
 			      transform->id))
 		return FALSE;
 	if (transform->attr_keylen > 0) {
-		int n = snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "_%d", transform->attr_keylen);
-		if (n < 0 || buf->pos + n > sizeof(buf->buf))
-			return FALSE;
-		buf->pos += n;
+		return print_join(buf,
+			snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "_%d", transform->attr_keylen));
 	}
 	return TRUE;
 }
@@ -349,7 +352,8 @@ static bool print_transforms(struct print *buf, const char *prefix,
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
-	struct print buf = {0};
+	struct print buf;
+	print_init(&buf);
 	if (!print_name_value(&buf, "PROTOID=", protoid_name(proposal->protoid),
 			      proposal->protoid))
 		return;
@@ -390,7 +394,8 @@ void DBG_log_ikev2_proposals(const char *prefix,
 	for (p = 0; p < proposals->nr; p++) {
 		DBG_log("  proposal %d:", p);
 		struct ikev2_proposal *proposal = &proposals->proposal[p];
-		struct print buf0 = {0};
+		struct print buf0;
+		print_init(&buf0);
 		if (!print_name_value(&buf0, "protoid=",
 				      protoid_name(proposal->protoid),
 				      proposal->protoid))
@@ -398,7 +403,8 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		DBG_log("    %s", buf0.buf);
 		enum ikev2_trans_type type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			struct print buf = {0};
+			struct print buf;
+			print_init(&buf);
 			print_transforms(&buf, "", type,
 					 &proposal->transforms[type]);
 			DBG_log("    %s", buf.buf);
@@ -570,7 +576,8 @@ static int process_transforms(pb_stream *prop_pbs,
 		 * If nothing at all matched, log it.
 		 */
 		if (!transform_matched) {
-			struct print buf = {0};
+			struct print buf;
+			print_init(&buf);
 			print_transform(&buf, "", type, &remote_transform);
 			libreswan_log("remote proposal %d transform %d (%s) matched no local proposals",
 				      remote_proposal_nr, remote_transform_nr, buf.buf);
@@ -1590,7 +1597,8 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 		 */
 		passert(proposals->nr < max_proposals);
 		struct ikev2_proposal *proposal = &proposals->proposal[proposals->nr];
-		*proposal = (struct ikev2_proposal) {0};
+		static struct ikev2_proposal zero_proposal;	/* naturally zero */
+		*proposal = zero_proposal;
 
 		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
