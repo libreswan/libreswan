@@ -542,7 +542,7 @@ void duplicate_id(struct id *dst, const struct id *src)
 	clonetochunk(dst->name, src->name.ptr, src->name.len, "copy of id");
 }
 
-static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
+static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
 		return FALSE;
@@ -550,14 +550,14 @@ static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
 	int matched = 0;
 	int ava_num = 0;
 
-	CERTAVA **avas_b;
+	CERTAVA *const *avas_b;
 	for (avas_b = rdn_b->avas; *avas_b != NULL; avas_b++) {
 		CERTAVA *const ava_b = *avas_b;
 		const SECOidTag tag_b = CERT_GetAVATag(ava_b);
 
 		ava_num++;
 
-		CERTAVA **avas_a;
+		CERTAVA *const *avas_a;
 		for (avas_a = rdn_a->avas; *avas_a != NULL; avas_a++) {
 			CERTAVA *const ava_a = *avas_a;
 
@@ -591,7 +591,7 @@ static bool match_rdn(CERTRDN *rdn_a, CERTRDN *rdn_b, bool *has_wild)
  * match an equal number of RDNs, in any order
  * if wildcards != NULL, wildcard matches are enabled
  */
-static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
+static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wildcards)
 {
 	char abuf[ASN1_BUF_LEN];
 	char bbuf[ASN1_BUF_LEN];
@@ -604,21 +604,21 @@ static bool match_dn_unordered(chunk_t a, chunk_t b, int *wildcards)
 	DBG(DBG_CONTROL,
 	    DBG_log("%s A: %s, B: %s", __FUNCTION__, abuf, bbuf));
 
-	CERTName *a_name = CERT_AsciiToName(abuf);
-	CERTName *b_name = CERT_AsciiToName(bbuf);
+	CERTName *const a_name = CERT_AsciiToName(abuf);
+	CERTName *const b_name = CERT_AsciiToName(bbuf);
 
 	if (a_name == NULL || b_name == NULL)
 		return FALSE;
 
-	CERTRDN **rdns_b;
+	CERTRDN *const *rdns_b;
 	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
-		CERTRDN *rdn_b = *rdns_b;
+		CERTRDN *const rdn_b = *rdns_b;
 
 		rdn_num++;
 
-		CERTRDN **rdns_a;
+		CERTRDN *const *rdns_a;
 		for (rdns_a = a_name->rdns; *rdns_a != NULL; rdns_a++) {
-			CERTRDN *rdn_a = *rdns_a++;
+			CERTRDN *const rdn_a = *rdns_a;
 			bool has_wild = FALSE;
 
 			if (match_rdn(rdn_a, rdn_b,
