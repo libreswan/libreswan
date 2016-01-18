@@ -17,7 +17,7 @@
  */
 
 #ifdef FIPS_CHECK
-# include <fipscheck.h>
+# include <fipscheck.h>	/* from fipscheck devel */
 #endif
 
 const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto",
