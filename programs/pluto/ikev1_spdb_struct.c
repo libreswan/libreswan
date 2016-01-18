@@ -180,6 +180,7 @@ static bool out_attr(int type,
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
 
+		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TLV;
 		attr.isaat_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
