@@ -294,36 +294,32 @@ static void print_join(struct print *buf, int n)
 		 * of the required size.
 		 */
 		pexpect(n >= 0);
-		return;
-	}
-	if (buf->pos + n >= max) {
+	} else if (buf->pos + n >= max) {
 		/* buffer overflow: add ... as indicator */
 		strcpy(&buf->buf[max - sizeof("...")], "...");
-		buf->pos = max - 1;
+		buf->pos = max;
+	} else {
+		buf->pos += n;
 	}
-	buf->pos += n;
 }
 
 static void print_string(struct print *buf, const char *string)
 {
-	return print_join(buf,
-		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s", string));
+	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "%s", string));
 }
 
 static void print_value(struct print *buf, const char *prefix, int value)
 {
-	return print_join(buf,
-		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s%d", prefix, value));
+	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "%s%d", prefix, value));
 }
 
 static void print_name_value(struct print *buf, const char *prefix,
 			     const char *name, int value)
 {
-	return print_join(buf,
-		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-			 "%s%s(%d)", prefix, name, value));
+	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "%s%s(%d)", prefix, name, value));
 }
 
 /*
