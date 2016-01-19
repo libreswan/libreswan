@@ -261,13 +261,12 @@ struct print {
 	char buf[1024];
 };
 
-static void print_init(struct print *buf)
+static struct print *print_buf()
 {
-	buf->pos = 0;
-	buf->buf[0] = '\0';
+	return alloc_thing(struct print, "print buf");
 }
 
-static bool print_join(struct print *buf, int n)
+static void print_join(struct print *buf, int n)
 {
 	const size_t max = sizeof(buf->buf);
 	/*
@@ -289,33 +288,32 @@ static bool print_join(struct print *buf, int n)
 		 * s*printf() implementation that returns -1 instead
 		 * of the required size.
 		 */
-		return FALSE;
+		pexpect(n >= 0);
+		return;
 	}
 	if (buf->pos + n >= max) {
 		/* buffer overflow: add ... as indicator */
 		strcpy(&buf->buf[max - sizeof("...")], "...");
 		buf->pos = max - 1;
-		return FALSE;
 	}
 	buf->pos += n;
-	return TRUE;
 }
 
-static bool print_string(struct print *buf, const char *string)
+static void print_string(struct print *buf, const char *string)
 {
 	return print_join(buf,
 		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
 			 "%s", string));
 }
 
-static bool print_value(struct print *buf, const char *prefix, int value)
+static void print_value(struct print *buf, const char *prefix, int value)
 {
 	return print_join(buf,
 		snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
 			 "%s%d", prefix, value));
 }
 
-static bool print_name_value(struct print *buf, const char *prefix,
+static void print_name_value(struct print *buf, const char *prefix,
 			     const char *name, int value)
 {
 	return print_join(buf,
@@ -326,21 +324,19 @@ static bool print_name_value(struct print *buf, const char *prefix,
 /*
  * Pretty print a single transform to the buffer.
  */
-static bool print_transform(struct print *buf, const char *prefix,
+static void print_transform(struct print *buf, const char *prefix,
 			    enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	if (!print_name_value(buf, prefix,
-			      enum_name(ikev2_transid_val_descs[type],
-					transform->id),
-			      transform->id))
-		return FALSE;
+	print_name_value(buf, prefix,
+			 enum_name(ikev2_transid_val_descs[type],
+				   transform->id),
+			 transform->id);
 	if (transform->attr_keylen > 0) {
-		return print_join(buf,
-			snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "_%d", transform->attr_keylen));
+		print_join(buf,
+			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				    "_%d", transform->attr_keylen));
 	}
-	return TRUE;
 }
 
 static const char *trans_type_name(enum ikev2_trans_type type)
@@ -357,59 +353,49 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 /*
  * Print <TRANSFORM-TYPE> [ "=" TRANSFORM , ... ].
  */
-static bool print_transforms(struct print *buf, const char *prefix,
+static void print_transforms(struct print *buf, const char *prefix,
 			     enum ikev2_trans_type type,
 			     const struct ikev2_transforms *transforms)
 {
-	if (!print_string(buf, prefix))
-		return FALSE;
-	if (!print_string(buf, trans_type_name(type)))
-		return FALSE;
+	print_string(buf, prefix);
+	print_string(buf, trans_type_name(type));
 	char *sep = "=";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
-		if (!print_transform(buf, sep, type, transform))
-			return FALSE;
+		print_transform(buf, sep, type, transform);
 		sep = ",";
 	};
-	return TRUE;
 }
 
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
-	struct print buf;
-	print_init(&buf);
-	if (!print_name_value(&buf, "PROTOID=", protoid_name(proposal->protoid),
-			      proposal->protoid))
-		return;
+	struct print *buf = print_buf();
+	print_name_value(buf, "PROTOID=", protoid_name(proposal->protoid),
+			 proposal->protoid);
 	if (proposal->propnum > 0) {
-		if (!print_value(&buf, " PROTONUM=", proposal->propnum))
-			return;
+		print_value(buf, " PROTONUM=", proposal->propnum);
 	}
 	if (proposal->remote_spi.size > 0) {
-		if (!print_string(&buf, " SPI="))
-			return;
+		print_string(buf, " SPI=");
 		size_t i;
 		const char *sep = "[";
 		for (i = 0; i < proposal->remote_spi.size; i++) {
-			if (!print_value(&buf, sep, proposal->remote_spi.bytes[i]))
-				return;
+			print_value(buf, sep, proposal->remote_spi.bytes[i]);
 			sep = " ";
 		}
-		if (!print_string(&buf, "]"))
-			return;
+		print_string(buf, "]");
 	}
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 		const struct ikev2_transforms *transforms = &proposal->transforms[type];
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
-			if (!print_transforms(&buf, " ", type, transforms))
-				break;
+			print_transforms(buf, " ", type, transforms);
 		}
 	}
-	DBG_log("%s ikev2_proposal:%s", prefix, buf.buf);
+	DBG_log("%s ikev2_proposal:%s", prefix, buf->buf);
+	pfree(buf);
 }
 
 void DBG_log_ikev2_proposals(const char *prefix,
@@ -421,21 +407,20 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		DBG_log("  proposal %d:", p);
 		const struct ikev2_proposal *proposal = &proposals->proposal[p];
 		{
-			struct print buf;
-			print_init(&buf);
-			if (!print_name_value(&buf, "protoid=",
-					      protoid_name(proposal->protoid),
-					      proposal->protoid))
-				break;
-			DBG_log("    %s", buf.buf);
+			struct print *buf = print_buf();
+			print_name_value(buf, "protoid=",
+					 protoid_name(proposal->protoid),
+					 proposal->protoid);
+			DBG_log("    %s", buf->buf);
+			pfree(buf);
 		}
 		enum ikev2_trans_type type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-			struct print buf;
-			print_init(&buf);
-			print_transforms(&buf, "", type,
+			struct print *buf = print_buf();
+			print_transforms(buf, "", type,
 					 &proposal->transforms[type]);
-			DBG_log("    %s", buf.buf);
+			DBG_log("    %s", buf->buf);
+			pfree(buf);
 		}
 	}
 }
@@ -588,11 +573,12 @@ static int process_transforms(pb_stream *prop_pbs,
 					if (local_transform->id == remote_transform.id
 					    && local_transform->attr_keylen == remote_transform.attr_keylen) {
 						DBG(DBG_CONTROLMORE,
-						    struct print buf = {0};
-						    print_transform(&buf, "", type, &remote_transform);
+						    struct print *buf = print_buf();
+						    print_transform(buf, "", type, &remote_transform);
 						    DBG_log("remote proposal %d transform %d (%s) matches local proposal %d transform %d",
 							    remote_proposal_nr, remote_transform_nr,
-							    buf.buf, local_proposal_nr, local_transform_nr));
+							    buf->buf, local_proposal_nr, local_transform_nr);
+						    pfree(buf));
 						matching_local_proposals[local_proposal_nr][type] = local_transform_nr;
 						transform_matched = TRUE;
 						break;
@@ -604,11 +590,11 @@ static int process_transforms(pb_stream *prop_pbs,
 		 * If nothing at all matched, log it.
 		 */
 		if (!transform_matched) {
-			struct print buf;
-			print_init(&buf);
-			print_transform(&buf, "", type, &remote_transform);
+			struct print *buf = print_buf();
+			print_transform(buf, "", type, &remote_transform);
 			libreswan_log("remote proposal %d transform %d (%s) matched no local proposals",
-				      remote_proposal_nr, remote_transform_nr, buf.buf);
+				      remote_proposal_nr, remote_transform_nr, buf->buf);
+			pfree(buf);
 		}
 	}
 
