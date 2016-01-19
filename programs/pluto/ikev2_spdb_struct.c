@@ -269,8 +269,37 @@ static void print_init(struct print *buf)
 
 static bool print_join(struct print *buf, int n)
 {
-	if (n < 0 || buf->pos + n > sizeof(buf->buf))
+	const size_t max = sizeof(buf->buf);
+	/*
+	 * The caller used the unsigned expression:
+	 *
+	 *    sizeof(buf->buf) - buf->pos
+	 *
+	 * to determine the amount of space left.  The below is a
+	 * "better late than never" assertion that the unsigned
+	 * expression didn't underflow.
+	 */
+	passert(buf->pos <= max);
+	if (n < 0) {
+		/*
+		 * What else to do?
+		 *
+		 * A negative value either indicates an "output error"
+		 * (will that happen?); or a very old, non-compliant,
+		 * s*printf() implementation that returns -1 instead
+		 * of the required size.
+		 */
 		return FALSE;
+	}
+	if (buf->pos + n >= max) {
+		buf->pos = max;
+		/* blat the end to guarentee NUL termination */
+		buf->buf[max - 1] = '\0';
+		buf->buf[max - 2] = '.';
+		buf->buf[max - 3] = '.';
+		buf->buf[max - 4] = '.';
+		return FALSE;
+	}
 	buf->pos += n;
 	return TRUE;
 }
