@@ -139,7 +139,7 @@ struct key_opt {
 	struct sock     *sk;
 };
 
-#define key_pid(sk) ((struct key_opt*)&((sk)->sk_protinfo))->key_pid
+#define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
 
 /* XXX-mcr this is not an alignment, this is because the count is in 64-bit
  * words.
