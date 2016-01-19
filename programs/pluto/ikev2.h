@@ -86,7 +86,8 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
 				  oakley_group_t modp);
 
-stf_status ikev2_process_sa_payload(pb_stream *sa_payload,
+stf_status ikev2_process_sa_payload(const char *what,
+				    pb_stream *sa_payload,
 				    bool ike, bool initial, bool accepted,
 				    struct ikev2_proposal **chosen,
 				    struct ikev2_proposals *local_proposals);

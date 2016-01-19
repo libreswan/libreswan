@@ -1056,7 +1056,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		passert(st->st_ike_proposals != NULL);
 
 		DBG(DBG_CONTROL, DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here"));
-		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+		stf_status ret = ikev2_process_sa_payload("IKE responder",
+							  &sa_pd->pbs,
 							  /*ike*/ TRUE,
 							  /*initial*/ TRUE,
 							  /*accepted*/ FALSE,
@@ -1470,7 +1471,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 						  &st->st_ike_proposals);
 		passert(st->st_ike_proposals != NULL);
 
-		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
+							  &sa_pd->pbs,
 							  /*ike*/ TRUE,
 							  /*initial*/ TRUE,
 							  /*accepted*/ TRUE,
@@ -3686,7 +3688,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 						  &st->st_esp_or_ah_proposals);
 		passert(st->st_esp_or_ah_proposals != NULL);
 
-		stf_status ret = ikev2_process_sa_payload(&sa_pd->pbs,
+		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
+							  &sa_pd->pbs,
 							  /*ike*/ FALSE,
 							  /*initial*/ FALSE,
 							  /*accepted*/ TRUE,
