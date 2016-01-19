@@ -378,10 +378,13 @@ void DBG_log_ikev2_proposal(const char *prefix,
 		print_value(buf, " PROTONUM=", proposal->propnum);
 	}
 	if (proposal->remote_spi.size > 0) {
+		pexpect(proposal->remote_spi.size <= sizeof(proposal->remote_spi.size));
 		print_string(buf, " SPI=");
 		size_t i;
 		const char *sep = "[";
-		for (i = 0; i < proposal->remote_spi.size; i++) {
+		for (i = 0; (i < proposal->remote_spi.size
+			     && i < sizeof(proposal->remote_spi.size));
+		     i++) {
 			print_value(buf, sep, proposal->remote_spi.bytes[i]);
 			sep = " ";
 		}
