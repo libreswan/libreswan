@@ -15,6 +15,7 @@ v3.17 (unrelease)
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
 * pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
 * pluto: Fix arious coverity warnings and corner cases [Hugh, Paul]
+* KLIPS: Support for Linux 4.4.x kernel (lsw#256) [Wolfgang]
 
 v3.16 (December 18, 2015)
 * auto: add new option --start which is like auto=start [Tuomo]
