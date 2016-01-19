@@ -707,7 +707,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 *    [0..LOCAL_PROPOSALS->NR) - chosen proposal
 	 *    LOCAL_PROPOSALS->NR - no proposal chosen
 	 */
-	struct print remote_proposals_buf = {0};
+	struct print remote_proposals_buf = {0,};
 	int best_local_proposal = local_proposals->nr;
 	int next_propnum = 1;
 	struct ikev2_prop remote_proposal;
@@ -1035,7 +1035,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal)
 {
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
-	struct trans_attrs ta = (struct trans_attrs) {0};
+	struct trans_attrs ta = (struct trans_attrs) {0,};
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
@@ -1644,7 +1644,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 			     proposal < &proposals->proposal[proposals->nr];
 			     proposal++) {
 				/* zap the existing ESN */
-				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) {0};
+				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) {0,};
 				add_esn_transforms(proposal, policy);
 			}
 			*result = proposals;
