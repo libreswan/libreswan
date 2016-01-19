@@ -257,7 +257,7 @@ struct ikev2_proposals {
 };
 
 struct print {
-	size_t pos;
+	size_t pos;	/* index of '\0' in buf */
 	char buf[1024];
 };
 
@@ -292,12 +292,9 @@ static bool print_join(struct print *buf, int n)
 		return FALSE;
 	}
 	if (buf->pos + n >= max) {
-		buf->pos = max;
-		/* blat the end to guarentee NUL termination */
-		buf->buf[max - 1] = '\0';
-		buf->buf[max - 2] = '.';
-		buf->buf[max - 3] = '.';
-		buf->buf[max - 4] = '.';
+		/* buffer overflow: add ... as indicator */
+		strcpy(&buf->buf[max - sizeof("...")], "...");
+		buf->pos = max - 1;
 		return FALSE;
 	}
 	buf->pos += n;
@@ -331,7 +328,7 @@ static bool print_name_value(struct print *buf, const char *prefix,
  */
 static bool print_transform(struct print *buf, const char *prefix,
 			    enum ikev2_trans_type type,
-			    struct ikev2_transform *transform)
+			    const struct ikev2_transform *transform)
 {
 	if (!print_name_value(buf, prefix,
 			      enum_name(ikev2_transid_val_descs[type],
@@ -362,14 +359,14 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
  */
 static bool print_transforms(struct print *buf, const char *prefix,
 			     enum ikev2_trans_type type,
-			     struct ikev2_transforms *transforms)
+			     const struct ikev2_transforms *transforms)
 {
 	if (!print_string(buf, prefix))
 		return FALSE;
 	if (!print_string(buf, trans_type_name(type)))
 		return FALSE;
 	char *sep = "=";
-	struct ikev2_transform *transform;
+	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		if (!print_transform(buf, sep, type, transform))
 			return FALSE;
@@ -405,7 +402,7 @@ void DBG_log_ikev2_proposal(const char *prefix,
 	}
 	enum ikev2_trans_type type;
 	for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
-		struct ikev2_transforms *transforms = &proposal->transforms[type];
+		const struct ikev2_transforms *transforms = &proposal->transforms[type];
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
 			if (!print_transforms(&buf, " ", type, transforms))
@@ -422,14 +419,16 @@ void DBG_log_ikev2_proposals(const char *prefix,
 	DBG_log("%s ikev2_proposals:", prefix);
 	for (p = 0; p < proposals->nr; p++) {
 		DBG_log("  proposal %d:", p);
-		struct ikev2_proposal *proposal = &proposals->proposal[p];
-		struct print buf0;
-		print_init(&buf0);
-		if (!print_name_value(&buf0, "protoid=",
-				      protoid_name(proposal->protoid),
-				      proposal->protoid))
-			break;
-		DBG_log("    %s", buf0.buf);
+		const struct ikev2_proposal *proposal = &proposals->proposal[p];
+		{
+			struct print buf;
+			print_init(&buf);
+			if (!print_name_value(&buf, "protoid=",
+					      protoid_name(proposal->protoid),
+					      proposal->protoid))
+				break;
+			DBG_log("    %s", buf.buf);
+		}
 		enum ikev2_trans_type type;
 		for (type = 1; type < IKEv2_TRANS_TYPE_ROOF; type++) {
 			struct print buf;
