@@ -739,5 +739,7 @@ bool whack_prompt_for(int whackfd,
 		return FALSE;
 	}
 
+	ansbuf[ansbuf_len - 1] = '\0'; /* ensure buffer is NULL terminated */
+
 	return TRUE;
 }
