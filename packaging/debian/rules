@@ -48,3 +48,6 @@ override_dh_auto_install-arch:
 
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
+
+override_dh_strip:
+	dh_strip --dbg-package=libreswan-dbg
