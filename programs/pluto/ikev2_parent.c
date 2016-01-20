@@ -844,6 +844,23 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
 	}
 
+
+	/* Vendor ID processing */
+	{
+		if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
+			struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V];
+
+			DBG(DBG_CONTROL, DBG_log("Processing VIDs"));
+			while (v != NULL) {
+				handle_vendorid(md, (char *)v->pbs.cur,
+					pbs_left(&v->pbs), TRUE);
+				v = v->next;
+			}
+		} else {
+			DBG(DBG_CONTROL, DBG_log("no VIDs received"));
+		}
+	}
+
 	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
@@ -862,22 +879,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->from_state = STATE_IKEv2_BASE;
 	} else {
 		/* ??? should st->st_connection be changed to c? */
-	}
-
-	/* Vendor ID processing */
-	{
-		if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
-			struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V];
-
-			DBG(DBG_CONTROL, DBG_log("Processing VIDs"));
-			while (v != NULL) {
-				handle_vendorid(md, (char *)v->pbs.cur,
-					pbs_left(&v->pbs), TRUE);
-				v = v->next;
-			}
-		} else {
-			DBG(DBG_CONTROL, DBG_log("no VIDs received"));
-		}
 	}
 
 	{
