@@ -60,7 +60,7 @@ You can load this machine definition into libvirt using:
     </interface>
     <interface type='network'>
       <mac address='52:54:00:1d:9c:19'/>
-      <source network='swandefault'/>
+      <source network='default'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>
