@@ -78,6 +78,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
+#include "ikev2.h"
 
 #include "virtual.h"	/* needs connections.h */
 
@@ -347,11 +348,13 @@ void delete_connection(struct connection *c, bool relations)
 		alg_info_delref(&c->alg_info_ike->ai);
 		c->alg_info_ike = NULL;
 	}
+	free_ikev2_proposals(&c->ike_proposals);
 
 	if (c->alg_info_esp != NULL) {
 		alg_info_delref(&c->alg_info_esp->ai);
 		c->alg_info_esp = NULL;
 	}
+	free_ikev2_proposals(&c->esp_or_ah_proposals);
 
 	pfree(c);
 }

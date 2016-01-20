@@ -282,6 +282,16 @@ struct connection {
 	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
+	/*
+	 * The ALG_INFO converted to IKEv2 format.
+	 *
+	 * Since they are allocated on-demand so there's no need to
+	 * worry about copying them when a connection object gets
+	 * cloned.
+	 */
+	struct ikev2_proposals *ike_proposals;
+	struct ikev2_proposals *esp_or_ah_proposals;
+
 	/* host_pair linkage */
 	struct host_pair *host_pair;
 	struct connection *hp_next;

@@ -7,6 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1022,8 +1023,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
 						  c->alg_info_esp, c->policy,
-						  &cst->st_esp_or_ah_proposals);
-		passert(cst->st_esp_or_ah_proposals != NULL);
+						  &c->esp_or_ah_proposals);
+		passert(c->esp_or_ah_proposals != NULL);
 
 		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
 							  &sa_pd->pbs,
@@ -1031,7 +1032,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 							  /*initial*/ FALSE,
 							  /*accepted*/ FALSE,
 							  &cst->st_accepted_esp_or_ah_proposal,
-							  cst->st_esp_or_ah_proposals);
+							  c->esp_or_ah_proposals);
 
 		if (ret == STF_OK) {
 			passert(cst->st_accepted_esp_or_ah_proposal != NULL);

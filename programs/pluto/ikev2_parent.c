@@ -12,7 +12,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -267,9 +267,9 @@ stf_status ikev2parent_outI1(int whack_sock,
 	{
 		ikev2_proposals_from_alg_info_ike("initial IKE modp",
 						  c->alg_info_ike,
-						  &st->st_ike_proposals);
-		passert(st->st_ike_proposals != NULL);
-		st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+						  &c->ike_proposals);
+		passert(c->ike_proposals != NULL);
+		st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
 		passert(st->st_oakley.group != NULL); /* known! */
 		st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 
@@ -479,9 +479,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			ikev2_proposals_from_alg_info_ike("IKE initiator",
-							  st->st_connection->alg_info_ike,
-							  &st->st_ike_proposals);
-			passert(st->st_ike_proposals != NULL);
+							  c->alg_info_ike,
+							  &c->ike_proposals);
+			passert(c->ike_proposals != NULL);
 			/*
 			 * Since this is an initial IKE exchange, the
 			 * SPI is emitted as is part of the packet
@@ -489,7 +489,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			 * NULL SPIs.
 			 */
 			bool ret = ikev2_emit_sa_proposals(&md->rbody,
-							   st->st_ike_proposals,
+							   c->ike_proposals,
 							   (chunk_t*)NULL,
 							   ISAKMP_NEXT_v2KE);
 			if (!ret) {
@@ -897,9 +897,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			 */
 			ikev2_proposals_from_alg_info_ike("initial IKE invalid KE",
 							  c->alg_info_ike,
-							  &st->st_ike_proposals);
-			passert(st->st_ike_proposals != NULL);
-			st->st_oakley.group = ikev2_proposals_first_modp(st->st_ike_proposals);
+							  &c->ike_proposals);
+			passert(c->ike_proposals != NULL);
+			st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
 			passert(st->st_oakley.group != NULL); /* known! */
 			st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
@@ -1051,9 +1051,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		}
 
 		ikev2_proposals_from_alg_info_ike("IKE responder",
-						  st->st_connection->alg_info_ike,
-						  &st->st_ike_proposals);
-		passert(st->st_ike_proposals != NULL);
+						  c->alg_info_ike,
+						  &c->ike_proposals);
+		passert(c->ike_proposals != NULL);
 
 		DBG(DBG_CONTROL, DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here"));
 		stf_status ret = ikev2_process_sa_payload("IKE responder",
@@ -1062,7 +1062,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 							  /*initial*/ TRUE,
 							  /*accepted*/ FALSE,
 							  &st->st_accepted_ike_proposal,
-							  st->st_ike_proposals);
+							  c->ike_proposals);
 
 		if (ret == STF_OK) {
 			passert(st->st_accepted_ike_proposal != NULL);
@@ -1268,7 +1268,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	/* struct connection *c = st->st_connection; */
+	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -1344,10 +1344,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					return STF_IGNORE;
 
 			ikev2_proposals_from_alg_info_ike("initial IKE validating invalid KE",
-							  st->st_connection->alg_info_ike,
-							  &st->st_ike_proposals);
-			passert(st->st_ike_proposals != NULL);
-			if (ikev2_proposals_include_modp(st->st_ike_proposals, sg.sg_group)) {
+							  c->alg_info_ike,
+							  &c->ike_proposals);
+			passert(c->ike_proposals != NULL);
+			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
 
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
@@ -1410,7 +1410,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	/* struct connection *c = st->st_connection; */
+	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 
 	/* for testing only */
@@ -1467,9 +1467,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		ikev2_proposals_from_alg_info_ike("IKE initiator (accepting)",
-						  st->st_connection->alg_info_ike,
-						  &st->st_ike_proposals);
-		passert(st->st_ike_proposals != NULL);
+						  c->alg_info_ike,
+						  &c->ike_proposals);
+		passert(c->ike_proposals != NULL);
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
@@ -1477,7 +1477,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 							  /*initial*/ TRUE,
 							  /*accepted*/ TRUE,
 							  &st->st_accepted_ike_proposal,
-							  st->st_ike_proposals);
+							  c->ike_proposals);
 		if (ret == STF_OK) {
 			passert(st->st_accepted_ike_proposal != NULL);
 			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
@@ -2599,10 +2599,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		ikev2_proposals_from_alg_info_esp("ESP/AH initiator",
 						  cc->alg_info_esp,
 						  cc->policy,
-						  &cst->st_esp_or_ah_proposals);
-		passert(cst->st_esp_or_ah_proposals != NULL);
+						  &cc->esp_or_ah_proposals);
+		passert(cc->esp_or_ah_proposals != NULL);
 
-		ikev2_emit_sa_proposals(&e_pbs_cipher, cst->st_esp_or_ah_proposals,
+		ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
 					&local_spi, ISAKMP_NEXT_v2TSi);
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
@@ -3685,8 +3685,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
 						  c->alg_info_esp, c->policy,
-						  &st->st_esp_or_ah_proposals);
-		passert(st->st_esp_or_ah_proposals != NULL);
+						  &c->esp_or_ah_proposals);
+		passert(c->esp_or_ah_proposals != NULL);
 
 		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
 							  &sa_pd->pbs,
@@ -3694,7 +3694,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 							  /*initial*/ FALSE,
 							  /*accepted*/ TRUE,
 							  &st->st_accepted_esp_or_ah_proposal,
-							  st->st_esp_or_ah_proposals);
+							  c->esp_or_ah_proposals);
 
 		if (ret == STF_OK) {
 			passert(st->st_accepted_esp_or_ah_proposal != NULL);
