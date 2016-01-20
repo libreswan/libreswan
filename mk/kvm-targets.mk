@@ -212,7 +212,7 @@ $(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
 	fallocate -l 8G '$(KVM_POOL)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
-		--network=network:swandefault,model=virtio \
+		--network=network:default,model=virtio \
 		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
