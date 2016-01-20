@@ -52,15 +52,3 @@ Description: Internet Key Exchange daemon
  .
  The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
  project, but provides improved X.509 certificate support and other features.
-
-Package: libreswan-dbg
-Architecture: any
-Section: debug
-Priority: extra
-Depends: libreswan (= ${binary:Version}), ${misc:Depends}
-Description: Internet Key Exchange daemon - debugging symbols
- Libreswan is an IPsec based VPN solution for the Linux kernel. Both
- IKEv1 and IKEv2 protocols are supported.
- .
- This package provides the symbols needed for debugging of libreswan
- binaries.
