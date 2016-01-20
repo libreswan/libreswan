@@ -66,44 +66,36 @@
 
 /* Taken from ikev1_spdb_struct.c, as the format is similar */
 /* Note: cloned from out_attr, with the same bugs */
-static bool ikev2_out_attr(int type,
-		    unsigned long val,
-		    struct_desc *attr_desc,
-		    enum_names *const *attr_val_descs,
-		    pb_stream *pbs)
+static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
+			   unsigned long val,
+			   pb_stream *pbs)
 {
 	struct ikev2_trans_attr attr;
 
-	if (val >> 16 == 0) {
-		/* short value: use TV form - reuse ISAKMP_ATTR_defines for ikev2 */
+	/*
+	 * IKEv2 the type determines the format that an attribute must
+	 * use (in IKEv1 it was the value that determined this).
+	 */
+	switch (type) {
+
+	case IKEv2_KEY_LENGTH:
+		passert((val >> 16) == 0);
+		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
+		/* set the short-form attribute format bit */
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TV;
 		attr.isatr_lv = val;
-		if (!out_struct(&attr, attr_desc, pbs, NULL))
+		if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))
 			return FALSE;
-	} else {
+		break;
+
+	default:
 		/*
-		 * We really only support KEY_LENGTH, which does not use this long
-		 * attribute style. See comments in out_attr() in ikev1_spdb_struct.c
+		 * Since there are no IKEv2 long-form attributes,
+		 * there is no long-form code.
 		 */
-		pb_stream val_pbs;
-		u_int32_t nval = htonl(val);
+		bad_case(type);
 
-		attr.isatr_type = type | ISAKMP_ATTR_AF_TLV;
-		attr.isatr_lv = sizeof(nval);
-		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
-		    !out_raw(&nval, sizeof(nval), &val_pbs,
-			     "long attribute value"))
-			return FALSE;
-
-		close_output_pbs(&val_pbs);
 	}
-	DBG(DBG_EMITTING, {
-		    enum_names *d = attr_val_descs[type];
-
-		    if (d != NULL)
-			    DBG_log("    [%lu is %s]", val, enum_show(d,
-								      val));
-	    });
 	return TRUE;
 }
 
@@ -537,16 +529,21 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 			}
 
+			/*
+			 * This switch checks both the attribute's
+			 * type and its encoding.  Hence ORing the
+			 * encoding with the type.
+			 */
 			switch (attr.isatr_type) {
 			case IKEv2_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 				remote_transform.attr_keylen = attr.isatr_lv;
 				break;
 			default:
-				libreswan_log("remote proposal %d transform %d has unknown attribute %d",
-					      remote_proposal_nr, remote_transform_nr, attr.isatr_type);
+				libreswan_log("remote proposal %d transform %d has unknown attribute %d or unexpeced attribute encoding",
+					      remote_proposal_nr, remote_transform_nr,
+					      attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				print_string(remote_print_buf, "[unknown-attribute]");
 				return num_local_proposals; /* try next proposal */
-
 			}
 		}
 
@@ -938,8 +935,6 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 	if (transform->attr_keylen > 0) {
 		if (!ikev2_out_attr(IKEv2_KEY_LENGTH,
 				    transform->attr_keylen,
-				    &ikev2_trans_attr_desc,
-				    ikev2_trans_attr_val_descs,
 				    &trans_pbs)) {
 			libreswan_log("ikev2_out_attr() of transfor attribute failed");
 			return FALSE;
