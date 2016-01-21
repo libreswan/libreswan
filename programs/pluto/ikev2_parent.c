@@ -867,40 +867,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	passert(c->ike_proposals != NULL);
 
 	/*
-	 * Does the MODP group have even a remote chance of being
-	 * accepted?  That is, do we even know of it?
-	 *
-	 * It is arguable what to do here: reply with INVALID_SYNTAX;
-	 * reply with INVALID_KE and no group; reply with INVALID_KE
-	 * and a group that matches; or reply INVALID_KE and the
-	 * default group.
-	 *
-	 * Until the proposal-check gets moved to here, go with the
-	 * last one so that, for little cost, a legitimate initiator
-	 * gets a hint as to the problem.
-	 */
-	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	struct trans_attrs oakley = {
-		.groupnum = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group,
-		.group = lookup_group(md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group),
-	};
-	if (oakley.group == NULL) {
-		/*
-		 * Since the KE can't be valid, send back an
-		 * INVALID_KE with our preference.
-		 */
-		const struct oakley_group_desc *group
-			= ikev2_proposals_first_modp(c->ike_proposals);
-		passert(group != NULL); /* known! */
-		DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
-					 md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group,
-					 group->group));
-		send_v2_notification_invalid_ke(md, group);
-		pexpect(md->st == NULL);
-		return STF_FAIL;
-	}
-
-	/*
 	 * Select the proposal.
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
@@ -921,13 +887,27 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 	passert(accepted_ike_proposal != NULL);
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
+	struct trans_attrs accepted_oakley = ikev2_proposal_to_trans_attrs(accepted_ike_proposal);
 
 	/*
-	 * XXX: Check for INVALID_KE
+	 * Check the MODP group matches the accepted proposal.
 	 */
+	if (accepted_oakley.group != NULL) {
+		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
+		if (accepted_oakley.group->group != ke_group) {
+			free_ikev2_proposal(&accepted_ike_proposal);
+			DBG(DBG_CONTROL, DBG_log("send INVALID_KE for modp %d and suggest %d",
+						 ke_group,
+						 accepted_oakley.group->group));
+			send_v2_notification_invalid_ke(md, accepted_oakley.group);
+			pexpect(md->st == NULL);
+			return STF_FAIL;
+		}
+	}
 
 	/*
-	 * XXX: Check that the KE is valid, see accept_KE!
+	 * XXX: Check that the KE size is valid, see accept_KE!
 	 */
 
 	/*
@@ -951,14 +931,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		/* save the proposal information */
 		/*
-		 * XXX: This is pretty messed up, ST_OAKLEY contains
-		 * the MODP group from the KE payload, while
-		 * ST_ACCEPTED_IKE_PROPOSAL contains the MODP group
-		 * from the chosen proposal.  They may not be the
-		 * same.
+		 * XXX: This is somewhat messed up, the entire oakley
+		 * group isn't being copied over.
 		 */
-
-		st->st_oakley = oakley;
+		st->st_oakley.group = accepted_oakley.group;
+		st->st_oakley.groupnum = accepted_oakley.groupnum;
 		st->st_accepted_ike_proposal = accepted_ike_proposal;
 
 		md->st = st;
