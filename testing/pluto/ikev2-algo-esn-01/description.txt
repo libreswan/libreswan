@@ -1,0 +1,7 @@
+Test of negotiating ESN with netkey
+
+The test for this is difficult, it technically requires 2^32 packets to trigger.
+But a side effect of setting esn=yes is that the kernel xfrm state no longer
+uses the main replay_window header option, but a new struct. So it will display
+a replay_window of 0 (irrespective of the real replay_window)
+

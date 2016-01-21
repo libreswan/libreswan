@@ -126,8 +126,11 @@ kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
-kvmplutotest	ikev1-impair-gx-01			good
-kvmplutotest	ikev1-impair-gx-02			good
+# ESN tests
+kvmplutotest	ikev2-algo-esn-01			good
+kvmplutotest	ikev2-algo-esn-02			good
+kvmplutotest	ikev2-algo-esn-03			good
+kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -148,6 +151,9 @@ kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
 kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
 kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
+kvmplutotest	ikev1-impair-gx-01			good
+kvmplutotest	ikev1-impair-gx-02			good
+
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 

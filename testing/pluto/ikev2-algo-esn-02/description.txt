@@ -1,0 +1,1 @@
+Test of negotiating with mismatched ESN. The connection should fail to establish
