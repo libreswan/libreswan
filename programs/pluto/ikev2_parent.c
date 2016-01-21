@@ -860,7 +860,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-
 	/* Get the proposals ready.  */
 	ikev2_proposals_from_alg_info_ike("initial IKE responder",
 					  c->alg_info_ike,
@@ -902,11 +901,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/*
-	 * XXX: Check for NO_PROPOSAL_CHOSEN.
+	 * Select the proposal.
 	 */
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	struct ikev2_proposal *accepted_ike_proposal = NULL;
+	stf_status ret = ikev2_process_sa_payload("IKE responder",
+						  &sa_pd->pbs,
+						  /*ike*/ TRUE,
+						  /*initial*/ TRUE,
+						  /*accepted*/ FALSE,
+						  &accepted_ike_proposal,
+						  c->ike_proposals);
+	if (ret != STF_OK) {
+		passert(accepted_ike_proposal == NULL);
+		return ret;
+	}
+	/*
+	 * Must either attach this to "struct state"; or free.
+	 */
+	passert(accepted_ike_proposal != NULL);
 
 	/*
 	 * XXX: Check for INVALID_KE
+	 */
+
+	/*
+	 * XXX: Check that the KE is valid, see accept_KE!
 	 */
 
 	/*
@@ -928,8 +948,17 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
-		/* save the agreed proposal information */
+		/* save the proposal information */
+		/*
+		 * XXX: This is pretty messed up, ST_OAKLEY contains
+		 * the MODP group from the KE payload, while
+		 * ST_ACCEPTED_IKE_PROPOSAL contains the MODP group
+		 * from the chosen proposal.  They may not be the
+		 * same.
+		 */
+
 		st->st_oakley = oakley;
+		st->st_accepted_ike_proposal = accepted_ike_proposal;
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
@@ -1016,7 +1045,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
@@ -1073,41 +1101,26 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
+		pexpect(c->ike_proposals != NULL);
 		ikev2_proposals_from_alg_info_ike("IKE responder",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
+		passert(st->st_accepted_ike_proposal != NULL);
 
-		DBG(DBG_CONTROL, DBG_log("XXX: should process sa-payload earlier, save chosen, and then just emit here"));
-		stf_status ret = ikev2_process_sa_payload("IKE responder",
-							  &sa_pd->pbs,
-							  /*ike*/ TRUE,
-							  /*initial*/ TRUE,
-							  /*accepted*/ FALSE,
-							  &st->st_accepted_ike_proposal,
-							  c->ike_proposals);
-
-		if (ret == STF_OK) {
-			passert(st->st_accepted_ike_proposal != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", st->st_accepted_ike_proposal));
-			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
-			/*
-			 * Since this is the initial IKE exchange, the
-			 * SPI is emitted as part of the packet header
-			 * and not as part of the proposal.  Hence the
-			 * NULL SPI.
-			 */
-			if (!ikev2_emit_sa_proposal(&md->rbody, st->st_accepted_ike_proposal,
-						    NULL, next_payload_type)) {
-				DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
-				ret = STF_INTERNAL_ERROR;
-			}
+		DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", st->st_accepted_ike_proposal));
+		st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
+		/*
+		 * Since this is the initial IKE exchange, the SPI is
+		 * emitted as part of the packet header and not as
+		 * part of the proposal.  Hence the NULL SPI.
+		 */
+		if (!ikev2_emit_sa_proposal(&md->rbody, st->st_accepted_ike_proposal,
+					    NULL, next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
+			return STF_INTERNAL_ERROR;
 		}
 
-		if (ret != STF_OK) {
-			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
-			return ret;
-		}
 	}
 
 	/* KE in */
