@@ -920,6 +920,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * Must either attach this to "struct state"; or free.
 	 */
 	passert(accepted_ike_proposal != NULL);
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
 
 	/*
 	 * XXX: Check for INVALID_KE
@@ -1101,15 +1102,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
-		pexpect(c->ike_proposals != NULL);
-		ikev2_proposals_from_alg_info_ike("IKE responder",
-						  c->alg_info_ike,
-						  &c->ike_proposals);
-		passert(c->ike_proposals != NULL);
 		passert(st->st_accepted_ike_proposal != NULL);
-
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposal("IKE", st->st_accepted_ike_proposal));
 		st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
+
 		/*
 		 * Since this is the initial IKE exchange, the SPI is
 		 * emitted as part of the packet header and not as
