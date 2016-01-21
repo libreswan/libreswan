@@ -1674,6 +1674,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 				add_esn_transforms(proposal, policy);
 			}
 			*result = proposals;
+			break;
 		}
 		default:
 			bad_case(policy);
