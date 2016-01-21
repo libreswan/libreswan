@@ -655,6 +655,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 {
+	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
+
 	bool got_dcookie = FALSE;
 	bool require_dcookie = require_ddos_cookies();
 	struct payload_digest *ntfy;
@@ -761,7 +763,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/* authentication policy alternatives in order of decreasing preference */
 	static const lset_t policies[] = { POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
-	struct state *st = md->st;
 	lset_t policy;
 	struct connection *c;
 	stf_status e;
@@ -819,8 +820,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
-
 	/* check if we would drop the packet based on VID before we create a state */
 	if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
 		struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V];
@@ -861,6 +860,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
+	/*
+	 * We've committed to creating a state and, presumably,
+	 * dedicating real resources to the connection.
+	 */
+	struct state *st = md->st;
 	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
