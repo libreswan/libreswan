@@ -1259,11 +1259,13 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		switch (conn->options[KBF_ESN]) {
 		case esn_yes:
 			conn->policy |= POLICY_ESN_YES;
+			conn->policy &= ~POLICY_ESN_NO;
 			break;
 
 		case esn_no:
 			/* this is the default for now */
 			conn->policy |= POLICY_ESN_NO;
+			conn->policy &= ~POLICY_ESN_YES;
 			break;
 
 		case esn_either:
