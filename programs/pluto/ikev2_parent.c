@@ -860,6 +860,55 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
+
+	/* Get the proposals ready.  */
+	ikev2_proposals_from_alg_info_ike("initial IKE responder",
+					  c->alg_info_ike,
+					  &c->ike_proposals);
+	passert(c->ike_proposals != NULL);
+
+	/*
+	 * Does the MODP group have even a remote chance of being
+	 * accepted?  That is, do we even know of it?
+	 *
+	 * It is arguable what to do here: reply with INVALID_SYNTAX;
+	 * reply with INVALID_KE and no group; reply with INVALID_KE
+	 * and a group that matches; or reply INVALID_KE and the
+	 * default group.
+	 *
+	 * Until the proposal-check gets moved to here, go with the
+	 * last one so that, for little cost, a legitimate initiator
+	 * gets a hint as to the problem.
+	 */
+	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+	struct trans_attrs oakley = {
+		.groupnum = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group,
+		.group = lookup_group(md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group),
+	};
+	if (oakley.group == NULL) {
+		/*
+		 * Since the KE can't be valid, send back an
+		 * INVALID_KE with our preference.
+		 */
+		const struct oakley_group_desc *group
+			= ikev2_proposals_first_modp(c->ike_proposals);
+		passert(group != NULL); /* known! */
+		DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
+					 md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group,
+					 group->group));
+		send_v2_notification_invalid_ke(md, group);
+		pexpect(md->st == NULL);
+		return STF_FAIL;
+	}
+
+	/*
+	 * XXX: Check for NO_PROPOSAL_CHOSEN.
+	 */
+
+	/*
+	 * XXX: Check for INVALID_KE
+	 */
+
 	/*
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
@@ -879,44 +928,13 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
+		/* save the agreed proposal information */
+		st->st_oakley = oakley;
+
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
 	} else {
 		/* ??? should st->st_connection be changed to c? */
-	}
-
-	{
-		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
-		st->st_oakley.group = lookup_group(ke->isak_group);
-		if (st->st_oakley.group == NULL) {
-			/*
-			 * It is arguable what to do here: reply with
-			 * INVALID_SYNTAX; reply with INVALID_KE and
-			 * no group; reply with INVALID_KE and a group
-			 * that matches; or reply INVALID_KE and the
-			 * default group.
-			 *
-			 * Go with the last one so that, for little
-			 * cost, a legitimate initiator gets a hint as
-			 * to the problem.
-			 */
-			ikev2_proposals_from_alg_info_ike("initial IKE invalid KE",
-							  c->alg_info_ike,
-							  &c->ike_proposals);
-			passert(c->ike_proposals != NULL);
-			st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
-			passert(st->st_oakley.group != NULL); /* known! */
-			st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
-			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
-				ke->isak_group,
-				st->st_oakley.group->group));
-			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-		}
-		/*
-		 * Don't try to check if the group is acceptable here.
-		 * Need to first select the policy, and that happens
-		 * much later (although it shouldn't).
-		*/
 	}
 
 	/*

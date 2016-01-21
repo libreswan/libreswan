@@ -212,7 +212,10 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-void send_v2_notification_invalid_ke_from_state(struct state *st);
+void send_v2_notification_invalid_ke_from_state(struct state *st); /* XXX: dieing */
+
+void send_v2_notification_invalid_ke(struct msg_digest *md,
+				     const struct oakley_group_desc *group);
 
 struct ikev2_payloads_summary {
 	stf_status status;
