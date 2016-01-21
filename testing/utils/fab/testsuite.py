@@ -309,7 +309,7 @@ def load_testsuite_or_tests(logger, directories, args,
             test_directory = os.path.join(directory, "..", "..", os.path.basename(directory))
         else:
             logger.error("directory '%s' is invalid", directory)
-            return None
+            continue
         tests.append(Test(kind="kvmplutotest", expected_result="good",
                           test_directory=test_directory,
                           testing_directory=args.testing_directory,
