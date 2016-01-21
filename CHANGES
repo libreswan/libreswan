@@ -10,7 +10,7 @@ v3.17 (unrelease)
 * IKEv2: Ignore IKE_INIT replies with DOS COOKIE > 64 bytes [Paul]
 * IKEv2: Fix memory leak of dcookies [Paul]
 * IKEv2: switch pluto to native IKEv2 SA code, disentangle from IKEv1 [Andrew]
-* IKEv2: ESN support via esn=yes|no|either (default no) [Paul]
+* IKEv2: ESN support (XFRM only) via esn=yes|no|either (default no) [Paul]
 * IKEv1: Minor logging changes for DPD/NAT-T/AGGR [Paul]
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
 * pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
