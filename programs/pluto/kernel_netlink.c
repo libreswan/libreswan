@@ -1090,7 +1090,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 				req.p.replay_window));
 		} else {
 			struct xfrm_replay_state_esn xre;
-			u_int32_t bmp_size = sa->replay_window + pad_up(sa->replay_window, sizeof(u_int32_t) * 8) / 8;
+			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window + 
+				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
 
 			xre.replay_window = sa->replay_window; /* replay_window must be multiple of 8 */
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
