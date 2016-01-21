@@ -2013,6 +2013,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 		}
 
+		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+			said_next->esn = TRUE;
+		}
+
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
 		said_next->enckeylen = enc_key_len;
@@ -2186,6 +2191,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->replay_window = c->sa_replay_window;
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
+
+		if (st->st_ah.attrs.transattrs.esn_enabled == TRUE) {
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+			said_next->esn = TRUE;
+		}
 
 		DBG(DBG_CRYPT, {
 			DBG_dump("AH authkey:", said_next->authkey,

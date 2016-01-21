@@ -984,9 +984,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * tunnels in linux 2.6.25+
 	 */
 	if (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+		DBG(DBG_KERNEL, DBG_log("netlink: enabling tunnel mode"));
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
 	} else {
+		DBG(DBG_KERNEL, DBG_log("netlink: enabling transport mode"));
 		req.p.mode = XFRM_MODE_TRANSPORT;
 	}
 
@@ -1064,10 +1066,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
-	/* most stacks allow up to 32, klips and netkey and bsd up to 64? */
-	req.p.replay_window = sa->replay_window;
-	DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d",
-		req.p.replay_window));
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1078,6 +1076,35 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+
+	if (sa->esatype != ET_IPCOMP) {
+		if (sa->esn) {
+			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));
+			req.p.flags |= XFRM_STATE_ESN;
+		}
+
+		if (sa->replay_window <= 32 && !sa->esn) {
+			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
+			req.p.replay_window = sa->replay_window;
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
+				req.p.replay_window));
+		} else {
+			struct xfrm_replay_state_esn xre;
+			u_int32_t bmp_size = sa->replay_window + pad_up(sa->replay_window, sizeof(u_int32_t) * 8) / 8;
+
+			xre.replay_window = sa->replay_window; /* replay_window must be multiple of 8 */
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
+				xre.replay_window));
+			xre.bmp_len = bmp_size / sizeof(u_int32_t);
+			/* this is where we could fill in sequence numbers for this SA */
+
+			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
+			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
+			memcpy(RTA_DATA(attr), &xre, sizeof(xre));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		}
+	}
 
 	if (sa->authkeylen != 0) {
 		const char *name = sparse_name(aalg_list, sa->authalg);

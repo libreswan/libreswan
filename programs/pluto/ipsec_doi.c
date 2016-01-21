@@ -553,9 +553,10 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		}
 
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			 "%sESP%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
+			 st->st_esp.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,
@@ -572,8 +573,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 	if (st->st_ah.present) {
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH=>0x%08lx <0x%08lx",
+			 "%sAH%s=>0x%08lx <0x%08lx",
 			 ini,
+			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi));
 

@@ -118,14 +118,10 @@ struct trans_attrs {
  */
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
-	ipsec_spi_t spi;                /* his SPI */
+	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 	u_int16_t encapsulation;
-#if 0                                   /* not implemented yet */
-	u_int16_t cmprs_dict_sz;
-	u_int32_t cmprs_alg;
-#endif
 };
 
 /* IPsec per protocol state information */
