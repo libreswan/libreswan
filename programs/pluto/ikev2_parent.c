@@ -930,12 +930,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		st->st_msgid_nextuse = 0;
 
 		/* save the proposal information */
-		/*
-		 * XXX: This is somewhat messed up, the entire oakley
-		 * group isn't being copied over.
-		 */
-		st->st_oakley.group = accepted_oakley.group;
-		st->st_oakley.groupnum = accepted_oakley.groupnum;
+		st->st_oakley = accepted_oakley;
 		st->st_accepted_ike_proposal = accepted_ike_proposal;
 
 		md->st = st;
@@ -1079,14 +1074,12 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			next_payload_type = ISAKMP_NEXT_v2N;
 		}
 
-		passert(st->st_accepted_ike_proposal != NULL);
-		st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
-
 		/*
 		 * Since this is the initial IKE exchange, the SPI is
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
+		passert(st->st_accepted_ike_proposal != NULL);
 		if (!ikev2_emit_sa_proposal(&md->rbody, st->st_accepted_ike_proposal,
 					    NULL, next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
