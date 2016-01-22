@@ -51,7 +51,6 @@ class Tests(Counts):
 class Results(Counts):
 
     def count(self, result, *extras):
-        Counts.add(self, "total", result.test.name)
         Counts.add(self, str(result), result.test.name)
         for extra in extras:
             Counts.add(self, "%s(%s)" % (result, extra), result.test.name)
@@ -59,13 +58,15 @@ class Results(Counts):
             Counts.add(self, "%s(%s)" % (result, error), result.test.name)
 
     def add_ignore(self, test, reason):
-        # result?
+        Counts.add(self, "total", test.name)
         Counts.add(self, "ignore", test.name)
 
     def add_skip(self, result):
+        Counts.add(self, "total", result.test.name)
         self.count(result, "skip-" + str(result))
 
     def add_result(self, result, old_result=None):
+        Counts.add(self, "total", result.test.name)
         if old_result:
             self.count(result, "previous-" + str(old_result))
         else:
