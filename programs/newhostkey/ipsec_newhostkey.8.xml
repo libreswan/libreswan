@@ -79,7 +79,7 @@ the output with (via its <option>--hostname</option> option).</para>
 <para>The output format is that of <emphasis remap='I'>rsasigkey</emphasis>,
 with bracketing added to complete the <emphasis remap='I'>ipsec.secrets</emphasis>
 format. In the usual case, where <emphasis remap='I'>ipsec.secrets</emphasis>
-contains only the host’s own private key, the output of
+contains only the host's own private key, the output of
 <emphasis remap='I'>newhostkey</emphasis> is sufficient as a complete
 <emphasis remap='I'>ipsec.secrets</emphasis> file.</para>
 
@@ -101,7 +101,7 @@ by Henry Spencer. Updated by Paul Wouters</para>
 
 <refsect1 id='bugs'><title>BUGS</title>
 <para>As with <emphasis remap='I'>rsasigkey</emphasis>, the run time is
-difficult to predict, since depletion of the system’s randomness pool
+difficult to predict, since depletion of the system's randomness pool
 can cause arbitrarily long waits for random bits for seeding the NSS library,
 and the prime-number searches can also take unpredictable (and potentially large)
 amounts of CPU time.

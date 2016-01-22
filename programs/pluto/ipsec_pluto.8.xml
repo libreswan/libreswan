@@ -987,8 +987,8 @@
       operations. This behavior can be fine tuned using the
       <option>--nhelpers</option>. Pluto will start <emphasis
       remap="I">(n-1)</emphasis> of them, where <emphasis
-      remap="I">n</emphasis> is the number of CPU’s you have (including
-      hypherthreaded CPU’s). A value of <emphasis remap="I">0</emphasis>
+      remap="I">n</emphasis> is the number of CPU's you have (including
+      hypherthreaded CPU's). A value of <emphasis remap="I">0</emphasis>
       forces pluto to do all operations in the main process. A value of
       <emphasis remap="I">-1</emphasis> tells pluto to perform the above
       calculation. Any other value forces the number to that amount.</para>
