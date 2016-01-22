@@ -8,10 +8,6 @@ Type=simple
 Restart=always
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
-EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
-#Environment=IPSEC_SBINDIR=@FINALSBINDIR@
-#Environment=IPSEC_EXECDIR=@FINALSBINDIR@/ipsec
-#PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
 # Check configuration file
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
@@ -22,7 +18,7 @@ ExecStartPre=@FINALSBINDIR@/ipsec --checknss
 # Check for nflog setup
 ExecStartPre=@FINALSBINDIR@/ipsec --checknflog
 # Start the actual IKE daemon
-ExecStart=@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
+ExecStart=@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush
