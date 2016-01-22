@@ -227,59 +227,6 @@ License: MIT-and-BSD-3-clause
  Agency (DARPA) and Air Force Research Laboratory, Air Force
  Materiel Command, USAF, under agreement number F30602-01-2-0537.
 
-Files: lib/libcrypto/liblswcrypto/cryptodev.c
-Copyright: 2008 David McCullough,  2004-2005 Intel Corporation
-License: BSD-2-clause
- Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
- .
- Daniel Djamaludin
- Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
- .
- The code was developed with source from the file: hw_cryptodev.c
- in the openssl package, and the file: ipsec_doi.c from the
- libreswan package.
- .
- hw_cryptodev.c, openssl package:
- Copyright (c) 2002 Bob Beck <beck@openbsd.org>
- Copyright (c) 2002 Theo de Raadt
- Copyright (c) 2002 Markus Friedl
- All rights reserved.
- .
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- 1. Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
- .
- THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY
- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- .
- ipsec_doi.c, libreswan package:
- Copyright (C) 1997 Angelos D. Keromytis.
- Copyright (C) 1998-2002  D. Hugh Redelmeier.
- Copyright (C) 2003 Michael Richardson <mcr@xelerance.com>
- .
- This program is free software; you can redistribute it and/or modify it
- under the terms of the GNU General Public License as published by the
- Free Software Foundation; either version 2 of the License, or (at your
- option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- .
- This program is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- for more details.
-
 Files: linux/include/libreswan/pfkeyv2.h
 Copyright:  U.S. Naval Research Laboratory
 License: public-domain
