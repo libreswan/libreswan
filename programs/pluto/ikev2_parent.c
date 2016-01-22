@@ -907,8 +907,25 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/*
-	 * XXX: Check that the KE size is valid, see accept_KE!
+	 * Check and read the KE contents.
 	 */
+	chunk_t accepted_gi = empty_chunk;
+	if (accepted_oakley.group != NULL) {
+		/* note: v1 notification! */
+		if (accept_KE(&accepted_gi, "Gi",
+			      accepted_oakley.group,
+			      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
+		    != NOTHING_WRONG) {
+			/*
+			 * A KE with the incorrect number of bytes is
+			 * a syntax error and not a wrong modp group.
+			 */
+			freeanychunk(accepted_gi);
+			free_ikev2_proposal(&accepted_ike_proposal);
+			/* lower-layer will generate a notify.  */
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+	}
 
 	/*
 	 * We've committed to creating a state and, presumably,
@@ -932,6 +949,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		/* save the proposal information */
 		st->st_oakley = accepted_oakley;
 		st->st_accepted_ike_proposal = accepted_ike_proposal;
+		st->st_gi = accepted_gi;
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
@@ -1086,49 +1104,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 		}
 
-	}
-
-	/* KE in */
-	{
-		/* note: v1 notification! */
-		notification_t rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-			       &md->chain[ISAKMP_NEXT_v2KE]->pbs);
-
-		switch (rn) {
-		case NOTHING_WRONG:
-			break;
-		case INVALID_KEY_INFORMATION:
-		{
-			/*
-			 * RFC 5996 1.3 says that we should return our
-			 * desired group number when rejecting
-			 * sender's.
-			 *
-			 * [cagney]: This discovery that the MODP
-			 * group is invalid has come really late.  It
-			 * should have happend before our end of the
-			 * DH calculation occured - way back when the
-			 * packet was first received and the more
-			 * basic MODP check is performed.
-			 *
-			 * RFC 7296 Section 2.6.1:  When the IKE_SA_INIT
-			 * exchange does not result in the creation of an
-			 * IKE SA due to INVALID_KE_PAYLOAD, NO_PROPOSAL_CHOSEN,
-			 * or COOKIE, the responder's SPI will be zero also in
-			 * the response message.
-			 */
-			DBG(DBG_CONTROL, DBG_log("Clearing RCOOKIE for INVALID_KE reply"));
-			rehash_state(st, zero_cookie);
-			send_v2_notification_invalid_ke_from_state(st);
-			/* nothing to do or remember */
-			delete_state(st);
-			md->st = NULL;
-			return STF_FAIL;
-		}
-		default:
-			/* hope v1 and v2 notifications correspond! */
-			return STF_FAIL + rn;
-		}
 	}
 
 	/* Ni in */
