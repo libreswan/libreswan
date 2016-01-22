@@ -684,13 +684,13 @@
   <refsect1 id="description">
     <title>DESCRIPTION</title>
 
-    <para><emphasis remap="B">pluto</emphasis> is an IKE (“IPsec Key
-    Exchange”) daemon. <emphasis remap="B">whack</emphasis> is an auxiliary
+    <para><emphasis remap="B">pluto</emphasis> is an IKE ("IPsec Key
+    Exchange") daemon. <emphasis remap="B">whack</emphasis> is an auxiliary
     program to allow requests to be made to a running <emphasis
     remap="B">pluto</emphasis>.</para>
 
     <para><emphasis remap="B">pluto</emphasis> is used to automatically build
-    shared “security associations” on a system that has IPsec, the secure IP
+    shared "security associations" on a system that has IPsec, the secure IP
     protocol. In other words, <emphasis remap="B">pluto</emphasis> can
     eliminate much of the work of manual keying. The actual secure
     transmission of packets is the responsibility of other parts of the system
@@ -1009,7 +1009,7 @@
       with the name <filename>/var/run/pluto/pluto.pid</filename>. If the
       lockfile cannot be created, <emphasis remap="B">pluto</emphasis> exits -
       this prevents multiple <emphasis remap="B">pluto</emphasis>s from
-      competing Any “leftover” lockfile must be removed before <emphasis
+      competing Any "leftover" lockfile must be removed before <emphasis
       remap="B">pluto</emphasis> will run. <emphasis
       remap="B">pluto</emphasis> writes its PID into this file so that scripts
       can find it. This lock will not function properly if it is on an NFS
@@ -1017,7 +1017,7 @@
       anyway).</para>
 
       <para><emphasis remap="B">pluto</emphasis> then forks and the parent
-      exits. This is the conventional “daemon fork”. It can make debugging
+      exits. This is the conventional "daemon fork". It can make debugging
       awkward, so there is an option to suppress this fork. In certain
       configurations, pluto might also launch helper programs to assist with
       DNS queries or to offload cryptographic operations.</para>
@@ -1107,7 +1107,7 @@
 
       <para>Each connection may be routed, and must be while it has an IPsec
       SA. The connection specifies the characteristics of the route: the
-      interface on this machine, the “gateway” (the nexthop), and the peer's
+      interface on this machine, the "gateway" (the nexthop), and the peer's
       client subnet. Two connections may not be simultaneously routed if they
       are for the same peer's client subnet but use different interfaces or
       gateways (<emphasis remap="B">pluto</emphasis>'s logic does not reflect
@@ -1176,7 +1176,7 @@
       connection, including those being negotiated. The status form displays
       the <emphasis remap="B">pluto</emphasis>'s internal state. The debug
       form tells <emphasis remap="B">pluto</emphasis> to change the selection
-      of debugging output “on the fly”. The shutdown form tells <emphasis
+      of debugging output "on the fly". The shutdown form tells <emphasis
       remap="B">pluto</emphasis> to shut down, deleting all SAs.</para>
 
       <para>The crash option asks pluto to consider a particularly target IP
@@ -1279,7 +1279,7 @@
             <para>the identity of the end. Currently, this can be an IP
             address (specified as dotted quad or as a Fully Qualified Domain
             Name, which will be resolved immediately) or as a Fully Qualified
-            Domain Name itself (prefixed by “@” to signify that it should not
+            Domain Name itself (prefixed by "@" to signify that it should not
             be resolved), or as user@FQDN, or an X.509 DN, or as the magic
             value <emphasis remap="B">%myid</emphasis>. <emphasis
             remap="B">Pluto</emphasis> only authenticates the identity, and
@@ -1320,7 +1320,7 @@
             <para>the IP address of the end (generally the public interface).
             If <emphasis remap="B">pluto</emphasis> is to act as a responder
             for IKE negotiations initiated from unknown IP addresses (the
-            “Road Warrior” case), the IP address should be specified as
+            "Road Warrior" case), the IP address should be specified as
             <emphasis remap="B">%any</emphasis> (currently, the obsolete
             notation <literal>0.0.0.0</literal> is also accepted for this). If
             <emphasis remap="B">pluto</emphasis> is to opportunistically
@@ -1457,7 +1457,7 @@
             dots. The most convenient form of the <emphasis
             remap="I">mask</emphasis> is a decimal integer, specifying the
             number of leading one bits in the mask. So, for example,
-            10.0.0.0/8 would specify the class A network “Net 10”.</para>
+            10.0.0.0/8 would specify the class A network "Net 10".</para>
           </listitem>
         </varlistentry>
 
@@ -2162,7 +2162,7 @@
       tells <emphasis remap="B">pluto</emphasis> to set up routing for a
       connection. Although like a traditional route, it uses an ipsec device
       as a virtual interface. Once routing is set up, no packets will be sent
-      “in the clear” to the peer's client specified in the connection. A TRAP
+      "in the clear" to the peer's client specified in the connection. A TRAP
       shunt eroute will be installed; if outbound traffic is caught, Pluto
       will initiate the connection. An explicit <emphasis
       remap="B">whack</emphasis> route is not always needed: if it hasn't been
@@ -2374,8 +2374,8 @@
 
           <listitem>
             <para>specifies the value of the RSA public key. It is a sequence
-            of bytes as described in RFC 2537 “RSA/MD5 KEYs and SIGs in the
-            Domain Name System (DNS)”. It is denoted in a way suitable for
+            of bytes as described in RFC 2537 "RSA/MD5 KEYs and SIGs in the
+            Domain Name System (DNS)". It is denoted in a way suitable for
             <citerefentry>
                 <refentrytitle>ipsec_ttodata</refentrytitle>
 
@@ -2936,7 +2936,7 @@
       <para>Up to this point, all configuring has presumed that the IP
       addresses are known to all parties ahead of time. This will not work
       when either end is mobile (or assigned a dynamic IP address for other
-      reasons). We call this situation “Road Warrior”. It is fairly tricky and
+      reasons). We call this situation "Road Warrior". It is fairly tricky and
       has some important limitations, most of which are features of the IKE
       protocol.</para>
 
@@ -3084,7 +3084,7 @@
           <listitem>
             <para>specifies the file for authentication secrets (default:
             <filename>/etc/ipsec.secrets</filename>). This name is subject to
-            “globbing” as in <citerefentry>
+            "globbing" as in <citerefentry>
                 <refentrytitle>sh</refentrytitle>
 
                 <manvolnum>1</manvolnum>
@@ -3114,9 +3114,9 @@
           <term><option>--nofork</option></term>
 
           <listitem>
-            <para>disable “daemon fork” (default is to fork). In addition,
+            <para>disable "daemon fork" (default is to fork). In addition,
             after the lock file and control socket are created, print the line
-            “Pluto initialized” to standard out.</para>
+            "Pluto initialized" to standard out.</para>
           </listitem>
         </varlistentry>
 
@@ -3182,7 +3182,7 @@
       prodigious amount of debugging information. There are several classes
       of debugging output, and <emphasis remap="B">pluto</emphasis> may be
       directed to produce a selection of them. All lines of debugging output
-      are prefixed with “|&nbsp;” to distinguish them from error messages.
+      are prefixed with "|&nbsp;" to distinguish them from error messages.
       </para>
 
       <para>When <emphasis remap="B">pluto</emphasis> is invoked, it may be
