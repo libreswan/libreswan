@@ -48,10 +48,9 @@ override_dh_auto_install:
 	    fi; \
 	done
 
-	# set permissions on ipsec.secrets
 	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.conf
-	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/
+	chmod 700 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies
 
 override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
