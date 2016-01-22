@@ -1283,24 +1283,6 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 }
 
-void send_v2_notification_invalid_ke_from_state(struct state *st)
-{
-	/* ??? CLANG 3.5 thinks that st might be NULL */
-	passert(st->st_oakley.group != NULL);
-	DBG(DBG_CONTROL,
-	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",
-		    strip_prefix(enum_show(&oakley_group_names,
-					   st->st_oakley.group->group),
-				 "OAKLEY_GROUP_"),
-		    st->st_oakley.group->group));
-	const u_int16_t gr = htons(st->st_oakley.group->group);
-	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
-
-	/* RFC 7296 Section-2.6.1 recommends clearing rcookie */
-	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
-			     st->st_icookie, NULL /* rcookie */, &nd);
-}
-
 void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t type,
 				     chunk_t *data)
@@ -1802,14 +1784,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 				/* We are the exchange responder */
 				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				/* Check if this is an IKE_INIT reply w INVALID_KE */
-				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
-				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
-					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
-					send_v2_notification_invalid_ke_from_state(st);
-				} else {
-					SEND_V2_NOTIFICATION(md->note);
-				}
+				SEND_V2_NOTIFICATION(md->note);
 
 				if (st != NULL) {
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
