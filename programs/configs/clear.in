@@ -1,5 +1,5 @@
 # This file defines the set of CIDRs (network/mask-length) to which
-# communication should always be in the clear.
+# communication should always be in the clear. One IPv4 or IPv6 CIDR per line.
 #
 # If running a recursive DNS server with query minimalization, one could
 # opt to always send DNS root server traffic in the clear to speedup

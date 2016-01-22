@@ -1,3 +1,4 @@
 # This file defines the set of CIDRs (network/mask-length) to which
 # we will communicate in the clear, or, if the other side initiates IPSEC,
 # using encryption.  This behaviour is also called "Opportunistic Responder".
+# One IPv4 or IPv6 CIDR per line.

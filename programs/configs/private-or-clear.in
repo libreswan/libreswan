@@ -1,9 +1,10 @@
 # This file defines the set of CIDRs (network/mask-length) to which
 # communication should be private, if possible, but in the clear otherwise.
+# One IPv4 or IPv6 CIDR per line.
 #
 # If the target has a TXT (later IPSECKEY) record that specifies
 # authentication material, we will require private (i.e. encrypted)
 # communications.  If no such record is found, communications will be
 # in the clear.
-
+#
 0.0.0.0/0
