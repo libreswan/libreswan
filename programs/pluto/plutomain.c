@@ -1474,6 +1474,10 @@ int main(int argc, char **argv)
 	}
 
 	if (fips_mode) {
+		if (!PK11_IsFIPS()) {
+			loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode but NSS library is not in FIPS mode");
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		}
 		libreswan_log("FIPS: pluto daemon running in FIPS mode");
 	} else {
 		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
