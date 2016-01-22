@@ -112,6 +112,30 @@ class Test:
             self.initiators = self.files_with_suffix("run.sh")
         return self.initiators
 
+    def scripts(self):
+        """Return a list of dict of domain,script to run"""
+
+        scripts = []
+        nic = {"nic"}
+        domain_names = self.domain_names()
+        initiator_names = self.initiator_names()
+        add_matching(self, scripts, "%(domain)sinit.sh", nic);
+        add_matching(self, scripts, "%(domain)sinit.sh", domain_names ^ nic ^ initiator_names)
+        add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
+        add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
+        add_matching(self, scripts, "final.sh", domain_names)
+        return scripts
+
+
+def add_matching(test, scripts, template, domain_names):
+    s = dict()
+    for domain_name in domain_names:
+        script = template % {'domain':domain_name}
+        if (os.path.exists(os.path.join(test.directory, script))):
+            s[domain_name] = script
+    if s:
+        scripts.append(s)
+
 
 class Testsuite:
 

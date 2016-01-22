@@ -40,12 +40,16 @@ def main():
     parser.add_argument("--update-diff", action="store_true",
                         help=("Update the '.console.diff' file"))
 
-    parser.add_argument("--print-directory", action="store_true")
-    parser.add_argument("--print-name", action="store_true")
-    # parser.add_argument("--print-result", action="store_true")
+    parser.add_argument("--prefix-directory", action="store_true")
+    parser.add_argument("--prefix-name", action="store_true")
+    parser.add_argument("--prefix-output-directory", action="store_true")
+
+    parser.add_argument("--print-result", action="store_true")
     parser.add_argument("--print-diff", action="store_true")
     parser.add_argument("--print-args", action="store_true")
-    parser.add_argument("--print-output-directory", action="store_true")
+    parser.add_argument("--print-scripts", action="store_true")
+    parser.add_argument("--print-domains", action="store_true")
+    parser.add_argument("--print-initiators", action="store_true")
 
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
@@ -68,16 +72,27 @@ def main():
     logutil.config(args)
     logger = logutil.getLogger("kvmresults")
 
+    # default to printing results
+    if not args.print_scripts \
+       and not args.print_result \
+       and not args.print_diff \
+       and not args.print_initiators \
+       and not args.print_domains:
+        args.print_result = True
+
     # The option -vvvvvvv is a short circuit for these; make
     # re-ordering easy by using V as a counter.
     v = 0
-    args.print_directory = args.print_directory or args.verbose > v
-    args.print_name = args.print_name or args.verbose > v
+    args.prefix_directory = args.prefix_directory or args.verbose > v
+    args.prefix_name = args.prefix_name or args.verbose > v
+    args.print_result = args.print_result or args.verbose > v
     v += 1
-    args.print_output_directory = args.print_output_directory or args.verbose > v
+    args.prefix_output_directory = args.prefix_output_directory or args.verbose > v
     v += 1
-    args.list_untested = args.list_untested or args.verbose > v ; v += 1
-    args.list_ignored = args.list_ignored or args.verbose > v ; v += 1
+    args.list_untested = args.list_untested or args.verbose > v
+    args.list_ignored = args.list_ignored or args.verbose > v
+    v += 1
+    args.print_scripts = args.print_scripts or args.verbose > v
     v += 1
     args.print_args = args.print_args or args.verbose > v
 
@@ -146,9 +161,9 @@ def results(logger, tests, baseline, args, result_stats):
             if ignore and not args.list_ignored:
                 continue
 
-            # Filter out tests that have not been run?
+            # Filter out tests that have not been run
             result = None
-            if not ignore:
+            if not ignore and args.print_result:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
@@ -164,7 +179,7 @@ def results(logger, tests, baseline, args, result_stats):
             sep = ""
 
             # Print the test's name/path
-            if not args.print_directory and not args.print_name and not args.print_output_directory:
+            if not args.prefix_directory and not args.prefix_name and not args.prefix_output_directory:
                 # By default: when the path given on the command line
                 # explicitly specifies a test's output directory
                 # (found in TEST.SAVED_OUTPUT_DIRECTORY), print that;
@@ -176,15 +191,15 @@ def results(logger, tests, baseline, args, result_stats):
                 sep = " "
             else:
                 # Print the test name/path per command line
-                if args.print_name:
+                if args.prefix_name:
                     print(sep, end="")
                     print(test.name, end="")
                     sep = " "
-                if args.print_directory:
+                if args.prefix_directory:
                     print(sep, end="")
                     print(test.directory, end="")
                     sep = " "
-                if args.print_output_directory:
+                if args.prefix_output_directory:
                     print(sep, end="")
                     print((test.saved_output_directory
                            and test.saved_output_directory
@@ -196,12 +211,33 @@ def results(logger, tests, baseline, args, result_stats):
                 print("ignored", ignore, end="")
                 sep = " "
 
-            print(sep, end="")
-            if result.errors:
-                print(result, result.errors, end="")
-            else:
-                print(result, end="")
-            sep = " "
+            if result:
+                print(sep, end="")
+                if result.errors:
+                    print(result, result.errors, end="")
+                else:
+                    print(result, end="")
+                sep = " "
+
+            if args.print_domains:
+                for name in test.domain_names():
+                    print(sep, end="")
+                    print(name, end="")
+                    sep = " "
+
+            if args.print_initiators:
+                for name in test.initiator_names():
+                    print(sep, end="")
+                    print(name, end="")
+                    sep = " "
+
+            if args.print_scripts:
+                for scripts in test.scripts():
+                    for name, script in scripts.items():
+                        print(sep, end="")
+                        print(name + ":" + script, end="")
+                        sep = ","
+                    sep = " "
 
             print()
 

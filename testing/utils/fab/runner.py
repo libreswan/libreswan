@@ -50,7 +50,6 @@ TEST_TIMEOUT = 120
 class TestDomain:
 
     def __init__(self, domain_name, test):
-        self.full_name = "test " + test.name + " " + domain_name
         self.test = test
         # Get the domain
         self.domain = virsh.Domain(domain_name)
@@ -59,7 +58,7 @@ class TestDomain:
         self.console = self.domain.console()
 
     def __str__(self):
-        return self.full_name
+        return self.domain.name
 
     def crash(self):
         # The objective here is to cause any further operations (on
@@ -155,7 +154,7 @@ class TestDomains:
         for test_domain in self.test_domains.values():
             test_domain.close()
 
-def run_job_on_domain(executor, jobs, logger, domain, work):
+def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
     jobs[job] = domain
     logger.debug("scheduled %s on %s", job, domain)
@@ -171,7 +170,7 @@ def wait_for_jobs(jobs, logger):
 
 def execute_on_domains(executor, jobs, logger, domains, work):
     for domain in domains:
-        run_job_on_domain(executor, jobs, logger, domain, work)
+        submit_job_for_domain(executor, jobs, logger, domain, work)
     wait_for_jobs(jobs, logger)
 
 
@@ -227,22 +226,23 @@ def run_test(test, max_workers=1):
             # crashed jobs.
             executor.shutdown()
 
+def strset(s):
+    return " ".join(str(e) for e in s)
+
 def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     test_domains = set()
-    for test_domain in test.domain_names():
-        test_domains.add(all_test_domains[test_domain])
-    logger.debug("test domains: %s", test_domains)
+    for domain_name in test.domain_names():
+        test_domains.add(all_test_domains[domain_name])
+    logger.debug("test domains: %s", strset(test_domains))
 
-    initiator_domains = set()
-    for test_domain in test.initiator_names():
-        initiator_domains.add(all_test_domains[test_domain])
-    logger.debug("initiator domains: %s", initiator_domains)
-
-    logger.info("idleing domains")
+    idle_test_domains = set()
     for test_domain in all_test_domains.values():
         if test_domain not in test_domains:
-            run_job_on_domain(executor, jobs, logger, test_domain,
+            idle_test_domains.add(test_domain)
+    logger.info("idle domains: %s", strset(idle_test_domains))
+    for test_domain in idle_test_domains:
+        submit_job_for_domain(executor, jobs, logger, test_domain,
                               TestDomain.shutdown)
     wait_for_jobs(jobs, logger)
     
@@ -260,12 +260,12 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     boot_and_login = True
     if boot_and_login:
-        logger.info("boot and login domains")
+        logger.info("boot and login domains: %s", strset(test_domains))
         execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot_and_login)
     else:
-        logger.info("boot domains")
+        logger.info("boot domains: %s", strset(test_domains))
         execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot)
-        logger.info("login domains")
+        logger.info("login domains: %s", strset(test_domains))
         execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
 
     # re-direct the test-result log file
@@ -274,20 +274,10 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
                               test_domain.domain.name + ".console.verbose.txt")
         test_domain.console.output(open(output, "w"))
 
-    # Init all but initiator, and then the initiators
-    logger.info("running init.sh scripts")
-    execute_on_domains(executor, jobs, logger, test_domains ^ initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "init.sh"))
-    execute_on_domains(executor, jobs, logger, initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "init.sh"))
-
-    # Run the actual test:
-    logger.info("running test scripts")
-    execute_on_domains(executor, jobs, logger, initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "run.sh"))
-
-    # Finish
-    logger.info("running final.sh scripts")
-    if os.path.exists(os.path.join(test.directory, "final.sh")):
-        execute_on_domains(executor, jobs, logger, test_domains,
-                           lambda test_domain: test_domain.read_file_run("final.sh"))
+    for scripts in test.scripts():
+        tasks = " ".join(("%s:%s") % (domain_name, script) for domain_name, script in scripts.items())
+        logger.info("running script: %s", tasks)
+        for domain_name, script in scripts.items():
+            submit_job_for_domain(executor, jobs, logger, all_test_domains[domain_name],
+                                  lambda test_domain: test_domain.read_file_run(script))
+        wait_for_jobs(jobs, logger)
