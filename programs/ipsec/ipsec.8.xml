@@ -79,15 +79,19 @@ host init system. Supported init systems are sysv, systemd, upstart and openrc.
 <para><userinput>ipsec barf</userinput> dumps the internal system status
 to stdout for debugging</para>
 
-<para><userinput>ipsec auto </userinput> is used to manually add, remove, up or down connections. For more information see 'man ipsec_auto </para>
+<para><userinput>ipsec auto</userinput> is used to manually add, remove, up or down connections. For more information see 'man ipsec_auto </para>
 
 <para><userinput>ipsec whack</userinput> is used to communicate direct commands to the pluto daemon using the whack interface. For more information see 'man ipsec_pluto' </para>
 
 <para><userinput>ipsec initnss</userinput> initialises the NSS database that contains all the X.509 certificate information and private RSA keys</para>
 
+<para><userinput>ipsec checknss</userinput> is ussed to check the NSS database and initialize it when it is not present.</para>
+
 <para><userinput>ipsec import</userinput> is used to import PKCS#12 X.509 files into the NSS database</para>
 
+<para><userinput>ipsec checknflog</userinput> is used to initialise iptables rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.</para>
 
+<para><userinput>ipsec stopnflog</userinput> is used to delete iptables rules for the nflog devices.</para>
 </refsect1>
 
 <refsect1 id='files'><title>FILES</title>
