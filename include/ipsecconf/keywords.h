@@ -30,6 +30,8 @@
 #include "constants.h"
 #endif
 
+#include <sys/queue.h>
+
 /*
  * these are global configuration parameters, and appear in
  * "config setup" stanza, and as non-left/right items in
