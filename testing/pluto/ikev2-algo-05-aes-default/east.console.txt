@@ -27,16 +27,9 @@ east #
  echo "initdone"
 initdone
 east #
- grep -A 1 KEY_LENGTH /tmp/pluto.log
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
+ : dump key-length attributes to the connsole - none can be zero
+east #
+ grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -53,6 +46,12 @@ east #
 |    length/value: 128 (0x80)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
+--
+|    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
@@ -63,9 +62,6 @@ east #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
@@ -85,12 +81,6 @@ east #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(256)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
@@ -109,9 +99,6 @@ east #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -129,12 +116,6 @@ east #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(256)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)

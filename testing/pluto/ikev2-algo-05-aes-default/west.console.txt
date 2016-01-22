@@ -152,7 +152,9 @@ west #
  echo done
 done
 west #
- grep -A 1 KEY_LENGTH /tmp/pluto.log
+ : dump key-length attributes to the connsole - none can be zero
+west #
+ grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -174,9 +176,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -198,9 +197,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -218,9 +214,6 @@ west #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
@@ -240,9 +233,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
@@ -260,9 +250,6 @@ west #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
