@@ -1,20 +1,19 @@
 # This file defines the set of CIDRs (network/mask-length) to which
 # communication should always be in the clear.
 #
-# See @FINALDOCDIR@/policygroups.html for details.
-#
-
-# root name servers should be in the clear
-192.58.128.30/32
-198.41.0.4/32
-192.228.79.201/32
-192.33.4.12/32
-128.8.10.90/32
-192.203.230.10/32
-192.5.5.241/32
-192.112.36.4/32
-128.63.2.53/32
-192.36.148.17/32
-193.0.14.129/32
-199.7.83.42/32
-202.12.27.33/32
+# If running a recursive DNS server with query minimalization, one could
+# opt to always send DNS root server traffic in the clear to speedup
+# starting with an empty cache. It is not required though.
+# 198.41.0.4/32
+# 192.228.79.201/32
+# 192.33.4.12/32
+# 199.7.91.13/32
+# 192.203.230.10/32
+# 192.5.5.241/32
+# 192.112.36.4/32
+# 198.97.190.53/32
+# 192.36.148.17/32
+# 192.58.128.30/32
+# 193.0.14.129/32
+# 199.7.83.42/32
+# 202.12.27.33/32
