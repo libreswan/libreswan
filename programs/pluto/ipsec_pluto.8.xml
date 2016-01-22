@@ -1037,7 +1037,7 @@
       <para>If the <option>--perpeerlog</option> option is given, then pluto
       will open a log file per connection. By default, this is in
       /var/log/pluto/peer, in a subdirectory formed by turning all dot (.)
-      [IPv4} or colon (:) [IPv6] into slashes (/).</para>
+      [IPv4] or colon (:) [IPv6] into slashes (/).</para>
 
       <para>The base directory can be changed with the
       <option>--perpeerlogbase</option>.</para>
