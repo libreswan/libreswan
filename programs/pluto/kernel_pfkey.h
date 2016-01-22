@@ -19,7 +19,7 @@ extern void init_pfkey(void);
 extern void klips_register_proto(unsigned satype, const char *satypename);
 #endif
 extern void pfkey_close(void);
-#ifdef KLIPS
+#if defined(KLIPS) || (defined(linux) && defined(NETKEY_SUPPORT))
 extern void pfkey_register_response(const struct sadb_msg *msg);
 #endif
 extern void pfkey_dequeue(void);
