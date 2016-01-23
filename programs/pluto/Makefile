@@ -27,7 +27,6 @@ endif
 
 # XXX: Pluto doesn't include mk/program.mk and define PROGRAM
 MANPAGES += ipsec_pluto.8
-MANPAGES += ipsec.secrets.5
 
 # XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
@@ -311,8 +310,8 @@ RMFLAGS = -f
 
 # files for a (source) distribution
 
-DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
-	 pluto.8 ipsec_whack.8 ipsec.secrets.5 .cvsignore
+DISTMISC = CHANGES PLUTO-CONVENTIONS TODO Makefile routing.txt \
+	 pluto.8 ipsec_whack.8 .cvsignore
 
 DISTSRC = \
 	ike_alg_nss_cbc.h ike_alg_nss_cbc.c \

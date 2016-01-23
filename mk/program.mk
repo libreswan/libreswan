@@ -48,10 +48,12 @@ install-local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
 buildall: $(PROGRAMSLIST)
 
+src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
+
 foreach-file = @set -eu ; $(foreach f, $(1), \
 		file=$(f) ; \
 		destdir=$(strip $(2)) ; \
-		src=$(firstword $(wildcard $(srcdir)/$(f)) $(builddir)/$(f)) ; \
+		src=$(call src-file,$(f)) ; \
 		$(3) \
 	)
 
@@ -61,12 +63,14 @@ doinstall:
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+	set -eu ; $(foreach file, $(CONFFILES), \
+		if [ ! -f $(CONFDIR)/$(file) ]; then \
+			echo Install: $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
+			mkdir -p $(CONFDIR) ; \
+			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
 		fi ; \
+	)
+	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
@@ -96,6 +100,8 @@ list-local-base:
 	)
 	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo $$destdir/$$file ; \
+	)
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \

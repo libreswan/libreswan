@@ -48,5 +48,5 @@ config setup
 #
 # There is also a lot of information in the manual page, "man ipsec.conf"
 #
-# It is best to add your IPsec connections as separate files in /etc/ipsec.d/
-include /etc/ipsec.d/*.conf
+# It is best to add your IPsec connections as separate files in @IPSEC_CONFDDIR@/
+include @IPSEC_CONFDDIR@/*.conf
