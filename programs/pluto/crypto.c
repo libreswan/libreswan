@@ -24,8 +24,6 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
-#include <klips-crypto/des.h>
 
 #include <errno.h>
 
@@ -77,7 +75,7 @@ static struct encrypt_desc crypto_encrypter_3des =
 		    .algo_id =       OAKLEY_3DES_CBC,
 		    .algo_v2id =     IKEv2_ENCR_3DES,
 		    .algo_next =     NULL, },
-	.enc_ctxsize =      sizeof(des_key_schedule) * 3,
+	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size =           DES_CBC_BLOCK_SIZE,

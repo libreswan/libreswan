@@ -49,7 +49,9 @@
 // IMPORTANT NOTE: AES_BLOCK_SIZE is in BYTES (16, 24, 32 or undefined). If
 // left undefined a slower version providing variable block length is compiled
 
+#ifndef AES_BLOCK_SIZE
 #define AES_BLOCK_SIZE  16
+#endif
 
 // The number of key schedule words for different block and key lengths
 // allowing for method of computation which requires the length to be a
