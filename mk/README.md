@@ -256,3 +256,5 @@ The following are quirks in the test infrastructure:
 
 - swan-transmogrify runs chcon -R testing/pluto, it should only run
   that over the current test directory
+
+- implement libvirt/install.sh using install-kvm-networks et.al.

@@ -6,27 +6,6 @@ LIBRESWANSRCDIR=$(dirname $TESTDIR)
 
 source ${LIBRESWANSRCDIR}/kvmsetup.sh
 
-cd $TESTING
+cd $LIBRESWANSRCDIR
 
-for netname in net/*; do
-    net=$(basename $netname)
-    sudo virsh net-destroy $net
-    sudo virsh net-undefine $net
-done
-
-for hostfilename in swan${OSTYPE}base vm/*; do
-    hostname=$(basename ${hostfilename})
-    sudo virsh destroy $hostname
-done
-
-for hostfilename in swan${OSTYPE}base vm/*; do
-    hostname=$(basename ${hostfilename})
-    sudo virsh undefine $hostname --remove-all-storage
-done
-
-for f in img qcow2 ; do
-    rm -f ${POOLSPACE}/swan"${OSTYPE}"base.$f
-done
-
-sudo virsh pool-destroy $(basename $POOLSPACE)
-sudo virsh pool-undefine $(basename $POOLSPACE)
+make uninstall-kvm-networks uninstall-kvm-domains KVM_POOL=$POOLSPACE KVM_OS=$OSTYPE
