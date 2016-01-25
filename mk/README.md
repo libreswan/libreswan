@@ -22,14 +22,16 @@ Setting up virtual machines
 
 This requires two steps:
 
-    make kvm-networks
-    make kvm-domains
+    make install-kvm-networks
+    make install-kvm-domains
 
-To build an individual domain use the target "kvm-domain-east" for
-instance.  To delete the domains or networks use the targets
-"clean-kvm-domains" and "clean-kvm-networks".
+To uninstall the KVM domains or networks use the targets
+"uninstall-kvm-domains" and "uninstall-kvm-networks".  Individual
+domains and networks can also be installed an uninstalled with make
+targets like install-kvm-domain-east and uninstall-kvm-domain-east.
 
-(This replaces the script ./testing/libvirt/install.sh)
+(This replaces the scripts ./testing/libvirt/install.sh and
+./testing/libvirt/uninstall.sh)
 
 
 Logging into a domain
@@ -48,7 +50,7 @@ Use:
     make kvm-install
 
 To install/update a single domain use a target like
-"kvm-install-east".  To clean the build directory use "clean-kvm".
+"kvm-install-east".  To clean the build directory use "kvm-clean".
 
 (This replaces something like "make check UPDATEONLY=1")
 

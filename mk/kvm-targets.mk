@@ -45,9 +45,12 @@ KVM_KEYS = testing/x509/keys/up-to-date
 # choice is arbitrary).
 KVM_DOMAIN = $(firstword $(filter $(KVM_DOMAINS),$(lastword $(subst -, ,$@))) $(KVM_BUILD_DOMAIN))
 
-# Hack to map common typos on to real clean-kvm target
-kvm-%-clean: clean-kvm-% ; @:
-kvm-clean-%: clean-kvm-% ; @:
+# Hack to map common typos on to real kvm-clean* targets
+clean-kvm-%: kvm-clean-% ; @:
+kvm-%-clean: kvm-clean-% ; @:
+.PHONY: clean-kvm distclean-kvm
+clean-kvm: kvm-clean
+distclean-kvm: kvm-distclean
 
 # Run "make $(1)" on $(2).
 define kvm-make
@@ -61,13 +64,10 @@ endef
 
 # Standard make targets; just mirror the local target names.
 # Everything is run on $(KVM_BUILD_DOMAIN).
-KVM_BUILD_TARGETS = kvm-all kvm-base clean-kvm-base kvm-manpages clean-kvm-manpages kvm-module kvm-clean kvm-distclean
+KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean-base kvm-manpages kvm-clean-manpages kvm-module kvm-clean kvm-distclean
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
-	$(call kvm-make, $(patsubst clean-kvm-%,clean-%,$(patsubst kvm-%,%,$@)), $(KVM_BUILD_DOMAIN))
-.PHONY: clean-kvm distclean-kvm
-clean-kvm: kvm-clean
-distclean-kvm: kvm-distclean
+	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
 
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
@@ -207,7 +207,7 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 # an incomplete state if the rule is aborted.
 KVM_BASE_DOMAIN_IMAGE = $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
 $(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
-	@$(MAKE) clean-kvm-domain-$(KVM_BASE_DOMAIN)
+	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 	rm -f '$(KVM_POOL)/$*.img'
 	fallocate -l 8G '$(KVM_POOL)/$*.img'
 	sudo virt-install \
@@ -242,8 +242,11 @@ $(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks | $(KVM_POOL)/$(KVM_B
 	rm -f $(KVM_BASE_DOMAIN_DISK)
 	sudo qemu-img convert -O qcow2 '$(KVM_BASE_DOMAIN_IMAGE)' '$(KVM_BASE_DOMAIN_DISK)'
 # Mainly for debugging
-.PHONY: kvm-base-domain
-kvm-base-domain: $(KVM_BASE_DOMAIN_DISK)
+.PHONY: install-kvm-domain-base
+install-kvm-domain-base: $(KVM_BASE_DOMAIN_DISK)
+# some useful aliases
+kvm-domains: install-kvm-domains ; @:
+kvm-domain-%: install-kvm-domain-% ; @:
 
 # Create the test domains
 #
@@ -254,13 +257,13 @@ kvm-base-domain: $(KVM_BASE_DOMAIN_DISK)
 # (changing MTIME), the domain's disk isn't a good indicator that a
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
-.PHONY: kvm-domains
-kvm-domains: $(patsubst %,kvm-domain-%,$(KVM_TEST_DOMAINS))
-kvm-domain-%: $(KVM_POOL)/%.xml | $(KVM_POOL)/%.qcow2 ; @:
+.PHONY: install-kvm-domains
+install-kvm-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
+install-kvm-domain-%: $(KVM_POOL)/%.xml | $(KVM_POOL)/%.qcow2 ; @:
 .PRECIOUS: $(patsubst %,$(KVM_POOL)/%.qcow2,$(KVM_TEST_DOMAINS))
 .PRECIOUS: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_TEST_DOMAINS))
 $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
-	@$(MAKE) --no-print-directory clean-kvm-domain-$*
+	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
 	rm -f '$(KVM_POOL)/$*.qcow2'
 	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASE_DOMAIN_DISK)' '$(KVM_POOL)/$*.qcow2'
 	sed \
@@ -276,14 +279,16 @@ $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/v
 
 # XXX: Be smarter with this target and avoid the errors when the
 # commands fail?
-.PHONY: clean-kvm-domains
-clean-kvm-domains: $(patsubst %,clean-kvm-domain-%,$(KVM_DOMAINS))
-clean-kvm-domain-%:
+.PHONY: uninstall-kvm-domains
+uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_DOMAINS))
+uninstall-kvm-domain-%:
 	-sudo virsh destroy '$*'
 	-sudo virsh undefine '$*' --remove-all-storage
 	rm -f $(KVM_POOL)/$*.xml   $(KVM_POOL)/$*.ks
 	rm -f $(KVM_POOL)/$*.qcow2 $(KVM_POOL)/$*.img
-
+# Some useful aliases
+kvm-clean-domains: uninstall-kvm-domains ; @:
+kvm-clean-domain-%: uninstall-kvm-domain-% ; @:
 
 #
 # Build networks from scratch
@@ -291,18 +296,23 @@ clean-kvm-domain-%:
 # XXX: This deletes each network before creating it; should it?
 
 KVM_NETDIR = testing/libvirt/net
-.PHONY: kvm-networks
-kvm-networks: $(patsubst $(KVM_NETDIR)/%,kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
-kvm-network-%: clean-kvm-network-%
+.PHONY: install-kvm-networks
+install-kvm-networks: $(patsubst $(KVM_NETDIR)/%,install-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
+install-kvm-network-%: uninstall-kvm-network-%
 	sudo virsh net-define $(KVM_NETDIR)/$*
 	sudo virsh net-autostart $*
 	sudo virsh net-start $*
-.PHONY: clean-kvm-networks
-clean-kvm-networks: $(patsubst $(KVM_NETDIR)/%,clean-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
-clean-kvm-network-%:
+.PHONY: uninstall-kvm-networks
+uninstall-kvm-networks: $(patsubst $(KVM_NETDIR)/%,uninstall-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
+uninstall-kvm-network-%:
 	if sudo virsh net-info $* 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
 		sudo virsh net-destroy $* ; \
 	fi
 	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
 		sudo virsh net-undefine $* ; \
 	fi
+# Some useful aliases
+kvm-networks: install-kvm-networks ; @:
+kvm-network-%: install-kvm-network-% ; @:
+kvm-clean-networks: uninstall-kvm-networks ; @:
+kvm-clean-network-%: uninstall-kvm-network-% ; @:
