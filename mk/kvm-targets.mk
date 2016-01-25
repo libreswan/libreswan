@@ -277,13 +277,15 @@ $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/v
 	sudo virsh define '$(KVM_POOL)/$*.tmp'
 	mv '$(KVM_POOL)/$*.tmp' '$(KVM_POOL)/$*.xml'
 
-# XXX: Be smarter with this target and avoid the errors when the
-# commands fail?
 .PHONY: uninstall-kvm-domains
 uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_DOMAINS))
 uninstall-kvm-domain-%:
-	-sudo virsh destroy '$*'
-	-sudo virsh undefine '$*' --remove-all-storage
+	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
+		sudo virsh destroy '$*' ; \
+	fi
+	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
+		sudo virsh undefine '$*' --remove-all-storage ; \
+	fi
 	rm -f $(KVM_POOL)/$*.xml   $(KVM_POOL)/$*.ks
 	rm -f $(KVM_POOL)/$*.qcow2 $(KVM_POOL)/$*.img
 # Some useful aliases
