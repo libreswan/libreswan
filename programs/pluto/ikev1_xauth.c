@@ -369,6 +369,159 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 }
 
 /**
+ * Add ISAKMP attribute
+ *
+ * Add a given Mode Config attribute to the reply stream.
+ *
+ * @param pb_stream strattr the reply stream (stream)
+ * @param attr_type int the attribute type
+ * @param ia internal_addr the IP information for the connection
+ * @param st State structure
+ * @return stf_status STF_OK or STF_INTERNAL_ERROR
+ */
+static stf_status isakmp_add_attr (pb_stream *strattr,
+				   const int attr_type,
+				   const struct internal_addr *ia,
+				   const struct state *st)
+{
+	pb_stream attrval;
+	unsigned char *byte_ptr;
+	unsigned int len;
+	bool dont_advance;
+	int dns_idx = 0;
+
+	do {
+		dont_advance = FALSE;
+
+		/* ISAKMP attr out */
+		{
+			struct isakmp_attribute attr;
+
+			attr.isaat_af_type = attr_type |
+					     ISAKMP_ATTR_AF_TLV;
+			if (!out_struct(&attr,
+					&isakmp_xauth_attribute_desc,
+					strattr,
+					&attrval))
+				return STF_INTERNAL_ERROR;
+		}
+
+		switch (attr_type) {
+		case INTERNAL_IP4_ADDRESS:
+			len = addrbytesptr(&ia->ipaddr,
+					   &byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_addr"))
+				return STF_INTERNAL_ERROR;
+
+			break;
+
+		case INTERNAL_IP4_SUBNET:
+			len = addrbytesptr(
+				&st->st_connection->spd.this.client.addr,
+				&byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_subnet"))
+				return STF_INTERNAL_ERROR;
+			/* FALL THROUGH */
+		case INTERNAL_IP4_NETMASK:
+		{
+			int m =
+				st->st_connection->spd.this.client.maskbits;
+			u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+
+
+			if (!out_raw(&mask, sizeof(mask),
+				     &attrval, "IP4_submsk"))
+				return STF_INTERNAL_ERROR;
+			break;
+		}
+
+		case INTERNAL_IP4_DNS:
+			len = addrbytesptr(&ia->dns[dns_idx++],
+					   &byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_dns"))
+				return STF_INTERNAL_ERROR;
+
+			if (dns_idx < 2 &&
+			    !isanyaddr(&ia->dns[dns_idx]))
+				dont_advance = TRUE;
+			break;
+
+		case MODECFG_DOMAIN:
+			if(st->st_connection->modecfg_domain) {
+				DBG_log("We are sending '%s' as domain",
+					st->st_connection->modecfg_domain);
+				if (!out_raw(st->st_connection->modecfg_domain,
+					     strlen(st->st_connection->modecfg_domain),
+					     &attrval, "")) {
+					return STF_INTERNAL_ERROR;
+				}
+			} else {
+				DBG_log("We are not sending a domain");
+			}
+			break;
+
+		case MODECFG_BANNER:
+			if(st->st_connection->modecfg_banner) {
+				DBG_log("We are sending '%s' as banner",
+					st->st_connection->modecfg_banner);
+				if (!out_raw(st->st_connection->modecfg_banner,
+					     strlen(st->st_connection->modecfg_banner),
+					     &attrval, "")) {
+					return STF_INTERNAL_ERROR;
+				}
+			} else {
+				DBG_log("We are not sending a banner");
+			}
+			break;
+
+		/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
+		case CISCO_SPLIT_INC:
+		{
+		/* example payload
+		 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
+		 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
+		 *  28676        14        10.0.0.0    255.0.0.0
+		 *
+		 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
+		 */
+			/*
+			 * ??? this really should use
+			 * packet emitting routines
+			 */
+
+			/* If we don't need split tunneling, just omit the payload */
+			if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+				DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+				break;
+			}
+			DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+			unsigned char si[14];	/* 14 is magic */
+
+			zero(&si);	/* OK: no pointer fields */
+			memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
+			struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+			memcpy(si + 4, &splitmask, 4);
+			if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
+				return STF_INTERNAL_ERROR;
+			break;
+		}
+		default:
+			libreswan_log(
+				"attempt to send unsupported mode cfg attribute %s.",
+				enum_show(&modecfg_attr_names,
+					  attr_type));
+			break;
+		}
+		close_output_pbs(&attrval);
+	} while (dont_advance);
+
+	return STF_OK;
+}
+
+/**
  * Mode Config Reply
  *
  * Generates a reply stream containing Mode Config information (eg: IP, DNS, WINS)
@@ -415,7 +568,6 @@ static stf_status modecfg_resp(struct state *st,
 		pb_stream strattr;
 		int attr_type;
 		struct internal_addr ia;
-		int dns_idx;
 		bool has_lease;
 
 		{
@@ -455,144 +607,14 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		attr_type = 0;
-		dns_idx = 0;
 		while (resp != LEMPTY) {
-			bool dont_advance = FALSE;
-
 			if (resp & 1) {
-				pb_stream attrval;
-				unsigned char *byte_ptr;
-				unsigned int len;
-
-				/* ISAKMP attr out */
-				{
-					struct isakmp_attribute attr;
-
-					attr.isaat_af_type = attr_type |
-							     ISAKMP_ATTR_AF_TLV;
-					if (!out_struct(&attr,
-							&isakmp_xauth_attribute_desc,
-							&strattr,
-							&attrval))
-						return STF_INTERNAL_ERROR;
-				}
-
-				switch (attr_type) {
-				case INTERNAL_IP4_ADDRESS:
-					len = addrbytesptr(&ia.ipaddr,
-							   &byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_addr"))
-						return STF_INTERNAL_ERROR;
-
-					break;
-
-				case INTERNAL_IP4_SUBNET:
-					len = addrbytesptr(
-						&st->st_connection->spd.this.client.addr,
-						&byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_subnet"))
-						return STF_INTERNAL_ERROR;
-					/* FALL THROUGH */
-				case INTERNAL_IP4_NETMASK:
-				{
-					int m =
-						st->st_connection->spd.this.client.maskbits;
-					u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
-
-
-					if (!out_raw(&mask, sizeof(mask),
-						     &attrval, "IP4_submsk"))
-						return STF_INTERNAL_ERROR;
-					break;
-				}
-
-				case INTERNAL_IP4_DNS:
-					len = addrbytesptr(&ia.dns[dns_idx++],
-							   &byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_dns"))
-						return STF_INTERNAL_ERROR;
-
-					if (dns_idx < 2 &&
-					    !isanyaddr(&ia.dns[dns_idx]))
-						dont_advance = TRUE;
-					break;
-
-				case MODECFG_DOMAIN:
-					if(st->st_connection->modecfg_domain) {
-						DBG_log("We are sending '%s' as domain",
-							st->st_connection->modecfg_domain);
-						if (!out_raw(st->st_connection->modecfg_domain,
-							     strlen(st->st_connection->modecfg_domain),
-							     &attrval, "")) {
-							return STF_INTERNAL_ERROR;
-						}
-					} else {
-						DBG_log("We are not sending a domain");
-					}
-					break;
-
-				case MODECFG_BANNER:
-					if(st->st_connection->modecfg_banner) {
-						DBG_log("We are sending '%s' as banner",
-							st->st_connection->modecfg_banner);
-						if (!out_raw(st->st_connection->modecfg_banner,
-							     strlen(st->st_connection->modecfg_banner),
-							     &attrval, "")) {
-							return STF_INTERNAL_ERROR;
-						}
-					} else {
-						DBG_log("We are not sending a banner");
-					}
-					break;
-
-				/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
-				case CISCO_SPLIT_INC:
-				{
-				/* example payload
-				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
-				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
-				 *  28676        14        10.0.0.0    255.0.0.0
-				 *
-				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
-				 */
-					/*
-					 * ??? this really should use
-					 * packet emitting routines
-					 */
-
-					/* If we don't need split tunneling, just omit the payload */
-					if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
-						DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
-						break;
-					}
-					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
-					unsigned char si[14];	/* 14 is magic */
-
-					zero(&si);	/* OK: no pointer fields */
-					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
-					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
-					memcpy(si + 4, &splitmask, 4);
-					if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
-						return STF_INTERNAL_ERROR;
-					break;
-				}
-				default:
-					libreswan_log(
-						"attempt to send unsupported mode cfg attribute %s.",
-						enum_show(&modecfg_attr_names,
-							  attr_type));
-					break;
-				}
-				close_output_pbs(&attrval);
-
+				stf_status ret = isakmp_add_attr (&strattr, attr_type, &ia, st);
+				if (ret != STF_OK)
+					return ret;
 			}
-			if (!dont_advance) {
-				attr_type++;
-				resp >>= 1;
-			}
+			attr_type++;
+			resp >>= 1;
 		}
 
 		if (!close_message(&strattr, st))
