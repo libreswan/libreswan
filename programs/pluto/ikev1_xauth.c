@@ -2106,7 +2106,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				loglog(RC_INFORMATIONAL, "Received DNS domain '%s'",
+				loglog(RC_INFORMATIONAL, "Received Banner domain '%s'",
 					st->st_connection->modecfg_banner);
 				break;
 			}
