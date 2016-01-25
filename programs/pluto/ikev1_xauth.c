@@ -1799,6 +1799,12 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			/* ignore */
 			break;
+		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+			/* ignore - we will always send/receive these */
+			break;
+
 		default:
 			log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 			break;
@@ -1917,6 +1923,11 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 				/* ignore */
+				break;
+			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+				/* ignore - we will always send/receive these */
 				break;
 
 			default:
@@ -2046,25 +2057,23 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
+				/* this is always done - irrespective of CFG request */
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"Domain");
-				/*
-				 * ??? this won't work because MODECFG_DOMAIN is way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
+				loglog(RC_INFORMATIONAL, "Received DNS domain '%s'",
+					st->st_connection->modecfg_domain);
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
+				/* this is always done - irrespective of CFG request */
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				/*
-				 * ??? this won't work because MODECFG_BANNER is way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
+				loglog(RC_INFORMATIONAL, "Received DNS domain '%s'",
+					st->st_connection->modecfg_banner);
 				break;
 			}
 
@@ -2078,7 +2087,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				struct connection *c = st->st_connection;
 				struct spd_route *last_spd = &c->spd;
 
-				DBG_log("Received Cisco Split tunnel route(s)");
+				DBG(DBG_CONTROL, DBG_log("Received Cisco Split tunnel route(s)"));
 				if (!last_spd->that.has_client) {
 					ip_address any;
 
@@ -2194,11 +2203,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
-				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				/*
-				 * ??? this won't work because INTERNAL_IP4_NBNS and INTERNAL_IP6_NBNS are way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
+				libreswan_log("Received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
 			}
 
