@@ -2738,11 +2738,11 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 
 # ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
-		if (ixs->pass)
-			memset(&fl.nl_u.ip6_u.saddr, 0,
-			       sizeof(fl.nl_u.ip6_u.saddr));
-		else
-			fl.nl_u.ip6_u.saddr = lsw_ip6_hdr(ixs)->saddr;
+		/* saddr must not be set with ipv6, otherwise you can't 
+		 * force the output device with linux kernels >= 4.3.
+		 * (kernel commit d46a9d678e4c9fac1e968d0593e4dba683389324)
+		 */
+		memset(&fl.nl_u.ip6_u.saddr, 0, sizeof(fl.nl_u.ip6_u.saddr));
 		fl.nl_u.ip6_u.daddr = lsw_ip6_hdr(ixs)->daddr;
 		/* fl->nl_u.ip6_u.tos = RT_TOS(lsw_ip6_hdr(ixs)->tos); */
 		fl.flowi_proto = IPPROTO_IPV6;
