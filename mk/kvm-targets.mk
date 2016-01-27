@@ -205,15 +205,19 @@ $(KVM_POOL):
 	@echo ''
 	@exit 1
 
-# Build the base disk image.
+# Build the base domain's disk image.
 #
 # Use a pattern rule so that GNU make knows that two things are built.
 #
-# Create and use the .ks file as the hard-dependency indicating that
-# the target finished.  The .img file, a soft-dependency, is left in
-# an incomplete state if the rule is aborted.
-KVM_BASE_DOMAIN_IMAGE = $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
-$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks | $(KVM_POOL)
+# This rule uses order-only dependencies so that unintended re-builds,
+# triggered says by switching git branches say, do not occure.
+#
+# This rule uses the .ks file as main target.  Should the target fail
+# the .img file may be in an incomplete state.
+
+# XXX: Could run the kickstart file through SED before using it.
+
+$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks $(KVM_POOL)
 	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 	rm -f '$(KVM_POOL)/$*.img'
 	fallocate -l 8G '$(KVM_POOL)/$*.img'
@@ -234,26 +238,37 @@ $(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks 
 		$(KVM_HVM)
 	cp testing/libvirt/$(KVM_OS)base.ks $(KVM_POOL)/$*.ks
 
+# mostly for testing
+.PHONY: install-kvm-base-domain uninstall-kvm-base-domain
+install-kvm-base-domain: $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks
+uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+
 # Create the base domain's .qcow2 disk image (ready for cloning)
 #
-# The base domain's .img file is a only soft dependency since its
-# modification date isn't a reliable indicator that it is up-to-date,
-# instead the .ks file is used for that.
+# The base domain's .img file is an order-only dependency.  This
+# prevents things like rebooting the domain triggering an unexpected
+# update.
 #
-# XXX: should the base domain be rebooted and then fsck'd before
-# cloning it?
-KVM_BASE_DOMAIN_DISK = $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
-$(KVM_BASE_DOMAIN_DISK): $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks | $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
-	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'touch /forcefsck'
-	: $(KVMSH_COMMAND) --hostname swanbase --shutdown $(KVM_BASE_DOMAIN) 'true'
-	rm -f $(KVM_BASE_DOMAIN_DISK)
-	sudo qemu-img convert -O qcow2 '$(KVM_BASE_DOMAIN_IMAGE)' '$(KVM_BASE_DOMAIN_DISK)'
-# Mainly for debugging
-.PHONY: install-kvm-domain-base
-install-kvm-domain-base: $(KVM_BASE_DOMAIN_DISK)
-# some useful aliases
-kvm-domains: install-kvm-domains ; @:
-kvm-domain-%: install-kvm-domain-% ; @:
+# The base domain's kickstart file is an order-only dependency.  This
+# prevents things like switching branches triggering an unexpected
+# update.
+#
+# XXX: There is a bug where the install sometimes leaves the disk
+# image in a state where the clone result is corrupt.  Since one
+# symptom seems to be a kernel barf involving qemu-img, look for that
+# in dmesg.
+
+$(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
+	: clone
+	rm -f $@.tmp
+	sudo qemu-img convert -O qcow2 '$(KVM_POOL)/$(KVM_BASE_DOMAIN).img' $@.tmp
+	: try to track down an apparent corruption
+	if dmesg | grep qemu-img ; then \
+		: qemu-img caused a kernel panic, time to reboot ; \
+		exit 1 ; \
+	fi
+	: finished
+	mv $@.tmp $@
 
 # Create the test domains
 #
@@ -264,15 +279,17 @@ kvm-domain-%: install-kvm-domain-% ; @:
 # (changing MTIME), the domain's disk isn't a good indicator that a
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
-.PHONY: install-kvm-domains
-install-kvm-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
+
+.PHONY: install-kvm-domains install-kvm-test-domains
+install-kvm-domains: install-kvm-test-domains install-kvm-base-domain
+install-kvm-test-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
 install-kvm-domain-%: $(KVM_POOL)/%.xml | $(KVM_POOL)/%.qcow2 ; @:
 .PRECIOUS: $(patsubst %,$(KVM_POOL)/%.qcow2,$(KVM_TEST_DOMAINS))
 .PRECIOUS: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_TEST_DOMAINS))
-$(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/vm/%
+$(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2 testing/libvirt/vm/%
 	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
 	rm -f '$(KVM_POOL)/$*.qcow2'
-	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASE_DOMAIN_DISK)' '$(KVM_POOL)/$*.qcow2'
+	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_POOL)/$*.qcow2'
 	sed \
 		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
@@ -284,9 +301,16 @@ $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/v
 	sudo virsh define '$(KVM_POOL)/$*.tmp'
 	mv '$(KVM_POOL)/$*.tmp' '$(KVM_POOL)/$*.xml'
 
-.PHONY: uninstall-kvm-domains
-uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_DOMAINS))
-uninstall-kvm-domain-%: $(KVM_POOL)
+# some useful aliases
+kvm-domains: install-kvm-domains ; @:
+kvm-domain-%: install-kvm-domain-% ; @:
+
+.PHONY: uninstall-kvm-domains uninstall-kvm-test-domains
+uninstall-kvm-test-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
+	: Force the shared qcow file to be rebuilt
+	rm -f $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
+uninstall-kvm-domains: uninstall-kvm-test-domains uninstall-kvm-base-domain
+uninstall-kvm-domain-%: | $(KVM_POOL)
 	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$*' ; \
 	fi
@@ -295,6 +319,7 @@ uninstall-kvm-domain-%: $(KVM_POOL)
 	fi
 	rm -f $(KVM_POOL)/$*.xml   $(KVM_POOL)/$*.ks
 	rm -f $(KVM_POOL)/$*.qcow2 $(KVM_POOL)/$*.img
+
 # Some useful aliases
 kvm-clean-domains: uninstall-kvm-domains ; @:
 kvm-clean-domain-%: uninstall-kvm-domain-% ; @:

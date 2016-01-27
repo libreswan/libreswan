@@ -30,8 +30,24 @@ To uninstall the KVM domains or networks use the targets
 domains and networks can also be installed an uninstalled with make
 targets like install-kvm-domain-east and uninstall-kvm-domain-east.
 
+Note: qemu-img seems to occasionally trigger a kernel bug leading to a
+corrupt .qcow2 file.  The symptom is "rpm -Va" failing really badly in
+the test domains.  The make file kvm-targets.mk includes a hack -
+dmesg | grep qemu-img - that tries to detect this.
+
 (This replaces the scripts ./testing/libvirt/install.sh and
 ./testing/libvirt/uninstall.sh)
+
+
+Updating virtual machines
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Just the test machines can be updated with:
+
+    make uninstall-kvm-test-domains
+    make install-kvm-test-domains
+
+it will re-create the test domains using the current base image.
 
 
 Logging into a domain
