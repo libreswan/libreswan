@@ -198,6 +198,13 @@ $(KVM_ISO):
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
+$(KVM_POOL):
+	@echo ''
+	@echo '    The directory $(KVM_POOL) does not exist'
+	@echo '    Either create $(KVM_POOL) or set the KVM_POOL make variable in Makefile.inc.local'
+	@echo ''
+	@exit 1
+
 # Build the base disk image.
 #
 # Use a pattern rule so that GNU make knows that two things are built.
@@ -206,7 +213,7 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 # the target finished.  The .img file, a soft-dependency, is left in
 # an incomplete state if the rule is aborted.
 KVM_BASE_DOMAIN_IMAGE = $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
-$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
+$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks | $(KVM_POOL)
 	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 	rm -f '$(KVM_POOL)/$*.img'
 	fallocate -l 8G '$(KVM_POOL)/$*.img'
@@ -279,7 +286,7 @@ $(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_BASE_DOMAIN_DISK) testing/libvirt/v
 
 .PHONY: uninstall-kvm-domains
 uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_DOMAINS))
-uninstall-kvm-domain-%:
+uninstall-kvm-domain-%: $(KVM_POOL)
 	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$*' ; \
 	fi
