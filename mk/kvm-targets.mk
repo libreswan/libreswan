@@ -307,8 +307,11 @@ kvm-domain-%: install-kvm-domain-% ; @:
 
 .PHONY: uninstall-kvm-domains uninstall-kvm-test-domains
 uninstall-kvm-test-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
-	: Force the shared qcow file to be rebuilt
-	rm -f $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
+	: To rebuild the test domains from the current base domain type:
+	:
+	:     rm -f $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
+	:
+	: This is not done by default as the operation is unreliable and slow.
 uninstall-kvm-domains: uninstall-kvm-test-domains uninstall-kvm-base-domain
 uninstall-kvm-domain-%: | $(KVM_POOL)
 	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \

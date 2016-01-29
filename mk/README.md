@@ -39,15 +39,20 @@ dmesg | grep qemu-img - that tries to detect this.
 ./testing/libvirt/uninstall.sh)
 
 
-Updating virtual machines
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Rebuilding and updating the test domains
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just the test machines can be updated with:
+The test domains can be rebuilt with:
 
     make uninstall-kvm-test-domains
     make install-kvm-test-domains
 
-it will re-create the test domains using the current base image.
+They will use the base .qcow2 image created earlier.  That base .qcow2
+image will not be updated.
+
+To also force an update of the base .qcow2 image, the file will need
+to be deleted.  This is both to prevent accidental domain updates; and
+avoid the unreliable and slow operation of creating the .qcow2 file.
 
 
 Logging into a domain
