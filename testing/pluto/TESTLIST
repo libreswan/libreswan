@@ -67,6 +67,7 @@ kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-49-hub-spoke			good
+kvmplutotest	ikev2-50-propnum			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good

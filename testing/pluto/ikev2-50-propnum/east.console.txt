@@ -1,0 +1,85 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+[ 00.00] registered KLIPS /proc/sys/net
+[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] 
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-propnum
+002 added connection description "westnet-eastnet-propnum"
+east #
+ echo "initdone"
+initdone
+east #
+ : dump all emitted and parsed proposals onto the console
+east #
+ : weird pattern deals with optional length field
+east #
+ grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
+| ****parse IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+|    length: 56 (0x38)
+|    prop #: 1 (0x1)
+|    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
+|    spi size: 0 (0x0)
+|    # transforms: 5 (0x5)
+--
+| ****parse IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_LAST (0x0)
+|    length: 40 (0x28)
+|    prop #: 2 (0x2)
+|    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
+|    spi size: 0 (0x0)
+|    # transforms: 4 (0x4)
+--
+| ****emit IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_LAST (0x0)
+|    prop #: 2 (0x2)
+|    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
+|    spi size: 0 (0x0)
+|    # transforms: 4 (0x4)
+--
+| ***parse IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_NON_LAST (0x2)
+|    length: 52 (0x34)
+|    prop #: 1 (0x1)
+|    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+|    spi size: 4 (0x4)
+|    # transforms: 4 (0x4)
+--
+| ***parse IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_LAST (0x0)
+|    length: 36 (0x24)
+|    prop #: 2 (0x2)
+|    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+|    spi size: 4 (0x4)
+|    # transforms: 3 (0x3)
+--
+| ******emit IKEv2 Proposal Substructure Payload:
+|    last proposal: v2_PROPOSAL_LAST (0x0)
+|    prop #: 1 (0x1)
+|    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
+|    spi size: 4 (0x4)
+|    # transforms: 3 (0x3)
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

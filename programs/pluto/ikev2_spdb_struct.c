@@ -862,7 +862,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			best_local_proposal = match;
 			/* blat best with a new value */
 			*best_proposal = (struct ikev2_proposal) {
-				.propnum = remote_proposal.isap_protoid,
+				.propnum = remote_proposal.isap_propnum,
 				.protoid = remote_proposal.isap_protoid,
 				.remote_spi = remote_spi,
 			};

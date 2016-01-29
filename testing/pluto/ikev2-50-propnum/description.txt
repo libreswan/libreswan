@@ -1,0 +1,7 @@
+This is an IKEv2 accepted proposal PROPNUM test to confirm we return correct propnums
+
+For IKE, the second proposal should be accepted.
+For ESP, the first proposal should be accepted.
+
+To confirm this, extracts from the emit lines in the pluto log are
+dumped onto the console and expected to match.
