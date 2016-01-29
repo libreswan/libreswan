@@ -64,8 +64,9 @@ def main():
 
     parser.add_argument("domain", action="store",
                         help="domain (virtual machine) to connect to")
-    parser.add_argument("command", nargs="?",
-                        help="run shell command non-interactively")
+
+    parser.add_argument("command", nargs=argparse.REMAINDER,
+                        help="run shell command non-interactively; WARNING#1: this simply concatenates remaining arguments with spaces; WARNING#2: this does not try to escape arguments before passing them onto the domain's shell")
 
     logutil.add_arguments(parser)
     args = parser.parse_args()
@@ -92,8 +93,8 @@ def main():
             console = remote.start(domain)
 
     # Find a reason to log-in and interact with the console.
-    batch = args.mode == "batch" or args.command != None
-    interactive = args.mode == "interactive" or (args.command == None and args.boot == None and not args.shutdown)
+    batch = args.mode == "batch" or args.command
+    interactive = args.mode == "interactive" or (not args.command and args.boot == None and not args.shutdown)
 
     if interactive or batch:
 
@@ -117,7 +118,7 @@ def main():
             console.output(args.output)
             console.run("")
 
-            status = console.run(args.command, timeout=args.timeout)
+            status = console.run(' '.join(args.command), timeout=args.timeout)
             print()
 
         if interactive:
