@@ -1019,8 +1019,8 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	int lp;
 	for (lp = 0; lp < proposals->nr; lp++) {
 		struct ikev2_proposal *proposal = &proposals->proposal[lp];
-		int protonum = lp + 1;
-		if (!emit_proposal(&sa_pbs, proposal, protonum, local_spi,
+		unsigned propnum = lp + 1;
+		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
 				   (lp < proposals->nr - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST))) {
