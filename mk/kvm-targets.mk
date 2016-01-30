@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,10 +12,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: GNU Make doesn't let you combine pattern targets (e.x.,
+# Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
 # patterns can be used, any targets with dependencies are not marked
 # as .PHONY.  Sigh!
+
+# Note: for pattern targets, the value of % can be found in the make
+# variable '$*'.  It is used to extract the DOMAIN from targets like
+# kvm-install-DOMAIN.
+
 
 # XXX: For compatibility
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
@@ -39,11 +44,6 @@ KVM_OBJDIR = OBJ.kvm
 
 # file to mark keys are up-to-date
 KVM_KEYS = testing/x509/keys/up-to-date
-
-# Uses "$@" to determine the current make target's indented host.
-# Assumes the target looks like xxx-yyy-HOST, defaults to 'east' (the
-# choice is arbitrary).
-KVM_DOMAIN = $(firstword $(filter $(KVM_DOMAINS),$(lastword $(subst -, ,$@))) $(KVM_BUILD_DOMAIN))
 
 # Hack to map common typos on to real kvm-clean* targets
 clean-kvm-%: kvm-clean-% ; @:
@@ -71,28 +71,27 @@ $(KVM_BUILD_TARGETS):
 
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
-# needs to use the swan-install script.  Also, to avoid parallel
-# builds getting in the way, this uses sub-makes to explicitly
-# serialize building "base" and "modules".
-KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
-.PHONY: kvm-install kvm-build $(KVM_INSTALL_TARGETS)
-$(KVM_INSTALL_TARGETS): kvm-build
-	: KVM_DOMAIN: '$(KVM_DOMAIN)'
+# needs to use the swan-install script.
+.PHONY: kvm-install
+kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
+kvm-install-%: kvm-build
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_DOMAIN)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-kvm-install: $(KVM_INSTALL_TARGETS)
+	$(KVMSH_COMMAND) --chdir . $* 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+
+# To avoid parallel "make base" and "make module" builds stepping on
+# each others toes, this uses sub-makes to explicitly serialize "base"
+# and "modules" targets.
+.PHONY: kvm-build
 kvm-build:
 	$(MAKE) --no-print-directory kvm-base
 	$(MAKE) --no-print-directory kvm-module
 
 
 # Some useful kvm wide commands.
-KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
-.PHONY: kvm-shutdown $(KVM_SHUTDOWN_TARGETS)
-$(KVM_SHUTDOWN_TARGETS):
-	: KVM_DOMAIN: '$(KVM_DOMAIN)'
-	$(KVMSH_COMMAND) --shutdown '$(KVM_DOMAIN)'
-kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
+.PHONY: kvm-shutdown
+kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
+kvm-shutdown-%:
+	$(KVMSH_COMMAND) --shutdown $*
 
 
 # [re]run the testsuite.
