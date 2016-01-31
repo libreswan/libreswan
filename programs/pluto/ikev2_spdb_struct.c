@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -515,6 +515,13 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			.valid = TRUE,
 		};
 		enum ikev2_trans_type type = remote_trans.isat_type;
+		/* ignore unknown transform types.  */
+		if (type == 0) {
+			return -(STF_FAIL + v2N_INVALID_SYNTAX);
+		}
+		if (type >= IKEv2_TRANS_TYPE_ROOF) {
+			return num_local_proposals; /* try next proposal */
+		}
 
 		/* followed by attributes */
 		while (pbs_left(&trans_pbs) != 0) {
