@@ -440,15 +440,15 @@ void DBG_log_ikev2_proposals(const char *prefix,
  */
 
 static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_buf,
-			      int remote_proposal_nr, int num_remote_transforms,
+			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
 			      struct ikev2_proposal *local_proposals,
 			      const int num_local_proposals,
 			      int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF])
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("Comparing remote proposal %d with %d transforms against %d local proposals",
-		    remote_proposal_nr, num_remote_transforms, num_local_proposals));
+	    DBG_log("Comparing remote proposal %u with %d transforms against %d local proposals",
+		    remote_propnum, num_remote_transforms, num_local_proposals));
 
 	lset_t transform_types_found = LEMPTY;
 
@@ -477,7 +477,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				};
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("local proposal %d type %s has %d transforms",
-					    local_proposal_nr, trans_type_name(type),
+					    local_proposal_nr + 1, trans_type_name(type),
 					    matching_local_proposals[local_proposal_nr][type]));
 			}
 		}
@@ -504,8 +504,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		pb_stream trans_pbs;
 		if (!in_struct(&remote_trans, &ikev2_trans_desc,
 			       prop_pbs, &trans_pbs)) {
-			libreswan_log("remote proposal %d transform %d is corrupt",
-				      remote_proposal_nr, remote_transform_nr);
+			libreswan_log("remote proposal %u transform %d is corrupt",
+				      remote_propnum, remote_transform_nr);
 			print_string(remote_print_buf, "[corrupt-transform]");
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
@@ -530,8 +530,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			if (!in_struct(&attr, &ikev2_trans_attr_desc,
 				       &trans_pbs,
 				       &attr_pbs)) {
-				libreswan_log("remote proposal %d transform %d contains corrupt attribute",
-					      remote_proposal_nr, remote_transform_nr);
+				libreswan_log("remote proposal %u transform %d contains corrupt attribute",
+					      remote_propnum, remote_transform_nr);
 				print_string(remote_print_buf, "[corrupt-attribute]");
 				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 			}
@@ -546,8 +546,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				remote_transform.attr_keylen = attr.isatr_lv;
 				break;
 			default:
-				libreswan_log("remote proposal %d transform %d has unknown attribute %d or unexpeced attribute encoding",
-					      remote_proposal_nr, remote_transform_nr,
+				libreswan_log("remote proposal %u transform %d has unknown attribute %d or unexpeced attribute encoding",
+					      remote_propnum, remote_transform_nr,
 					      attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				print_string(remote_print_buf, "[unknown-attribute]");
 				return num_local_proposals; /* try next proposal */
@@ -562,8 +562,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			if (first_integrity_transid < 0) {
 				first_integrity_transid = remote_trans.isat_transid;
 			} else if (first_integrity_transid == 0 || remote_trans.isat_transid == 0) {
-				libreswan_log("remote proposal %d transform %d has too much NULL integrity %d %d",
-					      remote_proposal_nr, remote_transform_nr,
+				libreswan_log("remote proposal %u transform %d has too much NULL integrity %d %d",
+					      remote_propnum, remote_transform_nr,
 					      first_integrity_transid, remote_trans.isat_transid);
 				print_string(remote_print_buf, "[mixed-integrity]");
 				return num_local_proposals; /* try next proposal */
@@ -604,9 +604,9 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_transform(buf, "", type, &remote_transform);
-						    DBG_log("remote proposal %d transform %d (%s) matches local proposal %d transform %d",
-							    remote_proposal_nr, remote_transform_nr,
-							    buf->buf, local_proposal_nr, local_transform_nr);
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %d",
+							    remote_propnum, remote_transform_nr,
+							    buf->buf, local_proposal_nr + 1, local_transform_nr);
 						    pfree(buf));
 						matching_local_proposals[local_proposal_nr][type] = local_transform_nr;
 						break;
@@ -645,7 +645,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			int type_matched = local_transforms->transform[matching_local_proposals[local_proposal_nr][type]].valid;
 			if (type_proposed != type_matched) {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
-							     local_proposal_nr, trans_type_name(type),
+							     local_proposal_nr + 1, trans_type_name(type),
 							     type_proposed ? "proposed" : "not-proposed",
 							     type_matched ? "matched" : "not-matched"));
 				break;
@@ -654,13 +654,13 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		/* loop finished? */
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
-			    DBG_log("remote proposal %d matches local proposal %d",
-				    remote_proposal_nr, local_proposal_nr));
+			    DBG_log("remote proposal %u matches local proposal %d",
+				    remote_propnum, local_proposal_nr + 1));
 			return local_proposal_nr;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("Remote proposal %d matches no local proposals", remote_proposal_nr));
+	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
 	return num_local_proposals;
 }
 
