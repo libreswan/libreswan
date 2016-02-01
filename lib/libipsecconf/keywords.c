@@ -116,6 +116,7 @@ static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddo
  * Values for authby={rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
+	/* note: these POLICY bits happen to fit in an unsigned int */
 	{ "never",     LEMPTY },
 	{ "null",      POLICY_AUTH_NULL},
 	{ "secret",    POLICY_PSK },
@@ -311,6 +312,7 @@ static const struct keyword_enum_value kw_klipsdebug_values[] = {
 static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(kw_klipsdebug_values);
 
 static const struct keyword_enum_value kw_phase2types_values[] = {
+	/* note: these POLICY bits happen to fit in an unsigned int */
 	{ "ah+esp",   POLICY_ENCRYPT | POLICY_AUTHENTICATE },
 	{ "esp",      POLICY_ENCRYPT },
 	{ "ah",       POLICY_AUTHENTICATE },
@@ -640,10 +642,12 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KSCF_SUBNETWITHIN, NOT_ENUM },
 	{ "protoport",      kv_conn | kv_leftright | kv_processed, kt_string,
 	  KSCF_PROTOPORT, NOT_ENUM },
+
 	{ "phase2",         kv_conn | kv_auto | kv_manual | kv_policy,
 	  kt_enum, KBF_PHASE2, &kw_phase2types_list },
-	{ "auth",           kv_conn | kv_auto | kv_manual | kv_policy |
-	  kv_alias,  kt_enum, KBF_PHASE2, &kw_phase2types_list },
+	{ "auth",           kv_conn | kv_auto | kv_manual | kv_policy | kv_alias,
+	  kt_enum, KBF_PHASE2, &kw_phase2types_list },
+
 	{ "compress",       kv_conn | kv_auto, kt_bool,   KBF_COMPRESS,
 	  NOT_ENUM },
 

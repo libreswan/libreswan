@@ -140,13 +140,14 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
 
-	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
-				   POLICY_ENCRYPT | POLICY_PFS;
-	cfg->conn_default.policy |= POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;	/* ikev2=permit */
-	cfg->conn_default.policy |= POLICY_SAREF_TRACK;         /* sareftrack=yes */
-	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW;      /* ike_frag=yes */
-
-	cfg->conn_default.policy |= POLICY_ESN_NO;      /* esn=no */
+	cfg->conn_default.policy =
+		POLICY_RSASIG |
+		POLICY_TUNNEL |
+		POLICY_ENCRYPT | POLICY_PFS |
+		POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |	/* ikev2=permit */
+		POLICY_SAREF_TRACK |         /* sareftrack=yes */
+		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
+		POLICY_ESN_NO;      /* esn=no */
 
 	cfg->conn_default.options[KBF_IKELIFETIME] =
 		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
@@ -1161,8 +1162,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	/* reset authby flags */
 	if (conn->options_set[KBF_AUTHBY]) {
-		conn->policy &= ~(POLICY_ID_AUTH_MASK);
-
 #ifdef FIPS_CHECK
 		if (libreswan_fipsmode()) {
 			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY])) {
@@ -1174,6 +1173,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 #endif
 
+		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
 
 #ifdef STARTER_POLICY_DEBUG
@@ -1231,55 +1231,53 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	if (conn->options_set[KBF_IKEv2]) {
-		lset_t policy = LEMPTY;
+		lset_t pv2 = LEMPTY;
 
 		switch (conn->options[KBF_IKEv2]) {
 		case fo_never:
-			policy = POLICY_IKEV1_ALLOW;
+			pv2 = POLICY_IKEV1_ALLOW;
 			break;
 
 		case fo_permit:
 			/* this is the default for now */
-			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;
+			pv2 = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;
 			break;
 
 		case fo_propose:
-			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
+			pv2 = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 
 		case fo_insist:
-			policy =                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
+			pv2 =                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 		}
-		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | policy;
+		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | pv2;
 	}
 
 	if (conn->options_set[KBF_ESN]) {
+		conn->policy &= ~(POLICY_ESN_NO | POLICY_ESN_YES);
 
 		switch (conn->options[KBF_ESN]) {
 		case esn_yes:
 			conn->policy |= POLICY_ESN_YES;
-			conn->policy &= ~POLICY_ESN_NO;
 			break;
 
 		case esn_no:
 			/* this is the default for now */
 			conn->policy |= POLICY_ESN_NO;
-			conn->policy &= ~POLICY_ESN_YES;
 			break;
 
 		case esn_either:
-			conn->policy |= POLICY_ESN_NO;
-			conn->policy |= POLICY_ESN_YES;
+			conn->policy |= POLICY_ESN_NO | POLICY_ESN_YES;
 			break;
 		}
 	}
 
 	if (conn->options_set[KBF_IKE_FRAG]) {
+		conn->policy &= ~(POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
+
 		switch (conn->options[KBF_IKE_FRAG]) {
 		case ynf_no:
-			conn->policy &= ~POLICY_IKE_FRAG_ALLOW;
-			conn->policy &= ~POLICY_IKE_FRAG_FORCE;
 			break;
 
 		case ynf_yes:
@@ -1295,6 +1293,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	if (conn->options_set[KBF_SAREFTRACK]) {
+		conn->policy &= ~(POLICY_SAREF_TRACK | POLICY_SAREF_TRACK_CONNTRACK);
+
 		switch (conn->options[KBF_SAREFTRACK]) {
 		case sat_yes:
 			/* this is the default */
@@ -1307,8 +1307,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			break;
 
 		case sat_no:
-			conn->policy &= ~POLICY_SAREF_TRACK;
-			conn->policy &= ~POLICY_SAREF_TRACK_CONNTRACK;
 			break;
 		}
 	}
