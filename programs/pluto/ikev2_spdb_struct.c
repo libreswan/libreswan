@@ -256,10 +256,26 @@ struct ikev2_proposal_match {
 };
 
 struct ikev2_proposals {
-	int nr;
+	int roof;
+	/*
+	 * The proposals array is 1-based matching what goes across
+	 * the wire.  The first entry is ignored.
+	 */
 	struct ikev2_proposal *proposal;
 	bool on_heap;
 };
+
+#define FOR_EACH_PROPOSAL(PROPNUM, PROPOSAL, PROPOSALS)			\
+	for ((PROPNUM) = 1,						\
+		     (PROPOSAL) = &(PROPOSALS)->proposal[(PROPNUM)];	\
+	     (PROPNUM) < (PROPOSALS)->roof;				\
+	     (PROPNUM)++, (PROPOSAL)++)
+
+#define FOR_EACH_PROPOSAL_BASE(PROPNUM, PROPOSAL, PROPOSALS, BASE, BOUND) \
+	for ((PROPNUM) = ((BASE) ? (BASE) : 1),				\
+		     (PROPOSAL) = &(PROPOSALS)->proposal[(PROPNUM)];	\
+	     (PROPNUM) < (BOUND) && (PROPNUM) < (PROPOSALS)->roof;	\
+	     (PROPNUM)++, (PROPOSAL)++)
 
 struct print {
 	size_t pos;	/* index of '\0' in buf */
@@ -405,12 +421,12 @@ void DBG_log_ikev2_proposal(const char *prefix,
 void DBG_log_ikev2_proposals(const char *prefix,
 			     struct ikev2_proposals *proposals)
 {
-	int p;
 	DBG_log("%s ikev2_proposals:", prefix);
 	DBG_log("  allocation: %s", (proposals->on_heap ? "heap" : "static"));
-	for (p = 0; p < proposals->nr; p++) {
-		int propnum = p + 1;
-		const struct ikev2_proposal *proposal = &proposals->proposal[p];
+	passert(proposals->proposal[0].protoid == 0);
+	int propnum;
+	const struct ikev2_proposal *proposal;
+	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 		if (proposal->propnum) {
 			DBG_log("  proposal: %d (%d)", propnum, proposal->propnum);
 		} else {
@@ -436,12 +452,15 @@ void DBG_log_ikev2_proposals(const char *prefix,
 }
 
 /*
- * Compare the initiator's proposal's transforms against the first
- * NUM_LOCAL_PROPOSALS finding the earliest match.
+ * Compare the initiator's proposal's transforms against local
+ * proposals [LOCAL_PROPNUM_BASE .. LOCAL_PROPNUM_BOUND) finding the
+ * earliest match.
  *
- * Return the matching proposal # (an index into
- * MATCHING_LOCAL_PROPOSALS which contains the details) or a -STF_FAIL
- * status or NUM_LOCAL_PROPOSALS for no match.
+ * Returns:
+ *
+ *    -(STF_FAIL+v2...): if things go wrong
+ *    0: if nothing matches
+ *    [LOCAL_PROPNUM_BASE, LOCAL_PROPNUM_BOUND): if there is a match
  *
  * As the remote proposal is parsed and validated, a description of it
  * is accumulated in REMOTE_PRINT_BUF.
@@ -450,13 +469,15 @@ void DBG_log_ikev2_proposals(const char *prefix,
 static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_buf,
 			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
-			      struct ikev2_proposal *local_proposals,
-			      const int num_local_proposals,
+			      struct ikev2_proposals *local_proposals,
+			      const int local_propnum_base, const int local_propnum_bound,
 			      struct ikev2_proposal_match *matching_local_proposals)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("Comparing remote proposal %u with %d transforms against %d local proposals",
-		    remote_propnum, num_remote_transforms, num_local_proposals));
+	    DBG_log("Comparing remote proposal %u containing %d transforms against local proposal [%d..%d] of %d local proposals",
+		    remote_propnum, num_remote_transforms,
+		    local_propnum_base, local_propnum_bound - 1,
+		    local_proposals->roof - 1));
 
 	lset_t transform_types_found = LEMPTY;
 
@@ -471,12 +492,11 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	 * updated (reduced) accordingly.
 	 */
 	{
-		int local_proposal_nr;
-		for (local_proposal_nr = 0;
-		     local_proposal_nr < num_local_proposals;
-		     local_proposal_nr++) {
-			struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
-			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
+		int local_propnum;
+		struct ikev2_proposal *local_proposal;
+		FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
+				       local_propnum_base, local_propnum_bound) {
+			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
 			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
@@ -491,7 +511,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("local proposal %d type %s has %zu transforms",
-					    local_proposal_nr + 1, trans_type_name(type),
+					    local_propnum, trans_type_name(type),
 					    sentinel_transform - local_transforms->transform));
 			}
 		}
@@ -534,7 +554,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			return -(STF_FAIL + v2N_INVALID_SYNTAX);
 		}
 		if (type >= IKEv2_TRANS_TYPE_ROOF) {
-			return num_local_proposals; /* try next proposal */
+			return 0; /* try next proposal */
 		}
 
 		/* followed by attributes */
@@ -564,7 +584,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 					      remote_propnum, remote_transform_nr,
 					      attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				print_string(remote_print_buf, "[unknown-attribute]");
-				return num_local_proposals; /* try next proposal */
+				return 0; /* try next proposal */
 			}
 		}
 
@@ -580,7 +600,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 					      remote_propnum, remote_transform_nr,
 					      first_integrity_transid, remote_trans.isat_transid);
 				print_string(remote_print_buf, "[mixed-integrity]");
-				return num_local_proposals; /* try next proposal */
+				return 0; /* try next proposal */
 			}
 		}
 
@@ -597,9 +617,10 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		/*
 		 * Find the proposals that match and flag them.
 		 */
-		int local_proposal_nr;
-		for (local_proposal_nr = 0; local_proposal_nr < num_local_proposals; local_proposal_nr++) {
-			struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
+		int local_propnum;
+		struct ikev2_proposal *local_proposal;
+		FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
+				       local_propnum_base, local_propnum_bound) {
 			if (local_proposal->protoid == remote_protoid) {
 				/*
 				 * Search the proposal for transforms of this
@@ -607,7 +628,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 * transforms before the last match.
 				 */
 				struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
-				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
+				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 				struct ikev2_transform *local_transform;
 				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
 					passert(matching_local_proposal->matching_transform[type] != NULL);
@@ -622,7 +643,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						    print_transform(buf, "", type, &remote_transform);
 						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %zu",
 							    remote_propnum, remote_transform_nr,
-							    buf->buf, local_proposal_nr + 1,
+							    buf->buf, local_propnum,
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
 						matching_local_proposal->matching_transform[type] = local_transform;
@@ -634,11 +655,12 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	}
 
 	/* XXX: Use a set to speed up the comparison?  */
-	int local_proposal_nr;
-	for (local_proposal_nr = 0; local_proposal_nr < num_local_proposals; local_proposal_nr++) {
-		struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
-		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_proposal_nr));
-		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
+	int local_propnum;
+	struct ikev2_proposal *local_proposal;
+	FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
+			       local_propnum_base, local_propnum_bound) {
+		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_propnum));
+		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 		enum ikev2_trans_type type;
 		struct ikev2_transforms *local_transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
@@ -663,7 +685,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			int type_matched = matching_local_proposal->matching_transform[type]->valid;
 			if (type_proposed != type_matched) {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
-							     local_proposal_nr + 1, trans_type_name(type),
+							     local_propnum, trans_type_name(type),
 							     type_proposed ? "proposed" : "not-proposed",
 							     type_matched ? "matched" : "not-matched"));
 				break;
@@ -673,13 +695,13 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
 			    DBG_log("remote proposal %u matches local proposal %d",
-				    remote_propnum, local_proposal_nr + 1));
-			return local_proposal_nr;
+				    remote_propnum, local_propnum));
+			return local_propnum;
 		}
 	}
 
 	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
-	return num_local_proposals;
+	return 0;
 }
 
 static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
@@ -715,7 +737,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
-				 what, local_proposals->nr));
+				 what, local_proposals->roof - 1));
 
 	/*
 	 * The chosen proposal.  If there was a match, and no errors,
@@ -730,7 +752,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 * Must be freed.
 	 */
 	struct ikev2_proposal_match *matching_local_proposals;
-	matching_local_proposals = alloc_bytes(sizeof(matching_local_proposals[0]) * local_proposals->nr,
+	matching_local_proposals = alloc_bytes(sizeof(matching_local_proposals[0]) * local_proposals->roof,
 					       "matching_local_proposals");
 
 	/*
@@ -748,10 +770,10 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 * On loop exit, the result is one of:
 	 *
 	 *    -ve - the STF_FAIL status
-	 *    [0..LOCAL_PROPOSALS->NR) - chosen proposal
-	 *    LOCAL_PROPOSALS->NR - no proposal chosen
+         *    0: no proposal matched
+	 *    [1..LOCAL_PROPOSALS->ROOF): best match so far
 	 */
-	int best_local_proposal = local_proposals->nr;
+	int matching_local_propnum = 0;
 	int next_propnum = 1;
 	struct ikev2_prop remote_proposal;
 	do {
@@ -761,7 +783,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			       &proposal_pbs)) {
 			libreswan_log("proposal %d corrupt", next_propnum);
 			print_string(remote_proposals_buf, " [corrupt-proposal]");
-			best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
 		}
 		print_string(remote_proposals_buf, " ");
@@ -783,9 +805,15 @@ stf_status ikev2_process_sa_payload(const char *what,
 		if (accepted) {
 			/* There can be only one accepted proposal.  */
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
-				libreswan_log("Error: more than one proposal received.");
-				print_string(remote_proposals_buf, "[too-many-proposals]");
-				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				libreswan_log("Error: more than one accepted proposal received.");
+				print_string(remote_proposals_buf, "[too-many-accepted-proposals]");
+				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				break;
+			}
+			if (remote_proposal.isap_propnum < 1 || remote_proposal.isap_propnum >= local_proposals->roof) {
+				libreswan_log("Error: invalid accepted proposal.");
+				print_string(remote_proposals_buf, "[invalid-accepted-proposal]");
+				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
 			}
 		} else {
@@ -794,7 +822,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 					      remote_proposal.isap_propnum,
 					      next_propnum);
 				print_string(remote_proposals_buf, "[wrong-protonum]");
-				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
 			}
 			next_propnum++;
@@ -857,34 +885,50 @@ stf_status ikev2_process_sa_payload(const char *what,
 			if (!in_raw(remote_spi.bytes, remote_spi.size, &proposal_pbs, "remote SPI")) {
 				libreswan_log("proposal %d contains corrupt SPI",
 					      remote_proposal.isap_propnum);
-				best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				print_string(remote_proposals_buf, "[corrupt-spi]");
 				break;
 			}
 		}
 
+		int local_propnum_base;
+		int local_propnum_bound;
+		if (accepted) {
+			local_propnum_base = remote_proposal.isap_propnum;
+			local_propnum_bound = remote_proposal.isap_propnum + 1;
+		} else {
+			local_propnum_base = 1; /*or 0*/
+			local_propnum_bound = (matching_local_propnum
+					       ? matching_local_propnum
+					       : local_proposals->roof);
+		}
 		int match = process_transforms(&proposal_pbs, remote_proposals_buf,
 					       remote_proposal.isap_propnum,
 					       remote_proposal.isap_numtrans,
 					       remote_proposal.isap_protoid,
-					       local_proposals->proposal,
-					       best_local_proposal,
+					       local_proposals,
+					       local_propnum_base,
+					       local_propnum_bound,
 					       matching_local_proposals);
+
 		if (match < 0) {
 			/* capture the error and bail */
-			best_local_proposal = match;
+			matching_local_propnum = match;
 			break;
-		} else if (match < best_local_proposal) {
+		}
+
+		if (match > 0) {
+			passert(match < local_proposals->roof);
 			/* mark what happend */
-			if (best_local_proposal == local_proposals->nr) {
-				/* good */
-				print_string(remote_proposals_buf, "[match]");
+			if (matching_local_propnum == 0) {
+				/* first match */
+				print_string(remote_proposals_buf, "[first-match]");
 			} else {
-				/* better */
+				/* second or further match */
 				print_string(remote_proposals_buf, "[better-match]");
 			}
 			/* capture the new best proposal  */
-			best_local_proposal = match;
+			matching_local_propnum = match;
 			/* blat best with a new value */
 			*best_proposal = (struct ikev2_proposal) {
 				.propnum = remote_proposal.isap_propnum,
@@ -894,7 +938,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *best_transforms;
 			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
-				struct ikev2_transform *matching_transform = matching_local_proposals[best_local_proposal].matching_transform[type];
+				struct ikev2_transform *matching_transform = matching_local_proposals[matching_local_propnum].matching_transform[type];
 				passert(matching_transform != NULL);
 				/*
 				 * This includes invalid (or
@@ -903,15 +947,12 @@ stf_status ikev2_process_sa_payload(const char *what,
 				 */
 				*best_transforms->transform = *matching_transform;
 			}
-		} else {
-			/* no improvement */
-			passert(match == best_local_proposal);
 		}
 
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
 	stf_status status;
-	if (best_local_proposal < 0) {
+	if (matching_local_propnum < 0) {
 		/*
 		 * best_local_proposal is -STF_FAIL status indicating
 		 * corruption.
@@ -920,8 +961,11 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 * reason will have already been logged.
 		 */
 		libreswan_log("parsed proposals: %s", remote_proposals_buf->buf);
-		status = -best_local_proposal;
-	} else if (best_local_proposal >= local_proposals->nr) {
+		status = -matching_local_propnum;
+	} else if (accepted && matching_local_propnum == 0) {
+		libreswan_log("accepted proposal did not match: %s", remote_proposals_buf->buf);
+		status = STF_FAIL;
+	} else if (matching_local_propnum == 0) {
 		/* no luck */
 		libreswan_log("no proposals matched: %s", remote_proposals_buf->buf);
 		status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -931,6 +975,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 * gets written to the console, altering output, and
 		 * causing test noise.
 		 */
+		pexpect(!accepted || matching_local_propnum == best_proposal->propnum);
 		DBG(DBG_CONTROL, DBG_log("proposals: %s", remote_proposals_buf->buf));
 		/* transfer ownership of BEST_PROPOSAL to caller */
 		*chosen_proposal = best_proposal;
@@ -1044,12 +1089,11 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
 		return FALSE;
 
-	int lp;
-	for (lp = 0; lp < proposals->nr; lp++) {
-		struct ikev2_proposal *proposal = &proposals->proposal[lp];
-		unsigned propnum = lp + 1;
+	int propnum;
+	struct ikev2_proposal *proposal;
+	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
-				   (lp < proposals->nr - 1
+				   (propnum < proposals->roof - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST))) {
 			return FALSE;
@@ -1344,6 +1388,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 #define TR(T, ...) { .transform = { T, __VA_ARGS__ } }
 
 static struct ikev2_proposal default_ikev2_ike_proposal[] = {
+	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	/*
 	 * IKEv2 proposal #0:
 	 * AES_GCM[256]
@@ -1428,7 +1473,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 
 static struct ikev2_proposals default_ikev2_ike_proposals = {
 	.proposal = default_ikev2_ike_proposal,
-	.nr = elemsof(default_ikev2_ike_proposal),
+	.roof = elemsof(default_ikev2_ike_proposal),
 };
 
 /*
@@ -1457,9 +1502,10 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 
 	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
-	int max_proposals = alg_info_ike->ai.alg_info_cnt;
-	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * max_proposals, "propsal");
+	int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
+	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * proposals_roof, "propsal");
 	proposals->on_heap = TRUE;
+	proposals->roof = 1;
 
 	struct ike_info *ike_info;
 	int ixxxx;
@@ -1474,8 +1520,8 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 		 * contain partially constructed stuff from an earlier
 		 * iteration).
 		 */
-		passert(proposals->nr < max_proposals);
-		struct ikev2_proposal *proposal = &proposals->proposal[proposals->nr];
+		passert(proposals->roof < proposals_roof);
+		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
 		*proposal = (struct ikev2_proposal) {
 			.protoid =  IKEv2_SEC_PROTO_IKE,
 		};
@@ -1570,13 +1616,14 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 
 		DBG(DBG_CONTROL,
 		    DBG_log_ikev2_proposal("... ", proposal));
-		proposals->nr++;
+		proposals->roof++;
 	}
 	*result = proposals;
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
 }
 
 static struct ikev2_proposal ikev2_esn_no_esp_proposal[] = {
+	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
@@ -1612,10 +1659,11 @@ static struct ikev2_proposal ikev2_esn_no_esp_proposal[] = {
 };
 static struct ikev2_proposals ikev2_esn_no_esp_proposals = {
 	.proposal = ikev2_esn_no_esp_proposal,
-	.nr = elemsof(ikev2_esn_no_esp_proposal),
+	.roof = elemsof(ikev2_esn_no_esp_proposal),
 };
 
 static struct ikev2_proposal ikev2_esn_no_ah_proposal[] = {
+	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
@@ -1633,7 +1681,7 @@ static struct ikev2_proposal ikev2_esn_no_ah_proposal[] = {
 };
 static struct ikev2_proposals ikev2_esn_no_ah_proposals = {
 	.proposal = ikev2_esn_no_ah_proposal,
-	.nr = elemsof(ikev2_esn_no_ah_proposal),
+	.roof = elemsof(ikev2_esn_no_ah_proposal),
 };
 
 static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
@@ -1689,14 +1737,14 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposal,
 									"cloned ESP/AH proposals");
 			proposals->on_heap = TRUE;
-			proposals->nr = esn_no_proposals->nr;
+			proposals->roof = esn_no_proposals->roof;
 			proposals->proposal = clone_bytes(esn_no_proposals->proposal,
-							  sizeof(esn_no_proposals->proposal[0]) * esn_no_proposals->nr,
+							  sizeof(esn_no_proposals->proposal[0]) * esn_no_proposals->roof,
 							  "ESP/AH proposals");
+			
+			int propnum;
 			struct ikev2_proposal *proposal;
-			for (proposal = &proposals->proposal[0];
-			     proposal < &proposals->proposal[proposals->nr];
-			     proposal++) {
+			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 				/* invalidate the existing ESN_NO proposal */
 				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) { .valid = FALSE };
 				add_esn_transforms(proposal, policy);
@@ -1714,9 +1762,10 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
-	int max_proposals = alg_info_esp->ai.alg_info_cnt;
-	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * max_proposals, "propsal");
+	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
+	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * proposals_roof, "propsal");
 	proposals->on_heap = TRUE;
+	proposals->roof = 1;
 
 	const struct esp_info *esp_info;
 	int ixxxx;
@@ -1731,10 +1780,11 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 		 * contain partially constructed stuff from an earlier
 		 * iteration).
 		 */
-		passert(proposals->nr < max_proposals);
-		struct ikev2_proposal *proposal = &proposals->proposal[proposals->nr];
-		static struct ikev2_proposal zero_proposal;	/* naturally zero */
-		*proposal = zero_proposal;
+		passert(proposals->roof < proposals_roof);
+		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
+		*proposal = (struct ikev2_proposal) {
+			.protoid = 0,
+		};
 
 		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
@@ -1811,7 +1861,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 
 		DBG(DBG_CONTROL,
 		    DBG_log_ikev2_proposal("... ", proposal));
-		proposals->nr++;
+		proposals->roof++;
 	}
 
 	*result = proposals;
@@ -1856,9 +1906,9 @@ ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy
  */
 const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposals *proposals)
 {
-	int p;
-	for (p = 0; p < proposals->nr; p++) {
-		struct ikev2_proposal *proposal = &proposals->proposal[p];
+	int propnum;
+	struct ikev2_proposal *proposal;
+	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 		int t;
 		for (t = 0; t < transforms->transform[t].valid; t++) {
@@ -1892,9 +1942,9 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
 				  oakley_group_t modp)
 {
-	int p;
-	for (p = 0; p < proposals->nr; p++) {
-		struct ikev2_proposal *proposal = &proposals->proposal[p];
+	int propnum;
+	struct ikev2_proposal *proposal;
+	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
