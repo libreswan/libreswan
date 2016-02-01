@@ -247,6 +247,14 @@ struct ikev2_proposal {
 	     (TYPE) < elemsof((PROPOSAL)->transforms);			\
 	     (TYPE)++, (TRANSFORMS)++)
 
+struct ikev2_proposal_match {
+	/*
+	 * Pointer to the best matched transform within the local
+	 * proposal, or the (invalid) sentinel transform.
+	 */
+	struct ikev2_transform *matching_transform[IKEv2_TRANS_TYPE_ROOF];
+};
+
 struct ikev2_proposals {
 	int nr;
 	struct ikev2_proposal *proposal;
@@ -444,7 +452,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			      enum ikev2_sec_proto_id remote_protoid,
 			      struct ikev2_proposal *local_proposals,
 			      const int num_local_proposals,
-			      int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF])
+			      struct ikev2_proposal_match *matching_local_proposals)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("Comparing remote proposal %u with %d transforms against %d local proposals",
@@ -453,13 +461,13 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	lset_t transform_types_found = LEMPTY;
 
 	/*
-	 * The MATCHING_LOCAL_PROPOSALS[PROPOSAL][TYPE] table contains
-	 * the index of the the best matched transform for each
-	 * transform-type for each local proposal.
+	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
+	 * local proposal.  Each entry points to the best matching or
+	 * sentinel transforms for that proposal.
 	 *
-	 * Initially, each index is set to the proposal's
-	 * transform-type's first invalid entry (making an upper-bound
-	 * for searches).  If a transform matches, the index is
+	 * Initially the MATCHING_TRANSFORM[TRANS_TYPE]s point to the
+	 * proposal's sentinel transforms making an upper bound on
+	 * searches.  If a transform matches, then the pointer is
 	 * updated (reduced) accordingly.
 	 */
 	{
@@ -468,17 +476,23 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		     local_proposal_nr < num_local_proposals;
 		     local_proposal_nr++) {
 			struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
+			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
 			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
-				struct ikev2_transform *local_transform;
-				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
-					matching_local_proposals[local_proposal_nr][type]++;
-				};
+				/*
+				 * Find the sentinel transform for
+				 * this transform-type.
+				 */
+				struct ikev2_transform *sentinel_transform;
+				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms);
+				passert(!sentinel_transform->valid);
+				/* save it */
+				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("local proposal %d type %s has %d transforms",
+				    DBG_log("local proposal %d type %s has %zu transforms",
 					    local_proposal_nr + 1, trans_type_name(type),
-					    matching_local_proposals[local_proposal_nr][type]));
+					    sentinel_transform - local_transforms->transform));
 			}
 		}
 	}
@@ -593,10 +607,12 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 * transforms before the last match.
 				 */
 				struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
+				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
 				struct ikev2_transform *local_transform;
 				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
-					int local_transform_nr = local_transform - local_transforms->transform;
-					if (local_transform_nr >= matching_local_proposals[local_proposal_nr][type]) {
+					passert(matching_local_proposal->matching_transform[type] != NULL);
+					/* passert - points to member of local_transforms */
+					if (local_transform >= matching_local_proposal->matching_transform[type]) {
 						break;
 					}
 					if (local_transform->id == remote_transform.id
@@ -604,11 +620,12 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_transform(buf, "", type, &remote_transform);
-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %d",
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %zu",
 							    remote_propnum, remote_transform_nr,
-							    buf->buf, local_proposal_nr + 1, local_transform_nr);
+							    buf->buf, local_proposal_nr + 1,
+							    local_transform - local_transforms->transform);
 						    pfree(buf));
-						matching_local_proposals[local_proposal_nr][type] = local_transform_nr;
+						matching_local_proposal->matching_transform[type] = local_transform;
 						break;
 					}
 				}
@@ -621,6 +638,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	for (local_proposal_nr = 0; local_proposal_nr < num_local_proposals; local_proposal_nr++) {
 		struct ikev2_proposal *local_proposal = &local_proposals[local_proposal_nr];
 		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_proposal_nr));
+		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_proposal_nr];
 		enum ikev2_trans_type type;
 		struct ikev2_transforms *local_transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
@@ -642,7 +660,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				continue;
 			}
 			int type_proposed = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = local_transforms->transform[matching_local_proposals[local_proposal_nr][type]].valid;
+			int type_matched = matching_local_proposal->matching_transform[type]->valid;
 			if (type_proposed != type_matched) {
 				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
 							     local_proposal_nr + 1, trans_type_name(type),
@@ -711,7 +729,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 *
 	 * Must be freed.
 	 */
-	int (*matching_local_proposals)[IKEv2_TRANS_TYPE_ROOF];
+	struct ikev2_proposal_match *matching_local_proposals;
 	matching_local_proposals = alloc_bytes(sizeof(matching_local_proposals[0]) * local_proposals->nr,
 					       "matching_local_proposals");
 
@@ -876,11 +894,14 @@ stf_status ikev2_process_sa_payload(const char *what,
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *best_transforms;
 			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
-				int tt = matching_local_proposals[best_local_proposal][type];
-				struct ikev2_transform *matching_transform = &local_proposals->proposal[best_local_proposal].transforms[type].transform[tt];
-				if (matching_transform->valid) {
-					best_transforms->transform[0] = *matching_transform;
-				}
+				struct ikev2_transform *matching_transform = matching_local_proposals[best_local_proposal].matching_transform[type];
+				passert(matching_transform != NULL);
+				/*
+				 * This includes invalid (or
+				 * unmatched) transform types which is
+				 * ok.
+				 */
+				*best_transforms->transform = *matching_transform;
 			}
 		} else {
 			/* no improvement */
