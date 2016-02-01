@@ -1557,6 +1557,12 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REPLAY_W: /* --replay-window <num> */
+			/*
+			 * ??? what values are legitimate?
+			 * 32 and often 64, but what else?
+			 * Not so large that the
+			 * number of bits overflows u_int32_t.
+			 */
 			msg.sa_replay_window = opt_whole;
 			continue;
 
