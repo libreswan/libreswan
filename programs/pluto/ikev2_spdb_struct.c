@@ -1043,7 +1043,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 			    chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type)
 {
-	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal_proposal ..."));
+	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal ..."));
 	passert(pbs != NULL);
 
 	/* SA header out */
