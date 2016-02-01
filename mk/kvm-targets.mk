@@ -126,8 +126,8 @@ kvm-test-all: $(KVM_KEYS)
 	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good|wip" $(KVM_TESTS)
 
 # clean up
-.PHONY: clean-kvm-check clean-kvm-test
-clean-kvm-check clean-kvm-test:
+.PHONY: kvm-clean-check kvm-clean-test
+kvm-clean-check kvm-clean-test:
 	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
 
