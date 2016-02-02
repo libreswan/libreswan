@@ -188,7 +188,6 @@ kvmplutotest	dynamic-iface-01			good
 kvmplutotest	newoe-01-whack				good
 kvmplutotest	newoe-02-klips				wip
 kvmplutotest	newoe-03-oeself				good
-kvmplutotest	newoe-04-01				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
 kvmplutotest	newoe-06-prio				good
@@ -333,7 +332,6 @@ kvmplutotest	ikev2-liveness-01-netkey	wip
 kvmplutotest	ikev2-liveness-01-netkey-drop	good
 
 kvmplutotest	delete-sa-01	good
-kvmplutotest	delete-sa-02	wip
 kvmplutotest	delete-sa-03	wip
 kvmplutotest	delete-sa-04	wip
 kvmplutotest	delete-sa-05	wip
@@ -506,7 +504,6 @@ kvmplutotest	xauth-pluto-16		good
 skiptest	xauth-pluto-17		wip
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
-kvmplutotest	xauth-pluto-20		good
 
 
 
@@ -833,4 +830,3 @@ kvmplutotest	nss-cert-ocsp-05-ikev2		good
 kvmplutotest	nss-cert-ocsp-05-strict		good
 kvmplutotest	nss-cert-ocsp-06		good
 kvmplutotest	nss-cert-ocsp-07-nourl		good
-kvmplutotest	nss-leftrsasigkey2-01		good
