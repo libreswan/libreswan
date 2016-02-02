@@ -665,11 +665,22 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 */
 				struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
 				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
+				struct ikev2_transform **matching_local_transform = &matching_local_proposal->matching_transform[type];
+				/*
+				 * The matching local transform always
+				 * points into the local transform
+				 * array (which includes includes the
+				 * sentinel transform at the array
+				 * end).
+				 */
+				passert(*matching_local_transform >= &local_transforms->transform[0]);
+				passert(*matching_local_transform < &local_transforms->transform[elemsof(local_transforms->transform)]);
+				/*
+				 * See if this match improves things.
+				 */
 				struct ikev2_transform *local_transform;
 				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
-					passert(matching_local_proposal->matching_transform[type] != NULL);
-					/* passert - points to member of local_transforms */
-					if (local_transform >= matching_local_proposal->matching_transform[type]) {
+					if (local_transform >= *matching_local_transform) {
 						break;
 					}
 					if (local_transform->id == remote_transform.id
@@ -682,7 +693,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 							    buf->buf, local_propnum,
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
-						matching_local_proposal->matching_transform[type] = local_transform;
+						*matching_local_transform = local_transform;
 						break;
 					}
 				}
