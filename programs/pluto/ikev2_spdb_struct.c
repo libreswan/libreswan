@@ -224,6 +224,10 @@ struct ikev2_proposal {
 	 * that the propnum should be auto-assigned.
 	 *
 	 * A chosen proposal always has a non-zero propnum.
+	 *
+	 * Yes, this is field is signed (IETF propnum is a uint16_t).
+	 * It keeps it compatible with code using <0 for errors, 0 for
+	 * no match, and >0 for a match.
 	 */
 	int propnum;
 	/*
@@ -256,23 +260,55 @@ struct ikev2_proposal_match {
 };
 
 struct ikev2_proposals {
+	/*
+	 * The number of elements in the PROPOSAL array.  When
+	 * iterating over the array this is the hard upper bound.
+	 *
+	 * Because PROPOSAL[0] exists but is ignored (PROPOSAL is
+	 * treated as one-based) ROOF is one more than the number of
+	 * proposals.
+	 *
+	 * Yes, this field is signed (IETF propnum is a uint16_t).  It
+	 * keeps it compatible with code using <0 for errors, 0 for no
+	 * match, and >0 for a match.
+	 */
 	int roof;
 	/*
-	 * The proposals array is 1-based matching what goes across
-	 * the wire.  The first entry is ignored.
+	 * An array of proposals.  So that the array index matches the
+	 * IETF propnum, the array is 1-based (PROPOSAL[0] exists but
+	 * is ignored).
 	 */
 	struct ikev2_proposal *proposal;
+	/*
+	 * Was this object, and the PROPOSAL array, allocated from the
+	 * heap (rather than being static).  If so, it will all need
+	 * to be freeed.
+	 *
+	 * An alternative would be to use the array-at-end hack but
+	 * that makes initializing more messy.
+	 */
 	bool on_heap;
 };
 
+/*
+ * Iterate over all the proposals.
+ *
+ * PROPNUM is an int.
+ */
 #define FOR_EACH_PROPOSAL(PROPNUM, PROPOSAL, PROPOSALS)			\
 	for ((PROPNUM) = 1,						\
 		     (PROPOSAL) = &(PROPOSALS)->proposal[(PROPNUM)];	\
 	     (PROPNUM) < (PROPOSALS)->roof;				\
 	     (PROPNUM)++, (PROPOSAL)++)
 
-#define FOR_EACH_PROPOSAL_BASE(PROPNUM, PROPOSAL, PROPOSALS, BASE, BOUND) \
-	for ((PROPNUM) = ((BASE) ? (BASE) : 1),				\
+/*
+ * Iterate over the sub-range [BASE..BOUND) of proposals, but also
+ * bound sub-range by [1..ROOF).
+ *
+ * PROPNUM, BASE, BOUND are all ints.
+ */
+#define FOR_EACH_PROPOSAL_IN_RANGE(PROPNUM, PROPOSAL, PROPOSALS, BASE, BOUND) \
+	for ((PROPNUM) = ((BASE) > 0 ? (BASE) : 1),			\
 		     (PROPOSAL) = &(PROPOSALS)->proposal[(PROPNUM)];	\
 	     (PROPNUM) < (BOUND) && (PROPNUM) < (PROPOSALS)->roof;	\
 	     (PROPNUM)++, (PROPOSAL)++)
@@ -494,8 +530,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	{
 		int local_propnum;
 		struct ikev2_proposal *local_proposal;
-		FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
-				       local_propnum_base, local_propnum_bound) {
+		FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
+					   local_propnum_base, local_propnum_bound) {
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
@@ -619,8 +655,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		 */
 		int local_propnum;
 		struct ikev2_proposal *local_proposal;
-		FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
-				       local_propnum_base, local_propnum_bound) {
+		FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
+					   local_propnum_base, local_propnum_bound) {
 			if (local_proposal->protoid == remote_protoid) {
 				/*
 				 * Search the proposal for transforms of this
@@ -657,8 +693,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	/* XXX: Use a set to speed up the comparison?  */
 	int local_propnum;
 	struct ikev2_proposal *local_proposal;
-	FOR_EACH_PROPOSAL_BASE(local_propnum, local_proposal, local_proposals,
-			       local_propnum_base, local_propnum_bound) {
+	FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
+				   local_propnum_base, local_propnum_bound) {
 		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_propnum));
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 		enum ikev2_trans_type type;
