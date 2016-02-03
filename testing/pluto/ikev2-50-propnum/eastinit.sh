@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep
+../../guestbin/swan-prep
 ipsec setup start
-/testing/pluto/bin/wait-until-pluto-started
+../../pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-propnum
 echo "initdone"

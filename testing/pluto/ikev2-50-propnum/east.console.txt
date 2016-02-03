@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+../../guestbin/swan-prep
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -19,7 +19,7 @@ east #
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-propnum
 002 added connection description "westnet-eastnet-propnum"
