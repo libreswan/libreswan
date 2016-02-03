@@ -183,9 +183,9 @@ def results(logger, tests, baseline, args, result_stats):
             logger.debug("start processing test %s", test.name)
 
             # Filter out tests that are being ignored?
-            ignore = testsuite.ignore(test, args)
+            ignore, details = testsuite.ignore(test, args)
             if ignore:
-                result_stats.add_ignore(test, ignore)
+                result_stats.add_ignored(test, ignore)
             if ignore and not args.list_ignored:
                 continue
 

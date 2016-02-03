@@ -23,11 +23,14 @@ class Counts:
     def __init__(self):
         # Use a default dict so no need to worry about initializing
         # values to zero.
-        self.counts = defaultdict(list)
+        self.counts = defaultdict(lambda: defaultdict(set))
 
-    def add(self, value, *keys):
+    def add(self, value, *keys, domain=None):
         key = "/".join(keys)
-        self.counts[key].append(value)
+        # Include the "None" domain in the set so that it is always
+        # non-empty - makes iterating over it is easier.  See
+        # log_details.
+        self.counts[key][value].add(domain)
 
     def log_summary(self, log, header=None, footer=None, prefix=""):
         if len(self.counts):
@@ -39,14 +42,21 @@ class Counts:
     def log_details(self, log, header=None, footer=None, prefix=""):
         if len(self.counts):
             header and log(header)
-            for key in sorted(self.counts):
-                values = self.counts[key]
-                line = ""
-                for value in sorted(values):
-                    if value:
-                        line += " "
-                        line += value
-                log("%s%s:%s", prefix, key, line)
+            for key, values in sorted(self.counts.items()):
+                # First invert value:domain creating domain:value
+                table = defaultdict(set)
+                for value, domains in sorted(values.items()):
+                    for domain in domains:
+                        table[domain].add(value)
+                # Second log key[/domain]: value ...
+                for domain, values in sorted(table.items()):
+                    line = ""
+                    for value in sorted(values):
+                        line += " " + value
+                    if domain:
+                        log("%s%s/%s:%s", prefix, key, domain, line)
+                    else:
+                        log("%s%s:%s", prefix, key, line)
             footer and log(footer)
 
 
@@ -60,12 +70,13 @@ class Results(Counts):
     def count(self, result):
         Counts.add(self, result.test.name, "total")
         Counts.add(self, result.test.name, str(result))
-        for error in result.errors:
-            Counts.add(self, result.test.name, str(result), error)
+        for domain, errors in result.errors.items():
+            for error in errors:
+                Counts.add(self, result.test.name, str(result), error, domain=domain)
 
-    def add_ignore(self, test, reason):
+    def add_ignored(self, test, reason):
         Counts.add(self, test.name, "total")
-        Counts.add(self, test.name, "ignore", reason)
+        Counts.add(self, test.name, "ignored", reason)
 
     def add_skip(self, result):
         self.count(result)
@@ -74,4 +85,4 @@ class Results(Counts):
     def add_result(self, result, old_result=None):
         self.count(result)
         if old_result:
-            Counts.add(self, result.test.name, "previous", str(old_result))
+            Counts.add(self, result.test.name, str(result), "previous", str(old_result))

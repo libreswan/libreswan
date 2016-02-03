@@ -168,7 +168,6 @@ def run_test(test, max_workers=1):
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
-    logger.info("starting test")
 
     with TestDomains(logger, test, testsuite.DOMAIN_NAMES) as all_test_domains:
         try:
@@ -180,18 +179,20 @@ def run_test(test, max_workers=1):
             # executor is cleaned up explicitly in the finally clause.
             executor = futures.ThreadPoolExecutor(max_workers=max_workers)
             jobs = {}
+            logger.info("starting test")
             run_test_on_executor(executor, jobs, logger, test, all_test_domains)
+            logger.info("finishing test")
 
         finally:
 
             # Control-c, timeouts, along with any other crash, and
             # even a normal exit, all end up here!
-            logger.info("finishing test")
 
             # Start with a list of jobs still in the queue; one or
             # more of them may be running.
             done, not_done = futures.wait(jobs, timeout=0)
             logger.debug("jobs done %s not done %s", done, not_done)
+
             # First: cancel all outstanding jobs (otherwise killing
             # one job would just result in the next job starting).
             # Calling cancel() on running jobs has no effect so need

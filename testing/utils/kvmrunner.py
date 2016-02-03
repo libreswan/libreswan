@@ -80,6 +80,7 @@ def main():
     result_stats = stats.Results()
 
     start_time = datetime.now()
+    exit_code = 0
 
     try:
         logger.info("run started at %s", start_time)
@@ -92,15 +93,15 @@ def main():
             # Would the number of tests to be [re]run be better?
             test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
 
-            ignore = testsuite.ignore(test, args)
+            ignore, details = testsuite.ignore(test, args)
             if ignore:
-                result_stats.add_ignore(test, ignore)
+                result_stats.add_ignored(test, ignore)
                 test_stats.add(test, "ignored")
                 # No need to log all the ignored tests when an
                 # explicit sub-set of tests is being run.  For
                 # instance, when running just one test.
                 if not args.test_name:
-                    logger.info("%s: ignore (%s)", test_prefix, ignore)
+                    logger.info("%s: ignore (%s)", test_prefix, details)
                 continue
 
             # Implement "--retry" as described above: if retry is -ve,
@@ -233,26 +234,24 @@ def main():
             test_stats.add(test, "tests", str(result))
             result_stats.add_result(result, old_result)
 
-            test_stats.log_summary(logger.info, header="updated stats:",
-                                   prefix="    ")
-            result_stats.log_summary(logger.info, header="updated results:",
-                                     prefix="    ")
+            test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
+            result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
     except KeyboardInterrupt:
         logger.exception("**** test %s interrupted ****", test.name)
-        return 1
+        exit_code = 1
 
-    level = args.verbose and logger.info or logger.debug
-    test_stats.log_details(level, header="stat details:", prefix="  ")
-    result_stats.log_details(logger.info, header="result details:", prefix="  ")
+    test_stats.log_details(args.verbose and logger.info or logger.debug,
+                           header="final stat details:", prefix="  ")
+    result_stats.log_details(logger.info, header="final test details:", prefix="  ")
 
-    test_stats.log_summary(logger.info, header="stat summary:", prefix="  ")
-    result_stats.log_summary(logger.info, header="result summary:", prefix="  ")
+    test_stats.log_summary(logger.info, header="final test stats:", prefix="  ")
+    result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
 
     end_time = datetime.now()
     logger.info("run finished at %s after %s", end_time, end_time - start_time)
 
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -432,16 +432,18 @@ def ignore(test, args):
     """
 
     if args.test_kind.pattern and not args.test_kind.search(test.kind):
-        return "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
+        return test.kind, "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
     if args.test_name.pattern and not args.test_name.search(test.name):
-        return "name '%s' does not match '%s'" % (test.name, args.test_name.pattern)
+        return test.name, "name '%s' does not match '%s'" % (test.name, args.test_name.pattern)
     if args.test_result.pattern and not args.test_result.search(test.expected_result):
-        return "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
+        return test.expected_result, "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
 
     if args.test_exclude.pattern:
-        if args.test_exclude.search(test.kind) or \
-           args.test_exclude.search(test.name) or \
-           args.test_exclude.search(test.expected_result):
-            return "matches exclude regular expression: %s" % args.test_exclude.pattern
+        if args.test_exclude.search(test.kind):
+            return test.kind, "kind '%s' excluded by regular expression '%s'" % (test.kind, args.test_exclude.pattern)
+        if args.test_exclude.search(test.name):
+            return test.name, "name '%s' excluded by regular expression '%s'" % (test.name, args.test_exclude.pattern)
+        if args.test_exclude.search(test.expected_result):
+            return test.expected_result, "expected test result '%s' excluded by regular expression '%s'" % (test.expected_result, args.test_exclude.pattern)
 
-    return None
+    return None, None
