@@ -52,6 +52,10 @@ def main():
     parser.add_argument("--print-domains", action="store_true")
     parser.add_argument("--print-initiators", action="store_true")
 
+    parser.add_argument("--stats", action="store", default="summary",
+                        choices=["details", "summary", "none"],
+                        help="provide overview statistics; default: \"%(default)s\"");
+
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
     parser.add_argument("--list-untested", action="store_true",
@@ -156,7 +160,10 @@ def main():
     try:
         results(logger, tests, baseline, args, result_stats)
     finally:
-        result_stats.log_summary(stderr_log, prefix="  ")
+        if args.stats == "details":
+            result_stats.log_details(stderr_log, header="Details:", prefix="  ")
+        if args.stats in ["details", "summary"]:
+            result_stats.log_summary(stderr_log, header="Summary:", prefix="  ")
 
     return 0
 
