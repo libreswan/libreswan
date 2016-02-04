@@ -13,6 +13,7 @@ v3.17 (unrelease)
 * IKEv2: ESN support (XFRM only) via esn=yes|no|either (default no) [Paul]
 * IKEv1: Minor logging changes for DPD/NAT-T/AGGR [Paul]
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
+* pluto: pluto: connection restarts did not use dynamic dns information [Wolfgang]
 * pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
 * pluto: Fix arious coverity warnings and corner cases [Hugh, Paul]
 * KLIPS: Support for Linux 4.4.x kernel (lsw#256) [Wolfgang]
