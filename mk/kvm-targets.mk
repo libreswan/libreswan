@@ -352,3 +352,8 @@ kvm-networks: install-kvm-networks ; @:
 kvm-network-%: install-kvm-network-% ; @:
 kvm-clean-networks: uninstall-kvm-networks ; @:
 kvm-clean-network-%: uninstall-kvm-network-% ; @:
+
+
+.PHONY: kvm-help
+kvm-help:
+	cat mk/README.KVM.md
