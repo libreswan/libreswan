@@ -324,11 +324,11 @@ static bool same_in_some_sense(const struct connection *a,
 void restart_connections_by_peer(struct connection *const c)
 {
 	/*
-	 * Iff c is a CK_INSTANCE, it will be removed by terminate_connection.
+	 * If c is a CK_INSTANCE, it will be removed by terminate_connection.
 	 * Any parts of c we need after that must be copied first.
 	 */
 
-	const struct host_pair *const hp = c->host_pair;
+	struct host_pair *hp = c->host_pair;
 	enum connection_kind c_kind  = c->kind;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
@@ -357,6 +357,9 @@ void restart_connections_by_peer(struct connection *const c)
 	if (c_kind != CK_INSTANCE) {
 		/* reference to c is OK because not CK_INSTANCE */
 		update_host_pairs(c);
+		/* host_pair/host_addr changes with dynamic dns */
+		hp = c->host_pair;
+		host_addr = c->spd.that.host_addr;
 	}
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
