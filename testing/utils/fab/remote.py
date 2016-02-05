@@ -114,7 +114,7 @@ def _login(domain, console, username, password,
 
     start_time = time.time()
 
-    domain.logger.info("login timeouts: login prompt: %ss password prompt: %ss shell prompt: %ss",
+    domain.logger.info("login timeouts: %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
                        login_timeout, password_timeout, shell_timeout)
     domain.logger.debug("console prompt: %s", console.prompt.pattern)
 
@@ -149,7 +149,7 @@ def _login(domain, console, username, password,
     console.expect(console.prompt, timeout=shell_timeout)
     domain.logger.info("We're in after %d seconds!", time.time() - start_time)
 
-LOGIN_TIMEOUT = 60
+LOGIN_TIMEOUT = 120
 PASSWORD_TIMEOUT = 5
 SHELL_TIMEOUT = 5
 
