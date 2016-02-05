@@ -43,8 +43,6 @@ def main():
 
     parser.add_argument("--dry-run", "-n", action="store_true")
     parser.add_argument("--verbose", "-v", action="count", default=0)
-    parser.add_argument("--output-directory", default=None, metavar="DIRECTORY",
-                        help="save test results as %(metavar)s/<test> instead of <test>/OUTPUT")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
@@ -68,7 +66,6 @@ def main():
     logger.info("  retry: %s", args.retry)
     logger.info("  attempts: %s", args.attempts)
     logger.info("  dry-run: %s", args.dry_run)
-    logger.info("  output-directory: %s", args.output_directory or "<testsuite>/<test>/OUTPUT (default)")
     logger.info("  backup-directory: %s", args.backup_directory)
     logger.info("  directories: %s", args.directories)
     testsuite.log_arguments(logger, args)
@@ -77,7 +74,6 @@ def main():
     logutil.log_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
-                                              testsuite_output_directory=args.output_directory,
                                               log_level=logutil.INFO)
     if not tests:
         logger.error("test or testsuite directory invalid: %s", args.directories)

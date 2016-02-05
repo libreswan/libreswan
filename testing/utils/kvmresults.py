@@ -20,6 +20,7 @@ from fab import testsuite
 from fab import logutil
 from fab import post
 from fab import stats
+from fab import utils
 
 def main():
 
@@ -56,13 +57,16 @@ def main():
     parser.add_argument("--list-untested", action="store_true",
                         help="include untested tests in the list")
 
-    parser.add_argument("directories", metavar="TEST-DIRECTORY", nargs="+",
-                        help=("Either a testsuite (only one) or test directory"))
+    parser.add_argument("--baseline", metavar="DIRECTORY",
+                        help="a %(metavar)s containing baseline testsuite output")
+
+    parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
+                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), test output, or testsuite output")
     # Note: this argument serves as documentation only.  The
-    # TEST-DIRECTORY argument always consume all remaining parameters.
+    # TEST-DIRECTORY argument always consumes all remaining arguments.
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
-                        help=("An optional testsuite directory containing"
-                              " results from a previous test run"))
+                        help="an optional testsuite directory (contains a TESTLIST file) containing output from a previous test run")
+
     post.add_arguments(parser)
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
@@ -102,18 +106,35 @@ def main():
         logutil.log_arguments(logger, args)
         return 1
 
-    # Is the last argument some sort of baseline?  If it is, pre-load
-    # it.
-    #
-    # XXX: Should also support something like --baseline-testsuite and
-    # --baseline-output parameters.
+    # Try to find a baseline.  If present, pre-load it.
     baseline = None
-    if len(args.directories) > 1:
+    if args.baseline:
+        # An explict baseline testsuite, can be more forgiving.
+        baseline = testsuite.load(logger, args,
+                                  testsuite_directory=args.baseline,
+                                  testsuite_output_directory=None,
+                                  error_level=logutil.DEBUG)
+        if not baseline:
+            # Assume that it is baseline output only.
+            if args.testing_directory:
+                baseline_directory = os.path.join(args.testing_directory, "pluto")
+            else:
+                baseline_directory = utils.directory("..", "pluto")
+            baseline = testsuite.load(logger, args,
+                                      testsuite_directory=baseline_directory,
+                                      testsuite_output_directory=args.baseline,
+                                      error_level=logutil.DEBUG)
+        if not baseline:
+            logger.info("'%s' is not a baseline", args.baseline)
+            return 1
+    elif len(args.directories) > 1:
         # If there is more than one directory then, perhaps, the last
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline = testsuite.load(logger, args.directories[-1], args,
+        baseline = testsuite.load(logger, args,
+                                  testsuite_directory=args.directories[-1],
+                                  testsuite_output_directory=None,
                                   error_level=logutil.DEBUG)
         if baseline:
             # discard the last argument as consumed above.
