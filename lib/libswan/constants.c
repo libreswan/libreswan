@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 #include <netinet/in.h>
 
 #include <libreswan.h>
