@@ -1781,7 +1781,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 			 * Clone the ESN_NO proposals and fix up the
 			 * ESN bits.
 			 */
-			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposal,
+			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
 									"cloned ESP/AH proposals");
 			proposals->on_heap = TRUE;
 			proposals->roof = esn_no_proposals->roof;

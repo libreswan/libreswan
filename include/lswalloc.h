@@ -33,7 +33,7 @@ extern void *clone_bytes(const void *orig, size_t size,
 extern bool leak_detective;
 extern void report_leaks(void);
 
-#define alloc_thing(thing, name) (alloc_bytes(sizeof(thing), (name)))
+#define alloc_thing(thing, name) ((thing*) alloc_bytes(sizeof(thing), (name)))
 
 #define clone_thing(orig, name) clone_bytes((const void *)&(orig), \
 					    sizeof(orig), (name))
