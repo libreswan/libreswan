@@ -33,6 +33,37 @@ extern void *clone_bytes(const void *orig, size_t size,
 extern bool leak_detective;
 extern void report_leaks(void);
 
+/*
+ * Notes on __typeof__().
+ *
+ * The macro clone_thing(), for instance, uses __typeof__(THING) to
+ * ensure that the type of the original THING and the returned clone
+ * match.  Enforcing this flushed out a weird bug bug in the config
+ * parser.
+ *
+ * While __typeof__() is a non-standard extension, it is widely
+ * supported - GCC, LLVM, and even PCC include the feature.  MSVC
+ * provides the alternative decltype(), and when someone tries to use
+ * that compiler adding suitable #ifdefs should be straight forward.
+ *
+ * There is, however, one limitation.  If THING has the const
+ * qualifier then the clone can't be assigned to a non-const variable.
+ * For instance, this code gets a warning:
+ *
+ *    const char *p = ...;
+ *    char *q = clone_thing(*p, "copy of p");
+ *
+ * One way round it would be to use another GCC extension ({}) and
+ * change the macro to:
+ *
+ *    #define clone_thing(TYPE,THING,NAME) ({
+ *            const (TYPE) *p = &(THING);
+ *            (TYPE*) clone_bytes(p, sizeof(TYPE), (NAME);
+ *       )}
+ *
+ * Another would be to use, er, C++'s remove_const<>.
+ */
+
 #define alloc_thing(thing, name) ((thing*) alloc_bytes(sizeof(thing), (name)))
 
 #define alloc_things(THING, COUNT, NAME) ((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
