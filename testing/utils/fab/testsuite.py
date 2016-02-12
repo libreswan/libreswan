@@ -319,10 +319,10 @@ def load_testsuite_or_tests(logger, directories, args,
         testsuite = load(logger, args, testsuite_directory=directory,
                          testsuite_output_directory=args.testsuite_output)
         if testsuite:
-            logger.log(log_level, "'%s' is a testsuite", testsuite_directory)
+            logger.log(log_level, "'%s' is a testsuite", directory)
             # more efficient?
             for test in testsuite:
-                tests.add(test)
+                tests.append(test)
             continue
 
         # easy case, directory is a single test
