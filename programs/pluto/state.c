@@ -460,13 +460,10 @@ static struct state_hash_table statetable = {
  */
 struct state *new_state(void)
 {
-	/* initialized all to zero & NULL */
-	static const struct state blank_state;
-
 	static so_serial_t next_so = SOS_FIRST;
 	struct state *st;
 
-	st = clone_thing(blank_state, "struct state in new_state()");
+	st = alloc_thing(struct state, "struct state in new_state()");
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
