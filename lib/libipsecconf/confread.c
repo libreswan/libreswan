@@ -586,13 +586,13 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 				char *value = end->strings[KSCF_RSAKEY1];
 
 				pfreeany(end->rsakey1);
-				end->rsakey1 = (unsigned char *)clone_str(value,"end->rsakey1");
+				end->rsakey1 = clone_str(value,"end->rsakey1");
 			}
 			if (end->strings[KSCF_RSAKEY2] != NULL) {
 				char *value = end->strings[KSCF_RSAKEY2];
 
 				pfreeany(end->rsakey2);
-				end->rsakey2 = (unsigned char *)clone_str(value,"end->rsakey2");
+				end->rsakey2 = clone_str(value,"end->rsakey2");
 			}
 		}
 	}
@@ -1331,7 +1331,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 }
 
 static void conn_default(struct starter_conn *conn,
-		  const struct starter_conn *def)
+			 struct starter_conn *def)
 {
 	int i;
 
@@ -1344,12 +1344,12 @@ static void conn_default(struct starter_conn *conn,
 
 	conn->left.iface = clone_str(def->left.iface, "conn default left iface");
 	conn->left.id = clone_str(def->left.id, "conn default leftid");
-	conn->left.rsakey1 = clone_thing(def->left.rsakey1, "conn default left rsakey1");
-	conn->left.rsakey2 = clone_thing(def->left.rsakey2, "conn default left rsakey2");
+	conn->left.rsakey1 = clone_str(def->left.rsakey1, "conn default left rsakey1");
+	conn->left.rsakey2 = clone_str(def->left.rsakey2, "conn default left rsakey2");
 	conn->right.iface = clone_str(def->right.iface, "conn default right iface");
 	conn->right.id = clone_str(def->right.id, "conn default rightid");
-	conn->right.rsakey1 = clone_thing(def->right.rsakey1, "conn default right rsakey1");
-	conn->right.rsakey2 = clone_thing(def->right.rsakey2, "conn default right rsakey2");
+	conn->right.rsakey1 = clone_str(def->right.rsakey1, "conn default right rsakey1");
+	conn->right.rsakey2 = clone_str(def->right.rsakey2, "conn default right rsakey2");
 
 	for (i = 0; i < KSCF_MAX; i++) {
 		conn->left.strings[i] = clone_str(def->left.strings[i], "conn default left item");
@@ -1380,7 +1380,7 @@ static void conn_default(struct starter_conn *conn,
 
 struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name)
 {
-	struct starter_conn *conn = alloc_bytes(sizeof(struct starter_conn),"add_conn starter_conn");
+	struct starter_conn *conn = alloc_thing(struct starter_conn, "add_conn starter_conn");
 
 	conn_default(conn, &cfg->conn_default);
 	conn->name = clone_str(name, "add conn name");
@@ -1440,8 +1440,7 @@ struct starter_config *confread_load(const char *file,
 	if (cfgp == NULL)
 		return NULL;
 
-	struct starter_config *cfg =
-		alloc_bytes(sizeof(struct starter_config), "starter_config cfg");
+	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
 
 	/**
 	 * Set default values

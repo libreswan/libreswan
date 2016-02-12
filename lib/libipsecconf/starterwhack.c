@@ -439,7 +439,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav((char *)end->rsakey1, 0, 0, keyspace,
+			err = ttodatav(end->rsakey1, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
@@ -474,7 +474,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav((char *)end->rsakey2, 0, 0, keyspace,
+			err = ttodatav(end->rsakey2, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
