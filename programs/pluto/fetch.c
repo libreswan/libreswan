@@ -541,7 +541,7 @@ void free_crl_fetch(void)
 /*
  * add additional distribution points
  */
-void add_distribution_points(const generalName_t *newPoints,
+void add_distribution_points(generalName_t *newPoints,
 			     generalName_t **distributionPoints)
 {
 	while (newPoints != NULL) {

@@ -35,8 +35,10 @@ extern void report_leaks(void);
 
 #define alloc_thing(thing, name) ((thing*) alloc_bytes(sizeof(thing), (name)))
 
-#define clone_thing(orig, name) clone_bytes((const void *)&(orig), \
-					    sizeof(orig), (name))
+#define clone_thing(orig, name)						\
+	((__typeof__(&(orig))) clone_bytes((const void *)&(orig),	\
+					   sizeof(orig), (name)))
+
 #define clone_str(str, name) \
 	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
 

@@ -15,7 +15,7 @@
 
 #include <nss.h>
 extern void wake_fetch_thread(const char *who);
-extern void add_distribution_points(const generalName_t *newPoints,
+extern void add_distribution_points(generalName_t *newPoints,
 				    generalName_t **distributionPoints);
 extern void list_distribution_points(const generalName_t *gn);
 
