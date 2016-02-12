@@ -799,8 +799,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 * Must be freed.
 	 */
 	struct ikev2_proposal_match *matching_local_proposals;
-	matching_local_proposals = alloc_bytes(sizeof(matching_local_proposals[0]) * local_proposals->roof,
-					       "matching_local_proposals");
+	matching_local_proposals = alloc_things(struct ikev2_proposal_match, local_proposals->roof,
+						"matching_local_proposals");
 
 	/*
 	 * Buffer to accumulate the entire proposal (in ascii form).
@@ -1550,7 +1550,7 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
-	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * proposals_roof, "propsal");
+	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
@@ -1810,7 +1810,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
-	proposals->proposal = alloc_bytes(sizeof(struct ikev2_proposal) * proposals_roof, "propsal");
+	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
