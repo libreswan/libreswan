@@ -180,6 +180,16 @@ void update_host_pairs(struct connection *c)
 			 * the connection's remote host address and remove
 			 * the connection from the host pair.
 			 */
+
+			/*
+			 * Unroute the old connection before changing the ip
+			 * address. If the client is the peer, also update the
+			 * client info
+			 */
+			if (!d->spd.that.has_client) {
+				addrtosubnet(&new_addr, &d->spd.that.client);
+			}
+
 			d->spd.that.host_addr = new_addr;
 			list_rm(struct connection, hp_next, d,
 				d->host_pair->connections);
