@@ -183,7 +183,12 @@ void update_host_pairs(struct connection *c)
 
 			/*
 			 * Unroute the old connection before changing the ip
-			 * address. If the client is the peer, also update the
+			 * address.
+			 */
+			unroute_connection(d);
+
+			/*
+			 * If the client is the peer, also update the
 			 * client info
 			 */
 			if (!d->spd.that.has_client) {
