@@ -10,7 +10,7 @@
 
 %global buildefence 0
 %global development 0
-%global cavstests 0
+%global cavstests 1
 
 #global prever rc1
 
@@ -128,6 +128,7 @@ FS=$(pwd)
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
+    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac
 %{nil}
 %endif
 
@@ -166,6 +167,17 @@ install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/p
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
 
+%if %{USE_FIPSCHECK}
+install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
+install -m644 packaging/fedora/libreswan-prelink.conf \
+        %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+%endif
+
+%if %{cavstests}
+# we should add a new makefile target for this
+cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
+%endif
+
 %if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
@@ -173,6 +185,10 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 # We only run the CAVS tests here.
 cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
 bunzip2 *.fax.bz2
+
+# work around for older xen based machines
+export NSS_DISABLE_HW_GCM=1
+
 : starting CAVS test for IKEv2
 OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null

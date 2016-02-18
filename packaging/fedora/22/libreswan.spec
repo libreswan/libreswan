@@ -11,7 +11,7 @@
 %global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
-%global cavstests 0
+%global cavstests 1
 
 #global prever rc1
 
@@ -131,6 +131,7 @@ FS=$(pwd)
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
+    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac \
 %{nil}
 %endif
 
@@ -173,12 +174,21 @@ echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %if %{cavstests}
+# we should add a new makefile target for this
+cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
+%endif
+
+%if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
 # run here.
 # We only run the CAVS tests here.
 cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
 bunzip2 *.fax.bz2
+
+# work around for older xen based machines
+export NSS_DISABLE_HW_GCM=1
+
 : starting CAVS test for IKEv2
 OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
