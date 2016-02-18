@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <gmp.h>
 #include <libreswan.h>
 
 #include "sysdep.h"

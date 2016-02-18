@@ -48,7 +48,6 @@
 #include "packet.h"
 #include "demux.h"
 #include "ipsec_doi.h"
-#include "mpzfuncs.h"
 #include "oid.h"
 #include "x509.h"
 #include "certs.h"
@@ -61,7 +60,6 @@
 #include "sha1.h"
 #include "whack.h"
 #include "fetch.h"
-#include "mpzfuncs.h"
 #include "hostpair.h" /* for find_host_pair_connections */
 
 /* new NSS code */

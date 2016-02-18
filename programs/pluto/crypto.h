@@ -20,8 +20,6 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#include <gmp.h>    /* GNU MP library */
-
 #ifdef USE_MD5
 #include "md5.h"
 #endif

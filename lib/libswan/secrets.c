@@ -36,7 +36,6 @@
 #define GLOB_ABORTED GLOB_ABEND	/* fix for old versions */
 #endif
 
-#include <gmp.h>
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -48,7 +47,6 @@
 #include "secrets.h"
 #include "certs.h"
 #include "lex.h"
-#include "mpzfuncs.h"
 
 #include <nss.h>
 #include <pk11pub.h>

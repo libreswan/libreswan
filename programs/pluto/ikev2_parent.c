@@ -32,7 +32,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <gmp.h>
 
 #include <libreswan.h>
 #include <errno.h>

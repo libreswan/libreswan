@@ -20,12 +20,13 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include <gmp.h>	/* GNU MP library */
 #include "id.h"
 
 #include <nss.h>
 #include <pk11pub.h>
 #include "x509.h"
+
+#include "mpzfuncs.h"
 
 #ifndef SHARED_SECRETS_FILE
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"

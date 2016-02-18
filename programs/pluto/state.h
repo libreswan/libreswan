@@ -33,7 +33,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
-#include <gmp.h>    /* GNU MP library */
 #include "quirks.h"
 
 #include <nss.h>

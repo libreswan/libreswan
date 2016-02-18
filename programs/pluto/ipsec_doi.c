@@ -33,7 +33,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>           /* for gettimeofday */
-#include <gmp.h>
 #include <resolv.h>
 
 #include <libreswan.h>
