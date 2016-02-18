@@ -539,8 +539,11 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
+
+	/* XXX we should use an NSS function here and not a GMP function */
 	bundp = bundle(E, n, &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+
 	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
 	printf("\tPublicExponent: %s\n",
 	       hexOut(getPublicExponent(pubkey)));
