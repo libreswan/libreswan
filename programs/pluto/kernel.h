@@ -319,7 +319,7 @@ extern void record_and_initiate_opportunistic(const ip_subnet *,
 					      const ip_subnet *,
 					      int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-					      , const struct xfrm_user_sec_ctx_ike *
+					      , struct xfrm_user_sec_ctx_ike *
 #endif
 					      , const char *why);
 extern void init_kernel(void);

@@ -554,7 +554,7 @@ static void cannot_oppo(struct connection *c,
 static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
-				  , const struct xfrm_user_sec_ctx_ike *uctx
+				  , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
@@ -564,7 +564,7 @@ void initiate_ondemand(const ip_address *our_client,
 		      bool held,
 		      int whackfd
 #ifdef HAVE_LABELED_IPSEC
-		      , const struct xfrm_user_sec_ctx_ike *uctx
+		      , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		      , err_t why)
 {
@@ -708,7 +708,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
-				  , const struct xfrm_user_sec_ctx_ike *uctx
+				  , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  )
 {

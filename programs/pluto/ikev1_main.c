@@ -101,7 +101,7 @@ stf_status main_outI1(int whack_sock,
 		unsigned long try,
 		enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		, const struct xfrm_user_sec_ctx_ike *uctx
+		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
 	)
 {

@@ -172,7 +172,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
 				       int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-				       , const struct xfrm_user_sec_ctx_ike *uctx
+				       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				       , const char *why)
 {
