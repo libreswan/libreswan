@@ -1439,8 +1439,8 @@ int main(int argc, char **argv)
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
 	if (DBGP(IMPAIR_FORCE_FIPS)) {
-		libreswan_log("Setting all FIPS checks to true to emulate FIPS mode");
-		fips_kernel = fips_product = fips_mode = fips_files_check_ok = 1;
+		libreswan_log("Setting FIPS checks to true to emulate FIPS mode");
+		fips_kernel = fips_product = fips_mode = 1;
 	}
 
 	if (fips_mode == -1) {
