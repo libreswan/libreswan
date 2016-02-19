@@ -29,7 +29,7 @@ if [ -f ${pidfile} ]; then
 fi
 
 # spin off into the background, with our own logging
-echo "Starting Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
+echo "Starting Pluto" | logger -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
 
 # Work around problem with broken shells (e.g. Busybox sh).
 # We are called with stdout & stderr going to a logger process started

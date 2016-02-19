@@ -30,7 +30,7 @@ fi
 
 # message patterns that start relevant parts of logs
 fstart='Starting Libreswan'
-pstart='Starting Pluto subsystem'
+pstart='Starting Pluto'
 
 case "$1" in
 --help)		echo "Usage: ipsec barf" ; exit 0	;;
