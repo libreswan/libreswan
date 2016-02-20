@@ -454,9 +454,8 @@ enum original_role {
 				  LELEM(STATE_XAUTH_I0) | \
 				  LELEM(STATE_XAUTH_I1) | \
 				  LELEM(STATE_MODE_CFG_I1) | \
-                                 LELEM(STATE_MODE_CFG_I1) | \
-                                 LELEM(STATE_PARENT_I1) | \
-                                 LELEM(STATE_PARENT_I2))
+				  LELEM(STATE_PARENT_I1) | \
+				  LELEM(STATE_PARENT_I2))
 
 
 #define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
