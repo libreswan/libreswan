@@ -405,7 +405,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_deleteuser) {
 		DBG_log("received whack to delete connection by user %s",
 				msg.name);
-		for_each_state(v1_delete_state_by_xauth_name, msg.name);
+		for_each_state(v1_delete_state_by_username, msg.name);
 	}
 
 	if (msg.whack_deleteid) {
@@ -720,7 +720,7 @@ bool whack_prompt_for(int whackfd,
 
 	DBG(DBG_CONTROLMORE, DBG_log("prompting for %s:", prompt2));
 
-	whack_log(echo ? RC_XAUTHPROMPT : RC_ENTERSECRET,
+	whack_log(echo ? RC_USERPROMPT : RC_ENTERSECRET,
 		  "%s prompt for %s:",
 		  prompt1, prompt2);
 

@@ -130,7 +130,7 @@ static void help(void)
 		"\n"
 		"initiation: whack (--initiate | --terminate) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
-		"	[--xauthname <name>] [--xauthpass <pass>]\n"
+		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address>\n"
@@ -141,7 +141,7 @@ static void help(void)
 		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
 		"\n"
-		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
+		"delete user: whack --deleteuser --name <user_name> \\\n"
 		"	[--crash <ip-address>]\n"
 		"\n"
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
@@ -291,7 +291,7 @@ enum option_enums {
 	OPT_ASYNC,
 
 	OPT_DELETECRASH,
-	OPT_XAUTHNAME,
+	OPT_USERNAME,
 	OPT_XAUTHPASS,
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
@@ -489,8 +489,9 @@ static const struct option long_opts[] = {
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
-	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
-	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
+	{ "username", required_argument, NULL, OPT_USERNAME + OO },
+	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
+	{ "xauthname", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
@@ -842,10 +843,10 @@ int main(int argc, char **argv)
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
-	char xauthname[XAUTH_MAX_NAME_LENGTH];
+	char username[MAX_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int xauthnamelen = 0, xauthpasslen = 0;
-	bool gotxauthname = FALSE, gotxauthpass = FALSE;
+	int usernamelen = 0, xauthpasslen = 0;
+	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
 
 	/* check division of numbering space */
@@ -1150,7 +1151,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		/* --deleteuser  --name <xauth username> */
+		/* --deleteuser  --name <username> */
 		case OPT_DELETEUSER:
 			msg.whack_deleteuser = TRUE;
 			continue;
@@ -1732,18 +1733,18 @@ int main(int argc, char **argv)
 			msg.right.xauth_client = TRUE;
 			continue;
 
-		case OPT_XAUTHNAME:	/* --xauthname */
+		case OPT_USERNAME:	/* --username, was --xauthname */
 			/*
 			 * we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			msg.right.xauth_name = optarg;
-			gotxauthname = TRUE;
-			xauthname[0] = '\0';
-			strncat(xauthname, optarg, sizeof(xauthname) -
-				strlen(xauthname) - 1);
-			xauthnamelen = strlen(xauthname) + 1;
+			msg.right.username = optarg;
+			gotusername = TRUE;
+			username[0] = '\0';
+			strncat(username, optarg, sizeof(username) -
+				strlen(username) - 1);
+			usernamelen = strlen(username) + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
@@ -2238,16 +2239,16 @@ int main(int argc, char **argv)
 								   xauthpasslen);
 							break;
 
-						case RC_XAUTHPROMPT:
-							if (!gotxauthname) {
-								xauthnamelen =
+						case RC_USERPROMPT:
+							if (!gotusername) {
+								usernamelen =
 									whack_get_value(
-										xauthname,
-										sizeof(xauthname));
+										username,
+										sizeof(username));
 							}
 							send_reply(sock,
-								   xauthname,
-								   xauthnamelen);
+								   username,
+								   usernamelen);
 							break;
 
 						/* case RC_LOG_SERIOUS: */

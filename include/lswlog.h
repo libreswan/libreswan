@@ -136,7 +136,7 @@ enum rc_type {
 
 	/* entry of secrets */
 	RC_ENTERSECRET = 40,
-	RC_XAUTHPROMPT = 41,
+	RC_USERPROMPT = 41,
 
 	/* progress: start of range for successful state transition.
 	 * Actual value is RC_NEW_STATE plus the new state code.

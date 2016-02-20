@@ -424,12 +424,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	secure_xauth_username_str[0] = '\0';
 
-	if (st != NULL && st->st_xauth_username[0] != '\0') {
+	if (st != NULL && st->st_username[0] != '\0') {
 		char *p = jam_str(secure_xauth_username_str,
 				sizeof(secure_xauth_username_str),
-				"PLUTO_XAUTH_USERNAME='");
+				"PLUTO_USERNAME='");
 
-		remove_metachar(st->st_xauth_username,
+		remove_metachar(st->st_username,
 				p,
 				sizeof(secure_xauth_username_str) -
 				(p - secure_xauth_username_str) - 2);

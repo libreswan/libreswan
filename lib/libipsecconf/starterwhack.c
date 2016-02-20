@@ -81,9 +81,9 @@ static int send_reply(int sock, char *buf, ssize_t len)
 }
 
 static int starter_whack_read_reply(int sock,
-				char xauthname[XAUTH_MAX_NAME_LENGTH],
+				char username[MAX_USERNAME_LEN],
 				char xauthpass[XAUTH_MAX_PASS_LENGTH],
-				int xauthnamelen,
+				int usernamelen,
 				int xauthpasslen)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
@@ -180,26 +180,26 @@ static int starter_whack_read_reply(int sock,
 
 					break;
 
-				case RC_XAUTHPROMPT:
-					if (xauthnamelen == 0) {
-						xauthnamelen = whack_get_value(
-							xauthname,
-							XAUTH_MAX_NAME_LENGTH);
+				case RC_USERPROMPT:
+					if (usernamelen == 0) {
+						usernamelen = whack_get_value(
+							username,
+							MAX_USERNAME_LEN);
 					}
-					if (xauthnamelen >
-						XAUTH_MAX_NAME_LENGTH) {
+					if (usernamelen >
+						MAX_USERNAME_LEN) {
 						/*
 						 * for input >= 128,
-						 * xauthnamelen would be 129
+						 * useramelen would be 129
 						 */
-						xauthnamelen =
-							XAUTH_MAX_NAME_LENGTH;
+						usernamelen =
+							MAX_USERNAME_LEN;
 						starter_log(LOG_LEVEL_ERR,
-							"xauth name cannot be >= %d chars",
-							XAUTH_MAX_NAME_LENGTH);
+							"username cannot be >= %d chars",
+							MAX_USERNAME_LEN);
 					}
-					ret = send_reply(sock, xauthname,
-							xauthnamelen);
+					ret = send_reply(sock, username,
+							usernamelen);
 					if (ret != 0)
 						return ret;
 
@@ -270,10 +270,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 	/* read reply */
 	{
-		char xauthname[XAUTH_MAX_NAME_LENGTH];
+		char username[MAX_USERNAME_LEN];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret = starter_whack_read_reply(sock, xauthname, xauthpass, 0,
+		ret = starter_whack_read_reply(sock, username, xauthpass, 0,
 					0);
 		close(sock);
 	}
@@ -392,8 +392,8 @@ static void set_whack_end(char *lr,
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->options_set[KNCF_XAUTHCLIENT])
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
-	if (l->strings_set[KSCF_XAUTHUSERNAME])
-		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
+	if (l->strings_set[KSCF_USERNAME])
+		w->username = l->strings[KSCF_USERNAME];
 
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];

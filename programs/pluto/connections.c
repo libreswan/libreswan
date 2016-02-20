@@ -232,7 +232,7 @@ static void delete_end(struct end *e)
 	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
-	pfreeany(e->xauth_name);
+	pfreeany(e->username);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -764,7 +764,7 @@ void unshare_connection_end(struct end *e)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
 	e->updown = clone_str(e->updown, "updown");
-	e->xauth_name = clone_str(e->xauth_name, "xauth name");
+	e->username = clone_str(e->username, "username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
 	e->cert_nickname = clone_str(e->cert_nickname, "cert_nickname");
@@ -919,7 +919,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
-	dst->xauth_name = src->xauth_name;
+	dst->username = src->username;
 
 	dst->protocol = src->protocol;
 	dst->port = src->port;
@@ -3661,7 +3661,7 @@ static void show_one_sr(const struct connection *c,
 		((END).CLIENT ? "client" : "none"))
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   xauth info: us:%s, them:%s, %s my_xauthuser=%s; their_xauthuser=%s",
+		"\"%s\"%s:   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
 		c->name, instance,
 		/*
 		 * Both should not be set, but if they are, we want to
@@ -3672,13 +3672,13 @@ static void show_one_sr(const struct connection *c,
 		/* should really be an enum name */
 		sr->this.xauth_server ?
 			c->xauthby == XAUTHBY_FILE ?
-				"method:file;" :
+				"xauthby:file;" :
 			c->xauthby == XAUTHBY_PAM ?
-				"method:pam;" :
-				"method:alwaysok;" :
+				"xauthby:pam;" :
+				"xauthby:alwaysok;" :
 			"",
-		sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]",
-		sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
+		sr->this.username != NULL ? sr->this.username : "[any]",
+		sr->that.username != NULL ? sr->that.username : "[any]");
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "

@@ -176,7 +176,7 @@ struct end {
 
 	bool xauth_server;
 	bool xauth_client;
-	char *xauth_name;
+	char *username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
 	bool has_lease;		/* from address pool */

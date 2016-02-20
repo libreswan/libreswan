@@ -473,14 +473,16 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KNCF_XAUTHSERVER,  NOT_ENUM },
 	{ "xauthclient", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_XAUTHCLIENT, NOT_ENUM },
-	{ "xauthname",   kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
 	{ "modecfgserver", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_MODECONFIGSERVER, NOT_ENUM },
 	{ "modecfgclient", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_MODECONFIGCLIENT, NOT_ENUM },
-	{ "xauthusername", kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
+	{ "username", kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_USERNAME, NOT_ENUM },
+	{ "xauthusername", kv_conn | kv_auto | kv_leftright | kv_alias, kt_string,
+	  KSCF_USERNAME, NOT_ENUM }, /* obsolete name */
+	{ "xauthname", kv_conn | kv_auto | kv_leftright | kv_alias, kt_string,
+	  KSCF_USERNAME, NOT_ENUM }, /* obsolete name */
 	{ "addresspool", kv_conn | kv_auto | kv_leftright, kt_range,
 	  KSCF_ADDRESSPOOL, NOT_ENUM },
 

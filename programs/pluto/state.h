@@ -73,8 +73,6 @@
 
 struct state;   /* forward declaration of tag */
 
-#define XAUTH_USERNAME_LEN 64
-
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -456,7 +454,7 @@ struct state {
 
 	struct hidden_variables hidden_variables;
 
-	char st_xauth_username[XAUTH_USERNAME_LEN];	/* NUL-terminated */
+	char st_username[MAX_USERNAME_LEN];	/* NUL-terminated */
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
@@ -562,7 +560,7 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
-extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
+extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,

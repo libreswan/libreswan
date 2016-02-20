@@ -139,8 +139,9 @@ export LC_ALL
 #	PLUTO_SA_TYPE
 #		The type of IPsec SA (ESP or AH)
 #
-#	PLUTO_XAUTH_USERNAME
-#		The XAUTH username that was authenticated (if any) for this SA
+#	PLUTO_USERNAME
+#		The username (XAUTH or GSSAPI) that was authenticated (if any)
+#		for this SA
 #
 #	XAUTH_FAILED
 #		If xauthfail=soft this will be set to 1 if XAUTH authentication

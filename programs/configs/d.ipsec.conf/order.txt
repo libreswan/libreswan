@@ -39,7 +39,7 @@ d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml
 d.ipsec.conf/leftxauthclient.xml
-d.ipsec.conf/leftxauthusername.xml
+d.ipsec.conf/leftusername.xml
 d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/xauthby.xml

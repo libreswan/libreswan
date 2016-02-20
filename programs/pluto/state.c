@@ -511,13 +511,13 @@ void delete_state_by_id_name(struct state *st, void *name)
 	}
 }
 
-void v1_delete_state_by_xauth_name(struct state *st, void *name)
+void v1_delete_state_by_username(struct state *st, void *name)
 {
-	/* only support deleting ikev1 with xauth user name */
+	/* only support deleting ikev1 with username */
 	if (st->st_ikev2)
 		return;
 
-	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
+	if (IS_IKE_SA(st) && streq(st->st_username, name)) {
 		delete_my_family(st, FALSE);
 		/* note: no md->st to clear */
 	}
@@ -738,8 +738,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 
 		if (st->st_ah.present) {
@@ -755,8 +755,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 
 		if (st->st_ipcomp.present) {
@@ -772,8 +772,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 	}
 
@@ -1295,8 +1295,8 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
-	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username),
-		st->st_xauth_username);
+	jam_str(nst->st_username, sizeof(nst->st_username),
+		st->st_username);
 
 	return nst;
 }
@@ -1719,7 +1719,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	}
 
 
-	if(st->st_xauth_username[0] == '\0') {
+	if(st->st_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
@@ -1727,8 +1727,8 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		"#%lu: \"%s\"%s%s%s%s%s%s%s",
 		st->st_serialno,
 		c->name, inst,
-		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
-		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
+		(st->st_username[0] != '\0') ? ", username=" : "",
+		(st->st_username[0] != '\0') ? st->st_username : "",
 		(traffic_buf[0] != '\0') ? traffic_buf : "",
 		thatidbuf[0] != '\0' ? ", id='" : "",
 		thatidbuf[0] != '\0' ? thatidbuf : "",
@@ -1976,8 +1976,8 @@ void fmt_state(struct state *st, const monotime_t n,
 			(unsigned long)st->st_ref,
 			(unsigned long)st->st_refhim,
 			traffic_buf,
-			(st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
-			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
+			(st->st_username[0] != '\0') ? "username=" : "",
+			(st->st_username[0] != '\0') ? st->st_username : "");
 
 #       undef add_said
 	}
