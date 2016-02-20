@@ -48,7 +48,7 @@
 #include "ikev1_quick.h"
 #include "timer.h"
 
-/* struct pending, the structure representing Quick Mode
+/* struct pending, the structure representing IPsec SA
  * negotiations delayed until a Keying Channel has been negotiated.
  * Essentially, a pending call to quick_outI1.
  */
@@ -68,7 +68,10 @@ struct pending {
 	struct pending *next;
 };
 
-/* queue a Quick Mode negotiation pending completion of a suitable Main Mode */
+/*
+ * queue an IPsec SA negotiation pending completion of a
+ * suitable phase 1 (IKE SA)
+ */
 void add_pending(int whack_sock,
 		 struct state *isakmp_sa,
 		 struct connection *c,
@@ -82,14 +85,14 @@ void add_pending(int whack_sock,
 {
 	struct pending *p, **pp;
 
-	/* look for duplicate pending phase #2, skip add operation */
+	/* look for duplicate pending IPsec SA's, skip add operation */
 	pp = host_pair_first_pending(c);
 
 	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
+				DBG_log("Ignored already queued up pending IPsec SA negotiation with %s \"%s\"",
 					ipstr(&c->spd.that.host_addr, &b),
 					c->name);
 			});
@@ -117,7 +120,7 @@ void add_pending(int whack_sock,
 	if (uctx != NULL) {
 		p->uctx = clone_thing(*uctx, "pending security context");
 		DBG(DBG_CONTROL,
-		    DBG_log("pending phase 2 with security context %s, %d",
+		    DBG_log("pending IPsec SA negotiation with security context %s, %d",
 			    p->uctx->sec_ctx_value,
 			    p->uctx->ctx.ctx_len));
 	}
@@ -159,7 +162,7 @@ void release_pending_whacks(struct state *st, err_t story)
 				passert(whack_log_fd == NULL_FD);
 				whack_log_fd = p->whack_sock;
 				whack_log(RC_COMMENT,
-					  "%s for ISAKMP SA, but releasing whack for pending IPSEC SA",
+					  "%s for IKE SA, but releasing whack for pending IPSEC SA",
 					  story);
 				whack_log_fd = NULL_FD;
 			}
