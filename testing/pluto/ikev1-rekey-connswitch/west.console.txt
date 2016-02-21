@@ -187,9 +187,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "TUNNEL-A" used 54s ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #2: "TUNNEL-A" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" used 54s ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": deleting connection
@@ -228,9 +228,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "TUNNEL-A" used 55s ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #2: "TUNNEL-A" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" used 55s ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
 west #
  echo done
 done
