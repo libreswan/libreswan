@@ -14,7 +14,7 @@ east #
  ipsec auto --status |grep nss-cert-crl
 000 "nss-cert-crl": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-crl":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east
-000 "nss-cert-crl":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "nss-cert-crl":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-crl":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-crl":   labeled_ipsec:no;
 000 "nss-cert-crl":   policy_label:unset;

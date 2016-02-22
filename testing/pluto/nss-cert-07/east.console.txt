@@ -19,7 +19,7 @@ east #
  ipsec auto --status |grep nss-cert
 000 "nss-cert-correct": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[C=CA, OU=*, CN=west.testing.libreswan.org, ST=*, L=Toronto, O=Libreswan, E=testing@libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-correct":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
-000 "nss-cert-correct":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "nss-cert-correct":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-correct":   labeled_ipsec:no;
 000 "nss-cert-correct":   policy_label:unset;
@@ -33,7 +33,7 @@ east #
 000 "nss-cert-correct":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "nss-cert-wrong": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[E=testing@libreswan.org, CN=signedbyother.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-wrong":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
-000 "nss-cert-wrong":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "nss-cert-wrong":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-wrong":   labeled_ipsec:no;
 000 "nss-cert-wrong":   policy_label:unset;

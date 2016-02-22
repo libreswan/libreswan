@@ -130,7 +130,7 @@ west #
 000  
 000 "westnet-eastnet-serpent": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-serpent":     oriented; my_ip=unset; their_ip=unset
-000 "westnet-eastnet-serpent":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "westnet-eastnet-serpent":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-serpent":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-serpent":   labeled_ipsec:no;
 000 "westnet-eastnet-serpent":   policy_label:unset;
