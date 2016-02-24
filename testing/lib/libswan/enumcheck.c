@@ -25,7 +25,7 @@ void do_test(enum_names *enum_test, int max) {
 	fflush(stdout);
 }
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 
 	progname = argv[0];
 

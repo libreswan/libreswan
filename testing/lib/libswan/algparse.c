@@ -50,7 +50,7 @@ void do_test(const char *algstr, int ttype) {
 		alg_info_free(aie);
 }
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 
 	progname = argv[0];
 

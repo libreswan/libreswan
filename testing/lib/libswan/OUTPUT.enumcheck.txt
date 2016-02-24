@@ -58,6 +58,11 @@ OK: [   45] -> ISAKMP_NEXT_v2TSr -> 45
 OK: [   46] -> ISAKMP_NEXT_v2SK -> 46
 OK: [   47] -> ISAKMP_NEXT_v2CP -> 47
 OK: [   48] -> ISAKMP_NEXT_v2EAP -> 48
+OK: [   49] -> ISAKMP_NEXT_v2GSPM -> 49
+OK: [   50] -> ISAKMP_NEXT_v2IDG -> 50
+OK: [   51] -> ISAKMP_NEXT_v2GSA -> 51
+OK: [   52] -> ISAKMP_NEXT_v2KD -> 52
+OK: [   53] -> ISAKMP_NEXT_v2SKF -> 53
 OK: [  132] -> ISAKMP_NEXT_v2IKE_FRAGMENTATION -> 132
 
 OK: [    0] -> ISAKMP_NEXT_NONE -> 0
@@ -99,6 +104,11 @@ OK: [   45] -> ISAKMP_NEXT_v2TSr -> 45
 OK: [   46] -> ISAKMP_NEXT_v2SK -> 46
 OK: [   47] -> ISAKMP_NEXT_v2CP -> 47
 OK: [   48] -> ISAKMP_NEXT_v2EAP -> 48
+OK: [   49] -> ISAKMP_NEXT_v2GSPM -> 49
+OK: [   50] -> ISAKMP_NEXT_v2IDG -> 50
+OK: [   51] -> ISAKMP_NEXT_v2GSA -> 51
+OK: [   52] -> ISAKMP_NEXT_v2KD -> 52
+OK: [   53] -> ISAKMP_NEXT_v2SKF -> 53
 OK: [  130] -> ISAKMP_NEXT_NATD_DRAFTS -> 130
 OK: [  131] -> ISAKMP_NEXT_NATOA_DRAFTS -> 131
 OK: [  132] -> ISAKMP_NEXT_IKE_FRAGMENTATION -> 132
@@ -192,9 +202,13 @@ OK: [   17] -> ESP_UNASSIGNED_ID17 -> 17
 OK: [   18] -> ESP_AES_GCM_A -> 18
 OK: [   19] -> ESP_AES_GCM_B -> 19
 OK: [   20] -> ESP_AES_GCM_C -> 20
-OK: [   21] -> ESP_SEED_CBC -> 21
+OK: [   21] -> ESP_NULL_AUTH_AES_GMAC -> 21
 OK: [   22] -> ESP_CAMELLIA -> 22
 OK: [   23] -> ESP_NULL_AUTH_AES_GMAC -> 23
+OK: [   24] -> ESP_CAMELLIA_CTR -> 24
+OK: [   25] -> ESP_CAMELLIA_CCM_A -> 25
+OK: [   26] -> ESP_CAMELLIA_CCM_B -> 26
+OK: [   27] -> ESP_CAMELLIA_CCM_C -> 27
 OK: [  249] -> ESP_MARS -> 249
 OK: [  250] -> ESP_RC6 -> 250
 OK: [  251] -> ESP_KAME_NULL -> 251
@@ -253,6 +267,25 @@ OK: [    5] -> OAKLEY_3DES_CBC -> 5
 OK: [    6] -> OAKLEY_CAST_CBC -> 6
 OK: [    7] -> OAKLEY_AES_CBC -> 7
 OK: [    8] -> OAKLEY_CAMELLIA_CBC -> 8
+OK: [    9] -> UNUSED_9 -> 9
+OK: [   10] -> UNUSED_10 -> 10
+OK: [   11] -> UNUSED_11 -> 11
+OK: [   12] -> UNUSED_12 -> 12
+OK: [   13] -> OAKLEY_AES_CTR -> 13
+OK: [   14] -> OAKLEY_AES_CCM_A -> 14
+OK: [   15] -> OAKLEY_AES_CCM_B -> 15
+OK: [   16] -> OAKLEY_AES_CCM_16 -> 16
+OK: [   17] -> UNUSED_17 -> 17
+OK: [   18] -> OAKLEY_AES_GCM_A -> 18
+OK: [   19] -> OAKLEY_AES_GCM_B -> 19
+OK: [   20] -> OAKLEY_AES_GCM_C -> 20
+OK: [   21] -> UNUSED_21 -> 21
+OK: [   22] -> UNUSED_22 -> 22
+OK: [   23] -> UNUSED_23 -> 23
+OK: [   24] -> OAKLEY_CAMELLIA_CTR -> 24
+OK: [   25] -> OAKLEY_CAMELLIA_CCM_A -> 25
+OK: [   26] -> OAKLEY_CAMELLIA_CCM_B -> 26
+OK: [   27] -> OAKLEY_CAMELLIA_CCM_C -> 27
 
 OK: [    1] -> OAKLEY_MD5 -> 1
 OK: [    2] -> OAKLEY_SHA1 -> 2
@@ -260,6 +293,9 @@ OK: [    3] -> OAKLEY_TIGER -> 3
 OK: [    4] -> OAKLEY_SHA2_256 -> 4
 OK: [    5] -> OAKLEY_SHA2_384 -> 5
 OK: [    6] -> OAKLEY_SHA2_512 -> 6
+OK: [    7] -> UNUSED_7 -> 7
+OK: [    8] -> UNUSED_8 -> 8
+OK: [    9] -> DISABLED-OAKLEY_AES_XCBC -> 9
 
 OK: [    1] -> OAKLEY_GROUP_MODP768 -> 1
 OK: [    2] -> OAKLEY_GROUP_MODP1024 -> 2
@@ -368,6 +404,8 @@ OK: [   41] -> v2N_UNEXPECTED_NAT_DETECTED -> 41
 OK: [   42] -> v2N_USE_ASSIGNED_HoA -> 42
 OK: [   43] -> v2N_TEMPORARY_FAILURE -> 43
 OK: [   44] -> v2N_CHILD_SA_NOT_FOUND -> 44
+OK: [   45] -> v2N_INVALID_GROUP_ID -> 45
+OK: [   46] -> v2N_AUTHORIZATION_FAILED -> 46
 
 OK: [    7] -> IKEv2_TS_IPV4_ADDR_RANGE -> 7
 OK: [    8] -> IKEv2_TS_IPV6_ADDR_RANGE -> 8
@@ -387,7 +425,7 @@ OK: [    5] -> AUTH_ALGORITHM_HMAC_SHA2_256 -> 5
 OK: [    6] -> AUTH_ALGORITHM_HMAC_SHA2_384 -> 6
 OK: [    7] -> AUTH_ALGORITHM_HMAC_SHA2_512 -> 7
 OK: [    8] -> AUTH_ALGORITHM_HMAC_RIPEMD -> 8
-OK: [    9] -> AUTH_ALGORITHM_AES_CBC -> 9
+OK: [    9] -> AUTH_ALGORITHM_AES_XCBC -> 9
 OK: [   10] -> AUTH_ALGORITHM_SIG_RSA -> 10
 OK: [   11] -> AUTH_ALGORITHM_AES_128_GMAC -> 11
 OK: [   12] -> AUTH_ALGORITHM_AES_192_GMAC -> 12
@@ -424,6 +462,7 @@ OK: [    9] -> IKEv2_AUTH_ECDSA_P256 -> 9
 OK: [   10] -> IKEv2_AUTH_ECDSA_P384 -> 10
 OK: [   11] -> IKEv2_AUTH_ECDSA_P521 -> 11
 OK: [   12] -> IKEv2_AUTH_GSPM -> 12
+OK: [   13] -> IKEv2_AUTH_NULL -> 13
 
 OK: [    1] -> DES-IV64(obsoleted) -> 1
 OK: [    2] -> DES(obsoleted) -> 2
@@ -456,10 +495,11 @@ OK: [   27] -> CAMELLIA_CCM_C -> 27
 OK: [    1] -> PRF_HMAC_MD5 -> 1
 OK: [    2] -> PRF_HMAC_SHA1 -> 2
 OK: [    3] -> PRF_HMAC_TIGER -> 3
-OK: [    4] -> PRF_HMAC_AES128-XCBC -> 4
+OK: [    4] -> PRF_AES128-XCBC -> 4
 OK: [    5] -> PRF_HMAC_SHA2-256 -> 5
 OK: [    6] -> PRF_HMAC_SHA2-384 -> 6
 OK: [    7] -> PRF_HMAC_SHA2-512 -> 7
+OK: [    8] -> PRF_AES128_CMAC -> 8
 
 OK: [    0] -> AUTH_NONE -> 0
 OK: [    1] -> AUTH_HMAC_MD5_96 -> 1
@@ -486,12 +526,21 @@ OK: [    3] -> TRANS_TYPE_INTEG -> 3
 OK: [    4] -> TRANS_TYPE_DH -> 4
 OK: [    5] -> TRANS_TYPE_ESN -> 5
 
-OK: [    0] -> CERT_NONE -> 0
 OK: [    1] -> CERT_PKCS7_WRAPPED_X509 -> 1
-OK: [    2] -> CERT_PGP (unsupported) -> 2
+OK: [    2] -> CERT_PGP -> 2
 OK: [    3] -> CERT_DNS_SIGNED_KEY -> 3
 OK: [    4] -> CERT_X509_SIGNATURE -> 4
 OK: [    5] -> CERT_RESERVED5 -> 5
+OK: [    6] -> CERT_KERBEROS_TOKENS -> 6
+OK: [    7] -> CERT_CRL -> 7
+OK: [    8] -> CERT_ARL -> 8
+OK: [    9] -> CERT_SPKI -> 9
+OK: [   10] -> CERT_X509_ATTRIBUTE -> 10
+
+OK: [    1] -> CERT_PKCS7_WRAPPED_X509 -> 1
+OK: [    2] -> CERT_PGP -> 2
+OK: [    3] -> CERT_DNS_SIGNED_KEY -> 3
+OK: [    4] -> CERT_X509_SIGNATURE -> 4
 OK: [    6] -> CERT_KERBEROS_TOKENS -> 6
 OK: [    7] -> CERT_CRL -> 7
 OK: [    8] -> CERT_ARL -> 8
@@ -501,6 +550,7 @@ OK: [   11] -> CERT_RAW_RSA -> 11
 OK: [   12] -> CERT_X509_CERT_URL -> 12
 OK: [   13] -> CERT_X509_BUNDLE_URL -> 13
 OK: [   14] -> CERT_OCSP_CONTENT -> 14
+OK: [   15] -> CERT_RAW_PUBLIC_KEY -> 15
 
 OK: [    1] -> INTERNAL_IP4_ADDRESS -> 1
 OK: [    2] -> INTERNAL_IP4_NETMASK -> 2
@@ -522,7 +572,6 @@ OK: [   17] -> INTERNAL_IP6_LINK -> 17
 OK: [   18] -> INTERNAL_IP6_PREFIX -> 18
 OK: [   19] -> HOME_AGENT_ADDRESS -> 19
 
-OK: [    0] -> ID_NONE -> 0
 OK: [    1] -> ID_IPV4_ADDR -> 1
 OK: [    2] -> ID_FQDN -> 2
 OK: [    3] -> ID_USER_FQDN -> 3
@@ -535,5 +584,15 @@ OK: [    9] -> ID_DER_ASN1_DN -> 9
 OK: [   10] -> ID_DER_ASN1_GN -> 10
 OK: [   11] -> ID_KEY_ID -> 11
 OK: [   12] -> ID_FC_NAME -> 12
+
+OK: [    1] -> ID_IPV4_ADDR -> 1
+OK: [    2] -> ID_FQDN -> 2
+OK: [    3] -> ID_USER_FQDN -> 3
+OK: [    5] -> ID_IPV6_ADDR -> 5
+OK: [    9] -> ID_DER_ASN1_DN -> 9
+OK: [   10] -> ID_DER_ASN1_GN -> 10
+OK: [   11] -> ID_KEY_ID -> 11
+OK: [   12] -> ID_FC_NAME -> 12
+OK: [   13] -> ID_NULL -> 13
 
 ../enumcheck leak detective found no leaks
