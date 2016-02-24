@@ -1,19 +1,24 @@
+connection_kind_names:
 OK: [    0] -> CK_GROUP -> 0
 OK: [    1] -> CK_TEMPLATE -> 1
 OK: [    2] -> CK_PERMANENT -> 2
 OK: [    3] -> CK_INSTANCE -> 3
 OK: [    4] -> CK_GOING_AWAY -> 4
 
+certpolicy_type_names:
 OK: [    1] -> CERT_NEVERSEND -> 1
 OK: [    2] -> CERT_SENDIFASKED -> 2
 OK: [    3] -> CERT_ALWAYSSEND -> 3
 
+version_names:
 OK: [   16] -> ISAKMP Version 1.0 (rfc2407) -> 16
 OK: [   32] -> IKEv2 version 2.0 (rfc4306/rfc5996) -> 32
 
+doi_names:
 OK: [    0] -> ISAKMP_DOI_ISAKMP -> 0
 OK: [    1] -> ISAKMP_DOI_IPSEC -> 1
 
+ikev1_payload_names:
 OK: [    0] -> ISAKMP_NEXT_NONE -> 0
 OK: [    1] -> ISAKMP_NEXT_SA -> 1
 OK: [    2] -> ISAKMP_NEXT_P -> 2
@@ -41,6 +46,7 @@ OK: [  130] -> ISAKMP_NEXT_NATD_DRAFTS -> 130
 OK: [  131] -> ISAKMP_NEXT_NATOA_DRAFTS -> 131
 OK: [  132] -> ISAKMP_NEXT_IKE_FRAGMENTATION -> 132
 
+ikev2_payload_names:
 OK: [    0] -> ISAKMP_NEXT_v2NONE -> 0
 OK: [   33] -> ISAKMP_NEXT_v2SA -> 33
 OK: [   34] -> ISAKMP_NEXT_v2KE -> 34
@@ -65,6 +71,7 @@ OK: [   52] -> ISAKMP_NEXT_v2KD -> 52
 OK: [   53] -> ISAKMP_NEXT_v2SKF -> 53
 OK: [  132] -> ISAKMP_NEXT_v2IKE_FRAGMENTATION -> 132
 
+payload_names_ikev1orv2:
 OK: [    0] -> ISAKMP_NEXT_NONE -> 0
 OK: [    1] -> ISAKMP_NEXT_SA -> 1
 OK: [    2] -> ISAKMP_NEXT_P -> 2
@@ -113,6 +120,7 @@ OK: [  130] -> ISAKMP_NEXT_NATD_DRAFTS -> 130
 OK: [  131] -> ISAKMP_NEXT_NATOA_DRAFTS -> 131
 OK: [  132] -> ISAKMP_NEXT_IKE_FRAGMENTATION -> 132
 
+ikev1_exchange_names:
 OK: [    0] -> ISAKMP_XCHG_NONE -> 0
 OK: [    1] -> ISAKMP_XCHG_BASE -> 1
 OK: [    2] -> ISAKMP_XCHG_IDPROT -> 2
@@ -127,6 +135,7 @@ OK: [   33] -> ISAKMP_XCHG_NGRP -> 33
 OK: [  244] -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE -> 244
 OK: [  245] -> ISAKMP_XCHG_ECHOREPLY_PRIVATE -> 245
 
+ikev2_exchange_names:
 OK: [   34] -> ISAKMP_v2_SA_INIT -> 34
 OK: [   35] -> ISAKMP_v2_AUTH -> 35
 OK: [   36] -> ISAKMP_v2_CREATE_CHILD_SA -> 36
@@ -135,6 +144,7 @@ OK: [   38] -> ISAKMP_v2_IKE_SESSION_RESUME -> 38
 OK: [  244] -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE -> 244
 OK: [  245] -> ISAKMP_XCHG_ECHOREPLY_PRIVATE -> 245
 
+exchange_names_ikev1orv2:
 OK: [    0] -> ISAKMP_XCHG_NONE -> 0
 OK: [    1] -> ISAKMP_XCHG_BASE -> 1
 OK: [    2] -> ISAKMP_XCHG_IDPROT -> 2
@@ -154,19 +164,28 @@ OK: [   38] -> ISAKMP_v2_IKE_SESSION_RESUME -> 38
 OK: [  244] -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE -> 244
 OK: [  245] -> ISAKMP_XCHG_ECHOREPLY_PRIVATE -> 245
 
+ikev1_protocol_names:
 OK: [    0] -> PROTO_RESERVED -> 0
 OK: [    1] -> PROTO_ISAKMP -> 1
 OK: [    2] -> PROTO_IPSEC_AH -> 2
 OK: [    3] -> PROTO_IPSEC_ESP -> 3
 OK: [    4] -> PROTO_IPCOMP -> 4
 
+ikev2_protocol_names:
 OK: [    0] -> PROTO_v2_RESERVED -> 0
 OK: [    1] -> PROTO_v2_IKE -> 1
 OK: [    2] -> PROTO_v2_AH -> 2
 OK: [    3] -> PROTO_v2_ESP -> 3
 
+ikev2_del_protocol_names:
+OK: [    1] -> PROTO_v2_IKE -> 1
+OK: [    2] -> PROTO_v2_AH -> 2
+OK: [    3] -> PROTO_v2_ESP -> 3
+
+isakmp_transformid_names:
 OK: [    1] -> KEY_IKE -> 1
 
+ah_transformid_names:
 OK: [    2] -> AH_MD5 -> 2
 OK: [    3] -> AH_SHA -> 3
 OK: [    4] -> AH_DES -> 4
@@ -182,6 +201,7 @@ OK: [   13] -> AH_AES_256_GMAC -> 13
 OK: [  251] -> AH_NULL -> 251
 OK: [  252] -> AH_SHA2_256_TRUNC -> 252
 
+esp_transformid_names:
 OK: [    1] -> ESP_DES_IV64 -> 1
 OK: [    2] -> ESP_DES -> 2
 OK: [    3] -> ESP_3DES -> 3
@@ -217,11 +237,13 @@ OK: [  253] -> ESP_TWOFISH -> 253
 OK: [  254] -> ESP_ID254 -> 254
 OK: [  255] -> ESP_ID255 -> 255
 
+ipcomp_transformid_names:
 OK: [    1] -> IPCOMP_OUI -> 1
 OK: [    2] -> IPCOMP_DEFLAT -> 2
 OK: [    3] -> IPCOMP_LZS -> 3
 OK: [    4] -> IPCOMP_LZJH -> 4
 
+oakley_attr_names:
 OK: [    6] -> OAKLEY_GROUP_PRIME (variable length) -> 6
 OK: [    7] -> OAKLEY_GROUP_GENERATOR_ONE (variable length) -> 7
 OK: [    8] -> OAKLEY_GROUP_GENERATOR_TWO (variable length) -> 8
@@ -230,6 +252,7 @@ OK: [   10] -> OAKLEY_GROUP_CURVE_B (variable length) -> 10
 OK: [   12] -> OAKLEY_LIFE_DURATION (variable length) -> 12
 OK: [   16] -> OAKLEY_GROUP_ORDER (variable length) -> 16
 
+ipsec_attr_names:
 OK: [    1] -> SA_LIFE_TYPE -> 1
 OK: [    2] -> SA_LIFE_DURATION -> 2
 OK: [    3] -> GROUP_DESCRIPTION -> 3
@@ -241,12 +264,15 @@ OK: [    8] -> COMPRESS_DICT_SIZE -> 8
 OK: [    9] -> COMPRESS_PRIVATE_ALG -> 9
 OK: [   10] -> ECN_TUNNEL -> 10
 
+sa_lifetime_names:
 OK: [    1] -> SA_LIFE_TYPE_SECONDS -> 1
 OK: [    2] -> SA_LIFE_TYPE_KBYTES -> 2
 
+oakley_lifetime_names:
 OK: [    1] -> OAKLEY_LIFE_SECONDS -> 1
 OK: [    2] -> OAKLEY_LIFE_KILOBYTES -> 2
 
+oakley_auth_names:
 OK: [    1] -> OAKLEY_PRESHARED_KEY -> 1
 OK: [    2] -> OAKLEY_DSS_SIG -> 2
 OK: [    3] -> OAKLEY_RSA_SIG -> 3
@@ -259,6 +285,7 @@ OK: [    9] -> OAKLEY_ECDSA_P256 -> 9
 OK: [   10] -> OAKLEY_ECDSA_P384 -> 10
 OK: [   11] -> OAKLEY_ECDSA_P521 -> 11
 
+oakley_enc_names:
 OK: [    1] -> OAKLEY_DES_CBC -> 1
 OK: [    2] -> OAKLEY_IDEA_CBC -> 2
 OK: [    3] -> OAKLEY_BLOWFISH_CBC -> 3
@@ -287,6 +314,7 @@ OK: [   25] -> OAKLEY_CAMELLIA_CCM_A -> 25
 OK: [   26] -> OAKLEY_CAMELLIA_CCM_B -> 26
 OK: [   27] -> OAKLEY_CAMELLIA_CCM_C -> 27
 
+oakley_hash_names:
 OK: [    1] -> OAKLEY_MD5 -> 1
 OK: [    2] -> OAKLEY_SHA1 -> 2
 OK: [    3] -> OAKLEY_TIGER -> 3
@@ -297,6 +325,7 @@ OK: [    7] -> UNUSED_7 -> 7
 OK: [    8] -> UNUSED_8 -> 8
 OK: [    9] -> DISABLED-OAKLEY_AES_XCBC -> 9
 
+oakley_group_names:
 OK: [    1] -> OAKLEY_GROUP_MODP768 -> 1
 OK: [    2] -> OAKLEY_GROUP_MODP1024 -> 2
 OK: [    3] -> OAKLEY_GROUP_GP155 -> 3
@@ -328,6 +357,7 @@ OK: [   28] -> OAKLEY_GROUP_NON_IKE_28 -> 28
 OK: [   29] -> OAKLEY_GROUP_NON_IKE_29 -> 29
 OK: [   30] -> OAKLEY_GROUP_NON_IKE_30 -> 30
 
+ikev1_notify_names:
 OK: [    1] -> INVALID_PAYLOAD_TYPE -> 1
 OK: [    2] -> DOI_NOT_SUPPORTED -> 2
 OK: [    3] -> SITUATION_NOT_SUPPORTED -> 3
@@ -359,6 +389,7 @@ OK: [   28] -> CERTIFICATE_UNAVAILABLE -> 28
 OK: [   29] -> UNSUPPORTED_EXCHANGE_TYPE -> 29
 OK: [   30] -> UNEQUAL_PAYLOAD_LENGTHS -> 30
 
+ikev2_notify_names:
 OK: [    0] -> v2N_RESERVED -> 0
 OK: [    1] -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD -> 1
 OK: [    2] -> v2N_UNUSED_2 -> 2
@@ -407,15 +438,18 @@ OK: [   44] -> v2N_CHILD_SA_NOT_FOUND -> 44
 OK: [   45] -> v2N_INVALID_GROUP_ID -> 45
 OK: [   46] -> v2N_AUTHORIZATION_FAILED -> 46
 
+ikev2_ts_type_names:
 OK: [    7] -> IKEv2_TS_IPV4_ADDR_RANGE -> 7
 OK: [    8] -> IKEv2_TS_IPV6_ADDR_RANGE -> 8
 OK: [    9] -> IKEv2_TS_FC_ADDR_RANGE -> 9
 
+enc_mode_names:
 OK: [    1] -> ENCAPSULATION_MODE_TUNNEL -> 1
 OK: [    2] -> ENCAPSULATION_MODE_TRANSPORT -> 2
 OK: [    3] -> ENCAPSULATION_MODE_UDP_TUNNEL_RFC -> 3
 OK: [    4] -> ENCAPSULATION_MODE_UDP_TRANSPORT_RFC -> 4
 
+auth_alg_names:
 OK: [    0] -> AUTH_ALGORITHM_NONE -> 0
 OK: [    1] -> AUTH_ALGORITHM_HMAC_MD5 -> 1
 OK: [    2] -> AUTH_ALGORITHM_HMAC_SHA1 -> 2
@@ -432,24 +466,29 @@ OK: [   12] -> AUTH_ALGORITHM_AES_192_GMAC -> 12
 OK: [   13] -> AUTH_ALGORITHM_AES_256_GMAC -> 13
 OK: [  251] -> AUTH_ALGORITHM_NULL_KAME -> 251
 
+xauth_type_names:
 OK: [    0] -> Generic -> 0
 OK: [    1] -> RADIUS-CHAP -> 1
 OK: [    2] -> OTP -> 2
 OK: [    3] -> S/KEY -> 3
 
+xauth_attr_names:
 
+attr_msg_type_names:
 OK: [    0] -> ISAKMP_CFG_RESERVED -> 0
 OK: [    1] -> ISAKMP_CFG_REQUEST -> 1
 OK: [    2] -> ISAKMP_CFG_REPLY -> 2
 OK: [    3] -> ISAKMP_CFG_SET -> 3
 OK: [    4] -> ISAKMP_CFG_ACK -> 4
 
+ikev2_sec_proto_id_names:
 OK: [    1] -> IKEv2_SEC_PROTO_IKE -> 1
 OK: [    2] -> IKEv2_SEC_PROTO_AH -> 2
 OK: [    3] -> IKEv2_SEC_PROTO_ESP -> 3
 OK: [    4] -> IKEv2_SEC_FC_ESP_HEADER -> 4
 OK: [    5] -> IKEv2_SEC_FC_CT_AUTHENTICATION -> 5
 
+ikev2_auth_names:
 OK: [    1] -> IKEv2_AUTH_RSA -> 1
 OK: [    2] -> IKEv2_AUTH_SHARED -> 2
 OK: [    3] -> IKEv2_AUTH_DSA -> 3
@@ -464,6 +503,7 @@ OK: [   11] -> IKEv2_AUTH_ECDSA_P521 -> 11
 OK: [   12] -> IKEv2_AUTH_GSPM -> 12
 OK: [   13] -> IKEv2_AUTH_NULL -> 13
 
+ikev2_trans_type_encr_names:
 OK: [    1] -> DES-IV64(obsoleted) -> 1
 OK: [    2] -> DES(obsoleted) -> 2
 OK: [    3] -> 3DES -> 3
@@ -492,6 +532,7 @@ OK: [   25] -> CAMELLIA_CCM_A -> 25
 OK: [   26] -> CAMELLIA_CCM_B -> 26
 OK: [   27] -> CAMELLIA_CCM_C -> 27
 
+ikev2_trans_type_prf_names:
 OK: [    1] -> PRF_HMAC_MD5 -> 1
 OK: [    2] -> PRF_HMAC_SHA1 -> 2
 OK: [    3] -> PRF_HMAC_TIGER -> 3
@@ -501,6 +542,7 @@ OK: [    6] -> PRF_HMAC_SHA2-384 -> 6
 OK: [    7] -> PRF_HMAC_SHA2-512 -> 7
 OK: [    8] -> PRF_AES128_CMAC -> 8
 
+ikev2_trans_type_integ_names:
 OK: [    0] -> AUTH_NONE -> 0
 OK: [    1] -> AUTH_HMAC_MD5_96 -> 1
 OK: [    2] -> AUTH_HMAC_SHA1_96 -> 2
@@ -517,26 +559,30 @@ OK: [   12] -> AUTH_HMAC_SHA2_256_128 -> 12
 OK: [   13] -> AUTH_HMAC_SHA2_384_192 -> 13
 OK: [   14] -> AUTH_HMAC_SHA2_512_256 -> 14
 
+ikev2_trans_type_esn_names:
 OK: [    0] -> ESN_DISABLED -> 0
 OK: [    1] -> ESN_ENABLED -> 1
 
+ikev2_trans_type_names:
 OK: [    1] -> TRANS_TYPE_ENCR -> 1
 OK: [    2] -> TRANS_TYPE_PRF -> 2
 OK: [    3] -> TRANS_TYPE_INTEG -> 3
 OK: [    4] -> TRANS_TYPE_DH -> 4
 OK: [    5] -> TRANS_TYPE_ESN -> 5
 
+ike_cert_type_names:
 OK: [    1] -> CERT_PKCS7_WRAPPED_X509 -> 1
 OK: [    2] -> CERT_PGP -> 2
 OK: [    3] -> CERT_DNS_SIGNED_KEY -> 3
 OK: [    4] -> CERT_X509_SIGNATURE -> 4
-OK: [    5] -> CERT_RESERVED5 -> 5
+OK: [    5] -> CERT_X509_KEY_EXCHANGE -> 5
 OK: [    6] -> CERT_KERBEROS_TOKENS -> 6
 OK: [    7] -> CERT_CRL -> 7
 OK: [    8] -> CERT_ARL -> 8
 OK: [    9] -> CERT_SPKI -> 9
 OK: [   10] -> CERT_X509_ATTRIBUTE -> 10
 
+ikev2_cert_type_names:
 OK: [    1] -> CERT_PKCS7_WRAPPED_X509 -> 1
 OK: [    2] -> CERT_PGP -> 2
 OK: [    3] -> CERT_DNS_SIGNED_KEY -> 3
@@ -552,6 +598,7 @@ OK: [   13] -> CERT_X509_BUNDLE_URL -> 13
 OK: [   14] -> CERT_OCSP_CONTENT -> 14
 OK: [   15] -> CERT_RAW_PUBLIC_KEY -> 15
 
+modecfg_attr_names:
 OK: [    1] -> INTERNAL_IP4_ADDRESS -> 1
 OK: [    2] -> INTERNAL_IP4_NETMASK -> 2
 OK: [    3] -> INTERNAL_IP4_DNS -> 3
@@ -572,6 +619,7 @@ OK: [   17] -> INTERNAL_IP6_LINK -> 17
 OK: [   18] -> INTERNAL_IP6_PREFIX -> 18
 OK: [   19] -> HOME_AGENT_ADDRESS -> 19
 
+ike_idtype_names:
 OK: [    1] -> ID_IPV4_ADDR -> 1
 OK: [    2] -> ID_FQDN -> 2
 OK: [    3] -> ID_USER_FQDN -> 3
@@ -585,6 +633,7 @@ OK: [   10] -> ID_DER_ASN1_GN -> 10
 OK: [   11] -> ID_KEY_ID -> 11
 OK: [   12] -> ID_FC_NAME -> 12
 
+ike_idtype_names:
 OK: [    1] -> ID_IPV4_ADDR -> 1
 OK: [    2] -> ID_FQDN -> 2
 OK: [    3] -> ID_USER_FQDN -> 3
