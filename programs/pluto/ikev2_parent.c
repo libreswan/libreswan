@@ -4375,7 +4375,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 					DBG(DBG_CONTROLMORE,
 						DBG_log("received delete request for %s SA(0x%08" PRIx32 ")",
-							enum_show(&protocol_names,
+							enum_show(&ikev2_protocol_names,
 								v2del->isad_protoid),
 							ntohl(spi)));
 
@@ -4394,7 +4394,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 						DBG(DBG_CONTROLMORE,
 							DBG_log("our side SPI that needs to be sent: %s SA(0x%08" PRIx32 ")",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl(pr->our_spi)));
 						if (j < elemsof(spi_buf)) {
@@ -4408,7 +4408,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						/* ??? should this diagnostic go to the real log? */
 						DBG(DBG_CONTROLMORE,
 							DBG_log("received delete request for %s SA(0x%08" PRIx32 ") but local state is not found",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl(spi)));
 					}
@@ -4593,7 +4593,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 					DBG(DBG_CONTROLMORE, DBG_log(
 						    "delete %s SA(0x%08" PRIx32 ")",
-						    enum_show(&protocol_names,
+						    enum_show(&ikev2_protocol_names,
 							    v2del->isad_protoid),
 						    ntohl((uint32_t)
 							  spi)));
@@ -4609,7 +4609,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					if (dst != NULL) {
 						DBG(DBG_CONTROLMORE,
 							DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl((uint32_t)spi)));
 
@@ -4622,7 +4622,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					} else {
 						libreswan_log(
 						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-							    enum_show(&protocol_names, v2del->isad_protoid),
+							    enum_show(&ikev2_protocol_names, v2del->isad_protoid),
 								ntohl((uint32_t)spi));
 					}
 				}

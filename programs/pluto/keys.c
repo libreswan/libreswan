@@ -892,6 +892,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						  sizeof(expires_buf)),
 					  check_expiry_msg);
 
+				/* XXX could be ikev2_idtype_names */
 				whack_log(RC_COMMENT, "       %s '%s'",
 					  enum_show(&ike_idtype_names,
 						    key->id.kind), id_buf);

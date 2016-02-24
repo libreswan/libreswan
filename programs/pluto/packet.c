@@ -190,7 +190,7 @@ static field_desc isap_fields[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "proposal number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev1_protocol_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "number of transforms", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -1042,7 +1042,7 @@ static field_desc ikev2_notify_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ikev2_protocol_names },
 	/* names used are v1 names may be we should use 4306 3.3.1 names */
 	{ ft_nat,  8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Notify Message Type",

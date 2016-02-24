@@ -46,7 +46,7 @@ extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
 extern enum_names ikev2_exchange_names;
 extern enum_names exchange_names_ikev1orv2;
-extern enum_names protocol_names; /* rename to protocol_names_ikev1 */
+extern enum_names ikev1_protocol_names;
 extern enum_names ikev2_protocol_names;
 extern enum_names ikev2_del_protocol_names;	/* subset of protocol names accepted by IKEv2 Delete */
 extern enum_names isakmp_transformid_names;

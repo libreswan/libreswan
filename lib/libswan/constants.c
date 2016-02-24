@@ -470,7 +470,7 @@ const char *const sit_bit_names[] = {
 };
 
 /* Protocol IDs (RFC 2407 "IPsec DOI" section 4.4.1) */
-static const char *const protocol_name[] = {
+static const char *const ikev1_protocol_name[] = {
 	"PROTO_RESERVED",
 	"PROTO_ISAKMP",
 	"PROTO_IPSEC_AH",
@@ -478,10 +478,10 @@ static const char *const protocol_name[] = {
 	"PROTO_IPCOMP",
 };
 
-enum_names protocol_names = {
+enum_names ikev1_protocol_names = {
 	PROTO_RESERVED,
 	PROTO_IPCOMP,
-	protocol_name,
+	ikev1_protocol_name,
 	NULL
 };
 
@@ -504,7 +504,7 @@ enum_names ikev2_protocol_names = {
 enum_names ikev2_del_protocol_names = {
 	PROTO_ISAKMP,
 	PROTO_IPSEC_ESP,
-	&protocol_name[PROTO_ISAKMP],
+	&ikev2_protocol_name[PROTO_ISAKMP],
 	NULL
 };
 
@@ -1677,8 +1677,8 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_UNEXPECTED_NAT_DETECTED",
 	"v2N_USE_ASSIGNED_HoA",
 	"v2N_TEMPORARY_FAILURE",
-	"v2N_CHILD_SA_NOT_FOUND",	/* 45 */
-	"v2N_INVALID_GROUP_ID",
+	"v2N_CHILD_SA_NOT_FOUND",
+	"v2N_INVALID_GROUP_ID", /* 45 draft-yeung-g-ikev2 */
 	"v2N_AUTHORIZATION_FAILED",
 };
 
