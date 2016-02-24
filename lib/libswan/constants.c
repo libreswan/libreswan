@@ -1317,6 +1317,7 @@ enum_names oakley_auth_names = {
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
  */
 static const char *const ikev2_cp_attribute_type_name[] = {
+	"IKEv2_CP_ATTR_RESERVED",
 	"IKEv2_INTERNAL_IP4_ADDRESS",	/* 1 */
 	"IKEv2_INTERNAL_IP4_NETMASK",
 	"IKEv2_INTERNAL_IP4_DNS",
