@@ -27,7 +27,7 @@ extern enum_names *const ipsec_attr_val_descs[];
 extern const unsigned int ipsec_attr_val_descs_roof;
 extern enum_names sa_lifetime_names;
 extern enum_names enc_mode_names;
-extern enum_names auth_alg_names, extended_auth_alg_names;
+extern enum_names auth_alg_names;
 extern enum_names oakley_lifetime_names;
 
 extern enum_names version_names;
