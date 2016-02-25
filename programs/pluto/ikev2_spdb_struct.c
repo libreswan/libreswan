@@ -1004,26 +1004,34 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 * best_local_proposal is -STF_FAIL status indicating
 		 * corruption.
 		 *
-		 * Dump the proposal so far.  The detailed error
+		 * Dump the proposals so far.  The detailed error
 		 * reason will have already been logged.
 		 */
-		libreswan_log("parsed proposals: %s", remote_proposals_buf->buf);
+		libreswan_log("partial list of proposals:%s",
+			      remote_proposals_buf->buf);
 		status = -matching_local_propnum;
-	} else if (accepted && matching_local_propnum == 0) {
-		libreswan_log("accepted proposal did not match: %s", remote_proposals_buf->buf);
-		status = STF_FAIL;
 	} else if (matching_local_propnum == 0) {
-		/* no luck */
-		libreswan_log("no proposals matched: %s", remote_proposals_buf->buf);
-		status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		if (accepted) {
+			libreswan_log("accepted proposal invalid:%s",
+				      remote_proposals_buf->buf);
+			status = STF_FAIL;
+		} else {
+			/* no luck */
+			libreswan_log("no proposal chosen from:%s",
+				      remote_proposals_buf->buf);
+			status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 	} else {
-		/*
-		 * For the moment don't libreswan_log() this as it
-		 * gets written to the console, altering output, and
-		 * causing test noise.
-		 */
-		pexpect(!accepted || matching_local_propnum == best_proposal->propnum);
-		DBG(DBG_CONTROL, DBG_log("proposals: %s", remote_proposals_buf->buf));
+		if (accepted) {
+			pexpect(matching_local_propnum == best_proposal->propnum);
+			libreswan_log("proposal %d was accepted:%s",
+				      best_proposal->propnum,
+				      remote_proposals_buf->buf);
+		} else {
+			libreswan_log("proposal %d chosen from:%s",
+				      best_proposal->propnum,
+				      remote_proposals_buf->buf);
+		}
 		/* transfer ownership of BEST_PROPOSAL to caller */
 		*chosen_proposal = best_proposal;
 		best_proposal = NULL;
