@@ -81,19 +81,19 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 	return 1;
 }
 
-void terminate_connection(const char *nm)
+void terminate_connection(const char *name)
 {
 	/*
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by con_by_name).
 	 */
-	struct connection *c = con_by_name(nm, TRUE);
+	struct connection *c = con_by_name(name, TRUE);
 
 	if (c != NULL) {
 		while (c != NULL) {
 			struct connection *n = c->ac_next; /* grab this before c might disappear */
 
-			if (streq(c->name, nm) &&
+			if (streq(c->name, name) &&
 			    c->kind >= CK_PERMANENT &&
 			    !NEVER_NEGOTIATE(c->policy))
 				(void) terminate_a_connection(c, NULL);
@@ -102,12 +102,12 @@ void terminate_connection(const char *nm)
 	} else {
 		int count;
 
-		loglog(RC_COMMENT, "terminating all conns with alias='%s'", nm);
-		count = foreach_connection_by_alias(nm, terminate_a_connection, NULL);
+		loglog(RC_COMMENT, "terminating all conns with alias='%s'", name);
+		count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
 
 		if (count == 0) {
 			whack_log(RC_UNKNOWN_NAME,
-				  "no connection named \"%s\"", nm);
+				  "no connection named \"%s\"", name);
 		}
 	}
 }

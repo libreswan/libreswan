@@ -355,7 +355,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     , err_t why);
-extern void terminate_connection(const char *nm);
+extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict);
