@@ -227,6 +227,28 @@ extern const char *strip_prefix(const char *s, const char *prefix);
 
 extern int enum_search(enum_names *ed, const char *string);
 
+/*
+ * Printing enum enums.
+ *
+ * An enum_enum_names table describes an enumeration first identified
+ * by a TYPE and then identified by a VALUE.
+ *
+ * Like above:
+ *
+ * enum_enum_table() returns TABLE's enum_names, or NULL.
+ * enum_enum_name() returns TABLE VAL's enum, or NULL.
+ * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
+ */
+
+typedef const struct enum_enum_names enum_enum_names;
+
+enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
+const char *enum_enum_name(enum_enum_names *e, unsigned long table,
+			   unsigned long val);
+const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
+			    unsigned long val, struct esb_buf *buf);
+
+
 /* Printing lset_t values:
  *
  * These routines require a name table which is a NULL-terminated

@@ -382,8 +382,8 @@ static void print_transform(struct print *buf, const char *prefix,
 			    const struct ikev2_transform *transform)
 {
 	print_name_value(buf, prefix,
-			 enum_name(ikev2_transid_val_descs[type],
-				   transform->id),
+			 enum_enum_name(&v2_transform_ID_enums, type,
+					transform->id),
 			 transform->id);
 	if (transform->attr_keylen > 0) {
 		print_join(buf,

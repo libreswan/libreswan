@@ -1899,7 +1899,7 @@ enum_names ikev2_trans_type_names = {
 };
 
 /* for each IKEv2 transform attribute, which enum_names describes its values? */
-enum_names *const ikev2_transid_val_descs[] = {
+static enum_names *const ikev2_transid_val_descs[] = {
 	NULL,
 	&ikev2_trans_type_encr_names,         /* 1 */
 	&ikev2_trans_type_prf_names,          /* 2 */
@@ -1908,10 +1908,7 @@ enum_names *const ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_roof =
-	elemsof(ikev2_transid_val_descs);
-
-const struct enum_enum_names v2_transform_ID_enums = {
+enum_enum_names v2_transform_ID_enums = {
 	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
 	&ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ENCR]
 };
@@ -2160,6 +2157,43 @@ int enum_search(enum_names *ed, const char *str)
 	}
 	return -1;
 }
+
+
+/* choose table from struct enum_enum_names */
+enum_names *enum_enum_table(enum_enum_names *een,
+			    unsigned long table)
+{
+	if (een->een_first <= table && table <= een->een_last) {
+		return een->een_enum_name[table - een->een_first];
+	} else {
+		return NULL;
+	}
+}
+
+const char *enum_enum_name(enum_enum_names *een, unsigned long table,
+			   unsigned long val)
+{
+	if (een == NULL) {
+		return NULL;
+	}
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		return NULL;
+	}
+	return enum_name(en, val);
+}
+
+const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
+			    unsigned long val, struct esb_buf *b)
+{
+	const char *name = enum_enum_name(een, table, val);
+	if (name != NULL) {
+		return name;
+	}
+	snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+	return b->buf;
+}
+
 
 /*
  * construct a string to name the bits on in a set
