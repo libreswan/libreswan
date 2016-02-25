@@ -1927,26 +1927,6 @@ enum_names ikev2_trans_attr_descs = {
 	ikev2_trans_attr_name, NULL
 };
 
-/* for each IKEv2 attribute, which enum_names describes its values? */
-enum_names *const ikev2_trans_attr_val_descs[] = {
-	NULL,	/* 0 */
-	NULL,	/* 1 */
-	NULL,	/* 2 */
-	NULL,	/* 3 */
-	NULL,	/* 4 */
-	NULL,	/* 5 */
-	NULL,	/* 6 */
-	NULL,	/* 7 */
-	NULL,	/* 8 */
-	NULL,	/* 9 */
-	NULL,	/* 10 */
-	NULL,	/* 11 */
-	NULL,	/* 12 */
-	NULL,	/* 13 */
-	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
-};
-
-
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;
 static ip_subnet ipv4_all, ipv6_all;
