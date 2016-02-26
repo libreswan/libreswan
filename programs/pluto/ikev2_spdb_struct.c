@@ -381,10 +381,16 @@ static void print_transform(struct print *buf, const char *prefix,
 			    enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	print_name_value(buf, prefix,
-			 enum_enum_name(&v2_transform_ID_enums, type,
-					transform->id),
-			 transform->id);
+	print_string(buf, prefix);
+	print_string(buf, strip_prefix(enum_name(&ikev2_trans_type_names,
+						 type),
+				       "TRANS_TYPE_"));
+	const char *id  = enum_enum_name(&v2_transform_ID_enums,
+					 type, transform->id);
+	id = strip_prefix(id, "OAKLEY_GROUP_");
+	id = strip_prefix(id, "AUTH_");
+	id = strip_prefix(id, "PRF_");
+	print_name_value(buf, ":", id, transform->id);
 	if (transform->attr_keylen > 0) {
 		print_join(buf,
 			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
@@ -833,7 +839,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
 		}
-		print_string(remote_proposals_buf, " ");
+		print_value(remote_proposals_buf, " ", remote_proposal.isap_propnum);
+		print_string(remote_proposals_buf, ":");
 		print_string(remote_proposals_buf, protoid_name(remote_proposal.isap_protoid));
 		print_string(remote_proposals_buf, ":");
 
