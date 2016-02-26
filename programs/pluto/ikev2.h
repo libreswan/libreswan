@@ -88,7 +88,10 @@ bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
 
 stf_status ikev2_process_sa_payload(const char *what,
 				    pb_stream *sa_payload,
-				    bool ike, bool initial, bool accepted,
+				    bool expect_ike,  /* IKE vs ESP or AH */
+				    bool expect_spi,
+				    bool expect_accepted,
+				    bool opportunistic,
 				    struct ikev2_proposal **chosen,
 				    struct ikev2_proposals *local_proposals);
 

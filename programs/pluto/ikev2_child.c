@@ -1028,9 +1028,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
 							  &sa_pd->pbs,
-							  /*ike*/ FALSE,
-							  /*initial*/ FALSE,
-							  /*accepted*/ FALSE,
+							  /*expect_ike*/ FALSE,
+							  /*expect_spi*/ TRUE,
+							  /*expect_accepted*/ FALSE,
+							  c->policy & POLICY_OPPORTUNISTIC,
 							  &cst->st_accepted_esp_or_ah_proposal,
 							  c->esp_or_ah_proposals);
 

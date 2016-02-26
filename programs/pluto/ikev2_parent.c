@@ -872,9 +872,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	stf_status ret = ikev2_process_sa_payload("IKE responder",
 						  &sa_pd->pbs,
-						  /*ike*/ TRUE,
-						  /*initial*/ TRUE,
-						  /*accepted*/ FALSE,
+						  /*expect_ike*/ TRUE,
+						  /*expect_spi*/ FALSE,
+						  /*expect_accepted*/ FALSE,
+						  c->policy & POLICY_OPPORTUNISTIC,
 						  &accepted_ike_proposal,
 						  c->ike_proposals);
 	if (ret != STF_OK) {
@@ -1448,9 +1449,10 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
-							  /*ike*/ TRUE,
-							  /*initial*/ TRUE,
-							  /*accepted*/ TRUE,
+							  /*expect_ike*/ TRUE,
+							  /*expect_spi*/ FALSE,
+							  /*expect_accepted*/ TRUE,
+							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
 		if (ret == STF_OK) {
@@ -3665,9 +3667,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
 							  &sa_pd->pbs,
-							  /*ike*/ FALSE,
-							  /*initial*/ FALSE,
-							  /*accepted*/ TRUE,
+							  /*expect_ike*/ FALSE,
+							  /*expect_spi*/ TRUE,
+							  /*expect_accepted*/ TRUE,
+							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_esp_or_ah_proposal,
 							  c->esp_or_ah_proposals);
 

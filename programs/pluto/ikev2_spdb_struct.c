@@ -785,7 +785,10 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
  */
 stf_status ikev2_process_sa_payload(const char *what,
 				    pb_stream *sa_payload,
-				    bool ike, bool initial, bool accepted,
+				    bool expect_ike,
+				    bool expect_spi,
+				    bool expect_accepted,
+				    bool opportunistic,
 				    struct ikev2_proposal **chosen_proposal,
 				    struct ikev2_proposals *local_proposals)
 {
@@ -856,7 +859,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 * MUST match the number on the proposal sent that was
 		 * accepted.
 		 */
-		if (accepted) {
+		if (expect_accepted) {
 			/* There can be only one accepted proposal.  */
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
 				libreswan_log("Error: more than one accepted proposal received.");
@@ -889,7 +892,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 * the IPsec protocol identifier for the current
 		 * negotiation.
 		 */
-		if (ike && remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
+		if (expect_ike && remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
 			libreswan_log("proposal %d has unexpected Protocol ID %d, expected IKE",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_protoid);
@@ -909,9 +912,9 @@ stf_status ikev2_process_sa_payload(const char *what,
 		 */
 		/* Read any SPI.  */
 		struct ikev2_spi remote_spi = {
-			.size = (initial ? 0 : proto_spi_size(remote_proposal.isap_protoid)), 
+			.size = (expect_spi ? proto_spi_size(remote_proposal.isap_protoid) : 0),
 		};
-		if (!initial && remote_spi.size == 0) {
+		if (expect_spi && remote_spi.size == 0) {
 			libreswan_log("proposal %d has unrecognized Protocol ID %u; ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_protoid);
@@ -947,7 +950,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 		int local_propnum_base;
 		int local_propnum_bound;
-		if (accepted) {
+		if (expect_accepted) {
 			local_propnum_base = remote_proposal.isap_propnum;
 			local_propnum_bound = remote_proposal.isap_propnum + 1;
 		} else {
@@ -1018,26 +1021,36 @@ stf_status ikev2_process_sa_payload(const char *what,
 			      remote_proposals_buf->buf);
 		status = -matching_local_propnum;
 	} else if (matching_local_propnum == 0) {
-		if (accepted) {
+		/* no luck */
+		if (expect_accepted) {
 			libreswan_log("accepted proposal invalid:%s",
 				      remote_proposals_buf->buf);
 			status = STF_FAIL;
 		} else {
-			/* no luck */
 			libreswan_log("no proposal chosen from:%s",
 				      remote_proposals_buf->buf);
 			status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	} else {
-		if (accepted) {
+		if (expect_accepted) {
 			pexpect(matching_local_propnum == best_proposal->propnum);
-			libreswan_log("proposal %d was accepted:%s",
-				      best_proposal->propnum,
-				      remote_proposals_buf->buf);
+			/* don't log on initiator's end - redundant */
+			DBG(DBG_CONTROL,
+			    DBG_log("proposal %d was accepted:%s",
+				    best_proposal->propnum,
+				    remote_proposals_buf->buf));
 		} else {
-			libreswan_log("proposal %d chosen from:%s",
-				      best_proposal->propnum,
-				      remote_proposals_buf->buf);
+			if (opportunistic) {
+				/* Don't log when opportunistic.  */
+				DBG(DBG_CONTROL,
+				    DBG_log("proposal %d chosen from:%s",
+					    best_proposal->propnum,
+					    remote_proposals_buf->buf));
+			} else {
+				libreswan_log("proposal %d chosen from:%s",
+					      best_proposal->propnum,
+					      remote_proposals_buf->buf);
+			}
 		}
 		/* transfer ownership of BEST_PROPOSAL to caller */
 		*chosen_proposal = best_proposal;
