@@ -16,6 +16,9 @@
 #  bad  - output should NOT match [only for unit tests, not pluto test]
 #  wip  - this test still need work.
 
+# run the lib/libswan/ tests
+kvmplutotest	basic-pluto-00	good
+
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	good
