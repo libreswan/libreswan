@@ -361,6 +361,12 @@ static void print_string(struct print *buf, const char *string)
 				 "%s", string));
 }
 
+static void print_byte(struct print *buf, int byte)
+{
+	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
+				 "%02x", byte));
+}
+
 static void print_value(struct print *buf, int value)
 {
 	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
@@ -374,26 +380,35 @@ static void print_name_value(struct print *buf, const char *name, int value)
 }
 
 /*
- * Pretty print a single transform to the buffer.
+ * Print <TRANSFORM> to the buffer.
  */
 static void print_transform(struct print *buf, enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	print_string(buf, strip_prefix(enum_name(&ikev2_trans_type_names,
-						 type),
-				       "TRANS_TYPE_"));
 	const char *id  = enum_enum_name(&v2_transform_ID_enums,
 					 type, transform->id);
 	id = strip_prefix(id, "OAKLEY_GROUP_");
 	id = strip_prefix(id, "AUTH_");
 	id = strip_prefix(id, "PRF_");
-	print_string(buf, ":");
 	print_name_value(buf, id, transform->id);
 	if (transform->attr_keylen > 0) {
 		print_join(buf,
 			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
 				    "_%d", transform->attr_keylen));
 	}
+}
+
+/*
+ * Print <TRANSFORM-TYPE> "=" <TRANSFORM> to the buffer
+ */
+static void print_type_transform(struct print *buf, enum ikev2_trans_type type,
+				 const struct ikev2_transform *transform)
+{
+	print_string(buf, strip_prefix(enum_name(&ikev2_trans_type_names,
+						 type),
+				       "TRANS_TYPE_"));
+	print_string(buf, "=");
+	print_transform(buf, type, transform);
 }
 
 static const char *trans_type_name(enum ikev2_trans_type type)
@@ -408,56 +423,61 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 }
 
 /*
- * Print <TRANSFORM-TYPE> [ "=" TRANSFORM , ... ].
+ * Print <TRANSFORM-TYPE>  "=" <TRANSFORM> { "|" <TRANSFORM> }+.
  */
-static void print_transforms(struct print *buf, enum ikev2_trans_type type,
-			     const struct ikev2_transforms *transforms)
+static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
+				  const struct ikev2_transforms *transforms)
 {
 	print_string(buf, trans_type_name(type));
-	char *sep = "=";
+	print_string(buf, "=");
+	char *sep = "";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		print_string(buf, sep);
 		print_transform(buf, type, transform);
-		sep = ",";
+		sep = "|";
 	};
 }
 
-void DBG_log_ikev2_proposal(const char *prefix,
-			    struct ikev2_proposal *proposal)
+static void print_proposal(struct print *buf,
+			   struct ikev2_proposal *proposal)
 {
-	struct print *buf = print_buf();
-	print_string(buf, "PROTOID=");
-	print_name_value(buf, protoid_name(proposal->protoid),
-			 proposal->protoid);
-	if (proposal->propnum > 0) {
-		print_string(buf, " PROTONUM=");
+	if (proposal->propnum) {
 		print_value(buf, proposal->propnum);
+		print_string(buf, ":");
 	}
+	print_string(buf, protoid_name(proposal->protoid));
+	print_string(buf, ":");
+	const char *sep = "";
 	if (proposal->remote_spi.size > 0) {
 		pexpect(proposal->remote_spi.size <= sizeof(proposal->remote_spi.size));
-		print_string(buf, " SPI=");
+		print_string(buf, "SPI=");
 		size_t i;
-		const char *sep = "[";
 		for (i = 0; (i < proposal->remote_spi.size
 			     && i < sizeof(proposal->remote_spi.size));
 		     i++) {
-			print_string(buf, sep);
-			print_value(buf, proposal->remote_spi.bytes[i]);
-			sep = " ";
+			print_byte(buf, proposal->remote_spi.bytes[i]);
 		}
-		print_string(buf, "]");
+		sep = ";";
 	}
 	enum ikev2_trans_type type;
 	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
-			print_string(buf, " ");
-			print_transforms(buf, type, transforms);
+			print_string(buf, sep);
+			print_type_transforms(buf, type, transforms);
+			sep = ";";
 		}
 	}
-	DBG_log("%s ikev2_proposal:%s", prefix, buf->buf);
+}
+
+void DBG_log_ikev2_proposal(const char *prefix,
+			    struct ikev2_proposal *proposal)
+{
+	struct print *buf = print_buf();
+	print_proposal(buf, proposal);
+	DBG_log("%s ikev2_proposal: %s", prefix, buf->buf);
 	pfree(buf);
 }
 
@@ -487,7 +507,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		const struct ikev2_transforms *transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 			struct print *buf = print_buf();
-			print_transforms(buf, type, transforms);
+			print_type_transforms(buf, type, transforms);
 			DBG_log("    %s", buf->buf);
 			pfree(buf);
 		}
@@ -654,8 +674,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		 * Accumulate the proposal's transforms in remote_buf.
 		 */
 		print_string(remote_print_buf, remote_buf_prefix);
-		print_transform(remote_print_buf, type, &remote_transform);
-		remote_buf_prefix = ",";
+		print_type_transform(remote_print_buf, type, &remote_transform);
+		remote_buf_prefix = ";";
 
 		/*
 		 * Find the proposals that match and flag them.
@@ -694,7 +714,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 					    && local_transform->attr_keylen == remote_transform.attr_keylen) {
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
-						    print_transform(buf, type, &remote_transform);
+						    print_type_transform(buf, type, &remote_transform);
 						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %zu",
 							    remote_propnum, remote_transform_nr,
 							    buf->buf, local_propnum,
@@ -1601,6 +1621,7 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
 		*proposal = (struct ikev2_proposal) {
 			.protoid =  IKEv2_SEC_PROTO_IKE,
+			.propnum = proposals->roof,
 		};
 
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
@@ -1861,6 +1882,7 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
 		*proposal = (struct ikev2_proposal) {
 			.protoid = 0,
+			.propnum = proposals->roof,
 		};
 
 		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
