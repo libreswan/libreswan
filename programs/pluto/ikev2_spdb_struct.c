@@ -390,7 +390,8 @@ static void print_transform(struct print *buf, enum ikev2_trans_type type,
 	id = strip_prefix(id, "OAKLEY_GROUP_");
 	id = strip_prefix(id, "AUTH_");
 	id = strip_prefix(id, "PRF_");
-	print_name_value(buf, id, transform->id);
+	id = strip_prefix(id, "ESN_");
+	print_string(buf, id);
 	if (transform->attr_keylen > 0) {
 		print_join(buf,
 			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
@@ -423,7 +424,7 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 }
 
 /*
- * Print <TRANSFORM-TYPE>  "=" <TRANSFORM> { "|" <TRANSFORM> }+.
+ * Print <TRANSFORM-TYPE>  "=" <TRANSFORM> { "," <TRANSFORM> }+.
  */
 static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
 				  const struct ikev2_transforms *transforms)
@@ -435,7 +436,7 @@ static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		print_string(buf, sep);
 		print_transform(buf, type, transform);
-		sep = "|";
+		sep = ",";
 	};
 }
 
