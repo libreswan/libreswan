@@ -1021,7 +1021,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
 
-		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
+		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);

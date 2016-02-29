@@ -64,11 +64,11 @@ void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposa
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
-void ikev2_proposals_from_alg_info_ike(const char *what,
+void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				       struct alg_info_ike *alg_info_ike,
 				       struct ikev2_proposals **proposals);
 
-void ikev2_proposals_from_alg_info_esp(const char *what,
+void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp, lset_t policy,
 				       struct ikev2_proposals **proposals);
 

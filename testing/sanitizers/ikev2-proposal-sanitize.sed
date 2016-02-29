@@ -1,2 +1,2 @@
-/: proposal [0-9]* chosen from: /d
-/: proposal [0-9]* was accepted: /d
+/ IKE proposals: /d
+/ ESP.AH proposals: /d

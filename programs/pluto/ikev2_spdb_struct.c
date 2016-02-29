@@ -439,11 +439,11 @@ static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
 	};
 }
 
-static void print_proposal(struct print *buf,
-			   struct ikev2_proposal *proposal)
+static void print_proposal(struct print *buf, int propnum,
+			   const struct ikev2_proposal *proposal)
 {
-	if (proposal->propnum) {
-		print_value(buf, proposal->propnum);
+	if (propnum) {
+		print_value(buf, propnum);
 		print_string(buf, ":");
 	}
 	print_string(buf, protoid_name(proposal->protoid));
@@ -476,9 +476,22 @@ void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
 	struct print *buf = print_buf();
-	print_proposal(buf, proposal);
+	print_proposal(buf, proposal->propnum, proposal);
 	DBG_log("%s ikev2_proposal: %s", prefix, buf->buf);
 	pfree(buf);
+}
+
+static void print_proposals(struct print *buf, struct ikev2_proposals *proposals)
+{
+	passert(proposals->proposal[0].protoid == 0);
+	const char *proposal_sep = "";
+	int propnum;
+	const struct ikev2_proposal *proposal;
+	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
+		print_string(buf, proposal_sep);
+		proposal_sep = " ";
+		print_proposal(buf, propnum, proposal);
+	}
 }
 
 void DBG_log_ikev2_proposals(const char *prefix,
@@ -1065,7 +1078,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    remote_print_buf->buf));
 		} else {
 			struct print *prop = print_buf();
-			print_proposal(prop, best_proposal);
+			print_proposal(prop, best_proposal->propnum, best_proposal);
 			if (opportunistic) {
 				/* Don't log when opportunistic.  */
 				DBG(DBG_CONTROL,
@@ -1584,7 +1597,7 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
  * If alg_info_ike includes unknown algorithms those get dropped,
  * which can lead to no proposals.
  */
-void ikev2_proposals_from_alg_info_ike(const char *what,
+void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				       struct alg_info_ike *alg_info_ike,
 				       struct ikev2_proposals **result)
 {
@@ -1596,7 +1609,13 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 	if (alg_info_ike == NULL) {
 		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
 		*result = &default_ikev2_ike_proposals;
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+
+		struct print *buf = print_buf();
+		print_proposals(buf, *result);
+		libreswan_log("%s IKE proposals: %s (default)",
+			      name, buf->buf);
+		pfree(buf);
+
 		return;
 	}
 
@@ -1720,7 +1739,11 @@ void ikev2_proposals_from_alg_info_ike(const char *what,
 		proposals->roof++;
 	}
 	*result = proposals;
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+
+	struct print *buf = print_buf();
+	print_proposals(buf, *result);
+	libreswan_log("%s IKE proposals: %s", name, buf->buf);
+	pfree(buf);
 }
 
 static struct ikev2_proposal ikev2_esn_no_esp_proposal[] = {
@@ -1796,7 +1819,7 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-void ikev2_proposals_from_alg_info_esp(const char *what,
+void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
 				       struct ikev2_proposals **result)
@@ -1856,7 +1879,13 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 		default:
 			bad_case(policy);
 		}
-		DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+
+		struct print *buf = print_buf();
+		print_proposals(buf, *result);
+		libreswan_log("%s ESP/AH proposals: %s (default)",
+			      name, buf->buf);
+		pfree(buf);
+
 		return;
 	}
 
@@ -1967,7 +1996,11 @@ void ikev2_proposals_from_alg_info_esp(const char *what,
 	}
 
 	*result = proposals;
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposals(what, *result));
+
+	struct print *buf = print_buf();
+	print_proposals(buf, *result);
+	libreswan_log("%s ESP/AH proposals: %s", name, buf->buf);
+	pfree(buf);
 }
 
 

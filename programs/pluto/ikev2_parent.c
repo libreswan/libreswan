@@ -264,7 +264,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		ikev2_proposals_from_alg_info_ike("initial IKE modp",
+		ikev2_proposals_from_alg_info_ike(c->name, "initial IKE modp",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -477,7 +477,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		u_char *sa_start = md->rbody.cur;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			ikev2_proposals_from_alg_info_ike("IKE initiator",
+			ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -860,7 +860,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike("initial IKE responder",
+	ikev2_proposals_from_alg_info_ike(c->name, "initial IKE responder",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
@@ -1319,7 +1319,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			ikev2_proposals_from_alg_info_ike("initial IKE validating invalid KE",
+			ikev2_proposals_from_alg_info_ike(c->name, "initial IKE validating invalid KE",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -1442,7 +1442,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_proposals_from_alg_info_ike("IKE initiator (accepting)",
+		ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator (accepting)",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -2573,7 +2573,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
 		
-		ikev2_proposals_from_alg_info_esp("ESP/AH initiator",
+		ikev2_proposals_from_alg_info_esp(cc->name, "ESP/AH initiator",
 						  cc->alg_info_esp,
 						  cc->policy,
 						  &cc->esp_or_ah_proposals);
@@ -3660,7 +3660,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(st, c->policy);
 
-		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
+		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
