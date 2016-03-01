@@ -971,6 +971,28 @@ bool states_use_connection(const struct connection *c)
 	return FALSE;
 }
 
+bool shared_phase1_connection(const struct connection *c)
+{
+	int i;
+
+	so_serial_t serial_us = c->newest_isakmp_sa;
+
+	if (serial_us == SOS_NOBODY)
+		return FALSE;
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
+		FOR_EACH_ENTRY(st, i, {
+			if (st->st_connection == c)
+				continue;
+			if (st->st_clonedfrom == serial_us)
+				return TRUE;
+			});
+	}
+	return FALSE;
+}
+
 /*
  * delete all states that were created for a given connection,
  * additionally delete any states for which func(st, c)
@@ -1106,16 +1128,6 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	foreach_states_by_connection_func_delete(c,
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
-	/*
-	 * XXX Seems to dump here because one of the states is NULL.
-	 * Removing the Assert makes things work.
-	 * We should fix this eventually.
-	 * -- MCR 2005 Nov 2 commit a87bf151b7b6566a3d4560584c8e6b2884123780
-	 *
-	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
-	 *  && c->newest_isakmp_sa == SOS_NOBODY);
-	 */
-
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
@@ -1142,8 +1154,9 @@ static bool same_phase1_no_phase2(struct state *this,
 {
 	if (IS_ISAKMP_SA_ESTABLISHED(this->st_state))
 		return FALSE;
-	else
+	if (c->kind == CK_INSTANCE)
 		return same_phase1_sa_relations(this, c);
+	return FALSE;
 }
 
 void delete_p2states_by_connection(struct connection *c)

@@ -587,6 +587,7 @@ extern void log_newest_sa_change(char *f, struct state *const st);
 
 #ifdef XAUTH_HAVE_PAM
 void ikev2_free_auth_pam(so_serial_t st_serialno);
+bool shared_phase1_connection(const struct connection *c);
 #endif
 
 #endif /* _STATE_H */

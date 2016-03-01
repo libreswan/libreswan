@@ -3920,18 +3920,28 @@ void show_connections_status(void)
 }
 
 /*
- * Delete a connection if it is an instance and it is no longer in use.
+ * Delete a connection if
+ * - it is an instance and it is no longer in use.
+ * - the ike state is not shared with another connection
  * We must be careful to avoid circularity:
  * we don't touch it if it is CK_GOING_AWAY.
  */
 void connection_discard(struct connection *c)
 {
-	if (c->kind == CK_INSTANCE) {
-		if (in_pending_use(c))
-			return;
+	DBG(DBG_CONTROL, DBG_log("in connection_discard for connection %s", c->name));
 
-		if (!states_use_connection(c))
+	if (c->kind == CK_INSTANCE) {
+		DBG(DBG_CONTROL, DBG_log("connection is instance"));
+		if (in_pending_use(c)) {
+			DBG(DBG_CONTROL, DBG_log("in pending use"));
+			return;
+		}
+		DBG(DBG_CONTROL, DBG_log("not in pending use"));
+
+		if (!states_use_connection(c)) {
+			DBG(DBG_CONTROL, DBG_log("no states use this connection, deleting"));
 			delete_connection(c, FALSE);
+		}
 	}
 }
 
