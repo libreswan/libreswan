@@ -335,7 +335,7 @@ kvmplutotest	ikev2-liveness-01-netkey	wip
 kvmplutotest	ikev2-liveness-01-netkey-drop	good
 
 kvmplutotest	delete-sa-01	good
-kvmplutotest	delete-sa-03	wip
+kvmplutotest	delete-sa-03	good
 kvmplutotest	delete-sa-04	wip
 kvmplutotest	delete-sa-05	wip
 

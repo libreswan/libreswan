@@ -1,4 +1,5 @@
-ipsec look
+# both east and west should still have one IKE SA #1
+ipsec status | grep west-east
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
