@@ -15,8 +15,10 @@
 import os
 import re
 import collections
+import subprocess
 from fab import logutil
 from fab import utils
+
 
 class Test:
 
@@ -94,22 +96,18 @@ class Test:
     def __str__(self):
         return self.full_name
 
-    def files_with_suffix(self, suffix):
-        s = set()
-        for file in os.listdir(self.directory):
-            host, init, t = file.partition(suffix)
-            if init and not t:
-                s.add(host)
-        return s
-
     def domain_names(self):
         if not self.domains:
-            self.domains = self.files_with_suffix("init.sh")
+            self.domains = _domain_names_from_files_with_suffix(self.logger,
+                                                                self.directory,
+                                                                "init.sh")
         return self.domains
 
     def initiator_names(self):
         if not self.initiators:
-            self.initiators = self.files_with_suffix("run.sh")
+            self.initiators = _domain_names_from_files_with_suffix(self.logger,
+                                                                   self.directory,
+                                                                   "run.sh")
         return self.initiators
 
     def scripts(self):
@@ -119,15 +117,15 @@ class Test:
         nic = {"nic"}
         domain_names = self.domain_names()
         initiator_names = self.initiator_names()
-        add_matching(self, scripts, "%(domain)sinit.sh", nic);
-        add_matching(self, scripts, "%(domain)sinit.sh", domain_names ^ nic ^ initiator_names)
-        add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
-        add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
-        add_matching(self, scripts, "final.sh", domain_names)
+        _add_matching(self, scripts, "%(domain)sinit.sh", nic);
+        _add_matching(self, scripts, "%(domain)sinit.sh", domain_names ^ nic ^ initiator_names)
+        _add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
+        _add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
+        _add_matching(self, scripts, "final.sh", domain_names)
         return scripts
 
 
-def add_matching(test, scripts, template, domain_names):
+def _add_matching(test, scripts, template, domain_names):
     s = dict()
     for domain_name in domain_names:
         script = template % {'domain':domain_name}
@@ -135,6 +133,32 @@ def add_matching(test, scripts, template, domain_names):
             s[domain_name] = script
     if s:
         scripts.append(s)
+
+
+def _domain_names():
+    domains = set()
+    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
+    for name in output.splitlines():
+        domains.add(name)
+    return domains
+DOMAIN_NAMES = _domain_names()
+
+
+def _domain_names_from_files_with_suffix(logger, directory, suffix):
+    """Find files matching <domain><suffix>"""
+    domain_names = set()
+    for f in os.listdir(directory):
+        domain_name, middle, tail = f.partition(suffix)
+        if not middle or tail:
+            continue
+        if not domain_name in DOMAIN_NAMES:
+            logger.warn("the domain name '%s', from '%s/<%s>%s', is invalid (valid domains: %s)",
+                        domain_name, directory, domain_name, suffix,
+                        " ".join(DOMAIN_NAMES))
+            continue
+        domain_names.add(domain_name)
+    return domain_names
+
 
 # Load the tetsuite defined by TESTLIST
 

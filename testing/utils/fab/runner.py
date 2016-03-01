@@ -16,7 +16,6 @@ import os
 import sys
 import pexpect
 import time
-import subprocess
 from concurrent import futures
 from fab import virsh
 from fab import testsuite
@@ -36,14 +35,6 @@ def log_arguments(logger, args):
     logger.info("Runner arguments:")
     logger.info("  workers: %s", args.workers)
 
-
-def domain_names():
-    domains = set()
-    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
-    for name in output.splitlines():
-        domains.add(name)
-    return domains
-DOMAIN_NAMES = domain_names()
 
 TEST_TIMEOUT = 120
 
@@ -181,7 +172,7 @@ def run_test(test, max_workers=1):
     logger = logutil.getLogger(__name__, test.name)
     logger.info("starting test")
 
-    with TestDomains(logger, test, DOMAIN_NAMES) as all_test_domains:
+    with TestDomains(logger, test, testsuite.DOMAIN_NAMES) as all_test_domains:
         try:
 
             # Python doesn't have an easy way to obtain an executor's
