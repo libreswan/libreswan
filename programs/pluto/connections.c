@@ -1698,7 +1698,6 @@ void remove_group_instance(const struct connection *group,
 			const char *name)
 {
 	passert(group->kind == CK_GROUP);
-	passert(oriented(*group));
 
 	delete_connections_by_name(name, FALSE);
 }
