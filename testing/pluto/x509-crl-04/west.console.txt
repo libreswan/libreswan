@@ -185,7 +185,7 @@ west #
 000  
 000 "westnet-eastnet-x509-cr": 192.0.1.0/24===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; erouted; eroute owner: #3
 000 "westnet-eastnet-x509-cr":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west
-000 "westnet-eastnet-x509-cr":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "westnet-eastnet-x509-cr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-x509-cr":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-x509-cr":   labeled_ipsec:no;
 000 "westnet-eastnet-x509-cr":   policy_label:unset;

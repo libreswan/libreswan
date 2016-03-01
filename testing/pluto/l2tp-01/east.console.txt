@@ -62,6 +62,7 @@ Certificate Nickname                                         Trust Attributes
 east #
 east #
  grep 'Result using RFC 3947' /tmp/pluto.log
+| NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #

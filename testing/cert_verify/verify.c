@@ -65,7 +65,10 @@ static void get_file(SECItem *cert, const char *path)
 	fseek(fp, 0, SEEK_SET);
 
 	buf = (unsigned char *) PORT_Alloc(fsize);
-	fread(buf, fsize, 1, fp);
+	if (fread(buf, 1, fsize, fp) != fsize) {
+		printf("read failed on %s\n", path);
+		exit(1);
+	}
 	cert->type = siBuffer;
 	cert->len = fsize;
 	cert->data = buf;

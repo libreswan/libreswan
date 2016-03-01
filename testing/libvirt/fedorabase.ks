@@ -159,6 +159,7 @@ debuginfo-install -y \
     nss-util \
     openldap \
     openssl-libs \
+    ocspd \
     pam \
     pcre \
     python-libs \

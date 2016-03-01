@@ -885,7 +885,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
 		loglog(RC_LOG_SERIOUS,
 		       "unexpected Protocol ID (%s) found in Oakley Proposal",
-		       enum_show(&protocol_names, proposal.isap_protoid));
+		       enum_show(&ikev1_protocol_names, proposal.isap_protoid));
 		return INVALID_PROTOCOL_ID;
 	}
 
@@ -2251,7 +2251,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			default:
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected Protocol ID (%s) in IPsec Proposal",
-				       enum_show(&protocol_names,
+				       enum_show(&ikev1_protocol_names,
 						 next_proposal.isap_protoid));
 				return INVALID_PROTOCOL_ID;
 			}

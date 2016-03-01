@@ -470,7 +470,7 @@ const char *const sit_bit_names[] = {
 };
 
 /* Protocol IDs (RFC 2407 "IPsec DOI" section 4.4.1) */
-static const char *const protocol_name[] = {
+static const char *const ikev1_protocol_name[] = {
 	"PROTO_RESERVED",
 	"PROTO_ISAKMP",
 	"PROTO_IPSEC_AH",
@@ -478,10 +478,10 @@ static const char *const protocol_name[] = {
 	"PROTO_IPCOMP",
 };
 
-enum_names protocol_names = {
+enum_names ikev1_protocol_names = {
 	PROTO_RESERVED,
 	PROTO_IPCOMP,
-	protocol_name,
+	ikev1_protocol_name,
 	NULL
 };
 
@@ -504,7 +504,7 @@ enum_names ikev2_protocol_names = {
 enum_names ikev2_del_protocol_names = {
 	PROTO_ISAKMP,
 	PROTO_IPSEC_ESP,
-	&protocol_name[PROTO_ISAKMP],
+	&ikev2_protocol_name[PROTO_ISAKMP],
 	NULL
 };
 
@@ -1317,26 +1317,29 @@ enum_names oakley_auth_names = {
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
  */
 static const char *const ikev2_cp_attribute_type_name[] = {
-	"v2_INTERNAL_IP4_ADDRESS",	/* 1 */
-	"v2_INTERNAL_IP4_NETMASK",
-	"v2_INTERNAL_IP4_DNS",
-	"v2_INTERNAL_IP4_NBNS",
-	"v2_CP_ATTRIBUTE_RESERVED_5"
-	"v2_INTERNAL_IP4_DHCP",
-	"v2_APPLICATION_VERSION",
-	"v2_INTERNAL_IP6_ADDRESS",
-	"v2_CP_ATTRIBUTE_RESERVED_9",
-	"v2_INTERNAL_IP6_DNS",
-	"v2_CP_ATTRIBUTE_RESERVED_11"
-	"v2_INTERNAL_IP6_DHCP",
-	"v2_INTERNAL_IP4_SUBNET",	/* 13 */
-	"v2_SUPPORTED_ATTRIBUTES",
-	"v2_INTERNAL_IP6_SUBNET",
-	"v2_MIP6_HOME_PREFIX",
-	"v2_INTERNAL_IP6_LINK",
-	"v2_INTERNAL_IP6_PREFIX",
-	"v2_HOME_AGENT_ADDRESS",
-	"v2_P-CSCF_IP4_ADDRESS", /* 20 */
+	"IKEv2_CP_ATTR_RESERVED",
+	"IKEv2_INTERNAL_IP4_ADDRESS",	/* 1 */
+	"IKEv2_INTERNAL_IP4_NETMASK",
+	"IKEv2_INTERNAL_IP4_DNS",
+	"IKEv2_INTERNAL_IP4_NBNS",
+	"IKEv2_CP_ATTRIBUTE_RESERVED_5"
+	"IKEv2_INTERNAL_IP4_DHCP",
+	"IKEv2_APPLICATION_VERSION",
+	"IKEv2_INTERNAL_IP6_ADDRESS",
+	"IKEv2_CP_ATTRIBUTE_RESERVED_9",
+	"IKEv2_INTERNAL_IP6_DNS",
+	"IKEv2_CP_ATTRIBUTE_RESERVED_11"
+	"IKEv2_INTERNAL_IP6_DHCP",
+	"IKEv2_INTERNAL_IP4_SUBNET",	/* 13 */
+	"IKEv2_SUPPORTED_ATTRIBUTES",
+	"IKEv2_INTERNAL_IP6_SUBNET",
+	"IKEv2_MIP6_HOME_PREFIX",
+	"IKEv2_INTERNAL_IP6_LINK",
+	"IKEv2_INTERNAL_IP6_PREFIX",
+	"IKEv2_HOME_AGENT_ADDRESS",
+	"IKEv2_P_CSCF_IP4_ADDRESS", /* 20 */
+        "IKEv2_P_CSCF_IP6_ADDRESS",
+        "IKEv2_FTT_KAT"
 };
 
 enum_names ikev2_cp_attribute_type_names = {
@@ -1677,8 +1680,8 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_UNEXPECTED_NAT_DETECTED",
 	"v2N_USE_ASSIGNED_HoA",
 	"v2N_TEMPORARY_FAILURE",
-	"v2N_CHILD_SA_NOT_FOUND",	/* 45 */
-	"v2N_INVALID_GROUP_ID",
+	"v2N_CHILD_SA_NOT_FOUND",
+	"v2N_INVALID_GROUP_ID", /* 45 draft-yeung-g-ikev2 */
 	"v2N_AUTHORIZATION_FAILED",
 };
 
@@ -1896,7 +1899,7 @@ enum_names ikev2_trans_type_names = {
 };
 
 /* for each IKEv2 transform attribute, which enum_names describes its values? */
-enum_names *const ikev2_transid_val_descs[] = {
+static enum_names *const ikev2_transid_val_descs[] = {
 	NULL,
 	&ikev2_trans_type_encr_names,         /* 1 */
 	&ikev2_trans_type_prf_names,          /* 2 */
@@ -1905,10 +1908,7 @@ enum_names *const ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_roof =
-	elemsof(ikev2_transid_val_descs);
-
-const struct enum_enum_names v2_transform_ID_enums = {
+enum_enum_names v2_transform_ID_enums = {
 	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
 	&ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ENCR]
 };
@@ -1923,26 +1923,6 @@ enum_names ikev2_trans_attr_descs = {
 	IKEv2_KEY_LENGTH + ISAKMP_ATTR_AF_TV,
 	ikev2_trans_attr_name, NULL
 };
-
-/* for each IKEv2 attribute, which enum_names describes its values? */
-enum_names *const ikev2_trans_attr_val_descs[] = {
-	NULL,	/* 0 */
-	NULL,	/* 1 */
-	NULL,	/* 2 */
-	NULL,	/* 3 */
-	NULL,	/* 4 */
-	NULL,	/* 5 */
-	NULL,	/* 6 */
-	NULL,	/* 7 */
-	NULL,	/* 8 */
-	NULL,	/* 9 */
-	NULL,	/* 10 */
-	NULL,	/* 11 */
-	NULL,	/* 12 */
-	NULL,	/* 13 */
-	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
-};
-
 
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;
@@ -2177,6 +2157,43 @@ int enum_search(enum_names *ed, const char *str)
 	}
 	return -1;
 }
+
+
+/* choose table from struct enum_enum_names */
+enum_names *enum_enum_table(enum_enum_names *een,
+			    unsigned long table)
+{
+	if (een->een_first <= table && table <= een->een_last) {
+		return een->een_enum_name[table - een->een_first];
+	} else {
+		return NULL;
+	}
+}
+
+const char *enum_enum_name(enum_enum_names *een, unsigned long table,
+			   unsigned long val)
+{
+	if (een == NULL) {
+		return NULL;
+	}
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		return NULL;
+	}
+	return enum_name(en, val);
+}
+
+const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
+			    unsigned long val, struct esb_buf *b)
+{
+	const char *name = enum_enum_name(een, table, val);
+	if (name != NULL) {
+		return name;
+	}
+	snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+	return b->buf;
+}
+
 
 /*
  * construct a string to name the bits on in a set

@@ -329,7 +329,7 @@ DISTSRC = \
 	demux.c demux.h msgdigest.c \
 	myid.c hmac.c \
 	hostpair.c ipsec_doi.c ipsec_doi.h \
-	spdb.c spdb_struct.c spdb_print.c spdb.h \
+	spdb.c spdb_struct.c spdb.h \
 	ikev1.c ikev1_quick.c ikev1_continuations.h \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
 	ikev1_msgid.c \
@@ -397,7 +397,7 @@ OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_O
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
 OBJSPLUTO += demux.o msgdigest.o keys.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
-OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
+OBJSPLUTO += rnd.o spdb.o spdb_struct.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o
 OBJSPLUTO += ike_alg_camellia.o

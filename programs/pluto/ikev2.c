@@ -814,7 +814,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			rehash_state(st, md->hdr.isa_rcookie);
 		}
 
-
 		/*
 		 * We need to check if this IKE_INIT is a retransmit
 		 */
@@ -832,6 +831,18 @@ void process_v2_packet(struct msg_digest **mdp)
 				return;
 			}
 			/* update lastrecv later on */
+
+		}
+
+		/*
+		 * If this exchange request is not an IKE_INIT
+		 * or IKE_AUTH, ensure we have an established IKE SA
+		 */
+		if ((ix != ISAKMP_v2_SA_INIT && ix != ISAKMP_v2_AUTH) &&
+		    !IS_IKE_SA_ESTABLISHED(st)) {
+			libreswan_log("Ignoring %s Exchange as IKE SA for %s has not yet been authenticated",
+				enum_show(&state_names, st->st_state), st->st_connection->name);
+			return;
 		}
 
 	} else if (!msg_r) {

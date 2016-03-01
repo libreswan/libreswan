@@ -1192,6 +1192,7 @@ enum ikev2_cp_attribute_type {
 	 * IKEv2 CP Attribute types
 	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
 	 */
+	IKEv2_CP_ATTR_RESERVED = 0,
 	IKEv2_INTERNAL_IP4_ADDRESS = 1,
 	IKEv2_INTERNAL_IP4_NETMASK = 2,
 	IKEv2_INTERNAL_IP4_DNS = 3,

@@ -309,6 +309,7 @@ static void db_prop_print(struct db_prop *p)
 	unsigned ti, ai;
 	enum_names *n, *n_at, *n_av;
 
+	/* XXX should it print ikev1_protocol_names or ikev2_protocol_names ? */
 	DBG_log("protoid=\"%s\"", enum_name(&protocol_names, p->protoid));
 	for (ti = 0, t = p->trans; ti < p->trans_cnt; ti++, t++) {
 		switch (p->protoid) {

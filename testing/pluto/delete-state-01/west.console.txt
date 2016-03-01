@@ -121,7 +121,7 @@ west #
 000  
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset
-000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "west-east-delete1":   labeled_ipsec:no;
 000 "west-east-delete1":   policy_label:unset;
@@ -238,7 +238,7 @@ west #
 000  
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset
-000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "west-east-delete1":   labeled_ipsec:no;
 000 "west-east-delete1":   policy_label:unset;
@@ -353,7 +353,7 @@ west #
 000  
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset
-000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "west-east-delete1":   labeled_ipsec:no;
 000 "west-east-delete1":   policy_label:unset;
@@ -459,7 +459,7 @@ west #
 000  
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset
-000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "west-east-delete1":   labeled_ipsec:no;
 000 "west-east-delete1":   policy_label:unset;

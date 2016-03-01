@@ -31,7 +31,8 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, force-busy=no
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
+000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
@@ -104,11 +105,12 @@ east #
 000  
 000 "v6-transport": 2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]; unrouted; eroute owner: #0
 000 "v6-transport":     oriented; my_ip=unset; their_ip=unset
-000 "v6-transport":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "v6-transport":   labeled_ipsec:no;
 000 "v6-transport":   policy_label:unset;
 000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "v6-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "v6-transport":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
@@ -116,7 +118,9 @@ east #
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
-000 State list:
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 Bare Shunt list:
 000  

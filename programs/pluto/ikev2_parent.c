@@ -264,7 +264,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		ikev2_proposals_from_alg_info_ike("initial IKE modp",
+		ikev2_proposals_from_alg_info_ike(c->name, "initial IKE modp",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -477,7 +477,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		u_char *sa_start = md->rbody.cur;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			ikev2_proposals_from_alg_info_ike("IKE initiator",
+			ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -860,7 +860,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike("initial IKE responder",
+	ikev2_proposals_from_alg_info_ike(c->name, "initial IKE responder",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
@@ -872,9 +872,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	stf_status ret = ikev2_process_sa_payload("IKE responder",
 						  &sa_pd->pbs,
-						  /*ike*/ TRUE,
-						  /*initial*/ TRUE,
-						  /*accepted*/ FALSE,
+						  /*expect_ike*/ TRUE,
+						  /*expect_spi*/ FALSE,
+						  /*expect_accepted*/ FALSE,
+						  c->policy & POLICY_OPPORTUNISTIC,
 						  &accepted_ike_proposal,
 						  c->ike_proposals);
 	if (ret != STF_OK) {
@@ -1318,7 +1319,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			ikev2_proposals_from_alg_info_ike("initial IKE validating invalid KE",
+			ikev2_proposals_from_alg_info_ike(c->name, "initial IKE validating invalid KE",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -1441,16 +1442,17 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_proposals_from_alg_info_ike("IKE initiator (accepting)",
+		ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator (accepting)",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
-							  /*ike*/ TRUE,
-							  /*initial*/ TRUE,
-							  /*accepted*/ TRUE,
+							  /*expect_ike*/ TRUE,
+							  /*expect_spi*/ FALSE,
+							  /*expect_accepted*/ TRUE,
+							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
 		if (ret == STF_OK) {
@@ -2571,7 +2573,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
 		
-		ikev2_proposals_from_alg_info_esp("ESP/AH initiator",
+		ikev2_proposals_from_alg_info_esp(cc->name, "ESP/AH initiator",
 						  cc->alg_info_esp,
 						  cc->policy,
 						  &cc->esp_or_ah_proposals);
@@ -3658,16 +3660,17 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(st, c->policy);
 
-		ikev2_proposals_from_alg_info_esp("ESP/AH responder",
+		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
 
 		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
 							  &sa_pd->pbs,
-							  /*ike*/ FALSE,
-							  /*initial*/ FALSE,
-							  /*accepted*/ TRUE,
+							  /*expect_ike*/ FALSE,
+							  /*expect_spi*/ TRUE,
+							  /*expect_accepted*/ TRUE,
+							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_esp_or_ah_proposal,
 							  c->esp_or_ah_proposals);
 
@@ -4375,7 +4378,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 					DBG(DBG_CONTROLMORE,
 						DBG_log("received delete request for %s SA(0x%08" PRIx32 ")",
-							enum_show(&protocol_names,
+							enum_show(&ikev2_protocol_names,
 								v2del->isad_protoid),
 							ntohl(spi)));
 
@@ -4394,7 +4397,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 						DBG(DBG_CONTROLMORE,
 							DBG_log("our side SPI that needs to be sent: %s SA(0x%08" PRIx32 ")",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl(pr->our_spi)));
 						if (j < elemsof(spi_buf)) {
@@ -4408,7 +4411,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						/* ??? should this diagnostic go to the real log? */
 						DBG(DBG_CONTROLMORE,
 							DBG_log("received delete request for %s SA(0x%08" PRIx32 ") but local state is not found",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl(spi)));
 					}
@@ -4593,7 +4596,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 					DBG(DBG_CONTROLMORE, DBG_log(
 						    "delete %s SA(0x%08" PRIx32 ")",
-						    enum_show(&protocol_names,
+						    enum_show(&ikev2_protocol_names,
 							    v2del->isad_protoid),
 						    ntohl((uint32_t)
 							  spi)));
@@ -4609,7 +4612,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					if (dst != NULL) {
 						DBG(DBG_CONTROLMORE,
 							DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-								enum_show(&protocol_names,
+								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl((uint32_t)spi)));
 
@@ -4622,7 +4625,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					} else {
 						libreswan_log(
 						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-							    enum_show(&protocol_names, v2del->isad_protoid),
+							    enum_show(&ikev2_protocol_names, v2del->isad_protoid),
 								ntohl((uint32_t)spi));
 					}
 				}

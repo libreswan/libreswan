@@ -126,7 +126,7 @@ road #
 000  
 000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east
-000 "road-east-x509-ipv4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
@@ -140,7 +140,7 @@ road #
 000 "road-east-x509-ipv4":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
 000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset; mycert=road; hiscert=east
-000 "road-east-x509-ipv4"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
@@ -279,7 +279,7 @@ road #
 000  
 000 "road-east-x509-ipv4": 0.0.0.0/0===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "road-east-x509-ipv4":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east
-000 "road-east-x509-ipv4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4":   labeled_ipsec:no;
 000 "road-east-x509-ipv4":   policy_label:unset;
@@ -293,7 +293,7 @@ road #
 000 "road-east-x509-ipv4":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===0.0.0.0/0; erouted; eroute owner: #4
 000 "road-east-x509-ipv4"[1]:     oriented; my_ip=192.0.2.100; their_ip=unset; mycert=road; hiscert=east
-000 "road-east-x509-ipv4"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-x509-ipv4"[1]:   labeled_ipsec:no;
 000 "road-east-x509-ipv4"[1]:   policy_label:unset;
