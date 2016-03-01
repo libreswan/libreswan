@@ -20,7 +20,6 @@ import re
 import pexpect
 import argparse
 import shutil
-import subprocess
 import time
 from datetime import datetime
 from distutils import util
