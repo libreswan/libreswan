@@ -134,6 +134,8 @@ kvmplutotest	ikev1-algo-05-3des-sha2			good
 kvmplutotest	ikev2-algo-esn-01			good
 kvmplutotest	ikev2-algo-esn-02			good
 kvmplutotest	ikev2-algo-esn-03			good
+kvmplutotest	ikev2-algo-esn-04			good
+kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 # Various corner case tests for IKEv2
