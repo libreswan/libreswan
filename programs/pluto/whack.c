@@ -99,6 +99,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
+		"	[--esn ] [--no-esn] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -640,6 +641,9 @@ static const struct option long_opts[] = {
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
 	PS("ikefrag-force", IKE_FRAG_FORCE),
 	PS("no-ikepad", NO_IKEPAD),
+
+	PS("no-esn", ESN_NO),
+	PS("esn", ESN_YES),
 #undef PS
 
 
@@ -1504,6 +1508,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_IKE_FRAG_FORCE_IX:
 		/* --no-ikepad */
 		case CDP_SINGLETON + POLICY_NO_IKEPAD_IX:
+		/* --no-esn */
+		case CDP_SINGLETON + POLICY_ESN_NO_IX:
+		/* --esn */
+		case CDP_SINGLETON + POLICY_ESN_YES_IX:
+
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
