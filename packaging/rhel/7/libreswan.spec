@@ -12,11 +12,11 @@
 %global development 0
 %global cavstests 1
 
-#global prever rc1
+%global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: IPSECBASEVERSION
+Version: 3.17
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
