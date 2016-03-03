@@ -2504,10 +2504,23 @@ struct connection *find_host_connection(
 			bitnamesof(sa_policy_bit_names, req_policy));
 	});
 
-	return find_next_host_connection(
+	struct connection *c = find_next_host_connection(
 		find_host_pair_connections(me, my_port, him, his_port),
 		req_policy, policy_exact_mask);
+
+	/*
+	 * This could be a shared IKE SA connection, in which case
+	 * we prefer to find the connection that has the IKE SA
+	 */
+	struct connection *candidate = c;
+
+	for (; candidate != NULL; candidate = candidate->hp_next)
+		if (candidate->newest_isakmp_sa != SOS_NOBODY)
+			return candidate;
+
+	return c;
 }
+
 stf_status ikev2_find_host_connection( struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
 		u_int16_t his_port, lset_t policy)
