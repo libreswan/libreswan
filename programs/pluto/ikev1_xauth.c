@@ -1216,6 +1216,7 @@ static bool do_file_authentication(void *varg)
 	return win;
 }
 
+#ifdef XAUTH_HAVE_PAM
 /* IN AN AUTH THREAD */
 static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 {
@@ -1252,6 +1253,7 @@ static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 	pfreeany(parg.ra);
 	return (results);
 }
+#endif
 
 /*
  * Main authentication routine will then call the actual compiled-in
