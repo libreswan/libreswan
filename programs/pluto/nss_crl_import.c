@@ -75,7 +75,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 		n = 0;
 # else
 		exit_log_errno((e,
-x			"readlink(\"/proc/self/exe\") failed for crl helper"));
+			"readlink(\"/proc/self/exe\") failed for crl helper"));
 # endif
 	}
 #else
