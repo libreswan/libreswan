@@ -54,24 +54,15 @@ if [ ! -f "${OSTYPE}"base.ks ]; then
 fi
 
 # Create the virtual networks
-for netname in net/*; do
-    net=$(basename ${netname})
-    netdown=""
-    if [ -z "$(sudo virsh net-list --all | grep ${net} | \
-	awk '{ print $1 }')" ]; then
-	sudo virsh net-define net/${net}
-	sudo virsh net-autostart ${net}
-	echo ${net} created
-	sudo virsh net-start ${net}
-	echo ${net} activated
-    elif [ -n "$(sudo virsh net-list --all | grep inactive | grep ${net} | \
-	awk '{ print $1 }')" ]; then
-	sudo virsh net-start ${net}
-	echo ${net} activated
-    else
-	echo ${net} already exists - not created
-    fi
-done
+
+(
+    cd ${LIBRESWANSRCDIR}
+    make install-kvm-networks \
+	 'KVM_OS=${OSTYPE}' \
+	 'KVM_POOLDIR=${POOLSPACE}' \
+	 'KVM_SOURCEDIR=${SOURCEDIR}' \
+	 'KVM_TESTINGDIR=${TESTINGDIR}'
+)
 
 echo "creating VM disk image"
 
