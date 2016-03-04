@@ -8,61 +8,78 @@ framework.
 Just keep in mind that some is experimental.
 
 
-Creating KVM test domains
--------------------------
+Installing KVM test domains
+---------------------------
 
-This requires two steps:
+
+Makefile.inc.local configuration
+................................
+
+(from "make kvm-config-variables")
+
+Before creating the test domains, the following make variables need to
+be defined (these make variables are only used when creating the
+domains):
+
+    KVM_POOL: directory containg the test domain disks
+
+    KVM_SOURCEDIR: directory to mount on /source within the domains
+
+    KVM_TESTINGDIR: directory to mount on /testing within the domains
+
+For a traditional test domain configuration, with a single libreswan
+source directory mounted under /source, add the following to
+Makefile.inc.local:
+
+    KVM_POOL = /home/build/pool
+    KVM_SOURCEDIR = $(abs_top_srcdir)
+    KVM_TESTINGDIR = $(abs_top_srcdir)/testing
+
+Alternatively, if you have multiple libreswan source directories and
+would like their common parent directory to be mounted under /source
+then add the following to Makefile.inc.local:
+
+    KVM_POOL = $(abspath $(abs_top_srcdir)/../pool)
+    KVM_SOURCEDIR = $(abspath $(abs_top_srcdir)/..)
+    KVM_TESTINGDIR = $(abs_top_srcdir)/testing
+
+
+Installing test networks and test domains
+.........................................
+
+Once the make variables are set, the test networks and test domains
+can be installed with:
 
     make install-kvm-networks
     make install-kvm-domains
 
-By default, the KVM domain's mount points are set up as:
+Conversely the test domains and networks can be completely uninstalled
+using:
 
-    /testing   -> current source tree's testing/ directory
-    /source    -> directory above current source tree
-
-(The latter is different to the old install.sh script).  The following
-make variables (default values shown) alter this behaviour:
-
-    KVM_OS ?= fedora
-    KVM_POOL ?= /home/build/pool
-    KVM_SOURCEDIR ?= $(abspath $(abs_top_srcdir)/..)
-    KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
-
-and can be overridden in Makefile.inc.local, for instance, to point
-/source at just this source tree, set:
-
-    KVM_SOURCEDIR = $(abs_top_srcdir)
-
-To uninstall the KVM domains or networks use the targets
-"uninstall-kvm-domains" and "uninstall-kvm-networks".  Individual
-domains and networks can also be installed an uninstalled with make
-targets like install-kvm-domain-east and uninstall-kvm-domain-east.
-
-Note: qemu-img seems to occasionally trigger a kernel bug leading to a
-corrupt .qcow2 file.  The symptom is "rpm -Va" failing really badly in
-the test domains.  The make file kvm-targets.mk includes a hack -
-dmesg | grep qemu-img - that tries to detect this.  The workaround is
-to reboot your machine.
-
-(This replaces the ./testing/libvirt/install.sh and
-./testing/libvirt/uninstall.sh)
+    make uninstall-kvm-networks
+    make uninstall-kvm-domains
 
 
-Rebuilding and updating the test domains
-----------------------------------------
+Re-installing and updating test domains
+.......................................
 
-The test domains can be rebuilt with:
+It is also possible to re-install an individual test domain, such as
+east:
+
+    make uninstall-kvm-domain-east
+    make install-kvm-domain-east
+
+and all test domains without re-creating the base domain vis:
 
     make uninstall-kvm-test-domains
     make install-kvm-test-domains
 
-They will use the base .qcow2 image created earlier.  That base .qcow2
-image will not be updated.
+These make targets DO NOT update the base .qcow2 image created from
+the base domain.
 
 To also force an update of the base .qcow2 image, that file will need
 to be explicitly deleted.  This is both to prevent accidental domain
-updates; and avoid the unreliable and slow operation of creating the
+updates; and avoid the unreliable and slow process of creating the
 base .qcow2 file.
 
 
@@ -77,12 +94,15 @@ To get a shell prompt on a domain, such as east, use:
 Installing libreswan
 --------------------
 
-Use:
+To install libreswan on all test domains (except nic), use:
 
     make kvm-install
 
-To install/update a single domain use a target like
-"kvm-install-east".  To clean the build directory use:
+and to install libreswan on just one domain, for instance "east", use:
+
+    make kvm-install-east
+
+To clean the kvm build directory use:
 
     make kvm-clean
 

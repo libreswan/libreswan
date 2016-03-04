@@ -8,4 +8,4 @@ source ${LIBRESWANSRCDIR}/kvmsetup.sh
 
 cd $LIBRESWANSRCDIR
 
-make uninstall-kvm-networks uninstall-kvm-domains KVM_POOL=$POOLSPACE KVM_OS=$OSTYPE
+make uninstall-kvm-networks uninstall-kvm-domains KVM_POOLDIR=$POOLSPACE KVM_OS=$OSTYPE

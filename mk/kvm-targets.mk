@@ -25,10 +25,11 @@
 # XXX: For compatibility
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
+# KVM_SOURCEDIR ?= $(abspath $(abs_top_srcdir)/..)
+# KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+# KVM_POOLDIR ?= /home/build/pool
+
 KVM_OS ?= fedora
-KVM_POOL ?= /home/build/pool
-KVM_SOURCEDIR ?= $(abspath $(abs_top_srcdir)/..)
-KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 
 KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
@@ -197,10 +198,56 @@ $(KVM_ISO):
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
-$(KVM_POOL):
+#
+# Check that things are correctly configured for creating the KVM
+# domains
+#
+
+KVM_CONFIG =
+
+ifeq ($(and $(KVM_POOLDIR),$(KVM_SOURCEDIR),$(KVM_TESTINGDIR)),)
+KVM_CONFIG += kvm-config-variables
+endif
+.PHONY: kvm-config-variables
+kvm-config-variables:
 	@echo ''
-	@echo '    The directory $(KVM_POOL) does not exist'
-	@echo '    Either create $(KVM_POOL) or set the KVM_POOL make variable in Makefile.inc.local'
+	@echo 'Before creating the test domains, the following make variables'
+	@echo 'need to be defined (these make variables are only used when'
+	@echo 'creating the domains):'
+	@echo ''
+	@echo '    KVM_POOLDIR:    directory containg the domain file systems'
+	@echo '    KVM_SOURCEDIR:  directory to mount on /source'
+	@echo '    KVM_TESTINGDIR: directory to mount on /testing'
+	@echo ''
+	@echo 'For a traditional test domain configuration, with a single'
+	@echo 'libreswan source directory mounted under /source, add the'
+	@echo 'following to Makefile.inc.local:'
+	@echo ''
+	@echo 'KVM_POOLDIR = /home/build/pool'
+	@echo 'KVM_SOURCEDIR = $$(abs_top_srcdir)'
+	@echo 'KVM_TESTINGDIR = $$(abs_top_srcdir)/testing'
+	@echo ''
+	@echo 'Alternatively, if you have multiple libreswan source'
+	@echo 'directories and would like their common parent directory to'
+	@echo 'be mounted under /source then add the following to'
+	@echo 'Makefile.inc.local:'
+	@echo ''
+	@echo 'KVM_POOLDIR = $$(abspath $$(abs_top_srcdir)/../pool)'
+	@echo 'KVM_SOURCEDIR = $$(abspath $$(abs_top_srcdir)/..)'
+	@echo 'KVM_TESTINGDIR = $$(abs_top_srcdir)/testing'
+	@echo ''
+	@exit 1
+
+ifeq ($(wildcard $(KVM_POOLDIR)),)
+KVM_CONFIG += kvm-config-pooldir
+endif
+.PHONY: kvm-config-pooldir
+kvm-config-pooldir:
+	@echo ''
+	@echo 'The directory $(KVM_POOLDIR) does not exist.  Either:'
+	@echo ''
+	@echo '    - create $(KVM_POOLDIR) or
+	@echo '    - set the KVM_POOLDIR make variable in Makefile.inc.local'
 	@echo ''
 	@exit 1
 
@@ -216,17 +263,17 @@ $(KVM_POOL):
 
 # XXX: Could run the kickstart file through SED before using it.
 
-$(KVM_POOL)/%.ks $(KVM_POOL)/%.img: | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks $(KVM_POOL)
+$(KVM_POOLDIR)/%.ks $(KVM_POOLDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
 	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-	rm -f '$(KVM_POOL)/$*.img'
-	fallocate -l 8G '$(KVM_POOL)/$*.img'
+	rm -f '$(KVM_POOLDIR)/$*.img'
+	fallocate -l 8G '$(KVM_POOLDIR)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
 		--network=network:default,model=virtio \
 		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk path='$(KVM_POOL)/$*.img' \
+		--disk path='$(KVM_POOLDIR)/$*.img' \
 		--ram 1024 \
 		--vcpus=1 \
 		--check-cpu \
@@ -235,12 +282,12 @@ $(KVM_POOL)/%.ks $(KVM_POOL)/%.img: | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.k
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
-	cp testing/libvirt/$(KVM_OS)base.ks $(KVM_POOL)/$*.ks
+	cp testing/libvirt/$(KVM_OS)base.ks $(KVM_POOLDIR)/$*.ks
 
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
-install-kvm-base-domain: $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
+uninstall-kvm-base-domain:  $(KVM_CONFIG) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 
 # Create the base domain's .qcow2 disk image (ready for cloning)
 #
@@ -257,10 +304,10 @@ uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 # symptom seems to be a kernel barf involving qemu-img, look for that
 # in dmesg.
 
-$(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks $(KVM_POOL)/$(KVM_BASE_DOMAIN).img
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img
 	: clone
 	rm -f $@.tmp
-	sudo qemu-img convert -O qcow2 '$(KVM_POOL)/$(KVM_BASE_DOMAIN).img' $@.tmp
+	sudo qemu-img convert -O qcow2 '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img' $@.tmp
 	: try to track down an apparent corruption
 	if dmesg | grep qemu-img ; then \
 		: qemu-img caused a kernel panic, time to reboot ; \
@@ -282,49 +329,41 @@ $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_POOL)/$(KVM_BASE_DOMAIN).ks $(KVM_
 .PHONY: install-kvm-domains install-kvm-test-domains
 install-kvm-domains: install-kvm-test-domains install-kvm-base-domain
 install-kvm-test-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
-install-kvm-domain-%: $(KVM_POOL)/%.xml | $(KVM_POOL)/%.qcow2 ; @:
-.PRECIOUS: $(patsubst %,$(KVM_POOL)/%.qcow2,$(KVM_TEST_DOMAINS))
-.PRECIOUS: $(patsubst %,$(KVM_POOL)/%.xml,$(KVM_TEST_DOMAINS))
-$(KVM_POOL)/%.xml $(KVM_POOL)/%.qcow2: $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2 testing/libvirt/vm/%
+install-kvm-domain-%:  $(KVM_CONFIG) | $(KVM_POOLDIR)/%.xml $(KVM_POOLDIR)/%.qcow2 ; @:
+.PRECIOUS: $(patsubst %,$(KVM_POOLDIR)/%.qcow2,$(KVM_TEST_DOMAINS))
+.PRECIOUS: $(patsubst %,$(KVM_POOLDIR)/%.xml,$(KVM_TEST_DOMAINS))
+$(KVM_POOLDIR)/%.xml $(KVM_POOLDIR)/%.qcow2: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 testing/libvirt/vm/%
 	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
-	rm -f '$(KVM_POOL)/$*.qcow2'
-	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_POOL)/$*.qcow2'
+	rm -f '$(KVM_POOLDIR)/$*.qcow2'
+	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_POOLDIR)/$*.qcow2'
 	sed \
 		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$(KVM_POOL):" \
+		-e "s:@@POOLSPACE@@:$(KVM_POOLDIR):" \
 		-e "s:@@USER@@:$$(id -u):" \
 		-e "s:@@GROUP@@:$$(id -g qemu):" \
 		'testing/libvirt/vm/$*' \
-		> '$(KVM_POOL)/$*.tmp'
-	sudo virsh define '$(KVM_POOL)/$*.tmp'
-	mv '$(KVM_POOL)/$*.tmp' '$(KVM_POOL)/$*.xml'
-
-# some useful aliases
-kvm-domains: install-kvm-domains ; @:
-kvm-domain-%: install-kvm-domain-% ; @:
+		> '$(KVM_POOLDIR)/$*.tmp'
+	sudo virsh define '$(KVM_POOLDIR)/$*.tmp'
+	mv '$(KVM_POOLDIR)/$*.tmp' '$(KVM_POOLDIR)/$*.xml'
 
 .PHONY: uninstall-kvm-domains uninstall-kvm-test-domains
 uninstall-kvm-test-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
-	: To rebuild the test domains from the current base domain type:
+	: To rebuild the test domains from the current base domain disk type:
 	:
-	:     rm -f $(KVM_POOL)/$(KVM_BASE_DOMAIN).qcow2
+	:     rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	:
 	: This is not done by default as the operation is unreliable and slow.
 uninstall-kvm-domains: uninstall-kvm-test-domains uninstall-kvm-base-domain
-uninstall-kvm-domain-%: | $(KVM_POOL)
+uninstall-kvm-domain-%: $(KVM_CONFIG)
 	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$*' ; \
 	fi
 	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
 		sudo virsh undefine '$*' --remove-all-storage ; \
 	fi
-	rm -f $(KVM_POOL)/$*.xml   $(KVM_POOL)/$*.ks
-	rm -f $(KVM_POOL)/$*.qcow2 $(KVM_POOL)/$*.img
-
-# Some useful aliases
-kvm-clean-domains: uninstall-kvm-domains ; @:
-kvm-clean-domain-%: uninstall-kvm-domain-% ; @:
+	rm -f $(KVM_POOLDIR)/$*.xml   $(KVM_POOLDIR)/$*.ks
+	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_POOLDIR)/$*.img
 
 #
 # Build networks from scratch
@@ -347,11 +386,6 @@ uninstall-kvm-network-%:
 	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
 		sudo virsh net-undefine $* ; \
 	fi
-# Some useful aliases
-kvm-networks: install-kvm-networks ; @:
-kvm-network-%: install-kvm-network-% ; @:
-kvm-clean-networks: uninstall-kvm-networks ; @:
-kvm-clean-network-%: uninstall-kvm-network-% ; @:
 
 
 .PHONY: kvm-help
