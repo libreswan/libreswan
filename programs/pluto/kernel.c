@@ -63,6 +63,7 @@
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"
+#include "secrets.h"
 #include "log.h"
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */

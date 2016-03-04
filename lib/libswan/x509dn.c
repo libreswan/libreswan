@@ -39,7 +39,6 @@
 #include "oid.h"
 #include "x509.h"
 #include "certs.h"
-#include "secrets.h"
 #ifdef USE_MD5
 #include "md5.h"
 #endif

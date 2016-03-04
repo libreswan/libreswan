@@ -49,7 +49,6 @@
 #include "timer.h"
 #include "ike_alg.h"
 #include "id.h"
-#include "secrets.h"
 #include "keys.h"
 #include "ikev2_prf.h"
 #include "crypt_prf.h"

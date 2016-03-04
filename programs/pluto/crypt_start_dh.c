@@ -50,7 +50,6 @@
 #include "log.h"
 #include "ike_alg.h"
 #include "id.h"
-#include "secrets.h"
 #include "keys.h"
 
 /*

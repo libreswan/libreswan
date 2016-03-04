@@ -53,7 +53,6 @@
 #include "state.h"
 #include "lex.h"
 #include "keys.h"
-#include "secrets.h"
 #include "mpzfuncs.h"
 #include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
@@ -79,6 +78,7 @@
 #include <secport.h>
 #include <time.h>
 #include "lswconf.h"
+#include "secrets.h"
 
 char *pluto_shared_secrets_file;
 static struct secret *pluto_secrets = NULL;
