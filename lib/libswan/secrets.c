@@ -54,6 +54,7 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
+#include "mpzfuncs.h"	/* for n_to_mpz() */
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */

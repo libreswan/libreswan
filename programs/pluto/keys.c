@@ -54,6 +54,7 @@
 #include "lex.h"
 #include "keys.h"
 #include "secrets.h"
+#include "mpzfuncs.h"
 #include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "log.h"

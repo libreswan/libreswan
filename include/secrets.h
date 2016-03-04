@@ -25,8 +25,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include "x509.h"
-
-#include "mpzfuncs.h"
+#include <gmp.h>
 
 #ifndef SHARED_SECRETS_FILE
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"

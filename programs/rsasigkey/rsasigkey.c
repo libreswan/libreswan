@@ -32,8 +32,6 @@
 #include <libreswan.h>
 #include "lswalloc.h"
 
-#include <mpzfuncs.h>
-
 #include <prerror.h>
 #include <prinit.h>
 #include <prmem.h>
@@ -45,6 +43,7 @@
 #include <seccomon.h>
 #include <secerr.h>
 #include <secport.h>
+#include <gmp.h>
 
 #include <time.h>
 

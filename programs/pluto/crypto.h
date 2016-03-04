@@ -34,7 +34,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-#include "mpzfuncs.h"
+#include <gmp.h>
 
 extern void init_crypto(void);
 
