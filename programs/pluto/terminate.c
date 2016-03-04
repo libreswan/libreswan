@@ -39,7 +39,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "secrets.h"
 
 #include "defs.h"
 #include "connections.h"        /* needs id.h */

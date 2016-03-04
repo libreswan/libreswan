@@ -43,7 +43,6 @@
 #include "state.h"
 #include "packet.h"
 #include "keys.h"
-#include "secrets.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
 #include "spdb.h"

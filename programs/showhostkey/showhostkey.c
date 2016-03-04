@@ -50,6 +50,7 @@
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "secrets.h"
+#include "mpzfuncs.h"
 
 #include <nss.h>
 #include <prerror.h>

@@ -54,6 +54,7 @@
 #include "server.h"
 #include "vendor.h"
 #include "keys.h"
+#include "secrets.h"
 
 static u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,

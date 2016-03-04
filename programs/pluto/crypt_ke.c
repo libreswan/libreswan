@@ -52,6 +52,7 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 #include "lswconf.h"
+#include "mpzfuncs.h"
 
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)

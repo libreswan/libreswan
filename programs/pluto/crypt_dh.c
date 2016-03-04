@@ -57,7 +57,6 @@
 #include "timer.h"
 #include "ike_alg.h"
 #include "id.h"
-#include "secrets.h"
 #include "keys.h"
 #include "crypt_dh.h"
 #include "crypt_symkey.h"

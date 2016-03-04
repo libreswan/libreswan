@@ -139,6 +139,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
+#include "id.h"    /* for struct id */
 
 struct virtual_t;
 

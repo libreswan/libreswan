@@ -23,11 +23,13 @@
 #ifndef _KEYS_H
 #define _KEYS_H
 
-#include "secrets.h"
 #include "x509.h"
 #include "certs.h"
 
 struct connection;
+struct RSA_private_key;
+struct RSA_public_key;
+struct pubkey;
 
 extern int sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
 		      size_t hash_len, u_char *sig_val, size_t sig_len);

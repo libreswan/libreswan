@@ -23,7 +23,6 @@
 #define _CERTS_H
 
 #include <cert.h> /* NSS */
-#include "secrets.h"
 #include "x509.h"
 
 /* advance warning of imminent expiry of

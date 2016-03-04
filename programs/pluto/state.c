@@ -73,6 +73,7 @@
 #include "crypt_symkey.h"
 #include "spdb.h"
 #include "ikev2.h"
+#include "secrets.h"    /* unreference_key() */
 
 #include <nss.h>
 #include <pk11pub.h>

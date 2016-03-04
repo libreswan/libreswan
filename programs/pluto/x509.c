@@ -61,6 +61,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "hostpair.h" /* for find_host_pair_connections */
+#include "secrets.h"
 
 /* new NSS code */
 #include "pluto_x509.h"

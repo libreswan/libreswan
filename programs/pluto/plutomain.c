@@ -63,7 +63,7 @@
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "secrets.h"
+#include "secrets.h"    /* for free_remembered_public_keys() */
 #include "adns.h"	/* needs <resolv.h> */
 #include "dnskey.h"	/* needs keys.h and adns.h */
 #include "rnd.h"
