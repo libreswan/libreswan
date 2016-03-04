@@ -70,11 +70,11 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 		sizeof(crl_path_space));
 	if (n < 0) {
 # ifdef __uClibc__
-	/* on some nommu we have no proc/self/exe, try without path */
-	*crl_path_space = '\0';
-	n = 0;
+		/* on some nommu we have no proc/self/exe, try without path */
+		*crl_path_space = '\0';
+		n = 0;
 # else
-	exit_log_errno((e, "readlink(\"/proc/self/exe\") failed for crl helper"));
+		exit_log_errno(e, "readlink(\"/proc/self/exe\") failed for crl helper");
 # endif
 	}
 #else
@@ -92,9 +92,9 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	arg[0] = clone_str(crl_path_space, "crl path");
 
 	DBG_log("Calling %s to import CRL - url: %s, der size: %s",
-						  arg[0],
-						  arg[1],
-						  arg[2]);
+		arg[0],
+		arg[1],
+		arg[2]);
 
 	crl_si.len = len;
 	crl_si.data = der;
