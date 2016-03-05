@@ -54,7 +54,6 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
-#include "mpzfuncs.h"	/* for n_to_mpz() */
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -84,6 +83,22 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
+
+/*
+ * Convert network form (binary bytes, big-endian) to MP_INT.
+ * The *mp must not be previously mpz_inited.
+ */
+static void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
+{
+	size_t i;
+
+	mpz_init_set_ui(mp, 0);
+
+	for (i = 0; i != nlen; i++) {
+		mpz_mul_ui(mp, mp, 1 << BITS_PER_BYTE);
+		mpz_add_ui(mp, mp, nbytes[i]);
+	}
+}
 
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {

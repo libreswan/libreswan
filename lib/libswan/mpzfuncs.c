@@ -70,19 +70,3 @@ chunk_t mpz_to_n_autosize(const MP_INT *mp)
 
 	return mpz_to_n(mp, bytes);
 }
-
-/*
- * Convert network form (binary bytes, big-endian) to MP_INT.
- * The *mp must not be previously mpz_inited.
- */
-void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
-{
-	size_t i;
-
-	mpz_init_set_ui(mp, 0);
-
-	for (i = 0; i != nlen; i++) {
-		mpz_mul_ui(mp, mp, 1 << BITS_PER_BYTE);
-		mpz_add_ui(mp, mp, nbytes[i]);
-	}
-}
