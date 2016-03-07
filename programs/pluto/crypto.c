@@ -373,7 +373,7 @@ const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc
 
 static void init_oakley_groups(void)
 {
-	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
+	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 16) != 0
 	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
 				 16) != 0 ||
 	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
