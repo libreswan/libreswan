@@ -42,6 +42,7 @@ extern void init_crypto(void);
 
 struct oakley_group_desc {
 	u_int16_t group;
+	const char *modp;
 /* RFC 5114 defines new modp groups each having different generator */
 	MP_INT *generator;
 	MP_INT *modulus;

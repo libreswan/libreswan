@@ -201,6 +201,8 @@ static struct hash_desc crypto_integ_sha1 =
 
 #endif
 
+static void init_oakley_groups(void);
+
 void init_crypto(void)
 {
 #ifdef FIPS_CHECK
@@ -209,26 +211,7 @@ void init_crypto(void)
 	bool fips = FALSE;
 #endif
 
-	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
-	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
-				 16) != 0 ||
-	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
-	    mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0
-	    /* modp768_modulus no longer supported */
-	    || mpz_init_set_str(&modp1024_modulus, MODP1024_MODULUS,
-				16) != 0 ||
-	    mpz_init_set_str(&modp1536_modulus, MODP1536_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp2048_modulus, MODP2048_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp3072_modulus, MODP3072_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp4096_modulus, MODP4096_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp6144_modulus, MODP6144_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp8192_modulus, MODP8192_MODULUS, 16) != 0
-	    || mpz_init_set_str(&dh22_modulus, MODP1024_MODULUS_DH22,
-				16) != 0 ||
-	    mpz_init_set_str(&dh23_modulus, MODP2048_MODULUS_DH23, 16) != 0 ||
-	    mpz_init_set_str(&dh24_modulus, MODP2048_MODULUS_DH24, 16) != 0
-	    )
-		exit_log("mpz_init_set_str() failed in init_crypto()");
+	init_oakley_groups();
 
 #ifdef USE_TWOFISH
 	if (!fips)
@@ -287,60 +270,70 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP1024,
 		.generator = &groupgenerator,
+		.modp = MODP1024_MODULUS,
 		.modulus = &modp1024_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP1536,
 		.generator = &groupgenerator,
+		.modp = MODP1536_MODULUS,
 		.modulus = &modp1536_modulus,
 		.bytes = BYTES_FOR_BITS(1536),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP2048,
 		.generator = &groupgenerator,
+		.modp = MODP2048_MODULUS,
 		.modulus = &modp2048_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP3072,
 		.generator = &groupgenerator,
+		.modp = MODP3072_MODULUS,
 		.modulus = &modp3072_modulus,
 		.bytes = BYTES_FOR_BITS(3072),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP4096,
 		.generator = &groupgenerator,
+		.modp = MODP4096_MODULUS,
 		.modulus = &modp4096_modulus,
 		.bytes = BYTES_FOR_BITS(4096),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP6144,
 		.generator = &groupgenerator,
+		.modp = MODP6144_MODULUS,
 		.modulus = &modp6144_modulus,
 		.bytes = BYTES_FOR_BITS(6144),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP8192,
 		.generator = &groupgenerator,
+		.modp = MODP8192_MODULUS,
 		.modulus = &modp8192_modulus,
 		.bytes = BYTES_FOR_BITS(8192),
 	},
 	{
 		.group = OAKLEY_GROUP_DH22,
 		.generator = &generator_dh22,
+		.modp = MODP1024_MODULUS_DH22,
 		.modulus = &dh22_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
 	},
 	{
 		.group = OAKLEY_GROUP_DH23,
 		.generator = &generator_dh23,
+		.modp = MODP2048_MODULUS_DH23,
 		.modulus = &dh23_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
 	{
 		.group = OAKLEY_GROUP_DH24,
 		.generator = &generator_dh24,
+		.modp = MODP2048_MODULUS_DH24,
 		.modulus = &dh24_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
@@ -365,6 +358,25 @@ const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc
 		return group + 1;
 	} else {
 		return NULL;
+	}
+}
+
+static void init_oakley_groups(void)
+{
+	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
+	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
+				 16) != 0 ||
+	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
+	    mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0) {
+		exit_log("mpz_init_set_str() failed in init_crypto()");
+	}
+
+	int i;
+	for (i = 0; i != elemsof(oakley_group); i++) {
+		const struct oakley_group_desc *group = &oakley_group[i];
+		if (mpz_init_set_str(group->modulus, group->modp, 16) != 0) {
+			exit_log("mpz_init_set_str() failed in init_crypto()");
+		}
 	}
 }
 
