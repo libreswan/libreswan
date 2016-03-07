@@ -270,6 +270,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP1024,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP1024_MODULUS,
 		.modulus = &modp1024_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
@@ -277,6 +278,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP1536,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP1536_MODULUS,
 		.modulus = &modp1536_modulus,
 		.bytes = BYTES_FOR_BITS(1536),
@@ -284,6 +286,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP2048,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP2048_MODULUS,
 		.modulus = &modp2048_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
@@ -291,6 +294,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP3072,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP3072_MODULUS,
 		.modulus = &modp3072_modulus,
 		.bytes = BYTES_FOR_BITS(3072),
@@ -298,6 +302,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP4096,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP4096_MODULUS,
 		.modulus = &modp4096_modulus,
 		.bytes = BYTES_FOR_BITS(4096),
@@ -305,6 +310,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP6144,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP6144_MODULUS,
 		.modulus = &modp6144_modulus,
 		.bytes = BYTES_FOR_BITS(6144),
@@ -312,6 +318,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_MODP8192,
 		.generator = &groupgenerator,
+		.gen = MODP_GENERATOR,
 		.modp = MODP8192_MODULUS,
 		.modulus = &modp8192_modulus,
 		.bytes = BYTES_FOR_BITS(8192),
@@ -319,6 +326,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_DH22,
 		.generator = &generator_dh22,
+		.gen = MODP_GENERATOR_DH22,
 		.modp = MODP1024_MODULUS_DH22,
 		.modulus = &dh22_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
@@ -326,6 +334,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_DH23,
 		.generator = &generator_dh23,
+		.gen = MODP_GENERATOR_DH23,
 		.modp = MODP2048_MODULUS_DH23,
 		.modulus = &dh23_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
@@ -333,6 +342,7 @@ static const struct oakley_group_desc oakley_group[] = {
 	{
 		.group = OAKLEY_GROUP_DH24,
 		.generator = &generator_dh24,
+		.gen = MODP_GENERATOR_DH24,
 		.modp = MODP2048_MODULUS_DH24,
 		.modulus = &dh24_modulus,
 		.bytes = BYTES_FOR_BITS(2048),

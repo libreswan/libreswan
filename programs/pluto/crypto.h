@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,6 +43,7 @@ extern void init_crypto(void);
 
 struct oakley_group_desc {
 	u_int16_t group;
+	const char *gen;
 	const char *modp;
 /* RFC 5114 defines new modp groups each having different generator */
 	MP_INT *generator;
