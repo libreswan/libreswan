@@ -279,7 +279,7 @@ void init_crypto(void)
 
 const struct oakley_group_desc unset_group = { OAKLEY_GROUP_invalid, NULL, NULL, 0 };      /* magic signifier */
 
-const struct oakley_group_desc oakley_group[] = {
+static const struct oakley_group_desc oakley_group[] = {
 	/* modp768_modulus no longer supported - too weak */
 	{
 		.group = OAKLEY_GROUP_MODP1024,
@@ -343,8 +343,6 @@ const struct oakley_group_desc oakley_group[] = {
 	},
 };
 
-const unsigned int oakley_group_size = elemsof(oakley_group);
-
 const struct oakley_group_desc *lookup_group(u_int16_t group)
 {
 	int i;
@@ -354,6 +352,17 @@ const struct oakley_group_desc *lookup_group(u_int16_t group)
 			return &oakley_group[i];
 
 	return NULL;
+}
+
+const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *group)
+{
+	if (group == NULL) {
+		return &oakley_group[0];
+	} else if (group < &oakley_group[elemsof(oakley_group) - 1]) {
+		return group + 1;
+	} else {
+		return NULL;
+	}
 }
 
 /* Encryption Routines

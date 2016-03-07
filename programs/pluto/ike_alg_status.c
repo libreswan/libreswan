@@ -56,7 +56,6 @@
  */
 void ike_alg_show_status(void)
 {
-	unsigned i;
 	struct ike_alg *algo;
 
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
@@ -89,11 +88,10 @@ void ike_alg_show_status(void)
 			  ((struct hash_desc *)algo)->hash_digest_len);
 	}
 
-#define IKE_DH_ALG_FOR_EACH(idx) for ((idx) = 0; (idx) != oakley_group_size; (idx)++)
-
-	IKE_DH_ALG_FOR_EACH(i) {
-		const struct oakley_group_desc *gdesc = oakley_group + i;
-
+	const struct oakley_group_desc *gdesc;
+	for (gdesc = next_oakley_group(NULL);
+	     gdesc != NULL;
+	     gdesc = next_oakley_group(gdesc)) {
 		whack_log(RC_COMMENT,
 			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
 			  gdesc->group,
