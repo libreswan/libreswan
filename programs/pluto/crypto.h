@@ -35,8 +35,6 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-#include <gmp.h>
-
 extern void init_crypto(void);
 
 /* Oakley group descriptions */
@@ -45,15 +43,14 @@ struct oakley_group_desc {
 	u_int16_t group;
 	const char *gen;
 	const char *modp;
-/* RFC 5114 defines new modp groups each having different generator */
-	MP_INT *generator;
-	MP_INT *modulus;
 	size_t bytes;
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */
 extern const struct oakley_group_desc *lookup_group(u_int16_t group);
 const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
+void get_oakley_group_param(const struct oakley_group_desc *,
+			    chunk_t *base, chunk_t *prime);
 
 /* unification of cryptographic encoding/decoding algorithms
  *

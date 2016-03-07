@@ -37,33 +37,11 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "test_buffer.h"
 
 #include "pem.h"
 
 #include "lswconf.h" /* for libreswan_fipsmode() */
-
-/* moduli and generator. */
-
-static MP_INT
-	/* modp768_modulus no longer supported - it is too weak */
-	modp1024_modulus, /* migrate away from this if you are still using it */
-	modp1536_modulus,
-	modp2048_modulus,
-	modp3072_modulus,
-	modp4096_modulus,
-	modp6144_modulus,
-	modp8192_modulus;
-
-static MP_INT
-	dh22_modulus,
-	dh23_modulus,
-	dh24_modulus;
-
-static MP_INT groupgenerator;  /* MODP group generator (2) */
-
-static MP_INT generator_dh22,
-       generator_dh23,
-       generator_dh24;
 
 #ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
@@ -201,8 +179,6 @@ static struct hash_desc crypto_integ_sha1 =
 
 #endif
 
-static void init_oakley_groups(void);
-
 void init_crypto(void)
 {
 #ifdef FIPS_CHECK
@@ -210,8 +186,6 @@ void init_crypto(void)
 #else
 	bool fips = FALSE;
 #endif
-
-	init_oakley_groups();
 
 #ifdef USE_TWOFISH
 	if (!fips)
@@ -265,86 +239,66 @@ const struct oakley_group_desc unset_group = {
 	.group = OAKLEY_GROUP_invalid,
 };
 
-static const struct oakley_group_desc oakley_group[] = {
+static struct oakley_group_desc oakley_group[] = {
 	/* modp768_modulus no longer supported - too weak */
 	{
 		.group = OAKLEY_GROUP_MODP1024,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP1024_MODULUS,
-		.modulus = &modp1024_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP1536,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP1536_MODULUS,
-		.modulus = &modp1536_modulus,
 		.bytes = BYTES_FOR_BITS(1536),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP2048,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP2048_MODULUS,
-		.modulus = &modp2048_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP3072,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP3072_MODULUS,
-		.modulus = &modp3072_modulus,
 		.bytes = BYTES_FOR_BITS(3072),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP4096,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP4096_MODULUS,
-		.modulus = &modp4096_modulus,
 		.bytes = BYTES_FOR_BITS(4096),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP6144,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP6144_MODULUS,
-		.modulus = &modp6144_modulus,
 		.bytes = BYTES_FOR_BITS(6144),
 	},
 	{
 		.group = OAKLEY_GROUP_MODP8192,
-		.generator = &groupgenerator,
 		.gen = MODP_GENERATOR,
 		.modp = MODP8192_MODULUS,
-		.modulus = &modp8192_modulus,
 		.bytes = BYTES_FOR_BITS(8192),
 	},
 	{
 		.group = OAKLEY_GROUP_DH22,
-		.generator = &generator_dh22,
 		.gen = MODP_GENERATOR_DH22,
 		.modp = MODP1024_MODULUS_DH22,
-		.modulus = &dh22_modulus,
 		.bytes = BYTES_FOR_BITS(1024),
 	},
 	{
 		.group = OAKLEY_GROUP_DH23,
-		.generator = &generator_dh23,
 		.gen = MODP_GENERATOR_DH23,
 		.modp = MODP2048_MODULUS_DH23,
-		.modulus = &dh23_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
 	{
 		.group = OAKLEY_GROUP_DH24,
-		.generator = &generator_dh24,
 		.gen = MODP_GENERATOR_DH24,
 		.modp = MODP2048_MODULUS_DH24,
-		.modulus = &dh24_modulus,
 		.bytes = BYTES_FOR_BITS(2048),
 	},
 };
@@ -371,23 +325,11 @@ const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc
 	}
 }
 
-static void init_oakley_groups(void)
+void get_oakley_group_param(const struct oakley_group_desc *group,
+			    chunk_t *base, chunk_t *prime)
 {
-	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 16) != 0
-	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
-				 16) != 0 ||
-	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
-	    mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0) {
-		exit_log("mpz_init_set_str() failed in init_crypto()");
-	}
-
-	int i;
-	for (i = 0; i != elemsof(oakley_group); i++) {
-		const struct oakley_group_desc *group = &oakley_group[i];
-		if (mpz_init_set_str(group->modulus, group->modp, 16) != 0) {
-			exit_log("mpz_init_set_str() failed in init_crypto()");
-		}
-	}
+	*base = decode_hex_to_chunk(group->gen, group->gen);
+	*prime = decode_hex_to_chunk(group->modp, group->modp);
 }
 
 /* Encryption Routines
