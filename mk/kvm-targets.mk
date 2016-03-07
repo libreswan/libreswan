@@ -77,7 +77,8 @@ $(KVM_BUILD_TARGETS):
 kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
 kvm-install-%: kvm-build
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . $* 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+	$(KVMSH_COMMAND) --chdir . --shutdown $* \
+		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
 
 # To avoid parallel "make base" and "make module" builds stepping on
 # each others toes, this uses sub-makes to explicitly serialize "base"
