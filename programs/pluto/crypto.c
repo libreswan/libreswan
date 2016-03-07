@@ -5,6 +5,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -280,27 +281,66 @@ const struct oakley_group_desc unset_group = { OAKLEY_GROUP_invalid, NULL, NULL,
 
 const struct oakley_group_desc oakley_group[] = {
 	/* modp768_modulus no longer supported - too weak */
-	{ OAKLEY_GROUP_MODP1024, &groupgenerator, &modp1024_modulus,
-	  BYTES_FOR_BITS(1024) },
-	{ OAKLEY_GROUP_MODP1536, &groupgenerator, &modp1536_modulus,
-	  BYTES_FOR_BITS(1536) },
-	{ OAKLEY_GROUP_MODP2048, &groupgenerator, &modp2048_modulus,
-	  BYTES_FOR_BITS(2048) },
-	{ OAKLEY_GROUP_MODP3072, &groupgenerator, &modp3072_modulus,
-	  BYTES_FOR_BITS(3072) },
-	{ OAKLEY_GROUP_MODP4096, &groupgenerator, &modp4096_modulus,
-	  BYTES_FOR_BITS(4096) },
-	{ OAKLEY_GROUP_MODP6144, &groupgenerator, &modp6144_modulus,
-	  BYTES_FOR_BITS(6144) },
-	{ OAKLEY_GROUP_MODP8192, &groupgenerator, &modp8192_modulus,
-	  BYTES_FOR_BITS(8192) },
-	{ OAKLEY_GROUP_DH22, &generator_dh22, &dh22_modulus, BYTES_FOR_BITS(
-		  1024) },
-	{ OAKLEY_GROUP_DH23, &generator_dh23, &dh23_modulus, BYTES_FOR_BITS(
-		  2048) },
-	{ OAKLEY_GROUP_DH24, &generator_dh24, &dh24_modulus, BYTES_FOR_BITS(
-		  2048) },
-
+	{
+		.group = OAKLEY_GROUP_MODP1024,
+		.generator = &groupgenerator,
+		.modulus = &modp1024_modulus,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP1536,
+		.generator = &groupgenerator,
+		.modulus = &modp1536_modulus,
+		.bytes = BYTES_FOR_BITS(1536),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP2048,
+		.generator = &groupgenerator,
+		.modulus = &modp2048_modulus,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP3072,
+		.generator = &groupgenerator,
+		.modulus = &modp3072_modulus,
+		.bytes = BYTES_FOR_BITS(3072),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP4096,
+		.generator = &groupgenerator,
+		.modulus = &modp4096_modulus,
+		.bytes = BYTES_FOR_BITS(4096),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP6144,
+		.generator = &groupgenerator,
+		.modulus = &modp6144_modulus,
+		.bytes = BYTES_FOR_BITS(6144),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP8192,
+		.generator = &groupgenerator,
+		.modulus = &modp8192_modulus,
+		.bytes = BYTES_FOR_BITS(8192),
+	},
+	{
+		.group = OAKLEY_GROUP_DH22,
+		.generator = &generator_dh22,
+		.modulus = &dh22_modulus,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+	{
+		.group = OAKLEY_GROUP_DH23,
+		.generator = &generator_dh23,
+		.modulus = &dh23_modulus,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_DH24,
+		.generator = &generator_dh24,
+		.modulus = &dh24_modulus,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
 };
 
 const unsigned int oakley_group_size = elemsof(oakley_group);
