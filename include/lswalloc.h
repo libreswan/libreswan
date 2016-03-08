@@ -96,6 +96,12 @@ typedef struct chunk chunk_t;
 #define clonetochunk(ch, addr, size, name) \
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
+#define chunk_clone(OLD, NAME) (chunk_t)			\
+	{							\
+		.ptr = clone_bytes((OLD).ptr, (OLD).len, NAME), \
+		.len = (OLD).len,				\
+	}
+
 #define clonereplacechunk(ch, addr, size, name) \
 	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
 
