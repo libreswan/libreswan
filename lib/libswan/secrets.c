@@ -54,6 +54,7 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
+#include "mpzfuncs.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -126,34 +127,15 @@ static void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
 	}
 }
 
-static void RSA_show_key_fields(struct RSA_private_key *k)
-{
-	const struct fld *p;
-
-	DBG_log(" keyid: *%s", k->pub.keyid);
-
-	for (p = RSA_private_field; p < &RSA_private_field[2]; p++) {
-		passert(p->offset >= 0);
-		MP_INT *n = (MP_INT *) ((char *)k + p->offset);
-		size_t sz = mpz_sizeinbase(n, 16);
-		/* ought to be big enough */
-		char buf[RSA_MAX_OCTETS * 2 + 2];
-
-		passert(sz <= sizeof(buf));
-		mpz_get_str(buf, 16, n);
-
-		DBG_log(" %s: %s", p->name, buf);
-	}
-}
-
 static void RSA_show_public_key(struct RSA_public_key *k)
 {
-	/*
-	 * Kludge: pretend that it is a private key, but only display the
-	 * first two fields (which are the public key).
-	 */
-	passert(offsetof(struct RSA_private_key, pub) == 0);
-	RSA_show_key_fields((struct RSA_private_key *)k);
+	DBG_log(" keyid: *%s", k->keyid);
+	chunk_t n = mpz_to_n_autosize(&k->n);
+	chunk_t e = mpz_to_n_autosize(&k->e);
+	DBG_dump_chunk("n", n);
+	DBG_dump_chunk("e", e);
+	freeanychunk(n);
+	freeanychunk(e);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
