@@ -60,7 +60,7 @@ const struct id empty_id;	/* ID_NONE */
 
 struct fld {
 	const char *name;
-	size_t offset;
+	ssize_t offset;
 };
 
 static const struct fld RSA_private_field[] = {
@@ -75,27 +75,27 @@ static const struct fld RSA_private_field[] = {
 
 	{
 		.name = "PrivateExponent",
-		.offset = offsetof(struct RSA_private_key, d),
+		.offset = -1,
 	},
 	{
 		.name = "Prime1",
-		.offset = offsetof(struct RSA_private_key, p),
+		.offset = -1,
 	},
 	{
 		.name = "Prime2",
-		.offset = offsetof(struct RSA_private_key, q),
+		.offset = -1,
 	},
 	{
 		.name = "Exponent1",
-		.offset = offsetof(struct RSA_private_key, dP),
+		.offset = -1,
 	},
 	{
 		.name = "Exponent2",
-		.offset = offsetof(struct RSA_private_key, dQ),
+		.offset = -1,
 	},
 	{
 		.name = "Coefficient",
-		.offset = offsetof(struct RSA_private_key, qInv),
+		.offset = -1,
 	},
 	{
 		.name = "CKAIDNSS",
@@ -126,13 +126,14 @@ static void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
 	}
 }
 
-static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
+static void RSA_show_key_fields(struct RSA_private_key *k)
 {
 	const struct fld *p;
 
 	DBG_log(" keyid: *%s", k->pub.keyid);
 
-	for (p = RSA_private_field; p < &RSA_private_field[fieldcnt]; p++) {
+	for (p = RSA_private_field; p < &RSA_private_field[2]; p++) {
+		passert(p->offset >= 0);
 		MP_INT *n = (MP_INT *) ((char *)k + p->offset);
 		size_t sz = mpz_sizeinbase(n, 16);
 		/* ought to be big enough */
@@ -152,7 +153,7 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	 * first two fields (which are the public key).
 	 */
 	passert(offsetof(struct RSA_private_key, pub) == 0);
-	RSA_show_key_fields((struct RSA_private_key *)k, 2);
+	RSA_show_key_fields((struct RSA_private_key *)k);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
@@ -767,10 +768,15 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			memcpy(rsak->ckaid, bv, bvlen);
 			rsak->ckaid_len = bvlen;
 		} else {
-			MP_INT *n =
-				(MP_INT *) ((char *)rsak + p->offset);
-
-			n_to_mpz(n, bv, bvlen);
+			if (p->offset >= 0) {
+				MP_INT *n = (MP_INT *) ((char *)rsak + p->offset);
+				n_to_mpz(n, bv, bvlen);
+				DBG(DBG_PRIVATE,
+				    DBG_dump(p->name, bv, bvlen));
+			} else {
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("ignoring field %s", p->name));
+			}
 			if (pfv_next < &pub_field[elemsof(pub_field)]) {
 				if (pfvs_next - pfv_space + bvlen >
 					sizeof(pfv_space))
@@ -1157,12 +1163,6 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 			case PPK_RSA:
 				free_RSA_public_content(
 					&s->pks.u.RSA_private_key.pub);
-				mpz_clear(&s->pks.u.RSA_private_key.d);
-				mpz_clear(&s->pks.u.RSA_private_key.p);
-				mpz_clear(&s->pks.u.RSA_private_key.q);
-				mpz_clear(&s->pks.u.RSA_private_key.dP);
-				mpz_clear(&s->pks.u.RSA_private_key.dQ);
-				mpz_clear(&s->pks.u.RSA_private_key.qInv);
 				break;
 			default:
 				bad_case(s->pks.kind);

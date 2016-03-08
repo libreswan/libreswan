@@ -49,15 +49,6 @@ struct RSA_public_key {
 
 struct RSA_private_key {
 	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
-
-	MP_INT
-		d,				/* private exponent: (e^-1) mod ((p-1) * (q-1)) */
-	/* help for Chinese Remainder Theorem speedup: */
-		p,				/* first secret prime */
-		q,				/* second secret prime */
-		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
-		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
-		qInv;				/* (q^-1) mod p */
 	/*
 	 * ckaid for use in NSS
 	 *
