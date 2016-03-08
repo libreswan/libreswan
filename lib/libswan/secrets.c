@@ -63,18 +63,44 @@ struct fld {
 	size_t offset;
 };
 
-static const struct fld RSA_private_field[] =
-{
-	{ "Modulus", offsetof(struct RSA_private_key, pub.n) },
-	{ "PublicExponent", offsetof(struct RSA_private_key, pub.e) },
+static const struct fld RSA_private_field[] = {
+	{
+		.name = "Modulus",
+		.offset = offsetof(struct RSA_private_key, pub.n),
+	},
+	{
+		.name = "PublicExponent",
+		.offset = offsetof(struct RSA_private_key, pub.e),
+	},
 
-	{ "PrivateExponent", offsetof(struct RSA_private_key, d) },
-	{ "Prime1", offsetof(struct RSA_private_key, p) },
-	{ "Prime2", offsetof(struct RSA_private_key, q) },
-	{ "Exponent1", offsetof(struct RSA_private_key, dP) },
-	{ "Exponent2", offsetof(struct RSA_private_key, dQ) },
-	{ "Coefficient", offsetof(struct RSA_private_key, qInv) },
-	{ "CKAIDNSS", offsetof(struct RSA_private_key, ckaid) },
+	{
+		.name = "PrivateExponent",
+		.offset = offsetof(struct RSA_private_key, d),
+	},
+	{
+		.name = "Prime1",
+		.offset = offsetof(struct RSA_private_key, p),
+	},
+	{
+		.name = "Prime2",
+		.offset = offsetof(struct RSA_private_key, q),
+	},
+	{
+		.name = "Exponent1",
+		.offset = offsetof(struct RSA_private_key, dP),
+	},
+	{
+		.name = "Exponent2",
+		.offset = offsetof(struct RSA_private_key, dQ),
+	},
+	{
+		.name = "Coefficient",
+		.offset = offsetof(struct RSA_private_key, qInv),
+	},
+	{
+		.name = "CKAIDNSS",
+		.offset = offsetof(struct RSA_private_key, ckaid),
+	},
 };
 
 static err_t lsw_process_psk_secret(chunk_t *psk);
