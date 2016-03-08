@@ -21,4 +21,4 @@ else
 include ../../mk/program.mk
 endif
 
-LDLIBS+=${NSSLIBS} -lgmp
+LDLIBS+=${NSSLIBS}

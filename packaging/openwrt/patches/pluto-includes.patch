@@ -17,8 +17,8 @@ diff -urN libreswan-2.3.1dr6.old/programs/pluto/Makefile libreswan-2.3.1dr6.dev/
  LIBSPLUTO+=$(X509_LIBS) 
  LIBSPLUTO+=$(HAVE_THREADS_LIBS) ${XAUTHPAM_LIBS}
  LIBSPLUTO+=${CURL_LIBS} 
--LIBSPLUTO+= -lgmp -lresolv # -lefence
-+LIBSPLUTO+= $(EXTRA_LIBS) -lgmp -lresolv # -lefence
+-LIBSPLUTO+= -lresolv # -lefence
++LIBSPLUTO+= $(EXTRA_LIBS) -lresolv # -lefence
  
  ifneq ($(LD_LIBRARY_PATH),)
  LDFLAGS=-L$(LD_LIBRARY_PATH)

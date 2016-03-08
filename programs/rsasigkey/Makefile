@@ -13,7 +13,7 @@
 #
 
 PROGRAM=rsasigkey
-LIBS=${LSWLOGLIB} ${LIBRESWANLIB} -lgmp
+LIBS=${LSWLOGLIB} ${LIBRESWANLIB}
 LIBS+=${NSSLIBS}
 
 ifdef top_srcdir
