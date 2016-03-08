@@ -116,12 +116,6 @@ static SECItem *getModulus(SECKEYPublicKey *pk)
 	return &pk->u.rsa.modulus;
 }
 
-/* getPublicExponent - returns public exponent of the RSA public key */
-static SECItem *getPublicExponent(SECKEYPublicKey *pk)
-{
-	return &pk->u.rsa.publicExponent;
-}
-
 /*
  * hexOut - prepare hex output, guaranteeing even number of digits.
  * (The current Libreswan conversion routines expect an even digit count.)
@@ -507,7 +501,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
 	fprintf(stderr,
-		"Generated RSA key pair using the NSS database\n");
+		"Generated RSA key pair was stored in the NSS database\n");
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
@@ -519,20 +513,10 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	bundp = bundle(E, getModulus(pubkey), &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
 
-	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
-	printf("\tPublicExponent: %s\n",
-	       hexOut(getPublicExponent(pubkey)));
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex format - not the real values\n");
-		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
-		printf("\tPrime1: %s\n", hexOut(ckaID));
-		printf("\tPrime2: %s\n", hexOut(ckaID));
-		printf("\tExponent1: %s\n", hexOut(ckaID));
-		printf("\tExponent2: %s\n", hexOut(ckaID));
-		printf("\tCoefficient: %s\n", hexOut(ckaID));
-		printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
+		printf("\t#CKAIDNSS: %s\n", hexOut(ckaID));
 		SECITEM_FreeItem(ckaID, PR_TRUE);
 	}
 
