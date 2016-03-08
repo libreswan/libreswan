@@ -8,11 +8,11 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:IPSECBASEVERSION
+PKG_VERSION:3.17rc2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://download.libreswan.org/
+PKG_SOURCE_URL:=https://download.libreswan.org/testing/
 PKG_MD5SUM:=calculate_me
 
 include $(INCLUDE_DIR)/package.mk
