@@ -6,7 +6,7 @@ Specific vendors/distribution build instructions available in packaging/
 Build requirements
 ------------------
 bison flex pkgconfig gcc make xmlto
-gmp-devel nss-devel nspr-devel libevent-devel
+nss-devel nspr-devel libevent-devel
 
 for systemd: pkgconfig hostname systemd
 for pam/xauth: pam-devel

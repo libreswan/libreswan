@@ -51,7 +51,7 @@ For Debian/Ubuntu
 
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
-		libcurl3-nss-dev libgmp3-dev flex bison gcc make \
+		libcurl3-nss-dev flex bison gcc make \
 		libunbound-dev libnss3-tools libevent-dev xmlto
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
@@ -60,7 +60,7 @@ For Fedora/RHEL/CentOS
 
 	yum install nss-devel nspr-devel pkg-config pam-devel \
 		libcap-ng-devel libselinux-devel \
-		curl-devel gmp-devel flex bison gcc make \
+		curl-devel flex bison gcc make \
 		fipscheck-devel unbound-devel libevent-devel
 
 (note: for rhel6/centos6 use libevent2-devel)

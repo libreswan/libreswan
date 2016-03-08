@@ -7,7 +7,7 @@ west #
 /bin/bash -c "unset module; export LIBRESWANLIB=/source/OBJ.linux.x86_64/lib/libswan/libswan.a REGRESSRESULTS=${REGRESSRESULTS-../results} ; . /source/testing/utils/functions.sh; . ./TESTLIST"
 **** make libtest COMPILING enumcheck.c ****
    Sourcing ./FLAGS.enumcheck
- cc -g -o enumcheck -DSWAN_TESTING -DENUMCHECK_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./enumcheck.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lgmp -lefence -Iinclude/
+ cc -g -o enumcheck -DSWAN_TESTING -DENUMCHECK_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./enumcheck.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lefence -Iinclude/
    Running enumcheck
    Exit code 0
    output matched
@@ -15,7 +15,7 @@ Recording "true: 0" to ../results/lib-enumcheck/status
 *******  PASSED  lib-enumcheck ********
 **** make libtest COMPILING algparse.c ****
    Sourcing ./FLAGS.algparse
- cc -g -o algparse -DSWAN_TESTING -DALGPARSE_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./algparse.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lgmp -lefence -Iinclude/
+ cc -g -o algparse -DSWAN_TESTING -DALGPARSE_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./algparse.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lefence -Iinclude/
    Running algparse
    Exit code 0
    output matched

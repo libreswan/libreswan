@@ -16,6 +16,7 @@ v3.17 (unrelease)
 * pluto: pluto: connection restarts did not use dynamic dns information [Wolfgang]
 * pluto: Ignore tentative and failed IPv6 addresses [Lubomir Rintel]
 * pluto: Fix arious coverity warnings and corner cases [Hugh, Paul]
+* pluto/rsasigkey: libgmp functions obsoleted by native NSS [Andrew]
 * KLIPS: Support for Linux 4.4.x kernel (lsw#256) [Wolfgang]
 * KLIPS: IPv6 can't determine routing device (lsw#237) [Wolfgang]
 * barf: Does not show pluto log correctly in the output (rhbz#1309764) [Paul]
