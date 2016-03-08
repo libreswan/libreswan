@@ -606,8 +606,6 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 deb:
-	cp debian/changelog.in debian/changelog
-	cp debian/NEWS.in debian/NEWS
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
 	debuild -i -us -uc -b
 	#debuild -S -sa
