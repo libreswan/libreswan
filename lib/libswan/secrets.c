@@ -8,6 +8,7 @@
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,7 +55,6 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
-#include "mpzfuncs.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -110,32 +110,11 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-
-/*
- * Convert network form (binary bytes, big-endian) to MP_INT.
- * The *mp must not be previously mpz_inited.
- */
-static void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
-{
-	size_t i;
-
-	mpz_init_set_ui(mp, 0);
-
-	for (i = 0; i != nlen; i++) {
-		mpz_mul_ui(mp, mp, 1 << BITS_PER_BYTE);
-		mpz_add_ui(mp, mp, nbytes[i]);
-	}
-}
-
 static void RSA_show_public_key(struct RSA_public_key *k)
 {
 	DBG_log(" keyid: *%s", k->keyid);
-	chunk_t n = mpz_to_n_autosize(&k->n);
-	chunk_t e = mpz_to_n_autosize(&k->e);
-	DBG_dump_chunk("n", n);
-	DBG_dump_chunk("e", e);
-	freeanychunk(n);
-	freeanychunk(e);
+	DBG_dump_chunk("n", k->n);
+	DBG_dump_chunk("e", k->e);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
@@ -272,8 +251,8 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 
 void free_RSA_public_content(struct RSA_public_key *rsa)
 {
-	mpz_clear(&rsa->n);
-	mpz_clear(&rsa->e);
+	freeanychunk(rsa->n);
+	freeanychunk(rsa->e);
 }
 
 /*
@@ -751,10 +730,10 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			rsak->ckaid_len = bvlen;
 		} else {
 			if (p->offset >= 0) {
-				MP_INT *n = (MP_INT *) ((char *)rsak + p->offset);
-				n_to_mpz(n, bv, bvlen);
+				chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
+				clonetochunk(*n, bv, bvlen, "n");
 				DBG(DBG_PRIVATE,
-				    DBG_dump(p->name, bv, bvlen));
+				    DBG_dump_chunk(p->name, *n));
 			} else {
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("ignoring field %s", p->name));
@@ -782,10 +761,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	} else if (shift()) {
 		return "malformed end of RSA private key -- unexpected token after '}'";
 	} else {
-		unsigned bits = mpz_sizeinbase(&rsak->pub.n, 2);
-
-		rsak->pub.k = (bits + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-
+		rsak->pub.k = rsak->pub.n.len;
 		rsak->pub.keyid[0] = '\0';	/* in case of failure */
 		splitkeytoid(pub_field[1].ptr, pub_field[1].len,
 			pub_field[0].ptr, pub_field[0].len,
@@ -1273,19 +1249,18 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 	if (mod.len > RSA_MAX_OCTETS)
 		return RSA_MAX_OCTETS_UGH;
 
-	n_to_mpz(&rsa->e, exponent.ptr, exponent.len);
-	n_to_mpz(&rsa->n, mod.ptr, mod.len);
+	rsa->e = chunk_clone(exponent, "e");
+	rsa->n = chunk_clone(mod, "n");
 
 	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
 
 	DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
 
-	rsa->k = mpz_sizeinbase(&rsa->n, 2);	/* size in bits, for a start */
-	rsa->k = (rsa->k + BITS_PER_BYTE - 1) / BITS_PER_BYTE;	/* now octets */
+	rsa->k = rsa->n.len;
 
 	if (rsa->k != mod.len) {
-		mpz_clear(&rsa->e);
-		mpz_clear(&rsa->n);
+		freeanychunk(rsa->e);
+		freeanychunk(rsa->n);
 		return "RSA modulus shorter than specified";
 	}
 
@@ -1299,20 +1274,18 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 		DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT ");
 		);
 	DBG(DBG_CRYPT,
-		DBG_log("n did %smatch",
-			(mpz_cmp(&a->n,
-				&b->n) == 0) ? "" : "NOT ");
+	    DBG_log("n did %smatch",
+		    same_chunk(a->n, b->n) ? "" : "NOT ");
 		);
 	DBG(DBG_CRYPT,
 		DBG_log("e did %smatch",
-			(mpz_cmp(&a->e,
-				&b->e) == 0) ? "" : "NOT ");
+			same_chunk(a->e, b->e) ? "" : "NOT ");
 		);
 
 	return a == b ||
 		(a->k == b->k &&
-			mpz_cmp(&a->n, &b->n) == 0 &&
-			mpz_cmp(&a->e, &b->e) == 0);
+		 same_chunk(a->n, b->n) &&
+		 same_chunk(a->e, b->e));
 }
 
 void install_public_key(struct pubkey *pk, struct pubkey_list **head)
@@ -1373,8 +1346,8 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	n.ptr = nsspk->u.rsa.modulus.data;
 	n.len = nsspk->u.rsa.modulus.len;
 
-	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
+	pk->u.rsa.e = chunk_clone(e, "e");
+	pk->u.rsa.n = chunk_clone(n, "n");
 
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
@@ -1442,10 +1415,10 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 	rsak->ckaid_len = certCKAID->len;
 	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
 
-	n_to_mpz(&rsak->pub.e, pubk->u.rsa.publicExponent.data,
-		pubk->u.rsa.publicExponent.len);
-	n_to_mpz(&rsak->pub.n, pubk->u.rsa.modulus.data,
-		pubk->u.rsa.modulus.len);
+	clonetochunk(rsak->pub.e, pubk->u.rsa.publicExponent.data,
+		     pubk->u.rsa.publicExponent.len, "e");
+	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
+		     pubk->u.rsa.modulus.len, "n");
 
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);

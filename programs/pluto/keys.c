@@ -53,7 +53,6 @@
 #include "state.h"
 #include "lex.h"
 #include "keys.h"
-#include "mpzfuncs.h"
 #include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "log.h"
@@ -238,7 +237,6 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	SECStatus retVal;
 	SECItem nss_n, nss_e;
 	SECItem signature, data;
-	chunk_t n, e;
 
 	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
@@ -261,9 +259,9 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/* Converting n(modulus) and e(exponent) from mpz_t form to chunk_t */
-	n = mpz_to_n_autosize(&k->n);
-	e = mpz_to_n_autosize(&k->e);
+	/* make a local copy.  */
+	chunk_t n = chunk_clone(k->n, "n");
+	chunk_t e = chunk_clone(k->e, "e");
 
 	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
@@ -762,8 +760,8 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 
 	memcpy(p->u.rsa.keyid, k->keyid, sizeof(p->u.rsa.keyid));
 	p->u.rsa.k = k->k;
-	mpz_init_set(&p->u.rsa.e, &k->e);
-	mpz_init_set(&p->u.rsa.n, &k->n);
+	p->u.rsa.e = chunk_clone(k->e, "e");
+	p->u.rsa.n = chunk_clone(k->n, "n");
 
 	/* note that we return a 1 reference count upon creation:
 	 * invariant: recount > 0.
