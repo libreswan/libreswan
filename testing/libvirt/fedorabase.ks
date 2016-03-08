@@ -93,8 +93,6 @@ yum install -y 2>&1 \
     gcc \
     gdb \
     git \
-    gmp-devel \
-    gmp-devel \
     hping3 \
     ipsec-tools \
     libcap-ng-devel \
@@ -139,7 +137,6 @@ debuginfo-install -y \
     audit-libs \
     cyrus-sasl \
     glibc \
-    gmp \
     keyutils \
     krb5-libs \
     ldns \
