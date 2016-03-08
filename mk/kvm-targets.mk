@@ -330,10 +330,10 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_B
 .PHONY: install-kvm-domains install-kvm-test-domains
 install-kvm-domains: install-kvm-test-domains install-kvm-base-domain
 install-kvm-test-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
-install-kvm-domain-%:  $(KVM_CONFIG) | $(KVM_POOLDIR)/%.xml $(KVM_POOLDIR)/%.qcow2 ; @:
+install-kvm-domain-%:  $(KVM_CONFIG) $(KVM_POOLDIR)/%.qcow2 $(KVM_POOLDIR)/%.xml ; @:
 .PRECIOUS: $(patsubst %,$(KVM_POOLDIR)/%.qcow2,$(KVM_TEST_DOMAINS))
 .PRECIOUS: $(patsubst %,$(KVM_POOLDIR)/%.xml,$(KVM_TEST_DOMAINS))
-$(KVM_POOLDIR)/%.xml $(KVM_POOLDIR)/%.qcow2: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 testing/libvirt/vm/%
+$(KVM_POOLDIR)/%.xml $(KVM_POOLDIR)/%.qcow2:  $(KVM_CONFIG) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 | testing/libvirt/vm/%
 	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
 	rm -f '$(KVM_POOLDIR)/$*.qcow2'
 	sudo qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_POOLDIR)/$*.qcow2'
