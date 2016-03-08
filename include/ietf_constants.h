@@ -27,7 +27,7 @@
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
 
-#define MODP_GENERATOR "2"
+#define MODP_GENERATOR "02" /* HEX! */
 
 /* Diffie-Hellman group 22 generator (RFC 5114) */
 #define MODP_GENERATOR_DH22 \

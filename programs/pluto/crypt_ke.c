@@ -52,7 +52,7 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 #include "lswconf.h"
-#include "mpzfuncs.h"
+#include "test_buffer.h"
 
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)
@@ -63,8 +63,9 @@ void calc_ke(struct pluto_crypto_req *r)
 	SECKEYPublicKey *pubk;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
 	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
-	chunk_t base  = mpz_to_n_autosize(group->generator);
-	chunk_t prime = mpz_to_n_autosize(group->modulus);
+	chunk_t base;
+	chunk_t prime;
+	get_oakley_group_param(group, &base, &prime);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:", prime));
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:", base));

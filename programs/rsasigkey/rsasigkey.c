@@ -43,7 +43,6 @@
 #include <seccomon.h>
 #include <secerr.h>
 #include <secport.h>
-#include <gmp.h>
 
 #include <time.h>
 
@@ -106,9 +105,8 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-static const unsigned char *bundle(int e, mpz_t n, size_t *sizep);
+static const unsigned char *bundle(int e, SECItem *, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
-static const char *hexout(mpz_t var);
 void report(char *msg);
 
 
@@ -122,18 +120,6 @@ static SECItem *getModulus(SECKEYPublicKey *pk)
 static SECItem *getPublicExponent(SECKEYPublicKey *pk)
 {
 	return &pk->u.rsa.publicExponent;
-}
-
-/* Caller must ensure that dst is at least item->len*2+1 bytes long */
-static void SECItemToHex(const SECItem * item, char * dst)
-{
-	if (dst && item && item->data) {
-		unsigned char * src = item->data;
-		unsigned int len = item->len;
-		for (; len > 0; --len, dst += 2)
-			sprintf(dst, "%02x", *src++);
-		*dst = '\0';
-	}
 }
 
 /*
@@ -430,14 +416,8 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
 	const unsigned char *bundp = NULL;
-	mpz_t n;
-	mpz_t e;
 	size_t bs;
-	char n_str[3 + MAXBITS / 4 + 1];
 	realtime_t now = realnow();
-
-	mpz_init(n);
-	mpz_init(e);
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
@@ -529,9 +509,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	fprintf(stderr,
 		"Generated RSA key pair using the NSS database\n");
 
-	SECItemToHex(getModulus(pubkey), n_str);
-	assert(!mpz_set_str(n, n_str, 16));
-
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
@@ -539,8 +516,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 
-	/* XXX we should use an NSS function here and not a GMP function */
-	bundp = bundle(E, n, &bs);
+	bundp = bundle(E, getModulus(pubkey), &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
 
 	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
@@ -610,41 +586,14 @@ void getrandom(size_t nbytes, unsigned char *buf)
 }
 
 /*
- * hexout - prepare hex output, guaranteeing even number of digits
- * (The current FreeS/WAN conversion routines want an even digit count,
- * but mpz_get_str doesn't promise one.)
- *
- * NOTE: result is a pointer into a STATIC buffer.
- */
-static const char *hexout(mpz_t var)
-{
-	static char hexbuf[3 + MAXBITS / 4 + 1];
-	char *hexp;
-
-	mpz_get_str(hexbuf + 3, 16, var);
-	if (strlen(hexbuf + 3) % 2 == 0) {
-		/* even number of hex digits */
-		hexp = hexbuf + 1;
-	} else {
-		/* odd, must pad */
-		hexp = hexbuf;
-		hexp[2] = '0';
-	}
-	hexp[0] = '0';
-	hexp[1] = 'x';
-
-	return hexp;
-}
-
-/*
    - bundle - bundle e and n into an RFC2537-format lump
- * Note, calls hexout.
+ * Note, calls hexOut.
  *
  * NOTE: returns a pointer into a STATIC buffer
  */
-static const unsigned char *bundle(int e, mpz_t n, size_t *sizep)
+static const unsigned char *bundle(int e, SECItem *n, size_t *sizep)
 {
-	const char *hexp = hexout(n);
+	const char *hexp = hexOut(n);
 	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;

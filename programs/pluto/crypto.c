@@ -5,6 +5,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,33 +37,11 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "test_buffer.h"
 
 #include "pem.h"
 
 #include "lswconf.h" /* for libreswan_fipsmode() */
-
-/* moduli and generator. */
-
-static MP_INT
-	/* modp768_modulus no longer supported - it is too weak */
-	modp1024_modulus, /* migrate away from this if you are still using it */
-	modp1536_modulus,
-	modp2048_modulus,
-	modp3072_modulus,
-	modp4096_modulus,
-	modp6144_modulus,
-	modp8192_modulus;
-
-static MP_INT
-	dh22_modulus,
-	dh23_modulus,
-	dh24_modulus;
-
-static MP_INT groupgenerator;  /* MODP group generator (2) */
-
-static MP_INT generator_dh22,
-       generator_dh23,
-       generator_dh24;
 
 #ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
@@ -208,27 +187,6 @@ void init_crypto(void)
 	bool fips = FALSE;
 #endif
 
-	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
-	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
-				 16) != 0 ||
-	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
-	    mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0
-	    /* modp768_modulus no longer supported */
-	    || mpz_init_set_str(&modp1024_modulus, MODP1024_MODULUS,
-				16) != 0 ||
-	    mpz_init_set_str(&modp1536_modulus, MODP1536_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp2048_modulus, MODP2048_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp3072_modulus, MODP3072_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp4096_modulus, MODP4096_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp6144_modulus, MODP6144_MODULUS, 16) != 0 ||
-	    mpz_init_set_str(&modp8192_modulus, MODP8192_MODULUS, 16) != 0
-	    || mpz_init_set_str(&dh22_modulus, MODP1024_MODULUS_DH22,
-				16) != 0 ||
-	    mpz_init_set_str(&dh23_modulus, MODP2048_MODULUS_DH23, 16) != 0 ||
-	    mpz_init_set_str(&dh24_modulus, MODP2048_MODULUS_DH24, 16) != 0
-	    )
-		exit_log("mpz_init_set_str() failed in init_crypto()");
-
 #ifdef USE_TWOFISH
 	if (!fips)
 		ike_alg_twofish_init();
@@ -276,34 +234,74 @@ void init_crypto(void)
  * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 
-const struct oakley_group_desc unset_group = { OAKLEY_GROUP_invalid, NULL, NULL, 0 };      /* magic signifier */
-
-const struct oakley_group_desc oakley_group[] = {
-	/* modp768_modulus no longer supported - too weak */
-	{ OAKLEY_GROUP_MODP1024, &groupgenerator, &modp1024_modulus,
-	  BYTES_FOR_BITS(1024) },
-	{ OAKLEY_GROUP_MODP1536, &groupgenerator, &modp1536_modulus,
-	  BYTES_FOR_BITS(1536) },
-	{ OAKLEY_GROUP_MODP2048, &groupgenerator, &modp2048_modulus,
-	  BYTES_FOR_BITS(2048) },
-	{ OAKLEY_GROUP_MODP3072, &groupgenerator, &modp3072_modulus,
-	  BYTES_FOR_BITS(3072) },
-	{ OAKLEY_GROUP_MODP4096, &groupgenerator, &modp4096_modulus,
-	  BYTES_FOR_BITS(4096) },
-	{ OAKLEY_GROUP_MODP6144, &groupgenerator, &modp6144_modulus,
-	  BYTES_FOR_BITS(6144) },
-	{ OAKLEY_GROUP_MODP8192, &groupgenerator, &modp8192_modulus,
-	  BYTES_FOR_BITS(8192) },
-	{ OAKLEY_GROUP_DH22, &generator_dh22, &dh22_modulus, BYTES_FOR_BITS(
-		  1024) },
-	{ OAKLEY_GROUP_DH23, &generator_dh23, &dh23_modulus, BYTES_FOR_BITS(
-		  2048) },
-	{ OAKLEY_GROUP_DH24, &generator_dh24, &dh24_modulus, BYTES_FOR_BITS(
-		  2048) },
-
+/* magic signifier */
+const struct oakley_group_desc unset_group = {
+	.group = OAKLEY_GROUP_invalid,
 };
 
-const unsigned int oakley_group_size = elemsof(oakley_group);
+static struct oakley_group_desc oakley_group[] = {
+	/* modp768_modulus no longer supported - too weak */
+	{
+		.group = OAKLEY_GROUP_MODP1024,
+		.gen = MODP_GENERATOR,
+		.modp = MODP1024_MODULUS,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP1536,
+		.gen = MODP_GENERATOR,
+		.modp = MODP1536_MODULUS,
+		.bytes = BYTES_FOR_BITS(1536),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP2048,
+		.gen = MODP_GENERATOR,
+		.modp = MODP2048_MODULUS,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP3072,
+		.gen = MODP_GENERATOR,
+		.modp = MODP3072_MODULUS,
+		.bytes = BYTES_FOR_BITS(3072),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP4096,
+		.gen = MODP_GENERATOR,
+		.modp = MODP4096_MODULUS,
+		.bytes = BYTES_FOR_BITS(4096),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP6144,
+		.gen = MODP_GENERATOR,
+		.modp = MODP6144_MODULUS,
+		.bytes = BYTES_FOR_BITS(6144),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP8192,
+		.gen = MODP_GENERATOR,
+		.modp = MODP8192_MODULUS,
+		.bytes = BYTES_FOR_BITS(8192),
+	},
+	{
+		.group = OAKLEY_GROUP_DH22,
+		.gen = MODP_GENERATOR_DH22,
+		.modp = MODP1024_MODULUS_DH22,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+	{
+		.group = OAKLEY_GROUP_DH23,
+		.gen = MODP_GENERATOR_DH23,
+		.modp = MODP2048_MODULUS_DH23,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_DH24,
+		.gen = MODP_GENERATOR_DH24,
+		.modp = MODP2048_MODULUS_DH24,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+};
 
 const struct oakley_group_desc *lookup_group(u_int16_t group)
 {
@@ -314,6 +312,24 @@ const struct oakley_group_desc *lookup_group(u_int16_t group)
 			return &oakley_group[i];
 
 	return NULL;
+}
+
+const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *group)
+{
+	if (group == NULL) {
+		return &oakley_group[0];
+	} else if (group < &oakley_group[elemsof(oakley_group) - 1]) {
+		return group + 1;
+	} else {
+		return NULL;
+	}
+}
+
+void get_oakley_group_param(const struct oakley_group_desc *group,
+			    chunk_t *base, chunk_t *prime)
+{
+	*base = decode_hex_to_chunk(group->gen, group->gen);
+	*prime = decode_hex_to_chunk(group->modp, group->modp);
 }
 
 /* Encryption Routines
