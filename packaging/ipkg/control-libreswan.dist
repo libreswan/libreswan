@@ -4,5 +4,5 @@ Section: Communications
 Version: VERSION
 Architecture: ARCH
 Maintainer: Libreswan <users@lists.libreswan.org>
-Depends: gawk libgmp
+Depends: gawk
 Description: Libreswan IPsec IKE daemon and related tools

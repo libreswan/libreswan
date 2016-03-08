@@ -32,7 +32,7 @@ $(call Package/libreswan/Default)
   SUBMENU:=VPN
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-libreswan +libgmp +ip
+  DEPENDS:=+kmod-libreswan +ip
   TITLE+= (daemon)
 endef
 

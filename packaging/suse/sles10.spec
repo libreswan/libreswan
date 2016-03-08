@@ -20,7 +20,7 @@ Group: Productivity/Networking/Security
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 PreReq: %insserv_prereq %fillup_prereq perl
-BuildRequires: gmp-devel bison flex bind-devel xmlto sgml-skel
+BuildRequires: bison flex bind-devel xmlto sgml-skel
 Requires: iproute2 >= 2.6.8
 AutoReqProv:    on
 %if %{buildklips}
