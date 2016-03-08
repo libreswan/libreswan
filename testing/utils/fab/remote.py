@@ -94,7 +94,7 @@ def directory(domain, console, directory, default=None):
 # return (from a login attempt) to GRUB can result in weird and
 # puzzling behaviour such as booting the wrong kernel.
 
-STARTUP_TIMEOUT = 30
+STARTUP_TIMEOUT = 60
 SHUTDOWN_TIMEOUT = 20
 
 def _startup(domain, console, timeout=STARTUP_TIMEOUT):
@@ -102,6 +102,7 @@ def _startup(domain, console, timeout=STARTUP_TIMEOUT):
     # XXX: While len(expected) should technically be sufficient, that
     # isn't clear without looking at sources.  Instead just "double,
     # and then double again".
+    domain.logger.info("waiting %d seconds for domain to start", timeout)
     start_time = time.time()
     console.expect(expected, timeout=timeout,
                    searchwindowsize=(len(expected)*4))
@@ -205,12 +206,12 @@ def reboot(domain, console=None,
     if not console:
         domain.logger.error("domain is shutdown")
         return None
-    domain.logger.info("rebooting domain")
+    domain.logger.info("waiting %d seconds for domain to reboot", shutdown_timeout)
     start_time = time.time()
     domain.reboot()
     try:
         console.expect("\[\s*[0-9]+\.[0-9]+]\s+reboot:", timeout=SHUTDOWN_TIMEOUT)
-        domain.logger.info("domain reset after %d seconds", time.time() - start_time)
+        domain.logger.info("domain rebooted after %d seconds", time.time() - start_time)
     except pexpect.TIMEOUT:
         domain.logger.error("domain failed to reboot after %s seconds, resetting it", time.time() - start_time)
         domain.reset()
@@ -228,9 +229,8 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
     if not console:
         domain.logger.error("domain already shutdown")
         return None
-    domain.logger.info("shutting down domain")
+    domain.logger.info("waiting %d seconds for domain to shutdown", shutdown_timeout)
     domain.shutdown()
-    domain.logger.debug("waiting %s seconds for console to close", shutdown_timeout)
     if console.expect([pexpect.EOF,pexpect.TIMEOUT], timeout=shutdown_timeout):
         domain.logger.error("timeout waiting for shutdown, destroying it")
         domain.destroy()
