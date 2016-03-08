@@ -29,7 +29,6 @@ override_dh_auto_install:
 			MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
 			DESTDIR=$(CURDIR)/debian/libreswan
 	rm -rf $(CURDIR)/debian/libreswan/usr/local
-	install --mode=0600 $(CURDIR)/debian/ipsec.secrets.proto $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 
 	rm -f $(CURDIR)/debian/libreswan/etc/init.d/ipsec?*
 
