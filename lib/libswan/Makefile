@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -34,7 +34,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
 	nss_copies.c \
 	iprange.c \
         keyblobtoid.c \
-	kernel_alg.c lex.c mpzfuncs.c \
+	kernel_alg.c lex.c \
 	realtimetoa.c lswconf.c \
 	portof.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
