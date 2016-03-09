@@ -2203,9 +2203,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						sizeof(caddr));
 
 					loglog(RC_INFORMATIONAL,
-						"Received subnet %s, maskbits %d",
-						caddr,
-						tmp_spd->that.client.maskbits);
+						"Received subnet %s",
+						caddr);
 
 					tmp_spd->this.cert_nickname = NULL;
 					tmp_spd->that.cert_nickname = NULL;
