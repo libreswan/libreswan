@@ -4,39 +4,42 @@
 	dh $@
 
 override_dh_auto_build:
-	$(MAKE) programs INC_USRLOCAL=/usr \
-			 FINALBINDIR=/usr/lib/ipsec \
-			 FINALLIBEXECDIR=/usr/lib/ipsec \
-			 INC_RCDEFAULT=/etc/init.d \
-			 PUBDIR=/usr/sbin \
-			 MANTREE=/usr/share/man \
-			 CONFDIR=$(CURDIR)/debian \
-			 USE_LDAP=true \
-			 USE_LIBCURL=true \
-			 USE_XAUTHPAM=true \
-			 USE_FIPSCHECK=false \
-			 USE_LIBCAP_NG=false \
-			 USE_LABELED_IPSEC=false \
-			 USE_ADNS=false \
-			 USE_DNSSEC=true \
-
+	$(MAKE) programs \
+		INC_USRLOCAL=/usr \
+		FINALBINDIR=/usr/lib/ipsec \
+		FINALLIBEXECDIR=/usr/lib/ipsec \
+		INC_RCDEFAULT=/etc/init.d \
+		PUBDIR=/usr/sbin \
+		MANTREE=/usr/share/man \
+		CONFDIR=$(CURDIR)/debian \
+		USE_LDAP=true \
+		USE_LIBCURL=true \
+		USE_XAUTHPAM=true \
+		USE_FIPSCHECK=false \
+		USE_LIBCAP_NG=false \
+		USE_LABELED_IPSEC=false \
+		USE_ADNS=false \
+		USE_DNSSEC=true
 
 override_dh_auto_install:
 	# Add here commands to install the package into debian/tmp.
-	$(MAKE) install INC_USRLOCAL=/usr \
-			FINALBINDIR=/usr/lib/ipsec \
-			FINALLIBEXECDIR=/usr/lib/ipsec \
-			INC_RCDEFAULT=/etc/init.d \
-			PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
-			MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
-			DESTDIR=$(CURDIR)/debian/libreswan
+	$(MAKE) install \
+		INC_USRLOCAL=/usr \
+		FINALBINDIR=/usr/lib/ipsec \
+		FINALLIBEXECDIR=/usr/lib/ipsec \
+		INC_RCDEFAULT=/etc/init.d \
+		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
+		MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
+		DESTDIR=$(CURDIR)/debian/libreswan
 	rm -rf $(CURDIR)/debian/libreswan/usr/local
-
 	rm -f $(CURDIR)/debian/libreswan/etc/init.d/ipsec?*
 
 	# delete var/lock/subsys and var/run to satisfy lintian
 	rm -rf $(CURDIR)/debian/libreswan/var/lock
 	rm -rf $(CURDIR)/debian/libreswan/var/run
+
+	# there is no sysconfig in debian
+	rm -rf $(CURDIR)/debian/libreswan/etc/sysconfig
 
 	# fix some manpage issues
 	for oldname in `find $(CURDIR)/debian/libreswan/usr/share/man -name "ipsec_ipsec*"`; \
