@@ -1,2 +1,3 @@
 do-not-use-git-version.patch
 #allow-linebreaks-in-man-pages.patch
+debian-pam.d-pluto.patch
