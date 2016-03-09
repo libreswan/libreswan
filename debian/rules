@@ -7,6 +7,7 @@ override_dh_auto_build:
 	$(MAKE) programs INC_USRLOCAL=/usr \
 			 FINALBINDIR=/usr/lib/ipsec \
 			 FINALLIBEXECDIR=/usr/lib/ipsec \
+			 INC_RCDEFAULT=/etc/init.d \
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
@@ -25,6 +26,7 @@ override_dh_auto_install:
 	$(MAKE) install INC_USRLOCAL=/usr \
 			FINALBINDIR=/usr/lib/ipsec \
 			FINALLIBEXECDIR=/usr/lib/ipsec \
+			INC_RCDEFAULT=/etc/init.d \
 			PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 			MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
 			DESTDIR=$(CURDIR)/debian/libreswan
