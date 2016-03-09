@@ -45,7 +45,7 @@ road #
 005 "modecfg-road-eastnet-psk" #1: Received IP4 NETMASK 255.255.255.0
 005 "modecfg-road-eastnet-psk" #1: Received DNS server 1.2.3.4
 005 "modecfg-road-eastnet-psk" #1: Received DNS server 5.6.7.8
-005 "modecfg-road-eastnet-psk" #1: Received subnet 192.0.2.0/24, maskbits 24
+005 "modecfg-road-eastnet-psk" #1: Received subnet 192.0.2.0/24
 004 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established
 002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I1: initiate
