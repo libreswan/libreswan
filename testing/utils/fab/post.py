@@ -106,13 +106,17 @@ def strip_blank_line(s):
     return s
 
 # Compare two strings; hack to mimic "diff -N -w -B"?
+# Returns:
+#    [], None
+#    [diff..], True # if white space only
+#    [diff...], False
 def fuzzy_diff(logger, ln, l, rn, r,
                strip_spaces=False,
                strip_blank_lines=False):
     if l == r:
         # fast path
         logger.debug("fuzzy_diff fast match")
-        return "", "identical"
+        return [], None
     # Could be more efficient
     if strip_spaces:
         l = strip_space(l)
@@ -126,14 +130,14 @@ def fuzzy_diff(logger, ln, l, rn, r,
                                      lineterm=""))
     logger.debug("fuzzy_diff: %s", diff)
     if not diff:
-        return diff, "same"
-    # see if the problem was just white space
+        return [], None
+    # see if the problem was just white space; hack
     if not strip_spaces and not strip_blank_lines:
         l = strip_blank_line(strip_space(l))
         r = strip_blank_line(strip_space(r))
         if l == r:
-            return diff, "different-whitespace"
-    return diff, "different"
+            return diff, True
+    return diff, False
 
 
 def sanitize_output(logger, raw_file, test_directory):
@@ -276,36 +280,37 @@ class TestResult:
             expected_sanitized_console_output_file = os.path.join(test.directory, domain + ".console.txt")
             test.logger.debug("domain %s comparing against known-good output '%s'", domain, expected_sanitized_console_output_file)
             if os.path.exists(expected_sanitized_console_output_file):
-                with open(expected_sanitized_console_output_file) as f:
-                    expected_sanitized_console_output = f.read()
+
+                diff, whitespace = [], None
+
                 sanitized_console_diff_file = os.path.join(output_directory, domain + ".console.diff")
-                sanitized_console_diff = None
-                different = None
                 if skip_diff:
                     sanitized_console_diff = load_output(test.logger, sanitized_console_diff_file)
                     # be consistent with fuzzy_diff which returns a list
                     # of lines.
                     if sanitized_console_diff:
-                        sanitized_console_diff = sanitized_console_diff.splitlines()
-                        different = "different"
-                if not sanitized_console_diff:
-                    sanitized_console_diff, different = fuzzy_diff(test.logger,
-                                                                   domain + ".console.txt", expected_sanitized_console_output,
-                                                                   "OUTPUT/" + domain + ".console.txt", sanitized_console_output,
-                                                                   strip_spaces=strip_spaces,
-                                                                   strip_blank_lines=strip_blank_lines)
+                        diff, whitespace = sanitized_console_diff.splitlines(), False
+                if not diff:
+                    with open(expected_sanitized_console_output_file) as f:
+                        expected_sanitized_console_output = f.read()
+                    diff, whitespace = fuzzy_diff(test.logger,
+                                                  domain + ".console.txt", expected_sanitized_console_output,
+                                                  "OUTPUT/" + domain + ".console.txt", sanitized_console_output,
+                                                  strip_spaces=strip_spaces,
+                                                  strip_blank_lines=strip_blank_lines)
                 if update_diff:
                     test.logger.debug("domain %s updating diff file %s", domain, sanitized_console_diff_file)
                     with open(sanitized_console_diff_file, "w") as f:
-                        for line in sanitized_console_diff:
+                        for line in diff:
                             f.write(line)
                             f.write("\n")
-                if not sanitized_console_diff:
-                    test.logger.debug("%s console and expected output match", domain)
-                    continue
-                self.errors.add("output-" + different, domain)
-                self.diffs[domain] = sanitized_console_diff
-                self.passed = False
+                if diff:
+                    self.diffs[domain] = diff
+                    if whitespace:
+                        self.errors.add("output-whitespace", domain)
+                    else:
+                        self.passed = False
+                        self.errors.add("output-different", domain)
             elif domain == "nic":
                 # NIC never gets its console output checked.
                 test.logger.debug("domain %s has unchecked console output", domain)
@@ -386,13 +391,16 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             test_result.errors.add("baseline-passed", domain)
             continue
 
-        baseline_diff, different = fuzzy_diff(test.logger,
-                                              "BASELINE/" + domain + ".console.txt", baseline_result.sanitized_console_output[domain],
-                                              "OUTPUT/" + domain + ".console.txt", test_result.sanitized_console_output[domain],
-                                              strip_spaces=strip_spaces,
-                                              strip_blank_lines=strip_blank_lines)
+        baseline_diff, baseline_whitespace = fuzzy_diff(test.logger,
+                                                        "BASELINE/" + domain + ".console.txt", baseline_result.sanitized_console_output[domain],
+                                                        "OUTPUT/" + domain + ".console.txt", test_result.sanitized_console_output[domain],
+                                                        strip_spaces=strip_spaces,
+                                                        strip_blank_lines=strip_blank_lines)
         if baseline_diff:
-            test_result.errors.add("baseline-different", domain)
+            if baseline_whitespace:
+                test_result.errors.add("baseline-whitespace", domain)
+            else:
+                test_result.errors.add("baseline-different", domain)
             # update the diff to something hopefully closer?
             test_result.diffs[domain] = baseline_diff
         # else:
