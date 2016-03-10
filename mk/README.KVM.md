@@ -12,6 +12,14 @@ Installing KVM test domains
 ---------------------------
 
 
+Preparation (FC23)
+------------------
+
+sudo dnf install virt-manager virt-install python3-pexpect
+sudo usermod -a -G qemu cagney
+sudo chmod g+w /var/lib/libvirt/qemu/
+
+
 Makefile.inc.local configuration
 ................................
 
