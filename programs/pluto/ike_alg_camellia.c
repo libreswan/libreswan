@@ -30,7 +30,7 @@
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "lswconf.h"
+#include "lswfips.h"
 #include "lswlog.h"
 
 #include "ike_alg_nss_cbc.h"

@@ -41,7 +41,7 @@
 
 #include "pem.h"
 
-#include "lswconf.h" /* for libreswan_fipsmode() */
+#include "lswfips.h"
 
 #ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,

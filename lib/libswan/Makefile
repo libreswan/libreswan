@@ -36,6 +36,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c \
 	realtimetoa.c lswconf.c \
+	lswfips.c \
 	portof.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \

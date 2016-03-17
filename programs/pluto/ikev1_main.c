@@ -87,7 +87,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
-#include "lswconf.h" /* for libreswan_fipsmode() */
+#include "lswfips.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

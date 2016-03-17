@@ -49,6 +49,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswconf.h"
+#include "lswfips.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
