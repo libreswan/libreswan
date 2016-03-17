@@ -26,6 +26,28 @@
 #include "lswlog.h"
 #include "lswfips.h"
 
+static int has_fips(bool force, const char *check, int fips)
+{
+	if (fips > 0) {
+		libreswan_log("FIPS %s detected", check);
+	} else if (fips == 0) {
+		if (force) {
+			libreswan_log("FIPS %s forced (not detected)", check);
+			fips = 1;
+		} else {
+			libreswan_log("FIPS %s disabled (not detected)", check);
+		}
+	} else {
+		if (force) {
+			libreswan_log("FIPS %s forced (detection failed)", check);
+			fips = 1;
+		} else {
+			libreswan_log("FIPS %s detection failed", check);
+		}
+	}
+	return fips;
+}
+
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
  * yes (1), no (0), unknown(-1)
@@ -57,6 +79,11 @@ int libreswan_fipskernel(void)
 	return 0;
 }
 
+int libreswan_has_fips_kernel(bool force)
+{
+	return has_fips(force, "Kernel Mode", libreswan_fipskernel());
+}
+
 /*
  * Return TRUE if we are a fips product.
  * This is irrespective of whether we are running in FIPS mode
@@ -80,6 +107,13 @@ libreswan_fipsproduct(void)
 
 }
 
+int libreswan_has_fips_product(bool force)
+{
+	return has_fips(force, "Product", libreswan_fipsproduct());
+}
+
+static int fips_mode = -1;
+
 /*
  * Is the machine running in FIPS mode (fips product AND fips kernel mode)
  * yes (1), no (0), unknown(-1)
@@ -89,6 +123,17 @@ libreswan_fipsproduct(void)
 int
 libreswan_fipsmode(void)
 {
+	/*
+	 * Fips mode as set by the below.
+	 *
+	 * Otherwise determine value using fipsproduct and fipskernel.
+	 * The problem here is that confread.c calls this (from
+	 * addconn) without first calling set_fipsmode.
+	 */
+	if (fips_mode >= 0) {
+		return fips_mode;
+	}
+
 	int product = libreswan_fipsproduct();
 	int kernel = libreswan_fipskernel();
 
@@ -100,4 +145,10 @@ libreswan_fipsmode(void)
 
 	return 0;
 }
+
+void libreswan_set_fips_mode(bool fips)
+{
+	fips_mode = fips;
+}
+
 #endif

@@ -22,6 +22,12 @@
 #define _LSW_FIPS_H
 
 #ifdef FIPS_CHECK
+
+int libreswan_has_fips_product(bool force);
+int libreswan_has_fips_kernel(bool force);
+
+void libreswan_set_fips_mode(bool fips_mode);
+
 int libreswan_fipsmode(void);
 int libreswan_fipsproduct(void);
 int libreswan_fipskernel(void);
