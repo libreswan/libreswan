@@ -647,4 +647,13 @@ install install-programs::
 		echo -e "**********************************************************************\n" ; \
 	fi
 
+# Test only target (run by swan-install) that generates FIPS .*.hmac
+# files for everything that will be verified by fipscheck.
+#
+# Without this fipscheck (run in FIPS mode) will fail.
+
+.PHONY: install-fipshmac
+install-fipshmac:
+	fipshmac $(LIBEXECDIR)/* $(PUBDIR)/ipsec
+
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
