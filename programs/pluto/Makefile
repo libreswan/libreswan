@@ -210,7 +210,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
+	-DUSE_AES -DUSE_3DES -DUSE_CAMELLIA \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
@@ -233,19 +233,14 @@ PLUTOMINUSL+= ${LIBCRYPT}
 
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
+
 ifeq ($(USE_FIPSCHECK),true)
-DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
 endif
 
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
 LIBSPLUTO+= -lcap-ng
-endif
-
-# NetworkManager support
-ifeq ($(USE_NM),true)
-DEFINES+=-DHAVE_NM
 endif
 
 BINNAMEPLUTO = pluto
