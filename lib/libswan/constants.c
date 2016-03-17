@@ -854,6 +854,7 @@ static const char *const ipsec_attr_name[] = {
 #endif
 };
 
+#ifndef HAVE_LABELED_IPSEC
 static const char *const ipsec_var_attr_name[] = {
 	"SA_LIFE_DURATION (variable length)",
 	NULL,
@@ -863,10 +864,8 @@ static const char *const ipsec_var_attr_name[] = {
 	NULL,
 	NULL,
 	"COMPRESS_PRIVATE_ALG (variable length)",
-#ifdef HAVE_LABELED_IPSEC
-	"NULL", /* ECN TUNNEL */
-#endif
 };
+#endif
 
 #ifdef HAVE_LABELED_IPSEC
 static const char *const ipsec_private_attr_name[] = {
@@ -1064,13 +1063,6 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_LINK",
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",	/* 19 */
-};
-
-static enum_names modecfg_attr_names_draft = {
-	INTERNAL_IP4_ADDRESS,
-	HOME_AGENT_ADDRESS,
-	modecfg_attr_name_draft,
-	NULL
 };
 
 static const char *const modecfg_cisco_attr_name[] = {
