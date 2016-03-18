@@ -37,7 +37,7 @@ def main():
     # is a python word.
     parser.add_argument("--retry", type=int, metavar="COUNT", default=1,
                         help="which previously run tests should be retried: 0 selects not-started tests; 1 selects not-started+failed tests; -1 selects not-started+failed+passed tests (default is %(default)s)")
-    parser.add_argument("--attempts", type=bool, default=1,
+    parser.add_argument("--attempts", type=int, default=1,
                         help="number of times to attempt a test before giving up; default %(default)s")
 
     parser.add_argument("--dry-run", "-n", action="store_true")
