@@ -81,23 +81,6 @@ def main():
     test_stats = stats.Tests()
     result_stats = stats.Results()
 
-    # Save the previous test results.  Do it up-front so that the
-    # saved results are always a complete copy of the original test
-    # output.
-    logger.info("copying existing results to %s ...", args.backup_directory)
-    saved_tests = 0
-    for test in tests:
-        if os.path.exists(test.output_directory):
-            backup_directory = os.path.join(args.backup_directory, test.name)
-            level = logutil.DEBUG
-            logger.debug("copying '%s' in '%s'",
-                         test.output_directory, backup_directory)
-            if not args.dry_run:
-                saved_tests += 1
-                os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
-                shutil.copytree(test.output_directory, backup_directory)
-    logger.info("... %d test results saved", saved_tests)
-
     try:
         logger.info("run started at %s", datetime.now())
 
@@ -145,6 +128,35 @@ def main():
             logger.info("%s: starting ...", test_prefix)
             test_stats.add("tests", test)
 
+            # Move the contents of the existing OUTPUT directory to
+            # BACKUP_DIRECTORY.  Do it file-by-file so that, at no
+            # point, the directory is empty.
+            #
+            # By moving each test just before it is started a trail of
+            # what tests were attempted at each run is left.
+            #
+            # XXX: During boot, swan-transmogrify runs "chcon -R
+            # testing/pluto".  Of course this means that each time a
+            # test is added and/or a test is run (adding files under
+            # <test>/OUTPUT), the boot process (and consequently the
+            # time taken to run a test) keeps increasing.
+            #
+            # Always moving the directory contents to the
+            # BACKUP_DIRECTORY mitigates this some.
+
+            saved_output_directory = None
+            if os.path.exists(test.output_directory):
+                saved_output_directory = os.path.join(args.backup_directory, test.name)
+                logger.info("moving contents of '%s' to '%s'",
+                            test.output_directory, saved_output_directory)
+                # Copy "empty" OUTPUT directories too.
+                args.dry_run or os.makedirs(saved_output_directory, exist_ok=True)
+                for name in os.listdir(test.output_directory):
+                    src = os.path.join(test.output_directory, name)
+                    dst = os.path.join(saved_output_directory, name)
+                    logger.debug("moving '%s' to '%s'", src, dst)
+                    args.dry_run or os.replace(src, dst)
+
             debugfile = None
             result = None
 
@@ -153,52 +165,37 @@ def main():
             for attempt in range(args.attempts):
                 test_stats.add("attempts", test)
 
-                # On first attempt (attempt == 0), empty the
-                # <test>/OUTPUT/ directory of all contents.  On
-                # subsequent attempts, move the files from the
-                # previous attempt to <test>/OUTPUT/<attempt>/.
-                #
-                # XXX: Don't just delete the OUTPUT/ directory as
-                # this, for a short period, changes the status of the
-                # test to never-run.
-                #
-                # XXX: During boot, swan-transmogrify runs "chcon -R
-                # testing/pluto".  Of course this means that each time
-                # a test is added and/or a test is run (adding files
-                # under <test>/OUTPUT), the boot process (and
-                # consequently the time taken to run a test) keeps
-                # increasing.
-                #
-                # Mitigate this slightly by emptying <test>/OUTPUT
-                # before starting any test attempts.  It's assumed
-                # that the previous test run was already captured
-                # above with save-directory.
-
-                if not args.dry_run:
-                    try:
+                # Create the OUTPUT directory.
+                try:
+                    if not args.dry_run:
                         os.mkdir(test.output_directory)
-                    except FileExistsError:
+                    elif os.exists(test.output_directory):
+                        raise FileExistsError()
+                except FileExistsError:
+                    # On first attempt, the OUTPUT directory will
+                    # be empty (see above) so no need to save.
+                    if attempt > 0:
                         saved_output_directory = os.path.join(test.output_directory, str(attempt))
-                        logger.info("emptying directory '%s'", test.output_directory)
+                        logger.info("moving contents of '%s' to '%s'",
+                                    test.output_directory, saved_output_directory)
+                        args.dry_run or os.makedirs(saved_output_directory, exist_ok=True)
                         for name in os.listdir(test.output_directory):
-                            src = os.path.join(test.output_directory, name)
-                            if attempt == 0:
-                                logger.debug("  remove '%s'", src)
-                                if os.path.isfile(src):
-                                    os.remove(src)
-                                else:
-                                    shutil.rmtree(src)
-                            elif os.path.isfile(src):
+                            if os.path.isfile(src):
+                                src = os.path.join(test.output_directory, name)
                                 dst = os.path.join(saved_output_directory, name)
-                                logger.debug("  move '%s' to '%s'", src, dst)
-                                os.makedirs(saved_output_directory, exist_ok=True)
-                                os.rename(src, dst)
+                                logger.debug("moving '%s' to '%s'", src, dst)
+                                args.dry_run or os.replace(src, dst)
 
                 # Start a debug log in the OUTPUT directory; include
                 # timing for this specific test attempt.
                 with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
                     logger.info("****** test %s attempt %d of %d started at %s ******",
                                 test.name, attempt+1, args.attempts, datetime.now())
+
+                    if saved_output_directory:
+                        logger.info("contents of '%s' moved to '%s'",
+                                    test.output_directory, saved_output_directory)
+                    saved_output_directory = None
 
                     ending = "undefined"
                     try:
