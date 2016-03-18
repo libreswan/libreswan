@@ -1479,12 +1479,14 @@ static void append_transform(struct ikev2_proposal *proposal,
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, .valid = TRUE, }
 #define ENCR_3DES { .id = IKEv2_ENCR_3DES, .valid = TRUE, }
 
+#define PRF_SHA2_512 { .id = IKEv2_PRF_HMAC_SHA2_512, .valid = TRUE, }
 #define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, .valid = TRUE, }
 #define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, .valid = TRUE, }
 #define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, .valid = TRUE, }
 #define PRF_MD5 { .id = IKEv2_PRF_HMAC_MD5, .valid = TRUE, }
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, .valid = TRUE, }
+#define AUTH_SHA2_512_256 { .id = IKEv2_AUTH_HMAC_SHA2_512_256, .valid = TRUE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, .valid = TRUE, }
 #define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, .valid = TRUE, }
 #define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, .valid = TRUE, }
@@ -1506,7 +1508,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	 * IKEv2 proposal #0:
 	 * AES_GCM[256]
 	 * NULL
-	 * SHA1,SHA2_256
+	 * SHA2_512, SHA2_256, SHA1
 	 * MODP2048, MODP4096, MODP8192
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
@@ -1518,7 +1520,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA1, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
 		},
 	},
@@ -1526,7 +1528,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	 * IKEv2 proposal #1:
 	 * AES_GCM[128]
 	 * NULL
-	 * SHA1,SHA2_256
+	 * SHA2_512, SHA2_256, SHA1
 	 * MODP2048, MODP4096, MODP8192
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
@@ -1538,16 +1540,16 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA1, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
 		},
 	},
         /*
 	 * IKEv2 proposal #2:
 	 * AES_CBC[256]
-	 * SHA1, SHA2_256, AES_XCBC
+	 * SHA2_512, SHA2_256, SHA1
+	 * SHA2_512, SHA2_256, SHA1
 	 * MODP1536, MODP2048
-	 * INTEG????
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1557,17 +1559,17 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96, AUTH_SHA2_256_128, AUTH_AES_XCBC_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP1536, DH_MODP2048),
 		},
 	},
         /*
 	 * IKEv2 proposal #3:
 	 * AES_CBC[128]
-	 * SHA1, SHA2_256, AES_XCBC
+	 * SHA2_512, SHA2_256, SHA1
+	 * SHA2_512, SHA2_256, SHA1
 	 * MODP1536, MODP2048
-	 * INTEG????
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1577,8 +1579,8 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96, AUTH_SHA2_256_128, AUTH_AES_XCBC_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA1, PRF_SHA2_256, PRF_AES128_XCBC),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP1536, DH_MODP2048),
 		},
 	},
