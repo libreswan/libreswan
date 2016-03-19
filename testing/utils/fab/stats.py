@@ -28,19 +28,25 @@ class Counts:
     def add(self, key, value):
         self.counts[key].append(value)
 
-    def log_summary(self, log, prefix=""):
-        for key, values in sorted(self.counts.items()):
-            log("%s%s: %d", prefix, key, len(values))
+    def log_summary(self, log, header=None, footer=None, prefix=""):
+        if len(self.counts):
+            header and log(header)
+            for key, values in sorted(self.counts.items()):
+                log("%s%s: %d", prefix, key, len(values))
+            footer and log(footer)
 
-    def log_details(self, log, prefix=""):
-        for key in sorted(self.counts):
-            values = self.counts[key]
-            line = ""
-            for value in sorted(values):
-                if value:
-                    line += " "
-                    line += value
-            log("%s%s:%s", prefix, key, line)
+    def log_details(self, log, header=None, footer=None, prefix=""):
+        if len(self.counts):
+            header and log(header)
+            for key in sorted(self.counts):
+                values = self.counts[key]
+                line = ""
+                for value in sorted(values):
+                    if value:
+                        line += " "
+                        line += value
+                    log("%s%s:%s", prefix, key, line)
+            footer and log(footer)
 
 
 class Tests(Counts):

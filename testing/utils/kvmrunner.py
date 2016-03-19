@@ -86,6 +86,10 @@ def main():
 
         test_count = 0
         for test in tests:
+
+            test_stats.log_summary(logger.info, header="stats so far:", prefix="    ")
+            result_stats.log_summary(logger.info, header="results so far:", prefix="    ")
+            
             test_stats.add("total", test)
             test_count += 1
             # Would the number of tests to be [re]run be better?
@@ -229,27 +233,18 @@ def main():
             test_stats.add("tests(%s)" % result, test)
             result_stats.add_result(result, old_result)
 
-            logger.info("Results so far:")
-            result_stats.log_summary(logger.info, prefix="  ")
-
     except KeyboardInterrupt:
         logger.exception("**** test %s interrupted ****", test.name)
         return 1
 
-    finally:
-        logger.info("run finished at %s", datetime.now())
+    logger.info("run finished at %s", datetime.now())
 
-        level = args.verbose and logger.info or logger.debug
-        level("stat details:")
-        test_stats.log_details(level, prefix="  ")
+    level = args.verbose and logger.info or logger.debug
+    test_stats.log_details(level, header="stat details:", prefix="  ")
+    result_stats.log_details(logger.info, header="result details:", prefix="  ")
 
-        logger.info("result details:")
-        result_stats.log_details(logger.info, prefix="  ")
-
-        logger.info("stat summary:")
-        test_stats.log_summary(logger.info, prefix="  ")
-        logger.info("result summary:")
-        result_stats.log_summary(logger.info, prefix="  ")
+    test_stats.log_summary(logger.info, header="stat summary:", prefix="  ")
+    result_stats.log_summary(logger.info, header="result summary:", prefix="  ")
 
     return 0
 
