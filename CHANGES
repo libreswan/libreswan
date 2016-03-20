@@ -32,6 +32,7 @@ v3.17 (unrelease)
 * pluto/rsasigkey: libgmp functions obsoleted by native NSS [Andrew]
 * pluto: Be more careful handling realloc() failure [Hugh]
 * pluto: Fix leaks in NSS/certificate handling code [William Rios]
+* pluto: Refuse to load conns with protoport=XX/%any on both sides [Paul]
 * rsasigkey: Only print the comment line, pubkey and CKAID [Paul]
 * secrets: Remove wrapper for "ipsec secrets" and make it inline [Paul]
 * libipsecconf: Make handling of policy bits more systematic [Hugh]
