@@ -1245,6 +1245,13 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
+	if (wm->right.has_port_wildcard && wm->left.has_port_wildcard) {
+		loglog(RC_LOG_SERIOUS,
+			"Failed to add connection \"%s\" : cannot have protoport with %%any on both sides",
+				wm->name);
+		return;
+	}
+
 	if (check_connection_end(&wm->right, &wm->left, wm) &&
 	    check_connection_end(&wm->left, &wm->right, wm))
 	{
