@@ -458,7 +458,11 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 		return NULL;
 	}
 
-	/* some common code, refactor */
+	/*
+	 * XXX Duplicate code with find_dercrl_uri().
+	 * XXX Certificate can have multiple distpoints, convert all of them.
+	 * XXX distPoints[1] seems to be NULL even if multiple?
+	 */
 
 	CRLDistributionPoint *point = dps->distPoints[0];
 	generalName_t *gndp = NULL;
