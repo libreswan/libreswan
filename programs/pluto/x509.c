@@ -1792,7 +1792,6 @@ static void cert_detail_list(show_cert_t type)
 void check_crls(void)
 {
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	PRTime now = PR_Now();
 
 	if (handle == NULL)
 		return;
@@ -1806,17 +1805,9 @@ void check_crls(void)
 
 	while (crl_node != NULL) {
 		if (crl_node->crl != NULL) {
-			PRTime time;
-			PRTime interval = (deltasecs(crl_check_interval) * 2) * PR_NSEC_PER_MSEC;
-			SECItem *n = &crl_node->crl->crl.nextUpdate;
 			SECItem *issuer = &crl_node->crl->crl.derName;
 
-			if (DER_DecodeTimeChoice(&time, n) != SECSuccess)
-				continue;
-
-			if (time - now < interval)
-				add_crl_fetch_request_nss(issuer, NULL);
-
+			add_crl_fetch_request_nss(issuer, NULL);
 		}
 		crl_node = crl_node->next;
 	}
