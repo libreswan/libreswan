@@ -1806,12 +1806,41 @@ void check_crls(void)
 	while (crl_node != NULL) {
 		if (crl_node->crl != NULL) {
 			SECItem *issuer = &crl_node->crl->crl.derName;
+			generalName_t *end_dp;
+			chunk_t chunk = empty_chunk;
 
 			add_crl_fetch_request_nss(issuer, NULL);
+
+			chunk.ptr = (u_char *)crl_node->crl->url;
+			chunk.len = strlen(crl_node->crl->url);
+			end_dp = alloc_thing(generalName_t, "generalName");
+			end_dp->kind = GN_URI;
+			end_dp->name = chunk;
+			end_dp->next = NULL;
+			add_crl_fetch_request_nss(issuer, end_dp);
+			pfree(end_dp);
 		}
 		crl_node = crl_node->next;
 	}
-	return;
+
+	/* add the pubkeys distribution points to fetch list */
+
+	struct pubkey_list *pubkeys = pluto_pubkeys;
+	struct pubkey *key;
+
+	while (pubkeys != NULL) {
+		key = pubkeys->key;
+		if (key != NULL) {
+			SECItem issuer = chunk_to_secitem(key->issuer);
+			generalName_t *end_dp;
+
+			add_crl_fetch_request_nss(&issuer, NULL);
+
+			end_dp = gndp_from_nss_cert(key->u.rsa.nssCert);
+			add_crl_fetch_request_nss(&issuer, end_dp);
+		}
+		pubkeys = pubkeys->next;
+	}
 }
 #endif
 
