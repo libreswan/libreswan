@@ -36,9 +36,9 @@ KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BUILD_DOMAIN = east
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
+KVM_QEMUDIR = /var/lib/libvirt/qemu
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVMTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 
 KVM_OBJDIR = OBJ.kvm
@@ -53,14 +53,20 @@ kvm-%-clean: kvm-clean-% ; @:
 clean-kvm: kvm-clean
 distclean-kvm: kvm-distclean
 
-# Run "make $(1)" on $(2).
-define kvm-make
+# Invoke KVMSH in curret directory with argument list $(1)
+define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
+	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
 	$(KVMSH_COMMAND) \
 		--output ++compile-log.txt \
 		--chdir . \
-		'$(strip $(2))' \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"'
+		$(1)
+endef
+
+# Run "make $(1)" on $(2)"; yea, host argument should be first :-)
+define kvm-make
+	$(call kvmsh, $(2) \
+		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"')
 endef
 
 # Standard make targets; just mirror the local target names.
@@ -76,9 +82,8 @@ $(KVM_BUILD_TARGETS):
 .PHONY: kvm-install
 kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
 kvm-install-%: kvm-build
-	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . --shutdown $* \
-		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+	$(call kvmsh, $* \
+		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
 # To avoid parallel "make base" and "make module" builds stepping on
 # each others toes, this uses sub-makes to explicitly serialize "base"
@@ -93,7 +98,7 @@ kvm-build:
 .PHONY: kvm-shutdown
 kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
 kvm-shutdown-%:
-	$(KVMSH_COMMAND) --shutdown $*
+	$(call kvmsh, --shutdown $*)
 
 
 # [re]run the testsuite.
@@ -147,8 +152,8 @@ SHOWVERSION = $(MAKE) showversion
 .PHONY: kvm-checksum
 kvm-checksum:
 	$(SHOWVERSION) | tee kvm-checksum.new
-	$(KVMSH_COMMAND) --output ++kvm-checksum.new --chdir . east \
-		'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum'
+	$(call kvmsh, $(KVM_BUILD_DOMAIN) \
+		'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum')
 	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
 		echo "Checksum file unchanged" ; \
 		rm kvm-checksum.new ; \
@@ -206,11 +211,26 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
 KVM_CONFIG =
 
-ifeq ($(and $(KVM_POOLDIR),$(KVM_SOURCEDIR),$(KVM_TESTINGDIR)),)
-KVM_CONFIG += kvm-config-variables
+ifeq ($(shell test -w $(KVM_QEMUDIR) && echo ok),)
+KVM_CONFIG += kvm-config-broken-qemu
 endif
-.PHONY: kvm-config-variables
-kvm-config-variables:
+.PHONY: kvm-config-broken-qemu
+kvm-config-broken-qemu:
+	@echo ''
+	@echo 'The directory:'
+	@echo ''
+	@echo '    $(KVM_QEMUDIR)'
+	@echo ''
+	@echo 'is not writeable.  This will break virsh which is'
+	@echo 'used to manipulate the domains.'
+	@echo ''
+	@exit 1
+
+ifeq ($(and $(KVM_POOLDIR),$(KVM_SOURCEDIR),$(KVM_TESTINGDIR)),)
+KVM_CONFIG += kvm-config-broken-variables
+endif
+.PHONY: kvm-config-broken-variables
+kvm-config-broken-variables:
 	@echo ''
 	@echo 'Before creating the test domains, the following make variables'
 	@echo 'need to be defined (these make variables are only used when'
@@ -240,14 +260,14 @@ kvm-config-variables:
 	@exit 1
 
 ifeq ($(wildcard $(KVM_POOLDIR)),)
-KVM_CONFIG += kvm-config-pooldir
+KVM_CONFIG += kvm-config-broken-pooldir
 endif
-.PHONY: kvm-config-pooldir
-kvm-config-pooldir:
+.PHONY: kvm-config-broken-pooldir
+kvm-config-broken-pooldir:
 	@echo ''
 	@echo 'The directory $(KVM_POOLDIR) does not exist.  Either:'
 	@echo ''
-	@echo '    - create $(KVM_POOLDIR) or
+	@echo '    - create $(KVM_POOLDIR) or'
 	@echo '    - set the KVM_POOLDIR make variable in Makefile.inc.local'
 	@echo ''
 	@exit 1
