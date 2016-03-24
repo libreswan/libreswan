@@ -81,15 +81,14 @@ def main():
     test_stats = stats.Tests()
     result_stats = stats.Results()
 
+    start_time = datetime.now()
+
     try:
-        logger.info("run started at %s", datetime.now())
+        logger.info("run started at %s", start_time)
 
         test_count = 0
         for test in tests:
 
-            test_stats.log_summary(logger.info, header="stats so far:", prefix="    ")
-            result_stats.log_summary(logger.info, header="results so far:", prefix="    ")
-            
             test_stats.add("total", test)
             test_count += 1
             # Would the number of tests to be [re]run be better?
@@ -227,17 +226,20 @@ def main():
                     if result.passed:
                         break
 
-            # Above will have set RESULT (don't reach here during
-            # cntrl-c or crash).
+            # Above will have set RESULT.  During a control-c or crash
+            # the below will not be executed.
 
             test_stats.add("tests(%s)" % result, test)
             result_stats.add_result(result, old_result)
 
+            test_stats.log_summary(logger.info, header="updated stats:",
+                                   prefix="    ")
+            result_stats.log_summary(logger.info, header="updated results:",
+                                     prefix="    ")
+
     except KeyboardInterrupt:
         logger.exception("**** test %s interrupted ****", test.name)
         return 1
-
-    logger.info("run finished at %s", datetime.now())
 
     level = args.verbose and logger.info or logger.debug
     test_stats.log_details(level, header="stat details:", prefix="  ")
@@ -245,6 +247,9 @@ def main():
 
     test_stats.log_summary(logger.info, header="stat summary:", prefix="  ")
     result_stats.log_summary(logger.info, header="result summary:", prefix="  ")
+
+    end_time = datetime.now()
+    logger.info("run finished at %s after %s", end_time, end_time - start_time)
 
     return 0
 
