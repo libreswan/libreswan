@@ -915,8 +915,14 @@ err_t load_nss_cert_secret(const char *nickname)
 	if (cert == NULL) {
 		return "NSS cert not found";
 	}
-	/*
-	 * cert is released in lsw_add_rsa_secret on error
-	 */
-	return lsw_add_rsa_secret(&pluto_secrets, cert);
+
+	if (cert_key_is_rsa(cert)) {
+		/*
+		 * cert is released in lsw_add_rsa_secret on error
+		 */
+		return lsw_add_rsa_secret(&pluto_secrets, cert);
+	} else {
+		return "NSS cert not supported";
+	}
+
 }
