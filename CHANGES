@@ -18,6 +18,7 @@ v3.17 (unrelease)
 * IKEv2: Validate unexpected dcookies to limit TRANSCRIPT attack [Paul]
 * IKEv2: Don't duplicate failed IKE SA every pending cycle of 120s [Paul]
 * IKEv2: add --impair-send-bogus-dcookie for testing [Paul]
+* IKEv1: Packet retransmit fixes for Main/Aggr/Xauth modes [Paul]
 * IKEv1: Minor logging changes for DPD/NAT-T/AGGR [Paul]
 * IKEv1: Prefix a few functons with ikev1_* where not obvious [Paul]
 * IKEv1: Always send modecfg banner and domain if they are set [Lubomir Rintel]
