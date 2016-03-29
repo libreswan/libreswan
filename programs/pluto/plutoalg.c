@@ -687,11 +687,11 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log(
+	libreswan_log(
 		"ESP IPsec Transform [%s (%d), %s] refused",
 		enum_name(&esp_transformid_names, ealg),
 		key_len,
-		enum_name(&auth_alg_names, aalg)));
+		enum_name(&auth_alg_names, aalg));
 	return FALSE;
 }
 
@@ -708,9 +708,9 @@ bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 			return TRUE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log(
+	libreswan_log(
 		"AH IPsec Transform [%s] refused",
-		enum_name(&ah_transformid_names, aalg)));
+		enum_name(&ah_transformid_names, aalg));
 	return FALSE;
 }
 
