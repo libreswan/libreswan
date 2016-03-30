@@ -428,7 +428,8 @@ static void fetch_crls(void)
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
-				libreswan_log("fetch failed:  %s", ugh);
+				DBG(DBG_CONTROL,
+					DBG_log("fetch failed:  %s", ugh));
 			} else {
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
