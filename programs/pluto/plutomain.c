@@ -1265,7 +1265,6 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_NO_FORK
 	fork_desired = FALSE;
-	nhelpers = 0;
 #endif
 
 	if (chdir(coredir) == -1) {
