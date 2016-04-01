@@ -125,6 +125,24 @@ ifeq ($(HAVE_NO_FORK),true)
 USERLAND_CFLAGS+=-DHAVE_NO_FORK
 endif
 
+# Do things like create a daemon using the sequence fork()+exit().  If
+# you don't have or don't want to use fork() disable this.
+USE_FORK ?= true
+ifeq ($(USE_FORK),true)
+USERLAND_CFLAGS += -DUSE_FORK=1
+else
+USERLAND_CFLAGS += -DUSE_FORK=0
+endif
+
+# Use the daemon() library call to do stuff like create a daemon
+# (equivalent to fork()+exit()).
+USE_DAEMON ?= false
+ifeq ($(USE_DAEMON),true)
+USERLAND_CFLAGS += -DUSE_DAEMON=1
+else
+USERLAND_CFLAGS += -DUSE_DAEMON=0
+endif
+
 ifeq ($(origin GCC_LINT),undefined)
 GCC_LINT=-DGCC_LINT
 endif

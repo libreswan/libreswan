@@ -15,6 +15,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -108,7 +109,7 @@ static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
-static bool fork_desired = TRUE;
+static bool fork_desired = USE_FORK || USE_DAEMON;
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
@@ -168,6 +169,12 @@ static const char compile_time_interop_options[] = ""
 
 #ifdef HAVE_NO_FORK
 	" NO_FORK"
+#endif
+#if USE_FORK
+	" USE_FORK"
+#endif
+#if USE_DAEMON
+	" USE_DAEMON"
 #endif
 #ifdef HAVE_BROKEN_POPEN
 	" BROKEN_POPEN"
@@ -1263,10 +1270,6 @@ int main(int argc, char **argv)
 		invocation_fail("unexpected argument");
 	reset_debugging();
 
-#ifdef HAVE_NO_FORK
-	fork_desired = FALSE;
-#endif
-
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
@@ -1307,6 +1310,7 @@ int main(int argc, char **argv)
 
 	/* If not suppressed, do daemon fork */
 	if (fork_desired) {
+#if USE_FORK
 		{
 			pid_t pid = fork();
 
@@ -1328,7 +1332,25 @@ int main(int argc, char **argv)
 				exit(fill_lock(lockfd, pid) ? 0 : 1);
 			}
 		}
-
+#elif USE_DAEMON
+		if (daemon(TRUE, TRUE) < 0) {
+			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
+				errno, strerror(errno));
+			exit_pluto(PLUTO_EXIT_FORK_FAIL);
+		}
+		/*
+		 * Parent just exits, so need to fill in our own PID
+		 * file.  This is racy.
+		 *
+		 * Since "ipsec start" invokes pluto with --nofork, it
+		 * is probably safer to leave this feature disabled
+		 * rather than enable it with daemon.
+		 */
+		(void) fill_lock(lockfd, getpid());
+#else
+		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
+		exit_pluto(PLUTO_EXIT_FORK_FAIL);		
+#endif
 		if (setsid() < 0) {
 			int e = errno;
 
