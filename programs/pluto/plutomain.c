@@ -167,11 +167,11 @@ static const char compile_time_interop_options[] = ""
 	" MAST"
 #endif
 
-#ifdef HAVE_NO_FORK
-	" NO_FORK"
-#endif
 #if USE_FORK
 	" USE_FORK"
+#endif
+#if USE_VFORK
+	" USE_VFORK"
 #endif
 #if USE_DAEMON
 	" USE_DAEMON"

@@ -398,9 +398,6 @@ IPSEC_CONNECTION_LIMIT?=250
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN?=false
 
-# For systems with no fork (uclibc nommu)
-HAVE_NO_FORK?=false
-
 NONINTCONFIG=oldconfig
 
 -include ${LIBRESWANSRCDIR}/Makefile.ver

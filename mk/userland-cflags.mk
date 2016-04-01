@@ -121,10 +121,6 @@ ifeq ($(HAVE_BROKEN_POPEN),true)
 USERLAND_CFLAGS+=-DHAVE_BROKEN_POPEN
 endif
 
-ifeq ($(HAVE_NO_FORK),true)
-USERLAND_CFLAGS+=-DHAVE_NO_FORK
-endif
-
 # Do things like create a daemon using the sequence fork()+exit().  If
 # you don't have or don't want to use fork() disable this.
 USE_FORK ?= true
@@ -132,6 +128,17 @@ ifeq ($(USE_FORK),true)
 USERLAND_CFLAGS += -DUSE_FORK=1
 else
 USERLAND_CFLAGS += -DUSE_FORK=0
+endif
+
+# Where possible use vfork() instead of fork().  For instance, when
+# creating a child process, use the call sequence vfork()+exec().
+#
+# Systems with nommu, which do not have fork(), should set this.
+USE_VFORK ?= false
+ifeq ($(USE_VFORK),true)
+USERLAND_CFLAGS += -DUSE_VFORK=1
+else
+USERLAND_CFLAGS += -DUSE_VFORK=0
 endif
 
 # Use the daemon() library call to do stuff like create a daemon

@@ -702,10 +702,12 @@ void call_server(void)
 				    DISCARD_CONST(char *, ctl_addr.sun_path),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
-#ifdef HAVE_NO_FORK
+#if USE_VFORK
 		addconn_child_pid = vfork(); /* for better, for worse, in sickness and health..... */
-#else
+#elif USE_FORK
 		addconn_child_pid = fork();
+#else
+#error "addconn requires USE_VFORK or USE_FORK"
 #endif
 		if (addconn_child_pid == 0) {
 			/* child */
