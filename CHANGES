@@ -1,6 +1,10 @@
 
 See also https://libreswan.org/
 
+v3.18 (unreleased)
+* pluto: replace make variable HAVE_NO_FORK with USE_FORK, USE_DAEMON, and USE_VFORK [cagney]
+* pluto: add make variable USE_PTHREAD_SETSCHEDPRIO used by Darwin [cagney]
+
 v3.17 (unrelease)
 * IKEv2: Add Vendor ID support and VID_OPPORTUNISTIC [Paul]
 * IKEv2: Send VID_OPPORTUNISTIC when doing AUTH-NULL Opportunistc IPsec [Paul]
