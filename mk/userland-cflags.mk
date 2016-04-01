@@ -141,8 +141,12 @@ else
 USERLAND_CFLAGS += -DUSE_VFORK=0
 endif
 
-# Use the daemon() library call to do stuff like create a daemon
-# (equivalent to fork()+exit()).
+# Where possible use daemon() instead of fork()+exit() to create a
+# daemon (detached) processes.
+#
+# Some system's don't suport daemon() and some systems don't support
+# fork().  Since the daemon call can lead to a race it isn't the
+# prefered option.
 USE_DAEMON ?= false
 ifeq ($(USE_DAEMON),true)
 USERLAND_CFLAGS += -DUSE_DAEMON=1

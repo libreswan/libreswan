@@ -1313,7 +1313,23 @@ int main(int argc, char **argv)
 
 	/* If not suppressed, do daemon fork */
 	if (fork_desired) {
-#if USE_FORK
+#if USE_DAEMON
+		if (daemon(TRUE, TRUE) < 0) {
+			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
+				errno, strerror(errno));
+			exit_pluto(PLUTO_EXIT_FORK_FAIL);
+		}
+		/*
+		 * Parent just exits, so need to fill in our own PID
+		 * file.  This is racy, since the file won't be
+		 * created until after the parent has exited.
+		 *
+		 * Since "ipsec start" invokes pluto with --nofork, it
+		 * is probably safer to leave this feature disabled
+		 * then implement it using the daemon call.
+		 */
+		(void) fill_lock(lockfd, getpid());
+#elif USE_FORK
 		{
 			pid_t pid = fork();
 
@@ -1335,21 +1351,6 @@ int main(int argc, char **argv)
 				exit(fill_lock(lockfd, pid) ? 0 : 1);
 			}
 		}
-#elif USE_DAEMON
-		if (daemon(TRUE, TRUE) < 0) {
-			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
-				errno, strerror(errno));
-			exit_pluto(PLUTO_EXIT_FORK_FAIL);
-		}
-		/*
-		 * Parent just exits, so need to fill in our own PID
-		 * file.  This is racy.
-		 *
-		 * Since "ipsec start" invokes pluto with --nofork, it
-		 * is probably safer to leave this feature disabled
-		 * rather than enable it with daemon.
-		 */
-		(void) fill_lock(lockfd, getpid());
 #else
 		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
 		exit_pluto(PLUTO_EXIT_FORK_FAIL);		
