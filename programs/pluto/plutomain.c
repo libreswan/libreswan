@@ -176,6 +176,9 @@ static const char compile_time_interop_options[] = ""
 #if USE_DAEMON
 	" USE_DAEMON"
 #endif
+#if USE_PTHREAD_SETSCHEDPRIO
+	" USE_PTHREAD_SETSCHEDPRIO"
+#endif
 #ifdef HAVE_BROKEN_POPEN
 	" BROKEN_POPEN"
 #endif
