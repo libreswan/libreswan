@@ -285,7 +285,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	struct pluto_crypto_req req;
 
 	/* OS X does not have pthread_setschedprio */
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+#if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
 
 	DBG(DBG_CONTROL,

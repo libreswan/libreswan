@@ -143,6 +143,14 @@ else
 USERLAND_CFLAGS += -DUSE_DAEMON=0
 endif
 
+# OSX, for instance, doesn't have this call.
+USE_PTHREAD_SETSCHEDPRIO ?= true
+ifeq ($(USE_PTHREAD_SETSCHEDPRIO),true)
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=1
+else
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=0
+endif
+
 ifeq ($(origin GCC_LINT),undefined)
 GCC_LINT=-DGCC_LINT
 endif
