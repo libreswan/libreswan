@@ -9,6 +9,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -710,13 +711,23 @@ void call_server(void)
 #error "addconn requires USE_VFORK or USE_FORK"
 #endif
 		if (addconn_child_pid == 0) {
-			/* child */
+			/*
+			 * child
+			 *
+			 * Note that, when vfork() was used, calls
+			 * like sleep() and DBG_log() are not valid.
+			 *
+			 * XXX: Why the sleep?
+			 */
+#if USE_FORK
 			sleep(1);
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("calling addconn helper using execve"));
+#endif
 			execve(addconn_path, newargv, newenv);
 			_exit(42);
 		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("created addconn helper (pid:%d) using %s+execve",
+			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
 		/* parent continues */
 	}
 	main_loop();
