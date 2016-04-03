@@ -11,7 +11,7 @@
 %global development 0
 %global cavstests 1
 
-#global prever rc2
+#global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
