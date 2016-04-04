@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.18 (unrelease)
+v3.18 (unreleased)
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
