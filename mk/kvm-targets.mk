@@ -40,7 +40,9 @@ KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
 KVM_QEMUDIR = /var/lib/libvirt/qemu
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
+KVMSH ?= $(KVMSH_COMMAND)
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+KVMRUNNER ?= $(KVMRUNNER_COMMAND)
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -160,7 +162,7 @@ distclean-kvm: kvm-distclean
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
-	$(KVMSH_COMMAND) \
+	$(KVMSH) \
 		--output ++compile-log.txt \
 		--chdir . \
 		$(1)
@@ -219,10 +221,10 @@ KVM_TESTS = testing/pluto
 kvm-check: kvm-check-good
 kvm-check-good: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good"     $(KVM_TESTS)
+	$(KVMRUNNER) --retry 1 --test-result "good"     $(KVM_TESTS)
 kvm-check-all: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry 1 --test-result "good|wip" $(KVM_TESTS)
+	$(KVMRUNNER) --retry 1 --test-result "good|wip" $(KVM_TESTS)
 
 # "test" runs tests regardless.  It is best used with the KVM_TESTS
 # varible.
@@ -230,10 +232,10 @@ kvm-check-all: $(KVM_KEYS)
 kvm-test: kvm-test-good
 kvm-test: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good"     $(KVM_TESTS)
+	$(KVMRUNNER) --retry -1 --test-result "good"     $(KVM_TESTS)
 kvm-test-all: $(KVM_KEYS)
 	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER_COMMAND) --retry -1 --test-result "good|wip" $(KVM_TESTS)
+	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(KVM_TESTS)
 
 # clean up
 .PHONY: kvm-clean-check kvm-clean-test
