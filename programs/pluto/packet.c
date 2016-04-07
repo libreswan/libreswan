@@ -959,7 +959,7 @@ static field_desc ikev2_cert_req_fields[] = {
 };
 
 struct_desc ikev2_certificate_req_desc =
-	{ "IKEv2 Certificate Request Payload", ikev2_cert_fields,
+	{ "IKEv2 Certificate Request Payload", ikev2_cert_req_fields,
 	  IKEV2_CERT_SIZE };
 
 /*
