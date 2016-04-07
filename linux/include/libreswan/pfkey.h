@@ -18,6 +18,7 @@
 #define __NET_IPSEC_PF_KEY_H
 
 #include "pfkeyv2.h"
+#include <linux/version.h>
 #ifdef __KERNEL__
 extern struct proto_ops pfkey_proto_ops;
 typedef struct sock pfkey_sock;
@@ -139,7 +140,11 @@ struct key_opt {
 	struct sock     *sk;
 };
 
-#define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+# define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
+#else
+# define key_pid(sk) ((struct key_opt*)&((sk)->sk_protinfo))->key_pid
+#endif
 
 /* XXX-mcr this is not an alignment, this is because the count is in 64-bit
  * words.
