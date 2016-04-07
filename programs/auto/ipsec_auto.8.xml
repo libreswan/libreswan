@@ -78,10 +78,8 @@ connection</replaceable></arg>
     <arg choice='opt'>--listcerts </arg>
     <arg choice='opt'>--listpubkeys </arg>
     <arg choice='opt'>--checkpubkeys </arg>
-    <arg choice='opt'>--listcacerts | --rereadcacerts</arg>
+    <arg choice='opt'>--listcacerts</arg>
     <arg choice='opt'>--listcrls | --rereadcrls </arg>
-    <arg choice='opt'>--listacerts | --rereadacerts </arg>
-    <arg choice='opt'>--listaacerts | --rereadaacerts </arg>
     <arg choice='opt'>--listgroups | --rereadgroups </arg>
     <arg choice='opt'>--purgeocsp </arg>
 
@@ -237,12 +235,6 @@ but that may change.)</para>
        startup  time.   (This is currently a synonym for <option>--ready,</option> but that may
        change.)
 </para>
-<para>       The <option>--rereadcacerts</option> operation reads all certificate files contained  in
-       the  /etc/ipsec.d/cacerts  directory  and  adds them to pluto's list of
-       Certification Authority (CA) certificates. Note CA certificates can and should be stored inside
-       NSS instead of in the /etc/ipsec.d/cacerts directory which will result in automatic updates. This option
-       will be obsoleted in the near future.
-</para>
 <para>       The <option>--rereadcrls</option> operation reads all certificate revocation list  (CRL)
        files  contained  in  the  /etc/ipsec.d/crls directory and adds them to
        pluto's list of CRLs.  Note CRLs can and should be stored inside
@@ -250,7 +242,7 @@ but that may change.)</para>
        will be obsoleted in the near future.
 </para>
 <para>       The <option>--rereadall</option> operation is equivalent to the execution of
-         --rereadsecrets, --rereadcacerts and --rereadcrls.
+         --rereadsecrets, and --rereadcrls.
 </para>
 <para>       The <option>--listpubkeys</option> operation lists all RSA public keys  either  received
        from  peers  via the IKE protocol embedded in authenticated certificate
