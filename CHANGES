@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.18 (unreleased)
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
+* pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
