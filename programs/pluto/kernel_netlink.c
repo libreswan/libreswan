@@ -77,19 +77,6 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-static const struct pfkey_proto_info broad_proto_info[2] = {
-	{
-		.proto = IPPROTO_ESP,
-		.encapsulation = ENCAPSULATION_MODE_TUNNEL,
-		.reqid = 0
-	},
-	{
-		.proto = 0,
-		.encapsulation = 0,
-		.reqid = 0
-	}
-};
-
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
