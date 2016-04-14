@@ -219,9 +219,6 @@ static const char *const state_story[] = {
 enum_names state_stories =
 	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
-static const char *const natt_method_result_name[] = {
-};
-
 /*
  * natt_bit_names is dual purpose:
  * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
