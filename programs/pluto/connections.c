@@ -1175,6 +1175,17 @@ static bool preload_wm_cert_secrets(const struct whack_message *wm)
 	return TRUE;
 }
 
+/* only used by add_connection() */
+static void mark_parse(char *wmmark, struct sa_mark *sa_mark) {
+	char *mask_start = strstr(wmmark,"/");
+
+	sa_mark->val = strtol(wmmark, &mask_start, 0);
+	if (mask_start != wmmark && *mask_start == '/')
+		sa_mark->mask = strtol(mask_start + 1, NULL, 0);
+	else
+		sa_mark->mask = 0xffffffff;
+}
+
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
@@ -1416,15 +1427,17 @@ void add_connection(const struct whack_message *wm)
 		 *  if mark is provided and mask is not mask will default to 0xFFFFFFFF
 		 *  if nothing is provided mark and mask are set to 0;
 		 */
-		if (wm->conn_mark != NULL) {
-			char *mask_start = strstr(wm->conn_mark, "/");
 
-			c->sa_mark.val = strtol(wm->conn_mark, &mask_start, 0);
-			if (mask_start != wm->conn_mark && *mask_start == '/')
-				c->sa_mark.mask = strtol(mask_start + 1, NULL, 0);
-			else
-				c->sa_mark.mask = 0xffffffff;
+
+		/* mark-in= and mark-out= overwrite mark= */
+		if (wm->conn_mark_both != NULL) {
+			mark_parse(wm->conn_mark_both, &c->sa_marks.in);
+			mark_parse(wm->conn_mark_both, &c->sa_marks.out);
 		}
+		if (wm->conn_mark_in != NULL)
+			mark_parse(wm->conn_mark_in, &c->sa_marks.in);
+		if (wm->conn_mark_out != NULL)
+			mark_parse(wm->conn_mark_out, &c->sa_marks.out);
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -2359,12 +2372,16 @@ struct connection *route_owner(struct connection *c,
 		/*
 		 * allow policies different by mark/mask
 		 */
-		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x -- conn %s mark %"PRIu32"/%#010x",
-			c->name,
-			c->sa_mark.val, c->sa_mark.mask,
-			d->name,
-			d->sa_mark.val, d->sa_mark.mask));
-		if ((c->sa_mark.val & c->sa_mark.mask) != (d->sa_mark.val & d->sa_mark.mask))
+		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x vs",
+			c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+			c->sa_marks.out.val, c->sa_marks.out.mask));
+
+		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x",
+			d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+			d->sa_marks.out.val, d->sa_marks.out.mask));
+
+		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) &&
+		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask))
 			continue;
 
 		struct spd_route *srd;
@@ -3748,7 +3765,7 @@ void show_one_connection(const struct connection *c)
 	char mtustr[8];
 	char sapriostr[13];
 	char nflogstr[8];
-	char markstr[2 * strlen("0xffffffff") + strlen("/")];
+	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
 	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
 
@@ -3839,9 +3856,10 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(nflogstr, "unset");
 
-	if (c->sa_mark.val != 0)
-		snprintf(markstr, sizeof(markstr), "%"PRIu32"/%#010x",
-			c->sa_mark.val, c->sa_mark.mask);
+	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 )
+		snprintf(markstr, sizeof(markstr), "%"PRIu32"/%#010x, %"PRIu32"/%#010x",
+			c->sa_marks.in.val, c->sa_marks.in.mask,
+			c->sa_marks.out.val, c->sa_marks.out.mask);
 	else
 		strcpy(markstr, "unset");
 

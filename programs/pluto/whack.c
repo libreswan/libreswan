@@ -121,7 +121,7 @@ static void help(void)
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
-		"       [--conn-mark <mark/mask>] \\\n"
+		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -359,7 +359,9 @@ enum option_enums {
 	CD_PRIORITY,
 	CD_REQID,
 	CD_NFLOG_GROUP,
-	CD_CONN_MARK,
+	CD_CONN_MARK_BOTH,
+	CD_CONN_MARK_IN,
+	CD_CONN_MARK_OUT,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -604,7 +606,9 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + OO + NUMERIC_ARG },
-	{ "conn-mark", required_argument, NULL, CD_CONN_MARK + OO },
+	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
+	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN + OO },
+	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -1797,8 +1801,14 @@ int main(int argc, char **argv)
 			msg.modecfg_banner = strdup(optarg);
 			continue;
 
-		case CD_CONN_MARK:      /* --conn-mark */
-			msg.conn_mark = strdup(optarg);
+		case CD_CONN_MARK_BOTH:      /* --conn-mark */
+			msg.conn_mark_both = strdup(optarg);
+			continue;
+		case CD_CONN_MARK_IN:      /* --conn-mark-in */
+			msg.conn_mark_in = strdup(optarg);
+			continue;
+		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
+			msg.conn_mark_out = strdup(optarg);
 			continue;
 
 		case CD_XAUTHBY:

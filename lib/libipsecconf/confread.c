@@ -1218,7 +1218,13 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	str_to_conn(modecfg_dns2, KSCF_MODECFGDNS2);
 	str_to_conn(modecfg_domain, KSCF_MODECFGDOMAIN);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
-	str_to_conn(conn_mark, KSCF_CONN_MARK);
+
+	/* mark-in= and mark-out= override mark= */
+	str_to_conn(conn_mark_in, KSCF_CONN_MARK_BOTH);
+	str_to_conn(conn_mark_out, KSCF_CONN_MARK_BOTH);
+	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
+	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
+
 	str_to_conn(connalias, KSCF_CONNALIAS);
 
 #	undef str_to_conn
@@ -1369,7 +1375,9 @@ static void conn_default(struct starter_conn *conn,
 	conn->modecfg_dns2 = clone_str(def->modecfg_dns2, "conn default dns2");
 	conn->modecfg_domain = clone_str(def->modecfg_domain, "conn default domain");
 	conn->modecfg_banner = clone_str(def->modecfg_banner, "conn default banner");
-	conn->conn_mark = clone_str(def->conn_mark, "conn default conn_mark");
+	conn->conn_mark_both = clone_str(def->conn_mark_both, "conn default conn_mark_both");
+	conn->conn_mark_in = clone_str(def->conn_mark_in, "conn default conn_mark_in");
+	conn->conn_mark_out = clone_str(def->conn_mark_out, "conn default conn_mark_out");
 #ifdef HAVE_LABELED_IPSEC
 	conn->policy_label = clone_str(def->policy_label, "conn default policy_label");
 #endif

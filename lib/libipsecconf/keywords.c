@@ -599,7 +599,11 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "modecfgbanner", kv_conn | kv_auto, kt_string, KSCF_MODECFGBANNER,
 	  NOT_ENUM },
-	{ "mark",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK,
+	{ "mark",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_BOTH,
+	  NOT_ENUM },
+	{ "mark-in",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_IN,
+	  NOT_ENUM },
+	{ "mark-out",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_OUT,
 	  NOT_ENUM },
 
 	{ "modecfgwins1", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,

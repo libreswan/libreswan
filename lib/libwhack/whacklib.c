@@ -133,7 +133,9 @@ err_t pack_whack_msg(struct whackpacker *wp)
 #endif
 	    !pack_str(wp, &wp->msg->modecfg_domain) ||                          /* string 28 */
 	    !pack_str(wp, &wp->msg->modecfg_banner) ||                          /* string 29 */
-	    !pack_str(wp, &wp->msg->conn_mark) ||                               /* string 30 */
+	    !pack_str(wp, &wp->msg->conn_mark_both) ||                          /* string 30 */
+	    !pack_str(wp, &wp->msg->conn_mark_in) ||                            /* string 31 */
+	    !pack_str(wp, &wp->msg->conn_mark_out) ||                           /* string 32 */
 	    wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len) {  /* chunk (sort of string) */
 		ugh = "too many bytes of strings to fit in message to pluto";
 		return ugh;
@@ -194,8 +196,10 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->policy_label) ||          /* string 27 */
 #endif
 	    !unpack_str(wp, &wp->msg->modecfg_domain) ||        /* string 28 */
-	    !unpack_str(wp, &wp->msg->modecfg_banner) ||       /* string 29 */
-	    !unpack_str(wp, &wp->msg->conn_mark) ||            /* string 30 */
+	    !unpack_str(wp, &wp->msg->modecfg_banner) ||        /* string 29 */
+	    !unpack_str(wp, &wp->msg->conn_mark_both) ||        /* string 30 */
+	    !unpack_str(wp, &wp->msg->conn_mark_in) ||          /* string 31 */
+	    !unpack_str(wp, &wp->msg->conn_mark_out) ||         /* string 32 */
 	    wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)
 		ugh = "message from whack contains bad string";
 

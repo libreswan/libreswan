@@ -276,7 +276,9 @@ struct whack_message {
 	ip_address modecfg_dns2;
 	char *modecfg_domain;
 	char *modecfg_banner;
-	char *conn_mark;
+	char *conn_mark_both;
+	char *conn_mark_in;
+	char *conn_mark_out;
 
 	/* what metric to put on ipsec routes */
 	int metric;

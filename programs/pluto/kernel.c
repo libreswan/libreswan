@@ -378,7 +378,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "",
-		connmarkstr[sizeof("CONNMARK='' ") +  2 * sizeof("0xffffffff")+1] = "";
+		connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
 #undef MAX_DISPLAY_BYTES
 
 	ipstr_buf bme, bpeer;
@@ -446,9 +446,14 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	}
 
 	connmarkstr[0] = '\0';
-	if (c->sa_mark.val != 0) {
-		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK=%"PRIu32"/%#010x ",
-			c->sa_mark.val, c->sa_mark.mask);
+	int inend = 0;
+	if (c->sa_marks.in.val != 0) {
+		inend = snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK_IN=%"PRIu32"/%#010x ",
+			c->sa_marks.in.val, c->sa_marks.in.mask);
+	}
+	if (c->sa_marks.out.val != 0) {
+		inend = snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend, "CONNMARK_OUT=%"PRIu32"/%#010x ",
+			c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 
 	srcip_str[0] = '\0';
@@ -1109,7 +1114,7 @@ bool raw_eroute(const ip_address *this_host,
 		       const struct pfkey_proto_info *proto_info,
 		       deltatime_t use_lifetime,
 		       uint32_t sa_priority,
-		       const struct sa_mark *sa_mark,
+		       const struct sa_marks *sa_marks,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1168,7 +1173,7 @@ bool raw_eroute(const ip_address *this_host,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, sa_priority, sa_mark, op, text_said
+					use_lifetime, sa_priority, sa_marks, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 					, policy_label
 #endif
@@ -1292,7 +1297,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			       ET_INT, null_proto_info,
 			       deltatime(SHUNT_PATIENCE),
 			       DEFAULT_IPSEC_SA_PRIORITY,
-			       NULL, /* sa_mark */
+			       NULL, /* sa_marks */
 			       op, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
@@ -1373,7 +1378,7 @@ bool eroute_connection(const struct spd_route *sr,
 		       int sa_proto, enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       uint32_t sa_priority,
-		       const struct sa_mark *sa_mark,
+		       const struct sa_marks *sa_marks,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
 		       , const char *policy_label
@@ -1398,7 +1403,7 @@ bool eroute_connection(const struct spd_route *sr,
 			  esatype,
 			  proto_info,
 			  deltatime(0),
-			  sa_priority, sa_mark, op, buf2
+			  sa_priority, sa_marks, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -2318,7 +2323,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				  proto_info,			/* " */
 				  deltatime(0),			/* lifetime */
 				  c->sa_priority,		/* IPsec SA prio */
-				  &c->sa_mark,			/* IPsec SA mark mask */
+				  &c->sa_marks,			/* IPsec SA marks */
 				  ERO_ADD_INBOUND,		/* op */
 				  "add inbound"			/* opname */
 #ifdef HAVE_LABELED_IPSEC
@@ -2404,7 +2409,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
 				  null_proto_info,
 				  deltatime(0),
-				  c->sa_priority, &c->sa_mark,
+				  c->sa_priority, &c->sa_marks,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label

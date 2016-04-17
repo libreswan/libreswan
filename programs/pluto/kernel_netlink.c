@@ -613,7 +613,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const struct pfkey_proto_info *proto_info,
 			deltatime_t use_lifetime UNUSED,
 			uint32_t sa_priority,
-			const struct sa_mark *sa_mark,
+			const struct sa_marks *sa_marks,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -873,18 +873,22 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len += attr->rta_len;
 
 		/* mark policy extension */
-		if(sa_mark->val != 0 && sa_mark->mask != 0) {
-			struct xfrm_mark xfrm_mark;
-			struct rtattr* mark_attr;
+		{
+			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			xfrm_mark.v = sa_mark->val;
-			xfrm_mark.m = sa_mark->mask;
-			mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			mark_attr->rta_type = XFRMA_MARK;
-			mark_attr->rta_len = sizeof(xfrm_mark);
-			memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
-			mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
-			req.n.nlmsg_len += mark_attr->rta_len;
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+				struct xfrm_mark xfrm_mark;
+				struct rtattr* mark_attr;
+
+				xfrm_mark.v = sa_mark.val;
+				xfrm_mark.m = sa_mark.mask;
+				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+				mark_attr->rta_type = XFRMA_MARK;
+				mark_attr->rta_len = sizeof(xfrm_mark);
+				memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
+				mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
+				req.n.nlmsg_len += mark_attr->rta_len;
+			}
 		}
 	}
 
@@ -1867,7 +1871,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				c->sa_priority, &c->sa_mark, op, opname
+				c->sa_priority, &c->sa_marks, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				, st->st_connection->policy_label
 #endif
@@ -1994,7 +1998,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					null_proto_info,
 					deltatime(0),
 					c->sa_priority,
-					&c->sa_mark,
+					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
@@ -2030,7 +2034,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					null_proto_info,
 					deltatime(0),
 					c->sa_priority,
-					&c->sa_mark,
+					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
