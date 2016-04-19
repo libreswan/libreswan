@@ -443,7 +443,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 				r_gateway,
 				r_interface,
 				r_source, rtmsg->rtm_table,
-				ignore ? "" : " (ignored)");
+				ignore ? " (ignored)" : "");
 		}
 
 		if (ignore)
