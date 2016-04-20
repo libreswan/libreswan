@@ -2,8 +2,8 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-online 192.0.2.254 -I 192.0.1.254
-192.0.2.254 -I 192.0.1.254 is online
+ ../../pluto/bin/wait-until-alive 192.0.2.254 -I 192.0.1.254
+destination 192.0.2.254 -I 192.0.1.254 is alive
 west #
  # make sure that clear text does not get through
 west #
