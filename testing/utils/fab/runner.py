@@ -104,11 +104,10 @@ class TestDomain:
         self.login()
 
     def read_file_run(self, basename):
-        self.logger.info("running: %s", basename)
+        self.logger.info("starting script %s", basename)
         filename = os.path.join(self.test.directory, basename)
-        file = None
-        try:
-            file = open(filename, "r")
+        start_time = time.time()
+        with open(filename, "r") as file:
             for line in file:
                 line = line.strip()
                 if line:
@@ -118,9 +117,8 @@ class TestDomain:
                         # XXX: Can't abort as some ping commands are
                         # expected to fail.
                         self.logger.warning("command '%s' failed with status %d", line, status)
-        finally:
-            if file:
-                file.close()
+            self.logger.info("script %s finished after %d seconds",
+                             basename, time.time() - start_time)
 
 
 class TestDomains:
@@ -267,7 +265,7 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     for scripts in test.scripts():
         tasks = " ".join(("%s:%s") % (domain_name, script) for domain_name, script in scripts.items())
-        logger.info("running script: %s", tasks)
+        logger.info("running scripts: %s", tasks)
         for domain_name, script in scripts.items():
             submit_job_for_domain(executor, jobs, logger, all_test_domains[domain_name],
                                   lambda test_domain: test_domain.read_file_run(script))
