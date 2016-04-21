@@ -292,6 +292,12 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE);
 	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
 
+	bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
+
+	if (verbose)
+		printf("\nseeking_src = %d, seeking_gateway = %d, has_peer = %d\n",
+			seeking_src, seeking_gateway, has_peer);
+
 	char msgbuf[RTNL_BUFSIZE];
 	bool has_dst = FALSE;
 	int query_again = 0;
@@ -308,12 +314,20 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 */
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
 		has_dst = TRUE;
-	} else if (peer->addrtype == KH_IPADDR) {
+	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
 		 * We may need to figure out source IP
 		 * and gateway IP to get there.
 		 */
+		if (peer->addrtype == KH_IPHOSTNAME) {
+			err_t er;
+			er = ttoaddr(peer->strings[KSCF_IP], 0, AF_UNSPEC,
+				&peer->addr);
+			if (er != NULL)
+				return -1;
+		}
+
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
 		has_dst = TRUE;
 		if (seeking_src && seeking_gateway &&
@@ -355,7 +369,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	}
 
 	if (verbose)
-		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
+		printf("seeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
 			seeking_src, seeking_gateway, has_dst);
 
 	/* Send netlink get_route request */
