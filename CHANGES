@@ -5,10 +5,12 @@ v3.18 (unreleased)
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
+* addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
-* pluto: replace make variable HAVE_NO_FORK with USE_FORK, USE_DAEMON, and USE_VFORK [Andrew]
+* pluto: replace make variable HAVE_NO_FORK with USE_FORK, USE_DAEMON, and
+         USE_VFORK [Andrew]
 * pluto: add make variable USE_PTHREAD_SETSCHEDPRIO used by Darwin [Andrew]
 * IKEv2: Add Vendor ID support and VID_OPPORTUNISTIC [Paul]
 * IKEv2: Send VID_OPPORTUNISTIC when doing AUTH-NULL Opportunistc IPsec [Paul]
