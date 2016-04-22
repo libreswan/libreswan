@@ -100,7 +100,7 @@ static const struct fld RSA_private_field[] = {
 	},
 	{
 		.name = "CKAIDNSS",
-		.offset = offsetof(struct RSA_private_key, ckaid),
+		.offset = -1,
 	},
 };
 
@@ -686,89 +686,101 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
  */
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 {
-	/*
-	 * data structure to save public field values
-	 * (Modulus and PublicExponent) for keyid calculation
-	 */
-	unsigned char pfv_space[RSA_MAX_ENCODING_BYTES];
-	unsigned char *pfvs_next = pfv_space;
-	chunk_t pub_field[2];	/* first 2 fields only */
-	chunk_t *pfv_next = &pub_field[0];
+	passert(tokeq("{"));
+	while (1) {
+		if (!shift()) {
+			return "premature end of RSA key";
+		}
+		if (tokeq("}")) {
+			break;
+		}
 
-	const struct fld *p;
+		const struct fld *p = NULL;
+		const struct fld *f;
+		for (f = RSA_private_field;
+		     f < RSA_private_field + elemsof(RSA_private_field);
+		     f++) {
+			if (tokeqword(f->name)) {
+				p = f;
+				break;
+			}
+		}
+		if (p == NULL) {
+			return builddiag("RSA keyword '%s' not recognised", flp->tok);
+		}
+		if (!shift()) {
+			return "premature end of RSA key";
+		}
 
-	for (p = RSA_private_field;
-		p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
+		/* skip optional ':' */
+		if (tokeq(":") && !shift()) {
+			return "premature end of RSA key";
+		}
+
 		/* Binary Value of key field */
 		unsigned char bv[RSA_MAX_ENCODING_BYTES];
 		size_t bvlen;
 		char diag_space[TTODATAV_BUF];
-		err_t ugh;
-
-		if (!shift()) {
-			return "premature end of RSA key";
-		} else if (!tokeqword(p->name)) {
-			return builddiag(
-				"%s keyword not found where expected in RSA key",
-				p->name);
-		} else if (!(shift() &&
-				(!tokeq(":") || shift()))) {
-			/* ignore optional ":" */
-			return "premature end of RSA key";
-		} else if (NULL !=
-			(ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0,
-					(char *)bv, sizeof(bv),
-					&bvlen,
-					diag_space, sizeof(diag_space),
-					TTODATAV_SPACECOUNTS))) {
+		err_t ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0,
+				     (char *)bv, sizeof(bv),
+				     &bvlen,
+				     diag_space, sizeof(diag_space),
+				     TTODATAV_SPACECOUNTS);
+		if (ugh != NULL) {
 			/* in RSA key, ttodata didn't like */
 			return builddiag("RSA data malformed (%s): %s",
-					ugh, flp->tok);
-		} else if (streq(p->name, "CKAIDNSS")) {
+					 ugh, flp->tok);
+		}
+		passert(sizeof(bv) >= bvlen);
+
+		/* dispose of the data */
+		if (streq(p->name, "CKAIDNSS")) {
+			DBG(DBG_CONTROL, DBG_log("saving CKAID"));
+			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			passert(sizeof(rsak->ckaid) >= bvlen);
 			memcpy(rsak->ckaid, bv, bvlen);
 			rsak->ckaid_len = bvlen;
+		} else if (p->offset >= 0) {
+			DBG(DBG_CONTROLMORE, DBG_log("saving %s", p->name));
+			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
+			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
+			clonetochunk(*n, bv, bvlen, p->name);
+			DBG(DBG_PRIVATE, DBG_dump_chunk(p->name, *n));
 		} else {
-			if (p->offset >= 0) {
-				chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
-				clonetochunk(*n, bv, bvlen, "n");
-				DBG(DBG_PRIVATE,
-				    DBG_dump_chunk(p->name, *n));
-			} else {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("ignoring field %s", p->name));
-			}
-			if (pfv_next < &pub_field[elemsof(pub_field)]) {
-				if (pfvs_next - pfv_space + bvlen >
-					sizeof(pfv_space))
-					return "public key takes too many bytes";
-				setchunk(*pfv_next, pfvs_next, bvlen);
-				memcpy(pfvs_next, bv, bvlen);
-				pfvs_next += bvlen;
-				pfv_next++;
+			DBG(DBG_CONTROL, DBG_log("ignoring %s", p->name));
+		}
+	}
+	passert(tokeq("}"));
+	if (shift()) {
+		return "malformed end of RSA private key -- unexpected token after '}'";
+	}
+
+	/*
+	 * Check that all required fields are present.
+	 */
+	if (rsak->ckaid_len == 0) {
+		return "field 'CKAIDNSS' either missing or empty";
+	}
+	const struct fld *p;
+	for (p = RSA_private_field;
+	     p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
+		if (p->offset >= 0) {
+			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
+			if (n->len == 0) {
+				return builddiag("field '%s' either missing or empty", p->name);
 			}
 		}
 	}
 
-	/*
-	 * We require an (indented) '}' and the end of the record.
-	 * We break down the test so that the diagnostic will be
-	 * more helpful.  Some people don't seem to wish to indent
-	 * the brace!
-	 */
-	if (!shift() || !tokeq("}")) {
-		return "malformed end of RSA private key -- indented '}' required";
-	} else if (shift()) {
-		return "malformed end of RSA private key -- unexpected token after '}'";
-	} else {
-		rsak->pub.k = rsak->pub.n.len;
-		rsak->pub.keyid[0] = '\0';	/* in case of failure */
-		splitkeytoid(pub_field[1].ptr, pub_field[1].len,
-			pub_field[0].ptr, pub_field[0].len,
-			rsak->pub.keyid, sizeof(rsak->pub.keyid));
-
-		return RSA_public_key_sanity(rsak);
+	rsak->pub.k = rsak->pub.n.len;
+	rsak->pub.keyid[0] = '\0';	/* in case of failure */
+	if (rsak->pub.e.len > 0 || rsak->pub.n.len >0) {
+		splitkeytoid(rsak->pub.e.ptr, rsak->pub.e.len,
+			     rsak->pub.n.ptr, rsak->pub.e.len,
+			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
 	}
+
+	return RSA_public_key_sanity(rsak);
 }
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
