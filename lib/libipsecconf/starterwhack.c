@@ -9,6 +9,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -422,7 +423,6 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 		msg.keyid = end->id;
 
 		switch (end->rsakey1_type) {
-		case PUBKEY_DNS:
 		case PUBKEY_DNSONDEMAND:
 			starter_log(LOG_LEVEL_DEBUG,
 				"conn %s/%s has key from DNS",
@@ -468,7 +468,6 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 		msg.keyid = end->id;
 		switch (end->rsakey2_type) {
 		case PUBKEY_NOTSET:
-		case PUBKEY_DNS:
 		case PUBKEY_DNSONDEMAND:
 		case PUBKEY_CERTIFICATE:
 			break;

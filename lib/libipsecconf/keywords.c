@@ -7,6 +7,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -191,12 +192,12 @@ static const struct keyword_enum_value kw_type_values[] = {
 static const struct keyword_enum_values kw_type_list = VALUES_INITIALIZER(kw_type_values);
 
 /*
- * Values for rsasigkey={%dnsondemand, %dns, literal }
+ * Values for rsasigkey={ %cert, %dnsondemand, %dns, literal }
  */
 static const struct keyword_enum_value kw_rsasigkey_values[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
-	{ "%dns",         PUBKEY_DNS },
+	{ "%dns",         PUBKEY_DNSONDEMAND },
 	{ "%dnsondemand", PUBKEY_DNSONDEMAND },
 };
 
