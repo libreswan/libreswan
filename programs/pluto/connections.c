@@ -1146,7 +1146,16 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 		return TRUE;
 	}
 
-	CERTCertificate *cert = get_cert_from_nss(nickname); // Must free?
+	/*
+	 * Must free CERT.
+	 *
+	 * This function's caller - add_connection - can end up
+	 * loading the certificate twice.  First here, and then in
+	 * extract_end / load_end_nss_certificate.  It happens
+	 * because, at the point of this function's call, there is no
+	 * where to stash the certificate.  Caveat emptor.
+	 */
+	CERTCertificate *cert = get_cert_from_nss(nickname);
 	if (cert == NULL) {
 		loglog(RC_COMMENT,
 		       "%scert with the nickname \"%s\" does not exist in NSS db",
@@ -1155,9 +1164,15 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 	}
 
 	/*
-	 * XXX: why is the above considered fatal, yet the below
-	 * harmless; and why load a cert only to throw it away;
-	 * on-demand?
+	 * Try to pre-load the certificate's secret (private key) into
+	 * the local cache (see keys.c).
+	 *
+	 * This can fail.  For instance, this end may only have the
+	 * peer's certificate
+	 *
+	 * This could also fail because a needed secret is missing.
+	 * That case is handled by refine_host_connection /
+	 * get_preshared_secret.
 	 */
 	err_t ugh = load_nss_cert_secret(cert);
 	if (ugh != NULL) {
