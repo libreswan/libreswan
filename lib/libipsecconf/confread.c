@@ -13,6 +13,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -572,7 +573,6 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		end->rsakey2_type = end->options[KSCF_RSAKEY2];
 
 		switch (end->options[KSCF_RSAKEY1]) {
-		case PUBKEY_DNS:
 		case PUBKEY_DNSONDEMAND:
 			end->key_from_DNS_on_demand = TRUE;
 			break;

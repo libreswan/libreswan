@@ -215,27 +215,34 @@ kvm-shutdown-%:
 
 KVM_TESTS = testing/pluto
 
+# Given a make command like:
+#
+#     make kvm-test "KVM_TESTS=$(./testing/utils/kvmresults.py --quick testing/pluto | awk '/output-different/ { print $1 }' )"
+#
+# then KVM_TESTS ends up containing new lines, strip them out.
+STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
+
 # "check" runs any test that has not yet passed (that is: failed,
 # incomplete, and not started).  This is probably the safest option.
 .PHONY: kvm-check kvm-check-good kvm-check-all
 kvm-check: kvm-check-good
 kvm-check-good: $(KVM_KEYS)
-	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER) --retry 1 --test-result "good"     $(KVM_TESTS)
+	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --retry  1 --test-result "good"     $(STRIPPED_KVM_TESTS)
 kvm-check-all: $(KVM_KEYS)
-	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER) --retry 1 --test-result "good|wip" $(KVM_TESTS)
+	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --retry  1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
 
 # "test" runs tests regardless.  It is best used with the KVM_TESTS
 # varible.
 .PHONY: kvm-test-good kvm-test-all
 kvm-test: kvm-test-good
 kvm-test: $(KVM_KEYS)
-	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good"     $(KVM_TESTS)
+	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --retry -1 --test-result "good"     $(STRIPPED_KVM_TESTS)
 kvm-test-all: $(KVM_KEYS)
-	: KVM_TESTS = $(KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(KVM_TESTS)
+	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
 
 # clean up
 .PHONY: kvm-clean-check kvm-clean-test

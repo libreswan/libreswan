@@ -2,10 +2,12 @@
 north #
  # confirm that the network is alive
 north #
- ping -n -c 4 192.0.2.254
+ ../../pluto/bin/wait-until-alive 192.0.2.254
+ping -n -c 1 -w 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
+destination 192.0.2.254 is dead
 north #
  # make sure that clear text does not get through
 north #

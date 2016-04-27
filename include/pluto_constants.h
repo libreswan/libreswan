@@ -1,10 +1,12 @@
 /* manifest constants
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -772,9 +774,8 @@ enum sa_policy_bits {
 
 enum pubkey_source {
 	PUBKEY_NOTSET       = 0,
-	PUBKEY_DNS          = 1,
-	PUBKEY_DNSONDEMAND  = 2,
-	PUBKEY_CERTIFICATE  = 3,
+	PUBKEY_DNSONDEMAND  = 1,
+	PUBKEY_CERTIFICATE  = 2,
 	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
 };
 

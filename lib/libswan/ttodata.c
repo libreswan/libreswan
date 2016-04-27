@@ -2,6 +2,7 @@
  * convert from text form of arbitrary data (e.g., keys) to binary
  *
  * Copyright (C) 2000  Henry Spencer.
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -37,18 +38,18 @@ static const char *badch(const char *, int, char *, size_t);
  *
  * If some of this looks slightly odd, it's because it has changed
  * repeatedly (from the original atodata()) without a major rewrite.
+ *
+ * Return NULL on success, else literal or errp
  */
-const char *	/* NULL on success, else literal or errp */
-ttodatav(src, srclen, base, dst, dstlen, lenp, errp, errlen, flags)
-const char *src;
-size_t srclen;	/* 0 means apply strlen() */
-int base;	/* 0 means figure it out */
-char *dst;	/* need not be valid if dstlen is 0 */
-size_t dstlen;
-size_t *lenp;	/* where to record length (NULL is nowhere) */
-char *errp;	/* error buffer */
-size_t errlen;
-unsigned int flags;
+const char *ttodatav(const char *src,
+		     size_t srclen,	/* 0 means apply strlen() */
+		     int base,		/* 0 means figure it out */
+		     char *dst,		/* need not be valid if dstlen is 0 */
+		     size_t dstlen,
+		     size_t *lenp,	/* where to record length (NULL is nowhere) */
+		     char *errp,	/* error buffer */
+		     size_t errlen,
+		     unsigned int flags)
 {
 	size_t ingroup;	/* number of input bytes converted at once */
 	char buf[4];	/* output from conversion */
@@ -175,15 +176,15 @@ unsigned int flags;
 
 /*
  * ttodata - convert text to data
+ *
+ * Return NULL on success, else literal
  */
-const char *	/* NULL on success, else literal */
-ttodata(src, srclen, base, dst, dstlen, lenp)
-const char *src;
-size_t srclen;	/* 0 means apply strlen() */
-int base;	/* 0 means figure it out */
-char *dst;	/* need not be valid if dstlen is 0 */
-size_t dstlen;
-size_t *lenp;	/* where to record length (NULL is nowhere) */
+const char *ttodata(const char *src,
+		    size_t srclen,	/* 0 means apply strlen() */
+		    int base,		/* 0 means figure it out */
+		    char *dst,		/* need not be valid if dstlen is 0 */
+		    size_t dstlen,
+		    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
 	return ttodatav(src, srclen, base, dst, dstlen, lenp, (char *)NULL,
 			(size_t)0, TTODATAV_SPACECOUNTS);
@@ -191,12 +192,12 @@ size_t *lenp;	/* where to record length (NULL is nowhere) */
 
 /*
  * unhex - convert two ASCII hex digits to byte
+ *
+ * Return number of result bytes, or error code
  */
-static int	/* number of result bytes, or error code */
-unhex(src, dst, dstlen)
-const char *src;	/* known to be full length */
-char *dst;
-size_t dstlen;	/* not large enough is a failure */
+static int unhex(const char *src,	/* known to be full length */
+		 char *dst,
+		 size_t dstlen)		/* not large enough is a failure */
 {
 	const char *p;
 	unsigned byte;
@@ -231,12 +232,12 @@ size_t dstlen;	/* not large enough is a failure */
  *
  * Note that a base64 digit group is padded out with '=' if it represents
  * less than three bytes:  one byte is dd==, two is ddd=, three is dddd.
+ *
+ * Return number of result bytes, or error code
  */
-static int	/* number of result bytes, or error code */
-unb64(src, dst, dstlen)
-const char *src;	/* known to be full length */
-char *dst;
-size_t dstlen;
+static int unb64(const char *src,	/* known to be full length */
+		 char *dst,
+		 size_t dstlen)
 {
 	const char *p;
 	unsigned byte1;
@@ -295,12 +296,12 @@ size_t dstlen;
 
 /*
  * untext - convert one ASCII character to byte
+ *
+ * Return number of result bytes, or error code
  */
-static int	/* number of result bytes, or error code */
-untext(src, dst, dstlen)
-const char *src;	/* known to be full length */
-char *dst;
-size_t dstlen;	/* not large enough is a failure */
+static int untext(const char *src,	/* known to be full length */
+		  char *dst,
+		  size_t dstlen)	/* not large enough is a failure */
 {
 	if (dstlen < 1)
 		return SHORT;
@@ -314,13 +315,13 @@ size_t dstlen;	/* not large enough is a failure */
  *
  * If the compiler complains that the array bigenough[] has a negative
  * size, that means the TTODATAV_BUF constant has been set too small.
+ *
+ * Return literal or errp
  */
-static const char *	/* literal or errp */
-badch(src, errcode, errp, errlen)
-const char *src;
-int errcode;
-char *errp;	/* might be NULL */
-size_t errlen;
+static const char *badch(const char *src,
+			 int errcode,
+			 char *errp,	/* might be NULL */
+			 size_t errlen)
 {
 	static const char pre[] = "unknown character (`";
 	static const char suf[] = "') in input";

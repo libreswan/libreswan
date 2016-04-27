@@ -16,6 +16,8 @@ import os
 import re
 import subprocess
 import difflib
+from collections import defaultdict
+
 from fab import utils
 
 def add_arguments(parser):
@@ -38,24 +40,26 @@ def log_arguments(logger, args):
     logger.info("  ignore-blank-lines: %s", args.ignore_blank_lines)
 
 
-# Dictionary to accumulate errors from a test run.
+# Dictionary to accumulate all the errors for each domain from an
+# individual test.
 
 class Errors:
 
     def __init__(self, logger):
-        self.errors = {}
+        self.errors = defaultdict(set)
         self.logger = logger
 
     # this formatting is subject to infinite feedback.
+    #
+    # Not exactly efficient.
     def __str__(self):
-        s = None
-        for who in sorted(self.errors):
+        s = ""
+        for domain, errors in sorted(self.errors.items()):
             if s:
                 s += " "
-            else:
-                s = ""
-            s += who + ":"
-            s += ",".join(sorted(self.errors[who]))
+            if domain:
+                s += domain + ":"
+            s += ",".join(sorted(errors))
         return s
 
     # So, like a real collection, can easily test if non-empty.
@@ -69,29 +73,28 @@ class Errors:
             values |= errors
         return values.__iter__()
 
-    def add(self, what, who=None):
-        if not who in self.errors:
-            self.errors[who] = set()
-        self.errors[who].add(what)
-        self.logger.debug("domain %s has %s", who, what)
+    def items(self):
+        return self.errors.items()
 
-    def search(self, regex, string, what, domain):
-        self.logger.debug("searching for '%s' (%s) for domain '%s'", regex, what, domain)
+    def add(self, error, domain=None):
+        self.errors[domain].add(error)
+        self.logger.debug("domain %s has error %s", domain, error)
+
+    def search(self, regex, string, error, domain):
+        self.logger.debug("searching domain %s for '%s' (error %s)", domain, regex, error)
         if re.search(regex, string):
-            self.logger.debug("'%s' matched for domain '%s'", regex, domain)
-            self.add(what, domain)
+            self.add(error, domain)
             return True
         else:
             return False
 
-    def grep(self, regex, filename, what, domain):
-        self.logger.debug("grepping for '%s' (%s) in '%s' for domain '%s'", regex, what, filename, domain)
+    def grep(self, regex, filename, error, domain):
+        self.logger.debug("grepping domain %s file '%s' for '%s' (error %s)", domain, filename, regex, error)
         command = ['grep', '-e', regex, filename]
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode == 0:
-            self.logger.debug("'%s' matched for domain '%s'", regex, domain)
-            self.add(what, domain)
+            self.add(error, domain)
             return True
         else:
             return False

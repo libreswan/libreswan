@@ -20,7 +20,6 @@ import re
 import pexpect
 import argparse
 import shutil
-import time
 from datetime import datetime
 from distutils import util
 from concurrent import futures
@@ -46,9 +45,8 @@ def main():
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
     # (avoiding Makefile, OBJ, README, ... :-).
-    parser.add_argument("--backup-directory", metavar="DIRECTORY",
-                        default=os.path.join("BACKUP", time.strftime("%Y%m%d%H%M%S", time.localtime())),
-                        help="backup existing <test>/OUTPUT to %(metavar)s/<test> (default: %(default)s)")
+    parser.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
+                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="either a testsuite directory or a list of test directories")
@@ -149,7 +147,9 @@ def main():
 
             saved_output_directory = None
             if os.path.exists(test.output_directory):
-                saved_output_directory = os.path.join(args.backup_directory, test.name)
+                saved_output_directory = os.path.join(args.backup_directory,
+                                                      start_time.strftime("%Y%m%d%H%M%S"),
+                                                      test.name)
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, saved_output_directory)
                 # Copy "empty" OUTPUT directories too.

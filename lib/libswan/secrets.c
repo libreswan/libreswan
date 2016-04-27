@@ -1479,7 +1479,6 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 	if ((pkey = get_nss_cert_privkey(*secrets, cert)) != NULL) {
 		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
 					 cert->nickname));
-		CERT_DestroyCertificate(cert);
 		return NULL;
 	}
 	s = alloc_thing(struct secret, "secret");
@@ -1489,7 +1488,6 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,
 						cert)) != NULL) {
 		pfree(s);
-		CERT_DestroyCertificate(cert);
 		return ugh;
 	}
 

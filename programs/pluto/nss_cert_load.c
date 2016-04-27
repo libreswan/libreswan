@@ -105,20 +105,6 @@ bool load_coded_file(const char *filename,
 	return FALSE;
 }
 
-bool cert_exists_in_nss(const char *nickname)
-{
-	CERTCertificate *cert;
-
-	cert = PK11_FindCertFromNickname(nickname,
-					lsw_return_nss_password_file_info());
-	if (cert == NULL)
-		return FALSE;
-
-	CERT_DestroyCertificate(cert);
-
-	return TRUE;
-}
-
 CERTCertificate *get_cert_from_nss(const char *nickname)
 {
 	CERTCertificate *cert;
