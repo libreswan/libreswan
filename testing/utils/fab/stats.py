@@ -45,7 +45,7 @@ class Counts:
                     if value:
                         line += " "
                         line += value
-                    log("%s%s:%s", prefix, key, line)
+                log("%s%s:%s", prefix, key, line)
             footer and log(footer)
 
 
