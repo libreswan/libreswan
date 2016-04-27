@@ -17,6 +17,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1139,40 +1140,40 @@ static reqid_t gen_reqid(void)
 	}
 }
 
+static bool preload_wm_cert_secret(const char *side, const char *nickname)
+{
+	if (nickname == NULL) {
+		return TRUE;
+	}
+
+	CERTCertificate *cert = get_cert_from_nss(nickname); // Must free?
+	if (cert == NULL) {
+		loglog(RC_COMMENT,
+		       "%scert with the nickname \"%s\" does not exist in NSS db",
+		       side, nickname);
+		return FALSE;
+	}
+
+	/*
+	 * XXX: why is the above considered fatal, yet the below
+	 * harmless; and why load a cert only to throw it away;
+	 * on-demand?
+	 */
+	err_t ugh = load_nss_cert_secret(cert);
+	if (ugh != NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("warning: no secret key loaded for %scert=%s: %s",
+			    side, nickname, ugh));
+	}
+
+	CERT_DestroyCertificate(cert);
+	return TRUE;
+}
+
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
-	err_t ugh;
-
-	if (wm->left.cert != NULL) {
-		if (!cert_exists_in_nss(wm->left.cert)) {
-			loglog(RC_COMMENT, "leftcert with the "
-					   "nickname \"%s\" does "
-					   "not exist in NSS db",
-					   wm->left.cert);
-			return FALSE;
-		}
-		if ((ugh = load_nss_cert_secret(wm->left.cert)) != NULL) {
-			DBG(DBG_CONTROL, DBG_log("warning: no secret key loaded for leftcert=%s: %s",
-						  wm->left.cert, ugh));
-		}
-	}
-
-	if (wm->right.cert != NULL) {
-		//nokey-refpatch check_cert_nss PK11_FindKeyByAnyCert(cert)
-		if (!cert_exists_in_nss(wm->right.cert)) {
-			loglog(RC_COMMENT, "rightcert with the "
-					   "nickname \"%s\" does "
-					   "not exist in NSS db",
-					   wm->right.cert);
-			return FALSE;
-		}
-		if ((ugh = load_nss_cert_secret(wm->right.cert)) != NULL) {
-			DBG(DBG_CONTROL, DBG_log("warning: no secret key loaded for rightcert=%s: %s",
-						  wm->right.cert, ugh));
-		}
-	}
-
-	return TRUE;
+	return (preload_wm_cert_secret("left", wm->left.cert)
+		&& preload_wm_cert_secret("right", wm->right.cert));
 }
 
 /* only used by add_connection() */

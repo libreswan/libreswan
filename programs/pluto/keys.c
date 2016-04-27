@@ -10,6 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -593,25 +594,54 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	/* is there a certificate assigned to this connection? */
 	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
+		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
 			c->spd.this.cert.u.nss_cert);
-
 		passert(my_public_key != NULL);
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);
-
-		if (best == NULL && c->spd.this.cert_nickname != NULL) {
-			err_t err = NULL;
-			DBG(DBG_CONTROL,
-			    DBG_log("Private key for cert %s not found. Attempting to load on-demand",
-				    c->spd.this.cert_nickname));
-			err = load_nss_cert_secret(c->spd.this.cert_nickname);
-			if (err == NULL) {
-				best = lsw_find_secret_by_public_key(pluto_secrets,
-						my_public_key, kind);
-			}
+		if (best != NULL) {
+			free_public_key(my_public_key);
+			return best;
 		}
+
+		/*
+		 * .cert.ty is set to CERT_X509_SIGNATURE by either
+		 * load_nss_cert_from_db() or pluto_process_certs().
+		 * However, only load_nss_cert_from_db() can set the
+		 * .left.cert.  Consequently:
+		 *
+		 * - .cert_nickname should be non-NULL
+		 * - .nss_cert should match that nickname
+		 *
+		 * Even if, somehow .cert_nickname is NULL, then
+		 * .nss_cert should be used to pull the secret in from
+		 * the NSS DB.
+		 */
+		pexpect(c->spd.this.cert_nickname);
+
+		DBG(DBG_CONTROL,
+		    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
+			    c->spd.this.cert_nickname));
+
+
+		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
+		if (err != NULL) {
+			DBG(DBG_CONTROL,
+			    DBG_log("private key for cert %s not found in NSS DB",
+				    c->spd.this.cert_nickname));
+			free_public_key(my_public_key);
+			return NULL;
+		}
+
+		best = lsw_find_secret_by_public_key(pluto_secrets,
+						     my_public_key, kind);
+		/*
+		 * Just added a secret using the cert as the key; how
+		 * can it then not be found?
+		 */
+		pexpect(best);
 		free_public_key(my_public_key);
 		return best;
 	}
@@ -908,21 +938,15 @@ void list_public_keys(bool utc, bool check_pub_keys)
 	}
 }
 
-err_t load_nss_cert_secret(const char *nickname)
+err_t load_nss_cert_secret(CERTCertificate *cert)
 {
-	CERTCertificate *cert = get_cert_from_nss(nickname);
-
 	if (cert == NULL) {
 		return "NSS cert not found";
 	}
 
 	if (cert_key_is_rsa(cert)) {
-		/*
-		 * cert is released in lsw_add_rsa_secret on error
-		 */
 		return lsw_add_rsa_secret(&pluto_secrets, cert);
 	} else {
 		return "NSS cert not supported";
 	}
-
 }
