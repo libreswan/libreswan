@@ -171,7 +171,7 @@ endef
 # Run "make $(1)" on $(2)"; yea, host argument should be first :-)
 define kvm-make
 	$(call kvmsh, $(2) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"')
+		'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"')
 endef
 
 # Standard make targets; just mirror the local target names.
