@@ -94,8 +94,16 @@ to stdout for debugging</para>
 <para><userinput>ipsec stopnflog</userinput> is used to delete iptables rules for the nflog devices.</para>
 </refsect1>
 
+<refsect1 id='returncode'><title>RETURN CODE</title>
+<para>The ipsec command passes the return code of the sub-command
+back to the caller. The only exception is when <userinput>ipsec pluto</userinput>
+is used without --nofork, as it will fork into the background
+and the ipsec command returns success while the pluto daemon
+may in fact exit with an error code after the fork. </para>
+</refsect1>
+
 <refsect1 id='files'><title>FILES</title>
-<para>/usr/local/libexec/ipsec	usual utilities directory</para>
+<para>/usr/libexec/ipsec	usual utilities directory</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
