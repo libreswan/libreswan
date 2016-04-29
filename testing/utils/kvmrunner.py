@@ -87,7 +87,7 @@ def main():
         test_count = 0
         for test in tests:
 
-            test_stats.add("total", test)
+            test_stats.add(test, "total")
             test_count += 1
             # Would the number of tests to be [re]run be better?
             test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
@@ -95,7 +95,7 @@ def main():
             ignore = testsuite.ignore(test, args)
             if ignore:
                 result_stats.add_ignore(test, ignore)
-                test_stats.add("ignored", test)
+                test_stats.add(test, "ignored")
                 # No need to log all the ignored tests when an
                 # explicit sub-set of tests is being run.  For
                 # instance, when running just one test.
@@ -115,19 +115,19 @@ def main():
                 if old_result:
                     if old_result.passed:
                         logger.info("%s: passed", test_prefix)
-                        test_stats.add("skipped", test)
+                        test_stats.add(test, "skipped")
                         result_stats.add_skip(old_result)
                         continue
                     if args.retry == 0:
                         logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
                                     result, test.output_directory)
-                        test_stats.add("skipped", test)
+                        test_stats.add(test, "skipped")
                         result_stats.add_skip(old_result)
                         continue
-                    test_stats.add("retry", test)
+                    test_stats.add(test, "retry")
 
             logger.info("%s: starting ...", test_prefix)
-            test_stats.add("tests", test)
+            test_stats.add(test, "tests")
 
             # Move the contents of the existing OUTPUT directory to
             # BACKUP_DIRECTORY.  Do it file-by-file so that, at no
@@ -166,7 +166,7 @@ def main():
             # At least one iteration; above will have filtered out
             # skips and ignores
             for attempt in range(args.attempts):
-                test_stats.add("attempts", test)
+                test_stats.add(test, "attempts")
 
                 # Create the OUTPUT directory.
                 try:
@@ -213,12 +213,13 @@ def main():
                             with open(test.result_file, "w") as f:
                                 f.write('"result": "%s"\n' % result)
                     except pexpect.TIMEOUT as e:
-                        ending = "timeout"
                         logger.exception("**** test %s timed out ****", test.name)
+                        ending = "timed-out"
+                        # If the test has no output to check against, this will "pass"
                         result = post.mortem(test, args, update=(not args.dry_run))
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
-                    test_stats.add("attempts(%s:%s)" % (ending, result), test)
+                    test_stats.add(test, "attempts", ending, str(result))
                     if result.errors:
                         logger.info("****** test %s %s %s ******", test.name, result, result.errors)
                     else:
@@ -229,7 +230,7 @@ def main():
             # Above will have set RESULT.  During a control-c or crash
             # the below will not be executed.
 
-            test_stats.add("tests(%s)" % result, test)
+            test_stats.add(test, "tests", str(result))
             result_stats.add_result(result, old_result)
 
             test_stats.log_summary(logger.info, header="updated stats:",

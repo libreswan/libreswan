@@ -25,7 +25,8 @@ class Counts:
         # values to zero.
         self.counts = defaultdict(list)
 
-    def add(self, key, value):
+    def add(self, value, *keys):
+        key = "/".join(keys)
         self.counts[key].append(value)
 
     def log_summary(self, log, header=None, footer=None, prefix=""):
@@ -50,30 +51,27 @@ class Counts:
 
 
 class Tests(Counts):
-    def add(self, stat, test):
-        Counts.add(self, stat, test.name)
+    def add(self, test, *stats):
+        Counts.add(self, test.name, *stats)
 
 
 class Results(Counts):
 
-    def count(self, result, *extras):
-        Counts.add(self, str(result), result.test.name)
-        for extra in extras:
-            Counts.add(self, "%s(%s)" % (result, extra), result.test.name)
+    def count(self, result):
+        Counts.add(self, result.test.name, "total")
+        Counts.add(self, result.test.name, str(result))
         for error in result.errors:
-            Counts.add(self, "%s(%s)" % (result, error), result.test.name)
+            Counts.add(self, result.test.name, str(result), error)
 
     def add_ignore(self, test, reason):
-        Counts.add(self, "total", test.name)
-        Counts.add(self, "ignore", test.name)
+        Counts.add(self, test.name, "total")
+        Counts.add(self, test.name, "ignore", reason)
 
     def add_skip(self, result):
-        Counts.add(self, "total", result.test.name)
-        self.count(result, "skip-" + str(result))
+        self.count(result)
+        Counts.add(self, result.test.name, "skip", str(result))
 
     def add_result(self, result, old_result=None):
-        Counts.add(self, "total", result.test.name)
+        self.count(result)
         if old_result:
-            self.count(result, "previous-" + str(old_result))
-        else:
-            self.count(result)
+            Counts.add(self, result.test.name, "previous", str(old_result))
