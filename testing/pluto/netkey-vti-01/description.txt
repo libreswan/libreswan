@@ -1,0 +1,7 @@
+Basic netkey test but now using marking and vti interfaces with routing.
+
+This test sets up a "routed vpn" with a 0.0.0.0/0 <-> 0.0.0.0/0 policy.
+
+Whatever west decides to route into the vti device, is what is getting
+encrypted. Note that east uses no marks and encrypts everything back.
+(this kind of mismatch is exactly why routed vpns are not recommended)
