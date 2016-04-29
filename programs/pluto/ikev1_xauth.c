@@ -2206,9 +2206,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						"Received subnet %s",
 						caddr);
 
-					tmp_spd->this.cert_nickname = NULL;
-					tmp_spd->that.cert_nickname = NULL;
-
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;
 

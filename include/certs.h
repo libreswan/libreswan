@@ -54,6 +54,8 @@ typedef struct {
 	} u;
 } cert_t;
 
+const char *cert_nickname(const cert_t *cert);
+
 extern void list_certs(void);
 extern bool load_nsscert_from_nss(const char *nickname, cert_t *cert);
 #endif /* _CERTS_H */

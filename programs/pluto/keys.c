@@ -606,31 +606,17 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			return best;
 		}
 
-		/*
-		 * .cert.ty is set to CERT_X509_SIGNATURE by either
-		 * load_nss_cert_from_db() or pluto_process_certs().
-		 * However, only load_nss_cert_from_db() can set the
-		 * .left.cert.  Consequently:
-		 *
-		 * - .cert_nickname should be non-NULL
-		 * - .nss_cert should match that nickname
-		 *
-		 * Even if, somehow .cert_nickname is NULL, then
-		 * .nss_cert should be used to pull the secret in from
-		 * the NSS DB.
-		 */
-		pexpect(c->spd.this.cert_nickname);
-
+		const char *nickname = cert_nickname(&c->spd.this.cert);
 		DBG(DBG_CONTROL,
 		    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
-			    c->spd.this.cert_nickname));
+			    nickname));
 
 
 		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
 		if (err != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("private key for cert %s not found in NSS DB",
-				    c->spd.this.cert_nickname));
+				    nickname));
 			free_public_key(my_public_key);
 			return NULL;
 		}

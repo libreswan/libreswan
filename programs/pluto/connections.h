@@ -169,7 +169,6 @@ struct end {
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	char *cert_nickname;		/* NSS certificate nickname */
 	cert_t cert;			/* end certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 

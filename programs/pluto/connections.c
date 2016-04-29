@@ -229,7 +229,6 @@ static void delete_end(struct end *e)
 		CERT_DestroyCertificate(e->cert.u.nss_cert);
 
 	freeanychunk(e->ca);
-	pfreeany(e->cert_nickname);
 	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
@@ -768,7 +767,6 @@ void unshare_connection_end(struct end *e)
 	e->username = clone_str(e->username, "username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
-	e->cert_nickname = clone_str(e->cert_nickname, "cert_nickname");
 }
 
 /*
@@ -841,7 +839,6 @@ static void load_end_nss_certificate(const char *name, struct end *dst)
 		return;
 	}
 
-	dst->cert_nickname = (char *)name;
 	DBG(DBG_X509, DBG_log("loaded certificate \'%s\'", name));
 
 	add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
@@ -3697,8 +3694,8 @@ static void show_one_sr(const struct connection *c,
 		OPT_HOST(&c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; myup=", sr->this.updown),
 		OPT_PREFIX_STR("; theirup=", sr->that.updown),
-		OPT_PREFIX_STR("; mycert=", sr->this.cert_nickname),
-		OPT_PREFIX_STR("; hiscert=", sr->that.cert_nickname));
+		  OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
+		  OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR

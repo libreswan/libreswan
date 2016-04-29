@@ -1854,6 +1854,20 @@ void list_certs(void)
 	cert_detail_list(CERT_TYPE_END);
 }
 
+/*
+ * Either the underlying cert's nickname, or NULL.
+ */
+const char *cert_nickname(const cert_t *cert)
+{
+	if (cert->ty != CERT_X509_SIGNATURE) {
+		return NULL;
+	}
+	if (cert->u.nss_cert == NULL) {
+		return NULL;
+	}
+	return cert->u.nss_cert->nickname;
+}
+
 void list_authcerts(void)
 {
 	cert_detail_list(CERT_TYPE_CA);
