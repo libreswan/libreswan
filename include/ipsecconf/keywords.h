@@ -1,4 +1,5 @@
 /* Libreswan config file parser keywords processor
+ *
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
@@ -9,6 +10,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -244,6 +246,19 @@ enum keyword_auto {
 	STARTUP_ADD        = 2,
 	STARTUP_ONDEMAND   = 3,
 	STARTUP_START      = 4
+};
+
+/*
+ * Potential keyword values for fields like {left,right}rsasigkey=.
+ *
+ * This is internal to the config parser and doesn't belong in whack
+ * or on the wire.
+ */
+enum keyword_pubkey {
+	PUBKEY_NOTSET       = 0,
+	PUBKEY_DNSONDEMAND  = 1,
+	PUBKEY_CERTIFICATE  = 2,
+	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
 };
 
 enum keyword_satype {

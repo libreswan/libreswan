@@ -1,9 +1,11 @@
 /* Libreswan config file parser (confread.h)
+ *
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2009 Jose Quaresma <josequaresma@gmail.com>
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Coprright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,7 +51,7 @@ struct starter_end {
 	char *iface;
 	char *id;
 
-	enum pubkey_source rsakey1_type, rsakey2_type;
+	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;
 	char *rsakey2;
 	u_int16_t port;

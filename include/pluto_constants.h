@@ -772,13 +772,6 @@ enum sa_policy_bits {
 /* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
-enum pubkey_source {
-	PUBKEY_NOTSET       = 0,
-	PUBKEY_DNSONDEMAND  = 1,
-	PUBKEY_CERTIFICATE  = 2,
-	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
-};
-
 /* values for right=/left= */
 enum keyword_host {
 	KH_NOTSET       = 0,
