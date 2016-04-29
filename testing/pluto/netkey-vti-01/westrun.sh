@@ -1,5 +1,5 @@
 ipsec auto --up  westnet-eastnet-vti
-ip tunnel add west-east mode vti remote 192.1.2.23 local 192.1.2.45 ikey 20 okey 21
+ip tunnel add west-east mode vti remote 192.1.2.23 local 192.1.2.45 key 20
 ip link set west-east up
 sysctl -w net.ipv4.conf.west-east.disable_policy=1
 sysctl -w net.ipv4.conf.west-east.rp_filter=0
