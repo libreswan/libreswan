@@ -815,38 +815,41 @@ static void unshare_connection(struct connection *c)
 
 static void load_end_nss_certificate(const char *name, struct end *dst)
 {
-	cert_t cert;
-
 	dst->cert.ty = CERT_NONE;
 	dst->cert.u.nss_cert = NULL;
 
-	if (!load_nss_cert_from_db(name, &cert)) {
+	if (name == NULL) {
+		return;
+	}
+
+	CERTCertificate *cert = get_cert_from_nss(name);
+	if (cert == NULL) {
 		whack_log(RC_FATAL, "cannot load certificate \'%s\'", name);
 		/* No cert, default to IP ID */
 		dst->id.kind = ID_NONE;
 		return;
 	}
 
-	select_nss_cert_id(cert.u.nss_cert, &dst->id);
+	select_nss_cert_id(cert, &dst->id);
 
 	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert.u.nss_cert,
-				     PR_Now(),
+	if (CERT_CheckCertValidTimes(cert, PR_Now(),
 				     FALSE) != secCertTimeValid) {
 		loglog(RC_LOG_SERIOUS,"certificate \'%s\' is expired/invalid",
 				      name);
-		CERT_DestroyCertificate(cert.u.nss_cert);
+		CERT_DestroyCertificate(cert);
 		return;
 	}
 
 	DBG(DBG_X509, DBG_log("loaded certificate \'%s\'", name));
 
-	add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
-	dst->cert = cert;
+	add_rsa_pubkey_from_cert(&dst->id, cert);
+	dst->cert.ty = CERT_X509_SIGNATURE;
+	dst->cert.u.nss_cert = cert;
 
 	/* if no CA is defined, use issuer as default */
 	if (dst->ca.ptr == NULL) {
-		dst->ca = secitem_to_chunk(cert.u.nss_cert->derIssuer);
+		dst->ca = secitem_to_chunk(cert->derIssuer);
 	}
 }
 

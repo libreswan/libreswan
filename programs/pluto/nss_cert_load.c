@@ -112,21 +112,3 @@ CERTCertificate *get_cert_from_nss(const char *nickname)
 					lsw_return_nss_password_file_info());
 	return cert;
 }
-
-bool load_nss_cert_from_db(const char *nickname, cert_t *cert)
-{
-	if (cert == NULL)
-		return FALSE;
-
-	cert->u.nss_cert = NULL;
-	cert->ty = CERT_NONE;
-
-	cert->u.nss_cert = get_cert_from_nss(nickname);
-
-	if (cert->u.nss_cert == NULL) {
-		return FALSE;
-	}
-	cert->ty = CERT_X509_SIGNATURE;
-
-	return TRUE;
-}
