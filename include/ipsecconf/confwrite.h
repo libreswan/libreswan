@@ -1,7 +1,9 @@
 /* Libreswan config file writer (confwrite.h)
+ *
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,12 +19,8 @@
 #ifndef _IPSEC_CONFWRITE_H_
 #define _IPSEC_CONFWRITE_H_
 
-#include "keywords.h"
-
-#ifndef _LIBRESWAN_H
-#include "libreswan.h"
-#include "constants.h"
-#endif
+struct keyword_def;
+struct starter_config;
 
 void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *k);
 void confwrite(struct starter_config *cfg, FILE *out);
