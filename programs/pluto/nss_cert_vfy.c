@@ -44,14 +44,16 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 	/*
 	 * possibly need to handle passworded db case here
 	 */
-	if ((*slot = PK11_GetInternalKeySlot()) == NULL) {
+	*slot = PK11_GetInternalKeySlot();
+	if (*slot == NULL) {
 		    DBG(DBG_X509,
 			DBG_log("PK11_GetInternalKeySlot error [%d]",
 				PORT_GetError()));
 		return FALSE;
 	}
 
-	if ((*handle = CERT_GetDefaultCertDB()) == NULL) {
+	*handle = CERT_GetDefaultCertDB();
+	if (*handle == NULL) {
 		    DBG(DBG_X509,
 			DBG_log("error getting db handle [%d]",
 				PORT_GetError()));
@@ -69,10 +71,6 @@ static bool crl_is_current(CERTSignedCrl *crl)
 static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 				     CERTCertificate *cert)
 {
-	CERTCrlHeadNode *crl_list = NULL;
-	CERTCrlNode *crl_node = NULL;
-	CERTSignedCrl *crl = NULL;
-
 	if (handle == NULL || cert == NULL)
 		return NULL;
 
@@ -85,11 +83,14 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 	 *
 	 * crl = (CERTSignedCrl *)SEC_FindCrlByName(handle, &searchName, SEC_CRL_TYPE);
 	 */
+	CERTCrlHeadNode *crl_list = NULL;
+
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
 		return NULL;
 	}
 
-	crl_node = crl_list->first;
+	CERTCrlNode *crl_node = crl_list->first;
+	CERTSignedCrl *crl = NULL;
 
 	while (crl_node != NULL) {
 		if (crl_node->crl != NULL &&
@@ -103,7 +104,7 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 		crl_node = crl_node->next;
 	}
 
-	if (crl == NULL && crl_list) {
+	if (crl == NULL) {
 		PORT_FreeArena(crl_list->arena, PR_FALSE);
 	}
 
@@ -113,23 +114,17 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 				 CERTCertificate *cert)
 {
+	bool res = FALSE;
 	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
 
 	if (crl != NULL) {
-	       if (crl_is_current(crl)) {
-		       if (crl->arena) {
-			       PORT_FreeArena(crl->arena, PR_FALSE);
-		       }
-
-		       return TRUE;
-	       }
-
-	       if (crl->arena) {
-		       PORT_FreeArena(crl->arena, PR_FALSE);
-	       }
+		res = crl_is_current(crl);
+		if (crl->arena != NULL) {
+			PORT_FreeArena(crl->arena, PR_FALSE);
+		}
 	}
 
-	return FALSE;
+	return res;
 }
 
 /*
@@ -177,44 +172,41 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 						      SECItem *ders,
 						      int der_cnt)
 {
-	SECStatus rv;
-	int i, fin_count = 0;
-	int nonroot = 0;
-	CERTCertificate **cc = NULL;
-	SECItem **derlist = NULL;
-
 	if (der_cnt < 1) {
 		DBG(DBG_X509, DBG_log("nothing to decode"));
 		return 0;
 	}
 
-	derlist = (SECItem **) PORT_Alloc(sizeof(SECItem *) * der_cnt);
+	SECItem **derlist = PORT_Alloc(sizeof(SECItem *) * der_cnt);
+
+	int i;
+	int nonroot = 0;
 
 	for (i = 0; i < der_cnt; i++) {
 		if (!CERT_IsRootDERCert(&ders[i]))
 			derlist[nonroot++] = &ders[i];
 	}
 
+	int fin_count = 0;
+
 	if (nonroot < 1) {
 		DBG(DBG_X509, DBG_log("nothing to decode"));
-		fin_count = 0;
-		goto done;
+	} else {
+		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
+						chain, PR_FALSE, PR_FALSE, NULL);
+		if (rv != SECSuccess || *chain == NULL) {
+			DBG(DBG_X509, DBG_log("could not decode any certs"));
+		} else {
+			CERTCertificate **cc;
+
+			for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
+				DBG(DBG_X509, DBG_log("decoded %s",
+					(*cc)->subjectName));
+				fin_count++;
+			}
+		}
 	}
 
-	rv = CERT_ImportCerts(handle, 0, nonroot, derlist, chain, PR_FALSE,
-								  PR_FALSE,
-								  NULL);
-	if (rv != SECSuccess || *chain == NULL) {
-		DBG(DBG_X509, DBG_log("could not decode any certs"));
-		goto done;
-	}
-
-	for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
-		DBG(DBG_X509, DBG_log("decoded %s", (*cc)->subjectName));
-		fin_count++;
-	}
-
-done:
 	PORT_Free(derlist);
 	return fin_count;
 }
@@ -229,12 +221,9 @@ static void new_vfy_log(CERTVerifyLog *log)
 
 static CERTCertList *get_all_root_certs(void)
 {
-	PK11SlotInfo *slot = NULL;
-	CERTCertList *allcerts = NULL;
-	CERTCertList *roots = NULL;
-	CERTCertListNode *node = NULL;
+	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 
-	if ((slot = PK11_GetInternalKeySlot()) == NULL)
+	if (slot == NULL)
 		return NULL;
 
 	if (PK11_NeedLogin(slot)) {
@@ -243,12 +232,15 @@ static CERTCertList *get_all_root_certs(void)
 		if (rv != SECSuccess)
 			return NULL;
 	}
-	allcerts = PK11_ListCertsInSlot(slot);
+
+	CERTCertList *allcerts = PK11_ListCertsInSlot(slot);
 
 	if (allcerts == NULL)
 		return NULL;
 
-	roots = CERT_NewCertList();
+	CERTCertList *roots = CERT_NewCertList();
+
+	CERTCertListNode *node;
 
 	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
 						node = CERT_LIST_NEXT(node)) {
@@ -275,8 +267,8 @@ static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 
 static unsigned int rev_val_flags(PRBool strict)
 {
-	unsigned int flags = 0;
-	flags |= CERT_REV_M_TEST_USING_THIS_METHOD;
+	unsigned int flags = CERT_REV_M_TEST_USING_THIS_METHOD;
+
 	if (strict) {
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
@@ -304,34 +296,21 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 	}
 }
 
-#define RETRY_TYPE(err, re) ((err == SEC_ERROR_INADEQUATE_CERT_TYPE || \
-			      err == SEC_ERROR_INADEQUATE_KEY_USAGE) && re)
+#define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
+			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
 static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 						   CERTCertificate **end_out,
 						   bool *rev_opts)
 {
-	int in_idx = 0;
-	int i;
-	int fin = 0;
-	bool reverify = TRUE;
-	SECStatus rv;
-	CERTVerifyLog vfy_log;
-	CERTVerifyLog vfy_log2;
-	CERTVerifyLog *cur_log = NULL;
 	CERTCertificate *end_cert = NULL;
-	CERTValInParam cvin[7];
-	CERTValOutParam cvout[3];
-	CERTCertList *trustcl = NULL;
-	CERTRevocationFlags rev;
-	SECCertificateUsage usage = certificateUsageSSLClient;
-	PRUint64 revFlagsLeaf[2] = { 0, 0 };
-	PRUint64 revFlagsChain[2] = { 0, 0 };
+
+	int i;
 
 	for (i = 0; i < chain_len; i++) {
 		if (!CERT_IsCACert(chain[i], NULL)) {
-		       end_cert = chain[i];
-		       break;
+			end_cert = chain[i];
+			break;
 		}
 	}
 
@@ -340,21 +319,35 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 		return VERIFY_RET_FAIL;
 	}
 
-	if ((trustcl = get_all_root_certs()) == NULL) {
+	CERTCertList *trustcl = get_all_root_certs();
+
+	if (trustcl == NULL) {
 		DBG(DBG_X509, DBG_log("no trust anchor available for verification"));
 		return VERIFY_RET_FAIL;
 	}
 
+	CERTVerifyLog *cur_log = NULL;
+	CERTVerifyLog vfy_log;
+	CERTVerifyLog vfy_log2;
+
 	new_vfy_log(&vfy_log);
 	new_vfy_log(&vfy_log2);
 
-	zero(&cvin);	/* ??? are there pointer fields? */
-	zero(&cvout);	/* ??? are there pointer fields? */
+	CERTRevocationFlags rev;
 	zero(&rev);	/* ??? are there pointer fields? */
+
+	PRUint64 revFlagsLeaf[2] = { 0, 0 };
+	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
 						 rev_opts[RO_OCSP_S]);
+	int in_idx = 0;
+	CERTValInParam cvin[7];
+	CERTValOutParam cvout[3];
+	zero(&cvin);	/* ??? are there pointer fields? */
+	zero(&cvout);	/* ??? are there pointer fields? */
+
 	cvin[in_idx].type = cert_pi_revocationFlags;
 	cvin[in_idx++].value.pointer.revocation = &rev;
 
@@ -370,8 +363,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	cvin[in_idx].type = cert_pi_end;
 
 	cvout[0].type = cert_po_errorLog;
-	cvout[0].value.pointer.log = &vfy_log;
-	cur_log = &vfy_log;
+	cvout[0].value.pointer.log = cur_log = &vfy_log;
 	cvout[1].type = cert_po_certList;
 	cvout[1].value.pointer.chain = NULL;
 	cvout[2].type = cert_po_end;
@@ -383,39 +375,53 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	 * IKE profile being available for NSS, this covers more
 	 * KU/EKU combinations
 	 */
-retry:
-	rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
 
-	if (rv != SECSuccess || cur_log->count > 0) {
-		if (cur_log->count > 0 && cur_log->head != NULL) {
-			if (RETRY_TYPE(cur_log->head->error, reverify)) {
+	int fin;
+	SECCertificateUsage usage;
+
+	for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
+		SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
+
+		if (rv != SECSuccess || cur_log->count > 0) {
+			if (cur_log->count > 0 && cur_log->head != NULL) {
+				if (usage == certificateUsageSSLClient &&
+				    RETRYABLE_TYPE(cur_log->head->error)) {
+					/* try again, after some adjustments */
+					DBG(DBG_X509,
+					    DBG_log("retrying verification with the NSS serverAuth profile"));
+					/* ??? since we are about to overwrite cvout[1],
+					 * should we be doing:
+					 * if (cvout[1].value.pointer.chain != NULL)
+					 *	CERT_DestroyCertList(cvout[1].value.pointer.chain);
+					 */
+					cvout[0].value.pointer.log = cur_log = &vfy_log2;
+					cvout[1].value.pointer.chain = NULL;
+					continue;
+				} else {
+					fin = nss_err_to_revfail(cur_log->head);
+				}
+			} else {
+				/*
+				 * An rv != SECSuccess without CERTVerifyLog results should not
+				 * happen, but catch it anyway
+				 */
 				DBG(DBG_X509,
-				    DBG_log("retrying verification with the NSS serverAuth profile"));
-				cur_log = &vfy_log2;
-				cvout[0].value.pointer.log = cur_log;
-				cvout[1].value.pointer.chain = NULL;
-				usage = certificateUsageSSLServer;
-				reverify = FALSE;
-				goto retry;
+				    DBG_log("unspecified NSS verification failure"));
+				fin = VERIFY_RET_FAIL;
 			}
-			fin = nss_err_to_revfail(cur_log->head);
 		} else {
-			/* An rv != SECFailure without CERTVerifyLog results should not
-			 * happen, but catch it anyways */
-			DBG(DBG_X509,
-			    DBG_log("unspecified NSS verification failure"));
-			fin = VERIFY_RET_FAIL;
+			DBG(DBG_X509, DBG_log("certificate is valid"));
+			*end_out = end_cert;
+			fin = VERIFY_RET_OK;
 		}
-	} else {
-		DBG(DBG_X509, DBG_log("certificate is valid"));
-		*end_out = end_cert;
-		fin = VERIFY_RET_OK;
+		break;
 	}
+
 	CERT_DestroyCertList(trustcl);
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
-	if (cvout[1].value.pointer.chain) {
+	if (cvout[1].value.pointer.chain != NULL) {
 		CERT_DestroyCertList(cvout[1].value.pointer.chain);
 	}
 
@@ -445,18 +451,15 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
 							bool *rev_opts)
 {
-	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
-	CERTCertificate **cert_chain = NULL;
-	PK11SlotInfo *slot = NULL;
-	CERTCertDBHandle *handle = NULL;
-	int chain_len = 0;
-	int ret = 0;
-
 	if (VFY_INVALID_USE(ders, num_ders))
 		return -1;
 
+	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
+
 	chunks_to_si(ders, si_ders, num_ders, MAX_CA_PATH_LEN);
 
+	PK11SlotInfo *slot = NULL;
+	CERTCertDBHandle *handle = NULL;
 	if (!prepare_nss_import(&slot, &handle))
 		return -1;
 	/*
@@ -467,10 +470,13 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	 * certificate both permanent and in-memory cache are used
 	 * together to try to complete the chain.
 	 */
-	if ((chain_len = crt_tmp_import(handle, &cert_chain,
-						  si_ders,
-						  num_ders)) < 1)
+	CERTCertificate **cert_chain = NULL;
+	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, num_ders);
+
+	if (chain_len < 1)
 		return -1;
+
+	int ret = 0;
 
 	if (crl_update_check(handle, cert_chain, chain_len)) {
 		if (rev_opts[RO_CRL_S]) {
