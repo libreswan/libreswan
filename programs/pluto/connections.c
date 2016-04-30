@@ -1187,8 +1187,8 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
-	return (preload_wm_cert_secret("left", wm->left.cert)
-		&& preload_wm_cert_secret("right", wm->right.cert));
+	return preload_wm_cert_secret("left", wm->left.cert)
+		&& preload_wm_cert_secret("right", wm->right.cert);
 }
 
 /* only used by add_connection() */

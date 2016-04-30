@@ -1252,7 +1252,7 @@ static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 				(unsigned long)(served_delta.tv_usec * 1000000)));
 
 	pfreeany(parg.ra);
-	return (results);
+	return results;
 }
 #endif
 

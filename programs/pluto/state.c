@@ -158,21 +158,21 @@ struct {
 /* space for unknown as well */
 static unsigned int total_established_ike(void)
 {
-	return (category.anonymous_ike.count +
-		category.authenticated_ike.count);
+	return category.anonymous_ike.count +
+		category.authenticated_ike.count;
 }
 
 static unsigned int total_ike(void)
 {
-	return (category.half_open_ike.count +
+	return category.half_open_ike.count +
 		category.open_ike.count +
-		total_established_ike());
+		total_established_ike();
 }
 
 static unsigned int total_ipsec(void)
 {
-	return (category.authenticated_ipsec.count +
-		category.anonymous_ipsec.count);
+	return category.authenticated_ipsec.count +
+		category.anonymous_ipsec.count;
 }
 
 static unsigned int total()
@@ -2304,9 +2304,9 @@ void clear_dh_from_state(struct state *st)
 
 bool require_ddos_cookies()
 {
-	return (pluto_ddos_mode == DDOS_FORCE_BUSY) ||
-		((pluto_ddos_mode == DDOS_AUTO) &&
-		 (category.half_open_ike.count >= pluto_ddos_treshold));
+	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
+		(pluto_ddos_mode == DDOS_AUTO &&
+		 category.half_open_ike.count >= pluto_ddos_treshold);
 }
 
 bool drop_new_exchanges()
