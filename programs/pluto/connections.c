@@ -3697,8 +3697,8 @@ static void show_one_sr(const struct connection *c,
 		OPT_HOST(&c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; myup=", sr->this.updown),
 		OPT_PREFIX_STR("; theirup=", sr->that.updown),
-		  OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
-		  OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)));
+		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
+		OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
