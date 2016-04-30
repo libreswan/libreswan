@@ -1859,13 +1859,9 @@ void list_certs(void)
  */
 const char *cert_nickname(const cert_t *cert)
 {
-	if (cert->ty != CERT_X509_SIGNATURE) {
-		return NULL;
-	}
-	if (cert->u.nss_cert == NULL) {
-		return NULL;
-	}
-	return cert->u.nss_cert->nickname;
+	return cert->ty == CERT_X509_SIGNATURE &&
+		cert->u.nss_cert != NULL ?
+			cert->u.nss_cert->nickname : NULL;
 }
 
 void list_authcerts(void)
