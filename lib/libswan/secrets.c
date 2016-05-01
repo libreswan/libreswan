@@ -773,10 +773,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#if defined(LIBCURL) || defined(LDAP_VER)
-static pthread_mutex_t authcert_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 /*
  * lock access to my certs and keys
  */
@@ -798,34 +794,6 @@ void unlock_certs_and_keys(const char *who)
 		);
 	pthread_mutex_unlock(&certs_and_keys_mutex);
 }
-
-#if defined(LIBCURL) || defined(LDAP_VER)
-
-/*
- * lock access to the chained authcert list
- * ??? declared in x509.h
- */
-void lock_authcert_list(const char *who)
-{
-	pthread_mutex_lock(&authcert_list_mutex);
-	DBG(DBG_CONTROLMORE,
-		DBG_log("authcert list locked by '%s'", who);
-		);
-}
-
-/*
- * unlock access to the chained authcert list
- * ??? declared in x509.h
- */
-void unlock_authcert_list(const char *who)
-{
-	DBG(DBG_CONTROLMORE,
-		DBG_log("authcert list unlocked by '%s'", who);
-		);
-	pthread_mutex_unlock(&authcert_list_mutex);
-}
-
-#endif
 
 static void process_secret(struct secret **psecrets,
 			struct secret *s)

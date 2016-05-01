@@ -74,33 +74,12 @@ static fetch_req_t empty_fetch_req = {
 static fetch_req_t *crl_fetch_reqs  = NULL;
 
 static pthread_t thread;
-static pthread_mutex_t crl_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
 
 extern char *curl_iface;
 extern long curl_timeout;
-
-/* lock access to the chained crl list
- * ??? declared in x509.h
- */
-void lock_crl_list(const char *who)
-{
-	pthread_mutex_lock(&crl_list_mutex);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl list locked by '%s'", who));
-}
-
-/* unlock access to the chained crl list
- * ??? declared in x509.h
- */
-void unlock_crl_list(const char *who)
-{
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl list unlocked by '%s'", who));
-	pthread_mutex_unlock(&crl_list_mutex);
-}
 
 /*
  * lock access to the chained crl fetch request list

@@ -104,7 +104,7 @@ chunk_t secitem_to_chunk(SECItem si)
 	return chunk;
 }
 
-chunk_t dup_secitem_to_chunk(SECItem si)
+static chunk_t dup_secitem_to_chunk(SECItem si)
 {
 	chunk_t chunk = empty_chunk;
 
@@ -139,7 +139,7 @@ bool cert_key_is_rsa(CERTCertificate *cert)
 	return ret;
 }
 
-realtime_t get_nss_cert_notafter(CERTCertificate *cert)
+static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 {
 	realtime_t ret;
 	PRTime notBefore, notAfter;
@@ -177,7 +177,7 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 	return *our_pathlen <= MAX_CA_PATH_LEN;
 }
 
-void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
+static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 				generalName_t *pluto_gn)
 {
 	switch(nss_gn->type) {
@@ -231,19 +231,6 @@ void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 	}
 }
 
-/*
- * Filter eliminating the directory entries starting with .,
- * Odd spot for this function, but convenient
- */
-int filter_dotfiles(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	struct dirent *entry)
-{
-	return entry->d_name[0] != '.';
-
-}
 /*
  * Checks if CA a is trusted by CA b
  * This very well could end up being condensed into
@@ -372,7 +359,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 }
 
-char *make_crl_uri_str(chunk_t *uri)
+static char *make_crl_uri_str(chunk_t *uri)
 {
 	if (uri == NULL || uri->ptr == NULL || uri->len < 1)
 		return NULL;
@@ -477,7 +464,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	return gndp;
 }
 
-char *find_dercrl_uri(chunk_t *dercrl)
+static char *find_dercrl_uri(chunk_t *dercrl)
 {
 	/* these are used by out so must be initialized */
 	CERTCertificate *cacert = NULL;
@@ -570,6 +557,19 @@ out:
 		SEC_DestroyCrl(crl);
 
 	return uri;
+}
+
+/*
+ * Filter for scandir(3): eliminate the directory entries starting with ".".
+ */
+static int filter_dotfiles(
+#ifdef SCANDIR_HAS_CONST
+	const
+#endif
+	struct dirent *entry)
+{
+	return entry->d_name[0] != '.';
+
 }
 
 /*
@@ -716,7 +716,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
  * Convert all CERTCertificate general names to a list of pluto generalName_t
  * Results go in *gn_out.
  */
-void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
+static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 {
 	generalName_t *pgn_list = NULL;
 	CERTGeneralName *first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);;

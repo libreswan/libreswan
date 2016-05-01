@@ -74,7 +74,6 @@ extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
 			 const char *null_dn);
 extern err_t atodn(char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);
-extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
 extern void load_crls(void);
 extern void list_authcerts(void);
 extern void list_crls(void);
@@ -85,13 +84,7 @@ extern void clear_ocsp_cache(void);
  */
 extern SECItem chunk_to_secitem(chunk_t chunk);
 extern chunk_t secitem_to_chunk(SECItem si);
-extern chunk_t dup_secitem_to_chunk(SECItem si);
 extern chunk_t get_dercert_from_nss_cert(CERTCertificate *cert);
-extern void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
-				       generalName_t *pluto_gn);
-extern void get_pluto_gn_from_nss_cert(CERTCertificate *cert,
-					generalName_t **gn_out);
-extern realtime_t get_nss_cert_notafter(CERTCertificate *cert);
 extern generalName_t *gndp_from_nss_cert(CERTCertificate *cert);
 extern bool cert_key_is_rsa(CERTCertificate *cert);
 extern void select_nss_cert_id(CERTCertificate *cert, struct id *end_id);
@@ -99,26 +92,11 @@ extern void add_rsa_pubkey_from_cert(const struct id *keyid,
 				    CERTCertificate *cert);
 extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
 extern bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri);
-extern char *find_dercrl_uri(chunk_t *dercrl);
-extern char *make_crl_uri_str(chunk_t *uri);
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 extern void check_crls(void);
-extern void lock_crl_list(const char *who);	/* in fetch.c */
-extern void unlock_crl_list(const char *who);	/* in fetch.c */
-extern void lock_authcert_list(const char *who);	/* in secrets.c */
-extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 #else
-/* WARNING empty x509 locking functions defined bypassing real locking */
-/* not fixing this hack, see issues #1390, #1391, #1392 */
 #define check_crls(who)			/* nothing */
-#define lock_crl_list(who)		/* nothing */
-#define unlock_crl_list(who)		/* nothing */
-#define lock_authcert_list(who)		/* nothing */
-#define unlock_authcert_list(who)	/* nothing */
 #endif
-
-/* filter eliminating the directory entries '.' and '..' */
-typedef struct dirent dirent_t;
 
 #endif /* _X509_H */

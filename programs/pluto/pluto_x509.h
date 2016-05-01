@@ -67,10 +67,5 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			   enum original_role role,
 			   enum next_payload_types_ikev2 np,
 			   pb_stream *outpbs);
-extern int filter_dotfiles(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	dirent_t *entry);
 
 #endif /* _PLUTO_X509_H */
