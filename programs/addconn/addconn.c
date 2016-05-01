@@ -321,9 +321,8 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
-			err_t er;
-			er = ttoaddr(peer->strings[KSCF_IP], 0, AF_UNSPEC,
-				&peer->addr);
+			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
+				AF_UNSPEC, &peer->addr);
 			if (er != NULL)
 				return -1;
 		}
