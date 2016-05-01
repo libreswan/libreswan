@@ -1812,19 +1812,19 @@ void check_crls(void)
 	while (crl_node != NULL) {
 		if (crl_node->crl != NULL) {
 			SECItem *issuer = &crl_node->crl->crl.derName;
-			generalName_t *end_dp;
-			chunk_t chunk = empty_chunk;
 
 			add_crl_fetch_request_nss(issuer, NULL);
 
-			chunk.ptr = (u_char *)crl_node->crl->url;
-			chunk.len = strlen(crl_node->crl->url);
-			end_dp = alloc_thing(generalName_t, "generalName");
-			end_dp->kind = GN_URI;
-			end_dp->name = chunk;
-			end_dp->next = NULL;
-			add_crl_fetch_request_nss(issuer, end_dp);
-			pfree(end_dp);
+			generalName_t end_dp = {
+				.kind = GN_URI,
+				.name = {
+					.ptr = (u_char *)crl_node->crl->url,
+					.len = strlen(crl_node->crl->url)
+				},
+				.next = NULL
+			};
+
+			add_crl_fetch_request_nss(issuer, &end_dp);
 		}
 		crl_node = crl_node->next;
 	}
@@ -1880,4 +1880,3 @@ void clear_ocsp_cache(void)
 	DBG(DBG_X509, DBG_log("calling NSS to clear OCSP cache"));
 	(void)CERT_ClearOCSPCache();
 }
-
