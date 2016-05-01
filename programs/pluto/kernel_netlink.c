@@ -516,14 +516,14 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 			(long) len, (unsigned long) rsp.n.nlmsg_len);
 		return FALSE;
 	} else if (rsp.n.nlmsg_type != NLMSG_ERROR   &&
-		(rbuf && rsp.n.nlmsg_type != rbuf->nlmsg_type)) {
+		(rbuf != NULL && rsp.n.nlmsg_type != rbuf->nlmsg_type)) {
 		loglog(RC_LOG_SERIOUS,
 			"netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			description, text_said,
 			sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
-	} else if (rbuf) {
+	} else if (rbuf != NULL) {
 		if ((size_t) r > rbuf_len) {
 			loglog(RC_LOG_SERIOUS,
 				"netlink recvfrom() of response to our %s message for %s %s was too long: %ld > %lu",
@@ -570,7 +570,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 		return FALSE;
 
 	error = -rsp.e.error;
-	if (!error)
+	if (error == 0)
 		return TRUE;
 
 	if (error == ENOENT && enoent_ok)
@@ -802,7 +802,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * if the user did not specify a priority, calculate one based
 		 * on 'more specific' getting a higher priority
 		 */
-		if (sa_priority) {
+		if (sa_priority != 0) {
 			req.u.p.priority = sa_priority;
 		} else {
 			req.u.p.priority = MIN_SPD_PRIORITY -
@@ -1246,7 +1246,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-	if (sa->natt_type) {
+	if (sa->natt_type != 0) {
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->natt_type;

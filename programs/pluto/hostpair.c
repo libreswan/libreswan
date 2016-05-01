@@ -132,7 +132,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		if (af == NULL)
 			af = aftoinfo(AF_INET);
 
-		if (af)
+		if (af != NULL)
 			hisaddr = af->any;
 
 #else

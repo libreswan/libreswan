@@ -609,14 +609,14 @@ static stf_status modecfg_resp(struct state *st,
 		 * MODECFG_DOMAIN and MODECFG_BANNER in connection
 		 * configuration we probably want the client to see them
 		 * anyway. */
-		if(st->st_connection->modecfg_domain) {
+		if(st->st_connection->modecfg_domain != NULL) {
 			DBG_log("We are sending '%s' as domain",
 				st->st_connection->modecfg_domain);
 			isakmp_add_attr (&strattr, MODECFG_DOMAIN, &ia, st);
 		} else {
 			DBG_log("We are not sending a domain");
 		}
-		if(st->st_connection->modecfg_banner) {
+		if(st->st_connection->modecfg_banner != NULL) {
 			DBG_log("We are sending '%s' as banner",
 				st->st_connection->modecfg_banner);
 			isakmp_add_attr (&strattr, MODECFG_BANNER, &ia, st);
@@ -1031,7 +1031,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "XAUTH: status");
 
-	if (status)
+	if (status != 0)
 		change_state(st, STATE_XAUTH_R1);
 
 	return STF_OK;
@@ -2366,11 +2366,11 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 						/* replace the first newline character with a string-terminating \0. */
 						{
-							char* cptr = memchr(
+							char *cptr = memchr(
 								xauth_username,
 								'\n',
 								sizeof(xauth_username));
-							if (cptr)
+							if (cptr != NULL)
 								*cptr = '\0';
 						}
 						jam_str(st->st_username,

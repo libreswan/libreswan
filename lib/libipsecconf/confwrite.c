@@ -365,7 +365,7 @@ static void confwrite_side(FILE *out,
 			protostr, portstr);
 	}
 
-	if (end->cert)
+	if (end->cert != NULL)
 		fprintf(out, "\t%scert=%s\n", side, end->cert);
 
 	if (!isanyaddr(&end->sourceip)) {
@@ -407,7 +407,7 @@ static void confwrite_conn(FILE *out,
 
 	fprintf(out, "conn %s\n", conn->name);
 
-	if (conn->alsos) {
+	if (conn->alsos != NULL) {
 		/* handle also= as a comment */
 
 		int alsoplace = 0;
@@ -430,7 +430,7 @@ static void confwrite_conn(FILE *out,
 	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
-	if (conn->connalias)
+	if (conn->connalias != NULL)
 		cwf("connalias", conn->connalias);
 
 	{
@@ -460,7 +460,7 @@ static void confwrite_conn(FILE *out,
 		cwf("auto", dsn);
 	}
 
-	if (conn->policy) {
+	if (conn->policy != LEMPTY) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));

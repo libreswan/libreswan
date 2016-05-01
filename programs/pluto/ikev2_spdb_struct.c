@@ -442,7 +442,7 @@ static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
 static void print_proposal(struct print *buf, int propnum,
 			   const struct ikev2_proposal *proposal)
 {
-	if (propnum) {
+	if (propnum != 0) {
 		print_value(buf, propnum);
 		print_string(buf, ":");
 	}
@@ -503,7 +503,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-		if (proposal->propnum) {
+		if (proposal->propnum != 0) {
 			DBG_log("  proposal: %d (%d)", propnum, proposal->propnum);
 		} else {
 			DBG_log("  proposal: %d", propnum);
@@ -1650,12 +1650,12 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 
 		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg == NULL) {
-			if (ike_info->ike_ealg) {
+			if (ike_info->ike_ealg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);
 				continue;
 			}
 		} else {
-			if (ike_info->ike_eklen) {
+			if (ike_info->ike_eklen != 0) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 						 ealg->common.algo_v2id, ike_info->ike_eklen);
 			} else if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
@@ -1688,7 +1688,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keydeflen);
 				}
-				if (ealg->keymaxlen) {
+				if (ealg->keymaxlen != 0) {
 					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keymaxlen);
@@ -1698,7 +1698,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 
 		struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
 		if (halg == NULL) {
-			if (ike_info->ike_halg) {
+			if (ike_info->ike_halg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown hash algorithm %d", ike_info->ike_halg);
 				continue;
 			}
@@ -1950,7 +1950,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				unsigned ekeylen = crypto_req_keysize(CRK_ESPorAH,
 								      esp_info->transid);
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen);
-				if (ekeylen) {
+				if (ekeylen != 0) {
 					unsigned ekeylen2 = BITS_PER_BYTE * kernel_alg_esp_enc_max_keylen(esp_info->transid);
 					if (ekeylen2 != ekeylen) {
 						append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen2);

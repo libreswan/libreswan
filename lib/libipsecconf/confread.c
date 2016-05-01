@@ -378,7 +378,7 @@ static bool load_setup(struct starter_config *cfg,
 	/* now process some things with specific values */
 
 	/* interfaces has to be chopped up */
-	if (cfg->setup.interfaces)
+	if (cfg->setup.interfaces != NULL)
 		FREE_LIST(cfg->setup.interfaces);
 	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
 
@@ -960,7 +960,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	/* now, process the also's */
-	if (conn->alsos)
+	if (conn->alsos != NULL)
 		FREE_LIST(conn->alsos);
 	conn->alsos = new_list(conn->strings[KSCF_ALSO]);
 

@@ -366,7 +366,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		case WHACK_STARTWHACKRECORD:
 			/* close old filename */
-			if (whackrecordfile) {
+			if (whackrecordfile != NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
@@ -380,7 +380,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			goto done;
 
 		case WHACK_STOPWHACKRECORD:
-			if (whackrecordfile) {
+			if (whackrecordfile != NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));

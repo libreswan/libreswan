@@ -620,7 +620,7 @@ size_t format_end(char *buf,
 	}
 
 	if (dohost_name) {
-		if (this->host_addr_name) {
+		if (this->host_addr_name != NULL) {
 			size_t icl = strlen(host_space);
 			int room = sizeof(host_space) - icl - 1;
 			int needed = snprintf(host_space + icl, room, "<%s>",
@@ -755,9 +755,9 @@ void unshare_connection_end(struct end *e)
 {
 	unshare_id_content(&e->id);
 
-	if (e->cert.u.nss_cert) {
+	if (e->cert.u.nss_cert != NULL) {
 		e->cert.u.nss_cert = CERT_DupCertificate(e->cert.u.nss_cert);
-		passert(e->cert.u.nss_cert);
+		passert(e->cert.u.nss_cert != NULL);
 	}
 
 	if (e->ca.ptr != NULL)
@@ -1491,11 +1491,11 @@ void add_connection(const struct whack_message *wm)
 		 * It is not necessary on the initiator
 		 */
 
-		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
+		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr != 0) {
 			/* there is address pool range add to the global list */
 			c->pool = install_addresspool(&wm->left.pool_range);
 		}
-		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
+		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
 			/* there is address pool range add to the global list */
 			c->pool = install_addresspool(&wm->right.pool_range);
 		}
@@ -3843,7 +3843,7 @@ void show_one_connection(const struct connection *c)
 		  (c->fake_strongswan) ? "yes" : "no",
 		  (c->send_vendorid) ? "yes" : "no");
 
-	if (c->policy_next) {
+	if (c->policy_next != NULL) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   policy_next: %s",
 			c->name, instance, c->policy_next->name);
@@ -3904,7 +3904,7 @@ void show_one_connection(const struct connection *c)
 			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
-	if (c->extra_debugging) {
+	if (c->extra_debugging != LEMPTY) {
 		whack_log(RC_COMMENT, "\"%s\"%s:   debug: %s",
 			c->name,
 			instance,
@@ -3919,7 +3919,7 @@ void show_one_connection(const struct connection *c)
 		c->newest_isakmp_sa,
 		c->newest_ipsec_sa);
 
-	if (c->connalias) {
+	if (c->connalias != NULL) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   aliases: %s\n",
 			c->name,

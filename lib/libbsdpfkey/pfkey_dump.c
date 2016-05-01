@@ -475,13 +475,13 @@ struct sadb_msg *m;
 	}
 
 	/* lifetime */
-	if (m_lftc) {
+	if (m_lftc != NULL) {
 		printf("\tcreated: %s  ",
 		       str_mono_time(m_lftc->sadb_lifetime_addtime));
 		printf("lastused: %s\n",
 		       str_mono_time(m_lftc->sadb_lifetime_usetime));
 	}
-	if (m_lfth) {
+	if (m_lfth != NULL) {
 		printf("\tlifetime: %lu(s) ",
 		       (u_long)m_lfth->sadb_lifetime_addtime);
 		printf("validtime: %lu(s)\n",
@@ -577,7 +577,7 @@ u_int ulp, p1, p2;
 			break;
 		default:
 			ent = getprotobynumber(ulp);
-			if (ent)
+			if (ent != NULL)
 				printf("%s", ent->p_name);
 			else
 				printf("%u", ulp);

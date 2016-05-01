@@ -28,6 +28,7 @@ s/^VFS: Disk.*/VFS: Diskquotas version dquot_6.4.0 initialized/
 /^unable to open /d
 /^nbd: module cleaned up./d
 /^ip_conntrack .*/d
+/^nf_conntrack .*/d
 /^ip_tables: .*/d
 /echo Starting loading module/,/^Finished loading module.*/d
 /^none on \/testing type hostfs .*/d

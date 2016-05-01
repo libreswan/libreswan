@@ -1121,7 +1121,7 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 		int error;
 
 		error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
-		if (error)
+		if (error != 0)
 			libreswan_log("success on unparsable message - cannot happen");
 
 #ifdef KLIPS_MAST

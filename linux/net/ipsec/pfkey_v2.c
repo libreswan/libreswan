@@ -1233,7 +1233,7 @@ int pfkey_supported_show(struct seq_file *seq, void *offset)
 
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		ps = pfkey_supported_list[satype];
-		while (ps) {
+		while (ps != NULL) {
 			struct ipsec_alg_supported *alg = ps->supportedp;
 			const char *n = alg->ias_name;
 			if (n == NULL) n = "unknown";
@@ -1263,7 +1263,7 @@ int pfkey_registered_show(struct seq_file *seq, void *offset)
 
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		pfkey_sockets = pfkey_registered_sockets[satype];
-		while (pfkey_sockets) {
+		while (pfkey_sockets != NULL) {
 			seq_printf(seq,
 				     "    %2d %8p %5d %8p\n",
 				     satype,

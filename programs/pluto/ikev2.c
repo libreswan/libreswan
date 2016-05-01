@@ -585,19 +585,19 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 			return;
 	}
 
-	if (errors.missing) {
+	if (errors.missing != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "missing payload(s) (%s). Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,
 				  errors.missing));
 	}
-	if (errors.unexpected) {
+	if (errors.unexpected != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "payload(s) (%s) unexpected. Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,
 				  errors.unexpected));
 	}
-	if (errors.bad_repeat) {
+	if (errors.bad_repeat != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "payload(s) (%s) unexpectedly repeated. Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,

@@ -355,7 +355,7 @@ int main(int argc, char **argv)
 
 			/* Build an SADB_X_GRPSA message to send down. */
 			/* It needs <base, SA, SA2, address(D,D2) > minimum. */
-			if (!j) {
+			if (j == 0) {
 				if ((error = pfkey_msg_hdr_build(&extensions[0],
 								 K_SADB_X_GRPSA,
 								 proto2satype(

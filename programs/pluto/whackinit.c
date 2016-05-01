@@ -596,7 +596,7 @@ int main(int argc, char **argv)
 	if (LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE)) {
 		if (!LHAS(opts_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
-	} else if (!msg.whack_options) {
+	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts_seen, OPT_NAME))
 			diag("no reason for --name");
 	}

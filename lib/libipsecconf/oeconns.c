@@ -436,7 +436,7 @@ void add_any_oeconns(struct starter_config *cfg,
 
 #if 0
 			/* this doesn't help at all, since we memcpy below. */
-			if (cfg->got_oedefault) {
+			if (cfg->got_oedefault != NULL) {
 				/* get oedefaults too */
 				conn_default(conn, &cfg->conn_oedefault);
 			}

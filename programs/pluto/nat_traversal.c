@@ -417,7 +417,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	const ip_address *first, *second;
 	unsigned short firstport, secondport;
 
-	passert(st->st_oakley.prf_hasher);
+	passert(st->st_oakley.prf_hasher != NULL);
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
@@ -432,7 +432,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	second = &md->iface->ip_addr;
 	secondport = st->st_localport;
 
-	if (0) {
+	if (FALSE) {
 		const ip_address *t;
 		unsigned short p;
 
@@ -585,7 +585,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 		ipinit = &st->st_remoteaddr;
 	}
 
-	passert(st->st_connection);
+	passert(st->st_connection != NULL);
 
 	nat_np = (st->hidden_variables.st_nat_traversal &
 		NAT_T_WITH_RFC_VALUES) != LEMPTY ?
@@ -819,7 +819,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 	unsigned int *nat_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
 
-	if (!c)
+	if (c == NULL)
 		return;
 
 	if (!c->nat_keepalive) {
@@ -1159,8 +1159,8 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	bool found_me = FALSE;
 	bool found_him = FALSE;
 
-	passert(st);
-	passert(md->iface);
+	passert(st != NULL);
+	passert(md->iface != NULL);
 
 	/*
 	 * First one with my IP & port

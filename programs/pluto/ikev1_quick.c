@@ -206,7 +206,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES:
 			needed_len = AES_CBC_BLOCK_SIZE;
 			/* if an attribute is set, then use that! */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
 					BITS_PER_BYTE;
@@ -214,7 +214,7 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 		case ESP_AES_CTR:
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
 					BITS_PER_BYTE;
@@ -230,7 +230,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -246,7 +246,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -264,7 +264,7 @@ static void compute_proto_keymat(struct state *st,
 			 * We use a minimum of 128bits to avoid padding
 			 * This is also the max keysize for cast128
 			 */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 			}
 			/* minimum = default = maximum */
@@ -286,7 +286,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -302,7 +302,7 @@ static void compute_proto_keymat(struct state *st,
 
 #if 0
 		case ESP_SEED_CBC:
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				/* SEED-CBC is always 128bit */
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;

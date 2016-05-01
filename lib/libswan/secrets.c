@@ -169,12 +169,12 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 
 	/* Search for PPK_RSA pks */
 	s2 = secrets;
-	while (s2) {
-		for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next)
+	while (s2 != NULL) {
+		for (; s2 != NULL && s2->pks.kind == PPK_RSA; s2 = s2->next)
 			continue;
-		for (s = s2; s && s->pks.kind != PPK_RSA; s = s->next)
+		for (s = s2; s != NULL && s->pks.kind != PPK_RSA; s = s->next)
 			continue;
-		if (s) {
+		if (s != NULL) {
 			struct secret *tmp = s->next;
 			struct secret curr = *s;
 			s2->next = tmp;
@@ -182,7 +182,7 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 			*s = *s2;
 			*s2 = curr;
 			s2 = s;
-		} else if (s2) {
+		} else if (s2 != NULL) {
 			s2 = s2->next;
 		}
 	}
@@ -354,7 +354,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 	idhim[0] = '\0';
 	idhim2[0] = '\0';
-	if (his_id) {
+	if (his_id != NULL) {
 		idtoa(his_id, idhim, IDTOA_BUF);
 		strcpy(idhim2, idhim);
 	}
@@ -858,7 +858,7 @@ static void process_secret(struct secret **psecrets,
 			/* RSA key in certificate in NSS */
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
-		if (!ugh) {
+		if (ugh == NULL) {
 			libreswan_log("loaded private key for keyid: %s:%s",
 				enum_name(&ppk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);

@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 			usage(progname);
 			break;
 		case 'v':
-			if (optarg) {
+			if (optarg != NULL) {
 				fprintf(stderr,
 					"%s: warning; '-v' and '--version' options don't expect arguments, arg '%s' found, perhaps unintended.\n",
 					progname, optarg);

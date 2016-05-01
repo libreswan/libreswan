@@ -597,24 +597,30 @@ void load_crls(void)
 		int n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
-		if (n > 0) {
-			while (n--) {
-				chunk_t blob = empty_chunk;
-				char *filename = filelist[n]->d_name;
+		if (n < 0) {
+			int e = errno;
 
-				if (load_coded_file(filename, "crl", &blob)) {
-					/* get uri from the CA */
-					char *uri = find_dercrl_uri(&blob);
+			libreswan_log(
+				"Scanning directory '%s' failed - (%d %s)",
+				oco->crls_dir, e, strerror(e));
+		}
+		while (n > 0) {
+			n--;
+			chunk_t blob = empty_chunk;
+			char *filename = filelist[n]->d_name;
 
-					if (uri != NULL) {
-						(void)insert_crl_nss(&blob,
-								    NULL,
-								    uri);
-						pfree(uri);
-					}
+			if (load_coded_file(filename, "crl", &blob)) {
+				/* get uri from the CA */
+				char *uri = find_dercrl_uri(&blob);
+
+				if (uri != NULL) {
+					(void)insert_crl_nss(&blob,
+							    NULL,
+							    uri);
+					pfree(uri);
 				}
-				free(filelist[n]);	/* was malloced by scandir(3) */
 			}
+			free(filelist[n]);	/* was malloced by scandir(3) */
 		}
 		free(filelist);	/* was malloced by scandir(3) */
 	}

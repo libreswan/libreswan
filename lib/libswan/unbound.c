@@ -41,7 +41,7 @@ bool unbound_init(struct ub_ctx *dnsctx)
 
 	/* create unbound resolver context */
 	dnsctx = ub_ctx_create();
-	if (!dnsctx) {
+	if (dnsctx == NULL) {
 		libreswan_log("error: could not create unbound context");
 		return FALSE;
 	}

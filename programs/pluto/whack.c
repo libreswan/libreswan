@@ -2020,7 +2020,7 @@ int main(int argc, char **argv)
 		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
-	} else if (!msg.whack_options) {
+	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts1_seen, OPT_NAME))
 			diag("no reason for --name");
 	}
@@ -2096,14 +2096,14 @@ int main(int argc, char **argv)
 	wp.msg = &msg;
 
 	/* build esp message as esp="<esp>;<pfsgroup>" */
-	if (msg.pfsgroup) {
+	if (msg.pfsgroup != NULL) {
 		snprintf(esp_buf, sizeof(esp_buf), "%s;%s",
-			 msg.esp ? msg.esp : "",
-			 msg.pfsgroup ? msg.pfsgroup : "");
+			 msg.esp != NULL ? msg.esp : "",
+			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
 		msg.esp = esp_buf;
 	}
 	ugh = pack_whack_msg(&wp);
-	if (ugh)
+	if (ugh != NULL)
 		diag(ugh);
 
 	msg.magic = ((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |

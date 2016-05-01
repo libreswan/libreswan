@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
-	*src_opt;
+		*src_opt;
 	u_int32_t natt;
 	u_int16_t sport, dport;
 	uint32_t life[life_maxsever][life_maxtype];
@@ -609,7 +609,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 		case 'H':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear'  options permitted.\n",
 					progname);
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'P':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear'  options permitted.\n",
 					progname);
@@ -650,7 +650,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'Z':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear'  options permitted.\n",
 					progname);
@@ -674,7 +674,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case '4':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear' options permitted.\n",
 					progname);
@@ -690,7 +690,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case '6':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear' options permitted.\n",
 					progname);
@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear'  options permitted.\n",
 					progname);
@@ -721,7 +721,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'c':
-			if (alg) {
+			if (alg != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--ah', '--esp', '--comp', '--ip4', '--ip6', '--del' or '--clear'  options permitted.\n",
 					progname);
@@ -736,13 +736,13 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'e':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (edst_opt) {
+			if (edst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, edst_opt);
@@ -824,13 +824,13 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'a':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, ADDRESS FAMILY parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (af_opt) {
+			if (af_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, ADDRESS FAMILY parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, af_opt);
@@ -858,25 +858,25 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'I':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SAID parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (proto_opt) {
+			if (proto_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-			if (edst_opt) {
+			if (edst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			if (spi_opt) {
+			if (spi_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, spi_opt);
@@ -943,7 +943,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'D':
-			if (dst_opt) {
+			if (dst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, DST parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, dst_opt);
@@ -1017,7 +1017,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'S':
-			if (src_opt) {
+			if (src_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SRC parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, src_opt);
@@ -1162,19 +1162,19 @@ int main(int argc, char *argv[])
 	case XF_DEL:
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
-		if (!said_opt) {
+		if (said_opt == NULL) {
 			if (isanyaddr(&edst)) {
 				fprintf(stderr,
 					"%s: SA destination not specified.\n",
 					progname);
 				exit(1);
 			}
-			if (!spi) {
+			if (spi == 0) {
 				fprintf(stderr, "%s: SA SPI not specified.\n",
 					progname);
 				exit(1);
 			}
-			if (!proto) {
+			if (proto == 0) {
 				fprintf(stderr,
 					"%s: SA PROTO not specified.\n",
 					progname);
@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[])
 		switch (alg) {
 		/*	Allow no auth ... after all is local root decision 8)  */
 		case XF_OTHER_ALG:
-			if (!authalg)
+			if (authalg == 0)
 				break;
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_AUTH],
 						SADB_EXT_KEY_AUTH,

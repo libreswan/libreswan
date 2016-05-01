@@ -125,7 +125,7 @@ static int print_secrets(struct secret *secret,
 		idtoa(&ids->id, idb1, sizeof(idb1));
 		if (ids->next != NULL) {
 			idtoa(&ids->next->id, idb2, sizeof(idb2));
-			if (ids->next->next)
+			if (ids->next->next != NULL)
 				more = "more";
 		}
 	}
@@ -249,7 +249,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 	publicKey = (SECKEYPublicKey *)
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-	if (!publicKey) {
+	if (publicKey == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 		PORT_SetError(SEC_ERROR_NO_MEMORY);
 		return "11" "NSS error: Not enough memory to create publicKey";
@@ -627,7 +627,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		 * Just added a secret using the cert as the key; how
 		 * can it then not be found?
 		 */
-		pexpect(best);
+		pexpect(best != NULL);
 		free_public_key(my_public_key);
 		return best;
 	}

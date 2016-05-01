@@ -2586,7 +2586,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 {
 	struct state *p1st;
 
-	passert(st);
+	passert(st != NULL);
 
 	if (from_state == STATE_UNDEFINED)
 		from_state = st->st_state;
@@ -2629,7 +2629,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct state st;	/* note: not a pointer! */
 	struct connection cnx;	/* note: not a pointer! */
 
-	passert(md);
+	passert(md != NULL);
 
 	zero(&st);	/* ??? pointer fields might not be NULLed */
 	zero(&cnx);	/* ??? pointer fields might not be NULLed */

@@ -111,7 +111,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
 	const struct state *st;
 
-	if (c->alg_info_ike) {
+	if (c->alg_info_ike != NULL) {
 		char buf[1024];
 
 		alg_info_snprint(buf, sizeof(buf) - 1,

@@ -650,7 +650,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
 
-	if (conn->modecfg_dns1) {
+	if (conn->modecfg_dns1 != NULL) {
 		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
 				&(msg.modecfg_dns1)) &&
 			!tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
@@ -658,7 +658,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_ERR,
 				"Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
 	}
-	if (conn->modecfg_dns2) {
+	if (conn->modecfg_dns2 != NULL) {
 		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
 				&(msg.modecfg_dns2)) &&
 			!tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,

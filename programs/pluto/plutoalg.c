@@ -330,7 +330,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 		}
 
 		aklen = esp_info->authkeylen;
-		if (!aklen)
+		if (aklen == 0)
 			aklen = kernel_alg_esp_auth_keylen(
 				esp_info->auth) * BITS_PER_BYTE;
 
@@ -530,7 +530,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			/* no key length - if required add default here and add another max entry */
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
 
-			if (def_ks) {
+			if (def_ks != 0) {
 				int max_ks = BITS_PER_BYTE *
 					kernel_alg_esp_enc_max_keylen(ealg_i);
 
@@ -862,7 +862,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 	dbnew = kernel_alg_db_new(ei, policy, logit);
 
-	if (!dbnew) {
+	if (dbnew == NULL) {
 		libreswan_log("failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}

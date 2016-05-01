@@ -738,7 +738,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	}
 
 	trans_left = proposal.isap_notrans;
-	while (trans_left--) {
+	while (trans_left-- != 0) {
 		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
 			       &proposal_pbs,
 			       &trans_pbs))

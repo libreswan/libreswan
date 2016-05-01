@@ -109,7 +109,7 @@ static void parser_y_close(struct ic_inputsource *iis)
 		fclose(iis->file);
 		iis->file = NULL;
 	}
-	if (iis->fileglob.gl_pathv) {
+	if (iis->fileglob.gl_pathv != NULL) {
 		globfree(&iis->fileglob);
 		iis->fileglob.gl_pathv = NULL;
 	}

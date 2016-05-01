@@ -164,10 +164,10 @@ void ignore(struct cavp_entry *entry UNUSED,
 static void cavp_parser()
 {
 	char line[BUF_SIZE];
-	while (TRUE) {
+	for (;;) {
 		if (fgets(line, sizeof(line), stdin) == NULL) {
 			int error = ferror(stdin);
-			if (error) {
+			if (error != 0) {
 				fprintf(stderr, "Unexpected error: %s\n",
 					strerror(error));
 				exit(1);

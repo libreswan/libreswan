@@ -168,19 +168,19 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 	char *tokenName = NULL;
 	int tokenLen = 0;
 
-	if (!pwFile)
-		return 0;
+	if (pwFile == NULL)
+		return NULL;
 
 	if (retry)
-		return 0;  /* no good retrying - the files contents will be the same */
+		return NULL;  /* no good retrying - the files contents will be the same */
 
 	phrases = PORT_ZAlloc(maxPwdFileSize);
 
-	if (!phrases)
-		return 0; /* out of memory */
+	if (phrases == NULL)
+		return NULL; /* out of memory */
 
 	fd = PR_Open(pwFile, PR_RDONLY, 0);
-	if (!fd) {
+	if (fd == NULL) {
 		fprintf(stderr, "%s: No password file \"%s\" exists.\n", me, pwFile);
 		PORT_Free(phrases);
 		return NULL;
@@ -195,9 +195,9 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 		return NULL;
 	}
 
-	if (slot) {
+	if (slot != NULL) {
 		tokenName = PK11_GetTokenName(slot);
-		if (tokenName)
+		if (tokenName != NULL)
 			tokenLen = PORT_Strlen(tokenName);
 	}
 	i = 0;
@@ -214,7 +214,7 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 			phrases[i++] = '\0';
 		/* now analyze the current passphrase */
 		phrase = &phrases[startphrase];
-		if (!tokenName)
+		if (tokenName == NULL)
 			break;
 		if (PORT_Strncmp(phrase, tokenName, tokenLen))
 			continue;
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!configdir) {
+	if (configdir == NULL) {
 		configdir = NSSDIR;
 	}
 
@@ -446,7 +446,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	}
 #endif
 
-	if (PK11_IsFIPS() && !password) {
+	if (PK11_IsFIPS() && password == NULL) {
 		fprintf(stderr,
 			"%s: On FIPS mode a password is required\n",
 			me);
@@ -475,7 +475,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/* Do some random-number initialization. */
 	UpdateNSS_RNG(seedbits);
 	/* Log in to the token */
-	if (password) {
+	if (password != NULL) {
 		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
 		if (rv != SECSuccess) {
 			fprintf(stderr,
@@ -488,10 +488,10 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 				       CKM_RSA_PKCS_KEY_PAIR_GEN,
 				       &rsaparams, &pubkey,
 				       PR_TRUE,
-				       password ? PR_TRUE : PR_FALSE,
+				       password != NULL? PR_TRUE : PR_FALSE,
 				       &pwdata);
 	/* inTheToken, isSensitive, passwordCallbackFunction */
-	if (!privkey) {
+	if (privkey == NULL) {
 		fprintf(stderr,
 			"%s: key pair generation failed: \"%d\"\n", me,
 			PORT_GetError());
@@ -520,9 +520,9 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		SECITEM_FreeItem(ckaID, PR_TRUE);
 	}
 
-	if (privkey)
+	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
-	if (pubkey)
+	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
 	(void) NSS_Shutdown();

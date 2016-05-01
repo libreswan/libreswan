@@ -579,7 +579,7 @@ void init_vendorid(void)
 		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
 			vid->descr == NULL ? vid->descr : "");
-		if (vid->vid)
+		if (vid->vid != NULL)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
 	}

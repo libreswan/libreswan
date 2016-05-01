@@ -1291,7 +1291,7 @@ int main(int argc, char **argv)
 		log_to_stderr = FALSE;
 
 #if 0
-	if (kernel_ops->set_debug)
+	if (kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
 #endif
@@ -1542,7 +1542,7 @@ int main(int argc, char **argv)
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
-	if (pluto_shared_secrets_file)
+	if (pluto_shared_secrets_file != NULL)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
 	libreswan_log(leak_detective ?

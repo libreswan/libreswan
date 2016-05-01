@@ -2371,7 +2371,7 @@ fail:
 		libreswan_log("setup_half_ipsec_sa() hit fail:");
 		/* undo the done SPIs */
 		while (said_next-- != said) {
-			if (said_next->proto) {
+			if (said_next->proto != 0) {
 				(void) del_spi(said_next->spi,
 					       said_next->proto,
 					       &src.addr, said_next->dst);

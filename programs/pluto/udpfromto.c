@@ -100,7 +100,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 	 * IP_PKTINFO / IP_RECVDSTADDR don't provide sin_port so we have to
 	 * retrieve it using getsockname().
 	 */
-	if (to) {
+	if (to != NULL) {
 		struct sockaddr_in si;
 		socklen_t l = sizeof(si);
 
@@ -116,7 +116,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 			((struct sockaddr_in *)to)->sin_port = si.sin_port;
 			((struct sockaddr_in *)to)->sin_addr = si.sin_addr;
 		}
-		if (tolen)
+		if (tolen != NULL)
 			*tolen = sizeof(struct sockaddr_in);
 	}
 
@@ -136,7 +136,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 	if ((err = recvmsg(s, &msgh, flags)) < 0)
 		return err;
 
-	if (fromlen)
+	if (fromlen != NULL)
 		*fromlen = msgh.msg_namelen;
 
 	/* Process auxiliary received data in msgh */
@@ -149,10 +149,10 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 			cmsg->cmsg_type == IP_PKTINFO) {
 			struct in_pktinfo *i =
 				(struct in_pktinfo *)CMSG_DATA(cmsg);
-			if (to) {
+			if (to != NULL) {
 				((struct sockaddr_in *)to)->sin_addr =
 					i->ipi_addr;
-				if (tolen)
+				if (tolen != NULL)
 					*tolen = sizeof(struct sockaddr_in);
 			}
 			break;

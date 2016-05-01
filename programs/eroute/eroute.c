@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 			argcount--;
 			break;
 		case 'a':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--replacein', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 			action_type = EMT_SETEROUTE;
 			break;
 		case 'A':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--replacein', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 			action_type = EMT_INEROUTE;
 			break;
 		case 'r':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--replacein', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 			action_type = EMT_REPLACEROUTE;
 			break;
 		case 'E':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--replacein', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 			action_type = EMT_INREPLACEROUTE;
 			break;
 		case 'c':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 			action_type = EMT_CLREROUTE;
 			break;
 		case 'd':
-			if (action_type) {
+			if (action_type != 0) {
 				fprintf(stderr,
 					"%s: Only one of '--add', '--addin', '--replace', '--clear', or '--del' options permitted.\n",
 					progname);
@@ -244,13 +244,13 @@ int main(int argc, char **argv)
 			action_type = EMT_DELEROUTE;
 			break;
 		case 'e':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (edst_opt) {
+			if (edst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, edst_opt);
@@ -270,13 +270,13 @@ int main(int argc, char **argv)
 			usage(progname);
 			exit(1);
 		case 's':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (spi_opt) {
+			if (spi_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, spi_opt);
@@ -296,20 +296,20 @@ int main(int argc, char **argv)
 			spi_opt = optarg;
 			break;
 		case 'p':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (proto_opt) {
+			if (proto_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, proto_opt);
 				exit(1);
 			}
 #if 0
-			if (said.proto) {
+			if (said.proto != 0) {
 				fprintf(stderr,
 					"%s: Warning, PROTO parameter redefined:%s\n",
 					progname, optarg);
@@ -333,31 +333,31 @@ int main(int argc, char **argv)
 			proto_opt = optarg;
 			break;
 		case 'I':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SAID parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (proto_opt) {
+			if (proto_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-			if (edst_opt) {
+			if (edst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, EDST parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			if (spi_opt) {
+			if (spi_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			if (said_af_opt) {
+			if (said_af_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, address family parameter redefined in SA:%s, already defined as:%s\n",
 					progname, optarg, said_af_opt);
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
 				"See `ipsec --copyright' for copyright information.\n");
 			exit(1);
 		case 'D':
-			if (dst_opt) {
+			if (dst_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, --dst parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, dst_opt);
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
 			dst_opt = optarg;
 			break;
 		case 'S':
-			if (src_opt) {
+			if (src_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, --src parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, src_opt);
@@ -416,7 +416,7 @@ int main(int argc, char **argv)
 			src_opt = optarg;
 			break;
 		case 'P':
-			if (transport_proto_opt) {
+			if (transport_proto_opt != NULL) {
 				fprintf(stderr, "%s: Error, --transport-proto"
 					" parameter redefined:%s, "
 					"already defined as:%s\n",
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
 			transport_proto_opt = optarg;
 			break;
 		case 'Q':
-			if (src_port_opt) {
+			if (src_port_opt != NULL) {
 				fprintf(stderr, "%s: Error, --src-port"
 					" parameter redefined:%s, "
 					"already defined as:%s\n",
@@ -437,7 +437,7 @@ int main(int argc, char **argv)
 			src_port_opt = optarg;
 			break;
 		case 'R':
-			if (dst_port_opt) {
+			if (dst_port_opt != NULL) {
 				fprintf(stderr, "%s: Error, --dst-port"
 					" parameter redefined:%s, "
 					"already defined as:%s\n",
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		case 'i': /* specifies the address family of the SAID, stored in said_af */
-			if (said_af_opt) {
+			if (said_af_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, address family of SAID redefined:%s, already defined as:%s\n",
 					progname, optarg, said_af_opt);
@@ -480,7 +480,7 @@ int main(int argc, char **argv)
 			said_af_opt = optarg;
 			break;
 		case 'f': /* specifies the address family of the eroute, stored in eroute_af */
-			if (eroute_af_opt) {
+			if (eroute_af_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, address family of eroute redefined:%s, already defined as:%s\n",
 					progname, optarg, eroute_af_opt);
@@ -567,7 +567,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (src_port_opt) {
+	if (src_port_opt != NULL) {
 		struct servent * ent = getservbyname(src_port_opt, 0);
 		if (ent != 0) {
 			src_port = ent->s_port;
@@ -583,7 +583,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (dst_port_opt) {
+	if (dst_port_opt != NULL) {
 		struct servent * ent = getservbyname(dst_port_opt, 0);
 		if (ent != 0) {
 			dst_port = ent->s_port;
@@ -604,8 +604,8 @@ int main(int argc, char **argv)
 	case EMT_REPLACEROUTE:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
-		if (!(said_af_opt && edst_opt && spi_opt &&
-		      proto_opt) && !(said_opt)) {
+		if (!(said_af_opt != NULL && edst_opt != NULL && spi_opt != NULL &&
+		      proto_opt != NULL) && said_opt == NULL) {
 			fprintf(stderr,
 				"%s: add and addin options must have SA specified.\n",
 				progname);
@@ -613,14 +613,14 @@ int main(int argc, char **argv)
 		}
 		break;
 	case EMT_DELEROUTE:
-		if (!src_opt) {
+		if (src_opt == NULL) {
 			fprintf(stderr,
 				"%s: Error -- %s option '--src' is required.\n",
 				progname,
 				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
-		if (!dst_opt) {
+		if (dst_opt == NULL) {
 			fprintf(stderr,
 				"%s: Error -- %s option '--dst' is required.\n",
 				progname,
@@ -1002,7 +1002,7 @@ sa_build:
 		fprintf(stdout, "%s: DEBUG: pfkey write successful.\n",
 			progname);
 
-	if (pfkey_msg) {
+	if (pfkey_msg != NULL) {
 		pfkey_extensions_free(extensions);
 		pfkey_msg_free(&pfkey_msg);
 	}

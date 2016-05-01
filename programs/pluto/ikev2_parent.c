@@ -616,7 +616,7 @@ static void ikev2_check_frag_support(struct msg_digest *md)
 	struct payload_digest *p;
 	struct state *st = md->st;
 
-	passert(st);
+	passert(st != NULL);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		switch (p->payload.v2n.isan_type) {
@@ -2004,7 +2004,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 
 		freeanychunk(old->cipher);
 		pfree(old);
-	} while (frag);
+	} while (frag != NULL);
 
 	st->ikev2_frags = NULL;
 
