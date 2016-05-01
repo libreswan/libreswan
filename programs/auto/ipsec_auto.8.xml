@@ -242,7 +242,7 @@ but that may change.)</para>
        will be obsoleted in the near future.
 </para>
 <para>       The <option>--rereadall</option> operation is equivalent to the execution of
-         --rereadsecrets, and --rereadcrls.
+         --rereadsecrets and --rereadcrls.
 </para>
 <para>       The <option>--listpubkeys</option> operation lists all RSA public keys  either  received
        from  peers  via the IKE protocol embedded in authenticated certificate
