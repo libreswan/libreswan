@@ -604,8 +604,9 @@ int main(int argc, char **argv)
 	case EMT_REPLACEROUTE:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
-		if (!(said_af_opt != NULL && edst_opt != NULL && spi_opt != NULL &&
-		      proto_opt != NULL) && said_opt == NULL) {
+		if ((said_af_opt == NULL || edst_opt == NULL ||
+		     spi_opt == NULL || proto_opt == NULL) &&
+		    said_opt == NULL) {
 			fprintf(stderr,
 				"%s: add and addin options must have SA specified.\n",
 				progname);
