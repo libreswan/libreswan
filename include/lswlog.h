@@ -61,7 +61,6 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
 #define DBG_dump_chunk(label, ch) DBG_dump(label, (ch).ptr, (ch).len)
 
-extern void exit_tool(int) NEVER_RETURNS;
 extern void tool_init_log(void);
 extern void tool_close_log(void);
 

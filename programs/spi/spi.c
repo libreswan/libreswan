@@ -1738,12 +1738,3 @@ int main(int argc, char *argv[])
 		printf("%s: exited normally\n", progname);
 	exit(0);
 }
-
-/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
- * The odd-looking parens are to prevent macro expansion:
- * lswlog.h without DEBUG define a macro exit_tool().
- */
-void (exit_tool)(int x)
-{
-	exit(x);
-}
