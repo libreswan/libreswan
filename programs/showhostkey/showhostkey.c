@@ -57,7 +57,7 @@
 #include <prinit.h>
 
 char usage[] =
-	"Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
+	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
 	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
 	"                         [--dump ] [--list ]\n"
 	"                         [--dhclient ] [--file secretfile ]\n"
