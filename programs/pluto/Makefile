@@ -457,8 +457,6 @@ cleanall:
 		$(OBJSWHACK) $(BINNAMEWHACK) \
 		$(OBJSADNS) $(BINNAMEADNS)
 
-distclean: clean
-
 check:
 	echo no checks in lib right now.
 

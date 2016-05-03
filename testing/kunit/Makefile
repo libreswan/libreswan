@@ -39,7 +39,7 @@ include/asm/madelinks: include/asm/files.txt
 
 check:	include/libreswan.h include/linux/madelinks include/net/madelinks include/asm/madelinks
 
-cleanall distclean install programs checkprograms check clean install_file_list:
+cleanall install programs checkprograms check clean install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
