@@ -39,6 +39,7 @@ all:
 
 .PHONY: programs
 programs: all
+man: manpages
 
 # All:
 

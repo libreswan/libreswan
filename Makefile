@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -54,7 +54,6 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 # to use a local TARGET-local target.
 BROKEN_TARGETS += install
 BROKEN_TARGETS += check
-BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 # XXX: Without this sub-directories that still require
@@ -179,7 +178,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-man config install:: ${OBJDIR}/Makefile
+config install:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
