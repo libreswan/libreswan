@@ -54,7 +54,6 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 # to use a local TARGET-local target.
 BROKEN_TARGETS += install
 BROKEN_TARGETS += check
-BROKEN_TARGETS += config
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 # XXX: Without this sub-directories that still require
 # $(builddir)/Makefile will fail.
@@ -68,7 +67,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 
 # declaration for make's benefit
 .PHONY:	def insert kpatch patches _patches _patches2.4 \
-	klipsdefaults programs man config install clean \
+	klipsdefaults programs man install clean \
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
@@ -178,10 +177,12 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-config install:: ${OBJDIR}/Makefile
+install:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
+.PHONY: config
+config: ${OBJDIR}/Makefile
 ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
