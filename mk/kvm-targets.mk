@@ -468,8 +468,3 @@ uninstall-kvm-network-%:
 	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
 		sudo virsh net-undefine $* ; \
 	fi
-
-
-.PHONY: kvm-help
-kvm-help:
-	cat mk/README.KVM.md

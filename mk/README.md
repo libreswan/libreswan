@@ -1,30 +1,183 @@
-Where is this code going?
--------------------------
 
-The basic idea is to reduce things to the point that a Makefile looks
-something like:
+Overview
+========
 
-    PROGRAMS=foo
-    include ../../mk/program.mk
-    ifdef EXTRA_STUFF
-    LIBS+=-lextra
-    endif
+The kvm-* make targets provide an alternative build and test
+framework.
 
-Either subdirs.mk, program.mk, or library.mk gets included.
+Just keep in mind that some is experimental.
 
-This means:
 
-- the srcdir/objdir shuffle has to go
-- all the flags get set up
-- all the auto-dependency stuff is delt with
-- makefiles use a small well-defined set of flags
+Installing KVM test domains
+---------------------------
 
-And a small set of well defined targets work:
 
-- make (default to programs or all?)
-- make install
-- make clean
-- make distclean?
+Preparation (FC23)
+------------------
+
+sudo dnf install virt-manager virt-install python3-pexpect
+sudo usermod -a -G qemu cagney
+sudo chmod g+w /var/lib/libvirt/qemu/
+
+
+Makefile.inc.local configuration
+................................
+
+(from "make kvm-config-variables")
+
+Before creating the test domains, the following make variables need to
+be defined (these make variables are only used when creating the
+domains):
+
+    KVM_POOL: directory containg the test domain disks
+
+    KVM_SOURCEDIR: directory to mount on /source within the domains
+
+    KVM_TESTINGDIR: directory to mount on /testing within the domains
+
+For a traditional test domain configuration, with a single libreswan
+source directory mounted under /source, add the following to
+Makefile.inc.local:
+
+    KVM_POOL = /home/build/pool
+    KVM_SOURCEDIR = $(abs_top_srcdir)
+    KVM_TESTINGDIR = $(abs_top_srcdir)/testing
+
+Alternatively, if you have multiple libreswan source directories and
+would like their common parent directory to be mounted under /source
+then add the following to Makefile.inc.local:
+
+    KVM_POOL = $(abspath $(abs_top_srcdir)/../pool)
+    KVM_SOURCEDIR = $(abspath $(abs_top_srcdir)/..)
+    KVM_TESTINGDIR = $(abs_top_srcdir)/testing
+
+
+Installing test networks and test domains
+.........................................
+
+Once the make variables are set, the test networks and test domains
+can be installed with:
+
+    make install-kvm-networks
+    make install-kvm-domains
+
+Conversely the test domains and networks can be completely uninstalled
+using:
+
+    make uninstall-kvm-networks
+    make uninstall-kvm-domains
+
+
+Re-installing and updating test domains
+.......................................
+
+It is also possible to re-install an individual test domain, such as
+east:
+
+    make uninstall-kvm-domain-east
+    make install-kvm-domain-east
+
+and all test domains without re-creating the base domain vis:
+
+    make uninstall-kvm-test-domains
+    make install-kvm-test-domains
+
+These make targets DO NOT update the base .qcow2 image created from
+the base domain.
+
+To also force an update of the base .qcow2 image, that file will need
+to be explicitly deleted.  This is both to prevent accidental domain
+updates; and avoid the unreliable and slow process of creating the
+base .qcow2 file.
+
+
+Logging into a test domain
+--------------------------
+
+To get a shell prompt on a domain, such as east, use:
+
+    ./testing/utils/kvmsh.py east
+
+
+Installing libreswan
+--------------------
+
+To install libreswan on all test domains (except nic), use:
+
+    make kvm-install
+
+and to install libreswan on just one domain, for instance "east", use:
+
+    make kvm-install-east
+
+To clean the kvm build directory use:
+
+    make kvm-clean
+
+(This replaces something like "make check UPDATEONLY=1")
+
+
+Creating test keys
+------------------
+
+The tests requires custom keys.  They are generated using a test
+domain, with:
+
+    make kvm-keys
+
+Please note that they are not currently automatically re-generated
+(this is because of concern that critical keys may be accidently
+deleted).  To manually re-build the keys use:
+
+    make clean-kvm-keys kvm-keys
+
+(This replaces directly running scripts in testing/x509 directory)
+
+
+Running the tests
+-----------------
+
+There are two targets available for running the testsuite.  The
+difference is in how previously run tests are handled.
+
+- run tests unconditionally:
+
+      make kvm-test
+
+  This target is best suited for the iterative build test cycle where
+  a limited set of tests need to be run.  For instance, to update the
+  domain east with the latest changes and then run a subset of tests,
+  use:
+
+      make kvm-install-east kvm-test KVM_TESTS=testing/pluto/ikev2-algo-*
+
+- to run tests that haven't passed (i.e, un-tested and failed tests):
+
+      make kvm-check
+
+  This target is best suited for running or updating the entire
+  testsuite.  For instance, because some tests fail intermittently, a
+  second kvm-check will likely improve the test results.
+
+(This replaces and better focuses the functionality found in "make
+check" and the script testing/utils/swantest.)
+
+(If you forget to run kvm-keys it doesn't matter, both kvm-test and
+kvm-check depend on the kvm-keys target.)
+
+
+Examining test results
+----------------------
+
+The script kvmresults can be used to examine the results from the
+current test run:
+
+    ./testing/utils/kvmresults.py testing/pluto
+
+(even while the testsuite is still running) and compare the results
+with an earlier baseline vis:
+
+    ./testing/utils/kvmresults.py testing/pluto ../saved-testing-pluto-directory
 
 mk/manpages.mk
 --------------
@@ -58,84 +211,3 @@ mk/tests.sh
 
 This script goes through a whole heap of make commands, such as
 sub-directory clean/build, that should work.
-
-TODO: a.k.a. what needs fixing
-------------------------------
-
-The following are quirks in the build system:
-
-- stop library.mk switching to $(builddir)
-
-- stop program.mk switching to $(builddir)
-
-- recursive make targets should stick to $(srcdir); currently some
-  switch back to $(builddir) at the last moment (see above)
-
-- lib/libswan should use library.mk
-
-- programs/pluto should to use program.mk
-
-- remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
-
-- move modobj to under $(builddir)
-
-- unit tests under testing/ could do with their own unit-test.mk file;
-  grep for UNITTEST in testing's Makefile-s
-
-- free up CFLAGS; see autoconf/automake for possible guidelines?
-
-- be more consistent with "=", ":=" and "?="; there's a meta issue
-  here - configuration files are included early leading to "?=" rather
-  than late
-
-- eliminate :: rules
-
-- run "make --warn-undefined-variables"
-
-- do not generate the makefiles under $(OBJDIR); need to stop things
-  switching to that directory first
-
-- eliminate Makefile.ver: this is really messy as scripts do all sorts
-  of wierd and wonderful stuff with it.
-
-- make building individual programs configurable
-
-- add a minimal config for small systems
-
-The following are quirks inside of pluto:
-
-- log, as a separate line, the file's basename, line and function
-
-- enable -std=gnu99; hopefully just slog
-
-- switch to vfork
-
-The following are quirks with /testing:
-
-- don't have /etc/ipsec.conf refer to /testing
-
-- don't have tests run scripts in /testing
-
-- run ../../../testing/guestbin/swan-init (a relative path within the
-  current test tree), and not /testing/guestbin/swan-init
-
-The following are quirks in the test infrastructure:
-
-- have *init.sh et.al. scripts always succeed.  This means that
-  commands like ping that are expected to fail (demonstrating no
-  conectivity) will need a "!" prefix so the failure is success.
-
-- support multiple run files (for instance run1east.sh, run2west.sh,
-  ...); this will allow more complicated tests such as where west
-  establishes a connection but east triggers the re-establish
-
-- speed up ping aka liveness tests
-
-- simplify fips check
-
-- eliminate test results "incomplete" and "bad"
-
-- swan-transmogrify runs chcon -R testing/pluto, it should only run
-  that over the current test directory
-
-- implement libvirt/install.sh using install-kvm-networks et.al.
