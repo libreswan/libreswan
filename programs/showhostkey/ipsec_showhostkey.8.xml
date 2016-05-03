@@ -93,6 +93,7 @@ might give (with the key data trimmed for clarity):</para>
 <para>The <option>--dhclient</option>
 option cause the output to be suitable for inclusion in
 <citerefentry><refentrytitle>dhclient.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+</para>
 
 <para>Normally, the default key for this host
 (the one with no host identities specified for it) is the one extracted.
