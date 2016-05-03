@@ -35,6 +35,7 @@ d.ipsec.conf/leftid.xml
 d.ipsec.conf/leftrsasigkey.xml
 d.ipsec.conf/leftrsasigkey2.xml
 d.ipsec.conf/leftcert.xml
+d.ipsec.conf/leftckaid.xml
 d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml

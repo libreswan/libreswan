@@ -1,6 +1,8 @@
 /*
- * NSS certificate loading routines
+ * NSS certificate loading routines, for libreswan
+ *
  * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -105,10 +107,69 @@ bool load_coded_file(const char *filename,
 	return FALSE;
 }
 
-CERTCertificate *get_cert_from_nss(const char *nickname)
+CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname)
 {
+	if (nickname == NULL) {
+		return NULL;
+	}
 	CERTCertificate *cert;
 	cert = PK11_FindCertFromNickname(nickname,
 					lsw_return_nss_password_file_info());
 	return cert;
+}
+
+struct ckaid_match_arg {
+	SECItem ckaid;
+	CERTCertificate *cert;
+};
+
+static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, void *arg)
+{
+	struct ckaid_match_arg *ckaid_match_arg = arg;
+	if (ckaid_match_arg->cert != NULL) {
+		return SECSuccess;
+	}
+	SECItem *ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+						      lsw_return_nss_password_file_info());
+	if (ckaid == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("GetLowLevelID for cert %s failed", cert->nickname));
+		return SECSuccess;
+	}
+	if (SECITEM_ItemsAreEqual(ckaid, &ckaid_match_arg->ckaid)) {
+		DBG(DBG_CONTROLMORE, DBG_log("CKAID matched cert %s", cert->nickname));
+		ckaid_match_arg->cert = CERT_DupCertificate(cert);
+		/* bail early, but how?  */
+	}
+	SECITEM_FreeItem(ckaid, PR_TRUE);
+	return SECSuccess;
+}
+
+CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
+{
+	if (ckaid == NULL) {
+		return NULL;
+	}
+	size_t buflen = strlen(ckaid);
+	char *buf = alloc_bytes(buflen, "ckaid"); /* good enough */
+	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
+	if (ugh != NULL) {
+		pfree(buf);
+		/* should have been rejected by whack? */
+		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
+		return NULL;
+	}
+
+	struct ckaid_match_arg ckaid_match_arg = {
+		.cert = NULL,
+		.ckaid = {
+			.type = siBuffer,
+			.data = (void*) buf,
+			.len = buflen,
+		},
+	};
+	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
+			       lsw_return_nss_password_file_info());
+	pfree(buf);
+	return ckaid_match_arg.cert;
 }

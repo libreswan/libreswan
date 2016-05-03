@@ -246,6 +246,7 @@ static void key_add_continue(struct adns_continuation *ac, err_t ugh)
 
 static void key_add_request(const struct whack_message *msg)
 {
+	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
 
@@ -313,6 +314,7 @@ static void key_add_request(const struct whack_message *msg)
 			 */
 			key_add_merge(oc, &keyid);
 		} else {
+			DBG_dump_chunk("add pubkey", msg->keyval);
 			ugh = add_public_key(&keyid, DAL_LOCAL,
 					     msg->pubkey_alg,
 					     &msg->keyval, &pluto_pubkeys);

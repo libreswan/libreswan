@@ -375,7 +375,14 @@ static void set_whack_end(char *lr,
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->has_port_wildcard = l->has_port_wildcard;
 
-	w->cert = l->cert;
+	if (l->cert != NULL) {
+		w->pubkey = l->cert;
+		w->pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+	}
+	if (l->ckaid != NULL) {
+		w->pubkey = l->ckaid;
+		w->pubkey_type = WHACK_PUBKEY_CKAID;
+	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];

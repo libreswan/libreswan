@@ -131,6 +131,8 @@
 
       <arg choice="opt">--cert <replaceable>friendly_name</replaceable></arg>
 
+      <arg choice="opt">--ckaid <replaceable>CKAID</replaceable></arg>
+
       <arg choice="opt">--ca <replaceable>distinguished
       name</replaceable></arg>
 
@@ -207,6 +209,8 @@
       <arg choice="opt">--host <replaceable>ip-address</replaceable></arg>
 
       <arg choice="opt">--cert <replaceable>friendly_name</replaceable></arg>
+
+      <arg choice="opt">--ckaid <replaceable>CKAID</replaceable></arg>
 
       <arg choice="opt">--ca <replaceable>distinguished
       name</replaceable></arg>
@@ -1342,6 +1346,16 @@
                 <manvolnum>5</manvolnum>
               </citerefentry> on how to extrac this from the PKCS#12
             file.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--ckaid</option>&nbsp;<emphasis
+          remap="I">CKAID</emphasis></term>
+
+          <listitem>
+            <para>The hex CKAID of the X.509 certificate.
+            Certificates are stored in the NSS database.</para>
           </listitem>
         </varlistentry>
 

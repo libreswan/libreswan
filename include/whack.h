@@ -1,10 +1,12 @@
 /* Structure of messages from whack to Pluto proper.
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,7 +46,19 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 42)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 43)
+
+/*
+ * Where, if any, is the pubkey comming from.
+ *
+ * This goes across the wire so re-ordering this means bumping whack's
+ * version number.
+ */
+enum whack_pubkey_type {
+	WHACK_PUBKEY_NONE,
+	WHACK_PUBKEY_CERTIFICATE_NICKNAME,
+	WHACK_PUBKEY_CKAID,
+};
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -52,7 +66,7 @@
  */
 struct whack_end {
 	char *id;	/* id string (if any) -- decoded by pluto */
-	char *cert;	/* path string (if any) -- loaded by pluto  */
+	char *pubkey;	/* PUBKEY_TYPE string (if any) -- decoded by pluto  */
 	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;	/* access control groups (if any) -- parsed by pluto */
 
@@ -63,6 +77,7 @@ struct whack_end {
 	ip_subnet client;
 
 	bool key_from_DNS_on_demand;
+	enum whack_pubkey_type pubkey_type;
 	bool has_client;
 	bool has_client_wildcard;
 	bool has_port_wildcard;

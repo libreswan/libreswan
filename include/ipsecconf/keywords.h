@@ -170,6 +170,7 @@ enum keyword_string_conn_field {
 	KSCF_RSAKEY1, /* loose_enum */
 	KSCF_RSAKEY2, /* loose_enum */
 	KSCF_CERT,
+	KSCF_CKAID,
 	KSCF_CA,
 	KSCF_SUBNETWITHIN,
 	KSCF_PROTOPORT,

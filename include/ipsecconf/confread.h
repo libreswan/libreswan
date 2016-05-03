@@ -61,6 +61,7 @@ struct starter_end {
 	bool has_port_wildcard;
 	char *virt;
 	char *cert;
+	char *ckaid;
 	char *ca;
 	char *updown;
 	ip_range pool_range;    /* store start of v4 addresspool */

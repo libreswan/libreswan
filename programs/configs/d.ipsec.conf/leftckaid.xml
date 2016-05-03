@@ -1,0 +1,7 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftckaid</emphasis></term>
+  <listitem>
+    <para>The hex CKAID of the X.509 certificate.  Certificates are
+    stored in the NSS database.</para>
+  </listitem>
+  </varlistentry>

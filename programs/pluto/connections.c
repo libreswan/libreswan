@@ -813,18 +813,16 @@ static void unshare_connection(struct connection *c)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_nss_certificate(const char *name, struct end *dst)
+static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
+				     struct end *dst, const char *source,
+				     const char *name)
 {
 	dst->cert.ty = CERT_NONE;
 	dst->cert.u.nss_cert = NULL;
 
-	if (name == NULL) {
-		return;
-	}
-
-	CERTCertificate *cert = get_cert_from_nss(name);
 	if (cert == NULL) {
-		whack_log(RC_FATAL, "cannot load certificate \'%s\'", name);
+		whack_log(RC_FATAL, "%s certificate with %s \'%s\' not found in NSS DB",
+			  which, source, name);
 		/* No cert, default to IP ID */
 		dst->id.kind = ID_NONE;
 		return;
@@ -835,13 +833,13 @@ static void load_end_nss_certificate(const char *name, struct end *dst)
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(),
 				     FALSE) != secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS,"certificate \'%s\' is expired/invalid",
-				      name);
+		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired/invalid",
+		       which, name);
 		CERT_DestroyCertificate(cert);
 		return;
 	}
 
-	DBG(DBG_X509, DBG_log("loaded certificate \'%s\'", name));
+	DBG(DBG_X509, DBG_log("loaded %s certificate \'%s\'", which, name));
 
 	add_rsa_pubkey_from_cert(&dst->id, cert);
 	dst->cert.ty = CERT_X509_SIGNATURE;
@@ -891,8 +889,27 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	if (src->cert != NULL) {
-		load_end_nss_certificate(src->cert, dst);
+	switch (src->pubkey_type) {
+	case WHACK_PUBKEY_CERTIFICATE_NICKNAME: {
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->pubkey);
+		load_end_nss_certificate(which, cert, dst, "nickname",
+					 src->pubkey);
+		break;
+	}
+	case WHACK_PUBKEY_CKAID: {
+		/*
+		 * XXX: The pubkey might already be loaded and in
+		 * either &pluto_secrets or %pluto_pubkeys.  For now
+		 * ignore this (ipsec.secrets RSA pubkeys get put in
+		 * pluto_secrets, sigh).
+		 */
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
+		load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		break;
+	}
+	default:
+		/* ignore */
+		break;
 	}
 
 	/* does id have wildcards? */
@@ -1140,12 +1157,9 @@ static reqid_t gen_reqid(void)
 	}
 }
 
-static bool preload_wm_cert_secret(const char *side, const char *nickname)
+static bool preload_wm_cert_secret(const char *side, const char *pubkey,
+				   enum whack_pubkey_type pubkey_type)
 {
-	if (nickname == NULL) {
-		return TRUE;
-	}
-
 	/*
 	 * Must free CERT.
 	 *
@@ -1155,12 +1169,43 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 	 * because, at the point of this function's call, there is no
 	 * where to stash the certificate.  Caveat emptor.
 	 */
-	CERTCertificate *cert = get_cert_from_nss(nickname);
-	if (cert == NULL) {
-		loglog(RC_COMMENT,
-		       "%scert with the nickname \"%s\" does not exist in NSS db",
-		       side, nickname);
-		return FALSE;
+	CERTCertificate *cert;
+	const char *cert_source;
+	switch (pubkey_type) {
+	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
+		cert = get_cert_by_nickname_from_nss(pubkey);
+		cert_source = "nickname";
+		if (cert == NULL) {
+			loglog(RC_COMMENT,
+			       "%s certificate with %s '%s' was not found in NSS DB",
+			       side, cert_source, pubkey);
+			return FALSE;
+		}
+		break;
+	case WHACK_PUBKEY_CKAID:
+		/*
+		 * XXX: The pubkey might already be loaded and in
+		 * either &pluto_secrets or %pluto_pubkeys.  For now
+		 * ignore this (ipsec.secrets RSA pubkeys get put in
+		 * pluto_secrets, sigh).
+		 */
+		cert = get_cert_by_ckaid_from_nss(pubkey);
+		cert_source = "CKAID";
+		if (cert == NULL) {
+			DBG(DBG_CONTROL,
+			    DBG_log("preload %s certificate with %s '%s' failed - not found in NSS DB",
+				    side, cert_source, pubkey));
+			return TRUE;
+		}
+		break;
+	case WHACK_PUBKEY_NONE:
+		pexpect(pubkey == NULL);
+		return TRUE;
+	default:
+		DBG(DBG_CONTROL,
+		    DBG_log("warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type));
+		/* recoverable screwup? */
+		return TRUE;
 	}
 
 	/*
@@ -1177,8 +1222,8 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 	err_t ugh = load_nss_cert_secret(cert);
 	if (ugh != NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log("warning: no secret key loaded for %scert=%s: %s",
-			    side, nickname, ugh));
+		    DBG_log("warning: no secret key loaded for %s certificate with %s %s: %s",
+			    side, cert_source, pubkey, ugh));
 	}
 
 	CERT_DestroyCertificate(cert);
@@ -1187,8 +1232,10 @@ static bool preload_wm_cert_secret(const char *side, const char *nickname)
 
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
-	return preload_wm_cert_secret("left", wm->left.cert)
-		&& preload_wm_cert_secret("right", wm->right.cert);
+	return (preload_wm_cert_secret("left", wm->left.pubkey,
+				       wm->left.pubkey_type)
+		&& preload_wm_cert_secret("right", wm->right.pubkey,
+					  wm->right.pubkey_type));
 }
 
 /* only used by add_connection() */

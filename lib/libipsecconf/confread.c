@@ -644,8 +644,22 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 	}
 
 	/* copy certificate path name */
-	if (end->strings_set[KSCF_CERT])
+	if (end->strings_set[KSCF_CERT] && end->strings_set[KSCF_CKAID]) {
+		ERR_FOUND("only one of %scert and %sckaid can be specified",
+			  leftright, leftright);
+	}
+	if (end->strings_set[KSCF_CERT]) {
 		end->cert = clone_str(end->strings[KSCF_CERT], "KSCF_CERT");
+	}
+	if ( end->strings_set[KSCF_CKAID]) {
+		const char *ckaid = end->strings[KSCF_CKAID];
+		/* try parsing it */
+		const char *ugh = ttodata(ckaid, 0, 16, NULL, 0, NULL);
+		if (ugh != NULL) {
+			ERR_FOUND("invalid %sckaid: %s", leftright, ugh);
+		}
+		end->ckaid = clone_str(ckaid, "KSCF_CKAID");
+	}
 
 	if (end->strings_set[KSCF_CA])
 		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");

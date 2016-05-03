@@ -65,16 +65,16 @@ static void help(void)
 		"connection: whack --name <connection_name> \\\n"
 		"	--connalias <alias_names> \\\n"
 		"	[--ipv4 | --ipv6] [--tunnelipv4 | --tunnelipv6] \\\n"
-		"	(--host <ip-address> | --id <identity> | --cert <path>) \\\n"
+		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
 		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
 		"	[--updown <updown>] \\\n"
-		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--groups <access control groups>] \\\n"
-		"	[--cert <path>] [--ca <distinguished name>] \\\n"
+		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
+		"	[--ca <distinguished name>] \\\n"
 		"	[--sendca no|issuer|all] [--sendcert] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
@@ -324,6 +324,7 @@ enum option_enums {
 	END_HOST,
 	END_ID,
 	END_CERT,
+	END_CKAID,
 	END_CA,
 	END_GROUPS,
 	END_IKEPORT,
@@ -519,6 +520,7 @@ static const struct option long_opts[] = {
 	{ "host", required_argument, NULL, END_HOST + OO },
 	{ "id", required_argument, NULL, END_ID + OO },
 	{ "cert", required_argument, NULL, END_CERT + OO },
+	{ "ckaid", required_argument, NULL, END_CKAID + OO },
 	{ "ca", required_argument, NULL, END_CA + OO },
 	{ "groups", required_argument, NULL, END_GROUPS + OO },
 	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
@@ -1367,7 +1369,20 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			msg.right.cert = optarg;	/* decoded by Pluto */
+			if (msg.right.pubkey != NULL)
+				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+			msg.right.pubkey = optarg;	/* decoded by Pluto */
+			msg.right.pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+			continue;
+
+		case END_CKAID:	/* --ckaid <ckaid> */
+			if (msg.right.pubkey != NULL)
+				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+			/* try parsing it; the error isn't the most specific */
+			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
+			diagq(ugh, optarg);
+			msg.right.pubkey = optarg;	/* decoded by Pluto */
+			msg.right.pubkey_type = WHACK_PUBKEY_CKAID;
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */

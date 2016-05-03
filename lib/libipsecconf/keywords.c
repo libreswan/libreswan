@@ -466,6 +466,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KSCF_RSAKEY2, &kw_rsasigkey_list },
 	{ "cert",           kv_conn | kv_auto | kv_leftright, kt_filename,
 	  KSCF_CERT, NOT_ENUM },
+	{ "ckaid",          kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_CKAID, NOT_ENUM },
 	{ "sendcert",       kv_conn | kv_auto | kv_leftright, kt_enum,
 	  KNCF_SENDCERT, &kw_sendcert_list },
 	{ "ca",             kv_conn | kv_auto | kv_leftright, kt_string,

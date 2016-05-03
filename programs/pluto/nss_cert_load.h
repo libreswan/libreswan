@@ -20,6 +20,7 @@
 
 #include <libreswan.h>
 extern bool load_coded_file(const char *filename, const char *type, chunk_t *blob);
-extern CERTCertificate *get_cert_from_nss(const char *nickname);
+extern CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname);
+extern CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid);
 
 #endif /* _NSS_CERT_LOAD_H */
