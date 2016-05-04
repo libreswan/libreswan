@@ -35,20 +35,76 @@
 
 all:
 
-# For historic reasons, "programs" also builds everything.
+# Map common, and historic targets, onto current names.  For historic
+# reasons, "programs" also builds everything.
 
 .PHONY: programs
 programs: all
 man: manpages
 
-# All:
+# Generate a recursive target.
+
+define recursive-target
+  .PHONY: $(1) local-$(1) recursive-$(1)
+  $(1): local-$(1) recursive-$(1)
+  local-$(1):
+
+  # Building $(SUBDIRS) after all local targets is historic behaviour
+  recursive-$(1): local-$(1)
+
+  # Require $(builddir)/Makefile.  Targets that switch to builddir
+  # require it.  In $(topsrcdir) this will trigger a re-build of the
+  # Makefiles, in sub-directories this will simply barf.  It's assumed
+  # that $(OBJDIR) has been created by the time a subdir build has
+  # run.
+  $(1) local-$(1) recursive-$(1): $$(builddir)/Makefile
+
+  recursive-$(1):
+	@set -eu $$(foreach subdir,$$(SUBDIRS),; $$(MAKE) -C $$(subdir) $$(patsubst recursive-%,%,$$@))
+endef
+
+# The build is split into several sub-targets - namely so that
+# manpages are not built by default.
+#
+# For each define: TARGET clean-TARGET install-TARGET
 
 TARGETS = base manpages
+
+#$(eval $(foreach target,$(TARGETS),$(call recursive-target,$(target))))
+
+#$(eval $(foreach target,$(TARGETS),$(call recursive-target,clean-$(target))))
+# legacy names
+#.PHONY: clean-local-base clean-local-manpages
+#local-clean-base: clean-local-base
+#local-clean-manpages: clean-local-manpages
+
+#$(eval $(foreach target,$(TARGETS),$(call recursive-target,install-$(target))))
+# legacy names
+#.PHONY: install-local-base install-local-manpages
+#local-install-base: install-local-base
+#local-install-manpages: install-local-manpages
+# install requires up-to-date build; recursive make, being evil, makes
+# this less than 100% reliable.
+#install-local-base local-install-base: local-base
+#install-local-manpages local-install-manpages: local-manpages
+
+
+# More generic targets.   These, in each directory, invoke local
+# versions of the above.
+
+$(eval $(call recursive-target,all))
+local-all: $(patsubst %,local-%,$(TARGETS))
+
+#$(eval $(call recursive-target,clean))
+#local-clean: $(patsubst %,local-clean-%,$(TARGETS))
+
+#$(eval $(call recursive-target,install))
+#local-install:  $(patsubst %,local-install-%,$(TARGETS))
+
 LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
 GLOBAL_TARGETS += all $(TARGETS)
 .PHONY: all $(TARGETS) $(LOCAL_TARGETS)
 
-all: $(LOCAL_TARGETS)
 base: local-base
 manpages: local-manpages
 $(LOCAL_TARGETS):
