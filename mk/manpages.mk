@@ -41,25 +41,17 @@ refnames = $(foreach manpage, $(1), \
 		$(addsuffix $(suffix $(manpage)), \
 			$(shell $(SHELL) $(abs_top_srcdir)/packaging/utils/refnames.sh $(manpage).xml)))
 
-ifeq ($(srcdir),.)
 local-install-manpages: local-manpages
-	@set -eu ; $(foreach refname, $(call refnames,$(MANPAGES)), \
-		src=$(builddir)/$(refname) ; \
-		destdir=$(MANDIR$(suffix $(refname))) ; \
-		echo $$src '->' $$destdir ; \
-		mkdir -p $$destdir ; \
-		$(INSTALL) $(INSTMANFLAGS) $$src $$destdir ; \
-	)
-else
-# install manpage target is designed to work in $(srcdir)
-local-install-manpages:
-	$(MAKE) -C $(srcdir) $@
-endif
+	@set -eu $(foreach refname,$(call refnames,$(MANPAGES)), \
+		; src=$(builddir)/$(refname) \
+		; destdir=$(MANDIR$(suffix $(refname))) \
+		; echo $$src '->' $$destdir \
+		; mkdir -p $$destdir \
+		; $(INSTALL) $(INSTMANFLAGS) $$src $$destdir)
 
 list-local-manpages:
-	@set -eu ; $(foreach refname, $(call refnames,$(MANPAGES)), \
-		echo $(MANDIR$(suffix $(refname)))/$(refname) ; \
-	)
+	@set -eu $(foreach refname,$(call refnames,$(MANPAGES)), \
+		; echo $(MANDIR$(suffix $(refname)))/$(refname))
 
 local-clean-manpages:
 	rm -f $(builddir)/*.[1-8]
