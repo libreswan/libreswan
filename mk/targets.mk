@@ -78,11 +78,7 @@ CLEAN_LOCAL_TARGETS = $(addprefix clean-, $(LOCAL_TARGETS))
 GLOBAL_TARGETS += clean $(CLEAN_TARGETS)
 .PHONY: clean $(CLEAN_TARGETS) $(CLEAN_LOCAL_TARGETS)
 
-ifeq ($(filter clean,$(BROKEN_TARGETS)),)
 clean: $(CLEAN_LOCAL_TARGETS)
-else
-clean:: $(CLEAN_LOCAL_TARGETS)
-endif
 clean-base: clean-local-base
 clean-manpages: clean-local-manpages
 $(CLEAN_LOCAL_TARGETS):
@@ -114,11 +110,7 @@ list-manpages: list-local-manpages
 # Check: much simpler
 
 GLOBAL_TARGETS += check
-ifeq ($(filter check,$(BROKEN_TARGETS)),)
 check:
-else
-check:
-endif
 
 # Checkprograms: XXX: should this be deleted; it doesn't do anything?
 GLOBAL_TARGETS += checkprograms

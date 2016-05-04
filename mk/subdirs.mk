@@ -19,17 +19,7 @@ default:
 
 include $(top_srcdir)/mk/targets.mk
 
-# These extra recursive-targets need to be migrated to targets.mk
-# (an/or quietly dropped).  They are here until the top-level Makefile
-# gets cleaned up.
-
-SUBDIR_TARGETS = man
-ifneq ($(filter $(GLOBAL_TARGETS),$(SUBDIR_TARGETS)),)
-$(error Extra targets in $(SUBDIR_TARGETS))
-endif
-.PHONY: $(SUBDIR_TARGETS)
-
-$(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
+$(filter-out $(BROKEN_TARGETS),$(GLOBAL_TARGETS)):
 	@set -eu ; \
 	for d in $(SUBDIRS) ; do \
 		$(MAKE) -C $$d $(basename $@) ; \
