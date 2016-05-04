@@ -55,9 +55,6 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 BROKEN_TARGETS += install
 BROKEN_TARGETS += check
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
-# XXX: Without this sub-directories that still require
-# $(builddir)/Makefile will fail.
-all clean base clean-base install-base: $(builddir)/Makefile
 
 # kernel details
 # what variant of our patches should we use, and where is it

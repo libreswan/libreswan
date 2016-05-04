@@ -86,7 +86,7 @@ local-install-manpages: local-manpages
 $(eval $(call recursive-target,all))
 local-all: $(patsubst %,local-%,$(TARGETS))
 
-#$(eval $(call recursive-target,clean))
+$(eval $(call recursive-target,clean))
 local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 
 #$(eval $(call recursive-target,install))
@@ -103,12 +103,6 @@ install: local-install
 else
 install:: local-install
 endif
-
-# Clean:
-
-GLOBAL_TARGETS += clean
-.PHONY: clean local-clean
-clean: local-clean
 
 # The install_file_list target is special; the command:
 #
