@@ -4,11 +4,18 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
+Type=@SD_TYPE@
 Restart=always
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
-#
+
+# Set WatchdogSec to the amount of time (in seconds) that systemd will wait
+# before restarting an unresponsive pluto.
+# EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
+# are 60, 90, 120. WatchdogSec=0 disables the action
+NotifyAccess=all
+WatchdogSec=60
+
 # Check configuration file
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
 # Check for kernel modules

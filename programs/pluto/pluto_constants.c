@@ -75,6 +75,16 @@ static const char *const dpd_action_name[] = {
 enum_names dpd_action_names =
 	{ DPD_ACTION_DISABLED, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
+/* systemd watchdog action names */
+static const char *const sd_action_name[] = {
+	"action:exit", /* daemon exiting */
+	"action:start", /* daemon starting */
+	"action:error", /* how is this an action? */
+	"action:watchdog", /* the keepalive watchdog ping */
+};
+enum_names sd_action_names =
+	{ PLUTO_SD_EXIT, PLUTO_SD_WATCHDOG, sd_action_name, NULL };
+
 /* Timer events */
 static const char *const timer_event_name[] = {
 	"EVENT_NULL",
@@ -83,6 +93,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_SHUNT_SCAN",
 	"EVENT_LOG_DAILY",
 	"EVENT_PENDING_DDNS",
+	"EVENT_SD_WATCHDOG",
 	"EVENT_PENDING_PHASE2",
 
 	"EVENT_SO_DISCARD",

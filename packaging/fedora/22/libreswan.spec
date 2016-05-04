@@ -5,6 +5,7 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
+%global USE_SD_WATCHDOG true
 
 %global _hardened_build 1
 
@@ -53,6 +54,10 @@ Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
+%endif
+
+%if %{USE_SD_WATCHDOG}
+BuildRequires: systemd-devel
 %endif
 
 %if %{USE_LIBCAP_NG}
@@ -109,6 +114,7 @@ make %{?_smp_mflags} \
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
     USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_SD_WATCHDOG="%{USE_SD_WATCHDOG}" \
     USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
     USE_LDAP=true \

@@ -58,6 +58,10 @@
 
 #include "nat_traversal.h"
 
+#ifdef USE_SD_WATCHDOG
+#include "pluto_sd.h"
+#endif
+
 static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 {
 	struct connection *c = st->st_connection;
@@ -532,6 +536,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
 	case EVENT_LOG_DAILY:
+	case EVENT_SD_WATCHDOG:
 	case EVENT_NAT_T_KEEPALIVE:
 		passert(st == NULL);
 		break;
@@ -607,6 +612,12 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_LOG_DAILY:
 		daily_log_event();
 		break;
+
+#ifdef USE_SD_WATCHDOG
+	case EVENT_SD_WATCHDOG:
+		sd_watchdog_event();
+		break;
+#endif
 
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();

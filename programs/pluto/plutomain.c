@@ -105,6 +105,10 @@
 # include "security_selinux.h"
 #endif
 
+#ifdef USE_SD_WATCHDOG
+# include "pluto_sd.h"
+#endif
+
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
@@ -185,6 +189,9 @@ static const char compile_time_interop_options[] = ""
 	" NSS"
 #ifdef DNSSEC
 	" DNSSEC"
+#endif
+#ifdef USE_SD_WATCHDOG
+	" USE_SD_WATCHDOG"
 #endif
 #ifdef FIPS_CHECK
 	" FIPS_CHECK"
@@ -1652,6 +1659,14 @@ int main(int argc, char **argv)
 	init_avc();
 #endif
 	daily_log_event();
+
+#ifdef USE_SD_WATCHDOG
+	/* tell systemd that we've started */
+	pluto_sd_watchdog_start();
+	/* start the even probess */
+	event_schedule(EVENT_SD_WATCHDOG, SD_WATCHDOG_INTERVAL, NULL);
+#endif
+
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
 }
@@ -1701,6 +1716,9 @@ void exit_pluto(int status)
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
+#ifdef USE_SD_WATCHDOG
+	pluto_sd_watchdog_exit(status);
+#endif
 	exit(status);	/* exit, with our error code */
 }
 

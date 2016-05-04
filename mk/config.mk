@@ -290,6 +290,16 @@ USE_DNSSEC?=true
 # This code is only used by IKEv1 OE - which is obsoleted. Do not enable!
 USE_ADNS?=false
 
+# For systemd start/stop notifications and watchdog feature
+USE_SD_WATCHDOG?=true
+
+# Figure out ipsec.service file Type= option
+ifeq ($(USE_SD_WATCHDOG),true)
+SD_TYPE=notify
+else
+SD_TYPE=simple
+endif
+
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
 # and any certificates to be in a single directory defined by
 # FINALCONFDDIR?
@@ -488,6 +498,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool

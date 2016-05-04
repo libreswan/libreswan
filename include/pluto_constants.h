@@ -76,6 +76,13 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
+enum sd_actions {
+	PLUTO_SD_EXIT = 0,
+	PLUTO_SD_START = 1,
+	PLUTO_SD_ERROR = 2,
+	PLUTO_SD_WATCHDOG = 3,
+};
+
 /*
  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
  *
@@ -105,6 +112,7 @@ enum event_type {
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_LOG_DAILY,		/* reset certain log events/stats */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
+	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 
 	/* events associated with states */
