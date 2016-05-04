@@ -123,7 +123,3 @@ list-manpages: list-local-manpages
 
 GLOBAL_TARGETS += check
 check:
-
-# Checkprograms: XXX: should this be deleted; it doesn't do anything?
-GLOBAL_TARGETS += checkprograms
-checkprograms:

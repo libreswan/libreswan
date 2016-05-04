@@ -55,7 +55,6 @@ check:
 ifneq ($(strip(${REGRESSRESULTS})),)
 	mkdir -p ${REGRESSRESULTS}
 endif
-	@for d in $(SUBDIRS); do (cd $$d && $(MAKE) DESTDIR=${DESTDIR} checkprograms || exit 1); done
 	@for d in $(SUBDIRS); \
 	do \
 		echo ===================================; \
