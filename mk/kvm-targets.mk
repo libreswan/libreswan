@@ -168,19 +168,26 @@ define kvmsh
 		$(1)
 endef
 
-# Run "make $(1)" on $(2)"; yea, host argument should be first :-)
+# Run "make $(2)" on $(1)"; yea, host argument should be first :-)
 define kvm-make
-	$(call kvmsh, $(2) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(1))"')
+	$(call kvmsh, $(1) \
+	'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
 endef
 
-# Standard make targets; just mirror the local target names.
-# Everything is run on $(KVM_BUILD_DOMAIN).
-KVM_BUILD_TARGETS = kvm-all kvm-base kvm-clean-base kvm-manpages kvm-clean-manpages kvm-module kvm-clean kvm-distclean
-.PHONY: $(KVM_BUILD_TARGETS)
-$(KVM_BUILD_TARGETS):
-	$(call kvm-make, $(patsubst kvm-%,%,$@), $(KVM_BUILD_DOMAIN))
+# Run "make <anything>" on the specified domain; mainly for testing
+$(patsubst %,kvm-make-\%-%,$(KVM_INSTALL_DOMAINS)):
+	$(call kvm-make, $(patsubst kvm-make-$*-%,%,$@), $*)
+# Run "make <anything>" on the build domain; mainly for testing
+kvm-make-%:
+	$(call kvm-make, $(KVM_BUILD_DOMAIN), $*)
 
+# To avoid parallel "make base" and "make module" builds stepping on
+# each others toes, this uses sub-makes to explicitly serialize "base"
+# and "modules" targets.
+.PHONY: kvm-build
+kvm-build:
+	$(call kvm-make, $(KVM_BUILD_DOMAIN), base)
+	$(call kvm-make, $(KVM_BUILD_DOMAIN), module)
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
 # needs to use the swan-install script.
@@ -190,13 +197,12 @@ kvm-install-%: kvm-build
 	$(call kvmsh, $* \
 		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
-# To avoid parallel "make base" and "make module" builds stepping on
-# each others toes, this uses sub-makes to explicitly serialize "base"
-# and "modules" targets.
-.PHONY: kvm-build
-kvm-build:
-	$(MAKE) --no-print-directory kvm-base
-	$(MAKE) --no-print-directory kvm-module
+# Some standard make targets; just mirror the local target names.
+# Everything is run on $(KVM_BUILD_DOMAIN).
+KVM_BUILD_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-distclean
+.PHONY: $(KVM_BUILD_TARGETS)
+$(KVM_BUILD_TARGETS):
+	$(call kvm-make, $(KVM_BUILD_DOMAIN), $(patsubst kvm-%,%,$@))
 
 
 # Some useful kvm wide commands.
