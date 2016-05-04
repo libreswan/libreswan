@@ -42,8 +42,6 @@ The following are quirks in the build system:
 
 - when fips, generate fipshmac checksums during install
 
-- stop library.mk switching to $(builddir)
-
 - stop program.mk switching to $(builddir)
 
 - recursive make targets should stick to $(srcdir); currently some
