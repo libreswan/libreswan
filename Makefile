@@ -189,7 +189,7 @@ ${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir
 	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
 
 # Recursive clean dealt with elsewhere.
-clean-local-base: moduleclean
+local-clean-base: moduleclean
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
 		rm -rf $(file) ; )	# but leave out.kpatch
 
@@ -199,8 +199,8 @@ clean-local-base: moduleclean
 # $(OBJDIR), "distclean" does not depend on it.  If it did, "make
 # distclean" would have the quirky behaviour of first creating
 # $(OBJDIR) only to then delete it.
-distclean: clean-local-base module24clean module26clean clean-kvm-keys
-	rm -f out.kpatch
+distclean: moduleclean module24clean module26clean clean-kvm-keys
+	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf OBJ.* $(OBJDIR)
 

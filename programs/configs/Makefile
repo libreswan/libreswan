@@ -39,7 +39,7 @@ $(builddir)/ipsec.conf.5.xml: $(xmlsources)
 	@mkdir -p $(builddir)
 	cat $(xmlsources) > $@
 
-clean-local-manpages: clean-local-xml-manpages
+local-clean-manpages: local-clean-xml-manpages
 .PHONY: clean-local-xml-manpages
-clean-local-xml-manpages:
+local-clean-xml-manpages:
 	rm -f $(builddir)/ipsec.conf.5.xml

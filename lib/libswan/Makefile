@@ -92,7 +92,7 @@ EXTLIBS=libdes.a
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-clean-local-base: $(builddir)/Makefile
+local-clean-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) cleanall
 buildall: $(LIBA) $(LIBL)
 list-local-base:

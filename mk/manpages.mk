@@ -42,7 +42,7 @@ refnames = $(foreach manpage, $(1), \
 			$(shell $(SHELL) $(abs_top_srcdir)/packaging/utils/refnames.sh $(manpage).xml)))
 
 ifeq ($(srcdir),.)
-install-local-manpages: local-manpages
+local-install-manpages: local-manpages
 	@set -eu ; $(foreach refname, $(call refnames,$(MANPAGES)), \
 		src=$(builddir)/$(refname) ; \
 		destdir=$(MANDIR$(suffix $(refname))) ; \
@@ -52,7 +52,7 @@ install-local-manpages: local-manpages
 	)
 else
 # install manpage target is designed to work in $(srcdir)
-install-local-manpages:
+local-install-manpages:
 	$(MAKE) -C $(srcdir) $@
 endif
 
@@ -61,7 +61,7 @@ list-local-manpages:
 		echo $(MANDIR$(suffix $(refname)))/$(refname) ; \
 	)
 
-clean-local-manpages:
+local-clean-manpages:
 	rm -f $(builddir)/*.[1-8]
 
 # Always write the output to $(builddir).

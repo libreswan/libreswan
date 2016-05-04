@@ -70,24 +70,15 @@ endef
 
 TARGETS = base manpages
 
-#$(eval $(foreach target,$(TARGETS),$(call recursive-target,$(target))))
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,$(target))))
 
-#$(eval $(foreach target,$(TARGETS),$(call recursive-target,clean-$(target))))
-# legacy names
-#.PHONY: clean-local-base clean-local-manpages
-#local-clean-base: clean-local-base
-#local-clean-manpages: clean-local-manpages
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,clean-$(target))))
 
-#$(eval $(foreach target,$(TARGETS),$(call recursive-target,install-$(target))))
-# legacy names
-#.PHONY: install-local-base install-local-manpages
-#local-install-base: install-local-base
-#local-install-manpages: install-local-manpages
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,install-$(target))))
 # install requires up-to-date build; recursive make, being evil, makes
 # this less than 100% reliable.
-#install-local-base local-install-base: local-base
-#install-local-manpages local-install-manpages: local-manpages
-
+local-install-base: local-base
+local-install-manpages: local-manpages
 
 # More generic targets.   These, in each directory, invoke local
 # versions of the above.
@@ -96,48 +87,28 @@ $(eval $(call recursive-target,all))
 local-all: $(patsubst %,local-%,$(TARGETS))
 
 #$(eval $(call recursive-target,clean))
-#local-clean: $(patsubst %,local-clean-%,$(TARGETS))
+local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 
 #$(eval $(call recursive-target,install))
-#local-install:  $(patsubst %,local-install-%,$(TARGETS))
+local-install: $(patsubst %,local-install-%,$(TARGETS))
 
 LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
-GLOBAL_TARGETS += $(TARGETS)
-.PHONY: $(TARGETS) $(LOCAL_TARGETS)
-
-base: local-base
-manpages: local-manpages
-$(LOCAL_TARGETS):
 
 # Install:
 
-INSTALL_TARGETS = $(addprefix install-,$(TARGETS))
-INSTALL_LOCAL_TARGETS = $(addprefix install-,$(LOCAL_TARGETS))
-GLOBAL_TARGETS += install $(INSTALL_TARGETS)
-.PHONY: install $(INSTALL_TARGETS) $(INSTALL_LOCAL_TARGETS)
-
+GLOBAL_TARGETS += install
+.PHONY: install local-install
 ifeq ($(filter install,$(BROKEN_TARGETS)),)
-install: $(INSTALL_LOCAL_TARGETS)
+install: local-install
 else
-install:: $(INSTALL_LOCAL_TARGETS)
+install:: local-install
 endif
-install-base: install-local-base
-install-manpages: install-local-manpages
-install-local-base: local-base
-install-local-manpages: local-manpages
-$(INSTALL_LOCAL_TARGETS):
 
 # Clean:
 
-CLEAN_TARGETS = $(addprefix clean-, $(TARGETS))
-CLEAN_LOCAL_TARGETS = $(addprefix clean-, $(LOCAL_TARGETS))
-GLOBAL_TARGETS += clean $(CLEAN_TARGETS)
-.PHONY: clean $(CLEAN_TARGETS) $(CLEAN_LOCAL_TARGETS)
-
-clean: $(CLEAN_LOCAL_TARGETS)
-clean-base: clean-local-base
-clean-manpages: clean-local-manpages
-$(CLEAN_LOCAL_TARGETS):
+GLOBAL_TARGETS += clean
+.PHONY: clean local-clean
+clean: local-clean
 
 # The install_file_list target is special; the command:
 #

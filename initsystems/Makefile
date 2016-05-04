@@ -22,10 +22,11 @@ config:
 # XXX: Both switch directory and change the target.
 local-base:
 	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
-install-local-base:
+local-install-base:
 	$(MAKE) -C $(builddir)/$(INITSYSTEM) install
-local-clean:
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) cleanall
+#broken in sub-directories
+#local-clean-base:
+#	$(MAKE) -C $(builddir)/$(INITSYSTEM) cleanall
 
 # Note: since this cherry-picks the sub-directory to "build" this
 # isn't really a mk/subdirs.mk candidate.
