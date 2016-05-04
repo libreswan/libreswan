@@ -1,6 +1,6 @@
 # Default Makefile targets, for Libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -102,8 +102,8 @@ local-all: $(patsubst %,local-%,$(TARGETS))
 #local-install:  $(patsubst %,local-install-%,$(TARGETS))
 
 LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
-GLOBAL_TARGETS += all $(TARGETS)
-.PHONY: all $(TARGETS) $(LOCAL_TARGETS)
+GLOBAL_TARGETS += $(TARGETS)
+.PHONY: $(TARGETS) $(LOCAL_TARGETS)
 
 base: local-base
 manpages: local-manpages

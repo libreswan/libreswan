@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015, 2016, Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -183,9 +183,10 @@ install:: ${OBJDIR}/Makefile
 
 .PHONY: config
 config: ${OBJDIR}/Makefile
-${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
+${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
-	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
+	mkdir -p $(builddir)
+	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
 
 # Recursive clean dealt with elsewhere.
 clean-local-base: moduleclean
