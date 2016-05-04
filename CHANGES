@@ -5,6 +5,7 @@ v3.18 (unreleased)
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
+* pluto: Add systemd watchdog support via USE_SD_WATCHDOG [Matt/Paul]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 
 v3.17 (April 4, 2016)
