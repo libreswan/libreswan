@@ -2034,9 +2034,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				loglog(RC_INFORMATIONAL,
-					"Received IP4 NETMASK %s",
-					ipstr(&a, &b));
+				DBG(DBG_CONTROL, DBG_log("Received IP4 NETMASK %s",
+					ipstr(&a, &b)));
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2098,8 +2097,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"Domain");
-				loglog(RC_INFORMATIONAL, "Received DNS domain '%s'",
-					st->st_connection->modecfg_domain);
 				break;
 			}
 
@@ -2109,8 +2106,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				loglog(RC_INFORMATIONAL, "Received Banner domain '%s'",
-					st->st_connection->modecfg_banner);
 				break;
 			}
 
