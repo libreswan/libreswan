@@ -92,8 +92,11 @@ EXTLIBS=libdes.a
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-local-clean-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
+
+local-clean-base:
+	rm -f $(builddir)/*core* core *.core
+	rm -f $(foreach f,$(OBJS) $(LOGOBJS) $(LIBA) $(LIBL) $(EXTHDRS) $(EXTLIBS) version.c, $(builddir)/$(f))
+
 buildall: $(LIBA) $(LIBL)
 list-local-base:
 	@: never nothing to do
@@ -125,10 +128,6 @@ version.c:	version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
 
 test-%: %.c
 	${CC} ${CFLAGS} -D`echo $* | tr 'a-z' 'A-Z'`_MAIN $*.c -o test-$*
-
-cleanall:
-	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c
-
 
 # developer-only stuff
 l:

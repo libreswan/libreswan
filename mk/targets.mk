@@ -27,10 +27,6 @@
 # Note: For reasons similar to the above target aliases should, at
 # most, depend on on global (recursive) target.
 
-# XXX: BROKEN_TARGETS, found in top-level/Makefile and mk/top.mk have
-# custom rules and use ::.  They also, typically, descend into
-# $(builddir) instead of $(srcdir).
-
 # This is the default; unless your Makefile puts something earlier.
 
 all:

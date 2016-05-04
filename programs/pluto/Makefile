@@ -417,8 +417,11 @@ CAVP += cavp
 
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
+
 local-clean-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
+	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
+		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(OBJSADNS) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
 buildall: $(BINNAMEPLUTO) $(BINNAMEADNS) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
@@ -450,12 +453,6 @@ $(BINNAMEWHACK): $(OBJSWHACK)
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
 	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
-
-cleanall:
-	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(OBJSPLUTO) $(BINNAMEPLUTO) \
-		$(OBJSWHACK) $(BINNAMEWHACK) \
-		$(OBJSADNS) $(BINNAMEADNS)
 
 check:
 	echo no checks in lib right now.

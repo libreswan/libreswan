@@ -42,8 +42,10 @@ PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-local-clean-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
+
+local-clean-base:
+	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
+
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
 buildall: $(PROGRAMSLIST)
@@ -146,12 +148,3 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 	@${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
-
-cleanall::
-ifneq ($(strip $(PROGRAM)),)
-	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${SRCDIR}$(PROGRAM).pl ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${SRCDIR}$(PROGRAM).c ];  then rm -f $(PROGRAM); fi
-	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
-endif
-	@rm -f *.o

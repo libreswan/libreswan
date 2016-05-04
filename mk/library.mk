@@ -39,8 +39,10 @@ ARFLAGS=crvs
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-local-clean-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
+
+local-clean-base:
+	rm -f $(foreach f,$(OBJS) $(LIB), $(builddir)/$(f))
+
 buildall: $(LIB)
 list-local-base:
 	@: never nothing to do
@@ -49,9 +51,6 @@ $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
 $(OBJS):	$(HDRS)
-
-cleanall::
-	rm -rf ${OBJS} $(LIB)
 
 MK_DEPEND_FILES = $(OBJS)
 MK_DEPEND_CFLAGS = $(CFLAGS)

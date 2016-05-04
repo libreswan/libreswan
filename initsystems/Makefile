@@ -24,9 +24,9 @@ local-base:
 	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
 local-install-base:
 	$(MAKE) -C $(builddir)/$(INITSYSTEM) install
-#broken in sub-directories
-#local-clean-base:
-#	$(MAKE) -C $(builddir)/$(INITSYSTEM) cleanall
+
+local-clean-base:
+	rm -f $(filter-out %/Makefile,$(wildcard $(builddir)/$(INITSYSTEM)/*))
 
 # Note: since this cherry-picks the sub-directory to "build" this
 # isn't really a mk/subdirs.mk candidate.
