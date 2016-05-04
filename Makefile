@@ -64,7 +64,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 
 # declaration for make's benefit
 .PHONY:	def insert kpatch patches _patches _patches2.4 \
-	klipsdefaults programs man install clean \
+	klipsdefaults programs man install \
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
@@ -173,10 +173,6 @@ klipsdefaults:
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
-
-install:: ${OBJDIR}/Makefile
-	@echo OBJDIR: ${OBJDIR}
-	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
 .PHONY: config
 config: ${OBJDIR}/Makefile
@@ -619,7 +615,10 @@ deb-klips:
 release:
 	packaging/utils/makerelease
 
-install install-programs::
+# Force install-programs to be run after everything else.
+install: install-programs
+install-programs: local-install recursive-install
+install-programs:
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \

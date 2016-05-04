@@ -89,20 +89,10 @@ local-all: $(patsubst %,local-%,$(TARGETS))
 $(eval $(call recursive-target,clean))
 local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 
-#$(eval $(call recursive-target,install))
+$(eval $(call recursive-target,install))
 local-install: $(patsubst %,local-install-%,$(TARGETS))
 
-LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
-
 # Install:
-
-GLOBAL_TARGETS += install
-.PHONY: install local-install
-ifeq ($(filter install,$(BROKEN_TARGETS)),)
-install: local-install
-else
-install:: local-install
-endif
 
 # The install_file_list target is special; the command:
 #
@@ -116,6 +106,7 @@ endif
 # - to stop make's directory messages, --no-print-directory is
 #   specified
 
+LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
 LIST_TARGETS = $(addprefix list-, $(TARGETS))
 LIST_LOCAL_TARGETS = $(addprefix list-, $(LOCAL_TARGETS))
 .PHONY: install_file_list $(LIST_TARGETS) $(LIST_LOCAL_TARGETS)

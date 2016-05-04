@@ -66,8 +66,6 @@ The following are quirks in the build system:
   here - configuration files are included early leading to "?=" rather
   than late
 
-- eliminate :: rules
-
 - run "make --warn-undefined-variables"
 
 - do not generate the makefiles under $(OBJDIR); need to stop things
@@ -105,8 +103,6 @@ The following are quirks in the test infrastructure:
   ...); this will allow more complicated tests such as where west
   establishes a connection but east triggers the re-establish
 
-- speed up ping aka liveness tests
-
 - simplify fips check
 
 - eliminate test results "incomplete" and "bad"
@@ -115,3 +111,5 @@ The following are quirks in the test infrastructure:
   that over the current test directory
 
 - implement libvirt/install.sh using install-kvm-networks et.al.
+
+- simplify and speed up ping deadness check
