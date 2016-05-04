@@ -18,9 +18,3 @@ default:
 .PHONY: default
 
 include $(top_srcdir)/mk/targets.mk
-
-$(filter-out $(BROKEN_TARGETS),$(GLOBAL_TARGETS)):
-	@set -eu ; \
-	for d in $(SUBDIRS) ; do \
-		$(MAKE) -C $$d $(basename $@) ; \
-	done

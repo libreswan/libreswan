@@ -48,12 +48,6 @@ def help:
 .PHONY: def help
 
 include ${LIBRESWANSRCDIR}/Makefile.top
-
-# Broken targets have some sort of existing rule in this, or an
-# included, Makefile.  The rules should either be deleted or changed
-# to use a local TARGET-local target.
-BROKEN_TARGETS += install
-BROKEN_TARGETS += check
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
 # kernel details

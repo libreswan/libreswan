@@ -50,19 +50,12 @@ dummy:
 kvm:
 	@echo Please run ./testing/libvirt/install.sh
 
-# DESTDIR is normally set in Makefile.inc
-check:
+# Run regress stuff after the other check targets.
+.PHONY: regress
+check: regress
+regress: local-check recursive-check
 ifneq ($(strip(${REGRESSRESULTS})),)
 	mkdir -p ${REGRESSRESULTS}
-endif
-	@for d in $(SUBDIRS); \
-	do \
-		echo ===================================; \
-		echo Now making check in $$d; \
-		echo ===================================; \
-		${MAKE} -C $$d DESTDIR=${DESTDIR} check ;\
-	done
-ifneq ($(strip(${REGRESSRESULTS})),)
 	-perl testing/utils/regress-summarize-results.pl ${REGRESSRESULTS}
 endif
 	@echo "======== End of make check target. ========"

@@ -92,7 +92,7 @@ local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 $(eval $(call recursive-target,install))
 local-install: $(patsubst %,local-install-%,$(TARGETS))
 
-# Install:
+$(eval $(call recursive-target,check))
 
 # The install_file_list target is special; the command:
 #
@@ -118,8 +118,3 @@ install_file_list $(LIST_TARGETS):
 install_file_list: list-local-base list-local-manpages
 list-base: list-local-base
 list-manpages: list-local-manpages
-
-# Check: much simpler
-
-GLOBAL_TARGETS += check
-check:
