@@ -20,10 +20,6 @@ include mk/dirs.mk
 endif
 
 LIBRESWANSRCDIR?=$(shell pwd)
-export LIBRESWANSRCDIR
-
-TERMCAP=
-export TERMCAP
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
@@ -92,20 +88,6 @@ ifneq ($(strip(${REGRESSRESULTS})),)
 	-perl testing/utils/regress-summarize-results.pl ${REGRESSRESULTS}
 endif
 	@echo "======== End of make check target. ========"
-
-# USE_ variables determine if features are compiled into Libreswan.
-# export them so that "make env" can get at them
-export USE_KLIPS USE_NETKEY
-export USE_XAUTHPAM
-export USE_LDAP
-export USE_LIBCURL
-export USE_EXTRACRYPTO
-export USE_DNSSEC USE_LINUX_AUDIT
-export USE_IPSEC_CONNECTION_LIMIT IPSEC_CONNECTION_LIMIT
-export USE_FIPSCHECK FIPSPRODUCTCHECK
-export USE_NM USE_LABELED_IPSEC
-export USE_MAST USE_SAREF_KERNEL
-export EVENT_SD_WATCHDOG
 
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
@@ -225,7 +207,6 @@ klipsdefaults:
 
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
-export OBJDIRTOP
 
 .PHONY: config
 config: ${OBJDIR}/Makefile
