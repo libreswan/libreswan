@@ -268,8 +268,6 @@ precheck:
 		exit 1 ; \
 	fi
 
-Makefile: Makefile.ver
-
 # configuring (exit statuses disregarded, something fishy here sometimes)
 xcf:
 	-cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) xconfig
