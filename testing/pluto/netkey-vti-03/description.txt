@@ -1,0 +1,11 @@
+
+WIP:
+
+using marking and VTI, map two IPsec SA's onto one VTI device that use a different
+set of gateway IPs. This would function similarly to the old KLIPS ipsec0 device.
+
+Currently: a ping from east to west on either subnet results in ESP packets on the
+nic (swan12) but the packets from west to east are missing on the ipsec0 interface
+on west. East also does not see ping replies but also does not log xfrm drops.
+West shows icmp reply/request on the ipsec0 interface
+
