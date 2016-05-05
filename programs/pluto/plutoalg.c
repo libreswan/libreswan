@@ -372,9 +372,9 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 			    bool fix_zero)
 {
-	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
+	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
 	passert(!fix_zero || enc_desc != NULL);
-	struct hash_desc *hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
+	const struct hash_desc *hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
 	passert(!fix_zero || hash_desc != NULL);
 
 	int eklen = ike_info->ike_eklen;

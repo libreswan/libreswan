@@ -8,20 +8,22 @@
 
 struct connection;	/* forward declaration */
 
-/* common prefix for struct encrypt_desc and struct hash_desc */
+/* common prefix for struct encrypt_desc and struct hash_desc
+ * Read-only except for name and algo_next.
+ */
 struct ike_alg {
-	const char *name;
-	const char *officname;
-	u_int16_t algo_type;
-	u_int16_t algo_id;	/* either hash or enc algo id */
-	u_int16_t algo_v2id;	/* either hash or enc algo id */
-	struct ike_alg *algo_next;
+	const char *name;	/* note: overwritten sometimes */
+	const char *const officname;
+	const u_int16_t algo_type;
+	const u_int16_t algo_id;	/* either hash or enc algo id */
+	const u_int16_t algo_v2id;	/* either hash or enc algo id */
+	const struct ike_alg *algo_next;
 };
 
 struct encrypt_desc {
-	struct ike_alg common;	/* MUST BE FIRST */
-	size_t enc_ctxsize;
-	size_t enc_blocksize;
+	struct ike_alg common;	/* MUST BE FIRST and writable */
+	const size_t enc_ctxsize;
+	const size_t enc_blocksize;
 	/*
 	 * Does this algorithm require padding to the above
 	 * ENC_BLOCKSIZE bytes?
@@ -29,14 +31,14 @@ struct encrypt_desc {
 	 * This shouldn't be confused with the need to pad things to
 	 * 4-bytes (ESP) or not at all (IKE).
 	 */
-	bool pad_to_blocksize;
+	const bool pad_to_blocksize;
 	/*
 	 * Number of additional bytes that should be extracted from
 	 * the initial shared-secret.
 	 *
 	 * CTR calls this nonce; CCM calls it salt.
 	 */
-	size_t salt_size;
+	const size_t salt_size;
 	/*
 	 * The IV sent across the wire; this is random material.
 	 *
@@ -44,12 +46,12 @@ struct encrypt_desc {
 	 * The SALT, WIRE-IV, and who-knows what else are concatenated
 	 * to form a ENC_BLOCKSIZE-byte starting-variable (aka IV).
 	 */
-	size_t wire_iv_size;
+	const size_t wire_iv_size;
 
-	unsigned keydeflen;
-	unsigned keymaxlen;
-	unsigned keyminlen;
-	void (*do_crypt)(u_int8_t *dat,
+	const unsigned keydeflen;
+	const unsigned keymaxlen;
+	const unsigned keyminlen;
+	void (*const do_crypt)(u_int8_t *dat,
 			 size_t datasize,
 			 PK11SymKey *key,
 			 u_int8_t *iv,
@@ -60,7 +62,7 @@ struct encrypt_desc {
 	 * the size (in 8-bit bytes) of the authentication tag
 	 * appended to the end of the encrypted data.
 	*/
-	size_t aead_tag_size;
+	const size_t aead_tag_size;
 
 	/*
 	 * Perform Authenticated Encryption with Associated Data
@@ -75,7 +77,7 @@ struct encrypt_desc {
 	 *
 	 * All sizes are in 8-bit bytes.
 	 */
-	bool (*do_aead_crypt_auth)(u_int8_t *salt, size_t salt_size,
+	bool (*const do_aead_crypt_auth)(u_int8_t *salt, size_t salt_size,
 				   u_int8_t *wire_iv, size_t wire_iv_size,
 				   u_int8_t *aad, size_t aad_size,
 				   u_int8_t *text_and_tag,
@@ -89,14 +91,14 @@ typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
 struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
-	size_t hash_key_size;	/* in bits */
-	size_t hash_ctx_size;
-	size_t hash_digest_len;
-	size_t hash_integ_len;	/* truncated output len when used as an integrity algorithm in IKEV2 */
-	size_t hash_block_size;
-	void (*hash_init)(union hash_ctx *ctx);
-	hash_update_t hash_update;
-	void (*hash_final)(u_int8_t *out, union hash_ctx *ctx);
+	const size_t hash_key_size;	/* in bits */
+	const size_t hash_ctx_size;
+	const size_t hash_digest_len;
+	const size_t hash_integ_len;	/* truncated output len when used as an integrity algorithm in IKEV2 */
+	const size_t hash_block_size;
+	void (*const hash_init)(union hash_ctx *ctx);
+	const hash_update_t hash_update;
+	void (*const hash_final)(u_int8_t *out, union hash_ctx *ctx);
 };
 
 struct alg_info_ike; /* forward reference */
@@ -133,24 +135,24 @@ extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int 
 #define IKE_ALG_HASH    1
 #define IKE_ALG_INTEG   2
 #define IKE_ALG_ROOF	3
-extern struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
+extern const struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
 extern void ike_alg_add(struct ike_alg *);
 extern bool ike_alg_register_enc(struct encrypt_desc *e);
 extern bool ike_alg_register_hash(struct hash_desc *a);
-extern struct ike_alg *ikev1_alg_find(unsigned algo_type,
+extern const struct ike_alg *ikev1_alg_find(unsigned algo_type,
 			     unsigned algo_id);
 
-extern struct ike_alg *ikev2_alg_find(unsigned algo_type,
+extern const struct ike_alg *ikev2_alg_find(unsigned algo_type,
 				   enum ikev2_trans_type_encr algo_v2id);
 
-static __inline__ struct hash_desc *ike_alg_get_hasher(int alg)
+static __inline__ const struct hash_desc *ike_alg_get_hasher(int alg)
 {
-	return (struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
+	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
 }
 
-static __inline__ struct encrypt_desc *ike_alg_get_encrypter(int alg)
+static __inline__ const struct encrypt_desc *ike_alg_get_encrypter(int alg)
 {
-	return (struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
+	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
 extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,

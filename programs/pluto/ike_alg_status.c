@@ -56,7 +56,7 @@
  */
 void ike_alg_show_status(void)
 {
-	struct ike_alg *algo;
+	const struct ike_alg *algo;
 
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
@@ -72,20 +72,20 @@ void ike_alg_show_status(void)
 			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
 			  algo->algo_v2id,
 			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
-			  ((struct encrypt_desc *)algo)->enc_blocksize,
-			  ((struct encrypt_desc *)algo)->keydeflen);
+			  ((const struct encrypt_desc *)algo)->enc_blocksize,
+			  ((const struct encrypt_desc *)algo)->keydeflen);
 	}
 	IKE_HALG_FOR_EACH(algo) {
 		/*
 		 * ??? we think that hash_integ_len is meaningless
 		 * (and 0) for IKE hashes
 		 */
-		pexpect(((struct hash_desc *)algo)->hash_integ_len == 0);
+		pexpect(((const struct hash_desc *)algo)->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  ((struct hash_desc *)algo)->hash_digest_len);
+			  ((const struct hash_desc *)algo)->hash_digest_len);
 	}
 
 	const struct oakley_group_desc *gdesc;

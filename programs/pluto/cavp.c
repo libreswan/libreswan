@@ -121,7 +121,7 @@ static void next_state(enum what what)
 	}
 }
 
-struct hash_desc *hasher;
+const struct hash_desc *hasher;
 char hasher_name[BUF_SIZE];
 
 void hash(struct cavp_entry *entry,

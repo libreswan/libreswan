@@ -1257,7 +1257,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			case IKEv2_TRANS_TYPE_ENCR:
 				ta.encrypt = transform->id;
 				ta.enckeylen = transform->attr_keylen;
-				ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
+				ta.encrypter = (const struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
 										     ta.encrypt);
 				if (ta.encrypter == NULL) {
 					/* everything should be in alg_info.  */
@@ -1277,7 +1277,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			break;
 			case IKEv2_TRANS_TYPE_PRF:
 				ta.prf_hash = transform->id;
-				ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+				ta.prf_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
 										   ta.prf_hash);
 				if (ta.prf_hasher == NULL) {
 					/* everything should be in alg_info.  */
@@ -1292,7 +1292,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 				} else {
 					ta.integ_hash = transform->id;
-					ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+					ta.integ_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
 											     ta.integ_hash);
 					if (ta.integ_hasher == NULL) {
 						/* everything should be in alg_info.  */
@@ -1648,7 +1648,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			.propnum = proposals->roof,
 		};
 
-		struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
+		const struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg == NULL) {
 			if (ike_info->ike_ealg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);
@@ -1696,7 +1696,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			}
 		}
 
-		struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
+		const struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
 		if (halg == NULL) {
 			if (ike_info->ike_halg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown hash algorithm %d", ike_info->ike_halg);
