@@ -359,10 +359,10 @@ $(KVM_POOLDIR)/%.ks $(KVM_POOLDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
 install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 uninstall-kvm-base-domain:  $(KVM_CONFIG) undefine-kvm-domain-$(KVM_BASE_DOMAIN)
-	rm -f $(KVM_POOLDIR)/$*.xml
-	rm -f $(KVM_POOLDIR)/$*.ks
-	rm -f $(KVM_POOLDIR)/$*.qcow2
-	rm -f $(KVM_POOLDIR)/$*.img
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).xml
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img
 
 # Create the base domain's .qcow2 disk image (ready for cloning) in
 # $(KVM_POOLDIR).
