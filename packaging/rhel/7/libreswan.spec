@@ -5,7 +5,7 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
-%global USE_SD_WATCHDOG true
+%global USE_SYSTEMD_WATCHDOG true
 
 %global _hardened_build 1
 
@@ -55,7 +55,7 @@ Requires: fipscheck%{_isa}
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
 %endif
-%if %{USE_SD_WATCHDOG}
+%if %{USE_SYSTEMD_WATCHDOG}
 BuildRequires: systemd-devel
 %endif
 %if %{USE_LIBCAP_NG}
@@ -110,7 +110,7 @@ make %{?_smp_mflags} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK="%{USE_FIPSCHECK}" \
     USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-    USE_SD_WATCHDOG="%{USE_SD_WATCHDOG}" \
+    USE_SYSTEMD_WATCHDOG="%{USE_SYSTEMD_WATCHDOG}" \
     USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
     USE_LDAP=true \

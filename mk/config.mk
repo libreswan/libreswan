@@ -288,10 +288,10 @@ USE_DNSSEC?=true
 USE_ADNS?=false
 
 # For systemd start/stop notifications and watchdog feature
-USE_SD_WATCHDOG?=true
+USE_SYSTEMD_WATCHDOG?=true
 
 # Figure out ipsec.service file Type= option
-ifeq ($(USE_SD_WATCHDOG),true)
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
 else
 SD_TYPE=simple

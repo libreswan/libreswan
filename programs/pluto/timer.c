@@ -58,7 +58,7 @@
 
 #include "nat_traversal.h"
 
-#ifdef USE_SD_WATCHDOG
+#ifdef USE_SYSTEMD_WATCHDOG
 #include "pluto_sd.h"
 #endif
 
@@ -613,7 +613,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		daily_log_event();
 		break;
 
-#ifdef USE_SD_WATCHDOG
+#ifdef USE_SYSTEMD_WATCHDOG
 	case EVENT_SD_WATCHDOG:
 		sd_watchdog_event();
 		break;
