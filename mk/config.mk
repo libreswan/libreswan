@@ -4,7 +4,7 @@
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -133,6 +133,9 @@ FINALVARDIR?=/var
 VARDIR?=$(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
+
+# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
+INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INC_RCDIRS which exists gets them.
@@ -288,7 +291,12 @@ USE_DNSSEC?=true
 USE_ADNS?=false
 
 # For systemd start/stop notifications and watchdog feature
+# We only enable this by default if used INITSYSTEM is systemd
+ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG?=true
+else
+USE_SYSTEMD_WATCHDOG?=false
+endif
 
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
