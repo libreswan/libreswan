@@ -30,4 +30,7 @@ local-clean-base:
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif
+
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
