@@ -64,9 +64,6 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 SHELL=/bin/bash
 export SHELL
 
-# location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
-BINSH=/bin/sh
-
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -474,7 +471,6 @@ export NSSFLAGS NSSLIBS
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
-			-e "s:@BINSH@:$(BINSH):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
