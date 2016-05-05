@@ -74,15 +74,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 #    and basename for pluto's lockfile (.pid) and control socket (.ctl).
 #    Double quoting may be needed.
 
-
-
-ifeq ($(USE_ADNS),true)
-ifeq ($(USE_KEYRR),true)
-KEYRR_DEFINES=-DUSE_KEYRR
-ADNS_SRC=adns.c adns.h dnskey.c dnskey.h
-endif
-endif
-
 ifeq ($(USE_PFKEYv2),true)
 PFKEYv2_DIST_SRC=kernel_pfkey.c kernel_pfkey.h
 PFKEYv2_OBJS=kernel_pfkey.o
@@ -213,7 +204,6 @@ endif
 
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
-	${ADNS_DEFS} \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
 	$(NETKEY_DEFS) \
@@ -269,14 +259,6 @@ LDFLAGS+=${NSSLIBS}
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
-endif
-
-ifeq ($(USE_ADNS),true)
-LIBSADNS = $(LIBRESWANLIB)
-LIBSADNS += -lresolv
-BINNAMEADNS = _pluto_adns
-ADNS_OBJS=dnskey.o
-OBJSADNS = adns.o
 endif
 
 LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
@@ -367,7 +349,6 @@ DISTSRC = \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
-	${ADNS_SRC} \
 	whack.c whackinit.c \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
@@ -411,7 +392,6 @@ OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
 OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
-OBJSPLUTO += ${ADNS_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
 OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
@@ -434,11 +414,11 @@ local-base: $(builddir)/Makefile
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(OBJSADNS) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEADNS) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
@@ -447,20 +427,13 @@ doinstall:
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
-	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
-
-ifeq ($(USE_ADNS),true)
-$(BINNAMEADNS): $(OBJSADNS)
-	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}
-endif
 
 $(BINNAMEWHACK): $(OBJSWHACK)
 	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}

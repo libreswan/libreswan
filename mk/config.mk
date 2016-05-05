@@ -286,10 +286,6 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
 
-# Enable support for the obsoleted adns resolver
-# This code is only used by IKEv1 OE - which is obsoleted. Do not enable!
-USE_ADNS?=false
-
 # For systemd start/stop notifications and watchdog feature
 # We only enable this by default if used INITSYSTEM is systemd
 ifeq ($(INITSYSTEM),systemd)

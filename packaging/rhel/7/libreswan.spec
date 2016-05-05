@@ -116,7 +116,6 @@ make %{?_smp_mflags} \
     USE_LDAP=true \
     USE_LIBCURL=true \
 %endif
-    USE_ADNS=false \
     USE_DNSSEC="%{USE_DNSSEC}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
