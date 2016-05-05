@@ -525,9 +525,6 @@ static const struct option long_opts[] = {
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
-#ifdef USE_ADNS
-	{ "adns\0<pathname>", required_argument, NULL, 'a' },
-#endif
 	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
@@ -1044,12 +1041,6 @@ int main(int argc, char **argv)
 		case 'f':	/* --ipsecdir <ipsec-dir> */
 			lsw_init_ipsecdir(optarg);
 			continue;
-
-#ifdef USE_ADNS
-		case 'a':	/* --adns <pathname> */
-			pluto_adns_option = optarg;
-			continue;
-#endif
 
 		case 'N':	/* --debug-none */
 			base_debugging = DBG_NONE;
@@ -1643,9 +1634,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-#ifdef USE_ADNS
-	init_adns();
-#endif
 	init_id();
 	init_vendorid();
 
@@ -1702,9 +1690,6 @@ void exit_pluto(int status)
 	free_myFQDN();	/* free myid FQDN */
 
 	free_ifaces();	/* free interface list from memory */
-#ifdef USE_ADNS
-	stop_adns();	/* Stop async DNS process (if running) */
-#endif
 	free_md_pool();	/* free the md pool */
 	NSS_Shutdown();
 	delete_lock();	/* delete any lock files */

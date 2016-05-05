@@ -546,12 +546,6 @@ static void reapchildren(void)
 	errno = 0;
 
 	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
-#ifdef USE_ADNS
-		/* got a child to reap */
-		if (adns_reapchild(child))
-			continue;
-#endif
-
 		if (child == addconn_child_pid) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reaped addconn helper child"));

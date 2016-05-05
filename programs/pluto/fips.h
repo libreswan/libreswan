@@ -22,9 +22,6 @@
 
 const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto",
 				IPSEC_EXECDIR "/setup",
-#ifdef USE_ADNS
-				IPSEC_EXECDIR "/_pluto_adns",
-#endif
 				IPSEC_EXECDIR "/addconn",
 				IPSEC_EXECDIR "/auto",
 				IPSEC_EXECDIR "/barf",

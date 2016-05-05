@@ -1741,11 +1741,7 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 stf_status oakley_id_and_auth(struct msg_digest *md,
 			bool initiator, /* are we the Initiator? */
 			bool aggrmode, /* aggressive mode? */
-#ifdef USE_ADNS
-			cont_fn_t cont_fn, /* continuation function */
-#else
-			cont_fn_t cont_fn UNUSED, /* continuation function */
-#endif
+			cont_fn_t cont_fn UNUSED, /* ADNS continuation function */
 			/* current state, can be NULL */
 			const struct key_continuation *kc)
 {
@@ -1826,29 +1822,12 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 #ifdef USE_KEYRR
 				nkc->failure_ok = TRUE;
 #endif
-#ifdef USE_ADNS
-				ugh = start_adns_query(
-					&st->st_connection->spd.that.id,
-					/* SG itself */
-					&st->st_connection->spd.that.id,
-					ns_t_txt,
-					cont_fn,
-					&nkc->ac);
-#endif
 				break;
 
 #ifdef USE_KEYRR
 			case kos_his_txt:
 				/* second try: look for the KEY records */
 				nkc->step = kos_his_key;
-#ifdef USE_ADNS
-				ugh = start_adns_query(
-					&st->st_connection->spd.that.id,
-					NULL, /* no sgw for KEY */
-					ns_t_key,
-					cont_fn,
-					&nkc->ac);
-#endif
 				break;
 #endif /* USE_KEYRR */
 

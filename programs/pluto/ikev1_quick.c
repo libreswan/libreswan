@@ -1476,36 +1476,6 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 	       which, ugh, st->st_msgid);
 }
 
-#ifdef USE_ADNS
-static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
-{
-	stf_status r;
-	struct verify_oppo_continuation *vc = (void *)cr;
-	struct verify_oppo_bundle *b = &vc->b;
-	struct state *st = b->md->st;
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: adns continuation: %s", ugh));
-
-	passert(cur_state == NULL);
-	/* if st == NULL, our state has been deleted -- just clean up */
-	if (st != NULL) {
-		passert(st->st_suspended_md == b->md);
-		unset_suspended(st); /* no longer connected or suspended */
-		cur_state = st;
-		if (!b->failure_ok && ugh != NULL) {
-			report_verify_failure(b, ugh);
-			r = STF_FAIL + INVALID_ID_INFORMATION;
-		} else {
-			r = quick_inI1_outR1_authtail(b, cr);
-		}
-		complete_v1_state_transition(&b->md, r);
-	}
-	release_any_md(&b->md);
-	cur_state = NULL;
-}
-#endif
-
 static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 					       enum verify_oppo_step next_step)
 {
@@ -1565,36 +1535,15 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->my.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(&id,
-				       our_id,
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 	case vos_our_txt:
 		vc->b.failure_ok = b->failure_ok = TRUE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(our_id,
-				       our_id, /* self as SG */
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 #ifdef USE_KEYRR
 	case vos_our_key:
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(our_id,
-				       NULL,
-				       ns_t_key,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 #endif
 
@@ -1602,13 +1551,6 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->his.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(&id,
-				       &c->spd.that.id,
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 	default:
