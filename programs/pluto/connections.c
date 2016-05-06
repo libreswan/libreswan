@@ -1226,10 +1226,10 @@ static bool preload_wm_cert_secret(const char *side, const char *pubkey,
 
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
-	return (preload_wm_cert_secret("left", wm->left.pubkey,
+	return preload_wm_cert_secret("left", wm->left.pubkey,
 				       wm->left.pubkey_type)
 		&& preload_wm_cert_secret("right", wm->right.pubkey,
-					  wm->right.pubkey_type));
+					  wm->right.pubkey_type);
 }
 
 /* only used by add_connection() */
