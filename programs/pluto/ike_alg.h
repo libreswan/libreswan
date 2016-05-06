@@ -121,8 +121,9 @@ extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
 extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
 extern bool ike_alg_enc_ok(int ealg, unsigned key_len,
-		    struct alg_info_ike *alg_info_ike, const char **, char *,
-		    size_t);
+		    struct alg_info_ike *alg_info_ike,
+		    const char **errp,
+		    char *ugh_buf, size_t ugh_buf_len);
 extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 		      struct alg_info_ike *alg_info_ike);
 
