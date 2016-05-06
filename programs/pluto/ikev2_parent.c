@@ -4978,8 +4978,8 @@ static int build_ikev2_version()
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
-			<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
-				(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
+			<< ISA_MAJ_SHIFT) |
+	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
 #ifdef XAUTH_HAVE_PAM
