@@ -153,7 +153,7 @@ statement_kw:
 		char *string = NULL;	/* neutral placeholding value */
 		unsigned int number = 0;	/* neutral placeholding value */
 
-		switch(kw.keydef->type) {
+		switch (kw.keydef->type) {
 		case kt_list:
 			number = parser_enum_list(kw.keydef, value, TRUE);
 			break;
@@ -214,7 +214,7 @@ statement_kw:
 		char *string = NULL;	/* neutral placeholding value */
 		unsigned int number = 0;	/* neutral placeholding value */
 
-		switch(kw.keydef->type) {
+		switch (kw.keydef->type) {
 		case kt_list:
 			number = parser_enum_list(kw.keydef, $3, TRUE);
 			break;

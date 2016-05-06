@@ -1733,7 +1733,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	}
 
 
-	if(st->st_username[0] == '\0') {
+	if (st->st_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 

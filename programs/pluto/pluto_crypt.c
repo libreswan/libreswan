@@ -907,7 +907,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
 
-	if(w->evm != NULL) {
+	if (w->evm != NULL) {
 		event_del(w->evm);
 		w->evm = NULL;
 	}

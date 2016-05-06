@@ -109,13 +109,9 @@ bool load_coded_file(const char *filename,
 
 CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname)
 {
-	if (nickname == NULL) {
-		return NULL;
-	}
-	CERTCertificate *cert;
-	cert = PK11_FindCertFromNickname(nickname,
-					lsw_return_nss_password_file_info());
-	return cert;
+	return nickname == NULL ? NULL :
+		PK11_FindCertFromNickname(nickname,
+			lsw_return_nss_password_file_info());
 }
 
 struct ckaid_match_arg {

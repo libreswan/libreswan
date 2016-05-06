@@ -21,26 +21,30 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 %packages --ignoremissing
 
-# Note: The install repo is a cut-down version of "Everything", stuff
-# is missing (hence --ignoremissing).  Try to install everything here
-# as it is quick; however some things will still needed to be added in
-# %post when the the "Everything" repo is available.
+# Full list of RPMs to install (see also %post)
+
+# Since it is fast and local, try to install everything here using the
+# install DVD image.  Anything missing will be fixed up later in
+# %post.  The option --ignoremissing is specified so we don't have to
+# juggle what is enabled / disabled here.
+
+# Note: The problem is that the DVD doesn't contain "Everything" -
+# that repo only becomes available during %post when it is enabled.
+# To get around this, %post installing a few things that were missed.
+# The easiest way to figure out if something ALSO needs to be listed
+# in %post is to look in "Packaging/" on the DVD.  I just wish this
+# could go in a separate file so post could do the fix up
+# automatically.
+
+# Note: %post also installs debug-rpms.  Downloading and installing
+# them is what takes all the time and bandwith.
+
+# Note: To avoid an accidental kernel upgrade (KLIPS doesn't build
+# with some 4.x kernels), install everything kernel dependent here.
+# If you find the kernel still being upgraded look at the log files in
+# /var/tmp created during the %post state.
 
 @core
-
-# To avoid an accidental kernel upgrade (KLIPS doesn't build with the
-# 4.x kernels), install everything kernel dependent here.  If you find
-# the kernel still being upgraded look at the log files in /var/tmp.
-
-kernel-devel
-kernel-headers
-kernel-core
-kernel-modules
-kernel-modules-extra
-glibc-devel
-xl2tpd
-
-# Minimal list of RPMs, see also %post
 
 ElectricFence
 audit-libs-devel
@@ -52,10 +56,17 @@ flex
 gcc
 gdb
 git
+glibc-devel
 hping3
 ipsec-tools
+kernel-core
+kernel-devel
+kernel-headers
+kernel-modules
+kernel-modules-extra
 libcap-ng-devel
 libevent-devel
+libselinux-devel
 lsof
 make
 mtr
@@ -79,6 +90,7 @@ rpm-build
 screen
 strace
 strongswan
+systemd-devel
 tcpdump
 telnet
 unbound
@@ -87,6 +99,7 @@ unbound-libs
 valgrind
 vim-enhanced
 wget
+xl2tpd
 xmlto
 yum-utils
 
@@ -148,6 +161,7 @@ yum install -y 2>&1 \
     python3-setproctitle \
     racoon2 \
     strongswan \
+    systemd-devel \
     unbound \
     unbound-devel \
     vim-enhanced \

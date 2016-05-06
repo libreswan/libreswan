@@ -224,7 +224,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
 	 * drafts, so we don't hit the bad Cisco code.
 	 */
-	switch(st->st_connection->ikev1_natt) {
+	switch (st->st_connection->ikev1_natt) {
 	case natt_rfc:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
 		if (!out_vid(np, outs, VID_NATT_RFC))

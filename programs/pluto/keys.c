@@ -54,7 +54,6 @@
 #include "state.h"
 #include "lex.h"
 #include "keys.h"
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */

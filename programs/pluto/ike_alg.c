@@ -57,7 +57,7 @@
 *       - lookup
 *=========================================================*/
 
-struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
@@ -66,17 +66,17 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 
 bool ike_alg_enc_present(int ealg)
 {
-	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
 
-	return enc_desc ? enc_desc->enc_blocksize : 0;
+	return enc_desc != NULL && enc_desc->enc_blocksize != 0;
 }
 
 /*	check if IKE hash algo is present */
 bool ike_alg_hash_present(int halg)
 {
-	struct hash_desc *hash_desc = ike_alg_get_hasher(halg);
+	const struct hash_desc *hash_desc = ike_alg_get_hasher(halg);
 
-	return hash_desc ? hash_desc->hash_digest_len : 0;
+	return hash_desc != NULL && hash_desc->hash_digest_len != 0;
 }
 
 bool ike_alg_enc_ok(int ealg, unsigned key_len,
@@ -84,23 +84,22 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		    const char **errp, char *ugh_buf, size_t ugh_buf_len)
 {
 	int ret = TRUE;
-	struct encrypt_desc *enc_desc;
+	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
 
-	enc_desc = ike_alg_get_encrypter(ealg);
-	if (!enc_desc) {
+	passert(ugh_buf_len != 0);
+	if (enc_desc == NULL) {
 		/* failure: encrypt algo must be present */
 		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
 		ret = FALSE;
-	} else if ((key_len) && ((key_len < enc_desc->keyminlen) ||
-				 (key_len > enc_desc->keymaxlen))) {
+	} else if (key_len != 0 && (key_len < enc_desc->keyminlen ||
+				    key_len > enc_desc->keymaxlen)) {
 		/* failure: if key_len specified, it must be in range */
 		snprintf(ugh_buf, ugh_buf_len,
-			 "key_len not in range: encalg=%d, "
-			 "key_len=%d, keyminlen=%d, keymaxlen=%d",
+			 "key_len not in range: encalg=%d, key_len=%d, keyminlen=%d, keymaxlen=%d",
 			 ealg, key_len,
 			 enc_desc->keyminlen,
 			 enc_desc->keymaxlen);
-		libreswan_log("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
+		libreswan_log("ike_alg_enc_ok(): %s", ugh_buf);
 		ret = FALSE;
 	}
 
@@ -121,7 +120,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 			    ealg, key_len);
 	    }
 	    );
-	if (!ret && errp)
+	if (!ret && errp != NULL)
 		*errp = ugh_buf;
 	return ret;
 }
@@ -178,9 +177,9 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  *      this is also used in ikev2 despite name :/
  */
-struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
+const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 {
-	struct ike_alg *e;
+	const struct ike_alg *e;
 
 	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
 		if (e->algo_id == algo_id)
@@ -189,10 +188,10 @@ struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 	return e;
 }
 
-struct ike_alg *ikev2_alg_find(unsigned algo_type,
+const struct ike_alg *ikev2_alg_find(unsigned algo_type,
 				   enum ikev2_trans_type_encr algo_v2id)
 {
-	struct ike_alg *e = ike_alg_base[algo_type];
+	const struct ike_alg *e = ike_alg_base[algo_type];
 	int search_algo_v2id = algo_v2id;
 
 	/*
@@ -222,6 +221,7 @@ void ike_alg_add(struct ike_alg *a)
 	passert(a->algo_id == 0 || ikev1_alg_find(a->algo_type, a->algo_id) == NULL);
 	passert(a->algo_v2id == 0 || ikev2_alg_find(a->algo_type, a->algo_v2id) == NULL);
 
+	passert(a->algo_next == NULL);	/* must not already be on a list */
 	a->algo_next = ike_alg_base[a->algo_type];
 	ike_alg_base[a->algo_type] = a;
 }
@@ -247,10 +247,11 @@ bool ike_alg_register_hash(struct hash_desc *hash_desc)
 		     hash_desc->common.algo_id,
 		     (int)hash_desc->hash_ctx_size,
 		     (int)sizeof(union hash_ctx));
-	} else if (!(hash_desc->hash_init && hash_desc->hash_update &&
-		     hash_desc->hash_final)) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d needs  "
-		     "hash_init(), hash_update() and hash_final()",
+	} else if (hash_desc->hash_init == NULL ||
+			hash_desc->hash_update == NULL ||
+			hash_desc->hash_final == NULL) {
+		libreswan_log("ike_alg_register_hash(): hash alg=%d missing "
+		     "hash_init(), hash_update(), or hash_final()",
 		     hash_desc->common.algo_id);
 	} else {
 		alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
@@ -317,8 +318,10 @@ const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 {
 	const struct oakley_group_desc * ret = NULL;
 
+	/* ??? 0 isn't a legitimate value for esp_pfsgroup */
 	if ((policy & POLICY_PFS) &&
-	     c->alg_info_esp && c->alg_info_esp->esp_pfsgroup)
+	    c->alg_info_esp != NULL &&
+	    c->alg_info_esp->esp_pfsgroup != 0)
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
 	return ret;
 }

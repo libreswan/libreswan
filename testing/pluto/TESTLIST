@@ -186,6 +186,7 @@ kvmplutotest	nflog-03-conns				good
 
 kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
+kvmplutotest	netkey-vti-03				good
 
 kvmplutotest	ikev2-43-init-retransmit		good
 

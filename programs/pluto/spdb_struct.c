@@ -128,7 +128,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			    "processing ealg=%u halg=%u modp=%u eklen=%u",
 			    ealg, halg, modp, eklen));
 
-		struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+		const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
 
 		if (enc_desc == NULL) {
 			DBG_log("oakley_alg_makedb() "
@@ -322,7 +322,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
 
 			if (def_ks != 0) {
-				struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
+				const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
 				int max_ks = enc_desc->keymaxlen;
 				int ks;
 

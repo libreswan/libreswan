@@ -35,7 +35,7 @@ struct cavp {
 	struct cavp_entry *data;
 };
 
-extern struct hash_desc *hasher;
+extern const struct hash_desc *hasher;
 extern char hasher_name[];
 void hash(struct cavp_entry *entry, const char *value);
 

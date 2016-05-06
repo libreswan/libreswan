@@ -609,14 +609,14 @@ static stf_status modecfg_resp(struct state *st,
 		 * MODECFG_DOMAIN and MODECFG_BANNER in connection
 		 * configuration we probably want the client to see them
 		 * anyway. */
-		if(st->st_connection->modecfg_domain != NULL) {
+		if (st->st_connection->modecfg_domain != NULL) {
 			DBG_log("We are sending '%s' as domain",
 				st->st_connection->modecfg_domain);
 			isakmp_add_attr (&strattr, MODECFG_DOMAIN, &ia, st);
 		} else {
 			DBG_log("We are not sending a domain");
 		}
-		if(st->st_connection->modecfg_banner != NULL) {
+		if (st->st_connection->modecfg_banner != NULL) {
 			DBG_log("We are sending '%s' as banner",
 				st->st_connection->modecfg_banner);
 			isakmp_add_attr (&strattr, MODECFG_BANNER, &ia, st);
@@ -1177,12 +1177,12 @@ static bool do_file_authentication(void *varg)
 
 			if (win) {
 
-				if(addresspool != NULL && strlen(addresspool)>0) {
+				if (addresspool != NULL && strlen(addresspool)>0) {
 					/* set user defined ip address or pool */
 					char *temp;
 					char single_addresspool[128];
 					pool_range = alloc_thing(ip_range, "pool_range");
-					if(pool_range != NULL){
+					if (pool_range != NULL){
 						temp = strchr(addresspool, '-');
 						if (temp == NULL ) {
 							/* convert single ip address to addresspool */
@@ -1198,9 +1198,9 @@ static bool do_file_authentication(void *varg)
 							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
 						}
 						/* if valid install new addresspool */
-						if(pool_range->start.u.v4.sin_addr.s_addr){
+						if (pool_range->start.u.v4.sin_addr.s_addr){
 						    /* delete existing pool if exits */
-							if(c->pool)
+							if (c->pool)
 								unreference_addresspool(c);
 							c->pool = install_addresspool(pool_range);
 						}

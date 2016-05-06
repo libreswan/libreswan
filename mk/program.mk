@@ -137,7 +137,7 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 %.i: %.c
 	$(CC) $(CFLAGS) -E -o $@ $<
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

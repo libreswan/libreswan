@@ -358,14 +358,14 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
  *
  *==========================================================
  */
-struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
+const struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
 {
-	return (struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
+	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
 }
 
-struct encrypt_desc *crypto_get_encrypter(int alg)
+const struct encrypt_desc *crypto_get_encrypter(int alg)
 {
-	return (struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
+	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
@@ -391,9 +391,9 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
  */
 int crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
-	switch(ksproto) {
+	switch (ksproto) {
 	case CRK_IKEv2:
-		switch(algo) {
+		switch (algo) {
 		case IKEv2_ENCR_CAST:
 			return CAST_KEY_DEF_LEN;
 		case IKEv2_ENCR_AES_CBC:
@@ -424,7 +424,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		}
 
 	case CRK_IKEv1:
-		switch(algo) {
+		switch (algo) {
 		case OAKLEY_CAST_CBC:
 			return CAST_KEY_DEF_LEN;
 		case OAKLEY_AES_CBC:
@@ -442,7 +442,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		}
 
 	case CRK_ESPorAH:
-		switch(algo) {
+		switch (algo) {
 		case ESP_CAST:
 			return CAST_KEY_DEF_LEN;
 		case ESP_AES:

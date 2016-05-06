@@ -66,7 +66,6 @@
 #include "log.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
-#include "adns.h"	/* needs <resolv.h> */
 #include "dnskey.h"	/* needs keys.h and adns.h */
 #include "rnd.h"
 #include "state.h"
@@ -105,7 +104,7 @@
 # include "security_selinux.h"
 #endif
 
-#ifdef USE_SD_WATCHDOG
+#ifdef USE_SYSTEMD_WATCHDOG
 # include "pluto_sd.h"
 #endif
 
@@ -190,8 +189,8 @@ static const char compile_time_interop_options[] = ""
 #ifdef DNSSEC
 	" DNSSEC"
 #endif
-#ifdef USE_SD_WATCHDOG
-	" USE_SD_WATCHDOG"
+#ifdef USE_SYSTEMD_WATCHDOG
+	" USE_SYSTEMD_WATCHDOG"
 #endif
 #ifdef FIPS_CHECK
 	" FIPS_CHECK"
@@ -525,9 +524,6 @@ static const struct option long_opts[] = {
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
-#ifdef USE_ADNS
-	{ "adns\0<pathname>", required_argument, NULL, 'a' },
-#endif
 	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
@@ -1045,12 +1041,6 @@ int main(int argc, char **argv)
 			lsw_init_ipsecdir(optarg);
 			continue;
 
-#ifdef USE_ADNS
-		case 'a':	/* --adns <pathname> */
-			pluto_adns_option = optarg;
-			continue;
-#endif
-
 		case 'N':	/* --debug-none */
 			base_debugging = DBG_NONE;
 			continue;
@@ -1187,7 +1177,7 @@ int main(int argc, char **argv)
 						"coredir via --config");
 			}
 			/* --vendorid */
-			if(cfg->setup.strings[KSF_MYVENDORID]) {
+			if (cfg->setup.strings[KSF_MYVENDORID]) {
 				pfree(pluto_vendorid);
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
 						"pluto_vendorid via --config");
@@ -1643,9 +1633,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-#ifdef USE_ADNS
-	init_adns();
-#endif
 	init_id();
 	init_vendorid();
 
@@ -1660,7 +1647,7 @@ int main(int argc, char **argv)
 #endif
 	daily_log_event();
 
-#ifdef USE_SD_WATCHDOG
+#ifdef USE_SYSTEMD_WATCHDOG
 	/* tell systemd that we've started */
 	pluto_sd_watchdog_start();
 	/* start the even probess */
@@ -1702,9 +1689,6 @@ void exit_pluto(int status)
 	free_myFQDN();	/* free myid FQDN */
 
 	free_ifaces();	/* free interface list from memory */
-#ifdef USE_ADNS
-	stop_adns();	/* Stop async DNS process (if running) */
-#endif
 	free_md_pool();	/* free the md pool */
 	NSS_Shutdown();
 	delete_lock();	/* delete any lock files */
@@ -1716,7 +1700,7 @@ void exit_pluto(int status)
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
-#ifdef USE_SD_WATCHDOG
+#ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_watchdog_exit(status);
 #endif
 	exit(status);	/* exit, with our error code */

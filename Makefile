@@ -20,10 +20,6 @@ include mk/dirs.mk
 endif
 
 LIBRESWANSRCDIR?=$(shell pwd)
-export LIBRESWANSRCDIR
-
-TERMCAP=
-export TERMCAP
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
@@ -47,7 +43,52 @@ def help:
 
 .PHONY: def help
 
-include ${LIBRESWANSRCDIR}/Makefile.top
+PATCHES=linux
+# where KLIPS goes in the kernel
+# note, some of the patches know the last part of this path
+KERNELKLIPS=$(KERNELSRC)/net/ipsec
+KERNELCRYPTODES=$(KERNELSRC)/crypto/ciphers/des
+KERNELLIBFREESWAN=$(KERNELSRC)/lib/libfreeswan
+KERNELLIBZLIB=$(KERNELSRC)/lib/zlib
+KERNELINCLUDE=$(KERNELSRC)/include
+
+MAKEUTILS=packaging/utils
+ERRCHECK=${MAKEUTILS}/errcheck
+KVUTIL=${MAKEUTILS}/kernelversion
+KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
+
+SUBDIRS?=lib programs initsystems testing
+
+TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
+
+tags:	$(TAGSFILES)
+	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
+
+cscope:
+	@ls ${TAGSFILES} > cscope.files
+	@cscope -b
+
+TAGS:	$(TAGSFILES)
+	@LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
+
+.PHONY: dummy
+dummy:
+
+
+
+kvm:
+	@echo Please run ./testing/libvirt/install.sh
+
+# Run regress stuff after the other check targets.
+.PHONY: regress
+check: regress
+regress: local-check recursive-check
+ifneq ($(strip(${REGRESSRESULTS})),)
+	mkdir -p ${REGRESSRESULTS}
+	-perl testing/utils/regress-summarize-results.pl ${REGRESSRESULTS}
+endif
+	@echo "======== End of make check target. ========"
+
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
 # kernel details
@@ -166,7 +207,6 @@ klipsdefaults:
 
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
-export OBJDIRTOP
 
 .PHONY: config
 config: ${OBJDIR}/Makefile
@@ -227,8 +267,6 @@ precheck:
 		echo '*** please do that first; the results are necessary.' ; \
 		exit 1 ; \
 	fi
-
-Makefile: Makefile.ver
 
 # configuring (exit statuses disregarded, something fishy here sometimes)
 xcf:

@@ -63,7 +63,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
@@ -587,74 +586,6 @@ void initiate_ondemand(const ip_address *our_client,
 #endif
 				      );
 }
-
-#ifdef USE_ADNS
-static void continue_oppo(struct adns_continuation *acr, err_t ugh)
-{
-	struct find_oppo_continuation *cr = (void *)acr; /* inherit, damn you! */
-	struct connection *c;
-	bool was_held = cr->b.held;
-	int whackfd = cr->b.whackfd;
-
-	/* note: cr->id has no resources; cr->sgw_id is id_none:
-	 * neither need freeing.
-	 */
-	whack_log_fd = whackfd;
-
-	/* Discover and record whether %hold has gone away.
-	 * This could have happened while we were awaiting DNS.
-	 * We must check BEFORE any call to cannot_oppo.
-	 */
-	if (was_held) {
-		cr->b.held = has_bare_hold(&cr->b.our_client,
-					   &cr->b.peer_client,
-					   cr->b.transport_proto);
-	}
-
-	/* if we're going to ignore the error, at least note it in debugging log */
-	if (cr->b.failure_ok && ugh != NULL) {
-		DBG(DBG_CONTROL | DBG_DNS, {
-			ipstr_buf a;
-			ipstr_buf b;
-			DBG_log("continuing from failed DNS lookup for %s, %s to %s: %s",
-				cr->b.want,
-				ipstr(&cr->b.our_client, &a),
-				ipstr(&cr->b.peer_client, &b),
-				ugh);
-		});
-	}
-
-	if (!cr->b.failure_ok && ugh != NULL) {
-		c = find_connection_for_clients(NULL, &cr->b.our_client,
-						&cr->b.peer_client,
-						cr->b.transport_proto);
-		cannot_oppo(c, &cr->b,
-			    builddiag("%s: %s", cr->b.want, ugh));
-	} else if (was_held && !cr->b.held) {
-		/* was_held indicates we were started due to a %trap firing
-		 * (as opposed to a "whack --oppohere --oppothere").
-		 * Since the %hold has gone, we can assume that somebody else
-		 * has beaten us to the punch.  We can go home.  But lets log it.
-		 */
-		ipstr_buf a, b;
-
-		loglog(RC_COMMENT,
-		       "%%hold otherwise handled during DNS lookup for Opportunistic Initiation for %s to %s",
-		       ipstr(&cr->b.our_client, &a),
-		       ipstr(&cr->b.peer_client, &b));
-	} else {
-		initiate_ondemand_body(&cr->b, &cr->ac, ugh
-#ifdef HAVE_LABELED_IPSEC
-					     , NULL
-#endif
-					     );
-		whackfd = NULL_FD; /* was handed off */
-	}
-
-	whack_log_fd = NULL_FD;
-	close_any(whackfd);
-}
-#endif
 
 static err_t check_txt_recs(enum myid_state try_state,
 			    const struct connection *c,
@@ -1263,10 +1194,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,
 				"opportunistic continuation");
-#ifdef USE_ADNS
-			struct id id;
-#endif
-
 			b->policy_prio = c->prio;
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
@@ -1307,84 +1234,17 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 			switch (next_step) {
 			case fos_myid_ip_txt:
-#ifdef USE_ADNS
-				if (c->spd.this.id.kind == ID_MYID &&
-				    myid_state != MYID_SPECIFIED) {
-					cr->b.failure_ok = TRUE;
-					cr->b.want = b->want =
-						"IPSECKEY record for IP address as %myid";
-					ugh = start_adns_query(&myids[MYID_IP],
-							       &myids[MYID_IP],
-							       ns_t_txt,
-							       continue_oppo,
-							       &cr->ac);
-					break;
-				}
-#endif
 				cr->b.step = fos_myid_hostname_txt;
 			/* FALL THROUGH */
 			case fos_myid_hostname_txt:
-#ifdef USE_ADNS
-				if (c->spd.this.id.kind == ID_MYID &&
-				    myid_state != MYID_SPECIFIED) {
-					cr->b.failure_ok = FALSE;
-					cr->b.want = b->want =
-						"IPSECKEY record for hostname as %myid";
-					ugh = start_adns_query(&myids[
-								 MYID_HOSTNAME],
-							       &myids[MYID_HOSTNAME],
-							       ns_t_txt,
-							       continue_oppo,
-							       &cr->ac);
-					break;
-				}
-#endif
 				cr->b.step = fos_our_client;
 			/* FALL THROUGH */
 			case fos_our_client: /* IPSECKEY for our client */
-#ifdef USE_ADNS
-				if (!sameaddr(&c->spd.this.host_addr,
-					      &b->our_client)) {
-					/* Check that at least one IPSECKEY(reverse(b->our_client)) is workable.
-					 * Note: {unshare|free}_id_content not needed for id: ephemeral.
-					 */
-					cr->b.want = b->want =
-						"our client's IPSECKEY record";
-					iptoid(&b->our_client, &id);
-					ugh = start_adns_query(&id,
-							       &c->spd.this.id, /* we are the security gateway */
-							       ns_t_txt,
-							       continue_oppo,
-							       &cr->ac);
-					break;
-				}
-#endif
 				cr->b.step = fos_our_txt;
 			/* FALL THROUGH */
 			case fos_our_txt: /* IPSECKEY for us */
-#ifdef USE_ADNS
-				cr->b.failure_ok = b->failure_ok = TRUE;
-				cr->b.want = b->want = "our IPSECKEY record";
-				ugh = start_adns_query(&sr->this.id,
-						       &sr->this.id, /* we are the security gateway XXX - maybe ignore? mcr */
-						       ns_t_txt,
-						       continue_oppo,
-						       &cr->ac);
-#endif
 				break;
 			case fos_his_client: /* IPSECKEY for his client */
-#ifdef USE_ADNS
-				/* note: {unshare|free}_id_content not needed for id: ephemeral */
-				cr->b.want = b->want =
-						     "target's IPSECKEY record";
-				cr->b.failure_ok = b->failure_ok = FALSE;
-				iptoid(&b->peer_client, &id);
-				ugh = start_adns_query(&id,
-						       (const struct id *) NULL, /* security gateway unconstrained */
-						       ns_t_txt,
-						       continue_oppo,
-						       &cr->ac);
-#endif
 				break;
 			default:
 				bad_case(next_step);

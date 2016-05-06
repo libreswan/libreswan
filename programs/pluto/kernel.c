@@ -581,7 +581,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	 * works for both old and new way of snprintf() returning
 	 * eiter -1 or the output length  -- by Carsten Schlote
 	 */
-	return ((result >= blen) || (result < 0)) ? -1 : result;
+	return (result >= blen || result < 0) ? -1 : result;
 }
 
 bool do_command(const struct connection *c, const struct spd_route *sr, const char *verb,

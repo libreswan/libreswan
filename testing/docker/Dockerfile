@@ -18,7 +18,7 @@ RUN dnf install -y wget vim-enhanced bison flex nss-devel \
  rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
  libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography \
- tcpdump trousers traceroute telnet;
+ tcpdump trousers traceroute telnet libselinux-devel systemd-devel;
 RUN dnf clean all;
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \

@@ -1,7 +1,7 @@
 # Makefile for init systems, for libreswan.
 #
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,9 +12,6 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-
-# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # XXX: Switch directory hack
 config:
@@ -33,4 +30,7 @@ local-clean-base:
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif
+
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk

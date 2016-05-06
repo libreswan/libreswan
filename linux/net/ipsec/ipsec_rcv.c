@@ -195,7 +195,7 @@ DEBUG_NO_STATIC int ipsec_updatereplaywindow(struct ipsec_sa *ipsp, __u32 seq)
 	/* too old or wrapped */ /* if wrapped, kill off SA? */
 	if (diff >= ipsp->ips_replaywin) {
 /*
-		if(seq < 0.25*max && ipsp->ips_replaywin_lastseq > 0.75*max) {
+		if (seq < 0.25*max && ipsp->ips_replaywin_lastseq > 0.75*max) {
 			ipsec_sa_delchain(ipsp);
 		}
  */

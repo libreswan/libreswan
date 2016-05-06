@@ -66,7 +66,6 @@
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "adns.h" /* needs <resolv.h> */
 #include "dnskey.h" /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
@@ -353,11 +352,6 @@ void delete_connection(struct connection *c, bool relations)
 		/* ??? should we: pfree(sr); */
 		sr = next_sr;
 	}
-
-#ifdef USE_ADNS
-	if ((c->policy & POLICY_AUTH_NULL) == LEMPTY)
-		gw_delref(&c->gw_info);
-#endif
 
 	if (c->alg_info_ike != NULL) {
 		alg_info_delref(&c->alg_info_ike->ai);
@@ -1232,10 +1226,10 @@ static bool preload_wm_cert_secret(const char *side, const char *pubkey,
 
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
-	return (preload_wm_cert_secret("left", wm->left.pubkey,
+	return preload_wm_cert_secret("left", wm->left.pubkey,
 				       wm->left.pubkey_type)
 		&& preload_wm_cert_secret("right", wm->right.pubkey,
-					  wm->right.pubkey_type));
+					  wm->right.pubkey_type);
 }
 
 /* only used by add_connection() */
@@ -1972,11 +1966,7 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
-#ifdef USE_ADNS
-				struct gw_info *gw,
-#else
-				struct gw_info *gw UNUSED,
-#endif
+				    struct gw_info *gw UNUSED, /* ADNS */
 				const ip_address *our_client,
 				const ip_address *peer_client)
 {
@@ -2028,14 +2018,6 @@ struct connection *oppo_instantiate(struct connection *c,
 
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
-
-#ifdef USE_ADNS
-	if (!(d->policy & POLICY_AUTH_NULL)) {
-		passert(d->gw_info == NULL);
-		gw_addref(gw);
-		d->gw_info = gw;
-	}
-#endif
 
 	/*
 	 * Adjust routing if something is eclipsing c.

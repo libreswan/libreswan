@@ -739,9 +739,9 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 		/* reject things we know but don't like */
-		switch(p_ctx->protoid) {
+		switch (p_ctx->protoid) {
 		case PROTO_ISAKMP:
-			switch(ealg_id) {
+			switch (ealg_id) {
 			case OAKLEY_DES_CBC:
 			case OAKLEY_IDEA_CBC:
 			case OAKLEY_BLOWFISH_CBC:
@@ -750,7 +750,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 			break;
 		case PROTO_IPSEC_ESP:
-			switch(ealg_id) {
+			switch (ealg_id) {
 			case ESP_reserved:
 			case ESP_DES_IV64:
 			case ESP_DES:
@@ -777,9 +777,9 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		 * for testing purposes.
 		 */
 		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch(p_ctx->protoid) {
+			switch (p_ctx->protoid) {
 			case PROTO_ISAKMP:
-				switch(ealg_id) {
+				switch (ealg_id) {
 				case OAKLEY_3DES_CBC:
 					return "3DES does not take variable key lengths";
 				case OAKLEY_CAST_CBC:
@@ -810,7 +810,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				}
 				break;
 			case PROTO_IPSEC_ESP:
-				switch(ealg_id) {
+				switch (ealg_id) {
 				case ESP_3DES:
 					return "3DES does not take variable key lengths";
 				case ESP_NULL:
@@ -865,7 +865,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				 * defintion, authentication is
 				 * built-in).
 				 */
-				switch(ealg_id) {
+				switch (ealg_id) {
 				case ESP_AES_GCM_8:
 				case ESP_AES_GCM_12:
 				case ESP_AES_GCM_16:
@@ -887,7 +887,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				 * The non-empty authentication
 				 * algorithm will be used as the PRF.
 				 */
-				switch(ealg_id) {
+				switch (ealg_id) {
 				case OAKLEY_AES_CCM_8:
 				case OAKLEY_AES_CCM_12:
 				case OAKLEY_AES_CCM_16:
@@ -917,7 +917,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				 * Reject any non-null authentication
 				 * algorithm
 				 */
-				switch(ealg_id) {
+				switch (ealg_id) {
 				case ESP_AES_GCM_8:
 				case ESP_AES_GCM_12:
 				case ESP_AES_GCM_16:
@@ -945,7 +945,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 		if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch(aalg_id) {
+			switch (aalg_id) {
 			case AH_NULL:
 				if (ealg_id == -1)
 					return "Encryption and authentication cannot both be null";
