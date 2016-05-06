@@ -1149,7 +1149,7 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 				     ahp->ah_data,
 				     AHHMAC_HASHLEN);
 
-		if(buf)
+		if (buf)
 			kfree(buf);
 	} else
 #endif  /* CONFIG_KLIPS_ALG */

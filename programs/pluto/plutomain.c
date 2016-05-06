@@ -1177,7 +1177,7 @@ int main(int argc, char **argv)
 						"coredir via --config");
 			}
 			/* --vendorid */
-			if(cfg->setup.strings[KSF_MYVENDORID]) {
+			if (cfg->setup.strings[KSF_MYVENDORID]) {
 				pfree(pluto_vendorid);
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
 						"pluto_vendorid via --config");

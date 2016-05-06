@@ -180,7 +180,7 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 				generalName_t *pluto_gn)
 {
-	switch(nss_gn->type) {
+	switch (nss_gn->type) {
 	case certOtherName:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.OthName.name);
 		pluto_gn->kind = GN_OTHER_NAME;
@@ -1131,7 +1131,7 @@ void ikev2_decode_cr(struct msg_digest *md)
 		struct ikev2_certreq *const cr = &p->payload.v2certreq;
 		chunk_t ca_name;
 
-		switch(cr->isacertreq_enc) {
+		switch (cr->isacertreq_enc) {
 		case CERT_X509_SIGNATURE:
 
 			ca_name.len = pbs_left(&p->pbs);
@@ -1751,7 +1751,7 @@ static void cert_detail_list(show_cert_t type)
 {
 	char *tstr = "";
 
-	switch(type) {
+	switch (type) {
 	case CERT_TYPE_END:
 		tstr = "End ";
 		break;

@@ -279,7 +279,7 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 #endif /* CONFIG_KLIPS_IPCOMP */
 
 	seq_printf(seq, " natencap=");
-	switch(sa_p->ips_natt_type) {
+	switch (sa_p->ips_natt_type) {
 	case 0:
 		seq_printf(seq, "none");
 		break;
@@ -642,7 +642,7 @@ int ipsec_proc_init()
 
 	/* create /proc/net/ipsec */
 	proc_net_ipsec_dir = proc_mkdir("ipsec", PROC_NET);
-	if(proc_net_ipsec_dir == NULL) {
+	if (proc_net_ipsec_dir == NULL) {
 		/* no point in continuing */
 		return 1;
 	}

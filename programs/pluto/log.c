@@ -1186,7 +1186,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	zero(&cipher_str);	/* OK: no pointer fields */
 	zero(&spi_str);	/* OK: no pointer fields */
 
-	switch(op) {
+	switch (op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
 		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);

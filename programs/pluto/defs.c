@@ -79,7 +79,7 @@ monotime_t mononow(void)
 		CLOCK_MONOTONIC	/* second best */
 #   endif
 		, &t);
-	switch(r) {
+	switch (r) {
 	case 0:
 		/* OK */
 		break;

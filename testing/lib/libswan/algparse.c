@@ -21,7 +21,7 @@ void do_test(const char *algstr, int ttype) {
 	char algbuf[256];
 
 	printf("[%*s] ", 20, algstr);
-	switch(ttype) {
+	switch (ttype) {
 	case PROTO_IPSEC_ESP:
 		aie = (struct alg_info *)alg_info_esp_create_from_str(
 			algstr, err_buf, sizeof(err_buf));

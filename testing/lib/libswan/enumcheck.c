@@ -12,7 +12,7 @@ void do_test(char *enumname, enum_names *enum_test, int max) {
 	int i = 0;
 
 	fprintf(stdout, "%s:\n", enumname);
-	for(i; i < max; i++) {
+	for (i; i < max; i++) {
 		int found;
 		const char *name = enum_name(enum_test, i);
 		if (name != NULL) {

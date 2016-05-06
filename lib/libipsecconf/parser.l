@@ -504,7 +504,7 @@ include			return INCLUDE;
 					fprintf(stderr, "STR/KEY: %s\n",
 						yytext);
 				tok = parser_find_keyword(yytext, &yylval);
-				switch(tok)
+				switch (tok)
 				{
 				case BOOLWORD:
 					BEGIN BOOLEAN;

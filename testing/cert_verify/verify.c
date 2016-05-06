@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
 
 	int numcerts = 0;
 	while ((opt = getopt(argc, argv, "u:d:e:pn:s:coSr")) != -1) {
-		switch(opt) {
+		switch (opt) {
 			/* usage type */
 		case 'u':
 			set_usage(optarg);

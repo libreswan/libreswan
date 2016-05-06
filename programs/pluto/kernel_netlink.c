@@ -1127,7 +1127,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 
-			switch(sa->authalg) {
+			switch (sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 				algo.alg_trunc_len = 128;
 				break;

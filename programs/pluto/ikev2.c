@@ -1143,7 +1143,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
 
-		switch(auth) {
+		switch (auth) {
 		case IKEv2_AUTH_RSA:
 			auth_policy = POLICY_RSASIG;
 			break;

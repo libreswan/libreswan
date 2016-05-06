@@ -1305,12 +1305,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	if (nat_traversal_enabled)
 		numvidtosend++;
-	if(c->cisco_unity)
+	if (c->cisco_unity)
 		numvidtosend++;
-	if(c->fake_strongswan)
+	if (c->fake_strongswan)
 		numvidtosend++;
 
-	if(c->send_vendorid)
+	if (c->send_vendorid)
 		numvidtosend++;
 
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
@@ -1338,19 +1338,19 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->cisco_unity) {
+	if (c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->fake_strongswan) {
+	if (c->fake_strongswan) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->send_vendorid) {
+	if (c->send_vendorid) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
 			return STF_INTERNAL_ERROR;

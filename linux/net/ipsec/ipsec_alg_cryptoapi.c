@@ -749,11 +749,11 @@ setup_digest_list (struct ipsec_alg_capi_digest* dlist)
 		 * 	use a local ci to avoid touching dptr->ci,
 		 * 	if register ipsec_alg success then bind digest
 		 */
-		if(dptr->alg.ixt_common.ixt_support.ias_name == NULL) {
+		if (dptr->alg.ixt_common.ixt_support.ias_name == NULL) {
 		   dptr->alg.ixt_common.ixt_support.ias_name = dptr->digestname;
 		}
 
-		if( setup_digest(dptr->digestname) ) {
+		if (setup_digest(dptr->digestname) ) {
 			if (debug_crypto > 0)
 				printk(KERN_DEBUG "klips_debug:"
 						"setup_digest_list():"

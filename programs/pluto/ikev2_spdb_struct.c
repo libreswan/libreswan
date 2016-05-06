@@ -1381,7 +1381,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 			 * we should be esp=null or a kernel-only
 			 * algorithm without userland struct.
 			 */
-			switch(ta.encrypt) {
+			switch (ta.encrypt) {
 			case IKEv2_ENCR_NULL:
 				break; /* ok */
 			case IKEv2_ENCR_CAST:
