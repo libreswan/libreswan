@@ -79,7 +79,6 @@
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "keys.h"
-#include "adns.h"               /* needs <resolv.h> */
 #include "dnskey.h"             /* needs keys.h and adns.h */
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */

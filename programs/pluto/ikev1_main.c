@@ -53,7 +53,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h" /* needs packet.h */
-#include "adns.h" /* needs <resolv.h> */
 #include "dnskey.h" /* needs keys.h and adns.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
