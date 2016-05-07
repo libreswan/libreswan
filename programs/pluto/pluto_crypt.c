@@ -1056,7 +1056,7 @@ void init_crypto_helpers(int nhelpers)
 		libreswan_log("starting up %d crypto helpers",
 			      nhelpers);
 		pc_workers = alloc_bytes(sizeof(*pc_workers) * nhelpers,
-					 "pluto crypto helpers");
+					 "pluto crypto helpers (ignore)");
 		pc_workers_cnt = nhelpers;
 
 		for (i = 0; i < nhelpers; i++)
