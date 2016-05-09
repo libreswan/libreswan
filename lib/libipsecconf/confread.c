@@ -1238,6 +1238,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
+	str_to_conn(vti_iface, KSCF_VTI_IFACE);
 
 	str_to_conn(connalias, KSCF_CONNALIAS);
 

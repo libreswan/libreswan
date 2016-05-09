@@ -652,6 +652,13 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-out=%s",
 		conn->name, msg.conn_mark_out);
 
+	msg.vti_iface = conn->vti_iface;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" vti_iface=%s",
+		conn->name, msg.vti_iface);
+	if (conn->options_set[KBF_VTI_ROUTING])
+		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
+
+
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])

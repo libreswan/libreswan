@@ -50,6 +50,7 @@
 #include "defs.h"
 #include "whack.h"
 
+#include <net/if.h> /* for IFNAMSIZ */
 /*
  * Print the 'ipsec --whack help' message
  */
@@ -122,6 +123,7 @@ static void help(void)
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
 		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
+		"       [--vti-iface <iface> ] [ --vti-routing ]\\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -363,6 +365,8 @@ enum option_enums {
 	CD_CONN_MARK_BOTH,
 	CD_CONN_MARK_IN,
 	CD_CONN_MARK_OUT,
+	CD_VTI_IFACE,
+	CD_VTI_ROUTING,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -611,6 +615,8 @@ static const struct option long_opts[] = {
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN + OO },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
+	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
+	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -1824,6 +1830,17 @@ int main(int argc, char **argv)
 			continue;
 		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
 			msg.conn_mark_out = strdup(optarg);
+			continue;
+
+		case CD_VTI_IFACE:      /* --vti-iface */
+			if (optarg != NULL && strlen(optarg) <= IFNAMSIZ)
+				msg.vti_iface = strdup(optarg);
+			else
+				fprintf(stderr, "whack: invalid interface name '%s' ignored\n",
+					optarg);
+			continue;
+		case CD_VTI_ROUTING:	/* --vti-routing */
+			msg.vti_routing = TRUE;
 			continue;
 
 		case CD_XAUTHBY:

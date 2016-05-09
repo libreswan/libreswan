@@ -789,6 +789,8 @@ static void unshare_connection(struct connection *c)
 	/* duplicate any alias, adding spaces to the beginning and end */
 	c->connalias = clone_str(c->connalias, "connection alias");
 
+	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
+
 	struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
@@ -1495,6 +1497,9 @@ void add_connection(const struct whack_message *wm)
 			mark_parse(wm->conn_mark_in, &c->sa_marks.in);
 		if (wm->conn_mark_out != NULL)
 			mark_parse(wm->conn_mark_out, &c->sa_marks.out);
+
+		c->vti_iface = wm->vti_iface;
+		c->vti_routing = wm->vti_routing;
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -3896,6 +3901,16 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(sapriostr, "auto");
 
+	fmt_policy_prio(c->prio, prio);
+	whack_log(RC_COMMENT,
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s;",
+		  c->name, instance,
+		  prio,
+		  ifn,
+		  (unsigned long)c->metric,
+		  mtustr, sapriostr
+	);
+
 	if (c->nflog_group != 0)
 		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
 	else
@@ -3908,14 +3923,11 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(markstr, "unset");
 
-	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; nflog-group: %s; mark: %s;",
-		  c->name, instance,
-		  prio,
-		  ifn,
-		  (unsigned long)c->metric,
-		  mtustr, sapriostr, nflogstr, markstr
+		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface: %s; vti-routing: %s",
+		  c->name, instance, nflogstr, markstr,
+		  c->vti_iface == NULL ? "unset" : c->vti_iface,
+		  c->vti_routing ? "yes" : "no"
 	);
 
 	/* slightly complicated stuff to avoid extra crap */

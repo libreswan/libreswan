@@ -531,6 +531,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* traffic out stats - if any */
 			"%s" /* nflog-group - if any */
 			"%s" /* conn-mark - if any */
+			"VTI_IFACE='%s' VTI_ROUTING='%s' "
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -575,7 +576,9 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		traffic_in_str,
 		traffic_out_str,
 		nflogstr,
-		connmarkstr
+		connmarkstr,
+		c->vti_iface ? c->vti_iface : "",
+		c->vti_routing ? "yes" : "no"
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
