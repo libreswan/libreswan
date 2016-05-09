@@ -14,7 +14,7 @@
 
 PROGRAM=rsasigkey
 LIBS=${LSWLOGLIB} ${LIBRESWANLIB}
-LIBS+=${NSSLIBS}
+LIBS+=$(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
@@ -22,6 +22,4 @@ else
 include ../../mk/program.mk
 endif
 
-ifeq ($(USE_FIPSCHECK),true)
-LIBS+=  -lfipscheck
-endif
+LIBS+=$(FIPSCHECK_LDFLAGS)
