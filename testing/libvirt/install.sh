@@ -108,6 +108,7 @@ fi
 
 for hostname in $(${TESTDIR}/utils/kvmhosts.sh); do
     # Use the the base disk to create VM disks
+    rm -f ${POOLSPACE}/${hostname}.qcow2
     qemu-img create -F qcow2 -f qcow2 \
 	-b $base.qcow2 ${POOLSPACE}/${hostname}.qcow2
     if [ -x /usr/sbin/restorecon ]; then
