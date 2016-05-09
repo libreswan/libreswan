@@ -215,6 +215,8 @@ struct connection {
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */
 	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
+	char *vti_iface;
+	bool vti_routing;
 	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;

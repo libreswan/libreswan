@@ -608,6 +608,10 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "mark-out",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_OUT,
 	  NOT_ENUM },
+	{ "vti-interface",    kv_conn | kv_auto, kt_string, KSCF_VTI_IFACE,
+	  NOT_ENUM },
+	{ "vti-routing",    kv_conn | kv_auto, kt_bool, KBF_VTI_ROUTING,
+	  NOT_ENUM },
 
 	{ "modecfgwins1", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
 	  NOT_ENUM },

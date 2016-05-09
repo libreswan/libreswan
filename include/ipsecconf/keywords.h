@@ -147,6 +147,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,
 	KBF_NFLOG_CONN,
 	KBF_DDOS_MODE,
+	KBF_VTI_ROUTING,
 	KBF_MAX
 };
 
@@ -191,6 +192,7 @@ enum keyword_string_conn_field {
 	KSCF_CONN_MARK_BOTH,
 	KSCF_CONN_MARK_IN,
 	KSCF_CONN_MARK_OUT,
+	KSCF_VTI_IFACE,
 	KSCF_MAX
 };
 

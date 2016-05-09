@@ -110,6 +110,8 @@ struct starter_conn {
 	char *conn_mark_both;
 	char *conn_mark_in;
 	char *conn_mark_out;
+	char *vti_iface;
+	bool vti_routing;
 };
 
 struct starter_config {
