@@ -186,6 +186,12 @@ then
 _________________________ ip-l2tp-session
 	ip l2tp show session
 fi
+if test -d /sys/module/ip_vti
+then
+	ip -s tunnel show
+_________________________ ip-tunnel
+	ip -s tunnel show
+fi
 _________________________ /proc/crypto
 if test -r /proc/crypto
 then
