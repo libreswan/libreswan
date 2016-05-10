@@ -516,11 +516,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
 		"PLUTO_CONN_POLICY='%s' "	/* 25 */
+		"PLUTO_CONN_KIND='%s' "
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
 		"%s"		/* XAUTH username - if any */
 		"%s"		/* PLUTO_MY_SRCIP - if any */
-		"PLUTO_IS_PEER_CISCO='%u' "	/* 30 */
+		"PLUTO_IS_PEER_CISCO='%u' "
 		"PLUTO_PEER_DNS_INFO='%s' "
 		"PLUTO_PEER_DOMAIN_INFO='%s' "
 		"PLUTO_PEER_BANNER='%s' "
@@ -562,11 +563,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmtu_str,
 		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
+		enum_show(&connection_kind_names, c->kind),
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
 		secure_xauth_username_str,
 		srcip_str,
-		c->remotepeertype,		/* 30 */
+		c->remotepeertype,
 		c->cisco_dns_info ? c->cisco_dns_info : "",
 		c->modecfg_domain ? c->modecfg_domain : "",
 		c->modecfg_banner ? c->modecfg_banner : "",
