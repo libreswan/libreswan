@@ -1172,20 +1172,18 @@ void alg_info_delref(struct alg_info *alg_info)
 }
 
 /* snprint already parsed transform list (alg_info) */
-void alg_info_snprint(char *buf, size_t buflen,
-		const struct alg_info *alg_info)
+void alg_info_esp_snprint(char *buf, size_t buflen,
+			  const struct alg_info_esp *alg_info_esp)
 {
 	char *ptr = buf;
 	char *be = buf + buflen;
 
 	passert(buflen > 0);
 
-	switch (alg_info->alg_info_protoid) {
+	switch (alg_info_esp->ai.alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
 	{
-		struct alg_info_esp *alg_info_esp =
-			(struct alg_info_esp *)alg_info;
-		struct esp_info *esp_info;
+		const struct esp_info *esp_info;
 		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
@@ -1220,9 +1218,7 @@ void alg_info_snprint(char *buf, size_t buflen,
 
 	case PROTO_IPSEC_AH:
 	{
-		struct alg_info_esp *alg_info_esp =
-			(struct alg_info_esp *)alg_info;
-		struct esp_info *esp_info;
+		const struct esp_info *esp_info;
 		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
@@ -1249,41 +1245,44 @@ void alg_info_snprint(char *buf, size_t buflen,
 		break;
 	}
 
-	case PROTO_ISAKMP:
-	{
-		struct alg_info_ike *alg_info_ike =
-			(struct alg_info_ike *)alg_info;
-		struct ike_info *ike_info;
-		int cnt;
-
-		ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
-			snprintf(ptr, be - ptr,
-				"%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
-				strip_prefix(enum_name(&oakley_enc_names, ike_info->ike_ealg),
-					"OAKLEY_"),
-				ike_info->ike_ealg,
-				(int)ike_info->ike_eklen,
-				strip_prefix(enum_name(&oakley_hash_names, ike_info->ike_halg),
-					"OAKLEY_"),
-				ike_info->ike_halg,
-				(int)ike_info->ike_hklen,
-				strip_prefix(enum_name(&oakley_group_names, ike_info->ike_modp),
-					"OAKLEY_GROUP_"),
-				ike_info->ike_modp
-				);
-			ptr += strlen(ptr);
-			if (cnt > 0) {
-				snprintf(ptr, be - ptr, ", ");
-				ptr += strlen(ptr);
-			}
-		}
-		break;
-	}
-
 	default:
 		snprintf(buf, be - ptr, "INVALID protoid=%d\n",
-			alg_info->alg_info_protoid);
+			alg_info_esp->ai.alg_info_protoid);
 		ptr += strlen(ptr);	/* ptr not subsequently used */
 		break;
+	}
+}
+
+/* snprint already parsed transform list (alg_info) */
+void alg_info_ike_snprint(char *buf, size_t buflen,
+			  const struct alg_info_ike *alg_info_ike)
+{
+	char *ptr = buf;
+	char *be = buf + buflen;
+
+	passert(buflen > 0);
+
+	const struct ike_info *ike_info;
+	int cnt;
+	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
+		snprintf(ptr, be - ptr,
+			 "%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
+			 strip_prefix(enum_name(&oakley_enc_names, ike_info->ike_ealg),
+				      "OAKLEY_"),
+			 ike_info->ike_ealg,
+			 (int)ike_info->ike_eklen,
+			 strip_prefix(enum_name(&oakley_hash_names, ike_info->ike_halg),
+				      "OAKLEY_"),
+			 ike_info->ike_halg,
+			 (int)ike_info->ike_hklen,
+			 strip_prefix(enum_name(&oakley_group_names, ike_info->ike_modp),
+				      "OAKLEY_GROUP_"),
+			 ike_info->ike_modp
+			);
+		ptr += strlen(ptr);
+		if (cnt > 0) {
+			snprintf(ptr, be - ptr, ", ");
+			ptr += strlen(ptr);
+		}
 	}
 }
