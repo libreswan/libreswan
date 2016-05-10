@@ -38,8 +38,8 @@ east #
 000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)_000-MODP2048(14)
-000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)_160-MODP2048(14)
+000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14)
+000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14)
 000 "westnet-eastnet-aes256":   ESP algorithms wanted: AES(12)_256-SHA1(2)_000
 000 "westnet-eastnet-aes256":   ESP algorithms loaded: AES(12)_256-SHA1(2)_000
 east #

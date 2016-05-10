@@ -81,7 +81,6 @@ struct ike_info {
 	u_int16_t ike_ealg;             /* encryption algorithm - bit 15 set for reserved */
 	u_int8_t ike_halg;              /* hash algorithm */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
-	size_t ike_hklen;               /* how many bits required by hash algo */
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 

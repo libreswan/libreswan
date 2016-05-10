@@ -112,7 +112,7 @@ static int modp_getbyname_ike(const char *const str)
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-			       unsigned ek_bits, int aalg_id, unsigned ak_bits,
+			       unsigned ek_bits, int aalg_id,
 			       unsigned int modp_id)
 {
 	struct ike_info *ike_info = alg_info->ike;
@@ -125,7 +125,6 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		if (ike_info[i].ike_ealg == ealg_id &&
 		    (ek_bits == 0 || ike_info[i].ike_eklen == ek_bits) &&
 		    ike_info[i].ike_halg == aalg_id &&
-		    (ak_bits == 0 || ike_info[i].ike_hklen == ak_bits) &&
 		    ike_info[i].ike_modp == modp_id) {
 			return;
 		}
@@ -138,15 +137,14 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_ealg = ealg_id;
 	ike_info[cnt].ike_eklen = ek_bits;
 	ike_info[cnt].ike_halg = aalg_id;
-	ike_info[cnt].ike_hklen = ak_bits;
 	ike_info[cnt].ike_modp = modp_id;
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
 			       "ealg_id=%d ek_bits=%d "
-			       "aalg_id=%d ak_bits=%d "
+			       "aalg_id=%d "
 			       "modp_id=%d, cnt=%d",
 			       ealg_id, ek_bits,
-			       aalg_id, ak_bits,
+			       aalg_id,
 			       modp_id, alg_info->ai.alg_info_cnt));
 }
 
@@ -169,7 +167,7 @@ static const enum ikev1_hash_attribute default_ike_aalgs[] = {
  */
 static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int ak_bits,
+			     int aalg_id,
 			     int modp_id)
 {
 	if (ealg_id == 0) {
@@ -178,14 +176,14 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 
 		for (i=0; i != elemsof(default_ike_ealgs); i++) {
 			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
-				aalg_id, ak_bits, modp_id);
+				aalg_id, modp_id);
 		}
 	} else {
 		if (aalg_id > 0) {
 			raw_alg_info_ike_add(
 				(struct alg_info_ike *)alg_info,
 				ealg_id, ek_bits,
-				aalg_id, ak_bits,
+				aalg_id,
 				modp_id);
 		} else {
 			int j;
@@ -194,7 +192,7 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 				raw_alg_info_ike_add(
 					(struct alg_info_ike *)alg_info,
 					ealg_id, ek_bits,
-					default_ike_aalgs[j], ak_bits,
+					default_ike_aalgs[j],
 					modp_id);
 			}
 		}
@@ -203,9 +201,12 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int ak_bits,
+			     int aalg_id, int ak_bits UNUSED,
 			     int modp_id)
 {
+	/*
+	 * XXX: Require ak_bits==0?
+	 */
 	if (modp_id == 0) {
 		/* try each default group */
 		int i;
@@ -213,13 +214,13 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 		for (i=0; i != elemsof(default_ike_groups); i++)
 			per_group_alg_info_ike_add(alg_info,
 				     ealg_id, ek_bits,
-				     aalg_id, ak_bits,
+				     aalg_id,
 				     default_ike_groups[i]);
 	} else {
 		/* group determined by caller */
 		per_group_alg_info_ike_add(alg_info,
 			     ealg_id, ek_bits,
-			     aalg_id, ak_bits,
+			     aalg_id,
 			     modp_id);
 	}
 }
@@ -365,13 +366,10 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 	int eklen = ike_info->ike_eklen;
 	if (fix_zero && !eklen)
 		eklen = enc_desc->keydeflen;
-	int aklen = ike_info->ike_hklen;
-	if (fix_zero && !aklen)
-		aklen = hash_desc->hash_digest_len * BITS_PER_BYTE;
 
 	struct esb_buf enc_buf, hash_buf, group_buf;
 	return snprintf(buf, buflen,
-			"%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
+			"%s(%d)_%03d-%s(%d)-%s(%d)",
 			strip_prefix(enum_showb(&oakley_enc_names,
 						ike_info->ike_ealg, &enc_buf),
 				     "OAKLEY_"),
@@ -379,7 +377,7 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 			strip_prefix(enum_showb(&oakley_hash_names,
 						ike_info->ike_halg, &hash_buf),
 				     "OAKLEY_"),
-			ike_info->ike_halg, aklen,
+			ike_info->ike_halg,
 			strip_prefix(enum_showb(&oakley_group_names,
 						ike_info->ike_modp, &group_buf),
 				     "OAKLEY_GROUP_"),

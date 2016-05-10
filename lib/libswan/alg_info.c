@@ -1266,7 +1266,7 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 	int cnt;
 	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
 		snprintf(ptr, be - ptr,
-			 "%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
+			 "%s(%d)_%03d-%s(%d)-%s(%d)",
 			 strip_prefix(enum_name(&oakley_enc_names, ike_info->ike_ealg),
 				      "OAKLEY_"),
 			 ike_info->ike_ealg,
@@ -1274,7 +1274,6 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 			 strip_prefix(enum_name(&oakley_hash_names, ike_info->ike_halg),
 				      "OAKLEY_"),
 			 ike_info->ike_halg,
-			 (int)ike_info->ike_hklen,
 			 strip_prefix(enum_name(&oakley_group_names, ike_info->ike_modp),
 				      "OAKLEY_GROUP_"),
 			 ike_info->ike_modp
