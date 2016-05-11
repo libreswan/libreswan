@@ -201,7 +201,7 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int ak_bits UNUSED,
+			     int aalg_id,
 			     int modp_id)
 {
 	/*

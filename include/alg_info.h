@@ -156,7 +156,7 @@ extern struct alg_info *alg_info_parse_str(
 	void (*parser_init)(struct parser_context *p_ctx),
 	void (*alg_info_add)(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits,
+			int aalg_id,
 			int modp_id),
 	const struct oakley_group_desc *(*lookup_group_f)(u_int16_t group));
 

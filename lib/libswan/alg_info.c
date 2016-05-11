@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -405,7 +405,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
  */
 static void alg_info_esp_add(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits UNUSED,
+			int aalg_id,
 			int modp_id UNUSED)
 {
 	/* Policy: default to AES */
@@ -437,7 +437,7 @@ static void alg_info_esp_add(struct alg_info *alg_info,
  */
 static void alg_info_ah_add(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits UNUSED,
+			int aalg_id,
 			int modp_id UNUSED)
 {
 	/* ah=null is invalid */
@@ -720,7 +720,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			struct alg_info *alg_info,
 			void (*alg_info_add)(struct alg_info *alg_info,
 					int ealg_id, int ek_bits,
-					int aalg_id, int ak_bits,
+					int aalg_id,
 					int modp_id),
 			const struct oakley_group_desc *(*lookup_group)
 			(u_int16_t group))
@@ -971,7 +971,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 	(*alg_info_add)(alg_info,
 			ealg_id, p_ctx->eklen,
-			aalg_id, p_ctx->aklen,
+			aalg_id,
 			modp_id);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
@@ -989,7 +989,7 @@ struct alg_info *alg_info_parse_str(
 	void (*parser_init)(struct parser_context *p_ctx),
 	void (*alg_info_add)(struct alg_info *alg_info,
 		int ealg_id, int ek_bits,
-		int aalg_id, int ak_bits,
+		int aalg_id,
 		int modp_id),
 	const struct oakley_group_desc *(*lookup_group)(u_int16_t group))
 {
@@ -1004,7 +1004,7 @@ struct alg_info *alg_info_parse_str(
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		(*alg_info_add)(alg_info, 0, 0, 0, 0, 0);
+		(*alg_info_add)(alg_info, 0, 0, 0, 0);
 
 	ptr = alg_str;
 	do {
