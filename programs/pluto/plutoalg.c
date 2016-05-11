@@ -229,9 +229,8 @@ static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
 			    const struct esp_info *esp_info)
 {
 	unsigned eklen = esp_info->enckeylen;
-	unsigned aklen = esp_info->authkeylen;
 
-	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
+	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
 			sep,
 			strip_prefix(enum_name(&esp_transformid_names,
 					       esp_info->transid), "ESP_"),
@@ -240,8 +239,7 @@ static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
 							    esp_info->auth),
 						  "AUTH_ALGORITHM_HMAC_"),
 				     "AUTH_ALGORITHM_"),
-			esp_info->auth,
-			aklen);
+			esp_info->auth);
 }
 
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
@@ -315,18 +313,13 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 			continue;
 		}
 
-		int aklen = esp_info->authkeylen;
-		if (aklen == 0)
-			aklen = kernel_alg_esp_auth_keylen(
-				esp_info->auth) * BITS_PER_BYTE;
-
-		int ret = snprintf(ptr, buflen, "%s%s(%d)_%03d",
+		int ret = snprintf(ptr, buflen, "%s%s(%d)",
 			       sep,
 			       strip_prefix(strip_prefix(enum_name(&auth_alg_names,
 								esp_info->auth),
 							"AUTH_ALGORITHM_HMAC_"),
 					"AUTH_ALGORITHM_"),
-			       esp_info->auth, aklen);
+			       esp_info->auth);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
@@ -607,7 +600,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			ESP_AALG_FOR_EACH(aalg_i) {
 				tmp_esp_info.auth =
 					alg_info_esp_sadb2aa(aalg_i);
-				tmp_esp_info.authkeylen = 0;
 				kernel_alg_db_add(ctx_new, &tmp_esp_info,
 						  policy, FALSE);
 			}

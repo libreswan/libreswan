@@ -60,8 +60,8 @@ west #
 000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14)
 000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14)
-000 "westnet-eastnet-aes256":   ESP algorithms wanted: AES(12)_256-SHA1(2)_000
-000 "westnet-eastnet-aes256":   ESP algorithms loaded: AES(12)_256-SHA1(2)_000
+000 "westnet-eastnet-aes256":   ESP algorithms wanted: AES(12)_256-SHA1(2)
+000 "westnet-eastnet-aes256":   ESP algorithms loaded: AES(12)_256-SHA1(2)
 west #
  echo "initdone"
 initdone

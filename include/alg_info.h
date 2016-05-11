@@ -69,7 +69,6 @@ struct esp_info {
 	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
 	u_int16_t auth;         /* AUTH */
 	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
-	u_int32_t authkeylen;   /* keylength for AUTH (bytes) */
 	u_int8_t encryptalg;    /* normally  encryptalg=transid */
 	u_int16_t authalg;	/* normally  authalg=auth+1
 				 * Paul: apparently related to magic at

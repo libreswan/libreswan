@@ -371,7 +371,7 @@ void alg_info_free(struct alg_info *alg_info)
 /* ??? much of this code is the same as raw_alg_info_ike_add (same bugs!) */
 static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				int ealg_id, unsigned ek_bits,
-				int aalg_id, unsigned ak_bits)
+				int aalg_id)
 {
 	struct esp_info *esp_info = alg_info->esp;
 	int cnt = alg_info->ai.alg_info_cnt;
@@ -382,8 +382,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	for (i = 0; i < cnt; i++) {
 		if (esp_info[i].transid == ealg_id &&
 		    (ek_bits == 0 || esp_info[i].enckeylen == ek_bits) &&
-		    esp_info[i].auth == aalg_id &&
-		    (ak_bits == 0 || esp_info[i].authkeylen == ak_bits))
+		    esp_info[i].auth == aalg_id)
 			return;
 	}
 
@@ -394,7 +393,6 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	esp_info[cnt].transid = ealg_id;
 	esp_info[cnt].enckeylen = ek_bits;
 	esp_info[cnt].auth = aalg_id;
-	esp_info[cnt].authkeylen = ak_bits;
 
 	/* sadb values */
 	esp_info[cnt].encryptalg = ealg_id;
@@ -407,7 +405,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
  */
 static void alg_info_esp_add(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits,
+			int aalg_id, int ak_bits UNUSED,
 			int modp_id UNUSED)
 {
 	/* Policy: default to AES */
@@ -421,15 +419,15 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 				aalg_id = 0;
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					ealg_id, ek_bits,
-					aalg_id, ak_bits);
+					aalg_id);
 		} else {
 			/* Policy: default to MD5 and SHA1 */
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					ealg_id, ek_bits,
-					AUTH_ALGORITHM_HMAC_MD5, ak_bits);
+					AUTH_ALGORITHM_HMAC_MD5);
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					ealg_id, ek_bits,
-					AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
+					AUTH_ALGORITHM_HMAC_SHA1);
 		}
 	}
 }
@@ -439,22 +437,22 @@ static void alg_info_esp_add(struct alg_info *alg_info,
  */
 static void alg_info_ah_add(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits,
+			int aalg_id, int ak_bits UNUSED,
 			int modp_id UNUSED)
 {
 	/* ah=null is invalid */
 	if (aalg_id > 0) {
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
-				aalg_id, ak_bits);
+				aalg_id);
 	} else {
 		/* Policy: default to MD5 and SHA1 */
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
-				AUTH_ALGORITHM_HMAC_MD5, ak_bits);
+				AUTH_ALGORITHM_HMAC_MD5);
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
-				AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
+				AUTH_ALGORITHM_HMAC_SHA1);
 	}
 }
 
@@ -1187,7 +1185,7 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)_%03u",
+			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)",
 				strip_prefix(enum_name(&esp_transformid_names,
 						esp_info->transid),
 					"ESP_"),
@@ -1197,8 +1195,7 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 								esp_info->auth),
 							"AUTH_ALGORITHM_HMAC_"),
 						"AUTH_ALGORITHM_"),
-				esp_info->auth,
-				(unsigned)esp_info->authkeylen);
+				esp_info->auth);
 			ptr += strlen(ptr);
 			if (cnt > 0) {
 				snprintf(ptr, be - ptr, ", ");
@@ -1222,13 +1219,12 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-			snprintf(ptr, be - ptr, "%s(%d)_%03u",
+			snprintf(ptr, be - ptr, "%s(%d)",
 				strip_prefix(strip_prefix(enum_name(&auth_alg_names,
 								esp_info->auth),
 						"AUTH_ALGORITHM_HMAC_"),
 					"AUTH_ALGORITHM_"),
-				esp_info->auth,
-				(unsigned)esp_info->authkeylen);
+				esp_info->auth);
 			ptr += strlen(ptr);
 			if (cnt > 0) {
 				snprintf(ptr, be - ptr, ", ");

@@ -1832,51 +1832,51 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* ??? table of non-registered algorithms? */
 		static const struct esp_info esp_info[] = {
 			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_MD5,
-			  0, HMAC_MD5_KEY_LEN,
+			  0,
 			  SADB_EALG_NULL, SADB_AALG_MD5HMAC },
 			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
-			  0, HMAC_SHA1_KEY_LEN,
+			  0,
 			  SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
 #if 0
 			{ FALSE, ESP_DES, AUTH_ALGORITHM_NONE,
-			  DES_CBC_BLOCK_SIZE, 0,
+			  DES_CBC_BLOCK_SIZE,
 			  SADB_EALG_DESCBC, SADB_AALG_NONE },
 			{ FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_MD5,
-			  DES_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
+			  DES_CBC_BLOCK_SIZE,
 			  SADB_EALG_DESCBC, SADB_AALG_MD5HMAC },
 			{ FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_SHA1,
 			  DES_CBC_BLOCK_SIZE,
-			  HMAC_SHA1_KEY_LEN, SADB_EALG_DESCBC,
+			  SADB_EALG_DESCBC,
 			  SADB_AALG_SHA1HMAC },
 #endif
 			{ FALSE, ESP_3DES, AUTH_ALGORITHM_NONE,
-			  DES_CBC_BLOCK_SIZE * 3, 0,
+			  DES_CBC_BLOCK_SIZE * 3,
 			  SADB_EALG_3DESCBC, SADB_AALG_NONE },
 			{ FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_MD5,
-			  DES_CBC_BLOCK_SIZE * 3, HMAC_MD5_KEY_LEN,
+			  DES_CBC_BLOCK_SIZE * 3,
 			  SADB_EALG_3DESCBC, SADB_AALG_MD5HMAC },
 			{ FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_SHA1,
-			  DES_CBC_BLOCK_SIZE * 3, HMAC_SHA1_KEY_LEN,
+			  DES_CBC_BLOCK_SIZE * 3,
 			  SADB_EALG_3DESCBC, SADB_AALG_SHA1HMAC },
 
 			{ FALSE, ESP_AES, AUTH_ALGORITHM_NONE,
-			  AES_CBC_BLOCK_SIZE, 0,
+			  AES_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_AESCBC, SADB_AALG_NONE },
 			{ FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_MD5,
-			  AES_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
+			  AES_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_AESCBC, SADB_AALG_MD5HMAC },
 			{ FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_SHA1,
-			  AES_CBC_BLOCK_SIZE, HMAC_SHA1_KEY_LEN,
+			  AES_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_AESCBC, SADB_AALG_SHA1HMAC },
 
 			{ FALSE, ESP_CAST, AUTH_ALGORITHM_NONE,
-			  CAST_CBC_BLOCK_SIZE, 0,
+			  CAST_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_CASTCBC, SADB_AALG_NONE },
 			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_MD5,
-			  CAST_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
+			  CAST_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_CASTCBC, SADB_AALG_MD5HMAC },
 			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_SHA1,
-			  CAST_CBC_BLOCK_SIZE, HMAC_SHA1_KEY_LEN,
+			  CAST_CBC_BLOCK_SIZE,
 			  SADB_X_EALG_CASTCBC, SADB_AALG_SHA1HMAC },
 		};
 
@@ -1991,11 +1991,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
+		int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
 		DBG(DBG_KERNEL, DBG_log(
 			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%" PRIu32,
-			st->st_esp.keymat_len, enc_key_len, ei->authkeylen));
+			st->st_esp.keymat_len, enc_key_len, authkeylen));
 
-		passert(st->st_esp.keymat_len == enc_key_len + ei->authkeylen);
+		passert(st->st_esp.keymat_len == enc_key_len + authkeylen);
 
 		set_text_said(text_esp, &dst.addr, esp_spi, SA_ESP);
 
@@ -2033,7 +2034,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->encalg = ei->encryptalg;
 
 		said_next->authkey = esp_dst_keymat + enc_key_len;
-		said_next->authkeylen = ei->authkeylen;
+		said_next->authkeylen = authkeylen;
 		/* said_next->authkey = esp_dst_keymat + ei->enckeylen; */
 		/* said_next->enckeylen = ei->enckeylen; */
 
@@ -2110,77 +2111,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
 		u_char *ah_dst_keymat =
 			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
-		u_int16_t key_len;
 
-		unsigned char authalg;
 
-		switch (st->st_ah.attrs.transattrs.integ_hash) {
-		case AUTH_ALGORITHM_HMAC_MD5:
-			authalg = SADB_AALG_MD5HMAC;
-			key_len = HMAC_MD5_KEY_LEN;
-			break;
-
-		case AUTH_ALGORITHM_HMAC_SHA1:
-			authalg = SADB_AALG_SHA1HMAC;
-			key_len = HMAC_SHA1_KEY_LEN;
-			break;
-
-		/* RFC 4868 */
-		case AUTH_ALGORITHM_HMAC_SHA2_256:
-			authalg = SADB_X_AALG_SHA2_256HMAC;
-			key_len = BYTES_FOR_BITS(256);
-			break;
-
-		/* RFC 4868 */
-		case AUTH_ALGORITHM_HMAC_SHA2_384:
-			authalg = SADB_X_AALG_SHA2_384HMAC;
-			key_len = BYTES_FOR_BITS(384);
-			break;
-
-		/* RFC 4868 */
-		case AUTH_ALGORITHM_HMAC_SHA2_512:
-			authalg = SADB_X_AALG_SHA2_512HMAC;
-			key_len = BYTES_FOR_BITS(512);
-			break;
-
-		/* RFC 2857 Section 3 */
-		case AUTH_ALGORITHM_HMAC_RIPEMD:
-			authalg = SADB_X_AALG_RIPEMD160HMAC;
-			key_len = BYTES_FOR_BITS(160);
-			break;
-
-		/* RFC 3566 Section 4.1 */
-		case AUTH_ALGORITHM_AES_XCBC:
-			authalg = SADB_X_AALG_AES_XCBC_MAC;
-			key_len = BYTES_FOR_BITS(128);
-			break;
-
-		/* RFC 4543 Section 5.3 */
-		case AUTH_ALGORITHM_AES_128_GMAC:
-			authalg = SADB_X_AALG_AH_AES_128_GMAC;
-			key_len = BYTES_FOR_BITS(128);
-			break;
-
-		/* RFC 4543 Section 5.3 */
-		case AUTH_ALGORITHM_AES_192_GMAC:
-			authalg = SADB_X_AALG_AH_AES_192_GMAC;
-			key_len = BYTES_FOR_BITS(192);
-			break;
-
-		/* RFC 4543 Section 5.3 */
-		case AUTH_ALGORITHM_AES_256_GMAC:
-			authalg = SADB_X_AALG_AH_AES_256_GMAC;
-			key_len = BYTES_FOR_BITS(256);
-			break;
-
-		case AUTH_ALGORITHM_NULL_KAME: /* Should we support this? */
-		case AUTH_ALGORITHM_SIG_RSA: /* RFC 4359 */
-		case AUTH_ALGORITHM_KPDK:
-		case AUTH_ALGORITHM_DES_MAC:
-		default:
-			loglog(RC_LOG_SERIOUS, "%s not implemented",
-			       enum_show(&auth_alg_names,
-					 st->st_ah.attrs.transattrs.integ_hash));
+	        /*
+		 * INTEG_HASH has type oakley_hash_t (a.k.a., "enum
+		 * ikev1_hash_attribute") yet here it is being treated
+		 * as ae "enum ikev1_auth_attribute".
+		 */
+		int authalg;
+		int key_len = ikev1_auth_kernel_attrs(st->st_ah.attrs.transattrs.integ_hash, &authalg);
+		if (authalg < 0) {
 			goto fail;
 		}
 
@@ -3518,3 +3458,89 @@ void expire_bare_shunts()
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 }
 
+int
+ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
+{
+	int authalg;
+	int key_len;
+
+	switch (auth) {
+
+	case AUTH_ALGORITHM_NONE:
+		authalg = 0;
+		key_len = 0;
+		break;
+
+	case AUTH_ALGORITHM_HMAC_MD5:
+		authalg = SADB_AALG_MD5HMAC;
+		key_len = HMAC_MD5_KEY_LEN;
+		break;
+
+	case AUTH_ALGORITHM_HMAC_SHA1:
+		authalg = SADB_AALG_SHA1HMAC;
+		key_len = HMAC_SHA1_KEY_LEN;
+		break;
+
+		/* RFC 4868 */
+	case AUTH_ALGORITHM_HMAC_SHA2_256:
+		authalg = SADB_X_AALG_SHA2_256HMAC;
+		key_len = BYTES_FOR_BITS(256);
+		break;
+
+		/* RFC 4868 */
+	case AUTH_ALGORITHM_HMAC_SHA2_384:
+		authalg = SADB_X_AALG_SHA2_384HMAC;
+		key_len = BYTES_FOR_BITS(384);
+		break;
+
+		/* RFC 4868 */
+	case AUTH_ALGORITHM_HMAC_SHA2_512:
+		authalg = SADB_X_AALG_SHA2_512HMAC;
+		key_len = BYTES_FOR_BITS(512);
+		break;
+
+		/* RFC 2857 Section 3 */
+	case AUTH_ALGORITHM_HMAC_RIPEMD:
+		authalg = SADB_X_AALG_RIPEMD160HMAC;
+		key_len = BYTES_FOR_BITS(160);
+		break;
+
+		/* RFC 3566 Section 4.1 */
+	case AUTH_ALGORITHM_AES_XCBC:
+		authalg = SADB_X_AALG_AES_XCBC_MAC;
+		key_len = BYTES_FOR_BITS(128);
+		break;
+
+		/* RFC 4543 Section 5.3 */
+	case AUTH_ALGORITHM_AES_128_GMAC:
+		authalg = SADB_X_AALG_AH_AES_128_GMAC;
+		key_len = BYTES_FOR_BITS(128);
+		break;
+
+		/* RFC 4543 Section 5.3 */
+	case AUTH_ALGORITHM_AES_192_GMAC:
+		authalg = SADB_X_AALG_AH_AES_192_GMAC;
+		key_len = BYTES_FOR_BITS(192);
+		break;
+
+		/* RFC 4543 Section 5.3 */
+	case AUTH_ALGORITHM_AES_256_GMAC:
+		authalg = SADB_X_AALG_AH_AES_256_GMAC;
+		key_len = BYTES_FOR_BITS(256);
+		break;
+
+	case AUTH_ALGORITHM_NULL_KAME: /* Should we support this? */
+	case AUTH_ALGORITHM_SIG_RSA: /* RFC 4359 */
+	case AUTH_ALGORITHM_KPDK:
+	case AUTH_ALGORITHM_DES_MAC:
+	default:
+		loglog(RC_LOG_SERIOUS, "%s not implemented",
+		       enum_show(&auth_alg_names, auth));
+		key_len = 0;
+		authalg = -1;
+	}
+
+	if (alg != NULL)
+		*alg = authalg;
+	return key_len;
+}

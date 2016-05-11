@@ -444,5 +444,7 @@ extern bool raw_eroute(const ip_address *this_host,
 #endif
 		       );
 
+int ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg);
+
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

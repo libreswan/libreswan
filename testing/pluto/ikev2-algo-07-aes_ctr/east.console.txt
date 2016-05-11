@@ -114,8 +114,8 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CTR(13)_128-SHA1(2)-MODP2048(14)
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  AES_CTR(13)_128-SHA1(2)-MODP2048(14)
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES_CTR(13)_256-SHA1(2)_000
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES_CTR(13)_256-SHA1(2)_000
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES_CTR(13)_256-SHA1(2)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES_CTR(13)_256-SHA1(2)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
