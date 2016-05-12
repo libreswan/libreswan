@@ -297,8 +297,10 @@ class TestResult:
                     with open(expected_sanitized_console_output_file) as f:
                         expected_sanitized_console_output = f.read()
                     diff, whitespace = fuzzy_diff(test.logger,
-                                                  domain + ".console.txt", expected_sanitized_console_output,
-                                                  "OUTPUT/" + domain + ".console.txt", sanitized_console_output,
+                                                  "MASTER/" + test.name + "/" + domain + ".console.txt",
+                                                  expected_sanitized_console_output,
+                                                  "OUTPUT/" + test.name + "/" + domain + ".console.txt",
+                                                  sanitized_console_output,
                                                   strip_spaces=strip_spaces,
                                                   strip_blank_lines=strip_blank_lines)
                 if update_diff:
@@ -395,8 +397,10 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             continue
 
         baseline_diff, baseline_whitespace = fuzzy_diff(test.logger,
-                                                        "BASELINE/" + domain + ".console.txt", baseline_result.sanitized_console_output[domain],
-                                                        "OUTPUT/" + domain + ".console.txt", test_result.sanitized_console_output[domain],
+                                                        "BASELINE/" + test.name + "/" + domain + ".console.txt",
+                                                        baseline_result.sanitized_console_output[domain],
+                                                        "OUTPUT/" + test.name + "/" + domain + ".console.txt",
+                                                        test_result.sanitized_console_output[domain],
                                                         strip_spaces=strip_spaces,
                                                         strip_blank_lines=strip_blank_lines)
         if baseline_diff:
