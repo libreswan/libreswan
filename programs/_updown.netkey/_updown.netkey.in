@@ -130,7 +130,11 @@ export LC_ALL
 #		is the local IPsec kernel stack used, eg KLIPS, NETKEY,
 #		MAST, NOSTACK
 #
-#	PLUTO_NM_CONFIGURED
+#	PLUTO_IS_PEER_CISCO=0|1
+#		remote server type is cisco. Add support for cisco extensions
+#		when used with xauth.
+#
+#	PLUTO_NM_CONFIGURED=0|1
 #		is NetworkManager used for resolv.conf update
 #
 #	PLUTO_SA_REQID
