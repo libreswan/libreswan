@@ -6,6 +6,7 @@
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2003-2016 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2011-2016 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,8 +21,8 @@
 # CAUTION:  Installing a new version of Libreswan will install a new
 # copy of this script, wiping out any custom changes you make.  If
 # you need changes, make a copy of this under another name, and customize
-# that, and use the (left/right)updown parameters in ipsec.conf to make
-# Libreswan use yours instead of this default one.
+# that, and use the (left/right)updown= parameters in ipsec.conf to make
+# Libreswan use your modified updown script instead of this default one.
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
@@ -154,6 +155,16 @@ export LC_ALL
 #	CONNMARK
 #		If mark= is set on the connection, this variable will be
 #		set with the value. It can be used for iptables or VTI.
+#
+#	VTI_IFAC=iface
+#		Name of VTI interface to create
+#
+#	VTI_ROUTING=yes|no
+#		Whether or not to perform ip rule and ip route commands
+#		covering the IPsec SA address ranges to route those packets
+#		into the VTI_IFACE interface. This should be enabled unless
+#		the IPsec SA covers 0.0.0.0/0 <-> 0.0.0.0/0
+#
 
 # rpm based systems
 if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
@@ -202,7 +213,6 @@ uproute() {
     doroute replace
     ip route flush cache
 }
-
 
 downroute() {
     doroute del
@@ -332,7 +342,9 @@ addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
-
+	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
+	    PLUTO_INTERFACE="${VTI_IFACE}"
+	fi
 	if [ 0${PLUTO_IS_PEER_CISCO} -eq 0 ]; then
 	    it="ip addr add ${PLUTO_MY_SOURCEIP}/32 dev ${PLUTO_INTERFACE%:*}"
 	else
@@ -436,6 +448,10 @@ doroute() {
 	peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} | \
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     fi
+   if [ -n "${VTI_IFACE}" ]; then
+	addsource
+	peer_interface="${VTI_IFACE}"
+    fi
     if [ -z "${peer_interface}" ]; then
 	peer_interface=${PLUTO_INTERFACE}
     fi
@@ -507,15 +523,81 @@ delnflog() {
     fi
 }
 
+addvtiiface() {
+    if [ -n "${VTI_IFACE}" ]; then
+	if [ -z "${CONNMARK_IN}" -o -z "${CONNMARK_OUT}" ]; then
+	    echo "vti-interface option ignored because no mark was configured"
+	else
+	    if [ ! -d "/proc/sys/net/ipv4/conf/${VTI_IFACE}" ]; then
+		echo "creating vti interface"
+		vtipeer="${PLUTO_PEER}"
+		if [ "${PLUTO_CONN_KIND}" = CK_INSTANCE ]; then
+		    vtipeer="0.0.0.0"
+		fi
+		ip tunnel add ${VTI_IFACE} mode vti local ${PLUTO_ME} \
+		    remote ${vtipeer} okey ${CONNMARK_OUT%/*} \
+		    ikey ${CONNMARK_IN%/*}
+		ip link set ${VTI_IFACE} up
+		sysctl -w net.ipv4.conf.${VTI_IFACE}.disable_policy=1
+		sysctl -w net.ipv4.conf.${VTI_IFACE}.rp_filter=0
+		sysctl -w net.ipv4.conf.${VTI_IFACE}.forwarding=1
+	    else
+		echo "vti interface \"${VTI_IFACE}\" already exists"
+	    fi
+	fi
+    fi
+}
+
+addvti() {
+    echo "addvti called"
+    if [ -n "${VTI_IFACE}" ]; then
+	if [ -z "${CONNMARK_IN}" -o -z "${CONNMARK_OUT}" ]; then
+	    echo "vti-interface option ignored because no mark was configured"
+	else
+	    if [ "${VTI_ROUTING}" = yes ]; then
+		# Tuomo should improve this with using ${PLUTO_MY_CLIENT_NET}
+		echo "setting up vti routing"
+		r=add
+		ip route list | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
+		if [ "${r}" = change ]; then
+		    # resolve LAN conflict by forcing host route for default gw
+		    gw="$(ip ro li | grep ^default | awk '{ print $3;}')"
+		    gwdev="$(ip ro li | grep ^default | awk '{ print $5;}')"
+		    echo "ip route add ${gw} dev ${gwdev}"
+		    ip route add ${gw} dev ${gwdev} >/dev/null ||:
+		fi
+		srcip=""
+		if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
+		    srcip=" src ${PLUTO_MY_SOURCEIP}"
+		fi
+		echo "ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}"
+		ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
+		echo "done ip route"
+	    fi
+	fi
+    fi
+}
+
+delvti() {
+    # If multiple conns use the VTI interface name, how can we tell when to
+    # delete the interface?
+    # So for now, only delete the routes into it. Also needs ip rule support
+    if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes -a \
+	-d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]
+    then
+	ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
+	    src ${PLUTO_MY_SOURCEIP} ||:
+    fi
+}
 
 # the big choice
 case "${PLUTO_VERB}" in
     prepare-host|prepare-client)
-	# Delete possibly-existing route (preliminary to adding a route)
-	# Not used for NETKEY
+	addvtiiface
 	;;
     route-host|route-client)
 	# connection to me or my client subnet being routed
+	addvti
 	uproute
 	addnflog
 	;;
@@ -531,6 +613,7 @@ case "${PLUTO_VERB}" in
 	# connection to me going down
 	downrule
 	delnflog
+	delvti
 	# If you are doing a custom version, firewall commands go here.
 	;;
     up-client)
@@ -543,6 +626,7 @@ case "${PLUTO_VERB}" in
 	# connection to my client subnet going down
 	downrule
 	delnflog
+	delvti
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
 	notifyNM disconnect
