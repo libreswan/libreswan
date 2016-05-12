@@ -35,8 +35,6 @@ enum parser_state_esp {
 	ST_EK_END,
 	ST_AA,          /* auth algo */
 	ST_AA_END,
-	ST_AK,          /* auth. key length */
-	ST_AK_END,
 	ST_MODP,        /* modp spec */
 	ST_END,
 	ST_EOF,
@@ -57,7 +55,6 @@ struct parser_context {
 	char *aalg_str;
 	char *modp_str;
 	int eklen;
-	int aklen;
 	bool ealg_permit;
 	bool aalg_permit;
 	int ch;	/* character that stopped parsing */

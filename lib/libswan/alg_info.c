@@ -505,7 +505,6 @@ static err_t parser_machine(struct parser_context *p_ctx)
 		case ST_EA:
 		case ST_EK:
 		case ST_AA:
-		case ST_AK:
 		case ST_MODP:
 		{
 			enum parser_state_esp next_state = 0;
@@ -605,14 +604,9 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "Non alpha char found after enc keylen end separator";
 
 		case ST_AA:
-			if (ch == '-') {
+			if (ch == ';' || ch == '-') {
 				*(p_ctx->aalg_str++) = 0;
 				parser_set_state(p_ctx, ST_AA_END);
-				break;
-			}
-			if (ch == ';') {
-				*(p_ctx->aalg_str++) = 0;
-				parser_set_state(p_ctx, ST_AK_END);
 				break;
 			}
 			if (isalnum(ch) || ch == '_') {
@@ -622,10 +616,6 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "Non alphanum or valid separator found in auth string";
 
 		case ST_AA_END:
-			if (isdigit(ch)) {
-				parser_set_state(p_ctx, ST_AK);
-				continue;
-			}
 			/*
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
@@ -634,31 +624,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
-			return "Non initial digit found for auth keylen";
-
-		case ST_AK:
-			if (ch == '-' || ch == ';') {
-				parser_set_state(p_ctx, ST_AK_END);
-				break;
-			}
-			if (isdigit(ch)) {
-				if (p_ctx->aklen >= INT_MAX / 10)
-					return "auth keylen WAY too big";
-				p_ctx->aklen = p_ctx->aklen * 10 + (ch - '0');
-				break;
-			}
-			return "Non digit found for auth keylen";
-
-		case ST_AK_END:
-			/*
-			 * Only allow modpXXXX string if we have
-			 * a modp_getbyname method
-			 */
-			if (p_ctx->modp_getbyname != NULL && isalpha(ch)) {
-				parser_set_state(p_ctx, ST_MODP);
-				continue;
-			}
-			return "Non alpha char found after auth keylen";
+			return "Invalid modulus";
 
 		case ST_MODP:
 			if (isalnum(ch)) {
@@ -949,8 +915,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 					return "Encryption and authentication cannot both be null";
 				break;
 			default:
-				if (p_ctx->aklen != 0)
-					return "authentication algorithm does not take a variable key size";
 				break;
 			}
 		}
