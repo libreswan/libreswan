@@ -56,6 +56,7 @@
 #include "crypt_symkey.h"
 #include "crypt_dbg.h"
 #include "ikev2_prf.h"
+#include "kernel.h"
 
 void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
@@ -82,16 +83,18 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	passert(ei != NULL);
 	ipi->attrs.transattrs.ei = ei;
 
+	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
+	int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
 	switch (ei->transid) {
 	case IKEv2_ENCR_reserved:
 		/* AH */
-		ipi->keymat_len = ei->authkeylen;
+		ipi->keymat_len = authkeylen;
 		break;
 
 	case IKEv2_ENCR_AES_CTR:
-		ipi->keymat_len = ei->enckeylen + ei->authkeylen + AES_CTR_SALT_BYTES;;
+		ipi->keymat_len = ei->enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
 		break;
 
 	case IKEv2_ENCR_AES_GCM_8:
@@ -110,14 +113,14 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 
 	default:
 		/* ordinary ESP */
-		ipi->keymat_len = ei->enckeylen + ei->authkeylen;
+		ipi->keymat_len = ei->enckeylen + authkeylen;
 		break;
 	}
 
 	DBG(DBG_CONTROL,
 		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%" PRIu32 ", keymat_len=%" PRIu16,
 			ei->enckeylen,
-			ei->authkeylen,
+			authkeylen,
 			ipi->keymat_len));
 
 	/*

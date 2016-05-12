@@ -109,8 +109,8 @@ east #
 000 "westnet-eastnet-esp-3des-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)_000
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms loaded: 3DES(3)_000-SHA1(2)_000
+000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)
+000 "westnet-eastnet-esp-3des-alg":   ESP algorithms loaded: 3DES(3)_000-SHA1(2)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

@@ -1369,9 +1369,8 @@ void add_connection(const struct whack_message *wm)
 				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
-					alg_info_snprint(buf, sizeof(buf),
-							(struct alg_info *)c->
-							alg_info_esp);
+					alg_info_esp_snprint(buf, sizeof(buf),
+							     c->alg_info_esp);
 				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
@@ -1398,9 +1397,8 @@ void add_connection(const struct whack_message *wm)
 
 			DBG(DBG_CRYPT | DBG_CONTROL, {
 				char buf[256]; /* XXX: fix magic value */
-				alg_info_snprint(buf, sizeof(buf),
-						(struct alg_info *)c->
-						alg_info_ike);
+				alg_info_ike_snprint(buf, sizeof(buf),
+						     c->alg_info_ike);
 				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
 			});

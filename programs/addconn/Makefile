@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} ${EFENCE} ${NSSLIBS}
+PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} ${EFENCE} $(NSS_LDFLAGS)
 
 PROGRAM=addconn
 
@@ -25,9 +25,7 @@ else
 include ../../mk/program.mk
 endif
 
-ifeq ($(USE_DNSSEC),true)
-PROGLIBS+=-lunbound
-endif
+PROGLIBS+=$(UNBOUND_LDFLAGS)
 
 TAGS:	$(DISTSRC)
 	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]

@@ -35,8 +35,6 @@ enum parser_state_esp {
 	ST_EK_END,
 	ST_AA,          /* auth algo */
 	ST_AA_END,
-	ST_AK,          /* auth. key length */
-	ST_AK_END,
 	ST_MODP,        /* modp spec */
 	ST_END,
 	ST_EOF,
@@ -57,7 +55,6 @@ struct parser_context {
 	char *aalg_str;
 	char *modp_str;
 	int eklen;
-	int aklen;
 	bool ealg_permit;
 	bool aalg_permit;
 	int ch;	/* character that stopped parsing */
@@ -69,7 +66,6 @@ struct esp_info {
 	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
 	u_int16_t auth;         /* AUTH */
 	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
-	u_int32_t authkeylen;   /* keylength for AUTH (bytes) */
 	u_int8_t encryptalg;    /* normally  encryptalg=transid */
 	u_int16_t authalg;	/* normally  authalg=auth+1
 				 * Paul: apparently related to magic at
@@ -81,7 +77,6 @@ struct ike_info {
 	u_int16_t ike_ealg;             /* encryption algorithm - bit 15 set for reserved */
 	u_int8_t ike_halg;              /* hash algorithm */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
-	size_t ike_hklen;               /* how many bits required by hash algo */
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
@@ -119,8 +114,10 @@ extern struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 						  char *err_buf, size_t err_buf_len);
 
 extern int alg_info_parse(const char *str);
-extern void alg_info_snprint(char *buf, size_t buflen,
-		     const struct alg_info *alg_info);
+void alg_info_ike_snprint(char *buf, size_t buflen,
+			  const struct alg_info_ike *alg_info_ike);
+void alg_info_esp_snprint(char *buf, size_t buflen,
+			  const struct alg_info_esp *alg_info_esp);
 
 extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
@@ -156,7 +153,7 @@ extern struct alg_info *alg_info_parse_str(
 	void (*parser_init)(struct parser_context *p_ctx),
 	void (*alg_info_add)(struct alg_info *alg_info,
 			int ealg_id, int ek_bits,
-			int aalg_id, int ak_bits,
+			int aalg_id,
 			int modp_id),
 	const struct oakley_group_desc *(*lookup_group_f)(u_int16_t group));
 

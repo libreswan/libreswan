@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aes256
-003 phase2alg string error: authentication algorithm does not take a variable key size, enc_alg="aes"(256), auth_alg="sha2_256", modp=""
+003 phase2alg string error: Invalid modulus, just after "aes256-sha2_256-" (old_state=ST_AA_END)
 west #
  echo "initdone"
 initdone

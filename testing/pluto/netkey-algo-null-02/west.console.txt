@@ -133,8 +133,8 @@ west #
 000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-esp-null-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-esp-null-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-esp-null-alg":   ESP algorithms wanted: NULL(11)_000-SHA1(2)_000
-000 "westnet-eastnet-esp-null-alg":   ESP algorithms loaded: NULL(11)_000-SHA1(2)_000
+000 "westnet-eastnet-esp-null-alg":   ESP algorithms wanted: NULL(11)_000-SHA1(2)
+000 "westnet-eastnet-esp-null-alg":   ESP algorithms loaded: NULL(11)_000-SHA1(2)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

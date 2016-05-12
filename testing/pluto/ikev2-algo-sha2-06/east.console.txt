@@ -112,10 +112,10 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_512(6)_000-MODP1536(5)
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  AES_CBC(7)_256-SHA2_512(6)_512-MODP1536(5)
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_256-SHA2_512(7)_000
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)_000
+000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_512(6)-MODP1536(5)
+000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  AES_CBC(7)_256-SHA2_512(6)-MODP1536(5)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_256-SHA2_512(7)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

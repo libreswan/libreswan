@@ -22,8 +22,8 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
 000 "westnet-eastnet-ipv4-psk-ikev1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms wanted: 3DES(3)_000-SHA2_256(5)_000
-000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms loaded: 3DES(3)_000-SHA2_256(5)_000
+000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms wanted: 3DES(3)_000-SHA2_256(5)
+000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms loaded: 3DES(3)_000-SHA2_256(5)
 east #
  echo "initdone"
 initdone
