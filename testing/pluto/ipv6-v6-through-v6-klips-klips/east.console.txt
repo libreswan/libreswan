@@ -107,7 +107,8 @@ east #
 000 "westnet-eastnet-6in6":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-6in6":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "westnet-eastnet-6in6":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "westnet-eastnet-6in6":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-6in6":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0

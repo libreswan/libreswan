@@ -44,7 +44,8 @@ road #
 000 "v6-tunnel-east-road":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "v6-tunnel-east-road":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "v6-tunnel-east-road":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "v6-tunnel-east-road":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "v6-tunnel-east-road":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
+000 "v6-tunnel-east-road":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "v6-tunnel-east-road":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "v6-tunnel-east-road":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 road #

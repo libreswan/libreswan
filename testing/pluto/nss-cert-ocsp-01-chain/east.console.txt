@@ -21,7 +21,8 @@ east #
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
