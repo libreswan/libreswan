@@ -110,8 +110,8 @@ ipsec auto --status
 000 "road-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-eastnet-nonat":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-DH24(24)
 000 "road-eastnet-nonat":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)-DH24(24)
-000 "road-eastnet-nonat":   ESP algorithms wanted: AES(12)_256-SHA2_512(7)_000; pfsgroup=MODP3072(15)
-000 "road-eastnet-nonat":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)_000
+000 "road-eastnet-nonat":   ESP algorithms wanted: AES(12)_256-SHA2_512(7); pfsgroup=MODP3072(15)
+000 "road-eastnet-nonat":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
