@@ -117,13 +117,13 @@ def main():
                     if old_result.passed:
                         logger.info("%s: passed", test_prefix)
                         test_stats.add(test, "skipped")
-                        result_stats.add_skip(old_result)
+                        result_stats.add_skipped(old_result)
                         continue
                     if args.retry == 0:
                         logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
                                     result, test.output_directory)
                         test_stats.add(test, "skipped")
-                        result_stats.add_skip(old_result)
+                        result_stats.add_skipped(old_result)
                         continue
                     test_stats.add(test, "retry")
 
