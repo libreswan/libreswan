@@ -212,7 +212,7 @@ ipsec status
 000 "block": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 000 "block":     oriented; my_ip=unset; their_ip=unset
 000 "block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "block":   labeled_ipsec:no;
 000 "block":   policy_label:unset;
 000 "block":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -226,7 +226,7 @@ ipsec status
 000 "block#192.0.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "block#192.0.2.0/24":     oriented; my_ip=unset; their_ip=unset
 000 "block#192.0.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "block#192.0.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "block#192.0.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "block#192.0.2.0/24":   labeled_ipsec:no;
 000 "block#192.0.2.0/24":   policy_label:unset;
 000 "block#192.0.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -240,7 +240,7 @@ ipsec status
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 000 "clear":     oriented; my_ip=unset; their_ip=unset
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear":   labeled_ipsec:no;
 000 "clear":   policy_label:unset;
 000 "clear":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -254,7 +254,7 @@ ipsec status
 000 "clear#192.1.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.0/24":   labeled_ipsec:no;
 000 "clear#192.1.2.0/24":   policy_label:unset;
 000 "clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -268,7 +268,7 @@ ipsec status
 000 "clear#192.1.2.129/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.129/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.2.129/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear#192.1.2.129/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear#192.1.2.129/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.129/32":   labeled_ipsec:no;
 000 "clear#192.1.2.129/32":   policy_label:unset;
 000 "clear#192.1.2.129/32":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -282,7 +282,7 @@ ipsec status
 000 "clear#192.1.2.130/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.130/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.2.130/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear#192.1.2.130/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear#192.1.2.130/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.130/32":   labeled_ipsec:no;
 000 "clear#192.1.2.130/32":   policy_label:unset;
 000 "clear#192.1.2.130/32":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -296,7 +296,7 @@ ipsec status
 000 "clear#192.1.2.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.254/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.254/32":   labeled_ipsec:no;
 000 "clear#192.1.2.254/32":   policy_label:unset;
 000 "clear#192.1.2.254/32":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -310,7 +310,7 @@ ipsec status
 000 "clear-or-private": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear-or-private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "clear-or-private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear-or-private":   labeled_ipsec:no;
 000 "clear-or-private":   policy_label:unset;
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 3600s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
@@ -324,7 +324,7 @@ ipsec status
 000 "packetdefault": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunistic[ID_NULL]; prospective erouted; eroute owner: #0
 000 "packetdefault":     oriented; my_ip=unset; their_ip=unset
 000 "packetdefault":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "packetdefault":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "packetdefault":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "packetdefault":   labeled_ipsec:no;
 000 "packetdefault":   policy_label:unset;
 000 "packetdefault":   ike_life: 3600s; ipsec_life: 3600s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
@@ -338,7 +338,7 @@ ipsec status
 000 "packetdefault"[1]: 192.1.3.209[ID_NULL]---192.1.3.254...192.1.2.23[ID_NULL]; erouted; eroute owner: #2
 000 "packetdefault"[1]:     oriented; my_ip=unset; their_ip=unset
 000 "packetdefault"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "packetdefault"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "packetdefault"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "packetdefault"[1]:   labeled_ipsec:no;
 000 "packetdefault"[1]:   policy_label:unset;
 000 "packetdefault"[1]:   ike_life: 3600s; ipsec_life: 3600s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
@@ -354,7 +354,7 @@ ipsec status
 000 "private": 192.1.3.209[%myid]---192.1.3.254...%opportunisticgroup; unrouted; eroute owner: #0
 000 "private":     oriented; my_ip=unset; their_ip=unset
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "private":   labeled_ipsec:no;
 000 "private":   policy_label:unset;
 000 "private":   ike_life: 3600s; ipsec_life: 3600s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
@@ -368,7 +368,7 @@ ipsec status
 000 "private-or-clear": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "private-or-clear":   labeled_ipsec:no;
 000 "private-or-clear":   policy_label:unset;
 000 "private-or-clear":   ike_life: 3600s; ipsec_life: 3600s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3;
