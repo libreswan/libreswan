@@ -992,7 +992,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret;
 
-	if (c->pool != NULL) {
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
 		if (ret != STF_OK)
 			return ret;
@@ -1208,9 +1208,18 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 	if (c->spd.this.cat) {
 		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
 			ipstr(&ip, &ip_str)));
-		c->spd.this.client.addr = ip;
-		c->spd.this.client.maskbits = 32; /* export it as value */
-		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+		if (sameaddr (&c->spd.this.client.addr, &ip)) {
+			/* The address we received is same as this side
+			 * should we also check the host_srcip */
+			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received NTERNAL_IP4_ADDRESS which is same as this.client.addr %s. Will not add CAT iptable rules",
+				st->st_serialno, c->name, c->instance_serial,
+				ipstr(&ip, &ip_str)));
+		} else {
+			c->spd.this.client.addr = ip;
+			c->spd.this.client.maskbits = 32;
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+			c->spd.this.has_cat = TRUE; /* create iptable entry */
+		}
 	} else {
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */

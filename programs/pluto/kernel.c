@@ -446,7 +446,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			c->nflog_group);
 	}
 
-	if (!sr->this.cat)
+	if (!sr->this.has_cat)
 		catstr[0] = '\0';
 
 	connmarkstr[0] = '\0';
@@ -1406,7 +1406,7 @@ bool eroute_connection(const struct spd_route *sr,
 	if (sa_proto == SA_INT)
 		peer = aftoinfo(addrtypeof(peer))->any;
 
-	if (sr->this.cat) {
+	if (sr->this.has_cat) {
 		addrtosubnet(&sr->this.host_addr, &client);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				peer, &sr->that.client,

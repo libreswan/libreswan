@@ -2348,6 +2348,23 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 	return ret;
 }
 
+static int ikev2_np_cp_or_sa(struct connection *const pc, int np, const lset_t
+	   st_nat_traversal)
+{
+	int rnp = np;
+
+	if (pc->spd.this.modecfg_client) {
+		if (pc->spd.this.cat) {
+			if (st_nat_traversal & NAT_T_DETECTED) {
+				rnp = ISAKMP_NEXT_v2CP;
+			}
+		} else {
+			rnp = ISAKMP_NEXT_v2CP;
+		}
+	}
+	return rnp;
+}
+
 static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r)
@@ -2355,6 +2372,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct msg_digest *const md = dh->pcrc_md;
 	struct state *const pst = md->st;	/* parent's state object */
 	struct connection *const pc = pst->st_connection;	/* parent connection */
+	int send_cp_r = 0;
 
 	if (!finish_dh_v2(pst, r))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
@@ -2520,8 +2538,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send out the AUTH payload */
 	{
-		int np = pc->spd.this.modecfg_client ?
-				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
+		int np = send_cp_r = ikev2_np_cp_or_sa(pc, ISAKMP_NEXT_v2SA,
+				pst->hidden_variables.st_nat_traversal);
 
 		stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, np,
 				idhash, &e_pbs_cipher);
@@ -2530,7 +2548,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			return authstat;
 	}
 
-	if (pc->spd.this.modecfg_client){
+	if (send_cp_r == ISAKMP_NEXT_v2CP) {
 		stf_status cpstat = ikev2_send_cp(pc, ISAKMP_NEXT_v2SA,
 				&e_pbs_cipher);
 
@@ -3371,6 +3389,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct state *pst = st;
+	int cp_r;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -3502,8 +3521,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
+	cp_r = ikev2_np_cp_or_sa(c, 0, st->hidden_variables.st_nat_traversal);
 	/* are we expecting a v2CP (RESP) ?  */
-	if (c->spd.this.modecfg_client) {
+	if (cp_r == ISAKMP_NEXT_v2CP) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
 			libreswan_log("missing v2CP reply, not attempting to setup child SA");

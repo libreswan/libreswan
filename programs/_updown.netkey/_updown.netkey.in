@@ -595,17 +595,25 @@ delvti() {
 addcat() {
     if [ -n "${CAT}" ] && [ "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
 	iptables -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
-		-j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
+		 -j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
+
+	iptables -m policy --dir in --pol ipsec -t nat -I PREROUTING \
+		-d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} -j DNAT \
+		--to-destination ${PLUTO_ME}
     fi
 }
 
 delcat() {
     if [ -n "${CAT}" ]; then
+
+	iptables -m policy --dir in --pol ipsec -t nat -D PREROUTING \
+		-d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} -j DNAT \
+		--to-destination ${PLUTO_ME}
+
 	iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
-		-j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
+		 -j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
     fi
 }
-
 # the big choice
 case "${PLUTO_VERB}" in
     prepare-host|prepare-client)

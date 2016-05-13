@@ -3770,7 +3770,7 @@ static void show_one_sr(const struct connection *c,
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-		"policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s",
+		"policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),

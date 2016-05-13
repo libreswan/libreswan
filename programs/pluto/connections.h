@@ -183,6 +183,8 @@ struct end {
 	bool modecfg_server;	/* Give local addresses to tunnel's end */
 	bool modecfg_client;	/* request address for local end */
 	bool cat;		/* IPv4 Client Address Translation */
+	bool has_cat;		/* add a CAT iptable rule when a valid INTERNAL_IP4_ADDRESS
+				   is received */
 };
 
 struct spd_route {

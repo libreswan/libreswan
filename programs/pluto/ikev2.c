@@ -12,6 +12,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2016 Antony Antony <appu@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1432,7 +1433,9 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		}
 
 		if (c->policy & POLICY_OPPORTUNISTIC) {
-			if (IS_PARENT_SA_ESTABLISHED(st)) {
+			if (st->st_connection->spd.that.has_lease) {
+				*pkind = kind = EVENT_SA_EXPIRE;
+			} else if (IS_PARENT_SA_ESTABLISHED(st)) {
 				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED_IKE;
 			} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED;
