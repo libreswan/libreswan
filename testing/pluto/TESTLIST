@@ -251,6 +251,9 @@ kvmplutotest 	newoe-20-ipv6				good
 kvmplutotest 	newoe-21-liveness-clear			good
 kvmplutotest	newoe-22-nat-poc-cop			good
 kvmplutotest	newoe-23-reverse-nat 			good
+kvmplutotest	newoe-24-poc-poc-ca			good
+kvmplutotest	newoe-25-poc-poc-cat-1			good
+kvmplutotest	ikev2-50-xfrmcat-demo			good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
