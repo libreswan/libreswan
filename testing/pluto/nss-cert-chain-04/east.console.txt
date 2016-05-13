@@ -35,7 +35,8 @@ east #
 000 "road-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "road-A":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "road-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-A":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-chain-B": 192.0.2.254/32===192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
@@ -49,7 +50,8 @@ east #
 000 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-chain-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "road-chain-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #

@@ -146,7 +146,8 @@ west #
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -161,7 +162,8 @@ west #
 000 "TUNNEL-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
@@ -175,7 +177,8 @@ west #
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -201,7 +204,8 @@ west #
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -216,7 +220,8 @@ west #
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>

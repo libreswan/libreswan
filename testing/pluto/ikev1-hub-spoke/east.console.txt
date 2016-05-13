@@ -112,7 +112,8 @@ east #
 000 "northnet-westnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "northnet-westnet-ipv4-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "northnet-westnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "northnet-westnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "northnet-westnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "northnet-westnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "northnet-westnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
@@ -125,7 +126,8 @@ east #
 000 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-northnet-ipv4-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
 000 "westnet-northnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "westnet-northnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset; mark: unset;
+000 "westnet-northnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
 000 "westnet-northnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-northnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
