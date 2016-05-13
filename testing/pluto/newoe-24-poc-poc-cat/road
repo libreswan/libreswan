@@ -1,7 +1,0 @@
-sudo docker stop --time=1  road1
-sudo docker rm road1
-
-sudo docker run -h road --privileged  --name road1 -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /usr/sbin/init
-sudo docker exec -ti road1 'hostname road'
-sudo docker exec -ti road1 'cd /home/build/libreswan; make base-install'
-
