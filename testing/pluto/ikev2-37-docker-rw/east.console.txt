@@ -102,7 +102,7 @@ ipsec auto --status
 000 "road-eastnet-nonat": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...%any[@road]===192.0.2.219/32; unrouted; eroute owner: #0
 000 "road-eastnet-nonat":     oriented; my_ip=unset; their_ip=192.0.2.219
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "road-eastnet-nonat":   labeled_ipsec:no;
 000 "road-eastnet-nonat":   policy_label:unset;
 000 "road-eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -198,8 +198,10 @@ default via 192.1.2.254 dev eth1
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 NSS_CERTIFICATES
+
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+
 east #
 east #
 if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
