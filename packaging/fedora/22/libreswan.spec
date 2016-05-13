@@ -14,12 +14,12 @@
 %global development 0
 %global cavstests 1
 
-#global prever rc1
+%global prever dr1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.17
+Version: 3.18
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -237,5 +237,5 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr1
 - Automated build from release tar ball
