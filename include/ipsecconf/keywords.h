@@ -8,8 +8,8 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -208,6 +208,7 @@ enum keyword_numeric_conn_field {
 	KNCF_XAUTHCLIENT      = 8,
 	KNCF_MODECONFIGSERVER = 9,
 	KNCF_MODECONFIGCLIENT = 10,
+	KNCF_CAT              = 11,
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,

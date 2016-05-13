@@ -92,6 +92,7 @@ struct whack_end {
 	char *username;
 	bool modecfg_server;	/* for MODECFG */
 	bool modecfg_client;
+	bool cat;		/* IPv4 Client Address Translation */
 	unsigned int tundev;
 	enum certpolicy sendcert;
 	bool send_ca;

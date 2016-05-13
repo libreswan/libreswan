@@ -182,6 +182,7 @@ struct end {
 	bool has_lease;		/* from address pool */
 	bool modecfg_server;	/* Give local addresses to tunnel's end */
 	bool modecfg_client;	/* request address for local end */
+	bool cat;		/* IPv4 Client Address Translation */
 };
 
 struct spd_route {

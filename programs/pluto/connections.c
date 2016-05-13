@@ -542,7 +542,7 @@ size_t format_end(char *buf,
 	char host_port[sizeof(":65535")];
 	char host_id[IDTOA_BUF + 2];
 	char hop[ADDRTOT_BUF];
-	char endopts[sizeof("MS+MC+XS+XC+Sxx") + 1] = "";
+	char endopts[sizeof("MS+MC+XS+XC+Sxx+CAT") + 1] = "";
 	const char *hop_sep = "";
 	const char *open_brackets  = "";
 	const char *close_brackets = "";
@@ -674,6 +674,9 @@ size_t format_end(char *buf,
 
 		if (this->modecfg_client)
 			p = add_str(endopts, sizeof(endopts), p, "+MC");
+
+		if (this->cat)
+			p = add_str(endopts, sizeof(endopts), p, "+CAT");
 
 		if (this->xauth_server)
 			p = add_str(endopts, sizeof(endopts), p, "+XS");
@@ -929,6 +932,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
+	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;
 
 	dst->xauth_server = src->xauth_server;
@@ -3766,7 +3770,7 @@ static void show_one_sr(const struct connection *c,
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-		"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
+		"policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
@@ -3775,7 +3779,8 @@ static void show_one_sr(const struct connection *c,
 		isanyaddr(&c->modecfg_dns1) ? "unset" : ipstr(&c->modecfg_dns1, &dns1b),
 		isanyaddr(&c->modecfg_dns2) ? "unset" : ipstr(&c->modecfg_dns2, &dns2b),
 		(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-		(c->modecfg_banner == NULL) ? ", banner:unset" : "");
+		(c->modecfg_banner == NULL) ? ", banner:unset" : "",
+		sr->this.cat ? "set" : "unset");
 
 #undef COMBO
 

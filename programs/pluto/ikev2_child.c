@@ -5,7 +5,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2012,2016 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
  *
@@ -1203,17 +1203,26 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 	libreswan_log("received INTERNAL_IP4_ADDRESS %s",
 			ipstr(&ip, &ip_str));
 
-	addrtosubnet(&ip, &c->spd.this.client);
-	setportof(0, &c->spd.this.client.addr);	/* ??? redundant? */
-
 	c->spd.this.has_client = TRUE;
-	/* ??? the following test seems obscure.  What's it about? */
-	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
+
+	if (c->spd.this.cat) {
+		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
+			ipstr(&ip, &ip_str)));
+		c->spd.this.client.addr = ip;
+		c->spd.this.client.maskbits = 32; /* export it as value */
+		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+	} else {
+		addrtosubnet(&ip, &c->spd.this.client);
+		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
+		/* ??? the following test seems obscure.  What's it about? */
+		if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
-		DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
+				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
 					ipstr(&ip, &ip_str)));
-		c->spd.this.host_srcip = ip;
+				c->spd.this.host_srcip = ip;
+		}
 	}
+
 	return TRUE;
 }
 

@@ -378,7 +378,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
 		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "",
-		connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
+		connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "",
+		catstr[] = "CAT='YES' ";
 #undef MAX_DISPLAY_BYTES
 
 	ipstr_buf bme, bpeer;
@@ -444,6 +445,9 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
 			c->nflog_group);
 	}
+
+	if (!sr->this.cat)
+		catstr[0] = '\0';
 
 	connmarkstr[0] = '\0';
 	int inend = 0;
@@ -533,6 +537,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* nflog-group - if any */
 			"%s" /* conn-mark - if any */
 			"VTI_IFACE='%s' VTI_ROUTING='%s' "
+			"%s" /* CAT=yes if set */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -580,7 +585,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		nflogstr,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
-		c->vti_routing ? "yes" : "no"
+		c->vti_routing ? "yes" : "no",
+		catstr
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
@@ -1392,12 +1398,35 @@ bool eroute_connection(const struct spd_route *sr,
 {
 	const ip_address *peer = &sr->that.host_addr;
 	char buf2[256];
+	ip_subnet client;
 
 	snprintf(buf2, sizeof(buf2),
 		 "eroute_connection %s", opname);
 
 	if (sa_proto == SA_INT)
 		peer = aftoinfo(addrtypeof(peer))->any;
+
+	if (sr->this.cat) {
+		addrtosubnet(&sr->this.host_addr, &client);
+		bool t = raw_eroute(&sr->this.host_addr, &client,
+				peer, &sr->that.client,
+				cur_spi,
+				new_spi,
+				sa_proto,
+				sr->this.protocol,
+				esatype,
+				proto_info,
+				deltatime(0),
+				sa_priority, sa_marks, op, buf2
+#ifdef HAVE_LABELED_IPSEC
+				, policy_label
+#endif
+				);
+		if (!t)
+			libreswan_log("CAT: failed to eroute additional Client Address Translation policy");
+
+	DBG(DBG_CONTROL, DBG_log("%s CAT extra route added return=%d", __func__, t));
+	}
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
 			  peer, &sr->that.client,

@@ -3,10 +3,10 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -619,6 +619,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 
 	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
+	  NOT_ENUM },
+
+	{ "cat",            kv_conn | kv_auto | kv_leftright, kt_bool, KNCF_CAT,
 	  NOT_ENUM },
 
 	{ "overlapip",      kv_conn | kv_auto, kt_bool,   KBF_OVERLAPIP,

@@ -7,6 +7,7 @@
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2003-2016 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2011-2016 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2016 Antony Antony <antony@phenome.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -590,6 +591,21 @@ delvti() {
     fi
 }
 
+# Client Address Translation CAT
+addcat() {
+    if [ -n "${CAT}" ] && [ "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
+	iptables -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
+		-j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
+    fi
+}
+
+delcat() {
+    if [ -n "${CAT}" ]; then
+	iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
+		-j SNAT --to-source ${PLUTO_MY_CLIENT_NET} -d ${PLUTO_PEER_CLIENT}
+    fi
+}
+
 # the big choice
 case "${PLUTO_VERB}" in
     prepare-host|prepare-client)
@@ -600,6 +616,7 @@ case "${PLUTO_VERB}" in
 	addvti
 	uproute
 	addnflog
+	addcat
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -613,6 +630,7 @@ case "${PLUTO_VERB}" in
 	# connection to me going down
 	downrule
 	delnflog
+	delcat
 	delvti
 	# If you are doing a custom version, firewall commands go here.
 	;;
@@ -626,6 +644,7 @@ case "${PLUTO_VERB}" in
 	# connection to my client subnet going down
 	downrule
 	delnflog
+	delcat
 	delvti
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
