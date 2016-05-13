@@ -86,7 +86,7 @@ if [ ! -f $base.qcow2 ]; then
     # For static networking add kernel args parameters ip=.... etc
     # (network settings in kickstart are ignored by modern dracut)
     sudo virt-install --connect=qemu:///system \
-	--network=network:default,model=virtio \
+	--network=network:swandefault,model=virtio \
 	--initrd-inject=./"${OSTYPE}"base.ks \
 	--extra-args="swanname=swan${OSTYPE}base ks=file:/${OSTYPE}base.ks \
 	   console=tty0 console=ttyS0,115200" \
