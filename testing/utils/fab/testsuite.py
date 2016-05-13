@@ -35,7 +35,7 @@ class Test:
         # name (aka basename).  However, since TEST_DIRECTORY could be
         # relative (for instance "."  or "./..") it first needs to be
         # made absolute before the basename can be extracted.
-        test_directory = os.path.abspath(test_directory)
+        test_directory = os.path.realpath(test_directory)
         # The test's name is the same as the directory's basename.
         self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
@@ -75,11 +75,11 @@ class Test:
         # test results have been copied then this will be different to
         # test.directory.
         if testing_directory:
-            self.sanitize_directory = os.path.abspath(os.path.join(testing_directory, "pluto", self.name))
+            self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
         else:
             for sanitize_directory in [self.directory, utils.directory("..", "pluto", self.name)]:
                 # Tentative
-                self.sanitize_directory = os.path.abspath(sanitize_directory)
+                self.sanitize_directory = os.path.realpath(sanitize_directory)
                 self.logger.debug("is '%s' a test sanitize directory?" % self.sanitize_directory)
                 for path in [self.sanitize_directory,
                              os.path.join(self.sanitize_directory, "..", "..", "default-testparams.sh"),

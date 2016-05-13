@@ -43,7 +43,8 @@ def mounts(domain):
         if match:
             source = match.group(1)
             # Strip trailing "/" along with other potential quirks
-            source = os.path.abspath(source)
+            # such as the mount point being a soft link.
+            source = os.path.realpath(source)
             continue
         match = re.compile("<target dir='([^']*)'").search(line)
         if match:
@@ -74,7 +75,7 @@ def mount_point(domain, console, device):
     return mount
 
 def directory(domain, console, directory, default=None):
-    directory = os.path.abspath(directory)
+    directory = os.path.realpath(directory)
     for target, source in mounts(domain).items():
         if os.path.commonprefix([source, directory]) == source:
             # found a suitable mount point, now find were it is
