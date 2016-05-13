@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.18 (unreleased)
+* XFRM: Support for NAT OE Client Address Translation (leftcat=) [Antony]
 * XFRM: Support for VTI using vti-interface= and vti-routing= [Paul/Tuomo]
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
