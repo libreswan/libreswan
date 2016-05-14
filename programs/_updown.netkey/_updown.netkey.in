@@ -530,7 +530,7 @@ addvtiiface() {
 	    echo "vti-interface option ignored because no mark was configured"
 	else
 	    if [ ! -d "/proc/sys/net/ipv4/conf/${VTI_IFACE}" ]; then
-		echo "creating vti interface"
+		# echo "creating vti interface"
 		vtipeer="${PLUTO_PEER}"
 		if [ "${PLUTO_CONN_KIND}" = CK_INSTANCE ]; then
 		    vtipeer="0.0.0.0"
@@ -550,28 +550,27 @@ addvtiiface() {
 }
 
 addvti() {
-    echo "addvti called"
     if [ -n "${VTI_IFACE}" ]; then
 	if [ -z "${CONNMARK_IN}" -o -z "${CONNMARK_OUT}" ]; then
 	    echo "vti-interface option ignored because no mark was configured"
 	else
 	    if [ "${VTI_ROUTING}" = yes ]; then
 		# Tuomo should improve this with using ${PLUTO_MY_CLIENT_NET}
-		echo "setting up vti routing"
+		# echo "setting up vti routing"
 		r=add
 		ip route list | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
 		if [ "${r}" = change ]; then
 		    # resolve LAN conflict by forcing host route for default gw
 		    gw="$(ip ro li | grep ^default | awk '{ print $3;}')"
 		    gwdev="$(ip ro li | grep ^default | awk '{ print $5;}')"
-		    echo "ip route add ${gw} dev ${gwdev}"
+		    # echo "ip route add ${gw} dev ${gwdev}"
 		    ip route add ${gw} dev ${gwdev} >/dev/null ||:
 		fi
 		srcip=""
 		if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
 		    srcip=" src ${PLUTO_MY_SOURCEIP}"
 		fi
-		echo "ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}"
+		# echo "ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}"
 		ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
 		echo "done ip route"
 	    fi
