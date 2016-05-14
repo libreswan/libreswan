@@ -474,3 +474,36 @@ uninstall-kvm-network-%:
 	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
 		sudo virsh net-undefine $* ; \
 	fi
+
+
+.PHONY: kvm-help
+kvm-help:
+	@echo ''
+	@echo 'For more help see mk/README.md but here are some hints'
+	@echo ''
+	@echo '  To create the domains:'
+	@echo '    make install-kvm-domains install-kvm-networks'
+	@echo '  With:'
+	@echo '    install-kvm-domains        - update/install all the domains'
+	@echo '    install-kvm-networks       - update/install all the networks'
+	@echo ''
+	@echo '  To run tests, either:'
+	@echo '    make check UPDATE=1'
+	@echo '  Or:'
+	@echo '    make kvm-install kvm-test'
+	@echo '  With:'
+	@echo '    kvm-install                - update/install libreswan'
+	@echo '    kvm-test                   - run all "good" tests'
+	@echo '    kvm-test-clean             - delete test results'
+	@echo '    kvm-check                  - re-run failing tests'
+	@echo '                               - add KVM_TESTS=testing/pluto/... for individual tests'
+	@echo '    kvm-keys                   - use the KVM to create the test keys'
+	@echo '    kvm-clean                  - clean out the KVM build tree'
+	@echo ''
+	@echo '  To rebuild domains:'
+	@echo '    make uninstall-kvm-test-domains install-kvm-domains'
+	@echo '  With:'
+	@echo '    uninstall-kvm-test-domains - delete just the test domains, keep the base'
+	@echo '    uninstall-kvm-domains      - rip out all the domains'
+	@echo '    uninstall-kvm-networks     - rip out all the networks'
+	@echo ''
