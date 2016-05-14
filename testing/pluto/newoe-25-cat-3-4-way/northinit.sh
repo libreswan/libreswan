@@ -7,6 +7,6 @@ ipsec setup start
 ipsec whack --debug-all --impair-retransmits
 ipsec auto --status
 #these will create passthroguh shunts
-ping -n -c 4 192.1.2.23
-ping -n -c 4 192.1.2.45
+ping -n -c 4 -I 192.1.3.33 192.1.2.23
+ping -n -c 4 -I 192.1.3.33 192.1.2.45
 echo "initdone"
