@@ -32,28 +32,55 @@ else
         echo "can't identify RESPONDER no $P/eastinit.sh"
         exit 1
 fi
+set +e
+consoles=`ls *.console.txt || echo "NOFILES"`
+set -e
 
-consoles=`ls *.console.txt`
-result=passed
+result=notset
+if [ "$consoles" != "NOFILES" ]; then
+	for con in $consoles; do
+		conv=`echo "$con" | sed -e "s/console/console.verbose/g"`
+		host=`echo "$con" | sed -e "s/.console.txt//g"`
+		if  [ ! -f $con ]; then
+			echo "can't sanitize missing file $con"
+			exit 1
+		fi
+		if [ ! -f OUTPUT/$conv ]; then
+			echo "can't sanitize missing OUTPUT/$conv"
+			exit 1
+		fi
 
-for con in $consoles; do
-	conv=`echo "$con" | sed -e "s/console/console.verbose/g"`
-	host=`echo "$con" | sed -e "s/.console.txt//g"`
-	if  [ ! -f $con ]; then
-		echo "can't sanitize missing file $con"
-		exit 1
-	fi
-	if [ ! -f OUTPUT/$conv ]; then
-		echo "can't sanitize missing OUTPUT/$conv"
-		exit 1
-	fi
-	#echo "sanize host $host OUTPUT/$conv $con"
-	r=`consolediff "$host" "OUTPUT/$conv" "$con"`
-	set $r
-	m=$3
-	if [ "$result" == "passed" ] && [ "$m" != "matched" ] ; then
-                result="failed"
-        fi
-	echo "$r"
+		#echo "sanitize host $host OUTPUT/$conv $con"
+		r=`consolediff "$host" "OUTPUT/$conv" "$con"`
+		set $r
+		m=$3
+
+		if [ "$result" == "notset" ] && [ "$m" == "matched" ]; then
+			result="passed"
+		fi
+		if [ "$m" != "matched" ] ; then
+			result="failed"
+		fi
+		echo "$r"
+	done;
+else
+	result=failed
+	vconsoles=`ls OUTPUT/*.console.verbose.txt`
+	for conv in $vconsoles; do
+		con1=`echo "$conv" | sed -e "s/console.verbose/console/g"`
+		con=`echo "$con1" | sed -e "s/OUTPUT\///g"`
+		host=`echo "$con" | sed -e "s/.console.txt//g"`
+		if [ "$host" == "nic" ]; then
+			continue
+		fi
+
+		if [ ! -f $conv ]; then
+			echo "can't sanitize missing file $conv"
+			exit 1
+		fi
+		echo "$host Consoleoutput new"
+
 done;
+fi
+
 echo "result $(basename $(pwd)) $result "
