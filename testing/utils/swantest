@@ -967,13 +967,20 @@ class scantests:
         for role in ["initiator", "responder"]:
             host = self.tests[self.testname][role]
             plutolog = self.tpath + '/OUTPUT/' + host + '.pluto.log'
+            if not os.path.exists(plutolog):
+                plutolog = plutolog + '.gz'
             conslelog = self.tpath + '/OUTPUT/' + host + '.console.txt'
+            if not os.path.exists(conslelog):
+                conslelog = conslelog + '.gz'
 
-            self.grep_n_add(role, plutolog, 'ASSERTION FAILED', "ASSERT")
-            self.grep_n_add(role, plutolog, 'EXPECTATION FAILED', "EXPECT")
-            self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
-            self.grep_n_add(role, conslelog, 'general protection', "GPFAULT")
-            self.grep_n_add(role, conslelog, "^CORE FOUND$", "CORE")
+            if os.path.exists(plutolog):
+                self.grep_n_add(role, plutolog, 'ASSERTION FAILED', "ASSERT")
+                self.grep_n_add(role, plutolog, 'EXPECTATION FAILED', "EXPECT")
+
+            if os.path.exists(conslelog):
+                 self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
+                 self.grep_n_add(role, conslelog, 'general protection', "GPFAULT")
+                 self.grep_n_add(role, conslelog, "^CORE FOUND$", "CORE")
 
     def grep_n_add(self, role, filename, pattern, note):
         if not os.path.exists(filename):
