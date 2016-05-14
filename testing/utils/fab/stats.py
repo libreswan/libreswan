@@ -67,22 +67,22 @@ class Tests(Counts):
 
 class Results(Counts):
 
-    def count(self, result):
+    def add_ignored(self, test, reason):
+        Counts.add(self, test.name, "total")
+        Counts.add(self, test.name, "ignored", reason)
+
+    def count_result(self, result):
         Counts.add(self, result.test.name, "total")
         Counts.add(self, result.test.name, str(result))
         for domain, errors in result.errors.items():
             for error in errors:
                 Counts.add(self, result.test.name, str(result), error, domain=domain)
 
-    def add_ignored(self, test, reason):
-        Counts.add(self, test.name, "total")
-        Counts.add(self, test.name, "ignored", reason)
-
-    def add_skip(self, result):
-        self.count(result)
-        Counts.add(self, result.test.name, "skip", str(result))
+    def add_skipped(self, result):
+        Counts.add(self, result.test.name, "skipped", str(result))
+        self.count_result(result)
 
     def add_result(self, result, old_result=None):
-        self.count(result)
+        self.count_result(result)
         if old_result:
             Counts.add(self, result.test.name, str(result), "previous", str(old_result))

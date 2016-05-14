@@ -202,7 +202,10 @@ def results(logger, tests, baseline, args, result_stats):
                 if not result and not args.list_untested:
                     continue
 
-            result_stats.add_result(result)
+                if not result:
+                    result_stats.add_ignored(test, str(result))
+                else:
+                    result_stats.add_result(result)
 
             sep = ""
 
