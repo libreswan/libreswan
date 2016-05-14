@@ -115,14 +115,14 @@ kvm-config-broken-pooldir:
 	@echo ''
 	@echo '    KVM_POOLDIR - pool directory for both test and base domains'
 	@echo ''
-	@echo 'is defined in Makefile.inc.local, and that the directory
+	@echo 'is defined in Makefile.inc.local, and that the directory'
 	@echo '($(KVM_POOLDIR)) exists.'
 	@echo ''
 	@echo 'For instance, to store all domain disks in /home/build/pool, add:'
 	@echo ''
 	@echo '    KVM_POOLDIR=/home/build/pool'
 	@echo ''
-	@echo 'to Makefile.inc.local.
+	@echo 'to Makefile.inc.local.'
 	@exit 1
 
 ifeq ($(and $(KVM_TEST_DOMAIN_POOLDIR),$(wildcard $(KVM_TEST_DOMAIN_POOLDIR))),)
