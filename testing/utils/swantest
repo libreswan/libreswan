@@ -1301,7 +1301,7 @@ def sanitize(cmd):
 
 def split_sanity(sanity):
     if sanity:
-        for line in sanity.split("\n")[-1]:
+        for line in sanity.split("\n")[-1:]:
             try:
                 key, name, value = line.split()
                 if key == "result":
