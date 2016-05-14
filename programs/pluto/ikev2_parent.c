@@ -3914,7 +3914,7 @@ void send_v2_notification(struct state *p1st,
 	 * one with retrying).  So we need not preserve the packet we
 	 * are sending.
 	 */
-	send_ike_msg_without_recording(p1st, &reply_stream, __FUNCTION__);
+	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
 }
 
 /* add notify payload to the rbody */
