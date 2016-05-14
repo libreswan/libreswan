@@ -29,51 +29,31 @@ if [ -f eastinit.sh ] ; then
         RESPONDER=east
 else
         P=`pwd`
-        echo "can't identify INITIATOR no $P/eastinit.sh"
+        echo "can't identify RESPONDER no $P/eastinit.sh"
         exit 1
 fi
 
-if [ -f westinit.sh ] ; then
-        INITIATOR=west
-elif [ -f roadinit.sh ] ; then
-        INITIATOR=road
-elif [ -f northinit.sh ] ; then
-        INITIATOR=north
-else
-        echo "can't identify INITIATOR"
-        exit 1
-fi
+consoles=`ls *.console.txt`
+result=passed
 
-
-ivc="./OUTPUT/${INITIATOR}.console.verbose.txt"
-ic="./${INITIATOR}.console.txt"
-
-rvc="./OUTPUT/${RESPONDER}.console.verbose.txt"
-rc="./${RESPONDER}.console.txt"
-
-result="passed"
-for f in $ivc $ic $rvc $rc ; do
-	if [ ! -f $ivc ] ; then
-		echo "missing required file $f"
-		result="passed"
+for con in $consoles; do
+	conv=`echo "$con" | sed -e "s/console/console.verbose/g"`
+	host=`echo "$con" | sed -e "s/.console.txt//g"`
+	if  [ ! -f $con ]; then
+		echo "can't sanitize missing file $con"
+		exit 1
 	fi
-done
-
-if [ "$result" == "passed" ] ; then
-	cdiff1=`consolediff ${INITIATOR} ${ivc} ${ic}`
-	set  $cdiff1
+	if [ ! -f OUTPUT/$conv ]; then
+		echo "can't sanitize missing OUTPUT/$conv"
+		exit 1
+	fi
+	#echo "sanize host $host OUTPUT/$conv $con"
+	r=`consolediff "$host" "OUTPUT/$conv" "$con"`
+	set $r
 	m=$3
-	if [ "$m" != "matched" ] ; then
-		result="failed"
-	fi
-	cdiff2=`consolediff ${RESPONDER} ${rvc} ${rc}`
-	set  $cdiff2
-	m=$3
-	if [ "$m" != "matched" ] ; then
-		result="failed"
-	fi
-fi
-
-echo $cdiff1
-echo $cdiff2
+	if [ "$result" == "passed" ] && [ "$m" != "matched" ] ; then
+                result="failed"
+        fi
+	echo "$r"
+done;
 echo "result $(basename $(pwd)) $result "
