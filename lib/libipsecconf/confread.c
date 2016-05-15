@@ -1447,12 +1447,8 @@ struct starter_config *confread_load(const char *file,
 	bool err = FALSE;
 	bool connerr;
 
-#ifdef DNSSEC
-	struct ub_ctx *dnsctx = ub_ctx_create();
-	unbound_init(dnsctx);
-#else
 	struct ub_ctx *dnsctx = NULL;
-#endif
+
 	/**
 	 * Load file
 	 */
@@ -1483,6 +1479,11 @@ struct starter_config *confread_load(const char *file,
 		confread_free(cfg);
 		return NULL;
 	}
+
+#ifdef DNSSEC
+	if (!unbound_init(dnsctx))
+		return NULL;
+#endif
 
 	if (!setuponly) {
 		/**
@@ -1530,13 +1531,6 @@ struct starter_config *confread_load(const char *file,
 						 FALSE,
 						 resolvip, perr);
 
-#if 0	/* ??? the following condition can never be true */
-			if (connerr == -1) {
-				parser_free_conf(cfgp);
-				confread_free(cfg);
-				return NULL;
-			}
-#endif
 			err |= connerr;
 		}
 
@@ -1548,7 +1542,9 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	parser_free_conf(cfgp);
-
+#ifdef DNSSEC
+	ub_ctx_delete(dnsctx);
+#endif
 	return cfg;
 }
 
