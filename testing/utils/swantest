@@ -499,14 +499,31 @@ class scantests:
             self.tdirs.append(self.stdir)
             logging.info("scan a single directory %s" % self.stdir)
         else:
-            self.tdirs = sorted(listdir(self.npath), reverse=True)
+            tdirs = list()
+            tdirs =  sorted(listdir(self.npath), reverse=True)
+            if not tdirs:
+                logging.error("nothing here in the directory %s" % self.npath)
+                return("nothing here in the directory %s" % self.npath)
+            i = 0
+            j = 0
+            for d in tdirs:
+                if os.path.isdir( self.npath + '/' + d):
+                    i +=  1
+                    self.tdirs.append(d)
+                    logging.debug("tdir %s/%s" % (self.npath,d))
+                else:
+                    j += 1
+                    logging.debug("ignore %s . not a directory?" % d)
 
-        if not self.tdirs:
-            logging.info("node directory %s is empty", rnode)
-            return "no testruns found in %s" % rnode
+            logging.info("%s directories to scan for test results, ignored %s in npath %s" % (i, j, self.npath))
+            self.d_to_scan = i
 
-        for d in self.tdirs:
-            logging.debug("scan directory %s for tests ", d)
+        i = 0
+        for d in sorted(self.tdirs):
+            i += 1
+            logging.info("scan directory %s for tests  %s/%s"%(d, i,
+                self.d_to_scan))
+
             self.tdir = d
             if self.scan_trun():
                 logging.error("scan directory %s", d)
