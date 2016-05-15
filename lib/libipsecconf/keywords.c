@@ -788,7 +788,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 
 	assert(kd->type == kt_list || kd->type == kt_enum);
 
-	scopy = strdup(s);
+	scopy = strdup(s); /* leaks */
 	valresult = 0;
 
 	/*
@@ -823,6 +823,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 				 kd->keyname, piece);
 
 				fprintf(stderr, "ERROR: %s\n", complaintbuf);
+				free(scopy);
 				exit(1);
 		}
 	}
