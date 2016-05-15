@@ -128,9 +128,6 @@ struct starter_config {
 	/* conn %default */
 	struct starter_conn conn_default;
 
-	struct starter_conn conn_oedefault;
-	bool got_oedefault;
-
 	char *ctlbase;  /* location of pluto control socket */
 
 	/* connections list (without %default) */

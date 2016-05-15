@@ -40,7 +40,6 @@
 #include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
-#include "ipsecconf/oeconns.h"
 #include "ipsecconf/interfaces.h"
 
 #include "ipsecconf/keywords.h"
@@ -166,9 +165,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* should be stack specific but lib/ can't check kernel_ops->replay_window */
 	cfg->conn_default.options[KBF_KEYINGTRIES] =
 		SA_REPLACEMENT_RETRIES_DEFAULT;
-
-	/* now here is a sticker.. we want it on. But pluto has to be smarter first */
-	cfg->conn_default.options[KBF_OPPOENCRYPT] = FALSE;
 
 	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
 
@@ -1487,7 +1483,7 @@ struct starter_config *confread_load(const char *file,
 
 	if (!setuponly) {
 		/**
-		 * Find %default and %oedefault conn
+		 * Find %default
 		 *
 		 */
 		struct section_list *sconn;
@@ -1503,18 +1499,6 @@ struct starter_config *confread_load(const char *file,
 						/*default conn*/ TRUE,
 						 resolvip, perr);
 			}
-
-			if (streq(sconn->name, "%oedefault")) {
-				starter_log(LOG_LEVEL_DEBUG,
-					    "Loading oedefault conn");
-				err |= load_conn(dnsctx,
-						 &cfg->conn_oedefault,
-						 cfgp, sconn, FALSE,
-						/*default conn*/ TRUE,
-						 resolvip, perr);
-				if (!err)
-					cfg->got_oedefault = TRUE;
-			}
 		}
 
 		/**
@@ -1524,8 +1508,6 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default"))
 				continue;
-			if (streq(sconn->name, "%oedefault"))
-				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
 						 FALSE,
@@ -1534,11 +1516,6 @@ struct starter_config *confread_load(const char *file,
 			err |= connerr;
 		}
 
-		/* if we have OE on, then create any missing OE conns! */
-		if (cfg->setup.options[KBF_OPPOENCRYPT]) {
-			starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns");
-			add_any_oeconns(cfg, cfgp);
-		}
 	}
 
 	parser_free_conf(cfgp);
