@@ -74,6 +74,8 @@
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 
+#include "lswfips.h" /* for libreswan_fipsmode() */
+
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
 /* test if the routes required for two different connections agree
@@ -2044,6 +2046,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 		    st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
+				if (libreswan_fipsmode() == 1) {
+					loglog(RC_LOG_SERIOUS,
+						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
+					goto fail;
+				}
 				DBG(DBG_KERNEL, DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits"));
 				/* We need to tell the kernel to mangle the sha2_256, as instructed by the user */
 				said_next->authalg =
