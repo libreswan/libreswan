@@ -500,29 +500,30 @@ class scantests:
             logging.info("scan a single directory %s" % self.stdir)
         else:
             tdirs = list()
-            tdirs =  sorted(listdir(self.npath), reverse=True)
+            tdirs = sorted(listdir(self.npath), reverse=True)
             if not tdirs:
                 logging.error("nothing here in the directory %s" % self.npath)
                 return("nothing here in the directory %s" % self.npath)
             i = 0
             j = 0
             for d in tdirs:
-                if os.path.isdir( self.npath + '/' + d):
-                    i +=  1
+                if os.path.isdir(self.npath + '/' + d):
+                    i += 1
                     self.tdirs.append(d)
-                    logging.debug("tdir %s/%s" % (self.npath,d))
+                    logging.debug("tdir %s/%s" % (self.npath, d))
                 else:
                     j += 1
                     logging.debug("ignore %s . not a directory?" % d)
 
-            logging.info("%s directories to scan for test results, ignored %s in npath %s" % (i, j, self.npath))
+            logging.info("%s directories to scan for test results, ignored %s in npath %s" % (
+                i, j, self.npath))
             self.d_to_scan = i
 
         i = 0
         for d in sorted(self.tdirs):
             i += 1
-            logging.info("scan directory %s for tests  %s/%s"%(d, i,
-                self.d_to_scan))
+            logging.info("scan directory %s for tests  %s/%s" % (d, i,
+                                                                 self.d_to_scan))
 
             self.tdir = d
             if self.scan_trun():
@@ -995,9 +996,10 @@ class scantests:
                 self.grep_n_add(role, plutolog, 'EXPECTATION FAILED', "EXPECT")
 
             if os.path.exists(conslelog):
-                 self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
-                 self.grep_n_add(role, conslelog, 'general protection', "GPFAULT")
-                 self.grep_n_add(role, conslelog, "^CORE FOUND$", "CORE")
+                self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
+                self.grep_n_add(
+                    role, conslelog, 'general protection', "GPFAULT")
+                self.grep_n_add(role, conslelog, "^CORE FOUND$", "CORE")
 
     def grep_n_add(self, role, filename, pattern, note):
         if not os.path.exists(filename):
@@ -1727,7 +1729,8 @@ def docker_net_bridge(dname, brname, iface, prefix):
         logging.error(output)
         raise PipeworkEroor(output)
 
-    cmd = "sudo docker exec -ti %s /bin/bash -c 'ip addr del %s dev %s'" % (dname, prefix, iface)
+    cmd = "sudo docker exec -ti %s /bin/bash -c 'ip addr del %s dev %s'" % (
+        dname, prefix, iface)
     runcmd_check_output(cmd)
 
 
