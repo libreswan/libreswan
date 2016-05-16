@@ -1,4 +1,5 @@
-/* routines that interface with the kernel's IPsec mechanism
+/* routines that interface with the kernel's IPsec mechanism, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010  D. Hugh Redelmeier.
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
@@ -10,6 +11,7 @@
  * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2024,7 +2026,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
 
 		DBG(DBG_KERNEL, DBG_log(
-			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%d",
+			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + authkeylen=%u",
 			st->st_esp.keymat_len, enc_key_len, authkeylen));
 
 		passert(st->st_esp.keymat_len == enc_key_len + authkeylen);
@@ -2150,8 +2152,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * as ae "enum ikev1_auth_attribute".
 		 */
 		int authalg;
-		int key_len = ikev1_auth_kernel_attrs(st->st_ah.attrs.transattrs.integ_hash, &authalg);
-		if (authalg < 0) {
+		unsigned key_len = ikev1_auth_kernel_attrs(st->st_ah.attrs.transattrs.integ_hash, &authalg);
+		if (authalg <= 0) {
 			goto fail;
 		}
 
@@ -3489,12 +3491,11 @@ void expire_bare_shunts()
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 }
 
-/* ??? Why is the return type int?  Some unsigned type would seem more apt. */
-int
+unsigned
 ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 {
 	int authalg;
-	int key_len;
+	unsigned key_len;
 
 	switch (auth) {
 
