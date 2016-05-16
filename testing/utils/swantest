@@ -1727,6 +1727,9 @@ def docker_net_bridge(dname, brname, iface, prefix):
         logging.error(output)
         raise PipeworkEroor(output)
 
+    cmd = "sudo docker exec -ti %s /bin/bash -c 'ip addr del %s dev %s'" % (dname, prefix, iface)
+    runcmd_check_output(cmd)
+
 
 def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     # shared bridge between east - west, east - nic
@@ -1752,7 +1755,8 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     pcap_file_ext = '.pcap'
     pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
-    prefix = "0/0"
+    prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
+
     if test["initiator"] == "west":
         iface = "eth0"
         brname = "br%s" % bidw0
