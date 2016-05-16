@@ -1857,9 +1857,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 		const struct esp_info *ei;
 
-		/* ??? who picked this type for enc_key_len? */
-		u_int16_t enc_key_len;
-
 		/* ??? table of non-registered algorithms? */
 		static const struct esp_info esp_info[] = {
 			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_MD5,
@@ -1970,7 +1967,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				break;
 		}
 
-		enc_key_len = ta->enckeylen / BITS_PER_BYTE;
+		u_int16_t enc_key_len = ta->enckeylen / BITS_PER_BYTE;
+
 		if (enc_key_len != 0) {
 			/* XXX: must change to check valid _range_ enc_key_len */
 			if (enc_key_len > ei->enckeylen) {
@@ -2022,9 +2020,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
+		/* ??? why authkeylen but enc_key_len?  Spelling seems inconsistent. */
 		int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+
 		DBG(DBG_KERNEL, DBG_log(
-			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%" PRIu32,
+			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%d",
 			st->st_esp.keymat_len, enc_key_len, authkeylen));
 
 		passert(st->st_esp.keymat_len == enc_key_len + authkeylen);
@@ -3489,6 +3489,7 @@ void expire_bare_shunts()
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 }
 
+/* ??? Why is the return type int?  Some unsigned type would seem more apt. */
 int
 ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 {
