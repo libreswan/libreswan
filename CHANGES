@@ -10,6 +10,7 @@ v3.18 (unreleased)
 * pluto: Add systemd watchdog support via USE_SYSTEMD_WATCHDOG [Matt/Paul]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS
+* FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
