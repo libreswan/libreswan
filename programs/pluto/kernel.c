@@ -2023,7 +2023,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		/* ??? why authkeylen but enc_key_len?  Spelling seems inconsistent. */
-		int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+		unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
 
 		DBG(DBG_KERNEL, DBG_log(
 			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + authkeylen=%u",
@@ -2152,8 +2152,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * as ae "enum ikev1_auth_attribute".
 		 */
 		int authalg;
-		unsigned key_len = ikev1_auth_kernel_attrs(st->st_ah.attrs.transattrs.integ_hash, &authalg);
+		enum ikev1_auth_attribute auth = st->st_ah.attrs.transattrs.integ_hash;
+		unsigned key_len = ikev1_auth_kernel_attrs(auth, &authalg);
 		if (authalg <= 0) {
+			loglog(RC_LOG_SERIOUS, "%s not implemented",
+			       enum_show(&auth_alg_names, auth));
 			goto fail;
 		}
 
@@ -3567,8 +3570,6 @@ ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 	case AUTH_ALGORITHM_KPDK:
 	case AUTH_ALGORITHM_DES_MAC:
 	default:
-		loglog(RC_LOG_SERIOUS, "%s not implemented",
-		       enum_show(&auth_alg_names, auth));
 		key_len = 0;
 		authalg = -1;
 	}
