@@ -58,6 +58,47 @@ class PipeworkEroor():
     """General exception for pipework errors."""
     pass
 
+def grep_4_known_errors(test):
+    for role in ["initiator", "responder"]:
+        host = test[role]
+        tpath = os.getcwd()
+
+        plutolog = tpath + '/OUTPUT/' + host + '.pluto.log'
+        if not os.path.exists(plutolog):
+            plutolog = plutolog + '.gz'
+        conslelog = tpath + '/OUTPUT/' + host + '.console.txt'
+        if not os.path.exists(conslelog):
+            conslelog = conslelog + '.gz'
+
+        if os.path.exists(plutolog):
+            grep_n_add(test, role, plutolog, 'ASSERTION FAILED', "ASSERT")
+            grep_n_add(test, role, plutolog, 'EXPECTATION FAILED', "EXPECT")
+
+        if os.path.exists(conslelog):
+            grep_n_add(test, role, conslelog, 'segfault', "SEGFAULT")
+            grep_n_add(test,
+                role, conslelog, 'general protection', "GPFAULT")
+            grep_n_add(test, role, conslelog, "^CORE FOUND$", "CORE")
+
+def grep_n_add(test, role, filename, pattern, note):
+    if not os.path.exists(filename):
+        return
+
+    fixed = '-F '
+    fixed = ''
+    key = "%s-status" % test[role]
+    status = ''
+
+    cmd = "zgrep " + fixed + "'" + pattern + "'  " + filename
+    match = subprocess.getoutput(cmd)
+    logging.debug("%s" % cmd)
+    if match:
+        logging.info("%s %s" %(test[role], match))
+        logging.debug(("%s %s %s" % (test[role], cmd, match)))
+        if key in test:
+            test[key] += " " + note
+        else:
+            test[key] = note
 
 class guest (threading.Thread):
 
@@ -2094,7 +2135,7 @@ def do_single_test(args, start='', test=None, st=None):
         logging.info("ABORT %s single test unknown type", test["type"])
         os.chdir("..")  # chdir end
         return
-
+    grep_4_known_errors(test)
     s = sanitize(args.sanitizer)
     write_result(args, start, test["name"], s, testexpect=test["expect"])
 
