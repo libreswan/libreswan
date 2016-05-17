@@ -33,7 +33,7 @@ else
         exit 1
 fi
 set +e
-consoles=`ls *.console.txt || echo "NOFILES"`
+consoles=`ls *.console.txt 2>/dev/null || echo "NOFILES"`
 set -e
 
 result=notset
@@ -78,6 +78,7 @@ else
 			echo "can't sanitize missing file $conv"
 			exit 1
 		fi
+		r=`consolediff "$host" "$conv" "$con"`
 		echo "$host Consoleoutput new"
 
 done;
