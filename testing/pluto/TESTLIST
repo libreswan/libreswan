@@ -23,12 +23,13 @@ kvmplutotest	basic-pluto-00	good
 kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
-kvmplutotest	basic-pluto-07	good
+
+kvmplutotest	basic-pluto-01-klips	good
 
 kvmplutotest	netkey-audit-01	good
 
 kvmplutotest	ikev1-01-fuzzer	good
-kvmplutotest	ikev1-initial-contact wip
+kvmplutotest	ikev1-initial-contact-01	wip
 
 
 #################################################################
@@ -470,7 +471,8 @@ umlXhost	nat-aggr-01		good
 #
 # a test of using AES with pluto
 #
-kvmplutotest	basic-pluto-04		good
+kvmplutotest	ikev1-algo-ike-aes-01	good
+kvmplutotest	ikev1-algo-ike-aes-02	good
 
 # CAP_DAC_OVERRIDE
 kvmplutotest	basic-pluto-06		good
@@ -529,14 +531,13 @@ kvmplutotest	aggr-pluto-02		good
 kvmplutotest	aggr-pluto-03		wip
 kvmplutotest	aggr-pluto-04		wip
 
-#
-# a testcase with pfs=yes connecting to pfs=no
-#
-kvmplutotest	basic-pluto-09		good
-kvmplutotest	basic-pluto-10		wip
+# Various algo tests
+kvmplutotest	ikev1-algo-ike-pfs-01	good
+kvmplutotest	ikev1-algo-esp-null-01	good
+
 kvmplutotest	basic-pluto-01-valgrind	good
 
-kvmplutotest	basic-pluto-11		good
+kvmplutotest	ikev1-algo-ike-bogus-01	good
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
