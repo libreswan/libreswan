@@ -542,6 +542,7 @@ class scantests:
             self.tdir = self.stdir
             self.tdirs.append(self.stdir)
             logging.info("scan a single directory %s" % self.stdir)
+            self.d_to_scan = 1
         else:
             tdirs = list()
             tdirs = sorted(listdir(self.npath), reverse=True)
