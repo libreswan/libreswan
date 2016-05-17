@@ -253,7 +253,7 @@ kvmplutotest	newoe-22-nat-poc-cop			good
 kvmplutotest	newoe-23-reverse-nat 			good
 kvmplutotest	newoe-25-cat-1				good
 kvmplutotest	newoe-25-cat-2				good
-kvmplutotest	newoe-25-cat-3-4			good
+kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
