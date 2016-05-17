@@ -58,6 +58,7 @@ class PipeworkEroor():
     """General exception for pipework errors."""
     pass
 
+
 def grep_4_known_errors(test):
     for role in ["initiator", "responder"]:
         host = test[role]
@@ -77,8 +78,9 @@ def grep_4_known_errors(test):
         if os.path.exists(conslelog):
             grep_n_add(test, role, conslelog, 'segfault', "SEGFAULT")
             grep_n_add(test,
-                role, conslelog, 'general protection', "GPFAULT")
+                       role, conslelog, 'general protection', "GPFAULT")
             grep_n_add(test, role, conslelog, "^CORE FOUND$", "CORE")
+
 
 def grep_n_add(test, role, filename, pattern, note):
     if not os.path.exists(filename):
@@ -93,12 +95,13 @@ def grep_n_add(test, role, filename, pattern, note):
     match = subprocess.getoutput(cmd)
     logging.debug("%s" % cmd)
     if match:
-        logging.info("%s %s" %(test[role], match))
+        logging.info("%s %s" % (test[role], match))
         logging.debug(("%s %s %s" % (test[role], cmd, match)))
         if key in test:
             test[key] += " " + note
         else:
             test[key] = note
+
 
 class guest (threading.Thread):
 
@@ -1281,6 +1284,10 @@ def orient(args, test):
 
     logging.debug("test hosts are initiator %s responder %s %s",
                   test["initiator"], test["responder"], log_line)
+
+    test["test_hosts"] = []
+    test["test_hosts"].extend(test_hosts)
+
     return cmds, test_hosts
 
 
@@ -1659,14 +1666,11 @@ def docker_flush_eth0(dhost, dname):
     runcmd("sudo docker exec -ti %s ip address flush dev eth0" % dname)
 
 
-def docker_restart_network(test, dnamei, dnamer, dnamen):
-
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
-           dnamei)
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
-           dnamer)
-    runcmd("sudo docker exec -ti %s systemctl restart network.service" %
-           dnamen)
+def docker_restart_network(test):
+    for host in test["test_hosts"]:
+        dname = host + "-" + test["name"]
+        runcmd("sudo docker exec -ti %s systemctl restart network.service" %
+               dname)
 
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
@@ -1723,18 +1727,10 @@ def docker_swan_build(args, dname):
 
 
 def docker_containers_start_stop(args, test, st, stop):
-    dnamei = test["initiator"] + "-" + test["name"]
-    dnamer = test["responder"] + "-" + test["name"]
-    dnamen = ''
 
-    if "nic" in test:
-        dnamen = test["nic"] + "-" + test["name"]
-    didn = ''
-
-    docker_stop_container(dnamei)
-    docker_stop_container(dnamer)
-    if "nic" in test:
-        docker_stop_container(dnamen)
+    for host in test["test_hosts"]:
+        dname = host + "-" + test["name"]
+        docker_stop_container(dname)
 
     if stop:
         return
@@ -1742,27 +1738,27 @@ def docker_containers_start_stop(args, test, st, stop):
     if init_output_dir():
         return True
 
-    didi = docker_start_container(test["initiator"], dnamei, args.dockerimage)
-    didr = docker_start_container(test["responder"], dnamer, args.dockerimage)
-
-    if "nic" in test:
-        didn = docker_start_container(test["nic"], dnamen, args.dockerimage)
+    for host in test["test_hosts"]:
+        dname = host + "-" + test["name"]
+        docker_start_container(host, dname, args.dockerimage)
 
     try:
-        docker_add_net_bridges(
-            args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+        docker_add_net_bridges(args, test)
     except:
         return True
 
-    docker_restart_network(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+    docker_restart_network(test)
 
-    if docker_swan_build(args, dnamei):
-        return True
-    if docker_swan_build(args, dnamer):
-        return True
+    for host in test["test_hosts"]:
+        if host == "nic":
+            continue
+
+        dname = host + "-" + test["name"]
+        if docker_swan_build(args, dname):
+            return True
 
 
-def docker_net_bridge(dname, brname, iface, prefix):
+def docker_net_bridge(dname, brname, iface, prefix, brlist):
     cmd = "sudo /usr/local/bin/pipework %s -i %s %s %s" % (
         brname, iface, dname, prefix)
     output = runcmd(cmd)
@@ -1773,27 +1769,40 @@ def docker_net_bridge(dname, brname, iface, prefix):
     cmd = "sudo docker exec -ti %s /bin/bash -c 'ip addr del %s dev %s'" % (
         dname, prefix, iface)
     runcmd_check_output(cmd)
+    brlist[brname] = 1
 
 
-def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
+def docker_add_net_bridges(args, test):
+
+    test['bid'] = []
+
     # shared bridge between east - west, east - nic
     bidc = random.randint(10000001, 19999999)
+    test['bid'].append(bidc)
 
     # for clients behind west
     bidw0 = random.randint(21000001, 21999999)
     bidw2 = random.randint(22000001, 22999999)
+    test['bid'].append(bidw0)
+    test['bid'].append(bidw2)
 
     # for clients behind east
     bide0 = random.randint(31000001, 31999999)
     bide2 = random.randint(32000001, 32999999)
+    test['bid'].append(bide0)
+    test['bid'].append(bide2)
 
     # shared bridge between nic - road, nic - north
     bidn1 = random.randint(51000001, 51999999)
     bidn2 = random.randint(52000001, 52999999)
     bidn3 = random.randint(53000001, 53999999)
+    test['bid'].append(bidn1)
+    test['bid'].append(bidn2)
+    test['bid'].append(bidn3)
 
     # shared for clients behind north
     bidno1 = random.randint(61000001, 61999999)
+    test['bid'].append(bidno1)
 
     brname = ''
     pcap_file_ext = '.pcap'
@@ -1801,98 +1810,116 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
 
     prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
 
-    if test["initiator"] == "west":
-        iface = "eth0"
-        brname = "br%s" % bidw0
-        docker_net_bridge(
-            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+    tcpdump_cmds = dict()
+    brlist = dict()
 
-        iface = "eth1"
-        brname = "br%s" % bidc
-        docker_net_bridge(
-            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+    for host in test["test_hosts"]:
+        dname = host + "-" + test["name"]
+        if host == "west":
+            iface = "eth0"
+            brname = "br%s" % bidw0
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        iface = "eth2"
-        brname = "br%s" % bidw2
-        docker_net_bridge(
-            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth1"
+            brname = "br%s" % bidc
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-    elif test["initiator"] == "road":
-        iface = "eth0"
-        brname = "br%s" % bidn1
-        docker_net_bridge(
-            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth2"
+            brname = "br%s" % bidw2
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
+        elif host == "road":
+            iface = "eth0"
+            brname = "br%s" % bidn1
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-    elif test["initiator"] == "north":
-        iface = "eth0"
-        brname = "br%s" % bidn1
-        docker_net_bridge(
-            danme=dnamei, brname=brname, iface=iface, prefix=prefix)
+            pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
 
-        iface = "eth1"
-        brname = "br%s" % bidno1
-        docker_net_bridge(
-            dname=dnamei, brname=brname, iface=iface, prefix=prefix)
-        pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
+        elif host == "north":
+            iface = "eth0"
+            brname = "br%s" % bidn1
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-    tcpdump_args1 =  args.tcpdump + \
-        " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
+            iface = "eth1"
+            brname = "br%s" % bidno1
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
+            pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
 
-    if "nic" in test:
-        iface = "eth1"
-        brname = "br%s" % bidn1
-        docker_net_bridge(
-            dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+        if host == "nic":
+            iface = "eth1"
+            brname = "br%s" % bidn1
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        iface = "eth0"
-        brname = "br%s" % bidc
-        docker_net_bridge(
-            dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth0"
+            brname = "br%s" % bidc
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        # adding eth2 and eth3 seems to slowdown network.restart
-        # if we need it in the future we could enable those
-        iface = "eth2"
-        brname = "br%s" % bidn2
-        # docker_net_bridge( dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+            # adding eth2 and eth3 seems to slowdown network.restart
+            # if we need it in the future we could enable those
+            iface = "eth2"
+            brname = "br%s" % bidn2
+            # docker_net_bridge( dname=dname, brname=brname, iface=iface,
+            # prefix=prefix, brlist=brlist)
 
-        iface = "eth3"
-        brname = "br%s" % bidn3
-        # docker_net_bridge(dname=dnamen, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth3"
+            brname = "br%s" % bidn3
+            # docker_net_bridge(dname=dname, brname=brname, iface=iface,
+            # prefix=prefix, brlist=brlist)
 
-    if test["responder"] == "east":
+        if host == "east":
 
-        iface = "eth0"
-        brname = "br%s" % bide0
-        docker_net_bridge(
-            dname=dnamer, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth0"
+            brname = "br%s" % bide0
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        iface = "eth2"
-        brname = "br%s" % bide2
-        docker_net_bridge(
-            dname=dnamer, brname=brname, iface=iface, prefix=prefix)
+            iface = "eth2"
+            brname = "br%s" % bide2
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
-        iface = "eth1"
-        brname = "br%s" % bidc
-        docker_net_bridge(
-            dname=dnamer, brname=brname, iface=iface, prefix=prefix)
-        pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
+            iface = "eth1"
+            brname = "br%s" % bidc
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
+            pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
-    tcpdump_args2 = args.tcpdump + \
-        " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
+        tcpdump_args =  args.tcpdump + \
+            " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
 
-    # AA store this pid1 and pid2 to kill the right tcpdump at the end.
+        tcpdump_cmds[tcpdump_args] = 1
+
+    # tcpdump pid(s) to kill the right tcpdump at the end.
     # killall is not an option, there could be other tests in the root pid
     # name space?
 
-    logging.info("%s %s", args.tcpdump, tcpdump_args1)
     test["tpids"] = []
-    tpid = subprocess.Popen(tcpdump_args1.split()).pid
-    test["tpids"].append(tpid)
-    if tcpdump_args1 != tcpdump_args2:
-        logging.info("%s %s", args.tcpdump, tcpdump_args2)
-        tpid = subprocess.Popen(tcpdump_args2.split()).pid
+    test["brlist"] = brlist
+    logging.debug("bridges to remove after the test [%s]" %
+                  " ".join(test["brlist"]))
+
+    for cmd in tcpdump_cmds.keys():
+        logging.info("%s", cmd)
+        tpid = subprocess.Popen(cmd.split()).pid
         test["tpids"].append(tpid)
 
 
@@ -1943,12 +1970,21 @@ def docker_run_test(args, test):
         docker_run_script(test["nic"], test["name"], "%sinit.sh" % test["nic"])
     docker_run_script(test["responder"], test[
                       "name"], "%sinit.sh" % test["responder"])
+
+    if "others" in test:
+        for host in test["others"]:
+            docker_run_script(host, test["name"], "%sinit.sh" % host)
+
     docker_run_script(test["initiator"], test[
                       "name"], "%sinit.sh" % test["initiator"])
     docker_run_script(test["initiator"], test[
                       "name"], "%srun.sh" % test["initiator"])
     docker_run_script(test["responder"], test["name"], "final.sh")
     docker_run_script(test["initiator"], test["name"], "final.sh")
+
+    if "others" in test:
+        for host in test["others"]:
+            docker_run_script(host, test["name"], "final.sh")
 
 
 def gentle_kill(pid, name, signal=1):
@@ -1989,6 +2025,7 @@ def do_dockerplutotest(args, start, test, st):
     docker_run_test(args, test)
     docker_clean(args, test, st)
     if "is_testlist" in st:
+        # stop the docker instances
         docker_containers_start_stop(args, test, st, True)
 
 
