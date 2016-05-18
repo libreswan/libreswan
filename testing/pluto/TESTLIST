@@ -24,8 +24,6 @@ kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
 
-kvmplutotest	basic-pluto-01-klips	good
-
 kvmplutotest	netkey-audit-01	good
 
 kvmplutotest	ikev1-01-fuzzer	good
@@ -583,14 +581,16 @@ kvmplutotest	psk-pluto-06		good
 # tests using alternative ESP algorithms
 #
 kvmplutotest	netkey-algo-twofish-01	good
-kvmplutotest	klips-algo-twofish-01	good
 kvmplutotest	netkey-algo-serpent-01	good
-kvmplutotest	klips-algo-serpent-01	good
 kvmplutotest	netkey-algo-camellia-01	good
 kvmplutotest	netkey-algo-cast-01	good
-kvmplutotest	klips-algo-cast-01	good
 kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
+
+kvmplutotest	klips-algo-twofish-01	good
+kvmplutotest	klips-algo-serpent-01	good
+kvmplutotest	klips-algo-cast-01	good
+kvmplutotest	klips-basic-pluto-01	good
 
 #
 # a test of using aes256 for phase 1 and phase 2,
