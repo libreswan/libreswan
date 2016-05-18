@@ -36,6 +36,13 @@ set +e
 consoles=`ls *.console.txt 2>/dev/null || echo "NOFILES"`
 set -e
 
+# this blats CORE into all the .diff files; better than nothing
+for i in OUTPUT/core* ; do
+	if [ -f "$i" ] ; then
+		echo "# CORE: $i"
+	fi
+done
+
 result=notset
 if [ "$consoles" != "NOFILES" ]; then
 	for con in $consoles; do

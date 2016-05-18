@@ -60,8 +60,7 @@ class PipeworkEroor():
 
 
 def grep_4_known_errors(test):
-    for role in ["initiator", "responder"]:
-        host = test[role]
+    for host in test["test_hosts"]:
         tpath = os.getcwd()
 
         plutolog = tpath + '/OUTPUT/' + host + '.pluto.log'
@@ -72,31 +71,31 @@ def grep_4_known_errors(test):
             conslelog = conslelog + '.gz'
 
         if os.path.exists(plutolog):
-            grep_n_add(test, role, plutolog, 'ASSERTION FAILED', "ASSERT")
-            grep_n_add(test, role, plutolog, 'EXPECTATION FAILED', "EXPECT")
+            grep_n_add(test, host, plutolog, 'ASSERTION FAILED', "ASSERT")
+            grep_n_add(test, host, plutolog, 'EXPECTATION FAILED', "EXPECT")
 
         if os.path.exists(conslelog):
-            grep_n_add(test, role, conslelog, 'segfault', "SEGFAULT")
+            grep_n_add(test, host, conslelog, 'segfault', "SEGFAULT")
             grep_n_add(test,
-                       role, conslelog, 'general protection', "GPFAULT")
-            grep_n_add(test, role, conslelog, "^CORE FOUND$", "CORE")
+                       host, conslelog, 'general protection', "GPFAULT")
+            grep_n_add(test, host, conslelog, "^CORE FOUND$", "CORE")
 
 
-def grep_n_add(test, role, filename, pattern, note):
+def grep_n_add(test, host, filename, pattern, note):
     if not os.path.exists(filename):
         return
 
     fixed = '-F '
     fixed = ''
-    key = "%s-status" % test[role]
+    key = "%s-status" % host
     status = ''
 
     cmd = "zgrep " + fixed + "'" + pattern + "'  " + filename
     match = subprocess.getoutput(cmd)
     logging.debug("%s" % cmd)
     if match:
-        logging.info("%s %s" % (test[role], match))
-        logging.debug(("%s %s %s" % (test[role], cmd, match)))
+        logging.info("%s %s" % (host, match))
+        logging.debug(("%s %s %s" % (host, cmd, match)))
         if key in test:
             test[key] += " " + note
         else:
@@ -1370,7 +1369,7 @@ def init_output_dir():
 def sanitize(cmd):
     sanity = subprocess.getoutput(cmd)
     # logging.info ("sanitizer output %s", sanity.replace("\n", " "))
-    logging.info("sanitizer output %s", sanity)
+    logging.info("sanitizer output\n %s", sanity)
     return sanity
 
 
