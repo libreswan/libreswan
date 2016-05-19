@@ -10,6 +10,6 @@ iptables -A OUTPUT -o eth1 -p udp --dport 500 -m recent --rcheck --hitcount 6 -j
 iptables -A OUTPUT -o eth1 -p udp --dport 500 -m recent --set -j DROP
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ipv4
+ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --status | grep westnet-eastnet-ipv4
 echo "initdone"

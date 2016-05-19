@@ -1,4 +1,4 @@
 Basic pluto with on the initiator (west), and on the responder ikev2=insist.
 The responder has left=%any.
 
-The ISAKMP SA shall not establish.
+The ISAKMP SA shall not establish. Additionally, run with leak detective enabled

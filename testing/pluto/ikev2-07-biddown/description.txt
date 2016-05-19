@@ -1,5 +1,8 @@
 Basic pluto with IKEv2 on the initiator (west).
 
+NOTE: Test is not working as it should.
+
+
 This test does not actually do IKEv2, it just *tries*.
 A packet filter discards the first 6 IKEv2 packets, at which point it falls
 back to trying IKEv1, which should succeed.
