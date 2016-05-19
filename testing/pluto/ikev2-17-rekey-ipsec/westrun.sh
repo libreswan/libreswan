@@ -6,5 +6,6 @@ sleep 20
 sleep 20
 sleep 20
 sleep 20
+# rekey of IPsec SA means traffic counters should be 0
 ipsec whack --trafficstatus
 echo done

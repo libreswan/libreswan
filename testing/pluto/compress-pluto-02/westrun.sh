@@ -1,3 +1,3 @@
 ipsec auto --up  westnet-eastnet-compress
-ipsec eroute
+ipsec whack --trafficstatus
 echo done
