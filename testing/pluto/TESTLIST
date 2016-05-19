@@ -42,7 +42,7 @@ kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
 kvmplutotest	ikev2-dcookie-03			good
 
-umlplutotest	ikev2-07-biddown			good
+kvmplutotest	ikev2-07-biddown			wip
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
