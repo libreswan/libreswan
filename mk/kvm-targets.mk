@@ -421,6 +421,7 @@ $(call kvm-test-domain-files,%): $(KVM_CONFIG) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN)
 	rm -f '$(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2'
 	qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2'
 	sed \
+		-e "s:@@NAME@@:$*:" \
 		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
 		-e "s:@@POOLSPACE@@:$(KVM_TEST_DOMAIN_POOLDIR):" \
