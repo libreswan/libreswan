@@ -159,58 +159,56 @@ kvm-%-clean: kvm-clean-% ; @:
 clean-kvm: kvm-clean
 distclean-kvm: kvm-distclean
 
-# Invoke KVMSH in curret directory with argument list $(1)
+# Invoke KVMSH in the curret directory with $(1) $(2) $(3) where $(2)
+# is the host.
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
-	$(KVMSH) \
-		--output ++compile-log.txt \
-		--chdir . \
-		$(1)
+	$(KVMSH) --output ++compile-log.txt --chdir . $(1) $(2) $(3)
 endef
 
-# Run "make $(2)" on $(1)"; yea, host argument should be first :-)
+# Run "make $(2)" on $(1)"
 define kvm-make
-	$(call kvmsh, $(1) \
-	'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
+	$(call kvmsh,,$(1),'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
 endef
 
 # Run "make <anything>" on the specified domain; mainly for testing
 $(patsubst %,kvm-make-\%-%,$(KVM_INSTALL_DOMAINS)):
-	$(call kvm-make, $(patsubst kvm-make-$*-%,%,$@), $*)
+	$(call kvm-make,$(patsubst kvm-make-$*-%,%,$@),$*)
 # Run "make <anything>" on the build domain; mainly for testing
 kvm-make-%:
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), $*)
+	$(call kvm-make,$(KVM_BUILD_DOMAIN),$*)
 
 # To avoid parallel "make base" and "make module" builds stepping on
 # each others toes, this uses sub-makes to explicitly serialize "base"
 # and "modules" targets.
 .PHONY: kvm-build
 kvm-build:
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), base)
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), module)
+	$(call kvm-make,$(KVM_BUILD_DOMAIN),base)
+	$(call kvm-make,$(KVM_BUILD_DOMAIN),module)
 
 # "install" is a little wierd.  It needs to be run on all VMs, and it
 # needs to use the swan-install script.
 .PHONY: kvm-install
 kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
 kvm-install-%: kvm-build
-	$(call kvmsh, $* \
-		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+	$(call kvmsh,,$*,'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
 # Some standard make targets; just mirror the local target names.
 # Everything is run on $(KVM_BUILD_DOMAIN).
 KVM_BUILD_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-distclean
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), $(patsubst kvm-%,%,$@))
+	$(call kvm-make,$(KVM_BUILD_DOMAIN),$(patsubst kvm-%,%,$@))
 
 
 # Some useful kvm wide commands.
 .PHONY: kvm-shutdown
 kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
 kvm-shutdown-%:
-	$(call kvmsh, --shutdown $*)
+	$(call kvmsh,--shutdown,$*)
+kvmsh-%:
+	$(call kvmsh,,$*)
 
 
 # [re]run the testsuite.
@@ -271,8 +269,7 @@ SHOWVERSION = $(MAKE) showversion
 .PHONY: kvm-checksum
 kvm-checksum:
 	$(SHOWVERSION) | tee kvm-checksum.new
-	$(call kvmsh, $(KVM_BUILD_DOMAIN) \
-		'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum')
+	$(call kvmsh,,$(KVM_BUILD_DOMAIN),'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum')
 	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
 		echo "Checksum file unchanged" ; \
 		rm kvm-checksum.new ; \
