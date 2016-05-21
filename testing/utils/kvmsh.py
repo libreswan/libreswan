@@ -59,11 +59,13 @@ def main():
                         choices=set(["interactive", "batch"]),
                         help=("enter mode"
                               " (default: if there is no command enter interactive mode)"))
-    parser.add_argument("--hostname", default=None,
-                        help="Domain's host name")
+    parser.add_argument("--host-name", default=None,
+                        help="The virtual machine's host name")
+    parser.add_argument("--domain-name", default=None,
+                        help="The virtual machine's domain name")
 
     parser.add_argument("domain", action="store",
-                        help="domain (virtual machine) to connect to")
+                        help="virtual machine (domain) to connect to")
 
     parser.add_argument("command", nargs=argparse.REMAINDER,
                         help="run shell command non-interactively; WARNING#1: this simply concatenates remaining arguments with spaces; WARNING#2: this does not try to escape arguments before passing them onto the domain's shell")
@@ -73,7 +75,9 @@ def main():
     logutil.config(args)
 
     # Get things started
-    domain = virsh.Domain(args.domain, hostname=args.hostname)
+    domain_name = args.domain_name or args.domain
+    host_name = args.host_name or args.domain
+    domain = virsh.Domain(domain_name, host_name)
 
     status = 0
     console = None
