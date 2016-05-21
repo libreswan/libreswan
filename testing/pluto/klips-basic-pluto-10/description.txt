@@ -1,0 +1,7 @@
+basic test with esp=null-md5
+
+Testcase for Mantis #428 "KLIPS NULL encryption patch (through cryptoapi)"
+003 "westnet-eastnet-null": requested kernel enc ealg_id=11 not present
+003 "westnet-eastnet-null": can not initiate: no acceptable kernel algorithms loaded
+
+(klips seems broken for null encryption via cryptoapi)

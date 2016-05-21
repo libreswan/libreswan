@@ -1,0 +1,30 @@
+STILL NEEDS FILTER
+
+03:07:50.371769 IP6 fe80::1000:ff:fe96:9649 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+03:08:06.693812 IP6 fe80::1000:ff:fe96:9649 > ff02::16: HBH ICMP6, multicast listener report v2, 3 group record(s), length 68
+03:08:06.706771 ARP, Request who-has 192.1.3.33 (Broadcast) tell 0.0.0.0, length 28
+03:08:07.706973 ARP, Request who-has 192.1.3.33 (Broadcast) tell 0.0.0.0, length 28
+03:08:08.714337 ARP, Reply 192.1.3.33 is-at 12:00:00:96:96:49, length 28
+03:08:10.730426 ARP, Request who-has 192.1.3.33 (Broadcast) tell 192.1.3.33, length 28
+03:08:16.651834 IP6 fe80::1000:ff:fe96:9649 > ff02::16: HBH ICMP6, multicast listener report v2, 3 group record(s), length 68
+03:08:31.481074 ARP, Request who-has 192.1.3.254 tell 192.1.3.33, length 28
+03:08:31.481258 ARP, Reply 192.1.3.254 is-at 12:00:00:32:64:ba, length 28
+03:08:31.481336 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+03:08:31.484463 IP 192.1.2.23.isakmp > 192.1.3.33.isakmp: isakmp: phase 1 R ident
+03:08:31.493612 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+03:08:31.499468 IP 192.1.2.23.isakmp > 192.1.3.33.isakmp: isakmp: phase 1 R ident
+03:08:31.516147 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident[E]
+03:08:31.525949 IP 192.1.2.23.isakmp > 192.1.3.33.isakmp: isakmp: phase 1 R ident[E]
+03:08:31.537296 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others I oakley-quick[E]
+03:08:31.545451 IP 192.1.2.23.isakmp > 192.1.3.33.isakmp: isakmp: phase 2/others R oakley-quick[E]
+03:08:31.665584 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others I oakley-quick[E]
+03:08:32.283381 IP 192.1.3.33 > 192.1.2.23: ESP(spi=0x1a7926a1,seq=0x1), length 132
+03:08:32.283999 IP 192.1.2.23 > 192.1.3.33: ESP(spi=0xe498a270,seq=0x1), length 132
+03:08:33.284514 IP 192.1.3.33 > 192.1.2.23: ESP(spi=0x1a7926a1,seq=0x2), length 132
+03:08:33.284867 IP 192.1.2.23 > 192.1.3.33: ESP(spi=0xe498a270,seq=0x2), length 132
+03:08:34.286249 IP 192.1.3.33 > 192.1.2.23: ESP(spi=0x1a7926a1,seq=0x3), length 132
+03:08:34.286591 IP 192.1.2.23 > 192.1.3.33: ESP(spi=0xe498a270,seq=0x3), length 132
+03:08:35.288021 IP 192.1.3.33 > 192.1.2.23: ESP(spi=0x1a7926a1,seq=0x4), length 132
+03:08:35.288395 IP 192.1.2.23 > 192.1.3.33: ESP(spi=0xe498a270,seq=0x4), length 132
+03:08:36.488580 ARP, Request who-has 192.1.3.33 tell 192.1.3.254, length 28
+03:08:36.488657 ARP, Reply 192.1.3.33 is-at 12:00:00:96:96:49, length 28

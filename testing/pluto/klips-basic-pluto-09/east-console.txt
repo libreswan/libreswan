@@ -1,0 +1,22 @@
+east:~#
+ TESTNAME=basic-pluto-09
+east:~#
+ source /testing/pluto/bin/eastlocal.sh
+east:~#
+ arp -s 192.0.2.1 10:00:00:dc:bc:01
+east:~#
+ ipsec setup start
+ipsec_setup: Starting Libreswan IPsec VERSION
+east:~#
+ /testing/pluto/bin/wait-until-pluto-started
+east:~#
+ ipsec auto --add northnet--eastnet-nat
+east:~#
+ echo done
+done
+east:~#
+ 
+
+east:~#
+east:~#
+

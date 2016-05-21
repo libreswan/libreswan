@@ -1,0 +1,7 @@
+
+This tests addconn orientation using KLIPS.
+
+It includes testing a --replace while a 0.0.0.0/0 tunnel is in place to
+see if we pick the right for nexthop=%defaultroute
+
+It also tests shutdown to see leak detective reports
