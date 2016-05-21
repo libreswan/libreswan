@@ -2,7 +2,7 @@
 dig 23.2.1.192.in-addr.arpa. txt
 /testing/pluto/bin/look-for-txt 23.2.1.192.in-addr.arpa. AQN3cn11F
 
-ipsec setup start
+ipsec start
 
 /testing/pluto/basic-pluto-01/eroutewait.sh trap
 

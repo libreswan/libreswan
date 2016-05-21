@@ -2,7 +2,7 @@
 cp policies/* /etc/ipsec.d/policies/
 cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 echo "192.1.3.209/32" >> /etc/ipsec.d/policies/private-or-clear
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --debug-all --impair-retransmits
 ipsec auto --status

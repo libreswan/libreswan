@@ -9,7 +9,7 @@ ping -n -c 4 192.0.2.254
 TESTNAME=protoport-02
 source /testing/pluto/bin/westlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet-protoport-any

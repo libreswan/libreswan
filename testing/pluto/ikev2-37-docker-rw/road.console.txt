@@ -6,7 +6,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
 iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j DROP
 road #
-ipsec setup start
+ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
 /testing/pluto/bin/wait-until-pluto-started

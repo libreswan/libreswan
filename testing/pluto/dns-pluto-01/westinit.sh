@@ -4,7 +4,7 @@ source /testing/pluto/bin/westlocal.sh
 
 : all occurs without DNS
 ipsec setup stop
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add dns--westnet-eastnet

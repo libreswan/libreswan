@@ -5,7 +5,7 @@
 iptables -A INPUT -i eth1 -p icmp -j DROP
 # confirm with a ping
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-4in6
 # alternatively, direct whack

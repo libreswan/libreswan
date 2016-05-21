@@ -12,7 +12,7 @@ iptables -F OUTPUT
 iptables -A INPUT -i eth0 -s 192.1.2.23 -p tcp --sport 3 -j REJECT
 iptables -A OUTPUT -o eth0 -d 192.1.2.23 -p tcp --dport 3 -j REJECT
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add road--east-port3

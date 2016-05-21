@@ -11,7 +11,7 @@ east #
 usage: fipscheck [-s <hmac-suffix>] <paths-to-files>
 fips mode is on
 east #
- ipsec setup start
+ ipsec start
 while loading conn 'westnet-eastnet-ipv4-psk', PSK not allowed in FIPS mode with NSS
 while loading 'westnet-eastnet-ipv4-psk': (null)
 while loading conn 'west-east-base-id-psk', PSK not allowed in FIPS mode with NSS

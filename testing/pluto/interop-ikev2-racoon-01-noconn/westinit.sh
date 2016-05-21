@@ -5,7 +5,7 @@ source /testing/pluto/bin/westnlocal.sh
 export PLUTO_EVENT_RETRANSMIT_DELAY=3
 export PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL=4
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec whack --whackrecord /var/tmp/ikev2.record

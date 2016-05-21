@@ -2,7 +2,7 @@
 TESTNAME=whackrecord-01
 source /testing/pluto/bin/eastlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec whack --whackrecord /var/tmp/east.record

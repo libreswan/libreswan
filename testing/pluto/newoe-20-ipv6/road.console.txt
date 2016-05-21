@@ -12,7 +12,7 @@ road #
 road #
  cp /source/programs/configs/v6neighbor-hole.conf /etc/ipsec.d/
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  # ensure for tests acquires expire before our failureshunt=2m

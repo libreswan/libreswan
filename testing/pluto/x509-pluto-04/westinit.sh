@@ -2,7 +2,7 @@
 certutil -D -n east -d sql:/etc/ipsec.d
 certutil -D -n east-ec -d sql:/etc/ipsec.d
 ipsec import /testing/x509/pkcs12/otherca/signedbyotherca.p12
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --debug-all --impair-retransmits
 ipsec auto --add westnet-eastnet-x509-cr

@@ -2,7 +2,7 @@
 road #
  cp policies/* /etc/ipsec.d/policies/
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
@@ -38,7 +38,7 @@ Redirecting to: systemctl stop ipsec.service
 road #
  ip xfrm state
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started

@@ -6,7 +6,7 @@ road #
 road #
  route add -net default gw 192.1.3.254
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started

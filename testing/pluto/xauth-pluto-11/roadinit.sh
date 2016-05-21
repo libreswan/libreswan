@@ -13,7 +13,7 @@ netstat -rn
 TESTNAME=xauth-pluto-11
 source /testing/pluto/bin/roadlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --replace xauth-road--eastnet

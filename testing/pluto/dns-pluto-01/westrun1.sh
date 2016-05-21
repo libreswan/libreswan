@@ -1,6 +1,6 @@
 ipsec setup stop
 named
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --replace  dns--westnet-eastnet
 ipsec whack --status

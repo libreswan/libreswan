@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # this should succeed
 ipsec auto --add modecfg-east-21

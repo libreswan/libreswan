@@ -8,7 +8,7 @@ ipsec look
 # aggressively kill pluto without sending ike delete
 killall -9 pluto 
 sleep 50
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus

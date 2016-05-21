@@ -6,7 +6,7 @@ east #
 east #
  cp ikev2-east-oe.conf /etc/ipsec.d/ikev2-oe.conf
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

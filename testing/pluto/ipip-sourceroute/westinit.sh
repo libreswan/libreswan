@@ -14,7 +14,7 @@ ping -n -c 4 -I 2.2.2.3 1.1.1.3
 #ping -n -c 4 -I 192.1.2.45 192.1.2.23
 #ping -n -c 4 -I 2.2.2.3 1.1.1.3
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add ipip-sourceroute
 ipsec auto --status

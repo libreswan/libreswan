@@ -252,7 +252,7 @@ ip addr add 192.1.3.250/24 dev eth0
 ip addr add 192.1.3.251/24 dev eth0
 ip addr add 192.1.3.252/24 dev eth0
 ip addr add 192.1.3.253/24 dev eth0
-ipsec setup start
+ipsec start
 ipsec whack --debug-all --impair-retransmits
 /testing/pluto/bin/wait-until-pluto-started
 echo "initdone"

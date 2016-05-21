@@ -13,4 +13,4 @@ cp -a /testing/pluto/food-groups-orderly-transition-01/east-etc /tmp/etc
 
 export IPSEC_CONFS=/tmp/etc
 
-ipsec setup start ; i=0 ; while i=`expr $i + 1`; [ $i -lt 20 ] && ! { ipsec auto --status | grep 'prospective erouted' >/dev/null ; } ; do sleep 1 ; done
+ipsec start ; i=0 ; while i=`expr $i + 1`; [ $i -lt 20 ] && ! { ipsec auto --status | grep 'prospective erouted' >/dev/null ; } ; do sleep 1 ; done

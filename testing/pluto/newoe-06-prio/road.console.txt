@@ -7,7 +7,7 @@ road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started

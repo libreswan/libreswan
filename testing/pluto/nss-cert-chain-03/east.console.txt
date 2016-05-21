@@ -3,7 +3,7 @@ Preparing X.509 files
 east #
  certutil -A -d sql:/etc/ipsec.d/ -i /testing/x509/certs/west_chain_int_1.crt -t ",," -n "west_chain_int_1"
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

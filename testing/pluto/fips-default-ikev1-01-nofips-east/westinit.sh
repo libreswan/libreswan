@@ -11,7 +11,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # not sure why FIPS and SElinux fails on pluto including from /testing/ in permissive mode
 #setenforce 0
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
 echo "initdone"

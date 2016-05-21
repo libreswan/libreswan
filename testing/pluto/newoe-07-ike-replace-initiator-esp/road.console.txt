@@ -2,7 +2,7 @@
 road #
  cp policies/* /etc/ipsec.d/policies/
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  # ensure for tests acquires expire before our failureshunt=2m

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # pass non-l2tp plaintext, netkey needs no passthrough conns
 ipsec auto --add any-east-l2tp

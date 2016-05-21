@@ -2,7 +2,7 @@
 
 : ==== start ====
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/basic-pluto-01/eroutewait.sh trap

@@ -10,7 +10,7 @@ north #
 north #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started

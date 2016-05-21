@@ -1,6 +1,5 @@
 /testing/guestbin/swan-prep
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ah-sha1-pfs
-ipsec auto --status
+ipsec auto --add westnet-eastnet-ah-sha1
 echo "initdone"

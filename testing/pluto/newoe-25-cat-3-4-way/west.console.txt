@@ -8,7 +8,7 @@ west #
 west #
  cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 west #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started

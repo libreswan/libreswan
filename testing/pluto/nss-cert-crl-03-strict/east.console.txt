@@ -5,7 +5,7 @@ east #
 east #
  certutil -d sql:/etc/ipsec.d -D -n west
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

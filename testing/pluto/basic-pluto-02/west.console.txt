@@ -34,7 +34,7 @@ west #
 west #
  ip route add 25.2.0.0/16 via 192.1.2.45
 west #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started

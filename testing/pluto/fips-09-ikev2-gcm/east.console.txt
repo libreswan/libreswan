@@ -11,7 +11,7 @@ east #
 usage: fipscheck [-s <hmac-suffix>] <paths-to-files>
 fips mode is on
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

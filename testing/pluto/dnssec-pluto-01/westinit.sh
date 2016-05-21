@@ -8,7 +8,7 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # ensure this test cases has USE_DNSSEC compiled pluto
 ipsec pluto --version |sed "s/^.*DNSSEC.*//"
 echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-etc-hosts
 ipsec auto --status | egrep "oriented|east-from-hosts"

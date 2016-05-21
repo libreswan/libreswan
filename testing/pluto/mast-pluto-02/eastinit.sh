@@ -10,7 +10,7 @@ iptables -I INPUT 1 -i eth1 -p 50 	       -j ACCEPT
 iptables -I INPUT 1 -i eth1 -p udp --dport 500  -j ACCEPT
 iptables -I INPUT 1 -i eth1 -p udp --dport 4500 -j ACCEPT
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add west-east
