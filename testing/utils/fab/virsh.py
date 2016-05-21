@@ -35,10 +35,10 @@ class STATE:
 
 class Domain:
 
-    def __init__(self, domain_name, hostname=None):
+    def __init__(self, domain_name, host_name=None):
         # Use the term "domain" just like virsh
         self.name = domain_name
-        self.hostname = hostname or domain_name
+        self.host_name = host_name or domain_name
         self.virsh_console = None
         # Logger?
         self.logger = logutil.getLogger(__name__, self.name)
@@ -87,7 +87,7 @@ class Domain:
     def console(self, timeout=CONSOLE_TIMEOUT):
         command = "sudo virsh console --force %s" % (self.name)
         self.logger.debug("opening console with: %s", command)
-        console = shell.Remote(command, hostname=self.hostname,
+        console = shell.Remote(command, hostname=self.host_name,
                                logger=self.logger)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first

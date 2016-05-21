@@ -40,7 +40,7 @@ def log_arguments(logger, args):
     logger.info("  ignore-blank-lines: %s", args.ignore_blank_lines)
 
 
-# Dictionary to accumulate all the errors for each domain from an
+# Dictionary to accumulate all the errors for each host from an
 # individual test.
 
 class Errors:
@@ -54,11 +54,11 @@ class Errors:
     # Not exactly efficient.
     def __str__(self):
         s = ""
-        for domain, errors in sorted(self.errors.items()):
+        for host, errors in sorted(self.errors.items()):
             if s:
                 s += " "
-            if domain:
-                s += domain + ":"
+            if host:
+                s += host + ":"
             s += ",".join(sorted(errors))
         return s
 
@@ -76,25 +76,25 @@ class Errors:
     def items(self):
         return self.errors.items()
 
-    def add(self, error, domain=None):
-        self.errors[domain].add(error)
-        self.logger.debug("domain %s has error %s", domain, error)
+    def add(self, error, host=None):
+        self.errors[host].add(error)
+        self.logger.debug("host %s has error %s", host, error)
 
-    def search(self, regex, string, error, domain):
-        self.logger.debug("searching domain %s for '%s' (error %s)", domain, regex, error)
+    def search(self, regex, string, error, host):
+        self.logger.debug("searching host %s for '%s' (error %s)", host, regex, error)
         if re.search(regex, string):
-            self.add(error, domain)
+            self.add(error, host)
             return True
         else:
             return False
 
-    def grep(self, regex, filename, error, domain):
-        self.logger.debug("grepping domain %s file '%s' for '%s' (error %s)", domain, filename, regex, error)
+    def grep(self, regex, filename, error, host):
+        self.logger.debug("grepping host %s file '%s' for '%s' (error %s)", host, filename, regex, error)
         command = ['grep', '-e', regex, filename]
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode == 0:
-            self.add(error, domain)
+            self.add(error, host)
             return True
         else:
             return False
@@ -211,43 +211,43 @@ class TestResult:
 
         # Check the pluto logs for markers indicating that there was a
         # crash or other unexpected behaviour.
-        for domain in test.domain_names():
-            pluto_log = os.path.join(output_directory, domain + ".pluto.log")
+        for host_name in test.host_names():
+            pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
             if os.path.exists(pluto_log):
                 test.logger.debug("checking '%s' for errors", pluto_log)
-                if self.errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", domain):
+                if self.errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
                     self.passed = False
                 # XXX: allow expection failures?
-                self.errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", domain)
+                self.errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", host_name)
 
         # Check the raw console output for problems and that it
         # matches expected output.
-        for domain in test.domain_names():
+        for host_name in test.host_names():
 
             # There should always be raw console output from all
-            # domains.  If there isn't then there's a big problem and
-            # little point with continuing checks for this domain.
+            # hosts.  If there isn't then there's a big problem and
+            # little point with continuing checks for this host.
 
             raw_console_file = os.path.join(output_directory,
-                                            domain + ".console.verbose.txt")
-            test.logger.debug("domain %s raw console output '%s'", domain, raw_console_file)
+                                            host_name + ".console.verbose.txt")
+            test.logger.debug("host %s raw console output '%s'", host_name, raw_console_file)
             if not os.path.exists(raw_console_file):
-                self.errors.add("output-missing", domain)
+                self.errors.add("output-missing", host_name)
                 self.passed = False
                 continue
 
-            test.logger.debug("domain %s loading raw console output", domain)
+            test.logger.debug("host %s loading raw console output", host_name)
             with open(raw_console_file) as f:
                 raw_console_output = f.read()
 
-            test.logger.debug("domain %s checking raw console output for signs of a crash", domain)
-            if self.errors.search(r"[\r\n]CORE FOUND", raw_console_output, "CORE", domain):
+            test.logger.debug("host %s checking raw console output for signs of a crash", host_name)
+            if self.errors.search(r"[\r\n]CORE FOUND", raw_console_output, "CORE", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"SEGFAULT", raw_console_output, "SEGFAULT", domain):
+            if self.errors.search(r"SEGFAULT", raw_console_output, "SEGFAULT", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"GPFAULT", raw_console_output, "GPFAULT", domain):
+            if self.errors.search(r"GPFAULT", raw_console_output, "GPFAULT", host_name):
                 # keep None
                 self.passed = False
 
@@ -256,37 +256,37 @@ class TestResult:
             #
             # For moment skip this as the marker for complete output isn't reliable?
             
-            #test.logger.debug("domain %s checking if raw console output was incomplete", domain)
+            #test.logger.debug("host %s checking if raw console output was incomplete", host_name)
             #if not "# : ==== end ====" in raw_console_output:
-            #    self.errors.add("output-incomplete", domain)
+            #    self.errors.add("output-incomplete", host_name)
             #    self.passed = False
             #    continue
 
             sanitized_console_file = os.path.join(output_directory,
-                                                  domain + ".console.txt")
-            test.logger.debug("domain %s sanitize console output '%s'", domain, sanitized_console_file)
+                                                  host_name + ".console.txt")
+            test.logger.debug("host %s sanitize console output '%s'", host_name, sanitized_console_file)
             sanitized_console_output = None
             if skip_sanitize:
                 sanitized_console_output = load_output(test.logger, sanitized_console_file)
             if not sanitized_console_output:
                 sanitized_console_output = sanitize_output(test.logger, raw_console_file, test.sanitize_directory)
             if not sanitized_console_output:
-                self.errors.add("sanitizer-failed", domain)
+                self.errors.add("sanitizer-failed", host_name)
                 continue
             if update_sanitize:
-                test.logger.debug("domain %s updating sanitized output file: %s", domain, sanitized_console_file)
+                test.logger.debug("host %s updating sanitized output file: %s", host_name, sanitized_console_file)
                 with open(sanitized_console_file, "w") as f:
                     f.write(sanitized_console_output)
 
-            self.sanitized_console_output[domain] = sanitized_console_output
+            self.sanitized_console_output[host_name] = sanitized_console_output
 
-            expected_sanitized_console_output_file = os.path.join(test.directory, domain + ".console.txt")
-            test.logger.debug("domain %s comparing against known-good output '%s'", domain, expected_sanitized_console_output_file)
+            expected_sanitized_console_output_file = os.path.join(test.directory, host_name + ".console.txt")
+            test.logger.debug("host %s comparing against known-good output '%s'", host_name, expected_sanitized_console_output_file)
             if os.path.exists(expected_sanitized_console_output_file):
 
                 diff, whitespace = [], None
 
-                sanitized_console_diff_file = os.path.join(output_directory, domain + ".console.diff")
+                sanitized_console_diff_file = os.path.join(output_directory, host_name + ".console.diff")
                 if skip_diff:
                     sanitized_console_diff = load_output(test.logger, sanitized_console_diff_file)
                     # be consistent with fuzzy_diff which returns a list
@@ -297,30 +297,30 @@ class TestResult:
                     with open(expected_sanitized_console_output_file) as f:
                         expected_sanitized_console_output = f.read()
                     diff, whitespace = fuzzy_diff(test.logger,
-                                                  "MASTER/" + test.name + "/" + domain + ".console.txt",
+                                                  "MASTER/" + test.name + "/" + host_name + ".console.txt",
                                                   expected_sanitized_console_output,
-                                                  "OUTPUT/" + test.name + "/" + domain + ".console.txt",
+                                                  "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
                                                   sanitized_console_output,
                                                   strip_spaces=strip_spaces,
                                                   strip_blank_lines=strip_blank_lines)
                 if update_diff:
-                    test.logger.debug("domain %s updating diff file %s", domain, sanitized_console_diff_file)
+                    test.logger.debug("host %s updating diff file %s", host_name, sanitized_console_diff_file)
                     with open(sanitized_console_diff_file, "w") as f:
                         for line in diff:
                             f.write(line)
                             f.write("\n")
                 if diff:
-                    self.diffs[domain] = diff
+                    self.diffs[host_name] = diff
                     if whitespace:
-                        self.errors.add("output-whitespace", domain)
+                        self.errors.add("output-whitespace", host_name)
                     else:
                         self.passed = False
-                        self.errors.add("output-different", domain)
-            elif domain == "nic":
+                        self.errors.add("output-different", host_name)
+            elif host_name == "nic":
                 # NIC never gets its console output checked.
-                test.logger.debug("domain %s has unchecked console output", domain)
+                test.logger.debug("host %s has unchecked console output", host_name)
             else:
-                self.errors.add("output-unchecked", domain)
+                self.errors.add("output-unchecked", host_name)
 
 
 def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
@@ -375,42 +375,42 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     if test_result.passed and baseline_result.passed:
         return test_result
 
-    for domain in test.domain_names():
+    for host_name in test.host_names():
 
-        if domain is "nic":
+        if host_name is "nic":
             continue
 
-        if not domain in test_result.sanitized_console_output:
+        if not host_name in test_result.sanitized_console_output:
             continue
 
-        if not domain in baseline_result.sanitized_console_output:
-            test_result.errors.add("baseline-missing", domain)
+        if not host_name in baseline_result.sanitized_console_output:
+            test_result.errors.add("baseline-missing", host_name)
             continue
 
-        if not domain in test_result.diffs:
-            if domain in baseline_result.diffs:
-                test_result.errors.add("baseline-failed", domain)
+        if not host_name in test_result.diffs:
+            if host_name in baseline_result.diffs:
+                test_result.errors.add("baseline-failed", host_name)
             continue
 
-        if not domain in baseline_result.diffs:
-            test_result.errors.add("baseline-passed", domain)
+        if not host_name in baseline_result.diffs:
+            test_result.errors.add("baseline-passed", host_name)
             continue
 
         baseline_diff, baseline_whitespace = fuzzy_diff(test.logger,
-                                                        "BASELINE/" + test.name + "/" + domain + ".console.txt",
-                                                        baseline_result.sanitized_console_output[domain],
-                                                        "OUTPUT/" + test.name + "/" + domain + ".console.txt",
-                                                        test_result.sanitized_console_output[domain],
+                                                        "BASELINE/" + test.name + "/" + host_name + ".console.txt",
+                                                        baseline_result.sanitized_console_output[host_name],
+                                                        "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                                                        test_result.sanitized_console_output[host_name],
                                                         strip_spaces=strip_spaces,
                                                         strip_blank_lines=strip_blank_lines)
         if baseline_diff:
             if baseline_whitespace:
-                test_result.errors.add("baseline-whitespace", domain)
+                test_result.errors.add("baseline-whitespace", host_name)
             else:
-                test_result.errors.add("baseline-different", domain)
+                test_result.errors.add("baseline-different", host_name)
             # update the diff to something hopefully closer?
-            test_result.diffs[domain] = baseline_diff
+            test_result.diffs[host_name] = baseline_diff
         # else:
-        #    test_result.errors.add("baseline-failed", domain)
+        #    test_result.errors.add("baseline-failed", host_name)
 
     return test_result

@@ -29,21 +29,24 @@ def add_arguments(parser):
     group = parser.add_argument_group("Run arguments", "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
                        help="default: %(default)s")
+    group.add_argument("--prefix", metavar="DOMAIN-PREFIX", default="",
+                       help="prefix to prepend to each domain")
 
 
 def log_arguments(logger, args):
     logger.info("Runner arguments:")
     logger.info("  workers: %s", args.workers)
+    logger.info("  prefix: %s", args.prefix)
 
 
 TEST_TIMEOUT = 120
 
 class TestDomain:
 
-    def __init__(self, domain_name, test):
+    def __init__(self, domain_name, host_name, test):
         self.test = test
         # Get the domain
-        self.domain = virsh.Domain(domain_name)
+        self.domain = virsh.Domain(domain_name=domain_name, host_name=host_name)
         self.logger = logutil.getLogger(__name__, test.name, domain_name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
@@ -123,14 +126,15 @@ class TestDomain:
 
 class TestDomains:
 
-    def __init__(self, logger, test, domain_names):
+    def __init__(self, logger, test, domain_prefix, host_names):
         self.logger = logger
         # Create a table of test domain objects; they are used during
         # cleanup; and they are used as the values of the JOBS table.
         self.test_domains = {}
-        for domain_name in domain_names:
-            test_domain = TestDomain(domain_name, test)
-            self.test_domains[domain_name] = test_domain
+        for host_name in host_names:
+            domain_name = domain_prefix + host_name
+            test_domain = TestDomain(domain_name, host_name, test)
+            self.test_domains[host_name] = test_domain
 
     def __enter__(self):
         self.logger.debug("all test domains: %s", self.test_domains)
@@ -169,7 +173,7 @@ def run_test(test, args):
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
 
-    with TestDomains(logger, test, testsuite.DOMAIN_NAMES) as all_test_domains:
+    with TestDomains(logger, test, args.prefix, testsuite.HOST_NAMES) as all_test_domains:
         try:
 
             # Python doesn't have an easy way to obtain an executor's
@@ -222,8 +226,8 @@ def strset(s):
 def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     test_domains = set()
-    for domain_name in test.domain_names():
-        test_domains.add(all_test_domains[domain_name])
+    for host_name in test.host_names():
+        test_domains.add(all_test_domains[host_name])
     logger.debug("test domains: %s", strset(test_domains))
 
     idle_test_domains = set()
@@ -235,7 +239,7 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
         submit_job_for_domain(executor, jobs, logger, test_domain,
                               TestDomain.shutdown)
     wait_for_jobs(jobs, logger)
-    
+
     # There's a tradeoff here between speed and reliability.
     #
     # In theory, since booting is largely I/O bound, and the host has
@@ -261,13 +265,13 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
     # re-direct the test-result log file
     for test_domain in test_domains:
         output = os.path.join(test.output_directory,
-                              test_domain.domain.name + ".console.verbose.txt")
+                              test_domain.domain.host_name + ".console.verbose.txt")
         test_domain.console.output(open(output, "w"))
 
     for scripts in test.scripts():
-        tasks = " ".join(("%s:%s") % (domain_name, script) for domain_name, script in scripts.items())
+        tasks = " ".join(("%s:%s") % (host_name, script) for host_name, script in scripts.items())
         logger.info("running scripts: %s", tasks)
-        for domain_name, script in scripts.items():
-            submit_job_for_domain(executor, jobs, logger, all_test_domains[domain_name],
+        for host_name, script in scripts.items():
+            submit_job_for_domain(executor, jobs, logger, all_test_domains[host_name],
                                   lambda test_domain: test_domain.read_file_run(script))
         wait_for_jobs(jobs, logger)

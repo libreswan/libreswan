@@ -96,16 +96,16 @@ class Test:
     def __str__(self):
         return self.full_name
 
-    def domain_names(self):
+    def host_names(self):
         if not self.domains:
-            self.domains = _domain_names_from_files_with_suffix(self.logger,
+            self.domains = _host_names_from_files_with_suffix(self.logger,
                                                                 self.directory,
                                                                 "init.sh")
         return self.domains
 
     def initiator_names(self):
         if not self.initiators:
-            self.initiators = _domain_names_from_files_with_suffix(self.logger,
+            self.initiators = _host_names_from_files_with_suffix(self.logger,
                                                                    self.directory,
                                                                    "run.sh")
         return self.initiators
@@ -115,49 +115,49 @@ class Test:
 
         scripts = []
         nic = {"nic"}
-        domain_names = self.domain_names()
+        host_names = self.host_names()
         initiator_names = self.initiator_names()
         _add_matching(self, scripts, "%(domain)sinit.sh", nic);
-        _add_matching(self, scripts, "%(domain)sinit.sh", domain_names ^ nic ^ initiator_names)
+        _add_matching(self, scripts, "%(domain)sinit.sh", host_names ^ nic ^ initiator_names)
         _add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
         _add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
-        _add_matching(self, scripts, "final.sh", domain_names)
+        _add_matching(self, scripts, "final.sh", host_names)
         return scripts
 
 
-def _add_matching(test, scripts, template, domain_names):
+def _add_matching(test, scripts, template, host_names):
     s = dict()
-    for domain_name in domain_names:
-        script = template % {'domain':domain_name}
+    for host_name in host_names:
+        script = template % {'domain':host_name}
         if (os.path.exists(os.path.join(test.directory, script))):
-            s[domain_name] = script
+            s[host_name] = script
     if s:
         scripts.append(s)
 
 
-def _domain_names():
+def _host_names():
     domains = set()
     status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
     for name in output.splitlines():
         domains.add(name)
     return domains
-DOMAIN_NAMES = _domain_names()
+HOST_NAMES = _host_names()
 
 
-def _domain_names_from_files_with_suffix(logger, directory, suffix):
+def _host_names_from_files_with_suffix(logger, directory, suffix):
     """Find files matching <domain><suffix>"""
-    domain_names = set()
+    host_names = set()
     for f in os.listdir(directory):
-        domain_name, middle, tail = f.partition(suffix)
+        host_name, middle, tail = f.partition(suffix)
         if not middle or tail:
             continue
-        if not domain_name in DOMAIN_NAMES:
+        if not host_name in HOST_NAMES:
             logger.warn("the domain name '%s', from '%s/<%s>%s', is invalid (valid domains: %s)",
-                        domain_name, directory, domain_name, suffix,
-                        " ".join(DOMAIN_NAMES))
+                        host_name, directory, host_name, suffix,
+                        " ".join(HOST_NAMES))
             continue
-        domain_names.add(domain_name)
-    return domain_names
+        host_names.add(host_name)
+    return host_names
 
 
 # Load the tetsuite defined by TESTLIST
