@@ -204,7 +204,7 @@ def main():
                     ending = "undefined"
                     try:
                         if not args.dry_run:
-                            runner.run_test(test, max_workers=args.workers)
+                            runner.run_test(test, args)
                         ending = "finished"
                         result = post.mortem(test, args, update=(not args.dry_run))
                         if not args.dry_run:

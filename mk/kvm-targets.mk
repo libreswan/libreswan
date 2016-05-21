@@ -41,8 +41,9 @@ KVM_QEMUDIR = /var/lib/libvirt/qemu
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMSH ?= $(KVMSH_COMMAND)
+KVM_WORKERS ?= 1
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
-KVMRUNNER ?= $(KVMRUNNER_COMMAND)
+KVMRUNNER ?= $(KVMRUNNER_COMMAND)$(if $(KVM_WORKERS), --workers $(KVM_WORKERS))
 
 KVM_OBJDIR = OBJ.kvm
 

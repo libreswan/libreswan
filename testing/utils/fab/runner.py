@@ -163,7 +163,7 @@ def execute_on_domains(executor, jobs, logger, domains, work):
     wait_for_jobs(jobs, logger)
 
 
-def run_test(test, max_workers=1):
+def run_test(test, args):
     # Lots of WITH/TRY blocks so things always clean up.
 
     # Time just this test
@@ -177,7 +177,7 @@ def run_test(test, max_workers=1):
             # If there's a crash, any remaining members of JOBS are
             # canceled or killed in the finally block below.  The
             # executor is cleaned up explicitly in the finally clause.
-            executor = futures.ThreadPoolExecutor(max_workers=max_workers)
+            executor = futures.ThreadPoolExecutor(max_workers=args.workers)
             jobs = {}
             logger.info("starting test")
             run_test_on_executor(executor, jobs, logger, test, all_test_domains)
