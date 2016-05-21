@@ -438,16 +438,18 @@ ctltest	 	vpn-dns-01		good
 # a test of using X.509 keys
 #
 kvmplutotest	x509-pluto-01		good
-
-#
-#
-# a test of sending and validating an X.509 cert
-#
 kvmplutotest	x509-pluto-02		good
-
-# a test of sending and validating an X.509 cert
-#
 kvmplutotest	x509-pluto-03		good
+kvmplutotest	x509-pluto-04		good
+
+umlplutotest	x509-pluto-05		good
+umlXhost	x509-pluto-06		good
+
+kvmplutotest	x509-pluto-frag-00	good
+kvmplutotest	x509-pluto-frag-01	good
+kvmplutotest	x509-pluto-frag-02	good
+kvmplutotest	x509-pluto-frag-03	good
+kvmplutotest	x509-pluto-frag-04	good
 
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
@@ -475,23 +477,6 @@ kvmplutotest	ikev1-algo-ike-aes-02	good
 # CAP_DAC_OVERRIDE
 kvmplutotest	basic-pluto-06		good
 
-# a test of sending and validating an X.509 cert
-# when the responder has leftca=%any
-#
-umlplutotest	x509-pluto-04		good
-
-#
-# a test of sending and validating an X.509 cert
-# when the responder only a leftca="" value, and
-# no leftid=
-#
-umlplutotest	x509-pluto-05		good
-
-#
-# a test of sending and validating an X.509 cert
-# when the responder has the wrong DN.
-#
-umlXhost	x509-pluto-06		good
 
 #
 # a test case of PSK with aggressive mode
@@ -517,6 +502,7 @@ kvmplutotest	xauth-pluto-16		good
 skiptest	xauth-pluto-17		wip
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
+kvmplutotest	xauth-pluto-20-pam	good
 
 
 
@@ -539,7 +525,6 @@ kvmplutotest	ikev1-algo-ike-bogus-01	good
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-12-netkey	wip
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit wip
@@ -596,15 +581,11 @@ kvmplutotest	klips-basic-pluto-01	good
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
-kvmplutotest    algo-pluto-02          good
-kvmplutotest    algo-pluto-03          good
-#known bug
-kvmplutotest    algo-pluto-04          wip
-
+kvmplutotest    algo-pluto-04          good
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
+kvmplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
-kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
 kvmplutotest    algo-pluto-11          good
 kvmplutotest    algo-pluto-12-aes-default	good
@@ -655,7 +636,6 @@ umlplutotest	protoport-02		good
 
 
 # Tests below require testing infrastructure with netkey support
-kvmplutotest    algo-pluto-07			good
 kvmplutotest    netkey-pluto-01			good
 kvmplutotest    netkey-pluto-02			good
 kvmplutotest    netkey-pluto-03			good
@@ -756,12 +736,6 @@ kvmplutotest	dnssec-pluto-01					good
 umlplutotest	phase1-expire-01-reconnect-klips		good
 umlplutotest	phase1-expire-02-reconnect-netkey		good
 
-kvmplutotest	x509-pluto-frag-00			good
-kvmplutotest	x509-pluto-frag-01			good
-kvmplutotest	x509-pluto-frag-02			good
-kvmplutotest	x509-pluto-frag-03			good
-kvmplutotest	x509-pluto-frag-04			good
-
 kvmplutotest	replay-authip-01			good
 
 kvmplutotest	l2tp-01					good
@@ -844,3 +818,27 @@ kvmplutotest	nss-cert-ocsp-05-ikev2		good
 kvmplutotest	nss-cert-ocsp-05-strict		good
 kvmplutotest	nss-cert-ocsp-06		good
 kvmplutotest	nss-cert-ocsp-07-nourl		good
+
+#################################################################
+# old saved KLIPS tests that were converted to NETKEY.
+# (theses tests were not actually testing stack features
+#################################################################
+kvmplutotest	klips-ah-pluto-01		skiptest
+kvmplutotest	klips-ah-pluto-12		skiptest
+kvmplutotest	klips-ah-pluto-13		skiptest
+kvmplutotest	klips-algo-cast-01		skiptest
+kvmplutotest	klips-algo-pluto-01		skiptest
+kvmplutotest	klips-algo-serpent-01		skiptest
+kvmplutotest	klips-algo-twofish-01		skiptest
+kvmplutotest	klips-basic-pluto-01		skiptest
+kvmplutotest	klips-basic-pluto-02		skiptest
+kvmplutotest	klips-basic-pluto-03		skiptest
+kvmplutotest	klips-basic-pluto-04		skiptest
+kvmplutotest	klips-basic-pluto-05		skiptest
+kvmplutotest	klips-basic-pluto-07		skiptest
+kvmplutotest	klips-basic-pluto-09		skiptest
+kvmplutotest	klips-basic-pluto-10		skiptest
+kvmplutotest	klips-basic-pluto-12		skiptest
+kvmplutotest	klips-compress-pluto-01		skiptest
+kvmplutotest	klips-compress-pluto-03		skiptest
+kvmplutotest	klips-passthrough-00		skiptest
