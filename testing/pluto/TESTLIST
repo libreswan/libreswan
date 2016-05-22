@@ -61,6 +61,8 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
+kvmplutotest	ikev2-31-nat-rw-no-rekey		good
+kvmplutotest	ikev2-30-rw-no-rekey			good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev2-45-impair-gx-01			good
@@ -116,8 +118,8 @@ kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
 # interop tests for KLIPS-NETKEY with SHA2
-kvmplutotest	ikev1-algo-esp-sha2-01			good
-kvmplutotest	ikev1-algo-esp-sha2-02			good
+kvmplutotest	ikev1-algo-esp-sha2-01-netkey-klips	good
+kvmplutotest	ikev1-algo-esp-sha2-02-netkey-klips	good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
@@ -329,16 +331,13 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
-kvmplutotest	dpd-01-netkey	good
 kvmplutotest	dpd-02	good
-kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
 kvmplutotest	dpd-04	good
 kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
-kvmplutotest	dpd-08-netkey	wip
 kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
@@ -818,6 +817,8 @@ kvmplutotest	nss-cert-ocsp-05-ikev2		good
 kvmplutotest	nss-cert-ocsp-05-strict		good
 kvmplutotest	nss-cert-ocsp-06		good
 kvmplutotest	nss-cert-ocsp-07-nourl		good
+
+kvmplutotest	ikev1-2behind-nat-01		wip
 
 #################################################################
 # old saved KLIPS tests that were converted to NETKEY.
