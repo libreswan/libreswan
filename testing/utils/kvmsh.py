@@ -63,6 +63,8 @@ def main():
                         help="The virtual machine's host name")
     parser.add_argument("--domain-name", default=None,
                         help="The virtual machine's domain name")
+    parser.add_argument("--prefix", default="",
+                        help="Prefix to prepend to the virtual machine's domain name")
 
     parser.add_argument("domain", action="store",
                         help="virtual machine (domain) to connect to")
@@ -75,7 +77,7 @@ def main():
     logutil.config(args)
 
     # Get things started
-    domain_name = args.domain_name or args.domain
+    domain_name = args.prefix + (args.domain_name or args.domain)
     host_name = args.host_name or args.domain
     domain = virsh.Domain(domain_name, host_name)
 

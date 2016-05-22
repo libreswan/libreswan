@@ -159,17 +159,18 @@ kvm-%-clean: kvm-clean-% ; @:
 clean-kvm: kvm-clean
 distclean-kvm: kvm-distclean
 
-# Invoke KVMSH in the curret directory with $(1) $(2) $(3) where $(2)
-# is the host.
+# Invoke KVMSH in the curret directory with $(1).
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
-	$(KVMSH) --output ++compile-log.txt --chdir . $(1) $(2) $(3)
+	$(KVMSH) --output ++compile-log.txt --chdir . \
+		$(if $(KVM_PREFIX),--prefix $(KVM_PREFIX)) \
+		$(1)
 endef
 
 # Run "make $(2)" on $(1)"
 define kvm-make
-	$(call kvmsh,,$(1),'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
+	$(call kvmsh,$(1) 'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
 endef
 
 # Run "make <anything>" on the specified domain; mainly for testing
@@ -192,7 +193,7 @@ kvm-build:
 .PHONY: kvm-install
 kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
 kvm-install-%: kvm-build
-	$(call kvmsh,,$*,'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+	$(call kvmsh,$* 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
 # Some standard make targets; just mirror the local target names.
 # Everything is run on $(KVM_BUILD_DOMAIN).
@@ -206,9 +207,9 @@ $(KVM_BUILD_TARGETS):
 .PHONY: kvm-shutdown
 kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
 kvm-shutdown-%:
-	$(call kvmsh,--shutdown,$*)
+	$(call kvmsh,--shutdown $*)
 kvmsh-%:
-	$(call kvmsh,,$*)
+	$(call kvmsh,$*)
 
 
 # [re]run the testsuite.
@@ -505,4 +506,10 @@ kvm-help:
 	@echo '    uninstall-kvm-test-domains - delete just the test domains, keep the base'
 	@echo '    uninstall-kvm-domains      - rip out all the domains'
 	@echo '    uninstall-kvm-networks     - rip out all the networks'
+	@echo ''
+	@echo '  To login to a domain:'
+	@echo '    make kvmsh-DOMAIN          - for instance kvmsh-east'
+	@echo '    make kvmsh-DOMAIN          - for instance kvmsh-east'
+	@echo '  And to run something on a domain:'
+	@echo '    make kvmsh-"DOMAIN CMD"    - for instance kvmsh-"east pwd"'
 	@echo ''
