@@ -10,6 +10,8 @@ west #
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
  # confirm with a ping
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -22,23 +24,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  ipsec start
-[ 00.00] registered KLIPS /proc/sys/net
-[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
-[ 00.00] 
 Redirecting to: systemctl start ipsec.service
-[ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -129,14 +115,14 @@ west #
  ipsec auto --down TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
 002 "TUNNEL-B" #3: deleting state #3 (STATE_QUICK_I2)
-005 "TUNNEL-B" #3: ESP traffic information: in=0B out=0B
+005 "TUNNEL-B" #3: ESP traffic information: in=336B out=336B
 002 "TUNNEL-B" #5: deleting state #5 (STATE_MAIN_R3)
 west #
  #One IKE will remain on TUNNEL-B
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "TUNNEL-A":   labeled_ipsec:no;
@@ -183,9 +169,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "TUNNEL-A" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": deleting connection
@@ -194,7 +180,7 @@ west #
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "TUNNEL-A":   labeled_ipsec:no;
@@ -226,30 +212,100 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "TUNNEL-A" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE_IF_USED in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #4: "TUNNEL-C" used XXs ago; esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1004@192.1.2.23 tun.1005@192.1.2.45 ref=0 refhim=4294901761 Traffic:! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 west #
  echo done
 done
 west #
  ipsec look
 west NOW
-192.0.1.254/32     -> 192.0.2.234/32     => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-192.0.1.254/32     -> 192.0.2.254/32     => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.234/32->192.0.1.254/32 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+XFRM policy:
+src 192.0.1.254/32 dst 192.0.2.234/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.234/32 dst 192.0.1.254/32 
+	dir fwd priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.234/32 dst 192.0.1.254/32 
+	dir in priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.1.254/32 dst 192.0.2.254/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.254/32 dst 192.0.1.254/32 
+	dir fwd priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.254/32 dst 192.0.1.254/32 
+	dir in priority 2080 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.0.2.234 dev ipsec0  scope link 
-192.0.2.254 dev ipsec0  scope link 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
 NSS_CERTIFICATES

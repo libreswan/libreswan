@@ -7,7 +7,7 @@ ipsec auto --up west-east
 ping -q -c 8 -n 192.1.2.23
 # show the tunnel!
 echo "Tunnel should be up"
-ipsec eroute
+ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
 echo "Waiting 15 seconds..."
 sleep 15
@@ -16,14 +16,14 @@ iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 : ==== cut ====
 sleep 10
-ipsec eroute
+ipsec whack --trafficstatus
 sleep 10
-ipsec eroute
+ipsec whack --trafficstatus
 sleep 10
 : ==== tuc ====
 # DPD should have triggered now
-echo "Tunnel should be down (%trap/%hold)"
-ipsec eroute
+echo "Tunnel should be down"
+ipsec whack --trafficstatus
 # Remove the Blockage
 echo "Removing block"
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
@@ -32,5 +32,5 @@ sleep 10
 ping -q -c 8 -n 192.1.2.23
 # Tunnel should be back up now
 echo "Tunnel should be up"
-ipsec eroute
-echo end
+ipsec whack --trafficstatus
+echo done

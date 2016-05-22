@@ -1,2 +1,0 @@
-# Put extra pluto command line options you want here
-PLUTO_OPTIONS=" --natikeport 1000 --ikeport 999"
