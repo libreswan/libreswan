@@ -1,4 +1,0 @@
-Basic pluto test, but running the NETKEY stack on west. (same as basic-pluto-01
-otherwise)
-
-A shutdown is issued to verify no kernel state is left behind

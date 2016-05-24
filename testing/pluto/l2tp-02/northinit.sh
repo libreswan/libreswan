@@ -1,9 +1,4 @@
 /testing/guestbin/swan-prep
-iptables -F INPUT
-iptables -F OUTPUT
-# make sure that clear text does not get through
-iptables -A INPUT -i eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
-iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add north-east-l2tp
