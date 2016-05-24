@@ -357,7 +357,13 @@ $(KVM_POOLDIR)/%.ks $(KVM_POOLDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
 install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain:  $(KVM_CONFIG) undefine-kvm-domain-$(KVM_BASE_DOMAIN)
+uninstall-kvm-base-domain:  $(KVM_CONFIG)
+	if sudo virsh domstate '$(KVM_BASE_DOMAIN)' 2>/dev/null | grep running > /dev/null ; then \
+		sudo virsh destroy '$(KVM_BASE_DOMAIN)' ; \
+	fi
+	if sudo virsh domstate '$(KVM_BASE_DOMAIN)' > /dev/null 2>&1 ; then \
+		sudo virsh undefine '$(KVM_BASE_DOMAIN)' --remove-all-storage ; \
+	fi
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).xml
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
@@ -411,8 +417,7 @@ KVM_TEST_DOMAINS_FILES = \
 
 .PHONY: install-kvm-domains install-kvm-test-domains
 
-install-kvm-domains: install-kvm-test-domains install-kvm-base-domain
-install-kvm-test-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
+install-kvm-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
 install-kvm-domain-%:  $(KVM_CONFIG) $(call kvm-test-domain-files,%) ; @:
 .PRECIOUS: $(KVM_TEST_DOMAINS_FILES)
 $(call kvm-test-domain-files,%): $(KVM_CONFIG) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 | testing/libvirt/vm/%
@@ -431,26 +436,36 @@ $(call kvm-test-domain-files,%): $(KVM_CONFIG) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN)
 	sudo virsh define '$(KVM_TEST_DOMAIN_POOLDIR)/$*.tmp'
 	mv '$(KVM_TEST_DOMAIN_POOLDIR)/$*.tmp' '$(KVM_TEST_DOMAIN_POOLDIR)/$*.xml'
 
-.PHONY: uninstall-kvm-domains uninstall-kvm-test-domains
-uninstall-kvm-domains: uninstall-kvm-test-domains uninstall-kvm-base-domain
-uninstall-kvm-test-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
-	: To rebuild the test domains from the current base domain disk type:
-	:
-	:     rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	:
-	: This is not done by default as the operation is unreliable and slow.
-uninstall-kvm-domain-%: $(KVM_CONFIG) undefine-kvm-domain-%
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.xml
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.ks
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2
-undefine-kvm-domain-%: destroy-kvm-domain-%
-	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
-		sudo virsh undefine '$*' --remove-all-storage ; \
-	fi
-destroy-kvm-domain-%:
+.PHONY: uninstall-kvm-domains
+uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
+	@echo ''
+	@echo 'NOTE:'
+	@echo ''
+	@echo '      Neither the base (master) domain nor its cloned disk have been deleted'
+	@echo ''
+	@echo 'To force a rebuild of the test domains using the real base domain disk type:'
+	@echo ''
+	@echo '     rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2'
+	@echo '     make install-kvm-domains'
+	@echo ''
+	@echo 'To force a complete rebuild of all domains including base type:'
+	@echo ''
+	@echo '     make uninstall-kvm-domains uninstall-kvm-base-domain'
+	@echo '     make install-kvm-domains'
+	@echo ''
+	@echo 'Rationale: since the creation of the base domain and its cloned disk is'
+	@echo 'both unreliable and slow, and typically not needed, an explict rule is provided'
+	@echo ''
+uninstall-kvm-domain-%: $(KVM_CONFIG)
 	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$*' ; \
 	fi
+	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
+		sudo virsh undefine '$*' --remove-all-storage ; \
+	fi
+	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.xml
+	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.ks
+	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2
 
 
 #
