@@ -1,0 +1,27 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add north-east-port3
+002 added connection description "north-east-port3"
+east #
+ ipsec auto --add north-east-pass
+002 added connection description "north-east-pass"
+east #
+ nc -4 -l 192.1.2.23 2 &
+[B] PID
+east #
+ nc -4 -l 192.1.2.23 3 &
+[B] PID
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

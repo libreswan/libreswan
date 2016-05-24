@@ -1,0 +1,57 @@
+iptables -t nat -F
+[   40.819638] nf_conntrack version 0.5.0 (3916 buckets, 15664 max)
+[root@nic nat-transport-02]# iptables -F
+[root@nic nat-transport-02]# # NAT
+[root@nic nat-transport-02]# #iptables -t nat -A POSTROUTING --source 192.1.3.0/24 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
+[root@nic nat-transport-02]# iptables -t nat -A POSTROUTING --source 192.1.3.0/24 --destination 0.0.0.0/0 -j MASQUERADE -o eth0
+[root@nic nat-transport-02]# # make sure that we never acidentially let non-NAT'ed ESP through.
+[root@nic nat-transport-02]# iptables -N LOGDROP
+[root@nic nat-transport-02]# iptables -A LOGDROP -j LOG
+[root@nic nat-transport-02]# iptables -A LOGDROP -j DROP
+[root@nic nat-transport-02]# iptables -I FORWARD 1 --proto 50 -j LOGDROP
+[root@nic nat-transport-02]# iptables -I FORWARD 2 --destination 192.0.2.0/24 -j LOGDROP
+[root@nic nat-transport-02]# iptables -I FORWARD 3 --source 192.0.2.0/24 -j LOGDROP
+[root@nic nat-transport-02]# # route
+[root@nic nat-transport-02]# iptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
+[root@nic nat-transport-02]# # Display the table, so we know it is correct.
+[root@nic nat-transport-02]# iptables -t nat -L -n
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  192.1.3.0/24         0.0.0.0/0           
+[root@nic nat-transport-02]# iptables -L -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+LOGDROP    all  --  0.0.0.0/0            192.0.2.0/24        
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+LOGDROP    esp  --  0.0.0.0/0            0.0.0.0/0           
+LOGDROP    all  --  0.0.0.0/0            192.0.2.0/24        
+LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain LOGDROP (4 references)
+target     prot opt source               destination         
+LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
+DROP       all  --  0.0.0.0/0            0.0.0.0/0           
+[root@nic nat-transport-02]# echo "initdone"
+initdone
+[root@nic nat-transport-02]# : ==== cut ====
+[root@nic nat-transport-02]# ipsec auto --status
+-bash: ipsec: command not found
+[root@nic nat-transport-02]# : ==== tuc ====
+[root@nic nat-transport-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+[root@nic nat-transport-02]# if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+[root@nic nat-transport-02]# : ==== end ====
+[root@nic nat-transport-02]# 

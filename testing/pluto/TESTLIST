@@ -845,3 +845,6 @@ kvmplutotest	klips-basic-pluto-12		skiptest
 kvmplutotest	klips-compress-pluto-01		skiptest
 kvmplutotest	klips-compress-pluto-03		skiptest
 kvmplutotest	klips-passthrough-00		skiptest
+kvmplutotest	klips-ipv6-tunnel-mode-03-rw	skiptest
+kvmplutotest	klips-nat-transport-02		skiptest
+kvmplutotest	klips-pluto-ipcmp-01		skiptest
