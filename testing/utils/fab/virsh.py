@@ -35,10 +35,10 @@ class STATE:
 
 class Domain:
 
-    def __init__(self, domain_name, host_name=None):
+    def __init__(self, domain_name, host_name):
         # Use the term "domain" just like virsh
         self.name = domain_name
-        self.host_name = host_name or domain_name
+        self.host_name = host_name
         self.virsh_console = None
         # Logger?
         self.logger = logutil.getLogger(__name__, self.name)

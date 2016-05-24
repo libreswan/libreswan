@@ -163,9 +163,7 @@ distclean-kvm: kvm-distclean
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
-	$(KVMSH) --output ++compile-log.txt --chdir . \
-		$(if $(KVM_PREFIX),--prefix $(KVM_PREFIX)) \
-		$(1)
+	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
 endef
 
 # Run "make $(2)" on $(1)"
@@ -537,7 +535,6 @@ kvm-help:
 	@echo '    uninstall-kvm-networks     - rip out all the networks'
 	@echo ''
 	@echo '  To login to a domain:'
-	@echo '    make kvmsh-DOMAIN          - for instance kvmsh-east'
 	@echo '    make kvmsh-DOMAIN          - for instance kvmsh-east'
 	@echo '  And to run something on a domain:'
 	@echo '    make kvmsh-"DOMAIN CMD"    - for instance kvmsh-"east pwd"'
