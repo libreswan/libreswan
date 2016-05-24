@@ -471,24 +471,38 @@ uninstall-kvm-domain-%: $(KVM_CONFIG)
 #
 # Build networks from scratch
 #
-# XXX: This deletes each network before creating it; should it?
 
 KVM_NETDIR = testing/libvirt/net
+KVM_TEST_NETWORKS = $(notdir $(wildcard $(KVM_NETDIR)/192*))
+KVM_TEST_NETWORKS_FILES = $(patsubst %,$(KVM_TEST_DOMAIN_POOLDIR)/%.xml,$(KVM_TEST_NETWORKS))
+.PRECIOUS: $(KVM_TEST_NETWORKS_FILES)
 .PHONY: install-kvm-networks
-install-kvm-networks: $(patsubst $(KVM_NETDIR)/%,install-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
-install-kvm-network-%: uninstall-kvm-network-%
-	sudo virsh net-define $(KVM_NETDIR)/$*
-	sudo virsh net-autostart $*
-	sudo virsh net-start $*
+install-kvm-networks: $(KVM_TEST_NETWORKS_FILES)
+install-kvm-network-%: $(KVM_TEST_DOMAIN_POOLDIR)/%.xml ; @:
+$(KVM_TEST_DOMAIN_POOLDIR)/%.xml:
+	rm -f '$@.tmp'
+	echo "<network ipv6='yes'>"					>> '$@.tmp'
+	echo "  <name>$*</name>"					>> '$@.tmp'
+	echo "  <bridge name='$*' stp='on' delay='0'/>"			>> '$@.tmp'
+	case "$*" in \
+		192_0_* ) echo '  <ip address="$*.127"/>' ;; \
+		192_* )   echo '  <ip address="$*.253"/>' ;; \
+	esac | sed -e 's/_/./g'						>> '$@.tmp'
+	echo "</network>"						>> '$@.tmp'
+	sudo virsh net-define '$@.tmp'
+	sudo virsh net-autostart '$*'
+	sudo virsh net-start '$*'
+	mv $@.tmp $@
 .PHONY: uninstall-kvm-networks
-uninstall-kvm-networks: $(patsubst $(KVM_NETDIR)/%,uninstall-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
+uninstall-kvm-networks: $(patsubst %,uninstall-kvm-network-$(KVM_POOL)%,$(KVM_TEST_NETWORKS))
 uninstall-kvm-network-%:
-	if sudo virsh net-info $* 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy $* ; \
+	if sudo virsh net-info '$*' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy '$*' ; \
 	fi
-	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine $* ; \
+	if sudo virsh net-info '$*' >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine '$*' ; \
 	fi
+	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.xml
 
 
 .PHONY: kvm-help
