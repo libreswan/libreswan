@@ -1769,7 +1769,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			    DBG_log("recorded ref=%u as refhim",
 				    said_next->ref));
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -1838,7 +1838,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2134,7 +2134,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2223,7 +2223,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
