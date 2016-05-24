@@ -115,8 +115,9 @@ kvmplutotest	ikev2-algo-sha2-04			good
 kvmplutotest	ikev2-algo-sha2-05			good
 kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
-kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
+
+kvmplutotest	klips-ikev2-algo-sha2-0			wip
 # interop tests for KLIPS-NETKEY with SHA2
 kvmplutotest	ikev1-algo-esp-sha2-01-netkey-klips	good
 kvmplutotest	ikev1-algo-esp-sha2-02-netkey-klips	good
