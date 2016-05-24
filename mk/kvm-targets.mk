@@ -254,29 +254,6 @@ kvm-clean-check kvm-clean-test:
 	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
 
-# Hide a make call
-SHOWVERSION = $(MAKE) showversion
-
-# Detect either a new or updated install or test.
-#
-# The file kvm-checksum.new is left as a marker for $(NEWRUN).
-#
-# The checksums for both the installed tree (on east) and the source
-# tree are recorded.  Presumably if either changes then it is a new
-# run.  The /etc directory is excluded as the tests play havoc with
-# its contents.
-.PHONY: kvm-checksum
-kvm-checksum:
-	$(SHOWVERSION) | tee kvm-checksum.new
-	$(call kvmsh,,$(KVM_BUILD_DOMAIN),'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum')
-	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
-		echo "Checksum file unchanged" ; \
-		rm kvm-checksum.new ; \
-	else \
-		echo "Checksum file CHANGED" ; \
-		cp kvm-checksum.new kvm-checksum ; \
-	fi
-
 # Build the keys/certificates using the KVM.
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
 KVM_KEYS_EXPIRATION_DAY = 14
