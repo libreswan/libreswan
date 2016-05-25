@@ -31,7 +31,6 @@ KVM_OS ?= fedora
 
 KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
-KVM_BUILD_DOMAIN = east
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
 KVM_QEMUDIR = /var/lib/libvirt/qemu
@@ -40,7 +39,7 @@ KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMSH ?= $(KVMSH_COMMAND)
 KVM_WORKERS ?= 1
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
-KVMRUNNER ?= $(KVMRUNNER_COMMAND)$(if $(KVM_WORKERS), --workers $(KVM_WORKERS))
+KVMRUNNER ?= $(KVMRUNNER_COMMAND)$(foreach pool,$(KVM_POOL), --prefix $(pool))$(if $(KVM_WORKERS), --workers $(KVM_WORKERS))
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -106,50 +105,6 @@ define kvmsh
 	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
 	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
 endef
-
-# Run "make $(2)" on $(1)"
-define kvm-make
-	$(call kvmsh,$(1) 'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
-endef
-
-# Run "make <anything>" on the specified domain; mainly for testing
-$(patsubst %,kvm-make-\%-%,$(KVM_INSTALL_DOMAINS)):
-	$(call kvm-make,$(patsubst kvm-make-$*-%,%,$@),$*)
-# Run "make <anything>" on the build domain; mainly for testing
-kvm-make-%:
-	$(call kvm-make,$(KVM_BUILD_DOMAIN),$*)
-
-# To avoid parallel "make base" and "make module" builds stepping on
-# each others toes, this uses sub-makes to explicitly serialize "base"
-# and "modules" targets.
-.PHONY: kvm-build
-kvm-build:
-	$(call kvm-make,$(KVM_BUILD_DOMAIN),base)
-	$(call kvm-make,$(KVM_BUILD_DOMAIN),module)
-
-# "install" is a little wierd.  It needs to be run on all VMs, and it
-# needs to use the swan-install script.
-.PHONY: kvm-install
-kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
-kvm-install-%: kvm-build
-	$(call kvmsh,$* 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
-
-# Some standard make targets; just mirror the local target names.
-# Everything is run on $(KVM_BUILD_DOMAIN).
-KVM_BUILD_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-distclean
-.PHONY: $(KVM_BUILD_TARGETS)
-$(KVM_BUILD_TARGETS):
-	$(call kvm-make,$(KVM_BUILD_DOMAIN),$(patsubst kvm-%,%,$@))
-
-
-# Some useful kvm wide commands.
-.PHONY: kvm-shutdown
-kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
-kvm-shutdown-%:
-	$(call kvmsh,--shutdown $*)
-kvmsh-%:
-	$(call kvmsh,$*)
-
 
 # [re]run the testsuite.
 #
@@ -226,6 +181,67 @@ KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
 .PHONY: $(KVM_KEYS_CLEAN_TARGETS)
 $(KVM_KEYS_CLEAN_TARGETS):
 	rm -rf testing/x509/*/ testing/x509/nss-pw
+
+
+#
+# Build a pool of networks from scratch
+#
+
+# Accumulate a list of all the files created when building the
+# network.  Can use this as a dependency to force the networks to be
+# built before the domains.
+
+KVM_POOL_NETWORK_FILES=
+
+# The offical network targets.
+
+.PHONY: install-kvm-networks uninstall-kvm-networks
+
+# Generate install and uninstall rules for each network within the
+# pool.
+
+define test_network
+  #(info pool=$(1) network=$(2))
+
+  KVM_POOL_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
+
+  .PHONY: install-kvm-network-$(1)$(2)
+  install-kvm-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
+  $$(KVM_POOLDIR)/$(1)$(2).xml:
+	rm -f '$$@.tmp'
+	echo "<network ipv6='yes'>"					>> '$$@.tmp'
+	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
+	echo "  <bridge name='$(1)$(2)' stp='on' delay='0'/>"		>> '$$@.tmp'
+	case "$(1)$(2)" in \
+		192_0_* ) echo '  <ip address="$(2).127"/>' ;; \
+		192_* )   echo '  <ip address="$(2).253"/>' ;; \
+	esac | sed -e 's/_/./g'						>> '$$@.tmp'
+	echo "</network>"						>> '$$@.tmp'
+	sudo virsh net-define '$$@.tmp'
+	sudo virsh net-autostart '$(1)$(2)'
+	sudo virsh net-start '$(1)$(2)'
+	mv $$@.tmp $$@
+
+  .PHONY: uninstall-kvm-network-$(1)$(2)
+  uninstall-kvm-networks: uninstall-kvm-network-$(1)$(2)
+  uninstall-kvm-network-$(1)$(2):
+	if sudo virsh net-info '$(1)$(2)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy '$(1)$(2)' ; \
+	fi
+	if sudo virsh net-info '$(1)$(2)' >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine '$(1)$(2)' ; \
+	fi
+	rm -f $$(KVM_POOLDIR)/$(1)$(2).xml
+
+endef
+
+KVM_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach network,$(KVM_NETWORKS),$(eval $(call test_network,$(pool),$(network)))))
+else
+$(foreach network,$(KVM_NETWORKS),$(eval $(call test_network,,$(network))))
+endif
 
 
 #
@@ -320,45 +336,59 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_BASEDIR)/$(KVM_B
 
 # Create the test domains in $(KVM_POOLDIR)
 #
-# Use a pattern rule so that GNU make knows that both the .xml and the
-# .qcow2 files are created.
-#
 # Since running a domain will likely modify its .qcow2 disk image
 # (changing MTIME), the domain's disk isn't a good indicator that a
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
 
-kvm-test-domain-files = \
-	$(KVM_POOLDIR)/$(1).qcow2 \
-	$(KVM_POOLDIR)/$(1).xml
-# multiple domains, multiple config files, terrible english
-KVM_TEST_DOMAINS_FILES = \
-	$(foreach domain, $(KVM_TEST_DOMAINS), \
-		$(call kvm-test-domain-files,$(domain)))
+KVM_POOL_DOMAIN_FILES = 
 
-.PHONY: install-kvm-domains install-kvm-test-domains
+.PHONY: install-kvm-domains uninstall-kvm-domains
 
-install-kvm-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
-install-kvm-domain-%:  $(KVM_CONFIG) $(call kvm-test-domain-files,%) ; @:
-.PRECIOUS: $(KVM_TEST_DOMAINS_FILES)
-$(call kvm-test-domain-files,%): $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | testing/libvirt/vm/%
-	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
-	rm -f '$(KVM_POOLDIR)/$*.qcow2'
-	qemu-img create -F qcow2 -f qcow2 -b '$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_POOLDIR)/$*.qcow2'
+define test_domain
+  #(info pool=$(1) network=$(2))
+
+  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
+  KVM_POOL_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
+
+  .PHONY: install-kvm-domain-$(1)$(2)
+  install-kvm-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 $(KVM_POOL_NETWORK_FILES) | testing/libvirt/vm/$(2)
+	@$$(MAKE) --no-print-directory uninstall-kvm-domain-$(1)$(2)
+	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
-		-e "s:@@NAME@@:$*:" \
-		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
-		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$(KVM_POOLDIR):" \
-		-e "s:@@USER@@:$$(id -u):" \
-		-e "s:@@GROUP@@:$$(id -g qemu):" \
-		'testing/libvirt/vm/$*' \
-		> '$(KVM_POOLDIR)/$*.tmp'
-	sudo virsh define '$(KVM_POOLDIR)/$*.tmp'
-	mv '$(KVM_POOLDIR)/$*.tmp' '$(KVM_POOLDIR)/$*.xml'
+		-e "s:@@NAME@@:$(1)$(2):" \
+		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
+		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
+		-e "s:@@POOLSPACE@@:$$(KVM_POOLDIR):" \
+		-e "s:@@USER@@:$$$$(id -u):" \
+		-e "s:@@GROUP@@:$$$$(id -g qemu):" \
+		-e "s:network='192_:network='$(1)192_:" \
+		< 'testing/libvirt/vm/$(2)' \
+		> '$$@.tmp'
+	sudo virsh define '$$@.tmp'
+	mv '$$@.tmp' '$$@'
+  .PHONY: uninstall-kvm-domain-$(1)$(2)
+  uninstall-kvm-domains: uninstall-kvm-domain-$(1)$(2)
+  uninstall-kvm-domain-$(1)$(2): $(KVM_CONFIG)
+	if sudo virsh domstate '$(1)$(2)' 2>/dev/null | grep running > /dev/null ; then \
+		sudo virsh destroy '$(1)$(2)' ; \
+	fi
+	if sudo virsh domstate '$(1)$(2)' > /dev/null 2>&1 ; then \
+		sudo virsh undefine '$(1)$(2)' --remove-all-storage ; \
+	fi
+	rm -f $(KVM_POOLDIR)/$(1)$(2).xml
+	rm -f $(KVM_POOLDIR)/$(1)$(2).ks
+	rm -f $(KVM_POOLDIR)/$(1)$(2).qcow2
+endef
 
-.PHONY: uninstall-kvm-domains
-uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call test_domain,$(pool),$(domain)))))
+else
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call test_domain,,$(domain))))
+endif
+
+uninstall-kvm-domains:
 	@echo ''
 	@echo 'NOTE:'
 	@echo ''
@@ -377,53 +407,78 @@ uninstall-kvm-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
 	@echo 'Rationale: since the creation of the base domain and its cloned disk is'
 	@echo 'both unreliable and slow, and typically not needed, an explict rule is provided'
 	@echo ''
-uninstall-kvm-domain-%: $(KVM_CONFIG)
-	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
-		sudo virsh destroy '$*' ; \
-	fi
-	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
-		sudo virsh undefine '$*' --remove-all-storage ; \
-	fi
-	rm -f $(KVM_POOLDIR)/$*.xml
-	rm -f $(KVM_POOLDIR)/$*.ks
-	rm -f $(KVM_POOLDIR)/$*.qcow2
 
 
 #
-# Build networks from scratch
+# Build targets
 #
 
-KVM_NETDIR = testing/libvirt/net
-KVM_TEST_NETWORKS = $(notdir $(wildcard $(KVM_NETDIR)/192*))
-KVM_TEST_NETWORKS_FILES = $(patsubst %,$(KVM_POOLDIR)/%.xml,$(KVM_TEST_NETWORKS))
-.PRECIOUS: $(KVM_TEST_NETWORKS_FILES)
-.PHONY: install-kvm-networks
-install-kvm-networks: $(KVM_TEST_NETWORKS_FILES)
-install-kvm-network-%: $(KVM_POOLDIR)/%.xml ; @:
-$(KVM_POOLDIR)/%.xml:
-	rm -f '$@.tmp'
-	echo "<network ipv6='yes'>"					>> '$@.tmp'
-	echo "  <name>$*</name>"					>> '$@.tmp'
-	echo "  <bridge name='$*' stp='on' delay='0'/>"			>> '$@.tmp'
-	case "$*" in \
-		192_0_* ) echo '  <ip address="$*.127"/>' ;; \
-		192_* )   echo '  <ip address="$*.253"/>' ;; \
-	esac | sed -e 's/_/./g'						>> '$@.tmp'
-	echo "</network>"						>> '$@.tmp'
-	sudo virsh net-define '$@.tmp'
-	sudo virsh net-autostart '$*'
-	sudo virsh net-start '$*'
-	mv $@.tmp $@
-.PHONY: uninstall-kvm-networks
-uninstall-kvm-networks: $(patsubst %,uninstall-kvm-network-$(KVM_POOL)%,$(KVM_TEST_NETWORKS))
-uninstall-kvm-network-%:
-	if sudo virsh net-info '$*' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy '$*' ; \
-	fi
-	if sudo virsh net-info '$*' >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine '$*' ; \
-	fi
-	rm -f $(KVM_POOLDIR)/$*.xml
+# Select the build domain; the choice is arbitrary; most likely it is "east".
+KVM_BUILD_DOMAIN = $(firstword $(KVM_POOL))$(firstword $(KVM_INSTALL_DOMAINS))
+
+# Map the documented targets, and their aliases, onto
+# internal/canonical targets.
+
+.PHONY: kvm-clean clean-kvm
+kvm-clean clean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-clean
+.PHONY: kvm-distclean distclean-kvm
+kvm-distclean distclean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-distclean
+
+# kvm-build is special.  To avoid "make base" and "make module"
+# running in parallel on the build machine (stepping on each others
+# toes), this uses sub-makes to explicitly serialize "base" and
+# "modules" targets.
+.PHONY: kvm-build build-kvm
+kvm-build build-kvm:
+	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-make-base
+	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-make-module
+
+# A catch all to run "make %" on the build domain; for instance "make
+# kvm-make-manpages'.
+kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
+
+# "kvm-install" is a little wierd.  It needs to be run on most VMs,
+# and it needs to use the swan-install script.
+.PHONY: kvm-install kvm-shutdown
+kvm-install: kvm-build | $(KVM_POOL_DOMAIN_FILES)
+
+define build_rules
+  #(info pool=$(1) domain=$(2))
+
+  # Run "make <anything>" on the specified domain
+  kvm-$(1)$(2)-make-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
+
+  # "kvm-install" is a little wierd.  It needs to be run on most VMs,
+  # and it needs to use the swan-install script.
+  kvm-install: kvm-$(1)$(2)-install
+  .PHONY: kvm-$(1)$(2)-install
+  kvm-$(1)$(2)-install: kvm-build | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+
+  kvm-shutdown: kvm-$(1)$(2)-shutdown
+  .PHONY: kvm-$(1)$(2)-shutdown
+  kvm-$(1)$(2)-shutdown: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,--shutdown $(1)$(2))
+
+  .PHONY: kvmsh-$(1)$(2)
+  kvmsh-$(1)$(2): | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2))
+  kvmsh-$(1)$(2)-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) $*)
+
+endef
+
+# Catch all to map 'kvmsh-east pwd' onto a kvmsh command.  Should
+# kvmsh-east map onto kvmsh-pooleast?  Probably not.
+kvmsh-%:
+	$(call kvmsh,$*)
+
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(pool),$(domain)))))
+else
+$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
+endif
 
 
 .PHONY: kvm-help
