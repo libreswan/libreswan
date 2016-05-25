@@ -6,3 +6,5 @@ to use the ID in the aggressive mode packet.
 
 However, in this test case, road turns out not to have the right PSK
 for east.
+
+The connection shall not establish

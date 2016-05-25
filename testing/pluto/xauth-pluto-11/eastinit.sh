@@ -1,15 +1,5 @@
-#!/bin/sh
-
-: ==== start ====
-
-TESTNAME=xauth-pluto-11
-source /testing/pluto/bin/eastlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-
-echo done.
-
-
-
-
+ipsec auto --add xauth-road-eastnet
+echo "initdone"

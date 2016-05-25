@@ -497,14 +497,14 @@ kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
 kvmplutotest	xauth-pluto-09		good
 
-umlXhost	xauth-pluto-10		good
-umlXhost	xauth-pluto-11		good
+kvmplutotest	xauth-pluto-10		good
+kvmplutotest	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12		good
 kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
-skiptest	xauth-pluto-17		wip
+kvmplutotest	xauth-pluto-17		good
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
 kvmplutotest	xauth-pluto-20-pam	good
@@ -606,7 +606,7 @@ umlXhost	multinet-03		good
 umlXhost	multinet-04		good
 
 # transport mode related tests
-umlplutotest	transport-01		good
+umlplutotest	klips-transport-01	good
 umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
 kvmplutotest	nat-transport-02	good

@@ -7,5 +7,4 @@ ipsec auto --add west-east-pass2
 nc -l 3 &
 ipsec auto --route west-east-pass
 ipsec auto --route west-east-pass2
-ipsec eroute
 echo "initdone"
