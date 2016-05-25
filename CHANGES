@@ -8,6 +8,7 @@ v3.18 (unreleased)
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
 * pluto: Add systemd watchdog support via USE_SYSTEMD_WATCHDOG [Matt/Paul]
+* pluto: Follow connaddrfamily when resolving hostnames [Daniel M. Weeks]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
 * FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
