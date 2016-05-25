@@ -152,13 +152,6 @@ kvm-config-broken-test-domain-pooldir:
 	@exit 1
 
 
-# Hack to map common typos on to real kvm-clean* targets
-clean-kvm-%: kvm-clean-% ; @:
-kvm-%-clean: kvm-clean-% ; @:
-.PHONY: clean-kvm distclean-kvm
-clean-kvm: kvm-clean
-distclean-kvm: kvm-distclean
-
 # Invoke KVMSH in the curret directory with $(1).
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
@@ -248,9 +241,12 @@ kvm-test-all: $(KVM_KEYS)
 	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
 	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
 
-# clean up
-.PHONY: kvm-clean-check kvm-clean-test
-kvm-clean-check kvm-clean-test:
+# clean up; accept pretty much everything
+KVM_TEST_CLEAN_TARGETS = \
+	clean-kvm-check kvm-clean-check kvm-check-clean \
+	clean-kvm-test kvm-clean-test kvm-test-clean
+.PHONY: $(KVM_TEST_CLEAN_TARGETS)
+$(KVM_TEST_CLEAN_TARGETS):
 	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
 
@@ -258,13 +254,13 @@ kvm-clean-check kvm-clean-test:
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
 KVM_KEYS_EXPIRATION_DAY = 14
 KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-.PHONY: kvm-keys clean-kvm-keys
 
+.PHONY: kvm-keys
 kvm-keys: $(KVM_KEYS)
 	$(MAKE) --no-print-directory kvm-keys-up-to-date
 
 # For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date clean-kvm-keys
+.PHONY: kvm-keys-up-to-date
 kvm-keys-up-to-date:
 	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
 		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
@@ -278,7 +274,9 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 	$(KVM_KEYS_SCRIPT) east testing/x509
 	touch $(KVM_KEYS)
 
-clean-kvm-keys:
+KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
+.PHONY: $(KVM_KEYS_CLEAN_TARGETS)
+$(KVM_KEYS_CLEAN_TARGETS):
 	rm -rf testing/x509/*/ testing/x509/nss-pw
 
 
