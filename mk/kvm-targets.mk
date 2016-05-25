@@ -219,7 +219,7 @@ kvm-keys-up-to-date:
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 	$(MAKE) clean-kvm-keys
-	$(KVM_KEYS_SCRIPT) east testing/x509
+	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	touch $(KVM_KEYS)
 
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
