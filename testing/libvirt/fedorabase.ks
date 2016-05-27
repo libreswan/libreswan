@@ -122,8 +122,6 @@ yum-utils
 
 
 %post
-echo "nameserver 193.110.157.123" >> /etc/resolv.conf
-/sbin/restorecon /etc/resolv.conf
 # Paul needs this due to broken isp
 #ifconfig eth0 mtu 1400
 # Tuomo switched to this alternative work-around for pmtu issues
@@ -143,7 +141,11 @@ rpm -qa > /var/tmp/rpm-qa.log
 
 # TODO: if rhel/centos, we should install epel-release too
 
+# workaround for vim fedora22 packaging bug. we want vim-enhanced
+rpm -e vim-minimal --nodeps
+
 yum install -y 2>&1 \
+    vim-enhanced \
     ElectricFence \
     audit-libs-devel \
     curl-devel \
@@ -164,8 +166,41 @@ yum install -y 2>&1 \
     systemd-devel \
     unbound \
     unbound-devel \
-    vim-enhanced \
     xmlto \
+    bison \
+    curl-devel \
+    fipscheck-devel \
+    flex \
+    gcc \
+    gdb \
+    nspr-devel \
+    nss-devel \
+    nss-tools \
+    openldap-devel \
+    pam-devel \
+    git \
+    ElectricFence \
+    audit-libs-devel \
+    glibc-devel \
+    hping3 \
+    ipsec-tools \
+    libcap-ng-devel \
+    libevent-devel \
+    libselinux-devel \
+    lsof \
+    strace \
+    strongswan \
+    tar \
+    python3-pexpect \
+    python3-setproctitle \
+    racoon2 \
+    systemd-devel \
+    unbound \
+    unbound-devel \
+    unbound-libs \
+    valgrind \
+    xmlto \
+    xl2tpd \
     | tee /var/tmp/yum-install.log
 
 debuginfo-install -y \
@@ -254,8 +289,8 @@ EOD
 
 cat << EOD >> /root/.bash_profile
 export GIT_PS1_SHOWDIRTYSTATE=true
-source /usr/share/git-core/contrib/completion/git-prompt.sh
-source /usr/share/doc/git/contrib/completion/git-prompt.sh
+#source /usr/share/git-core/contrib/completion/git-prompt.sh
+#source /usr/share/doc/git/contrib/completion/git-prompt.sh
 #export PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(declare -F __git_ps1 &>/dev/null && __git_ps1 " (%s)")\[\033[00m\]\\$ '
 alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim

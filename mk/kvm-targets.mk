@@ -249,7 +249,7 @@ endif
 #
 
 # Where to get the install image.
-KVM_ISO_URL_fedora = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
+KVM_ISO_URL_fedora = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
 KVM_ISO_URL = $(value KVM_ISO_URL_$(KVM_OS))
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 $(KVM_ISO): $(KVM_CONFIG)
@@ -276,7 +276,7 @@ $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
-		--network=network:default,model=virtio \
+		--network=network:swandefault,model=virtio \
 		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
