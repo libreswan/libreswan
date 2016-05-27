@@ -294,7 +294,7 @@ $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
 install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain:  $(KVM_CONFIG)
+uninstall-kvm-base-domain uninstall-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_CONFIG)
 	if sudo virsh domstate '$(KVM_BASE_DOMAIN)' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$(KVM_BASE_DOMAIN)' ; \
 	fi
