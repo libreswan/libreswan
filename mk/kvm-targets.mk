@@ -205,20 +205,34 @@ uninstall-kvm-networks: uninstall-kvm-test-networks
 # pool.
 
 define install-kvm-network
-	sudo virsh net-define '$(1).tmp'
-	sudo virsh net-autostart '$(2)'
-	sudo virsh net-start '$(2)'
-	mv $(1).tmp $(1)
+	sudo virsh net-define '$(2).tmp'
+	sudo virsh net-autostart '$(1)'
+	sudo virsh net-start '$(1)'
+	mv $(2).tmp $(2)
 endef
 
 define uninstall-kvm-network
-	if sudo virsh net-info '$(2)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy '$(2)' ; \
+	if sudo virsh net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy '$(1)' ; \
 	fi
-	if sudo virsh net-info '$(2)' >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine '$(2)' ; \
+	if sudo virsh net-info '$(1)' >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine '$(1)' ; \
 	fi
-	rm -f $(1)
+	rm -f $(2)
+endef
+
+define check-no-kvm-network
+	if sudo virsh net-info '$(1)' 2>/dev/null ; then \
+		echo 'The network $(1) seems to already exist.  Either clean it up with:' ; \
+		echo '' ; \
+		echo '    make uninstall-kvm-network-$(1)' ; \
+		echo '' ; \
+		echo 'Or skip creating the network with:' ; \
+		echo '' ; \
+		echo '    touch $(2)' ; \
+		echo '' ; \
+		exit 1 ; \
+	fi
 endef
 
 define kvm-test-network
@@ -230,6 +244,7 @@ define kvm-test-network
   install-kvm-test-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml:
+	$(call check-no-kvm-network,$(1)$(2),$$@)
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
 	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
@@ -239,12 +254,12 @@ define kvm-test-network
 		192_* )   echo '  <ip address="$(2).253"/>' ;; \
 	esac | sed -e 's/_/./g'						>> '$$@.tmp'
 	echo "</network>"						>> '$$@.tmp'
-	$(call install-kvm-network,$$@,$(1)$(2))
+	$(call install-kvm-network,$(1)$(2),$$@)
 
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
-	$(call uninstall-kvm-network,$$(KVM_POOLDIR)/$(1)$(2).xml,$(1)$(2))
+	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_POOLDIR)/$(1)$(2).xml)
 
 endef
 
@@ -264,12 +279,13 @@ KVM_BASE_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_BASE_NETWORK).xml
 .PHONY: install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK)
 install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
 $(KVM_BASE_NETWORK_FILE): $(KVM_CONFIG) | testing/libvirt/net/$(KVM_BASE_NETWORK)
+	$(call check-no-kvm-network,$(KVM_BASE_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_BASE_NETWORK) $@.tmp
-	$(call install-kvm-network,$@,$(KVM_BASE_NETWORK))
+	$(call install-kvm-network,$(KVM_BASE_NETWORK),$@)
 
 .PHONY: uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK)
 uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): $(KVM_CONFIG)
-	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK_FILE),$(KVM_BASE_NETWORK))
+	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK),$(KVM_BASE_NETWORK_FILE))
 
 
 #
@@ -296,16 +312,43 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 # This rule uses the .ks file as main target.  Should the target fail
 # the .img file may be in an incomplete state.
 
+define install-kvm-domain
+	sudo virsh define $(2).tmp
+	mv $(2).tmp $(2)
+endef
+
+define uninstall-kvm-domain
+	if sudo virsh domstate '$(1)' 2>/dev/null | grep running > /dev/null ; then \
+		sudo virsh destroy '$(1)' ; \
+	fi
+	if sudo virsh dominfo '$(1)' >/dev/null 2>&1 ; then \
+		sudo virsh undefine '$(1)' --remove-all-storage ; \
+	fi
+	rm -f $(2).xml
+	rm -f $(2).ks
+	rm -f $(2).qcow2
+	rm -f $(2).img
+endef
+
+define check-no-kvm-domain
+	if sudo virsh dominfo '$(1)' 2>/dev/null ; then \
+		echo 'The domain $(1) seems to already exist.  Either clean it up with:' ; \
+		echo '' ; \
+		echo '    make uninstall-kvm-domain-$(1)' ; \
+		echo '' ; \
+		echo 'Or skip creating the domain with:' ; \
+		echo '' ; \
+		echo '    touch $(2)' ; \
+		echo '' ; \
+		exit 1; \
+	fi
+endef
+
 # XXX: Could run the kickstart file through SED before using it.
 
 $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks $(KVM_BASE_NETWORK_FILE)
-	if test -r $(KVM_BASEDIR)/%.ks ; then \
-		echo "The base domain seems to already exist.  Either run:" ; \
-		echo "  make uninstall-kvm-base-domain" ; \
-		echo "Or:" ; \
-		echo "  touch $(KVM_BASEDIR)/$*.ks" ; \
-		exit 1 ; \
-	fi
+	$(call check-no-kvm-domain,$*,$(KVM_BASEDIR)/$*.ks)
+	rm -f '$(KVM_BASEDIR)/$*.img'
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
@@ -328,16 +371,7 @@ $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
 install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 uninstall-kvm-base-domain uninstall-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_CONFIG)
-	if sudo virsh domstate '$(KVM_BASE_DOMAIN)' 2>/dev/null | grep running > /dev/null ; then \
-		sudo virsh destroy '$(KVM_BASE_DOMAIN)' ; \
-	fi
-	if sudo virsh domstate '$(KVM_BASE_DOMAIN)' > /dev/null 2>&1 ; then \
-		sudo virsh undefine '$(KVM_BASE_DOMAIN)' --remove-all-storage ; \
-	fi
-	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).xml
-	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
-	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img
+	$(call uninstall-kvm-domain,$(KVM_BASE_DOMAIN),$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN))
 
 # Create the base domain's .qcow2 disk image (ready for cloning) in
 # $(KVM_BASEDIR).
@@ -374,7 +408,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_BASEDIR)/$(KVM_B
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
 
-KVM_POOL_DOMAIN_FILES = 
+KVM_TEST_DOMAIN_FILES =
 
 # The offical targets
 .PHONY: install-kvm-domains uninstall-kvm-domains
@@ -388,20 +422,13 @@ define kvm-test-domain
   #(info pool=$(1) network=$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
-  KVM_POOL_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
+  KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
-	if test -r $$@ ; then \
-		echo "The test domain $(1)$(2) seems to aready exist.  Either run:" ; \
-		echo "  make uninstall-kvm-domains" ; \
-		echo "Or:" ; \
-		echo "  make uninstall-kvm-domain-$(1)$(2)" ; \
-		echo "Or:" ; \
-		echo "  touch $$@" ; \
-		exit 1 ; \
-	fi
+	$(call check-no-kvm-domain,$(1)$(2),$$@)
+	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
@@ -413,20 +440,12 @@ define kvm-test-domain
 		-e "s:network='192_:network='$(1)192_:" \
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
-	sudo virsh define '$$@.tmp'
-	mv '$$@.tmp' '$$@'
+	$(call install-kvm-domain,$(1)$(2),$$@)
+
   .PHONY: uninstall-kvm-domain-$(1)$(2)
   uninstall-kvm-test-domains: uninstall-kvm-domain-$(1)$(2)
   uninstall-kvm-domain-$(1)$(2): $(KVM_CONFIG)
-	if sudo virsh domstate '$(1)$(2)' 2>/dev/null | grep running > /dev/null ; then \
-		sudo virsh destroy '$(1)$(2)' ; \
-	fi
-	if sudo virsh domstate '$(1)$(2)' > /dev/null 2>&1 ; then \
-		sudo virsh undefine '$(1)$(2)' --remove-all-storage ; \
-	fi
-	rm -f $(KVM_POOLDIR)/$(1)$(2).xml
-	rm -f $(KVM_POOLDIR)/$(1)$(2).ks
-	rm -f $(KVM_POOLDIR)/$(1)$(2).qcow2
+	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
 endef
 
 ifdef KVM_POOL
@@ -486,8 +505,16 @@ kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
 
 # "kvm-install" is a little wierd.  It needs to be run on most VMs,
 # and it needs to use the swan-install script.
+#
+# To ensure that all test domains are created, include an explict
+# dependency on all the test domain files.  "nic" which doesn't get
+# pluto installed, would otherwise not be created.
+#
+# For a parallel kvm-install, avoid multiple domains simultaneously
+# re-building libreswan by first explicitly running a build on
+# $(KVM_BUILD_DOMAIN).
 .PHONY: kvm-install kvm-shutdown
-kvm-install: kvm-build | $(KVM_POOL_DOMAIN_FILES)
+kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
 
 define build_rules
   #(info pool=$(1) domain=$(2))
