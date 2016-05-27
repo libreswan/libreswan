@@ -191,22 +191,43 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # network.  Can use this as a dependency to force the networks to be
 # built before the domains.
 
-KVM_POOL_NETWORK_FILES=
+KVM_TEST_NETWORK_FILES=
 
 # The offical network targets.
-
 .PHONY: install-kvm-networks uninstall-kvm-networks
+
+# Mainly for consistency
+.PHONY: install-kvm-test-networks uninstall-kvm-test-networks
+install-kvm-networks: install-kvm-test-networks
+uninstall-kvm-networks: uninstall-kvm-test-networks
 
 # Generate install and uninstall rules for each network within the
 # pool.
 
-define test_network
+define install-kvm-network
+	sudo virsh net-define '$(1).tmp'
+	sudo virsh net-autostart '$(2)'
+	sudo virsh net-start '$(2)'
+	mv $(1).tmp $(1)
+endef
+
+define uninstall-kvm-network
+	if sudo virsh net-info '$(2)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy '$(2)' ; \
+	fi
+	if sudo virsh net-info '$(2)' >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine '$(2)' ; \
+	fi
+	rm -f $(1)
+endef
+
+define kvm-test-network
   #(info pool=$(1) network=$(2))
 
-  KVM_POOL_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
+  KVM_TEST_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
 
   .PHONY: install-kvm-network-$(1)$(2)
-  install-kvm-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  install-kvm-test-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml:
 	rm -f '$$@.tmp'
@@ -218,30 +239,37 @@ define test_network
 		192_* )   echo '  <ip address="$(2).253"/>' ;; \
 	esac | sed -e 's/_/./g'						>> '$$@.tmp'
 	echo "</network>"						>> '$$@.tmp'
-	sudo virsh net-define '$$@.tmp'
-	sudo virsh net-autostart '$(1)$(2)'
-	sudo virsh net-start '$(1)$(2)'
-	mv $$@.tmp $$@
+	$(call install-kvm-network,$$@,$(1)$(2))
 
   .PHONY: uninstall-kvm-network-$(1)$(2)
-  uninstall-kvm-networks: uninstall-kvm-network-$(1)$(2)
+  uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
-	if sudo virsh net-info '$(1)$(2)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy '$(1)$(2)' ; \
-	fi
-	if sudo virsh net-info '$(1)$(2)' >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine '$(1)$(2)' ; \
-	fi
-	rm -f $$(KVM_POOLDIR)/$(1)$(2).xml
+	$(call uninstall-kvm-network,$$(KVM_POOLDIR)/$(1)$(2).xml,$(1)$(2))
 
 endef
 
-KVM_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
+KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
 ifdef KVM_POOL
-$(foreach pool,$(KVM_POOL),$(foreach network,$(KVM_NETWORKS),$(eval $(call test_network,$(pool),$(network)))))
+$(foreach pool,$(KVM_POOL),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(pool),$(network)))))
 else
-$(foreach network,$(KVM_NETWORKS),$(eval $(call test_network,,$(network))))
+$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,,$(network))))
 endif
+
+# To avoid the problem where the host has no "default" KVM network
+# (there's a rumour that libreswan's main testing machine has this
+# problem) create a dedicated swandefault.
+
+KVM_BASE_NETWORK = swandefault
+KVM_BASE_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_BASE_NETWORK).xml
+.PHONY: install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK)
+install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
+$(KVM_BASE_NETWORK_FILE): $(KVM_CONFIG) | testing/libvirt/net/$(KVM_BASE_NETWORK)
+	cp testing/libvirt/net/$(KVM_BASE_NETWORK) $@.tmp
+	$(call install-kvm-network,$@,$(KVM_BASE_NETWORK))
+
+.PHONY: uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK)
+uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): $(KVM_CONFIG)
+	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK_FILE),$(KVM_BASE_NETWORK))
 
 
 #
@@ -270,13 +298,13 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
 # XXX: Could run the kickstart file through SED before using it.
 
-$(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
+$(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks $(KVM_BASE_NETWORK_FILE)
 	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 	rm -f '$(KVM_BASEDIR)/$*.img'
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
-		--network=network:swandefault,model=virtio \
+		--network=network:$(KVM_BASE_NETWORK),model=virtio \
 		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
@@ -353,7 +381,7 @@ define test_domain
 
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 $(KVM_POOL_NETWORK_FILES) | testing/libvirt/vm/$(2)
+  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
 	@$$(MAKE) --no-print-directory uninstall-kvm-domain-$(1)$(2)
 	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
