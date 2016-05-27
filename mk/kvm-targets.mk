@@ -299,8 +299,13 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 # XXX: Could run the kickstart file through SED before using it.
 
 $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks $(KVM_BASE_NETWORK_FILE)
-	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-	rm -f '$(KVM_BASEDIR)/$*.img'
+	if test -r $(KVM_BASEDIR)/%.ks ; then \
+		echo "The base domain seems to already exist.  Either run:" ; \
+		echo "  make uninstall-kvm-base-domain" ; \
+		echo "Or:" ; \
+		echo "  touch $(KVM_BASEDIR)/$*.ks" ; \
+		exit 1 ; \
+	fi
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
 	sudo virt-install \
 		--connect=qemu:///system \
@@ -371,18 +376,32 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_BASEDIR)/$(KVM_B
 
 KVM_POOL_DOMAIN_FILES = 
 
+# The offical targets
 .PHONY: install-kvm-domains uninstall-kvm-domains
 
-define test_domain
+# for consistency
+.PHONY: install-kvm-test-domains uninstall-kvm-test-domains
+install-kvm-domains: install-kvm-test-domains
+uninstall-kvm-domains: uninstall-kvm-test-domains
+
+define kvm-test-domain
   #(info pool=$(1) network=$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
   KVM_POOL_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
-  install-kvm-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_CONFIG) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
-	@$$(MAKE) --no-print-directory uninstall-kvm-domain-$(1)$(2)
+	if test -r $$@ ; then \
+		echo "The test domain $(1)$(2) seems to aready exist.  Either run:" ; \
+		echo "  make uninstall-kvm-domains" ; \
+		echo "Or:" ; \
+		echo "  make uninstall-kvm-domain-$(1)$(2)" ; \
+		echo "Or:" ; \
+		echo "  touch $$@" ; \
+		exit 1 ; \
+	fi
 	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
@@ -397,7 +416,7 @@ define test_domain
 	sudo virsh define '$$@.tmp'
 	mv '$$@.tmp' '$$@'
   .PHONY: uninstall-kvm-domain-$(1)$(2)
-  uninstall-kvm-domains: uninstall-kvm-domain-$(1)$(2)
+  uninstall-kvm-test-domains: uninstall-kvm-domain-$(1)$(2)
   uninstall-kvm-domain-$(1)$(2): $(KVM_CONFIG)
 	if sudo virsh domstate '$(1)$(2)' 2>/dev/null | grep running > /dev/null ; then \
 		sudo virsh destroy '$(1)$(2)' ; \
@@ -411,9 +430,9 @@ define test_domain
 endef
 
 ifdef KVM_POOL
-$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call test_domain,$(pool),$(domain)))))
+$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(pool),$(domain)))))
 else
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call test_domain,,$(domain))))
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,,$(domain))))
 endif
 
 uninstall-kvm-domains:
