@@ -251,9 +251,9 @@ endif
 # Where to get the install image.
 KVM_ISO_URL_fedora = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
 KVM_ISO_URL = $(value KVM_ISO_URL_$(KVM_OS))
-KVM_ISO = $(notdir $(KVM_ISO_URL))
-$(KVM_ISO):
-	wget $(KVM_ISO_URL)
+KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
+$(KVM_ISO): $(KVM_CONFIG)
+	cd $(KVM_BASEDIR) && wget $(KVM_ISO_URL)
 
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
