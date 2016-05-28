@@ -158,6 +158,6 @@ messages when they happen. This list is quite busy during active
 development periods.
 
 ## Documentation
-The most up to date documentation are in the man pages that come with the
+The most up to date documentation is in the man pages that come with the
 software and at https://libreswan.org/
 
