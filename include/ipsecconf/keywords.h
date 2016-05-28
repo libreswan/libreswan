@@ -313,7 +313,7 @@ enum keyword_type {
 
 struct keyword_def {
 	const char        *keyname;
-	unsigned int validity;          /* has bits kv_config or kv_conn set */
+	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct keyword_enum_values *validenum;
