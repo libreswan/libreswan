@@ -519,52 +519,48 @@ void free_crl_fetch(void)
 }
 
 /*
- * add additional distribution points
+ * Add additional distribution points.
+ * Note: clones anything it needs to keep.
  */
 void add_distribution_points(generalName_t *newPoints,
 			     generalName_t **distributionPoints)
 {
-	while (newPoints != NULL) {
-		bool add = TRUE;
-		generalName_t *gn = *distributionPoints;
+	for (; newPoints != NULL; newPoints = newPoints->next) {
+		generalName_t *gn;
 
-		while (gn != NULL) {
+		for (gn = *distributionPoints; ; gn = gn->next) {
+			if (gn == NULL) {
+				/*
+				 * End of list; not found.
+				 * Clone additional distribution point.
+				 */
+				generalName_t *ngn = clone_thing(*newPoints, "generalName");
+				clonetochunk(ngn->name, newPoints->name.ptr,
+					     newPoints->name.len,
+					     "crl uri");
+
+				/* insert additional CRL distribution point */
+				ngn->next = *distributionPoints;
+				*distributionPoints = ngn;
+				break;
+			}
 			if (gn->kind == newPoints->kind &&
 			    gn->name.len == newPoints->name.len &&
 			    memeq(gn->name.ptr, newPoints->name.ptr,
 				   gn->name.len)) {
-				/* distribution point already present, skip to next entry */
-				add = FALSE;
+				/* newPoint already present */
 				break;
 			}
-			gn = gn->next;
 		}
-
-		if (add) {
-			/* clone additional distribution point */
-			gn = clone_thing(*newPoints, "generalName");
-			clonetochunk(gn->name, newPoints->name.ptr,
-				     newPoints->name.len,
-				     "crl uri");
-
-			/* insert additional CRL distribution point */
-			gn->next = *distributionPoints;
-			*distributionPoints = gn;
-		}
-		newPoints = newPoints->next;
 	}
 }
 
 /*
- * add a crl fetch request to the chained list
+ * Add a crl fetch request to the chained list.
+ * Note: clones anything that needs to persist.
  */
 void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 {
-	CERTCertificate *ca = NULL;
-	generalName_t *new_dp = NULL;
-	fetch_req_t *req;
-	chunk_t idn;
-
 	DBG(DBG_CONTROL, DBG_log("attempting to add a new CRL fetch request"));
 
 	if (issuer_dn == NULL || issuer_dn->data == NULL ||
@@ -574,99 +570,102 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 		return;
 	}
 
-	if ((ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
-							issuer_dn)) == NULL) {
+	CERTCertificate *ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
+						issuer_dn);
+	if (ca == NULL) {
 		DBG_log("no CA cert found to add fetch request: [%d]",
 							       PORT_GetError());
 		return;
 	}
 
-	idn = secitem_to_chunk(*issuer_dn);
+	chunk_t idn = secitem_to_chunk(*issuer_dn);
 
+	/* LOCK: matching unlock is at end of loop -- must be executed */
 	lock_crl_fetch_list("add_crl_fetch_request");
-	req = crl_fetch_reqs;
 
-	while (req != NULL) {
+	fetch_req_t *req;
+
+	for (req = crl_fetch_reqs; ; req = req->next) {
+		if (req == NULL) {
+			/* end of list; no match found */
+
+			generalName_t *new_dp = gndp_from_nss_cert(ca);
+
+			if (new_dp == NULL) {
+				if (end_dp == NULL) {
+					DBG(DBG_CONTROL,
+						DBG_log("no distribution point available for new fetch request"));
+					break;
+				}
+				DBG(DBG_CONTROL,
+					DBG_log("no CA crl DP available; using provided DP"));
+				new_dp = end_dp;
+			}
+
+			/* create a new fetch request */
+			fetch_req_t *nr = alloc_thing(fetch_req_t, "fetch request");
+
+			*nr = empty_fetch_req;
+
+			/* note current time */
+			nr->installed = realnow();
+
+			/* clone issuer */
+			clonetochunk(nr->issuer, idn.ptr, idn.len, "issuer dn");
+
+			/* copy distribution points */
+			add_distribution_points(new_dp, &nr->distributionPoints);
+
+			/* insert new fetch request at the head of the queue */
+			nr->next = crl_fetch_reqs;
+			crl_fetch_reqs = nr;
+
+			DBG(DBG_CONTROL,
+			    DBG_log("crl fetch request added"));
+			break;
+		}
 		if (same_dn(idn, req->issuer)) {
 			/* there is already a fetch request */
 			DBG(DBG_CONTROL,
 			    DBG_log("crl fetch request already exists"));
 
 			/* there might be new distribution points */
-			if ((new_dp = gndp_from_nss_cert(ca)) != NULL) {
-				DBG(DBG_CONTROL,
-				    DBG_log("new distribution point available"));
-				add_distribution_points(new_dp,
-						      &req->distributionPoints);
-			} else if (end_dp != NULL) {
-				DBG(DBG_CONTROL,
-					DBG_log("no CA crl DP available, adding provided DP"));
-				add_distribution_points(end_dp, &req->distributionPoints);
-			}
-			unlock_crl_fetch_list("add_crl_fetch_request");
-			if (ca != NULL)
-				CERT_DestroyCertificate(ca);
-			return;
-		}
-		req = req->next;
-	}
+			generalName_t *new_dp = gndp_from_nss_cert(ca);
 
-	if (new_dp == NULL) {
-		if ((new_dp = gndp_from_nss_cert(ca)) == NULL) {
-			if (end_dp != NULL) {
+			if (new_dp == NULL) {
+				if (end_dp == NULL) {
+					DBG(DBG_CONTROL,
+						DBG_log("no CA crl DP available"));
+					break;
+				}
 				DBG(DBG_CONTROL,
-					DBG_log("no CA crl DP available, using provided DP"));
+				    DBG_log("no CA crl DP available; using provided DP"));
 				new_dp = end_dp;
-			} else {
-				DBG(DBG_CONTROL,
-					DBG_log("no distribution point available for new fetch request"));
-				unlock_crl_fetch_list("add_crl_fetch_request");
-				if (ca != NULL)
-					CERT_DestroyCertificate(ca);
-				return;
 			}
+
+			add_distribution_points(end_dp, &req->distributionPoints);
+			DBG(DBG_CONTROL,
+			    DBG_log("crl fetch request augmented"));
+			break;
 		}
 	}
-
-	/* create a new fetch request */
-	req = alloc_thing(fetch_req_t, "fetch request");
-	*req = empty_fetch_req;
-
-	/* note current time */
-	req->installed = realnow();
-
-	/* clone issuer */
-	clonetochunk(req->issuer, idn.ptr, idn.len, "issuer dn");
-
-	/* copy distribution points */
-	add_distribution_points(new_dp, &req->distributionPoints);
-
-	/* insert new fetch request at the head of the queue */
-	req->next = crl_fetch_reqs;
-	crl_fetch_reqs = req;
-
-	DBG(DBG_CONTROL,
-	    DBG_log("crl fetch request added"));
+	/* UNLOCK: matching lock is before loop */
 	unlock_crl_fetch_list("add_crl_fetch_request");
 
-	if (ca != NULL)
-		CERT_DestroyCertificate(ca);
-
+	CERT_DestroyCertificate(ca);
 }
 
 /*
  * list all distribution points
  */
-void list_distribution_points(const generalName_t *gn)
+void list_distribution_points(const generalName_t *first_gn)
 {
-	bool first_gn = TRUE;
-
-	while (gn != NULL) {
-		whack_log(RC_COMMENT, "       %s '%.*s'", (first_gn) ? "distPts:" :
-			  "        ", (int)gn->name.len,
-			  gn->name.ptr);
-		first_gn = FALSE;
-		gn = gn->next;
+	const generalName_t *gn;
+	for (gn = first_gn; gn != NULL; gn = gn->next) {
+		whack_log(RC_COMMENT, "       %s '%.*s'",
+			gn == first_gn ? "distPts:" : "        ",
+			(int)gn->name.len,
+			gn->name.ptr);
 	}
 }
 
@@ -701,6 +700,6 @@ void list_crl_fetch_requests(bool utc)
 	unlock_crl_fetch_list("list_crl_fetch_requests");
 }
 
-#else
+#else /* defined(LIBCURL) || defined(LDAP_VER) */
 /* we'll just ignore for now - this is all going away anyway */
 #endif
