@@ -109,7 +109,7 @@ class guest (threading.Thread):
         self.hostname = hostname
         self.dname = hostname
         if args.instance:
-            self.dname = hostname + str (args.instance)
+            self.dname = hostname + str(args.instance)
         self.role = role
         self.testname = testname
         self.status = "NEW"
@@ -911,7 +911,8 @@ class scantests:
 
     def write_txt(self, table):
         if self.args.instance:
-            csvfile = self.trpath + '/' + 'table' + str(self.args.instance) + '.txt'
+            csvfile = self.trpath + '/' + 'table' + \
+                str(self.args.instance) + '.txt'
         else:
             csvfile = self.trpath + '/' + 'table.txt'
         logging.info("write text summary file %s" % csvfile)
@@ -1126,7 +1127,7 @@ def shut_down_hosts(args, test_hosts):
     all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
 
     if args.instance:
-        for i,host in enumerate(all_hosts):
+        for i, host in enumerate(all_hosts):
             all_hosts[i] += str(args.instance)
 
     if args.noreboot:
@@ -1294,7 +1295,7 @@ def orient(args, test):
 
     if args.instance:
         logging.debug("this is a second instance of the test turn")
-        for i,host in enumerate(test_hosts):
+        for i, host in enumerate(test_hosts):
             test_hosts[i] += str(args.instance)
 
     logging.debug("test hosts are initiator %s responder %s %s",
@@ -1534,7 +1535,7 @@ def cmdline():
                         type=compile_regex_arg, help="Exclude tests that match <regex>")
 
     parser.add_argument("--graphsappend", default='',
-                        help="update this graph entry. for advanced use only")
+                        help="update this graph entry. full path ")
 
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
@@ -2545,6 +2546,9 @@ def main():
     elif args.scancwd:
         scancwd(args)
         return
+
+    if args.instance:
+        args.leavezombies = True
 
     if not args.leavezombies:
         kill_zombies("swantest")
