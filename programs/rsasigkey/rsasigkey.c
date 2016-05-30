@@ -491,10 +491,21 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		return;
 	}
 
+	SECItem *public_modulus = &pubkey->u.rsa.modulus;
+	SECItem *public_exponent = &pubkey->u.rsa.publicExponent;
+
+	SECItem *ckaid = PK11_MakeIDFromPubKey(public_modulus);
+	if (ckaid == NULL) {
+		fprintf(stderr,
+			"%s: 'CKAID' calculation failed\n", me);
+		exit(1);
+	}
+	char *hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
+	
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
-	fprintf(stderr,
-		"Generated RSA key pair was stored in the NSS database\n");
+	fprintf(stderr, "Generated RSA key pair with CKAID %s was stored in the NSS database\n",
+		hex_ckaid);
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
@@ -503,14 +514,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 
-	SECItem *public_modulus = &pubkey->u.rsa.modulus;
-	SECItem *public_exponent = &pubkey->u.rsa.publicExponent;
-
-	SECItem *ckaID = PK11_MakeIDFromPubKey(public_modulus);
-	if (ckaID != NULL) {
-		printf("\t#ckaid=%s\n", conv(ckaID->data, ckaID->len, 16));
-		SECITEM_FreeItem(ckaID, PR_TRUE);
-	}
+	printf("\t#ckaid=%s\n", hex_ckaid);
 
 	bundp = bundle(E, public_modulus, &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
@@ -518,6 +522,10 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	printf("\tModulus: 0x%s\n", conv(public_modulus->data, public_modulus->len, 16));
 	printf("\tPublicExponent: 0x%s\n", conv(public_exponent->data, public_exponent->len, 16));
 
+	if (hex_ckaid != NULL)
+		free(hex_ckaid);
+	if (ckaid != NULL)
+		SECITEM_FreeItem(ckaid, PR_TRUE);		
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
 	if (pubkey != NULL)
