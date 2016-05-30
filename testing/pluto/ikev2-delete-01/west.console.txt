@@ -40,7 +40,7 @@ west #
 134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=OAKLEY_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -163,7 +163,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2-512-MODP2048
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithm newest: AES_GCM_C_256-NONE; pfsgroup=<Phase1>
 000  
 000 Total IPsec connections: loaded 1, active 1
 000  

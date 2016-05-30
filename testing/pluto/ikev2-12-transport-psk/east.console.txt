@@ -33,14 +33,12 @@ XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 

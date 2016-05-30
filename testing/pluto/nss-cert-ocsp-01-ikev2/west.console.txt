@@ -39,7 +39,7 @@ west #
 002 "nss-cert-ocsp" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 002 "nss-cert-ocsp" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "nss-cert-ocsp" #2: negotiated connection [192.0.1.254,192.0.1.254:0-65535 0] -> [192.0.2.254,192.0.2.254:0-65535 0]
-004 "nss-cert-ocsp" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "nss-cert-ocsp" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  echo done
 done

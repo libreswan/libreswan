@@ -75,13 +75,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.209/32 dst 7.7.7.7/32 
 	dir out priority 1568 ptype main 
@@ -184,13 +182,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.209/32 dst 7.7.7.7/32 
 	dir out priority 1568 ptype main 
@@ -281,13 +277,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.209/32 dst 7.7.7.7/32 
 	dir out priority 1568 ptype main 
@@ -378,13 +372,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.209/32 dst 7.7.7.7/32 
 	dir out priority 1568 ptype main 
@@ -481,13 +473,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.209/32 dst 7.7.7.7/32 
 	dir out priority 1568 ptype main 

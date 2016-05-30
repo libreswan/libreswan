@@ -56,7 +56,7 @@ west #
 134 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=OAKLEY_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -80,13 +80,11 @@ XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 

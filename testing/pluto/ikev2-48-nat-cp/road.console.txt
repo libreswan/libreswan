@@ -136,7 +136,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.2.1,192.0.2.1:0-65535 0] -> [192.1.2.23,192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP/NAT=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP/NAT=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  # AA see really weired route, I have to remove that
 road #
