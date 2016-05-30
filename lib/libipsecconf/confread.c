@@ -295,7 +295,7 @@ static char **new_list(const char *value)
  * @param cfg starter_config structure
  * @param cfgp config_parsed (ie: valid) struct
  * @param perr pointer to store errors in
- * @return bool TRUE if unsuccessfull
+ * @return bool TRUE if unsuccessful
  */
 static bool load_setup(struct starter_config *cfg,
 		       const struct config_parsed *cfgp)
@@ -715,7 +715,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
  *        k_default is used when we are loading a conn that should be
  *        considered to be a "default" value, and that replacing this
  *        value is considered acceptable.
- * @return bool TRUE if unsuccessfull
+ * @return bool TRUE if unsuccessful
  */
 static bool translate_conn(struct starter_conn *conn,
 		    const struct section_list *sl,
