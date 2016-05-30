@@ -1357,12 +1357,26 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	       sizeof(proto_info->attrs.spi));
 
 	/*
-	 * This is REALLY not correct, because this is not an IKE
-	 * algorithm
+	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
+	 * scheme and negotiation so the function
+	 * ikev2_proposal_to_trans_attrs(), above, should have been
+	 * able to handle everything.  It can't:
 	 *
-	 * XXX maybe we can leave this to ikev2 child key derivation
+	 * - esp/ah has its own version of the negotiated algorithm
+	 *   structure (it is a superset of the IKE one) and that
+	 *   needs to be populated with redundant value.
+	 *
+	 * - "generic" code uses IKEv1 ESP/AH/IKE numbers (which are
+         *   pretty messed up) when it could use a "struct alg_info"
+         *   object
+	 *
+	 * - rumor has it IKEv2 algorithms don't exist in the "struct
+         *   alg_info" database.  The "rationale" is that the database
+         *   should only contain IKE algorithms.  The result is that
+         *   there are many many functions duplicating the knowlege
+         *   the algorithm database already contains.
 	 */
-	DBG_log("XXX: All algorithms should be in our database, even when not implemented");
+	DBG(DBG_CONTROLMORE,DBG_log("XXX: Hacking around rumoured lack of ESP/AH algorithms in the crypto database"));
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
 		if (ta.encrypter != NULL) {
 			err_t ugh;
@@ -1681,7 +1695,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				 * strongswan proposes AES_000, this
 				 * won't match that.
 				 */
-				DBG_log("XXX: emiting short keylen before long keylen; should be other way round");
+				DBG(DBG_CONTROL, DBG_log("XXX: emiting short keylen before long keylen; should be other way round"));
 				if (ealg->keydeflen && (ealg->keydeflen < ealg->keymaxlen)) {
 					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
 								 ealg->keydeflen));
