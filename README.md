@@ -33,7 +33,7 @@ Win2k/BSD/OSX as well.
 Most distributions have native packaged support for Libreswan. Libreswan is
 available for RHEL, Fedora, Ubuntu, Debian, Arch, OpenWrt and more.
 
-Unless a source based build is truly needed,  it is often best to use
+Unless a source-based build is truly needed,  it is often best to use
 the pre-built version of the distribution you are using.
 
 There are a few packages required for Libreswan to compile from source:
@@ -76,8 +76,8 @@ system misses any of the requirements. This will also tell you if any of
 the kernel sysctl values needs changing.
 
 ## Starting Libreswan
-The install will detect the init system used (systemd, upstart, sysvinit,
-openrc) and should integrate with the linux distribution. The service
+The install will detect the init system used (systemd, Upstart, sysvinit,
+OpenRC) and should integrate with the Linux distribution. The service
 name is called "ipsec".  For example, on RHEL7, one would use:
 
     systemctl enable ipsec.service
@@ -112,7 +112,7 @@ If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
 you might need to adjust your config files, although great care has been
 put into making the configuration files full backwards compatible.
 
-See 'man ipsec.conf' for the list of options to find any new features.
+See `man ipsec.conf` for the list of options to find any new features.
 
 You can run `make install` on top of your old version - it will not
 overwrite your your `/etc/ipsec.*` configuration files. The default install
@@ -121,13 +121,13 @@ one from a distribution package in /usr and once manually in /usr/local.
 
 ## Support
 
-Mailing Lists:
+Mailing lists:
 
     https://lists.libreswan.org/ is home of all our the mailing lists
 
 Wiki:
 
-    https://libreswan.org is home to the Libreswan WIKI.  It has the most
+    https://libreswan.org is home to the Libreswan wiki.  It has the most
     up to date documentation, interop guides and other useful information.
 
 IRC:
@@ -158,6 +158,6 @@ messages when they happen. This list is quite busy during active
 development periods.
 
 ## Documentation
-The most up to date docs are in the man pages that come with the software
-and at https://libreswan.org/
+The most up to date documentation is in the man pages that come with the
+software and at https://libreswan.org/
 
