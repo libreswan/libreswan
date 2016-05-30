@@ -46,6 +46,8 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 @core
 
+# To help avoid duplicates THIS LIST IS SORTED.
+
 ElectricFence
 audit-libs-devel
 bind-utils
@@ -139,68 +141,56 @@ sysctl -w net.ipv4.tcp_mtu_probing=1
 
 rpm -qa > /var/tmp/rpm-qa.log
 
-# TODO: if rhel/centos, we should install epel-release too
+# workaround for vim fedora22 packaging bug. we want vim-enhanced and
+# that clashes with vim-minimal.
 
-# workaround for vim fedora22 packaging bug. we want vim-enhanced
 rpm -e vim-minimal --nodeps
 
+# TODO: if rhel/centos, we should install epel-release too
+
+# To help avoid duplicates THIS LIST IS SORTED.
+
 yum install -y 2>&1 \
-    vim-enhanced \
     ElectricFence \
     audit-libs-devel \
-    curl-devel \
-    fipscheck-devel \
-    hping3 \
-    ipsec-tools \
-    libcap-ng-devel \
-    libevent-devel \
-    nc \
-    nc6 \
-    nspr-devel \
-    nss-devel \
-    pexpect \
-    python3-pexpect \
-    python3-setproctitle \
-    racoon2 \
-    strongswan \
-    systemd-devel \
-    unbound \
-    unbound-devel \
-    xmlto \
     bison \
     curl-devel \
     fipscheck-devel \
     flex \
     gcc \
     gdb \
-    nspr-devel \
-    nss-devel \
-    nss-tools \
-    openldap-devel \
-    pam-devel \
     git \
-    ElectricFence \
-    audit-libs-devel \
     glibc-devel \
     hping3 \
+    hping3 \
+    ipsec-tools \
     ipsec-tools \
     libcap-ng-devel \
     libevent-devel \
     libselinux-devel \
     lsof \
-    strace \
-    strongswan \
-    tar \
+    nc \
+    nc6 \
+    nspr-devel \
+    nss-devel \
+    nss-tools \
+    openldap-devel \
+    pam-devel \
+    pexpect \
     python3-pexpect \
     python3-setproctitle \
     racoon2 \
+    strace \
+    strongswan \
     systemd-devel \
+    tar \
     unbound \
     unbound-devel \
     unbound-libs \
     valgrind \
-    xmlto \
+    vim-enhanced \
     xl2tpd \
+    xmlto \
     | tee /var/tmp/yum-install.log
 
 debuginfo-install -y \
@@ -225,9 +215,9 @@ debuginfo-install -y \
     nss-softokn \
     nss-softokn-freebl \
     nss-util \
+    ocspd \
     openldap \
     openssl-libs \
-    ocspd \
     pam \
     pcre \
     python-libs \
