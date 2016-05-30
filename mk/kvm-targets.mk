@@ -503,7 +503,9 @@ KVM_BUILD_DOMAIN = $(firstword $(KVM_POOL))$(firstword $(KVM_INSTALL_DOMAINS))
 # internal/canonical targets.
 
 .PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-clean
+kvm-clean clean-kvm:
+	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
+	rm -rf $(KVM_OBJDIR)
 .PHONY: kvm-distclean distclean-kvm
 kvm-distclean distclean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-distclean
 
@@ -588,7 +590,7 @@ kvm-help:
 	@echo '  Or (you can cherry-pick steps):'
 	@echo '    make kvm-clean kvm-install kvm-test-clean kvm-test kvm-check'
 	@echo '  Where:'
-	@echo '    kvm-clean                  - clean out the KVM build tree'
+	@echo '    kvm-clean                  - delete $(KVM_OBJDIR)'
 	@echo '    kvm-install                - update/install libreswan into the test domains'
 	@echo '    kvm-test-clean             - delete any previous test results'
 	@echo '    kvm-test                   - run all "good" tests'
