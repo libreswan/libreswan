@@ -359,12 +359,13 @@ KVM_KICKSTART_FILE = testing/libvirt/fedora22base.ks
 else
 KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS)base.ks
 endif
+KVM_DEBUGINFO ?= true
 
 $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE)
 	$(call check-no-kvm-domain,$*,$(KVM_BASEDIR)/$*.ks)
 	rm -f '$(KVM_BASEDIR)/$*.img'
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
-	sed -e 's/@@PLACEHOLDER@@/@@PLACEHOLDER@@/' \
+	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
 		< $(KVM_KICKSTART_FILE) > $(KVM_BASEDIR)/$*.tmp.ks
 	sudo virt-install \
 		--connect=qemu:///system \
@@ -381,7 +382,7 @@ $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) $(KVM_KICKS
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
-	cp $(KVM_BASEDIR)/$*.tmp $(KVM_BASEDIR)/$*.ks
+	cp $(KVM_BASEDIR)/$*.tmp.ks $(KVM_BASEDIR)/$*.ks
 
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain

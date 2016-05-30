@@ -193,7 +193,8 @@ yum install -y 2>&1 \
     xmlto \
     | tee /var/tmp/yum-install.log
 
-debuginfo-install -y \
+kvm_debuginfo=true
+$kvm_debuginfo && debuginfo-install -y \
     ElectricFence \
     audit-libs \
     cyrus-sasl \
