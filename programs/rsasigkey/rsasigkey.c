@@ -501,7 +501,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		exit(1);
 	}
 	char *hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
-	
+
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
 	fprintf(stderr, "Generated RSA key pair with CKAID %s was stored in the NSS database\n",
@@ -525,7 +525,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	if (hex_ckaid != NULL)
 		free(hex_ckaid);
 	if (ckaid != NULL)
-		SECITEM_FreeItem(ckaid, PR_TRUE);		
+		SECITEM_FreeItem(ckaid, PR_TRUE);	
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
 	if (pubkey != NULL)
