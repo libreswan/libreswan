@@ -734,13 +734,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 		passert(sizeof(bv) >= bvlen);
 
 		/* dispose of the data */
-		if (streq(p->name, "CKAIDNSS")) {
-			DBG(DBG_CONTROL, DBG_log("saving CKAID"));
-			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
-			passert(sizeof(rsak->ckaid) >= bvlen);
-			memcpy(rsak->ckaid, bv, bvlen);
-			rsak->ckaid_len = bvlen;
-		} else if (p->offset >= 0) {
+		if (p->offset >= 0) {
 			DBG(DBG_CONTROLMORE, DBG_log("saving %s", p->name));
 			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
@@ -758,9 +752,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	/*
 	 * Check that all required fields are present.
 	 */
-	if (rsak->ckaid_len == 0) {
-		return "field 'CKAIDNSS' either missing or empty";
-	}
 	const struct fld *p;
 	for (p = RSA_private_field;
 	     p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
@@ -779,6 +770,26 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			     rsak->pub.n.ptr, rsak->pub.e.len,
 			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
 	}
+
+	/*
+	 * Compute the CKAID using the modulus - keep old
+	 * configurations hobbling along.
+	 */
+	SECItem public_modulus = {
+		.data = rsak->pub.n.ptr,
+		.len = rsak->pub.n.len,
+	};
+	SECItem *ckaid = PK11_MakeIDFromPubKey(&public_modulus);
+	if (ckaid == NULL) {
+		return "unable to compute 'CKAID' from Modulus";
+	}
+	DBG(DBG_CONTROLMORE, DBG_dump("computed CKAID", ckaid->data, ckaid->len));
+	if (ckaid->len > sizeof(rsak->ckaid)) {
+		return "'CKAID' computed from Modulus unexpectedly big";
+	}
+	memcpy(rsak->ckaid, ckaid->data, ckaid->len);
+	rsak->ckaid_len = ckaid->len;
+	SECITEM_FreeItem(ckaid, PR_TRUE);
 
 	return RSA_public_key_sanity(rsak);
 }
