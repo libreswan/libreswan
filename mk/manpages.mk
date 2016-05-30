@@ -67,6 +67,7 @@ local-clean-manpages:
 
 %: %.xml
 	@mkdir -p $(builddir)
-	: ignoring $(XMLTO) exit status
-	$(XMLTO) -o $(builddir) man $< || true
+	${TRANSFORM_VARIABLES} < $< > $(builddir)/$(notdir $@).tmp
+	: ignoring seemingly bogus $(XMLTO) exit status
+	cd $(builddir) && $(XMLTO) man $(notdir $@).tmp || true
 	test -r $(builddir)/$(notdir $@)
