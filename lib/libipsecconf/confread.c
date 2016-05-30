@@ -696,7 +696,6 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 		conn_st->policy |= POLICY_XAUTH;
 
 	/*
-	 * KSCF_SUBNETWITHIN    --- not sure what to do with it.
 	 * KSCF_SOURCEIP = 16,
 	 */
 

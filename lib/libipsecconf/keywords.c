@@ -570,8 +570,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "phase2alg",  AUTOorMANUAL,  kt_string,  KSCF_ESP,  NOT_ENUM },
   { "esp",  AUTOorMANUAL | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
   { "ah",  AUTOorMANUAL | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
-  /* ??? note: subnetwithin isn't kv_auto or kv_manual */
-  { "subnetwithin",  kv_conn | kv_leftright,  kt_string,  KSCF_SUBNETWITHIN,  NOT_ENUM },
   /* ??? note: protoport isn't kv_auto or kv_manual */
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT,  NOT_ENUM },
 
