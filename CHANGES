@@ -5,6 +5,7 @@ v3.18 (unreleased)
 * XFRM: Support for NAT OE Client Address Translation (leftcat=) [Antony]
 * XFRM: Support for VTI using vti-interface= and vti-routing= [Paul/Tuomo]
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
+* KLIPS: Fix overwriting the sk pointer in 4.4 kernels [Ofer Heifetz]
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
 * pluto: Add systemd watchdog support via USE_SYSTEMD_WATCHDOG [Matt/Paul]
@@ -13,7 +14,6 @@ v3.18 (unreleased)
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
 * FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
 * FIPS: Do not allow Linux-style sha2 truncation for ESP in FIPS mode [Paul]
-
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
