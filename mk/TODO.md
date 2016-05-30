@@ -32,6 +32,9 @@ TODO: a.k.a. what needs fixing
 
 The following are quirks in the build system:
 
+- drop the ipsec_ prefix to man page names in the source tree makes
+  finding them a pain
+
 - merge config.mk and userlandcflags.mk; two types of flags are needed:
   USERLAND_CFLAGS += -D ... - defined for all builds
   <FEATURE>_LDFLAGS = ... - added as needed to an application's LDFLAGS
@@ -53,7 +56,7 @@ The following are quirks in the build system:
 
 - remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
-- move modobj to under $(builddir)
+- rename modobj to something more specific - like builddir
 
 - unit tests under testing/ could do with their own unit-test.mk file;
   grep for UNITTEST in testing's Makefile-s
@@ -107,7 +110,5 @@ The following are quirks in the test infrastructure:
 
 - swan-transmogrify runs chcon -R testing/pluto, it should only run
   that over the current test directory
-
-- implement libvirt/install.sh using install-kvm-networks et.al.
 
 - simplify and speed up ping deadness check
