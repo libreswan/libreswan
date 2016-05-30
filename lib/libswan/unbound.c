@@ -35,15 +35,16 @@
 static const char rootanchor[] =
 	". IN DNSKEY 257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=";
 
-bool unbound_init(struct ub_ctx *dnsctx)
+struct ub_ctx *unbound_init(void)
 {
 	int ugh;
 
 	/* create unbound resolver context */
-	dnsctx = ub_ctx_create();
+	struct ub_ctx *dnsctx = ub_ctx_create();
+
 	if (dnsctx == NULL) {
 		libreswan_log("error: could not create unbound context");
-		return FALSE;
+		return NULL;
 	}
 	DBG(DBG_DNS,
 		ub_ctx_debuglevel(dnsctx, 5);
@@ -55,7 +56,8 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	if (ugh != 0) {
 		libreswan_log("error reading hosts: %s: %s",
 			ub_strerror(ugh), strerror(errno));
-		return FALSE;
+		ub_ctx_delete(dnsctx);
+		return NULL;
 	}
 	DBG(DBG_DNS,
 		DBG_log("/etc/hosts lookups activated");
@@ -70,7 +72,8 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	if (ugh != 0) {
 		libreswan_log("error reading resolv.conf: %s: %s",
 			ub_strerror(ugh), strerror(errno));
-		return FALSE;
+		ub_ctx_delete(dnsctx);
+		return NULL;
 	}
 	DBG(DBG_DNS,
 		DBG_log("/etc/resolv.conf usage activated");
@@ -92,10 +95,11 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	if (ugh != 0) {
 		libreswan_log("error adding the DNSSEC root key: %s: %s",
 			ub_strerror(ugh), strerror(errno));
-		return FALSE;
+		ub_ctx_delete(dnsctx);
+		return NULL;
 	}
 
-	return TRUE;
+	return dnsctx;
 }
 
 /*

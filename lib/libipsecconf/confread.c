@@ -1453,8 +1453,6 @@ struct starter_config *confread_load(const char *file,
 	bool err = FALSE;
 	bool connerr;
 
-	struct ub_ctx *dnsctx = NULL;
-
 	/**
 	 * Load file
 	 */
@@ -1487,7 +1485,9 @@ struct starter_config *confread_load(const char *file,
 	}
 
 #ifdef DNSSEC
-	if (!unbound_init(dnsctx))
+	struct ub_ctx *dnsctx = unbound_init();
+
+	if (dnsctx == NULL)
 		return NULL;
 #endif
 
