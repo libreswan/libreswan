@@ -198,6 +198,7 @@ struct whack_message {
 	int connmtu;
 
 	uint32_t sa_priority;
+	uint32_t sa_tfcpad;
 	reqid_t sa_reqid;
 	int nflog_group;
 

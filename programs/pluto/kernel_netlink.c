@@ -1244,6 +1244,19 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
+		/* Traffic Flow Confidentiality is only for ESP tunnel mode */
+		if (sa->tfcpad != 0 &&
+		    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+			// set kernel to use TFC padding
+
+			attr->rta_type = XFRMA_TFCPAD;
+			attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
+			memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
+		}
 	}
 
 	if (sa->natt_type != 0) {
@@ -1263,6 +1276,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		/* ??? why is this not used? */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
+
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {

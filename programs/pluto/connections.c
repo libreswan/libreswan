@@ -1515,6 +1515,7 @@ void add_connection(const struct whack_message *wm)
 #endif
 		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
+		c->sa_tfcpad = wm->sa_tfcpad;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
@@ -3817,6 +3818,7 @@ void show_one_connection(const struct connection *c)
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];
+	char satfcstr[13];
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
@@ -3904,14 +3906,19 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(sapriostr, "auto");
 
+	if (c->sa_tfcpad != 0)
+		snprintf(satfcstr, sizeof(satfcstr), "%u", c->sa_tfcpad);
+	else
+		strcpy(satfcstr, "none");
+
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s;",
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		  c->name, instance,
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr, sapriostr
+		  mtustr, sapriostr, satfcstr
 	);
 
 	if (c->nflog_group != 0)

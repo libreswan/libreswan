@@ -2042,6 +2042,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
+		if (!inbound && c->sa_tfcpad != 0) {
+			DBG(DBG_KERNEL, DBG_log("Enabling TFC "));
+			said_next->tfcpad = c->sa_tfcpad;
+		}
 		said_next->authalg = ei->authalg;
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 		    st->st_connection->sha2_truncbug) {

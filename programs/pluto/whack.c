@@ -96,7 +96,7 @@ static void help(void)
 		"	[--esp <esp-algos>] \\\n"
 		"	[--remote-peer-type <cisco>] \\\n"
 		"	[--mtu <mtu>] \\\n"
-		"	[--priority <prio>] [--reqid <reqid>] \\\n"
+		"	[--priority <prio>] [--tfc <size>] [--reqid <reqid>] \\\n"
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
@@ -360,6 +360,7 @@ enum option_enums {
 	CD_METRIC,
 	CD_CONNMTU,
 	CD_PRIORITY,
+	CD_TFCPAD,
 	CD_REQID,
 	CD_NFLOG_GROUP,
 	CD_CONN_MARK_BOTH,
@@ -610,6 +611,7 @@ static const struct option long_opts[] = {
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
+	{ "tfc", required_argument, NULL, CD_TFCPAD + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + OO + NUMERIC_ARG },
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
@@ -1884,6 +1886,10 @@ int main(int argc, char **argv)
 
 		case CD_PRIORITY:
 			msg.sa_priority = opt_whole;
+			continue;
+
+		case CD_TFCPAD:
+			msg.sa_tfcpad = opt_whole;
 			continue;
 
 		case CD_NFLOG_GROUP:

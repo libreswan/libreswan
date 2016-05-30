@@ -590,6 +590,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 
   { "mtu",  AUTO,  kt_number,  KBF_CONNMTU,  NOT_ENUM },
   { "priority",  AUTO,  kt_number,  KBF_PRIORITY,  NOT_ENUM },
+  { "tfc",  AUTO,  kt_number,  KBF_TFCPAD,  NOT_ENUM },
   { "reqid",  AUTO,  kt_number,  KBF_REQID,  NOT_ENUM },
   { "nflog",  AUTO,  kt_number,  KBF_NFLOG_CONN,  NOT_ENUM },
 

@@ -538,6 +538,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.connmtu = conn->options[KBF_CONNMTU];
 	if (conn->options_set[KBF_PRIORITY])
 		msg.sa_priority = conn->options[KBF_PRIORITY];
+	if (conn->options_set[KBF_TFCPAD])
+		msg.sa_tfcpad = conn->options[KBF_TFCPAD];
 	if (conn->options_set[KBF_NFLOG_CONN])
 		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
