@@ -109,13 +109,6 @@ static const unsigned char *bundle(int e, SECItem *, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 void report(char *msg);
 
-
-/* getModulus - returns modulus of the RSA public key */
-static SECItem *getModulus(SECKEYPublicKey *pk)
-{
-	return &pk->u.rsa.modulus;
-}
-
 /*
  * hexOut - prepare hex output, guaranteeing even number of digits.
  * (The current Libreswan conversion routines expect an even digit count.)
@@ -510,15 +503,20 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 
-	bundp = bundle(E, getModulus(pubkey), &bs);
-	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+	SECItem *public_modulus = &pubkey->u.rsa.modulus;
+	SECItem *public_exponent = &pubkey->u.rsa.publicExponent;
 
-
-	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
+	SECItem *ckaID = PK11_MakeIDFromPubKey(public_modulus);
 	if (ckaID != NULL) {
-		printf("\t#CKAIDNSS: %s\n", hexOut(ckaID));
+		printf("\t#ckaid=%s\n", conv(ckaID->data, ckaID->len, 16));
 		SECITEM_FreeItem(ckaID, PR_TRUE);
 	}
+
+	bundp = bundle(E, public_modulus, &bs);
+	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+
+	printf("\tModulus: 0x%s\n", conv(public_modulus->data, public_modulus->len, 16));
+	printf("\tPublicExponent: 0x%s\n", conv(public_exponent->data, public_exponent->len, 16));
 
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
