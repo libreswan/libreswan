@@ -158,6 +158,7 @@ messages when they happen. This list is quite busy during active
 development periods.
 
 ## Documentation
-The most up to date docs are in the man pages that come with the software
-and at https://libreswan.org/
+The most up to date documentation consists of the man pages that come
+with the software. Further documentation can be found at https://libreswan.org/
+and the wiki at https://libreswan.org/wiki/
 
