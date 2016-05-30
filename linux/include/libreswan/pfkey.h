@@ -141,7 +141,7 @@ struct key_opt {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
-# define key_pid(sk) ((struct key_opt*)&(sk))->key_pid
+# define key_pid(sk) ((struct key_opt*)(sk))->key_pid
 #else
 # define key_pid(sk) ((struct key_opt*)&((sk)->sk_protinfo))->key_pid
 #endif
