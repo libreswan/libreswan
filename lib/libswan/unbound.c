@@ -205,16 +205,3 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		}
 	}
 }
-
-#ifdef UNBOUND_MAIN
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-
-	struct ub_ctx test;
-	ip_address addr;
-
-	return unbound_resolve(&test, "libreswan.org", 0, 0, &addr);
-}
-#endif
