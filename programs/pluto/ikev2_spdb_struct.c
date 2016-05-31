@@ -1694,18 +1694,23 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				 * XXX: There's a rumor that
 				 * strongswan proposes AES_000, this
 				 * won't match that.
+				 *
+				 * Could this be better handled by
+				 * searching the algorithm database
+				 * for anything matching the
+				 * encryption algorithm and marked as
+				 * a default.
 				 */
-				DBG(DBG_CONTROL, DBG_log("XXX: emiting short keylen before long keylen; should be other way round"));
-				if (ealg->keydeflen && (ealg->keydeflen < ealg->keymaxlen)) {
-					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
-								 ealg->keydeflen));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keydeflen);
-				}
 				if (ealg->keymaxlen != 0) {
 					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
 					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 							 ealg->common.algo_v2id, ealg->keymaxlen);
+				}
+				if (ealg->keydeflen != 0 && ealg->keydeflen < ealg->keymaxlen) {
+					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
+								 ealg->keydeflen));
+					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+							 ealg->common.algo_v2id, ealg->keydeflen);
 				}
 			}
 		}
