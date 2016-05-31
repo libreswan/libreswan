@@ -76,6 +76,7 @@ d.ipsec.conf/retransmit-interval.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
+d.ipsec.conf/tfc.xml
 d.ipsec.conf/nflog.xml
 d.ipsec.conf/mark.xml
 d.ipsec.conf/vti.xml
