@@ -249,11 +249,16 @@ define kvm-test-network
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
 	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
+  ifeq ($(1),)
+	echo "  <bridge name='swan$(subst _,,$(patsubst 192_%,%,$(2)))' stp='on' delay='0'/>"		>> '$$@.tmp'
+  else
 	echo "  <bridge name='$(1)$(2)' stp='on' delay='0'/>"		>> '$$@.tmp'
-	case "$(1)$(2)" in \
-		192_0_* ) echo '  <ip address="$(2).127"/>' ;; \
-		192_* )   echo '  <ip address="$(2).253"/>' ;; \
-	esac | sed -e 's/_/./g'						>> '$$@.tmp'
+  endif
+  ifeq ($(1),)
+	echo "  <ip address='$(subst _,.,$(2)).253'/>"				>> '$$@.tmp'
+  else
+	echo "  <!-- <ip address='$(subst _,.,$(2)).253'> -->"			>> '$$@.tmp'
+  endif
 	echo "</network>"						>> '$$@.tmp'
 	$(call install-kvm-network,$(1)$(2),$$@)
 
