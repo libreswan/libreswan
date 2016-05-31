@@ -203,40 +203,16 @@ static struct secret *pick_key(struct secret *host_secrets,
 	return s;
 }
 
-static unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
-				 unsigned int *keybuflen)
+static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
 {
-	unsigned char *buf;
-	unsigned char *p;
-	unsigned int elen;
-
-	/* XXX: this has always leaked memory */
-	chunk_t e = chunk_clone(pub->e, "e");
-	chunk_t n = chunk_clone(pub->n, "n");
-	elen = e.len;
-
-	buf = alloc_bytes(e.len + n.len + 3, "buffer for rfc3110");
-	p = buf;
-
-	if (elen <= 255) {
-		*p++ = elen;
-	} else if ((elen & ~0xffff) == 0) {
-		*p++ = 0;
-		*p++ = (elen >> 8) & 0xff;
-		*p++ = elen & 0xff;
-	} else {
-		pfree(buf);
-		return 0; /* unrepresentable exponent length */
+	char* base64;
+	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
+	if (err) {
+		fprintf(stderr, "%s: unexpected error encoing RSA public key '%s'\n",
+			progname, err);
+		exit(5);
 	}
-
-	memcpy(p, e.ptr, e.len);
-	p += e.len;
-	memcpy(p, n.ptr, n.len);
-	p += n.len;
-
-	*keybuflen = (p - buf);
-
-	return buf;
+	return base64;
 }
 
 static void show_dnskey(struct secret *s,
@@ -244,11 +220,8 @@ static void show_dnskey(struct secret *s,
 			char *gateway)
 {
 	char qname[256];
-	char base64[8192];
 	int gateway_type = 0;
 	const struct private_key_stuff *pks = lsw_get_pks(s);
-	unsigned char *keyblob;
-	unsigned int keybloblen = 0;
 
 	gethostname(qname, sizeof(qname));
 
@@ -258,9 +231,7 @@ static void show_dnskey(struct secret *s,
 		exit(5);
 	}
 
-	keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
-
-	datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
 
 	if (gateway != NULL) {
 		ip_address test;
@@ -280,15 +251,13 @@ static void show_dnskey(struct secret *s,
 	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
 	       qname, precedence, gateway_type,
 	       (gateway == NULL) ? "." : gateway, base64 + sizeof("0s") - 1);
+	pfree(base64);
 }
 
 static void show_confkey(struct secret *s,
 			 char *side)
 {
-	char base64[8192];
 	const struct private_key_stuff *pks = lsw_get_pks(s);
-	unsigned char *keyblob;
-	unsigned int keybloblen = 0;
 
 	if (pks->kind != PPK_RSA) {
 		char *enumstr = "gcc is crazy";
@@ -307,14 +276,14 @@ static void show_confkey(struct secret *s,
 		exit(5);
 	}
 
-	keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
-
-	datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
 
 	printf("\t# rsakey %s\n",
 	       pks->u.RSA_private_key.pub.keyid);
 	printf("\t%srsasigkey=%s\n", side,
 	       base64);
+
+	pfree(base64);
 }
 
 int main(int argc, char *argv[])

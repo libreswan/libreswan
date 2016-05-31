@@ -110,7 +110,7 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-static void RSA_show_public_key(struct RSA_public_key *k)
+void DBG_log_RSA_public_key(const struct RSA_public_key *k)
 {
 	DBG_log(" keyid: *%s", k->keyid);
 	DBG_dump_chunk("n", k->n);
@@ -1193,80 +1193,6 @@ void free_public_keys(struct pubkey_list **keys)
 {
 	while (*keys != NULL)
 		*keys = free_public_keyentry(*keys);
-}
-
-/*
- * decode of RSA pubkey chunk
- * - format specified in RFC 2537 RSA/MD5 Keys and SIGs in the DNS
- * - exponent length in bytes (1 or 3 octets)
- *   + 1 byte if in [1, 255]
- *   + otherwise 0x00 followed by 2 bytes of length (big-endian)
- * - exponent (of specified length)
- * - modulus (the rest of the pubkey chunk)
- */
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
-{
-	chunk_t exponent;
-	chunk_t mod;
-
-	rsa->keyid[0] = '\0';	/* in case of keyblobtoid failure */
-
-	if (pubkey->len < 3)
-		return "RSA public key blob way too short";	/*
-								 * not even
-								 * room for
-								 * length!
-								 */
-
-	/* exponent */
-	if (pubkey->ptr[0] != 0x00) {
-		/* one-byte length, followed by that many exponent bytes */
-		setchunk(exponent, pubkey->ptr + 1, pubkey->ptr[0]);
-	} else {
-		/*
-		 * 0x00 followed by 2 bytes of length (big-endian),
-		 * followed by that many exponent bytes
-		 */
-		setchunk(exponent, pubkey->ptr + 3,
-			(pubkey->ptr[1] << BITS_PER_BYTE) + pubkey->ptr[2]);
-	}
-
-	/*
-	 * check that exponent fits within pubkey and leaves room for
-	 * a reasonable modulus.
-	 * Take care to avoid overflow in this check.
-	 */
-	if (pubkey->len -
-		(exponent.ptr - pubkey->ptr) < exponent.len +
-		RSA_MIN_OCTETS_RFC)
-		return "RSA public key blob too short";
-
-	/* modulus: all that's left in pubkey */
-	mod.ptr = exponent.ptr + exponent.len;
-	mod.len = &pubkey->ptr[pubkey->len] - mod.ptr;
-
-	if (mod.len < RSA_MIN_OCTETS)
-		return RSA_MIN_OCTETS_UGH;
-
-	if (mod.len > RSA_MAX_OCTETS)
-		return RSA_MAX_OCTETS_UGH;
-
-	rsa->e = chunk_clone(exponent, "e");
-	rsa->n = chunk_clone(mod, "n");
-
-	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
-
-	DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
-
-	rsa->k = rsa->n.len;
-
-	if (rsa->k != mod.len) {
-		freeanychunk(rsa->e);
-		freeanychunk(rsa->n);
-		return "RSA modulus shorter than specified";
-	}
-
-	return NULL;
 }
 
 bool same_RSA_public_key(const struct RSA_public_key *a,

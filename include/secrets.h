@@ -60,13 +60,21 @@ struct RSA_public_key {
 };
 
 struct RSA_private_key {
-	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
+	struct RSA_public_key pub;
 };
 
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
 
-extern err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
-				   const chunk_t *pubkey);
+err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr);
+err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *exponent, chunk_t *modulus);
+
+err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
+err_t base64_to_rsa_pubkey(const char *rr, chunk_t *exponent, chunk_t *modulus);
+
+err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *pubkey);
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
+
+void DBG_log_RSA_public_key(const struct RSA_public_key *rsa);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;

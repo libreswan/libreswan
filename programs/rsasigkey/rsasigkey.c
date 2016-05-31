@@ -106,31 +106,36 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-static const unsigned char *bundle(int e, chunk_t n, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 void report(char *msg);
 
 /*
- * hexOut - prepare hex output, guaranteeing even number of digits.
- * (The current Libreswan conversion routines expect an even digit count.)
- *
- * NOTE: result is a pointer into a STATIC buffer.
+ * bundle - bundle e and n into an RFC2537-format chunk_t
  */
-static const char *hexOut(chunk_t data)
+static char *base64_bundle(int e, chunk_t modulus)
 {
-	unsigned i;
-	static char hexbuf[3 + BYTES_FOR_BITS(MAXBITS) * 2];
-	char *hexp = hexbuf;
+	/*
+	 * Pack the single-byte exponent into a byte array.
+	 */
+	assert(e <= 255);
+	u_char exponent_byte = 1;
+	chunk_t exponent = {
+		.ptr = &exponent_byte,
+		.len = 1,
+	};
 
-	if (data.len > BYTES_FOR_BITS(MAXBITS))
-		return "[too many bytes]";
+	/*
+	 * Create the resource record.
+	 */
+	char *bundle;
+	err_t err = rsa_pubkey_to_base64(exponent, modulus, &bundle);
+	if (err) {
+		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
+			me, err);
+		exit(1);
+	}
 
-	*hexp++ = '0';
-	*hexp++ = 'x';
-	for (i = 0; i < data.len; i++, hexp += 2)
-		sprintf(hexp, "%02x", data.ptr[i]);
-
-	return hexbuf;
+	return bundle;
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
@@ -403,8 +408,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
-	const unsigned char *bundp = NULL;
-	size_t bs;
 	realtime_t now = realnow();
 
 	if (password == NULL) {
@@ -526,8 +529,12 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 
 	printf("\t#ckaid=%s\n", hex_ckaid);
 
-	bundp = bundle(E, public_modulus, &bs);
-	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+	/* RFC2537/RFC3110-ish format */
+	{
+		char *bundle = base64_bundle(E, public_modulus);
+		printf("\t#pubkey=%s\n", bundle);
+		pfree(bundle);
+	}
 
 	printf("\tModulus: 0x%s\n", conv(public_modulus.ptr, public_modulus.len, 16));
 	printf("\tPublicExponent: 0x%s\n", conv(public_exponent.ptr, public_exponent.len, 16));
@@ -581,39 +588,6 @@ void getrandom(size_t nbytes, unsigned char *buf)
 	}
 
 	close(dev);
-}
-
-/*
-   - bundle - bundle e and n into an RFC2537-format lump
- * Note, calls hexOut.
- *
- * NOTE: returns a pointer into a STATIC buffer
- */
-static const unsigned char *bundle(int e, chunk_t n, size_t *sizep)
-{
-	const char *hexp = hexOut(n);
-	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
-	const char *er;
-	size_t size;
-
-	assert(e <= 255);
-	bundbuf[0] = 1;
-	bundbuf[1] = e;
-	er = ttodata(hexp, 0, 0, (char *)bundbuf + 2, sizeof(bundbuf) - 2,
-		     &size);
-	if (er != NULL) {
-		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
-			me, er);
-		exit(1);
-	}
-	if (size > sizeof(bundbuf) - 2) {
-		fprintf(stderr, "%s: can't-happen bundle overflow (need %d)\n",
-			me, (int) size);
-		exit(1);
-	}
-	if (sizep != NULL)
-		*sizep = size + 2;
-	return bundbuf;
 }
 
 /*
