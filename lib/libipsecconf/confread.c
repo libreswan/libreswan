@@ -24,7 +24,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdlib.h>
@@ -47,10 +46,8 @@
 
 #include "lswfips.h"
 
-static char tmp_err[512];
-
 /*
- * A policy only conn means that we load it, and do the appropriate firewalling
+ * A policy-only conn means that we load it, and do the appropriate firewalling
  * to make sure that no packets get out that this conn would apply to, but we
  * refuse to negotiate it in any way, either incoming or outgoing.
  */
@@ -188,20 +185,24 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->ctlbase = clone_str(CTL_FILE, "default base");
 }
 
-/* format error, and append to string of errors */
-static bool error_append(char **perr, const char *fmt, ...)
+/*
+ * format error, and append to string of errors
+ *
+ * Currently only used within validate_end().
+ * ??? the messages are not separated by anything (eg. SP or NL): unreadable?
+ * ??? Leak?  Where is the *perr freed?  
+ */
+static void error_append(char **perr, const char *fmt, ...)
 {
 	va_list args;
-
-	char *nerr;
-	int len;
+	char tmp_err[512];
 
 	va_start(args, fmt);
 	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
 	va_end(args);
 
-	len = 1 + strlen(tmp_err) + (*perr != NULL ? strlen(*perr) : 0);
-	nerr = alloc_bytes(len, "error_append len");
+	int len = 1 + strlen(tmp_err) + (*perr != NULL ? strlen(*perr) : 0);
+	char *nerr = alloc_bytes(len, "error_append");
 	nerr[0] = '\0';
 	if (*perr != NULL) {
 		strcpy(nerr, *perr);	/* safe: see allocation above */
@@ -209,8 +210,6 @@ static bool error_append(char **perr, const char *fmt, ...)
 	}
 	strcat(nerr, tmp_err);	/* safe: see allocation above */
 	*perr = nerr;
-
-	return TRUE;
 }
 
 #define KW_POLICY_FLAG(val, fl) { \
@@ -411,7 +410,7 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
 
-#  define ERR_FOUND(...) { err |= error_append(&err_str, __VA_ARGS__); }
+#  define ERR_FOUND(...) { error_append(&err_str, __VA_ARGS__); err = TRUE; }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
@@ -708,7 +707,6 @@ static bool validate_end(struct ub_ctx *dnsctx ,
 /**
  * Take keywords from ipsec.conf syntax and load into a conn struct
  *
- *
  * @param conn a connection definition
  * @param sl a section_list
  * @param assigned_value is set to either k_set, or k_default.
@@ -722,6 +720,14 @@ static bool translate_conn(struct starter_conn *conn,
 		    enum keyword_set assigned_value,
 		    err_t *error)
 {
+	/*
+	 * tmp_err must be able to carry an error message back to our caller.
+	 * Thus it must be static.
+	 * Great discipline is required to make sure that at most one error
+	 * message needs to persist.
+	 */
+	static char tmp_err[512];
+
 	bool err = FALSE;
 	const struct kw_list *kw;
 
@@ -733,6 +739,7 @@ static bool translate_conn(struct starter_conn *conn,
 
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
+			/* ??? pray nobody else wants to use tmp_err */
 			*error = tmp_err;
 
 			snprintf(tmp_err, sizeof(tmp_err),
@@ -773,6 +780,7 @@ static bool translate_conn(struct starter_conn *conn,
 			/* all treated as strings for now */
 			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
 			if ((*set_strings)[field] == k_set) {
+				/* ??? pray nobody else wants to use tmp_err */
 				*error = tmp_err;
 
 				snprintf(tmp_err, sizeof(tmp_err),
@@ -793,6 +801,7 @@ static bool translate_conn(struct starter_conn *conn,
 			pfreeany((*the_strings)[field]);
 
 			if (kw->string == NULL) {
+				/* ??? pray nobody else wants to use tmp_err */
 				*error = tmp_err;
 
 				snprintf(tmp_err, sizeof(tmp_err),
@@ -834,6 +843,7 @@ static bool translate_conn(struct starter_conn *conn,
 			assert(field < KEY_NUMERIC_MAX);
 
 			if ((*set_options)[field] == k_set) {
+				/* ??? pray nobody else wants to use tmp_err */
 				*error = tmp_err;
 				snprintf(tmp_err, sizeof(tmp_err),
 					 "duplicate key '%s' in conn %s while processing def %s",
@@ -855,6 +865,7 @@ static bool translate_conn(struct starter_conn *conn,
 					err = TRUE;
 					break;
 				}
+				/* ??? at this point, we have set *error but not err! */
 			}
 
 			(*the_options)[field] = kw->number;
@@ -878,6 +889,7 @@ static bool translate_conn(struct starter_conn *conn,
 			assert(field < KEY_NUMERIC_MAX);
 
 			if ((*set_options)[field] == k_set) {
+				/* ??? pray nobody else wants to use tmp_err */
 				*error = tmp_err;
 				snprintf(tmp_err, sizeof(tmp_err),
 					 "duplicate key '%s' in conn %s while processing def %s",
@@ -889,6 +901,7 @@ static bool translate_conn(struct starter_conn *conn,
 					err = TRUE;
 					break;
 				}
+				/* ??? at this point, we have set *error but not err! */
 			}
 
 #if 0
@@ -902,11 +915,13 @@ static bool translate_conn(struct starter_conn *conn,
 
 		case kt_comment:
 			break;
+
 		case kt_obsolete:
 			starter_log(LOG_LEVEL_INFO,
 				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
+
 		case kt_obsolete_quiet:
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Warning: obsolete keyword '%s' ignored",
@@ -931,16 +946,6 @@ static void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
-static bool load_conn_basic(struct starter_conn *conn,
-		    const struct section_list *sl,
-		    enum keyword_set assigned_value,
-		    err_t *perr)
-{
-	/* turn all of the keyword/value pairs into options/strings in left/right */
-
-	return translate_conn(conn, sl, assigned_value, perr);
-}
-
 static bool load_conn(struct ub_ctx *dnsctx,
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
@@ -950,10 +955,13 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		     bool resolvip,
 		     err_t *perr)
 {
-	bool err = FALSE;
 
-	err |= load_conn_basic(conn, sl,
-			       defaultconn ? k_default : k_set, perr);
+	bool err;
+
+	/* turn all of the keyword/value pairs into options/strings in left/right */
+	err = translate_conn(conn, sl,
+			defaultconn ? k_default : k_set,
+			perr);
 
 	move_comment_list(&conn->comments, &sl->comments);
 
@@ -965,6 +973,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		starter_log(LOG_LEVEL_INFO,
 			    "also= is not valid in section '%s'",
 			    sl->name);
+		/* ??? should we not set *perr? */
 		return TRUE;	/* error */
 	}
 
@@ -1014,16 +1023,16 @@ static bool load_conn(struct ub_ctx *dnsctx,
 				    conn->name, alsos[alsoplace]);
 
 			/*
-			 * if we found something that matches by name, and we haven't be
-			 * there, then process it.
+			 * if we found something that matches by name,
+			 * and we haven't been there, then process it.
 			 */
-			if (sl1 && !sl1->beenhere) {
+			if (sl1 != NULL && !sl1->beenhere) {
 				conn->strings_set[KSCF_ALSO] = FALSE;
 				pfreeany(conn->strings[KSCF_ALSO]);
 				conn->strings[KSCF_ALSO] = NULL;
 				sl1->beenhere = TRUE;
 
-				/* translate things, but do not replace earlier settings!*/
+				/* translate things, but do not replace earlier settings! */
 				err |= translate_conn(conn, sl1, k_set, perr);
 
 				if (conn->strings[KSCF_ALSO] != NULL) {
@@ -1085,6 +1094,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 				    conn->name,
 				    alsos[alsoplace],
 				    ALSO_LIMIT);
+			/* ??? should we not set *perr? */
 			return TRUE;	/* error */
 		}
 	}
@@ -1175,6 +1185,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
+				/* ??? should we not set *perr? */
 				return TRUE;	/* error */
 			}
 		}
