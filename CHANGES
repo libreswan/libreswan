@@ -11,14 +11,16 @@ v3.18 (unreleased)
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
 * pluto: Add systemd watchdog support via USE_SYSTEMD_WATCHDOG [Matt/Paul]
 * pluto: Follow connaddrfamily when resolving hostnames [Daniel M. Weeks]
+* libipsecconf: Remove legacy keyword subnetwithin= [Hugh]
+* libipsecconf: Clean out kv_auto / kv_manul attribytes [Hugh]
 * libswan: Fix unbound dnsctx handling [Hugh/Paul]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
 * FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
 * FIPS: Do not allow Linux-style sha2 truncation for ESP in FIPS mode [Paul]
 * IKEv2: for default proposals, prefer MODP2048 over MODP1536 [Andrew]
-* IKEv2: for proposals like ike=aes-sha2, prefer AES_258 over AES_128 [Andrew]
-* IKEv2: for default ESP/AH proposals, include and prefer AES_GCM [Andrew]
+* IKEv2: for proposals like ike=aes-sha2, prefer AES_256 over AES_128 [Andrew]
+* IKEv2: for default ESP proposals, include and prefer AES_GCM [Andrew]
 * IKEv2: for default ESP/AH proposals, do not propose MD5 integrity [Andrew]
 
 v3.17 (April 4, 2016)
