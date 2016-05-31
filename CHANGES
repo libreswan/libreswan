@@ -14,6 +14,10 @@ v3.18 (unreleased)
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
 * FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
 * FIPS: Do not allow Linux-style sha2 truncation for ESP in FIPS mode [Paul]
+* IKEv2: for default proposals, prefer MODP2048 over MODP1536 [Andrew]
+* IKEv2: for proposals like ike=aes-sha2, prefer AES_258 over AES_128 [Andrew]
+* IKEv2: for default ESP/AH proposals, include and prefer AES_GCM [Andrew]
+* IKEv2: for default ESP/AH proposals, do not propose MD5 integrity [Andrew]
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
