@@ -155,14 +155,15 @@ int sign_hash(const struct RSA_private_key *k,
 	SECKEYPrivateKey *privateKey = NULL;
 	SECItem signature;
 	SECItem data;
-	SECItem ckaId;
 	PK11SlotInfo *slot = NULL;
 
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Started using NSS"));
 
-	ckaId.type = siBuffer;
-	ckaId.len = k->ckaid_len;
-	ckaId.data = DISCARD_CONST(unsigned char *, k->ckaid);
+	SECItem ckaId = {
+		.type = siBuffer,
+		.len = k->pub.ckaid.len,
+		.data = DISCARD_CONST(unsigned char *, k->pub.ckaid.ptr),
+	};
 
 	slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {

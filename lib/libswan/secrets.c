@@ -115,6 +115,7 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	DBG_log(" keyid: *%s", k->keyid);
 	DBG_dump_chunk("n", k->n);
 	DBG_dump_chunk("e", k->e);
+	DBG_dump_chunk("CKAID", k->ckaid);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
@@ -253,6 +254,7 @@ void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
+	freeanychunk(rsa->ckaid);
 }
 
 /*
@@ -677,6 +679,28 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 	return ugh;
 }
 
+err_t form_rsa_ckaid(chunk_t modulus, chunk_t *ckaid)
+{
+	/*
+	 * Compute the CKAID directly using the modulus. - keep old
+	 * configurations hobbling along.
+	 */
+	SECItem modulus_secitem = {
+		.type = siBuffer,
+		.data = modulus.ptr,
+		.len = modulus.len,
+	};
+	SECItem *ckaid_secitem = PK11_MakeIDFromPubKey(&modulus_secitem);
+	if (ckaid_secitem == NULL) {
+		return "unable to compute 'CKAID' from Modulus";
+	}
+	DBG(DBG_CONTROLMORE, DBG_dump("computed CKAID",
+				      ckaid_secitem->data, ckaid_secitem->len));
+	clonetochunk(*ckaid, ckaid_secitem->data, ckaid_secitem->len, "ckaid");
+	SECITEM_FreeItem(ckaid_secitem, PR_TRUE);
+	return NULL;
+}
+
 /*
  * Parse fields of RSA private key.
  *
@@ -771,25 +795,12 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
 	}
 
-	/*
-	 * Compute the CKAID using the modulus - keep old
-	 * configurations hobbling along.
-	 */
-	SECItem public_modulus = {
-		.data = rsak->pub.n.ptr,
-		.len = rsak->pub.n.len,
-	};
-	SECItem *ckaid = PK11_MakeIDFromPubKey(&public_modulus);
-	if (ckaid == NULL) {
-		return "unable to compute 'CKAID' from Modulus";
+	/* Finally, the CKAID */
+	err_t err = form_rsa_ckaid(rsak->pub.n, &rsak->pub.ckaid);
+	if (err) {
+		/* let caller recover from mess */
+		return err;
 	}
-	DBG(DBG_CONTROLMORE, DBG_dump("computed CKAID", ckaid->data, ckaid->len));
-	if (ckaid->len > sizeof(rsak->ckaid)) {
-		return "'CKAID' computed from Modulus unexpectedly big";
-	}
-	memcpy(rsak->ckaid, ckaid->data, ckaid->len);
-	rsak->ckaid_len = ckaid->len;
-	SECITEM_FreeItem(ckaid, PR_TRUE);
 
 	return RSA_public_key_sanity(rsak);
 }
@@ -1400,16 +1411,11 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 		goto out;
 	}
 
-	rsak->pub.nssCert = cert;
-
-	passert(sizeof(rsak->ckaid) >= certCKAID->len);
-	rsak->ckaid_len = certCKAID->len;
-	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
-
 	clonetochunk(rsak->pub.e, pubk->u.rsa.publicExponent.data,
 		     pubk->u.rsa.publicExponent.len, "e");
 	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
 		     pubk->u.rsa.modulus.len, "n");
+	clonetochunk(rsak->pub.ckaid, certCKAID->data, certCKAID->len, "ckaid");
 
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);

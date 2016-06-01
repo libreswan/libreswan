@@ -40,6 +40,19 @@ struct RSA_public_key {
 	/* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
 	unsigned k;
 
+	/*
+	 * NSS's(?) idea of a unique ID for a public private key pair.
+	 * For RSA it is something like the SHA1 of the modulus.
+	 *
+	 * Value returned by PK11_GetLowLevelKeyIDForCert() and
+	 * computed by form_rsa_ckaid().
+	 *
+	 * XXX: When support for ECC is added this may need to be
+	 * moved to "pubkey"; or ECC will need its own value.  Think
+	 * of moving it here from RSA_private_key as a first step.
+	 */
+	chunk_t ckaid;
+
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
@@ -48,15 +61,6 @@ struct RSA_public_key {
 
 struct RSA_private_key {
 	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
-	/*
-	 * ckaid for use in NSS
-	 *
-	 * Value returned by PK11_GetLowLevelKeyIDForCert().
-	 * ??? Bound on size doesn't seem to be documented in NSS.
-	 * Empirically, 64 bytes is sufficient.
-	 */
-	unsigned char ckaid[64];
-	unsigned int ckaid_len;
 };
 
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
@@ -135,6 +139,7 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
+extern err_t form_rsa_ckaid(chunk_t modulus, chunk_t *ckaid);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);

@@ -31,6 +31,7 @@
 #include <getopt.h>
 #include <libreswan.h>
 #include "lswalloc.h"
+#include "secrets.h"
 
 #include <prerror.h>
 #include <prinit.h>
@@ -105,7 +106,7 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-static const unsigned char *bundle(int e, SECItem *, size_t *sizep);
+static const unsigned char *bundle(int e, chunk_t n, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 void report(char *msg);
 
@@ -115,19 +116,19 @@ void report(char *msg);
  *
  * NOTE: result is a pointer into a STATIC buffer.
  */
-static const char *hexOut(SECItem *data)
+static const char *hexOut(chunk_t data)
 {
 	unsigned i;
 	static char hexbuf[3 + BYTES_FOR_BITS(MAXBITS) * 2];
 	char *hexp = hexbuf;
 
-	if (data->len > BYTES_FOR_BITS(MAXBITS))
+	if (data.len > BYTES_FOR_BITS(MAXBITS))
 		return "[too many bytes]";
 
 	*hexp++ = '0';
 	*hexp++ = 'x';
-	for (i = 0; i < data->len; i++, hexp += 2)
-		sprintf(hexp, "%02x", data->data[i]);
+	for (i = 0; i < data.len; i++, hexp += 2)
+		sprintf(hexp, "%02x", data.ptr[i]);
 
 	return hexbuf;
 }
@@ -491,16 +492,22 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		return;
 	}
 
-	SECItem *public_modulus = &pubkey->u.rsa.modulus;
-	SECItem *public_exponent = &pubkey->u.rsa.publicExponent;
+	chunk_t public_modulus = {
+		.ptr = pubkey->u.rsa.modulus.data,
+		.len = pubkey->u.rsa.modulus.len,
+	};
+	chunk_t public_exponent = {
+		.ptr = pubkey->u.rsa.publicExponent.data,
+		.len = pubkey->u.rsa.publicExponent.len,
+	};
 
-	SECItem *ckaid = PK11_MakeIDFromPubKey(public_modulus);
-	if (ckaid == NULL) {
-		fprintf(stderr,
-			"%s: 'CKAID' calculation failed\n", me);
+	chunk_t ckaid;
+	err_t err = form_rsa_ckaid(public_modulus, &ckaid);
+	if (err) {
+		fprintf(stderr, "%s: 'CKAID' calculation failed '%s'\n", me, err);
 		exit(1);
 	}
-	char *hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
+	char *hex_ckaid = strdup(conv(ckaid.ptr, ckaid.len, 16));
 
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
@@ -519,13 +526,12 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	bundp = bundle(E, public_modulus, &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
 
-	printf("\tModulus: 0x%s\n", conv(public_modulus->data, public_modulus->len, 16));
-	printf("\tPublicExponent: 0x%s\n", conv(public_exponent->data, public_exponent->len, 16));
+	printf("\tModulus: 0x%s\n", conv(public_modulus.ptr, public_modulus.len, 16));
+	printf("\tPublicExponent: 0x%s\n", conv(public_exponent.ptr, public_exponent.len, 16));
 
 	if (hex_ckaid != NULL)
 		free(hex_ckaid);
-	if (ckaid != NULL)
-		SECITEM_FreeItem(ckaid, PR_TRUE);	
+	freeanychunk(ckaid);
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
 	if (pubkey != NULL)
@@ -581,7 +587,7 @@ void getrandom(size_t nbytes, unsigned char *buf)
  *
  * NOTE: returns a pointer into a STATIC buffer
  */
-static const unsigned char *bundle(int e, SECItem *n, size_t *sizep)
+static const unsigned char *bundle(int e, chunk_t n, size_t *sizep)
 {
 	const char *hexp = hexOut(n);
 	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
