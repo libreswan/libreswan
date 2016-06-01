@@ -514,14 +514,8 @@ kvm-clean clean-kvm:
 .PHONY: kvm-distclean distclean-kvm
 kvm-distclean distclean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-distclean
 
-# kvm-build is special.  To avoid "make base" and "make module"
-# running in parallel on the build machine (stepping on each others
-# toes), this uses sub-makes to explicitly serialize "base" and
-# "modules" targets.
 .PHONY: kvm-build build-kvm
-kvm-build build-kvm:
-	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-make-base
-	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-make-module
+kvm-build build-kvm: kvm-$(KVM_BUILD_DOMAIN)-build
 
 # A catch all to run "make %" on the build domain; for instance "make
 # kvm-make-manpages'.
@@ -547,6 +541,14 @@ define build_rules
   kvm-$(1)$(2)-make-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
 	$(call kvmsh,$(1)$(2) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
 
+  # kvm-build is special.  To avoid "make base" and "make module"
+  # running in parallel on the build machine (stepping on each others
+  # toes), this uses sub-makes to explicitly serialize "base" and
+  # "modules" targets.
+  kvm-$(1)$(2)-build:
+	$$(MAKE) kvm-$(1)$(2)-make-base
+	$$(MAKE) kvm-$(1)$(2)-make-module
+
   # "kvm-install" is a little wierd.  It needs to be run on most VMs,
   # and it needs to use the swan-install script.
   kvm-install: kvm-$(1)$(2)-install
@@ -563,14 +565,9 @@ define build_rules
   kvmsh-$(1)$(2): | $$(KVM_DOMAIN_$(1)$(2)_FILES)
 	$(call kvmsh,$(1)$(2))
   kvmsh-$(1)$(2)-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,$(1)$(2) $*)
+	$(call kvmsh,$(1)$(2) $$*)
 
 endef
-
-# Catch all to map 'kvmsh-east pwd' onto a kvmsh command.  Should
-# kvmsh-east map onto kvmsh-pooleast?  Probably not.
-kvmsh-%:
-	$(call kvmsh,$*)
 
 ifdef KVM_POOL
 $(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(pool),$(domain)))))
@@ -578,44 +575,57 @@ else
 $(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
 endif
 
+# Provide aliases so that "east" maps onto the first "east" in the
+# pool. et.al.
+
+define kvm_aliases
+  .PHONY: kvm-install-$(1)
+  kvm-install-$(1): kvm-$(2)-install
+  .PHONY: kvm-build-$(1)
+  kvm-build-$(1): kvm-$(2)-build
+endef
+
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_aliases,$(domain),$(firstword $(KVM_POOL))$(domain))))
+
+define kvmsh_aliases
+  kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
+endef
+
+ifneq ($(firstword $(KVM_POOL)),)
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call alias_rules,$(domain),$(firstword $(KVM_POOL))$(domain))))
+endif
 
 .PHONY: kvm-help
 kvm-help:
 	@echo ''
-	@echo 'For more help see mk/README.md but here are some hints'
+	@echo 'For more help see mk/README.md but here the standard make targets:'
 	@echo ''
-	@echo '  To create the test domains:'
-	@echo '    make install-kvm-networks install-kvm-domains'
-	@echo '  where:'
-	@echo '    install-kvm-networks       - installs the test networks'
-	@echo '    install-kvm-domains        - installs the test domains'
+	@echo ' To run tests, either:'
 	@echo ''
-	@echo '  To run tests, either:'
-	@echo '    make check UPDATE=1'
-	@echo '  Or (you can cherry-pick steps):'
-	@echo '    make kvm-clean kvm-install kvm-test-clean kvm-test kvm-check'
-	@echo '  Where:'
-	@echo '    kvm-clean                  - delete $(KVM_OBJDIR)'
-	@echo '    kvm-install                - update/install libreswan into the test domains'
-	@echo '    kvm-test-clean             - delete any previous test results'
-	@echo '    kvm-test                   - run all "good" tests'
-	@echo '                                 add KVM_TESTS=testing/pluto/... for individual tests'
-	@echo '    kvm-check                  - re-run any tests that failed during kvm-test'
+	@echo '   <create domains>      - see below'
+	@echo '   check UPDATEONLY=1    - just install'
+	@echo '   check                 - just run swantest'
 	@echo ''
-	@echo '  To rebuild the test domains:'
-	@echo '    make uninstall-kvm-domains install-kvm-domains'
-	@echo '  Where:'
-	@echo '    uninstall-kvm-domains      - delete the test domains (base remains)'
-	@echo '    install-kvm-domains        - update/install the test domains'
+	@echo ' Or [skip]:'
 	@echo ''
-	@echo '  To login to a domain:'
-	@echo '    make kvmsh-DOMAIN          - for instance kvmsh-east'
-	@echo '  And to run something on a domain:'
-	@echo '    make kvmsh-"DOMAIN CMD"    - for instance kvmsh-"east pwd"'
+	@echo '  [install-kvm-networks] - setup the test networks'
+	@echo '  [install-kvm-domains]  - setup the test domains'
+	@echo '  [kvm-clean]            - delete libreswan build in $(KVM_OBJDIR)'
+	@echo '  [kvm-test-clean]       - delete test results (else saved in BACKUP/)'
+	@echo '   kvm-install           - setup/update/install/... libreswan'
+	@echo '   kvm-test              - test installed libreswan'
+	@echo '  [kvm-check]            - test installed libreswan but skip tests that passed'
 	@echo ''
-	@echo '  Also:'
-	@echo '    kvm-check-clean            - alias for kvm-test-clean'
-	@echo '    kvm-keys                   - use the KVM to create the test keys'
-	@echo '    uninstall-kvm-base-domain  - delete the base domain used to create the test domains'
-	@echo '    uninstall-kvm-networks     - delete the test networks'
+	@echo ' To force the domains to rebuild:'
+	@echo '   uninstall-kvm-domains       - delete the test domains (not base)'
+	@echo '   uninstall-kvm-networks      - delete the test networks (not base)'
+	@echo '  [uninstall-kvm-base-domain]  - delete the base domain'
+	@echo '  [uninstall-kvm-base-network] - delete the base network'
+	@echo ''
+	@echo ' Also:'
+	@echo '   kvm-keys              - use the KVM to create the test keys'
+	@echo '   kvmsh-DOMAIN          - for instance kvmsh-east'
+	@echo '   kvmsh-DOMAIN-"CMD"    - for instance kvmsh-east-"pwd"'
+	@echo '   kvm-install-DOMAIN    - only install on DOMAIN'
+	@echo '   kvm-build-DOMAIN      - only build on DOMAIN'
 	@echo ''
