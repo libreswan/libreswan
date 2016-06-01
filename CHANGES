@@ -3,7 +3,8 @@ See also https://libreswan.org/
 
 v3.18 (unreleased)
 * XFRM: Support for NAT OE Client Address Translation (leftcat=) [Antony]
-* XFRM: Support for VTI using vti-interface= and vti-routing= [Paul/Tuomo]
+* XFRM: Experimental Support for routed-VPNs using VTI [Paul/Tuomo]
+        keywords: vti-interface=<name> vti-routing=yes|no vti-shared=yes|no
 * XFRM: Traffic Flow Confidentiality support using new keyword tfc=XXX [Paul]
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
 * KLIPS: Fix overwriting the sk pointer in 4.4 kernels [Ofer Heifetz]
@@ -13,6 +14,7 @@ v3.18 (unreleased)
 * pluto: Follow connaddrfamily when resolving hostnames [Daniel M. Weeks]
 * libipsecconf: Remove legacy keyword subnetwithin= [Hugh]
 * libipsecconf: Clean out kv_auto / kv_manul attribytes [Hugh]
+* newhostkey: Restore writing out Modules: keyword in ipsec.secrets [Andrew]
 * libswan: Fix unbound dnsctx handling [Hugh/Paul]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
