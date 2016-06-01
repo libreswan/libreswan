@@ -150,7 +150,7 @@ rpm -e vim-minimal --nodeps
 
 # To help avoid duplicates THIS LIST IS SORTED.
 
-yum install -y 2>&1 \
+dnf install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
     bison \
@@ -194,7 +194,7 @@ yum install -y 2>&1 \
     | tee /var/tmp/yum-install.log
 
 kvm_debuginfo=true
-$kvm_debuginfo && debuginfo-install -y \
+$kvm_debuginfo && dnf debuginfo-install -y \
     ElectricFence \
     audit-libs \
     cyrus-sasl \
