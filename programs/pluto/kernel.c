@@ -540,7 +540,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* traffic out stats - if any */
 			"%s" /* nflog-group - if any */
 			"%s" /* conn-mark - if any */
-			"VTI_IFACE='%s' VTI_ROUTING='%s' "
+			"VTI_IFACE='%s' VTI_ROUTING='%s' VTI_SHARED='%s' "
 			"%s" /* CAT=yes if set */
 
 		, c->name,
@@ -590,6 +590,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
 		c->vti_routing ? "yes" : "no",
+		c->vti_shared ? "yes" : "no",
 		catstr
 		);
 	/*

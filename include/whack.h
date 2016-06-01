@@ -299,7 +299,8 @@ struct whack_message {
 	char *conn_mark_out;
 
 	char *vti_iface;
-	bool vti_routing;
+	bool vti_routing; /* perform routing into vti device or not */
+	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
 	/* what metric to put on ipsec routes */
 	int metric;

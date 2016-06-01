@@ -546,6 +546,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "mark-out",  AUTO,  kt_string,  KSCF_CONN_MARK_OUT,  NOT_ENUM },
   { "vti-interface",  AUTO,  kt_string,  KSCF_VTI_IFACE,  NOT_ENUM },
   { "vti-routing",  AUTO,  kt_bool,  KBF_VTI_ROUTING,  NOT_ENUM },
+  { "vti-shared",  AUTO,  kt_bool,  KBF_VTI_SHARED,  NOT_ENUM },
 
   { "modecfgwins1",  AUTO,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "modecfgwins2",  AUTO,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },

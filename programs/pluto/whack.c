@@ -123,7 +123,7 @@ static void help(void)
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
 		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
-		"       [--vti-iface <iface> ] [ --vti-routing ]\\\n"
+		"       [--vti-iface <iface> ] [--vti-routing] [--vti-shared]\\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -368,6 +368,7 @@ enum option_enums {
 	CD_CONN_MARK_OUT,
 	CD_VTI_IFACE,
 	CD_VTI_ROUTING,
+	CD_VTI_SHARED,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -619,6 +620,7 @@ static const struct option long_opts[] = {
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
+	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -1843,6 +1845,9 @@ int main(int argc, char **argv)
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing */
 			msg.vti_routing = TRUE;
+			continue;
+		case CD_VTI_SHARED:	/* --vti-shared */
+			msg.vti_shared = TRUE;
 			continue;
 
 		case CD_XAUTHBY:

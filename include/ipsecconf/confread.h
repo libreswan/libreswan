@@ -112,6 +112,7 @@ struct starter_conn {
 	char *conn_mark_out;
 	char *vti_iface;
 	bool vti_routing;
+	bool vti_shared;
 };
 
 struct starter_config {

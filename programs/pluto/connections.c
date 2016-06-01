@@ -1502,6 +1502,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->vti_iface = wm->vti_iface;
 		c->vti_routing = wm->vti_routing;
+		c->vti_shared = wm->vti_shared;
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -3934,10 +3935,11 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface: %s; vti-routing: %s",
+		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s;",
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
-		  c->vti_routing ? "yes" : "no"
+		  c->vti_routing ? "yes" : "no",
+		  c->vti_shared ? "yes" : "no"
 	);
 
 	/* slightly complicated stuff to avoid extra crap */

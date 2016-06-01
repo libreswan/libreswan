@@ -148,6 +148,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_CONN,
 	KBF_DDOS_MODE,
 	KBF_VTI_ROUTING,
+	KBF_VTI_SHARED,
 	KBF_MAX
 };
 

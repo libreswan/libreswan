@@ -661,7 +661,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		conn->name, msg.vti_iface);
 	if (conn->options_set[KBF_VTI_ROUTING])
 		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
-
+	if (conn->options_set[KBF_VTI_SHARED])
+		msg.vti_shared = conn->options[KBF_VTI_SHARED];
 
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
