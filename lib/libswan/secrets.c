@@ -791,7 +791,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	rsak->pub.keyid[0] = '\0';	/* in case of failure */
 	if (rsak->pub.e.len > 0 || rsak->pub.n.len >0) {
 		splitkeytoid(rsak->pub.e.ptr, rsak->pub.e.len,
-			     rsak->pub.n.ptr, rsak->pub.e.len,
+			     rsak->pub.n.ptr, rsak->pub.n.len,
 			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
 	}
 
