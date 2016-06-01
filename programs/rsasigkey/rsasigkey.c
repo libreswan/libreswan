@@ -501,13 +501,16 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		.len = pubkey->u.rsa.publicExponent.len,
 	};
 
-	chunk_t ckaid;
-	err_t err = form_rsa_ckaid(public_modulus, &ckaid);
-	if (err) {
-		fprintf(stderr, "%s: 'CKAID' calculation failed '%s'\n", me, err);
-		exit(1);
+	char *hex_ckaid;
+	{
+		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(privkey);
+		if (ckaid == NULL) {
+			fprintf(stderr, "%s: 'CKAID' calculation failed\n", me);
+			exit(1);
+		}
+		hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
+		SECITEM_FreeItem(ckaid, PR_TRUE);
 	}
-	char *hex_ckaid = strdup(conv(ckaid.ptr, ckaid.len, 16));
 
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
@@ -531,7 +534,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 
 	if (hex_ckaid != NULL)
 		free(hex_ckaid);
-	freeanychunk(ckaid);
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
 	if (pubkey != NULL)
