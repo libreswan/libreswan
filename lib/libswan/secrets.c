@@ -1332,14 +1332,28 @@ void delete_public_keys(struct pubkey_list **head,
 struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 {
 	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+	if (nsspk == NULL) {
+		return NULL;
+	}
 
 	chunk_t e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
 	chunk_t n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "e");
 
+	chunk_t ckaid;
+	err_t err = form_rsa_ckaid(n, &ckaid);
+	if (err) {
+		/* XXX: What to do with the error?  */
+		freeanychunk(e);
+		freeanychunk(n);
+		SECKEY_DestroyPublicKey(nsspk);
+		return NULL;
+	}
+
+	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+
 	pk->u.rsa.e = e;
 	pk->u.rsa.n = n;
-
+	pk->u.rsa.ckaid = ckaid;
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
 	/*
