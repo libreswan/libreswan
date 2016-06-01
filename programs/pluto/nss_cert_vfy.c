@@ -434,7 +434,7 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 	int i;
 
 	for (i = 0; i < chunk_n && i < max_i; i++) {
-		items[i] = chunk_to_secitem(chunks[i]);
+		items[i] = same_chunk_as_dercert_secitem(chunks[i]);
 	}
 }
 

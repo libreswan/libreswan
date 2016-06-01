@@ -846,7 +846,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 
 	/* if no CA is defined, use issuer as default */
 	if (dst->ca.ptr == NULL) {
-		dst->ca = secitem_to_chunk(cert->derIssuer);
+		dst->ca = same_secitem_as_chunk(cert->derIssuer);
 	}
 }
 

@@ -1334,22 +1334,11 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
 
-	/*
-	 * Same as secitem_to_chunk() but that function is not available
-	 * outside programs/pluto/ right now
-	 *
-	 * chunk_t e = secitem_to_chunk(nsspk->u.rsa.publicExponent);
-	 * chunk_t n = secitem_to_chunk(nsspk->u.rsa.modulus);
-	 */
-	chunk_t e, n;
+	chunk_t e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
+	chunk_t n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "e");
 
-	e.ptr = nsspk->u.rsa.publicExponent.data;
-	e.len = nsspk->u.rsa.publicExponent.len;
-	n.ptr = nsspk->u.rsa.modulus.data;
-	n.len = nsspk->u.rsa.modulus.len;
-
-	pk->u.rsa.e = chunk_clone(e, "e");
-	pk->u.rsa.n = chunk_clone(n, "n");
+	pk->u.rsa.e = e;
+	pk->u.rsa.n = n;
 
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 

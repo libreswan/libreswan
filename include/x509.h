@@ -82,8 +82,7 @@ extern void clear_ocsp_cache(void);
 /*
  * New NSS x509 converted functions
  */
-extern SECItem chunk_to_secitem(chunk_t chunk);
-extern chunk_t secitem_to_chunk(SECItem si);
+extern SECItem same_chunk_as_dercert_secitem(chunk_t chunk);
 extern chunk_t get_dercert_from_nss_cert(CERTCertificate *cert);
 extern generalName_t *gndp_from_nss_cert(CERTCertificate *cert);
 extern bool cert_key_is_rsa(CERTCertificate *cert);

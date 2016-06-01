@@ -177,4 +177,11 @@ extern void unlock_certs_and_keys(const char *who);
 extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
 
+/* these do not clone */
+chunk_t same_secitem_as_chunk(SECItem si);
+SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
+
+chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
+SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name);
+
 #endif /* _SECRETS_H */

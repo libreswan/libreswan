@@ -43,6 +43,7 @@
 #include "x509.h"
 #include "whack.h"
 #include "fetch.h"
+#include "secrets.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -578,7 +579,7 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 		return;
 	}
 
-	chunk_t idn = secitem_to_chunk(*issuer_dn);
+	chunk_t idn = same_secitem_as_chunk(*issuer_dn);
 
 	/* LOCK: matching unlock is at end of loop -- must be executed */
 	lock_crl_fetch_list("add_crl_fetch_request");
