@@ -34,6 +34,13 @@
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
 
+/*
+ * For rationale behind *_t? Blame chunk_t.
+ */
+typedef struct {
+	SECItem *nss;
+} ckaid_t;
+
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
 
@@ -42,16 +49,20 @@ struct RSA_public_key {
 
 	/*
 	 * NSS's(?) idea of a unique ID for a public private key pair.
-	 * For RSA it is something like the SHA1 of the modulus.
+	 * For RSA it is something like the SHA1 of the modulus.  It
+	 * replaces KEYID.
 	 *
-	 * Value returned by PK11_GetLowLevelKeyIDForCert() and
-	 * computed by form_rsa_ckaid().
+	 * This is the value returned by
+	 * PK11_GetLowLevelKeyIDForCert() or
+	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
+	 * form_ckaid_nss()), or computed by brute force from the
+	 * modulus (see form_ckaid_rsa()).
 	 *
 	 * XXX: When support for ECC is added this may need to be
 	 * moved to "pubkey"; or ECC will need its own value.  Think
 	 * of moving it here from RSA_private_key as a first step.
 	 */
-	chunk_t ckaid;
+	ckaid_t ckaid;
 
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
@@ -147,7 +158,11 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
-extern err_t form_rsa_ckaid(chunk_t modulus, chunk_t *ckaid);
+
+err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
+err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
+void freeanyckaid(ckaid_t *ckaid);
+void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);

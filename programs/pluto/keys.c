@@ -159,12 +159,6 @@ int sign_hash(const struct RSA_private_key *k,
 
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Started using NSS"));
 
-	SECItem ckaId = {
-		.type = siBuffer,
-		.len = k->pub.ckaid.len,
-		.data = DISCARD_CONST(unsigned char *, k->pub.ckaid.ptr),
-	};
-
 	slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -184,7 +178,7 @@ int sign_hash(const struct RSA_private_key *k,
 		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
 	}
 
-	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
+	privateKey = PK11_FindKeyByKeyID(slot, k->pub.ckaid.nss,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
 		DBG(DBG_CRYPT,

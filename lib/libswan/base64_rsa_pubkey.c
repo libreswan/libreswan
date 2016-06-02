@@ -188,8 +188,8 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 		return err;
 	}
 
-	chunk_t ckaid;
-	err = form_rsa_ckaid(modulus, &ckaid);
+	ckaid_t ckaid;
+	err = form_ckaid_rsa(modulus, &ckaid);
 	if (err) {
 		freeanychunk(exponent);
 		freeanychunk(modulus);

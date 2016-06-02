@@ -115,7 +115,7 @@ void DBG_log_RSA_public_key(const struct RSA_public_key *k)
 	DBG_log(" keyid: *%s", k->keyid);
 	DBG_dump_chunk("n", k->n);
 	DBG_dump_chunk("e", k->e);
-	DBG_dump_chunk("CKAID", k->ckaid);
+	DBG_log_ckaid("CKAID", k->ckaid);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
@@ -254,7 +254,7 @@ void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
-	freeanychunk(rsa->ckaid);
+	freeanyckaid(&rsa->ckaid);
 }
 
 /*
@@ -679,26 +679,45 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 	return ugh;
 }
 
-err_t form_rsa_ckaid(chunk_t modulus, chunk_t *ckaid)
+err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid)
+{
+	SECItem *dup = SECITEM_DupItem(nss_ckaid);
+	if (dup == NULL) {
+		return "problem saving CKAID";
+	}
+	ckaid->nss = dup;
+	return NULL;
+}
+
+err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 {
 	/*
 	 * Compute the CKAID directly using the modulus. - keep old
 	 * configurations hobbling along.
 	 */
-	SECItem modulus_secitem = {
-		.type = siBuffer,
-		.data = modulus.ptr,
-		.len = modulus.len,
-	};
-	SECItem *ckaid_secitem = PK11_MakeIDFromPubKey(&modulus_secitem);
-	if (ckaid_secitem == NULL) {
-		return "unable to compute 'CKAID' from Modulus";
+	SECItem nss_modulus = same_chunk_as_secitem(modulus, siBuffer);
+	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_modulus);
+	if (nss_ckaid == NULL) {
+		return "unable to compute 'CKAID' from modulus";
 	}
-	DBG(DBG_CONTROLMORE, DBG_dump("computed CKAID",
-				      ckaid_secitem->data, ckaid_secitem->len));
-	clonetochunk(*ckaid, ckaid_secitem->data, ckaid_secitem->len, "ckaid");
-	SECITEM_FreeItem(ckaid_secitem, PR_TRUE);
-	return NULL;
+	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
+				      nss_ckaid->data, nss_ckaid->len));
+	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
+	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+	return err;
+}
+
+void freeanyckaid(ckaid_t *ckaid)
+{
+	if (ckaid && ckaid->nss) {
+		SECITEM_FreeItem(ckaid->nss, PR_TRUE);
+		ckaid->nss = NULL;
+	}
+}
+
+void DBG_log_ckaid(const char *prefix, ckaid_t ckaid)
+{
+	DBG_dump(prefix, ckaid.nss->data, ckaid.nss->len);
 }
 
 /*
@@ -796,7 +815,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	}
 
 	/* Finally, the CKAID */
-	err_t err = form_rsa_ckaid(rsak->pub.n, &rsak->pub.ckaid);
+	err_t err = form_ckaid_rsa(rsak->pub.n, &rsak->pub.ckaid);
 	if (err) {
 		/* let caller recover from mess */
 		return err;
@@ -1257,29 +1276,45 @@ void delete_public_keys(struct pubkey_list **head,
  */
 struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 {
-	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
-	if (nsspk == NULL) {
-		return NULL;
+	ckaid_t ckaid;
+	{
+		SECItem *nss_ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+								  lsw_return_nss_password_file_info());
+		if (nss_ckaid == NULL) {
+			return NULL;
+		}
+		err_t err = form_ckaid_nss(nss_ckaid, &ckaid);
+		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+		if (err) {
+			/* XXX: What to do with the error?  */
+			return NULL;
+		}
 	}
+	/* free: ckaid */
 
-	chunk_t e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
-	chunk_t n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "e");
-
-	chunk_t ckaid;
-	err_t err = form_rsa_ckaid(n, &ckaid);
-	if (err) {
-		/* XXX: What to do with the error?  */
-		freeanychunk(e);
-		freeanychunk(n);
+	chunk_t e;
+	chunk_t n;
+	{
+		SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+		if (nsspk == NULL) {
+			freeanyckaid(&ckaid);
+			return NULL;
+		}
+		e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
+		n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "n");
 		SECKEY_DestroyPublicKey(nsspk);
-		return NULL;
 	}
+	/* free: ckaid, n, e */
 
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-
 	pk->u.rsa.e = e;
 	pk->u.rsa.n = n;
 	pk->u.rsa.ckaid = ckaid;
+	/*
+	 * based on comments in form_keyid, the modulus length
+	 * returned by NSS might contain a leading zero and this
+	 * ignores that when generating the keyid.
+	 */
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
 	/*
@@ -1290,7 +1325,6 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	pk->id  = empty_id;
 	pk->issuer = empty_chunk;
 
-	SECKEY_DestroyPublicKey(nsspk);
 	return pk;
 }
 
@@ -1344,7 +1378,11 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 		     pubk->u.rsa.publicExponent.len, "e");
 	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
 		     pubk->u.rsa.modulus.len, "n");
-	clonetochunk(rsak->pub.ckaid, certCKAID->data, certCKAID->len, "ckaid");
+	ugh = form_ckaid_nss(certCKAID, &rsak->pub.ckaid);
+	if (ugh) {
+		/* let caller clean up mess */
+		goto out;
+	}
 
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);
