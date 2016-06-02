@@ -1,5 +1,6 @@
 /*
- * show the host keys in various formats
+ * show the host keys in various formats, for libreswan
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -54,16 +55,20 @@
 #include "lswnss.h"
 
 #include <nss.h>
+#include <keyhi.h>
 #include <prerror.h>
 #include <prinit.h>
 
 char usage[] =
 	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
-	"                         [--configdir <configdir> ]\n"
+	"                         [--configdir <configdir> ]"
+#if 0
+	"                         [--password <password> ]\n"
+#endif
 	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
 	"                         [--dump ] [--list ]\n"
 	"                         [--dhclient ] [--file secretfile ]\n"
-	"                         [--keynum count ] [--id identity ]\n"
+	"                         [--keynum count ] [--id identity ] [--ckaid <ckaid>]\n"
 	"                         [--rsaid keyid ] [--verbose] [--version]\n";
 
 /*
@@ -73,6 +78,8 @@ char usage[] =
  */
 enum opt {
 	OPT_CONFIGDIR,
+	OPT_PASSWORD,
+	OPT_CKAID,
 };
 
 struct option opts[] = {
@@ -88,10 +95,14 @@ struct option opts[] = {
 	{ "file",      required_argument, NULL, 'f', },
 	{ "keynum",    required_argument, NULL, 'n', },
 	{ "id",        required_argument, NULL, 'i', },
+	{ "ckaid",     required_argument, NULL, OPT_CKAID, },
 	{ "rsaid",     required_argument, NULL, 'I', },
 	{ "version",   no_argument,     NULL,  'V', },
 	{ "verbose",   no_argument,     NULL,  'v', },
 	{ "configdir", required_argument,     NULL,  OPT_CONFIGDIR, },
+#if 0
+	{ "password",  required_argument,     NULL,  OPT_PASSWORD, },
+#endif
 	{ 0,           0,      NULL,   0, }
 };
 
@@ -124,10 +135,13 @@ static void print_key(struct secret *secret,
 				printf("    psk: \"%s\"\n", pskbuf);
 			break;
 
-		case PPK_RSA:
-			printf("%d(%d): RSA keyid: %s with id: %s\n", lineno,
-			       count, pks->u.RSA_private_key.pub.keyid, idb);
+		case PPK_RSA: {
+			char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
+			printf("%d(%d): RSA keyid: %s id: %s NSS ckaid: %s\n", lineno,
+			       count, pks->u.RSA_private_key.pub.keyid, idb, ckaid);
+			pfree(ckaid);
 			break;
+		}
 
 		case PPK_XAUTH:
 			printf("%d(%d): XAUTH keyid: %s\n", lineno, count,
@@ -177,6 +191,24 @@ static int pickbyid(struct secret *secret UNUSED,
 static struct secret *get_key_byid(struct secret *host_secrets, char *rsakeyid)
 {
 	return lsw_foreach_secret(host_secrets, pickbyid, rsakeyid);
+}
+
+static int pick_by_ckaid(struct secret *secret UNUSED,
+			 struct private_key_stuff *pks,
+			 void *uservoid)
+{
+	char *start = (char *)uservoid;
+	if (ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+		/* try again */
+		return 1;
+	}
+	return 0;
+}
+
+static struct secret *get_key_by_ckaid(struct secret *host_secrets,
+				       char *ckaid)
+{
+	return lsw_foreach_secret(host_secrets, pick_by_ckaid, ckaid);
 }
 
 static void list_keys(struct secret *host_secrets)
@@ -317,6 +349,10 @@ int main(int argc, char *argv[])
 	char *rsakeyid, *keyid;
 	struct secret *host_secrets = NULL;
 	struct secret *s;
+	char *ckaid = NULL;
+#if 0
+	char *password = NULL;
+#endif
 
 	rsakeyid = NULL;
 	keyid = NULL;
@@ -383,6 +419,10 @@ int main(int argc, char *argv[])
 			keyid = clone_str(optarg, "keyname");
 			break;
 
+		case OPT_CKAID:
+			ckaid = clone_str(optarg, "ckaid");
+			break;
+
 		case 'I':
 			rsakeyid = clone_str(optarg, "rsakeyid");
 			break;
@@ -390,6 +430,12 @@ int main(int argc, char *argv[])
 		case OPT_CONFIGDIR:
 			configdir = clone_str(optarg, "configdir");
 			break;
+
+#if 0
+		case OPT_PASSWORD:
+			password = clone_str(optarg, "password");
+			break;
+#endif
 
 		case 'n':
 		case 'h':
@@ -460,6 +506,11 @@ usage:
 		if (verbose)
 			printf("; picking by keyid=%s\n", keyid);
 		s = pick_key(host_secrets, keyid);
+	} else if (ckaid != NULL) {
+		if (verbose) {
+			printf("; picking by ckaid=%s\n", ckaid);
+		}
+		s = get_key_by_ckaid(host_secrets, ckaid);
 	} else {
 		/* Paul: This assumption is WRONG. Mostly I have PSK's above my
 		 * multiline default : RSA entry, and then this assumption breaks
