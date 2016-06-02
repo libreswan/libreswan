@@ -1,10 +1,12 @@
 /*
- * RSA signature key generation
+ * RSA signature key generation, for libreswan
+ *
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,6 +54,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswconf.h"
+#include "lswnss.h"
 
 #ifdef FIPS_CHECK
 #  include <fipscheck.h>
@@ -74,8 +77,6 @@
 
 #define E       3               /* standard public exponent */
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
-
-#define NSSDIR "sql:/etc/ipsec.d"
 
 char *progname;
 char usage[] =
@@ -279,10 +280,11 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
  */
 int main(int argc, char *argv[])
 {
+	const struct lsw_conf_options *oco = lsw_init_options();
 	int opt;
 	int nbits = 0;
 	int seedbits = DEFAULT_SEED_BITS;
-	char *configdir = NULL; /* where the NSS databases reside */
+	char *configdir = oco->confddir; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
@@ -354,10 +356,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (configdir == NULL) {
-		configdir = NSSDIR;
-	}
-
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
 		srand(time(NULL));
@@ -427,14 +425,12 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	}
 	pwdata.data = password;
 
-	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-
-	rv = NSS_InitReadWrite(configdir);
-	if (rv != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite(%s) returned %d\n",
-			me, configdir, PR_GetError());
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(configdir, FALSE/*rw*/, GetModulePassword, err)) {
+		fprintf(stderr, "%s: %s\n", me, err);
 		exit(1);
 	}
+
 #ifdef FIPS_CHECK
 	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
 		fprintf(stderr,
@@ -449,8 +445,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 			me);
 		exit(1);
 	}
-
-	PK11_SetPasswordFunc(GetModulePassword);
 
 	/* Good for now but someone may want to use a hardware token */
 	slot = PK11_GetInternalKeySlot();
@@ -546,8 +540,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
-	(void) NSS_Shutdown();
-	(void) PR_Cleanup();
+	lsw_nss_shutdown(LSW_NSS_CLEANUP);
 }
 
 /*

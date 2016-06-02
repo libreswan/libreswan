@@ -51,6 +51,7 @@
 #include "constants.h"
 #include "lswconf.h"
 #include "lswfips.h"
+#include "lswnss.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -390,19 +391,17 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 static bool pluto_init_nss(char *nssdb)
 {
 	SECStatus rv;
-	char dbuf[1024];
 
-	snprintf(dbuf, sizeof(dbuf), "sql:%s", nssdb);
-	loglog(RC_LOG_SERIOUS, "NSS DB directory: %s", dbuf);
-	rv = NSS_Initialize(dbuf, "", "", SECMOD_DB, NSS_INIT_READONLY);
-	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS readonly initialization (\"%s\") failed (err %d)\n",
-			dbuf, PR_GetError());
+	/* little lie, lsw_nss_setup doesn't have logging */
+	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdb);
+
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY, getNSSPassword, err)) {
+		loglog(RC_LOG_SERIOUS, "%s", err);
 		return FALSE;
 	}
 
 	libreswan_log("NSS initialized");
-	PK11_SetPasswordFunc(getNSSPassword);
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -1690,7 +1689,7 @@ void exit_pluto(int status)
 
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */
-	NSS_Shutdown();
+	lsw_nss_shutdown(0);
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_kernelfd();	/* stop listening to kernel FD, remove event */

@@ -51,6 +51,7 @@
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "secrets.h"
+#include "lswnss.h"
 
 #include <nss.h>
 #include <prerror.h>
@@ -58,11 +59,21 @@
 
 char usage[] =
 	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
+	"                         [--configdir <configdir> ]\n"
 	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
 	"                         [--dump ] [--list ]\n"
 	"                         [--dhclient ] [--file secretfile ]\n"
 	"                         [--keynum count ] [--id identity ]\n"
 	"                         [--rsaid keyid ] [--verbose] [--version]\n";
+
+/*
+ * For new options, avoid magic numbers.
+ *
+ * XXX: Can fix old options later.
+ */
+enum opt {
+	OPT_CONFIGDIR,
+};
 
 struct option opts[] = {
 	{ "help",      no_argument,    NULL,   '?', },
@@ -80,6 +91,7 @@ struct option opts[] = {
 	{ "rsaid",     required_argument, NULL, 'I', },
 	{ "version",   no_argument,     NULL,  'V', },
 	{ "verbose",   no_argument,     NULL,  'v', },
+	{ "configdir", required_argument,     NULL,  OPT_CONFIGDIR, },
 	{ 0,           0,      NULL,   0, }
 };
 
@@ -301,6 +313,7 @@ int main(int argc, char *argv[])
 	int precedence = 10;
 	int verbose = 0;
 	const struct lsw_conf_options *oco = lsw_init_options();
+	char *configdir = oco->confddir;
 	char *rsakeyid, *keyid;
 	struct secret *host_secrets = NULL;
 	struct secret *s;
@@ -374,6 +387,10 @@ int main(int argc, char *argv[])
 			rsakeyid = clone_str(optarg, "rsakeyid");
 			break;
 
+		case OPT_CONFIGDIR:
+			configdir = clone_str(optarg, "configdir");
+			break;
+
 		case 'n':
 		case 'h':
 			break;
@@ -410,26 +427,18 @@ usage:
 	}
 
 	if (verbose)
-		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
-			oco->confddir);
-	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
+		fprintf(stderr, "%s using config directory \"%s\"\n",
+			progname, configdir);
 
-	{
-		SECStatus rv = NSS_InitReadWrite(oco->confddir);
-
-		if (rv != SECSuccess) {
-			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-				progname, PR_GetError());
-			exit(1);
-		}
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(configdir, LSW_NSS_READONLY, getNSSPassword, err)) {
+		fprintf(stderr, "%s: %s\n", progname, err);
+		exit(1);
 	}
-
-	PK11_SetPasswordFunc(getNSSPassword);
 
 	lsw_load_preshared_secrets(&host_secrets, secrets_file);
 
-	NSS_Shutdown();
-	PR_Cleanup();
+	lsw_nss_shutdown(LSW_NSS_CLEANUP);
 
 	/* options that apply to entire files */
 	if (dump_flg) {

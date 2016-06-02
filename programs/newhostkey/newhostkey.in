@@ -103,7 +103,7 @@ if [ ! -d ${configdir} ]; then
     exit 255
 fi
 
-certutil -L -d sql:$configdir >/dev/null 2>/dev/null
+certutil -L -d "sql:$configdir" >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
     echo "NSS database in $configdir not initialized."
@@ -111,7 +111,7 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir sql:${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir ${configdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -ne 0 ]; then
     exit ${RETVAL}
