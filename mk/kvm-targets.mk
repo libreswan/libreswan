@@ -578,21 +578,22 @@ endif
 # Provide aliases so that "east" maps onto the first "east" in the
 # pool. et.al.
 
-define kvm_aliases
+define kvm_alias
   .PHONY: kvm-install-$(1)
   kvm-install-$(1): kvm-$(2)-install
   .PHONY: kvm-build-$(1)
   kvm-build-$(1): kvm-$(2)-build
 endef
 
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_aliases,$(domain),$(firstword $(KVM_POOL))$(domain))))
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
 
-define kvmsh_aliases
+define kvmsh_alias
+  kvmsh-$(1): kvmsh-$(2)
   kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
 endef
 
 ifneq ($(firstword $(KVM_POOL)),)
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call alias_rules,$(domain),$(firstword $(KVM_POOL))$(domain))))
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvmsh_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
 endif
 
 .PHONY: kvm-help
