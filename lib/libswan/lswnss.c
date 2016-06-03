@@ -72,6 +72,14 @@ void lsw_nss_shutdown(unsigned flags)
 	}
 }
 
+static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pubkey)
+{
+	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
+	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
+	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
+	form_keyid(rsa->e, rsa->n, rsa->keyid, &rsa->k);
+}
+
 struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 							    void *uservoid,
 							    lsw_nss_buf_t err)
@@ -129,28 +137,10 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 		}
 
 		{
-			/*
-			 * Try to get public key information using a
-			 * certificate.  Failing just leads to fields
-			 * being blank.
-			 *
-			 * XXX: How to log failure?
-			 */
-			CERTCertificate *cert
-				= PK11_GetCertFromPrivateKey(node->key);
-			if (cert != NULL) {
-				SECKEYPublicKey *pubkey = CERT_ExtractPublicKey(cert);
-				if (pubkey != NULL) {
-					passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
-					pks.u.RSA_private_key.pub.e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
-					pks.u.RSA_private_key.pub.n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-					form_keyid(pks.u.RSA_private_key.pub.e,
-						   pks.u.RSA_private_key.pub.n,
-						   pks.u.RSA_private_key.pub.keyid,
-						   &pks.u.RSA_private_key.pub.k);
-					SECKEY_DestroyPublicKey(pubkey);
-				}
-				CERT_DestroyCertificate(cert);
+			SECKEYPublicKey *pubkey = SECKEY_ConvertToPublicKey(node->key);
+			if (pubkey != NULL) {
+				fill_RSA_public_key(&pks.u.RSA_private_key.pub, pubkey);
+				SECKEY_DestroyPublicKey(pubkey);
 			}
 		}
 
