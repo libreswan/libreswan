@@ -68,8 +68,9 @@ char usage[] =
 	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
 	"                         [--dump ] [--list ]\n"
 	"                         [--dhclient ] [--file secretfile ]\n"
-	"                         [--keynum count ] [--id identity ] [--ckaid <ckaid>]\n"
-	"                         [--rsaid keyid ] [--verbose] [--version]\n";
+	"                         [--keynum count ]\n"
+	"                         [--rsaid <keyid> ] [--id <id> ] [--ckaid <ckaid> ]\n"
+	"                         [--verbose] [--version]\n";
 
 /*
  * For new options, avoid magic numbers.
@@ -128,7 +129,7 @@ static void print(struct private_key_stuff *pks,
 		printf("%d(%d): ", pks->line, count);
 	} else {
 		/* NSS format */
-		printf("<%2d>: ", pks->line);
+		printf("<%2d> ", pks->line);
 	}
 
 	switch (pks->kind) {
@@ -139,15 +140,14 @@ static void print(struct private_key_stuff *pks,
 		break;
 
 	case PPK_RSA: {
-		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
+		printf("RSA");
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
-		printf("RSA keyid: ");
-		if (keyid[0]) {
-			printf("%s", keyid);
-		} else {
-			printf("<missing-pubkey>");
+		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
+		if (id) {
+			printf(" id: %s\n", idb);
 		}
-		printf(" id: %s CKAID: %s\n", idb, ckaid);
+		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
+		printf(" ckaid: %s\n", ckaid);
 		pfree(ckaid);
 		break;
 	}
@@ -197,13 +197,13 @@ static int dump_key(struct secret *secret,
 	return 1;
 }
 
-static int pick_by_rsakeyid(struct secret *secret UNUSED,
-			    struct private_key_stuff *pks,
-			    void *uservoid)
+static int pick_by_keyid(struct secret *secret UNUSED,
+			 struct private_key_stuff *pks,
+			 void *uservoid)
 {
-	char *rsakeyid = (char *)uservoid;
+	char *keyid = (char *)uservoid;
 
-	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
+	if (pks->kind == PPK_RSA && streq(pks->u.RSA_private_key.pub.keyid, keyid))
 		return 0;
 
 	return 1;
@@ -214,15 +214,15 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+	if (pks->kind == PPK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
 		/* try again */
 		return 1;
 	}
 	return 0;
 }
 
-static struct secret *pick_key(struct secret *host_secrets,
-			       char *idname)
+static struct secret *pick_by_id(struct secret *host_secrets,
+				  char *idname)
 {
 	struct id id;
 	struct secret *s;
@@ -370,7 +370,7 @@ static struct private_key_stuff *foreach_secret(char *secrets_file, secret_eval 
 
 int main(int argc, char *argv[])
 {
-	char secrets_file[PATH_MAX] = "";
+	char *secrets_file = NULL;
 	int opt;
 	int errflg = 0;
 	bool left_flg = FALSE;
@@ -384,17 +384,15 @@ int main(int argc, char *argv[])
 	int verbose = 0;
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *configdir = oco->confddir;
-	char *rsakeyid, *keyid;
+	char *keyid, *id;
 	struct private_key_stuff *pks;
 	char *ckaid = NULL;
 #if 0
 	char *password = NULL;
 #endif
 
-	rsakeyid = NULL;
 	keyid = NULL;
-
-	snprintf(secrets_file, PATH_MAX, "%s/ipsec.secrets", oco->confdir);
+	id = NULL;
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {
@@ -449,11 +447,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'f': /* --file arg */
-			jam_str(secrets_file, sizeof(secrets_file), optarg);
+			secrets_file = clone_str(optarg, "file");
 			break;
 
 		case 'i':
-			keyid = clone_str(optarg, "keyname");
+			id = clone_str(optarg, "keyname");
 			break;
 
 		case OPT_CKAID:
@@ -461,7 +459,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'I':
-			rsakeyid = clone_str(optarg, "rsakeyid");
+			keyid = clone_str(optarg, "keyid");
 			break;
 
 		case OPT_CONFIGDIR:
@@ -534,11 +532,11 @@ usage:
 		goto out;
 	}
 
-	if (rsakeyid != NULL) {
+	if (keyid != NULL) {
 		if (verbose)
-			printf("%s picking by rsakeyid=%s\n",
-			       ipseckey_flg ? ";" : "\t#", rsakeyid);
-		pks = foreach_secret(secrets_file, pick_by_rsakeyid, rsakeyid);
+			printf("%s picking by keyid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", keyid);
+		pks = foreach_secret(secrets_file, pick_by_keyid, keyid);
 	} else if (ckaid != NULL) {
 		if (verbose) {
 			printf("%s picking by ckaid=%s\n",
@@ -559,11 +557,11 @@ usage:
 		struct secret *host_secrets = NULL;
 		lsw_load_preshared_secrets(&host_secrets, secrets_file);
 		struct secret *s;
-		if (keyid != NULL) {
+		if (id != NULL) {
 			if (verbose)
-				printf("%s picking by keyid=%s\n",
-				       ipseckey_flg ? ";" : "\t#", keyid);
-			s = pick_key(host_secrets, keyid);
+				printf("%s picking by id=%s\n",
+				       ipseckey_flg ? ";" : "\t#", id);
+			s = pick_by_id(host_secrets, id);
 		} else {
 			/* Paul: This assumption is WRONG. Mostly I have PSK's above my
 			 * multiline default : RSA entry, and then this assumption breaks
