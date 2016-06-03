@@ -224,7 +224,8 @@ static struct secret *pick_key(struct secret *host_secrets,
 	err_t e = atoid(idname, &id, FALSE, FALSE);
 
 	if (e != NULL) {
-		printf("%s: key '%s' is invalid\n", progname, idname);
+		fprintf(stderr, "%s: key '%s' is invalid\n",
+			progname, idname);
 		return NULL;
 	}
 
@@ -234,8 +235,8 @@ static struct secret *pick_key(struct secret *host_secrets,
 	if (s == NULL) {
 		char abuf[IDTOA_BUF];
 		idtoa(&id, abuf, IDTOA_BUF);
-		printf("%s: cannot find key: %s (%s)\n", progname, idname,
-		       abuf);
+		fprintf(stderr, "%s: cannot find key '%s' (%s)\n",
+			progname, idname, abuf);
 		return NULL;
 	}
 
@@ -244,6 +245,11 @@ static struct secret *pick_key(struct secret *host_secrets,
 
 static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
 {
+	if (pub->e.len == 0 || pub->n.len == 0) {
+		fprintf(stderr, "%s: public key not found\n",
+			progname);
+		return NULL;
+	}
 	char* base64;
 	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
 	if (err) {
@@ -264,7 +270,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 	gethostname(qname, sizeof(qname));
 
 	if (pks->kind != PPK_RSA) {
-		printf("%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
+		fprintf(stderr, "%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
 			progname, enum_name(&ppk_names, pks->kind));
 		return 5;
 	}
@@ -283,8 +289,8 @@ static int show_dnskey(struct private_key_stuff *pks,
 			    &test) == NULL) {
 			gateway_type = 2;
 		} else {
-			printf("%s: unknown address family for gateway %s",
-			       progname, gateway);
+			fprintf(stderr, "%s: unknown address family for gateway %s",
+				progname, gateway);
 			return 5;
 		}
 	}
@@ -311,8 +317,8 @@ static int show_confkey(struct private_key_stuff *pks,
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}
-		printf("%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n", progname,
-			enumstr);
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n",
+			progname, enumstr);
 		return 5;
 	}
 
@@ -414,7 +420,7 @@ int main(int argc, char *argv[])
 
 				if (ugh != NULL) {
 					fprintf(stderr,
-						"precedence malformed: %s\n", ugh);
+						"%s: precedence malformed: %s\n", progname, ugh);
 					exit(5);
 				}
 				precedence = u;
@@ -488,13 +494,15 @@ usage:
 
 	if (!left_flg && !right_flg && !dump_flg && !list_flg &&
 	    !ipseckey_flg && !dhclient_flg) {
-		fprintf(stderr, "You must specify some operation\n");
+		fprintf(stderr, "%s: You must specify some operation\n",
+			progname);
 		goto usage;
 	}
 
 	if ((left_flg + right_flg + dump_flg + list_flg +
 	     ipseckey_flg + dhclient_flg) > 1) {
-		fprintf(stderr, "You must specify only one operation\n");
+		fprintf(stderr, "%s: You must specify only one operation\n",
+			progname);
 		goto usage;
 	}
 
@@ -523,16 +531,23 @@ usage:
 
 	if (rsakeyid != NULL) {
 		if (verbose)
-			printf("; picking by rsakeyid=%s\n", rsakeyid);
+			printf("%s picking by rsakeyid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", rsakeyid);
 		pks = foreach_secret(secrets_file, pick_by_rsakeyid, rsakeyid);
 	} else if (ckaid != NULL) {
 		if (verbose) {
-			printf("; picking by ckaid=%s\n", ckaid);
+			printf("%s picking by ckaid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
 		pks = foreach_secret(secrets_file, pick_by_ckaid, ckaid);
 	} else {
 		if (secrets_file == NULL || secrets_file[0] == '\0') {
-			fprintf(stderr, "no secrets file not specified\n");
+			/*
+			 * Interpet this is as specifying NSS should
+			 * be used.
+			 */
+			fprintf(stderr, "%s: for NSS one of --rsaid or --ckaid required\n",
+				progname);
 			status = 1;
 			goto out;
 		}
@@ -541,7 +556,8 @@ usage:
 		struct secret *s;
 		if (keyid != NULL) {
 			if (verbose)
-				printf("; picking by keyid=%s\n", keyid);
+				printf("%s picking by keyid=%s\n",
+				       ipseckey_flg ? ";" : "\t#", keyid);
 			s = pick_key(host_secrets, keyid);
 		} else {
 			/* Paul: This assumption is WRONG. Mostly I have PSK's above my
@@ -555,7 +571,7 @@ usage:
 	}
 
 	if (pks == NULL) {
-		printf("No keys found\n");
+		fprintf(stderr, "%s: No keys found\n", progname);
 		status = 20;
 		goto out;
 	}
