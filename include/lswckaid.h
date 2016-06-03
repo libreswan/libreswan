@@ -14,33 +14,21 @@
  * for more details.
  */
 
-#ifndef _LSWNSS_H_
-#define _LSWNSS_H_
-
-#include <stdbool.h>
-
-#include <pk11pub.h>
-
-#include "lswalloc.h"
-#include "secrets.h"
-
-enum lsw_nss_flags {
-	LSW_NSS_READONLY = 1,
-	LSW_NSS_CLEANUP = 2,
-};
+#ifndef _LSWCKAID_H_
+#define _LSWCKAID_H_
 
 /*
- * If something goes wrong, the error gets dumped into this null
- * terminated buffer.
+ * For rationale behind *_t? Blame chunk_t.
  */
-typedef char lsw_nss_buf_t[100];
+typedef struct {
+	SECItem *nss;
+} ckaid_t;
 
-bool lsw_nss_setup(const char *config_dir, unsigned flags,
-		   PK11PasswordFunc get_nss_password, lsw_nss_buf_t err);
-void lsw_nss_shutdown(unsigned flags);
-
-struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
-							    void *uservoid,
-							    lsw_nss_buf_t err);
+const char *ckaid_starts_with(ckaid_t ckaid, const char *start);
+char *ckaid_as_string(ckaid_t ckaid);
+err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
+err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
+void freeanyckaid(ckaid_t *ckaid);
+void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
 
 #endif

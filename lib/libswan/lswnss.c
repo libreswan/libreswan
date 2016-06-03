@@ -17,6 +17,7 @@
 #include <nspr.h>
 #include <nss.h>
 #include <pk11pub.h>
+#include <keyhi.h>
 
 #include "lswconf.h"
 #include "lswnss.h"
@@ -70,43 +71,94 @@ void lsw_nss_shutdown(unsigned flags)
 	}
 }
 
-#if 0
-#define MAX_CKA_ID_STR_LEN 40
-
-void for_all_nss_keys(void)
+struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
+							    void *uservoid,
+							    lsw_nss_buf_t err)
 {
+	err[0] = '\0';
+
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
-		fprintf(stderr, "no slot\n");
-		return;
+		snprintf(err, sizeof(lsw_nss_buf_t), "no slot");
+		return NULL;
 	}
 
 	SECKEYPrivateKeyList *list = PK11_ListPrivateKeysInSlot(slot);
 	if (list == NULL) {
-		fprintf(stderr, "no list\n");
+		snprintf(err, sizeof(lsw_nss_buf_t), "no list");
 		PK11_FreeSlot(slot);
-		return;
+		return NULL;
 	}
+
+	struct private_key_stuff *result = NULL;
 
 	SECKEYPrivateKeyListNode *node;
 	for (node = PRIVKEY_LIST_HEAD(list);
              !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
-		SECKEYPrivateKey *key = node->key;
-		fprintf(stderr, "nickname %s\n", PK11_GetPrivateKeyNickname(key));
-		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(key);
-		if (ckaid == NULL) {
-			fprintf(stderr, "no ckaid\n");
-		} else {
-			char ckaIDbuf[MAX_CKA_ID_STR_LEN + 4];
-			datatot(ckaid->data, ckaid->len, 16, ckaIDbuf, sizeof(ckaIDbuf));
-			fprintf(stderr, "ckaid: %s\n", ckaIDbuf);
-			SECITEM_FreeItem(ckaid, PR_TRUE);
 
+		struct private_key_stuff pks = {
+			.kind = PPK_RSA,
+		};
+
+		{
+			SECItem *nss_ckaid
+				= PK11_GetLowLevelKeyIDForPrivateKey(node->key);
+			if (nss_ckaid == NULL) {
+				fprintf(stderr, "ckaid not found\n");
+				continue;
+			}
+			const char *err = form_ckaid_nss(nss_ckaid,
+							 &pks.u.RSA_private_key.pub.ckaid);
+			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+			if (err) {
+				fprintf(stderr, "ckaid not found\n");
+				continue;
+			}
 		}
+
+#if 0
+		{
+			CERTCertificate *cert
+				= PK11_GetCertFromPrivateKey(node->key);
+			if (cert == NULL) {
+				fprintf(stderr, "cert not found\n");
+				continue;
+			}
+			SECKEYPublicKey *pubkey = CERT_ExtractPublicKey(cert);
+			if (pubkey == NULL) {
+				fprintf(stderr, "pubkey not found\n");
+				CERT_DestroyCertificate(cert);
+				continue;
+			}
+			if (SECKEY_GetPublicKeyType(pubkey) != rsaKey) {
+				SECKEY_DestroyPublicKey(pubkey);
+				CERT_DestroyCertificate(cert);
+			}
+			pks.u.RSA_private_key.pub.e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
+			pks.u.RSA_private_key.pub.n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
+			form_keyid(pks.u.RSA_private_key.pub.e,
+				   pks.u.RSA_private_key.pub.n,
+				   pks.u.RSA_private_key.pub.keyid,
+				   &pks.u.RSA_private_key.pub.k);
+			SECKEY_DestroyPublicKey(pubkey);
+			CERT_DestroyCertificate(cert);
+		}
+#endif
+
+		int ret = func(NULL, &pks, uservoid);
+		if (ret == 0) {
+			result = clone_thing(pks, "pks");
+			break;
+		}
+
+		freeanyckaid(&pks.u.RSA_private_key.pub.ckaid);
+		freeanychunk(pks.u.RSA_private_key.pub.e);
+		freeanychunk(pks.u.RSA_private_key.pub.n);
 	}
 
 	SECKEY_DestroyPrivateKeyList(list);
 	PK11_FreeSlot(slot);
+
+	return result;
 }
-#endif
