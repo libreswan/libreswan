@@ -44,9 +44,22 @@ typedef struct {
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
 
-	/* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
+	/*
+	 * The "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the moduls length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * The adjusted length is used in same_RSA_public_key() as
+	 * part of comparing two keys - but wouldn't that be
+	 * redundant?  The direct n==n test would pick up the
+	 * difference.
+	 */
 	unsigned k;
-
 	/*
 	 * NSS's(?) idea of a unique ID for a public private key pair.
 	 * For RSA it is something like the SHA1 of the modulus.  It

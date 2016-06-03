@@ -221,6 +221,24 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
+		/*
+		 * The "adjusted" length of modulus n in octets:
+		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+		 *
+		 * According to form_keyid() this is the moduls length
+		 * less any leading byte added by DER encoding.
+		 *
+		 * The adjusted length is used in sign_hash() as the
+		 * signature length - wouldn't PK11_SignatureLen be
+		 * better?
+		 *
+		 * The adjusted length is used in
+		 * same_RSA_public_key() as part of comparing two keys
+		 * - but wouldn't that be redundant?  The direct n==n
+		 * test would pick up the difference.
+		 */
+		DBG(DBG_CRYPT, DBG_log("XXX: adjusted modulus length %zu->%zu",
+				       n.len, n.len - 1));
 		n.ptr++;
 		n.len--;
 	}
@@ -238,6 +256,24 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.data == 0x00) {
+		/*
+		 * The "adjusted" length of modulus n in octets:
+		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+		 *
+		 * According to form_keyid() this is the moduls length
+		 * less any leading byte added by DER encoding.
+		 *
+		 * The adjusted length is used in sign_hash() as the
+		 * signature length - wouldn't PK11_SignatureLen be
+		 * better?
+		 *
+		 * The adjusted length is used in
+		 * same_RSA_public_key() as part of comparing two keys
+		 * - but wouldn't that be redundant?  The direct n==n
+		 * test would pick up the difference.
+		 */
+		DBG(DBG_CRYPT, DBG_log("XXX: adjusted modulus length %u->%u",
+				       n.len, n.len - 1));
 		n.data++;
 		n.len--;
 	}
@@ -1249,8 +1285,29 @@ void free_public_keys(struct pubkey_list **keys)
 }
 
 bool same_RSA_public_key(const struct RSA_public_key *a,
-			const struct RSA_public_key *b)
+			 const struct RSA_public_key *b)
 {
+	/*
+	 * The "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the moduls length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * The adjusted length is used in same_RSA_public_key() as
+	 * part of comparing two keys - but wouldn't that be
+	 * redundant?  The direct n==n test would pick up the
+	 * difference.
+	 */
+	DBG(DBG_CRYPT,
+	    if (a->k != b->k && same_chunk(a->e, b->e)) {
+		    DBG_log("XXX: different modulus k (%u vs %u) modulus (%zu vs %zu) caused a mismatch",
+			    a->k, b->k, a->n.len, b->n.len);
+	    });
+
 	DBG(DBG_CRYPT,
 		DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT ");
 		);
