@@ -112,7 +112,7 @@ static void print(struct private_key_stuff *pks,
 		  int lineno, int count, struct id *id,
 		  bool disclose)
 {
-	char idb[IDTOA_BUF] = "";
+	char idb[IDTOA_BUF] = "n/a";
 	if (id) {
 		idtoa(id, idb, IDTOA_BUF);
 	}
@@ -133,8 +133,14 @@ static void print(struct private_key_stuff *pks,
 
 	case PPK_RSA: {
 		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
-		printf("%d(%d): RSA keyid: %s id: %s NSS ckaid: %s\n", lineno,
-		       count, pks->u.RSA_private_key.pub.keyid, idb, ckaid);
+		char *keyid = pks->u.RSA_private_key.pub.keyid;
+		printf("%d(%d): RSA ", lineno, count);
+		if (keyid[0]) {
+			printf("keyid: %s", keyid);
+		} else {
+			printf("keyid: <missing-pubkey>");
+		}
+		printf(" id: %s CKAID: %s\n", idb, ckaid);
 		pfree(ckaid);
 		break;
 	}
@@ -325,6 +331,16 @@ static int show_confkey(struct private_key_stuff *pks,
 
 static struct private_key_stuff *foreach_secret(char *secrets_file, secret_eval func, void *uservoid)
 {
+	/*
+	 * XXX: Potential Memory leak.
+	 *
+	 * lsw_foreach_secret() + lsw_get_pks() returns an object that
+	 * must not be freed BUT lsw_nss_foreach_private_key_stuff()
+	 * returns an object that must be freed.
+	 *
+	 * For moment ignore this - as only caller is showhostkey.c
+	 * which quickly exits.
+	 */
 	if (secrets_file && secrets_file[0]) {
 		struct secret *host_secrets = NULL;
 		lsw_load_preshared_secrets(&host_secrets, secrets_file);
