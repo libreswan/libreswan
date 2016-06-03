@@ -109,8 +109,7 @@ struct option opts[] = {
 char *progname = "ipsec showhostkey";   /* for messages */
 
 static void print(struct private_key_stuff *pks,
-		  int lineno, int count, struct id *id,
-		  bool disclose)
+		  int count, struct id *id, bool disclose)
 {
 	char idb[IDTOA_BUF] = "n/a";
 	if (id) {
@@ -124,9 +123,17 @@ static void print(struct private_key_stuff *pks,
 			'x', pskbuf, sizeof(pskbuf));
 	}
 
+	if (count) {
+		/* ipsec.secrets format */
+		printf("%d(%d): ", pks->line, count);
+	} else {
+		/* NSS format */
+		printf("<%2d>: ", pks->line);
+	}
+
 	switch (pks->kind) {
 	case PPK_PSK:
-		printf("%d(%d): PSK keyid: %s\n", lineno, count, idb);
+		printf("PSK keyid: %s\n", idb);
 		if (disclose)
 			printf("    psk: \"%s\"\n", pskbuf);
 		break;
@@ -134,11 +141,11 @@ static void print(struct private_key_stuff *pks,
 	case PPK_RSA: {
 		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
-		printf("%d(%d): RSA ", lineno, count);
+		printf("RSA keyid: ");
 		if (keyid[0]) {
-			printf("keyid: %s", keyid);
+			printf("%s", keyid);
 		} else {
-			printf("keyid: <missing-pubkey>");
+			printf("<missing-pubkey>");
 		}
 		printf(" id: %s CKAID: %s\n", idb, ckaid);
 		pfree(ckaid);
@@ -146,14 +153,13 @@ static void print(struct private_key_stuff *pks,
 	}
 
 	case PPK_XAUTH:
-		printf("%d(%d): XAUTH keyid: %s\n", lineno, count,
-		       idb);
+		printf("XAUTH keyid: %s\n", idb);
 		if (disclose)
 			printf("    xauth: \"%s\"\n", pskbuf);
 		break;
 	case PPK_NULL:
 		/* can't happen but the compiler does not know that */
-		printf("%d(%d): NULL authentication -- cannot happen: %s\n", lineno, count, idb);
+		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
 	}
 }
@@ -164,15 +170,14 @@ static void print_key(struct secret *secret,
 {
 	if (secret) {
 		int count = 1;
-		int lineno = lsw_get_secretlineno(secret);
 		struct id_list *l = lsw_get_idlist(secret);
 		while (l != NULL) {
-			print(pks, lineno, count, &l->id, disclose);
+			print(pks, count, &l->id, disclose);
 			l = l->next;
 			count++;
 		}
 	} else {
-		print(pks, 0, 0, NULL, disclose);
+		print(pks, 0, NULL, disclose);
 	}
 }
 

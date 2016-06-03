@@ -94,6 +94,8 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 		return NULL;
 	}
 
+	int line = 1;
+
 	struct private_key_stuff *result = NULL;
 
 	SECKEYPrivateKeyListNode *node;
@@ -151,6 +153,11 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 				CERT_DestroyCertificate(cert);
 			}
 		}
+
+		/*
+		 * Only count private keys that get processed.
+		 */
+		pks.line = line++;
 
 		int ret = func(NULL, &pks, uservoid);
 		if (ret == 0) {

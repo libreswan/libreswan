@@ -129,10 +129,8 @@ static int print_secrets(struct secret *secret,
 		}
 	}
 
-	whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(
-			  secret),
-		  kind,
-		  idb1, idb2, more);
+	whack_log(RC_COMMENT, "    %d: %s %s %s%s",
+		  pks->line, kind, idb1, idb2, more);
 
 	/* continue loop until end */
 	return 1;

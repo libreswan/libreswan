@@ -141,18 +141,12 @@ static err_t RSA_public_key_sanity(struct RSA_private_key *k)
 struct secret {
 	struct secret  *next;
 	struct id_list *ids;
-	int secretlineno;
 	struct private_key_stuff pks;
 };
 
 struct private_key_stuff *lsw_get_pks(struct secret *s)
 {
 	return &s->pks;
-}
-
-int lsw_get_secretlineno(const struct secret *s)
-{
-	return s->secretlineno;
 }
 
 struct id_list *lsw_get_idlist(const struct secret *s)
@@ -400,7 +394,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	for (s = secrets; s != NULL; s = s->next) {
 		DBG(DBG_CONTROLMORE,
 			DBG_log("line %d: key type %s(%s) to type %s",
-				s->secretlineno,
+				s->pks.line,
 				enum_name(&ppk_names, kind),
 				idme,
 				enum_name(&ppk_names, s->pks.kind));
@@ -463,7 +457,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			}
 
 			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=%d", s->secretlineno,
+				DBG_log("line %d: match=%d", s->pks.line,
 					match);
 				);
 
@@ -545,7 +539,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					DBG(DBG_CONTROL,
 						DBG_log("best_match %d>%d best=%p (line=%d)",
 							best_match, match,
-							s, s->secretlineno);
+							s, s->pks.line);
 						);
 
 					/* this is the best match so far */
@@ -562,7 +556,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	}
 	DBG(DBG_CONTROL,
 		DBG_log("concluding with best_match=%d best=%p (lineno=%d)",
-			best_match, best, best ? best->secretlineno : -1);
+			best_match, best, best ? best->pks.line : -1);
 		);
 
 	return best;
@@ -1048,7 +1042,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			s->ids = NULL;
 			s->pks.kind = PPK_PSK;	/* default */
 			setchunk(s->pks.u.preshared_secret, NULL, 0);
-			s->secretlineno = flp->lino;
+			s->pks.line = flp->lino;
 			s->next = NULL;
 
 			for (;;) {
@@ -1538,7 +1532,7 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 	}
 	s = alloc_thing(struct secret, "secret");
 	s->pks.kind = PPK_RSA;
-	s->secretlineno = 0;
+	s->pks.line = 0;
 
 	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,
 						cert)) != NULL) {

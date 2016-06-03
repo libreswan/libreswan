@@ -102,6 +102,12 @@ void DBG_log_RSA_public_key(const struct RSA_public_key *rsa);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
+	/*
+	 * This replaced "int lsw_secretlineno()", which assumes only
+	 * one file (no includes) and isn't applicable to NSS.  For
+	 * NSS it's the entry number.
+	 */
+	int line;
 	union {
 		chunk_t preshared_secret;
 		struct RSA_private_key RSA_private_key;
@@ -110,7 +116,6 @@ struct private_key_stuff {
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
-extern int lsw_get_secretlineno(const struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
