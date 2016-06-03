@@ -48,7 +48,7 @@ struct RSA_public_key {
 	 * The "adjusted" length of modulus n in octets:
 	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
 	 *
-	 * According to form_keyid() this is the moduls length less
+	 * According to form_keyid() this is the modulus length less
 	 * any leading byte added by DER encoding.
 	 *
 	 * The adjusted length is used in sign_hash() as the signature
@@ -60,6 +60,7 @@ struct RSA_public_key {
 	 * difference.
 	 */
 	unsigned k;
+
 	/*
 	 * NSS's(?) idea of a unique ID for a public private key pair.
 	 * For RSA it is something like the SHA1 of the modulus.  It

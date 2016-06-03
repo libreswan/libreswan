@@ -225,7 +225,7 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 		 * The "adjusted" length of modulus n in octets:
 		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
 		 *
-		 * According to form_keyid() this is the moduls length
+		 * According to form_keyid() this is the modulus length
 		 * less any leading byte added by DER encoding.
 		 *
 		 * The adjusted length is used in sign_hash() as the
@@ -260,7 +260,7 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 		 * The "adjusted" length of modulus n in octets:
 		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
 		 *
-		 * According to form_keyid() this is the moduls length
+		 * According to form_keyid() this is the modulus length
 		 * less any leading byte added by DER encoding.
 		 *
 		 * The adjusted length is used in sign_hash() as the
@@ -1291,7 +1291,7 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 	 * The "adjusted" length of modulus n in octets:
 	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
 	 *
-	 * According to form_keyid() this is the moduls length less
+	 * According to form_keyid() this is the modulus length less
 	 * any leading byte added by DER encoding.
 	 *
 	 * The adjusted length is used in sign_hash() as the signature

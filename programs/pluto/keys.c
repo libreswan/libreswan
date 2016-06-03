@@ -189,7 +189,7 @@ int sign_hash(const struct RSA_private_key *k,
 	 * SIG_LEN contains "adjusted" length of modulus n in octets:
 	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
 	 *
-	 * According to form_keyid() this is the moduls length less
+	 * According to form_keyid() this is the modulus length less
 	 * any leading byte added by DER encoding.
 	 *
 	 * The adjusted length is used in sign_hash() as the signature
