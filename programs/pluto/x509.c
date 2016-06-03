@@ -1817,12 +1817,7 @@ void check_crls(void)
 		key = pubkeys->key;
 		if (key != NULL) {
 			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
-			generalName_t *end_dp;
-
 			add_crl_fetch_request_nss(&issuer, NULL);
-
-			end_dp = gndp_from_nss_cert(key->u.rsa.nssCert);
-			add_crl_fetch_request_nss(&issuer, end_dp);
 		}
 		pubkeys = pubkeys->next;
 	}

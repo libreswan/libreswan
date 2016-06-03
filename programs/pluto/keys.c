@@ -183,15 +183,6 @@ int sign_hash(const struct RSA_private_key *k,
 	if (privateKey == NULL) {
 		DBG(DBG_CRYPT,
 		    DBG_log("Can't find the private key from the NSS CKA_ID"));
-		if (k->pub.nssCert != NULL) {
-			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
-							   lsw_return_nss_password_file_info());
-			if (privateKey == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "Can't find the private key from the NSS CERT (err %d)",
-				       PR_GetError());
-			}
-		}
 	}
 
 	PK11_FreeSlot(slot);

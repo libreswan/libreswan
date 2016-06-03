@@ -67,7 +67,6 @@ struct RSA_public_key {
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
-	CERTCertificate *nssCert;
 };
 
 struct RSA_private_key {

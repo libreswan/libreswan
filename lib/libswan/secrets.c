@@ -1015,8 +1015,6 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			s->secretlineno = flp->lino;
 			s->next = NULL;
 
-			s->pks.u.RSA_private_key.pub.nssCert = NULL;
-
 			for (;;) {
 				struct id id;
 				err_t ugh;
