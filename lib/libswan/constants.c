@@ -850,12 +850,11 @@ static const char *const ipsec_attr_name[] = {
 	"COMPRESS_DICT_SIZE",
 	"COMPRESS_PRIVATE_ALG",
 #ifdef HAVE_LABELED_IPSEC
-	"ECN_TUNNEL",
+	"ECN_TUNNEL or old SECCTX",
 #endif
 };
 
-#if 0
-/* this is not used - which is a little strange */
+/* these are the only attributes with which we support variable length values */
 static const char *const ipsec_var_attr_name[] = {
 	"SA_LIFE_DURATION (variable length)",
 	NULL,
@@ -869,7 +868,6 @@ static const char *const ipsec_var_attr_name[] = {
 	"NULL", /* ECN TUNNEL */
 #endif
 };
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 static const char *const ipsec_private_attr_name[] = {
@@ -894,11 +892,11 @@ static enum_names ipsec_private_attr_names = {
 static enum_names ipsec_attr_desc_tv = {
 	SA_LIFE_TYPE + ISAKMP_ATTR_AF_TV,
 #ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL + ISAKMP_ATTR_AF_TV,
+	ECN_TUNNEL_or_old_SECCTX + ISAKMP_ATTR_AF_TV,
 #else
 	COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
 #endif
-	ipsec_attr_name,
+	ipsec_var_attr_name,
 #ifdef HAVE_LABELED_IPSEC
 	&ipsec_private_attr_names
 #else
@@ -907,21 +905,13 @@ static enum_names ipsec_attr_desc_tv = {
 };
 
 enum_names ipsec_attr_names = {
-#ifdef HAVE_LABELED_IPSEC
 	SA_LIFE_TYPE,
-#else
-	SA_LIFE_DURATION,
-#endif
 #ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL,
+	ECN_TUNNEL_or_old_SECCTX,
 #else
 	COMPRESS_PRIVATE_ALG,
 #endif
-#ifdef HAVE_LABELED_IPSEC
 	ipsec_attr_name,
-#else
-	ipsec_var_attr_name,
-#endif
 	&ipsec_attr_desc_tv
 };
 
@@ -938,7 +928,7 @@ enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* COMPRESS_DICT_SIZE */
 	NULL,	/* COMPRESS_PRIVATE_ALG */
 #ifdef HAVE_LABELED_IPSEC
-	NULL,	/* ECN_TUNNEL */
+	NULL,	/* ECN_TUNNEL_or_old_SECCTX */
 #endif
 };
 

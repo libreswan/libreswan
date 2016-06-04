@@ -823,7 +823,7 @@ int main(int argc, char **argv)
 			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
-			if (u != SECCTX && u != 10) {
+			if (u != SECCTX && u != ECN_TUNNEL_or_old_SECCTX) {
 				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
 				break;
 			}
