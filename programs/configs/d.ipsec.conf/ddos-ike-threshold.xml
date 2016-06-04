@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>ddos-ike-treshold</emphasis></term>
+  <term><emphasis remap='B'>ddos-ike-threshold</emphasis></term>
 <listitem>
 <para>The number of half-open IKE SAs before the pluto IKE daemon will be
 placed in busy mode. When in busy mode, pluto activates anti-DDoS counter

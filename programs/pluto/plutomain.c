@@ -1094,8 +1094,8 @@ int main(int argc, char **argv)
 				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
-			/* ddos-ike-treshold and max-halfopen-ike */
-			pluto_ddos_treshold = cfg->setup.options[KBF_DDOS_IKE_TRESHOLD];
+			/* ddos-ike-threshold and max-halfopen-ike */
+			pluto_ddos_threshold = cfg->setup.options[KBF_DDOS_IKE_THRESHOLD];
 			pluto_max_halfopen = cfg->setup.options[KBF_MAX_HALFOPEN_IKE];
 
 			strict_crl_policy =
@@ -1736,9 +1736,9 @@ void show_setup_plutomain()
 	);
 
 	whack_log(RC_COMMENT,
-		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
+		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
 		pluto_max_halfopen,
-		pluto_ddos_treshold,
+		pluto_ddos_threshold,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 

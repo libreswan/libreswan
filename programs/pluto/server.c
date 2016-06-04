@@ -207,7 +207,7 @@ bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE 
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
-unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */

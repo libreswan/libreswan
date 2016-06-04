@@ -125,7 +125,7 @@ enum keyword_numeric_config_field {
 	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
 	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
-	KBF_DDOS_IKE_TRESHOLD,
+	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
 	KBF_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KBF_REMOTEPEERTYPE,     /* Cisco interop: remote peer type */
