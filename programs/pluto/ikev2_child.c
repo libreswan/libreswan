@@ -1060,6 +1060,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		/* there MUST be an authenticated IKE SA! */
+		if (!IS_IKE_SA_ESTABLISHED(pst)) {
+			libreswan_log("Received CREATE_CHILD exchange not allowed on partial IKE SA");
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+
 		/* send NONCE */
 		struct ikev2_generic in;
 		pb_stream pb_nr;
