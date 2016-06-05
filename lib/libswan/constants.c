@@ -896,7 +896,7 @@ static enum_names ipsec_attr_desc_tv = {
 #else
 	COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
 #endif
-	ipsec_var_attr_name,
+	ipsec_attr_name,
 #ifdef HAVE_LABELED_IPSEC
 	&ipsec_private_attr_names
 #else
@@ -911,7 +911,7 @@ enum_names ipsec_attr_names = {
 #else
 	COMPRESS_PRIVATE_ALG,
 #endif
-	ipsec_attr_name,
+	ipsec_var_attr_name,
 	&ipsec_attr_desc_tv
 };
 
