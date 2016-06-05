@@ -549,6 +549,17 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
+	if (c->sa_tfcpad == 0) {
+		int np = ISAKMP_NEXT_v2N;
+
+		/* XXX: should this be a critical payload? */
+		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED, &empty_chunk,
+			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
+			      &md->rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
 	/* Send NAT-T Notify payloads */
 	{
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
@@ -657,6 +668,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
 	bool got_dcookie = FALSE;
+	bool got_no_tfc = FALSE;
 	bool require_dcookie = require_ddos_cookies();
 	struct payload_digest *ntfy;
 
@@ -666,13 +678,21 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-	/* Did we receive a DCOOKIE? */
+	/* Process NOTIFY payloads, including checking for a DCOOKIE */
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
-			DBG(DBG_CONTROLMORE, DBG_log(
-				"Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+			DBG(DBG_CONTROLMORE, DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
 			got_dcookie = TRUE;
 			break;
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
+			got_no_tfc = TRUE;
+			break;
+		default:
+			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify - ignored",
+				enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type)));
 		}
 	}
 
@@ -945,6 +965,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		st->st_original_role = ORIGINAL_RESPONDER;
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
+
+		if (got_no_tfc)
+			st->st_seen_no_tfc = TRUE;
 
 		/* save the proposal information */
 		st->st_oakley = accepted_oakley;
@@ -1407,11 +1430,23 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 
 		case v2N_USE_TRANSPORT_MODE:
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid for IKE_INIT - ignoring it",
+				enum_name(&state_names, st->st_state),
+				enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type)));
+			break;
+
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			/* we do handle these further down */
 			break;
+#if 0
+			st->st_seen_no_tfc = TRUE;
+			DBG(DBG_CONTROL, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED"));
+			break;
+#endif
 		default:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
 				enum_name(&state_names, st->st_state),
@@ -3381,6 +3416,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
  *                     <--  HDR, SK {IDr, [CERT,] AUTH,
  *                               SAr2, TSi, TSr}
  * [Parent SA established]
+ *
+ * For error handling in this function, please read:
+ * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
 stf_status ikev2parent_inR2(struct msg_digest *md)
@@ -3388,7 +3426,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
+	struct payload_digest *ntfy;
 	struct state *pst = st;
+	bool got_transport = FALSE;
 	int cp_r;
 
 	if (IS_CHILD_SA(st))
@@ -3408,6 +3448,26 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
+	}
+
+	/* Process NOTIFY payloads before AUTH so we can log any error notifies */
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+			DBG(DBG_CONTROLMORE, DBG_log("Ignoring bogus COOKIE notify in IKE_AUTH rpely"));
+			break;
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
+			st->st_seen_no_tfc = TRUE; /* Technically, this should be only on the child sa */
+			break;
+		case v2N_USE_TRANSPORT_MODE:
+			got_transport = TRUE;
+			break;
+		default:
+			DBG(DBG_CONTROLMORE, DBG_log("Received %s notify - ignored",
+				enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type)));
+		}
 	}
 
 	if (!ikev2_decode_peer_id_and_certs(md))
@@ -3469,11 +3529,14 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		if (authstat != STF_OK) {
 			libreswan_log("Authentication failed");
 			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
+			 * cannot use STF_FAIL + v2N_AUTHENTICATION_FAILED because IKE_AUTH
+			 * reply cannot receive an IKE_AUTH reply.
+			 * 
+			 * The RFC states:
+			 * "If the error occurs on the initiator, the notification MAY be
+			 *  returned in a separate INFORMATIONAL exchange, usually with no other
+			 *  payloads.  This is an exception for the general rule of not starting
+			 *  new exchanges based on errors in responses."
 			 */
 			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FAIL;
@@ -3486,6 +3549,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			      enum_name(&ikev2_auth_names,
 					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
 					v2a.isaa_type));
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED); /* see above comment */
 		return STF_FAIL;
 	}
 
@@ -3501,7 +3565,15 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
 
-	/* TODO: see if there are any notifications */
+	/* AUTH is ok, we can trust the notify payloads */
+	if (!got_transport && ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY)) {
+		libreswan_log("local policy requires Transport Mode but peer requires required Tunnel Mode");
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
+	}
+	if (got_transport && ((st->st_connection->policy & POLICY_TUNNEL) != LEMPTY)) {
+		libreswan_log("local policy requires Tunnel Mode but peer requires required Transport Mode");
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
+	}
 
 	/* See if there is a child SA available */
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
@@ -3517,6 +3589,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		 * ??? this isn't really a failure, is it?
 		 * If none of those payloads appeared, isn't this is a
 		 * legitimate negotiation of a parent?
+		 * Paul: this notify is never sent because w
 		 */
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}

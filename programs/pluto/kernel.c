@@ -2042,7 +2042,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
-		if (!inbound && c->sa_tfcpad != 0) {
+		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
 			DBG(DBG_KERNEL, DBG_log("Enabling TFC "));
 			said_next->tfcpad = c->sa_tfcpad;
 		}
