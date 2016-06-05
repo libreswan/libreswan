@@ -610,6 +610,8 @@ umlplutotest	klips-transport-01	good
 umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
 kvmplutotest	nat-transport-02	good
+kvmplutotest	ikev2-21-mode-mismatch-01	good
+kvmplutotest	ikev2-21-mode-mismatch-02	good
 
 kvmplutotest	ah-pluto-01		good
 kvmplutotest	ah-pluto-02		good
