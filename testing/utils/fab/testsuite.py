@@ -89,75 +89,78 @@ class Test:
                         self.sanitize_directory = None
                         break;
 
-        # will be filled in later
-        self.domains = None
-        self.initiators = None
+        scripts = _scripts(self.directory)
+
+        # host_names that this test requires, determine it from the
+        # script names.
+        self.host_names = set()
+        for host_name in HOST_NAMES:
+            for script in scripts:
+                if re.search(host_name, script):
+                    self.host_names.add(host_name)
+                    break
+
+        # figure out the scripts that need running
+        self.scripts = []
+        # init scripts
+        _add_matching(self.scripts, scripts, ["nic"], "nicinit.sh")
+        _add_matching(self.scripts, scripts, ["east"], "eastinit.sh")
+        for host_name in sorted(self.host_names):
+            _add_matching(self.scripts, scripts, [host_name], host_name + "init.sh")
+        # run scripts
+        for host_name in sorted(self.host_names):
+            _add_matching(self.scripts, scripts, [host_name], host_name + "run.sh")
+        # strip out the final script
+        final = []
+        _add_matching(final, scripts, sorted(self.host_names), "final.sh")
+        # what's left is the middle scripts, not exactly a smart way
+        # to do this
+        for script in sorted(scripts):
+            for host_name in sorted(self.host_names):
+                if re.search(host_name, script):
+                    self.scripts.append(Script(host_name, script))
+        # append the final scripts
+        for script in final:
+            self.scripts.append(script)
+
 
     def __str__(self):
         return self.full_name
 
-    def host_names(self):
-        if not self.domains:
-            self.domains = _host_names_from_files_with_suffix(self.logger,
-                                                                self.directory,
-                                                                "init.sh")
-        return self.domains
 
-    def initiator_names(self):
-        if not self.initiators:
-            self.initiators = _host_names_from_files_with_suffix(self.logger,
-                                                                   self.directory,
-                                                                   "run.sh")
-        return self.initiators
+class Script:
+    def __init__(self, host_name, script):
+        self.host_name = host_name
+        self.script = script
+    def __str__(self):
+        return "%s:%s" % (self.host_name, self.script)
 
-    def scripts(self):
-        """Return a list of dict of domain,script to run"""
+def _add_matching(run, scripts, host_names, script):
+    if script in scripts:
+        scripts.remove(script)
+        for host_name in host_names:
+            run.append(Script(host_name, script))
 
-        scripts = []
-        nic = {"nic"}
-        host_names = self.host_names()
-        initiator_names = self.initiator_names()
-        _add_matching(self, scripts, "%(domain)sinit.sh", nic);
-        _add_matching(self, scripts, "%(domain)sinit.sh", host_names ^ nic ^ initiator_names)
-        _add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
-        _add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
-        _add_matching(self, scripts, "final.sh", host_names)
-        return scripts
-
-
-def _add_matching(test, scripts, template, host_names):
-    s = dict()
-    for host_name in host_names:
-        script = template % {'domain':host_name}
-        if (os.path.exists(os.path.join(test.directory, script))):
-            s[host_name] = script
-    if s:
-        scripts.append(s)
-
+def _scripts(directory):
+    scripts = set()
+    if os.path.isdir(directory):
+        for script in os.listdir(directory):
+            if not re.match(r".*\.sh$", script):
+                continue
+            path = os.path.join(directory, script)
+            if not os.path.isfile(path):
+                continue
+            # Add more filter-outs
+            scripts.add(script)
+    return scripts
 
 def _host_names():
-    domains = set()
-    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
-    for name in output.splitlines():
-        domains.add(name)
-    return domains
-HOST_NAMES = _host_names()
-
-
-def _host_names_from_files_with_suffix(logger, directory, suffix):
-    """Find files matching <domain><suffix>"""
     host_names = set()
-    for f in os.listdir(directory):
-        host_name, middle, tail = f.partition(suffix)
-        if not middle or tail:
-            continue
-        if not host_name in HOST_NAMES:
-            logger.warn("the domain name '%s', from '%s/<%s>%s', is invalid (valid domains: %s)",
-                        host_name, directory, host_name, suffix,
-                        " ".join(HOST_NAMES))
-            continue
+    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
+    for host_name in output.splitlines():
         host_names.add(host_name)
     return host_names
+HOST_NAMES = _host_names()
 
 
 # Load the tetsuite defined by TESTLIST

@@ -226,7 +226,7 @@ def strset(s):
 def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     test_domains = set()
-    for host_name in test.host_names():
+    for host_name in test.host_names:
         test_domains.add(all_test_domains[host_name])
     logger.debug("test domains: %s", strset(test_domains))
 
@@ -268,10 +268,8 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
                               test_domain.domain.host_name + ".console.verbose.txt")
         test_domain.console.output(open(output, "w"))
 
-    for scripts in test.scripts():
-        tasks = " ".join(("%s:%s") % (host_name, script) for host_name, script in scripts.items())
-        logger.info("running scripts: %s", tasks)
-        for host_name, script in scripts.items():
-            submit_job_for_domain(executor, jobs, logger, all_test_domains[host_name],
-                                  lambda test_domain: test_domain.read_file_run(script))
-        wait_for_jobs(jobs, logger)
+    # Run the scripts directly
+    logger.info("running scripts: %s", " ".join(str(script) for script in test.scripts))
+    for script in test.scripts:
+        test_domain = all_test_domains[script.host_name]
+        test_domain.read_file_run(script.script)

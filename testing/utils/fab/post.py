@@ -211,7 +211,7 @@ class TestResult:
 
         # Check the pluto logs for markers indicating that there was a
         # crash or other unexpected behaviour.
-        for host_name in test.host_names():
+        for host_name in test.host_names:
             pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
             if os.path.exists(pluto_log):
                 test.logger.debug("checking '%s' for errors", pluto_log)
@@ -222,7 +222,7 @@ class TestResult:
 
         # Check the raw console output for problems and that it
         # matches expected output.
-        for host_name in test.host_names():
+        for host_name in test.host_names:
 
             # There should always be raw console output from all
             # hosts.  If there isn't then there's a big problem and
@@ -375,7 +375,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     if test_result.passed and baseline_result.passed:
         return test_result
 
-    for host_name in test.host_names():
+    for host_name in test.host_names:
 
         if host_name is "nic":
             continue

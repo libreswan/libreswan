@@ -49,8 +49,7 @@ def main():
     parser.add_argument("--print-diff", action="store_true")
     parser.add_argument("--print-args", action="store_true")
     parser.add_argument("--print-scripts", action="store_true")
-    parser.add_argument("--print-domains", action="store_true")
-    parser.add_argument("--print-initiators", action="store_true")
+    parser.add_argument("--print-host-names", action="store_true")
 
     parser.add_argument("--stats", action="store", default="summary",
                         choices=["details", "summary", "none"],
@@ -84,8 +83,7 @@ def main():
     if not args.print_scripts \
        and not args.print_result \
        and not args.print_diff \
-       and not args.print_initiators \
-       and not args.print_domains:
+       and not args.print_host_names:
         args.print_result = True
 
     # The option -vvvvvvv is a short circuit for these; make
@@ -101,6 +99,8 @@ def main():
     args.list_ignored = args.list_ignored or args.verbose > v
     v += 1
     args.print_scripts = args.print_scripts or args.verbose > v
+    v += 1
+    args.print_host_names = args.print_host_names or args.verbose > v
     v += 1
     args.print_args = args.print_args or args.verbose > v
 
@@ -250,25 +250,19 @@ def results(logger, tests, baseline, args, result_stats):
                     print(result, end="")
                 sep = " "
 
-            if args.print_domains:
-                for name in test.domain_names():
+            if args.print_host_names:
+                for name in test.host_names:
                     print(sep, end="")
                     print(name, end="")
-                    sep = " "
-
-            if args.print_initiators:
-                for name in test.initiator_names():
-                    print(sep, end="")
-                    print(name, end="")
-                    sep = " "
+                    sep = ","
+                sep = " "
 
             if args.print_scripts:
-                for scripts in test.scripts():
-                    for name, script in scripts.items():
-                        print(sep, end="")
-                        print(name + ":" + script, end="")
-                        sep = ","
-                    sep = " "
+                for script in test.scripts:
+                    print(sep, end="")
+                    print(script, end="")
+                    sep = ","
+                sep = " "
 
             print()
 
