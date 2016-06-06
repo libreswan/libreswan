@@ -1397,7 +1397,7 @@ int main(int argc, char **argv)
 
 	if (!pluto_init_nss(oco->nssdir)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 
 	if (ocsp_enable) {
@@ -1405,7 +1405,7 @@ int main(int argc, char **argv)
 						     ocsp_timeout,
 						     strict_ocsp_policy)) {
 			libreswan_log("Initializing NSS OCSP failed");
-			exit_pluto(10);
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		} else {
 			libreswan_log("NSS OCSP Enabled");
 		}
