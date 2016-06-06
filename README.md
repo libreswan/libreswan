@@ -127,8 +127,8 @@ Mailing Lists:
 
 Wiki:
 
-    https://libreswan.org is home to the Libreswan WIKI.  It has the most
-    up to date documentation, interop guides and other useful information.
+    https://libreswan.org is home to the Libreswan WIKI.  it contains
+    documentation, interop guides and other useful information.
 
 IRC:
 
