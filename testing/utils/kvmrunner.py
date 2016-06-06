@@ -204,7 +204,8 @@ def main():
                     ending = "undefined"
                     try:
                         if not args.dry_run:
-                            runner.run_test(test, args)
+                            with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
+                                runner.run_test(test, args, boot_executor)
                         ending = "finished"
                         result = post.mortem(test, args, update=(not args.dry_run))
                         if not args.dry_run:

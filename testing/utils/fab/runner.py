@@ -147,129 +147,126 @@ class TestDomains:
         for test_domain in self.test_domains.values():
             test_domain.close()
 
+
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
     jobs[job] = domain
     logger.debug("scheduled %s on %s", job, domain)
 
 
-def wait_for_jobs(jobs, logger):
-    logger.debug("waiting for jobs %s", jobs)
-    for job in futures.as_completed(jobs):
-        logger.debug("job %s on %s completed", job, jobs[job])
-        # propogate any exception
-        job.result()
-
-
-def execute_on_domains(executor, jobs, logger, domains, work):
-    for domain in domains:
-        submit_job_for_domain(executor, jobs, logger, domain, work)
-    wait_for_jobs(jobs, logger)
-
-
-def run_test(test, args):
+def run_test(test, args, boot_executor):
     # Lots of WITH/TRY blocks so things always clean up.
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
 
     with TestDomains(logger, test, args.prefix, testsuite.HOST_NAMES) as all_test_domains:
-        try:
 
-            # Python doesn't have an easy way to obtain an executor's
-            # current jobs (futures) so track them using the JOBS map.
-            # If there's a crash, any remaining members of JOBS are
-            # canceled or killed in the finally block below.  The
-            # executor is cleaned up explicitly in the finally clause.
-            executor = futures.ThreadPoolExecutor(max_workers=args.workers)
-            jobs = {}
-            logger.info("starting test")
-            run_test_on_executor(executor, jobs, logger, test, all_test_domains)
-            logger.info("finishing test")
+        logger.info("starting test")
 
-        finally:
+        test_domains = set()
+        for host_name in test.host_names:
+            test_domains.add(all_test_domains[host_name])
+            logger.debug("test domains: %s", strset(test_domains))
 
-            # Control-c, timeouts, along with any other crash, and
-            # even a normal exit, all end up here!
+        idle_domains = set()
+        for test_domain in all_test_domains.values():
+            if test_domain not in test_domains:
+                idle_domains.add(test_domain)
+        logger.info("idle domains: %s", strset(idle_domains))
 
-            # Start with a list of jobs still in the queue; one or
-            # more of them may be running.
-            done, not_done = futures.wait(jobs, timeout=0)
-            logger.debug("jobs done %s not done %s", done, not_done)
+        boot_test_domains(logger, test_domains, idle_domains, boot_executor)
 
-            # First: cancel all outstanding jobs (otherwise killing
-            # one job would just result in the next job starting).
-            # Calling cancel() on running jobs has no effect so need
-            # to stop them some other way; ulgh!
-            not_canceled = set()
-            for job in not_done:
-                logger.info("trying to cancel job %s on %s", job, jobs[job])
-                if job.cancel():
-                    logger.info("job %s on %s canceled", job, jobs[job])
-                else:
-                    logger.info("job %s on %s did not cancel", job, jobs[job])
-                    not_canceled.add(job)
-            # Second: cause any un-canceled jobs (presumably they are
-            # running) to crash.  The crash() call, effectively, pulls
-            # the rug out from under the code interacting with the
-            # domain.
-            for job in not_canceled:
-                logger.info("trying to crash job %s on %s", job, jobs[job])
-                jobs[job].crash()
-            # finally shutdown the executor; it will reap all the
-            # crashed jobs.
-            executor.shutdown()
+        # re-direct the test-result log file
+        for test_domain in test_domains:
+            output = os.path.join(test.output_directory,
+                                  test_domain.domain.host_name + ".console.verbose.txt")
+            test_domain.console.output(open(output, "w"))
+
+        # Run the scripts directly
+        logger.info("running scripts: %s", " ".join(str(script) for script in test.scripts))
+        for script in test.scripts:
+            test_domain = all_test_domains[script.host_name]
+            test_domain.read_file_run(script.script)
+
+        logger.info("finishing test")
+
 
 def strset(s):
     return " ".join(str(e) for e in s)
 
-def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
+def boot_test_domains(logger, test_domains, idle_domains, executor):
 
-    test_domains = set()
-    for host_name in test.host_names:
-        test_domains.add(all_test_domains[host_name])
-    logger.debug("test domains: %s", strset(test_domains))
+    try:
 
-    idle_test_domains = set()
-    for test_domain in all_test_domains.values():
-        if test_domain not in test_domains:
-            idle_test_domains.add(test_domain)
-    logger.info("idle domains: %s", strset(idle_test_domains))
-    for test_domain in idle_test_domains:
-        submit_job_for_domain(executor, jobs, logger, test_domain,
-                              TestDomain.shutdown)
-    wait_for_jobs(jobs, logger)
+        # There's a tradeoff here between speed and reliability.
+        #
+        # In theory, the boot process is mostly I/O bound.
+        # Consequently, having lots of domains boot in parallel should
+        # be harmless.
+        #
+        # In reality, the [fedora] boot process is very much CPU bound
+        # (a rule of thumb is two cores per domain).  Consequently, it
+        # is best to serialize the boot/login process.  This is done
+        # using a futures pool shared across test runners.
 
-    # There's a tradeoff here between speed and reliability.
-    #
-    # In theory, since booting is largely I/O bound, and the host has
-    # multiple cores, it should be possible to have several domains
-    # booting in parallel; hence separate boot and login jobs (domains
-    # continue to boot after the boot jobs finish).
-    #
-    # In reality, the boot process sometimes becomes gets bogged down,
-    # taking longer than expected, and resulting in timeouts.  For
-    # instance, if more than two domains are booting at once, or the
-    # host is busy with other jobs.
+        # Python doesn't have an easy way to obtain the jobs submitted
+        # for the current test so track them locally using the JOBS
+        # map.
+        #
+        # If there's a crash, any remaining members of JOBS are
+        # canceled or killed in the finally block below.
 
-    boot_and_login = True
-    if boot_and_login:
+        jobs = {}
+
+        for test_domain in idle_domains:
+            submit_job_for_domain(executor, jobs, logger, test_domain,
+                                  TestDomain.shutdown)
+
         logger.info("boot and login domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot_and_login)
-    else:
-        logger.info("boot domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot)
-        logger.info("login domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
+        for domain in test_domains:
+            submit_job_for_domain(executor, jobs, logger, domain,
+                                  TestDomain.boot_and_login)
 
-    # re-direct the test-result log file
-    for test_domain in test_domains:
-        output = os.path.join(test.output_directory,
-                              test_domain.domain.host_name + ".console.verbose.txt")
-        test_domain.console.output(open(output, "w"))
+        # Wait for the jobs to finish.  If one crashes, propogate the
+        # exception - will force things into the finally block.
+        logger.debug("waiting for jobs %s", jobs)
+        for job in futures.as_completed(jobs):
+            logger.debug("job %s on %s completed", job, jobs[job])
+            # propogate any exception
+            job.result()
 
-    # Run the scripts directly
-    logger.info("running scripts: %s", " ".join(str(script) for script in test.scripts))
-    for script in test.scripts:
-        test_domain = all_test_domains[script.host_name]
-        test_domain.read_file_run(script.script)
+    finally:
+
+        # Control-c, timeouts, along with any other crash, and even a
+        # normal exit, all end up here!
+
+        # Start with a list of jobs still in the queue; one or more of
+        # them may be running.
+        done, not_done = futures.wait(jobs, timeout=0)
+        logger.debug("jobs done %s not done %s", done, not_done)
+
+        # First: cancel all outstanding jobs (otherwise killing one
+        # job would just result in the next job starting).  Calling
+        # cancel() on running jobs has no effect so need to stop them
+        # some other way; ulgh!
+        not_canceled = set()
+        for job in not_done:
+            logger.info("trying to cancel job %s on %s", job, jobs[job])
+            if job.cancel():
+                logger.info("job %s on %s canceled", job, jobs[job])
+            else:
+                logger.info("job %s on %s did not cancel", job, jobs[job])
+                not_canceled.add(job)
+
+        # Second: cause any un-canceled jobs (presumably they are
+        # running) to crash.  The crash() call, effectively, pulls
+        # the rug out from under the code interacting with the
+        # domain.
+        for job in not_canceled:
+            logger.info("trying to crash job %s on %s", job, jobs[job])
+            jobs[job].crash()
+
+        # Finally wait again, but this time infinitely as all jobs
+        # should already be done.
+        futures.wait(jobs)
