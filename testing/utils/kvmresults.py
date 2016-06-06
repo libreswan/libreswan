@@ -194,6 +194,7 @@ def results(logger, tests, baseline, args, result_stats):
             if not ignore and args.print_result:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
+                                     test_finished=None,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,
                                      update=args.update,

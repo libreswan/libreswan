@@ -56,7 +56,6 @@ class Test:
             testsuite_output_directory
             and os.path.join(testsuite_output_directory, self.name)
             or os.path.join(self.directory, "OUTPUT"))
-        self.result_file = os.path.join(self.output_directory, "RESULT")
 
         # Directory containing saved output from a previous test run.
         # If the test's output directory was explicitly specified, say
@@ -122,6 +121,13 @@ class Test:
         # append the final scripts
         for script in final:
             self.scripts.append(script)
+
+
+    def result_file(self, directory=None):
+        """The result file in the given directory, or output_directory"""
+
+        directory = directory or self.output_directory
+        return os.path.join(directory, "RESULT")
 
 
     def __str__(self):

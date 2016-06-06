@@ -129,10 +129,10 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 kvm-check: kvm-check-good
 kvm-check-good: $(KVM_KEYS)
 	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry  1 --test-result "good"     $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --skip-passed --test-result "good"     $(STRIPPED_KVM_TESTS)
 kvm-check-all: $(KVM_KEYS)
 	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry  1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --skip-passed --test-result "good|wip" $(STRIPPED_KVM_TESTS)
 
 # "test" runs tests regardless.  It is best used with the KVM_TESTS
 # varible.
@@ -140,10 +140,10 @@ kvm-check-all: $(KVM_KEYS)
 kvm-test: kvm-test-good
 kvm-test: $(KVM_KEYS)
 	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good"     $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --test-result "good"     $(STRIPPED_KVM_TESTS)
 kvm-test-all: $(KVM_KEYS)
 	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) --test-result "good|wip" $(STRIPPED_KVM_TESTS)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \

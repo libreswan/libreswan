@@ -32,10 +32,15 @@ from fab import stats
 def main():
     parser = argparse.ArgumentParser(description="Run tests")
 
-    # This argument's behaviour is overloaded; the shorter word "try"
-    # is a python word.
-    parser.add_argument("--retry", type=int, metavar="COUNT", default=1,
-                        help="which previously run tests should be retried: 0 selects not-started tests; 1 selects not-started+failed tests; -1 selects not-started+failed+passed tests (default is %(default)s)")
+    parser.add_argument("--skip-passed", action="store_true",
+                        help="skip tests that passed during the previous test run")
+    parser.add_argument("--skip-failed", action="store_true",
+                        help="skip tests that failed during the previous test run")
+    parser.add_argument("--skip-incomplete", action="store_true",
+                        help="skip tests that did not complete during the previous test run")
+    parser.add_argument("--skip-untested", action="store_true",
+                        help="skip tests that have not been previously run")
+
     parser.add_argument("--attempts", type=int, default=1,
                         help="number of times to attempt a test before giving up; default %(default)s")
 
@@ -60,11 +65,14 @@ def main():
 
     logger = logutil.getLogger("kvmrunner")
     logger.info("Options:")
-    logger.info("  retry: %s", args.retry)
     logger.info("  attempts: %s", args.attempts)
     logger.info("  dry-run: %s", args.dry_run)
     logger.info("  backup-directory: %s", args.backup_directory)
     logger.info("  directories: %s", args.directories)
+    logger.info("  skip-passed: %s", args.skip_passed)
+    logger.info("  skip-failed: %s", args.skip_failed)
+    logger.info("  skip-incomplete: %s", args.skip_incomplete)
+    logger.info("  skip-untested: %s", args.skip_untested)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
     post.log_arguments(logger, args)
@@ -111,23 +119,29 @@ def main():
 
             # Be lazy with gathering the results, don't run the
             # sanitizer or diff.
-            old_result = post.mortem(test, args, skip_diff=True, skip_sanitize=True)
-            if args.retry >= 0:
-                if old_result:
-                    if old_result.passed:
-                        logger.info("%s: passed", test_prefix)
-                        test_stats.add(test, "skipped")
-                        result_stats.add_skipped(old_result)
-                        continue
-                    if args.retry == 0:
-                        logger.info("%s: %s (delete '%s' to re-test)", test_prefix,
-                                    result, test.output_directory)
-                        test_stats.add(test, "skipped")
-                        result_stats.add_skipped(old_result)
-                        continue
-                    test_stats.add(test, "retry")
+            #
+            # XXX: There is a bug here where the only difference is
+            # white space.  The test will show up as failed when it
+            # previousl showed up as a whitespace pass.
+            #
+            # The presence of the RESULT file is a proxy for detecting
+            # that the test was incomplete.
+            old_result = post.mortem(test, args, test_finished=None,
+                                     skip_diff=True, skip_sanitize=True)
+            if args.skip_passed and old_result.finished and old_result.passed is True or \
+               args.skip_failed and old_result.finished and old_result.passed is False or \
+               args.skip_incomplete and old_result.finished is False or \
+               args.skip_untested and old_result.finished is None:
+                logger.info("%s: skipped (previously %s)", test_prefix, old_result)
+                test_stats.add(test, "skipped")
+                result_stats.add_skipped(old_result)
+                continue
 
-            logger.info("%s: starting ...", test_prefix)
+            if old_result:
+                test_stats.add(test, "retry")
+                logger.info("%s: starting (previously %s) ...", test_prefix, old_result)
+            else:
+                logger.info("%s: starting ...", test_prefix)
             test_stats.add(test, "tests")
 
             # Move the contents of the existing OUTPUT directory to
@@ -207,18 +221,23 @@ def main():
                             with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
                                 runner.run_test(test, args, boot_executor)
                         ending = "finished"
-                        result = post.mortem(test, args, update=(not args.dry_run))
+                        result = post.mortem(test, args, test_finished=True,
+                                             update=(not args.dry_run))
                         if not args.dry_run:
                             # Store enough to fool the script
-                            # pluto-testlist-scan.sh.
-                            logger.info("storing result in '%s'", test.result_file)
-                            with open(test.result_file, "w") as f:
+                            # pluto-testlist-scan.sh and leave a
+                            # marker to indicate that the test
+                            # finished.
+                            logger.info("storing result in '%s'", test.result_file())
+                            with open(test.result_file(), "w") as f:
                                 f.write('"result": "%s"\n' % result)
                     except pexpect.TIMEOUT as e:
                         logger.exception("**** test %s timed out ****", test.name)
                         ending = "timed-out"
-                        # If the test has no output to check against, this will "pass"
-                        result = post.mortem(test, args, update=(not args.dry_run))
+                        # Still peform post-mortem so that errors are
+                        # captured, but force the result to incomplete.
+                        result = post.mortem(test, args, test_finished=False,
+                                             update=(not args.dry_run))
                     # Since the OUTPUT directory exists, all paths to
                     # here should have a non-null RESULT.
                     test_stats.add(test, "attempts", ending, str(result))
