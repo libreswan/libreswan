@@ -174,7 +174,7 @@ static void help(void)
 		"\n"
 		"reread: whack [--rereadsecrets] [--rereadcrls] [--rereadall] \\\n"
 		"\n"
-		"status: whack --status --trafficstatus --globalstatus --shuntstatus\n"
+		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
 		"shutdown: whack --shutdown\n"
 		"\n"
@@ -283,6 +283,7 @@ enum option_enums {
 	OPT_SHUTDOWN,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
+	OPT_FIPS_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -498,6 +499,7 @@ static const struct option long_opts[] = {
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
+	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "username", required_argument, NULL, OPT_USERNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
@@ -1223,6 +1225,10 @@ int main(int argc, char **argv)
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
 			msg.whack_shunt_status = TRUE;
+			continue;
+
+		case OPT_FIPS_STATUS:	/* --fipsstatus */
+			msg.whack_fips_status = TRUE;
 			continue;
 
 		case OPT_SHUTDOWN:	/* --shutdown */
@@ -2083,7 +2089,8 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
-	      msg.whack_options || msg.whack_shutdown || msg.whack_purgeocsp))
+	      msg.whack_fips_status || msg.whack_options || msg.whack_shutdown ||
+	      msg.whack_purgeocsp))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

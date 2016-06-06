@@ -21,16 +21,18 @@
 #ifndef _LSW_FIPS_H
 #define _LSW_FIPS_H
 
+enum lsw_fips_mode {
+	LSW_FIPS_UNSET = 0,
+	LSW_FIPS_UNKNOWN,
+	LSW_FIPS_OFF,
+	LSW_FIPS_ON
+};
+
 #ifdef FIPS_CHECK
 
-int libreswan_has_fips_product(bool force);
-int libreswan_has_fips_kernel(bool force);
-
-void libreswan_set_fips_mode(bool fips_mode);
-
-int libreswan_fipsmode(void);
-int libreswan_fipsproduct(void);
-int libreswan_fipskernel(void);
+extern void lsw_set_fips_mode(enum lsw_fips_mode fips);
+extern enum lsw_fips_mode lsw_get_fips_mode(void);
+extern bool libreswan_fipsmode(void);
 #endif
 
 #endif /* _LSW_FIPS_H_ */

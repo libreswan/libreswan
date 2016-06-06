@@ -91,6 +91,7 @@
 #include "nat_traversal.h"
 
 #include "lsw_select.h"
+#include "lswfips.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -503,6 +504,22 @@ void show_debug_status(void)
 {
 	whack_log(RC_COMMENT, "debug %s",
 		  bitnamesof(debug_bit_names, cur_debugging));
+}
+
+void show_fips_status(void)
+{
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+	whack_log(RC_COMMENT, "FIPS mode %s", !fips ?
+#ifdef FIPS_CHECK
+		"disabled" :
+#else
+		"disabled [support not compiled in]" :
+#endif
+		DBGP(IMPAIR_FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 
 static volatile sig_atomic_t sighupflag = FALSE;
