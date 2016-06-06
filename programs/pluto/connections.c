@@ -2618,7 +2618,7 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		 */
 		{
 			struct connection *d = find_host_connection(me,
-					pluto_port, (ip_address*)NULL, his_port,
+					pluto_port /* not my_port? */, (ip_address*)NULL, his_port,
 					policy, LEMPTY);
 
 			while (d != NULL) {
