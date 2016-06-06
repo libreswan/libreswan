@@ -21,6 +21,7 @@ v3.18 (unreleased)
 * FIPS: change SA_LIFE_DURATION_MAXIMUM from 1 day to 8h [Paul]
 * FIPS: Do not allow Linux-style sha2 truncation for ESP in FIPS mode [Paul]
 * FIPS: Allow PSK in FIPS mode. This was erroneously not allowed [Paul]
+* FIPS: Added new ipsec whack --fipsstatus [Paul]
 * IKEv2: for default proposals, prefer MODP2048 over MODP1536 [Andrew]
 * IKEv2: for proposals like ike=aes-sha2, prefer AES_256 over AES_128 [Andrew]
 * IKEv2: for default ESP proposals, include and prefer AES_GCM [Andrew]
