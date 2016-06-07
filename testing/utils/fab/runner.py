@@ -1,12 +1,12 @@
 # Test driver, for libreswan
 #
 # Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -32,7 +32,7 @@ def add_arguments(parser):
                                       "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
                        help="default: %(default)s")
-    group.add_argument("--prefix", metavar="DOMAIN-PREFIX", default="",
+    group.add_argument("--prefix", metavar="DOMAIN-PREFIX", action="append",
                        help="prefix to prepend to each domain")
 
     group.add_argument("--skip-passed", action="store_true",
@@ -179,28 +179,28 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
     logger.debug("scheduled %s on %s", job, domain)
 
 
-def run_test(test, args, boot_executor):
+def run_test(test, args, domain_prefix, boot_executor):
     # Lots of WITH/TRY blocks so things always clean up.
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
 
-    with TestDomains(logger, test, args.prefix, testsuite.HOST_NAMES) as all_test_domains:
+    with TestDomains(logger, test, domain_prefix, testsuite.HOST_NAMES) as all_test_domains:
 
         logger.info("starting test")
 
         test_domains = set()
         for host_name in test.host_names:
             test_domains.add(all_test_domains[host_name])
-            logger.debug("test domains: %s", strset(test_domains))
+        logger.debug("test domains: %s", strset(test_domains))
 
-        idle_domains = set()
+        unused_domains = set()
         for test_domain in all_test_domains.values():
             if test_domain not in test_domains:
-                idle_domains.add(test_domain)
-        logger.info("idle domains: %s", strset(idle_domains))
+                unused_domains.add(test_domain)
+        logger.debug("unused domains: %s", strset(unused_domains))
 
-        boot_test_domains(logger, test_domains, idle_domains, boot_executor)
+        boot_test_domains(logger, test_domains, unused_domains, boot_executor)
 
         # re-direct the test-result log file
         for test_domain in test_domains:
@@ -220,9 +220,12 @@ def run_test(test, args, boot_executor):
 def strset(s):
     return " ".join(str(e) for e in s)
 
-def boot_test_domains(logger, test_domains, idle_domains, executor):
+def boot_test_domains(logger, test_domains, unused_domains, executor):
 
     try:
+
+        boot_start_time = time.time()
+        logger.info("starting domains")
 
         # There's a tradeoff here between speed and reliability.
         #
@@ -244,11 +247,12 @@ def boot_test_domains(logger, test_domains, idle_domains, executor):
 
         jobs = {}
 
-        for test_domain in idle_domains:
+        logger.info("shutting down unused domains: %s", strset(unused_domains))
+        for test_domain in unused_domains:
             submit_job_for_domain(executor, jobs, logger, test_domain,
                                   TestDomain.shutdown)
 
-        logger.info("boot and login domains: %s", strset(test_domains))
+        logger.info("booting and loging into test domains: %s", strset(test_domains))
         for domain in test_domains:
             submit_job_for_domain(executor, jobs, logger, domain,
                                   TestDomain.boot_and_login)
@@ -260,6 +264,9 @@ def boot_test_domains(logger, test_domains, idle_domains, executor):
             logger.debug("job %s on %s completed", job, jobs[job])
             # propogate any exception
             job.result()
+
+        logger.info("domains started after %d seconds",
+                    time.time() - boot_start_time)
 
     finally:
 
@@ -298,13 +305,15 @@ def boot_test_domains(logger, test_domains, idle_domains, executor):
 
 def run_tests(logger, args, tests, test_stats, result_stats, start_time):
 
+    suffix = "******"
     test_count = 0
     for test in tests:
 
         test_stats.add(test, "total")
         test_count += 1
         # Would the number of tests to be [re]run be better?
-        test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
+        test_start_time = time.time()
+        test_prefix = "%s %s (test %d of %d)" % (suffix, test.name, test_count, len(tests))
 
         ignore, details = testsuite.ignore(test, args)
         if ignore:
@@ -314,7 +323,7 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
             # explicit sub-set of tests is being run.  For
             # instance, when running just one test.
             if not args.test_name:
-                logger.info("%s: ignore (%s)", test_prefix, details)
+                logger.info("%s ignored (%s)", test_prefix, details)
             continue
 
         # Implement "--retry" as described above: if retry is -ve,
@@ -337,16 +346,17 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
            args.skip_failed and old_result.finished and old_result.passed is False or \
            args.skip_incomplete and old_result.finished is False or \
            args.skip_untested and old_result.finished is None:
-            logger.info("%s: skipped (previously %s)", test_prefix, old_result)
+            logger.info("%s skipped (previously %s)", test_prefix, old_result)
             test_stats.add(test, "skipped")
             result_stats.add_skipped(old_result)
             continue
 
         if old_result:
-            test_stats.add(test, "retry")
-            logger.info("%s: starting (previously %s) ...", test_prefix, old_result)
+            test_stats.add(test, "tests", "retry")
+            logger.info("%s started (previously %s) ....", test_prefix, old_result)
         else:
-            logger.info("%s: starting ...", test_prefix)
+            test_stats.add(test, "tests", "try")
+            logger.info("%s started ....", test_prefix)
         test_stats.add(test, "tests")
 
         # Move the contents of the existing OUTPUT directory to
@@ -412,8 +422,9 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
             # Start a debug log in the OUTPUT directory; include
             # timing for this specific test attempt.
             with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
-                logger.info("****** test %s attempt %d of %d started at %s ******",
-                            test.name, attempt+1, args.attempts, datetime.now())
+                attempt_start_time = time.time()
+                attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
+                logger.info("%s started ....", attempt_prefix)
 
                 if backup_directory:
                     logger.info("contents of '%s' moved to '%s'",
@@ -424,7 +435,8 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
                 try:
                     if not args.dry_run:
                         with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-                            run_test(test, args, boot_executor)
+                            domain_prefix = args.prefix and args.prefix[0] or ""
+                            run_test(test, args, domain_prefix, boot_executor)
                     ending = "finished"
                     result = post.mortem(test, args, test_finished=True,
                                          update=(not args.dry_run))
@@ -446,10 +458,9 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
                 # Since the OUTPUT directory exists, all paths to
                 # here should have a non-null RESULT.
                 test_stats.add(test, "attempts", ending, str(result))
-                if result.errors:
-                    logger.info("****** test %s %s %s ******", test.name, result, result.errors)
-                else:
-                    logger.info("****** test %s %s ******", test.name, result)
+                logger.info("%s %s%s%s after %d seconds %s", attempt_prefix, result,
+                            result.errors and " ", result.errors,
+                            time.time() - attempt_start_time, suffix)
                 if result.passed:
                     break
 
@@ -458,6 +469,10 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
 
         test_stats.add(test, "tests", str(result))
         result_stats.add_result(result, old_result)
+
+        logger.info("%s %s%s%s after %d seconds %s", test_prefix, result,
+                    result.errors and " ", result.errors,
+                    time.time() - test_start_time, suffix)
 
         test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
         result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")

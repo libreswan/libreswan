@@ -15,14 +15,9 @@
 # for more details.
 
 import sys
-import os
-import re
-import pexpect
 import argparse
-import shutil
 from datetime import datetime
-from distutils import util
-from concurrent import futures
+
 from fab import runner
 from fab import testsuite
 from fab import logutil
