@@ -16,7 +16,9 @@ import os
 import sys
 import pexpect
 import time
+from datetime import datetime
 from concurrent import futures
+
 from fab import virsh
 from fab import testsuite
 from fab import remote
@@ -26,18 +28,41 @@ from fab import post
 
 
 def add_arguments(parser):
-    group = parser.add_argument_group("Run arguments", "Arguments controlling how tests are run")
+    group = parser.add_argument_group("Test Runner arguments",
+                                      "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
                        help="default: %(default)s")
     group.add_argument("--prefix", metavar="DOMAIN-PREFIX", default="",
                        help="prefix to prepend to each domain")
 
+    group.add_argument("--skip-passed", action="store_true",
+                       help="skip tests that passed during the previous test run")
+    group.add_argument("--skip-failed", action="store_true",
+                       help="skip tests that failed during the previous test run")
+    group.add_argument("--skip-incomplete", action="store_true",
+                       help="skip tests that did not complete during the previous test run")
+    group.add_argument("--skip-untested", action="store_true",
+                       help="skip tests that have not been previously run")
+
+    group.add_argument("--attempts", type=int, default=1,
+                       help="number of times to attempt a test before giving up; default %(default)s")
+
+    # Default to BACKUP under the current directory.  Name is
+    # arbitrary, chosen for its hopefully unique first letter
+    # (avoiding Makefile, OBJ, README, ... :-).
+    parser.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
+                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
 def log_arguments(logger, args):
-    logger.info("Runner arguments:")
+    logger.info("Test Runner arguments:")
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
-
+    logger.info("  skip-passed: %s", args.skip_passed)
+    logger.info("  skip-failed: %s", args.skip_failed)
+    logger.info("  skip-incomplete: %s", args.skip_incomplete)
+    logger.info("  skip-untested: %s", args.skip_untested)
+    logger.info("  attempts: %s", args.attempts)
+    logger.info("  backup-directory: %s", args.backup_directory)
 
 TEST_TIMEOUT = 120
 
@@ -270,3 +295,169 @@ def boot_test_domains(logger, test_domains, idle_domains, executor):
         # Finally wait again, but this time infinitely as all jobs
         # should already be done.
         futures.wait(jobs)
+
+def run_tests(logger, args, tests, test_stats, result_stats, start_time):
+
+    test_count = 0
+    for test in tests:
+
+        test_stats.add(test, "total")
+        test_count += 1
+        # Would the number of tests to be [re]run be better?
+        test_prefix = "****** %s (test %d of %d)" % (test.name, test_count, len(tests))
+
+        ignore, details = testsuite.ignore(test, args)
+        if ignore:
+            result_stats.add_ignored(test, ignore)
+            test_stats.add(test, "ignored")
+            # No need to log all the ignored tests when an
+            # explicit sub-set of tests is being run.  For
+            # instance, when running just one test.
+            if not args.test_name:
+                logger.info("%s: ignore (%s)", test_prefix, details)
+            continue
+
+        # Implement "--retry" as described above: if retry is -ve,
+        # the test is always run; if there's no result, the test
+        # is always run; skip passed tests; else things get a
+        # little wierd.
+
+        # Be lazy with gathering the results, don't run the
+        # sanitizer or diff.
+        #
+        # XXX: There is a bug here where the only difference is
+        # white space.  The test will show up as failed when it
+        # previousl showed up as a whitespace pass.
+        #
+        # The presence of the RESULT file is a proxy for detecting
+        # that the test was incomplete.
+        old_result = post.mortem(test, args, test_finished=None,
+                                 skip_diff=True, skip_sanitize=True)
+        if args.skip_passed and old_result.finished and old_result.passed is True or \
+           args.skip_failed and old_result.finished and old_result.passed is False or \
+           args.skip_incomplete and old_result.finished is False or \
+           args.skip_untested and old_result.finished is None:
+            logger.info("%s: skipped (previously %s)", test_prefix, old_result)
+            test_stats.add(test, "skipped")
+            result_stats.add_skipped(old_result)
+            continue
+
+        if old_result:
+            test_stats.add(test, "retry")
+            logger.info("%s: starting (previously %s) ...", test_prefix, old_result)
+        else:
+            logger.info("%s: starting ...", test_prefix)
+        test_stats.add(test, "tests")
+
+        # Move the contents of the existing OUTPUT directory to
+        # BACKUP_DIRECTORY.  Do it file-by-file so that, at no
+        # point, the directory is empty.
+        #
+        # By moving each test just before it is started a trail of
+        # what tests were attempted at each run is left.
+        #
+        # XXX: During boot, swan-transmogrify runs "chcon -R
+        # testing/pluto".  Of course this means that each time a
+        # test is added and/or a test is run (adding files under
+        # <test>/OUTPUT), the boot process (and consequently the
+        # time taken to run a test) keeps increasing.
+        #
+        # Always moving the directory contents to the
+        # BACKUP_DIRECTORY mitigates this some.
+
+        backup_directory = None
+        if os.path.exists(test.output_directory):
+            backup_directory = os.path.join(args.backup_directory,
+                                            start_time.strftime("%Y%m%d%H%M%S"),
+                                            test.name)
+            logger.info("moving contents of '%s' to '%s'",
+                        test.output_directory, backup_directory)
+            # Copy "empty" OUTPUT directories too.
+            args.dry_run or os.makedirs(backup_directory, exist_ok=True)
+            for name in os.listdir(test.output_directory):
+                src = os.path.join(test.output_directory, name)
+                dst = os.path.join(backup_directory, name)
+                logger.debug("moving '%s' to '%s'", src, dst)
+                args.dry_run or os.replace(src, dst)
+
+        debugfile = None
+        result = None
+
+        # At least one iteration; above will have filtered out
+        # skips and ignores
+        for attempt in range(args.attempts):
+            test_stats.add(test, "attempts")
+
+            # Create the OUTPUT directory.
+            try:
+                if not args.dry_run:
+                    os.mkdir(test.output_directory)
+                elif os.exists(test.output_directory):
+                    raise FileExistsError()
+            except FileExistsError:
+                # On first attempt, the OUTPUT directory will
+                # be empty (see above) so no need to save.
+                if attempt > 0:
+                    backup_directory = os.path.join(test.output_directory, str(attempt))
+                    logger.info("moving contents of '%s' to '%s'",
+                                test.output_directory, backup_directory)
+                    args.dry_run or os.makedirs(backup_directory, exist_ok=True)
+                    for name in os.listdir(test.output_directory):
+                        if os.path.isfile(src):
+                            src = os.path.join(test.output_directory, name)
+                            dst = os.path.join(backup_directory, name)
+                            logger.debug("moving '%s' to '%s'", src, dst)
+                            args.dry_run or os.replace(src, dst)
+
+            # Start a debug log in the OUTPUT directory; include
+            # timing for this specific test attempt.
+            with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
+                logger.info("****** test %s attempt %d of %d started at %s ******",
+                            test.name, attempt+1, args.attempts, datetime.now())
+
+                if backup_directory:
+                    logger.info("contents of '%s' moved to '%s'",
+                                test.output_directory, backup_directory)
+                backup_directory = None
+
+                ending = "undefined"
+                try:
+                    if not args.dry_run:
+                        with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
+                            run_test(test, args, boot_executor)
+                    ending = "finished"
+                    result = post.mortem(test, args, test_finished=True,
+                                         update=(not args.dry_run))
+                    if not args.dry_run:
+                        # Store enough to fool the script
+                        # pluto-testlist-scan.sh and leave a
+                        # marker to indicate that the test
+                        # finished.
+                        logger.info("storing result in '%s'", test.result_file())
+                        with open(test.result_file(), "w") as f:
+                            f.write('"result": "%s"\n' % result)
+                except pexpect.TIMEOUT as e:
+                    logger.exception("**** test %s timed out ****", test.name)
+                    ending = "timed-out"
+                    # Still peform post-mortem so that errors are
+                    # captured, but force the result to incomplete.
+                    result = post.mortem(test, args, test_finished=False,
+                                         update=(not args.dry_run))
+                # Since the OUTPUT directory exists, all paths to
+                # here should have a non-null RESULT.
+                test_stats.add(test, "attempts", ending, str(result))
+                if result.errors:
+                    logger.info("****** test %s %s %s ******", test.name, result, result.errors)
+                else:
+                    logger.info("****** test %s %s ******", test.name, result)
+                if result.passed:
+                    break
+
+        # Above will have set RESULT.  During a control-c or crash
+        # the below will not be executed.
+
+        test_stats.add(test, "tests", str(result))
+        result_stats.add_result(result, old_result)
+
+        test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
+        result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
