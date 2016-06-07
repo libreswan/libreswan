@@ -118,6 +118,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 
 		struct private_key_stuff pks = {
 			.kind = PPK_RSA,
+			.on_heap = TRUE,
 		};
 
 		{
