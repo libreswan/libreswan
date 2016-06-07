@@ -854,18 +854,22 @@ static const char *const ipsec_attr_name[] = {
 #endif
 };
 
-/* these are the only attributes with which we support variable length values */
+/*
+ * These are attributes with variable length values (TLV).
+ * The ones we actually support have non-NULL entries.
+ */
 static const char *const ipsec_var_attr_name[] = {
+	NULL,	/* SA_LIFE_TYPE */
 	"SA_LIFE_DURATION (variable length)",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL,	/* GROUP_DESCRIPTION */
+	NULL,	/* ENCAPSULATION_MODE */
+	NULL,	/* AUTH_ALGORITHM */
+	NULL,	/* KEY_LENGTH */
+	NULL,	/* KEY_ROUNDS */
+	NULL,	/* COMPRESS_DICT_SIZE */
 	"COMPRESS_PRIVATE_ALG (variable length)",
 #ifdef HAVE_LABELED_IPSEC
-	"NULL", /* ECN TUNNEL */
+	"NULL", /* ECN_TUNNEL_or_old_SECCTX */
 #endif
 };
 
