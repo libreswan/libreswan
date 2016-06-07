@@ -446,6 +446,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	log_to_stderr = verbose > 0;
+	tool_init_log();
+
 	if (!(left_flg + right_flg + ipseckey_flg + dump_flg + list_flg)) {
 		fprintf(stderr, "%s: You must specify an operation\n", progname);
 		goto usage;
