@@ -177,7 +177,7 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
-const char *ckaid_starts_with(ckaid_t ckaid, const char *start);
+bool ckaid_starts_with(ckaid_t ckaid, const char *start);
 char *ckaid_as_string(ckaid_t ckaid);
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
 err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);

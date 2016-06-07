@@ -710,13 +710,12 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 }
 
 /*
- * Return the first character that doesn't match; or NULL if
- * everything matches.
+ * Return true IFF CKAID starts with all of START (which is in HEX).
  */
-const char *ckaid_starts_with(ckaid_t ckaid, const char *start)
+bool ckaid_starts_with(ckaid_t ckaid, const char *start)
 {
 	if (strlen(start) > ckaid.nss->len * 2) {
-		return start + strlen(start);
+		return FALSE;
 	}
 	int i;
 	for (i = 0; start[i]; i++) {
@@ -728,13 +727,13 @@ const char *ckaid_starts_with(ckaid_t ckaid, const char *start)
 		char *end;
 		unsigned long ni = strtoul(n, &end, 16);
 		if (*end) {
-			return p;
+			return FALSE;
 		}
 		if (ni != nibble) {
-			return p;
+			return FALSE;
 		}
 	}
-	return NULL;
+	return TRUE;
 }
 
 char *ckaid_as_string(ckaid_t ckaid)

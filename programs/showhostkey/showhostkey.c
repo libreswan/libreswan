@@ -60,17 +60,12 @@
 #include <prinit.h>
 
 char usage[] =
-	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
-	"                         [--configdir <configdir> ]"
-#if 0
-	"                         [--password <password> ]\n"
-#endif
-	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
-	"                         [--dump ] [--list ]\n"
-	"                         [--dhclient ] [--file secretfile ]\n"
-	"                         [--keynum count ]\n"
-	"                         [--rsaid <keyid> ] [--id <id> ] [--ckaid <ckaid> ]\n"
-	"                         [--verbose] [--version]\n";
+  "Usage: ipsec showhostkey [ --verbose ]\n"
+  "                    { --version | --dump | --list | --left | --right |\n"
+  "                      --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
+  "                    [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
+  "                    [ --configdir <configdir> ] [ --password <password> ]\n"
+  "                    [ --file secretfile ]\n";
 
 /*
  * For new options, avoid magic numbers.
@@ -92,18 +87,13 @@ struct option opts[] = {
 	{ "ipseckey",  no_argument,    NULL,   'K', },
 	{ "gateway",   required_argument, NULL, 'g', },
 	{ "precedence", required_argument, NULL, 'p', },
-	{ "dhclient",  no_argument,    NULL,   'd', },
 	{ "file",      required_argument, NULL, 'f', },
-	{ "keynum",    required_argument, NULL, 'n', },
-	{ "id",        required_argument, NULL, 'i', },
 	{ "ckaid",     required_argument, NULL, OPT_CKAID, },
 	{ "rsaid",     required_argument, NULL, 'I', },
 	{ "version",   no_argument,     NULL,  'V', },
 	{ "verbose",   no_argument,     NULL,  'v', },
 	{ "configdir", required_argument,     NULL,  OPT_CONFIGDIR, },
-#if 0
 	{ "password",  required_argument,     NULL,  OPT_PASSWORD, },
-#endif
 	{ 0,           0,      NULL,   0, }
 };
 
@@ -144,7 +134,7 @@ static void print(struct private_key_stuff *pks,
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
 		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
 		if (id) {
-			printf(" id: %s\n", idb);
+			printf(" id: %s", idb);
 		}
 		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
 		printf(" ckaid: %s\n", ckaid);
@@ -197,16 +187,19 @@ static int dump_key(struct secret *secret,
 	return 1;
 }
 
-static int pick_by_keyid(struct secret *secret UNUSED,
+static int pick_by_rsaid(struct secret *secret UNUSED,
 			 struct private_key_stuff *pks,
 			 void *uservoid)
 {
-	char *keyid = (char *)uservoid;
+	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PPK_RSA && streq(pks->u.RSA_private_key.pub.keyid, keyid))
+	if (pks->kind == PPK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
+		/* stop */
 		return 0;
-
-	return 1;
+	} else {
+		/* try again */
+		return 1;
+	}
 }
 
 static int pick_by_ckaid(struct secret *secret UNUSED,
@@ -215,37 +208,12 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 {
 	char *start = (char *)uservoid;
 	if (pks->kind == PPK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+		/* stop */
+		return 0;
+	} else {
 		/* try again */
 		return 1;
 	}
-	return 0;
-}
-
-static struct secret *pick_by_id(struct secret *host_secrets,
-				  char *idname)
-{
-	struct id id;
-	struct secret *s;
-	err_t e = atoid(idname, &id, FALSE, FALSE);
-
-	if (e != NULL) {
-		fprintf(stderr, "%s: key '%s' is invalid\n",
-			progname, idname);
-		return NULL;
-	}
-
-	s = lsw_find_secret_by_id(host_secrets, PPK_RSA,
-				  &id, NULL, TRUE /* asymmetric */);
-
-	if (s == NULL) {
-		char abuf[IDTOA_BUF];
-		idtoa(&id, abuf, IDTOA_BUF);
-		fprintf(stderr, "%s: cannot find key '%s' (%s)\n",
-			progname, idname, abuf);
-		return NULL;
-	}
-
-	return s;
 }
 
 static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
@@ -340,7 +308,8 @@ static int show_confkey(struct private_key_stuff *pks,
 	return 0;
 }
 
-static struct private_key_stuff *foreach_secret(char *secrets_file, secret_eval func, void *uservoid)
+static struct private_key_stuff *foreach_secret(struct secret *host_secrets,
+						secret_eval func, void *uservoid)
 {
 	/*
 	 * XXX: Potential Memory leak.
@@ -352,47 +321,39 @@ static struct private_key_stuff *foreach_secret(char *secrets_file, secret_eval 
 	 * For moment ignore this - as only caller is showhostkey.c
 	 * which quickly exits.
 	 */
-	if (secrets_file && secrets_file[0]) {
-		struct secret *host_secrets = NULL;
-		lsw_load_preshared_secrets(&host_secrets, secrets_file);
+	if (host_secrets) {
 		struct secret *s = lsw_foreach_secret(host_secrets, func, uservoid);
-		return s ? lsw_get_pks(s) : NULL;
-	} else {
-		lsw_nss_buf_t err;
-		struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, err);
-		if (err[0]) {
-			fprintf(stderr, "%s: %s\n", progname, err);
-			return NULL;
+		if (s) {
+			return lsw_get_pks(s);
 		}
-		return pks;
 	}
+	lsw_nss_buf_t err = {0};
+	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, err);
+	if (err[0]) {
+		fprintf(stderr, "%s: %s\n", progname, err);
+		return NULL;
+	}
+	return pks;
 }
 
 int main(int argc, char *argv[])
 {
-	char *secrets_file = NULL;
+	char *secrets_file = IPSEC_CONFDIR "/ipsec.secrets";
 	int opt;
-	int errflg = 0;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;
 	bool dump_flg = FALSE;
 	bool list_flg = FALSE;
 	bool ipseckey_flg = FALSE;
-	bool dhclient_flg = FALSE;
 	char *gateway = NULL;
 	int precedence = 10;
 	int verbose = 0;
-	const struct lsw_conf_options *oco = lsw_init_options();
-	char *configdir = oco->confddir;
-	char *keyid, *id;
-	struct private_key_stuff *pks;
+	char *configdir = IPSEC_CONFDDIR;
 	char *ckaid = NULL;
+	char *rsaid = NULL;
 #if 0
 	char *password = NULL;
 #endif
-
-	keyid = NULL;
-	id = NULL;
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {
@@ -450,16 +411,12 @@ int main(int argc, char *argv[])
 			secrets_file = clone_str(optarg, "file");
 			break;
 
-		case 'i':
-			id = clone_str(optarg, "keyname");
-			break;
-
 		case OPT_CKAID:
 			ckaid = clone_str(optarg, "ckaid");
 			break;
 
 		case 'I':
-			keyid = clone_str(optarg, "keyid");
+			rsaid = clone_str(optarg, "rsaid");
 			break;
 
 		case OPT_CONFIGDIR:
@@ -489,22 +446,25 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (errflg) {
-usage:
-		fputs(usage, stderr);
-		exit(1);
+	if (!(left_flg + right_flg + ipseckey_flg + dump_flg + list_flg)) {
+		fprintf(stderr, "%s: You must specify an operation\n", progname);
+		goto usage;
 	}
 
-	if (!left_flg && !right_flg && !dump_flg && !list_flg &&
-	    !ipseckey_flg && !dhclient_flg) {
-		fprintf(stderr, "%s: You must specify some operation\n",
+	if ((left_flg + right_flg + ipseckey_flg + dump_flg + list_flg) > 1) {
+		fprintf(stderr, "%s: You must specify only one operation\n",
 			progname);
 		goto usage;
 	}
 
-	if ((left_flg + right_flg + dump_flg + list_flg +
-	     ipseckey_flg + dhclient_flg) > 1) {
-		fprintf(stderr, "%s: You must specify only one operation\n",
+	if ((left_flg + right_flg + ipseckey_flg) && !ckaid && !rsaid) {
+		fprintf(stderr, "%s: You must select a key using --ckaid or --rsaid\n",
+			progname);
+		goto usage;
+	}
+
+	if ((dump_flg + list_flg) && (ckaid || rsaid)) {
+		fprintf(stderr, "%s: You must not select a key\n",
 			progname);
 		goto usage;
 	}
@@ -513,6 +473,9 @@ usage:
 		fprintf(stderr, "%s using config directory \"%s\"\n",
 			progname, configdir);
 
+	/*
+	 * Set up for NSS - contains key pairs.
+	 */
 	int status = 0;
 	lsw_nss_buf_t err;
 	if (!lsw_nss_setup(configdir, LSW_NSS_READONLY, getNSSPassword, err)) {
@@ -520,57 +483,42 @@ usage:
 		exit(1);
 	}
 
+	/*
+	 * Load up any secrets file - contains PSK.
+	 */
+	struct secret *host_secrets = NULL;
+	if (secrets_file && secrets_file[0]) {
+		lsw_load_preshared_secrets(&host_secrets, secrets_file);
+	}
+
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		foreach_secret(secrets_file, dump_key, NULL);
+		foreach_secret(host_secrets, dump_key, NULL);
 		goto out;
 	}
 
 	if (list_flg) {
-		foreach_secret(secrets_file, list_key, NULL);
+		foreach_secret(host_secrets, list_key, NULL);
 		goto out;
 	}
 
-	if (keyid != NULL) {
+	struct private_key_stuff *pks;
+	if (rsaid != NULL) {
 		if (verbose)
-			printf("%s picking by keyid=%s\n",
-			       ipseckey_flg ? ";" : "\t#", keyid);
-		pks = foreach_secret(secrets_file, pick_by_keyid, keyid);
+			printf("%s picking by rsaid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", rsaid);
+		pks = foreach_secret(host_secrets, pick_by_rsaid, rsaid);
 	} else if (ckaid != NULL) {
 		if (verbose) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
-		pks = foreach_secret(secrets_file, pick_by_ckaid, ckaid);
+		pks = foreach_secret(host_secrets, pick_by_ckaid, ckaid);
 	} else {
-		if (secrets_file == NULL || secrets_file[0] == '\0') {
-			/*
-			 * Interpet this is as specifying NSS should
-			 * be used.
-			 */
-			fprintf(stderr, "%s: for NSS one of --rsaid or --ckaid required\n",
-				progname);
-			status = 1;
-			goto out;
-		}
-		struct secret *host_secrets = NULL;
-		lsw_load_preshared_secrets(&host_secrets, secrets_file);
-		struct secret *s;
-		if (id != NULL) {
-			if (verbose)
-				printf("%s picking by id=%s\n",
-				       ipseckey_flg ? ";" : "\t#", id);
-			s = pick_by_id(host_secrets, id);
-		} else {
-			/* Paul: This assumption is WRONG. Mostly I have PSK's above my
-			 * multiline default : RSA entry, and then this assumption breaks
-			 * The proper test would be for ": RSA" vs "@something :RSA"
-			 */
-			/* default key is the *LAST* key, because it is first in the file.*/
-			s = lsw_get_defaultsecret(host_secrets);
-		}
-		pks = s ? lsw_get_pks(s) : NULL;
+		fprintf(stderr, "%s: nothing to do\n", progname);
+		status = 1;
+		goto out;
 	}
 
 	if (pks == NULL) {
@@ -604,4 +552,8 @@ out:
 	 */
 	lsw_nss_shutdown(LSW_NSS_CLEANUP);
 	exit(status);
+
+usage:
+	fputs(usage, stderr);
+	exit(1);
 }
