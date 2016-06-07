@@ -897,9 +897,16 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
 			free_ikev2_proposal(&accepted_ike_proposal);
-			DBG(DBG_CONTROL, DBG_log("send INVALID_KE for modp %d and suggest %d",
-						 ke_group,
-						 accepted_oakley.group->group));
+			struct esb_buf ke_name;
+			struct esb_buf proposal_name;
+			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+				      strip_prefix(enum_showb(&oakley_group_names,
+							      ke_group, &ke_name),
+						   "OAKLEY_GROUP_"),
+				      strip_prefix(enum_showb(&oakley_group_names,
+							      accepted_oakley.group->group,
+							      &proposal_name),
+						   "OAKLEY_GROUP_"));
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
 			return STF_FAIL;
