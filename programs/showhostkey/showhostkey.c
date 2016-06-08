@@ -64,8 +64,7 @@ char usage[] =
   "                    { --version | --dump | --list | --left | --right |\n"
   "                      --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
   "                    [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
-  "                    [ --configdir <configdir> ] [ --password <password> ]\n"
-  "                    [ --file secretfile ]\n";
+  "                    [ --configdir <configdir> ] [ --password <password> ]\n";
 
 /*
  * For new options, avoid magic numbers.
@@ -87,7 +86,6 @@ struct option opts[] = {
 	{ "ipseckey",  no_argument,    NULL,   'K', },
 	{ "gateway",   required_argument, NULL, 'g', },
 	{ "precedence", required_argument, NULL, 'p', },
-	{ "file",      required_argument, NULL, 'f', },
 	{ "ckaid",     required_argument, NULL, OPT_CKAID, },
 	{ "rsaid",     required_argument, NULL, 'I', },
 	{ "version",   no_argument,     NULL,  'V', },
@@ -308,25 +306,8 @@ static int show_confkey(struct private_key_stuff *pks,
 	return 0;
 }
 
-static struct private_key_stuff *foreach_secret(struct secret *host_secrets,
-						secret_eval func, void *uservoid)
+static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid)
 {
-	/*
-	 * XXX: Potential Memory leak.
-	 *
-	 * lsw_foreach_secret() + lsw_get_pks() returns an object that
-	 * must not be freed BUT lsw_nss_foreach_private_key_stuff()
-	 * returns an object that must be freed.
-	 *
-	 * For moment ignore this - as only caller is showhostkey.c
-	 * which quickly exits.
-	 */
-	if (host_secrets) {
-		struct secret *s = lsw_foreach_secret(host_secrets, func, uservoid);
-		if (s) {
-			return lsw_get_pks(s);
-		}
-	}
 	lsw_nss_buf_t err = {0};
 	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, err);
 	if (err[0]) {
@@ -401,10 +382,6 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			break;
-
-		case 'f': /* --file arg */
-			lsw_conf_secretsfile(optarg);
 			break;
 
 		case OPT_CKAID:
@@ -491,23 +468,15 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/*
-	 * Load up any secrets file - contains PSK.
-	 */
-	struct secret *host_secrets = NULL;
-	if (oco->secretsfile && oco->secretsfile[0]) {
-		lsw_load_preshared_secrets(&host_secrets, oco->secretsfile);
-	}
-
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		foreach_secret(host_secrets, dump_key, NULL);
+		foreach_secret(dump_key, NULL);
 		goto out;
 	}
 
 	if (list_flg) {
-		foreach_secret(host_secrets, list_key, NULL);
+		foreach_secret(list_key, NULL);
 		goto out;
 	}
 
@@ -516,13 +485,13 @@ int main(int argc, char *argv[])
 		if (verbose)
 			printf("%s picking by rsaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", rsaid);
-		pks = foreach_secret(host_secrets, pick_by_rsaid, rsaid);
+		pks = foreach_secret(pick_by_rsaid, rsaid);
 	} else if (ckaid != NULL) {
 		if (verbose) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
-		pks = foreach_secret(host_secrets, pick_by_ckaid, ckaid);
+		pks = foreach_secret(pick_by_ckaid, ckaid);
 	} else {
 		fprintf(stderr, "%s: nothing to do\n", progname);
 		status = 1;

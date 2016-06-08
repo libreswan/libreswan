@@ -50,7 +50,6 @@
     <arg>--precedence <replaceable>precedence</replaceable></arg>
     <sbr/>
 
-    <arg>--file <replaceable>secretfile</replaceable></arg>
     <arg>--configdir <replaceable>configdir</replaceable></arg>
     <arg>--password <replaceable>password</replaceable></arg>
 
@@ -65,9 +64,11 @@
     <emphasis remap='I'>Showhostkey</emphasis> outputs (on standard
     output) a public key suitable for this host, in the format
     specified, using the host key information stored in the NSS
-    database.  In general, since only the super-user can access the
-    NSS database and <emphasis>ipsec.secrets</emphasis> file, only the
-    super-user can display the public key and secrets information.
+    database.
+  </para>
+  <para>
+    In general, since only the super-user can access the NSS database,
+    only the super-user can display the public key information.
   </para>
 
   <refsect2>
@@ -92,19 +93,6 @@
 	<listitem>
 	  <para>
 	    Increase the verbosity.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>
-	  <option>--file <replaceable>secretfile</replaceable></option>
-	</term>
-	<listitem>
-	  <para>
-	    Specify the location of <emphasis>ipsec.secrets</emphasis>
-	    that contains shared secrets (default
-	    <filename>@FINALCONFDIR@/ipsec.secrets</filename>).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -148,7 +136,7 @@
 	</term>
 	<listitem>
 	  <para>
-	    List all the private keys and pre-shared secrets.
+	    List the private keys.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -159,8 +147,7 @@
 	</term>
 	<listitem>
 	  <para>
-	    List, with more details, all private keys and shared
-	    secrets.
+	    List, with more details, the private keys.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -285,7 +272,6 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
 <refsect1 id='files'>
   <title>FILES</title>
   <para>
-    <filename>@FINALCONFDIR@/ipsec.secrets</filename>,
     <filename>@FINALNSSDIR@</filename>,
     <filename>@FINALNSSDIR@/nsspassword</filename>
   </para>
@@ -294,7 +280,6 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
 <refsect1 id='see_also'>
   <title>SEE ALSO</title>
   <para>
-    <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
     <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
     <citerefentry><refentrytitle>ipsec rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     <citerefentry><refentrytitle>ipsec newhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
