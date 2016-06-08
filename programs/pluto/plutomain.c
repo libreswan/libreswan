@@ -700,8 +700,7 @@ int main(int argc, char **argv)
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
 	/* set up initial defaults that need a cast */
-	pluto_shared_secrets_file =
-		DISCARD_CONST(char *, SHARED_SECRETS_FILE);
+	pluto_shared_secrets_file = DISCARD_CONST(char *, IPSEC_SECRETS_FILE);
 
 	unsigned int keep_alive = 0;
 

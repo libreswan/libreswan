@@ -338,7 +338,7 @@ static struct private_key_stuff *foreach_secret(struct secret *host_secrets,
 
 int main(int argc, char *argv[])
 {
-	char *secrets_file = IPSEC_CONFDIR "/ipsec.secrets";
+	char *secrets_file = IPSEC_SECRETS_FILE;
 	int opt;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;

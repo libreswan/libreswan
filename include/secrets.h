@@ -27,10 +27,6 @@
 #include <pk11pub.h>
 #include "x509.h"
 
-#ifndef SHARED_SECRETS_FILE
-# define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
-#endif
-
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
 
