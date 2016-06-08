@@ -70,6 +70,13 @@ void lsw_nss_shutdown(unsigned flags)
 	if (flags & LSW_NSS_CLEANUP) {
 		PR_Cleanup();
 	}
+#if 0
+	if (NSSPassword) {
+		pfree(NSSPassword->data);
+		pfree(NSSPassword);
+	}
+	NSSPassword = NULL;
+#endif
 }
 
 static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pubkey)

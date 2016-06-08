@@ -17,8 +17,6 @@
 #ifndef _LSWNSS_H_
 #define _LSWNSS_H_
 
-#include <stdbool.h>
-
 #include <pk11pub.h>
 
 #include "lswalloc.h"

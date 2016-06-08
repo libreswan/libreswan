@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <libreswan.h>
 #include "lswconf.h"
+#include "lswnss.h"
 #include <prlong.h>
 #include <secder.h>
 #include <errno.h>

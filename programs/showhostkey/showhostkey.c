@@ -338,7 +338,7 @@ static struct private_key_stuff *foreach_secret(struct secret *host_secrets,
 
 int main(int argc, char *argv[])
 {
-	char *secrets_file = IPSEC_SECRETS_FILE;
+	const struct lsw_conf_options *oco = lsw_init_options();
 	int opt;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;
@@ -348,12 +348,8 @@ int main(int argc, char *argv[])
 	char *gateway = NULL;
 	int precedence = 10;
 	int verbose = 0;
-	char *configdir = IPSEC_CONFDDIR;
 	char *ckaid = NULL;
 	char *rsaid = NULL;
-#if 0
-	char *password = NULL;
-#endif
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {
@@ -408,7 +404,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'f': /* --file arg */
-			secrets_file = clone_str(optarg, "file");
+			lsw_conf_secretsfile(optarg);
 			break;
 
 		case OPT_CKAID:
@@ -420,14 +416,19 @@ int main(int argc, char *argv[])
 			break;
 
 		case OPT_CONFIGDIR:
-			configdir = clone_str(optarg, "configdir");
+#if 0
+			/*
+			 * Will mean adding extra --nssdb option.
+			 */
+			lsw_conf_configddir(optarg);
+#else
+			lsw_init_ipsecdir(optarg);
+#endif
 			break;
 
-#if 0
 		case OPT_PASSWORD:
-			password = clone_str(optarg, "password");
+			lsw_conf_nsspassword(optarg);
 			break;
-#endif
 
 		case 'n':
 		case 'h':
@@ -474,14 +475,14 @@ int main(int argc, char *argv[])
 
 	if (verbose)
 		fprintf(stderr, "%s using config directory \"%s\"\n",
-			progname, configdir);
+			progname, oco->confddir);
 
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
 	int status = 0;
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(configdir, LSW_NSS_READONLY, getNSSPassword, err)) {
+	if (!lsw_nss_setup(oco->nssdb, LSW_NSS_READONLY, getNSSPassword, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}
@@ -490,8 +491,8 @@ int main(int argc, char *argv[])
 	 * Load up any secrets file - contains PSK.
 	 */
 	struct secret *host_secrets = NULL;
-	if (secrets_file && secrets_file[0]) {
-		lsw_load_preshared_secrets(&host_secrets, secrets_file);
+	if (oco->secretsfile && oco->secretsfile[0]) {
+		lsw_load_preshared_secrets(&host_secrets, oco->secretsfile);
 	}
 
 	/* options that apply to entire files */

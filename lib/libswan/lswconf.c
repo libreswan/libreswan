@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,7 +34,6 @@
 #include <pk11pub.h>
 
 static struct lsw_conf_options global_oco;
-static bool setup = FALSE;
 
 #define NSSpwdfilesize 4096
 static secuPWData NSSPassword;
@@ -44,96 +44,144 @@ static secuPWData NSSPassword;
 #define SUBDIRNAME(X) X
 #endif
 
-static void lsw_conf_calculate(struct lsw_conf_options *oco)
+/*
+ * Fill in the basics, return true, of lsw_conf_calculate should be
+ * called.
+ */
+static bool lsw_conf_setdefault(void)
+{
+	if (global_oco.rootdir != NULL) {
+		return FALSE;
+	}
+
+	/* copy everything to the heap for consistency. */
+	global_oco.rootdir = clone_str("","rootdir");
+
+	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
+	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
+	global_oco.secretsfile = clone_str(IPSEC_SECRETS_FILE, "default ipsec.secrets");
+
+	global_oco.vardir  = clone_str(IPSEC_VARDIR, "default vardir");
+
+	global_oco.confddir = clone_str(IPSEC_CONFDDIR, "default conf ipsecd_dir");
+
+	global_oco.nssdb = clone_str(IPSEC_NSSDIR, "default nssdb");
+
+	/* see also lsw_conf_calculate() below */
+	return TRUE;
+}
+
+static void subst(char **field, const char *value, const char *name)
+{
+	pfreeany(*field);
+	*field = clone_str(value, name);
+}
+
+/*
+ * Some things are rooted under CONFDDIR, re-compute them.
+ */
+static void lsw_conf_calculate(void)
 {
 	char buf[PATH_MAX];
 
 	/* will be phased out for NSS in the near future */
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/cacerts"), oco->confddir);
-	oco->cacerts_dir = clone_str(buf, "cacert path");
+	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/cacerts"), global_oco.confddir);
+	subst(&global_oco.cacerts_dir, buf, "cacert path");
 
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/crls"), oco->confddir);
-	oco->crls_dir = clone_str(buf, "crls path");
+	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/crls"), global_oco.confddir);
+	subst(&global_oco.crls_dir, buf, "crls path");
 
 	/* old OE policies - might get re-used in the near future */
-	snprintf(buf, sizeof(buf), "%s/policies", oco->confddir);
-	oco->policies_dir = clone_str(buf, "policies path");
-}
+	snprintf(buf, sizeof(buf), "%s/policies", global_oco.confddir);
+	subst(&global_oco.policies_dir, buf, "policies path");
 
-static void lsw_conf_setdefault(void)
-{
-	char buf[PATH_MAX];
-	static const struct lsw_conf_options zero_oco;	/* full of null pointers */
-
-	global_oco = zero_oco;
-
-	/* allocate them all to make it consistent */
-	global_oco.rootdir = clone_str("","rootdir");
-	global_oco.confddir = clone_str(IPSEC_CONFDDIR, "default conf ipsecd_dir");
-	global_oco.vardir  = clone_str(IPSEC_VARDIR, "default vardir");
-	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
-	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
-	global_oco.nssdir = clone_str(IPSEC_NSSDIR, "default nssdir");
-
-	/* path to NSS password file */
 	snprintf(buf, sizeof(buf), "%s/nsspassword", global_oco.confddir);
-	NSSPassword.data = clone_str(buf, "nss password file path");
-	NSSPassword.source =  PW_FROMFILE;
+	subst(&global_oco.nsspassword_file, buf, "nsspassword file");
 }
 
 void lsw_conf_free_oco(void)
 {
-	/* Must be a nicer way to loop over this? */
-	pfree(global_oco.rootdir);
-	pfree(global_oco.confdir);
-	pfree(global_oco.conffile);
-	pfree(global_oco.confddir);
-	pfree(global_oco.vardir);
-	pfree(global_oco.policies_dir);
-	pfree(global_oco.cacerts_dir);
-	pfree(global_oco.crls_dir);
-	pfree(global_oco.nssdir);
-	pfree(NSSPassword.data);
+	/*
+	 * Must be a nicer way to loop over this?
+	 *
+	 * for (char *p = (char*)&global_oco; p < (char*)(&global_oco + 1); p++)
+	 */
+	pfreeany(global_oco.rootdir);
+
+	pfreeany(global_oco.confdir);
+	pfreeany(global_oco.conffile);
+	pfreeany(global_oco.secretsfile);
+
+	pfreeany(global_oco.vardir);
+
+	pfreeany(global_oco.confddir);
+	pfreeany(global_oco.policies_dir);
+	pfreeany(global_oco.cacerts_dir);
+	pfreeany(global_oco.crls_dir);
+	pfreeany(global_oco.nsspassword_file);
+	pfreeany(global_oco.nsspassword);
+
+	pfreeany(global_oco.nssdb);
+
+	global_oco = (struct lsw_conf_options) {0};
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
 {
-	if (!setup) {
-		setup = TRUE;
-
-		lsw_conf_setdefault();
-		lsw_conf_calculate(&global_oco);
+	if (lsw_conf_setdefault()) {
+		lsw_conf_calculate();
 	}
-
 	return &global_oco;
 }
 
 /* This is only used in testing/crypto (and formerly in testing/lib/libpluto) */
-void lsw_init_rootdir(const char *root_dir)
+void lsw_conf_rootdir(const char *root_dir)
 {
-	if (!setup)
-		lsw_conf_setdefault();
-	pfreeany(global_oco.rootdir);
-	global_oco.rootdir = clone_str(root_dir, "override /");
-	lsw_conf_calculate(&global_oco);
-	setup = TRUE;
+	lsw_conf_setdefault();
+	subst(&global_oco.rootdir, root_dir, "override /");
+	lsw_conf_calculate();
 }
 
-void lsw_init_ipsecdir(const char *ipsec_dir)
+void lsw_conf_confddir(const char *confddir)
 {
-	if (!setup)
-		lsw_conf_setdefault();
-	global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
-	global_oco.nssdir = clone_str(ipsec_dir, "override nssdir");
-	lsw_conf_calculate(&global_oco);
-	setup = TRUE;
+	lsw_conf_setdefault();
+	subst(&global_oco.confddir, confddir, "override ipsec.d");
+	lsw_conf_calculate();
 
 	libreswan_log("adjusting ipsec.d to %s", global_oco.confddir);
 }
 
-secuPWData *lsw_return_nss_password_file_info(void)
+void lsw_conf_nssdb(const char *nssdb)
 {
-	return &NSSPassword;
+	lsw_conf_setdefault();
+	subst(&global_oco.nssdb, nssdb, "override nssdir");
+	lsw_conf_calculate();
+
+	libreswan_log("adjusting nssdb to %s", global_oco.confddir);
+}
+
+void lsw_init_ipsecdir(const char *confddir)
+{
+	lsw_conf_setdefault();
+	subst(&global_oco.confddir, confddir, "override ipsec.d");
+	subst(&global_oco.nssdb, confddir, "override nssdir");
+	lsw_conf_calculate();
+
+	libreswan_log("adjusting ipsec.d and nssdb to %s", global_oco.confddir);
+}
+
+void lsw_conf_secretsfile(const char *secretsfile)
+{
+	lsw_conf_setdefault();
+	subst(&global_oco.secretsfile, secretsfile, "secretsfile");
+	lsw_conf_calculate();
+}
+
+void lsw_conf_nsspassword(const char *nsspassword)
+{
+	lsw_conf_setdefault();
+	subst(&global_oco.nsspassword, nsspassword, "nsspassword");
+	lsw_conf_calculate();
 }
 
 /*
@@ -169,6 +217,11 @@ int libreswan_selinux(void)
 	else
 		return 0;
 
+}
+
+secuPWData *lsw_return_nss_password_file_info(void)
+{
+	return &NSSPassword;
 }
 
 char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)

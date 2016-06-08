@@ -29,14 +29,33 @@ struct lsw_conf_options {
 	char *rootdir;			/* default is "" --- used for testing */
 	char *confdir;			/* "/etc" */
 	char *conffile;			/* "/etc/ipsec.conf" */
-	char *confddir;			/* "/etc/ipsec.d" */
+	char *secretsfile;		/* "/etc/ipsec.secrets" */
 	char *vardir;			/* "/var/run/pluto" */
+	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
 	char *crls_dir;			/* "/etc/ipsec.d/crls" */
-	char *nssdir;			/* "/var/lib/pluto" */
+	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
+	char *nsspassword;		/* <password> overrides ^ */
+	char *nssdb;			/* "/var/lib/ipsec" */
 };
 
+const struct lsw_conf_options *lsw_init_options(void);
+void lsw_conf_free_oco(void);
+void lsw_conf_rootdir(const char *root_dir);
+void lsw_conf_secretsfile(const char *secretsfile);
+void lsw_conf_confddir(const char *confddir);
+void lsw_conf_nssdb(const char *nssdb);
+void lsw_conf_nsspassword(const char *nsspassword);
+
+/*
+ * XXX: Going away - sets both confddir and nssdb.
+ */
+void lsw_init_ipsecdir(const char *ipsec_dir);
+
+/*
+ * XXX: Should be opaque or even not needed.
+ */
 typedef struct {
 	enum {
 		PW_NONE = 0,		/* no password */
@@ -47,13 +66,9 @@ typedef struct {
 	char *data;
 } secuPWData;
 
-extern const struct lsw_conf_options *lsw_init_options(void);
-extern void lsw_conf_free_oco(void);
-extern void lsw_init_ipsecdir(const char *ipsec_dir);
-extern void lsw_init_rootdir(const char *root_dir);
-
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
+
 extern int libreswan_selinux(void);
 
 #endif /* _LSW_ALLOC_H_ */

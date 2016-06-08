@@ -1394,7 +1394,7 @@ int main(int argc, char **argv)
 	init_constants();
 	pluto_init_log();
 
-	if (!pluto_init_nss(oco->nssdir)) {
+	if (!pluto_init_nss(oco->nssdb)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}

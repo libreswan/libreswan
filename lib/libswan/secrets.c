@@ -55,6 +55,7 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
+#include "lswnss.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
