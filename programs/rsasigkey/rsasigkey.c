@@ -545,7 +545,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
-	lsw_nss_shutdown(LSW_NSS_CLEANUP);
+	lsw_nss_shutdown();
 }
 
 /*
