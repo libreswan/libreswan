@@ -236,14 +236,19 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdata = (secuPWData *)arg;
 	secuPWData pwnull = { PW_NONE, 0 };
-	secuPWData pwxtrn = { PW_EXTERNAL, "external" };
 	char *pw;
 
 	if (pwdata == NULL)
 		pwdata = &pwnull;
 
-	if (PK11_ProtectedAuthenticationPath(slot))
-		pwdata = &pwxtrn;
+	if (PK11_ProtectedAuthenticationPath(slot)) {
+		/*
+		 * Anyone know what this case is?
+		 */
+		fprintf(stderr, "%s: protected authentication paths not supported\n",
+			me);
+		return NULL;
+	}
 	if (retry && pwdata->source != PW_NONE) {
 		fprintf(stderr, "%s: Incorrect password/PIN entered.\n", me);
 		return NULL;
@@ -263,7 +268,7 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	case PW_PLAINTEXT:
 		return strdup(pwdata->data);
 
-	default: /* cases PW_NONE and PW_EXTERNAL not supported */
+	default: /* cases PW_NONE not supported */
 		fprintf(stderr,
 			"%s: Unknown or unsupported case in GetModulePassword\n",
 			me);

@@ -61,7 +61,6 @@ typedef struct {
 		PW_NONE = 0,		/* no password */
 		PW_FROMFILE = 1,	/* password data in a text file */
 		PW_PLAINTEXT = 2,	/* password data in the clear in memory buffer */
-		PW_EXTERNAL = 3		/* external source, user will be prompted */
 	} source;
 	char *data;
 } secuPWData;
