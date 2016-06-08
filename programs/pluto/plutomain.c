@@ -396,7 +396,8 @@ static bool pluto_init_nss(char *nssdb)
 	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdb);
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY, getNSSPassword, err)) {
+	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY|LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
+			   getNSSPassword, err)) {
 		loglog(RC_LOG_SERIOUS, "%s", err);
 		return FALSE;
 	}

@@ -69,7 +69,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		PK11_SetPasswordFunc(get_password);
 	}
 
-	if (flags & XXX_LSW_NSS_SETUP_TESTS_AUTHENTICATE) {
+	if (!(flags & LSW_NSS_SKIP_AUTH)) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
 		if (slot == NULL) {
 			return FALSE;
@@ -83,7 +83,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 void lsw_nss_shutdown(void)
 {
 	NSS_Shutdown();
-	if (flags & XXX_LSW_NSS_SHUTDOWN_CALLS_PR_CLEANUP) {
+	if (!(flags & LSW_NSS_SKIP_PR_CLEANUP)) {
 		PR_Cleanup();
 	}
 }

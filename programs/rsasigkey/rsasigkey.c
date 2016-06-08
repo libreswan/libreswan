@@ -431,7 +431,8 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	pwdata.data = password;
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(configdir, FALSE/*rw*/, GetModulePassword, err)) {
+	if (!lsw_nss_setup(configdir, LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
+			   GetModulePassword, err)) {
 		fprintf(stderr, "%s: %s\n", me, err);
 		exit(1);
 	}

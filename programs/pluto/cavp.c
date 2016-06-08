@@ -299,7 +299,8 @@ int main(int argc, char *argv[])
 	setbuf(stdout, NULL);
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
+	if (!lsw_nss_setup(NULL, LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
+			   NULL, err)) {
 		fprintf(stderr, "unexpected %s\n", err);
 		exit(1);
 	}

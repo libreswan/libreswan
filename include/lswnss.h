@@ -27,11 +27,11 @@ enum lsw_nss_flags {
 	/*
 	 * Should shutdown call PR_CLEANUP.
 	 */
-	XXX_LSW_NSS_SHUTDOWN_CALLS_PR_CLEANUP = 2,
+	LSW_NSS_SKIP_PR_CLEANUP = 2,
 	/*
 	 * Should setup try to authenticate.
 	 */
-	XXX_LSW_NSS_SETUP_TESTS_AUTHENTICATE = 4,
+	LSW_NSS_SKIP_AUTH = 4,
 };
 
 /*
