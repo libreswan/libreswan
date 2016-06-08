@@ -246,7 +246,6 @@ endif
 
 BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
-BINNAMEWHACKINIT = whackinit
 BINNAMEIMPORTCRL = _import_crl
 
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
@@ -347,7 +346,7 @@ DISTSRC = \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
-	whack.c whackinit.c \
+	whack.c \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
@@ -403,7 +402,6 @@ OBJSPLUTO += nss_err.o
 OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
 
 OBJSWHACK = whack.o
-OBJSWHACKINIT = whackinit.o
 
 CAVP += cavp
 
@@ -416,15 +414,13 @@ local-clean-base: $(builddir)/Makefile
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
-	#
-	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
@@ -435,9 +431,6 @@ $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 
 $(BINNAMEWHACK): $(OBJSWHACK)
 	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}
-
-$(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
-	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
 
 check:
 	echo no checks in lib right now.
