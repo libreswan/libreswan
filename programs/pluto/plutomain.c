@@ -699,9 +699,6 @@ int main(int argc, char **argv)
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
-	/* set up initial defaults that need a cast */
-	pluto_shared_secrets_file = DISCARD_CONST(char *, IPSEC_SECRETS_FILE);
-
 	unsigned int keep_alive = 0;
 
 	/* Overridden by virtual_private= in ipsec.conf */
@@ -1032,7 +1029,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 's':	/* --secretsfile <secrets-file> */
-			pluto_shared_secrets_file = optarg;
+			lsw_conf_secretsfile(optarg);
 			continue;
 
 		case 'f':	/* --ipsecdir <ipsec-dir> */
@@ -1138,8 +1135,10 @@ int main(int argc, char **argv)
 
 			/* no config option: ctlbase */
 			/* --secrets */
-			set_cfg_string(&pluto_shared_secrets_file,
-				cfg->setup.strings[KSF_SECRETSFILE]);
+			if (cfg->setup.strings[KSF_SECRETSFILE] &&
+			    *cfg->setup.strings[KSF_SECRETSFILE]) {
+				lsw_conf_secretsfile(cfg->setup.strings[KSF_SECRETSFILE]);
+			}
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* --ipsecdir */
@@ -1521,8 +1520,8 @@ int main(int argc, char **argv)
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
-	if (pluto_shared_secrets_file != NULL)
-		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
+	if (oco->secretsfile && *oco->secretsfile)
+		libreswan_log("secrets file: %s", oco->secretsfile);
 
 	libreswan_log(leak_detective ?
 		"leak-detective enabled" : "leak-detective disabled");
@@ -1696,7 +1695,7 @@ void show_setup_plutomain()
 		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
-		pluto_shared_secrets_file,
+		oco->secretsfile,
 		oco->confddir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
