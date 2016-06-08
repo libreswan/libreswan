@@ -24,7 +24,14 @@
 
 enum lsw_nss_flags {
 	LSW_NSS_READONLY = 1,
-	LSW_NSS_CLEANUP = 2,
+	/*
+	 * Should shutdown call PR_CLEANUP.
+	 */
+	XXX_LSW_NSS_SHUTDOWN_CALLS_PR_CLEANUP = 2,
+	/*
+	 * Should setup try to authenticate.
+	 */
+	XXX_LSW_NSS_SETUP_TESTS_AUTHENTICATE = 4,
 };
 
 /*
@@ -35,10 +42,14 @@ typedef char lsw_nss_buf_t[100];
 
 bool lsw_nss_setup(const char *config_dir, unsigned flags,
 		   PK11PasswordFunc get_nss_password, lsw_nss_buf_t err);
-void lsw_nss_shutdown(unsigned flags);
+void lsw_nss_shutdown(void);
 
 struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 							    void *uservoid,
 							    lsw_nss_buf_t err);
+
+char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
+
+PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 
 #endif

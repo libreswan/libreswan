@@ -1672,7 +1672,7 @@ void exit_pluto(int status)
 
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */
-	lsw_nss_shutdown(0);
+	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_kernelfd();	/* stop listening to kernel FD, remove event */

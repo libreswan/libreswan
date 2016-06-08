@@ -308,6 +308,6 @@ int main(int argc, char *argv[])
 
 	cavp_parser();
 
-	lsw_nss_shutdown(0);
+	lsw_nss_shutdown();
 	return 0;
 }

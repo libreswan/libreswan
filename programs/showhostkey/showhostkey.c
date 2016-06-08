@@ -482,7 +482,11 @@ int main(int argc, char *argv[])
 	 */
 	int status = 0;
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->nssdb, LSW_NSS_READONLY, getNSSPassword, err)) {
+	if (!lsw_nss_setup(oco->nssdb,
+			   (LSW_NSS_READONLY
+			    |XXX_LSW_NSS_SETUP_TESTS_AUTHENTICATE
+			    |XXX_LSW_NSS_SHUTDOWN_CALLS_PR_CLEANUP),
+			   lsw_nss_get_password, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}
@@ -554,7 +558,7 @@ out:
 	 * NSS it can.  Not really a problem since the entire secret
 	 * table gets leaked anyway.
 	 */
-	lsw_nss_shutdown(LSW_NSS_CLEANUP);
+	lsw_nss_shutdown();
 	exit(status);
 
 usage:
