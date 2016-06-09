@@ -35,7 +35,6 @@ KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
-KVM_QEMUDIR = /var/lib/libvirt/qemu
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMSH ?= $(KVMSH_COMMAND)
@@ -52,10 +51,30 @@ KVM_KEYS = testing/x509/keys/up-to-date
 # domains
 #
 
-define check-qemu-directory
-	test -w $(KVM_QEMUDIR) || $(MAKE) kvm-broken-qemu-directory
+KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
+define check-kvm-entropy
+	test ! -r $(KVM_ENTROPY_FILE) || test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 || $(MAKE) broken-kvm-entropy
 endef
-kvm-broken-qemu-directory:
+.PHONY: check-kvm-entropy broken-kvm-entropy
+check-kvm-entropy:
+	$(call check-kvm-entropy)
+broken-kvm-entropy:
+	:
+	:  According to $(KVM_ENTROPY_FILE) your computer do not seem to have much entropy.
+	:
+	:  Check the wiki for hints on how to fix this.
+	:
+	false
+
+
+KVM_QEMUDIR ?= /var/lib/libvirt/qemu
+define check-kvm-qemu-directory
+	test -w $(KVM_QEMUDIR) || $(MAKE) broken-kvm-qemu-directory
+endef
+.PHONY: check-kvm-qemu-directory broken-kvm-qemu-directory
+check-kvm-qemu-directory:
+	$(call check-kvm-qemu-directory)
+broken-kvm-qemu-directory:
 	:
 	:  The directory:
 	:
@@ -66,6 +85,8 @@ kvm-broken-qemu-directory:
 	:
 	false
 
+.PHONY: check-kvm-pooldir check-kvm-basedir
+check-kvm-pooldir check-kvm-basedir: | $(KVM_POOLDIR) $(KVM_BASEDIR)
 ifeq ($(KVM_BASEDIR),$(KVM_POOLDIR))
   $(KVM_POOLDIR):
 else
@@ -98,7 +119,7 @@ endif
 # Invoke KVMSH in the curret directory with $(1).
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(call check-qemu-directory)
+	$(call check-kvm-qemu-directory)
 	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
 endef
 
@@ -120,7 +141,8 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
 define kvm-test
 $(1): $$(KVM_KEYS)
-	$$(call check-qemu-directory)
+	$$(call check-kvm-qemu-directory)
+	$$(call check-kvm-entropy)
 	: KVM_TESTS=$$(STRIPPED_KVM_TESTS)
 	$$(KVMRUNNER_COMMAND)$$(foreach pool,$$(KVM_POOL), --prefix $$(pool))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
 endef
@@ -362,7 +384,8 @@ KVM_DEBUGINFO ?= true
 
 $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
 	$(call check-no-kvm-domain,$*,$(KVM_BASEDIR)/$*.ks)
-	$(call check-qemu-directory)
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
 	rm -f '$(KVM_BASEDIR)/$*.img'
 	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
 	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
@@ -445,6 +468,8 @@ define kvm-test-domain
   install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
 	$(call check-no-kvm-domain,$(1)$(2),$$@)
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
 	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
