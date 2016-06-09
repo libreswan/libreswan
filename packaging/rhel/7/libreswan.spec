@@ -238,7 +238,7 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_libdir}/fipscheck/pluto.hmac
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf

@@ -233,7 +233,7 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_libdir}/fipscheck/pluto.hmac
 %endif
 
 %changelog

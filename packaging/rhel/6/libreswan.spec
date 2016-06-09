@@ -224,8 +224,7 @@ fi
 %{_initrddir}/ipsec
 
 %if %{USE_FIPSCHECK}
-%{_sbindir}/.ipsec.hmac
-%{_libexecdir}/ipsec/.*.hmac
+%{_libexecdir}/ipsec/.pluto.hmac
 
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
