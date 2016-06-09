@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -299,8 +299,7 @@ int main(int argc, char *argv[])
 	setbuf(stdout, NULL);
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(NULL, LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
-			   NULL, err)) {
+	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
 		fprintf(stderr, "unexpected %s\n", err);
 		exit(1);
 	}
