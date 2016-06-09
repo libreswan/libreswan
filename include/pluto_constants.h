@@ -843,3 +843,5 @@ enum pluto_exit_code {
 	PLUTO_EXIT_AUDIT_FAIL = 7,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
+
+extern void init_pluto_constants(void);

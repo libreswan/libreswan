@@ -1395,6 +1395,8 @@ int main(int argc, char **argv)
 	}
 
 	init_constants();
+	init_pluto_constants();
+
 	pluto_init_log();
 
 	if (!pluto_init_nss(oco->nssdb)) {
