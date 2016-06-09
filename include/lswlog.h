@@ -85,6 +85,8 @@ extern void tool_close_log(void);
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
 extern char *progname;
+extern bool log_to_stderr;          /* should log go to stderr? */
+extern bool log_to_syslog;          /* should log go to syslog? */
 
 /* Codes for status messages returned to whack.
  * These are 3 digit decimal numerals.  The structure

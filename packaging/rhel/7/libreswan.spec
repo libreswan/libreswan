@@ -130,9 +130,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
-    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto
 %{nil}
 %endif
 
@@ -238,7 +236,7 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_libdir}/fipscheck/pluto.hmac
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf

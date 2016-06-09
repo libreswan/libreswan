@@ -2306,7 +2306,7 @@ bool require_ddos_cookies()
 {
 	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
 		(pluto_ddos_mode == DDOS_AUTO &&
-		 category.half_open_ike.count >= pluto_ddos_treshold);
+		 category.half_open_ike.count >= pluto_ddos_threshold);
 }
 
 bool drop_new_exchanges()
@@ -2331,7 +2331,7 @@ void show_globalstate_status(void)
 		  category.half_open_ike.count);
 	whack_log(RC_COMMENT, "~states.ike.open %d",
 		  category.open_ike.count);
-	whack_log(RC_COMMENT, "~states.ike.ddos_threshold %d",pluto_ddos_treshold);
+	whack_log(RC_COMMENT, "~states.ike.ddos_threshold %d",pluto_ddos_threshold);
 	whack_log(RC_COMMENT, "~states.ike.max.all %d",pluto_max_halfopen);
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
 	{

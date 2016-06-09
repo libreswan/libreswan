@@ -175,43 +175,58 @@ def load_output(logger, output_file):
 class TestResult:
 
     def __str__(self):
-        if self.passed is None:
-            return "not-tested"
-        elif self.passed is False:
-            return "failed"
-        elif self.passed is True:
-            return "passed"
+        if self.finished is True:
+            if self.passed is True:
+                return "passed"
+            elif self.passed is False:
+                return "failed"
+            else:
+                return "unknown"
+        elif self.finished is False:
+            # Sounds good doesn't mean anything.  It might be because
+            # the test aborted, but it could also be because the test
+            # is still in-progress.
+            return "incomplete"
         else:
-            return "undefined"
+            return "untested"
 
     def __bool__(self):
-        # was a result found?
-        return self.passed is not None
+        # Things started - passed is valid
+        return self.finished is not None
 
-    def __init__(self, test, skip_diff, skip_sanitize, output_directory=None,
+    def __init__(self, test, skip_diff, skip_sanitize,
+                 output_directory=None, test_finished=None,
                  update_diff=False, update_sanitize=False,
                  strip_spaces=False, strip_blank_lines=False):
 
         self.test = test
-        # Start with not-tested
         self.passed = None
-
+        self.finished = None
         self.errors = Errors(test.logger)
         self.diffs = {}
         self.sanitized_console_output = {}
 
         output_directory = output_directory or test.output_directory
 
+        # An OUTPUT directory is a clear indicator that something was
+        # started.
         if not os.path.exists(output_directory):
             test.logger.debug("output directory missing: %s", output_directory)
             return
+        if test_finished is None:
+            # Use RESULT as a proxy for a test finishing.  It isn't
+            # 100% reliable since an in-progress test looks list like
+            # an aborted test.
+            self.finished = os.path.isfile(test.result_file(output_directory));
+        else:
+            self.finished = test_finished;
 
-        # Be optimistic about the result.
+        # Be optimistic; passed is only really valid when finished is
+        # true.
         self.passed = True
 
-        # Check the pluto logs for markers indicating that there was a
         # crash or other unexpected behaviour.
-        for host_name in test.host_names():
+        for host_name in test.host_names:
             pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
             if os.path.exists(pluto_log):
                 test.logger.debug("checking '%s' for errors", pluto_log)
@@ -222,7 +237,7 @@ class TestResult:
 
         # Check the raw console output for problems and that it
         # matches expected output.
-        for host_name in test.host_names():
+        for host_name in test.host_names:
 
             # There should always be raw console output from all
             # hosts.  If there isn't then there's a big problem and
@@ -255,7 +270,7 @@ class TestResult:
             # any comparisons.
             #
             # For moment skip this as the marker for complete output isn't reliable?
-            
+
             #test.logger.debug("host %s checking if raw console output was incomplete", host_name)
             #if not "# : ==== end ====" in raw_console_output:
             #    self.errors.add("output-incomplete", host_name)
@@ -323,8 +338,11 @@ class TestResult:
                 self.errors.add("output-unchecked", host_name)
 
 
+# XXX: given that most of args are passed in unchagned, this should
+# change to some type of object.
+
 def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
-           output_directory=None,
+           output_directory=None, test_finished=None,
            update=False, update_diff=False, update_sanitize=False):
 
     update_diff = update or update_diff
@@ -334,7 +352,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     strip_blank_lines = args.ignore_blank_lines
 
     test_result = TestResult(test, skip_diff, skip_sanitize,
-                             output_directory,
+                             output_directory, test_finished=test_finished,
                              update_diff=update_diff,
                              update_sanitize=update_sanitize,
                              strip_spaces=strip_spaces,
@@ -375,7 +393,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     if test_result.passed and baseline_result.passed:
         return test_result
 
-    for host_name in test.host_names():
+    for host_name in test.host_names:
 
         if host_name is "nic":
             continue

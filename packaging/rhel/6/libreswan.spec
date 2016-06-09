@@ -123,9 +123,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac %{buildroot}%{_sbindir}/ipsec \
-    fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
-    rm -f %{buildroot}%{_libexecdir}/ipsec/.cavp.hmac \
+    fipshmac %{buildroot}%{_libexecdir}/ipsec/pluto \
 %{nil}
 %endif
 
@@ -224,8 +222,7 @@ fi
 %{_initrddir}/ipsec
 
 %if %{USE_FIPSCHECK}
-%{_sbindir}/.ipsec.hmac
-%{_libexecdir}/ipsec/.*.hmac
+%{_libexecdir}/ipsec/.pluto.hmac
 
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/

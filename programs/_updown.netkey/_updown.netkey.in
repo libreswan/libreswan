@@ -166,6 +166,9 @@ export LC_ALL
 #		into the VTI_IFACE interface. This should be enabled unless
 #		the IPsec SA covers 0.0.0.0/0 <-> 0.0.0.0/0
 #
+#	VTI_SHARED=yes|no
+#		Whether or not more conns (or instances) share a VTI device.
+#               If not shared, the VTI device is deleted when tunnel goes down.
 
 # rpm based systems
 if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
@@ -532,18 +535,31 @@ addvtiiface() {
 	    if [ ! -d "/proc/sys/net/ipv4/conf/${VTI_IFACE}" ]; then
 		# echo "creating vti interface"
 		vtipeer="${PLUTO_PEER}"
-		if [ "${PLUTO_CONN_KIND}" = CK_INSTANCE ]; then
+		if [ "${PLUTO_CONN_KIND}" = CK_INSTANCE -o "${VTI_SHARED}" = "yes" ]; then
 		    vtipeer="0.0.0.0"
 		fi
 		ip tunnel add ${VTI_IFACE} mode vti local ${PLUTO_ME} \
 		    remote ${vtipeer} okey ${CONNMARK_OUT%/*} \
 		    ikey ${CONNMARK_IN%/*}
-		ip link set ${VTI_IFACE} up
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.disable_policy=1
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.rp_filter=0
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.forwarding=1
+		ip link set ${VTI_IFACE} up
 	    else
-		echo "vti interface \"${VTI_IFACE}\" already exists"
+		# check there was no conflict if we are sharing
+		if [ "${VTI_SHARED}" = yes ]; then
+			#test: ip/ip remote 3.4.5.6 local 1.2.3.4 ttl inherit key 5
+			cur="$(ip tun ${VTI_IFACE})"
+			new="${VTI_IFACE}: ip/ip remote ${vtipeer} local ${PLUTO_ME} ttl inherit key ${CONNMARK_OUT%/*}"
+			if [ "${cur}" != "${new}" ]; then
+				echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting"
+			else
+				# temp debug
+				echo "vti interface already exists with identical parameters, OK"
+			fi
+		else
+			echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting (perhaps need vti-sharing=yes ?"
+		fi
 	    fi
 	fi
     fi
@@ -579,15 +595,15 @@ addvti() {
 }
 
 delvti() {
-    # If multiple conns use the VTI interface name, how can we tell when to
-    # delete the interface?
-    # So for now, only delete the routes into it. Also needs ip rule support
-    if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes -a \
-	-d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]
-    then
-	ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
-	    src ${PLUTO_MY_SOURCEIP} ||:
-    fi
+    if [ -n "${VTI_IFACE}" -a -d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]; then
+	if [ "${VTI_ROUTING}" = yes ]; then
+		ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
+			src ${PLUTO_MY_SOURCEIP} ||:
+	fi
+	if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
+		ip tun del ${VTI_IFACE} ||:
+	fi
+   fi
 }
 
 # Client Address Translation CAT

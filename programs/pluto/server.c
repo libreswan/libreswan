@@ -91,6 +91,7 @@
 #include "nat_traversal.h"
 
 #include "lsw_select.h"
+#include "lswfips.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -207,7 +208,7 @@ bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE 
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
-unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
@@ -503,6 +504,22 @@ void show_debug_status(void)
 {
 	whack_log(RC_COMMENT, "debug %s",
 		  bitnamesof(debug_bit_names, cur_debugging));
+}
+
+void show_fips_status(void)
+{
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+	whack_log(RC_COMMENT, "FIPS mode %s", !fips ?
+#ifdef FIPS_CHECK
+		"disabled" :
+#else
+		"disabled [support not compiled in]" :
+#endif
+		DBGP(IMPAIR_FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 
 static volatile sig_atomic_t sighupflag = FALSE;

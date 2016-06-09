@@ -1,0 +1,5 @@
+Client Address Translation (CAT) using OE/IDNULL with port not 500.
+The test using one server (east), and client (road) behind NAT.
+east and road use the same connections; ikev2-oe.conf.
+
+NIC SNAT port 500 to a higher port.

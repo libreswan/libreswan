@@ -26,33 +26,10 @@
 #include "lswlog.h"
 #include "lswfips.h"
 
-static int has_fips(bool force, const char *check, int fips)
-{
-	if (fips > 0) {
-		libreswan_log("FIPS %s detected", check);
-	} else if (fips == 0) {
-		if (force) {
-			libreswan_log("FIPS %s forced (not detected)", check);
-			fips = 1;
-		} else {
-			libreswan_log("FIPS %s disabled (not detected)", check);
-		}
-	} else {
-		if (force) {
-			libreswan_log("FIPS %s forced (detection failed)", check);
-			fips = 1;
-		} else {
-			libreswan_log("FIPS %s detection failed", check);
-		}
-	}
-	return fips;
-}
-
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
- * yes (1), no (0), unknown(-1)
  */
-int libreswan_fipskernel(void)
+static enum lsw_fips_mode lsw_fipskernel(void)
 {
 	char fips_flag[1];
 	int n;
@@ -62,7 +39,7 @@ int libreswan_fipskernel(void)
 		DBG(DBG_CONTROL,
 			DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
 			);
-		return 0;
+		return LSW_FIPS_OFF;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
@@ -70,18 +47,13 @@ int libreswan_fipskernel(void)
 	if (n != 1) {
 		loglog(RC_LOG_SERIOUS,
 			"FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
-		return -1;
+		return LSW_FIPS_UNKNOWN;
 	}
 
 	if (fips_flag[0] == '1')
-		return 1;
+		return LSW_FIPS_ON;
 
-	return 0;
-}
-
-int libreswan_has_fips_kernel(bool force)
-{
-	return has_fips(force, "Kernel Mode", libreswan_fipskernel());
+	return LSW_FIPS_OFF;
 }
 
 /*
@@ -89,39 +61,27 @@ int libreswan_has_fips_kernel(bool force)
  * This is irrespective of whether we are running in FIPS mode
  * yes (1), no (0), unknown(-1)
  */
-int
-libreswan_fipsproduct(void)
+static enum lsw_fips_mode lsw_fipsproduct(void)
 {
 	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
 		if (errno == ENOENT || errno == ENOTDIR) {
-			return 0;
+			return LSW_FIPS_OFF;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 				"FIPS ABORT: FIPS product check failed to determine status for %s: %d: %s",
 				FIPSPRODUCTCHECK, errno, strerror(errno));
-			return -1;
+			return LSW_FIPS_UNKNOWN;
 		}
 	}
-
-	return 1;
-
+	return LSW_FIPS_ON;
 }
 
-int libreswan_has_fips_product(bool force)
-{
-	return has_fips(force, "Product", libreswan_fipsproduct());
-}
-
-static int fips_mode = -1;
+static enum lsw_fips_mode fips_mode = LSW_FIPS_UNSET;
 
 /*
- * Is the machine running in FIPS mode (fips product AND fips kernel mode)
- * yes (1), no (0), unknown(-1)
- * Only pluto needs to know -1, so it can abort. Every other caller can
- * just check for fips mode using: if (libreswan_fipsmode())
+ * Should only be called directly by plutomain.c
  */
-int
-libreswan_fipsmode(void)
+enum lsw_fips_mode lsw_get_fips_mode(void)
 {
 	/*
 	 * Fips mode as set by the below.
@@ -130,23 +90,44 @@ libreswan_fipsmode(void)
 	 * The problem here is that confread.c calls this (from
 	 * addconn) without first calling set_fipsmode.
 	 */
-	if (fips_mode >= 0) {
+	if (fips_mode > LSW_FIPS_UNSET) {
 		return fips_mode;
 	}
 
-	int product = libreswan_fipsproduct();
-	int kernel = libreswan_fipskernel();
+	enum lsw_fips_mode product = lsw_fipsproduct();
+	enum lsw_fips_mode kernel = lsw_fipskernel();
 
-	if (product == -1 || kernel == -1)
-		return -1;
+	if (product == LSW_FIPS_UNKNOWN || kernel == LSW_FIPS_UNKNOWN) {
+		fips_mode = LSW_FIPS_UNKNOWN;
+	} else if (product == LSW_FIPS_ON && kernel== LSW_FIPS_ON)  {
+		fips_mode = LSW_FIPS_ON;
+	} else {
+		fips_mode = LSW_FIPS_OFF;
+	}
 
-	if (product && kernel)
-		return 1;
-
-	return 0;
+	libreswan_log("FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
+	libreswan_log("FIPS Kernel: %s",  kernel == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  kernel == LSW_FIPS_ON ? "YES" : "NO");
+	libreswan_log("FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
+	return fips_mode;
 }
 
-void libreswan_set_fips_mode(bool fips)
+/*
+ * Is the machine running in FIPS mode (fips product AND fips kernel mode)
+ * Only pluto needs to know UNKNOWN, so it can abort. Every other caller can
+ * just check for fips mode using: if (libreswan_fipsmode())
+ */
+bool libreswan_fipsmode()
+{
+	if (fips_mode == LSW_FIPS_UNSET)
+		fips_mode = lsw_get_fips_mode();
+
+	return fips_mode == LSW_FIPS_ON;
+}
+
+/*
+ * used only for debugging with --impair-force-fips
+ */
+void lsw_set_fips_mode(enum lsw_fips_mode fips)
 {
 	fips_mode = fips;
 }

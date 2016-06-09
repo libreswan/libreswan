@@ -922,11 +922,12 @@
       techniques, but they have not been implemented in <emphasis
       remap="B">pluto</emphasis>.</para>
 
-      <para>The file <filename>/etc/ipsec.secrets</filename> is used to keep
-      preshared secret keys and XAUTH passwords. RSA private keys, X.509 certificates,
-      CRLs, OCSP and smartcards are handled via NSS. For
-      debugging, there is an argument to the <emphasis remap="B">pluto</emphasis>
-      command to use a different file. This file is described in
+      <para>The file <filename>@IPSEC_SECRETS_FILE@</filename> is used
+      to keep preshared secret keys and XAUTH passwords. RSA private
+      keys, X.509 certificates, CRLs, OCSP and smartcards are handled
+      via NSS. For debugging, there is an argument to the <emphasis
+      remap="B">pluto</emphasis> command to use a different file. This
+      file is described in
       <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
 
           <manvolnum>5</manvolnum>
@@ -3097,7 +3098,7 @@
 
           <listitem>
             <para>specifies the file for authentication secrets (default:
-            <filename>/etc/ipsec.secrets</filename>). This name is subject to
+            <filename>@IPSEC_SECRETS_FILE@</filename>). This name is subject to
             "globbing" as in <citerefentry>
                 <refentrytitle>sh</refentrytitle>
 
@@ -3611,7 +3612,7 @@
 
     <para><filename>/var/run/pluto/pluto.pid</filename> <!-- .br -->
     <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
-    <filename>/etc/ipsec.secrets</filename> <!-- .br -->
+    <filename>@IPSEC_SECRETS_FILE@</filename> <!-- .br -->
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

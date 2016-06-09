@@ -123,7 +123,7 @@ static void help(void)
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
 		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
-		"       [--vti-iface <iface> ] [ --vti-routing ]\\\n"
+		"       [--vti-iface <iface> ] [--vti-routing] [--vti-shared]\\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -174,7 +174,7 @@ static void help(void)
 		"\n"
 		"reread: whack [--rereadsecrets] [--rereadcrls] [--rereadall] \\\n"
 		"\n"
-		"status: whack --status --trafficstatus --globalstatus --shuntstatus\n"
+		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
 		"shutdown: whack --shutdown\n"
 		"\n"
@@ -283,6 +283,7 @@ enum option_enums {
 	OPT_SHUTDOWN,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
+	OPT_FIPS_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -368,6 +369,7 @@ enum option_enums {
 	CD_CONN_MARK_OUT,
 	CD_VTI_IFACE,
 	CD_VTI_ROUTING,
+	CD_VTI_SHARED,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -497,6 +499,7 @@ static const struct option long_opts[] = {
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
+	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "username", required_argument, NULL, OPT_USERNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
@@ -619,6 +622,7 @@ static const struct option long_opts[] = {
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
+	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -1221,6 +1225,10 @@ int main(int argc, char **argv)
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
 			msg.whack_shunt_status = TRUE;
+			continue;
+
+		case OPT_FIPS_STATUS:	/* --fipsstatus */
+			msg.whack_fips_status = TRUE;
 			continue;
 
 		case OPT_SHUTDOWN:	/* --shutdown */
@@ -1844,6 +1852,9 @@ int main(int argc, char **argv)
 		case CD_VTI_ROUTING:	/* --vti-routing */
 			msg.vti_routing = TRUE;
 			continue;
+		case CD_VTI_SHARED:	/* --vti-shared */
+			msg.vti_shared = TRUE;
+			continue;
 
 		case CD_XAUTHBY:
 			if (streq(optarg, "pam")) {
@@ -2078,7 +2089,8 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
-	      msg.whack_options || msg.whack_shutdown || msg.whack_purgeocsp))
+	      msg.whack_fips_status || msg.whack_options || msg.whack_shutdown ||
+	      msg.whack_purgeocsp))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

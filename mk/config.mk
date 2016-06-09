@@ -472,6 +472,8 @@ export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1
 
+IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
+
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
@@ -495,6 +497,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@IPSEC_SECRETS_FILE@:$(IPSEC_SECRETS_FILE):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \

@@ -850,21 +850,26 @@ static const char *const ipsec_attr_name[] = {
 	"COMPRESS_DICT_SIZE",
 	"COMPRESS_PRIVATE_ALG",
 #ifdef HAVE_LABELED_IPSEC
-	"ECN_TUNNEL",
+	"ECN_TUNNEL or old SECCTX",
 #endif
 };
 
+/*
+ * These are attributes with variable length values (TLV).
+ * The ones we actually support have non-NULL entries.
+ */
 static const char *const ipsec_var_attr_name[] = {
+	NULL,	/* SA_LIFE_TYPE */
 	"SA_LIFE_DURATION (variable length)",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL,	/* GROUP_DESCRIPTION */
+	NULL,	/* ENCAPSULATION_MODE */
+	NULL,	/* AUTH_ALGORITHM */
+	NULL,	/* KEY_LENGTH */
+	NULL,	/* KEY_ROUNDS */
+	NULL,	/* COMPRESS_DICT_SIZE */
 	"COMPRESS_PRIVATE_ALG (variable length)",
 #ifdef HAVE_LABELED_IPSEC
-	"NULL", /* ECN TUNNEL */
+	"NULL", /* ECN_TUNNEL_or_old_SECCTX */
 #endif
 };
 
@@ -891,7 +896,7 @@ static enum_names ipsec_private_attr_names = {
 static enum_names ipsec_attr_desc_tv = {
 	SA_LIFE_TYPE + ISAKMP_ATTR_AF_TV,
 #ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL + ISAKMP_ATTR_AF_TV,
+	ECN_TUNNEL_or_old_SECCTX + ISAKMP_ATTR_AF_TV,
 #else
 	COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
 #endif
@@ -904,21 +909,13 @@ static enum_names ipsec_attr_desc_tv = {
 };
 
 enum_names ipsec_attr_names = {
-#ifdef HAVE_LABELED_IPSEC
 	SA_LIFE_TYPE,
-#else
-	SA_LIFE_DURATION,
-#endif
 #ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL,
+	ECN_TUNNEL_or_old_SECCTX,
 #else
 	COMPRESS_PRIVATE_ALG,
 #endif
-#ifdef HAVE_LABELED_IPSEC
-	ipsec_attr_name,
-#else
 	ipsec_var_attr_name,
-#endif
 	&ipsec_attr_desc_tv
 };
 
@@ -935,7 +932,7 @@ enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* COMPRESS_DICT_SIZE */
 	NULL,	/* COMPRESS_PRIVATE_ALG */
 #ifdef HAVE_LABELED_IPSEC
-	NULL,	/* ECN_TUNNEL */
+	NULL,	/* ECN_TUNNEL_or_old_SECCTX */
 #endif
 };
 
@@ -1066,12 +1063,15 @@ static const char *const modecfg_attr_name_draft[] = {
 	"HOME_AGENT_ADDRESS",	/* 19 */
 };
 
+#if 0
+/* this is not used - which is a little strange */
 static enum_names modecfg_attr_names_draft = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
 	NULL
 };
+#endif
 
 static const char *const modecfg_cisco_attr_name[] = {
 	"MODECFG_BANNER",	/* 28672 */

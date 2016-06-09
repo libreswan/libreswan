@@ -134,9 +134,8 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
-    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac \
 %{nil}
 %endif
 
@@ -233,7 +232,7 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_libdir}/fipscheck/pluto.hmac
 %endif
 
 %changelog

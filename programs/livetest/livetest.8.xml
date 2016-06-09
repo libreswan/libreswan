@@ -40,7 +40,7 @@ then configures a connection using a random ID, using a a custom HTTP-based prot
 <refsect1 id='files'><title>FILES</title>
 <literallayout remap='.nf'>
 /proc/net/ipsec_eroute
-/etc/ipsec.secrets
+@IPSEC_SECRETS_FILE@
 </literallayout> <!-- .fi -->
 </refsect1>
 

@@ -125,29 +125,30 @@ enum keyword_numeric_config_field {
 	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
 	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
-	KBF_DDOS_IKE_TRESHOLD,
+	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
-	KBF_OVERLAPIP,
-	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
-	KBF_NMCONFIGURED,       /*Network Manager support */
+	KBF_OVERLAPIP,		/* Allow overlapping IPsec policies */
+	KBF_REMOTEPEERTYPE,     /* Cisco interop: remote peer type */
+	KBF_NMCONFIGURED,       /* Network Manager support */
 	KBF_LABELED_IPSEC,
 	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
-	KBF_SECCTX,             /*security context attribute value for labeled ipsec */
+	KBF_SECCTX,             /* security context attribute value for labeled ipsec */
 	KBF_XAUTHBY,            /* method of xauth user auth - file, pam or alwaysok */
 	KBF_XAUTHFAIL,          /* method of failing, soft or hard */
-	KBF_IKE_FRAG,
-	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives - different from global force_keepalives */
-	KBF_INITIAL_CONTACT,
-	KBF_CISCO_UNITY,
-	KBF_VID_STRONGSWAN,
+	KBF_IKE_FRAG,		/* Enable support for IKE fragmentation */
+	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives */
+	KBF_INITIAL_CONTACT,	/* send initial contact VID */
+	KBF_CISCO_UNITY,	/* send cisco unity VID */
+	KBF_VID_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
-	KBF_NFLOG_ALL,
-	KBF_NFLOG_CONN,
-	KBF_DDOS_MODE,
-	KBF_VTI_ROUTING,
+	KBF_NFLOG_ALL,		/* Enable global nflog device */
+	KBF_NFLOG_CONN,		/* Enable per-conn nflog device */
+	KBF_DDOS_MODE,		/* set DDOS mode */
+	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
+	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_MAX
 };
 

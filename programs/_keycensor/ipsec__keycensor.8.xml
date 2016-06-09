@@ -20,10 +20,10 @@
 <!-- body begins here -->
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>_keycensor</emphasis>
-is used by
-<emphasis remap='B'>ipsec barf</emphasis>
-to process the /etc/ipsec.secrets file, removing private key info.</para>
+<para><emphasis remap='I'>_keycensor</emphasis> is used by <emphasis
+remap='B'>ipsec barf</emphasis> to process the
+<filename>@IPSEC_SECRETS_FILE@</filename> file, removing private key
+info.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>

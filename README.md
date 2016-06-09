@@ -33,7 +33,7 @@ Win2k/BSD/OSX as well.
 Most distributions have native packaged support for Libreswan. Libreswan is
 available for RHEL, Fedora, Ubuntu, Debian, Arch, OpenWrt and more.
 
-Unless a source based build is truly needed,  it is often best to use
+Unless a source-based build is truly needed,  it is often best to use
 the pre-built version of the distribution you are using.
 
 There are a few packages required for Libreswan to compile from source:
@@ -121,14 +121,14 @@ one from a distribution package in /usr and once manually in /usr/local.
 
 ## Support
 
-Mailing Lists:
+Mailing lists:
 
     https://lists.libreswan.org/ is home of all our the mailing lists
 
 Wiki:
 
-    https://libreswan.org is home to the Libreswan WIKI.  It has the most
-    up to date documentation, interop guides and other useful information.
+    https://libreswan.org is home to the Libreswan wiki.  it contains
+    documentation, interop guides and other useful information.
 
 IRC:
 

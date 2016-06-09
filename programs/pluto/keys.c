@@ -79,12 +79,12 @@
 #include "lswconf.h"
 #include "secrets.h"
 
-char *pluto_shared_secrets_file;
 static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets()
 {
-	lsw_load_preshared_secrets(&pluto_secrets , pluto_shared_secrets_file);
+	const struct lsw_conf_options *oco = lsw_init_options();
+	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile);
 }
 
 void free_preshared_secrets(void)
@@ -129,10 +129,8 @@ static int print_secrets(struct secret *secret,
 		}
 	}
 
-	whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(
-			  secret),
-		  kind,
-		  idb1, idb2, more);
+	whack_log(RC_COMMENT, "    %d: %s %s %s%s",
+		  pks->line, kind, idb1, idb2, more);
 
 	/* continue loop until end */
 	return 1;
@@ -140,9 +138,10 @@ static int print_secrets(struct secret *secret,
 
 void list_psks(void)
 {
+	const struct lsw_conf_options *oco = lsw_init_options();
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)",
-		  pluto_shared_secrets_file);
+		  oco->secretsfile);
 	whack_log(RC_COMMENT, " ");
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
@@ -155,14 +154,9 @@ int sign_hash(const struct RSA_private_key *k,
 	SECKEYPrivateKey *privateKey = NULL;
 	SECItem signature;
 	SECItem data;
-	SECItem ckaId;
 	PK11SlotInfo *slot = NULL;
 
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Started using NSS"));
-
-	ckaId.type = siBuffer;
-	ckaId.len = k->ckaid_len;
-	ckaId.data = DISCARD_CONST(unsigned char *, k->ckaid);
 
 	slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
@@ -183,21 +177,26 @@ int sign_hash(const struct RSA_private_key *k,
 		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
 	}
 
-	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
+	privateKey = PK11_FindKeyByKeyID(slot, k->pub.ckaid.nss,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
 		DBG(DBG_CRYPT,
 		    DBG_log("Can't find the private key from the NSS CKA_ID"));
-		if (k->pub.nssCert != NULL) {
-			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
-							   lsw_return_nss_password_file_info());
-			if (privateKey == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "Can't find the private key from the NSS CERT (err %d)",
-				       PR_GetError());
-			}
-		}
 	}
+
+	/*
+	 * SIG_LEN contains "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the modulus length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * Lets find out.
+	 */
+	pexpect((int)sig_len == PK11_SignatureLen(privateKey));
 
 	PK11_FreeSlot(slot);
 

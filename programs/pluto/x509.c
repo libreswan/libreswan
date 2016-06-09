@@ -87,40 +87,19 @@ bool ocsp_enable = FALSE;
 char *curl_iface = NULL;
 long curl_timeout = -1;
 
-SECItem chunk_to_secitem(chunk_t chunk)
+SECItem same_chunk_as_dercert_secitem(chunk_t chunk)
 {
-	SECItem si;
-	si.type = siDERCertBuffer;
-	si.data = (unsigned char *) chunk.ptr;
-	si.len = (unsigned int) chunk.len;
-	return si;
-}
-
-chunk_t secitem_to_chunk(SECItem si)
-{
-	chunk_t chunk = empty_chunk;
-	chunk.ptr = (u_char *) si.data;
-	chunk.len = (size_t) si.len;
-	return chunk;
-}
-
-static chunk_t dup_secitem_to_chunk(SECItem si)
-{
-	chunk_t chunk = empty_chunk;
-
-	clonetochunk(chunk, si.data, si.len, "chunk from secitem");
-
-	return chunk;
+	return same_chunk_as_secitem(chunk, siDERCertBuffer);
 }
 
 chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
 {
-	return secitem_to_chunk(cert->derCert);
+	return same_secitem_as_chunk(cert->derCert);
 }
 
 static int dntoasi(char *dst, size_t dstlen, SECItem si)
 {
-	chunk_t ch = secitem_to_chunk(si);
+	chunk_t ch = same_secitem_as_chunk(si);
 
 	return dntoa(dst, dstlen, ch);
 }
@@ -182,47 +161,47 @@ static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 {
 	switch (nss_gn->type) {
 	case certOtherName:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.OthName.name);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.OthName.name);
 		pluto_gn->kind = GN_OTHER_NAME;
 		break;
 
 	case certRFC822Name:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_RFC822_NAME;
 		break;
 
 	case certDNSName:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_DNS_NAME;
 		break;
 
 	case certX400Address:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_X400_ADDRESS;
 		break;
 
 	case certEDIPartyName:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_EDI_PARTY_NAME;
 		break;
 
 	case certURI:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_URI;
 		break;
 
 	case certIPAddress:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_IP_ADDRESS;
 		break;
 
 	case certRegisterID:
-		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_REGISTERED_ID;
 		break;
 
 	case certDirectoryName:
-		pluto_gn->name = secitem_to_chunk(nss_gn->derDirectoryName);
+		pluto_gn->name = same_secitem_as_chunk(nss_gn->derDirectoryName);
 		pluto_gn->kind = GN_DIRECTORY_NAME;
 		break;
 
@@ -278,7 +257,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	/* CA a might be a subordinate CA of b */
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
-		SECItem a_dn = chunk_to_secitem(a);
+		SECItem a_dn = same_chunk_as_dercert_secitem(a);
 		chunk_t i_dn = empty_chunk;
 
 		cacert = CERT_FindCertByName(handle, &a_dn);
@@ -289,7 +268,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		}
 
 		/* does the issuer of CA a match CA b? */
-		i_dn = secitem_to_chunk(cacert->derIssuer);
+		i_dn = same_secitem_as_chunk(cacert->derIssuer);
 		match = same_dn_any_order(i_dn, b);
 
 		/* we have a match and exit the loop */
@@ -337,7 +316,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 
 	if (end_id->kind == ID_DER_ASN1_DN) {
-		chunk_t certdn = secitem_to_chunk(cert->derSubject);
+		chunk_t certdn = same_secitem_as_chunk(cert->derSubject);
 
 		if (!same_dn_any_order(end_id->name, certdn)) {
 			char idb[IDTOA_BUF];
@@ -354,7 +333,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 		DBG(DBG_X509,
 		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'",
 			    cert->subjectName));
-		end_id->name = secitem_to_chunk(cert->derSubject);
+		end_id->name = same_secitem_as_chunk(cert->derSubject);
 		end_id->kind = ID_DER_ASN1_DN;
 	}
 }
@@ -475,7 +454,7 @@ static char *find_dercrl_uri(chunk_t *dercrl)
 
 	PLArenaPool *arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
 
-	SECItem crl_si = chunk_to_secitem(*dercrl);
+	SECItem crl_si = same_chunk_as_dercert_secitem(*dercrl);
 
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 
@@ -540,7 +519,7 @@ static char *find_dercrl_uri(chunk_t *dercrl)
 
 		if (dp_gn->type == certURI && name->data != NULL &&
 					      name->len > 0) {
-			chunk_t uri_chunk = secitem_to_chunk(*name);
+			chunk_t uri_chunk = same_secitem_as_chunk(*name);
 			uri = make_crl_uri_str(&uri_chunk);
 			if (uri != NULL) {
 				DBG(DBG_X509, DBG_log("using URI:%s from CA %s", uri,
@@ -759,7 +738,7 @@ static void create_cert_pubkey(struct pubkey **pkp,
 	pk->id = *id;
 	pk->dns_auth_level = DAL_LOCAL;
 	pk->until_time = get_nss_cert_notafter(cert);
-	pk->issuer = secitem_to_chunk(cert->derIssuer);
+	pk->issuer = same_secitem_as_chunk(cert->derIssuer);
 	*pkp = pk;
 }
 
@@ -769,7 +748,7 @@ static void create_cert_subjectdn_pubkey(struct pubkey **pkp,
 	struct id id;
 
 	id.kind = ID_DER_ASN1_DN;
-	id.name = secitem_to_chunk(cert->derSubject);
+	id.name = same_secitem_as_chunk(cert->derSubject);
 	create_cert_pubkey(pkp, &id, cert);
 }
 
@@ -840,7 +819,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 		if (is == NULL || is->isRoot)
 			return 0;
 
-		out_chain[0] = dup_secitem_to_chunk(is->derCert);
+		out_chain[0] = clone_secitem_as_chunk(is->derCert, "derCert");
 		CERT_DestroyCertificate(is);
 		return 1;
 	}
@@ -861,7 +840,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 	for (i = 0, j = 0; i < n; i++) {
 		if (!CERT_IsRootDERCert(&chain->certs[i]) &&
 				CERT_IsCADERCert(&chain->certs[i], NULL))  {
-			out_chain[j++] = dup_secitem_to_chunk(chain->certs[i]);
+			out_chain[j++] = clone_secitem_as_chunk(chain->certs[i], "cert");
 		}
 	}
 
@@ -891,7 +870,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 	}
 
 	if (c->spd.that.ca.ptr != NULL && c->spd.that.ca.len > 0) {
-		*dn = chunk_to_secitem(c->spd.that.ca);
+		*dn = same_chunk_as_dercert_secitem(c->spd.that.ca);
 		return TRUE;
 	}
 
@@ -901,7 +880,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 	}
 
 	if (c->spd.this.ca.ptr != NULL && c->spd.this.ca.len > 0) {
-		*dn = chunk_to_secitem(c->spd.this.ca);
+		*dn = same_chunk_as_dercert_secitem(c->spd.this.ca);
 		return TRUE;
 	}
 
@@ -1313,7 +1292,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 
 		dntoa(cbuf, ASN1_BUF_LEN, ca);
 
-		SECItem caname = chunk_to_secitem(ca);
+		SECItem caname = same_chunk_as_dercert_secitem(ca);
 
 		CERTCertificate *cacert =
 			CERT_FindCertByName(CERT_GetDefaultCertDB(), &caname);
@@ -1837,13 +1816,8 @@ void check_crls(void)
 	while (pubkeys != NULL) {
 		key = pubkeys->key;
 		if (key != NULL) {
-			SECItem issuer = chunk_to_secitem(key->issuer);
-			generalName_t *end_dp;
-
+			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
 			add_crl_fetch_request_nss(&issuer, NULL);
-
-			end_dp = gndp_from_nss_cert(key->u.rsa.nssCert);
-			add_crl_fetch_request_nss(&issuer, end_dp);
 		}
 		pubkeys = pubkeys->next;
 	}

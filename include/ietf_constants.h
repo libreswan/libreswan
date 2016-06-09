@@ -976,6 +976,7 @@ enum ikev1_ipsec_attr {
 	COMPRESS_DICT_SIZE = 8,
 	COMPRESS_PRIVATE_ALG = 9, /* B/V */
 	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
+		ECN_TUNNEL_or_old_SECCTX = ECN_TUNNEL,
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 

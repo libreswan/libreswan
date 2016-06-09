@@ -41,6 +41,9 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
 	ttorange.c ttosa.c ttosubnet.c ttoul.c ultot.c \
+	secitem_chunk.c \
+	base64_rsa_pubkey.c \
+	lswnss.c \
 	$(X509LIB)
 
 ifeq ($(USE_DNSSEC),true)

@@ -217,7 +217,7 @@ typedef enum {
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
-#define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 32
 
@@ -843,4 +843,3 @@ enum pluto_exit_code {
 	PLUTO_EXIT_AUDIT_FAIL = 7,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
-

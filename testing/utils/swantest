@@ -1845,17 +1845,17 @@ def docker_add_net_bridges(args, test):
 
         elif host == "north":
             iface = "eth0"
-            brname = "br%s" % bidn1
-            docker_net_bridge(
-                dname=dname, brname=brname, iface=iface, prefix=prefix,
-                brlist=brlist)
-
-            iface = "eth1"
             brname = "br%s" % bidno1
             docker_net_bridge(
                 dname=dname, brname=brname, iface=iface, prefix=prefix,
                 brlist=brlist)
             pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
+
+            iface = "eth1"
+            brname = "br%s" % bidn1
+            docker_net_bridge(
+                dname=dname, brname=brname, iface=iface, prefix=prefix,
+                brlist=brlist)
 
         if host == "nic":
             iface = "eth1"

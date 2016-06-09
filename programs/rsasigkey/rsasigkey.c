@@ -1,10 +1,12 @@
 /*
- * RSA signature key generation
+ * RSA signature key generation, for libreswan
+ *
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,6 +33,7 @@
 #include <getopt.h>
 #include <libreswan.h>
 #include "lswalloc.h"
+#include "secrets.h"
 
 #include <prerror.h>
 #include <prinit.h>
@@ -51,6 +54,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswconf.h"
+#include "lswnss.h"
 
 #ifdef FIPS_CHECK
 #  include <fipscheck.h>
@@ -73,8 +77,6 @@
 
 #define E       3               /* standard public exponent */
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
-
-#define NSSDIR "sql:/etc/ipsec.d"
 
 char *progname;
 char usage[] =
@@ -105,31 +107,36 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-static const unsigned char *bundle(int e, SECItem *, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 void report(char *msg);
 
 /*
- * hexOut - prepare hex output, guaranteeing even number of digits.
- * (The current Libreswan conversion routines expect an even digit count.)
- *
- * NOTE: result is a pointer into a STATIC buffer.
+ * bundle - bundle e and n into an RFC2537-format chunk_t
  */
-static const char *hexOut(SECItem *data)
+static char *base64_bundle(int e, chunk_t modulus)
 {
-	unsigned i;
-	static char hexbuf[3 + BYTES_FOR_BITS(MAXBITS) * 2];
-	char *hexp = hexbuf;
+	/*
+	 * Pack the single-byte exponent into a byte array.
+	 */
+	assert(e <= 255);
+	u_char exponent_byte = 1;
+	chunk_t exponent = {
+		.ptr = &exponent_byte,
+		.len = 1,
+	};
 
-	if (data->len > BYTES_FOR_BITS(MAXBITS))
-		return "[too many bytes]";
+	/*
+	 * Create the resource record.
+	 */
+	char *bundle;
+	err_t err = rsa_pubkey_to_base64(exponent, modulus, &bundle);
+	if (err) {
+		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
+			me, err);
+		exit(1);
+	}
 
-	*hexp++ = '0';
-	*hexp++ = 'x';
-	for (i = 0; i < data->len; i++, hexp += 2)
-		sprintf(hexp, "%02x", data->data[i]);
-
-	return hexbuf;
+	return bundle;
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
@@ -229,14 +236,19 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdata = (secuPWData *)arg;
 	secuPWData pwnull = { PW_NONE, 0 };
-	secuPWData pwxtrn = { PW_EXTERNAL, "external" };
 	char *pw;
 
 	if (pwdata == NULL)
 		pwdata = &pwnull;
 
-	if (PK11_ProtectedAuthenticationPath(slot))
-		pwdata = &pwxtrn;
+	if (PK11_ProtectedAuthenticationPath(slot)) {
+		/*
+		 * Anyone know what this case is?
+		 */
+		fprintf(stderr, "%s: protected authentication paths not supported\n",
+			me);
+		return NULL;
+	}
 	if (retry && pwdata->source != PW_NONE) {
 		fprintf(stderr, "%s: Incorrect password/PIN entered.\n", me);
 		return NULL;
@@ -256,7 +268,7 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	case PW_PLAINTEXT:
 		return strdup(pwdata->data);
 
-	default: /* cases PW_NONE and PW_EXTERNAL not supported */
+	default: /* cases PW_NONE not supported */
 		fprintf(stderr,
 			"%s: Unknown or unsupported case in GetModulePassword\n",
 			me);
@@ -273,10 +285,11 @@ static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
  */
 int main(int argc, char *argv[])
 {
+	const struct lsw_conf_options *oco = lsw_init_options();
 	int opt;
 	int nbits = 0;
 	int seedbits = DEFAULT_SEED_BITS;
-	char *configdir = NULL; /* where the NSS databases reside */
+	char *configdir = oco->confddir; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
@@ -348,10 +361,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (configdir == NULL) {
-		configdir = NSSDIR;
-	}
-
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
 		srand(time(NULL));
@@ -402,8 +411,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
-	const unsigned char *bundp = NULL;
-	size_t bs;
 	realtime_t now = realnow();
 
 	if (password == NULL) {
@@ -423,14 +430,13 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	}
 	pwdata.data = password;
 
-	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-
-	rv = NSS_InitReadWrite(configdir);
-	if (rv != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite(%s) returned %d\n",
-			me, configdir, PR_GetError());
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(configdir, LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
+			   GetModulePassword, err)) {
+		fprintf(stderr, "%s: %s\n", me, err);
 		exit(1);
 	}
+
 #ifdef FIPS_CHECK
 	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
 		fprintf(stderr,
@@ -445,8 +451,6 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 			me);
 		exit(1);
 	}
-
-	PK11_SetPasswordFunc(GetModulePassword);
 
 	/* Good for now but someone may want to use a hardware token */
 	slot = PK11_GetInternalKeySlot();
@@ -491,16 +495,25 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		return;
 	}
 
-	SECItem *public_modulus = &pubkey->u.rsa.modulus;
-	SECItem *public_exponent = &pubkey->u.rsa.publicExponent;
+	chunk_t public_modulus = {
+		.ptr = pubkey->u.rsa.modulus.data,
+		.len = pubkey->u.rsa.modulus.len,
+	};
+	chunk_t public_exponent = {
+		.ptr = pubkey->u.rsa.publicExponent.data,
+		.len = pubkey->u.rsa.publicExponent.len,
+	};
 
-	SECItem *ckaid = PK11_MakeIDFromPubKey(public_modulus);
-	if (ckaid == NULL) {
-		fprintf(stderr,
-			"%s: 'CKAID' calculation failed\n", me);
-		exit(1);
+	char *hex_ckaid;
+	{
+		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(privkey);
+		if (ckaid == NULL) {
+			fprintf(stderr, "%s: 'CKAID' calculation failed\n", me);
+			exit(1);
+		}
+		hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
+		SECITEM_FreeItem(ckaid, PR_TRUE);
 	}
-	char *hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
 
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
@@ -516,23 +529,24 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 
 	printf("\t#ckaid=%s\n", hex_ckaid);
 
-	bundp = bundle(E, public_modulus, &bs);
-	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+	/* RFC2537/RFC3110-ish format */
+	{
+		char *bundle = base64_bundle(E, public_modulus);
+		printf("\t#pubkey=%s\n", bundle);
+		pfree(bundle);
+	}
 
-	printf("\tModulus: 0x%s\n", conv(public_modulus->data, public_modulus->len, 16));
-	printf("\tPublicExponent: 0x%s\n", conv(public_exponent->data, public_exponent->len, 16));
+	printf("\tModulus: 0x%s\n", conv(public_modulus.ptr, public_modulus.len, 16));
+	printf("\tPublicExponent: 0x%s\n", conv(public_exponent.ptr, public_exponent.len, 16));
 
 	if (hex_ckaid != NULL)
 		free(hex_ckaid);
-	if (ckaid != NULL)
-		SECITEM_FreeItem(ckaid, PR_TRUE);	
 	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
 	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
-	(void) NSS_Shutdown();
-	(void) PR_Cleanup();
+	lsw_nss_shutdown();
 }
 
 /*
@@ -573,39 +587,6 @@ void getrandom(size_t nbytes, unsigned char *buf)
 	}
 
 	close(dev);
-}
-
-/*
-   - bundle - bundle e and n into an RFC2537-format lump
- * Note, calls hexOut.
- *
- * NOTE: returns a pointer into a STATIC buffer
- */
-static const unsigned char *bundle(int e, SECItem *n, size_t *sizep)
-{
-	const char *hexp = hexOut(n);
-	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
-	const char *er;
-	size_t size;
-
-	assert(e <= 255);
-	bundbuf[0] = 1;
-	bundbuf[1] = e;
-	er = ttodata(hexp, 0, 0, (char *)bundbuf + 2, sizeof(bundbuf) - 2,
-		     &size);
-	if (er != NULL) {
-		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
-			me, er);
-		exit(1);
-	}
-	if (size > sizeof(bundbuf) - 2) {
-		fprintf(stderr, "%s: can't-happen bundle overflow (need %d)\n",
-			me, (int) size);
-		exit(1);
-	}
-	if (sizep != NULL)
-		*sizep = size + 2;
-	return bundbuf;
 }
 
 /*

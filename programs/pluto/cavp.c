@@ -21,6 +21,7 @@
 
 #include "constants.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 #include "ike_alg.h"
 #include "crypto.h"
 #include "crypt_dbg.h"
@@ -297,11 +298,17 @@ int main(int argc, char *argv[])
 
 	setbuf(stdout, NULL);
 
-	NSS_NoDB_Init(".");
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(NULL, LSW_NSS_SKIP_PR_CLEANUP|LSW_NSS_SKIP_AUTH,
+			   NULL, err)) {
+		fprintf(stderr, "unexpected %s\n", err);
+		exit(1);
+	}
+
 	init_crypto();
 
 	cavp_parser();
 
-	NSS_Shutdown();
+	lsw_nss_shutdown();
 	return 0;
 }
