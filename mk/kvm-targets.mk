@@ -316,11 +316,11 @@ uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_PO
 
 
 # KVM_ISO_URL_$(KVM_OS) = ...
-KVM_ISO_URL_fedora21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
-KVM_ISO_URL_fedora22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+KVM_ISO_URL_f21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
+KVM_ISO_URL_f22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
 # XXX: Next time the ISO needs an update, set KVM_OS to that release
 # and delete the below hack.
-KVM_ISO_URL_fedora = $(KVM_ISO_URL_fedora22)
+KVM_ISO_URL_fedora = $(KVM_ISO_URL_f22)
 KVM_ISO_URL = $(KVM_ISO_URL_$(KVM_OS))
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 .PHONY: kvm-iso
