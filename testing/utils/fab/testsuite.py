@@ -151,7 +151,7 @@ def _scripts(directory):
     scripts = set()
     if os.path.isdir(directory):
         for script in os.listdir(directory):
-            if not re.match(r".*\.sh$", script):
+            if not re.match(r"[a-z0-9].*\.sh$", script):
                 continue
             path = os.path.join(directory, script)
             if not os.path.isfile(path):
