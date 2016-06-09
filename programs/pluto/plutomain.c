@@ -10,7 +10,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2016 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
@@ -95,8 +95,6 @@
 #include <nss.h>
 #include <nspr.h>
 
-#include "fips.h"
-
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>	/* from libcap-ng devel */
 #endif
@@ -114,6 +112,11 @@ static const char *pluto_name;	/* name (path) we were invoked with */
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
+
+#ifdef FIPS_CHECK
+# include <fipscheck.h> /* from fipscheck devel */
+static const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto", NULL };
+#endif
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
@@ -1495,9 +1498,9 @@ int main(int argc, char **argv)
 		bool fips_files = FIPSCHECK_verify_files(fips_package_files);
 
 		if (fips_files) {
-			libreswan_log("FIPS HMAC integrity verification tests passed");
+			libreswan_log("FIPS HMAC integrity verification self-test passed");
 		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification tests FAILED");
+			loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
 		}
 		if (pluto_fips_mode == LSW_FIPS_ON && !fips_files) {
 			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
