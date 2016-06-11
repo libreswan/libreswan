@@ -6,17 +6,22 @@
 import os,sys,socket,shutil,distutils.dir_util,commands
 import pexpect, glob
 
+
 try:
 	import argparse
 except ImportError , e:
 	module = str(e)[16:]
 	sys.exit("we requires the python argparse module")
 
-def shell(command):
+def shell(command, out=False):
         """Run command as a sub-process and report failures"""
+        if args.verbose:
+                print(command)
         status, output = commands.getstatusoutput(command)
         if status:
                 print("command '%s' failed with status %d: %s" % (command, status, output))
+        elif (args.verbose or out) and output:
+                print(output)
         return output
 
 # prevent double installs from going unnoticed
@@ -25,8 +30,6 @@ if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
 		sys.exit("\n\n---------------------------------------------------------------------\n"
                              "ABORT: found a swan userland in the base system as well as /usr/local\n"
 			     "---------------------------------------------------------------------\n")
-
-os.environ['NSS_DEFAULT_DB_TYPE'] = 'sql:'
 
 # just in case a new copy was installed
 if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
@@ -45,10 +48,11 @@ parser.add_argument('--fips', '-f', action='store_true',  help='prepare /etc/ips
 parser.add_argument('--revoked', '-r', action='store_true',  help='load a revoked certificate')
 parser.add_argument('--signedbyother', '-o', action='store_true',  help='load the signedbyother certificate')
 parser.add_argument('--eccert', '-e', action='store_true', help='enable an EC cert for this host')
-parser.add_argument('--nsspw', '-P', action='store_true', help='enable an nss passworded db')
+parser.add_argument('--nsspw', action='store_true', help='set the security password (on the NSS DB)')
 parser.add_argument('--certchain', '-c', action='store_true', help='import the ca-chain test certs')
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
 parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
+parser.add_argument('--verbose', '-v', action='store_true', help='more verbose')
 args = parser.parse_args()
 
 if args.hostname:
@@ -146,8 +150,11 @@ fp.close()
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
 
-	# this brings in the nss *.db files that are path-specific - they have pathnames hardcoded inside the file
-	#shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/")
+	# this brings in the nss *.db files that are path-specific -
+	# they have pathnames hardcoded inside the file
+	# shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
+	# "/etc/").  This default database contains a default key-pair
+	# for basic testing.
 	distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/ipsec.d/")
 
 	# fill in any missing dirs
@@ -209,128 +216,136 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		os.unlink(dst)
 	shutil.copyfile(resolv, "/etc/resolv.conf")
 
+if args.fips:
+	fp = open("/etc/system-fips","w")
+	fp.close()
+	shell("/testing/guestbin/fipson")
+	# the test also requires using a modutil cmd which we cannot run here
+	shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
+else:
+	shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto")
+	if os.path.isfile("/etc/system-fips"):
+		os.unlink("/etc/system-fips")
+
+# Set up NSS DB
+if userland in ("libreswan", "openswan"):
+
+        # Set password options.
 	if args.nsspw or args.fips:
-		dbpassword = 's3cret'
-		util_pw = ' -f /etc/ipsec.d/nsspassword'
-		p12cmd_pw = ' -k /etc/ipsec.d/nsspassword'
-		if not os.path.isfile('/etc/ipsec.d/nsspassword'):
-			with open('/etc/ipsec.d/nsspassword', 'w') as f:
-				f.write("NSS FIPS 140-2 Certificate DB:" + dbpassword + '\n')
-				f.write("NSS Certificate DB:" + dbpassword + '\n')
+		dbpassword = "s3cret"
+		util_pw = " -f /tmp/nsspw"
+		p12cmd_pw = " -k /tmp/nsspw"
+                with open("/tmp/nsspw", "w") as f:
+                        f.write(dbpassword)
+                        f.write("\n")
+		with open("/etc/ipsec.d/nsspassword", "w") as f:
+                        if args.nsspw:
+				f.write("NSS Certificate DB:" + dbpassword + "\n")
+                        if args.fips:
+				f.write("NSS FIPS 140-2 Certificate DB:" + dbpassword + "\n")
+        else:
+		util_pw = ""
+		p12cmd_pw = " -K ''"
 
-	if args.fips:
-		fp = open("/etc/system-fips","w")
-		fp.close()
-		shell("/testing/guestbin/fipson")
-		# the test also requires using a modutil cmd which we cannot run here
-		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
-		# passwd required
-		fp = open("/tmp/pw","w")
-		fp.write("\n")
-		fp.close()
-		out = shell("certutil -W -f /tmp/pw -@ /etc/ipsec.d/nsspassword -d sql:/etc/ipsec.d")
-		print "certutil out:%s"%out
-	else:
-		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto")
-		if os.path.isfile("/etc/system-fips"):
-			os.unlink("/etc/system-fips")
+        if args.x509:
+                # Delete any existing db files, and start fresh.
+		print "Preparing X.509 files"
+	        oldfiles = glob.glob("/etc/ipsec.d/*db")
+	        for oldfile in oldfiles:
+		        os.unlink(oldfile)
+		shell("/usr/bin/certutil -N --empty-password -d sql:/etc/ipsec.d")
 
+        # If needed set a password (this upgrades the database)
+        if args.nsspw or args.fips:
+                with open("/tmp/pw","w") as f:
+		        f.write("\n")
+                shell("/usr/bin/certutil -W -f /tmp/pw -@ /tmp/nsspw -d sql:/etc/ipsec.d", out=True)
+
+        # Switch on fips in the NSS db
+        if args.fips:
+                shell("/usr/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force", out=True)
 
 	# this section is getting rough. could use a nice refactoring
 	if args.x509:
-		if (userland == "libreswan" or userland == "openswan"):
-			print "Preparing X.509 files"
-			dbpassword = ''
-			util_pw = ''
-			p12cmd_pw = ''
 
+		if not os.path.isfile("/testing/x509/keys/mainca.key"):
+			print("\n\n---------------------------------------------------------------------\n"
+			      "WARNING: no mainca.key file, did you run testing/x509/dist_certs.py?\n"
+			      "---------------------------------------------------------------------\n")
 
-
-			# clean out old db files and generate new ones from scratch
-			# certutil accepts --empty-password, however the following way
-			# is useful for both empty and passworded tests.
-
-			oldfiles = glob.glob("/etc/ipsec.d/*db")
-			for oldfile in oldfiles:
-				os.unlink(oldfile)
-			shell("certutil -N --empty-password -d sql:/etc/ipsec.d")
-
-			if not os.path.isfile("/testing/x509/keys/mainca.key"):
-				print("\n\n---------------------------------------------------------------------\n"
-					  "WARNING: no mainca.key file, did you run testing/x509/dist_certs.py?\n"
-					  "---------------------------------------------------------------------\n")
-
-			if args.eccert:
-				p12 = hostname + "-ec"
-				ca = "curveca"
-				pw = "-W \"\""
+		if args.eccert:
+			p12 = hostname + "-ec"
+			ca = "curveca"
+			pw = "-W \"\""
+		else:
+			if args.x509name:
+				p12 = args.x509name
 			else:
-				if args.x509name:
-					p12 = args.x509name
-				else:
-					p12 = hostname
-				ca = "mainca"
-				pw = "-w /testing/x509/nss-pw"
+				p12 = hostname
+			ca = "mainca"
+			pw = "-w /testing/x509/nss-pw"
 
-			if args.certchain:
-				icanum = 2
-				pw = "-w /testing/x509/nss-pw"
-				root = "mainca"
-				ica_p = hostname + "_chain_int_"
-				ee = hostname + "_chain_endcert"
+		if args.certchain:
+			icanum = 2
+			pw = "-w /testing/x509/nss-pw"
+			root = "mainca"
+			ica_p = hostname + "_chain_int_"
+			ee = hostname + "_chain_endcert"
 
-				# a note about DB trusts
-				# 'CT,,' is our root's trust. T is important!! it is for verifying "SSLClient" x509 KU
-				# ',,' is an intermediate's trust
-				# 'P,,' (trusted peer) is nic's for OCSP
-				# 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
+			# a note about DB trusts
+			# 'CT,,' is our root's trust. T is important!! it is for verifying "SSLClient" x509 KU
+			# ',,' is an intermediate's trust
+			# 'P,,' (trusted peer) is nic's for OCSP
+			# 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
-				#mainca and nic import
-				shell("certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
-				shell("certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
+			#mainca and nic import
+			shell("/usr/bin/certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
+			shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
 
-				# install ee
-				shell("pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
+			# install ee
+			shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
 
-				# install intermediates
-				for i in range(1, icanum+1):
-					acrt = ica_p + str(i)
-					shell("certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ \
-										-a -i /testing/x509/certs/%s.crt%s" % (acrt,acrt, util_pw))
-				if args.revoked:
-					shell("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
+			# install intermediates
+			for i in range(1, icanum+1):
+				acrt = ica_p + str(i)
+				shell("/usr/bin/certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s" % (acrt,acrt, util_pw))
+			if args.revoked:
+				shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
 
-			else:
-				shell("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -K '' -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
-				# install all other public certs
-				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+		else:
+			shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
+			# install all other public certs
+			# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
 
-				if args.revoked:
-					shell("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+			if args.revoked:
+				shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
-				if args.signedbyother:
-					shell("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+			if args.signedbyother:
+				shell("/usr/bin/pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
-				# fix trust import from p12
-				# is pw needed?
-				shell("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'")
+			# fix trust import from p12
+			# is pw needed?
+			shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'%s" % (util_pw))
 
-				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
-					if not hostname in certname:
-						shell("certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
-		elif userland == "strongswan":
-			if args.eccert:
-				ca = "curveca"
-				key = hostname + "-ec"
-			else:
-				ca = "mainca"
-				key = hostname
+			for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
+				if not hostname in certname:
+					shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
 
-			shutil.copy("/testing/x509/cacerts/%s.crt"%ca,"/etc/strongswan/ipsec.d/cacerts/")
-			shutil.copy("/testing/x509/keys/%s.key"%key,"/etc/strongswan/ipsec.d/private/")
+# Strong swan has simple files.
+if userland == "strongswan" and args.x509:
+	if args.eccert:
+		ca = "curveca"
+		key = hostname + "-ec"
+	else:
+		ca = "mainca"
+		key = hostname
 
-			for certname in ( "west", "east", "road", "north","hashsha2","west-ec","east-ec"):
-				shutil.copy("/testing/x509/certs/%s.crt"%certname,"/etc/strongswan/ipsec.d/certs/")
+	shutil.copy("/testing/x509/cacerts/%s.crt"%ca,"/etc/strongswan/ipsec.d/cacerts/")
+	shutil.copy("/testing/x509/keys/%s.key"%key,"/etc/strongswan/ipsec.d/private/")
+
+	for certname in ( "west", "east", "road", "north","hashsha2","west-ec","east-ec"):
+		shutil.copy("/testing/x509/certs/%s.crt"%certname,"/etc/strongswan/ipsec.d/certs/")
+
 
 if userland == "racoon2" or userland == "racoon":
 	# Racoon uses x509 files straight from /testing/x509/*
