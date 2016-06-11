@@ -218,8 +218,14 @@ def reboot(domain, console=None,
         domain.reset()
         # give the domain extra time to start
         startup_timeout = startup_timeout * 4
-    _startup(domain, console, timeout=startup_timeout)
-    return console
+    try:
+        _startup(domain, console, timeout=startup_timeout)
+        return console
+    except pexpect.TIMEOUT:
+        domain.logger.error("domain failed to start after %d seconds, power cycling it", time.time() - start_time)
+        domain.destroy()
+        console.expect(pexpect.EOF, timeout=shutdown_timeout)
+        return start(domain)
 
 # Use the console to detect the shutdown - if/when the domain stops it
 # will exit giving an EOF.
