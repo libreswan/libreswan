@@ -603,6 +603,8 @@ define kvm_alias
   kvm-install-$(1): kvm-$(2)-install
   .PHONY: kvm-build-$(1)
   kvm-build-$(1): kvm-$(2)-build
+  .PHONY: kvm-shutdown-$(1)
+  kvm-shutdown-$(1): kvm-$(2)-shutdown
 endef
 
 $(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
