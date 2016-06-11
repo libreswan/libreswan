@@ -90,6 +90,8 @@ kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
 kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
+kvmplutotest	ikev2-04-basic-x509-nsspw		good
+
 kvmplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
 kvmplutotest	ikev2-10-2behind-nat	wip
