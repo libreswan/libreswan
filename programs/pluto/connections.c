@@ -1517,6 +1517,7 @@ void add_connection(const struct whack_message *wm)
 		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
 		c->sa_tfcpad = wm->sa_tfcpad;
+		c->send_no_esp_tfc = wm->send_no_esp_tfc;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
@@ -3875,13 +3876,14 @@ void show_one_connection(const struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; fake_strongswan:%s; send_vendorid:%s;",
+		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
 		  (c->sha2_truncbug) ? "yes" : "no",
 		  (c->initial_contact) ? "yes" : "no",
 		  (c->cisco_unity) ? "yes" : "no",
 		  (c->fake_strongswan) ? "yes" : "no",
-		  (c->send_vendorid) ? "yes" : "no");
+		  (c->send_vendorid) ? "yes" : "no",
+		  (c->send_no_esp_tfc) ? "yes" : "no");
 
 	if (c->policy_next != NULL) {
 		whack_log(RC_COMMENT,

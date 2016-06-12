@@ -110,6 +110,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
 	cfg->conn_default.options[KBF_CISCO_UNITY] = FALSE;
+	cfg->conn_default.options[KBF_NO_ESP_TFC] = FALSE;
 	cfg->conn_default.options[KBF_VID_STRONGSWAN] = FALSE;
 	cfg->conn_default.options[KBF_SEND_VENDORID] = FALSE;
 

@@ -1248,7 +1248,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 		if (sa->tfcpad != 0 &&
 		    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-			// set kernel to use TFC padding
+			DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %"PRIu32" (up to PMTU",
+				sa->tfcpad));
 
 			attr->rta_type = XFRMA_TFCPAD;
 			attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));

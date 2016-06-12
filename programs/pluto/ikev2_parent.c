@@ -549,17 +549,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (c->sa_tfcpad == 0) {
-		int np = ISAKMP_NEXT_v2N;
-
-		/* XXX: should this be a critical payload? */
-		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-			      PROTO_v2_RESERVED, &empty_chunk,
-			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
-			      &md->rbody))
-			return STF_INTERNAL_ERROR;
-	}
-
 	/* Send NAT-T Notify payloads */
 	{
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
@@ -622,26 +611,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	return STF_OK;
 }
 
-static void ikev2_check_frag_support(struct msg_digest *md)
-{
-	struct payload_digest *p;
-	struct state *st = md->st;
-
-	passert(st != NULL);
-
-	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-		switch (p->payload.v2n.isan_type) {
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			st->st_seen_fragvid = TRUE;
-			break;
-		default:
-			continue;
-		}
-
-		break;
-	}
-}
-
 /*
  *
  ***************************************************************
@@ -667,8 +636,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 {
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
-	bool got_dcookie = FALSE;
-	bool got_no_tfc = FALSE;
+	bool seen_dcookie = FALSE;
+	bool seen_ntfy_frag = FALSE;
 	bool require_dcookie = require_ddos_cookies();
 	struct payload_digest *ntfy;
 
@@ -683,11 +652,20 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
 			DBG(DBG_CONTROLMORE, DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
-			got_dcookie = TRUE;
+			seen_dcookie = TRUE;
 			break;
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
-			got_no_tfc = TRUE;
+		case v2N_USE_TRANSPORT_MODE:
+			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
+				enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type)));
+			break;
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			/* handled further below */
+			break;
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			seen_ntfy_frag = TRUE;
 			break;
 		default:
 			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify - ignored",
@@ -701,7 +679,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * violate the RFC and validate the cookie anyway. This prevents an
 	 * attacker from being able to inject a lot of data used later to HMAC
 	 */
-	if (got_dcookie || require_dcookie) {
+	if (seen_dcookie || require_dcookie) {
 		u_char dcookie[SHA2_256_DIGEST_SIZE];
 		chunk_t dc, ni, spiI;
 
@@ -973,9 +951,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
-		if (got_no_tfc)
-			st->st_seen_no_tfc = TRUE;
-
 		/* save the proposal information */
 		st->st_oakley = accepted_oakley;
 		st->st_accepted_ike_proposal = accepted_ike_proposal;
@@ -983,7 +958,13 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
+
+		if (seen_ntfy_frag)
+			st->st_seen_fragvid = TRUE;
+
 	} else {
+		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
+		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
 		/* ??? should st->st_connection be changed to c? */
 	}
 
@@ -993,7 +974,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, zero_cookie);
-		ikev2_check_frag_support(md);
 	}
 
 	/* calculate the nonce and the KE */
@@ -1446,14 +1426,11 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			/* we do handle these further down */
 			break;
-#if 0
-			st->st_seen_no_tfc = TRUE;
-			DBG(DBG_CONTROL, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED"));
-			break;
-#endif
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			st->st_seen_fragvid = TRUE;
+                        break;
 		default:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
 				enum_name(&state_names, st->st_state),
@@ -1516,7 +1493,6 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, st->st_rcookie);
-		ikev2_check_frag_support(md);
 	}
 
 	/* initiate calculation of g^xy */
@@ -2612,6 +2588,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	{
 		lset_t policy = pc->policy;
+		bool send_use_transport;
 
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
@@ -2624,6 +2601,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
+
+		send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
 
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
@@ -2645,17 +2624,29 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
-		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, cc, policy);
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, cc,
+			(send_use_transport || cc->send_no_esp_tfc) ?
+				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			if (!ship_v2N(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
 						ISAKMP_PAYLOAD_NONCRITICAL,
 						PROTO_v2_RESERVED,
 						&empty_chunk,
 						v2N_USE_TRANSPORT_MODE, &empty_chunk,
 						&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+		}
+
+		if (cc->send_no_esp_tfc) {
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
+					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 	}

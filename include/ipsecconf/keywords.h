@@ -140,6 +140,7 @@ enum keyword_numeric_config_field {
 	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives */
 	KBF_INITIAL_CONTACT,	/* send initial contact VID */
 	KBF_CISCO_UNITY,	/* send cisco unity VID */
+	KBF_NO_ESP_TFC	,	/* send ESP_TFC_PADDING_NOT_SUPPORTED */
 	KBF_VID_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */

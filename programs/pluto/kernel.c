@@ -2044,7 +2044,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			c->sa_replay_window));
 
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
-			DBG(DBG_KERNEL, DBG_log("Enabling TFC "));
+			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 		said_next->authalg = ei->authalg;

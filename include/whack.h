@@ -200,6 +200,7 @@ struct whack_message {
 
 	uint32_t sa_priority;
 	uint32_t sa_tfcpad;
+	bool send_no_esp_tfc;
 	reqid_t sa_reqid;
 	int nflog_group;
 

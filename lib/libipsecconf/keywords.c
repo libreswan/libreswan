@@ -498,6 +498,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "initial-contact",  AUTO,  kt_bool,  KBF_INITIAL_CONTACT,  NOT_ENUM },
   { "cisco_unity",  AUTO | kv_alias,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },  /* obsolete _ */
   { "cisco-unity",  AUTO,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },
+  { "send-no-esp-tfc",  AUTO,  kt_bool,  KBF_NO_ESP_TFC,  NOT_ENUM },
   { "fake-strongswan",  AUTO,  kt_bool,  KBF_VID_STRONGSWAN,  NOT_ENUM },
   { "send_vendorid",  AUTO | kv_alias,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },  /* obsolete _ */
   { "send-vendorid",  AUTO,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },
