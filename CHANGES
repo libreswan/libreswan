@@ -2,10 +2,10 @@
 See also https://libreswan.org/
 
 v3.18 (unreleased)
-* XFRM: Support for NAT OE Client Address Translation (leftcat=) [Antony]
-* XFRM: Experimental Support for routed-VPNs using VTI [Paul/Tuomo]
+* XFRM: EXPERIMENTAL Support for NAT OE Client Address Translation (leftcat=) [Antony]
+* XFRM: EXPERIMENTAL Support for routed-VPNs using VTI [Paul/Tuomo]
         keywords: vti-interface=<name> vti-routing=yes|no vti-shared=yes|no
-* XFRM: Traffic Flow Confidentiality support using new keyword tfc=XXX [Paul]
+* XFRM: EXPERIMENTAL Support for Traffic Flow Confidentiality tfc=XXX [Paul]
 * KLIPS: Fix for /proc/net/pf_key oops on < 4.4 [Erik Andersson]
 * KLIPS: Fix overwriting the sk pointer in 4.4 kernels [Ofer Heifetz]
 * pluto: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
