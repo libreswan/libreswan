@@ -49,12 +49,16 @@ For Debian/Ubuntu
 
 For Fedora/RHEL/CentOS
 
-	yum install nss-devel nspr-devel pkg-config pam-devel \
+	yum install nss-devel nspr-devel pkgconfig pam-devel \
 		libcap-ng-devel libselinux-devel \
 		curl-devel flex bison gcc make \
-		fipscheck-devel unbound-devel libevent-devel
+		fipscheck-devel unbound-devel libevent-devel xmlto
 
 (note: for rhel6/centos6 use libevent2-devel)
+
+For Fedora/RHEL7/CentOS7 with systemd:
+
+	yum install audit-libs-devel systemd-devel
 
 Runtime requirements (usually already present on the system)
 
