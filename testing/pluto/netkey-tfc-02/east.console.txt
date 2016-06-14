@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add tfc
+002 added connection description "tfc"
+east #
+ echo "initdone"
+initdone
+east #
+ # ESP should not show TFC
+east #
+ grep "PARENT SA established" /tmp/pluto.log
+"tfc" #2: STATE_PARENT_R2: received v2I2, PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
