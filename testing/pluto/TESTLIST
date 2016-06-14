@@ -196,6 +196,10 @@ kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
 kvmplutotest	netkey-vti-03				good
 
+kvmplutotest	netkey-tfc-01				good
+kvmplutotest	netkey-tfc-02				good
+kvmplutotest	netkey-tfc-03				good
+
 kvmplutotest	ikev2-43-init-retransmit		good
 
 kvmplutotest	ikev2-frag-01				good
