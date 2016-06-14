@@ -713,7 +713,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		dc.ptr = dcookie;
 		dc.len = SHA2_256_DIGEST_SIZE;
 
-		if (ntfy != NULL) {
+		if(got_dcookie) {
 			const pb_stream *dc_pbs;
 			chunk_t idc;
 
