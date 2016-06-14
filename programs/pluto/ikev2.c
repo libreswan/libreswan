@@ -1852,7 +1852,7 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	 * we verify the nonce is big enough.
 	 */
 
-	if (len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < len) {
+	if (len < IKEv2_MINIMUM_NONCE_SIZE || len > IKEv2_MAXIMUM_NONCE_SIZE) {
 		loglog(RC_LOG_SERIOUS, "%s length %zu not between %d and %d",
 			name, len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return v2N_INVALID_SYNTAX; /* ??? */
