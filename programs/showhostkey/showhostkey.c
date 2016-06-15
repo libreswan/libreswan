@@ -328,9 +328,11 @@ int main(int argc, char *argv[])
 	bool ipseckey_flg = FALSE;
 	char *gateway = NULL;
 	int precedence = 10;
-	int verbose = 0;
 	char *ckaid = NULL;
 	char *rsaid = NULL;
+
+	log_to_stderr = FALSE;
+	tool_init_log();
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {
@@ -412,7 +414,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'v':
-			verbose++;
+			log_to_stderr = TRUE;
 			break;
 
 		case 'V':
@@ -423,9 +425,6 @@ int main(int argc, char *argv[])
 			goto usage;
 		}
 	}
-
-	log_to_stderr = verbose > 0;
-	tool_init_log();
 
 	if (!(left_flg + right_flg + ipseckey_flg + dump_flg + list_flg)) {
 		fprintf(stderr, "%s: You must specify an operation\n", progname);
@@ -450,9 +449,7 @@ int main(int argc, char *argv[])
 		goto usage;
 	}
 
-	if (verbose)
-		fprintf(stderr, "%s using config directory \"%s\"\n",
-			progname, oco->confddir);
+	libreswan_log("using config directory \"%s\"\n", oco->confddir);
 
 	/*
 	 * Set up for NSS - contains key pairs.
@@ -479,12 +476,12 @@ int main(int argc, char *argv[])
 
 	struct private_key_stuff *pks;
 	if (rsaid != NULL) {
-		if (verbose)
+		if (log_to_stderr)
 			printf("%s picking by rsaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", rsaid);
 		pks = foreach_secret(pick_by_rsaid, rsaid);
 	} else if (ckaid != NULL) {
-		if (verbose) {
+		if (log_to_stderr) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
