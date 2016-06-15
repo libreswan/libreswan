@@ -40,6 +40,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	 */
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
+	libreswan_log("Initializing NSS");
 	if (configdir) {
 		const char sql[] = "sql:";
 		char *nssdb;
@@ -50,12 +51,13 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 			strcpy(nssdb, sql);
 			strcat(nssdb, configdir);
 		}
-		libreswan_log("Initializing NSS DB '%s'", nssdb);
+		libreswan_log("Opening NSS database \"%s\" %s", nssdb,
+			      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
 		SECStatus rv = NSS_Initialize(nssdb, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
 			snprintf(err, sizeof(lsw_nss_buf_t),
-				 "%s initialization of NSS database '%s' failed (%d)\n",
+				 "Initialization of NSS with %s database \"%s\" failed (%d)",
 				 (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
 				 nssdb, PR_GetError());
 			pfree(nssdb);
@@ -63,6 +65,12 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		}
 	} else {
 		NSS_NoDB_Init(".");
+	}
+
+	if (PK11_IsFIPS() && get_password == NULL) {
+		snprintf(err, sizeof(lsw_nss_buf_t),
+			 "on FIPS mode a password is required");
+		return FALSE;
 	}
 
 	if (get_password) {
@@ -104,7 +112,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err)
 		return NULL;
 	}
 
-	if (PK11_NeedLogin(slot)) {
+	if (PK11_IsFIPS() || PK11_NeedLogin(slot)) {
 		SECStatus status = PK11_Authenticate(slot, PR_FALSE,
 						     lsw_return_nss_password_file_info());
 		if (status != SECSuccess) {
@@ -252,7 +260,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	}
 
 	if (PK11_ProtectedAuthenticationPath(slot)) {
-		libreswan_log("NSS Password for token '%s' failed, slot has protected authentication path",
+		libreswan_log("NSS Password for token \"%s\" failed, slot has protected authentication path",
 			      token);
 		return NULL;
 	}
@@ -264,7 +272,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	 */
 	if (oco->nsspassword != NULL) {
 		char *password = PORT_Strdup(oco->nsspassword);
-		libreswan_log("NSS Password for token '%s' with length %zu passed to NSS",
+		libreswan_log("NSS Password for token \"%s\" with length %zu passed to NSS",
 			      token, strlen(password));
 		return password;
 	}
@@ -333,7 +341,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 		    p[toklen] == ':') {
 			/* we have a winner! */
 			p = PORT_Strdup(&p[toklen + 1]);
-			libreswan_log("NSS Password from file \"%s\" for token %s with length %zu passed to NSS",
+			libreswan_log("NSS Password from file \"%s\" for token \"%s\" with length %zu passed to NSS",
 				      oco->nsspassword_file, token, PORT_Strlen(p));
 			PORT_Free(passwords);
 			return p;
@@ -341,7 +349,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	}
 
 	/* no match found in password file */
-	libreswan_log("NSS Password file \"%s\" does not contain token '%s'",
+	libreswan_log("NSS Password file \"%s\" does not contain token \"%s\"",
 		      oco->nsspassword_file, token);
 	PORT_Free(passwords);
 	return NULL;
