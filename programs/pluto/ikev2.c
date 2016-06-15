@@ -752,6 +752,7 @@ void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	const struct state_v2_microcode *svm;
+	struct state *st;
 
 	/* Look for an state which matches the various things we know:
 	 *
@@ -782,7 +783,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Find the corresponding state
 	 */
-	struct state *st;
 	if (ix == ISAKMP_v2_SA_INIT) {
 		/*
 		 * For INIT messages, need to lookup using the ICOOKIE
@@ -965,6 +965,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
 	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
@@ -1047,7 +1048,21 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			if (st == NULL) {
+				send_v2_notification_from_md(md,
+					v2N_INVALID_MESSAGE_ID, NULL);
+			} else {
+				/* pretty bogus, reply without modifying existing state */
+				struct state *tmpst = duplicate_state(st);
+
+				update_ike_endpoints(tmpst, md);
+
+				send_v2_notification_from_state(tmpst,
+					v2N_INVALID_MESSAGE_ID, ix,
+					NULL);
+
+				delete_state(tmpst);
+			}
 		}
 		return;
 	}
@@ -1297,10 +1312,10 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 
 void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t type,
+				     u_int8_t isa_xchg,
 				     chunk_t *data)
 {
-	send_v2_notification(st, type, NULL, st->st_icookie, st->st_rcookie,
-			     data);
+	send_v2_notification(st, type, NULL, isa_xchg, data);
 }
 
 void send_v2_notification_from_md(struct msg_digest *md,
@@ -1308,7 +1323,6 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  chunk_t *data)
 {
 	struct state st;	/* note: not a pointer */
-	struct connection cnx;	/* note: not a pointer */
 
 	/**
 	 * Create a dummy state to be able to use send_ike_msg in
@@ -1322,17 +1336,17 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	passert(md != NULL);
 
 	zero(&st);	/* ??? might not NULL pointer fields */
-	zero(&cnx);	/* ??? might not NULL pointer fields */
-	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;
 	st.st_localaddr  = md->iface->ip_addr;
 	st.st_localport  = md->iface->port;
-	cnx.interface = md->iface;
 	st.st_interface = md->iface;
 
+	memcpy(st.st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+	memcpy(st.st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
+
 	send_v2_notification(&st, type, NULL,
-			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
+		md->hdr.isa_xchg, data);
 }
 
 void ikev2_update_msgid_counters(struct msg_digest *md)
@@ -1694,18 +1708,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	cur_state = st; /* might have changed */
 
 	/*
-	 * XXX/SML:  There is no need to abort here in all cases where st is
-	 * null, so moved this precondition to where it's needed.  Some previous
-	 * logic appears to have been tooled to handle null state, and state might
-	 * be null legitimately in certain failure cases (STF_FAIL + xxx).
+	 * XXX/SML: state might be null legitimately
 	 *
 	 * One condition for null state is when a new connection request packet
-	 * arrives and there is no suitable matching configuration.  For example,
-	 * ikev2parent_inI1outR1() will return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
-	 * no state in this case.  While other failures may be better caught before
-	 * this function is called, we should be graceful here.  And for this
-	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
-	 * (below) to let the peer know why we've rejected the request.
+	 * arrives and there is no suitable matching configuration.
 	 *
 	 * Another case of null state is return from ikev2parent_inR1BoutI1B
 	 * which returns STF_IGNORE.
@@ -1798,18 +1804,33 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 				/* We are the exchange responder */
 				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				SEND_V2_NOTIFICATION(md->note);
-
 				if (st != NULL) {
+					send_v2_notification_from_state(st, md->note,
+						md->hdr.isa_xchg, NULL);
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {
 						delete_event(st);
 						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
 					}
+				} else {
+					send_v2_notification_from_md(md, md->note, NULL);
 				}
+
 			} else {
-				/* We are the exchange initiator */
+				/*
+				 * We are the exchange initiator - we cannot reply to a reply
+				 * But we may send a new informational message
+				 */
+				if (st->st_state == STATE_PARENT_I2) {
+					if (result == STF_FAIL + v2N_AUTHENTICATION_FAILED) {
+						libreswan_log("TODO: initiator failed to AUTHENTICATE responder, send informationa");
+					}
+				}
+
+
+
+
 				pexpect(st !=  NULL && st->st_event != NULL &&
 						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
 			}

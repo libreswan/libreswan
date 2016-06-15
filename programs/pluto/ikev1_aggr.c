@@ -280,15 +280,10 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
-	struct state *st = new_state();
+	struct state *st = new_rstate(md);
 
 	cur_state = md->st = st;  /* (caller will reset cur_state) */
 	st->st_connection = c;	/* safe: from new_state */
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
 	change_state(st, STATE_AGGR_R1);
 
 	/*

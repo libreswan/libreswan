@@ -729,16 +729,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
-	md->st = st = new_state();
+	md->st = st = new_rstate(md);
 
 	passert(!st->st_oakley.doing_xauth);
 
 	st->st_connection = c;	/* safe: from new_state */
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
 
 	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
@@ -2403,12 +2398,9 @@ static void send_notification(struct state *sndst, notification_t type,
 	static monotime_t last_malformed;
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
-	struct connection *c = sndst->st_connection;
 
 	r_hashval = NULL;
 	r_hash_start = NULL;
-
-	passert(sndst != NULL && c != NULL);
 
 	switch (type) {
 	case PAYLOAD_MALFORMED:
@@ -2418,13 +2410,10 @@ static void send_notification(struct state *sndst, notification_t type,
 
 		last_malformed = n;
 		sndst->hidden_variables.st_malformed_sent++;
-		if (sndst->hidden_variables.st_malformed_sent >
-			MAXIMUM_MALFORMED_NOTIFY) {
-			if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				libreswan_log(
-					"too many (%d) malformed payloads. Deleting state",
-					sndst->hidden_variables.st_malformed_sent);
-			}
+		if (sndst->hidden_variables.st_malformed_sent > MAXIMUM_MALFORMED_NOTIFY) {
+			DBG(DBG_CONTROL, DBG_log(
+				"too many (%d) malformed payloads. Deleting state",
+				sndst->hidden_variables.st_malformed_sent));
 			delete_state(sndst);
 			/* note: no md->st to clear */
 			return;
@@ -2458,13 +2447,11 @@ static void send_notification(struct state *sndst, notification_t type,
 	{
 		ipstr_buf b;
 
-		if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			libreswan_log("sending %snotification %s to %s:%u",
-				encst ? "encrypted " : "",
-				enum_name(&ikev1_notify_names, type),
-				ipstr(&sndst->st_remoteaddr, &b),
-				sndst->st_remoteport);
-		}
+		DBG(DBG_CONTROL, DBG_log("sending %snotification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev1_notify_names, type),
+			ipstr(&sndst->st_remoteaddr, &b),
+			sndst->st_remoteport));
 	}
 
 	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
@@ -2605,20 +2592,11 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	 *   st_connection->interface
 	 */
 	struct state st;	/* note: not a pointer! */
-	struct connection cnx;	/* note: not a pointer! */
 
 	passert(md != NULL);
 
 	zero(&st);	/* ??? pointer fields might not be NULLed */
-	zero(&cnx);	/* ??? pointer fields might not be NULLed */
-	st.st_connection = &cnx;
-	st.st_remoteaddr = md->sender;
-	st.st_remoteport = md->sender_port;
-	st.st_localaddr = md->iface->ip_addr;
-	st.st_localport = md->iface->port;
-	cnx.interface = md->iface;
-	st.st_interface = md->iface;
-
+	update_ike_endpoints(&st, md);
 	send_notification(&st, type, NULL, 0,
 			md->hdr.isa_icookie, md->hdr.isa_rcookie,
 			PROTO_ISAKMP);
