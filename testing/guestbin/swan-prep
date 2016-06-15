@@ -53,6 +53,7 @@ parser.add_argument('--certchain', '-c', action='store_true', help='import the c
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
 parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
 parser.add_argument('--verbose', '-v', action='store_true', help='more verbose')
+parser.add_argument('--nokeys', action='store_true', help='do not provide any keys')
 args = parser.parse_args()
 
 if args.hostname:
@@ -247,15 +248,19 @@ if userland in ("libreswan", "openswan"):
 		util_pw = ""
 		p12cmd_pw = " -K ''"
 
-        if args.x509:
+        if args.x509 or args.nokeys:
                 # Delete any existing db files, and start fresh.
-		print "Preparing X.509 files"
+                if args.x509:
+		        print("Preparing X.509 files")
+                else:
+                        print("Creating empty NSS database")
 	        oldfiles = glob.glob("/etc/ipsec.d/*db")
 	        for oldfile in oldfiles:
 		        os.unlink(oldfile)
 		shell("/usr/bin/certutil -N --empty-password -d sql:/etc/ipsec.d")
 
-        # If needed set a password (this upgrades the database)
+        # If needed set a password (this will upgrade any existing
+        # database database)
         if args.nsspw or args.fips:
                 with open("/tmp/pw","w") as f:
 		        f.write("\n")
