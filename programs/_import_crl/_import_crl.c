@@ -1,6 +1,7 @@
-/* CRL import helper
+/* CRL import helper, for libreswan.
  *
  * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,20 +59,6 @@ static int import_crl(const char *url, unsigned char *buf, size_t len)
 	return 0;
 }
 
-static bool init_nss(const char *nssdb)
-{
-	char dbuf[1024];
-
-	snprintf(dbuf, sizeof(dbuf), "sql:%s", nssdb);
-
-	if (NSS_InitReadWrite(dbuf) != SECSuccess) {
-		return FALSE;
-	}
-
-	PK11_SetPasswordFunc(getNSSPassword);
-	return TRUE;
-}
-
 /*
  * _import_crl <url> <der size>
  * the der blob is passed through STDIN from pluto's fork
@@ -121,8 +108,12 @@ int main(int argc, char *argv[])
 	if ((size_t)(buf - tbuf) != len)
 		exit(-1);
 
-	if (!init_nss(IPSEC_NSSDIR))
-		exit(PORT_GetError());
+	const struct lsw_conf_options *oco = lsw_init_options();
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(oco->nssdb, 0, lsw_nss_get_password, err)) {
+		fprintf(stderr, "%s: %s\n", progname, err);
+		exit(1);
+	}
 
 	fin = import_crl(url, tbuf, len);
 
