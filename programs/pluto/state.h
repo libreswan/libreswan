@@ -493,8 +493,6 @@ extern bool states_use_connection(const struct connection *c);
 /* state functions */
 
 extern struct state *new_state(void);
-extern struct state *new_rstate(struct msg_digest *md);
-
 extern void init_states(void);
 extern void insert_state(struct state *st);
 extern void rehash_state(struct state *st, const u_char *rcookie);
@@ -587,7 +585,6 @@ extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 extern void log_newest_sa_change(char *f, struct state *const st);
-extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 
 #ifdef XAUTH_HAVE_PAM
 void ikev2_free_auth_pam(so_serial_t st_serialno);

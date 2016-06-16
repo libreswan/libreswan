@@ -923,14 +923,14 @@ void process_v1_packet(struct msg_digest **mdp)
 			libreswan_log(
 				"Message ID was 0x%08lx but should be zero in phase 1",
 				(unsigned long) md->hdr.isa_msgid);
-			send_notification_from_md(md, INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			libreswan_log(
 				"Initiator Cookie must not be zero in phase 1 message");
-			send_notification_from_md(md, INVALID_COOKIE);
+			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
 
@@ -941,7 +941,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 				libreswan_log("initial phase 1 message is invalid:"
 					      " its Encrypted Flag is on");
-				send_notification_from_md(md, INVALID_FLAGS);
+				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
 
@@ -1062,21 +1062,21 @@ void process_v1_packet(struct msg_digest **mdp)
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			DBG(DBG_CONTROL, DBG_log(
 				"Quick Mode message is invalid because it has an Initiator Cookie of 0"));
-			send_notification_from_md(md, INVALID_COOKIE);
+			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
 
 		if (is_zero_cookie(md->hdr.isa_rcookie)) {
 			DBG(DBG_CONTROL, DBG_log(
 				"Quick Mode message is invalid because it has a Responder Cookie of 0"));
-			send_notification_from_md(md, INVALID_COOKIE);
+			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
 
 		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 			DBG(DBG_CONTROL, DBG_log(
 				"Quick Mode message is invalid because it has a Message ID of 0"));
-			send_notification_from_md(md, INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 			return;
 		}
 
@@ -1126,8 +1126,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					loglog(RC_LOG_SERIOUS, "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
 				}
-				/* while we have a state - this packet wasn't part of it */
-				send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 				return;
 			}
 
@@ -1136,8 +1135,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08lx (perhaps this is a duplicated packet)",
 						(unsigned long) md->hdr.isa_msgid);
 				}
-				/* while we have a state - this packet wasn't part of it */
-				send_notification_from_md(md, INVALID_MESSAGE_ID);
+				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
 			st->st_msgid_reserved = FALSE;
@@ -1164,19 +1162,19 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_MODE_CFG:
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			DBG(DBG_CONTROL, DBG_log("Mode Config message is invalid because it has an Initiator Cookie of 0"));
-			send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+			/* XXX Could send notification back */
 			return;
 		}
 
 		if (is_zero_cookie(md->hdr.isa_rcookie)) {
 			DBG(DBG_CONTROL, DBG_log("Mode Config message is invalid because it has a Responder Cookie of 0"));
-			send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+			/* XXX Could send notification back */
 			return;
 		}
 
 		if (md->hdr.isa_msgid == 0) {
 			DBG(DBG_CONTROL, DBG_log("Mode Config message is invalid because it has a Message ID of 0"));
-			send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+			/* XXX Could send notification back */
 			return;
 		}
 
@@ -1197,7 +1195,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			if (st == NULL) {
 				DBG(DBG_CONTROL, DBG_log(
 					"Mode Config message is for a non-existent (expired?) ISAKMP SA"));
-				send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+				/* XXX Could send notification back */
 				return;
 			}
 
@@ -1208,21 +1206,25 @@ void process_v1_packet(struct msg_digest **mdp)
 						     enum_show(&ikev1_exchange_names,
 							       md->hdr.isa_xchg)));
 			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
-				st->st_connection->spd.this.xauth_server ?
-					" xauthserver" : "",
-				st->st_connection->spd.this.xauth_client ?
-					" xauthclient" : "",
-				st->st_connection->spd.this.modecfg_server ?
-					" modecfgserver" : "",
-				st->st_connection->spd.this.modecfg_client  ?
-					" modecfgclient" : ""
+						     st->st_connection->spd.
+						     this.xauth_server ?
+						     " xauthserver" : "",
+						     st->st_connection->spd.
+						     this.xauth_client ?
+						     " xauthclient" : "",
+						     st->st_connection->spd.
+						     this.modecfg_server ?
+						     " modecfgserver" : "",
+						     st->st_connection->spd.
+						     this.modecfg_client  ?
+						     " modecfgclient" : ""
 						     ));
 
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
 				       enum_name(&state_names, st->st_state)));
-				send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+				/* XXX Could send notification back */
 				return;
 			}
 			DBG(DBG_CONTROLMORE, DBG_log(" call  init_phase2_iv"));
@@ -1345,7 +1347,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	default:
 		DBG(DBG_CONTROL, DBG_log("unsupported exchange type %s in message",
 			      enum_show(&ikev1_exchange_names, md->hdr.isa_xchg)));
-		send_notification_from_md(md, UNSUPPORTED_EXCHANGE_TYPE);
+		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
 
@@ -1384,12 +1386,12 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc,
-			&md->message_pbs, &frag_pbs) ||
+			       &md->message_pbs, &frag_pbs) ||
 		    pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
 		    fraghdr.isafrag_np != 0 ||
-		    fraghdr.isafrag_number == 0 || fraghdr.isafrag_number > 16)
-		{
-			send_notification_from_state(st, from_state, PAYLOAD_MALFORMED);
+		    fraghdr.isafrag_number == 0 || fraghdr.isafrag_number >
+		    16) {
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
 
@@ -1631,13 +1633,13 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (st == NULL) {
 			libreswan_log(
 				"discarding encrypted message for an unknown ISAKMP SA");
-			send_notification_from_md(md, PAYLOAD_MALFORMED /* XXX ? */);
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 			return;
 		}
 		if (st->st_skey_ei_nss == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"discarding encrypted message because we haven't yet negotiated keying material");
-			send_notification_from_md(md, INVALID_FLAGS);
+			SEND_NOTIFICATION(INVALID_FLAGS);
 			return;
 		}
 
@@ -1672,7 +1674,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			{
 				loglog(RC_LOG_SERIOUS,
 				       "malformed message: not a multiple of encryption blocksize");
-				send_notification_from_md(md, PAYLOAD_MALFORMED);
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 				return;
 			}
 
@@ -1708,7 +1710,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
 			loglog(RC_LOG_SERIOUS,
 			       "packet rejected: should have been encrypted");
-			send_notification_from_md(md, INVALID_FLAGS);
+			SEND_NOTIFICATION(INVALID_FLAGS);
 			return;
 		}
 	}
@@ -1737,7 +1739,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				loglog(RC_LOG_SERIOUS,
 				       "more than %d payloads in message; ignored",
 				       PAYLIMIT);
-				send_notification_from_md(md, PAYLOAD_MALFORMED);
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 				return;
 			}
 
@@ -1816,7 +1818,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						loglog(RC_LOG_SERIOUS,
 						       "%smalformed payload in packet",
 						       excuse);
-						send_notification_from_md(md, PAYLOAD_MALFORMED);
+						SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 						return;
 					}
 					np = pd->payload.generic.isag_np;
@@ -1828,7 +1830,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
-					send_notification_from_md(md, INVALID_PAYLOAD_TYPE);
+					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
 				passert(sd != NULL);
@@ -1937,7 +1939,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		    md->hdr.isa_np != ISAKMP_NEXT_SA) {
 			loglog(RC_LOG_SERIOUS,
 			       "malformed Phase 1 message: does not start with an SA payload");
-			send_notification_from_md(md, PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
 	} else if (IS_QUICK(from_state)) {
@@ -1959,7 +1961,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
 			loglog(RC_LOG_SERIOUS,
 			       "malformed Quick Mode message: does not start with a HASH payload");
-			send_notification_from_state(st, from_state, PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
 
@@ -1973,7 +1975,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				if (p != &md->digest[i]) {
 					loglog(RC_LOG_SERIOUS,
 					       "malformed Quick Mode message: SA payload is in wrong position");
-					send_notification_from_state(st, from_state, PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 					return;
 				}
 				p = p->next;
@@ -1995,13 +1997,13 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
 					       " if any ID payload is present,"
 					       " there must be exactly two");
-					send_notification_from_state(st, from_state, PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
 					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
 					       " the ID payloads are not adjacent");
-					send_notification_from_state(st, from_state, PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 					return;
 				}
 			}
@@ -2673,7 +2675,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  enum_name(&ikev1_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG)
-			send_notification_from_state(st, from_state, md->note);
+			SEND_NOTIFICATION(md->note);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",

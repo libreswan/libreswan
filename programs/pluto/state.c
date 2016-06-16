@@ -486,18 +486,7 @@ struct state *new_state(void)
 
 	return st;
 }
-struct state *new_rstate(struct msg_digest *md)
-{
-	struct state *st = new_state();
 
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
-
-	return st;
-}
 /*
  * Initialize the state table
  *
@@ -2218,28 +2207,6 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
 	if (dq->qnat_traversal_vid < sq->qnat_traversal_vid)
 		dq->qnat_traversal_vid = sq->qnat_traversal_vid;
 	dq->xauth_vid |= sq->xauth_vid;
-}
-
-/*
- * see https://tools.ietf.org/html/rfc7296#section-2.23
- *
- * [...] SHOULD store this as the new address and port combination
- * for the SA (that is, they SHOULD dynamically update the address).
- * A host behind a NAT SHOULD NOT do this type of dynamic address
- * update if a validated packet has different port and/or address
- * values because it opens a possible DoS attack (such as allowing
- * an attacker to break the connection with a single packet).
- */
-void update_ike_endpoints(struct state *st,
-			  const struct msg_digest *md)
-{
-	/* caller must ensure we are not behind NAT */
-
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
 }
 
 void set_state_ike_endpoints(struct state *st,

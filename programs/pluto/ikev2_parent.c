@@ -437,7 +437,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		/* Impair function will raise major/minor by 1 for testing */
 		hdr.isa_version = build_ikev2_version();
 
-		hdr.isa_np = st->st_dcookie.len != 0 ?
+		hdr.isa_np = st->st_dcookie.ptr != NULL ?
 			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA;
 		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 		/* add original initiator flag - version flag could be set */
@@ -460,7 +460,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	 * http://tools.ietf.org/html/rfc5996#section-2.6
 	 * reply with the anti DDOS cookie if we received one (remote is under attack)
 	 */
-	if (st->st_dcookie.len != 0) {
+	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(ISAKMP_NEXT_v2SA,
 			 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
@@ -938,7 +938,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 	struct state *st = md->st;
 	if (st == NULL) {
-		st = new_rstate(md);
+		st = new_state();
 		/* set up new state */
 		memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
 		/* initialize_new_state expects valid icookie/rcookie values, so create it now */
@@ -3017,8 +3017,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
-		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED,
-			ISAKMP_v2_AUTH, NULL);
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 	}
 
 	passert(dh->pcrc_md != NULL);
@@ -3093,7 +3092,15 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			/*
+			 * ??? this could be
+			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
+			 * but that would be ignored by the logic in
+			 * complete_v2_state_transition()
+			 * that says "only send a notify is this packet was a question, not if it was an answer"
+			 */
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			return STF_FATAL;
 		}
 		break;
 	}
@@ -3109,7 +3116,15 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		if (authstat != STF_OK) {
 			libreswan_log(
 				"Authentication failed AUTH mismatch!");
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			/*
+			 * ??? this could be
+			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
+			 * but that would be ignored by the logic in
+			 * complete_v2_state_transition()
+			 * that says "only send a notify is this packet was a question, not if it was an answer"
+			 */
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			return STF_FATAL;
 		}
 		break;
 	}
@@ -3118,7 +3133,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			      enum_name(&ikev2_auth_names,
 					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
 					v2a.isaa_type));
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		return STF_FATAL;
 	}
 
 #ifdef XAUTH_HAVE_PAM
@@ -3139,11 +3154,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 
 	if (!pam_status) {
 		/*
-		 * TBD: send another notification but encrypted
-		 * because the AUTH payload really succeed, but
-		 * pam said not to allow it.
+		 * TBD: send this notification encrypted because the
+		 * AUTH payload succeed
 		 */
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		return STF_FATAL;
 	}
 
 	/* Is there a notify about an error ? */
@@ -3454,7 +3469,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	}
 
 	if (!ikev2_decode_peer_id_and_certs(md))
-		/* this won't send a packet because we are original initiator */
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
@@ -3489,8 +3503,15 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
-			/* this won't send a packet because we are original initiator */
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			/*
+			 * ??? this could be
+			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
+			 * but that would be ignored by the logic in
+			 * complete_v2_state_transition()
+			 * that says "only send a notify is this packet was a question, not if it was an answer"
+			 */
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			return STF_FAIL;
 		}
 		break;
 	}
@@ -3515,10 +3536,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			 *  payloads.  This is an exception for the general rule of not starting
 			 *  new exchanges based on errors in responses."
 			 */
-			send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED,
-				ISAKMP_v2_INFORMATIONAL, NULL);
-			/* this won't send a packet */
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			return STF_FAIL;
 		}
 		break;
 	}
@@ -3528,8 +3547,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			      enum_name(&ikev2_auth_names,
 					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
 					v2a.isaa_type));
-		/* this won't send a packet */
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED); /* see above comment */
+		return STF_FAIL;
 	}
 
 	/* authentication good */
@@ -3543,10 +3562,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
-
-	/* see https://tools.ietf.org/html/rfc7296#section-2.23 */
-	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
-		update_ike_endpoints(st, md);
 
 	/* AUTH is ok, we can trust the notify payloads */
 	if (!got_transport && ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY)) {
@@ -3572,6 +3587,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		 * ??? this isn't really a failure, is it?
 		 * If none of those payloads appeared, isn't this is a
 		 * legitimate negotiation of a parent?
+		 * Paul: this notify is never sent because w
 		 */
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
@@ -3870,7 +3886,8 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
 void send_v2_notification(struct state *p1st,
 			  v2_notification_t type,
 			  struct state *encst,
-			  u_int8_t isa_xchg,
+			  u_char *icookie,
+			  u_char *rcookie,
 			  chunk_t *n_data)
 {
 	/*
@@ -3915,12 +3932,20 @@ void send_v2_notification(struct state *p1st,
 
 		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = build_ikev2_version();
-		if (!is_zero_cookie(p1st->st_rcookie)) /* some responses are with zero rSPI */
-			memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
-		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
+		if (rcookie != NULL) /* some responses are with zero rSPI */
+			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
+		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 
-		/* Because we do not use separate micro states yet */
-		hdr.isa_xchg = isa_xchg;
+		/* incomplete */
+		switch (p1st->st_state) {
+		case STATE_PARENT_R2:
+			hdr.isa_xchg = ISAKMP_v2_AUTH;
+			break;
+		default:
+			/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
+			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+			break;
+		}
 
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
@@ -4051,10 +4076,6 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 		if (ret != STF_OK)
 			return ret;
 	}
-
-	/* see https://tools.ietf.org/html/rfc7296#section-2.23 */
-	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-		update_ike_endpoints(pst, md);
 
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
@@ -4285,10 +4306,6 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		if (ret != STF_OK)
 			return ret;
 	}
-
-	/* see https://tools.ietf.org/html/rfc7296#section-2.23 */
-	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
-		update_ike_endpoints(st, md);
 
 	/*
 	 * Generate response message,
