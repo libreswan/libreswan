@@ -66,7 +66,6 @@ typedef struct {
 } secuPWData;
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
-extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 extern int libreswan_selinux(void);
 
