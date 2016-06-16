@@ -48,6 +48,12 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 							    void *uservoid,
 							    lsw_nss_buf_t err);
 
+/*
+ * Just in case, at some point passing a parameter becomes somehow
+ * useful.
+ */
+#define lsw_return_nss_password_file_info() NULL
+
 char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);

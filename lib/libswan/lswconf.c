@@ -35,9 +35,6 @@
 
 static struct lsw_conf_options global_oco;
 
-#define NSSpwdfilesize 4096
-static secuPWData NSSPassword;
-
 #ifdef SINGLE_CONF_DIR
 #define SUBDIRNAME(X) ""
 #else
@@ -123,7 +120,7 @@ void lsw_conf_free_oco(void)
 
 	pfreeany(global_oco.nssdb);
 
-	global_oco = (struct lsw_conf_options) {0};
+	zero(&global_oco);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
@@ -217,114 +214,4 @@ int libreswan_selinux(void)
 	else
 		return 0;
 
-}
-
-secuPWData *lsw_return_nss_password_file_info(void)
-{
-	return &NSSPassword;
-}
-
-char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
-{
-	secuPWData *pwdInfo = (secuPWData *)arg;
-	PRFileDesc *fd;
-	PRInt32 nb;	/* number of bytes */
-	char *token;
-	int toklen;
-	const long maxPwdFileSize = NSSpwdfilesize;
-	int i;
-
-	if (slot == NULL)
-		return NULL;
-
-	if (pwdInfo == NULL)
-		return NULL;
-
-	token = PK11_GetTokenName(slot);
-	if (token == NULL)
-		return NULL;
-
-	toklen = PORT_Strlen(token);
-
-	/* Start all log messages with "NSS Password ..."! */
-	DBG(DBG_CRYPT, DBG_log("NSS Password for token '%s' required", token));
-
-	if (retry)
-		return NULL;
-
-	if (pwdInfo->source != PW_FROMFILE) {
-		libreswan_log("NSS Password source is not a file");
-		return NULL;
-	}
-
-	if (pwdInfo->data == NULL) {
-		libreswan_log("NSS Password file name not provided");
-		return NULL;
-	}
-
-	char *strings = PORT_ZAlloc(maxPwdFileSize);
-	if (strings == NULL) {
-		libreswan_log("NSS Password file could not be loaded, NSS memory allocate failed");
-		return NULL;
-	}
-
-	/* From here on, every return must be preceded by PORT_Free(strings) */
-
-	fd = PR_Open(pwdInfo->data, PR_RDONLY, 0);
-	if (fd == NULL) {
-		libreswan_log("NSS Password file \"%s\" could not be opened for reading",
-			      pwdInfo->data);
-		PORT_Free(strings);
-		return NULL;
-	}
-
-	nb = PR_Read(fd, strings, maxPwdFileSize);
-	PR_Close(fd);
-
-	for (i = 0; i < nb; ) {
-		/*
-		 * examine a line of the password file
-		 * token_name:password
-		 */
-		int start = i;
-		char *p;
-		int linelen;
-
-		/* find end of line */
-		while (i < nb &&
-		       (strings[i] != '\0' &&
-			strings[i] != '\r' &&
-			strings[i] != '\n'))
-			i++;
-
-		if (i == nb) {
-			libreswan_log("NSS Password file ends with a partial line (ignored)");
-			break;	/* no match found */
-		}
-
-		linelen = i - start;
-
-		/* turn delimiter into NUL and skip over it */
-		strings[i++] = '\0';
-
-		p = &strings[start];
-
-		if (linelen >= toklen + 1 &&
-		    PORT_Strncmp(p, token, toklen) == 0 &&
-		    p[toklen] == ':') {
-			/* we have a winner! */
-			p = PORT_Strdup(&p[toklen + 1]);
-			DBG(DBG_PRIVATE, DBG_log(
-				"Password passed to NSS is %s with length %zu",
-				 p, PORT_Strlen(p)));
-			PORT_Free(strings);
-			return p;
-		}
-	}
-
-	/* no match found in password file */
-	libreswan_log("NSS Password file \"%s\" does not contain token '%s'",
-		      pwdInfo->data, token);
-	PORT_Free(strings);
-	return NULL;
 }

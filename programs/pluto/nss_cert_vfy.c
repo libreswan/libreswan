@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <libreswan.h>
 #include "sysdep.h"
-#include "lswconf.h"
+#include "lswnss.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"

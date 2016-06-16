@@ -22,7 +22,7 @@
 #include "crypt_symkey.h"
 
 #include "crypto.h"
-#include "lswconf.h"
+#include "lswnss.h"
 
 static PK11SymKey *ephemeral_symkey(int debug)
 {

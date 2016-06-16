@@ -53,21 +53,6 @@ void lsw_conf_nsspassword(const char *nsspassword);
  */
 void lsw_init_ipsecdir(const char *ipsec_dir);
 
-/*
- * XXX: Should be opaque or even not needed.
- */
-typedef struct {
-	enum {
-		PW_NONE = 0,		/* no password */
-		PW_FROMFILE = 1,	/* password data in a text file */
-		PW_PLAINTEXT = 2,	/* password data in the clear in memory buffer */
-	} source;
-	char *data;
-} secuPWData;
-
-extern secuPWData *lsw_return_nss_password_file_info(void);
-extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
-
 extern int libreswan_selinux(void);
 
 #endif /* _LSW_ALLOC_H_ */

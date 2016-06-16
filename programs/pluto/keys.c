@@ -77,6 +77,7 @@
 #include <secport.h>
 #include <time.h>
 #include "lswconf.h"
+#include "lswnss.h"
 #include "secrets.h"
 
 static struct secret *pluto_secrets = NULL;
