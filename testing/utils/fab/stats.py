@@ -69,6 +69,7 @@ class Results(Counts):
 
     def add_ignored(self, test, reason):
         Counts.add(self, test.name, "total")
+        Counts.add(self, test.name, "ignored")
         Counts.add(self, test.name, "ignored", reason)
 
     def count_result(self, result):

@@ -21,6 +21,8 @@ from fab import logutil
 from fab import post
 from fab import stats
 from fab import utils
+from fab import skip
+from fab import ignore
 
 def main():
 
@@ -55,11 +57,6 @@ def main():
                         choices=["details", "summary", "none"],
                         help="provide overview statistics; default: \"%(default)s\"");
 
-    parser.add_argument("--list-ignored", action="store_true",
-                        help="include ignored tests in the list")
-    parser.add_argument("--list-untested", action="store_true",
-                        help="include untested tests in the list")
-
     parser.add_argument("--baseline", metavar="DIRECTORY",
                         help="a %(metavar)s containing baseline testsuite output")
 
@@ -73,6 +70,8 @@ def main():
     post.add_arguments(parser)
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
+    skip.add_arguments(parser)
+    ignore.add_arguments(parser)
 
     args = parser.parse_args()
 
@@ -95,9 +94,6 @@ def main():
     v += 1
     args.prefix_output_directory = args.prefix_output_directory or args.verbose > v
     v += 1
-    args.list_untested = args.list_untested or args.verbose > v
-    args.list_ignored = args.list_ignored or args.verbose > v
-    v += 1
     args.print_scripts = args.print_scripts or args.verbose > v
     v += 1
     args.print_host_names = args.print_host_names or args.verbose > v
@@ -108,7 +104,9 @@ def main():
         post.log_arguments(logger, args)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
-        return 1
+        skip.log_arguments(logger, args)
+        ignore.log_arguments(logger, args)
+        return 0
 
     # Try to find a baseline.  If present, pre-load it.
     baseline = None
@@ -151,11 +149,6 @@ def main():
         logger.error("Invalid testsuite or test directories")
         return 1
 
-    # When an explicit list of directories was specified always print
-    # all of them (otherwise, tests seem to get lost).
-    if isinstance(tests, list):
-        args.list_untested = True
-
     result_stats = stats.Results()
     try:
         results(logger, tests, baseline, args, result_stats)
@@ -183,15 +176,15 @@ def results(logger, tests, baseline, args, result_stats):
             logger.debug("start processing test %s", test.name)
 
             # Filter out tests that are being ignored?
-            ignore, details = testsuite.ignore(test, args)
-            if ignore:
-                result_stats.add_ignored(test, ignore)
-            if ignore and not args.list_ignored:
-                continue
+            ignored, include_ignored, details = ignore.test(logger, args, test)
+            if ignored:
+                result_stats.add_ignored(test, ignored)
+                if not include_ignored:
+                    continue
 
             # Filter out tests that have not been run
             result = None
-            if not ignore and args.print_result:
+            if not ignored and args.print_result:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
                                      test_finished=None,
@@ -201,6 +194,8 @@ def results(logger, tests, baseline, args, result_stats):
                                      update_sanitize=args.update_sanitize,
                                      update_diff=args.update_diff)
                 if not result and not args.list_untested:
+                    continue
+                if skip.result(logger, args, result):
                     continue
 
                 if not result:
@@ -238,9 +233,9 @@ def results(logger, tests, baseline, args, result_stats):
                            or test.output_directory), end="")
                     sep = " "
 
-            if ignore:
+            if ignored:
                 print(sep, end="")
-                print("ignored", ignore, end="")
+                print("ignored", ignored, end="")
                 sep = " "
 
             if result:

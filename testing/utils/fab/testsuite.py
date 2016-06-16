@@ -238,22 +238,6 @@ def add_arguments(parser):
     group.add_argument("--testsuite-output", metavar="DIRECTORY",
                         help="test results are stored as %(metavar)s/<test> instead of <test>/OUTPUT")
 
-    group.add_argument("--test-name", default="",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Select tests with name matching %(metavar)s"
-                             " (default: '%(default)s')"))
-    group.add_argument("--test-kind", default="kvmplutotest",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Select tests with kind matching %(metavar)s"
-                             " (default: '%(default)s')"))
-    group.add_argument("--test-result", default="good",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help="Select tests with (expected) result matching %(metavar)s (default: '%(default)s')")
-    group.add_argument("--test-exclude", default="",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Exclude tests that match %(metavar)s"
-                             " (default: '%(default)s')"))
-
 
 def log_arguments(logger, args):
     logger.info("Testsuite arguments:")

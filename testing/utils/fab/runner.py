@@ -25,6 +25,8 @@ from fab import remote
 from fab import logutil
 from fab import utils
 from fab import post
+from fab import skip
+from fab import ignore
 
 
 def add_arguments(parser):
@@ -34,15 +36,6 @@ def add_arguments(parser):
                        help="default: %(default)s")
     group.add_argument("--prefix", metavar="DOMAIN-PREFIX", action="append",
                        help="prefix to prepend to each domain")
-
-    group.add_argument("--skip-passed", action="store_true",
-                       help="skip tests that passed during the previous test run")
-    group.add_argument("--skip-failed", action="store_true",
-                       help="skip tests that failed during the previous test run")
-    group.add_argument("--skip-incomplete", action="store_true",
-                       help="skip tests that did not complete during the previous test run")
-    group.add_argument("--skip-untested", action="store_true",
-                       help="skip tests that have not been previously run")
 
     group.add_argument("--attempts", type=int, default=1,
                        help="number of times to attempt a test before giving up; default %(default)s")
@@ -57,10 +50,6 @@ def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
-    logger.info("  skip-passed: %s", args.skip_passed)
-    logger.info("  skip-failed: %s", args.skip_failed)
-    logger.info("  skip-incomplete: %s", args.skip_incomplete)
-    logger.info("  skip-untested: %s", args.skip_untested)
     logger.info("  attempts: %s", args.attempts)
     logger.info("  backup-directory: %s", args.backup_directory)
 
@@ -315,9 +304,9 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
         test_start_time = time.time()
         test_prefix = "%s %s (test %d of %d)" % (suffix, test.name, test_count, len(tests))
 
-        ignore, details = testsuite.ignore(test, args)
-        if ignore:
-            result_stats.add_ignored(test, ignore)
+        ignored, include_ignored, details = ignore.test(logger, args, test)
+        if ignored and not include_ignored:
+            result_stats.add_ignored(test, ignored)
             test_stats.add(test, "ignored")
             # No need to log all the ignored tests when an
             # explicit sub-set of tests is being run.  For
@@ -325,11 +314,6 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
             if not args.test_name:
                 logger.info("%s ignored (%s)", test_prefix, details)
             continue
-
-        # Implement "--retry" as described above: if retry is -ve,
-        # the test is always run; if there's no result, the test
-        # is always run; skip passed tests; else things get a
-        # little wierd.
 
         # Be lazy with gathering the results, don't run the
         # sanitizer or diff.
@@ -342,10 +326,7 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
         # that the test was incomplete.
         old_result = post.mortem(test, args, test_finished=None,
                                  skip_diff=True, skip_sanitize=True)
-        if args.skip_passed and old_result.finished and old_result.passed is True or \
-           args.skip_failed and old_result.finished and old_result.passed is False or \
-           args.skip_incomplete and old_result.finished is False or \
-           args.skip_untested and old_result.finished is None:
+        if skip.result(logger, args, old_result):
             logger.info("%s skipped (previously %s)", test_prefix, old_result)
             test_stats.add(test, "skipped")
             result_stats.add_skipped(old_result)
@@ -394,7 +375,7 @@ def run_tests(logger, args, tests, test_stats, result_stats, start_time):
         result = None
 
         # At least one iteration; above will have filtered out
-        # skips and ignores
+        # skips and ignored
         for attempt in range(args.attempts):
             test_stats.add(test, "attempts")
 
