@@ -319,7 +319,6 @@ static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid
 
 int main(int argc, char *argv[])
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
 	int opt;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;
@@ -449,6 +448,11 @@ int main(int argc, char *argv[])
 		goto usage;
 	}
 
+	/*
+	 * Don't fetch the config options until after they have been
+	 * processed, and really are "constant".
+	 */
+	const struct lsw_conf_options *oco = lsw_init_options();
 	libreswan_log("using config directory \"%s\"\n", oco->confddir);
 
 	/*

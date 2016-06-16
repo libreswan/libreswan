@@ -155,7 +155,6 @@ static void UpdateNSS_RNG(int seedbits)
  */
 int main(int argc, char *argv[])
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
 	int opt;
 	int nbits = 0;
 	int seedbits = DEFAULT_SEED_BITS;
@@ -262,6 +261,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/*
+	 * Don't fetch the config options until after they have been
+	 * processed, and really are "constant".
+	 */
+	const struct lsw_conf_options *oco = lsw_init_options();
 	rsasigkey(nbits, seedbits, oco);
 	exit(0);
 }
