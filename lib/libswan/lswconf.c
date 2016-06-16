@@ -35,9 +35,6 @@
 
 static struct lsw_conf_options global_oco;
 
-#define NSSpwdfilesize 4096
-static secuPWData NSSPassword;
-
 #ifdef SINGLE_CONF_DIR
 #define SUBDIRNAME(X) ""
 #else
@@ -217,9 +214,4 @@ int libreswan_selinux(void)
 	else
 		return 0;
 
-}
-
-secuPWData *lsw_return_nss_password_file_info(void)
-{
-	return &NSSPassword;
 }

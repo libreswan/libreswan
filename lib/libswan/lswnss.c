@@ -228,7 +228,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 	return result;
 }
 
-char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
+char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 {
 	if (retry) {
 		/* nothing changed */
@@ -237,14 +237,6 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	if (slot == NULL) {
 		/* nothing to secure */
-		return NULL;
-	}
-
-	if (arg == NULL) {
-		/*
-		 * Other than because we passed in a NULL arg, how
-		 * could arg become NULL?
-		 */
 		return NULL;
 	}
 
