@@ -62,7 +62,7 @@ For Fedora/RHEL7/CentOS7 with systemd:
 
 Runtime requirements (usually already present on the system)
 
-	nss, iproute2, iptables, sed, awk, bash, cut
+	nss, iproute2, iptables, sed, awk, bash, cut, procps-ng, which
 
 	(note: the Busybox version of "ip" does not support 'ip xfrm', so
 	       ensure you enable the iproute(2) package for busybox)
