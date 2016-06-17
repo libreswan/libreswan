@@ -130,7 +130,7 @@ west #
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "TUNNEL-A":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
@@ -146,7 +146,7 @@ west #
 000 "TUNNEL-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "TUNNEL-B":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
@@ -161,7 +161,7 @@ west #
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "TUNNEL-C":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
@@ -188,7 +188,7 @@ west #
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "TUNNEL-A":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
@@ -204,7 +204,7 @@ west #
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "TUNNEL-C":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
