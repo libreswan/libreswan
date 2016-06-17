@@ -35,8 +35,7 @@ endif
 
 xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
 
-$(builddir)/ipsec.conf.5.xml: $(xmlsources)
-	@mkdir -p $(builddir)
+$(builddir)/ipsec.conf.5.xml: $(xmlsources) | $(builddir)
 	cat $(xmlsources) > $@
 
 local-clean-manpages: local-clean-xml-manpages
