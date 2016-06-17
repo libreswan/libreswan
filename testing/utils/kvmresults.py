@@ -193,8 +193,6 @@ def results(logger, tests, baseline, args, result_stats):
                                      update=args.update,
                                      update_sanitize=args.update_sanitize,
                                      update_diff=args.update_diff)
-                if not result and not args.list_untested:
-                    continue
                 if skip.result(logger, args, result):
                     continue
 
