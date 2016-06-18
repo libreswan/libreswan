@@ -1,5 +1,5 @@
 libreswan (3.18~dr2-1) UNRELEASED; urgency=low
 
-  * Upload into debian (Closes: #773459)
+  * Initial upload to debian (Closes: #773459)
 
  -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Sun, 19 Jun 2016 23:39:14 -0400
