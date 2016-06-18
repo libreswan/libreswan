@@ -55,6 +55,10 @@ $(OBJS): $(builddir)/parser.tab.h
 #   On some architectures, yy_size_t is wider than int;
 #   which makes a mixed comparison OK.
 #
+# - flex 2.6.0-11 and gcc 4:5.3.1-3 on debian testing (2016-06-18)
+#   also warns about comparisons of different kinds, so we add a third
+#   fix.
+#
 # Avoid sed -i which somehow causes unwritable files
 # on fedora 20 with 9p filesystem mount.
 # Avoid creating the target file until it is done.
@@ -65,6 +69,7 @@ $(builddir)/lex.yy.c: parser.l
 	$(LEX) -o $@.tmp $<
 	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
 	    -e '/^extern int isatty.*$$/d' \
+	    -e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
 	    < $@.tmp > $@.sedtmp
 	rm $@.tmp
 	mv $@.sedtmp $@
