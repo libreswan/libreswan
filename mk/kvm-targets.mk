@@ -53,7 +53,7 @@ KVM_KEYS = testing/x509/keys/up-to-date
 
 KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 define check-kvm-entropy
-	test ! -r $(KVM_ENTROPY_FILE) || test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 || $(MAKE) broken-kvm-entropy
+	test ! -r $(KVM_ENTROPY_FILE) || test $(shell cat $(KVM_ENTROPY_FILE)) -gt 100 || $(MAKE) broken-kvm-entropy
 endef
 .PHONY: check-kvm-entropy broken-kvm-entropy
 check-kvm-entropy:
