@@ -23,6 +23,41 @@ from fab import stats
 from fab import utils
 from fab import skip
 from fab import ignore
+from enum import Enum
+
+
+class Print(Enum):
+    def __str__(self):
+        return self.value
+    diffs = "diffs"
+    directory = "directory"
+    expected_result = "expected-result"
+    full_name = "full-name"
+    host_names = "host-names"
+    kind = "kind"
+    name = "name"
+    output_directory = "output-directory"
+    result = "result"
+    sanitize_directory = "sanitize-directory"
+    saved_output_directory = "saved-output-directory"
+    scripts = "scripts"
+
+
+class Prefix(Enum):
+    def __str__(self):
+        return self.value
+    name = "name"
+    test_directory = "test-directory"
+    output_directory = "output-directory"
+
+
+class Stats(Enum):
+    def __str__(self):
+        return self.value
+    details = "details"
+    summary = "summary"
+    none = "none"
+
 
 def main():
 
@@ -36,6 +71,7 @@ def main():
                         help=("Use the previously generated '.console.txt' file"))
     parser.add_argument("--quick-diff", action="store_true",
                         help=("Use the previously generated '.console.diff' file"))
+
     parser.add_argument("--update", action="store_true",
                         help=("Update the '.console.txt' and '.console.diff' files"))
     parser.add_argument("--update-sanitize", action="store_true",
@@ -43,18 +79,19 @@ def main():
     parser.add_argument("--update-diff", action="store_true",
                         help=("Update the '.console.diff' file"))
 
-    parser.add_argument("--prefix-directory", action="store_true")
-    parser.add_argument("--prefix-name", action="store_true")
-    parser.add_argument("--prefix-output-directory", action="store_true")
+    parser.add_argument("--dump-args", action="store_true")
 
-    parser.add_argument("--print-result", action="store_true")
-    parser.add_argument("--print-diff", action="store_true")
-    parser.add_argument("--print-args", action="store_true")
-    parser.add_argument("--print-scripts", action="store_true")
-    parser.add_argument("--print-host-names", action="store_true")
+    parser.add_argument("--prefix", action="store", type=Prefix,
+                        choices=[p for p in Prefix],
+                        help="prefix to display with each test")
 
-    parser.add_argument("--stats", action="store", default="summary",
-                        choices=["details", "summary", "none"],
+    # how to parse --print directory,saved-directory,...?
+    parser.add_argument("--print", action="append", default=[],
+                        choices=[p for p in Print], type=Print,
+                        help="what information to display about each test")
+
+    parser.add_argument("--stats", action="store", default=Stats.summary, type=Stats,
+                        choices=[c for c in Stats],
                         help="provide overview statistics; default: \"%(default)s\"");
 
     parser.add_argument("--baseline", metavar="DIRECTORY",
@@ -79,28 +116,18 @@ def main():
     logger = logutil.getLogger("kvmresults")
 
     # default to printing results
-    if not args.print_scripts \
-       and not args.print_result \
-       and not args.print_diff \
-       and not args.print_host_names:
-        args.print_result = True
+    if not args.print:
+        args.print = [Print.result]
 
     # The option -vvvvvvv is a short circuit for these; make
     # re-ordering easy by using V as a counter.
     v = 0
-    args.prefix_directory = args.prefix_directory or args.verbose > v
-    args.prefix_name = args.prefix_name or args.verbose > v
-    args.print_result = args.print_result or args.verbose > v
-    v += 1
-    args.prefix_output_directory = args.prefix_output_directory or args.verbose > v
-    v += 1
-    args.print_scripts = args.print_scripts or args.verbose > v
-    v += 1
-    args.print_host_names = args.print_host_names or args.verbose > v
-    v += 1
-    args.print_args = args.print_args or args.verbose > v
 
-    if args.print_args:
+    if args.dump_args:
+        logger.info("Arguments:")
+        logger.info("  Stats: %s", args.stats)
+        logger.info("  Print: %s", args.print)
+        logger.info("  Prefix: %s", args.prefix)
         post.log_arguments(logger, args)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
@@ -111,17 +138,15 @@ def main():
     # Try to find a baseline.  If present, pre-load it.
     baseline = None
     if args.baseline:
-        # An explict baseline testsuite, can be more forgiving.
+        # An explict baseline testsuite, can be more forgiving in how
+        # it is loaded.
         baseline = testsuite.load(logger, args,
                                   testsuite_directory=args.baseline,
-                                  testsuite_output_directory=None,
                                   error_level=logutil.DEBUG)
         if not baseline:
-            # Assume that it is baseline output only.
-            if args.testing_directory:
-                baseline_directory = os.path.join(args.testing_directory, "pluto")
-            else:
-                baseline_directory = utils.directory("..", "pluto")
+            # Perhaps the baseline just contains output, magic up the
+            # corresponding testsuite directory.
+            baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, args,
                                       testsuite_directory=baseline_directory,
                                       testsuite_output_directory=args.baseline,
@@ -136,7 +161,6 @@ def main():
         # testing/pluto/OUTPUT/TESTDIR.
         baseline = testsuite.load(logger, args,
                                   testsuite_directory=args.directories[-1],
-                                  testsuite_output_directory=None,
                                   error_level=logutil.DEBUG)
         if baseline:
             # discard the last argument as consumed above.
@@ -153,9 +177,9 @@ def main():
     try:
         results(logger, tests, baseline, args, result_stats)
     finally:
-        if args.stats == "details":
+        if args.stats is Stats.details:
             result_stats.log_details(stderr_log, header="Details:", prefix="  ")
-        if args.stats in ["details", "summary"]:
+        if args.stats in [Stats.details, Stats.summary]:
             result_stats.log_summary(stderr_log, header="Summary:", prefix="  ")
 
     return 0
@@ -184,7 +208,7 @@ def results(logger, tests, baseline, args, result_stats):
 
             # Filter out tests that have not been run
             result = None
-            if not ignored and args.print_result:
+            if not ignored and Print.result in args.print:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
                                      test_finished=None,
@@ -204,7 +228,7 @@ def results(logger, tests, baseline, args, result_stats):
             sep = ""
 
             # Print the test's name/path
-            if not args.prefix_directory and not args.prefix_name and not args.prefix_output_directory:
+            if not args.prefix:
                 # By default: when the path given on the command line
                 # explicitly specifies a test's output directory
                 # (found in TEST.SAVED_OUTPUT_DIRECTORY), print that;
@@ -216,15 +240,15 @@ def results(logger, tests, baseline, args, result_stats):
                 sep = " "
             else:
                 # Print the test name/path per command line
-                if args.prefix_name:
+                if args.prefix is Prefix.name:
                     print(sep, end="")
                     print(test.name, end="")
                     sep = " "
-                if args.prefix_directory:
+                elif args.prefix is Prefix.test_directory:
                     print(sep, end="")
                     print(test.directory, end="")
                     sep = " "
-                if args.prefix_output_directory:
+                elif args.prefix is Prefix.output_directory:
                     print(sep, end="")
                     print((test.saved_output_directory
                            and test.saved_output_directory
@@ -236,31 +260,68 @@ def results(logger, tests, baseline, args, result_stats):
                 print("ignored", ignored, end="")
                 sep = " "
 
-            if result:
-                print(sep, end="")
-                if result.errors:
-                    print(result, result.errors, end="")
+            for p in args.print:
+                if p in [Print.diffs]:
+                    continue
+                elif p is Print.directory:
+                    print(sep, end="")
+                    print(test.directory, end="")
+                    sep = " "
+                elif p is Print.expected_result:
+                    print(sep, end="")
+                    print(test.expected_result, end="")
+                    sep = " "
+                elif p is Print.full_name:
+                    print(sep, end="")
+                    print(test.full_name, end="")
+                    sep = " "
+                elif p is Print.host_names:
+                    for name in test.host_names:
+                        print(sep, end="")
+                        print(name, end="")
+                        sep = ","
+                    sep = " "
+                elif p is Print.kind:
+                    print(sep, end="")
+                    print(test.kind, end="")
+                    sep = " "
+                elif p is Print.name:
+                    print(sep, end="")
+                    print(test.name, end="")
+                    sep = " "
+                elif p is Print.output_directory:
+                    print(sep, end="")
+                    print(test.output_directory, end="")
+                    sep = " "
+                elif p is Print.result:
+                    if result:
+                        print(sep, end="")
+                        if result.errors:
+                            print(result, result.errors, end="")
+                        else:
+                            print(result, end="")
+                        sep = " "
+                elif p is Print.sanitize_directory:
+                    print(sep, end="")
+                    print(test.sanitize_directory, end="")
+                    sep = " "
+                elif p is Print.saved_output_directory:
+                    print(sep, end="")
+                    print(test.saved_output_directory, end="")
+                    sep = " "
+                elif p is Print.scripts:
+                    for script in test.scripts:
+                        print(sep, end="")
+                        print(script, end="")
+                        sep = ","
+                    sep = " "
                 else:
-                    print(result, end="")
-                sep = " "
-
-            if args.print_host_names:
-                for name in test.host_names:
-                    print(sep, end="")
-                    print(name, end="")
-                    sep = ","
-                sep = " "
-
-            if args.print_scripts:
-                for script in test.scripts:
-                    print(sep, end="")
-                    print(script, end="")
-                    sep = ","
-                sep = " "
+                    print()
+                    print("unknown print option", p)
 
             print()
 
-            if args.print_diff and result:
+            if Print.diffs in args.print and result:
                 for domain in result.diffs:
                     for line in result.diffs[domain]:
                         if line:
