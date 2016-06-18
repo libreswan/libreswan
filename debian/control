@@ -5,7 +5,7 @@ Maintainer: Paul Wouters <paul@libreswan.org>
 Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
 Vcs-Browser: https://github.com/libreswan/libreswan
 Vcs-Git: https://github.com/libreswan/libreswan.git
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Build-Depends: bison,
                bzip2,
                debhelper (>= 9),
