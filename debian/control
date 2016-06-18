@@ -21,6 +21,7 @@ Build-Depends: bison,
                libsystemd-dev,
                libunbound-dev,
                man2html,
+               pkg-config,
                po-debconf,
                xmlto
 Homepage: https://libreswan.org/
