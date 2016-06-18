@@ -295,7 +295,7 @@ class TestResult:
 
             self.sanitized_console_output[host_name] = sanitized_console_output
 
-            expected_sanitized_console_output_file = os.path.join(test.directory, host_name + ".console.txt")
+            expected_sanitized_console_output_file = os.path.join(test.sanitize_directory, host_name + ".console.txt")
             test.logger.debug("host %s comparing against known-good output '%s'", host_name, expected_sanitized_console_output_file)
             if os.path.exists(expected_sanitized_console_output_file):
 
