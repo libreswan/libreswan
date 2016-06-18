@@ -23,8 +23,9 @@ from fab import utils
 class Test:
 
     def __init__(self, test_directory, testing_directory,
-                 saved_test_output_directory,
-                 testsuite_output_directory,
+                 saved_test_output_directory=None,
+                 saved_testsuite_output_directory=None,
+                 testsuite_output_directory=None,
                  kind="kvmplutotest", expected_result="good"):
         self.logger = logutil.getLogger(__name__)
         # basics
@@ -52,10 +53,10 @@ class Test:
         # Directory where the next test run's output should be
         # written.  If a common testsuite output directory was
         # specified, use that.
-        self.output_directory = (
-            testsuite_output_directory
-            and os.path.join(testsuite_output_directory, self.name)
-            or os.path.join(self.directory, "OUTPUT"))
+        if testsuite_output_directory:
+            self.output_directory = os.path.join(testsuite_output_directory, self.name)
+        else:
+            self.output_directory = os.path.join(self.directory, "OUTPUT")
 
         # Directory containing saved output from a previous test run.
         # If the test's output directory was explicitly specified, say
@@ -67,26 +68,18 @@ class Test:
         # than that directory, and not the next output-directory, will
         # be passed in and saved here.  Otherwise it is None, and the
         # OUTPUT_DIRECTORY should be used.
-        self.saved_output_directory = saved_test_output_directory
+        if saved_test_output_directory:
+            self.saved_output_directory = saved_test_output_directory
+        elif saved_testsuite_output_directory:
+            self.saved_output_directory = os.path.join(saved_testsuite_output_directory, self.name)
+        else:
+            self.saved_output_directory = None
 
         # An instance of the test directory within a tree that
         # includes all the post-mortem sanitization scripts.  If the
         # test results have been copied then this will be different to
         # test.directory.
-        if testing_directory:
-            self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
-        else:
-            for sanitize_directory in [self.directory, utils.directory("..", "pluto", self.name)]:
-                # Tentative
-                self.sanitize_directory = os.path.realpath(sanitize_directory)
-                self.logger.debug("is '%s' a test sanitize directory?" % self.sanitize_directory)
-                for path in [self.sanitize_directory,
-                             os.path.join(self.sanitize_directory, "..", "..", "default-testparams.sh"),
-                             os.path.join(self.sanitize_directory, "..", "..", "sanitizers")]:
-                    if not os.path.exists(path):
-                        self.logger.debug("test sanitize directory '%s' missing", path)
-                        self.sanitize_directory = None
-                        break;
+        self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
 
         scripts = _scripts(self.directory)
 
@@ -199,11 +192,9 @@ class Testsuite:
                     continue
                 test = Test(kind=kind, expected_result=expected_result,
                             test_directory=os.path.join(self.directory, name),
-                            saved_test_output_directory=(
-                                saved_testsuite_output_directory
-                                and os.path.join(saved_testsuite_output_directory, name)),
-                            testing_directory=testing_directory,
-                            testsuite_output_directory=testsuite_output_directory)
+                            saved_testsuite_output_directory=saved_testsuite_output_directory,
+                            testsuite_output_directory=testsuite_output_directory,
+                            testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
                     # This is serious
@@ -228,21 +219,22 @@ class Testsuite:
 
 def add_arguments(parser):
 
-    group = parser.add_argument_group("Test arguments",
-                                      "Options for selecting the tests to run")
+    group = parser.add_argument_group("testsuite arguments",
+                                      "options for configuring the testsuite or test directories")
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       help="Directory containg 'sanitizers/' and 'default-testparams.sh' and other scripts used to perform postmortem (default is either the test's 'testing/' directory, or this scripts 'testing/' directory).")
+                       default=os.path.relpath(utils.directory("..")),
+                       help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
     group.add_argument("--testsuite-output", metavar="DIRECTORY",
-                        help="test results are stored as %(metavar)s/<test> instead of <test>/OUTPUT")
+                        help="save test results in%(metavar)s/<test> instead of <test>/OUTPUT")
 
 
 def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
-    logger.info("  testing-directory: '%s'", args.testing_directory or "either test or this script testing directory (default)")
-    logger.info("  testsuite-output: '%s'", args.testsuite_output or "<testsuite>/<test>/OUTPUT (default)")
+    logger.info("  testing-directory: '%s'", args.testing_directory)
+    logger.info("  testsuite-output: '%s'", args.testsuite_output)
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-name: '%s'" , args.test_name.pattern)
     logger.info("  test-result: '%s'" , args.test_result.pattern)
@@ -268,7 +260,8 @@ TESTLIST = "TESTLIST"
 
 def load(logger, args,
          testsuite_directory=None,
-         testsuite_output_directory=None,
+         testsuite_output_directory=None, # going away
+         saved_testsuite_output_directory=None,
          error_level=logutil.ERROR):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
@@ -277,13 +270,15 @@ def load(logger, args,
 
     """
 
+    saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
     # Is DIRECTORY a testsuite?  For instance: testing/pluto.
     testlist = os.path.join(testsuite_directory, TESTLIST)
     if os.path.exists(testlist):
         logger.debug("'%s' is a testsuite directory", testsuite_directory)
         return Testsuite(logger, testlist, error_level,
                          testing_directory=args.testing_directory,
-                         testsuite_output_directory=testsuite_output_directory)
+                         testsuite_output_directory=args.testsuite_output,
+                         saved_testsuite_output_directory=saved_testsuite_output_directory)
 
     logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
     return None
@@ -299,12 +294,10 @@ def append_test(tests, args, test_directory=None,
 
     # Use the saved test output directory's name to find the
     # corresponding test directory.
-    if not test_directory and saved_test_output_directory:
-        subdir = os.path.basename(saved_test_output_directory)
-        if args.testing_directory:
+    if not test_directory:
+        if saved_test_output_directory:
+            subdir = os.path.basename(saved_test_output_directory)
             test_directory = os.path.join(args.testing_directory, "pluto", subdir)
-        else:
-            test_directory = utils.directory("..", "pluto", subdir)
     if not test_directory:
         return False
     if not is_test_directory(test_directory):

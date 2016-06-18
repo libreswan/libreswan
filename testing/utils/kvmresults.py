@@ -16,6 +16,9 @@
 
 import argparse
 import sys
+import os
+from enum import Enum
+
 from fab import testsuite
 from fab import logutil
 from fab import post
@@ -23,7 +26,6 @@ from fab import stats
 from fab import utils
 from fab import skip
 from fab import ignore
-from enum import Enum
 
 
 class Print(Enum):
@@ -149,7 +151,7 @@ def main():
             baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, args,
                                       testsuite_directory=baseline_directory,
-                                      testsuite_output_directory=args.baseline,
+                                      saved_testsuite_output_directory=args.baseline,
                                       error_level=logutil.DEBUG)
         if not baseline:
             logger.info("'%s' is not a baseline", args.baseline)
