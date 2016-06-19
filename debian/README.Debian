@@ -36,13 +36,7 @@ See also:
 
     https://libreswan.org/wiki/HOWTO:_Opportunistic_IPsec
 
-4) openswan to libreswan migration
-
-See:
-* https://libreswan.org/wiki/Migrating_from_Openswan
-* https://libreswan.org/wiki/Using_NSS_with_libreswan
-
-5) Raw RSA key creation
+4) Raw RSA key creation
 
 Raw RSA keys can be generated with
     ipsec newhostkey
@@ -54,7 +48,7 @@ in the "conn" section of ipsec.conf, use:
 For further information please take a closer look at the manpages
 ipsec_rsasigkey, ipsec.secrets, ipsec_showhostkey and ipsec.conf.
 
-6) X.509 support
+5) X.509 support
 
 All certificate material, including CA certificates, CRLs and private keys
 are now stored in the NSS database in /etc/ipsec.d
@@ -64,10 +58,10 @@ When migrating from pre-NSS openswan, the files from /etc/ipsec.d/private,
 imported into NSS using certutil, crlutil or pk12util. For more information
 see https://libreswan.org/wiki/Using_NSS_with_libreswan
 
-7) IPsec Kernel Support
+6) IPsec Kernel Support
 
 Note: This package uses the in-kernel IPsec stack, which is available
 in all recent stock Debian kernel images.  This packaging does not
 currently support KLIPS or KLIPS/MAST.
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Sun, 19 Jun 2016 09:08:23 -0400
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Sun, 19 Jun 2016 12:11:26 -0400
