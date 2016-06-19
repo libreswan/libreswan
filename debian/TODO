@@ -6,7 +6,9 @@ Location of NSS db
 
 The NSS database in /etc/ipsec.d/ (the files cert9.db, key4.db, and
 pkcs11.txt) seems awkward.  If they had their own directory they would
-not be mixed in with *.conf and *.secret.
+not be mixed in with *.conf and *.secret, and would be easier/safer to
+clean up in postrm, as there appears to be no standard tool from NSS
+for safely destroying such a database.
 
 Also, since the admin is not expected to typically modify these files
 by hand (some exceptions are noted in
