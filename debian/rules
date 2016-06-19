@@ -52,15 +52,5 @@ override_dh_auto_install:
 	    fi; \
 	done
 
-	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.secrets
-	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.conf
-	chmod 700 $(CURDIR)/debian/libreswan/etc/ipsec.d/
-	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.d/v6neighbor-hole.conf
-	chmod 700 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies
-	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies/*
-
-override_dh_fixperms:
-	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d
-
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
