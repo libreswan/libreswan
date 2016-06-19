@@ -27,23 +27,23 @@ override_dh_auto_install:
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
 		DESTDIR=$(CURDIR)/debian/libreswan
-	rm -rf $(CURDIR)/debian/libreswan/usr/local
-	rm -f $(CURDIR)/debian/libreswan/etc/init.d/ipsec?*
+	echo "removing files debian packaging does not need:"
+	find $(CURDIR)/debian/libreswan/usr/local \
+	     $(CURDIR)/debian/libreswan/etc/init.d \
+	     $(CURDIR)/debian/libreswan/var/lock \
+	     $(CURDIR)/debian/libreswan/var/run \
+	     $(CURDIR)/debian/libreswan/etc/sysconfig \
+	  -print -delete
 
-	# delete var/lock/subsys and var/run to satisfy lintian
-	rm -rf $(CURDIR)/debian/libreswan/var/lock
-	rm -rf $(CURDIR)/debian/libreswan/var/run
-
-	# there is no sysconfig in debian
-	rm -rf $(CURDIR)/debian/libreswan/etc/sysconfig
-
-	# fix some manpage issues
+	# fix some manpage issues:
 	for oldname in `find $(CURDIR)/debian/libreswan/usr/share/man -name "ipsec_ipsec*"`; \
 	do \
 	    newname=`echo "$$oldname" | sed 's/ipsec_ipsec_/ipsec_/'`; \
 	    if [ -f "$$newname" ]; then \
+		echo "no need for $$oldname; $$newname already exists" \
 		rm -f "$$oldname"; \
 	    else \
+		echo "moving $$oldname to $$newname" \
 		mv "$$oldname" "$$newname"; \
 	    fi; \
 	done
