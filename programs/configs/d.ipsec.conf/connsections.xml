@@ -58,7 +58,7 @@ is ignored and unused. For compatibility with openswan, specify:</para>
 <para>A section
 begins with a line of the form:</para>
 
-<para><emphasis remap='I'>type</emphasis> <emphasis remap='I'>name</emphasis></para>
+<para><emphasis remap='I'>type</emphasis>&nbsp;<emphasis remap='I'>name</emphasis></para>
 
 <para>where
 <emphasis remap='I'>type</emphasis>
