@@ -33,18 +33,5 @@ override_dh_auto_install:
 	     $(CURDIR)/debian/libreswan/etc/sysconfig \
 	  -print -delete
 
-	# fix some manpage issues:
-	for oldname in `find $(CURDIR)/debian/libreswan/usr/share/man -name "ipsec_ipsec*"`; \
-	do \
-	    newname=`echo "$$oldname" | sed 's/ipsec_ipsec_/ipsec_/'`; \
-	    if [ -f "$$newname" ]; then \
-		echo "no need for $$oldname; $$newname already exists" \
-		rm -f "$$oldname"; \
-	    else \
-		echo "moving $$oldname to $$newname" \
-		mv "$$oldname" "$$newname"; \
-	    fi; \
-	done
-
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
