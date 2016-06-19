@@ -72,7 +72,7 @@ prevented when the system is running in FIPS mode.</para>
 
 <para>The <option>--configdir</option> option specifies the nss configuration directory to use.
 This is the directory where the NSS certificate, key and security modules databases reside. The
-default value is <filename>/etc/ipsec.d</filename>.</para>
+default value is <filename>@IPSEC_NSSDIR@</filename>.</para>
 
 <para>The <option>--password</option> option specifies the nss cryptographic module authentication
 password if the NSS module has been configured to require it.  A password is required by hardware
@@ -181,8 +181,8 @@ be arbitrarily delayed if the system's entropy pool is low on
 randomness, and  the time taken by the search for primes is also somewhat
 unpredictable. Specifically, embedded systems and most virtual machines are low on
 entropy. In such a situation, consider generating the RSA key on another machine,
-and copying <filename>ipsec.secrets</filename> and the <filename>ipsec.d/*db</filename>
-files to the embedded platform. Note that NSS embeds the full path in the DB files, so
+and copying <filename>ipsec.secrets</filename> and the <filename>@IPSEC_NSSDIR@</filename>
+directory tree to the embedded platform. Note that NSS embeds the full path in the DB files, so
 the path on proxy machine must be identical to the path on the destination machine.
 </para>
 </refsect1>
