@@ -7,7 +7,6 @@ override_dh_auto_build:
 	$(MAKE) programs \
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
-		INC_RCDEFAULT=/etc/init.d \
 		PUBDIR=/usr/sbin \
 		INC_MANDIR=share/man \
 		USE_LDAP=true \
@@ -24,7 +23,6 @@ override_dh_auto_install-arch:
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_MANDIR=share/man \
-		INC_RCDEFAULT=/etc/init.d \
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		DESTDIR=$(CURDIR)/debian/libreswan
 	echo "removing files debian packaging does not need:"
