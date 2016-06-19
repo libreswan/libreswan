@@ -3,3 +3,4 @@ do-not-use-git-version.patch
 debian-pam.d-pluto.patch
 avoid-another-flex-gcc-warning.patch
 0004-ipsec-newhostkey-default-to-etc-ipsec.d-newhostkey-g.patch
+0005-section-intro-line-needs-whitespace-between-type-and.patch

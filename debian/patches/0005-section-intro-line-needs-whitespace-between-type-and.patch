@@ -1,0 +1,26 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Sun, 19 Jun 2016 08:17:40 -0400
+Subject: section intro line needs whitespace between "type" and "name"
+
+xmlto 0.0.25-2 (debian stable) apparently elides the space between
+"type" and "name", which makes this hard to read.  Also, we want this
+directive on a single line no matter how crazy narrow the terminal is.
+
+This should solve both problems.
+---
+ programs/configs/d.ipsec.conf/connsections.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/programs/configs/d.ipsec.conf/connsections.xml b/programs/configs/d.ipsec.conf/connsections.xml
+index 6334ee6..c121895 100644
+--- a/programs/configs/d.ipsec.conf/connsections.xml
++++ b/programs/configs/d.ipsec.conf/connsections.xml
+@@ -58,7 +58,7 @@ is ignored and unused. For compatibility with openswan, specify:</para>
+ <para>A section
+ begins with a line of the form:</para>
+ 
+-<para><emphasis remap='I'>type</emphasis> <emphasis remap='I'>name</emphasis></para>
++<para><emphasis remap='I'>type</emphasis>&nbsp;<emphasis remap='I'>name</emphasis></para>
+ 
+ <para>where
+ <emphasis remap='I'>type</emphasis>
