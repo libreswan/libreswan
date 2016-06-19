@@ -1,0 +1,41 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Sat, 18 Jun 2016 19:27:49 -0400
+Subject: ipsec newhostkey: default to /etc/ipsec.d/newhostkey-generated.secret
+
+By default, avoid touching /etc/ipsec.secrets.  Instead, generate a
+.secret file that will be included by the default /etc/ipsec.secrets.
+
+Also, document the change in defaults
+---
+ programs/newhostkey/ipsec_newhostkey.8.xml | 4 +++-
+ programs/newhostkey/newhostkey.in          | 2 +-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
+index 70d7d08..9326cef 100644
+--- a/programs/newhostkey/ipsec_newhostkey.8.xml
++++ b/programs/newhostkey/ipsec_newhostkey.8.xml
+@@ -46,7 +46,9 @@ outputs (into <emphasis remap='I'>filename</emphasis>, which can be
+ <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
+ using the <option>--quiet</option> option per default.
+ </para>
+-<para>The <option>--output</option> option is mandatory.
++<para>The <option>--output</option> option defaults to
++<emphasis remap='I'>/etc/ipsec.d/newhostkey-generated.secrets</emphasis> which
++should be included by a line in /etc/ipsec.secrets.
+ The specified <emphasis remap='I'>filename</emphasis> is created under umask
+ <emphasis remap='B'>077</emphasis> if nonexistent; if it already exists and is
+ non-empty, a warning message about that is sent to standard error,
+diff --git a/programs/newhostkey/newhostkey.in b/programs/newhostkey/newhostkey.in
+index 31226c2..06355b9 100755
+--- a/programs/newhostkey/newhostkey.in
++++ b/programs/newhostkey/newhostkey.in
+@@ -25,7 +25,7 @@ bits=
+ verbose=
+ host=
+ seeddev="--seeddev /dev/random"
+-output="@FINALCONFDIR@/ipsec.secrets"
++output="@FINALCONFDIR@/ipsec.d/newhostkey-generated.secrets"
+ configdir="@FINALNSSDIR@"
+ password=
+ for dummy; do
