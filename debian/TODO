@@ -1,0 +1,39 @@
+Notes about possible future directions in libreswan debian packaging
+====================================================================
+
+Location of NSS db
+------------------
+
+The NSS database in /etc/ipsec.d/ (the files cert9.db, key4.db, and
+pkcs11.txt) seems awkward.  If they had their own directory they would
+not be mixed in with *.conf and *.secret.
+
+Also, since the admin is not expected to typically modify these files
+by hand (some exceptions are noted in
+https://libreswan.org/wiki/Using_NSS_with_libreswan), they might be
+better placed someplace like /var/lib/libreswan instead of
+/etc/ipsec.d/.  However, divergence from upstream seems like the worse
+option here, especially since users are likely to read upstream
+documentation as well as in-package documentation.
+
+Service status at package installation
+--------------------------------------
+
+libreswan currently ships with an ipsec.service, which is deliberately
+not enabled by default, since it is usually meaningless to enable such
+a service without manual configuration.  The configuration necessary
+is probably too complex to put sanely into debconf.
+
+If an opportunistic/no-configuration-needed mode is functional and
+well-tested enough to run without configuration, we may enable the
+service by default in future versions.
+
+Integration with non-systemd initsystems
+----------------------------------------
+
+The Debian packaging currently only supports integration with systemd.
+It looks like upstream's sysvinit support is relatively untested, and
+other initsystems are not supported upstream at all.  If anyone wants
+to test and help maintain support for alternate initsystems (possibly
+in a separate binary package, e.g. libreswan-runit) that would be
+welcome!
