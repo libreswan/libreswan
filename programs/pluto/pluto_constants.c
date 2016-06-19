@@ -82,13 +82,15 @@ enum_names dpd_action_names = {
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
-	"action:exit", /* daemon exiting */
-	"action:start", /* daemon starting */
-	"action:error", /* how is this an action? */
-	"action:watchdog", /* the keepalive watchdog ping */
+	"action: exit", /* daemon exiting */
+	"action: start", /* daemon starting */
+	"action: watchdog", /* the keepalive watchdog ping */
+	"action: reloading", /* the keepalive watchdog ping */
+	"action: ready", /* the keepalive watchdog ping */
+	"action: stopping", /* the keepalive watchdog ping */
 };
 enum_names sd_action_names = {
-	PLUTO_SD_EXIT, PLUTO_SD_WATCHDOG,
+	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
 	ARRAY_REF(sd_action_name),
 	NULL
 };

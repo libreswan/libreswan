@@ -1,6 +1,6 @@
 /* whack communicating routines
  * Copyright (C) 1998, 1999  D. Hugh Redelmeier.
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012, 2016 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,6 +13,5 @@
  * for more details.
  */
 
-extern void do_whacklisten(void);
 extern void whack_handle_cb(evutil_socket_t fd,
 		const short event UNUSED, void *arg UNUSED);

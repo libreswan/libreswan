@@ -76,11 +76,14 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
+/* corresponding name table is sd_action_names */
 enum sd_actions {
-	PLUTO_SD_EXIT = 0,
-	PLUTO_SD_START = 1,
-	PLUTO_SD_ERROR = 2,
+	PLUTO_SD_EXIT = 1,
+	PLUTO_SD_START = 2,
 	PLUTO_SD_WATCHDOG = 3,
+	PLUTO_SD_RELOADING = 4,
+	PLUTO_SD_READY = 5,
+	PLUTO_SD_STOPPING = 6,
 };
 
 /*

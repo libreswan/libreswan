@@ -1,6 +1,7 @@
 /* pluto_sd.c
  * Status notifications for systemd
  * Copyright (c) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (c) 2016 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,15 +22,34 @@
 #include "pluto_sd.h"
 #include "lswlog.h"
 
-unsigned long sd_pid;
+static unsigned long sd_secs = 0;
+
+void pluto_sd_init() {
+	static unsigned long sd_usecs;
+	int ret = sd_watchdog_enabled(0, &sd_usecs);
+
+	if (ret == 0) {
+		libreswan_log("systemd watchdog not enabled - not sending watchdog keepalives");
+		return;
+	}
+	if (ret < 0) {
+		libreswan_log("systemd watchdog returned error %d - not sending watchdog keepalives", ret);
+		return;
+	}
+
+	libreswan_log("systemd watchdog for ipsec service configured with timeout of %lu usecs", sd_usecs);
+	sd_secs = sd_usecs / 2 / 1000000; /* advise as per 'man sd_watchdog_enabled' */
+	libreswan_log("watchdog: sending probes every %lu secs", sd_secs);
+        /* tell systemd that we have finished starting up */
+	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
+        /* start the keepalive events */
+        event_schedule(EVENT_SD_WATCHDOG, sd_secs, NULL);
+}
 
 /*
- * Interface for sd_notify calls. The status for watchdog and start cases
- * can be passed NO_STATUS as it's only useful for exit at the moment.
- * man sd_notify(3)
+ * Interface for sd_notify(3) calls.
  */
-
-static void pluto_sd(int action, int status)
+void pluto_sd(int action, int status)
 {
 	DBG(DBG_CONTROL, DBG_log("pluto_sd: executing action %s(%d), status %d",
 		enum_name(&sd_action_names, action), action, status));
@@ -37,6 +57,15 @@ static void pluto_sd(int action, int status)
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:
 		sd_notify(0, "WATCHDOG=1");
+		break;
+	case PLUTO_SD_RELOADING:
+		sd_notify(0, "RELOADING=1");
+		break;
+	case PLUTO_SD_READY:
+		sd_notify(0, "READY=1");
+		break;
+	case PLUTO_SD_STOPPING:
+		sd_notifyf(0, "STOPPING=1\nSTATUS=PLUTO_EXIT=%d", status);
 		break;
 	case PLUTO_SD_START:
 		sd_notifyf(0, "READY=1\nSTATUS=Startup completed.\nMAINPID=%lu",
@@ -46,24 +75,14 @@ static void pluto_sd(int action, int status)
 		sd_notifyf(0, "STATUS=Exited.\nERRNO=%i", status);
 		break;
 	default:
-		bad_case(action); /* we don't ever generate PLUTO_SD_ERROR ? */
+		bad_case(action);
 		break;
 	}
-}
-
-void pluto_sd_watchdog_start(void) 
-{
-	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
-}
-
-void pluto_sd_watchdog_exit(int status)
-{
-	pluto_sd(PLUTO_SD_EXIT, status);
 }
 
 void sd_watchdog_event(void)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
-	event_schedule(EVENT_SD_WATCHDOG, SD_WATCHDOG_INTERVAL, NULL);
+	event_schedule(EVENT_SD_WATCHDOG, sd_secs, NULL);
 	return;
 }

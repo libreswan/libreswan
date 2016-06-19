@@ -1621,23 +1621,16 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_id();
 	init_vendorid();
-
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
 #endif
-
 	load_crls();
-
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
 	daily_log_event();
-
 #ifdef USE_SYSTEMD_WATCHDOG
-	/* tell systemd that we've started */
-	pluto_sd_watchdog_start();
-	/* start the even probess */
-	event_schedule(EVENT_SD_WATCHDOG, SD_WATCHDOG_INTERVAL, NULL);
+	pluto_sd_init();
 #endif
 
 	call_server();
@@ -1657,6 +1650,9 @@ void exit_pluto(int status)
 {
 	/* needed because we may be called in odd state */
 	reset_globals();
+ #ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd(PLUTO_SD_STOPPING, status);
+ #endif
 	free_preshared_secrets();
 	free_remembered_public_keys();
 	delete_every_connection();
@@ -1687,7 +1683,7 @@ void exit_pluto(int status)
 		report_leaks();
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd_watchdog_exit(status);
+	pluto_sd(PLUTO_SD_EXIT,status);
 #endif
 	exit(status);	/* exit, with our error code */
 }
