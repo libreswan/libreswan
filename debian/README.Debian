@@ -48,15 +48,21 @@ in the "conn" section of ipsec.conf, use:
 For further information please take a closer look at the manpages
 ipsec_rsasigkey, ipsec.secrets, ipsec_showhostkey and ipsec.conf.
 
-5) X.509 support
+5) X.509 and secret key support uses /var/lib/libreswan/nss
 
 All certificate material, including CA certificates, CRLs and private keys
-are now stored in the NSS database in /etc/ipsec.d
+are now stored in the NSS database in /var/lib/libreswan/nss
 
 When migrating from pre-NSS openswan, the files from /etc/ipsec.d/private,
 /etc/ipsec.d/cacerts, /etc/ipsec.d/crls and /etc/ipsec.d/certs need to be
 imported into NSS using certutil, crlutil or pk12util. For more information
 see https://libreswan.org/wiki/Using_NSS_with_libreswan
+
+Please keep in mind that upstream documentation assumes that the NSS
+database is stored in /etc/ipsec.d instead of /var/lib/libreswan/nss,
+and translate accordingly!  Debian uses /var/lib/libreswan/nss to
+avoid clutter in /etc/ipsec.d, for easier cleanup, and to follow the
+FHS.
 
 6) IPsec Kernel Support
 
@@ -64,4 +70,4 @@ Note: This package uses the in-kernel IPsec stack, which is available
 in all recent stock Debian kernel images.  This packaging does not
 currently support KLIPS or KLIPS/MAST.
 
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Sun, 19 Jun 2016 12:11:26 -0400
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Sun, 19 Jun 2016 12:35:35 -0400

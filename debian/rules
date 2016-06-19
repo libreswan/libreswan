@@ -9,6 +9,7 @@ override_dh_auto_build:
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		PUBDIR=/usr/sbin \
 		INC_MANDIR=share/man \
+		FINALNSSDIR=/var/lib/libreswan/nss \
 		USE_LDAP=true \
 		USE_LIBCURL=true \
 		USE_XAUTHPAM=true \
@@ -23,6 +24,7 @@ override_dh_auto_install-arch:
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_MANDIR=share/man \
+		FINALNSSDIR=/var/lib/libreswan/nss \
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		DESTDIR=$(CURDIR)/debian/libreswan
 	echo "removing files debian packaging does not need:"
