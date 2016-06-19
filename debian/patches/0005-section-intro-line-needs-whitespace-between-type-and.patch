@@ -12,7 +12,7 @@ This should solve both problems.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/programs/configs/d.ipsec.conf/connsections.xml b/programs/configs/d.ipsec.conf/connsections.xml
-index 6334ee6..c121895 100644
+index 6334ee6..a534a12 100644
 --- a/programs/configs/d.ipsec.conf/connsections.xml
 +++ b/programs/configs/d.ipsec.conf/connsections.xml
 @@ -58,7 +58,7 @@ is ignored and unused. For compatibility with openswan, specify:</para>
