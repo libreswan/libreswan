@@ -2,7 +2,8 @@ Source: libreswan
 Section: net
 Priority: optional
 Maintainer: Paul Wouters <paul@libreswan.org>
-Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>,
+           Ondřej Surý <ondrej@debian.org>
 Vcs-Browser: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Standards-Version: 3.9.8
