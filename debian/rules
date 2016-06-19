@@ -28,9 +28,7 @@ override_dh_auto_install:
 		MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \
 		DESTDIR=$(CURDIR)/debian/libreswan
 	echo "removing files debian packaging does not need:"
-	find $(CURDIR)/debian/libreswan/usr/local \
-	     $(CURDIR)/debian/libreswan/etc/init.d \
-	     $(CURDIR)/debian/libreswan/var/lock \
+	find \
 	     $(CURDIR)/debian/libreswan/var/run \
 	     $(CURDIR)/debian/libreswan/etc/sysconfig \
 	  -print -delete
