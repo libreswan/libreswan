@@ -6,7 +6,6 @@
 override_dh_auto_build:
 	$(MAKE) programs \
 		INC_USRLOCAL=/usr \
-		FINALBINDIR=/usr/lib/ipsec \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_RCDEFAULT=/etc/init.d \
 		PUBDIR=/usr/sbin \
@@ -16,16 +15,14 @@ override_dh_auto_build:
 		USE_LIBCURL=true \
 		USE_XAUTHPAM=true \
 		USE_FIPSCHECK=false \
-		USE_LIBCAP_NG=false \
+		USE_LIBCAP_NG=true \
 		USE_LABELED_IPSEC=false \
-		USE_ADNS=false \
 		USE_DNSSEC=true
 
 override_dh_auto_install:
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) install \
 		INC_USRLOCAL=/usr \
-		FINALBINDIR=/usr/lib/ipsec \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_RCDEFAULT=/etc/init.d \
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
