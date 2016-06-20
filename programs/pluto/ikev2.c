@@ -1128,14 +1128,13 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-	} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-		if (id_kind(&peer) != ID_DER_ASN1_DN) {
-			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
-			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+				return FALSE;
+			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
-		duplicate_id(&st->st_connection->spd.that.id, &peer);
-	}
-
 	} else {
 		struct connection *r = NULL;
 		bool fromcert = FALSE;
