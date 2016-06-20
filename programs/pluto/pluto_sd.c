@@ -25,7 +25,7 @@
 static unsigned long sd_secs = 0;
 
 void pluto_sd_init() {
-	static unsigned long sd_usecs;
+	static uint64_t sd_usecs;
 	int ret = sd_watchdog_enabled(0, &sd_usecs);
 
 	if (ret == 0) {
@@ -37,7 +37,7 @@ void pluto_sd_init() {
 		return;
 	}
 
-	libreswan_log("systemd watchdog for ipsec service configured with timeout of %lu usecs", sd_usecs);
+	libreswan_log("systemd watchdog for ipsec service configured with timeout of %"PRIu64" usecs", sd_usecs);
 	sd_secs = sd_usecs / 2 / 1000000; /* advise as per 'man sd_watchdog_enabled' */
 	libreswan_log("watchdog: sending probes every %lu secs", sd_secs);
         /* tell systemd that we have finished starting up */
