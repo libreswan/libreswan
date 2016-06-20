@@ -95,7 +95,7 @@ if [ -n "${output}" -a -d "${output}" ]; then
 fi
 
 if [ -n "${output}" -a -s "${output}" ]; then
-    echo "${0}: WARNING: file \"${output}\" exists, appending to it" >&2
+    printf "%s: WARNING: file \"%s\" exists, appending to it\n" "${0}" "${output}" >&2
 fi
 
 if [ ! -d ${configdir} ]; then
@@ -120,7 +120,7 @@ fi
 out()
 (
     echo ': RSA	{'
-    echo "${key}"
+    printf "%s\n" "${key}"
     echo '	}'
     echo '# do not change the indenting of that "}"'
 )
