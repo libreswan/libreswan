@@ -878,7 +878,6 @@ int starter_permutate_conns(int
 							&lnet, "left"))
 				done = 1;
 		}
-
 	} while (!done);
 
 	return 0;	/* success. */

@@ -811,7 +811,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				break;
 			}
 		}
-
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
 		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
@@ -918,7 +917,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				break;
 			}
 		}
-
 	}
 
 	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {

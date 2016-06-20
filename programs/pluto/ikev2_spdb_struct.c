@@ -93,7 +93,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 		 * there is no long-form code.
 		 */
 		bad_case(type);
-
 	}
 	return TRUE;
 }
@@ -1043,7 +1042,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 				*best_transforms->transform = *matching_transform;
 			}
 		}
-
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
 	stf_status status;

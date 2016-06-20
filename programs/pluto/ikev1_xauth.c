@@ -326,7 +326,6 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 			return FALSE;
 		}
 		*got_lease = TRUE;
-
 	} else {
 		passert(!isanyaddr(&c->spd.that.client.addr));
 		ia->ipaddr = c->spd.that.client.addr;

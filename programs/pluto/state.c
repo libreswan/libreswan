@@ -1729,7 +1729,6 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
 		}
-
 	}
 
 

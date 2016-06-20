@@ -154,7 +154,6 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		}
 		ub_resolve_free(result);
 		return FALSE;
-
 	} else if (!result->bogus) {
 		if (!result->secure) {
 			DBG(DBG_DNS,

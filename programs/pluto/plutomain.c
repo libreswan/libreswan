@@ -1519,7 +1519,6 @@ int main(int argc, char **argv)
 		const char *vc = ipsec_version_code();
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
-
 	}
 
 	libreswan_log("core dump dir: %s", coredir);

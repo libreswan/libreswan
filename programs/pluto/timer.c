@@ -87,7 +87,6 @@ static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 			delay_ms << x;
 		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
 			delay_ms = 0;
-
 	}
 
 	if (delay_ms > 0) {

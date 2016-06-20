@@ -95,8 +95,6 @@ static struct talloc_chunk *talloc_chunk_from_ptr(const void *ptr)
 			TALLOC_ABORT("Bad talloc magic value - double free");
 		else
 			TALLOC_ABORT("Bad talloc magic value - unknown value");
-
-
 	}
 
 	return tc;

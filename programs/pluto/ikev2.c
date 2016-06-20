@@ -845,7 +845,6 @@ void process_v2_packet(struct msg_digest **mdp)
 				enum_show(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
-
 	} else if (!msg_r) {
 		/*
 		 * A request; send it to the parent.
@@ -1621,7 +1620,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 					deltasecs(c->dpd_delay) : MIN_LIVENESS,
 				       st);
 		}
-
 	}
 }
 

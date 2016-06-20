@@ -75,7 +75,6 @@ size_t dstlen;
 		*p++ = elen & 0xff;
 	} else {
 		return 0;       /* unrepresentable exponent length */
-
 	}
 	n = bufend - p;
 	if (elen < n)

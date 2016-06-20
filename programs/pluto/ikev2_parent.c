@@ -835,7 +835,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			}
                         p = p->next;
                 }
-
 	} else {
 		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
 	}
@@ -961,7 +960,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		if (seen_ntfy_frag)
 			st->st_seen_fragvid = TRUE;
-
 	} else {
 		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
 		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
@@ -1113,7 +1111,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	/* Ni in */
@@ -2890,8 +2887,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 		close(fds[0]);
 		p->master_fd = NULL_FD;
 		return STF_INTERNAL_ERROR;
-
 	}
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] started IKEv2 PAM helper thread '%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial, p->pam.name));
@@ -3819,7 +3816,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				}
 			}
 		} /* for */
-
 	} /* notification block */
 
 	ikev2_derive_child_keys(st, md->original_role);

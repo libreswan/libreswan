@@ -1524,7 +1524,6 @@ struct starter_config *confread_load(const char *file,
 
 			err |= connerr;
 		}
-
 	}
 
 	parser_free_conf(cfgp);

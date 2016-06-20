@@ -2319,7 +2319,6 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 			    "klips_debug:pfkey_x_addflow_parse: "
 			    "inbound eroute, setting incoming policy information in IPIP ipsec_sa for SA: %s.\n",
 			    sa_len ? sa : " (error)");
-
 	} else {
 		struct sk_buff *first = NULL, *last = NULL;
 
@@ -2541,7 +2540,6 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_x_delflow_parse: "
 			    "POLICYONLY flag set, done.\n");
-
 	} else if (extr->ips->ips_flags & SADB_X_SAFLAGS_CLEARFLOW) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_x_delflow_parse: "
@@ -3606,9 +3604,7 @@ int pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg)
 					    error);
 				SENDERR(-error);
 			}
-
 		}
-
 	}
 
 	/* Parse the message types */

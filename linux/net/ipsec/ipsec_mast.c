@@ -743,7 +743,6 @@ DEBUG_NO_STATIC int ipsec_mast_ioctl(struct net_device *dev, struct ifreq *ifr,
 			    "unknown command %d.\n",
 			    cmd);
 		return -EOPNOTSUPP;
-
 	}
 }
 

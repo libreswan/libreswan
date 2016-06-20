@@ -341,7 +341,6 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 			 st->st_ah.present ? st->st_ah.peer_bytes :
 			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
 			 0);
-
 	}
 	if (get_sa_info(st, TRUE, NULL)) {
 		snprintf(istr, istr_len, "PLUTO_INBYTES='%u' ",
@@ -1699,7 +1698,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			proto = SA_ESP;
 			esatype = ET_ESP;
 		}
-
 	} else if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 		/* XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
 		 * XXX FOR IP-in-IP ENCAPSULATION!

@@ -1539,7 +1539,6 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				" (remain=%li, sd->size=%zu)",
 				sd->name, (long int)(ins->roof - cur),
 				sd->size);
-
 	} else {
 		u_int8_t *roof = cur + sd->size; /* may be changed by a length field */
 		u_int8_t *outp = struct_ptr;

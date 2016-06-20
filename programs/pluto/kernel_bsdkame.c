@@ -390,7 +390,6 @@ static void bsdkame_dequeue(void)
 		bsdkame_pfkey_async(pi->msg);
 		free(pi->msg);	/* was malloced by pfkey_recv() */
 		pfree(pi);
-
 	}
 }
 
@@ -558,7 +557,6 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		DBG_log("request_len=%u policylen=%u",
 			ir->sadb_x_ipsecrequest_len, policylen);
-
 	} else {
 		DBG_log("setting policy=%d", policy);
 	}

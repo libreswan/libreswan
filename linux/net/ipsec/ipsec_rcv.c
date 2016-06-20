@@ -1033,8 +1033,6 @@ static enum ipsec_rcv_value ipsec_rcv_init(struct ipsec_rcv_state *irs)
 
 		if (prvdev)
 			stats = (struct net_device_stats *) &(prvdev->mystats);
-
-
 	} else {
 		KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_rcv_init: "
 			    "device supplied with skb is NULL\n");
