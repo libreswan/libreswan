@@ -127,9 +127,8 @@ start() {
     # Create lockfile
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
     touch ${lockpath}
-    # This script will enter an endless loop to ensure pluto restarts on crash
     # Start pluto on foreground, blocking here until it's killed.
-    ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS}
+    ${IPSEC_EXECDIR}/pluto --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS}
     # Pluto was killed, remove lockfile
     rm -f ${lockpath}
     return 0
