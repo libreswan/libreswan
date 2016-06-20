@@ -301,14 +301,35 @@ conn west-east-base-id-psk
 	leftid=@west
 	rightid=@east
 	authby=secret
-	
+
+conn east-rightrsasigkey
+        rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+conn east-rightckaid
+        rightckaid=61559973d3acef7d3a370e3e82ad92c18a8225f1
+
+conn west-leftrsasigkey
+        leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+conn west-leftrsasigkey
+        leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
+
+# Road uses the same key as west
+conn road-leftrsasigkey
+        leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+conn road-leftckaid
+        leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
+
+conn north-leftrsasigkey
+        leftrsasigkey=0sAQPl33O2PtU2qPE9DdMCq3/sTJ6LDg7Szw9Zv22IIYaTnhA0ry3Ps37r5bIksqWwAQN9tZatZu5IwijZmnY2qRCEtQmPF09lztgvjniAiof0a5jZkZRrUhVbnEcSvthvJbRlOH7kjcfwWNOfaRTMPsgWH6+7XZMrMzkOlFWB9LPMklhuSlpOw3arBC4RCAZVEw8CbN3RvMC4jWX1l+38GDn5Vav6DcVJmX8bz8PemX2eym+eFNZa/97WT1dqg6tRumR04CLpmsUQcbvU66SZKJyFDjHqzKvvmIQ/WcF1qrNh62GMWKWSJYStx3nzh9DHg8LWiv4mnSr/sd2biSF8yvU4LT9kDEGcNOmyVQ+CGrPHXqWZ
+conn north-leftckaid
+        leftckaid=905dfca10868747c6f20d31b2d204b8f88aa7c5d
+
 conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@west
-        leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+	also=west-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
-        rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+	also=east-rightrsasigkey
 
 conn road-east-base
 	also=road-east-base-id-nss
@@ -318,10 +339,10 @@ conn road-east-base
 conn road-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@road
-        leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+	also=road-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
-        rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+	also=east-rightrsasigkey
 
 conn west-eastnet-x509-ipv4
 	also=west-east-base-x509
@@ -419,11 +440,11 @@ conn north-east
 	#left=%any
 	#leftnexthop=192.2.3.254
 	leftid=@north
-        leftrsasigkey=0sAQPl33O2PtU2qPE9DdMCq3/sTJ6LDg7Szw9Zv22IIYaTnhA0ry3Ps37r5bIksqWwAQN9tZatZu5IwijZmnY2qRCEtQmPF09lztgvjniAiof0a5jZkZRrUhVbnEcSvthvJbRlOH7kjcfwWNOfaRTMPsgWH6+7XZMrMzkOlFWB9LPMklhuSlpOw3arBC4RCAZVEw8CbN3RvMC4jWX1l+38GDn5Vav6DcVJmX8bz8PemX2eym+eFNZa/97WT1dqg6tRumR04CLpmsUQcbvU66SZKJyFDjHqzKvvmIQ/WcF1qrNh62GMWKWSJYStx3nzh9DHg8LWiv4mnSr/sd2biSF8yvU4LT9kDEGcNOmyVQ+CGrPHXqWZ
+	also=north-leftrsasigkey
 	# Right security gateway, subnet behind it, next hop toward left.
 	right=192.1.2.23
 	rightid=@east
-	rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+	also=east-rightrsasigkey
 	rightnexthop=192.1.2.254
 
 conn north-east-psk
