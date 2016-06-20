@@ -406,7 +406,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
 	}
 
-	if (virt->n_net) {
+	if (virt->n_net != 0) {
 		/* ??? if why is already set, is this behaviour correct? */
 		if (net_in_list(peer_net, virt->net, virt->n_net))
 			return NULL;

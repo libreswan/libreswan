@@ -139,6 +139,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
+#include "id.h"    /* for struct id */
 
 struct virtual_t;
 
@@ -168,7 +169,6 @@ struct end {
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	char *cert_nickname;		/* NSS certificate nickname */
 	cert_t cert;			/* end certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 
@@ -176,12 +176,15 @@ struct end {
 
 	bool xauth_server;
 	bool xauth_client;
-	char *xauth_name;
+	char *username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
 	bool has_lease;		/* from address pool */
 	bool modecfg_server;	/* Give local addresses to tunnel's end */
 	bool modecfg_client;	/* request address for local end */
+	bool cat;		/* IPv4 Client Address Translation */
+	bool has_cat;		/* add a CAT iptable rule when a valid INTERNAL_IP4_ADDRESS
+				   is received */
 };
 
 struct spd_route {
@@ -197,6 +200,10 @@ struct sa_mark {
 	uint32_t val;
 	uint32_t mask;
 };
+struct sa_marks {
+	struct sa_mark in;
+	struct sa_mark out;
+};
 
 struct connection {
 	char *name;
@@ -210,7 +217,9 @@ struct connection {
 	uint32_t sa_priority;
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */
-	struct sa_mark sa_mark; /* contains a MARK values and MASK value for IPsec SA */
+	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
+	char *vti_iface;
+	bool vti_routing;
 	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
@@ -282,13 +291,22 @@ struct connection {
 	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
+	/*
+	 * The ALG_INFO converted to IKEv2 format.
+	 *
+	 * Since they are allocated on-demand so there's no need to
+	 * worry about copying them when a connection object gets
+	 * cloned.
+	 */
+	struct ikev2_proposals *ike_proposals;
+	struct ikev2_proposals *esp_or_ah_proposals;
+
 	/* host_pair linkage */
 	struct host_pair *host_pair;
 	struct connection *hp_next;
 
 	struct connection *ac_next;	/* all connections list link */
 
-	generalName_t *requested_ca;	/* collected certificate requests */
 	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t *pamh;		/*  PAM handle for that connection  */
@@ -343,10 +361,10 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     bool held,
 			     int whackfd
 #ifdef HAVE_LABELED_IPSEC
-			     , const struct xfrm_user_sec_ctx_ike *uctx
+			     , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     , err_t why);
-extern void terminate_connection(const char *nm);
+extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict);
@@ -447,7 +465,7 @@ extern void add_pending(int whack_sock,
 			unsigned long try,
 			so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-			, const struct xfrm_user_sec_ctx_ike *uctx
+			, struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			);
 

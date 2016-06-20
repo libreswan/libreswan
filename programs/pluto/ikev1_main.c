@@ -36,7 +36,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h> /* for gettimeofday */
-#include <gmp.h>
 #include <resolv.h>
 
 #include <libreswan.h>
@@ -54,7 +53,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h" /* needs packet.h */
-#include "adns.h" /* needs <resolv.h> */
 #include "dnskey.h" /* needs keys.h and adns.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
@@ -72,6 +70,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
+#include "secrets.h"
 
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -87,7 +86,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
-#include "lswconf.h" /* for libreswan_fipsmode() */
+#include "lswfips.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -101,7 +100,7 @@ stf_status main_outI1(int whack_sock,
 		unsigned long try,
 		enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		, const struct xfrm_user_sec_ctx_ike *uctx
+		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
 	)
 {
@@ -142,7 +141,7 @@ stf_status main_outI1(int whack_sock,
 		numvidtosend++;
 
 	/* set up new state */
-	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
+	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
 	initialize_new_state(st, c, policy, try, whack_sock, importance);
 	change_state(st, STATE_MAIN_I1);
 
@@ -219,7 +218,7 @@ stf_status main_outI1(int whack_sock,
 		int np = --numvidtosend >0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
+		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
 			return STF_INTERNAL_ERROR;
@@ -505,9 +504,9 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
 	size_t len = pbs_left(nonce_pbs);
 
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
 		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		       name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
@@ -748,7 +747,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	change_state(st, STATE_MAIN_R0);
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_cookie(FALSE, st->st_rcookie, COOKIE_SIZE, &md->sender);
+	get_cookie(FALSE, st->st_rcookie, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -848,7 +847,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	if (c->send_vendorid) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
@@ -998,7 +997,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
  * package up the calculate KE value, and emit it as a KE payload.
  * used by IKEv1: main, aggressive, and quick (in PFS mode).
  */
-bool justship_KE(chunk_t *g,
+bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
 	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
@@ -1006,22 +1005,22 @@ bool justship_KE(chunk_t *g,
 
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
 		/* Only used to test sending/receiving bogus g^x */
-		return out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
 	} else {
-		return out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
+		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
 	}
 }
 
-bool ship_KE(struct state *st,
+bool ikev1_ship_KE(struct state *st,
 	struct pluto_crypto_req *r,
 	chunk_t *g,
 	pb_stream *outs, u_int8_t np)
 {
 	unpack_KE_from_helper(st, r, g);
-	return justship_KE(g, outs, np);
+	return ikev1_justship_KE(g, outs, np);
 }
 
 /*
@@ -1054,12 +1053,12 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
-	if (!ship_KE(st, r, &st->st_gi,
+	if (!ikev1_ship_KE(st, r, &st->st_gi,
 			&md->rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ship_nonce(&st->st_ni, r, &md->rbody,
+	if (!ikev1_ship_nonce(&st->st_ni, r, &md->rbody,
 				(cur_debugging &
 					IMPAIR_BUST_MI2) ? ISAKMP_NEXT_VID :
 				ISAKMP_NEXT_NONE,
@@ -1073,7 +1072,12 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		 */
 		pb_stream vid_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
+		/*
+		 * This next payload value will get rewritten to one of the two
+		 * NAT payload types when needed, using out_modify_previous_np()
+		 * in the below call to ikev1_nat_traversal_add_natd()
+		 */
+		if (!ikev1_out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
 					&md->rbody,
 					&vid_pbs))
 			return STF_INTERNAL_ERROR;
@@ -1088,7 +1092,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1170,9 +1174,9 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &st->st_connection->requested_ca);
+	ikev1_decode_cr(md);
 
-	if (st->st_connection->requested_ca != NULL)
+	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	ikev1_natd_init(st, md);
@@ -1260,7 +1264,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
-	if (!ship_KE(st, r, &st->st_gr,
+	if (!ikev1_ship_KE(st, r, &st->st_gr,
 			&md->rbody, ISAKMP_NEXT_NONCE)) {
 		lsw_abort();
 		return STF_INTERNAL_ERROR;
@@ -1275,7 +1279,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			next_payload = ISAKMP_NEXT_VID;
 		if (send_cr)
 			next_payload = ISAKMP_NEXT_CR;
-		if (!ship_nonce(&st->st_nr, r,
+		if (!ikev1_ship_nonce(&st->st_nr, r,
 					&md->rbody,
 					next_payload,
 					"Nr"))
@@ -1288,7 +1292,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			 */
 			pb_stream vid_pbs;
 
-			if (!out_generic((send_cr) ? ISAKMP_NEXT_CR :
+			if (!ikev1_out_generic((send_cr) ? ISAKMP_NEXT_CR :
 					ISAKMP_NEXT_NONE,
 					&isakmp_vendor_id_desc, &md->rbody,
 					&vid_pbs))
@@ -1336,7 +1340,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1417,7 +1421,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	bool send_authcerts = FALSE;
 	bool send_full_chain = FALSE;
 	bool initial_contact = FALSE;
-	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
@@ -1426,9 +1429,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md);
 
-	if (requested_ca != NULL)
+	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	/*
@@ -1479,7 +1482,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * note: when we are able to ship based on the request
 	 * contents, we'll need them then.
 	 */
-	free_generalNames(requested_ca, TRUE);
+	free_generalNames(st->st_requested_ca, TRUE);
 
 	/*
 	 * Determine if we need to send INITIAL_CONTACT payload
@@ -1577,7 +1580,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
+			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
 						ISAKMP_NEXT_NONE,
 						&isakmp_hash_desc,
 						&md->rbody,
@@ -1597,7 +1600,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
+			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
 						ISAKMP_NEXT_NONE,
 						&isakmp_signature_desc,
 						&md->rbody,
@@ -1737,11 +1740,7 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 stf_status oakley_id_and_auth(struct msg_digest *md,
 			bool initiator, /* are we the Initiator? */
 			bool aggrmode, /* aggressive mode? */
-#ifdef USE_ADNS
-			cont_fn_t cont_fn, /* continuation function */
-#else
-			cont_fn_t cont_fn UNUSED, /* continuation function */
-#endif
+			cont_fn_t cont_fn UNUSED, /* ADNS continuation function */
 			/* current state, can be NULL */
 			const struct key_continuation *kc)
 {
@@ -1822,29 +1821,12 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 #ifdef USE_KEYRR
 				nkc->failure_ok = TRUE;
 #endif
-#ifdef USE_ADNS
-				ugh = start_adns_query(
-					&st->st_connection->spd.that.id,
-					/* SG itself */
-					&st->st_connection->spd.that.id,
-					ns_t_txt,
-					cont_fn,
-					&nkc->ac);
-#endif
 				break;
 
 #ifdef USE_KEYRR
 			case kos_his_txt:
 				/* second try: look for the KEY records */
 				nkc->step = kos_his_key;
-#ifdef USE_ADNS
-				ugh = start_adns_query(
-					&st->st_connection->spd.that.id,
-					NULL, /* no sgw for KEY */
-					ns_t_key,
-					cont_fn,
-					&nkc->ac);
-#endif
 				break;
 #endif /* USE_KEYRR */
 
@@ -2116,7 +2098,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!out_generic_raw(np, &isakmp_hash_desc, &md->rbody,
+			if (!ikev1_out_generic_raw(np, &isakmp_hash_desc, &md->rbody,
 						hash_val, hash_len, "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -2133,7 +2115,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(np, &isakmp_signature_desc,
+			if (!ikev1_out_generic_raw(np, &isakmp_signature_desc,
 						&md->rbody, sig_val, sig_len,
 						"SIG_R"))
 				return STF_INTERNAL_ERROR;
@@ -2506,7 +2488,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	/* HASH -- value to be filled later */
 	if (encst) {
 		pb_stream hash_pbs;
-		if (!out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
+		if (!ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2582,7 +2564,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 {
 	struct state *p1st;
 
-	passert(st);
+	passert(st != NULL);
 
 	if (from_state == STATE_UNDEFINED)
 		from_state = st->st_state;
@@ -2625,7 +2607,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct state st;	/* note: not a pointer! */
 	struct connection cnx;	/* note: not a pointer! */
 
-	passert(md);
+	passert(md != NULL);
 
 	zero(&st);	/* ??? pointer fields might not be NULLed */
 	zero(&cnx);	/* ??? pointer fields might not be NULLed */
@@ -2724,7 +2706,7 @@ bool ikev1_delete_out(struct state *st)
 	{
 		pb_stream hash_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
+		if (!ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2880,7 +2862,7 @@ bool accept_delete(struct msg_digest *md,
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: unknown Protocol ID (%s)",
-			enum_show(&protocol_names, d->isad_protoid));
+			enum_show(&ikev1_protocol_names, d->isad_protoid));
 		return self_delete;
 	}
 
@@ -2888,7 +2870,7 @@ bool accept_delete(struct msg_digest *md,
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: bad SPI size (%d) for %s",
 			d->isad_spisize,
-			enum_show(&protocol_names, d->isad_protoid));
+			enum_show(&ikev1_protocol_names, d->isad_protoid));
 		return self_delete;
 	}
 
@@ -2960,14 +2942,14 @@ bool accept_delete(struct msg_digest *md,
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
 					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
-					enum_show(&protocol_names,
+					enum_show(&ikev1_protocol_names,
 						d->isad_protoid),
 					ntohl(spi));
 			} else {
 				if (bogus) {
 					loglog(RC_LOG_SERIOUS,
 						"warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
-						enum_show(&protocol_names,
+						enum_show(&ikev1_protocol_names,
 							d->isad_protoid),
 						ntohl(spi));
 				}

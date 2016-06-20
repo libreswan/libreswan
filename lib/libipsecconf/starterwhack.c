@@ -9,6 +9,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,9 +82,9 @@ static int send_reply(int sock, char *buf, ssize_t len)
 }
 
 static int starter_whack_read_reply(int sock,
-				char xauthname[XAUTH_MAX_NAME_LENGTH],
+				char username[MAX_USERNAME_LEN],
 				char xauthpass[XAUTH_MAX_PASS_LENGTH],
-				int xauthnamelen,
+				int usernamelen,
 				int xauthpasslen)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
@@ -180,26 +181,26 @@ static int starter_whack_read_reply(int sock,
 
 					break;
 
-				case RC_XAUTHPROMPT:
-					if (xauthnamelen == 0) {
-						xauthnamelen = whack_get_value(
-							xauthname,
-							XAUTH_MAX_NAME_LENGTH);
+				case RC_USERPROMPT:
+					if (usernamelen == 0) {
+						usernamelen = whack_get_value(
+							username,
+							MAX_USERNAME_LEN);
 					}
-					if (xauthnamelen >
-						XAUTH_MAX_NAME_LENGTH) {
+					if (usernamelen >
+						MAX_USERNAME_LEN) {
 						/*
 						 * for input >= 128,
-						 * xauthnamelen would be 129
+						 * useramelen would be 129
 						 */
-						xauthnamelen =
-							XAUTH_MAX_NAME_LENGTH;
+						usernamelen =
+							MAX_USERNAME_LEN;
 						starter_log(LOG_LEVEL_ERR,
-							"xauth name cannot be >= %d chars",
-							XAUTH_MAX_NAME_LENGTH);
+							"username cannot be >= %d chars",
+							MAX_USERNAME_LEN);
 					}
-					ret = send_reply(sock, xauthname,
-							xauthnamelen);
+					ret = send_reply(sock, username,
+							usernamelen);
 					if (ret != 0)
 						return ret;
 
@@ -227,7 +228,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 	int ret;
 
 	/* copy socket location */
-	strncpy(ctl_addr.sun_path, ctlbase, sizeof(ctl_addr.sun_path));
+	strncpy(ctl_addr.sun_path, ctlbase, sizeof(ctl_addr.sun_path) - 1);
 
 	/*  Pack strings */
 	wp.msg = msg;
@@ -270,10 +271,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 	/* read reply */
 	{
-		char xauthname[XAUTH_MAX_NAME_LENGTH];
+		char username[MAX_USERNAME_LEN];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret = starter_whack_read_reply(sock, xauthname, xauthpass, 0,
+		ret = starter_whack_read_reply(sock, username, xauthpass, 0,
 					0);
 		close(sock);
 	}
@@ -374,7 +375,14 @@ static void set_whack_end(char *lr,
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->has_port_wildcard = l->has_port_wildcard;
 
-	w->cert = l->cert;
+	if (l->cert != NULL) {
+		w->pubkey = l->cert;
+		w->pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+	}
+	if (l->ckaid != NULL) {
+		w->pubkey = l->ckaid;
+		w->pubkey_type = WHACK_PUBKEY_CKAID;
+	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
@@ -392,13 +400,15 @@ static void set_whack_end(char *lr,
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->options_set[KNCF_XAUTHCLIENT])
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
-	if (l->strings_set[KSCF_XAUTHUSERNAME])
-		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
+	if (l->strings_set[KSCF_USERNAME])
+		w->username = l->strings[KSCF_USERNAME];
 
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
 	if (l->options_set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
+	if (l->options_set[KNCF_CAT])
+		w->cat = l->options[KNCF_CAT];
 	w->pool_range = l->pool_range;
 }
 
@@ -422,7 +432,6 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 		msg.keyid = end->id;
 
 		switch (end->rsakey1_type) {
-		case PUBKEY_DNS:
 		case PUBKEY_DNSONDEMAND:
 			starter_log(LOG_LEVEL_DEBUG,
 				"conn %s/%s has key from DNS",
@@ -439,7 +448,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav((char *)end->rsakey1, 0, 0, keyspace,
+			err = ttodatav(end->rsakey1, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
@@ -468,13 +477,12 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 		msg.keyid = end->id;
 		switch (end->rsakey2_type) {
 		case PUBKEY_NOTSET:
-		case PUBKEY_DNS:
 		case PUBKEY_DNSONDEMAND:
 		case PUBKEY_CERTIFICATE:
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav((char *)end->rsakey2, 0, 0, keyspace,
+			err = ttodatav(end->rsakey2, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
@@ -621,14 +629,15 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #ifdef HAVE_LABELED_IPSEC
 	/* Labeled ipsec support */
-	if (conn->options_set[KBF_LABELED_IPSEC])
+	if (conn->options_set[KBF_LABELED_IPSEC]) {
 		msg.labeled_ipsec = conn->options[KBF_LABELED_IPSEC];
+		msg.policy_label = conn->policy_label;
+		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
+			conn->name, msg.policy_label);
+	}
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" labeled_ipsec=%d",
 		conn->name, msg.labeled_ipsec);
 
-	msg.policy_label = conn->policy_label;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
-		conn->name, msg.policy_label);
 #endif
 
 	msg.modecfg_domain = conn->modecfg_domain;
@@ -637,16 +646,27 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
-	msg.conn_mark = conn->conn_mark;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
-		conn->name, msg.conn_mark);
+
+	msg.conn_mark_in = conn->conn_mark_in;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
+		conn->name, msg.conn_mark_in);
+	msg.conn_mark_out = conn->conn_mark_out;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-out=%s",
+		conn->name, msg.conn_mark_out);
+
+	msg.vti_iface = conn->vti_iface;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" vti_iface=%s",
+		conn->name, msg.vti_iface);
+	if (conn->options_set[KBF_VTI_ROUTING])
+		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
+
 
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
 
-	if (conn->modecfg_dns1) {
+	if (conn->modecfg_dns1 != NULL) {
 		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
 				&(msg.modecfg_dns1)) &&
 			!tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
@@ -654,7 +674,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_ERR,
 				"Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
 	}
-	if (conn->modecfg_dns2) {
+	if (conn->modecfg_dns2 != NULL) {
 		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
 				&(msg.modecfg_dns2)) &&
 			!tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,

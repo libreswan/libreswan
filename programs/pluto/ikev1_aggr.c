@@ -45,7 +45,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
@@ -328,7 +327,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_cookie(FALSE, st->st_rcookie, COOKIE_SIZE, &md->sender);
+	get_cookie(FALSE, st->st_rcookie, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -397,7 +396,6 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	bool send_cr = FALSE;
 	bool send_authcerts = FALSE;
 	bool send_full_chain = FALSE;
-	generalName_t *requested_ca = NULL;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	int auth_payload;
 	cert_t mycert = st->st_connection->spd.this.cert;
@@ -415,9 +413,9 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md);
 
-	if (requested_ca != NULL)
+	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
 	/*
@@ -464,7 +462,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 * free collected certificate requests since as initiator
 	 * we don't heed them anyway
 	 */
-	free_generalNames(requested_ca, TRUE);
+	free_generalNames(st->st_requested_ca, TRUE);
 
 	/* done parsing; initialize crypto  */
 
@@ -514,12 +512,12 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
 
 	/* KE */
-	if (!justship_KE(&st->st_gr,
+	if (!ikev1_justship_KE(&st->st_gr,
 			 &md->rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
 	/* Nr */
-	if (!justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID, "Nr"))
+	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID, "Nr"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDir out */
@@ -582,7 +580,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!out_generic_raw(ISAKMP_NEXT_VID,
+			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_hash_desc,
 					     &md->rbody,
 					     hash_val,
@@ -602,7 +600,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(ISAKMP_NEXT_VID,
+			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_signature_desc,
 					     &md->rbody, sig_val, sig_len,
 					     "SIG_R"))
@@ -636,7 +634,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 			     &md->rbody,
 			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -814,7 +812,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(auth_payload, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -839,7 +837,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!out_generic_raw(ISAKMP_NEXT_NONE,
+			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
 					     &isakmp_hash_desc, &md->rbody,
 					     hash_val, hash_len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
@@ -856,7 +854,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!out_generic_raw(ISAKMP_NEXT_NONE,
+			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
 					     &isakmp_signature_desc,
 					     &md->rbody, sig_val, sig_len,
 					     "SIG_I"))
@@ -1106,7 +1104,7 @@ stf_status aggr_outI1(int whack_sock,
 		      unsigned long try,
 		      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		      , const struct xfrm_user_sec_ctx_ike *uctx
+		      , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		      )
 {
@@ -1139,16 +1137,16 @@ stf_status aggr_outI1(int whack_sock,
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
 
-	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
+	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
 
 	st->st_import = importance;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name != NULL) {
-				jam_str(st->st_xauth_username,
-					sizeof(st->st_xauth_username),
-					sr->this.xauth_name);
+			if (sr->this.username != NULL) {
+				jam_str(st->st_username,
+					sizeof(st->st_username),
+					sr->this.username);
 				break;
 			}
 		}
@@ -1178,15 +1176,12 @@ stf_status aggr_outI1(int whack_sock,
 			    );
 
 	if (predecessor == NULL) {
-		libreswan_log(
-			"initiating Aggressive Mode #%lu, connection \"%s\"",
-			st->st_serialno, st->st_connection->name);
+		libreswan_log("initiating Aggressive Mode");
 	} else {
 		update_pending(predecessor, st);
 		libreswan_log(
-			"initiating Aggressive Mode #%lu to replace #%lu, connection \"%s\"",
-			st->st_serialno, predecessor->st_serialno,
-			st->st_connection->name);
+			"initiating Aggressive Mode #%lu to replace #%lu",
+			st->st_serialno, predecessor->st_serialno);
 	}
 
 	/*
@@ -1277,12 +1272,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	}
 
 	/* KE out */
-	if (!ship_KE(st, r, &st->st_gi,
+	if (!ikev1_ship_KE(st, r, &st->st_gi,
 		     &md->rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	DBG(DBG_CONTROLMORE, DBG_log("setting sec: %s", st->st_sec_in_use ? "TRUE" : "FALSE"));
@@ -1310,12 +1305,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	if (nat_traversal_enabled)
 		numvidtosend++;
-	if(c->cisco_unity)
+	if (c->cisco_unity)
 		numvidtosend++;
-	if(c->fake_strongswan)
+	if (c->fake_strongswan)
 		numvidtosend++;
 
-	if(c->send_vendorid)
+	if (c->send_vendorid)
 		numvidtosend++;
 
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
@@ -1343,19 +1338,19 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->cisco_unity) {
+	if (c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->fake_strongswan) {
+	if (c->fake_strongswan) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if(c->send_vendorid) {
+	if (c->send_vendorid) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
 			return STF_INTERNAL_ERROR;

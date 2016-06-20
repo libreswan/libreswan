@@ -109,7 +109,7 @@ static void parser_y_close(struct ic_inputsource *iis)
 		fclose(iis->file);
 		iis->file = NULL;
 	}
-	if (iis->fileglob.gl_pathv) {
+	if (iis->fileglob.gl_pathv != NULL) {
 		globfree(&iis->fileglob);
 		iis->fileglob.gl_pathv = NULL;
 	}
@@ -504,7 +504,7 @@ include			return INCLUDE;
 					fprintf(stderr, "STR/KEY: %s\n",
 						yytext);
 				tok = parser_find_keyword(yytext, &yylval);
-				switch(tok)
+				switch (tok)
 				{
 				case BOOLWORD:
 					BEGIN BOOLEAN;

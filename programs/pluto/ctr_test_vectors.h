@@ -12,4 +12,4 @@
  * for more details.
  */
 
-int test_aes_ctr(struct encrypt_desc *encrypt_desc);
+int test_aes_ctr(const struct encrypt_desc *encrypt_desc);

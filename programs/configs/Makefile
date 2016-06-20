@@ -13,8 +13,14 @@
 
 # the man page source is generated
 MANPAGES += $(builddir)/ipsec.conf.5
+MANPAGES += ipsec.secrets.5
 
-CONFFILES=ipsec.conf
+#different mode
+ipsec.secrets.INSTFLAGS = --mode=0600
+
+CONFFILES += ipsec.conf
+CONFFILES += ipsec.secrets
+
 EXCONFILES=ipsec.win2k.conf
 
 CONFDFILES = v6neighbor-hole.conf
@@ -33,7 +39,7 @@ $(builddir)/ipsec.conf.5.xml: $(xmlsources)
 	@mkdir -p $(builddir)
 	cat $(xmlsources) > $@
 
-clean-local-manpages: clean-local-xml-manpages
+local-clean-manpages: local-clean-xml-manpages
 .PHONY: clean-local-xml-manpages
-clean-local-xml-manpages:
+local-clean-xml-manpages:
 	rm -f $(builddir)/ipsec.conf.5.xml

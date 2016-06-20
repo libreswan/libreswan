@@ -1,0 +1,4 @@
+Same as ikev2-dcookie-01 but now west uses an impair to send a mangled dcookie.
+
+The connection should fail. Note this testcase cannot be sped up using
+impair-rentransmits because cookies rely on the retransmit.

@@ -4,7 +4,7 @@
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -63,11 +63,6 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 ### boilerplate, do not change, various scripts use extended BASH syntax!
 SHELL=/bin/bash
 export SHELL
-
-.PHONY:	programs man config clean
-
-# location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
-BINSH=/bin/sh
 
 ### install pathnames
 
@@ -138,6 +133,9 @@ FINALVARDIR?=/var
 VARDIR?=$(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
+
+# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
+INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INC_RCDIRS which exists gets them.
@@ -222,8 +220,9 @@ BISONOSFLAGS?=
 # after -I$(top_srcdir)/include and fixing that is an entirely
 # separate cleanup.
 NSSFLAGS?=$(shell pkg-config --cflags nss)
-# We don't want to link against every library pkg-config --libs nss returns
-NSSLIBS=-lnss3 -lnspr4
+# We don't want to link against every library pkg-config --libs nss
+# returns
+NSS_LDFLAGS ?= -lnss3 -lnspr4
 
 # To build with clang, use: scan-build make programs
 #GCC=clang
@@ -288,9 +287,20 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
 
-# Enable support for the obsoleted adns resolver
-# This code is only used by IKEv1 OE - which is obsoleted. Do not enable!
-USE_ADNS?=false
+# For systemd start/stop notifications and watchdog feature
+# We only enable this by default if used INITSYSTEM is systemd
+ifeq ($(INITSYSTEM),systemd)
+USE_SYSTEMD_WATCHDOG?=true
+else
+USE_SYSTEMD_WATCHDOG?=false
+endif
+
+# Figure out ipsec.service file Type= option
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+SD_TYPE=notify
+else
+SD_TYPE=simple
+endif
 
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
 # and any certificates to be in a single directory defined by
@@ -398,9 +408,6 @@ IPSEC_CONNECTION_LIMIT?=250
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN?=false
 
-# For systems with no fork (uclibc nommu)
-HAVE_NO_FORK?=false
-
 NONINTCONFIG=oldconfig
 
 -include ${LIBRESWANSRCDIR}/Makefile.ver
@@ -462,14 +469,12 @@ export LIBRESWANLIB LSWLOGLIB
 export LIBDESSRCDIR
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
-export NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1
 
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
-			-e "s:@BINSH@:$(BINSH):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
@@ -493,6 +498,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool

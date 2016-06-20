@@ -2,15 +2,8 @@
 west #
  # confirm that the network is alive
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # make sure that clear text does not get through
 west #
@@ -152,7 +145,9 @@ west #
  echo done
 done
 west #
- grep -A 1 KEY_LENGTH /tmp/pluto.log
+ : dump key-length attributes to the connsole - none can be zero
+west #
+ grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -174,9 +169,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -198,9 +190,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
@@ -218,9 +207,6 @@ west #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
@@ -240,9 +226,6 @@ west #
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
@@ -260,9 +243,6 @@ west #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)

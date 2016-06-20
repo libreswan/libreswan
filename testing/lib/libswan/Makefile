@@ -38,5 +38,3 @@ clean:
 	done
 
 cleanall: clean
-
-distclean: clean

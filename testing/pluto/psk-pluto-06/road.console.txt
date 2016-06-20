@@ -31,7 +31,7 @@ initdone
 road #
  ipsec whack --name road-east-psk --initiate
 003 "road-east-psk": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-002 "road-east-psk" #1: initiating Aggressive Mode #1, connection "road-east-psk"
+002 "road-east-psk" #1: initiating Aggressive Mode
 112 "road-east-psk" #1: STATE_AGGR_I1: initiate
 002 "road-east-psk" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "road-east-psk" #1: max number of retransmissions (0) reached STATE_AGGR_I1.  No response (or no acceptable response) to our first IKEv1 message

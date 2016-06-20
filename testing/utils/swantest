@@ -984,7 +984,7 @@ class scantests:
         key = "%s-status" % self.tests[self.testname][role]
         status = ''
 
-        cmd = "grep " + fixed + "'" + pattern + "'  " + filename
+        cmd = "zgrep " + fixed + "'" + pattern + "'  " + filename
         match = subprocess.getoutput(cmd)
         logging.debug("%s" % cmd)
         if match:

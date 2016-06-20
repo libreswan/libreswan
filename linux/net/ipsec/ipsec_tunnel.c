@@ -147,7 +147,11 @@ static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
 
 #ifdef NET_26   /* 2.6 kernels */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	return dst_output(dev_net(skb->dev), skb->sk, skb);
+#else
 	return dst_output(skb);
+#endif
 
 #else
 	return ip_send(skb);

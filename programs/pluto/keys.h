@@ -23,11 +23,13 @@
 #ifndef _KEYS_H
 #define _KEYS_H
 
-#include "secrets.h"
 #include "x509.h"
 #include "certs.h"
 
 struct connection;
+struct RSA_private_key;
+struct RSA_public_key;
+struct pubkey;
 
 extern int sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
 		      size_t hash_len, u_char *sig_val, size_t sig_len);
@@ -55,7 +57,7 @@ extern const chunk_t *get_preshared_secret(const struct connection *c);
 extern char *pluto_shared_secrets_file;
 extern void load_preshared_secrets();
 extern void free_preshared_secrets(void);
-extern err_t load_nss_cert_secret(const char *nickname);
+extern err_t load_nss_cert_secret(CERTCertificate *cert);
 
 extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 					  char *xauthname);

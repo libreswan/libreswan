@@ -70,8 +70,8 @@ def check_prompt_group(logger, match, expected, field):
         if expected != found:
             # Throw TIMEOUT as that is what is expected and what
             # would have happened.
-            pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
-                            % (field, expected, found))
+            raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
+                                  % (field, expected, found))
 
 def check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
     """Match wild-card  of the prompt pattern; return status"""

@@ -74,33 +74,12 @@ static fetch_req_t empty_fetch_req = {
 static fetch_req_t *crl_fetch_reqs  = NULL;
 
 static pthread_t thread;
-static pthread_mutex_t crl_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
 
 extern char *curl_iface;
 extern long curl_timeout;
-
-/* lock access to the chained crl list
- * ??? declared in x509.h
- */
-void lock_crl_list(const char *who)
-{
-	pthread_mutex_lock(&crl_list_mutex);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl list locked by '%s'", who));
-}
-
-/* unlock access to the chained crl list
- * ??? declared in x509.h
- */
-void unlock_crl_list(const char *who)
-{
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl list unlocked by '%s'", who));
-	pthread_mutex_unlock(&crl_list_mutex);
-}
 
 /*
  * lock access to the chained crl fetch request list
@@ -158,6 +137,7 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 
 	/* note: memory allocated by realloc(3) */
 	mem->ptr = realloc(mem->ptr, mem->len + realsize);
+	/* ??? what should we do on realloc failure? */
 	if (mem->ptr != NULL) {
 		memcpy(&(mem->ptr[mem->len]), ptr, realsize);
 		mem->len += realsize;
@@ -397,10 +377,10 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 				    DBG_log("  fetched blob coded in PEM format"));
 			} else {
 				ugh = "Blob coded in unknown format";
-				pfree(blob->ptr);
+				pfreeany(blob->ptr);
 			}
 		} else {
-			pfree(blob->ptr);
+			pfreeany(blob->ptr);
 		}
 	}
 	return ugh;
@@ -427,7 +407,8 @@ static void fetch_crls(void)
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
-				libreswan_log("fetch failed:  %s", ugh);
+				DBG(DBG_CONTROL,
+					DBG_log("fetch failed:  %s", ugh));
 			} else {
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
@@ -540,7 +521,7 @@ void free_crl_fetch(void)
 /*
  * add additional distribution points
  */
-void add_distribution_points(const generalName_t *newPoints,
+void add_distribution_points(generalName_t *newPoints,
 			     generalName_t **distributionPoints)
 {
 	while (newPoints != NULL) {

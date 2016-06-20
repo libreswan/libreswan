@@ -30,8 +30,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <libreswan.h>
-
-#include <gmp.h>
+#include "lswalloc.h"
 
 #include <prerror.h>
 #include <prinit.h>
@@ -106,9 +105,8 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-static const unsigned char *bundle(int e, mpz_t n, size_t *sizep);
+static const unsigned char *bundle(int e, SECItem *, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
-static const char *hexout(mpz_t var);
 void report(char *msg);
 
 
@@ -116,24 +114,6 @@ void report(char *msg);
 static SECItem *getModulus(SECKEYPublicKey *pk)
 {
 	return &pk->u.rsa.modulus;
-}
-
-/* getPublicExponent - returns public exponent of the RSA public key */
-static SECItem *getPublicExponent(SECKEYPublicKey *pk)
-{
-	return &pk->u.rsa.publicExponent;
-}
-
-/* Caller must ensure that dst is at least item->len*2+1 bytes long */
-static void SECItemToHex(const SECItem * item, char * dst)
-{
-	if (dst && item && item->data) {
-		unsigned char * src = item->data;
-		unsigned int len = item->len;
-		for (; len > 0; --len, dst += 2)
-			sprintf(dst, "%02x", *src++);
-		*dst = '\0';
-	}
 }
 
 /*
@@ -188,19 +168,19 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 	char *tokenName = NULL;
 	int tokenLen = 0;
 
-	if (!pwFile)
-		return 0;
+	if (pwFile == NULL)
+		return NULL;
 
 	if (retry)
-		return 0;  /* no good retrying - the files contents will be the same */
+		return NULL;  /* no good retrying - the files contents will be the same */
 
 	phrases = PORT_ZAlloc(maxPwdFileSize);
 
-	if (!phrases)
-		return 0; /* out of memory */
+	if (phrases == NULL)
+		return NULL; /* out of memory */
 
 	fd = PR_Open(pwFile, PR_RDONLY, 0);
-	if (!fd) {
+	if (fd == NULL) {
 		fprintf(stderr, "%s: No password file \"%s\" exists.\n", me, pwFile);
 		PORT_Free(phrases);
 		return NULL;
@@ -215,9 +195,9 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 		return NULL;
 	}
 
-	if (slot) {
+	if (slot != NULL) {
 		tokenName = PK11_GetTokenName(slot);
-		if (tokenName)
+		if (tokenName != NULL)
 			tokenLen = PORT_Strlen(tokenName);
 	}
 	i = 0;
@@ -234,7 +214,7 @@ static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 			phrases[i++] = '\0';
 		/* now analyze the current passphrase */
 		phrase = &phrases[startphrase];
-		if (!tokenName)
+		if (tokenName == NULL)
 			break;
 		if (PORT_Strncmp(phrase, tokenName, tokenLen))
 			continue;
@@ -375,7 +355,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!configdir) {
+	if (configdir == NULL) {
 		configdir = NSSDIR;
 	}
 
@@ -430,14 +410,8 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
 	const unsigned char *bundp = NULL;
-	mpz_t n;
-	mpz_t e;
 	size_t bs;
-	char n_str[3 + MAXBITS / 4 + 1];
 	realtime_t now = realnow();
-
-	mpz_init(n);
-	mpz_init(e);
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
@@ -472,7 +446,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	}
 #endif
 
-	if (PK11_IsFIPS() && !password) {
+	if (PK11_IsFIPS() && password == NULL) {
 		fprintf(stderr,
 			"%s: On FIPS mode a password is required\n",
 			me);
@@ -501,7 +475,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/* Do some random-number initialization. */
 	UpdateNSS_RNG(seedbits);
 	/* Log in to the token */
-	if (password) {
+	if (password != NULL) {
 		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
 		if (rv != SECSuccess) {
 			fprintf(stderr,
@@ -514,10 +488,10 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 				       CKM_RSA_PKCS_KEY_PAIR_GEN,
 				       &rsaparams, &pubkey,
 				       PR_TRUE,
-				       password ? PR_TRUE : PR_FALSE,
+				       password != NULL? PR_TRUE : PR_FALSE,
 				       &pwdata);
 	/* inTheToken, isSensitive, passwordCallbackFunction */
-	if (!privkey) {
+	if (privkey == NULL) {
 		fprintf(stderr,
 			"%s: key pair generation failed: \"%d\"\n", me,
 			PORT_GetError());
@@ -527,10 +501,7 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
 	fprintf(stderr,
-		"Generated RSA key pair using the NSS database\n");
-
-	SECItemToHex(getModulus(pubkey), n_str);
-	assert(!mpz_set_str(n, n_str, 16));
+		"Generated RSA key pair was stored in the NSS database\n");
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
@@ -538,28 +509,20 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
-	bundp = bundle(E, n, &bs);
+
+	bundp = bundle(E, getModulus(pubkey), &bs);
 	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
-	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
-	printf("\tPublicExponent: %s\n",
-	       hexOut(getPublicExponent(pubkey)));
+
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex format - not the real values\n");
-		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
-		printf("\tPrime1: %s\n", hexOut(ckaID));
-		printf("\tPrime2: %s\n", hexOut(ckaID));
-		printf("\tExponent1: %s\n", hexOut(ckaID));
-		printf("\tExponent2: %s\n", hexOut(ckaID));
-		printf("\tCoefficient: %s\n", hexOut(ckaID));
-		printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
+		printf("\t#CKAIDNSS: %s\n", hexOut(ckaID));
 		SECITEM_FreeItem(ckaID, PR_TRUE);
 	}
 
-	if (privkey)
+	if (privkey != NULL)
 		SECKEY_DestroyPrivateKey(privkey);
-	if (pubkey)
+	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
 	(void) NSS_Shutdown();
@@ -607,41 +570,14 @@ void getrandom(size_t nbytes, unsigned char *buf)
 }
 
 /*
- * hexout - prepare hex output, guaranteeing even number of digits
- * (The current FreeS/WAN conversion routines want an even digit count,
- * but mpz_get_str doesn't promise one.)
- *
- * NOTE: result is a pointer into a STATIC buffer.
- */
-static const char *hexout(mpz_t var)
-{
-	static char hexbuf[3 + MAXBITS / 4 + 1];
-	char *hexp;
-
-	mpz_get_str(hexbuf + 3, 16, var);
-	if (strlen(hexbuf + 3) % 2 == 0) {
-		/* even number of hex digits */
-		hexp = hexbuf + 1;
-	} else {
-		/* odd, must pad */
-		hexp = hexbuf;
-		hexp[2] = '0';
-	}
-	hexp[0] = '0';
-	hexp[1] = 'x';
-
-	return hexp;
-}
-
-/*
    - bundle - bundle e and n into an RFC2537-format lump
- * Note, calls hexout.
+ * Note, calls hexOut.
  *
  * NOTE: returns a pointer into a STATIC buffer
  */
-static const unsigned char *bundle(int e, mpz_t n, size_t *sizep)
+static const unsigned char *bundle(int e, SECItem *n, size_t *sizep)
 {
-	const char *hexp = hexout(n);
+	const char *hexp = hexOut(n);
 	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
@@ -700,12 +636,3 @@ char *msg;
 
 	fprintf(stderr, "%s\n", msg);
 }
-/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
- * The odd-looking parens are to prevent macro expansion:
- * lswlog.h without DEBUG define a macro exit_tool().
- */
-void (exit_tool)(int x)
-{
-	exit(x);
-}
-

@@ -58,6 +58,10 @@
 
 #include "nat_traversal.h"
 
+#ifdef USE_SYSTEMD_WATCHDOG
+#include "pluto_sd.h"
+#endif
+
 static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 {
 	struct connection *c = st->st_connection;
@@ -456,17 +460,23 @@ static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 		char story[80] = "";
 		if (type == EVENT_v2_SA_REPLACE_IF_USED) {
 			deltatime_t last_used_age;
-			/* ??? why do we only care about inbound traffic? */
-			get_sa_info(st, TRUE, &last_used_age);
-			snprintf(story, sizeof(story),
-				"last used %lds ago < %ld ",
-				(long)deltasecs(last_used_age),
-				(long)deltasecs(c->sa_rekey_margin));
-		}
-		DBG_log("replacing stale %s SA %s",
+			/* why do we only care about inbound traffic? */
+			/* because we cannot tell the difference sending out to a dead SA? */
+			if (get_sa_info(st, TRUE, &last_used_age)) {
+				snprintf(story, sizeof(story),
+					"last used %lds ago < %ld ",
+					(long)deltasecs(last_used_age),
+					(long)deltasecs(c->sa_rekey_margin));
+			} else {
+				snprintf(story, sizeof(story),
+					"unknown usage - get_sa_info() failed");
+			}
+
+			DBG_log("replacing stale %s SA %s",
 				IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 				story);
-		});
+		}
+	});
 }
 
 static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
@@ -526,6 +536,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
 	case EVENT_LOG_DAILY:
+	case EVENT_SD_WATCHDOG:
 	case EVENT_NAT_T_KEEPALIVE:
 		passert(st == NULL);
 		break;
@@ -601,6 +612,12 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_LOG_DAILY:
 		daily_log_event();
 		break;
+
+#ifdef USE_SYSTEMD_WATCHDOG
+	case EVENT_SD_WATCHDOG:
+		sd_watchdog_event();
+		break;
+#endif
 
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();

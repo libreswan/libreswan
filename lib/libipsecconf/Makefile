@@ -18,7 +18,6 @@ LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 MANDIR=$(MANTREE)/man3
 
-ONEFILE=parser.y
 SRCS=confread.c confwrite.c starterwhack.c starterlog.c
 SRCS+=parser.tab.c lex.yy.c keywords.c oeconns.c
 SRCS+=interfaces.c
@@ -28,6 +27,9 @@ SRCS+=interfaces.c
 
 OBJS=${SRCS:.c=.o}
 
+# pick up generated LEX/YACC files
+INCLUDES += -I$(builddir)
+
 ifdef top_srcdir
 include ${top_srcdir}/mk/library.mk
 else
@@ -36,7 +38,7 @@ endif
 
 # Hack to force the generated files to be built first.  Not too bad
 # since all the $(OBJS) indirectly depend on the header anyway.
-$(OBJS): parser.tab.h
+$(OBJS): $(builddir)/parser.tab.h
 
 # Use UNIX basename to strip off the directory.
 # Use sed to work around two bugs:
@@ -56,13 +58,16 @@ $(OBJS): parser.tab.h
 # Avoid sed -i which somehow causes unwritable files
 # on fedora 20 with 9p filesystem mount.
 # Avoid creating the target file until it is done.
-lex.yy.c: parser.l
-	cd $(builddir) && \
-	$(LEX) -o $@.$$$$ $(srcdir)/$$(basename $<) && \
+
+LEX = flex
+
+$(builddir)/lex.yy.c: parser.l
+	$(LEX) -o $@.tmp $<
 	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
-	    -e '/^extern int isatty.*$$/d' $@.$$$$ >SEDTMP$$$$ && \
-	rm $@.$$$$ && \
-	mv SEDTMP$$$$ $@
+	    -e '/^extern int isatty.*$$/d' \
+	    < $@.tmp > $@.sedtmp
+	rm $@.tmp
+	mv $@.sedtmp $@
 
 # Use wild card rule so that GNU Make knows that both are output from
 # a single recipe.
@@ -70,16 +75,27 @@ lex.yy.c: parser.l
 # - avoid sed -i which somehow causes unwritable files
 #   on fedora 20 with 9p filesystem mount
 # - avoid creating the target file until it is done
-%.tab.h %.tab.c: %.y
-	cd $(builddir) && \
-	$(BISON) ${BISONOSFLAGS} -v --defines=$$(basename $< .y).tab.h -o $$(basename $< .y).tab.c$$$$ $(srcdir)/$$(basename $<) && \
+# - $* matches %
+#
+# - run bison from the builddir so that parser.tab.h defines
+#   YY_YY_PARSER_TAB_H_INCLUDED and not a macro containing the
+#   buildpath.  See parser-controls.h for why.
+
+ifeq ($(USE_YACC),true)
+BISON=yacc -b parser
+else
+BISON=bison
+endif
+
+$(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
+	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v --defines=$*.tab.h -o $*.tab.c.tmp $(abs_srcdir)/$*.y
 	sed -e '/^ *#/s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
-		-e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
-		$$(basename $< .y).tab.c$$$$ >SEDTMP$$$$ && \
-	rm $$(basename $< .y).tab.c$$$$ && \
-	mv SEDTMP$$$$ $$(basename $< .y).tab.c
+	    -e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
+	    < $(builddir)/$*.tab.c.tmp >  $(builddir)/$*.tab.c.sedtmp
+	rm $(builddir)/$*.tab.c.tmp
+	mv $(builddir)/$*.tab.c.sedtmp $(builddir)/$*.tab.c
 
 clean: parser-clean
 .PHONY: parser-clean
 parser-clean:
-	cd $(builddir) && $(RM) -f SEDTMP* *.tab.[cdho] *.dot *.output lex.yy.[cdho]
+	cd $(builddir) && $(RM) -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -eu
+
+if test $# -lt 1; then
+    cat 1>&2 <<EOF
+Usage: $0 <dest> [ -I <interface> ]
+EOF
+    exit 1
+fi
+
+# Run ping so that it exits with success the moment it gets a single
+# packet pack.
+ping="ping -n -c 1 -w 4 $@"
+
+if output=$($ping 2>&1); then
+    echo "destination $@ is alive"
+    exit 0
+else
+    echo "$ping"
+    echo "$output"
+    echo "destination $@ is dead"
+    exit 1
+fi

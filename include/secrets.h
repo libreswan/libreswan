@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +21,6 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include <gmp.h>	/* GNU MP library */
 #include "id.h"
 
 #include <nss.h>
@@ -41,23 +41,13 @@ struct RSA_public_key {
 	unsigned k;
 
 	/* public: */
-	MP_INT
-		n,	/* modulus: p * q */
-		e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
+	chunk_t n;	/* modulus: p * q */
+	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
 	CERTCertificate *nssCert;
 };
 
 struct RSA_private_key {
 	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
-
-	MP_INT
-		d,				/* private exponent: (e^-1) mod ((p-1) * (q-1)) */
-	/* help for Chinese Remainder Theorem speedup: */
-		p,				/* first secret prime */
-		q,				/* second secret prime */
-		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
-		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
-		qInv;				/* (q^-1) mod p */
 	/*
 	 * ckaid for use in NSS
 	 *

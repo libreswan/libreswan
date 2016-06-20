@@ -22,7 +22,7 @@
  *      ML:	Mathieu Lafon <mlafon@arkoon.net>
  *
  * Fixes:
- *      ML:	ike_alg_ok_final() funcion (make F_STRICT consider hash/auth and modp).
+ *      ML:	ike_alg_ok_final() function (make F_STRICT consider hash/auth and modp).
  */
 #include <stdio.h>
 #include <string.h>
@@ -56,8 +56,7 @@
  */
 void ike_alg_show_status(void)
 {
-	unsigned i;
-	struct ike_alg *algo;
+	const struct ike_alg *algo;
 
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
@@ -73,27 +72,26 @@ void ike_alg_show_status(void)
 			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
 			  algo->algo_v2id,
 			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
-			  ((struct encrypt_desc *)algo)->enc_blocksize,
-			  ((struct encrypt_desc *)algo)->keydeflen);
+			  ((const struct encrypt_desc *)algo)->enc_blocksize,
+			  ((const struct encrypt_desc *)algo)->keydeflen);
 	}
 	IKE_HALG_FOR_EACH(algo) {
 		/*
 		 * ??? we think that hash_integ_len is meaningless
 		 * (and 0) for IKE hashes
 		 */
-		pexpect(((struct hash_desc *)algo)->hash_integ_len == 0);
+		pexpect(((const struct hash_desc *)algo)->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  ((struct hash_desc *)algo)->hash_digest_len);
+			  ((const struct hash_desc *)algo)->hash_digest_len);
 	}
 
-#define IKE_DH_ALG_FOR_EACH(idx) for ((idx) = 0; (idx) != oakley_group_size; (idx)++)
-
-	IKE_DH_ALG_FOR_EACH(i) {
-		const struct oakley_group_desc *gdesc = oakley_group + i;
-
+	const struct oakley_group_desc *gdesc;
+	for (gdesc = next_oakley_group(NULL);
+	     gdesc != NULL;
+	     gdesc = next_oakley_group(gdesc)) {
 		whack_log(RC_COMMENT,
 			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
 			  gdesc->group,
@@ -113,11 +111,11 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
 	const struct state *st;
 
-	if (c->alg_info_ike) {
+	if (c->alg_info_ike != NULL) {
 		char buf[1024];
 
-		alg_info_snprint(buf, sizeof(buf) - 1,
-				 (struct alg_info *)c->alg_info_ike);
+		alg_info_ike_snprint(buf, sizeof(buf) - 1,
+				     c->alg_info_ike);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithms wanted: %s",
 			  c->name,

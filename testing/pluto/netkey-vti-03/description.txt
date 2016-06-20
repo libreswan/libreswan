@@ -1,0 +1,8 @@
+
+using marking and VTI, map two IPsec SA's onto one VTI device that use a different
+set of gateway IPs. This functions similarly to the old KLIPS ipsec0 device.
+
+Note1: that the VTI interface needs disable_policy=1 but NOT disable_xfrm=1
+Note2: the mtu on the vti interface is 1332 - not sure why. We might have to fix that
+
+

@@ -1,13 +1,14 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para>The optional
-<emphasis remap='I'>ipsec.conf</emphasis>
-file
+<para>The <emphasis remap='I'>ipsec.conf</emphasis> file
 specifies most configuration and control information for the
 Libreswan IPsec subsystem.
 (The major exception is secrets for authentication;
 see
 <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)
-Its contents are not security-sensitive.
+Its contents are not security-sensitive. Configurations can be
+added using this configuration file or by using ipsec whack directly. This means
+that technically, the ipsec.conf file is optional, but a few warning might show
+up when this file is missing.
 </para>
 
 <para>The file is a text file, consisting of one or more

@@ -3,7 +3,7 @@ Install the prerequisites:
 
 sudo apt-get install fakeroot build-essential crash kexec-tools makedumpfile \
 	kernel-wedge libncurses5 libncurses5-dev libelf-dev asciidoc \
-	binutils-dev git libgmp3-dev libunbound-dev devscripts \
+	binutils-dev git libunbound-dev devscripts \
 	htmldoc man2html libcurl4-openssl-dev dpatch libssl-dev \
 	module-assistant
 

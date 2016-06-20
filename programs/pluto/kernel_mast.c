@@ -520,7 +520,7 @@ static bool mast_sag_eroute_replace(const struct state *st, const struct spd_rou
 	 * So we have to find it the hard way (it's a cpu hog).
 	 */
 	old_st = state_with_serialno(sr->eroute_owner);
-	if (!old_st)
+	if (old_st == NULL)
 		old_st = st;
 
 	DBG_log("mast_sag_eroute_replace state #%lu{ref=%d refhim=%d} "

@@ -121,7 +121,7 @@ static void next_state(enum what what)
 	}
 }
 
-struct hash_desc *hasher;
+const struct hash_desc *hasher;
 char hasher_name[BUF_SIZE];
 
 void hash(struct cavp_entry *entry,
@@ -164,10 +164,10 @@ void ignore(struct cavp_entry *entry UNUSED,
 static void cavp_parser()
 {
 	char line[BUF_SIZE];
-	while (TRUE) {
+	for (;;) {
 		if (fgets(line, sizeof(line), stdin) == NULL) {
 			int error = ferror(stdin);
-			if (error) {
+			if (error != 0) {
 				fprintf(stderr, "Unexpected error: %s\n",
 					strerror(error));
 				exit(1);

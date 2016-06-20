@@ -50,15 +50,13 @@ USERLAND_CFLAGS+=$(USERCOMPILE)
 
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DDNSSEC
-endif
-
-ifeq ($(USE_ADNS),true)
-USERLAND_CFLAGS+=-DUSE_ADNS
+UNBOUND_LDFLAGS ?= -lunbound
 endif
 
 ifeq ($(USE_FIPSCHECK),true)
 USERLAND_CFLAGS+=-DFIPS_CHECK
 USERLAND_CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
+FIPSCHECK_LDFLAGS ?= -lfipscheck
 endif
 
 ifeq ($(USE_KLIPS),true)
@@ -81,8 +79,6 @@ ifeq ($(USE_LDAP),true)
 USERLAND_CFLAGS+=-DLDAP_VER=3
 endif
 
-USERLAND_CFLAGS+=-DUSE_MD5
-
 ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
@@ -91,8 +87,12 @@ ifeq ($(USE_SAREF_KERNEL),true)
 USERLAND_CFLAGS+=-DSAREF_SUPPORTED
 endif
 
+USERLAND_CFLAGS+=-DUSE_MD5
 USERLAND_CFLAGS+=-DUSE_SHA2
 USERLAND_CFLAGS+=-DUSE_SHA1
+USERLAND_CFLAGS+=-DUSE_AES
+USERLAND_CFLAGS+=-DUSE_3DES
+USERLAND_CFLAGS+=-DUSE_CAMELLIA
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1
@@ -119,8 +119,45 @@ ifeq ($(HAVE_BROKEN_POPEN),true)
 USERLAND_CFLAGS+=-DHAVE_BROKEN_POPEN
 endif
 
-ifeq ($(HAVE_NO_FORK),true)
-USERLAND_CFLAGS+=-DHAVE_NO_FORK
+# Do things like create a daemon using the sequence fork()+exit().  If
+# you don't have or don't want to use fork() disable this.
+USE_FORK ?= true
+ifeq ($(USE_FORK),true)
+USERLAND_CFLAGS += -DUSE_FORK=1
+else
+USERLAND_CFLAGS += -DUSE_FORK=0
+endif
+
+# Where possible use vfork() instead of fork().  For instance, when
+# creating a child process, use the call sequence vfork()+exec().
+#
+# Systems with nommu, which do not have fork(), should set this.
+USE_VFORK ?= false
+ifeq ($(USE_VFORK),true)
+USERLAND_CFLAGS += -DUSE_VFORK=1
+else
+USERLAND_CFLAGS += -DUSE_VFORK=0
+endif
+
+# Where possible use daemon() instead of fork()+exit() to create a
+# daemon (detached) processes.
+#
+# Some system's don't suport daemon() and some systems don't support
+# fork().  Since the daemon call can lead to a race it isn't the
+# prefered option.
+USE_DAEMON ?= false
+ifeq ($(USE_DAEMON),true)
+USERLAND_CFLAGS += -DUSE_DAEMON=1
+else
+USERLAND_CFLAGS += -DUSE_DAEMON=0
+endif
+
+# OSX, for instance, doesn't have this call.
+USE_PTHREAD_SETSCHEDPRIO ?= true
+ifeq ($(USE_PTHREAD_SETSCHEDPRIO),true)
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=1
+else
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=0
 endif
 
 ifeq ($(origin GCC_LINT),undefined)

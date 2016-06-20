@@ -285,7 +285,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	struct pluto_crypto_req req;
 
 	/* OS X does not have pthread_setschedprio */
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+#if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
 
 	DBG(DBG_CONTROL,
@@ -907,7 +907,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
 
-	if(w->evm != NULL) {
+	if (w->evm != NULL) {
 		event_del(w->evm);
 		w->evm = NULL;
 	}
@@ -1056,7 +1056,7 @@ void init_crypto_helpers(int nhelpers)
 		libreswan_log("starting up %d crypto helpers",
 			      nhelpers);
 		pc_workers = alloc_bytes(sizeof(*pc_workers) * nhelpers,
-					 "pluto crypto helpers");
+					 "pluto crypto helpers (ignore)");
 		pc_workers_cnt = nhelpers;
 
 		for (i = 0; i < nhelpers; i++)

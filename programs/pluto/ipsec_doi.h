@@ -23,7 +23,7 @@ extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      so_serial_t replacing,
 			      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			      , const struct xfrm_user_sec_ctx_ike *uctx
+			      , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			      );
 
@@ -77,7 +77,7 @@ extern bool encrypt_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
  */
 #define START_HASH_PAYLOAD_NO_R_HASH_START(rbody, np) { \
 		pb_stream hash_pbs; \
-		if (!out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
+		if (!ikev1_out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
 			return STF_INTERNAL_ERROR; \
 		r_hashval = hash_pbs.cur; /* remember where to plant value */ \
 		if (!out_zero(st->st_oakley.prf_hasher->hash_digest_len, \

@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -34,8 +34,9 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
 	nss_copies.c \
 	iprange.c \
         keyblobtoid.c \
-	kernel_alg.c lex.c mpzfuncs.c \
+	kernel_alg.c lex.c \
 	realtimetoa.c lswconf.c \
+	lswfips.c \
 	portof.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
@@ -91,8 +92,11 @@ EXTLIBS=libdes.a
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-clean-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
+
+local-clean-base:
+	rm -f $(builddir)/*core* core *.core
+	rm -f $(foreach f,$(OBJS) $(LOGOBJS) $(LIBA) $(LIBL) $(EXTHDRS) $(EXTLIBS) version.c, $(builddir)/$(f))
+
 buildall: $(LIBA) $(LIBL)
 list-local-base:
 	@: never nothing to do
@@ -124,10 +128,6 @@ version.c:	version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
 
 test-%: %.c
 	${CC} ${CFLAGS} -D`echo $* | tr 'a-z' 'A-Z'`_MAIN $*.c -o test-$*
-
-cleanall:
-	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c
-
 
 # developer-only stuff
 l:

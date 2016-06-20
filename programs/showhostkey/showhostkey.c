@@ -9,6 +9,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -50,14 +51,13 @@
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "secrets.h"
-#include "mpzfuncs.h"
 
 #include <nss.h>
 #include <prerror.h>
 #include <prinit.h>
 
 char usage[] =
-	"Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
+	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
 	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
 	"                         [--dump ] [--list ]\n"
 	"                         [--dhclient ] [--file secretfile ]\n"
@@ -84,15 +84,6 @@ struct option opts[] = {
 };
 
 char *progname = "ipsec showhostkey";   /* for messages */
-
-/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
- * The odd-looking parens are to prevent macro expansion:
- * lswlog.h without DEBUG define a macro exit_tool().
- */
-void (exit_tool)(int x)
-{
-	exit(x);
-}
 
 static void print_key(struct secret *secret,
 		      struct private_key_stuff *pks,
@@ -219,10 +210,9 @@ static unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
 	unsigned char *p;
 	unsigned int elen;
 
-	chunk_t e, n;
-
-	e = mpz_to_n_autosize(&pub->e);
-	n = mpz_to_n_autosize(&pub->n);
+	/* XXX: this has always leaked memory */
+	chunk_t e = chunk_clone(pub->e, "e");
+	chunk_t n = chunk_clone(pub->n, "n");
 	elen = e.len;
 
 	buf = alloc_bytes(e.len + n.len + 3, "buffer for rfc3110");

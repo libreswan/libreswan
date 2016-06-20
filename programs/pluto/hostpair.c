@@ -43,7 +43,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "secrets.h"
 
 #include "defs.h"
 #include "connections.h"        /* needs id.h */
@@ -58,7 +57,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
@@ -133,7 +131,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		if (af == NULL)
 			af = aftoinfo(AF_INET);
 
-		if (af)
+		if (af != NULL)
 			hisaddr = af->any;
 
 #else

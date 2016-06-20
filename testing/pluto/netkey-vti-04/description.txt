@@ -1,0 +1,11 @@
+
+Using a single VTI device for all incoming roadwarriors on a connection
+
+this needs an updown that east could run that installs the VTI device and
+routes into the VTI device. For now, eastinit.sh creates the device
+and the route has to be done manually
+
+WIP: currently road's pings will come in on east's VTI and get a reply
+but the reply won't get encrypted.
+
+

@@ -1,0 +1,30 @@
+--- libreswan-3.16.orig/pam.d/pluto
++++ libreswan-3.16/pam.d/pluto
+@@ -1,16 +1,11 @@
+-#%PAM-1.0
+-# Regular System auth
+-auth include system-auth
+-#
+-# Google Authenticator with Regular System auth in combined prompt mode
+-# (OTP is added to the password at the password prompt without separator)
+-# auth required pam_google_authenticator.so forward_pass
+-# auth include system-auth use_first_pass
+-#
+-# Common
+-account required pam_nologin.so
+-account include system-auth
+-password include system-auth
+-session optional pam_keyinit.so force revoke
+-session include system-auth
+-session required pam_loginuid.so
++@include common-auth
++
++account  required       pam_nologin.so
++account  required       pam_access.so
++@include common-account
++
++session  optional       pam_keyinit.so force revoke
++session  required       pam_loginuid.so
++@include common-session
++
++@include common-password

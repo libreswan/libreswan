@@ -19,13 +19,13 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  grep FIPS /tmp/pluto.log
-Setting all FIPS checks to true to emulate FIPS mode
-FIPS Product detected (/etc/system-fips)
+FIPS HMAC integrity support [enabled]
 FIPS Kernel Mode detected
-FIPS HMAC integrity verification test passed
-FIPS: pluto daemon running in FIPS mode
+FIPS Product detected
+FIPS mode enabled - pluto daemon is running in FIPS mode
+FIPS mode enabled and NSS library is in FIPS mode
+FIPS mode enabled and HMAC integrity verification tests passed
 Starting Pluto (Libreswan Version )
-Warning: IMPAIR_FORCE_FIPS enabled
 east #
  ipsec auto --add westnet-eastnet-md5
 002 added connection description "westnet-eastnet-md5"

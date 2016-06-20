@@ -19,9 +19,4 @@ else
 include ../../mk/program.mk
 endif
 
-cleanall::
-	rm -f ${PROGRAM}
-
 programs: ${PROGRAM}
-
-

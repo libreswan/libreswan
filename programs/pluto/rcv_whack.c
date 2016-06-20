@@ -63,7 +63,6 @@
 #include "log.h"
 #include "keys.h"
 #include "secrets.h"
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "server.h"
 #include "fetch.h"
@@ -113,9 +112,6 @@ void do_whacklisten()
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
 	daily_log_reset();
-#ifdef USE_ADNS
-	reset_adns_restart_count();
-#endif
 	set_myFQDN();
 	find_ifaces();
 	load_preshared_secrets();
@@ -218,34 +214,9 @@ static bool openwhackrecordfile(char *file)
 	return TRUE;
 }
 
-#ifdef USE_ADNS
-static void key_add_continue(struct adns_continuation *ac, err_t ugh)
-{
-	struct key_add_continuation *kc = (void *) ac;
-	struct key_add_common *oc = kc->common;
-
-	passert(whack_log_fd == NULL_FD);
-	whack_log_fd = oc->whack_fd;
-
-	if (ugh != NULL) {
-		oc->diag[kc->lookingfor] = clone_str(ugh, "key add error");
-	} else {
-		oc->success = TRUE;
-		transfer_to_public_keys(kc->ac.gateways_from_dns
-#ifdef USE_KEYRR
-					, &kc->ac.keys_from_dns
-#endif          /* USE_KEYRR */
-					);
-	}
-
-	oc->refCount--;
-	key_add_merge(oc, &ac->id);
-	whack_log_fd = NULL_FD;
-}
-#endif
-
 static void key_add_request(const struct whack_message *msg)
 {
+	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
 
@@ -279,23 +250,9 @@ static void key_add_request(const struct whack_message *msg)
 				kc->lookingfor = kaa;
 				switch (kaa) {
 				case ka_TXT:
-#ifdef USE_ADNS
-					ugh = start_adns_query(&keyid,
-							       &keyid, /* same */
-							       ns_t_txt,
-							       key_add_continue,
-							       &kc->ac);
-#endif
 					break;
 #ifdef USE_KEYRR
 				case ka_KEY:
-#ifdef USE_ADNS
-					ugh = start_adns_query(&keyid,
-							       NULL,
-							       ns_t_key,
-							       key_add_continue,
-							       &kc->ac);
-#endif
 					break;
 #endif                                                  /* USE_KEYRR */
 				default:
@@ -313,6 +270,7 @@ static void key_add_request(const struct whack_message *msg)
 			 */
 			key_add_merge(oc, &keyid);
 		} else {
+			DBG_dump_chunk("add pubkey", msg->keyval);
 			ugh = add_public_key(&keyid, DAL_LOCAL,
 					     msg->pubkey_alg,
 					     &msg->keyval, &pluto_pubkeys);
@@ -366,7 +324,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		case WHACK_STARTWHACKRECORD:
 			/* close old filename */
-			if (whackrecordfile) {
+			if (whackrecordfile != NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
@@ -380,7 +338,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			goto done;
 
 		case WHACK_STOPWHACKRECORD:
-			if (whackrecordfile) {
+			if (whackrecordfile != NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
@@ -405,7 +363,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_deleteuser) {
 		DBG_log("received whack to delete connection by user %s",
 				msg.name);
-		for_each_state(v1_delete_state_by_xauth_name, msg.name);
+		for_each_state(v1_delete_state_by_username, msg.name);
 	}
 
 	if (msg.whack_deleteid) {
@@ -720,7 +678,7 @@ bool whack_prompt_for(int whackfd,
 
 	DBG(DBG_CONTROLMORE, DBG_log("prompting for %s:", prompt2));
 
-	whack_log(echo ? RC_XAUTHPROMPT : RC_ENTERSECRET,
+	whack_log(echo ? RC_USERPROMPT : RC_ENTERSECRET,
 		  "%s prompt for %s:",
 		  prompt1, prompt2);
 
@@ -738,6 +696,8 @@ bool whack_prompt_for(int whackfd,
 		whack_log(RC_LOG_SERIOUS, "no %s entered, aborted", prompt2);
 		return FALSE;
 	}
+
+	ansbuf[ansbuf_len - 1] = '\0'; /* ensure buffer is NULL terminated */
 
 	return TRUE;
 }

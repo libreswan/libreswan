@@ -353,6 +353,10 @@ case "${1}" in
 	fi
 	exit 0
 	;;
+    secrets)
+	"${IPSEC_EXECDIR}/whack" --rereadsecrets
+	exit 0
+	;;
     --*)
 	echo "${0}: unknown option \"${1}\" (perhaps command name was omitted?)" >&2
 	exit 1

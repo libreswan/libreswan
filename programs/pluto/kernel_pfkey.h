@@ -19,7 +19,7 @@ extern void init_pfkey(void);
 extern void klips_register_proto(unsigned satype, const char *satypename);
 #endif
 extern void pfkey_close(void);
-#ifdef KLIPS
+#if defined(KLIPS) || (defined(linux) && defined(NETKEY_SUPPORT))
 extern void pfkey_register_response(const struct sadb_msg *msg);
 #endif
 extern void pfkey_dequeue(void);
@@ -53,7 +53,7 @@ extern bool pfkey_raw_eroute(const ip_address *this_host,
 			     const struct pfkey_proto_info *proto_info UNUSED,
 			     deltatime_t use_lifetime UNUSED,
 			     uint32_t sa_priority,
-			     const struct sa_mark *sa_mark UNUSED,
+			     const struct sa_marks *sa_marks UNUSED,
 			     enum pluto_sadb_operations op,
 			     const char *text_said
 #ifdef HAVE_LABELED_IPSEC

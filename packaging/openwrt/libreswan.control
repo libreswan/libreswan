@@ -3,5 +3,5 @@ Section: base
 Priority: optional
 Maintainer: Libreswan <team@libreswan.org>
 Source: buildroot internal
-depends: gmp, ip, mawk
+depends: ip, mawk
 Description: Libreswan IPSec software

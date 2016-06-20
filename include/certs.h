@@ -23,7 +23,6 @@
 #define _CERTS_H
 
 #include <cert.h> /* NSS */
-#include "secrets.h"
 #include "x509.h"
 
 /* advance warning of imminent expiry of
@@ -54,6 +53,8 @@ typedef struct {
 		CERTCertificate *nss_cert;	/* CERT_X509_SIGNATURE */
 	} u;
 } cert_t;
+
+const char *cert_nickname(const cert_t *cert);
 
 extern void list_certs(void);
 extern bool load_nsscert_from_nss(const char *nickname, cert_t *cert);

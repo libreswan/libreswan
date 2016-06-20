@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,8 +21,6 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#include <gmp.h>    /* GNU MP library */
-
 #ifdef USE_MD5
 #include "md5.h"
 #endif
@@ -36,24 +35,22 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-#include "mpzfuncs.h"
-
 extern void init_crypto(void);
 
 /* Oakley group descriptions */
 
 struct oakley_group_desc {
 	u_int16_t group;
-/* RFC 5114 defines new modp groups each having different generator */
-	MP_INT *generator;
-	MP_INT *modulus;
+	const char *gen;
+	const char *modp;
 	size_t bytes;
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */
 extern const struct oakley_group_desc *lookup_group(u_int16_t group);
-extern const struct oakley_group_desc oakley_group[];
-extern const unsigned int oakley_group_size;
+const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
+void get_oakley_group_param(const struct oakley_group_desc *,
+			    chunk_t *base, chunk_t *prime);
 
 /* unification of cryptographic encoding/decoding algorithms
  *
@@ -70,8 +67,8 @@ struct state;   /* forward declaration, dammit */
 
 struct encrypt_desc;	/* forward */
 struct hash_desc;	/* forward */
-struct encrypt_desc *crypto_get_encrypter(int alg);
-struct hash_desc *crypto_get_hasher(oakley_hash_t alg);
+const struct encrypt_desc *crypto_get_encrypter(int alg);
+const struct hash_desc *crypto_get_hasher(oakley_hash_t alg);
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 			size_t size, struct state *st);

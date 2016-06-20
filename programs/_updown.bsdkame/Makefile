@@ -20,8 +20,3 @@ include ../../mk/program.mk
 endif
 
 programs: ${PROGRAM}
-
-cleanall::
-	rm -f ${UPDOWN_PROGRAM} ${PROGRAM}
-
-

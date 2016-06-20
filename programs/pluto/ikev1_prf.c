@@ -24,7 +24,7 @@
 #include "lswlog.h"
 #include "constants.h"
 #include "defs.h"
-#include "sysqueue.h"
+#include <sys/queue.h>
 #include "crypto.h"
 #include "crypt_dh.h"
 #include "crypt_prf.h"

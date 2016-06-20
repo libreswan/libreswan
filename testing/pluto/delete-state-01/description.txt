@@ -1,3 +1,0 @@
-This test use --deletestate to track deletion commands between peers.
-
-02 - west initiates, west uses ipsec whack --deletestate 2 and 1.

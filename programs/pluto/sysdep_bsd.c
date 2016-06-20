@@ -143,12 +143,16 @@ struct raw_iface *find_raw_ifaces4(void)
 	for (; num < (1024 * 1024); num *= 2) {
 		/* Get num local interfaces.  See netdevice(7). */
 		ifconf.ifc_len = num * sizeof(struct ifreq);
-		buf = realloc(buf, ifconf.ifc_len);
-		if (buf == NULL) {
+
+		struct ifreq *tmpbuf = realloc(buf, ifconf.ifc_len);
+
+		if (tmpbuf == NULL) {
+			free(buf);
 			exit_log_errno((e,
 					"realloc of %d in find_raw_ifaces4()",
 					ifconf.ifc_len));
 		}
+		buf = tmpbuf;
 		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 

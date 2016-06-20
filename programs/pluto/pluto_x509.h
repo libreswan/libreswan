@@ -25,7 +25,6 @@
 #include "packet.h"
 #include "demux.h"
 #include "server.h"
-#include "secrets.h"
 
 #include <cert.h>
 
@@ -34,8 +33,8 @@ struct msg_digest;
 
 extern bool ikev1_decode_cert(struct msg_digest *md);
 extern bool ikev2_decode_cert(struct msg_digest *md);
-extern void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
-extern void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
+extern void ikev1_decode_cr(struct msg_digest *md);
+extern void ikev2_decode_cr(struct msg_digest *md);
 
 extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 
@@ -68,10 +67,5 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			   enum original_role role,
 			   enum next_payload_types_ikev2 np,
 			   pb_stream *outpbs);
-extern int filter_dotfiles(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	dirent_t *entry);
 
 #endif /* _PLUTO_X509_H */

@@ -1,0 +1,5 @@
+
+Run the lib/libswan tests as a "pluto" test.
+
+Note the workaround for our test harnass to rely on the pwd including
+the test name, so we cannot cd into /source/testing/lib/libswan directly

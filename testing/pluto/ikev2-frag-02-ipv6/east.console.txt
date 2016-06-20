@@ -3,7 +3,7 @@ Preparing X.509 files
 east #
  certutil -A -n key4096 -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/key4096.crt
 east #
- ifconfig eth1 mtu 1480
+ ip link set dev eth1 mtu 1480
 east #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service

@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,10 +20,6 @@ include mk/dirs.mk
 endif
 
 LIBRESWANSRCDIR?=$(shell pwd)
-export LIBRESWANSRCDIR
-
-TERMCAP=
-export TERMCAP
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
@@ -47,19 +43,53 @@ def help:
 
 .PHONY: def help
 
-include ${LIBRESWANSRCDIR}/Makefile.top
+PATCHES=linux
+# where KLIPS goes in the kernel
+# note, some of the patches know the last part of this path
+KERNELKLIPS=$(KERNELSRC)/net/ipsec
+KERNELCRYPTODES=$(KERNELSRC)/crypto/ciphers/des
+KERNELLIBFREESWAN=$(KERNELSRC)/lib/libfreeswan
+KERNELLIBZLIB=$(KERNELSRC)/lib/zlib
+KERNELINCLUDE=$(KERNELSRC)/include
 
-# Broken targets have some sort of existing rule in this, or an
-# included, Makefile.  The rules should either be deleted or changed
-# to use a local TARGET-local target.
-BROKEN_TARGETS += install
-BROKEN_TARGETS += check
-BROKEN_TARGETS += man
-BROKEN_TARGETS += config
+MAKEUTILS=packaging/utils
+ERRCHECK=${MAKEUTILS}/errcheck
+KVUTIL=${MAKEUTILS}/kernelversion
+KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
+
+SUBDIRS?=lib programs initsystems testing
+
+TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
+
+tags:	$(TAGSFILES)
+	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
+
+cscope:
+	@ls ${TAGSFILES} > cscope.files
+	@cscope -b
+
+TAGS:	$(TAGSFILES)
+	@LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
+
+.PHONY: dummy
+dummy:
+
+
+
+kvm:
+	@echo Please run ./testing/libvirt/install.sh
+
+# Run regress stuff after the other check targets.
+.PHONY: regress
+check: regress
+regress: local-check recursive-check
+ifneq ($(strip(${REGRESSRESULTS})),)
+	mkdir -p ${REGRESSRESULTS}
+	-perl testing/utils/regress-summarize-results.pl ${REGRESSRESULTS}
+endif
+	@echo "======== End of make check target. ========"
+
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
-# XXX: Without this sub-directories that still require
-# $(builddir)/Makefile will fail.
-all clean base clean-base install-base: $(builddir)/Makefile
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -69,7 +99,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 
 # declaration for make's benefit
 .PHONY:	def insert kpatch patches _patches _patches2.4 \
-	klipsdefaults programs man config install clean distclean \
+	klipsdefaults programs man install \
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
@@ -177,18 +207,16 @@ klipsdefaults:
 
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
-export OBJDIRTOP
 
-man config install:: ${OBJDIR}/Makefile
-	@echo OBJDIR: ${OBJDIR}
-	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
-
-${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
+.PHONY: config
+config: ${OBJDIR}/Makefile
+${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
-	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
+	mkdir -p $(builddir)
+	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
 
 # Recursive clean dealt with elsewhere.
-clean-local-base: moduleclean
+local-clean-base: moduleclean
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
 		rm -rf $(file) ; )	# but leave out.kpatch
 
@@ -198,14 +226,9 @@ clean-local-base: moduleclean
 # $(OBJDIR), "distclean" does not depend on it.  If it did, "make
 # distclean" would have the quirky behaviour of first creating
 # $(OBJDIR) only to then delete it.
-distclean: clean-local-base module24clean module26clean
-	rm -f out.kpatch
+distclean: moduleclean module24clean module26clean clean-kvm-keys
+	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
-	rm -rf testing/x509/*/
-	rm -f testing/x509/index.*
-	rm -f testing/x509/crlnumber.*
-	rm -f testing/x509/serial*
-	rm -f testing/x509/nss-pw
 	rm -rf OBJ.* $(OBJDIR)
 
 # proxies for major kernel make operations
@@ -244,8 +267,6 @@ precheck:
 		echo '*** please do that first; the results are necessary.' ; \
 		exit 1 ; \
 	fi
-
-Makefile: Makefile.ver
 
 # configuring (exit statuses disregarded, something fishy here sometimes)
 xcf:
@@ -611,8 +632,6 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 deb:
-	cp debian/changelog.in debian/changelog
-	cp debian/NEWS.in debian/NEWS
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
 	debuild -i -us -uc -b
 	#debuild -S -sa
@@ -628,7 +647,10 @@ deb-klips:
 release:
 	packaging/utils/makerelease
 
-install install-programs::
+# Force install-programs to be run after everything else.
+install: install-programs
+install-programs: local-install recursive-install
+install-programs:
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
@@ -653,5 +675,14 @@ install install-programs::
 		echo "was already present.  You may wish to update it yourself if desired." ; \
 		echo -e "**********************************************************************\n" ; \
 	fi
+
+# Test only target (run by swan-install) that generates FIPS .*.hmac
+# files for everything that will be verified by fipscheck.
+#
+# Without this fipscheck (run in FIPS mode) will fail.
+
+.PHONY: install-fipshmac
+install-fipshmac:
+	fipshmac $(LIBEXECDIR)/* $(PUBDIR)/ipsec
 
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk

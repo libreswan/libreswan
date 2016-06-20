@@ -18,6 +18,6 @@ include ../../../mk/dirs.mk
 endif
 include $(top_srcdir)/Makefile.inc
 
-SUBDIRS=libswan libpluto
+SUBDIRS=libswan
 
 include $(top_srcdir)/mk/subdirs.mk

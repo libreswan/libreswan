@@ -5,7 +5,7 @@
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan
-Version: 3.16
+Version: IPSECBASEVERSION
 # Build KLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 0}}
 
@@ -21,7 +21,7 @@ Group: Productivity/Networking/Security
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 PreReq: %insserv_prereq %fillup_prereq perl
-BuildRequires: gmp-devel bison flex bind-devel xmlto
+BuildRequires: bison flex bind-devel xmlto
 Requires: iproute2 >= 2.6.8
 AutoReqProv:    on
 %if %{buildklips}

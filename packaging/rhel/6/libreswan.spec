@@ -9,13 +9,13 @@
 %global fipscheck_version 1.2.0-7
 %global buildefence 0
 %global development 0
-%global cavstests 0
+%global cavstests 1
 
-#global prever rc1
+%global prever dr2
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.16
+Version: 3.18
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -26,7 +26,7 @@ Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
 Group: System Environment/Daemons
-BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
+BuildRequires: bison flex redhat-rpm-config pkgconfig
 Requires(post): coreutils bash
 Requires(preun): initscripts chkconfig
 Requires(post): /sbin/chkconfig
@@ -109,7 +109,6 @@ make %{?_smp_mflags} \
     USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
     USE_LDAP=%{USE_CRL_FETCHING} \
     USE_LIBCURL=%{USE_CRL_FETCHING} \
-    USE_ADNS=false \
     USE_DNSSEC=%{USE_DNSSEC} \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
@@ -126,6 +125,7 @@ FS=$(pwd)
     %{__os_install_post} \
     fipshmac %{buildroot}%{_sbindir}/ipsec \
     fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
+    rm -f %{buildroot}%{_libexecdir}/ipsec/.cavp.hmac \
 %{nil}
 %endif
 
@@ -152,6 +152,17 @@ install -m 0755 initsystems/sysvinit/init.rhel %{buildroot}%{_initrddir}/ipsec
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
+%if %{USE_FIPSCHECK}
+install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
+install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+%endif
+
+%if %{cavstests}
+# cavs testing
+cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
+
+%endif
+
 %if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
@@ -159,6 +170,10 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 # We only run the CAVS tests here.
 cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
 bunzip2 *.fax.bz2
+
+# work around for older xen based machines
+export NSS_DISABLE_HW_GCM=1
+
 : starting CAVS test for IKEv2
 OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
@@ -202,14 +217,21 @@ fi
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
-%{_initrddir}/ipsec
-%{_libexecdir}/ipsec
 %{_sbindir}/ipsec
+%attr(0755,root,root) %dir %{_libexecdir}/ipsec
+%{_libexecdir}/ipsec/*
 %attr(0644,root,root) %{_mandir}/*/*.gz
+%{_initrddir}/ipsec
+
 %if %{USE_FIPSCHECK}
 %{_sbindir}/.ipsec.hmac
+%{_libexecdir}/ipsec/.*.hmac
+
+# We own the directory so we don't have to require prelink
+%attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
+%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.16-1
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr2
 - Automated build from release tar ball

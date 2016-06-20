@@ -19,32 +19,95 @@ part / --asprimary --grow
 part swap --size 1024
 services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
-#Just core packages
-#ensure we never accidentally get the openswan package
-%packages
+%packages --ignoremissing
+
+# Full list of RPMs to install (see also %post)
+
+# Since it is fast and local, try to install everything here using the
+# install DVD image.  Anything missing will be fixed up later in
+# %post.  The option --ignoremissing is specified so we don't have to
+# juggle what is enabled / disabled here.
+
+# Note: The problem is that the DVD doesn't contain "Everything" -
+# that repo only becomes available during %post when it is enabled.
+# To get around this, %post installing a few things that were missed.
+# The easiest way to figure out if something ALSO needs to be listed
+# in %post is to look in "Packaging/" on the DVD.  I just wish this
+# could go in a separate file so post could do the fix up
+# automatically.
+
+# Note: %post also installs debug-rpms.  Downloading and installing
+# them is what takes all the time and bandwith.
+
+# Note: To avoid an accidental kernel upgrade (KLIPS doesn't build
+# with some 4.x kernels), install everything kernel dependent here.
+# If you find the kernel still being upgraded look at the log files in
+# /var/tmp created during the %post state.
 
 @core
 
-# Note: The install repo is a cut-down version of "Everything", stuff
-# is missing.  Consequently leave installing most stuff to the POST
-# stage where YUM is available and pointing at the repo "Everything".
-
-# To avoid an accidental kernel upgrade (KLIPS doesn't build with the
-# 4.x kernels), install everything kernel dependent here.  If you find
-# the kernel still being upgraded look at the log files in /var/tmp.
-
+ElectricFence
+audit-libs-devel
+bind-utils
+bison
+curl-devel
+fipscheck-devel
+flex
+gcc
+gdb
+git
+glibc-devel
+hping3
+ipsec-tools
+kernel-core
 kernel-devel
 kernel-headers
-kernel-core
 kernel-modules
 kernel-modules-extra
-glibc-devel
+libcap-ng-devel
+libevent-devel
+libselinux-devel
+lsof
+make
+mtr
+nc
+nc6
+net-tools
+nmap
+nspr-devel
+nss-devel
+nss-tools
+openldap-devel
+pam-devel
+pexpect
+psmisc
+pyOpenSSL
+python3-pexpect
+python3-setproctitle
+racoon2
+redhat-rpm-config
+rpm-build
+screen
+strace
+strongswan
+systemd-devel
+tcpdump
+telnet
+unbound
+unbound-devel
+unbound-libs
+valgrind
+vim-enhanced
+wget
 xl2tpd
+xmlto
+yum-utils
 
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
 -sendmail
+-libreswan
 
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
@@ -66,10 +129,8 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
-# Install everything in the yum repo here.  Since some of these RPMs
-# are only found in the Everything repository it is easier to to do it
-# during POST when yum is set up and pointing at the latest Everything
-# repository.
+# Install anything missing from the CD, but found in the "Everything"
+# repo here.
 
 # There is also extra stuff, not in a repo, being installed at the
 # very end of this file.
@@ -85,53 +146,26 @@ rpm -qa > /var/tmp/rpm-qa.log
 yum install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
-    bind-utils \
-    bison \
     curl-devel \
     fipscheck-devel \
-    flex \
-    gcc \
-    gdb \
-    git \
-    gmp-devel \
-    gmp-devel \
     hping3 \
     ipsec-tools \
     libcap-ng-devel \
     libevent-devel \
-    lsof \
-    make \
-    mtr \
     nc \
     nc6 \
-    net-tools \
-    nmap \
     nspr-devel \
     nss-devel \
-    nss-tools \
-    openldap-devel \
-    pam-devel \
     pexpect \
-    psmisc \
     python3-pexpect \
     python3-setproctitle \
-    pyOpenSSL \
     racoon2 \
-    redhat-rpm-config \
-    rpm-build \
-    screen \
-    strace \
     strongswan \
-    telnet \
-    tcpdump \
+    systemd-devel \
     unbound \
     unbound-devel \
-    unbound-libs \
-    valgrind \
     vim-enhanced \
-    wget \
     xmlto \
-    yum-utils \
     | tee /var/tmp/yum-install.log
 
 debuginfo-install -y \
@@ -139,7 +173,6 @@ debuginfo-install -y \
     audit-libs \
     cyrus-sasl \
     glibc \
-    gmp \
     keyutils \
     krb5-libs \
     ldns \
@@ -159,13 +192,15 @@ debuginfo-install -y \
     nss-util \
     openldap \
     openssl-libs \
+    ocspd \
     pam \
     pcre \
     python-libs \
     sqlite \
     unbound-libs \
     xz-libs \
-    zlib
+    zlib \
+    | tee /var/tmp/yum-debug-info-install.log
 
 mkdir /testing /source
 
@@ -282,9 +317,7 @@ yum upgrade -y 2>&1 \
 # Need strongswan with CTR, GCM, and other fixes
 yum upgrade -y 2>&1 \
     https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm \
+    https://nohats.ca/ftp/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm \
     | tee /var/tmp/strongswan.log
 
-yum upgrade -y 2>&1 \
-    https://nohats.ca/ftp/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm \
-    | tee /var/tmp/strongswan-debug.log
 %end

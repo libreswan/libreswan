@@ -1,7 +1,0 @@
-#id   initiate aggrmode
-@west 0 0
-@west 1 0
-@west 0 1
-@west 1 1
-@east 0 0
-

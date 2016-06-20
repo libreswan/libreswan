@@ -27,9 +27,7 @@ else
 include ../../mk/program.mk
 endif
 
-ifeq ($(USE_DNSSEC),true)
-PROGLIBS+=-lunbound
-endif
+PROGLIBS+=$(UNBOUND_LDFLAGS)
 
 TAGS:	$(DISTSRC)
 	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]

@@ -26,7 +26,6 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "enum_names.h"	/* needed for struct enum_enum_names */
 #include "lswlog.h"
 
 #include "packet.h"
@@ -190,7 +189,7 @@ static field_desc isap_fields[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "proposal number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev1_protocol_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "number of transforms", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -960,7 +959,7 @@ static field_desc ikev2_cert_req_fields[] = {
 };
 
 struct_desc ikev2_certificate_req_desc =
-	{ "IKEv2 Certificate Request Payload", ikev2_cert_fields,
+	{ "IKEv2 Certificate Request Payload", ikev2_cert_req_fields,
 	  IKEV2_CERT_SIZE };
 
 /*
@@ -1042,7 +1041,7 @@ static field_desc ikev2_notify_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ikev2_protocol_names },
 	/* names used are v1 names may be we should use 4306 3.3.1 names */
 	{ ft_nat,  8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Notify Message Type",
@@ -1101,7 +1100,7 @@ struct_desc ikev2_notify_desc = { "IKEv2 Notify Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-static struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
+struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
 				     ikev2generic_fields,
 				     sizeof(struct ikev2_generic) };
 
@@ -1357,24 +1356,12 @@ void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
 }
 
-/* choose table from struct enum_enum_names */
-static enum_names *enum_enum_table(
-	const field_desc *fp,
-	u_int32_t last_enum)
-{
-	const struct enum_enum_names *const een = fp->desc;
-
-	if (een->een_first <= last_enum && last_enum <= een->een_last)
-		return een->een_enum_name[last_enum - een->een_first];
-	return NULL;
-}
-
 static err_t enum_enum_checker(
 	const char *struct_name,
 	const field_desc *fp,
 	u_int32_t last_enum)
 {
-	enum_names *ed = enum_enum_table(fp, last_enum);
+	enum_names *ed = enum_enum_table(fp->desc, last_enum);
 
 	if (ed == NULL) {
 		return builddiag("%s of %s has an unknown type: %lu (0x%lx)",
@@ -1462,17 +1449,12 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 
 			case ft_loose_enum_enum:
 			{
-				enum_names *ed = enum_enum_table(fp, last_enum);
-
-				if (ed == NULL) {
-					DBG_log("   %s: %lu (0x%lx)", fp->name,
-						(unsigned long)n,
-						(unsigned long)n);
-				} else {
-					DBG_log("   %s: %s (0x%lx)", fp->name,
-						enum_show(ed, n),
-						(unsigned long)n);
-				}
+				struct esb_buf buf;
+				const char *name = enum_enum_showb(fp->desc,
+								   last_enum,
+								   n, &buf);
+				DBG_log("   %s: %s (0x%lx)", fp->name,
+					name, (unsigned long)n);
 			}
 				break;
 
@@ -1987,7 +1969,17 @@ void out_modify_previous_np(u_int8_t np, pb_stream *outs)
 	}
 }
 
-bool out_generic(u_int8_t np, struct_desc *sd,
+bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
+		 pb_stream *outs, pb_stream *obj_pbs)
+{
+	struct ikev2_generic gen;
+
+	passert(sd->fields == ikev2generic_fields);
+	gen.isag_np = np;
+	return out_struct(&gen, sd, outs, obj_pbs);
+}
+
+bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
 	struct isakmp_generic gen;
@@ -1997,13 +1989,26 @@ bool out_generic(u_int8_t np, struct_desc *sd,
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
-bool out_generic_raw(u_int8_t np, struct_desc *sd,
+bool ikev2_out_generic_raw(u_int8_t np, struct_desc *sd,
 		     pb_stream *outs, const void *bytes, size_t len,
 		     const char *name)
 {
 	pb_stream pbs;
 
-	if (!out_generic(np, sd, outs, &pbs) ||
+	if (!ikev2_out_generic(np, sd, outs, &pbs) ||
+	    !out_raw(bytes, len, &pbs, name))
+		return FALSE;
+
+	close_output_pbs(&pbs);
+	return TRUE;
+}
+bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
+		     pb_stream *outs, const void *bytes, size_t len,
+		     const char *name)
+{
+	pb_stream pbs;
+
+	if (!ikev1_out_generic(np, sd, outs, &pbs) ||
 	    !out_raw(bytes, len, &pbs, name))
 		return FALSE;
 

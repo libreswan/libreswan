@@ -66,7 +66,6 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
-#include "klips-crypto/aes_cbc.h"
 #include "ike_alg.h"
 
 /* required for Linux 2.6.26 kernel and later */
@@ -77,19 +76,6 @@
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
-
-static const struct pfkey_proto_info broad_proto_info[2] = {
-	{
-		.proto = IPPROTO_ESP,
-		.encapsulation = ENCAPSULATION_MODE_TUNNEL,
-		.reqid = 0
-	},
-	{
-		.proto = 0,
-		.encapsulation = 0,
-		.reqid = 0
-	}
-};
 
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
@@ -530,14 +516,14 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 			(long) len, (unsigned long) rsp.n.nlmsg_len);
 		return FALSE;
 	} else if (rsp.n.nlmsg_type != NLMSG_ERROR   &&
-		(rbuf && rsp.n.nlmsg_type != rbuf->nlmsg_type)) {
+		(rbuf != NULL && rsp.n.nlmsg_type != rbuf->nlmsg_type)) {
 		loglog(RC_LOG_SERIOUS,
 			"netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			description, text_said,
 			sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
-	} else if (rbuf) {
+	} else if (rbuf != NULL) {
 		if ((size_t) r > rbuf_len) {
 			loglog(RC_LOG_SERIOUS,
 				"netlink recvfrom() of response to our %s message for %s %s was too long: %ld > %lu",
@@ -584,7 +570,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 		return FALSE;
 
 	error = -rsp.e.error;
-	if (!error)
+	if (error == 0)
 		return TRUE;
 
 	if (error == ENOENT && enoent_ok)
@@ -627,7 +613,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const struct pfkey_proto_info *proto_info,
 			deltatime_t use_lifetime UNUSED,
 			uint32_t sa_priority,
-			const struct sa_mark *sa_mark,
+			const struct sa_marks *sa_marks,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -816,7 +802,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * if the user did not specify a priority, calculate one based
 		 * on 'more specific' getting a higher priority
 		 */
-		if (sa_priority) {
+		if (sa_priority != 0) {
 			req.u.p.priority = sa_priority;
 		} else {
 			req.u.p.priority = MIN_SPD_PRIORITY -
@@ -887,18 +873,22 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len += attr->rta_len;
 
 		/* mark policy extension */
-		if(sa_mark->val != 0 && sa_mark->mask != 0) {
-			struct xfrm_mark xfrm_mark;
-			struct rtattr* mark_attr;
+		{
+			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			xfrm_mark.v = sa_mark->val;
-			xfrm_mark.m = sa_mark->mask;
-			mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			mark_attr->rta_type = XFRMA_MARK;
-			mark_attr->rta_len = sizeof(xfrm_mark);
-			memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
-			mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
-			req.n.nlmsg_len += mark_attr->rta_len;
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+				struct xfrm_mark xfrm_mark;
+				struct rtattr* mark_attr;
+
+				xfrm_mark.v = sa_mark.val;
+				xfrm_mark.m = sa_mark.mask;
+				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+				mark_attr->rta_type = XFRMA_MARK;
+				mark_attr->rta_len = sizeof(xfrm_mark);
+				memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
+				mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
+				req.n.nlmsg_len += mark_attr->rta_len;
+			}
 		}
 	}
 
@@ -984,9 +974,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * tunnels in linux 2.6.25+
 	 */
 	if (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+		DBG(DBG_KERNEL, DBG_log("netlink: enabling tunnel mode"));
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
 	} else {
+		DBG(DBG_KERNEL, DBG_log("netlink: enabling transport mode"));
 		req.p.mode = XFRM_MODE_TRANSPORT;
 	}
 
@@ -1064,10 +1056,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
-	/* most stacks allow up to 32, klips and netkey and bsd up to 64? */
-	req.p.replay_window = sa->replay_window;
-	DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d",
-		req.p.replay_window));
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1078,6 +1066,36 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+
+	if (sa->esatype != ET_IPCOMP) {
+		if (sa->esn) {
+			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));
+			req.p.flags |= XFRM_STATE_ESN;
+		}
+
+		if (sa->replay_window <= 32 && !sa->esn) {
+			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
+			req.p.replay_window = sa->replay_window;
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
+				req.p.replay_window));
+		} else {
+			struct xfrm_replay_state_esn xre;
+			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window + 
+				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
+
+			xre.replay_window = sa->replay_window; /* replay_window must be multiple of 8 */
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
+				xre.replay_window));
+			xre.bmp_len = bmp_size / sizeof(u_int32_t);
+			/* this is where we could fill in sequence numbers for this SA */
+
+			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
+			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
+			memcpy(RTA_DATA(attr), &xre, sizeof(xre));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		}
+	}
 
 	if (sa->authkeylen != 0) {
 		const char *name = sparse_name(aalg_list, sa->authalg);
@@ -1109,7 +1127,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 
-			switch(sa->authalg) {
+			switch (sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 				algo.alg_trunc_len = 128;
 				break;
@@ -1228,7 +1246,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-	if (sa->natt_type) {
+	if (sa->natt_type != 0) {
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->natt_type;
@@ -1853,7 +1871,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				c->sa_priority, &c->sa_mark, op, opname
+				c->sa_priority, &c->sa_marks, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				, st->st_connection->policy_label
 #endif
@@ -1980,7 +1998,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					null_proto_info,
 					deltatime(0),
 					c->sa_priority,
-					&c->sa_mark,
+					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
@@ -2016,7 +2034,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					null_proto_info,
 					deltatime(0),
 					c->sa_priority,
-					&c->sa_mark,
+					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label

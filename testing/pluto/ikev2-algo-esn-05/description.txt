@@ -1,0 +1,3 @@
+As ikev2-algo-esn-04 but now we test with esn disabled and replay-window set to 64
+
+The connection should establish

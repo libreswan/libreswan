@@ -9,6 +9,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -78,7 +79,6 @@
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "keys.h"
-#include "adns.h"               /* needs <resolv.h> */
 #include "dnskey.h"             /* needs keys.h and adns.h */
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */
@@ -203,6 +203,7 @@ void delete_ctl_socket(void)
 }
 
 bool listening = FALSE;  /* should we pay attention to IKE messages? */
+bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE msg? */
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
@@ -544,12 +545,6 @@ static void reapchildren(void)
 	errno = 0;
 
 	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
-#ifdef USE_ADNS
-		/* got a child to reap */
-		if (adns_reapchild(child))
-			continue;
-#endif
-
 		if (child == addconn_child_pid) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reaped addconn helper child"));
@@ -701,19 +696,31 @@ void call_server(void)
 				    DISCARD_CONST(char *, ctl_addr.sun_path),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
-#ifdef HAVE_NO_FORK
+#if USE_VFORK
 		addconn_child_pid = vfork(); /* for better, for worse, in sickness and health..... */
-#else
+#elif USE_FORK
 		addconn_child_pid = fork();
+#else
+#error "addconn requires USE_VFORK or USE_FORK"
 #endif
 		if (addconn_child_pid == 0) {
-			/* child */
+			/*
+			 * child
+			 *
+			 * Note that, when vfork() was used, calls
+			 * like sleep() and DBG_log() are not valid.
+			 *
+			 * XXX: Why the sleep?
+			 */
+#if USE_FORK
 			sleep(1);
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("calling addconn helper using execve"));
+#endif
 			execve(addconn_path, newargv, newenv);
 			_exit(42);
 		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("created addconn helper (pid:%d) using %s+execve",
+			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
 		/* parent continues */
 	}
 	main_loop();

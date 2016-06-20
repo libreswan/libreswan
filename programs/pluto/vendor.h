@@ -30,8 +30,10 @@ void init_vendorid(void);
 
 struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
-		     struct state *st);
+		     bool ikev2);
 
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
+
+bool vid_is_oppo(const char *vid, size_t len);
 
 #endif /* _VENDOR_H_ */

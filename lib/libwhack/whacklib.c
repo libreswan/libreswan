@@ -104,13 +104,13 @@ err_t pack_whack_msg(struct whackpacker *wp)
 
 	if (!pack_str(wp, &wp->msg->name) ||                                    /* string 1 */
 	    !pack_str(wp, &wp->msg->left.id) ||                                 /* string 2 */
-	    !pack_str(wp, &wp->msg->left.cert) ||                               /* string 3 */
+	    !pack_str(wp, &wp->msg->left.pubkey) ||                             /* string 3 */
 	    !pack_str(wp, &wp->msg->left.ca) ||                                 /* string 4 */
 	    !pack_str(wp, &wp->msg->left.groups) ||                             /* string 5 */
 	    !pack_str(wp, &wp->msg->left.updown) ||                             /* string 6 */
 	    !pack_str(wp, &wp->msg->left.virt) ||                               /* string 7 */
 	    !pack_str(wp, &wp->msg->right.id) ||                                /* string 8 */
-	    !pack_str(wp, &wp->msg->right.cert) ||                              /* string 9 */
+	    !pack_str(wp, &wp->msg->right.pubkey) ||                            /* string 9 */
 	    !pack_str(wp, &wp->msg->right.ca) ||                                /* string 10 */
 	    !pack_str(wp, &wp->msg->right.groups) ||                            /* string 11 */
 	    !pack_str(wp, &wp->msg->right.updown) ||                            /* string 12 */
@@ -119,8 +119,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->myid) ||                                    /* string 15 */
 	    !pack_str(wp, &wp->msg->ike) ||                                     /* string 16 */
 	    !pack_str(wp, &wp->msg->esp) ||                                     /* string 17 */
-	    !pack_str(wp, &wp->msg->left.xauth_name) ||                         /* string 18 */
-	    !pack_str(wp, &wp->msg->right.xauth_name) ||                        /* string 19 */
+	    !pack_str(wp, &wp->msg->left.username) ||                           /* string 18 */
+	    !pack_str(wp, &wp->msg->right.username) ||                          /* string 19 */
 	    !pack_str(wp, &wp->msg->connalias) ||                               /* string 20 */
 	    !pack_str(wp, &wp->msg->left.host_addr_name) ||                     /* string 21 */
 	    !pack_str(wp, &wp->msg->right.host_addr_name) ||                    /* string 22 */
@@ -133,7 +133,10 @@ err_t pack_whack_msg(struct whackpacker *wp)
 #endif
 	    !pack_str(wp, &wp->msg->modecfg_domain) ||                          /* string 28 */
 	    !pack_str(wp, &wp->msg->modecfg_banner) ||                          /* string 29 */
-	    !pack_str(wp, &wp->msg->conn_mark) ||                               /* string 30 */
+	    !pack_str(wp, &wp->msg->conn_mark_both) ||                          /* string 30 */
+	    !pack_str(wp, &wp->msg->conn_mark_in) ||                            /* string 31 */
+	    !pack_str(wp, &wp->msg->conn_mark_out) ||                           /* string 32 */
+	    !pack_str(wp, &wp->msg->vti_iface) ||                               /* string 33 */
 	    wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len) {  /* chunk (sort of string) */
 		ugh = "too many bytes of strings to fit in message to pluto";
 		return ugh;
@@ -166,13 +169,13 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	}
 	if (!unpack_str(wp, &wp->msg->name) ||                  /* string 1 */
 	    !unpack_str(wp, &wp->msg->left.id) ||               /* string 2 */
-	    !unpack_str(wp, &wp->msg->left.cert) ||             /* string 3 */
+	    !unpack_str(wp, &wp->msg->left.pubkey) ||           /* string 3 */
 	    !unpack_str(wp, &wp->msg->left.ca) ||               /* string 4 */
 	    !unpack_str(wp, &wp->msg->left.groups) ||           /* string 5 */
 	    !unpack_str(wp, &wp->msg->left.updown) ||           /* string 6 */
 	    !unpack_str(wp, &wp->msg->left.virt) ||             /* string 7 */
 	    !unpack_str(wp, &wp->msg->right.id) ||              /* string 8 */
-	    !unpack_str(wp, &wp->msg->right.cert) ||            /* string 9 */
+	    !unpack_str(wp, &wp->msg->right.pubkey) ||          /* string 9 */
 	    !unpack_str(wp, &wp->msg->right.ca) ||              /* string 10 */
 	    !unpack_str(wp, &wp->msg->right.groups) ||          /* string 11 */
 	    !unpack_str(wp, &wp->msg->right.updown) ||          /* string 12 */
@@ -181,8 +184,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->myid) ||                  /* string 15 */
 	    !unpack_str(wp, &wp->msg->ike) ||                   /* string 16 */
 	    !unpack_str(wp, &wp->msg->esp) ||                   /* string 17 */
-	    !unpack_str(wp, &wp->msg->left.xauth_name) ||       /* string 18 */
-	    !unpack_str(wp, &wp->msg->right.xauth_name) ||      /* string 19 */
+	    !unpack_str(wp, &wp->msg->left.username) ||       /* string 18 */
+	    !unpack_str(wp, &wp->msg->right.username) ||      /* string 19 */
 	    !unpack_str(wp, &wp->msg->connalias) ||             /* string 20 */
 	    !unpack_str(wp, &wp->msg->left.host_addr_name) ||   /* string 21 */
 	    !unpack_str(wp, &wp->msg->right.host_addr_name) ||  /* string 22 */
@@ -194,8 +197,11 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->policy_label) ||          /* string 27 */
 #endif
 	    !unpack_str(wp, &wp->msg->modecfg_domain) ||        /* string 28 */
-	    !unpack_str(wp, &wp->msg->modecfg_banner) ||       /* string 29 */
-	    !unpack_str(wp, &wp->msg->conn_mark) ||            /* string 30 */
+	    !unpack_str(wp, &wp->msg->modecfg_banner) ||        /* string 29 */
+	    !unpack_str(wp, &wp->msg->conn_mark_both) ||        /* string 30 */
+	    !unpack_str(wp, &wp->msg->conn_mark_in) ||          /* string 31 */
+	    !unpack_str(wp, &wp->msg->conn_mark_out) ||         /* string 32 */
+	    !unpack_str(wp, &wp->msg->vti_iface) ||             /* string 33 */
 	    wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)
 		ugh = "message from whack contains bad string";
 

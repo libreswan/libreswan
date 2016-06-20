@@ -44,7 +44,7 @@ kvmsh . 'rm -rf /tmp/x509'
 kvmsh . 'mkdir /tmp/x509'
 kvmsh . 'cp -f ./testing/x509/dist_certs.py /tmp/x509'
 kvmsh /tmp/x509 ./dist_certs.py
-kvmsh /tmp/x509 'tar cf /tmp/x509/kvm-keys.tar */'
+kvmsh /tmp/x509 'tar cf /tmp/x509/kvm-keys.tar */ nss-pw'
 
 # Unpack the tar archive locally.
 mkdir -p ${dest}

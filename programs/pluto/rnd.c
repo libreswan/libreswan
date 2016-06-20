@@ -20,7 +20,7 @@
 
 /* A true random number generator (we hope)
  *
- * Under LINUX ("linux" predefined), use /dev/urandom in non_FIPS, use /dev/random in FIPS
+ * Under LINUX, use NSS for FIPS compliant RNG.
  * Under OpenBSD ("__OpenBSD__" predefined), use arc4random().
  * Otherwise use our own random number generator based on clock skew.
  *   I (ADK) first heard of the idea from John Ioannidis, who heard it

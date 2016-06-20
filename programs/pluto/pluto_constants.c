@@ -75,6 +75,16 @@ static const char *const dpd_action_name[] = {
 enum_names dpd_action_names =
 	{ DPD_ACTION_DISABLED, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
+/* systemd watchdog action names */
+static const char *const sd_action_name[] = {
+	"action:exit", /* daemon exiting */
+	"action:start", /* daemon starting */
+	"action:error", /* how is this an action? */
+	"action:watchdog", /* the keepalive watchdog ping */
+};
+enum_names sd_action_names =
+	{ PLUTO_SD_EXIT, PLUTO_SD_WATCHDOG, sd_action_name, NULL };
+
 /* Timer events */
 static const char *const timer_event_name[] = {
 	"EVENT_NULL",
@@ -83,6 +93,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_SHUNT_SCAN",
 	"EVENT_LOG_DAILY",
 	"EVENT_PENDING_DDNS",
+	"EVENT_SD_WATCHDOG",
 	"EVENT_PENDING_PHASE2",
 
 	"EVENT_SO_DISCARD",
@@ -219,9 +230,6 @@ static const char *const state_story[] = {
 enum_names state_stories =
 	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
-static const char *const natt_method_result_name[] = {
-};
-
 /*
  * natt_bit_names is dual purpose:
  * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
@@ -325,6 +333,8 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
+	"ESN_NO",
+	"ESN_YES",
 	NULL	/* end for bitnamesof() */
 };
 

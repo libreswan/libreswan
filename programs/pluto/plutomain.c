@@ -15,6 +15,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,6 +50,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswconf.h"
+#include "lswfips.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -63,8 +65,7 @@
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "secrets.h"
-#include "adns.h"	/* needs <resolv.h> */
+#include "secrets.h"    /* for free_remembered_public_keys() */
 #include "dnskey.h"	/* needs keys.h and adns.h */
 #include "rnd.h"
 #include "state.h"
@@ -103,11 +104,15 @@
 # include "security_selinux.h"
 #endif
 
+#ifdef USE_SYSTEMD_WATCHDOG
+# include "pluto_sd.h"
+#endif
+
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
-static bool fork_desired = TRUE;
+static bool fork_desired = USE_FORK || USE_DAEMON;
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
@@ -120,6 +125,7 @@ extern bool strict_ocsp_policy;
 extern bool ocsp_enable;
 extern char *curl_iface;
 extern long curl_timeout;
+extern bool pluto_drop_oppo_null;
 
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
@@ -164,8 +170,17 @@ static const char compile_time_interop_options[] = ""
 	" MAST"
 #endif
 
-#ifdef HAVE_NO_FORK
-	" NO_FORK"
+#if USE_FORK
+	" USE_FORK"
+#endif
+#if USE_VFORK
+	" USE_VFORK"
+#endif
+#if USE_DAEMON
+	" USE_DAEMON"
+#endif
+#if USE_PTHREAD_SETSCHEDPRIO
+	" USE_PTHREAD_SETSCHEDPRIO"
 #endif
 #ifdef HAVE_BROKEN_POPEN
 	" BROKEN_POPEN"
@@ -173,6 +188,9 @@ static const char compile_time_interop_options[] = ""
 	" NSS"
 #ifdef DNSSEC
 	" DNSSEC"
+#endif
+#ifdef USE_SYSTEMD_WATCHDOG
+	" USE_SYSTEMD_WATCHDOG"
 #endif
 #ifdef FIPS_CHECK
 	" FIPS_CHECK"
@@ -506,9 +524,6 @@ static const struct option long_opts[] = {
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
-#ifdef USE_ADNS
-	{ "adns\0<pathname>", required_argument, NULL, 'a' },
-#endif
 	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
@@ -573,6 +588,7 @@ static const struct option long_opts[] = {
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
+	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -837,6 +853,10 @@ int main(int argc, char **argv)
 			log_append = FALSE;
 			continue;
 
+		case '8':	/* --drop-oppo-null */
+			pluto_drop_oppo_null = TRUE;
+			continue;
+
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
 			continue;
@@ -1021,12 +1041,6 @@ int main(int argc, char **argv)
 			lsw_init_ipsecdir(optarg);
 			continue;
 
-#ifdef USE_ADNS
-		case 'a':	/* --adns <pathname> */
-			pluto_adns_option = optarg;
-			continue;
-#endif
-
 		case 'N':	/* --debug-none */
 			base_debugging = DBG_NONE;
 			continue;
@@ -1075,6 +1089,7 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
+			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* force-busy is obsoleted, translate to ddos-mode= */
@@ -1162,7 +1177,7 @@ int main(int argc, char **argv)
 						"coredir via --config");
 			}
 			/* --vendorid */
-			if(cfg->setup.strings[KSF_MYVENDORID]) {
+			if (cfg->setup.strings[KSF_MYVENDORID]) {
 				pfree(pluto_vendorid);
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
 						"pluto_vendorid via --config");
@@ -1255,11 +1270,6 @@ int main(int argc, char **argv)
 		invocation_fail("unexpected argument");
 	reset_debugging();
 
-#ifdef HAVE_NO_FORK
-	fork_desired = FALSE;
-	nhelpers = 0;
-#endif
-
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
@@ -1278,7 +1288,7 @@ int main(int argc, char **argv)
 		log_to_stderr = FALSE;
 
 #if 0
-	if (kernel_ops->set_debug)
+	if (kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
 #endif
@@ -1300,6 +1310,23 @@ int main(int argc, char **argv)
 
 	/* If not suppressed, do daemon fork */
 	if (fork_desired) {
+#if USE_DAEMON
+		if (daemon(TRUE, TRUE) < 0) {
+			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
+				errno, strerror(errno));
+			exit_pluto(PLUTO_EXIT_FORK_FAIL);
+		}
+		/*
+		 * Parent just exits, so need to fill in our own PID
+		 * file.  This is racy, since the file won't be
+		 * created until after the parent has exited.
+		 *
+		 * Since "ipsec start" invokes pluto with --nofork, it
+		 * is probably safer to leave this feature disabled
+		 * then implement it using the daemon call.
+		 */
+		(void) fill_lock(lockfd, getpid());
+#elif USE_FORK
 		{
 			pid_t pid = fork();
 
@@ -1321,7 +1348,10 @@ int main(int argc, char **argv)
 				exit(fill_lock(lockfd, pid) ? 0 : 1);
 			}
 		}
-
+#else
+		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
+		exit_pluto(PLUTO_EXIT_FORK_FAIL);		
+#endif
 		if (setsid() < 0) {
 			int e = errno;
 
@@ -1414,6 +1444,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef FIPS_CHECK
+	libreswan_log("FIPS HMAC integrity support [enabled]");
 	/*
 	 * FIPS Kernel mode: fips=1 kernel boot parameter
 	 * FIPS Product mode: dracut-fips is installed
@@ -1423,55 +1454,72 @@ int main(int argc, char **argv)
 	 *
 	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
 	 */
-
 	{
-
-	int fips_kernel = libreswan_fipskernel();
-	int fips_product = libreswan_fipsproduct();
-	int fips_mode = libreswan_fipsmode();
-	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
-
-	if (DBGP(IMPAIR_FORCE_FIPS)) {
-		libreswan_log("Setting all FIPS checks to true to emulate FIPS mode");
-		fips_kernel = fips_product = fips_mode = fips_files_check_ok = 1;
-	}
-
-	if (fips_mode == -1) {
-		loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
-		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-	}
-
-	if (fips_product == 1)
-		libreswan_log("FIPS Product detected (%s)", FIPSPRODUCTCHECK);
-
-	if (fips_kernel == 1)
-		libreswan_log("FIPS Kernel Mode detected");
-
-	if (!fips_files_check_ok) {
-		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification FAILURE");
-		/*
-		 * We ignore fips=1 kernel mode if we are not a 'fips product'
-		 */
-		if (fips_product && fips_kernel) {
-			loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-		} else if (fips_product) {
-			libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
-		} else if (fips_kernel) {
-			libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
-		} else {
-			libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
+		if (DBGP(IMPAIR_FORCE_FIPS)) {
+			libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
 		}
-	} else {
-		libreswan_log("FIPS HMAC integrity verification test passed");
-	}
 
-	if (fips_mode) {
-		libreswan_log("FIPS: pluto daemon running in FIPS mode");
-	} else {
-		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
-	}
+		int fips_kernel = libreswan_has_fips_kernel(DBGP(IMPAIR_FORCE_FIPS));
+		int fips_product = libreswan_has_fips_product(DBGP(IMPAIR_FORCE_FIPS));
 
+		if (fips_kernel < 0 || fips_product < 0) {
+			loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		}
+
+		/* override what ever libreswan_fipsmode() would return */
+		int fips_mode = (fips_kernel > 0 && fips_product > 0);
+		libreswan_set_fips_mode(fips_mode);
+		if (fips_mode) {
+			libreswan_log("FIPS mode enabled - pluto daemon is running in FIPS mode");
+		} else {
+			libreswan_log("FIPS mode disabled - pluto daemon is not running in FIPS mode");
+		}
+
+		/*
+		 * Now verify the consequences.  Always run the tests
+		 * as combinations such as NSS in fips mode but as out
+		 * of it could be bad.
+		 */
+
+		bool fips_library = PK11_IsFIPS();
+		if (fips_mode) {
+			if (fips_library) {
+				libreswan_log("FIPS mode enabled and NSS library is in FIPS mode");
+			} else if (DBGP(IMPAIR_FORCE_FIPS)) {
+				/* bad? */
+				libreswan_log("FIPS mode enabled BUT NSS library is not in FIPS mode (impair-force-fips)");
+			} else {
+				loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode enabled but NSS library is not in FIPS mode");
+				exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+			}
+		} else {
+			if (fips_library) {
+				/* bad? */
+				libreswan_log("FIPS mode disabled but NSS library is in FIPS mode");
+			} else {
+				libreswan_log("FIPS mode disabled and NSS library is not in FIPS mode");
+			}
+		}
+
+		bool fips_files = FIPSCHECK_verify_files(fips_package_files);
+		if (fips_mode) {
+			if (fips_files) {
+				libreswan_log("FIPS mode enabled and HMAC integrity verification tests passed");
+			} else if (DBGP(IMPAIR_FORCE_FIPS)) {
+				/* bad? */
+				libreswan_log("FIPS mode enabled but HMAC integrity verification tests failed (impair-force-fips)");
+			} else {
+				loglog(RC_LOG_SERIOUS, "FIPS mode enabled but HMAC integrity verification tests FAILED");
+				exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+			}
+		} else {
+			if (fips_files) {
+				libreswan_log("FIPS mode disabled but HMAC integrity verification tests passed");
+			} else {
+				libreswan_log("FIPS mode disabled and HMAC integrity verification tests passed");
+			}
+		}
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
@@ -1491,7 +1539,7 @@ int main(int argc, char **argv)
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
-	if (pluto_shared_secrets_file)
+	if (pluto_shared_secrets_file != NULL)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
 	libreswan_log(leak_detective ?
@@ -1568,6 +1616,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
 	if (DBGP(IMPAIR_SEND_ZERO_GX))
 		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
+	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE))
+		libreswan_log("Warning: IMPAIR_SEND_BOGUS_DCOOKIE enabled");
 
 /* Initialize all of the various features */
 
@@ -1583,9 +1633,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-#ifdef USE_ADNS
-	init_adns();
-#endif
 	init_id();
 	init_vendorid();
 
@@ -1599,6 +1646,14 @@ int main(int argc, char **argv)
 	init_avc();
 #endif
 	daily_log_event();
+
+#ifdef USE_SYSTEMD_WATCHDOG
+	/* tell systemd that we've started */
+	pluto_sd_watchdog_start();
+	/* start the even probess */
+	event_schedule(EVENT_SD_WATCHDOG, SD_WATCHDOG_INTERVAL, NULL);
+#endif
+
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
 }
@@ -1634,9 +1689,6 @@ void exit_pluto(int status)
 	free_myFQDN();	/* free myid FQDN */
 
 	free_ifaces();	/* free interface list from memory */
-#ifdef USE_ADNS
-	stop_adns();	/* Stop async DNS process (if running) */
-#endif
 	free_md_pool();	/* free the md pool */
 	NSS_Shutdown();
 	delete_lock();	/* delete any lock files */
@@ -1648,6 +1700,9 @@ void exit_pluto(int status)
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
+#ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd_watchdog_exit(status);
+#endif
 	exit(status);	/* exit, with our error code */
 }
 

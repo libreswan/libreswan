@@ -13,7 +13,6 @@ endif
 SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     systemdfiles sysconfigfiles
 systemdfiles: $(SYSTEMDFILE)
@@ -68,7 +67,7 @@ postcheck:
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

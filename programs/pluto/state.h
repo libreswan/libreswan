@@ -33,11 +33,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
-#include <gmp.h>    /* GNU MP library */
 #include "quirks.h"
 
 #include <nss.h>
 #include <pk11pub.h>
+#include <x509.h>
 
 #ifdef XAUTH_HAVE_PAM
 # include <signal.h>
@@ -73,8 +73,6 @@
 
 struct state;   /* forward declaration of tag */
 
-#define XAUTH_USERNAME_LEN 64
-
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -89,6 +87,8 @@ struct trans_attrs {
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
+
+	bool esn_enabled;               /* IKEv2 ESN (extended sequence numbers) */
 
 	oakley_group_t groupnum;		/* for IKEv2 */
 
@@ -115,14 +115,10 @@ struct trans_attrs {
  */
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
-	ipsec_spi_t spi;                /* his SPI */
+	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 	u_int16_t encapsulation;
-#if 0                                   /* not implemented yet */
-	u_int16_t cmprs_dict_sz;
-	u_int32_t cmprs_alg;
-#endif
 };
 
 /* IPsec per protocol state information */
@@ -271,8 +267,6 @@ struct state {
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
 
-	struct db_sa *st_sadb;			/* note: owner of heap allocation */
-
 	/** IKEv1-only things **/
 
 	msgid_t st_msgid;                       /* MSG-ID from header.
@@ -299,6 +293,9 @@ struct state {
 	/* end of IKEv1-only things */
 
 	/** IKEv2-only things **/
+
+	struct ikev2_proposal *st_accepted_ike_proposal;
+	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
 
 	/* Am I the original initator, or orignal responder (v2 IKE_I flag). */
 	enum original_role st_original_role;
@@ -457,7 +454,7 @@ struct state {
 
 	struct hidden_variables hidden_variables;
 
-	char st_xauth_username[XAUTH_USERNAME_LEN];	/* NUL-terminated */
+	char st_username[MAX_USERNAME_LEN];	/* NUL-terminated */
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
@@ -480,6 +477,7 @@ struct state {
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
+	generalName_t *st_requested_ca;	/* collected certificate requests */
 };
 
 /* global variables */
@@ -562,7 +560,7 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
-extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
+extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,
@@ -590,5 +588,6 @@ extern void log_newest_sa_change(char *f, struct state *const st);
 #ifdef XAUTH_HAVE_PAM
 void ikev2_free_auth_pam(so_serial_t st_serialno);
 #endif
+bool shared_phase1_connection(const struct connection *c);
 
 #endif /* _STATE_H */

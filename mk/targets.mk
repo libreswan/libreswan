@@ -1,6 +1,6 @@
 # Default Makefile targets, for Libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -27,64 +27,68 @@
 # Note: For reasons similar to the above target aliases should, at
 # most, depend on on global (recursive) target.
 
-# XXX: BROKEN_TARGETS, found in top-level/Makefile and mk/top.mk have
-# custom rules and use ::.  They also, typically, descend into
-# $(builddir) instead of $(srcdir).
-
 # This is the default; unless your Makefile puts something earlier.
 
 all:
 
-# For historic reasons, "programs" also builds everything.
+# Map common, and historic targets, onto current names.  For historic
+# reasons, "programs" also builds everything.
 
 .PHONY: programs
 programs: all
+man: manpages
 
-# All:
+# Generate a recursive target.
+
+define recursive-target
+  .PHONY: $(1) local-$(1) recursive-$(1)
+  $(1): local-$(1) recursive-$(1)
+  local-$(1):
+
+  # Building $(SUBDIRS) after all local targets is historic behaviour
+  recursive-$(1): local-$(1)
+
+  # Require $(builddir)/Makefile.  Targets that switch to builddir
+  # require it.  In $(topsrcdir) this will trigger a re-build of the
+  # Makefiles, in sub-directories this will simply barf.  It's assumed
+  # that $(OBJDIR) has been created by the time a subdir build has
+  # run.
+  $(1) local-$(1) recursive-$(1): $$(builddir)/Makefile
+
+  recursive-$(1):
+	@set -eu $$(foreach subdir,$$(SUBDIRS),; $$(MAKE) -C $$(subdir) $$(patsubst recursive-%,%,$$@))
+endef
+
+# The build is split into several sub-targets - namely so that
+# manpages are not built by default.
+#
+# For each define: TARGET clean-TARGET install-TARGET
 
 TARGETS = base manpages
-LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
-GLOBAL_TARGETS += all $(TARGETS)
-.PHONY: all $(TARGETS) $(LOCAL_TARGETS)
 
-all: $(LOCAL_TARGETS)
-base: local-base
-manpages: local-manpages
-$(LOCAL_TARGETS):
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,$(target))))
 
-# Install:
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,clean-$(target))))
 
-INSTALL_TARGETS = $(addprefix install-,$(TARGETS))
-INSTALL_LOCAL_TARGETS = $(addprefix install-,$(LOCAL_TARGETS))
-GLOBAL_TARGETS += install $(INSTALL_TARGETS)
-.PHONY: install $(INSTALL_TARGETS) $(INSTALL_LOCAL_TARGETS)
+$(foreach target,$(TARGETS),$(eval $(call recursive-target,install-$(target))))
+# install requires up-to-date build; recursive make, being evil, makes
+# this less than 100% reliable.
+local-install-base: local-base
+local-install-manpages: local-manpages
 
-ifeq ($(filter install,$(BROKEN_TARGETS)),)
-install: $(INSTALL_LOCAL_TARGETS)
-else
-install:: $(INSTALL_LOCAL_TARGETS)
-endif
-install-base: install-local-base
-install-manpages: install-local-manpages
-install-local-base: local-base
-install-local-manpages: local-manpages
-$(INSTALL_LOCAL_TARGETS):
+# More generic targets.   These, in each directory, invoke local
+# versions of the above.
 
-# Clean:
+$(eval $(call recursive-target,all))
+local-all: $(patsubst %,local-%,$(TARGETS))
 
-CLEAN_TARGETS = $(addprefix clean-, $(TARGETS))
-CLEAN_LOCAL_TARGETS = $(addprefix clean-, $(LOCAL_TARGETS))
-GLOBAL_TARGETS += clean $(CLEAN_TARGETS)
-.PHONY: clean $(CLEAN_TARGETS) $(CLEAN_LOCAL_TARGETS)
+$(eval $(call recursive-target,clean))
+local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 
-ifeq ($(filter clean,$(BROKEN_TARGETS)),)
-clean: $(CLEAN_LOCAL_TARGETS)
-else
-clean:: $(CLEAN_LOCAL_TARGETS)
-endif
-clean-base: clean-local-base
-clean-manpages: clean-local-manpages
-$(CLEAN_LOCAL_TARGETS):
+$(eval $(call recursive-target,install))
+local-install: $(patsubst %,local-install-%,$(TARGETS))
+
+$(eval $(call recursive-target,check))
 
 # The install_file_list target is special; the command:
 #
@@ -98,6 +102,7 @@ $(CLEAN_LOCAL_TARGETS):
 # - to stop make's directory messages, --no-print-directory is
 #   specified
 
+LOCAL_TARGETS = $(addprefix local-, $(TARGETS))
 LIST_TARGETS = $(addprefix list-, $(TARGETS))
 LIST_LOCAL_TARGETS = $(addprefix list-, $(LOCAL_TARGETS))
 .PHONY: install_file_list $(LIST_TARGETS) $(LIST_LOCAL_TARGETS)
@@ -109,16 +114,3 @@ install_file_list $(LIST_TARGETS):
 install_file_list: list-local-base list-local-manpages
 list-base: list-local-base
 list-manpages: list-local-manpages
-
-# Check: much simpler
-
-GLOBAL_TARGETS += check
-ifeq ($(filter check,$(BROKEN_TARGETS)),)
-check:
-else
-check:
-endif
-
-# Checkprograms: XXX: should this be deleted; it doesn't do anything?
-GLOBAL_TARGETS += checkprograms
-checkprograms:

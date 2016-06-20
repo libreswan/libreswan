@@ -8,7 +8,6 @@ UPSTARTDIR=$(SYSCONFDIR)/init
 DEFAULTDIR=$(SYSCONFDIR)/default
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     upstartfiles defaultfiles
 upstartfiles: $(UPSTARTFILE)
@@ -28,7 +27,7 @@ installdefault:
 		$(INSTALL) $(DEFAULTFILE) $(DEFAULTDIR)/pluto ; \
 	fi
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

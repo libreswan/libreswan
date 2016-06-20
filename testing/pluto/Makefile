@@ -26,7 +26,9 @@ include $(top_srcdir)/mk/config.mk
 UTILS=${LIBRESWANSRCDIR}/testing/utils
 
 check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+ifeq ($(UPDATEONLY),)
 	$(MAKE) -C $(LIBRESWANSRCDIR) kvm-keys-up-to-date
+endif
 # skip rebuilding KVMs unless started with: make check UPDATE=1
 ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east

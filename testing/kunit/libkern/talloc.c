@@ -535,7 +535,7 @@ void *_talloc_realloc(const void *context, void *ptr, size_t size,
 	if (size >= MAX_TALLOC_SIZE)
 		return NULL;
 
-	/* realloc(NULL) is equavalent to malloc() */
+	/* realloc(NULL) is equivalent to malloc() */
 	if (ptr == NULL)
 		return talloc_named_const(context, size, name);
 

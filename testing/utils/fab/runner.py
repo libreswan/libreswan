@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -16,7 +16,6 @@ import os
 import sys
 import pexpect
 import time
-import subprocess
 from concurrent import futures
 from fab import virsh
 from fab import testsuite
@@ -37,20 +36,11 @@ def log_arguments(logger, args):
     logger.info("  workers: %s", args.workers)
 
 
-def domain_names():
-    domains = set()
-    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
-    for name in output.splitlines():
-        domains.add(name)
-    return domains
-DOMAIN_NAMES = domain_names()
-
 TEST_TIMEOUT = 120
 
 class TestDomain:
 
     def __init__(self, domain_name, test):
-        self.full_name = "test " + test.name + " " + domain_name
         self.test = test
         # Get the domain
         self.domain = virsh.Domain(domain_name)
@@ -59,7 +49,7 @@ class TestDomain:
         self.console = self.domain.console()
 
     def __str__(self):
-        return self.full_name
+        return self.domain.name
 
     def crash(self):
         # The objective here is to cause any further operations (on
@@ -109,12 +99,15 @@ class TestDomain:
         self.logger.info("'cd' to %s", test_directory)
         self.console.chdir(test_directory)
 
+    def boot_and_login(self):
+        self.boot()
+        self.login()
+
     def read_file_run(self, basename):
-        self.logger.info("running: %s", basename)
+        self.logger.info("starting script %s", basename)
         filename = os.path.join(self.test.directory, basename)
-        file = None
-        try:
-            file = open(filename, "r")
+        start_time = time.time()
+        with open(filename, "r") as file:
             for line in file:
                 line = line.strip()
                 if line:
@@ -124,9 +117,8 @@ class TestDomain:
                         # XXX: Can't abort as some ping commands are
                         # expected to fail.
                         self.logger.warning("command '%s' failed with status %d", line, status)
-        finally:
-            if file:
-                file.close()
+            self.logger.info("script %s finished after %d seconds",
+                             basename, time.time() - start_time)
 
 
 class TestDomains:
@@ -151,7 +143,7 @@ class TestDomains:
         for test_domain in self.test_domains.values():
             test_domain.close()
 
-def run_job_on_domain(executor, jobs, logger, domain, work):
+def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
     jobs[job] = domain
     logger.debug("scheduled %s on %s", job, domain)
@@ -167,7 +159,7 @@ def wait_for_jobs(jobs, logger):
 
 def execute_on_domains(executor, jobs, logger, domains, work):
     for domain in domains:
-        run_job_on_domain(executor, jobs, logger, domain, work)
+        submit_job_for_domain(executor, jobs, logger, domain, work)
     wait_for_jobs(jobs, logger)
 
 
@@ -176,9 +168,8 @@ def run_test(test, max_workers=1):
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
-    logger.info("starting test")
 
-    with TestDomains(logger, test, DOMAIN_NAMES) as all_test_domains:
+    with TestDomains(logger, test, testsuite.DOMAIN_NAMES) as all_test_domains:
         try:
 
             # Python doesn't have an easy way to obtain an executor's
@@ -188,18 +179,20 @@ def run_test(test, max_workers=1):
             # executor is cleaned up explicitly in the finally clause.
             executor = futures.ThreadPoolExecutor(max_workers=max_workers)
             jobs = {}
+            logger.info("starting test")
             run_test_on_executor(executor, jobs, logger, test, all_test_domains)
+            logger.info("finishing test")
 
         finally:
 
             # Control-c, timeouts, along with any other crash, and
             # even a normal exit, all end up here!
-            logger.info("finishing test")
 
             # Start with a list of jobs still in the queue; one or
             # more of them may be running.
             done, not_done = futures.wait(jobs, timeout=0)
             logger.debug("jobs done %s not done %s", done, not_done)
+
             # First: cancel all outstanding jobs (otherwise killing
             # one job would just result in the next job starting).
             # Calling cancel() on running jobs has no effect so need
@@ -223,34 +216,47 @@ def run_test(test, max_workers=1):
             # crashed jobs.
             executor.shutdown()
 
+def strset(s):
+    return " ".join(str(e) for e in s)
+
 def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
 
     test_domains = set()
-    for test_domain in test.domain_names():
-        test_domains.add(all_test_domains[test_domain])
-    logger.debug("test domains: %s", test_domains)
+    for domain_name in test.domain_names():
+        test_domains.add(all_test_domains[domain_name])
+    logger.debug("test domains: %s", strset(test_domains))
 
-    initiator_domains = set()
-    for test_domain in test.initiator_names():
-        initiator_domains.add(all_test_domains[test_domain])
-    logger.debug("initiator domains: %s", initiator_domains)
-
-    logger.info("orienting domains")
+    idle_test_domains = set()
     for test_domain in all_test_domains.values():
-        if test_domain in test_domains:
-            run_job_on_domain(executor, jobs, logger, test_domain,
-                              TestDomain.boot)
-        else:
-            run_job_on_domain(executor, jobs, logger, test_domain,
+        if test_domain not in test_domains:
+            idle_test_domains.add(test_domain)
+    logger.info("idle domains: %s", strset(idle_test_domains))
+    for test_domain in idle_test_domains:
+        submit_job_for_domain(executor, jobs, logger, test_domain,
                               TestDomain.shutdown)
     wait_for_jobs(jobs, logger)
+    
+    # There's a tradeoff here between speed and reliability.
+    #
+    # In theory, since booting is largely I/O bound, and the host has
+    # multiple cores, it should be possible to have several domains
+    # booting in parallel; hence separate boot and login jobs (domains
+    # continue to boot after the boot jobs finish).
+    #
+    # In reality, the boot process sometimes becomes gets bogged down,
+    # taking longer than expected, and resulting in timeouts.  For
+    # instance, if more than two domains are booting at once, or the
+    # host is busy with other jobs.
 
-    # At this point, since boot() only waits for basic startup, things
-    # are still going on in the background.  Consequently, merging the
-    # boot() and login() steps can result in a slowdown - the next
-    # domain isn't even started until after the first has logged in.
-    logger.info("login into domains")
-    execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
+    boot_and_login = True
+    if boot_and_login:
+        logger.info("boot and login domains: %s", strset(test_domains))
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot_and_login)
+    else:
+        logger.info("boot domains: %s", strset(test_domains))
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot)
+        logger.info("login domains: %s", strset(test_domains))
+        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
 
     # re-direct the test-result log file
     for test_domain in test_domains:
@@ -258,20 +264,10 @@ def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
                               test_domain.domain.name + ".console.verbose.txt")
         test_domain.console.output(open(output, "w"))
 
-    # Init all but initiator, and then the initiators
-    logger.info("running init.sh scripts")
-    execute_on_domains(executor, jobs, logger, test_domains ^ initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "init.sh"))
-    execute_on_domains(executor, jobs, logger, initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "init.sh"))
-
-    # Run the actual test:
-    logger.info("running test scripts")
-    execute_on_domains(executor, jobs, logger, initiator_domains,
-                       lambda test_domain: test_domain.read_file_run(test_domain.domain.name + "run.sh"))
-
-    # Finish
-    logger.info("running final.sh scripts")
-    if os.path.exists(os.path.join(test.directory, "final.sh")):
-        execute_on_domains(executor, jobs, logger, test_domains,
-                           lambda test_domain: test_domain.read_file_run("final.sh"))
+    for scripts in test.scripts():
+        tasks = " ".join(("%s:%s") % (domain_name, script) for domain_name, script in scripts.items())
+        logger.info("running scripts: %s", tasks)
+        for domain_name, script in scripts.items():
+            submit_job_for_domain(executor, jobs, logger, all_test_domains[domain_name],
+                                  lambda test_domain: test_domain.read_file_run(script))
+        wait_for_jobs(jobs, logger)

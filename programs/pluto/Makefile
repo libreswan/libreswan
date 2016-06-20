@@ -27,7 +27,6 @@ endif
 
 # XXX: Pluto doesn't include mk/program.mk and define PROGRAM
 MANPAGES += ipsec_pluto.8
-MANPAGES += ipsec.secrets.5
 
 # XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
@@ -75,15 +74,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 #    and basename for pluto's lockfile (.pid) and control socket (.ctl).
 #    Double quoting may be needed.
 
-
-
-ifeq ($(USE_ADNS),true)
-ifeq ($(USE_KEYRR),true)
-KEYRR_DEFINES=-DUSE_KEYRR
-ADNS_SRC=adns.c adns.h dnskey.c dnskey.h
-endif
-endif
-
 ifeq ($(USE_PFKEYv2),true)
 PFKEYv2_DIST_SRC=kernel_pfkey.c kernel_pfkey.h
 PFKEYv2_OBJS=kernel_pfkey.o
@@ -95,7 +85,7 @@ endif
 NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h
 ifeq ($(USE_NETKEY),true)
 NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
-NETKEY_SRCS=${NETKEY_DIST_SRCS}
+NETKEY_SRCS=${NETKEY_DIST_SRCS} ${PFKEYv2_DIST_SRC}
 NETKEY_OBJS=kernel_netlink.o
 endif
 
@@ -184,6 +174,16 @@ LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
 LABELED_IPSEC_LIBS=-lselinux
 endif
 
+SYSTEMD_NOTIFY_DIST_OBJS=pluto_sd.o
+SYSTEMD_NOTIFY_DIST_SRCS=${SYSTEMD_NOTIFY_DIST_OBJS:.o=.c}
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+SYSTEMD_NOTIFY_DEFS=-DUSE_SYSTEMD_WATCHDOG
+SYSTEMD_NOTIFY_OBJS=${SYSTEMD_NOTIFY_DIST_OBJS}
+SYSTEMD_NOTIFY_SRC=${SYSTEMD_NOTIFY_DIST_SRC}
+SYSTEMD_NOTIFY_LIBS=-lsystemd
+endif
+
+
 ifeq ($(USE_LIBCURL),true)
 # This compile option activates dynamic URL fetching
 # with libcurl in the source code
@@ -204,15 +204,14 @@ endif
 
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
-	${ADNS_DEFS} \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
 	${LABELED_IPSEC_DEFS} \
+	${SYSTEMD_NOTIFY_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
@@ -227,26 +226,22 @@ LIBSPLUTO+=$(X509_LIBS)
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
 LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
-LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
+LIBSPLUTO+=${SYSTEMD_NOTIFY_LIBS}
+LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} $(NSS_LDFLAGS)
 PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
-PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${LIBCRYPT} -lgmp
+PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} $(NSS_LDFLAGS)
+PLUTOMINUSL+= ${LIBCRYPT}
 
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
+
 ifeq ($(USE_FIPSCHECK),true)
-DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
 endif
 
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
 LIBSPLUTO+= -lcap-ng
-endif
-
-# NetworkManager support
-ifeq ($(USE_NM),true)
-DEFINES+=-DHAVE_NM
 endif
 
 BINNAMEPLUTO = pluto
@@ -260,24 +255,14 @@ SYSDEP_OBJ=sysdep_${OSDEP}.o
 
 # End of configuration coping options.
 
-LDFLAGS+=${NSSLIBS}
+LDFLAGS+=$(NSS_LDFLAGS)
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-ifeq ($(USE_ADNS),true)
-LIBSADNS = $(LIBRESWANLIB)
-LIBSADNS += -lresolv
-BINNAMEADNS = _pluto_adns
-ADNS_OBJS=dnskey.o
-OBJSADNS = adns.o
-endif
-
 LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
-ifeq ($(USE_DNSSEC),true)
-LIBSPLUTO += -lunbound
-endif
+LIBSPLUTO += $(UNBOUND_LDFLAGS)
 
 ifeq ($(USE_LINUX_AUDIT),true)
 LIBSPLUTO += -laudit
@@ -311,8 +296,8 @@ RMFLAGS = -f
 
 # files for a (source) distribution
 
-DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
-	 pluto.8 ipsec_whack.8 ipsec.secrets.5 .cvsignore
+DISTMISC = CHANGES PLUTO-CONVENTIONS TODO Makefile routing.txt \
+	 pluto.8 ipsec_whack.8 .cvsignore
 
 DISTSRC = \
 	ike_alg_nss_cbc.h ike_alg_nss_cbc.c \
@@ -330,7 +315,7 @@ DISTSRC = \
 	demux.c demux.h msgdigest.c \
 	myid.c hmac.c \
 	hostpair.c ipsec_doi.c ipsec_doi.h \
-	spdb.c spdb_struct.c spdb_print.c spdb.h \
+	spdb.c spdb_struct.c spdb.h \
 	ikev1.c ikev1_quick.c ikev1_continuations.h \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
 	ikev1_msgid.c \
@@ -362,11 +347,11 @@ DISTSRC = \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
-	${ADNS_SRC} \
 	whack.c whackinit.c \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
+	${SYSTEMD_NOTIFY_DIST_SRCS} \
 	packet.c pluto_constants.c readwhackmsg.c \
 	nss_cert_load.c nss_cert_load.h pem.c \
 	nss_cert_vfy.c nss_cert_vfy.h \
@@ -398,16 +383,16 @@ OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_O
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
 OBJSPLUTO += demux.o msgdigest.o keys.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
-OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
+OBJSPLUTO += rnd.o spdb.o spdb_struct.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o
 OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
 OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
-OBJSPLUTO += ${ADNS_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
+OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
 OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ}
@@ -424,11 +409,14 @@ CAVP += cavp
 
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-clean-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
-install-local-base: $(builddir)/Makefile
+
+local-clean-base: $(builddir)/Makefile
+	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
+		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+
+local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEADNS) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
@@ -437,34 +425,19 @@ doinstall:
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
-	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
-
-ifeq ($(USE_ADNS),true)
-$(BINNAMEADNS): $(OBJSADNS)
-	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}
-endif
 
 $(BINNAMEWHACK): $(OBJSWHACK)
 	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
 	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
-
-cleanall:
-	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(OBJSPLUTO) $(BINNAMEPLUTO) \
-		$(OBJSWHACK) $(BINNAMEWHACK) \
-		$(OBJSADNS) $(BINNAMEADNS)
-
-distclean: clean
 
 check:
 	echo no checks in lib right now.

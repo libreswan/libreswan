@@ -47,4 +47,4 @@ awk '	/(sig|enc|auth)key[ \t]*=[ \t]*[^%]/ {
 		print cold cooled
 		next
 	}
-	{ print }' $*
+	{ print }' "$*"

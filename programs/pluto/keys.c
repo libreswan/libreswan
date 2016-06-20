@@ -10,6 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,13 +54,10 @@
 #include "state.h"
 #include "lex.h"
 #include "keys.h"
-#include "secrets.h"
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "timer.h"
-#include "mpzfuncs.h"
 
 #include "fetch.h"
 #include "pluto_x509.h"
@@ -79,6 +77,7 @@
 #include <secport.h>
 #include <time.h>
 #include "lswconf.h"
+#include "secrets.h"
 
 char *pluto_shared_secrets_file;
 static struct secret *pluto_secrets = NULL;
@@ -125,7 +124,7 @@ static int print_secrets(struct secret *secret,
 		idtoa(&ids->id, idb1, sizeof(idb1));
 		if (ids->next != NULL) {
 			idtoa(&ids->next->id, idb2, sizeof(idb2));
-			if (ids->next->next)
+			if (ids->next->next != NULL)
 				more = "more";
 		}
 	}
@@ -223,6 +222,8 @@ int sign_hash(const struct RSA_private_key *k,
 		}
 	}
 
+	SECKEY_DestroyPrivateKey(privateKey);
+
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Ended using NSS"));
 	return signature.len;
 }
@@ -236,7 +237,6 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	SECStatus retVal;
 	SECItem nss_n, nss_e;
 	SECItem signature, data;
-	chunk_t n, e;
 
 	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
@@ -248,7 +248,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 	publicKey = (SECKEYPublicKey *)
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-	if (!publicKey) {
+	if (publicKey == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 		PORT_SetError(SEC_ERROR_NO_MEMORY);
 		return "11" "NSS error: Not enough memory to create publicKey";
@@ -259,9 +259,9 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/* Converting n(modulus) and e(exponent) from mpz_t form to chunk_t */
-	n = mpz_to_n_autosize(&k->n);
-	e = mpz_to_n_autosize(&k->e);
+	/* make a local copy.  */
+	chunk_t n = chunk_clone(k->n, "n");
+	chunk_t e = chunk_clone(k->e, "e");
 
 	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
@@ -593,25 +593,40 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	/* is there a certificate assigned to this connection? */
 	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
+		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
 			c->spd.this.cert.u.nss_cert);
-
 		passert(my_public_key != NULL);
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);
-
-		if (best == NULL && c->spd.this.cert_nickname != NULL) {
-			err_t err = NULL;
-			DBG(DBG_CONTROL,
-			    DBG_log("Private key for cert %s not found. Attempting to load on-demand",
-				    c->spd.this.cert_nickname));
-			err = load_nss_cert_secret(c->spd.this.cert_nickname);
-			if (err == NULL) {
-				best = lsw_find_secret_by_public_key(pluto_secrets,
-						my_public_key, kind);
-			}
+		if (best != NULL) {
+			free_public_key(my_public_key);
+			return best;
 		}
+
+		const char *nickname = cert_nickname(&c->spd.this.cert);
+		DBG(DBG_CONTROL,
+		    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
+			    nickname));
+
+
+		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
+		if (err != NULL) {
+			DBG(DBG_CONTROL,
+			    DBG_log("private key for cert %s not found in NSS DB",
+				    nickname));
+			free_public_key(my_public_key);
+			return NULL;
+		}
+
+		best = lsw_find_secret_by_public_key(pluto_secrets,
+						     my_public_key, kind);
+		/*
+		 * Just added a secret using the cert as the key; how
+		 * can it then not be found?
+		 */
+		pexpect(best != NULL);
 		free_public_key(my_public_key);
 		return best;
 	}
@@ -760,8 +775,8 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 
 	memcpy(p->u.rsa.keyid, k->keyid, sizeof(p->u.rsa.keyid));
 	p->u.rsa.k = k->k;
-	mpz_init_set(&p->u.rsa.e, &k->e);
-	mpz_init_set(&p->u.rsa.n, &k->n);
+	p->u.rsa.e = chunk_clone(k->e, "e");
+	p->u.rsa.n = chunk_clone(k->n, "n");
 
 	/* note that we return a 1 reference count upon creation:
 	 * invariant: recount > 0.
@@ -891,6 +906,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						  sizeof(expires_buf)),
 					  check_expiry_msg);
 
+				/* XXX could be ikev2_idtype_names */
 				whack_log(RC_COMMENT, "       %s '%s'",
 					  enum_show(&ike_idtype_names,
 						    key->id.kind), id_buf);
@@ -907,15 +923,15 @@ void list_public_keys(bool utc, bool check_pub_keys)
 	}
 }
 
-err_t load_nss_cert_secret(const char *nickname)
+err_t load_nss_cert_secret(CERTCertificate *cert)
 {
-	CERTCertificate *cert = get_cert_from_nss(nickname);
-
 	if (cert == NULL) {
 		return "NSS cert not found";
 	}
-	/*
-	 * cert is released in lsw_add_rsa_secret on error
-	 */
-	return lsw_add_rsa_secret(&pluto_secrets, cert);
+
+	if (cert_key_is_rsa(cert)) {
+		return lsw_add_rsa_secret(&pluto_secrets, cert);
+	} else {
+		return "NSS cert not supported";
+	}
 }

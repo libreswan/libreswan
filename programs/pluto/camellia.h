@@ -24,7 +24,7 @@
 # define CAMELLIA_BLOCK_SIZE  16
 #endif
 
-#if !defined(CAMELLIA_BLOCK_SIZE) || (CAMELLIA_BLOCK_SIZE == 32)
+#if CAMELLIA_BLOCK_SIZE == 32
 #define CAMELLIA_KS_LENGTH   120
 #define CAMELLIA_RC_LENGTH    29
 #else

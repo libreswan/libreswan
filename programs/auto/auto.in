@@ -20,7 +20,7 @@ usage="Usage:
 	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-	${me} [--showonly] --{rereadcacerts|rereadcrls|rereadall}
+	${me} [--showonly] --{rereadcrls|rereadall}
 	${me} [--showonly] [--utc] --{listpubkeys|listcerts}
 	${me} [--showonly] [--utc] --checkpubkeys
 	${me} [--showonly] [--utc] --{listcacerts|listgroups}

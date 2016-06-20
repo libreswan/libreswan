@@ -9,7 +9,6 @@ SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 SYSVINIT_DEFAULT_START?=
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     initdfiles sysconfigfiles
 initdfiles:   $(INITDFILE)
@@ -43,7 +42,7 @@ checkenabled:
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< | sed -e "s:@SYSVINIT_DEFAULT_START@:${SYSVINIT_DEFAULT_START}:g" > $@
 	@if [ -x $< ]; then chmod +x $@; fi

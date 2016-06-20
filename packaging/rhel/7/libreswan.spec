@@ -5,18 +5,19 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
+%global USE_SYSTEMD_WATCHDOG true
 
 %global _hardened_build 1
 
 %global buildefence 0
 %global development 0
-%global cavstests 0
+%global cavstests 1
 
-#global prever rc1
+%global prever dr2
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.16
+Version: 3.18
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -27,7 +28,7 @@ Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
 Group: System Environment/Daemons
-BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
+BuildRequires: bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
 Requires(post): coreutils bash systemd
 Requires(preun): systemd
@@ -53,6 +54,9 @@ Requires: fipscheck%{_isa}
 %endif
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
+%endif
+%if %{USE_SYSTEMD_WATCHDOG}
+BuildRequires: systemd-devel
 %endif
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
@@ -106,12 +110,12 @@ make %{?_smp_mflags} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK="%{USE_FIPSCHECK}" \
     USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_SYSTEMD_WATCHDOG="%{USE_SYSTEMD_WATCHDOG}" \
     USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
     USE_LDAP=true \
     USE_LIBCURL=true \
 %endif
-    USE_ADNS=false \
     USE_DNSSEC="%{USE_DNSSEC}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
@@ -128,6 +132,7 @@ FS=$(pwd)
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
+    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac
 %{nil}
 %endif
 
@@ -166,6 +171,17 @@ install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/p
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
 
+%if %{USE_FIPSCHECK}
+install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
+install -m644 packaging/fedora/libreswan-prelink.conf \
+        %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+%endif
+
+%if %{cavstests}
+# we should add a new makefile target for this
+cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
+%endif
+
 %if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
@@ -173,6 +189,10 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 # We only run the CAVS tests here.
 cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
 bunzip2 *.fax.bz2
+
+# work around for older xen based machines
+export NSS_DISABLE_HW_GCM=1
+
 : starting CAVS test for IKEv2
 OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
@@ -225,5 +245,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.16-1
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr2
 - Automated build from release tar ball

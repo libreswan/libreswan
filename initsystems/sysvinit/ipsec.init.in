@@ -294,6 +294,7 @@ case "$1" in
     status)
 	status
 	RETVAL=$?
+	${IPSEC_EXECDIR}/whack --status | grep Total | sed 's/^000\ Total\ //'
 	;;
     version)
 	version

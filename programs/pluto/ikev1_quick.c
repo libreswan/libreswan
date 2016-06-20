@@ -46,7 +46,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
@@ -63,6 +62,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
+#include "secrets.h"
 
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -205,7 +205,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES:
 			needed_len = AES_CBC_BLOCK_SIZE;
 			/* if an attribute is set, then use that! */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
 					BITS_PER_BYTE;
@@ -213,7 +213,7 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 		case ESP_AES_CTR:
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
 					BITS_PER_BYTE;
@@ -229,7 +229,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -245,7 +245,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -263,7 +263,7 @@ static void compute_proto_keymat(struct state *st,
 			 * We use a minimum of 128bits to avoid padding
 			 * This is also the max keysize for cast128
 			 */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 			}
 			/* minimum = default = maximum */
@@ -285,7 +285,7 @@ static void compute_proto_keymat(struct state *st,
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
 			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
 					st->st_esp.attrs.transattrs.enckeylen == 192 ||
 					st->st_esp.attrs.transattrs.enckeylen == 256);
@@ -301,7 +301,7 @@ static void compute_proto_keymat(struct state *st,
 
 #if 0
 		case ESP_SEED_CBC:
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
 				/* SEED-CBC is always 128bit */
 				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
@@ -907,7 +907,7 @@ stf_status quick_outI1(int whack_sock,
 		       unsigned long try,
 		       so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		       , const struct xfrm_user_sec_ctx_ike *uctx
+		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {
@@ -1107,7 +1107,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 		}
 
 		/* Ni out */
-		if (!ship_nonce(&st->st_ni, r, &rbody,
+		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
 				np,
 				"Ni")) {
 			reset_cur_state();
@@ -1117,7 +1117,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ship_KE(st, r, &st->st_gi,
+		if (!ikev1_ship_KE(st, r, &st->st_gi,
 			     &rbody,
 			     has_client ? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE)) {
 			reset_cur_state();
@@ -1475,36 +1475,6 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 	       which, ugh, st->st_msgid);
 }
 
-#ifdef USE_ADNS
-static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
-{
-	stf_status r;
-	struct verify_oppo_continuation *vc = (void *)cr;
-	struct verify_oppo_bundle *b = &vc->b;
-	struct state *st = b->md->st;
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: adns continuation: %s", ugh));
-
-	passert(cur_state == NULL);
-	/* if st == NULL, our state has been deleted -- just clean up */
-	if (st != NULL) {
-		passert(st->st_suspended_md == b->md);
-		unset_suspended(st); /* no longer connected or suspended */
-		cur_state = st;
-		if (!b->failure_ok && ugh != NULL) {
-			report_verify_failure(b, ugh);
-			r = STF_FAIL + INVALID_ID_INFORMATION;
-		} else {
-			r = quick_inI1_outR1_authtail(b, cr);
-		}
-		complete_v1_state_transition(&b->md, r);
-	}
-	release_any_md(&b->md);
-	cur_state = NULL;
-}
-#endif
-
 static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 					       enum verify_oppo_step next_step)
 {
@@ -1564,36 +1534,15 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->my.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(&id,
-				       our_id,
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 	case vos_our_txt:
 		vc->b.failure_ok = b->failure_ok = TRUE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(our_id,
-				       our_id, /* self as SG */
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 #ifdef USE_KEYRR
 	case vos_our_key:
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(our_id,
-				       NULL,
-				       ns_t_key,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 #endif
 
@@ -1601,13 +1550,6 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		networkof(&b->his.net, &client);
 		iptoid(&client, &id);
 		vc->b.failure_ok = b->failure_ok = FALSE;
-#ifdef USE_ADNS
-		ugh = start_adns_query(&id,
-				       &c->spd.that.id,
-				       ns_t_txt,
-				       quick_inI1_outR1_continue,
-				       &vc->ac);
-#endif
 		break;
 
 	default:
@@ -2395,7 +2337,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			np = ISAKMP_NEXT_NONE;
 
 		/* Nr out */
-		if (!justship_nonce(&st->st_nr, &md->rbody, np, "Nr"))
+		if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, np, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
@@ -2419,7 +2361,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			else
 				np = ISAKMP_NEXT_NONE;
 
-			if (!out_generic(np,
+			if (!ikev1_out_generic(np,
 					 &isakmp_vendor_id_desc, &md->rbody,
 					 &vid_pbs))
 				return STF_INTERNAL_ERROR;
@@ -2434,7 +2376,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && r != NULL) {
-		if (!justship_KE(&st->st_gr,
+		if (!ikev1_justship_KE(&st->st_gr,
 				 &md->rbody,
 				 id_pd != NULL ?
 					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
@@ -2704,7 +2646,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody,
 								   ISAKMP_NEXT_VID);
 
-				if (!out_generic(ISAKMP_NEXT_NONE,
+				if (!ikev1_out_generic(ISAKMP_NEXT_NONE,
 						 &isakmp_vendor_id_desc,
 						 &md->rbody, &vid_pbs))
 					return STF_INTERNAL_ERROR;

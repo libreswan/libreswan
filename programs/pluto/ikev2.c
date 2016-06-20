@@ -12,6 +12,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2016 Antony Antony <appu@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -585,19 +586,19 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 			return;
 	}
 
-	if (errors.missing) {
+	if (errors.missing != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "missing payload(s) (%s). Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,
 				  errors.missing));
 	}
-	if (errors.unexpected) {
+	if (errors.unexpected != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "payload(s) (%s) unexpected. Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,
 				  errors.unexpected));
 	}
-	if (errors.bad_repeat) {
+	if (errors.bad_repeat != LEMPTY) {
 		loglog(RC_LOG_SERIOUS,
 		       "payload(s) (%s) unexpectedly repeated. Message dropped.",
 		       bitnamesof(payload_name_ikev2_main,
@@ -814,7 +815,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			rehash_state(st, md->hdr.isa_rcookie);
 		}
 
-
 		/*
 		 * We need to check if this IKE_INIT is a retransmit
 		 */
@@ -832,6 +832,18 @@ void process_v2_packet(struct msg_digest **mdp)
 				return;
 			}
 			/* update lastrecv later on */
+
+		}
+
+		/*
+		 * If this exchange request is not an IKE_INIT
+		 * or IKE_AUTH, ensure we have an established IKE SA
+		 */
+		if ((ix != ISAKMP_v2_SA_INIT && ix != ISAKMP_v2_AUTH) &&
+		    !IS_IKE_SA_ESTABLISHED(st)) {
+			libreswan_log("Ignoring %s Exchange as IKE SA for %s has not yet been authenticated",
+				enum_show(&state_names, st->st_state), st->st_connection->name);
+			return;
 		}
 
 	} else if (!msg_r) {
@@ -1093,8 +1105,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (!ikev2_decode_cert(md))
 		return FALSE;
 
-	/* check for certificate requests */
-	ikev2_decode_cr(md, &c->requested_ca);
+	/* process any CERTREQ payloads */
+	ikev2_decode_cr(md);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
@@ -1132,7 +1144,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
 
-		switch(auth) {
+		switch (auth) {
 		case IKEv2_AUTH_RSA:
 			auth_policy = POLICY_RSASIG;
 			break;
@@ -1267,22 +1279,20 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
-void send_v2_notification_invalid_ke_from_state(struct state *st)
+void send_v2_notification_invalid_ke(struct msg_digest *md,
+				     const struct oakley_group_desc *group)
 {
-	/* ??? CLANG 3.5 thinks that st might be NULL */
-	passert(st->st_oakley.group != NULL);
 	DBG(DBG_CONTROL,
-	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",
-		    strip_prefix(enum_show(&oakley_group_names,
-					   st->st_oakley.group->group),
+	    DBG_log("sending INVALID_KE back with %s(%d)",
+		    strip_prefix(enum_show(&oakley_group_names, group->group),
 				 "OAKLEY_GROUP_"),
-		    st->st_oakley.group->group));
-	const u_int16_t gr = htons(st->st_oakley.group->group);
-	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
+		    group->group));
+	/* convert group to a raw buffer */
+	const u_int16_t gr = htons(group->group);
+	chunk_t nd;
+	setchunk(nd, (void*)&gr, sizeof(gr));
 
-	/* RFC 7296 Section-2.6.1 recommends clearing rcookie */
-	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
-			     st->st_icookie, NULL /* rcookie */, &nd);
+	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 }
 
 void send_v2_notification_from_state(struct state *st,
@@ -1423,7 +1433,9 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		}
 
 		if (c->policy & POLICY_OPPORTUNISTIC) {
-			if (IS_PARENT_SA_ESTABLISHED(st)) {
+			if (st->st_connection->spd.that.has_lease) {
+				*pkind = kind = EVENT_SA_EXPIRE;
+			} else if (IS_PARENT_SA_ESTABLISHED(st)) {
 				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED_IKE;
 			} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED;
@@ -1786,14 +1798,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 				/* We are the exchange responder */
 				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				/* Check if this is an IKE_INIT reply w INVALID_KE */
-				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
-				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
-					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
-					send_v2_notification_invalid_ke_from_state(st);
-				} else {
-					SEND_V2_NOTIFICATION(md->note);
-				}
+				SEND_V2_NOTIFICATION(md->note);
 
 				if (st != NULL) {
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
@@ -1834,66 +1839,24 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
 	len = pbs_left(nonce_pbs);
 
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+	/*
+	 * RFC 7296 Section 2.10:
+	 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128
+	 * bits in size, and MUST be at least half the key size of the
+	 * negotiated pseudorandom function (PRF).  However, the initiator
+	 * chooses the nonce before the outcome of the negotiation is known.
+	 * Because of that, the nonce has to be long enough for all the PRFs
+	 * being proposed.
+	 *
+	 * We will check for a minimum/maximum here. Once the PRF is selected,
+	 * we verify the nonce is big enough.
+	 */
+
+	if (len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length %zu not between %d and %d",
+			name, len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return v2N_NOTHING_WRONG;
-}
-
-
-bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
-{
-
-	if (lookup_group(received) == NULL) {
-		DBG(DBG_CONTROL, DBG_log(
-			"Received DH group %d not supported", received));
-		return FALSE;
-	}
-
-	if (ai_list != NULL) {
-		struct ike_info *ike_info;
-		int cnt;
-
-		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
-			if (received == ike_info->ike_modp)
-				return TRUE;
-		}
-		DBG(DBG_CONTROL, DBG_log(
-			"received DH group %d not in our proposal set", received));
-		return FALSE;
-	} else {
-		const enum ike_trans_type_dh *group;
-
-		DBG(DBG_CONTROL,DBG_log("check our default proposal for received DH group"));
-		for (group = IKEv2_oakley_sadb_groups;
-		     *group != OAKLEY_GROUP_invalid; group++) {
-			if (received == (*group))
-				return TRUE;
-		}
-		DBG(DBG_CONTROL,DBG_log("received DH group not in our default proposal"));
-		return FALSE;
-	}
-}
-
-oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
-{
-
-	if (ai_list != NULL) {
-		struct ike_info *ike_info;
-		int cnt;
-
-		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
-			if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
-				/* confirm we support it */
-				if (lookup_group(ike_info->ike_modp) != NULL)
-					return ike_info->ike_modp;
-			}
-		}
-	}
-
-	/* no valid groups, again pick first from default list */
-	return IKEv2_oakley_sadb_default_group;
 }

@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -94,7 +94,7 @@ def directory(domain, console, directory, default=None):
 # return (from a login attempt) to GRUB can result in weird and
 # puzzling behaviour such as booting the wrong kernel.
 
-STARTUP_TIMEOUT = 30
+STARTUP_TIMEOUT = 60
 SHUTDOWN_TIMEOUT = 20
 
 def _startup(domain, console, timeout=STARTUP_TIMEOUT):
@@ -102,16 +102,20 @@ def _startup(domain, console, timeout=STARTUP_TIMEOUT):
     # XXX: While len(expected) should technically be sufficient, that
     # isn't clear without looking at sources.  Instead just "double,
     # and then double again".
+    domain.logger.info("waiting %d seconds for domain to start", timeout)
+    start_time = time.time()
     console.expect(expected, timeout=timeout,
                    searchwindowsize=(len(expected)*4))
-    domain.logger.info("domain started")
+    domain.logger.info("domain started after %d seconds", time.time() - start_time)
 
 # Assuming the machine is booted, try to log-in.
 
 def _login(domain, console, username, password,
            login_timeout, password_timeout, shell_timeout):
 
-    domain.logger.info("attempting to log in; timeout: %ss password timeout: %ss shell timeout: %ss",
+    start_time = time.time()
+
+    domain.logger.info("login timeouts: %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
                        login_timeout, password_timeout, shell_timeout)
     domain.logger.debug("console prompt: %s", console.prompt.pattern)
 
@@ -128,7 +132,7 @@ def _login(domain, console, username, password,
     if console.expect(["login: ", console.prompt], timeout=login_timeout,
                       searchwindowsize=searchwindowsize):
         # shell prompt
-        domain.logger.info("we're in! Someone forgot to log out ...")
+        domain.logger.info("We're in after %d seconds!  Someone forgot to log out ...", time.time() - start_time)
         return
 
     domain.logger.debug("sending username '%s' waiting %s seconds for password or shell prompt", \
@@ -137,16 +141,16 @@ def _login(domain, console, username, password,
     if console.expect(["Password: ", console.prompt], timeout=password_timeout,
                       searchwindowsize=searchwindowsize):
         # shell prompt
-        domain.logger.info("we're in! No password ...")
+        domain.logger.info("We're in after %d seconds! No password ...", time.time() - start_time)
         return
 
     domain.logger.debug("sending password '%s', waiting %s seconds for shell prompt",
                         password, shell_timeout)
     console.sendline(password)
     console.expect(console.prompt, timeout=shell_timeout)
-    domain.logger.info("we're in!")
+    domain.logger.info("We're in after %d seconds!", time.time() - start_time)
 
-LOGIN_TIMEOUT = 60
+LOGIN_TIMEOUT = 120
 PASSWORD_TIMEOUT = 5
 SHELL_TIMEOUT = 5
 
@@ -202,10 +206,17 @@ def reboot(domain, console=None,
     if not console:
         domain.logger.error("domain is shutdown")
         return None
-    domain.logger.info("rebooting domain")
+    domain.logger.info("waiting %d seconds for domain to reboot", shutdown_timeout)
+    start_time = time.time()
     domain.reboot()
-    console.expect("\[\s*[0-9]+\.[0-9]+]\s+reboot:", timeout=SHUTDOWN_TIMEOUT)
-    domain.logger.info("domain reset")
+    try:
+        console.expect("\[\s*[0-9]+\.[0-9]+]\s+reboot:", timeout=SHUTDOWN_TIMEOUT)
+        domain.logger.info("domain rebooted after %d seconds", time.time() - start_time)
+    except pexpect.TIMEOUT:
+        domain.logger.error("domain failed to reboot after %s seconds, resetting it", time.time() - start_time)
+        domain.reset()
+        # give the domain extra time to start
+        startup_timeout = startup_timeout * 4
     _startup(domain, console, timeout=startup_timeout)
     return console
 
@@ -213,15 +224,19 @@ def reboot(domain, console=None,
 # will exit giving an EOF.
 
 def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
+    start_time = time.time()
     console = console or domain.console()
     if not console:
         domain.logger.error("domain already shutdown")
         return None
-    domain.logger.info("shutting down domain")
+    domain.logger.info("waiting %d seconds for domain to shutdown", shutdown_timeout)
     domain.shutdown()
-    domain.logger.debug("waiting %s seconds for console to close", shutdown_timeout)
     if console.expect([pexpect.EOF,pexpect.TIMEOUT], timeout=shutdown_timeout):
-        domain.logger.error("timeout waiting for shutdown, giving up")
-        return True
-    domain.logger.info("domain shutdown")
+        domain.logger.error("timeout waiting for shutdown, destroying it")
+        domain.destroy()
+        if console.expect([pexpect.EOF,pexpect.TIMEOUT], timeout=shutdown_timeout):
+            domain.logger.error("timeout waiting for destroy, giving up")
+            return True
+        return False
+    domain.logger.info("domain shutdown after %d seconds", time.time() - start_time)
     return False

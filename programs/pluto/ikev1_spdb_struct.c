@@ -37,7 +37,6 @@
 #include "state.h"
 #include "packet.h"
 #include "keys.h"
-#include "secrets.h"
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "spdb.h"
@@ -180,6 +179,7 @@ static bool out_attr(int type,
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
 
+		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TLV;
 		attr.isaat_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
@@ -738,7 +738,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	}
 
 	trans_left = proposal.isap_notrans;
-	while (trans_left--) {
+	while (trans_left-- != 0) {
 		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
 			       &proposal_pbs,
 			       &trans_pbs))
@@ -884,7 +884,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
 		loglog(RC_LOG_SERIOUS,
 		       "unexpected Protocol ID (%s) found in Oakley Proposal",
-		       enum_show(&protocol_names, proposal.isap_protoid));
+		       enum_show(&ikev1_protocol_names, proposal.isap_protoid));
 		return INVALID_PROTOCOL_ID;
 	}
 
@@ -2250,7 +2250,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			default:
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected Protocol ID (%s) in IPsec Proposal",
-				       enum_show(&protocol_names,
+				       enum_show(&ikev1_protocol_names,
 						 next_proposal.isap_protoid));
 				return INVALID_PROTOCOL_ID;
 			}

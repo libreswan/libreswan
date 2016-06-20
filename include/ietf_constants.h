@@ -27,7 +27,7 @@
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
 
-#define MODP_GENERATOR "2"
+#define MODP_GENERATOR "02" /* HEX! */
 
 /* Diffie-Hellman group 22 generator (RFC 5114) */
 #define MODP_GENERATOR_DH22 \
@@ -270,13 +270,36 @@
 
 #define LOCALSECRETSIZE BYTES_FOR_BITS(256)
 
-/* limits on nonce sizes. See RFC2409 "The internet key exchange (IKE)" 5 */
-#define MINIMUM_NONCE_SIZE 8 /* bytes */
-#define DEFAULT_NONCE_SIZE 16 /* bytes */
-#define MAXIMUM_NONCE_SIZE 256 /* bytes */
 
+/* Limits on nonce sizes */
+
+/*
+ * IKEv1 RFC-2409:
+ * The length of nonce payload MUST be between 8 and 256 bytes inclusive.
+ */
+#define IKEv1_MINIMUM_NONCE_SIZE 8 /* bytes */
+#define IKEv1_MAXIMUM_NONCE_SIZE 256 /* bytes */
+
+/*
+ * IKEv2 RFC-7296:
+ * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128 bits
+ * in size, and MUST be at least half the key size of the negotiated
+ * pseudorandom function (PRF). However, the initiator chooses the nonce
+ * before the outcome of the negotiation is known.  Because of that, the
+ * nonce has to be long enough for all the PRFs being proposed.
+ */
+#define IKEv2_MINIMUM_NONCE_SIZE 16 /* bytes */
+#define IKEv2_MAXIMUM_NONCE_SIZE 256 /* bytes */
+
+/* Default is based on minimum IKEv2 requirement */
+#define DEFAULT_NONCE_SIZE 32 /* bytes */
+
+/* This really means SPI size */
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
+
+/* IKEv2 DOS COOKIE */
+#define IKEv2_MAX_COOKIE_SIZE 64
 
 /* Various IETF defined key lengths */
 
@@ -389,6 +412,7 @@
 
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
+#define AES_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
@@ -790,6 +814,11 @@ enum ikev2_trans_type {
 };
 
 /*
+ * Assume indexing is 1..IKEv2_TRANS_TYPE_ESN.
+ */
+#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN + 1)
+
+/*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * (TODO: rename this to ikev2_encr_esp_ike)
@@ -1163,6 +1192,7 @@ enum ikev2_cp_attribute_type {
 	 * IKEv2 CP Attribute types
 	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
 	 */
+	IKEv2_CP_ATTR_RESERVED = 0,
 	IKEv2_INTERNAL_IP4_ADDRESS = 1,
 	IKEv2_INTERNAL_IP4_NETMASK = 2,
 	IKEv2_INTERNAL_IP4_DNS = 3,
@@ -1521,7 +1551,8 @@ enum ike_cert_type {
 	CERT_X509_CERT_URL = 12,
 	CERT_X509_BUNDLE_URL = 13,
 	CERT_OCSP_CONTENT = 14, /* RFC 4806 */
-	/* 15 - 200 Unassigned */
+	CERT_RAW_PUBLIC_KEY = 15, /* RFC 7670 */
+	/* 16 - 200 Unassigned */
 	/* 201 - 255 Private use */
 };
 

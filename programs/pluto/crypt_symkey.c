@@ -23,7 +23,7 @@
 #include "crypt_dbg.h"
 #endif
 #include "crypto.h"
-#include "lswconf.h"
+#include "lswfips.h"
 
 /*
  * XXX: Is there an NSS version of this?

@@ -42,16 +42,20 @@ PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 # XXX: Switch directory hack
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
-clean-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
-install-local-base: $(builddir)/Makefile
+
+local-clean-base:
+	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
+
+local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
 buildall: $(PROGRAMSLIST)
+
+src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
 foreach-file = @set -eu ; $(foreach f, $(1), \
 		file=$(f) ; \
 		destdir=$(strip $(2)) ; \
-		src=$(firstword $(wildcard $(srcdir)/$(f)) $(builddir)/$(f)) ; \
+		src=$(call src-file,$(f)) ; \
 		$(3) \
 	)
 
@@ -61,12 +65,14 @@ doinstall:
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+	set -eu ; $(foreach file, $(CONFFILES), \
+		if [ ! -f $(CONFDIR)/$(file) ]; then \
+			echo Install: $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
+			mkdir -p $(CONFDIR) ; \
+			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
 		fi ; \
+	)
+	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
@@ -96,6 +102,8 @@ list-local-base:
 	)
 	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo $$destdir/$$file ; \
+	)
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
@@ -129,7 +137,7 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 %.i: %.c
 	$(CC) $(CFLAGS) -E -o $@ $<
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
@@ -140,12 +148,3 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 	@${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
-
-cleanall::
-ifneq ($(strip $(PROGRAM)),)
-	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${SRCDIR}$(PROGRAM).pl ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${SRCDIR}$(PROGRAM).c ];  then rm -f $(PROGRAM); fi
-	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
-endif
-	@rm -f *.o

@@ -110,7 +110,7 @@ struct socket_list *pfkey_registered_sockets[K_SADB_SATYPE_MAX + 1];
 
 int pfkey_msg_interp(struct sock *, struct sadb_msg *);
 
-#ifdef NET_26_24_SKALLOC
+#if defined(NET_26_24_SKALLOC) || defined(NET_44_SKALLOC)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 38)
 DEBUG_NO_STATIC int pfkey_create(struct net *net, struct socket *sock,
 				 int protocol, int kern);
@@ -649,7 +649,7 @@ int pfkey_upmsgsk(struct sock *sk, struct sadb_msg *pfkey_msg)
 	return error;
 }
 
-#if defined(NET_26_12_SKALLOC) || defined(NET_26_24_SKALLOC)
+#if defined(NET_26_12_SKALLOC) || defined(NET_26_24_SKALLOC) || defined(NET_44_SKALLOC)
 
 static struct proto key_proto = {
 	.name     = "KEY",
@@ -658,7 +658,7 @@ static struct proto key_proto = {
 
 };
 #endif
-#ifdef NET_26_24_SKALLOC
+#if defined(NET_26_24_SKALLOC) || defined(NET_44_SKALLOC)
 DEBUG_NO_STATIC int pfkey_create(struct net *net, struct socket *sock, int protocol
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, \
 					 38)
@@ -721,6 +721,9 @@ DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol)
 	KLIPS_INC_USE;
 
 #ifdef NET_26
+#ifdef NET_44_SKALLOC
+	sk = (struct sock *)sk_alloc(net, PF_KEY, GFP_KERNEL, &key_proto, 0);
+#else
 #ifdef NET_26_24_SKALLOC
 	sk = (struct sock *)sk_alloc(net, PF_KEY, GFP_KERNEL, &key_proto);
 #else
@@ -728,6 +731,7 @@ DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol)
 	sk = (struct sock *)sk_alloc(PF_KEY, GFP_KERNEL, &key_proto, 1);
 #else
 	sk = (struct sock *)sk_alloc(PF_KEY, GFP_KERNEL, 1, NULL);
+#endif
 #endif
 #endif
 #else
@@ -1229,7 +1233,7 @@ int pfkey_supported_show(struct seq_file *seq, void *offset)
 
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		ps = pfkey_supported_list[satype];
-		while (ps) {
+		while (ps != NULL) {
 			struct ipsec_alg_supported *alg = ps->supportedp;
 			const char *n = alg->ias_name;
 			if (n == NULL) n = "unknown";
@@ -1259,7 +1263,7 @@ int pfkey_registered_show(struct seq_file *seq, void *offset)
 
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		pfkey_sockets = pfkey_registered_sockets[satype];
-		while (pfkey_sockets) {
+		while (pfkey_sockets != NULL) {
 			seq_printf(seq,
 				     "    %2d %8p %5d %8p\n",
 				     satype,

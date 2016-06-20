@@ -1149,7 +1149,7 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 				     ahp->ah_data,
 				     AHHMAC_HASHLEN);
 
-		if(buf)
+		if (buf)
 			kfree(buf);
 	} else
 #endif  /* CONFIG_KLIPS_ALG */
@@ -2618,14 +2618,20 @@ void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs)
 	}
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 static inline int ipsec_xmit_send2(struct sk_buff *skb)
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
 static inline int ipsec_xmit_send2(struct sock *sk, struct sk_buff *skb)
+#else
+static inline int ipsec_xmit_send2(struct net *net, struct sock *sk, struct sk_buff *skb)
 #endif
 {
 #ifdef NET_26   /* 2.6 kernels */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	return dst_output(dev_net(skb->dev), sk, skb);
+#else
 	return dst_output(skb);
+#endif
 
 #else
 	return ip_send(skb);
@@ -2642,10 +2648,12 @@ static inline int ipsec_xmit_send2_mast(struct sk_buff *skb)
 		skb->nfmark = 0;
 # endif
 #endif
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
 	return ipsec_xmit_send2(skb);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
 	return ipsec_xmit_send2(skb->sk, skb);
+#else
+	return ipsec_xmit_send2(dev_net(skb->dev), skb->sk, skb);
 #endif
 
 }
@@ -2730,11 +2738,11 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 
 # ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
-		if (ixs->pass)
-			memset(&fl.nl_u.ip6_u.saddr, 0,
-			       sizeof(fl.nl_u.ip6_u.saddr));
-		else
-			fl.nl_u.ip6_u.saddr = lsw_ip6_hdr(ixs)->saddr;
+		/* saddr must not be set with ipv6, otherwise you can't 
+		 * force the output device with linux kernels >= 4.3.
+		 * (kernel commit d46a9d678e4c9fac1e968d0593e4dba683389324)
+		 */
+		memset(&fl.nl_u.ip6_u.saddr, 0, sizeof(fl.nl_u.ip6_u.saddr));
 		fl.nl_u.ip6_u.daddr = lsw_ip6_hdr(ixs)->daddr;
 		/* fl->nl_u.ip6_u.tos = RT_TOS(lsw_ip6_hdr(ixs)->tos); */
 		fl.flowi_proto = IPPROTO_IPV6;
@@ -2896,8 +2904,11 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			err = ipsec_xmit_send2_mast(ixs->skb);
 		} else if (ip_hdr(ixs->skb)->version == 6) {
 			err = NF_HOOK(PF_INET6, LSW_NF_INET_LOCAL_OUT,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
-					ixs->skb->sk,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+				      dev_net(ixs->skb->dev),
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+				      ixs->skb->sk,
 #endif
 				      ixs->skb, NULL,
 				      ixs->route ?
@@ -2906,7 +2917,10 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 				      ipsec_xmit_send2);
 		} else {
 			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+				      dev_net(ixs->skb->dev),
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 				      ixs->skb->sk,
 #endif
 				      ixs->skb, NULL,

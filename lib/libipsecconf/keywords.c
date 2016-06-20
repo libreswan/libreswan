@@ -3,10 +3,11 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,6 +99,13 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 };
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
+static const struct keyword_enum_value kw_esn_values[] = {
+	{ "yes",     esn_yes  },
+	{ "no",    esn_no },
+	{ "either",   esn_either },
+};
+static const struct keyword_enum_values kw_esn_list = VALUES_INITIALIZER(kw_esn_values);
+
 static const struct keyword_enum_value kw_ddos_values[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
@@ -109,6 +117,7 @@ static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddo
  * Values for authby={rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
+	/* note: these POLICY bits happen to fit in an unsigned int */
 	{ "never",     LEMPTY },
 	{ "null",      POLICY_AUTH_NULL},
 	{ "secret",    POLICY_PSK },
@@ -183,12 +192,12 @@ static const struct keyword_enum_value kw_type_values[] = {
 static const struct keyword_enum_values kw_type_list = VALUES_INITIALIZER(kw_type_values);
 
 /*
- * Values for rsasigkey={%dnsondemand, %dns, literal }
+ * Values for rsasigkey={ %cert, %dnsondemand, %dns, literal }
  */
 static const struct keyword_enum_value kw_rsasigkey_values[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
-	{ "%dns",         PUBKEY_DNS },
+	{ "%dns",         PUBKEY_DNSONDEMAND },
 	{ "%dnsondemand", PUBKEY_DNSONDEMAND },
 };
 
@@ -304,6 +313,7 @@ static const struct keyword_enum_value kw_klipsdebug_values[] = {
 static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(kw_klipsdebug_values);
 
 static const struct keyword_enum_value kw_phase2types_values[] = {
+	/* note: these POLICY bits happen to fit in an unsigned int */
 	{ "ah+esp",   POLICY_ENCRYPT | POLICY_AUTHENTICATE },
 	{ "esp",      POLICY_ENCRYPT },
 	{ "ah",       POLICY_AUTHENTICATE },
@@ -415,6 +425,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "protostack",     kv_config, kt_string,    KSF_PROTOSTACK,
 	  &kw_proto_stack },
 	{ "nhelpers", kv_config, kt_number, KBF_NHELPERS, NOT_ENUM },
+	{ "drop-oppo-null",  kv_config, kt_bool, KBF_DROP_OPPO_NULL, NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
 	/* ??? AN ATTRIBUTE TYPE, NOT VALUE! */
 	{ "secctx_attr_value", kv_config | kv_alias, kt_number, KBF_SECCTX, NOT_ENUM },	/* obsolete _ */
@@ -455,6 +466,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KSCF_RSAKEY2, &kw_rsasigkey_list },
 	{ "cert",           kv_conn | kv_auto | kv_leftright, kt_filename,
 	  KSCF_CERT, NOT_ENUM },
+	{ "ckaid",          kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_CKAID, NOT_ENUM },
 	{ "sendcert",       kv_conn | kv_auto | kv_leftright, kt_enum,
 	  KNCF_SENDCERT, &kw_sendcert_list },
 	{ "ca",             kv_conn | kv_auto | kv_leftright, kt_string,
@@ -463,14 +476,16 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KNCF_XAUTHSERVER,  NOT_ENUM },
 	{ "xauthclient", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_XAUTHCLIENT, NOT_ENUM },
-	{ "xauthname",   kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
 	{ "modecfgserver", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_MODECONFIGSERVER, NOT_ENUM },
 	{ "modecfgclient", kv_conn | kv_auto | kv_leftright, kt_bool,
 	  KNCF_MODECONFIGCLIENT, NOT_ENUM },
-	{ "xauthusername", kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
+	{ "username", kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_USERNAME, NOT_ENUM },
+	{ "xauthusername", kv_conn | kv_auto | kv_leftright | kv_alias, kt_string,
+	  KSCF_USERNAME, NOT_ENUM }, /* obsolete name */
+	{ "xauthname", kv_conn | kv_auto | kv_leftright | kv_alias, kt_string,
+	  KSCF_USERNAME, NOT_ENUM }, /* obsolete name */
 	{ "addresspool", kv_conn | kv_auto | kv_leftright, kt_range,
 	  KSCF_ADDRESSPOOL, NOT_ENUM },
 
@@ -491,6 +506,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_keyexchange_list },
 	{ "ikev2",          kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEv2, &kw_fourvalued_list },
+	{ "esn",          kv_conn | kv_auto | kv_processed, kt_enum,
+	  KBF_ESN, &kw_esn_list },
 	{ "ike_frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
 	  KBF_IKE_FRAG, &kw_ynf_list },	/* obsolete _ */
 	{ "ike-frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
@@ -585,7 +602,15 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "modecfgbanner", kv_conn | kv_auto, kt_string, KSCF_MODECFGBANNER,
 	  NOT_ENUM },
-	{ "mark",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK,
+	{ "mark",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_BOTH,
+	  NOT_ENUM },
+	{ "mark-in",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_IN,
+	  NOT_ENUM },
+	{ "mark-out",    kv_conn | kv_auto, kt_string, KSCF_CONN_MARK_OUT,
+	  NOT_ENUM },
+	{ "vti-interface",    kv_conn | kv_auto, kt_string, KSCF_VTI_IFACE,
+	  NOT_ENUM },
+	{ "vti-routing",    kv_conn | kv_auto, kt_bool, KBF_VTI_ROUTING,
 	  NOT_ENUM },
 
 	{ "modecfgwins1", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
@@ -594,6 +619,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 
 	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
+	  NOT_ENUM },
+
+	{ "cat",            kv_conn | kv_auto | kv_leftright, kt_bool, KNCF_CAT,
 	  NOT_ENUM },
 
 	{ "overlapip",      kv_conn | kv_auto, kt_bool,   KBF_OVERLAPIP,
@@ -630,10 +658,12 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KSCF_SUBNETWITHIN, NOT_ENUM },
 	{ "protoport",      kv_conn | kv_leftright | kv_processed, kt_string,
 	  KSCF_PROTOPORT, NOT_ENUM },
+
 	{ "phase2",         kv_conn | kv_auto | kv_manual | kv_policy,
 	  kt_enum, KBF_PHASE2, &kw_phase2types_list },
-	{ "auth",           kv_conn | kv_auto | kv_manual | kv_policy |
-	  kv_alias,  kt_enum, KBF_PHASE2, &kw_phase2types_list },
+	{ "auth",           kv_conn | kv_auto | kv_manual | kv_policy | kv_alias,
+	  kt_enum, KBF_PHASE2, &kw_phase2types_list },
+
 	{ "compress",       kv_conn | kv_auto, kt_bool,   KBF_COMPRESS,
 	  NOT_ENUM },
 

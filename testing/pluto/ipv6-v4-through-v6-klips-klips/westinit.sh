@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --46
 # confirm that the network is alive
-ping -n -c 4 -I 192.0.1.254 192.0.2.254
+../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
 iptables -A INPUT -i eth1 -p icmp -j DROP
 # confirm with a ping

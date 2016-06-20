@@ -30,7 +30,7 @@ fi
 
 # message patterns that start relevant parts of logs
 fstart='Starting Libreswan'
-pstart='Starting Pluto subsystem'
+pstart='Starting Pluto'
 
 case "$1" in
 --help)		echo "Usage: ipsec barf" ; exit 0	;;
@@ -185,6 +185,12 @@ then
 	ip l2tp show tunnel
 _________________________ ip-l2tp-session
 	ip l2tp show session
+fi
+if test -d /sys/module/ip_vti
+then
+	ip -s tunnel show
+_________________________ ip-tunnel
+	ip -s tunnel show
 fi
 _________________________ /proc/crypto
 if test -r /proc/crypto

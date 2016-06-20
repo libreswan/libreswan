@@ -73,6 +73,7 @@
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "ike_alg.h"
+#include "secrets.h"
 
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
@@ -198,6 +199,7 @@ static st_jbuf_t *alloc_st_jbuf(void)
 				ptrdiff_t n = ptr - st_jbuf_mem;	/* number of entries, excluding end marker */
 
 				/* allocate n entries, plus one new entry, plus new endmarker */
+				/* ??? why are we using reealloc instead of Pluto's functions? */
 				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
 				if (st_jbuf_mem == NULL)
 					lsw_abort();
@@ -368,6 +370,141 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 }
 
 /**
+ * Add ISAKMP attribute
+ *
+ * Add a given Mode Config attribute to the reply stream.
+ *
+ * @param pb_stream strattr the reply stream (stream)
+ * @param attr_type int the attribute type
+ * @param ia internal_addr the IP information for the connection
+ * @param st State structure
+ * @return stf_status STF_OK or STF_INTERNAL_ERROR
+ */
+static stf_status isakmp_add_attr (pb_stream *strattr,
+				   const int attr_type,
+				   const struct internal_addr *ia,
+				   const struct state *st)
+{
+	pb_stream attrval;
+	unsigned char *byte_ptr;
+	unsigned int len;
+	bool dont_advance;
+	int dns_idx = 0;
+
+	do {
+		dont_advance = FALSE;
+
+		/* ISAKMP attr out */
+		{
+			struct isakmp_attribute attr;
+
+			attr.isaat_af_type = attr_type |
+					     ISAKMP_ATTR_AF_TLV;
+			if (!out_struct(&attr,
+					&isakmp_xauth_attribute_desc,
+					strattr,
+					&attrval))
+				return STF_INTERNAL_ERROR;
+		}
+
+		switch (attr_type) {
+		case INTERNAL_IP4_ADDRESS:
+			len = addrbytesptr(&ia->ipaddr,
+					   &byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_addr"))
+				return STF_INTERNAL_ERROR;
+
+			break;
+
+		case INTERNAL_IP4_SUBNET:
+			len = addrbytesptr(
+				&st->st_connection->spd.this.client.addr,
+				&byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_subnet"))
+				return STF_INTERNAL_ERROR;
+			/* FALL THROUGH */
+		case INTERNAL_IP4_NETMASK:
+		{
+			int m =
+				st->st_connection->spd.this.client.maskbits;
+			u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+
+
+			if (!out_raw(&mask, sizeof(mask),
+				     &attrval, "IP4_submsk"))
+				return STF_INTERNAL_ERROR;
+			break;
+		}
+
+		case INTERNAL_IP4_DNS:
+			len = addrbytesptr(&ia->dns[dns_idx++],
+					   &byte_ptr);
+			if (!out_raw(byte_ptr, len, &attrval,
+				     "IP4_dns"))
+				return STF_INTERNAL_ERROR;
+
+			if (dns_idx < 2 &&
+			    !isanyaddr(&ia->dns[dns_idx]))
+				dont_advance = TRUE;
+			break;
+
+		case MODECFG_DOMAIN:
+			if (!out_raw(st->st_connection->modecfg_domain,
+				     strlen(st->st_connection->modecfg_domain),
+				     &attrval, "")) {
+				return STF_INTERNAL_ERROR;
+			}
+			break;
+
+		case MODECFG_BANNER:
+			if (!out_raw(st->st_connection->modecfg_banner,
+				     strlen(st->st_connection->modecfg_banner),
+				     &attrval, "")) {
+				return STF_INTERNAL_ERROR;
+			}
+			break;
+
+		/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
+		case CISCO_SPLIT_INC:
+		{
+		/* example payload
+		 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
+		 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
+		 *  28676        14        10.0.0.0    255.0.0.0
+		 *
+		 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
+		 */
+			/*
+			 * ??? this really should use
+			 * packet emitting routines
+			 */
+
+			unsigned char si[14];	/* 14 is magic */
+
+			zero(&si);	/* OK: no pointer fields */
+			memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
+			struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+			memcpy(si + 4, &splitmask, 4);
+			if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
+				return STF_INTERNAL_ERROR;
+			break;
+		}
+		default:
+			libreswan_log(
+				"attempt to send unsupported mode cfg attribute %s.",
+				enum_show(&modecfg_attr_names,
+					  attr_type));
+			break;
+		}
+		close_output_pbs(&attrval);
+	} while (dont_advance);
+
+	return STF_OK;
+}
+
+/**
  * Mode Config Reply
  *
  * Generates a reply stream containing Mode Config information (eg: IP, DNS, WINS)
@@ -397,7 +534,7 @@ static stf_status modecfg_resp(struct state *st,
 	{
 		pb_stream hash_pbs;
 
-		if (!out_generic(ISAKMP_NEXT_MCFG_ATTR, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(ISAKMP_NEXT_MCFG_ATTR, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -414,7 +551,6 @@ static stf_status modecfg_resp(struct state *st,
 		pb_stream strattr;
 		int attr_type;
 		struct internal_addr ia;
-		int dns_idx;
 		bool has_lease;
 
 		{
@@ -453,145 +589,45 @@ static stf_status modecfg_resp(struct state *st,
 			}
 		}
 
+		/* Send the attributes requested by the client. */
 		attr_type = 0;
-		dns_idx = 0;
 		while (resp != LEMPTY) {
-			bool dont_advance = FALSE;
-
 			if (resp & 1) {
-				pb_stream attrval;
-				unsigned char *byte_ptr;
-				unsigned int len;
-
-				/* ISAKMP attr out */
-				{
-					struct isakmp_attribute attr;
-
-					attr.isaat_af_type = attr_type |
-							     ISAKMP_ATTR_AF_TLV;
-					if (!out_struct(&attr,
-							&isakmp_xauth_attribute_desc,
-							&strattr,
-							&attrval))
-						return STF_INTERNAL_ERROR;
-				}
-
-				switch (attr_type) {
-				case INTERNAL_IP4_ADDRESS:
-					len = addrbytesptr(&ia.ipaddr,
-							   &byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_addr"))
-						return STF_INTERNAL_ERROR;
-
-					break;
-
-				case INTERNAL_IP4_SUBNET:
-					len = addrbytesptr(
-						&st->st_connection->spd.this.client.addr,
-						&byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_subnet"))
-						return STF_INTERNAL_ERROR;
-					/* FALL THROUGH */
-				case INTERNAL_IP4_NETMASK:
-				{
-					int m =
-						st->st_connection->spd.this.client.maskbits;
-					u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
-
-
-					if (!out_raw(&mask, sizeof(mask),
-						     &attrval, "IP4_submsk"))
-						return STF_INTERNAL_ERROR;
-					break;
-				}
-
-				case INTERNAL_IP4_DNS:
-					len = addrbytesptr(&ia.dns[dns_idx++],
-							   &byte_ptr);
-					if (!out_raw(byte_ptr, len, &attrval,
-						     "IP4_dns"))
-						return STF_INTERNAL_ERROR;
-
-					if (dns_idx < 2 &&
-					    !isanyaddr(&ia.dns[dns_idx]))
-						dont_advance = TRUE;
-					break;
-
-				case MODECFG_DOMAIN:
-					if(st->st_connection->modecfg_domain) {
-						DBG_log("We are sending '%s' as domain",
-							st->st_connection->modecfg_domain);
-						if (!out_raw(st->st_connection->modecfg_domain,
-							     strlen(st->st_connection->modecfg_domain),
-							     &attrval, "")) {
-							return STF_INTERNAL_ERROR;
-						}
-					} else {
-						DBG_log("We are not sending a domain");
-					}
-					break;
-
-				case MODECFG_BANNER:
-					if(st->st_connection->modecfg_banner) {
-						DBG_log("We are sending '%s' as banner",
-							st->st_connection->modecfg_banner);
-						if (!out_raw(st->st_connection->modecfg_banner,
-							     strlen(st->st_connection->modecfg_banner),
-							     &attrval, "")) {
-							return STF_INTERNAL_ERROR;
-						}
-					} else {
-						DBG_log("We are not sending a banner");
-					}
-					break;
-
-				/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
-				case CISCO_SPLIT_INC:
-				{
-				/* example payload
-				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
-				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
-				 *  28676        14        10.0.0.0    255.0.0.0
-				 *
-				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
-				 */
-					/*
-					 * ??? this really should use
-					 * packet emitting routines
-					 */
-
-					/* If we don't need split tunneling, just omit the payload */
-					if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
-						DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
-						break;
-					}
-					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
-					unsigned char si[14];	/* 14 is magic */
-
-					zero(&si);	/* OK: no pointer fields */
-					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
-					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
-					memcpy(si + 4, &splitmask, 4);
-					if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
-						return STF_INTERNAL_ERROR;
-					break;
-				}
-				default:
-					libreswan_log(
-						"attempt to send unsupported mode cfg attribute %s.",
-						enum_show(&modecfg_attr_names,
-							  attr_type));
-					break;
-				}
-				close_output_pbs(&attrval);
-
+				stf_status ret = isakmp_add_attr (&strattr, attr_type, &ia, st);
+				if (ret != STF_OK)
+					return ret;
 			}
-			if (!dont_advance) {
-				attr_type++;
-				resp >>= 1;
-			}
+			attr_type++;
+			resp >>= 1;
+		}
+
+		/* Send these even if the client didn't request them. Due
+		 * to and unwise use of a bitmask the limited range of lset_t
+		 * causes us to loose track of whether the client requested
+		 * them. No biggie, the MODECFG draft allows us to send
+		 * attributes that the client didn't request and if we set
+		 * MODECFG_DOMAIN and MODECFG_BANNER in connection
+		 * configuration we probably want the client to see them
+		 * anyway. */
+		if (st->st_connection->modecfg_domain != NULL) {
+			DBG_log("We are sending '%s' as domain",
+				st->st_connection->modecfg_domain);
+			isakmp_add_attr (&strattr, MODECFG_DOMAIN, &ia, st);
+		} else {
+			DBG_log("We are not sending a domain");
+		}
+		if (st->st_connection->modecfg_banner != NULL) {
+			DBG_log("We are sending '%s' as banner",
+				st->st_connection->modecfg_banner);
+			isakmp_add_attr (&strattr, MODECFG_BANNER, &ia, st);
+		} else {
+			DBG_log("We are not sending a banner");
+		}
+		if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+			DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+		} else {
+			DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+			isakmp_add_attr (&strattr, CISCO_SPLIT_INC, &ia, st);
 		}
 
 		if (!close_message(&strattr, st))
@@ -995,7 +1031,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "XAUTH: status");
 
-	if (status)
+	if (status != 0)
 		change_state(st, STATE_XAUTH_R1);
 
 	return STF_OK;
@@ -1141,12 +1177,12 @@ static bool do_file_authentication(void *varg)
 
 			if (win) {
 
-				if(addresspool != NULL && strlen(addresspool)>0) {
+				if (addresspool != NULL && strlen(addresspool)>0) {
 					/* set user defined ip address or pool */
 					char *temp;
 					char single_addresspool[128];
 					pool_range = alloc_thing(ip_range, "pool_range");
-					if(pool_range != NULL){
+					if (pool_range != NULL){
 						temp = strchr(addresspool, '-');
 						if (temp == NULL ) {
 							/* convert single ip address to addresspool */
@@ -1162,9 +1198,9 @@ static bool do_file_authentication(void *varg)
 							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
 						}
 						/* if valid install new addresspool */
-						if(pool_range->start.u.v4.sin_addr.s_addr){
+						if (pool_range->start.u.v4.sin_addr.s_addr){
 						    /* delete existing pool if exits */
-							if(c->pool)
+							if (c->pool)
 								unreference_addresspool(c);
 							c->pool = install_addresspool(pool_range);
 						}
@@ -1181,6 +1217,7 @@ static bool do_file_authentication(void *varg)
 	return win;
 }
 
+#ifdef XAUTH_HAVE_PAM
 /* IN AN AUTH THREAD */
 static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 {
@@ -1215,8 +1252,9 @@ static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 				(unsigned long)(served_delta.tv_usec * 1000000)));
 
 	pfreeany(parg.ra);
-	return (results);
+	return results;
 }
+#endif
 
 /*
  * Main authentication routine will then call the actual compiled-in
@@ -1335,7 +1373,7 @@ static void *do_authentication(void *varg)
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), arg->name);
+		jam_str(st->st_username, sizeof(st->st_username), arg->name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -1798,6 +1836,12 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			/* ignore */
 			break;
+		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+			/* ignore - we will always send/receive these */
+			break;
+
 		default:
 			log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 			break;
@@ -1917,6 +1961,11 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 				/* ignore */
 				break;
+			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+				/* ignore - we will always send/receive these */
+				break;
 
 			default:
 				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
@@ -1985,9 +2034,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				loglog(RC_INFORMATIONAL,
-					"Received IP4 NETMASK %s",
-					ipstr(&a, &b));
+				DBG(DBG_CONTROL, DBG_log("Received IP4 NETMASK %s",
+					ipstr(&a, &b)));
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2045,25 +2093,19 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
+				/* this is always done - irrespective of CFG request */
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"Domain");
-				/*
-				 * ??? this won't work because MODECFG_DOMAIN is way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
+				/* this is always done - irrespective of CFG request */
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				/*
-				 * ??? this won't work because MODECFG_BANNER is way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
 				break;
 			}
 
@@ -2077,7 +2119,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				struct connection *c = st->st_connection;
 				struct spd_route *last_spd = &c->spd;
 
-				DBG_log("Received Cisco Split tunnel route(s)");
+				DBG(DBG_CONTROL, DBG_log("Received Cisco Split tunnel route(s)"));
 				if (!last_spd->that.has_client) {
 					ip_address any;
 
@@ -2156,12 +2198,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						sizeof(caddr));
 
 					loglog(RC_INFORMATIONAL,
-						"Received subnet %s, maskbits %d",
-						caddr,
-						tmp_spd->that.client.maskbits);
-
-					tmp_spd->this.cert_nickname = NULL;
-					tmp_spd->that.cert_nickname = NULL;
+						"Received subnet %s",
+						caddr);
 
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;
@@ -2193,11 +2231,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
-				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				/*
-				 * ??? this won't work because INTERNAL_IP4_NBNS and INTERNAL_IP6_NBNS are way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
+				libreswan_log("Received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
 			}
 
@@ -2236,7 +2270,7 @@ static stf_status xauth_client_resp(struct state *st,
 			     u_int16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
-	char xauth_username[XAUTH_USERNAME_LEN];
+	char xauth_username[MAX_USERNAME_LEN];
 	struct connection *c = st->st_connection;
 
 	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
@@ -2245,7 +2279,7 @@ static stf_status xauth_client_resp(struct state *st,
 		pb_stream hash_pbs;
 		int np = ISAKMP_NEXT_MCFG_ATTR;
 
-		if (!out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
@@ -2306,7 +2340,7 @@ static stf_status xauth_client_resp(struct state *st,
 							&attrval))
 						return STF_INTERNAL_ERROR;
 
-					if (st->st_xauth_username[0] == '\0') {
+					if (st->st_username[0] == '\0') {
 						if (st->st_whack_sock == -1) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username requested, but no file descriptor available for prompt");
@@ -2327,21 +2361,21 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 						/* replace the first newline character with a string-terminating \0. */
 						{
-							char* cptr = memchr(
+							char *cptr = memchr(
 								xauth_username,
 								'\n',
 								sizeof(xauth_username));
-							if (cptr)
+							if (cptr != NULL)
 								*cptr = '\0';
 						}
-						jam_str(st->st_xauth_username,
-							sizeof(st->st_xauth_username),
+						jam_str(st->st_username,
+							sizeof(st->st_username),
 							xauth_username);
 					}
 
-					if (!out_raw(st->st_xauth_username,
+					if (!out_raw(st->st_username,
 						     strlen(st->
-							    st_xauth_username),
+							    st_username),
 						     &attrval,
 						     "XAUTH username"))
 						return STF_INTERNAL_ERROR;
@@ -2365,11 +2399,11 @@ static stf_status xauth_client_resp(struct state *st,
 						struct secret *s =
 							lsw_get_xauthsecret(
 								st->st_connection,
-								st->st_xauth_username);
+								st->st_username);
 
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
-							    st->st_xauth_username,
+							    st->st_username,
 							    s));
 						if (s != NULL) {
 							struct private_key_stuff
@@ -2462,7 +2496,7 @@ static stf_status xauth_client_resp(struct state *st,
 	}
 
 	libreswan_log("XAUTH: Answering XAUTH challenge with user='%s'",
-		      st->st_xauth_username);
+		      st->st_username);
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
@@ -2708,7 +2742,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		pb_stream hash_pbs;
 		int np = ISAKMP_NEXT_MCFG_ATTR;
 
-		if (!out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
+		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */

@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -71,6 +71,12 @@ class Domain:
 
     def reboot(self):
         return self.run_status_output("sudo virsh reboot %s" % (self.name))
+
+    def reset(self):
+        return self.run_status_output("sudo virsh reset %s" % (self.name))
+
+    def destroy(self):
+        return self.run_status_output("sudo virsh destroy %s" % (self.name))
 
     def start(self):
         return self.run_status_output("sudo virsh start %s" % (self.name))

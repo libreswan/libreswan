@@ -1,4 +1,5 @@
 /* Libreswan config file parser keywords processor
+ *
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
@@ -7,8 +8,9 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,6 +31,8 @@
 #include "libreswan.h"
 #include "constants.h"
 #endif
+
+#include <sys/queue.h>
 
 /*
  * these are global configuration parameters, and appear in
@@ -83,6 +87,7 @@ enum keyword_numeric_config_field {
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
 	KBF_SEEDBITS,
+	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
 	KBF_CRLCHECKINTERVAL,
@@ -115,6 +120,7 @@ enum keyword_numeric_config_field {
 	KBF_MODECONFIGPULL,
 	KBF_FORCEENCAP,
 	KBF_IKEv2,
+	KBF_ESN,
 	KBF_IKEv2_ALLOW_NARROWING,
 	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
@@ -141,6 +147,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,
 	KBF_NFLOG_CONN,
 	KBF_DDOS_MODE,
+	KBF_VTI_ROUTING,
 	KBF_MAX
 };
 
@@ -164,11 +171,12 @@ enum keyword_string_conn_field {
 	KSCF_RSAKEY1, /* loose_enum */
 	KSCF_RSAKEY2, /* loose_enum */
 	KSCF_CERT,
+	KSCF_CKAID,
 	KSCF_CA,
 	KSCF_SUBNETWITHIN,
 	KSCF_PROTOPORT,
 	KSCF_SOURCEIP,
-	KSCF_XAUTHUSERNAME,
+	KSCF_USERNAME,
 	KSCF_SUBNETS,
 	KSCF_ADDRESSPOOL,
 	KSCF_MODECFGDNS1,
@@ -181,7 +189,10 @@ enum keyword_string_conn_field {
 	KSCF_ALSOFLIP,
 	KSCF_CONNALIAS,
 	KSCF_POLICY_LABEL,
-	KSCF_CONN_MARK,
+	KSCF_CONN_MARK_BOTH,
+	KSCF_CONN_MARK_IN,
+	KSCF_CONN_MARK_OUT,
+	KSCF_VTI_IFACE,
 	KSCF_MAX
 };
 
@@ -197,6 +208,7 @@ enum keyword_numeric_conn_field {
 	KNCF_XAUTHCLIENT      = 8,
 	KNCF_MODECONFIGSERVER = 9,
 	KNCF_MODECONFIGCLIENT = 10,
+	KNCF_CAT              = 11,
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,
@@ -238,6 +250,19 @@ enum keyword_auto {
 	STARTUP_ADD        = 2,
 	STARTUP_ONDEMAND   = 3,
 	STARTUP_START      = 4
+};
+
+/*
+ * Potential keyword values for fields like {left,right}rsasigkey=.
+ *
+ * This is internal to the config parser and doesn't belong in whack
+ * or on the wire.
+ */
+enum keyword_pubkey {
+	PUBKEY_NOTSET       = 0,
+	PUBKEY_DNSONDEMAND  = 1,
+	PUBKEY_CERTIFICATE  = 2,
+	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
 };
 
 enum keyword_satype {

@@ -167,15 +167,6 @@ static int createdelete_virtual(int createdelete, char *virtname)
 	return 0;
 }
 
-/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
- * The odd-looking parens are to prevent macro expansion:
- * lswlog.h without DEBUG define a macro exit_tool().
- */
-void (exit_tool)(int x)
-{
-	exit(x);
-}
-
 int debug = 0;
 
 int main(int argc, char *argv[])
@@ -219,7 +210,7 @@ int main(int argc, char *argv[])
 			usage(progname);
 			break;
 		case 'v':
-			if (optarg) {
+			if (optarg != NULL) {
 				fprintf(stderr,
 					"%s: warning; '-v' and '--version' options don't expect arguments, arg '%s' found, perhaps unintended.\n",
 					progname, optarg);
@@ -308,6 +299,7 @@ int main(int argc, char *argv[])
 				progname);
 			exit(1);
 		}
+		break;
 	case IPSEC_DEL_DEV:
 		if (!ifr.ifr_name[0]) {
 			fprintf(stderr, "%s: virtual I/F parameter missing.\n",

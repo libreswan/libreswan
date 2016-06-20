@@ -50,6 +50,7 @@
 #include "defs.h"
 #include "whack.h"
 
+#include <net/if.h> /* for IFNAMSIZ */
 /*
  * Print the 'ipsec --whack help' message
  */
@@ -65,16 +66,16 @@ static void help(void)
 		"connection: whack --name <connection_name> \\\n"
 		"	--connalias <alias_names> \\\n"
 		"	[--ipv4 | --ipv6] [--tunnelipv4 | --tunnelipv6] \\\n"
-		"	(--host <ip-address> | --id <identity> | --cert <path>) \\\n"
+		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
 		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
 		"	[--updown <updown>] \\\n"
-		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--groups <access control groups>] \\\n"
-		"	[--cert <path>] [--ca <distinguished name>] \\\n"
+		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
+		"	[--ca <distinguished name>] \\\n"
 		"	[--sendca no|issuer|all] [--sendcert] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
@@ -99,6 +100,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
+		"	[--esn ] [--no-esn] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -120,7 +122,8 @@ static void help(void)
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
-		"       [--conn-mark <mark/mask>] \\\n"
+		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
+		"       [--vti-iface <iface> ] [ --vti-routing ]\\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -130,7 +133,7 @@ static void help(void)
 		"\n"
 		"initiation: whack (--initiate | --terminate) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
-		"	[--xauthname <name>] [--xauthpass <pass>]\n"
+		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address>\n"
@@ -141,7 +144,7 @@ static void help(void)
 		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
 		"\n"
-		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
+		"delete user: whack --deleteuser --name <user_name> \\\n"
 		"	[--crash <ip-address>]\n"
 		"\n"
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
@@ -291,7 +294,7 @@ enum option_enums {
 	OPT_ASYNC,
 
 	OPT_DELETECRASH,
-	OPT_XAUTHNAME,
+	OPT_USERNAME,
 	OPT_XAUTHPASS,
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
@@ -323,6 +326,7 @@ enum option_enums {
 	END_HOST,
 	END_ID,
 	END_CERT,
+	END_CKAID,
 	END_CA,
 	END_GROUPS,
 	END_IKEPORT,
@@ -358,7 +362,11 @@ enum option_enums {
 	CD_PRIORITY,
 	CD_REQID,
 	CD_NFLOG_GROUP,
-	CD_CONN_MARK,
+	CD_CONN_MARK_BOTH,
+	CD_CONN_MARK_IN,
+	CD_CONN_MARK_OUT,
+	CD_VTI_IFACE,
+	CD_VTI_ROUTING,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -489,8 +497,9 @@ static const struct option long_opts[] = {
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
-	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
-	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
+	{ "username", required_argument, NULL, OPT_USERNAME + OO },
+	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
+	{ "xauthname", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
@@ -515,6 +524,7 @@ static const struct option long_opts[] = {
 	{ "host", required_argument, NULL, END_HOST + OO },
 	{ "id", required_argument, NULL, END_ID + OO },
 	{ "cert", required_argument, NULL, END_CERT + OO },
+	{ "ckaid", required_argument, NULL, END_CKAID + OO },
 	{ "ca", required_argument, NULL, END_CA + OO },
 	{ "groups", required_argument, NULL, END_GROUPS + OO },
 	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
@@ -602,7 +612,11 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + OO + NUMERIC_ARG },
-	{ "conn-mark", required_argument, NULL, CD_CONN_MARK + OO },
+	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
+	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN + OO },
+	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
+	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
+	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -639,6 +653,9 @@ static const struct option long_opts[] = {
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
 	PS("ikefrag-force", IKE_FRAG_FORCE),
 	PS("no-ikepad", NO_IKEPAD),
+
+	PS("no-esn", ESN_NO),
+	PS("esn", ESN_YES),
 #undef PS
 
 
@@ -709,6 +726,8 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 	{ "impair-send-zero-gx", no_argument, NULL,
 		IMPAIR_SEND_ZERO_GX_IX + DO },
+	{ "impair-send-bogus-dcookie", no_argument, NULL,
+		IMPAIR_SEND_BOGUS_DCOOKIE_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
@@ -840,10 +859,10 @@ int main(int argc, char **argv)
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
-	char xauthname[XAUTH_MAX_NAME_LENGTH];
+	char username[MAX_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int xauthnamelen = 0, xauthpasslen = 0;
-	bool gotxauthname = FALSE, gotxauthpass = FALSE;
+	int usernamelen = 0, xauthpasslen = 0;
+	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
 
 	/* check division of numbering space */
@@ -1148,7 +1167,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		/* --deleteuser  --name <xauth username> */
+		/* --deleteuser  --name <username> */
 		case OPT_DELETEUSER:
 			msg.whack_deleteuser = TRUE;
 			continue;
@@ -1356,7 +1375,20 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			msg.right.cert = optarg;	/* decoded by Pluto */
+			if (msg.right.pubkey != NULL)
+				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+			msg.right.pubkey = optarg;	/* decoded by Pluto */
+			msg.right.pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+			continue;
+
+		case END_CKAID:	/* --ckaid <ckaid> */
+			if (msg.right.pubkey != NULL)
+				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+			/* try parsing it; the error isn't the most specific */
+			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
+			diagq(ugh, optarg);
+			msg.right.pubkey = optarg;	/* decoded by Pluto */
+			msg.right.pubkey_type = WHACK_PUBKEY_CKAID;
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
@@ -1501,6 +1533,11 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_IKE_FRAG_FORCE_IX:
 		/* --no-ikepad */
 		case CDP_SINGLETON + POLICY_NO_IKEPAD_IX:
+		/* --no-esn */
+		case CDP_SINGLETON + POLICY_ESN_NO_IX:
+		/* --esn */
+		case CDP_SINGLETON + POLICY_ESN_YES_IX:
+
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
@@ -1555,6 +1592,12 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REPLAY_W: /* --replay-window <num> */
+			/*
+			 * ??? what values are legitimate?
+			 * 32 and often 64, but what else?
+			 * Not so large that the
+			 * number of bits overflows u_int32_t.
+			 */
 			msg.sa_replay_window = opt_whole;
 			continue;
 
@@ -1724,18 +1767,18 @@ int main(int argc, char **argv)
 			msg.right.xauth_client = TRUE;
 			continue;
 
-		case OPT_XAUTHNAME:	/* --xauthname */
+		case OPT_USERNAME:	/* --username, was --xauthname */
 			/*
 			 * we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			msg.right.xauth_name = optarg;
-			gotxauthname = TRUE;
-			xauthname[0] = '\0';
-			strncat(xauthname, optarg, sizeof(xauthname) -
-				strlen(xauthname) - 1);
-			xauthnamelen = strlen(xauthname) + 1;
+			msg.right.username = optarg;
+			gotusername = TRUE;
+			username[0] = '\0';
+			strncat(username, optarg, sizeof(username) -
+				strlen(username) - 1);
+			usernamelen = strlen(username) + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
@@ -1779,8 +1822,25 @@ int main(int argc, char **argv)
 			msg.modecfg_banner = strdup(optarg);
 			continue;
 
-		case CD_CONN_MARK:      /* --conn-mark */
-			msg.conn_mark = strdup(optarg);
+		case CD_CONN_MARK_BOTH:      /* --conn-mark */
+			msg.conn_mark_both = strdup(optarg);
+			continue;
+		case CD_CONN_MARK_IN:      /* --conn-mark-in */
+			msg.conn_mark_in = strdup(optarg);
+			continue;
+		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
+			msg.conn_mark_out = strdup(optarg);
+			continue;
+
+		case CD_VTI_IFACE:      /* --vti-iface */
+			if (optarg != NULL && strlen(optarg) <= IFNAMSIZ)
+				msg.vti_iface = strdup(optarg);
+			else
+				fprintf(stderr, "whack: invalid interface name '%s' ignored\n",
+					optarg);
+			continue;
+		case CD_VTI_ROUTING:	/* --vti-routing */
+			msg.vti_routing = TRUE;
 			continue;
 
 		case CD_XAUTHBY:
@@ -1992,7 +2052,7 @@ int main(int argc, char **argv)
 		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
-	} else if (!msg.whack_options) {
+	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts1_seen, OPT_NAME))
 			diag("no reason for --name");
 	}
@@ -2068,14 +2128,14 @@ int main(int argc, char **argv)
 	wp.msg = &msg;
 
 	/* build esp message as esp="<esp>;<pfsgroup>" */
-	if (msg.pfsgroup) {
+	if (msg.pfsgroup != NULL) {
 		snprintf(esp_buf, sizeof(esp_buf), "%s;%s",
-			 msg.esp ? msg.esp : "",
-			 msg.pfsgroup ? msg.pfsgroup : "");
+			 msg.esp != NULL ? msg.esp : "",
+			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
 		msg.esp = esp_buf;
 	}
 	ugh = pack_whack_msg(&wp);
-	if (ugh)
+	if (ugh != NULL)
 		diag(ugh);
 
 	msg.magic = ((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |
@@ -2230,16 +2290,16 @@ int main(int argc, char **argv)
 								   xauthpasslen);
 							break;
 
-						case RC_XAUTHPROMPT:
-							if (!gotxauthname) {
-								xauthnamelen =
+						case RC_USERPROMPT:
+							if (!gotusername) {
+								usernamelen =
 									whack_get_value(
-										xauthname,
-										sizeof(xauthname));
+										username,
+										sizeof(username));
 							}
 							send_reply(sock,
-								   xauthname,
-								   xauthnamelen);
+								   username,
+								   usernamelen);
 							break;
 
 						/* case RC_LOG_SERIOUS: */

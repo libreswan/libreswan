@@ -72,6 +72,8 @@
 #include "crypto.h"	/* requires sha1.h and md5.h */
 #include "crypt_symkey.h"
 #include "spdb.h"
+#include "ikev2.h"
+#include "secrets.h"    /* unreference_key() */
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -156,21 +158,21 @@ struct {
 /* space for unknown as well */
 static unsigned int total_established_ike(void)
 {
-	return (category.anonymous_ike.count +
-		category.authenticated_ike.count);
+	return category.anonymous_ike.count +
+		category.authenticated_ike.count;
 }
 
 static unsigned int total_ike(void)
 {
-	return (category.half_open_ike.count +
+	return category.half_open_ike.count +
 		category.open_ike.count +
-		total_established_ike());
+		total_established_ike();
 }
 
 static unsigned int total_ipsec(void)
 {
-	return (category.authenticated_ipsec.count +
-		category.anonymous_ipsec.count);
+	return category.authenticated_ipsec.count +
+		category.anonymous_ipsec.count;
 }
 
 static unsigned int total()
@@ -459,13 +461,10 @@ static struct state_hash_table statetable = {
  */
 struct state *new_state(void)
 {
-	/* initialized all to zero & NULL */
-	static const struct state blank_state;
-
 	static so_serial_t next_so = SOS_FIRST;
 	struct state *st;
 
-	st = clone_thing(blank_state, "struct state in new_state()");
+	st = alloc_thing(struct state, "struct state in new_state()");
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
@@ -513,13 +512,13 @@ void delete_state_by_id_name(struct state *st, void *name)
 	}
 }
 
-void v1_delete_state_by_xauth_name(struct state *st, void *name)
+void v1_delete_state_by_username(struct state *st, void *name)
 {
-	/* only support deleting ikev1 with xauth user name */
+	/* only support deleting ikev1 with username */
 	if (st->st_ikev2)
 		return;
 
-	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
+	if (IS_IKE_SA(st) && streq(st->st_username, name)) {
 		delete_my_family(st, FALSE);
 		/* note: no md->st to clear */
 	}
@@ -740,8 +739,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 
 		if (st->st_ah.present) {
@@ -757,8 +756,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 
 		if (st->st_ipcomp.present) {
@@ -774,8 +773,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_username);
 		}
 	}
 
@@ -889,9 +888,16 @@ void delete_state(struct state *st)
 	unreference_key(&st->st_peer_pubkey);
 	release_fragments(st);
 
-	free_sa(&st->st_sadb);
+	/*
+	 * Free the accepted proposal first, it points into the
+	 * proposals.
+	 */
+	free_ikev2_proposal(&st->st_accepted_ike_proposal);
+	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
 
 	clear_dh_from_state(st);
+
+	free_generalNames(st->st_requested_ca, TRUE);
 
 	freeanychunk(st->st_firstpacket_me);
 	freeanychunk(st->st_firstpacket_him);
@@ -902,10 +908,10 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_gr);
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
-
+	freeanychunk(st->st_dcookie);
 
 #    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
-	/* ??? free_any_nss_symkey(st->st_shared_nss); */
+	free_any_nss_symkey(st->st_shared_nss);
 
 	/* same as st_skeyid_nss */
 	free_any_nss_symkey(st->st_skeyseed_nss);
@@ -960,6 +966,28 @@ bool states_use_connection(const struct connection *c)
 
 		FOR_EACH_ENTRY(st, i, {
 			if (st->st_connection == c)
+				return TRUE;
+			});
+	}
+	return FALSE;
+}
+
+bool shared_phase1_connection(const struct connection *c)
+{
+	int i;
+
+	so_serial_t serial_us = c->newest_isakmp_sa;
+
+	if (serial_us == SOS_NOBODY)
+		return FALSE;
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
+		FOR_EACH_ENTRY(st, i, {
+			if (st->st_connection == c)
+				continue;
+			if (st->st_clonedfrom == serial_us)
 				return TRUE;
 			});
 	}
@@ -1101,16 +1129,6 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	foreach_states_by_connection_func_delete(c,
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
-	/*
-	 * XXX Seems to dump here because one of the states is NULL.
-	 * Removing the Assert makes things work.
-	 * We should fix this eventually.
-	 * -- MCR 2005 Nov 2 commit a87bf151b7b6566a3d4560584c8e6b2884123780
-	 *
-	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
-	 *  && c->newest_isakmp_sa == SOS_NOBODY);
-	 */
-
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
@@ -1137,8 +1155,9 @@ static bool same_phase1_no_phase2(struct state *this,
 {
 	if (IS_ISAKMP_SA_ESTABLISHED(this->st_state))
 		return FALSE;
-	else
+	if (c->kind == CK_INSTANCE)
 		return same_phase1_sa_relations(this, c);
+	return FALSE;
 }
 
 void delete_p2states_by_connection(struct connection *c)
@@ -1290,8 +1309,8 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
-	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username),
-		st->st_xauth_username);
+	jam_str(nst->st_username, sizeof(nst->st_username),
+		st->st_username);
 
 	return nst;
 }
@@ -1714,7 +1733,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	}
 
 
-	if(st->st_xauth_username[0] == '\0') {
+	if (st->st_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
@@ -1722,8 +1741,8 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		"#%lu: \"%s\"%s%s%s%s%s%s%s",
 		st->st_serialno,
 		c->name, inst,
-		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
-		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
+		(st->st_username[0] != '\0') ? ", username=" : "",
+		(st->st_username[0] != '\0') ? st->st_username : "",
 		(traffic_buf[0] != '\0') ? traffic_buf : "",
 		thatidbuf[0] != '\0' ? ", id='" : "",
 		thatidbuf[0] != '\0' ? thatidbuf : "",
@@ -1971,8 +1990,8 @@ void fmt_state(struct state *st, const monotime_t n,
 			(unsigned long)st->st_ref,
 			(unsigned long)st->st_refhim,
 			traffic_buf,
-			(st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
-			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
+			(st->st_username[0] != '\0') ? "username=" : "",
+			(st->st_username[0] != '\0') ? st->st_username : "");
 
 #       undef add_said
 	}
@@ -2285,9 +2304,9 @@ void clear_dh_from_state(struct state *st)
 
 bool require_ddos_cookies()
 {
-	return (pluto_ddos_mode == DDOS_FORCE_BUSY) ||
-		((pluto_ddos_mode == DDOS_AUTO) &&
-		 (category.half_open_ike.count >= pluto_ddos_treshold));
+	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
+		(pluto_ddos_mode == DDOS_AUTO &&
+		 category.half_open_ike.count >= pluto_ddos_treshold);
 }
 
 bool drop_new_exchanges()

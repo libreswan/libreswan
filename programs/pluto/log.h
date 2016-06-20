@@ -141,7 +141,7 @@ extern void show_setup_natt(void);
 extern void show_global_status(void);
 
 #ifdef USE_LINUX_AUDIT
-#include <libaudit.h>
+#include <libaudit.h>	/* from audit-libs devel */
 #define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */
 #define AUDIT_RESULT_FAIL 0

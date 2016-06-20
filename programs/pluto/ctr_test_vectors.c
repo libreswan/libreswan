@@ -238,7 +238,7 @@ static int test_ctr_vectors(CK_MECHANISM_TYPE cipher_mechanism,
 	return ok;
 }
 
-int test_aes_ctr(struct encrypt_desc *encrypt_desc)
+int test_aes_ctr(const struct encrypt_desc *encrypt_desc)
 {
 	return test_ctr_vectors(CKM_AES_CTR, encrypt_desc, aes_ctr_test_vectors);
 }

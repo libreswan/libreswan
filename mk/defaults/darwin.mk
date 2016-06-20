@@ -20,3 +20,6 @@ BUILD_KLIPS=false
 
 #not sure where this is supposed to come from, but the linux port has AR here
 RANLIB=ranlib
+
+# Darwin apparently doesn't have setschedprio
+USE_PTHREAD_SETSCHEDPRIO=false

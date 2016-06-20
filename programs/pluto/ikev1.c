@@ -245,7 +245,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_SA_REPLACE, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -394,7 +394,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
+	  EVENT_SA_REPLACE, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -571,12 +571,12 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
-	  EVENT_SA_REPLACE, xauth_inI0 },
+	  EVENT_v1_RETRANSMIT, xauth_inI0 },
 
 	{ STATE_XAUTH_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
-	  EVENT_SA_REPLACE, xauth_inI1 },
+	  EVENT_v1_RETRANSMIT, xauth_inI1 },
 
 #undef P
 #undef PT
@@ -838,7 +838,9 @@ static stf_status informational(struct msg_digest *md)
 						    LEMPTY, pcim_demand_crypto);
 				return STF_IGNORE;
 			}
-
+			loglog(RC_LOG_SERIOUS,
+			       "received and ignored informational message with ISAKMP_N_CISCO_LOAD_BALANCE for unestablished state.");
+			return STF_IGNORE;
 		default:
 			if (st != NULL &&
 			    (st->st_connection->extra_debugging &
@@ -994,14 +996,12 @@ void process_v1_packet(struct msg_digest **mdp)
 				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
 
 			if (st == NULL) {
-				if (!quiet) {
-					libreswan_log(
+				DBG(DBG_CONTROL, DBG_log(
 						"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
-							(unsigned long)md->hdr.isa_msgid);
-				}
+							(unsigned long)md->hdr.isa_msgid));
 
 				/* Let's try to log some info about these to track them down */
-				DBG(DBG_PARSING, {
+				DBG(DBG_CONTROL, {
 					    DBG_dump("- unknown SA's md->hdr.isa_icookie:",
 						    md->hdr.isa_icookie,
 						    COOKIE_SIZE);
@@ -2077,7 +2077,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		p = md->chain[ISAKMP_NEXT_VID];
 		while (p != NULL) {
 			handle_vendorid(md, (char *)p->pbs.cur,
-					pbs_left(&p->pbs), st);
+					pbs_left(&p->pbs), FALSE);
 			p = p->next;
 		}
 	}
@@ -2168,6 +2168,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	struct msg_digest *md = *mdp;
 	enum state_kind from_state;
 	struct state *st;
+
+	passert(md != NULL);
 
 	/* handle oddball/meta results now */
 
@@ -2680,27 +2682,24 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    enum_name(&state_names, from_state),
 			    enum_name(&ikev1_notify_names, md->note)));
 
-		if (st != NULL) {
 #ifdef HAVE_NM
-			if (st->st_connection->remotepeertype == CISCO &&
-			    st->st_connection->nmconfigured) {
-				if (!do_command(st->st_connection,
-						&st->st_connection->spd,
-						"disconnectNM", st))
-					DBG(DBG_CONTROL,
-					    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-			}
+		if (st->st_connection->remotepeertype == CISCO &&
+		    st->st_connection->nmconfigured) {
+			if (!do_command(st->st_connection,
+					&st->st_connection->spd,
+					"disconnectNM", st))
+				DBG(DBG_CONTROL,
+				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
+		}
 #endif
-			if (IS_PHASE1_INIT(st->st_state)) {
-				delete_event(st);
-				release_whack(st);
-			}
-			if (IS_QUICK(st->st_state)) {
-				delete_state(st);
-				/* wipe out dangling pointer to st */
-				if (md != NULL && st == md->st)
-					md->st = NULL;
-			}
+		if (IS_PHASE1_INIT(st->st_state)) {
+			delete_event(st);
+			release_whack(st);
+		}
+		if (IS_QUICK(st->st_state)) {
+			delete_state(st);
+			/* wipe out dangling pointer to st */
+			md->st = NULL;
 		}
 		break;
 	}
@@ -2830,7 +2829,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			auth_policy |=  POLICY_AGGRESSIVE;
 
 		/* check for certificate requests */
-		ikev1_decode_cr(md, &c->requested_ca);
+		ikev1_decode_cr(md);
 
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
 			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);

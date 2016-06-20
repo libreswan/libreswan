@@ -329,11 +329,12 @@ set_x_request(src, dst)
 		+ (dst ? dst->sa_len : 0);
 	tlen += reqlen;		/* increment to total length */
 
-	pbuf = realloc(pbuf, tlen);
-	if (pbuf == NULL) {
+	caddr_t t = realloc(pbuf, tlen);
+	if (t == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	pbuf = t;
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;

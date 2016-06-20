@@ -48,7 +48,6 @@
 #include "packet.h"
 #include "demux.h"
 #include "ipsec_doi.h"
-#include "mpzfuncs.h"
 #include "oid.h"
 #include "x509.h"
 #include "certs.h"
@@ -61,8 +60,8 @@
 #include "sha1.h"
 #include "whack.h"
 #include "fetch.h"
-#include "mpzfuncs.h"
 #include "hostpair.h" /* for find_host_pair_connections */
+#include "secrets.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -105,7 +104,7 @@ chunk_t secitem_to_chunk(SECItem si)
 	return chunk;
 }
 
-chunk_t dup_secitem_to_chunk(SECItem si)
+static chunk_t dup_secitem_to_chunk(SECItem si)
 {
 	chunk_t chunk = empty_chunk;
 
@@ -140,7 +139,7 @@ bool cert_key_is_rsa(CERTCertificate *cert)
 	return ret;
 }
 
-realtime_t get_nss_cert_notafter(CERTCertificate *cert)
+static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 {
 	realtime_t ret;
 	PRTime notBefore, notAfter;
@@ -178,10 +177,10 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 	return *our_pathlen <= MAX_CA_PATH_LEN;
 }
 
-void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
+static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 				generalName_t *pluto_gn)
 {
-	switch(nss_gn->type) {
+	switch (nss_gn->type) {
 	case certOtherName:
 		pluto_gn->name = secitem_to_chunk(nss_gn->name.OthName.name);
 		pluto_gn->kind = GN_OTHER_NAME;
@@ -232,19 +231,6 @@ void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 	}
 }
 
-/*
- * Filter eliminating the directory entries starting with .,
- * Odd spot for this function, but convenient
- */
-int filter_dotfiles(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	struct dirent *entry)
-{
-	return entry->d_name[0] != '.';
-
-}
 /*
  * Checks if CA a is trusted by CA b
  * This very well could end up being condensed into
@@ -373,7 +359,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 }
 
-char *make_crl_uri_str(chunk_t *uri)
+static char *make_crl_uri_str(chunk_t *uri)
 {
 	if (uri == NULL || uri->ptr == NULL || uri->len < 1)
 		return NULL;
@@ -459,7 +445,11 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 		return NULL;
 	}
 
-	/* some common code, refactor */
+	/*
+	 * XXX Duplicate code with find_dercrl_uri().
+	 * XXX Certificate can have multiple distpoints, convert all of them.
+	 * XXX distPoints[1] seems to be NULL even if multiple?
+	 */
 
 	CRLDistributionPoint *point = dps->distPoints[0];
 	generalName_t *gndp = NULL;
@@ -474,7 +464,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	return gndp;
 }
 
-char *find_dercrl_uri(chunk_t *dercrl)
+static char *find_dercrl_uri(chunk_t *dercrl)
 {
 	/* these are used by out so must be initialized */
 	CERTCertificate *cacert = NULL;
@@ -570,6 +560,19 @@ out:
 }
 
 /*
+ * Filter for scandir(3): eliminate the directory entries starting with ".".
+ */
+static int filter_dotfiles(
+#ifdef SCANDIR_HAS_CONST
+	const
+#endif
+	struct dirent *entry)
+{
+	return entry->d_name[0] != '.';
+
+}
+
+/*
  *  Loads CRLs
  */
 void load_crls(void)
@@ -594,24 +597,30 @@ void load_crls(void)
 		int n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
-		if (n > 0) {
-			while (n--) {
-				chunk_t blob = empty_chunk;
-				char *filename = filelist[n]->d_name;
+		if (n < 0) {
+			int e = errno;
 
-				if (load_coded_file(filename, "crl", &blob)) {
-					/* get uri from the CA */
-					char *uri = find_dercrl_uri(&blob);
+			libreswan_log(
+				"Scanning directory '%s' failed - (%d %s)",
+				oco->crls_dir, e, strerror(e));
+		}
+		while (n > 0) {
+			n--;
+			chunk_t blob = empty_chunk;
+			char *filename = filelist[n]->d_name;
 
-					if (uri != NULL) {
-						(void)insert_crl_nss(&blob,
-								    NULL,
-								    uri);
-						pfree(uri);
-					}
+			if (load_coded_file(filename, "crl", &blob)) {
+				/* get uri from the CA */
+				char *uri = find_dercrl_uri(&blob);
+
+				if (uri != NULL) {
+					(void)insert_crl_nss(&blob,
+							    NULL,
+							    uri);
+					pfree(uri);
 				}
-				free(filelist[n]);	/* was malloced by scandir(3) */
 			}
+			free(filelist[n]);	/* was malloced by scandir(3) */
 		}
 		free(filelist);	/* was malloced by scandir(3) */
 	}
@@ -681,7 +690,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
 		id->kind = afi->id_addr;
 		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
 			&id->ip_addr);
-		if (!ugh) {
+		if (ugh != NULL) {
 			libreswan_log(
 				"Warning: gntoid() failed to initaddr(): %s",
 				ugh);
@@ -707,7 +716,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
  * Convert all CERTCertificate general names to a list of pluto generalName_t
  * Results go in *gn_out.
  */
-void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
+static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 {
 	generalName_t *pgn_list = NULL;
 	CERTGeneralName *first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);;
@@ -1059,9 +1068,11 @@ bool ikev2_decode_cert(struct msg_digest *md)
  *  treat such payloads as synonymous with "X.509 Certificate -
  *  Signature".
  */
-void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev1_decode_cr(struct msg_digest *md)
 {
 	struct payload_digest *p;
+	struct state *st = md->st;
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	for (p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next) {
 		struct isakmp_cr *const cr = &p->payload.cr;
@@ -1084,8 +1095,8 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 				clonetochunk(gn->name, ca_name.ptr, ca_name.len,
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = *requested_ca;
-				*requested_ca = gn;
+				gn->next = requested_ca;
+				requested_ca = gn;
 			}
 
 			DBG(DBG_X509 | DBG_CONTROL, {
@@ -1109,20 +1120,23 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
  * This needs to handle the SHA-1 hashes instead. However, receiving CRs
  * does nothing ATM.
  */
-void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev2_decode_cr(struct msg_digest *md)
 {
 	struct payload_digest *p;
+	struct state *st = md->st;
+
+	generalName_t *requested_ca = st->st_requested_ca;
 
 	for (p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next) {
 		struct ikev2_certreq *const cr = &p->payload.v2certreq;
 		chunk_t ca_name;
 
-		ca_name.len = pbs_left(&p->pbs);
-		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
+		switch (cr->isacertreq_enc) {
+		case CERT_X509_SIGNATURE:
 
-		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
-
-		if (cr->isacertreq_enc == CERT_X509_SIGNATURE) {
+			ca_name.len = pbs_left(&p->pbs);
+			ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
+			DBG_cond_dump_chunk(DBG_X509, "CERT_X509_SIGNATURE CR:", ca_name);
 
 			if (ca_name.len > 0) {
 				generalName_t *gn;
@@ -1135,19 +1149,29 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->name = ca_name;
-				gn->next = *requested_ca;
-				*requested_ca = gn;
+				gn->next = requested_ca;
+				requested_ca = gn;
 			}
 
-			DBG(DBG_X509 | DBG_CONTROL, {
+			DBG(DBG_X509, {
 					char buf[IDTOA_BUF];
 					dntoa_or_null(buf, IDTOA_BUF, ca_name,
 						"%any");
 					DBG_log("requested CA: '%s'", buf);
 				});
-		} else {
+			break;
+#ifdef USE_GSSAPI
+		case CERT_KERBEROS_TOKENS:
+			if ((st->st_connection->policy & POLICY_GSSAPI) == LEMPTY) {
+				DBG(DBG_CONTROL, DBG_log("Ignoring CERTREQ payload of type GSS token for non-kerberos connection"));
+				continue;
+			}
+			libreswan_log("CERTREQ: GSS Token received: need to handle it");
+			break;
+#endif
+		default:
 			loglog(RC_LOG_SERIOUS,
-				"ignoring %s certificate request payload",
+				"ignoring CERTREQ payload of unsupported type %s",
 				enum_show(&ikev2_cert_type_names,
 					cr->isacertreq_enc));
 		}
@@ -1364,6 +1388,23 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs)
 {
+#ifdef USE_GSSAPI
+	if (st->st_connection->policy & POLICY_GSSAPI) {
+		chunk_t token;
+
+		/* XXX placeholder code */
+		token.ptr = alloc_bytes(10, "fake GSS token");
+		token.len = 10;
+
+		if (!ikev2_build_and_ship_CR(CERT_KERBEROS_TOKENS,
+			token, outpbs, np)) {
+			return STF_INTERNAL_ERROR;
+		} else {
+			return STF_OK;
+		}
+	}
+#endif
+
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_X509,
 		    DBG_log("connection->kind is CK_PERMANENT so send CERTREQ"));
@@ -1710,7 +1751,7 @@ static void cert_detail_list(show_cert_t type)
 {
 	char *tstr = "";
 
-	switch(type) {
+	switch (type) {
 	case CERT_TYPE_END:
 		tstr = "End ";
 		break;
@@ -1757,7 +1798,6 @@ static void cert_detail_list(show_cert_t type)
 void check_crls(void)
 {
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	PRTime now = PR_Now();
 
 	if (handle == NULL)
 		return;
@@ -1771,21 +1811,42 @@ void check_crls(void)
 
 	while (crl_node != NULL) {
 		if (crl_node->crl != NULL) {
-			PRTime time;
-			PRTime interval = (deltasecs(crl_check_interval) * 2) * PR_NSEC_PER_MSEC;
-			SECItem *n = &crl_node->crl->crl.nextUpdate;
 			SECItem *issuer = &crl_node->crl->crl.derName;
 
-			if (DER_DecodeTimeChoice(&time, n) != SECSuccess)
-				continue;
+			add_crl_fetch_request_nss(issuer, NULL);
 
-			if (time - now < interval)
-				add_crl_fetch_request_nss(issuer, NULL);
+			generalName_t end_dp = {
+				.kind = GN_URI,
+				.name = {
+					.ptr = (u_char *)crl_node->crl->url,
+					.len = strlen(crl_node->crl->url)
+				},
+				.next = NULL
+			};
 
+			add_crl_fetch_request_nss(issuer, &end_dp);
 		}
 		crl_node = crl_node->next;
 	}
-	return;
+
+	/* add the pubkeys distribution points to fetch list */
+
+	struct pubkey_list *pubkeys = pluto_pubkeys;
+	struct pubkey *key;
+
+	while (pubkeys != NULL) {
+		key = pubkeys->key;
+		if (key != NULL) {
+			SECItem issuer = chunk_to_secitem(key->issuer);
+			generalName_t *end_dp;
+
+			add_crl_fetch_request_nss(&issuer, NULL);
+
+			end_dp = gndp_from_nss_cert(key->u.rsa.nssCert);
+			add_crl_fetch_request_nss(&issuer, end_dp);
+		}
+		pubkeys = pubkeys->next;
+	}
 }
 #endif
 
@@ -1799,6 +1860,16 @@ void list_certs(void)
 	cert_detail_list(CERT_TYPE_END);
 }
 
+/*
+ * Either the underlying cert's nickname, or NULL.
+ */
+const char *cert_nickname(const cert_t *cert)
+{
+	return cert->ty == CERT_X509_SIGNATURE &&
+		cert->u.nss_cert != NULL ?
+			cert->u.nss_cert->nickname : NULL;
+}
+
 void list_authcerts(void)
 {
 	cert_detail_list(CERT_TYPE_CA);
@@ -1809,4 +1880,3 @@ void clear_ocsp_cache(void)
 	DBG(DBG_X509, DBG_log("calling NSS to clear OCSP cache"));
 	(void)CERT_ClearOCSPCache();
 }
-

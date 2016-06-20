@@ -52,14 +52,12 @@
  */
 static int ealg_getbyname_ike(const char *const str)
 {
-	int ret;
-
 	if (str == NULL || *str == '\0')
 		return -1;
-	ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str);
-	if (ret >= 0)
-		return ret;
-	return alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str);
+	int ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str);
+	if (ret < 0)
+		ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str);
+	return ret;
 }
 
 /**
@@ -71,14 +69,11 @@ static int ealg_getbyname_ike(const char *const str)
  */
 static int aalg_getbyname_ike(const char *str)
 {
-	int ret = -1;
-	int num_read;
-
 	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
 	if (str == NULL || str == '\0')
-		return ret;
+		return -1;
 
-	ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
+	int ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
 	if (ret >= 0)
 		return ret;
 
@@ -87,7 +82,8 @@ static int aalg_getbyname_ike(const char *str)
 		return INT_MAX;
 
 	/* support idXXX as syntax, matching iana numbers directly */
-	num_read = -1;
+
+	int num_read = -1;
 	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 &&
 	    num_read == (int) strlen(str))
 		return ret;
@@ -102,15 +98,13 @@ static int aalg_getbyname_ike(const char *str)
  */
 static int modp_getbyname_ike(const char *const str)
 {
-	int ret = -1;
-
 	if (str == NULL || *str == '\0')
 		return -1;
-	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
-	if (ret >= 0)
-		return ret;
-	return alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
+	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
+	if (ret < 0)
+		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
 			       " (extension)", str);
+	return ret;
 }
 
 /*
@@ -118,7 +112,7 @@ static int modp_getbyname_ike(const char *const str)
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-			       unsigned ek_bits, int aalg_id, unsigned ak_bits,
+			       unsigned ek_bits, int aalg_id,
 			       unsigned int modp_id)
 {
 	struct ike_info *ike_info = alg_info->ike;
@@ -131,7 +125,6 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		if (ike_info[i].ike_ealg == ealg_id &&
 		    (ek_bits == 0 || ike_info[i].ike_eklen == ek_bits) &&
 		    ike_info[i].ike_halg == aalg_id &&
-		    (ak_bits == 0 || ike_info[i].ike_hklen == ak_bits) &&
 		    ike_info[i].ike_modp == modp_id) {
 			return;
 		}
@@ -144,15 +137,14 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_ealg = ealg_id;
 	ike_info[cnt].ike_eklen = ek_bits;
 	ike_info[cnt].ike_halg = aalg_id;
-	ike_info[cnt].ike_hklen = ak_bits;
 	ike_info[cnt].ike_modp = modp_id;
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
 			       "ealg_id=%d ek_bits=%d "
-			       "aalg_id=%d ak_bits=%d "
+			       "aalg_id=%d "
 			       "modp_id=%d, cnt=%d",
 			       ealg_id, ek_bits,
-			       aalg_id, ak_bits,
+			       aalg_id,
 			       modp_id, alg_info->ai.alg_info_cnt));
 }
 
@@ -175,7 +167,7 @@ static const enum ikev1_hash_attribute default_ike_aalgs[] = {
  */
 static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int ak_bits,
+			     int aalg_id,
 			     int modp_id)
 {
 	if (ealg_id == 0) {
@@ -184,25 +176,23 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 
 		for (i=0; i != elemsof(default_ike_ealgs); i++) {
 			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
-				aalg_id, ak_bits, modp_id);
+				aalg_id, modp_id);
 		}
-		return;
-	}
-
-	{
+	} else {
 		if (aalg_id > 0) {
 			raw_alg_info_ike_add(
 				(struct alg_info_ike *)alg_info,
 				ealg_id, ek_bits,
-				aalg_id, ak_bits,
+				aalg_id,
 				modp_id);
 		} else {
 			int j;
+
 			for (j=0; j != elemsof(default_ike_aalgs); j++) {
 				raw_alg_info_ike_add(
 					(struct alg_info_ike *)alg_info,
 					ealg_id, ek_bits,
-					default_ike_aalgs[j], ak_bits,
+					default_ike_aalgs[j],
 					modp_id);
 			}
 		}
@@ -211,9 +201,12 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int ak_bits,
+			     int aalg_id,
 			     int modp_id)
 {
+	/*
+	 * XXX: Require ak_bits==0?
+	 */
 	if (modp_id == 0) {
 		/* try each default group */
 		int i;
@@ -221,15 +214,38 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 		for (i=0; i != elemsof(default_ike_groups); i++)
 			per_group_alg_info_ike_add(alg_info,
 				     ealg_id, ek_bits,
-				     aalg_id, ak_bits,
+				     aalg_id,
 				     default_ike_groups[i]);
 	} else {
 		/* group determined by caller */
 		per_group_alg_info_ike_add(alg_info,
 			     ealg_id, ek_bits,
-			     aalg_id, ak_bits,
+			     aalg_id,
 			     modp_id);
 	}
+}
+
+static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
+			    const struct esp_info *esp_info)
+{
+	unsigned eklen = esp_info->enckeylen;
+
+	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
+			sep,
+			strip_prefix(enum_name(&esp_transformid_names,
+					       esp_info->transid), "ESP_"),
+			esp_info->transid, eklen,
+			strip_prefix(strip_prefix(enum_name(&auth_alg_names,
+							    esp_info->auth),
+						  "AUTH_ALGORITHM_HMAC_"),
+				     "AUTH_ALGORITHM_"),
+			esp_info->auth);
+}
+
+void alg_info_snprint_esp_info(char *buf, size_t buflen,
+			       const struct esp_info *esp_info)
+{
+	snprint_esp_info(buf, buflen, "", esp_info);
 }
 
 /*
@@ -240,15 +256,12 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 				 struct alg_info_esp *alg_info)
 {
 	char *ptr = buf;
-	int ret;
 	struct esp_info *esp_info;
 	int cnt;
-	int eklen, aklen;
 	const char *sep = "";
 
 	passert(buflen >= sizeof("none"));
 
-	ptr = buf;
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
@@ -266,20 +279,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 			continue;
 		}
 
-		eklen = esp_info->enckeylen;
-		aklen = esp_info->authkeylen;
-
-		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
-			       sep,
-			       strip_prefix(enum_name(&esp_transformid_names,
-					 esp_info->transid), "ESP_"),
-			       esp_info->transid, eklen,
-			       strip_prefix(strip_prefix(enum_name(&auth_alg_names,
-								esp_info->auth),
-							"AUTH_ALGORITHM_HMAC_"),
-					"AUTH_ALGORITHM_"),
-			       esp_info->auth,
-			       aklen);
+		int ret = snprint_esp_info(ptr, buflen, sep, esp_info);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_esp: buffer too short for snprintf");
@@ -299,16 +299,11 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 				struct alg_info_esp *alg_info)
 {
 	char *ptr = buf;
-	int ret;
 	struct esp_info *esp_info;
 	int cnt;
-	int aklen;
 	const char *sep = "";
 
 	passert(buflen >= sizeof("none"));
-	ptr = buf;
-
-
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
@@ -318,18 +313,13 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 			continue;
 		}
 
-		aklen = esp_info->authkeylen;
-		if (!aklen)
-			aklen = kernel_alg_esp_auth_keylen(
-				esp_info->auth) * BITS_PER_BYTE;
-
-		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d",
+		int ret = snprintf(ptr, buflen, "%s%s(%d)",
 			       sep,
 			       strip_prefix(strip_prefix(enum_name(&auth_alg_names,
 								esp_info->auth),
 							"AUTH_ALGORITHM_HMAC_"),
 					"AUTH_ALGORITHM_"),
-			       esp_info->auth, aklen);
+			       esp_info->auth);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
@@ -358,50 +348,61 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 	}
 }
 
+static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
+			    bool fix_zero)
+{
+	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
+	passert(!fix_zero || enc_desc != NULL);
+	const struct hash_desc *hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
+	passert(!fix_zero || hash_desc != NULL);
+
+	int eklen = ike_info->ike_eklen;
+	if (fix_zero && !eklen)
+		eklen = enc_desc->keydeflen;
+
+	struct esb_buf enc_buf, hash_buf, group_buf;
+	return snprintf(buf, buflen,
+			"%s(%d)_%03d-%s(%d)-%s(%d)",
+			strip_prefix(enum_showb(&oakley_enc_names,
+						ike_info->ike_ealg, &enc_buf),
+				     "OAKLEY_"),
+			ike_info->ike_ealg, eklen,
+			strip_prefix(enum_showb(&oakley_hash_names,
+						ike_info->ike_halg, &hash_buf),
+				     "OAKLEY_"),
+			ike_info->ike_halg,
+			strip_prefix(enum_showb(&oakley_group_names,
+						ike_info->ike_modp, &group_buf),
+				     "OAKLEY_GROUP_"),
+			ike_info->ike_modp);
+}
+
+void alg_info_snprint_ike_info(char *buf, size_t buflen,
+			       struct ike_info *ike_info)
+{
+	snprint_ike_info(buf, buflen, ike_info, FALSE);
+}
+
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
 	char *ptr = buf;
-	int ret;
 	struct ike_info *ike_info;
 	int cnt;
-	int eklen, aklen;
 	const char *sep = "";
-	struct encrypt_desc *enc_desc;
-	struct hash_desc *hash_desc;
 
 	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
 		if (ike_alg_enc_present(ike_info->ike_ealg) &&
-		    (ike_alg_hash_present(ike_info->ike_halg)) &&
-		    (lookup_group(ike_info->ike_modp) != NULL)) {
-
-			enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
-			passert(enc_desc != NULL);
-			hash_desc = ike_alg_get_hasher(ike_info->ike_halg);
-			passert(hash_desc != NULL);
-
-			eklen = ike_info->ike_eklen;
-			if (!eklen)
-				eklen = enc_desc->keydeflen;
-			aklen = ike_info->ike_hklen;
-			if (!aklen)
-				aklen = hash_desc->hash_digest_len *
-					BITS_PER_BYTE;
-			ret = snprintf(ptr, buflen,
-				       "%s%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
-				       sep,
-				       strip_prefix(enum_name(&oakley_enc_names,
-						 ike_info->ike_ealg),
-						"OAKLEY_"),
-				       ike_info->ike_ealg, eklen,
-				       strip_prefix(enum_name(&oakley_hash_names,
-						 ike_info->ike_halg),
-						"OAKLEY_"),
-				       ike_info->ike_halg, aklen,
-				       strip_prefix(enum_name(&oakley_group_names,
-						 ike_info->ike_modp),
-						"OAKLEY_GROUP_"),
-				       ike_info->ike_modp);
+		    ike_alg_hash_present(ike_info->ike_halg) &&
+		    lookup_group(ike_info->ike_modp) != NULL) {
+			if (strlen(sep) >= buflen) {
+				DBG_log("alg_info_snprint_ike: buffer too short for seperator");
+				break;
+			}
+			strcpy(ptr, sep);
+			ptr += strlen(sep);
+			buflen -= strlen(sep);
+			int ret = snprint_ike_info(ptr, buflen, ike_info, TRUE);
 			if (ret < 0 || (size_t)ret >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
 				break;
@@ -460,7 +461,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      lset_t policy,
 			      bool logit)
 {
-	int ealg_i = 0, aalg_i;
+	int ealg_i = SADB_EALG_NONE;
 
 	if (policy & POLICY_ENCRYPT) {
 		ealg_i = esp_info->transid;
@@ -477,7 +478,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 	}
 
-	aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
+	int aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
+
 	if (!ESP_AALG_PRESENT(aalg_i)) {
 		DBG_log("kernel_alg_db_add() kernel auth "
 			"aalg_id=%d not present",
@@ -486,7 +488,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	}
 
 	if (policy & POLICY_ENCRYPT) {
-		/*	open new transformation */
+		/*open new transformation */
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
@@ -496,7 +498,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 					   esp_info->auth);
 		}
 
-		/*	add keylegth if specified in esp= string */
+		/* add keylength if specified in esp= string */
 		if (esp_info->enckeylen != 0) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
@@ -505,7 +507,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			/* no key length - if required add default here and add another max entry */
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
 
-			if (def_ks) {
+			if (def_ks != 0) {
 				int max_ks = BITS_PER_BYTE *
 					kernel_alg_esp_enc_max_keylen(ealg_i);
 
@@ -549,12 +551,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 				     lset_t policy, bool logit)
 {
-	unsigned int tn = 0;
-	struct db_context *ctx_new = NULL;
-	struct db_trans *t;
-	struct db_prop  *prop;
 	unsigned int trans_cnt = 0;
-	bool success = TRUE;
 	int protoid = PROTO_RESERVED;
 
 	if (policy & POLICY_ENCRYPT) {
@@ -570,7 +567,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 				  trans_cnt));
 
 	/*	pass aprox. number of transforms and attributes */
-	ctx_new = db_prop_new(protoid, trans_cnt, trans_cnt * 2);
+	struct db_context *ctx_new = db_prop_new(protoid, trans_cnt, trans_cnt * 2);
 
 	/*
 	 *      Loop: for each element (struct esp_info) of
@@ -580,6 +577,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	 *      if NULL alg_info, propose everything ...
 	 */
 
+	bool success = TRUE;
 	if (alg_info != NULL) {
 		const struct esp_info *esp_info;
 		int i;
@@ -588,7 +586,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			if (!kernel_alg_db_add(ctx_new,
 					esp_info,
 					policy, logit))
-				success = FALSE;
+				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
 		int ealg_i;
@@ -602,7 +600,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			ESP_AALG_FOR_EACH(aalg_i) {
 				tmp_esp_info.auth =
 					alg_info_esp_sadb2aa(aalg_i);
-				tmp_esp_info.authkeylen = 0;
 				kernel_alg_db_add(ctx_new, &tmp_esp_info,
 						  policy, FALSE);
 			}
@@ -615,13 +612,15 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		return NULL;
 	}
 
-	prop = db_prop_get(ctx_new);
+	struct db_prop  *prop = db_prop_get(ctx_new);
 
 	DBG(DBG_CONTROL | DBG_EMITTING, DBG_log("kernel_alg_db_new() "
 						"will return p_new->protoid=%d, p_new->trans_cnt=%d",
 						prop->protoid,
 						prop->trans_cnt));
 
+	unsigned int tn = 0;
+	struct db_trans *t;
 	for (t = prop->trans, tn = 0;
 	     t != NULL && t[tn].transid != 0 && tn < prop->trans_cnt;
 	     tn++) {
@@ -662,11 +661,9 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log(
-		"ESP IPsec Transform [%s (%d), %s] refused",
+	libreswan_log("ESP IPsec Transform [%s (%d), %s] refused",
 		enum_name(&esp_transformid_names, ealg),
-		key_len,
-		enum_name(&auth_alg_names, aalg)));
+		key_len, enum_name(&auth_alg_names, aalg));
 	return FALSE;
 }
 
@@ -683,9 +680,8 @@ bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 			return TRUE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log(
-		"AH IPsec Transform [%s] refused",
-		enum_name(&ah_transformid_names, aalg)));
+	libreswan_log("AH IPsec Transform [%s] refused",
+		enum_name(&ah_transformid_names, aalg));
 	return FALSE;
 }
 
@@ -697,7 +693,7 @@ void kernel_alg_show_status(void)
 	whack_log(RC_COMMENT, " "); /* spacer */
 
 	ESP_EALG_FOR_EACH(sadb_id) {
-		struct sadb_alg *alg_p = &esp_ealg[sadb_id];
+		const struct sadb_alg *alg_p = &esp_ealg[sadb_id];
 
 		whack_log(RC_COMMENT, "algorithm ESP encrypt: id=%d, name=%s, "
 			  "ivlen=%d, keysizemin=%d, keysizemax=%d",
@@ -710,7 +706,7 @@ void kernel_alg_show_status(void)
 
 	ESP_AALG_FOR_EACH(sadb_id) {
 		unsigned id = alg_info_esp_sadb2aa(sadb_id);
-		struct sadb_alg *alg_p = &esp_aalg[sadb_id];
+		const struct sadb_alg *alg_p = &esp_aalg[sadb_id];
 
 		whack_log(RC_COMMENT, "algorithm AH/ESP auth: id=%d, name=%s, "
 			  "keysizemin=%d, keysizemax=%d",
@@ -725,7 +721,6 @@ void kernel_alg_show_status(void)
 
 void kernel_alg_show_connection(const struct connection *c, const char *instance)
 {
-	const struct state *st;
 	const char *satype;
 	const char *pfsbuf;
 
@@ -749,7 +744,8 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	if (c->policy & POLICY_PFS) {
-		if (c->alg_info_esp && c->alg_info_esp->esp_pfsgroup) {
+		/* ??? 0 isn't a legitimate value for esp_pfsgroup */
+		if (c->alg_info_esp != NULL && c->alg_info_esp->esp_pfsgroup != 0) {
 			pfsbuf = strip_prefix(enum_show(&oakley_group_names,
 					   c->alg_info_esp->esp_pfsgroup),
 				"OAKLEY_GROUP_");
@@ -763,8 +759,8 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	if (c->alg_info_esp != NULL) {
 		char buf[1024];
 
-		alg_info_snprint(buf, sizeof(buf),
-				 (struct alg_info *)c->alg_info_esp);
+		alg_info_esp_snprint(buf, sizeof(buf),
+				     c->alg_info_esp);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   %s algorithms wanted: %s",
 			  c->name,
@@ -779,7 +775,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  buf);
 	}
 
-	st = state_with_serialno(c->newest_ipsec_sa);
+	const struct state *st = state_with_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
 		whack_log(RC_COMMENT,
@@ -811,13 +807,6 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 				bool logit)
 {
-	struct db_context *dbnew;
-	struct db_prop *p;
-	struct db_prop_conj pc;
-	struct db_sa t, *n;
-
-	zero(&t);	/* ??? may not NULL pointers properly */
-
 	if (ei == NULL) {
 		struct db_sa *sadb;
 		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
@@ -838,14 +827,14 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		return sadb;
 	}
 
-	dbnew = kernel_alg_db_new(ei, policy, logit);
+	struct db_context *dbnew = kernel_alg_db_new(ei, policy, logit);
 
-	if (!dbnew) {
+	if (dbnew == NULL) {
 		libreswan_log("failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}
 
-	p = db_prop_get(dbnew);
+	struct db_prop *p = db_prop_get(dbnew);
 
 	if (p == NULL) {
 		libreswan_log("failed to get proposal from context, returning empty");
@@ -853,13 +842,12 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		return NULL;
 	}
 
-	pc.prop_cnt = 1;
-	pc.props = p;
-	t.prop_conj_cnt = 1;
-	t.prop_conjs = &pc;
+	struct db_prop_conj pc = { .prop_cnt = 1, .props = p };
+
+	struct db_sa t = { .prop_conj_cnt = 1, .prop_conjs = &pc };
 
 	/* make a fresh copy */
-	n = sa_copy_sa(&t);
+	struct db_sa *n = sa_copy_sa(&t);
 	n->parentSA = FALSE;
 
 	db_destroy(dbnew);

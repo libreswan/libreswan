@@ -5,8 +5,9 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2012,2016 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,6 +64,7 @@
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "addresspool.h"
+#include "rnd.h"
 
 void ikev2_print_ts(struct traffic_selector *ts)
 {
@@ -990,7 +992,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret;
 
-	if (c->pool != NULL) {
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
 		if (ret != STF_OK)
 			return ret;
@@ -1010,20 +1012,48 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct ikev2_sa r_sa;
-		stf_status ret;
-		pb_stream r_sa_pbs;
+		enum next_payload_types_ikev2 next_payload_type =
+			(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
+			 ? ISAKMP_NEXT_v2Nr
+			 : ISAKMP_NEXT_v2TSi);
 
-		zero(&r_sa);	/* OK: no pointer fields */
-		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
-			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
+		/* ??? this code won't support AH + ESP */
+		struct ipsec_proto_info *proto_info
+			= ikev2_esp_or_ah_proto_info(cst, c->policy);
 
-		if (!out_struct(&r_sa, &ikev2_sa_desc, outpbs, &r_sa_pbs))
-			return STF_INTERNAL_ERROR;
+		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
+						  c->alg_info_esp, c->policy,
+						  &c->esp_or_ah_proposals);
+		passert(c->esp_or_ah_proposals != NULL);
 
-		/* SA body in and out */
-		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-						&r_sa_pbs, cst, FALSE);
+		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
+							  &sa_pd->pbs,
+							  /*expect_ike*/ FALSE,
+							  /*expect_spi*/ TRUE,
+							  /*expect_accepted*/ FALSE,
+							  c->policy & POLICY_OPPORTUNISTIC,
+							  &cst->st_accepted_esp_or_ah_proposal,
+							  c->esp_or_ah_proposals);
+
+		if (ret == STF_OK) {
+			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
+			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", cst->st_accepted_esp_or_ah_proposal));
+			if (!ikev2_proposal_to_proto_info(cst->st_accepted_esp_or_ah_proposal, proto_info)) {
+				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
+				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			} else {
+				proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+				chunk_t local_spi;
+				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+					 sizeof(proto_info->our_spi));
+				if (!ikev2_emit_sa_proposal(outpbs,
+							    cst->st_accepted_esp_or_ah_proposal,
+							    &local_spi, next_payload_type)) {
+					DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+					ret = STF_INTERNAL_ERROR;
+				}
+			}
+		}
 
 		if (ret != STF_OK)
 			return ret;
@@ -1173,17 +1203,35 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 	libreswan_log("received INTERNAL_IP4_ADDRESS %s",
 			ipstr(&ip, &ip_str));
 
-	addrtosubnet(&ip, &c->spd.this.client);
-	setportof(0, &c->spd.this.client.addr);	/* ??? redundant? */
-
 	c->spd.this.has_client = TRUE;
-	/* ??? the following test seems obscure.  What's it about? */
-	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
+
+	if (c->spd.this.cat) {
+		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
+			ipstr(&ip, &ip_str)));
+		if (sameaddr (&c->spd.this.client.addr, &ip)) {
+			/* The address we received is same as this side
+			 * should we also check the host_srcip */
+			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received NTERNAL_IP4_ADDRESS which is same as this.client.addr %s. Will not add CAT iptable rules",
+				st->st_serialno, c->name, c->instance_serial,
+				ipstr(&ip, &ip_str)));
+		} else {
+			c->spd.this.client.addr = ip;
+			c->spd.this.client.maskbits = 32;
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+			c->spd.this.has_cat = TRUE; /* create iptable entry */
+		}
+	} else {
+		addrtosubnet(&ip, &c->spd.this.client);
+		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
+		/* ??? the following test seems obscure.  What's it about? */
+		if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
-		DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
+				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
 					ipstr(&ip, &ip_str)));
-		c->spd.this.host_srcip = ip;
+				c->spd.this.host_srcip = ip;
+		}
 	}
+
 	return TRUE;
 }
 

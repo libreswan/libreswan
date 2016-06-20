@@ -17,26 +17,23 @@
  */
 
 #ifdef FIPS_CHECK
-# include <fipscheck.h>
+# include <fipscheck.h>	/* from fipscheck devel */
 #endif
 
 const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto",
 				IPSEC_EXECDIR "/setup",
-#ifdef USE_ADNS
-				IPSEC_EXECDIR "/_pluto_adns",
-#endif
 				IPSEC_EXECDIR "/addconn",
 				IPSEC_EXECDIR "/auto",
 				IPSEC_EXECDIR "/barf",
 				IPSEC_EXECDIR "/ikeping",
 				IPSEC_EXECDIR "/readwriteconf",
 				IPSEC_EXECDIR "/_keycensor",
+				IPSEC_EXECDIR "/_import_crl",
 				IPSEC_EXECDIR "/look",
 				IPSEC_EXECDIR "/newhostkey",
 				IPSEC_EXECDIR "/_plutorun",
 				IPSEC_EXECDIR "/_secretcensor",
 				IPSEC_EXECDIR "/rsasigkey",
-				IPSEC_EXECDIR "/secrets",
 				IPSEC_EXECDIR "/showhostkey",
 				IPSEC_EXECDIR "/_stackmanager",
 				IPSEC_EXECDIR "/_updown",

@@ -11,13 +11,6 @@ include $(top_srcdir)/mk/targets.mk
 KLIPSD=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
-LEX=flex
-ifeq ($(USE_YACC),true)
-BISON=yacc -b parser
-else
-BISON=bison
-endif
-
 VPATH+= ${KLIPSSRCDIR}
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 
@@ -36,22 +29,18 @@ CFLAGS+=$(USERLAND_CFLAGS)
 
 ARFLAGS=crvs
 
-# XXX: Switch directory hack
-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) buildall
-clean-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) cleanall
-buildall: $(LIB)
+local-base: $(LIB)
+
+local-clean-base:
+	rm -f $(foreach f,$(OBJS) $(LIB), $(builddir)/$(f))
+
 list-local-base:
 	@: never nothing to do
 
 $(LIB): $(OBJS)
-	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
+	cd $(builddir) ; $(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
 $(OBJS):	$(HDRS)
-
-cleanall::
-	rm -rf ${OBJS} $(LIB)
 
 MK_DEPEND_FILES = $(OBJS)
 MK_DEPEND_CFLAGS = $(CFLAGS)

@@ -262,7 +262,7 @@ err_t pemtobin(chunk_t *blob)
 				ugh = ttodata((char *)data.ptr, data.len, 64,
 					(char *)dst.ptr,
 					blob->len - dst.len, &len);
-				if (ugh) {
+				if (ugh != NULL) {
 					DBG(DBG_PARSING,
 						DBG_log("  %s", ugh));
 					state = PEM_ABORT;

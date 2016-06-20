@@ -1,10 +1,12 @@
 /* manifest constants
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,6 +76,13 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
+enum sd_actions {
+	PLUTO_SD_EXIT = 0,
+	PLUTO_SD_START = 1,
+	PLUTO_SD_ERROR = 2,
+	PLUTO_SD_WATCHDOG = 3,
+};
+
 /*
  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
  *
@@ -103,6 +112,7 @@ enum event_type {
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_LOG_DAILY,		/* reset certain log events/stats */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
+	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 
 	/* events associated with states */
@@ -263,6 +273,7 @@ enum {
 	IMPAIR_FORCE_FIPS_IX,			/* causes pluto to believe we are in fips mode, NSS needs its own hack */
 	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
 	IMPAIR_SEND_ZERO_GX_IX,			/* causes pluto to send a g^x that is zero, breaking DH calculation */
+	IMPAIR_SEND_BOGUS_DCOOKIE_IX,		/* causes pluto to send a a bogus IKEv2 DCOOKIE */
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
@@ -307,6 +318,7 @@ enum {
 #define IMPAIR_FORCE_FIPS	LELEM(IMPAIR_FORCE_FIPS_IX)
 #define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
 #define IMPAIR_SEND_ZERO_GX	LELEM(IMPAIR_SEND_ZERO_GX_IX)
+#define IMPAIR_SEND_BOGUS_DCOOKIE	LELEM(IMPAIR_SEND_BOGUS_DCOOKIE_IX)
 
 /* State of exchanges
  *
@@ -451,7 +463,10 @@ enum original_role {
 				  LELEM(STATE_AGGR_I2) | \
 				  LELEM(STATE_XAUTH_I0) | \
 				  LELEM(STATE_XAUTH_I1) | \
-				  LELEM(STATE_MODE_CFG_I1))
+				  LELEM(STATE_MODE_CFG_I1) | \
+				  LELEM(STATE_PARENT_I1) | \
+				  LELEM(STATE_PARENT_I2))
+
 
 #define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
@@ -588,6 +603,11 @@ enum four_options {
 	fo_insist  = 3          /* propose, and only accept if peer agrees */
 };
 
+enum esn_options {
+	esn_no = 1, /* default */
+	esn_yes = 2,
+	esn_either = 3,
+};
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
@@ -705,8 +725,10 @@ enum sa_policy_bits {
 	POLICY_IKE_FRAG_ALLOW_IX,
 	POLICY_IKE_FRAG_FORCE_IX,
 #define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
-	POLICY_NO_IKEPAD_IX	/* pad ike packets to 4 bytes or not */
-#define POLICY_IX_LAST	POLICY_NO_IKEPAD_IX
+	POLICY_NO_IKEPAD_IX,	/* pad ike packets to 4 bytes or not */
+	POLICY_ESN_NO_IX,		/* send/accept ESNno */
+	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
+#define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
@@ -743,6 +765,8 @@ enum sa_policy_bits {
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
+#define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
+#define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
@@ -755,14 +779,6 @@ enum sa_policy_bits {
 
 /* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
-
-enum pubkey_source {
-	PUBKEY_NOTSET       = 0,
-	PUBKEY_DNS          = 1,
-	PUBKEY_DNSONDEMAND  = 2,
-	PUBKEY_CERTIFICATE  = 3,
-	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
-};
 
 /* values for right=/left= */
 enum keyword_host {
@@ -811,7 +827,7 @@ enum PrivateKeyKind {
 };
 
 #define XAUTH_PROMPT_TRIES 3
-#define XAUTH_MAX_NAME_LENGTH 128
+#define MAX_USERNAME_LEN 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1

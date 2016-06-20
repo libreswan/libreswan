@@ -67,7 +67,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
 		return "start of range must not be greater than end";
 
-	if (non_zero){
+	if (non_zero) {
 		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
 
 		if (addr == 0)

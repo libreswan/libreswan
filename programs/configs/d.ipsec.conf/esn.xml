@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>esn</emphasis></term>
+  <listitem>
+<para>Whether or not to enable Extended Sequence Number (ESN) for the IPsec SA.
+ESN is typically used for very high-speed links (10Gbps or faster) where the
+standard 32 bit sequence number is exhausted too quickly, causing IPsec SA's
+rekeys to happen too often. Accepted values are
+<emphasis remap='B'>no</emphasis> (the default),
+<emphasis remap='B'>yes</emphasis> and <emphasis remap='B'>either</emphasis>.
+If <emphasis remap='I'>either</emphasis> is specified as an initiator, the responder will make the choice. As
+a responder, if <emphasis remap='I'>either</emphasis> is received, <emphasis remap='I'>no</emphasis> is picked.
+</para>
+  </listitem>
+  </varlistentry>
+

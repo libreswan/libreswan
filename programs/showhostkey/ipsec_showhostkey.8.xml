@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 
@@ -93,9 +93,7 @@ might give (with the key data trimmed for clarity):</para>
 <para>The <option>--dhclient</option>
 option cause the output to be suitable for inclusion in
 <citerefentry><refentrytitle>dhclient.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-as part of configuring WAVEsec.
-See &lt;<ulink url='http://www.wavesec.org'>http://www.wavesec.org</ulink>&gt;.</para>
-
+</para>
 
 <para>Normally, the default key for this host
 (the one with no host identities specified for it) is the one extracted.

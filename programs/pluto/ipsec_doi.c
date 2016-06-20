@@ -33,7 +33,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>           /* for gettimeofday */
-#include <gmp.h>
 #include <resolv.h>
 
 #include <libreswan.h>
@@ -50,7 +49,6 @@
 #include "packet.h"
 #include "keys.h"
 #include "demux.h"      /* needs packet.h */
-#include "adns.h"       /* needs <resolv.h> */
 #include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
@@ -68,6 +66,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
+#include "secrets.h"
 
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -155,18 +154,18 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 		     DEFAULT_NONCE_SIZE, "initiator nonce");
 }
 
-bool justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
+bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
 		    const char *name)
 {
-	return out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
+	return ikev1_out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
 }
 
-bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
+bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 		pb_stream *outs, u_int8_t np,
 		const char *name)
 {
 	unpack_nonce(n, r);
-	return justship_nonce(n, outs, np, name);
+	return ikev1_justship_nonce(n, outs, np, name);
 }
 
 /*
@@ -246,7 +245,7 @@ void ipsecdoi_initiate(int whack_sock,
 		       so_serial_t replacing,
 		       enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		       , const struct xfrm_user_sec_ctx_ike *uctx
+		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {
@@ -508,8 +507,8 @@ void initialize_new_state(struct state *st,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name != NULL) {
-				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_name);
+			if (sr->this.username != NULL) {
+				jam_str(st->st_username, sizeof(st->st_username), sr->this.username);
 				break;
 			}
 		}
@@ -553,9 +552,10 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		}
 
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			 "%sESP%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
+			 st->st_esp.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,
@@ -572,8 +572,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 	if (st->st_ah.present) {
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH=>0x%08lx <0x%08lx",
+			 "%sAH%s=>0x%08lx <0x%08lx",
 			 ini,
+			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi));
 
@@ -619,9 +620,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	b = add_str(sadetails, sad_len, b,
 		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
-	if (st->st_xauth_username[0] != '\0') {
-		b = add_str(sadetails, sad_len, b, " XAUTHuser=");
-		b = add_str(sadetails, sad_len, b, st->st_xauth_username);
+	if (st->st_username[0] != '\0') {
+		b = add_str(sadetails, sad_len, b, " username=");
+		b = add_str(sadetails, sad_len, b, st->st_username);
 	}
 
 	add_str(sadetails, sad_len, b, "}");
