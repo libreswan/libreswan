@@ -660,7 +660,7 @@ void extra_debugging(const struct connection *c)
 		return;
 	}
 
-	if (c != NULL && c->extra_debugging != 0) {
+	if (c->extra_debugging != 0) {
 		libreswan_log("extra debugging enabled for connection: %s",
 			      bitnamesof(debug_bit_names, c->extra_debugging &
 					 ~cur_debugging));

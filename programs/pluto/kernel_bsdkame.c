@@ -327,7 +327,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 		break;
 
 	default:
-		return;
+		break;
 	}
 }
 

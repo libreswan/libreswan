@@ -433,7 +433,6 @@ IPSEC_ALG_MODULE_INIT( ipsec_cryptoapi_init ){
 }
 IPSEC_ALG_MODULE_EXIT( ipsec_cryptoapi_fini ){
 	unsetup_cipher_list(alg_capi_carray);
-	return;
 }
 #ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");

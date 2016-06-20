@@ -939,12 +939,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Is the original role correct?
 	 */
-	if (st != NULL) {
-		if (st->st_original_role != md->original_role) {
-			DBG(DBG_CONTROL,
-			    DBG_log("state and md roles conflict; dropping packet"));
-			return;
-		}
+	if (st != NULL && st->st_original_role != md->original_role) {
+		DBG(DBG_CONTROL,
+		    DBG_log("state and md roles conflict; dropping packet"));
+		return;
 	}
 
 	/*

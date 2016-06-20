@@ -142,14 +142,10 @@ __policy__strbuffer__init__(msg)
 		yy_delete_buffer(yy_current_buffer);
 	strbuffer = (YY_BUFFER_STATE)yy_scan_string(msg);
 	yy_switch_to_buffer(strbuffer);
-
-	return;
 }
 
 void
 __policy__strbuffer__free__()
 {
 	yy_delete_buffer(strbuffer);
-
-	return;
 }

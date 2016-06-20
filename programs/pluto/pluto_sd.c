@@ -84,5 +84,4 @@ void sd_watchdog_event(void)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
 	event_schedule(EVENT_SD_WATCHDOG, sd_secs, NULL);
-	return;
 }

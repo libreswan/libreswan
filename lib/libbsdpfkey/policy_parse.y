@@ -217,8 +217,6 @@ yyerror(msg)
 {
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libipsecyytext);
-
-	return;
 }
 
 static struct sockaddr *
@@ -384,8 +382,6 @@ policy_parse_request_init()
 		free(p_dst);
 		p_dst = NULL;
 	}
-
-	return;
 }
 
 static caddr_t
