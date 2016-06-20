@@ -103,9 +103,7 @@
 # include "security_selinux.h"
 #endif
 
-#ifdef USE_SYSTEMD_WATCHDOG
 # include "pluto_sd.h"
-#endif
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 

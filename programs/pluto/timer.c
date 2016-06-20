@@ -58,9 +58,7 @@
 
 #include "nat_traversal.h"
 
-#ifdef USE_SYSTEMD_WATCHDOG
 #include "pluto_sd.h"
-#endif
 
 static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 {
