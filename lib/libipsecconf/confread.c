@@ -945,7 +945,11 @@ static void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
+#ifdef DNSSEC
 static bool load_conn(struct ub_ctx *dnsctx,
+#else
+static bool load_conn(struct ub_ctx *dnsctx UNUSED,
+#endif
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1490,7 +1494,12 @@ struct starter_config *confread_load(const char *file,
 			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err |= load_conn(dnsctx,
+				err |= load_conn(
+#ifdef DNSSEC
+						dnsctx,
+#else
+						NULL,
+#endif
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
 						/*default conn*/ TRUE,
@@ -1505,8 +1514,11 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default"))
 				continue;
-
+#ifdef DNSSEC
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
+#else
+			connerr = init_load_conn(NULL, cfg, cfgp, sconn,
+#endif
 						 FALSE,
 						 resolvip, perr);
 
