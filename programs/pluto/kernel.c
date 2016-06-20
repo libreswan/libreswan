@@ -3499,6 +3499,7 @@ void expire_bare_shunts()
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
 				"expire_bare_shunt");
+			passert(bsp != *bspp);
 		} else {
 			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
 			bspp = &bsp->next;
