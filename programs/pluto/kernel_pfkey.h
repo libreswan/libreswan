@@ -71,6 +71,8 @@ extern void pfkey_scan_shunts(void);
 
 extern int pfkeyfd;
 
+extern int bare_shunt_interval;
+
 #endif /* PFKEY */
 
 #ifdef NETKEY_SUPPORT

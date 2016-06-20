@@ -404,7 +404,7 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
-extern void expire_bare_shunts(void);
+extern void expire_bare_shunts();
 
 
 /*
