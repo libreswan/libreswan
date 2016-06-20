@@ -64,6 +64,8 @@ extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
 
+struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid);
+
 struct packet_byte_stream;
 extern stf_status RSA_check_signature_gen(struct state *st,
 					  const u_char hash_val[MAX_DIGEST_LEN],

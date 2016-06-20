@@ -935,3 +935,60 @@ err_t load_nss_cert_secret(CERTCertificate *cert)
 		return "NSS cert not supported";
 	}
 }
+
+static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t buflen)
+{
+	if (pubkey->u.rsa.n.ptr == NULL) {
+		DBG_log("RSA pubkey with NULL modulus");
+		return FALSE;
+	}
+	SECItem modulus = {
+		.type = siBuffer,
+		.len = pubkey->u.rsa.n.len,
+		.data = pubkey->u.rsa.n.ptr,
+	};
+	SECItem *pubkey_ckaid = PK11_MakeIDFromPubKey(&modulus);
+	if (pubkey_ckaid == NULL) {
+		DBG_log("RSA pubkey incomputable CKAID");
+		return FALSE;
+	}
+	DBG_dump("comparing ckaid with", pubkey_ckaid->data, pubkey_ckaid->len);
+	bool eq = (pubkey_ckaid->len == buflen
+		   && memcmp(pubkey_ckaid->data, buf, buflen) == 0);
+	SECITEM_FreeItem(pubkey_ckaid, PR_TRUE);
+	return eq;
+}
+
+struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
+{
+	size_t buflen = strlen(ckaid); /* good enough */
+	char *buf = alloc_bytes(buflen, "ckaid");
+	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
+	if (ugh != NULL) {
+		pfree(buf);
+		/* should have been rejected by whack? */
+		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
+		return NULL;
+	}
+	DBG(DBG_CONTROL,
+	    DBG_dump("looking for pubkey with CKAID that matches", buf, buflen));
+
+	struct pubkey_list *p;
+	for (p = pluto_pubkeys; p != NULL; p = p->next) {
+		DBG_log("looking at a PUBKEY");
+		struct pubkey *key = p->key;
+		switch (key->alg) {
+		case PUBKEY_ALG_RSA: {
+			if (rsa_pubkey_ckaid_matches(key, buf, buflen)) {
+				DBG_log("ckaid matching pubkey");
+				pfree(buf);
+				return key;
+			}
+		}
+		default:
+			break;
+		}
+	}
+	pfree(buf);
+	return NULL;
+}

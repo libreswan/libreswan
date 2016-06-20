@@ -897,13 +897,20 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 	case WHACK_PUBKEY_CKAID: {
 		/*
-		 * XXX: The pubkey might already be loaded and in
-		 * either &pluto_secrets or %pluto_pubkeys.  For now
-		 * ignore this (ipsec.secrets RSA pubkeys get put in
-		 * pluto_secrets, sigh).
+		 * Perhaps it is already loaded?  Or perhaps it was
+		 * specified using an earlier rsasigkey=.
 		 */
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
-		load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		struct pubkey *key = get_pubkey_with_matching_ckaid(src->pubkey);
+		if (key != NULL) {
+			/*
+			 * Convert the CKAID into the corresponding ID
+			 * so that a search will re-find it.
+			 */
+			dst->id = key->id;
+		} else {
+			CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
+			load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		}
 		break;
 	}
 	default:
