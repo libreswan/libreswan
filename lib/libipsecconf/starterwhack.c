@@ -458,6 +458,9 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
+				starter_log(LOG_LEVEL_DEBUG,
+					    "\tsending %s %srsasigkey=%s",
+					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				ret = send_whack_msg(&msg, cfg->ctlbase);
 			}
@@ -492,6 +495,9 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
+				starter_log(LOG_LEVEL_DEBUG,
+					    "\tsending %s %srsasigkey2=%s",
+					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				return send_whack_msg(&msg, cfg->ctlbase);
 			}
