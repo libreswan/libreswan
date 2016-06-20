@@ -37,7 +37,7 @@ ipsec data directory (default: /etc/ipsec.d/)
 
 
 <refsect1 id='bugs'><title>BUGS</title>
-<para>This still needs an option for using an ipsec.d directory at a no-default location</para>
+<para>This still needs an option for using an NSS directory at a non-default location</para>
 </refsect1>
 </refentry>
 
