@@ -47,6 +47,9 @@ BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
+%if %{USE_LABELED_IPSEC}
+BuildRequires: libselinux-devel
+%endif
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel >= %{fipscheck_version}
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
