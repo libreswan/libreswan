@@ -38,7 +38,7 @@ checkenabled:
 	if test $$count = 0 ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "** The ipsec service is not enabled." ; \
-		echo "** Enable it using 'chkconfig ipsec.init on' or anothr similar method." ; \
+		echo "** Enable it using 'chkconfig ipsec on' or another similar method." ; \
 		echo "**********************************************************************" ; \
 	fi
 
