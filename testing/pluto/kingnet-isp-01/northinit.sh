@@ -9,6 +9,6 @@ ping -n -c 4 east
 TESTNAME=kingnet-isp-01
 source /testing/pluto/bin/northlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 

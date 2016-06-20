@@ -1,0 +1,11 @@
+tfc testing - requires netkey
+
+This uses tfc=0 which we can only really see when we look at recorded
+tcpdump showing ESP packets around 120 bytes. Currently, test cases
+do not yet store sanitized tcpdump output for verification.
+
+We also set send-no-esp-tfc=yes on west to prevent east from using
+padding. East is configured to use padding up to 1500 bytes.
+
+tcpdump should show no padding is used be either east or west, so
+ping encrypted ESP should be about 120 bytes.

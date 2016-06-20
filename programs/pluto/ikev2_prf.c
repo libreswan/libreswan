@@ -186,14 +186,23 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
 	free_any_symkey("finalkey", &finalkey);
 
+	passert(*skeyseed_out == NULL);
 	*skeyseed_out = skeyseed_k;
+	passert(*SK_d_out == NULL);
 	*SK_d_out = SK_d_k;
+	passert(*SK_ai_out == NULL);
 	*SK_ai_out = SK_ai_k;
+	passert(*SK_ar_out == NULL);
 	*SK_ar_out = SK_ar_k;
+	passert(*SK_ei_out == NULL);
 	*SK_ei_out = SK_ei_k;
+	passert(*SK_er_out == NULL);
 	*SK_er_out = SK_er_k;
+	passert(*SK_pi_out == NULL);
 	*SK_pi_out = SK_pi_k;
+	passert(*SK_pr_out == NULL);
 	*SK_pr_out = SK_pr_k;
+
 	*initiator_salt_out = initiator_salt;
 	*responder_salt_out = responder_salt;
 	*chunk_SK_pi_out = chunk_SK_pi;

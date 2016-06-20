@@ -7,7 +7,7 @@ named
 dig 2.2.0.192.in-addr.arpa. txt
 dig japan.uml.freeswan.org. key
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add me-private-or-clear

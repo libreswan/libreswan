@@ -210,9 +210,8 @@ OBJDIRTOP=${ABSOBJDIR}
 
 .PHONY: config
 config: ${OBJDIR}/Makefile
-${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir
+${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir | $(builddir)
 	@echo Setting up for OBJDIR=${OBJDIR}
-	mkdir -p $(builddir)
 	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
 
 # Recursive clean dealt with elsewhere.

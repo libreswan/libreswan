@@ -10,7 +10,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2016 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
@@ -51,6 +51,7 @@
 #include "constants.h"
 #include "lswconf.h"
 #include "lswfips.h"
+#include "lswnss.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -94,8 +95,6 @@
 #include <nss.h>
 #include <nspr.h>
 
-#include "fips.h"
-
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>	/* from libcap-ng devel */
 #endif
@@ -104,15 +103,18 @@
 # include "security_selinux.h"
 #endif
 
-#ifdef USE_SYSTEMD_WATCHDOG
 # include "pluto_sd.h"
-#endif
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
+
+#ifdef FIPS_CHECK
+# include <fipscheck.h> /* from fipscheck devel */
+static const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto", NULL };
+#endif
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
@@ -390,19 +392,17 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 static bool pluto_init_nss(char *nssdb)
 {
 	SECStatus rv;
-	char dbuf[1024];
 
-	snprintf(dbuf, sizeof(dbuf), "sql:%s", nssdb);
-	loglog(RC_LOG_SERIOUS, "NSS DB directory: %s", dbuf);
-	rv = NSS_Initialize(dbuf, "", "", SECMOD_DB, NSS_INIT_READONLY);
-	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS readonly initialization (\"%s\") failed (err %d)\n",
-			dbuf, PR_GetError());
+	/* little lie, lsw_nss_setup doesn't have logging */
+	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdb);
+
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
+		loglog(RC_LOG_SERIOUS, "%s", err);
 		return FALSE;
 	}
 
 	libreswan_log("NSS initialized");
-	PK11_SetPasswordFunc(getNSSPassword);
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -700,10 +700,6 @@ int main(int argc, char **argv)
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
-	/* set up initial defaults that need a cast */
-	pluto_shared_secrets_file =
-		DISCARD_CONST(char *, SHARED_SECRETS_FILE);
-
 	unsigned int keep_alive = 0;
 
 	/* Overridden by virtual_private= in ipsec.conf */
@@ -824,7 +820,7 @@ int main(int argc, char **argv)
 			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
-			if (u != SECCTX && u != 10) {
+			if (u != SECCTX && u != ECN_TUNNEL_or_old_SECCTX) {
 				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
 				break;
 			}
@@ -1034,7 +1030,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 's':	/* --secretsfile <secrets-file> */
-			pluto_shared_secrets_file = optarg;
+			lsw_conf_secretsfile(optarg);
 			continue;
 
 		case 'f':	/* --ipsecdir <ipsec-dir> */
@@ -1095,8 +1091,8 @@ int main(int argc, char **argv)
 				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
-			/* ddos-ike-treshold and max-halfopen-ike */
-			pluto_ddos_treshold = cfg->setup.options[KBF_DDOS_IKE_TRESHOLD];
+			/* ddos-ike-threshold and max-halfopen-ike */
+			pluto_ddos_threshold = cfg->setup.options[KBF_DDOS_IKE_THRESHOLD];
 			pluto_max_halfopen = cfg->setup.options[KBF_MAX_HALFOPEN_IKE];
 
 			strict_crl_policy =
@@ -1140,8 +1136,10 @@ int main(int argc, char **argv)
 
 			/* no config option: ctlbase */
 			/* --secrets */
-			set_cfg_string(&pluto_shared_secrets_file,
-				cfg->setup.strings[KSF_SECRETSFILE]);
+			if (cfg->setup.strings[KSF_SECRETSFILE] &&
+			    *cfg->setup.strings[KSF_SECRETSFILE]) {
+				lsw_conf_secretsfile(cfg->setup.strings[KSF_SECRETSFILE]);
+			}
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* --ipsecdir */
@@ -1394,19 +1392,22 @@ int main(int argc, char **argv)
 	}
 
 	init_constants();
+	init_pluto_constants();
+
 	pluto_init_log();
 
-	if (!pluto_init_nss(oco->nssdir)) {
+	if (!pluto_init_nss(oco->nssdb)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
+	libreswan_log("NSS crypto library initialized");
 
 	if (ocsp_enable) {
 		if (!init_nss_ocsp(ocsp_default_uri, ocsp_trust_name,
 						     ocsp_timeout,
 						     strict_ocsp_policy)) {
-			libreswan_log("Initializing NSS OCSP failed");
-			exit_pluto(10);
+			loglog(RC_LOG_SERIOUS, "Initializing NSS OCSP failed");
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		} else {
 			libreswan_log("NSS OCSP Enabled");
 		}
@@ -1446,79 +1447,62 @@ int main(int argc, char **argv)
 #ifdef FIPS_CHECK
 	libreswan_log("FIPS HMAC integrity support [enabled]");
 	/*
-	 * FIPS Kernel mode: fips=1 kernel boot parameter
-	 * FIPS Product mode: dracut-fips is installed
+	 * FIPS mode requires two conditions to be true:
+	 *  - FIPS Kernel mode: fips=1 kernel boot parameter
+	 *  - FIPS Product mode: See FIPSPRODUCTCHECK in Makefile.inc
+	 *     (in RHEL/Fedora, dracut-fips installs $FIPSPRODUCTCHECK)
 	 *
-	 * When FIPS Product mode and FIPS Kernel mode, abort on hmac failure.
-	 * Otherwise, just complain about failures.
-	 *
-	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
+	 * When FIPS mode, abort on self-check hmac failure. Otherwise, complain
 	 */
 	{
 		if (DBGP(IMPAIR_FORCE_FIPS)) {
 			libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
+			lsw_set_fips_mode(LSW_FIPS_ON);
 		}
 
-		int fips_kernel = libreswan_has_fips_kernel(DBGP(IMPAIR_FORCE_FIPS));
-		int fips_product = libreswan_has_fips_product(DBGP(IMPAIR_FORCE_FIPS));
-
-		if (fips_kernel < 0 || fips_product < 0) {
-			loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-		}
-
-		/* override what ever libreswan_fipsmode() would return */
-		int fips_mode = (fips_kernel > 0 && fips_product > 0);
-		libreswan_set_fips_mode(fips_mode);
-		if (fips_mode) {
-			libreswan_log("FIPS mode enabled - pluto daemon is running in FIPS mode");
-		} else {
-			libreswan_log("FIPS mode disabled - pluto daemon is not running in FIPS mode");
-		}
+		enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
+		bool nss_fips_mode = PK11_IsFIPS();
 
 		/*
 		 * Now verify the consequences.  Always run the tests
 		 * as combinations such as NSS in fips mode but as out
 		 * of it could be bad.
 		 */
-
-		bool fips_library = PK11_IsFIPS();
-		if (fips_mode) {
-			if (fips_library) {
-				libreswan_log("FIPS mode enabled and NSS library is in FIPS mode");
-			} else if (DBGP(IMPAIR_FORCE_FIPS)) {
-				/* bad? */
-				libreswan_log("FIPS mode enabled BUT NSS library is not in FIPS mode (impair-force-fips)");
+		switch (pluto_fips_mode) {
+		case LSW_FIPS_UNKNOWN:
+			loglog(RC_LOG_SERIOUS, "ABORT: pluto FIPS mode could not be determined");
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+			break;
+		case LSW_FIPS_ON:
+			libreswan_log("FIPS mode enabled for pluto daemon");
+			if (nss_fips_mode) {
+				libreswan_log("NSS library is running in FIPS mode");
 			} else {
-				loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode enabled but NSS library is not in FIPS mode");
+				loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
 				exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 			}
-		} else {
-			if (fips_library) {
-				/* bad? */
-				libreswan_log("FIPS mode disabled but NSS library is in FIPS mode");
-			} else {
-				libreswan_log("FIPS mode disabled and NSS library is not in FIPS mode");
+			break;
+		case LSW_FIPS_OFF:
+			libreswan_log("FIPS mode disabled for pluto daemon");
+			if (nss_fips_mode) {
+				loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
 			}
+			break;
+		case LSW_FIPS_UNSET:
+		default:
+			bad_case(pluto_fips_mode);
 		}
 
+		/* always run hmac check so we can print diagnostic */
 		bool fips_files = FIPSCHECK_verify_files(fips_package_files);
-		if (fips_mode) {
-			if (fips_files) {
-				libreswan_log("FIPS mode enabled and HMAC integrity verification tests passed");
-			} else if (DBGP(IMPAIR_FORCE_FIPS)) {
-				/* bad? */
-				libreswan_log("FIPS mode enabled but HMAC integrity verification tests failed (impair-force-fips)");
-			} else {
-				loglog(RC_LOG_SERIOUS, "FIPS mode enabled but HMAC integrity verification tests FAILED");
-				exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-			}
+
+		if (fips_files) {
+			libreswan_log("FIPS HMAC integrity verification self-test passed");
 		} else {
-			if (fips_files) {
-				libreswan_log("FIPS mode disabled but HMAC integrity verification tests passed");
-			} else {
-				libreswan_log("FIPS mode disabled and HMAC integrity verification tests passed");
-			}
+			loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
+		}
+		if (pluto_fips_mode == LSW_FIPS_ON && !fips_files) {
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 		}
 	}
 #else
@@ -1539,8 +1523,8 @@ int main(int argc, char **argv)
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
-	if (pluto_shared_secrets_file != NULL)
-		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
+	if (oco->secretsfile && *oco->secretsfile)
+		libreswan_log("secrets file: %s", oco->secretsfile);
 
 	libreswan_log(leak_detective ?
 		"leak-detective enabled" : "leak-detective disabled");
@@ -1635,23 +1619,16 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_id();
 	init_vendorid();
-
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
 #endif
-
 	load_crls();
-
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
 	daily_log_event();
-
 #ifdef USE_SYSTEMD_WATCHDOG
-	/* tell systemd that we've started */
-	pluto_sd_watchdog_start();
-	/* start the even probess */
-	event_schedule(EVENT_SD_WATCHDOG, SD_WATCHDOG_INTERVAL, NULL);
+	pluto_sd_init();
 #endif
 
 	call_server();
@@ -1671,6 +1648,9 @@ void exit_pluto(int status)
 {
 	/* needed because we may be called in odd state */
 	reset_globals();
+ #ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd(PLUTO_SD_STOPPING, status);
+ #endif
 	free_preshared_secrets();
 	free_remembered_public_keys();
 	delete_every_connection();
@@ -1690,7 +1670,7 @@ void exit_pluto(int status)
 
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */
-	NSS_Shutdown();
+	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_kernelfd();	/* stop listening to kernel FD, remove event */
@@ -1701,7 +1681,7 @@ void exit_pluto(int status)
 		report_leaks();
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd_watchdog_exit(status);
+	pluto_sd(PLUTO_SD_EXIT,status);
 #endif
 	exit(status);	/* exit, with our error code */
 }
@@ -1714,7 +1694,7 @@ void show_setup_plutomain()
 		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
-		pluto_shared_secrets_file,
+		oco->secretsfile,
 		oco->confddir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
@@ -1737,9 +1717,9 @@ void show_setup_plutomain()
 	);
 
 	whack_log(RC_COMMENT,
-		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
+		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
 		pluto_max_halfopen,
-		pluto_ddos_treshold,
+		pluto_ddos_threshold,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 

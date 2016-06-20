@@ -43,7 +43,8 @@ def mounts(domain):
         if match:
             source = match.group(1)
             # Strip trailing "/" along with other potential quirks
-            source = os.path.abspath(source)
+            # such as the mount point being a soft link.
+            source = os.path.realpath(source)
             continue
         match = re.compile("<target dir='([^']*)'").search(line)
         if match:
@@ -74,7 +75,7 @@ def mount_point(domain, console, device):
     return mount
 
 def directory(domain, console, directory, default=None):
-    directory = os.path.abspath(directory)
+    directory = os.path.realpath(directory)
     for target, source in mounts(domain).items():
         if os.path.commonprefix([source, directory]) == source:
             # found a suitable mount point, now find were it is
@@ -217,8 +218,14 @@ def reboot(domain, console=None,
         domain.reset()
         # give the domain extra time to start
         startup_timeout = startup_timeout * 4
-    _startup(domain, console, timeout=startup_timeout)
-    return console
+    try:
+        _startup(domain, console, timeout=startup_timeout)
+        return console
+    except pexpect.TIMEOUT:
+        domain.logger.error("domain failed to start after %d seconds, power cycling it", time.time() - start_time)
+        domain.destroy()
+        console.expect(pexpect.EOF, timeout=shutdown_timeout)
+        return start(domain)
 
 # Use the console to detect the shutdown - if/when the domain stops it
 # will exit giving an EOF.

@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +21,7 @@
 
 #include "constants.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 #include "ike_alg.h"
 #include "crypto.h"
 #include "crypt_dbg.h"
@@ -297,11 +298,16 @@ int main(int argc, char *argv[])
 
 	setbuf(stdout, NULL);
 
-	NSS_NoDB_Init(".");
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
+		fprintf(stderr, "unexpected %s\n", err);
+		exit(1);
+	}
+
 	init_crypto();
 
 	cavp_parser();
 
-	NSS_Shutdown();
+	lsw_nss_shutdown();
 	return 0;
 }

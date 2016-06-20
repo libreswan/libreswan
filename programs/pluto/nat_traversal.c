@@ -75,11 +75,12 @@
 #include "nat_traversal.h"
 
 
+/* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_PERIOD  20
 
 bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
 
-static time_t nat_kap = 0;	/* keep-alive period */
+static time_t nat_kap = DEFAULT_KEEP_ALIVE_PERIOD;	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
 #define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE
@@ -102,8 +103,12 @@ void init_nat_traversal(unsigned int keep_alive_period)
 		}
 	}
 
-	nat_kap = keep_alive_period != 0 ?
-		keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
+
+	if (keep_alive_period != 0)
+		nat_kap = keep_alive_period;
+
+	DBG(DBG_NATT, DBG_log("init_nat_traversal() initialized with keep_alive=%d",
+		keep_alive_period));
 	libreswan_log("NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
@@ -978,6 +983,7 @@ static int nat_traversal_new_mapping(struct state *st,
 	return 0;
 }
 
+/* this should only be called after packet has been verified/authenticated! */
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
 	struct iface_port *i = NULL;
@@ -1052,7 +1058,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			if (sameaddr(&st->st_localaddr, &i->ip_addr) &&
 			    st->st_localport == i->port) {
 				DBG(DBG_NATT,
-					DBG_log("NAT-T: using interface %s:%d",
+					DBG_log("NAT-T: updated to use interface %s:%d",
 						i->ip_dev->id_rname,
 						i->port));
 				st->st_interface = i;

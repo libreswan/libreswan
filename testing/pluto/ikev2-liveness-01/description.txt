@@ -1,4 +1,4 @@
-IKEv2 "Liveness" checking events.
+IKEv2 "Liveness" checking events using netkey.
 
 east sends an INFORMATIONAL exchange and west responds.
 when west is killed, east goes without a response until

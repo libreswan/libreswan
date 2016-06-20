@@ -23,5 +23,4 @@ initiator/responder roles switch during rekey when only one end specfies
 a specific key length.
 
 NOTE: we support aes192, but it is not part of our default proposal. This
-      is true for all our block cipihers, as usually min == default, and we
-      support min,default and mx.
+      is true for all our block cipihers.

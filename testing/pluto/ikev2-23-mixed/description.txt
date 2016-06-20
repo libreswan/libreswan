@@ -3,5 +3,6 @@ This is an IKEv2 and IKEv1 test. Two connections between the same end points roa
 If the connections get added and brought up as in the scripts,
 it is observed that conn with ikev2=insist get established with ikev1.
 
-if we change the oreder of add and up there will be two connections.
+if we change the order of add and up there will be two connections.
 
+NOTE: So shouldn't this test show a failure to fix in code?

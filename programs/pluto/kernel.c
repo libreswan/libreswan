@@ -1,4 +1,5 @@
-/* routines that interface with the kernel's IPsec mechanism
+/* routines that interface with the kernel's IPsec mechanism, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010  D. Hugh Redelmeier.
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
@@ -10,6 +11,7 @@
  * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -71,6 +73,8 @@
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
+
+#include "lswfips.h" /* for libreswan_fipsmode() */
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -536,7 +540,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* traffic out stats - if any */
 			"%s" /* nflog-group - if any */
 			"%s" /* conn-mark - if any */
-			"VTI_IFACE='%s' VTI_ROUTING='%s' "
+			"VTI_IFACE='%s' VTI_ROUTING='%s' VTI_SHARED='%s' "
 			"%s" /* CAT=yes if set */
 
 		, c->name,
@@ -586,6 +590,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
 		c->vti_routing ? "yes" : "no",
+		c->vti_shared ? "yes" : "no",
 		catstr
 		);
 	/*
@@ -1765,7 +1770,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			    DBG_log("recorded ref=%u as refhim",
 				    said_next->ref));
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -1834,7 +1839,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -1856,9 +1861,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 		const struct esp_info *ei;
-
-		/* ??? who picked this type for enc_key_len? */
-		u_int16_t enc_key_len;
 
 		/* ??? table of non-registered algorithms? */
 		static const struct esp_info esp_info[] = {
@@ -1970,7 +1972,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				break;
 		}
 
-		enc_key_len = ta->enckeylen / BITS_PER_BYTE;
+		u_int16_t enc_key_len = ta->enckeylen / BITS_PER_BYTE;
+
 		if (enc_key_len != 0) {
 			/* XXX: must change to check valid _range_ enc_key_len */
 			if (enc_key_len > ei->enckeylen) {
@@ -2022,9 +2025,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
-		int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+		/* ??? why authkeylen but enc_key_len?  Spelling seems inconsistent. */
+		unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+
 		DBG(DBG_KERNEL, DBG_log(
-			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%" PRIu32,
+			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + authkeylen=%u",
 			st->st_esp.keymat_len, enc_key_len, authkeylen));
 
 		passert(st->st_esp.keymat_len == enc_key_len + authkeylen);
@@ -2038,10 +2043,21 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
+		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
+			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
+			said_next->tfcpad = c->sa_tfcpad;
+		}
 		said_next->authalg = ei->authalg;
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 		    st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
+#ifdef FIPS_CHECK
+				if (libreswan_fipsmode() == 1) {
+					loglog(RC_LOG_SERIOUS,
+						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
+					goto fail;
+				}
+#endif
 				DBG(DBG_KERNEL, DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits"));
 				/* We need to tell the kernel to mangle the sha2_256, as instructed by the user */
 				said_next->authalg =
@@ -2123,7 +2139,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2150,8 +2166,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * as ae "enum ikev1_auth_attribute".
 		 */
 		int authalg;
-		int key_len = ikev1_auth_kernel_attrs(st->st_ah.attrs.transattrs.integ_hash, &authalg);
-		if (authalg < 0) {
+		enum ikev1_auth_attribute auth = st->st_ah.attrs.transattrs.integ_hash;
+		unsigned key_len = ikev1_auth_kernel_attrs(auth, &authalg);
+		if (authalg <= 0) {
+			loglog(RC_LOG_SERIOUS, "%s not implemented",
+			       enum_show(&auth_alg_names, auth));
 			goto fail;
 		}
 
@@ -2209,7 +2228,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (new_refhim == IPSEC_SAREF_NULL)
+			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -3480,6 +3499,7 @@ void expire_bare_shunts()
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
 				"expire_bare_shunt");
+			passert(bsp != *bspp);
 		} else {
 			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
 			bspp = &bsp->next;
@@ -3489,11 +3509,11 @@ void expire_bare_shunts()
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 }
 
-int
+unsigned
 ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 {
 	int authalg;
-	int key_len;
+	unsigned key_len;
 
 	switch (auth) {
 
@@ -3565,8 +3585,6 @@ ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 	case AUTH_ALGORITHM_KPDK:
 	case AUTH_ALGORITHM_DES_MAC:
 	default:
-		loglog(RC_LOG_SERIOUS, "%s not implemented",
-		       enum_show(&auth_alg_names, auth));
 		key_len = 0;
 		authalg = -1;
 	}

@@ -55,6 +55,7 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
+#include "lswnss.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -110,11 +111,12 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-static void RSA_show_public_key(struct RSA_public_key *k)
+void DBG_log_RSA_public_key(const struct RSA_public_key *k)
 {
 	DBG_log(" keyid: *%s", k->keyid);
 	DBG_dump_chunk("n", k->n);
 	DBG_dump_chunk("e", k->e);
+	DBG_log_ckaid("CKAID", k->ckaid);
 }
 
 static err_t RSA_public_key_sanity(struct RSA_private_key *k)
@@ -140,18 +142,12 @@ static err_t RSA_public_key_sanity(struct RSA_private_key *k)
 struct secret {
 	struct secret  *next;
 	struct id_list *ids;
-	int secretlineno;
 	struct private_key_stuff pks;
 };
 
 struct private_key_stuff *lsw_get_pks(struct secret *s)
 {
 	return &s->pks;
-}
-
-int lsw_get_secretlineno(const struct secret *s)
-{
-	return s->secretlineno;
 }
 
 struct id_list *lsw_get_idlist(const struct secret *s)
@@ -220,6 +216,24 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
+		/*
+		 * The "adjusted" length of modulus n in octets:
+		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+		 *
+		 * According to form_keyid() this is the modulus length
+		 * less any leading byte added by DER encoding.
+		 *
+		 * The adjusted length is used in sign_hash() as the
+		 * signature length - wouldn't PK11_SignatureLen be
+		 * better?
+		 *
+		 * The adjusted length is used in
+		 * same_RSA_public_key() as part of comparing two keys
+		 * - but wouldn't that be redundant?  The direct n==n
+		 * test would pick up the difference.
+		 */
+		DBG(DBG_CRYPT, DBG_log("XXX: adjusted modulus length %zu->%zu",
+				       n.len, n.len - 1));
 		n.ptr++;
 		n.len--;
 	}
@@ -237,6 +251,24 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.data == 0x00) {
+		/*
+		 * The "adjusted" length of modulus n in octets:
+		 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+		 *
+		 * According to form_keyid() this is the modulus length
+		 * less any leading byte added by DER encoding.
+		 *
+		 * The adjusted length is used in sign_hash() as the
+		 * signature length - wouldn't PK11_SignatureLen be
+		 * better?
+		 *
+		 * The adjusted length is used in
+		 * same_RSA_public_key() as part of comparing two keys
+		 * - but wouldn't that be redundant?  The direct n==n
+		 * test would pick up the difference.
+		 */
+		DBG(DBG_CRYPT, DBG_log("XXX: adjusted modulus length %u->%u",
+				       n.len, n.len - 1));
 		n.data++;
 		n.len--;
 	}
@@ -253,6 +285,7 @@ void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
+	freeanyckaid(&rsa->ckaid);
 }
 
 /*
@@ -362,7 +395,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	for (s = secrets; s != NULL; s = s->next) {
 		DBG(DBG_CONTROLMORE,
 			DBG_log("line %d: key type %s(%s) to type %s",
-				s->secretlineno,
+				s->pks.line,
 				enum_name(&ppk_names, kind),
 				idme,
 				enum_name(&ppk_names, s->pks.kind));
@@ -425,7 +458,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			}
 
 			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=%d", s->secretlineno,
+				DBG_log("line %d: match=%d", s->pks.line,
 					match);
 				);
 
@@ -507,7 +540,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					DBG(DBG_CONTROL,
 						DBG_log("best_match %d>%d best=%p (line=%d)",
 							best_match, match,
-							s, s->secretlineno);
+							s, s->pks.line);
 						);
 
 					/* this is the best match so far */
@@ -524,7 +557,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	}
 	DBG(DBG_CONTROL,
 		DBG_log("concluding with best_match=%d best=%p (lineno=%d)",
-			best_match, best, best ? best->secretlineno : -1);
+			best_match, best, best ? best->pks.line : -1);
 		);
 
 	return best;
@@ -678,6 +711,82 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 }
 
 /*
+ * Return true IFF CKAID starts with all of START (which is in HEX).
+ */
+bool ckaid_starts_with(ckaid_t ckaid, const char *start)
+{
+	if (strlen(start) > ckaid.nss->len * 2) {
+		return FALSE;
+	}
+	int i;
+	for (i = 0; start[i]; i++) {
+		const char *p = start + i;
+		unsigned byte = ckaid.nss->data[i / 2];
+		/* high or low */
+		unsigned nibble = (i & 1) ? (byte & 0xf) : (byte >> 4);
+		char n[2] = { *p, };
+		char *end;
+		unsigned long ni = strtoul(n, &end, 16);
+		if (*end) {
+			return FALSE;
+		}
+		if (ni != nibble) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+char *ckaid_as_string(ckaid_t ckaid)
+{
+	size_t string_len = ckaid.nss->len * 2 + 1;
+	char *string = alloc_bytes(string_len, "ckaid-string");
+	datatot(ckaid.nss->data, ckaid.nss->len, 16, string, string_len);
+	return string;
+}
+
+err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid)
+{
+	SECItem *dup = SECITEM_DupItem(nss_ckaid);
+	if (dup == NULL) {
+		return "problem saving CKAID";
+	}
+	ckaid->nss = dup;
+	return NULL;
+}
+
+err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
+{
+	/*
+	 * Compute the CKAID directly using the modulus. - keep old
+	 * configurations hobbling along.
+	 */
+	SECItem nss_modulus = same_chunk_as_secitem(modulus, siBuffer);
+	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_modulus);
+	if (nss_ckaid == NULL) {
+		return "unable to compute 'CKAID' from modulus";
+	}
+	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
+				      nss_ckaid->data, nss_ckaid->len));
+	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
+	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+	return err;
+}
+
+void freeanyckaid(ckaid_t *ckaid)
+{
+	if (ckaid && ckaid->nss) {
+		SECITEM_FreeItem(ckaid->nss, PR_TRUE);
+		ckaid->nss = NULL;
+	}
+}
+
+void DBG_log_ckaid(const char *prefix, ckaid_t ckaid)
+{
+	DBG_dump(prefix, ckaid.nss->data, ckaid.nss->len);
+}
+
+/*
  * Parse fields of RSA private key.
  *
  * A braced list of keyword and value pairs.
@@ -734,13 +843,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 		passert(sizeof(bv) >= bvlen);
 
 		/* dispose of the data */
-		if (streq(p->name, "CKAIDNSS")) {
-			DBG(DBG_CONTROL, DBG_log("saving CKAID"));
-			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
-			passert(sizeof(rsak->ckaid) >= bvlen);
-			memcpy(rsak->ckaid, bv, bvlen);
-			rsak->ckaid_len = bvlen;
-		} else if (p->offset >= 0) {
+		if (p->offset >= 0) {
 			DBG(DBG_CONTROLMORE, DBG_log("saving %s", p->name));
 			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
@@ -758,9 +861,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	/*
 	 * Check that all required fields are present.
 	 */
-	if (rsak->ckaid_len == 0) {
-		return "field 'CKAIDNSS' either missing or empty";
-	}
 	const struct fld *p;
 	for (p = RSA_private_field;
 	     p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
@@ -776,8 +876,15 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 	rsak->pub.keyid[0] = '\0';	/* in case of failure */
 	if (rsak->pub.e.len > 0 || rsak->pub.n.len >0) {
 		splitkeytoid(rsak->pub.e.ptr, rsak->pub.e.len,
-			     rsak->pub.n.ptr, rsak->pub.e.len,
+			     rsak->pub.n.ptr, rsak->pub.n.len,
 			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
+	}
+
+	/* Finally, the CKAID */
+	err_t err = form_ckaid_rsa(rsak->pub.n, &rsak->pub.ckaid);
+	if (err) {
+		/* let caller recover from mess */
+		return err;
 	}
 
 	return RSA_public_key_sanity(rsak);
@@ -935,10 +1042,8 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			s->ids = NULL;
 			s->pks.kind = PPK_PSK;	/* default */
 			setchunk(s->pks.u.preshared_secret, NULL, 0);
-			s->secretlineno = flp->lino;
+			s->pks.line = flp->lino;
 			s->next = NULL;
-
-			s->pks.u.RSA_private_key.pub.nssCert = NULL;
 
 			for (;;) {
 				struct id id;
@@ -1173,83 +1278,30 @@ void free_public_keys(struct pubkey_list **keys)
 		*keys = free_public_keyentry(*keys);
 }
 
-/*
- * decode of RSA pubkey chunk
- * - format specified in RFC 2537 RSA/MD5 Keys and SIGs in the DNS
- * - exponent length in bytes (1 or 3 octets)
- *   + 1 byte if in [1, 255]
- *   + otherwise 0x00 followed by 2 bytes of length (big-endian)
- * - exponent (of specified length)
- * - modulus (the rest of the pubkey chunk)
- */
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
-{
-	chunk_t exponent;
-	chunk_t mod;
-
-	rsa->keyid[0] = '\0';	/* in case of keyblobtoid failure */
-
-	if (pubkey->len < 3)
-		return "RSA public key blob way too short";	/*
-								 * not even
-								 * room for
-								 * length!
-								 */
-
-	/* exponent */
-	if (pubkey->ptr[0] != 0x00) {
-		/* one-byte length, followed by that many exponent bytes */
-		setchunk(exponent, pubkey->ptr + 1, pubkey->ptr[0]);
-	} else {
-		/*
-		 * 0x00 followed by 2 bytes of length (big-endian),
-		 * followed by that many exponent bytes
-		 */
-		setchunk(exponent, pubkey->ptr + 3,
-			(pubkey->ptr[1] << BITS_PER_BYTE) + pubkey->ptr[2]);
-	}
-
-	/*
-	 * check that exponent fits within pubkey and leaves room for
-	 * a reasonable modulus.
-	 * Take care to avoid overflow in this check.
-	 */
-	if (pubkey->len -
-		(exponent.ptr - pubkey->ptr) < exponent.len +
-		RSA_MIN_OCTETS_RFC)
-		return "RSA public key blob too short";
-
-	/* modulus: all that's left in pubkey */
-	mod.ptr = exponent.ptr + exponent.len;
-	mod.len = &pubkey->ptr[pubkey->len] - mod.ptr;
-
-	if (mod.len < RSA_MIN_OCTETS)
-		return RSA_MIN_OCTETS_UGH;
-
-	if (mod.len > RSA_MAX_OCTETS)
-		return RSA_MAX_OCTETS_UGH;
-
-	rsa->e = chunk_clone(exponent, "e");
-	rsa->n = chunk_clone(mod, "n");
-
-	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
-
-	DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
-
-	rsa->k = rsa->n.len;
-
-	if (rsa->k != mod.len) {
-		freeanychunk(rsa->e);
-		freeanychunk(rsa->n);
-		return "RSA modulus shorter than specified";
-	}
-
-	return NULL;
-}
-
 bool same_RSA_public_key(const struct RSA_public_key *a,
-			const struct RSA_public_key *b)
+			 const struct RSA_public_key *b)
 {
+	/*
+	 * The "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the modulus length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * The adjusted length is used in same_RSA_public_key() as
+	 * part of comparing two keys - but wouldn't that be
+	 * redundant?  The direct n==n test would pick up the
+	 * difference.
+	 */
+	DBG(DBG_CRYPT,
+	    if (a->k != b->k && same_chunk(a->e, b->e)) {
+		    DBG_log("XXX: different modulus k (%u vs %u) modulus (%zu vs %zu) caused a mismatch",
+			    a->k, b->k, a->n.len, b->n.len);
+	    });
+
 	DBG(DBG_CRYPT,
 		DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT ");
 		);
@@ -1309,26 +1361,45 @@ void delete_public_keys(struct pubkey_list **head,
  */
 struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 {
-	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+	ckaid_t ckaid;
+	{
+		SECItem *nss_ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+								  lsw_return_nss_password_file_info());
+		if (nss_ckaid == NULL) {
+			return NULL;
+		}
+		err_t err = form_ckaid_nss(nss_ckaid, &ckaid);
+		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+		if (err) {
+			/* XXX: What to do with the error?  */
+			return NULL;
+		}
+	}
+	/* free: ckaid */
+
+	chunk_t e;
+	chunk_t n;
+	{
+		SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+		if (nsspk == NULL) {
+			freeanyckaid(&ckaid);
+			return NULL;
+		}
+		e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
+		n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "n");
+		SECKEY_DestroyPublicKey(nsspk);
+	}
+	/* free: ckaid, n, e */
+
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-
+	pk->u.rsa.e = e;
+	pk->u.rsa.n = n;
+	pk->u.rsa.ckaid = ckaid;
 	/*
-	 * Same as secitem_to_chunk() but that function is not available
-	 * outside programs/pluto/ right now
-	 *
-	 * chunk_t e = secitem_to_chunk(nsspk->u.rsa.publicExponent);
-	 * chunk_t n = secitem_to_chunk(nsspk->u.rsa.modulus);
+	 * based on comments in form_keyid, the modulus length
+	 * returned by NSS might contain a leading zero and this
+	 * ignores that when generating the keyid.
 	 */
-	chunk_t e, n;
-
-	e.ptr = nsspk->u.rsa.publicExponent.data;
-	e.len = nsspk->u.rsa.publicExponent.len;
-	n.ptr = nsspk->u.rsa.modulus.data;
-	n.len = nsspk->u.rsa.modulus.len;
-
-	pk->u.rsa.e = chunk_clone(e, "e");
-	pk->u.rsa.n = chunk_clone(n, "n");
-
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
 	/*
@@ -1339,7 +1410,6 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	pk->id  = empty_id;
 	pk->issuer = empty_chunk;
 
-	SECKEY_DestroyPublicKey(nsspk);
 	return pk;
 }
 
@@ -1389,16 +1459,15 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 		goto out;
 	}
 
-	rsak->pub.nssCert = cert;
-
-	passert(sizeof(rsak->ckaid) >= certCKAID->len);
-	rsak->ckaid_len = certCKAID->len;
-	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
-
 	clonetochunk(rsak->pub.e, pubk->u.rsa.publicExponent.data,
 		     pubk->u.rsa.publicExponent.len, "e");
 	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
 		     pubk->u.rsa.modulus.len, "n");
+	ugh = form_ckaid_nss(certCKAID, &rsak->pub.ckaid);
+	if (ugh) {
+		/* let caller clean up mess */
+		goto out;
+	}
 
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);
@@ -1463,7 +1532,7 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 	}
 	s = alloc_thing(struct secret, "secret");
 	s->pks.kind = PPK_RSA;
-	s->secretlineno = 0;
+	s->pks.line = 0;
 
 	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,
 						cert)) != NULL) {

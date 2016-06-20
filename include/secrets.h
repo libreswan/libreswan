@@ -27,45 +27,91 @@
 #include <pk11pub.h>
 #include "x509.h"
 
-#ifndef SHARED_SECRETS_FILE
-# define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
-#endif
-
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
+
+/*
+ * For rationale behind *_t? Blame chunk_t.
+ */
+typedef struct {
+	SECItem *nss;
+} ckaid_t;
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
 
-	/* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
+	/*
+	 * The "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the modulus length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * The adjusted length is used in same_RSA_public_key() as
+	 * part of comparing two keys - but wouldn't that be
+	 * redundant?  The direct n==n test would pick up the
+	 * difference.
+	 */
 	unsigned k;
+
+	/*
+	 * NSS's(?) idea of a unique ID for a public private key pair.
+	 * For RSA it is something like the SHA1 of the modulus.  It
+	 * replaces KEYID.
+	 *
+	 * This is the value returned by
+	 * PK11_GetLowLevelKeyIDForCert() or
+	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
+	 * form_ckaid_nss()), or computed by brute force from the
+	 * modulus (see form_ckaid_rsa()).
+	 *
+	 * XXX: When support for ECC is added this may need to be
+	 * moved to "pubkey"; or ECC will need its own value.  Think
+	 * of moving it here from RSA_private_key as a first step.
+	 */
+	ckaid_t ckaid;
 
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
-	CERTCertificate *nssCert;
 };
 
 struct RSA_private_key {
-	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
-	/*
-	 * ckaid for use in NSS
-	 *
-	 * Value returned by PK11_GetLowLevelKeyIDForCert().
-	 * ??? Bound on size doesn't seem to be documented in NSS.
-	 * Empirically, 64 bytes is sufficient.
-	 */
-	unsigned char ckaid[64];
-	unsigned int ckaid_len;
+	struct RSA_public_key pub;
 };
 
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
 
-extern err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
-				   const chunk_t *pubkey);
+err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr);
+err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *exponent, chunk_t *modulus);
+
+err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
+err_t base64_to_rsa_pubkey(const char *rr, chunk_t *exponent, chunk_t *modulus);
+
+err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *pubkey);
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
+
+void DBG_log_RSA_public_key(const struct RSA_public_key *rsa);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
+	/*
+	 * Was this allocated on the heap and hence, should it be
+	 * freeed (along with all members)?
+	 *
+	 * The old secrets file stuff passes around a pointer to a
+	 * cached structure so it shouldn't be freed.
+	 */
+	bool on_heap;
+	/*
+	 * This replaced "int lsw_secretlineno()", which assumes only
+	 * one file (no includes) and isn't applicable to NSS.  For
+	 * NSS it's the entry number.
+	 */
+	int line;
 	union {
 		chunk_t preshared_secret;
 		struct RSA_private_key RSA_private_key;
@@ -74,7 +120,6 @@ struct private_key_stuff {
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
-extern int lsw_get_secretlineno(const struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
@@ -136,6 +181,13 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
+bool ckaid_starts_with(ckaid_t ckaid, const char *start);
+char *ckaid_as_string(ckaid_t ckaid);
+err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
+err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
+void freeanyckaid(ckaid_t *ckaid);
+void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
+
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
@@ -171,5 +223,12 @@ extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
+
+/* these do not clone */
+chunk_t same_secitem_as_chunk(SECItem si);
+SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
+
+chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
+SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name);
 
 #endif /* _SECRETS_H */

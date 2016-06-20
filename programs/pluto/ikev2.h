@@ -167,9 +167,9 @@ extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 				     pb_stream *outpbs,
-				     enum original_role role,
-				     struct connection *c0,
-				     lset_t policy);
+				     const enum original_role role,
+				     const struct connection *c0,
+				     const enum next_payload_types_ikev2 np);
 
 extern int ikev2_parse_ts(struct payload_digest *ts_pd,
 			  struct traffic_selector *array,

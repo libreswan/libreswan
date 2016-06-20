@@ -36,7 +36,7 @@ the equivalent to running the commands
 <emphasis remap='I'>netstat -rn</emphasis>. However a bit of processing is
 done to combine the outputs.
 </para>
-<para>Some of the above commands, and there for <emphasis remap='I'>ipsec look</emphasis>,
+<para>Some of the above commands, and therefore <emphasis remap='I'>ipsec look</emphasis>,
 are only supported with the KLIPS or MAST stack, and will give errors when used on BSD, Windows
 or Linux with NETKEY.</para>
 </refsect1>

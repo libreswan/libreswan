@@ -183,8 +183,11 @@ static const char *const pluto_cryptoop_strings[] = {
 	"compute dh (V2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
 };
 
-static enum_names pluto_cryptoop_names =
-	{ pcr_build_ke_and_nonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
+static enum_names pluto_cryptoop_names = {
+	pcr_build_ke_and_nonce, pcr_compute_dh_v2,
+	ARRAY_REF(pluto_cryptoop_strings),
+	NULL
+};
 
 /* initializers for pluto_crypto_request continuations */
 

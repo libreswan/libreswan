@@ -6,7 +6,7 @@ ipsec auto --up west-east
 ping -q -c 4 -n 192.1.2.23
 # show the tunnel!
 echo "Tunnel should be up"
-ipsec eroute
+ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
 echo "Waiting 15 seconds..."
 sleep 15
@@ -17,7 +17,7 @@ sleep 15
 sleep 15
 sleep 15
 sleep 15
-ssh 192.1.2.23 ipsec eroute --clear
+ssh 192.1.2.23 ip xfrm state flush
 echo "Waiting to see if we detect phase2 is gone - DPD restarts"
 sleep 15
 sleep 15

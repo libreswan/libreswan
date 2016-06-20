@@ -23,8 +23,9 @@ from fab import utils
 class Test:
 
     def __init__(self, test_directory, testing_directory,
-                 saved_test_output_directory,
-                 testsuite_output_directory,
+                 saved_test_output_directory=None,
+                 saved_testsuite_output_directory=None,
+                 testsuite_output_directory=None,
                  kind="kvmplutotest", expected_result="good"):
         self.logger = logutil.getLogger(__name__)
         # basics
@@ -35,7 +36,7 @@ class Test:
         # name (aka basename).  However, since TEST_DIRECTORY could be
         # relative (for instance "."  or "./..") it first needs to be
         # made absolute before the basename can be extracted.
-        test_directory = os.path.abspath(test_directory)
+        test_directory = os.path.realpath(test_directory)
         # The test's name is the same as the directory's basename.
         self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
@@ -52,11 +53,10 @@ class Test:
         # Directory where the next test run's output should be
         # written.  If a common testsuite output directory was
         # specified, use that.
-        self.output_directory = (
-            testsuite_output_directory
-            and os.path.join(testsuite_output_directory, self.name)
-            or os.path.join(self.directory, "OUTPUT"))
-        self.result_file = os.path.join(self.output_directory, "RESULT")
+        if testsuite_output_directory:
+            self.output_directory = os.path.join(testsuite_output_directory, self.name)
+        else:
+            self.output_directory = os.path.join(self.directory, "OUTPUT")
 
         # Directory containing saved output from a previous test run.
         # If the test's output directory was explicitly specified, say
@@ -68,96 +68,98 @@ class Test:
         # than that directory, and not the next output-directory, will
         # be passed in and saved here.  Otherwise it is None, and the
         # OUTPUT_DIRECTORY should be used.
-        self.saved_output_directory = saved_test_output_directory
+        if saved_test_output_directory:
+            self.saved_output_directory = saved_test_output_directory
+        elif saved_testsuite_output_directory:
+            self.saved_output_directory = os.path.join(saved_testsuite_output_directory, self.name)
+        else:
+            self.saved_output_directory = None
 
         # An instance of the test directory within a tree that
         # includes all the post-mortem sanitization scripts.  If the
         # test results have been copied then this will be different to
         # test.directory.
-        if testing_directory:
-            self.sanitize_directory = os.path.abspath(os.path.join(testing_directory, "pluto", self.name))
-        else:
-            for sanitize_directory in [self.directory, utils.directory("..", "pluto", self.name)]:
-                # Tentative
-                self.sanitize_directory = os.path.abspath(sanitize_directory)
-                self.logger.debug("is '%s' a test sanitize directory?" % self.sanitize_directory)
-                for path in [self.sanitize_directory,
-                             os.path.join(self.sanitize_directory, "..", "..", "default-testparams.sh"),
-                             os.path.join(self.sanitize_directory, "..", "..", "sanitizers")]:
-                    if not os.path.exists(path):
-                        self.logger.debug("test sanitize directory '%s' missing", path)
-                        self.sanitize_directory = None
-                        break;
+        self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
 
-        # will be filled in later
-        self.domains = None
-        self.initiators = None
+        scripts = _scripts(self.directory)
+
+        # host_names that this test requires, determine it from the
+        # script names.
+        self.host_names = set()
+        for host_name in HOST_NAMES:
+            for script in scripts:
+                if re.search(host_name, script):
+                    self.host_names.add(host_name)
+                    break
+
+        # figure out the scripts that need running
+        self.scripts = []
+        # init scripts
+        _add_matching(self.scripts, scripts, ["nic"], "nicinit.sh")
+        _add_matching(self.scripts, scripts, ["east"], "eastinit.sh")
+        for host_name in sorted(self.host_names):
+            _add_matching(self.scripts, scripts, [host_name], host_name + "init.sh")
+        # run scripts
+        for host_name in sorted(self.host_names):
+            _add_matching(self.scripts, scripts, [host_name], host_name + "run.sh")
+        # strip out the final script
+        final = []
+        _add_matching(final, scripts, sorted(self.host_names), "final.sh")
+        # what's left is the middle scripts, not exactly a smart way
+        # to do this
+        for script in sorted(scripts):
+            for host_name in sorted(self.host_names):
+                if re.search(host_name, script):
+                    self.scripts.append(Script(host_name, script))
+        # append the final scripts
+        for script in final:
+            self.scripts.append(script)
+
+
+    def result_file(self, directory=None):
+        """The result file in the given directory, or output_directory"""
+
+        directory = directory or self.output_directory
+        return os.path.join(directory, "RESULT")
+
 
     def __str__(self):
         return self.full_name
 
-    def domain_names(self):
-        if not self.domains:
-            self.domains = _domain_names_from_files_with_suffix(self.logger,
-                                                                self.directory,
-                                                                "init.sh")
-        return self.domains
 
-    def initiator_names(self):
-        if not self.initiators:
-            self.initiators = _domain_names_from_files_with_suffix(self.logger,
-                                                                   self.directory,
-                                                                   "run.sh")
-        return self.initiators
+class Script:
+    def __init__(self, host_name, script):
+        self.host_name = host_name
+        self.script = script
+    def __str__(self):
+        return "%s:%s" % (self.host_name, self.script)
 
-    def scripts(self):
-        """Return a list of dict of domain,script to run"""
+def _add_matching(run, scripts, host_names, script):
+    if script in scripts:
+        scripts.remove(script)
+        for host_name in host_names:
+            run.append(Script(host_name, script))
 
-        scripts = []
-        nic = {"nic"}
-        domain_names = self.domain_names()
-        initiator_names = self.initiator_names()
-        _add_matching(self, scripts, "%(domain)sinit.sh", nic);
-        _add_matching(self, scripts, "%(domain)sinit.sh", domain_names ^ nic ^ initiator_names)
-        _add_matching(self, scripts, "%(domain)sinit.sh", initiator_names)
-        _add_matching(self, scripts, "%(domain)srun.sh", initiator_names)
-        _add_matching(self, scripts, "final.sh", domain_names)
-        return scripts
+def _scripts(directory):
+    scripts = set()
+    if os.path.isdir(directory):
+        for script in os.listdir(directory):
+            if not re.match(r"[a-z0-9].*\.sh$", script):
+                continue
+            path = os.path.join(directory, script)
+            if not os.path.isfile(path):
+                continue
+            # Add more filter-outs
+            scripts.add(script)
+    return scripts
 
-
-def _add_matching(test, scripts, template, domain_names):
-    s = dict()
-    for domain_name in domain_names:
-        script = template % {'domain':domain_name}
-        if (os.path.exists(os.path.join(test.directory, script))):
-            s[domain_name] = script
-    if s:
-        scripts.append(s)
-
-
-def _domain_names():
-    domains = set()
+def _host_names():
+    host_names = set()
     status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
-    for name in output.splitlines():
-        domains.add(name)
-    return domains
-DOMAIN_NAMES = _domain_names()
-
-
-def _domain_names_from_files_with_suffix(logger, directory, suffix):
-    """Find files matching <domain><suffix>"""
-    domain_names = set()
-    for f in os.listdir(directory):
-        domain_name, middle, tail = f.partition(suffix)
-        if not middle or tail:
-            continue
-        if not domain_name in DOMAIN_NAMES:
-            logger.warn("the domain name '%s', from '%s/<%s>%s', is invalid (valid domains: %s)",
-                        domain_name, directory, domain_name, suffix,
-                        " ".join(DOMAIN_NAMES))
-            continue
-        domain_names.add(domain_name)
-    return domain_names
+    for host_name in output.splitlines():
+        host_names.add(host_name)
+    return host_names
+HOST_NAMES = _host_names()
 
 
 # Load the tetsuite defined by TESTLIST
@@ -190,11 +192,9 @@ class Testsuite:
                     continue
                 test = Test(kind=kind, expected_result=expected_result,
                             test_directory=os.path.join(self.directory, name),
-                            saved_test_output_directory=(
-                                saved_testsuite_output_directory
-                                and os.path.join(saved_testsuite_output_directory, name)),
-                            testing_directory=testing_directory,
-                            testsuite_output_directory=testsuite_output_directory)
+                            saved_testsuite_output_directory=saved_testsuite_output_directory,
+                            testsuite_output_directory=testsuite_output_directory,
+                            testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
                     # This is serious
@@ -219,37 +219,22 @@ class Testsuite:
 
 def add_arguments(parser):
 
-    group = parser.add_argument_group("Test arguments",
-                                      "Options for selecting the tests to run")
+    group = parser.add_argument_group("testsuite arguments",
+                                      "options for configuring the testsuite or test directories")
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       help="Directory containg 'sanitizers/' and 'default-testparams.sh' and other scripts used to perform postmortem (default is either the test's 'testing/' directory, or this scripts 'testing/' directory).")
+                       default=os.path.relpath(utils.directory("..")),
+                       help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
     group.add_argument("--testsuite-output", metavar="DIRECTORY",
-                        help="test results are stored as %(metavar)s/<test> instead of <test>/OUTPUT")
-
-    group.add_argument("--test-name", default="",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Select tests with name matching %(metavar)s"
-                             " (default: '%(default)s')"))
-    group.add_argument("--test-kind", default="kvmplutotest",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Select tests with kind matching %(metavar)s"
-                             " (default: '%(default)s')"))
-    group.add_argument("--test-result", default="good",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help="Select tests with (expected) result matching %(metavar)s (default: '%(default)s')")
-    group.add_argument("--test-exclude", default="",
-                       type=re.compile, metavar="REGULAR-EXPRESSION",
-                       help=("Exclude tests that match %(metavar)s"
-                             " (default: '%(default)s')"))
+                        help="save test results in%(metavar)s/<test> instead of <test>/OUTPUT")
 
 
 def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
-    logger.info("  testing-directory: '%s'", args.testing_directory or "either test or this script testing directory (default)")
-    logger.info("  testsuite-output: '%s'", args.testsuite_output or "<testsuite>/<test>/OUTPUT (default)")
+    logger.info("  testing-directory: '%s'", args.testing_directory)
+    logger.info("  testsuite-output: '%s'", args.testsuite_output)
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-name: '%s'" , args.test_name.pattern)
     logger.info("  test-result: '%s'" , args.test_result.pattern)
@@ -275,7 +260,8 @@ TESTLIST = "TESTLIST"
 
 def load(logger, args,
          testsuite_directory=None,
-         testsuite_output_directory=None,
+         testsuite_output_directory=None, # going away
+         saved_testsuite_output_directory=None,
          error_level=logutil.ERROR):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
@@ -284,13 +270,15 @@ def load(logger, args,
 
     """
 
+    saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
     # Is DIRECTORY a testsuite?  For instance: testing/pluto.
     testlist = os.path.join(testsuite_directory, TESTLIST)
     if os.path.exists(testlist):
         logger.debug("'%s' is a testsuite directory", testsuite_directory)
         return Testsuite(logger, testlist, error_level,
                          testing_directory=args.testing_directory,
-                         testsuite_output_directory=testsuite_output_directory)
+                         testsuite_output_directory=args.testsuite_output,
+                         saved_testsuite_output_directory=saved_testsuite_output_directory)
 
     logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
     return None
@@ -306,12 +294,10 @@ def append_test(tests, args, test_directory=None,
 
     # Use the saved test output directory's name to find the
     # corresponding test directory.
-    if not test_directory and saved_test_output_directory:
-        subdir = os.path.basename(saved_test_output_directory)
-        if args.testing_directory:
+    if not test_directory:
+        if saved_test_output_directory:
+            subdir = os.path.basename(saved_test_output_directory)
             test_directory = os.path.join(args.testing_directory, "pluto", subdir)
-        else:
-            test_directory = utils.directory("..", "pluto", subdir)
     if not test_directory:
         return False
     if not is_test_directory(test_directory):

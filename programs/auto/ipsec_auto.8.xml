@@ -222,7 +222,7 @@ The output format is ad-hoc and likely to change.</para>
 operation tells
 <emphasis remap='I'>pluto</emphasis>
 to re-read the
-<filename>/etc/ipsec.secrets</filename>
+<filename>@IPSEC_SECRETS_FILE@</filename>
 secret-keys file,
 which it normally reads only at startup time.
 (This is currently a synonym for
@@ -231,7 +231,7 @@ but that may change.)</para>
 
 
 <para>      The    <option>--rereadsecrets</option>   operation   tells   pluto   to   re-read   the
-       /etc/ipsec.secrets secret-keys file, which it normally  reads  only  at
+       <filename>@IPSEC_SECRETS_FILE@</filename> secret-keys file, which it normally  reads  only  at
        startup  time.   (This is currently a synonym for <option>--ready,</option> but that may
        change.)
 </para>

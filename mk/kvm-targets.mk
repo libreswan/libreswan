@@ -22,27 +22,24 @@
 # kvm-install-DOMAIN.
 
 
-# XXX: For compatibility
-abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
+KVM_SOURCEDIR ?= $(abs_top_srcdir)
+KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+# An educated guess ...
+KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
+KVM_BASEDIR ?= $(KVM_POOLDIR)
 
-# KVM_SOURCEDIR ?= $(abspath $(abs_top_srcdir)/..)
-# KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
-# KVM_POOLDIR ?= /home/build/pool
-KVM_TEST_DOMAIN_POOLDIR ?= $(KVM_POOLDIR)
-
+# The KVM's operating system.
 KVM_OS ?= fedora
 
 KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
-KVM_BUILD_DOMAIN = east
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
-KVM_QEMUDIR = /var/lib/libvirt/qemu
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMSH ?= $(KVMSH_COMMAND)
+KVM_WORKERS ?= 1
 KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
-KVMRUNNER ?= $(KVMRUNNER_COMMAND)
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -54,163 +51,77 @@ KVM_KEYS = testing/x509/keys/up-to-date
 # domains
 #
 
-KVM_CONFIG =
+KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
+define check-kvm-entropy
+	test ! -r $(KVM_ENTROPY_FILE) || test $(shell cat $(KVM_ENTROPY_FILE)) -gt 100 || $(MAKE) broken-kvm-entropy
+endef
+.PHONY: check-kvm-entropy broken-kvm-entropy
+check-kvm-entropy:
+	$(call check-kvm-entropy)
+broken-kvm-entropy:
+	:
+	:  According to $(KVM_ENTROPY_FILE) your computer do not seem to have much entropy.
+	:
+	:  Check the wiki for hints on how to fix this.
+	:
+	false
 
-ifeq ($(shell test -w $(KVM_QEMUDIR) && echo ok),)
-KVM_CONFIG += kvm-config-broken-qemu
+
+KVM_QEMUDIR ?= /var/lib/libvirt/qemu
+define check-kvm-qemu-directory
+	test -w $(KVM_QEMUDIR) || $(MAKE) broken-kvm-qemu-directory
+endef
+.PHONY: check-kvm-qemu-directory broken-kvm-qemu-directory
+check-kvm-qemu-directory:
+	$(call check-kvm-qemu-directory)
+broken-kvm-qemu-directory:
+	:
+	:  The directory:
+	:
+	:      $(KVM_QEMUDIR)
+	:
+	:  is not writeable.  This will break virsh which is
+	:  used to manipulate the domains.
+	:
+	false
+
+.PHONY: check-kvm-pooldir check-kvm-basedir
+check-kvm-pooldir check-kvm-basedir: | $(KVM_POOLDIR) $(KVM_BASEDIR)
+ifeq ($(KVM_BASEDIR),$(KVM_POOLDIR))
+  $(KVM_POOLDIR):
+else
+  $(KVM_BASEDIR) $(KVM_POOLDIR):
 endif
-.PHONY: kvm-config-broken-qemu
-kvm-config-broken-qemu:
-	@echo ''
-	@echo 'The directory:'
-	@echo ''
-	@echo '    $(KVM_QEMUDIR)'
-	@echo ''
-	@echo 'is not writeable.  This will break virsh which is'
-	@echo 'used to manipulate the domains.'
-	@echo ''
-	@exit 1
-
-ifeq ($(and $(KVM_SOURCEDIR),$(KVM_TESTINGDIR)),)
-KVM_CONFIG += kvm-config-broken-mounts
-endif
-.PHONY: kvm-config-broken-mounts
-kvm-config-broken-mounts:
-	@echo ''
-	@echo 'Invalid kvm mount points'
-	@echo ''
-	@echo 'Before creating the test domains, the following make variables'
-	@echo 'need to be defined (these make variables are only used when'
-	@echo 'creating the domains and specify extra domain mount points):'
-	@echo ''
-	@echo '    KVM_SOURCEDIR:  directory to mount on /source'
-	@echo '    KVM_TESTINGDIR: directory to mount on /testing'
-	@echo ''
-	@echo 'For a traditional test domain configuration, with a single'
-	@echo 'libreswan source directory mounted under /source, add the'
-	@echo 'following to Makefile.inc.local:'
-	@echo ''
-	@echo '    KVM_SOURCEDIR = $$(abs_top_srcdir)'
-	@echo '    KVM_TESTINGDIR = $$(abs_top_srcdir)/testing'
-	@echo ''
-	@echo 'Alternatively, if you have multiple libreswan source'
-	@echo 'directories and would like their common parent directory to'
-	@echo 'be mounted under /source then add the following to'
-	@echo 'Makefile.inc.local:'
-	@echo ''
-	@echo '    KVM_SOURCEDIR = $$(abspath $$(abs_top_srcdir)/..)'
-	@echo '    KVM_TESTINGDIR = $$(abs_top_srcdir)/testing'
-	@echo ''
-	@exit 1
-
-ifeq ($(and $(KVM_POOLDIR),$(wildcard $(KVM_POOLDIR))),)
-KVM_CONFIG += kvm-config-broken-pooldir
-endif
-.PHONY: kvm-config-broken-pooldir
-kvm-config-broken-pooldir:
-	@echo ''
-	@echo 'Invalid kvm pool directory.'
-	@echo ''
-	@echo 'Check that the make variable:'
-	@echo ''
-	@echo '    KVM_POOLDIR - pool directory for both test and base domains'
-	@echo ''
-	@echo 'is defined in Makefile.inc.local, and that the directory
-	@echo '($(KVM_POOLDIR)) exists.'
-	@echo ''
-	@echo 'For instance, to store all domain disks in /home/build/pool, add:'
-	@echo ''
-	@echo '    KVM_POOLDIR=/home/build/pool'
-	@echo ''
-	@echo 'to Makefile.inc.local.
-	@exit 1
-
-ifeq ($(and $(KVM_TEST_DOMAIN_POOLDIR),$(wildcard $(KVM_TEST_DOMAIN_POOLDIR))),)
-KVM_CONFIG += kvm-config-broken-test-domain-pooldir
-endif
-.PHONY: kvm-config-broken-test-domain-pooldir
-kvm-config-broken-test-domain-pooldir:
-	@echo ''
-	@echo 'Invalid kvm test domain pool directory.'
-	@echo ''
-	@echo 'Check that one of the following is defined in Makefile.inc.local:'
-	@echo ''
-	@echo '    KVM_POOLDIR - common pool directory for both test and base domains'
-	@echo '    KVM_TEST_DOMAIN_POOLDIR - base domain pool directory (defaults to KVM_POOLDIR)'
-	@echo ''
-	@echo 'and that the corresponding directory ($(KVM_TEST_DOMAIN_POOLDIR)) exists.'
-	@echo ''
-	@echo 'For instance, to store all domain disks in /home/build/pool, add'
-	@echo ''
-	@echo '    KVM_POOLDIR=/home/build/pool'
-	@echo ''
-	@echo 'to Makefile.inc.local.  Alternatively, if you feel lucky, try specifying:'
-	@echo ''
-	@echo '    KVM_TEST_DOMAIN_POOLDIR=/tmp'
-	@echo ''
-	@exit 1
+	:
+	:  The pool directory:
+	:
+	:       "$@"
+	:
+	:  used to store kvm disk images and other files, does not exist.
+	:
+	:  Two make variables determine the pool directory\'s location:
+	:
+	:      KVM_POOLDIR=$(KVM_POOLDIR)
+	:                  - used for store test domain disk mages and files
+	:
+	:      KVM_BASEDIR=$(KVM_BASEDIR)
+	:                  - used for store the base domain disk image and files
+	:                  - by default it is set to KVM_POOLDIR
+	:
+	:  Either create the above directory or adjust its location by setting
+	:  the above make variables in the file:
+	:
+	:      Makefile.inc.local
+	:
+	false
 
 
-# Hack to map common typos on to real kvm-clean* targets
-clean-kvm-%: kvm-clean-% ; @:
-kvm-%-clean: kvm-clean-% ; @:
-.PHONY: clean-kvm distclean-kvm
-clean-kvm: kvm-clean
-distclean-kvm: kvm-distclean
-
-# Invoke KVMSH in curret directory with argument list $(1)
+# Invoke KVMSH in the curret directory with $(1).
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	test -w $(KVM_QEMUDIR) || $(MAKE) --no-print-directory kvm-config-broken-qemu
-	$(KVMSH) \
-		--output ++compile-log.txt \
-		--chdir . \
-		$(1)
+	$(call check-kvm-qemu-directory)
+	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
 endef
-
-# Run "make $(2)" on $(1)"; yea, host argument should be first :-)
-define kvm-make
-	$(call kvmsh, $(1) \
-	'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
-endef
-
-# Run "make <anything>" on the specified domain; mainly for testing
-$(patsubst %,kvm-make-\%-%,$(KVM_INSTALL_DOMAINS)):
-	$(call kvm-make, $(patsubst kvm-make-$*-%,%,$@), $*)
-# Run "make <anything>" on the build domain; mainly for testing
-kvm-make-%:
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), $*)
-
-# To avoid parallel "make base" and "make module" builds stepping on
-# each others toes, this uses sub-makes to explicitly serialize "base"
-# and "modules" targets.
-.PHONY: kvm-build
-kvm-build:
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), base)
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), module)
-
-# "install" is a little wierd.  It needs to be run on all VMs, and it
-# needs to use the swan-install script.
-.PHONY: kvm-install
-kvm-install: $(patsubst %,kvm-install-%,$(KVM_INSTALL_DOMAINS))
-kvm-install-%: kvm-build
-	$(call kvmsh, $* \
-		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
-
-# Some standard make targets; just mirror the local target names.
-# Everything is run on $(KVM_BUILD_DOMAIN).
-KVM_BUILD_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-distclean
-.PHONY: $(KVM_BUILD_TARGETS)
-$(KVM_BUILD_TARGETS):
-	$(call kvm-make, $(KVM_BUILD_DOMAIN), $(patsubst kvm-%,%,$@))
-
-
-# Some useful kvm wide commands.
-.PHONY: kvm-shutdown
-kvm-shutdown: $(patsubst %,kvm-shutdown-%,$(KVM_DOMAINS))
-kvm-shutdown-%:
-	$(call kvmsh, --shutdown $*)
-
 
 # [re]run the testsuite.
 #
@@ -228,69 +139,48 @@ KVM_TESTS = testing/pluto
 # then KVM_TESTS ends up containing new lines, strip them out.
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
+define kvm-test
+$(1): $$(KVM_KEYS)
+	$$(call check-kvm-qemu-directory)
+	$$(call check-kvm-entropy)
+	: KVM_TESTS=$$(STRIPPED_KVM_TESTS)
+	$$(KVMRUNNER_COMMAND)$$(foreach pool,$$(KVM_POOL), --prefix $$(pool))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
+endef
+
 # "check" runs any test that has not yet passed (that is: failed,
 # incomplete, and not started).  This is probably the safest option.
 .PHONY: kvm-check kvm-check-good kvm-check-all
 kvm-check: kvm-check-good
-kvm-check-good: $(KVM_KEYS)
-	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry  1 --test-result "good"     $(STRIPPED_KVM_TESTS)
-kvm-check-all: $(KVM_KEYS)
-	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry  1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
+$(eval $(call kvm-test,kvm-check-good, --skip-passed --test-result "good"))
+$(eval $(call kvm-test,kvm-check-all, --skip-passed --test-result "good|wip"))
 
 # "test" runs tests regardless.  It is best used with the KVM_TESTS
 # varible.
 .PHONY: kvm-test-good kvm-test-all
 kvm-test: kvm-test-good
-kvm-test: $(KVM_KEYS)
-	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good"     $(STRIPPED_KVM_TESTS)
-kvm-test-all: $(KVM_KEYS)
-	: KVM_TESTS = $(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) --retry -1 --test-result "good|wip" $(STRIPPED_KVM_TESTS)
+$(eval $(call kvm-test, kvm-test-good, --test-result "good"))
+$(eval $(call kvm-test, kvm-test-all,  --test-result "good|wip"))
 
-# clean up
-.PHONY: kvm-clean-check kvm-clean-test
-kvm-clean-check kvm-clean-test:
+# clean up; accept pretty much everything
+KVM_TEST_CLEAN_TARGETS = \
+	clean-kvm-check kvm-clean-check kvm-check-clean \
+	clean-kvm-test kvm-clean-test kvm-test-clean
+.PHONY: $(KVM_TEST_CLEAN_TARGETS)
+$(KVM_TEST_CLEAN_TARGETS):
 	rm -rf $(KVM_TESTS)/*/OUTPUT*
 
-
-# Hide a make call
-SHOWVERSION = $(MAKE) showversion
-
-# Detect either a new or updated install or test.
-#
-# The file kvm-checksum.new is left as a marker for $(NEWRUN).
-#
-# The checksums for both the installed tree (on east) and the source
-# tree are recorded.  Presumably if either changes then it is a new
-# run.  The /etc directory is excluded as the tests play havoc with
-# its contents.
-.PHONY: kvm-checksum
-kvm-checksum:
-	$(SHOWVERSION) | tee kvm-checksum.new
-	$(call kvmsh, $(KVM_BUILD_DOMAIN) \
-		'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum')
-	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
-		echo "Checksum file unchanged" ; \
-		rm kvm-checksum.new ; \
-	else \
-		echo "Checksum file CHANGED" ; \
-		cp kvm-checksum.new kvm-checksum ; \
-	fi
 
 # Build the keys/certificates using the KVM.
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
 KVM_KEYS_EXPIRATION_DAY = 14
 KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-.PHONY: kvm-keys clean-kvm-keys
 
+.PHONY: kvm-keys
 kvm-keys: $(KVM_KEYS)
 	$(MAKE) --no-print-directory kvm-keys-up-to-date
 
 # For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date clean-kvm-keys
+.PHONY: kvm-keys-up-to-date
 kvm-keys-up-to-date:
 	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
 		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
@@ -301,28 +191,147 @@ kvm-keys-up-to-date:
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
 	$(MAKE) clean-kvm-keys
-	$(KVM_KEYS_SCRIPT) east testing/x509
+	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	touch $(KVM_KEYS)
 
-clean-kvm-keys:
+KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
+.PHONY: $(KVM_KEYS_CLEAN_TARGETS)
+$(KVM_KEYS_CLEAN_TARGETS):
 	rm -rf testing/x509/*/ testing/x509/nss-pw
+
+
+#
+# Build a pool of networks from scratch
+#
+
+# Accumulate a list of all the files created when building the
+# network.  Can use this as a dependency to force the networks to be
+# built before the domains.
+
+KVM_TEST_NETWORK_FILES=
+
+# The offical network targets.
+.PHONY: install-kvm-networks uninstall-kvm-networks
+
+# Mainly for consistency
+.PHONY: install-kvm-test-networks uninstall-kvm-test-networks
+install-kvm-networks: install-kvm-test-networks
+uninstall-kvm-networks: uninstall-kvm-test-networks
+
+# Generate install and uninstall rules for each network within the
+# pool.
+
+define install-kvm-network
+	sudo virsh net-define '$(2).tmp'
+	sudo virsh net-autostart '$(1)'
+	sudo virsh net-start '$(1)'
+	mv $(2).tmp $(2)
+endef
+
+define uninstall-kvm-network
+	if sudo virsh net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		sudo virsh net-destroy '$(1)' ; \
+	fi
+	if sudo virsh net-info '$(1)' >/dev/null 2>&1 ; then \
+		sudo virsh net-undefine '$(1)' ; \
+	fi
+	rm -f $(2)
+endef
+
+define check-no-kvm-network
+	if sudo virsh net-info '$(1)' 2>/dev/null ; then \
+		echo 'The network $(1) seems to already exist.  Either clean it up with:' ; \
+		echo '' ; \
+		echo '    make uninstall-kvm-network-$(1)' ; \
+		echo '' ; \
+		echo 'Or skip creating the network with:' ; \
+		echo '' ; \
+		echo '    touch $(2)' ; \
+		echo '' ; \
+		exit 1 ; \
+	fi
+endef
+
+define kvm-test-network
+  #(info pool=$(1) network=$(2))
+
+  KVM_TEST_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
+
+  .PHONY: install-kvm-network-$(1)$(2)
+  install-kvm-test-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
+  $$(KVM_POOLDIR)/$(1)$(2).xml:
+	$(call check-no-kvm-network,$(1)$(2),$$@)
+	rm -f '$$@.tmp'
+	echo "<network ipv6='yes'>"					>> '$$@.tmp'
+	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
+  ifeq ($(1),)
+	echo "  <bridge name='swan$(subst _,,$(patsubst 192_%,%,$(2)))' stp='on' delay='0'/>"		>> '$$@.tmp'
+  else
+	echo "  <bridge name='$(1)$(2)' stp='on' delay='0'/>"		>> '$$@.tmp'
+  endif
+  ifeq ($(1),)
+	echo "  <ip address='$(subst _,.,$(2)).253'/>"				>> '$$@.tmp'
+  else
+	echo "  <!-- <ip address='$(subst _,.,$(2)).253'> -->"			>> '$$@.tmp'
+  endif
+	echo "</network>"						>> '$$@.tmp'
+	$(call install-kvm-network,$(1)$(2),$$@)
+
+  .PHONY: uninstall-kvm-network-$(1)$(2)
+  uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
+  uninstall-kvm-network-$(1)$(2):
+	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_POOLDIR)/$(1)$(2).xml)
+
+endef
+
+KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(pool),$(network)))))
+else
+$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,,$(network))))
+endif
+
+# To avoid the problem where the host has no "default" KVM network
+# (there's a rumour that libreswan's main testing machine has this
+# problem) create a dedicated swandefault.
+
+KVM_BASE_NETWORK = swandefault
+KVM_BASE_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_BASE_NETWORK).xml
+.PHONY: install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK)
+install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
+$(KVM_BASE_NETWORK_FILE): | testing/libvirt/net/$(KVM_BASE_NETWORK) $(KVM_POOLDIR)
+	$(call check-no-kvm-network,$(KVM_BASE_NETWORK),$@)
+	cp testing/libvirt/net/$(KVM_BASE_NETWORK) $@.tmp
+	$(call install-kvm-network,$(KVM_BASE_NETWORK),$@)
+
+.PHONY: uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK)
+uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_POOLDIR)
+	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK),$(KVM_BASE_NETWORK_FILE))
 
 
 #
 # Build KVM domains from scratch
 #
 
-# Where to get the install image.
-KVM_ISO_URL_fedora = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
-KVM_ISO_URL = $(value KVM_ISO_URL_$(KVM_OS))
-KVM_ISO = $(notdir $(KVM_ISO_URL))
-$(KVM_ISO):
-	wget $(KVM_ISO_URL)
+
+# KVM_ISO_URL_$(KVM_OS) = ...
+KVM_ISO_URL_f21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
+KVM_ISO_URL_f22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+# XXX: Next time the ISO needs an update, set KVM_OS to that release
+# and delete the below hack.
+KVM_ISO_URL_fedora = $(KVM_ISO_URL_f22)
+KVM_ISO_URL = $(KVM_ISO_URL_$(KVM_OS))
+KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
+.PHONY: kvm-iso
+kvm-iso: $(KVM_ISO)
+$(KVM_ISO): | $(KVM_BASEDIR)
+	cd $(KVM_BASEDIR) && wget $(KVM_ISO_URL)
 
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
-# Build the base domain's disk image in $(KVM_POOLDIR).
+# Build the base domain's disk image in $(KVM_BASEDIR).
 #
 # Use a pattern rule so that GNU make knows that two things are built.
 #
@@ -332,19 +341,62 @@ KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 # This rule uses the .ks file as main target.  Should the target fail
 # the .img file may be in an incomplete state.
 
-# XXX: Could run the kickstart file through SED before using it.
+define install-kvm-domain
+	sudo virsh define $(2).tmp
+	mv $(2).tmp $(2)
+endef
 
-$(KVM_POOLDIR)/%.ks $(KVM_POOLDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/libvirt/$(KVM_OS)base.ks
-	@$(MAKE) uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-	rm -f '$(KVM_POOLDIR)/$*.img'
-	fallocate -l 8G '$(KVM_POOLDIR)/$*.img'
+define uninstall-kvm-domain
+	if sudo virsh domstate '$(1)' 2>/dev/null | grep running > /dev/null ; then \
+		sudo virsh destroy '$(1)' ; \
+	fi
+	if sudo virsh dominfo '$(1)' >/dev/null 2>&1 ; then \
+		sudo virsh undefine '$(1)' --remove-all-storage ; \
+	fi
+	rm -f $(2).xml
+	rm -f $(2).ks
+	rm -f $(2).qcow2
+	rm -f $(2).img
+endef
+
+define check-no-kvm-domain
+	if sudo virsh dominfo '$(1)' 2>/dev/null ; then \
+		echo 'The domain $(1) seems to already exist.  Either clean it up with:' ; \
+		echo '' ; \
+		echo '    make uninstall-kvm-domain-$(1)' ; \
+		echo '' ; \
+		echo 'Or skip creating the domain with:' ; \
+		echo '' ; \
+		echo '    touch $(2)' ; \
+		echo '' ; \
+		exit 1; \
+	fi
+endef
+
+# XXX: Once KVM_OS gets re-named to include the release, this hack can
+# be deleted.
+ifeq ($(KVM_OS),fedora)
+KVM_KICKSTART_FILE = testing/libvirt/fedora22base.ks
+else
+KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS)base.ks
+endif
+KVM_DEBUGINFO ?= true
+
+$(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
+	$(call check-no-kvm-domain,$*,$(KVM_BASEDIR)/$*.ks)
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
+	rm -f '$(KVM_BASEDIR)/$*.img'
+	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
+	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
+		< $(KVM_KICKSTART_FILE) > $(KVM_BASEDIR)/$*.tmp.ks
 	sudo virt-install \
 		--connect=qemu:///system \
-		--network=network:default,model=virtio \
-		--initrd-inject=testing/libvirt/$(KVM_OS)base.ks \
-		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(KVM_OS)base.ks console=tty0 console=ttyS0,115200" \
+		--network=network:$(KVM_BASE_NETWORK),model=virtio \
+		--initrd-inject=$(KVM_BASEDIR)/$*.tmp.ks \
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$*.tmp.ks console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk path='$(KVM_POOLDIR)/$*.img' \
+		--disk path='$(KVM_BASEDIR)/$*.img' \
 		--ram 1024 \
 		--vcpus=1 \
 		--check-cpu \
@@ -353,19 +405,16 @@ $(KVM_POOLDIR)/%.ks $(KVM_POOLDIR)/%.img: $(KVM_CONFIG) | $(KVM_ISO) testing/lib
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
-	cp testing/libvirt/$(KVM_OS)base.ks $(KVM_POOLDIR)/$*.ks
+	cp $(KVM_BASEDIR)/$*.tmp.ks $(KVM_BASEDIR)/$*.ks
 
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
-install-kvm-base-domain: $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain:  $(KVM_CONFIG) undefine-kvm-domain-$(KVM_BASE_DOMAIN)
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).xml
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img
+install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
+uninstall-kvm-base-domain uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
+	$(call uninstall-kvm-domain,$(KVM_BASE_DOMAIN),$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN))
 
 # Create the base domain's .qcow2 disk image (ready for cloning) in
-# $(KVM_POOLDIR).
+# $(KVM_BASEDIR).
 #
 # The base domain's .img file is an order-only dependency.  This
 # prevents things like rebooting the domain triggering an unexpected
@@ -380,10 +429,10 @@ uninstall-kvm-base-domain:  $(KVM_CONFIG) undefine-kvm-domain-$(KVM_BASE_DOMAIN)
 # symptom seems to be a kernel barf involving qemu-img, look for that
 # in dmesg.
 
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img
+$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img
 	: clone
 	rm -f $@.tmp
-	sudo qemu-img convert -O qcow2 '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).img' $@.tmp
+	sudo qemu-img convert -O qcow2 '$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img' $@.tmp
 	: try to track down an apparent corruption
 	if dmesg | grep qemu-img ; then \
 		: qemu-img caused a kernel panic, time to reboot ; \
@@ -392,85 +441,216 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2:  $(KVM_CONFIG) | $(KVM_POOLDIR)/$(KVM_B
 	: finished
 	mv $@.tmp $@
 
-# Create the test domains in $(KVM_TEST_DOMAIN_POOLDIR)
-#
-# Use a pattern rule so that GNU make knows that both the .xml and the
-# .qcow2 files are created.
+# Create the test domains in $(KVM_POOLDIR)
 #
 # Since running a domain will likely modify its .qcow2 disk image
 # (changing MTIME), the domain's disk isn't a good indicator that a
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
 
-kvm-test-domain-files = \
-	$(KVM_TEST_DOMAIN_POOLDIR)/$(1).qcow2 \
-	$(KVM_TEST_DOMAIN_POOLDIR)/$(1).xml
-# multiple domains, multiple config files, terrible english
-KVM_TEST_DOMAINS_FILES = \
-	$(foreach domain, $(KVM_TEST_DOMAINS), \
-		$(call kvm-test-domain-files,$(domain)))
+KVM_TEST_DOMAIN_FILES =
 
-.PHONY: install-kvm-domains install-kvm-test-domains
+# The offical targets
+.PHONY: install-kvm-domains uninstall-kvm-domains
 
-install-kvm-domains: install-kvm-test-domains install-kvm-base-domain
-install-kvm-test-domains: $(patsubst %,install-kvm-domain-%,$(KVM_TEST_DOMAINS))
-install-kvm-domain-%:  $(KVM_CONFIG) $(call kvm-test-domain-files,%) ; @:
-.PRECIOUS: $(KVM_TEST_DOMAINS_FILES)
-$(call kvm-test-domain-files,%): $(KVM_CONFIG) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 | testing/libvirt/vm/%
-	@$(MAKE) --no-print-directory uninstall-kvm-domain-$*
-	rm -f '$(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2'
-	qemu-img create -F qcow2 -f qcow2 -b '$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2' '$(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2'
+# for consistency
+.PHONY: install-kvm-test-domains uninstall-kvm-test-domains
+install-kvm-domains: install-kvm-test-domains
+uninstall-kvm-domains: uninstall-kvm-test-domains
+
+define kvm-test-domain
+  #(info pool=$(1) network=$(2))
+
+  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
+  KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
+
+  .PHONY: install-kvm-domain-$(1)$(2)
+  install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
+	$(call check-no-kvm-domain,$(1)$(2),$$@)
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
+	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
+	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	sed \
-		-e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
-		-e "s:@@SOURCEDIR@@:$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$(KVM_TEST_DOMAIN_POOLDIR):" \
-		-e "s:@@USER@@:$$(id -u):" \
-		-e "s:@@GROUP@@:$$(id -g qemu):" \
-		'testing/libvirt/vm/$*' \
-		> '$(KVM_TEST_DOMAIN_POOLDIR)/$*.tmp'
-	sudo virsh define '$(KVM_TEST_DOMAIN_POOLDIR)/$*.tmp'
-	mv '$(KVM_TEST_DOMAIN_POOLDIR)/$*.tmp' '$(KVM_TEST_DOMAIN_POOLDIR)/$*.xml'
+		-e "s:@@NAME@@:$(1)$(2):" \
+		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
+		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
+		-e "s:@@POOLSPACE@@:$$(KVM_POOLDIR):" \
+		-e "s:@@USER@@:$$$$(id -u):" \
+		-e "s:@@GROUP@@:$$$$(id -g qemu):" \
+		-e "s:network='192_:network='$(1)192_:" \
+		< 'testing/libvirt/vm/$(2)' \
+		> '$$@.tmp'
+	$(call install-kvm-domain,$(1)$(2),$$@)
 
-.PHONY: uninstall-kvm-domains uninstall-kvm-test-domains
-uninstall-kvm-domains: uninstall-kvm-test-domains uninstall-kvm-base-domain
-uninstall-kvm-test-domains: $(patsubst %,uninstall-kvm-domain-%,$(KVM_TEST_DOMAINS))
-	: To rebuild the test domains from the current base domain disk type:
-	:
-	:     rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	:
-	: This is not done by default as the operation is unreliable and slow.
-uninstall-kvm-domain-%: $(KVM_CONFIG) undefine-kvm-domain-%
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.xml
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.ks
-	rm -f $(KVM_TEST_DOMAIN_POOLDIR)/$*.qcow2
-undefine-kvm-domain-%: destroy-kvm-domain-%
-	if sudo virsh domstate '$*' > /dev/null 2>&1 ; then \
-		sudo virsh undefine '$*' --remove-all-storage ; \
-	fi
-destroy-kvm-domain-%:
-	if sudo virsh domstate '$*' 2>/dev/null | grep running > /dev/null ; then \
-		sudo virsh destroy '$*' ; \
-	fi
+  .PHONY: uninstall-kvm-domain-$(1)$(2)
+  uninstall-kvm-test-domains: uninstall-kvm-domain-$(1)$(2)
+  uninstall-kvm-domain-$(1)$(2): | $(KVM_POOLDIR)
+	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
+endef
+
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(pool),$(domain)))))
+else
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,,$(domain))))
+endif
+
+uninstall-kvm-domains:
+	@echo ''
+	@echo 'NOTE:'
+	@echo ''
+	@echo '      Neither the base (master) domain nor its cloned disk have been deleted'
+	@echo ''
+	@echo 'To force a rebuild of the test domains using the real base domain disk type:'
+	@echo ''
+	@echo '     rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2'
+	@echo '     make install-kvm-domains'
+	@echo ''
+	@echo 'To force a complete rebuild of all domains including base type:'
+	@echo ''
+	@echo '     make uninstall-kvm-domains uninstall-kvm-base-domain'
+	@echo '     make install-kvm-domains'
+	@echo ''
+	@echo 'Rationale: since the creation of the base domain and its cloned disk is'
+	@echo 'both unreliable and slow, and typically not needed, an explict rule is provided'
+	@echo ''
 
 
 #
-# Build networks from scratch
+# Build targets
 #
-# XXX: This deletes each network before creating it; should it?
 
-KVM_NETDIR = testing/libvirt/net
-.PHONY: install-kvm-networks
-install-kvm-networks: $(patsubst $(KVM_NETDIR)/%,install-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
-install-kvm-network-%: uninstall-kvm-network-%
-	sudo virsh net-define $(KVM_NETDIR)/$*
-	sudo virsh net-autostart $*
-	sudo virsh net-start $*
-.PHONY: uninstall-kvm-networks
-uninstall-kvm-networks: $(patsubst $(KVM_NETDIR)/%,uninstall-kvm-network-%,$(wildcard $(KVM_NETDIR)/*))
-uninstall-kvm-network-%:
-	if sudo virsh net-info $* 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy $* ; \
-	fi
-	if sudo virsh net-info $* >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine $* ; \
-	fi
+# Select the build domain; the choice is arbitrary; most likely it is "east".
+KVM_BUILD_DOMAIN = $(firstword $(KVM_POOL))$(firstword $(KVM_INSTALL_DOMAINS))
+
+# Map the documented targets, and their aliases, onto
+# internal/canonical targets.
+
+.PHONY: kvm-clean clean-kvm
+kvm-clean clean-kvm:
+	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
+	rm -rf $(KVM_OBJDIR)
+.PHONY: kvm-distclean distclean-kvm
+kvm-distclean distclean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-distclean
+
+.PHONY: kvm-build build-kvm
+kvm-build build-kvm: kvm-$(KVM_BUILD_DOMAIN)-build
+
+# A catch all to run "make %" on the build domain; for instance "make
+# kvm-make-manpages'.
+kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
+
+# "kvm-install" is a little wierd.  It needs to be run on most VMs,
+# and it needs to use the swan-install script.
+#
+# To ensure that all test domains are created, include an explict
+# dependency on all the test domain files.  "nic" which doesn't get
+# pluto installed, would otherwise not be created.
+#
+# For a parallel kvm-install, avoid multiple domains simultaneously
+# re-building libreswan by first explicitly running a build on
+# $(KVM_BUILD_DOMAIN).
+.PHONY: kvm-install kvm-shutdown
+kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
+
+define build_rules
+  #(info pool=$(1) domain=$(2))
+
+  # Run "make <anything>" on the specified domain
+  kvm-$(1)$(2)-make-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
+
+  # kvm-build is special.  To avoid "make base" and "make module"
+  # running in parallel on the build machine (stepping on each others
+  # toes), this uses sub-makes to explicitly serialize "base" and
+  # "modules" targets.
+  kvm-$(1)$(2)-build:
+	$$(MAKE) kvm-$(1)$(2)-make-base
+	$$(MAKE) kvm-$(1)$(2)-make-module
+
+  # "kvm-install" is a little wierd.  It needs to be run on most VMs,
+  # and it needs to use the swan-install script.
+  kvm-install: kvm-$(1)$(2)-install
+  .PHONY: kvm-$(1)$(2)-install
+  kvm-$(1)$(2)-install: kvm-build | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+
+  kvm-shutdown: kvm-$(1)$(2)-shutdown
+  .PHONY: kvm-$(1)$(2)-shutdown
+  kvm-$(1)$(2)-shutdown: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,--shutdown $(1)$(2))
+
+  .PHONY: kvmsh-$(1)$(2)
+  kvmsh-$(1)$(2): | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2))
+  kvmsh-$(1)$(2)-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
+	$(call kvmsh,$(1)$(2) $$*)
+
+endef
+
+ifdef KVM_POOL
+$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(pool),$(domain)))))
+else
+$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
+endif
+
+# Provide aliases so that "east" maps onto the first "east" in the
+# pool. et.al.
+
+define kvm_alias
+  .PHONY: kvm-install-$(1)
+  kvm-install-$(1): kvm-$(2)-install
+  .PHONY: kvm-build-$(1)
+  kvm-build-$(1): kvm-$(2)-build
+  .PHONY: kvm-shutdown-$(1)
+  kvm-shutdown-$(1): kvm-$(2)-shutdown
+endef
+
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
+
+define kvmsh_alias
+  kvmsh-$(1): kvmsh-$(2)
+  kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
+endef
+
+ifneq ($(firstword $(KVM_POOL)),)
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvmsh_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
+endif
+
+.PHONY: kvm-help
+kvm-help:
+	@echo ''
+	@echo 'For more help see mk/README.md but here the standard make targets:'
+	@echo ''
+	@echo ' To run tests, either:'
+	@echo ''
+	@echo '   <create domains>      - see below'
+	@echo '   check UPDATEONLY=1    - just install'
+	@echo '   check                 - just run swantest'
+	@echo ''
+	@echo ' Or [skip]:'
+	@echo ''
+	@echo '  [install-kvm-networks] - setup the test networks'
+	@echo '  [install-kvm-domains]  - setup the test domains'
+	@echo '  [kvm-clean]            - delete libreswan build in $(KVM_OBJDIR)'
+	@echo '  [kvm-test-clean]       - delete test results (else saved in BACKUP/)'
+	@echo '   kvm-install           - setup/update/install/... libreswan'
+	@echo '   kvm-test              - test installed libreswan'
+	@echo '  [kvm-check]            - test installed libreswan but skip tests that passed'
+	@echo ''
+	@echo ' To force the domains to rebuild:'
+	@echo '   uninstall-kvm-domains       - delete the test domains (not base)'
+	@echo '   uninstall-kvm-networks      - delete the test networks (not base)'
+	@echo '  [uninstall-kvm-base-domain]  - delete the base domain'
+	@echo '  [uninstall-kvm-base-network] - delete the base network'
+	@echo ''
+	@echo ' Also:'
+	@echo '   kvm-keys              - use the KVM to create the test keys'
+	@echo '   kvmsh-DOMAIN          - open console on DOMAIN'
+	@echo '   kvmsh-DOMAIN-"CMD"    - run CMD on DOMAIN'
+	@echo '   kvm-install-DOMAIN    - only install on DOMAIN'
+	@echo '   kvm-build-DOMAIN      - only build on DOMAIN'
+	@echo '   kvm-shutdown          - shutdown all test domains'
+	@echo '   kvm-shutdown-DOMAIN   - shutdown DOMAIN'
+	@echo ''

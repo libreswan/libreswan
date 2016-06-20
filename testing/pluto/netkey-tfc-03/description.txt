@@ -1,0 +1,4 @@
+tfc testing - requires netkey
+
+Both sides are willing to do TFC and enable it. Both IPsec SA's
+should do TFC.

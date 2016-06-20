@@ -4,7 +4,7 @@ road #
 road #
  echo "192.1.2.23/32" >> /etc/ipsec.d/policies/clear
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  # ensure for tests acquires expire before our failureshunt=2m

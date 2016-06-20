@@ -1,6 +1,8 @@
-/testing/guestbin/swan-prep
-ipsec setup start
+: ==== start ====
+TESTNAME=netkey-pluto-04
+source /testing/pluto/bin/eastlocal.sh
+
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-aes128
-ipsec auto --status
-echo "initdone"
+
+ipsec auto --add westnet-eastnet

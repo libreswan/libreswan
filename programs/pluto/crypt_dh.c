@@ -63,7 +63,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include <keyhi.h>
-#include "lswconf.h"
+#include "lswnss.h"
 
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group

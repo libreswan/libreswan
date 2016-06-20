@@ -3,7 +3,7 @@
 ifconfig eth0:1 192.0.1.254/24
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive 192.0.2.254
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add road-east-ipv4-ikev2
 echo "initdone"

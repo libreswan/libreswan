@@ -1,1 +1,6 @@
 Interop with strongswan using one connections that will reauthenticate.
+
+This is not supported yet with libreswan and will result in:
+
+"westnet-eastnet-ikev2" #1: rejecting create child SA from 192.1.2.45:4500 -- new KE in DH for PFS is not yet supported
+

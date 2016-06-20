@@ -51,7 +51,7 @@
 #include <prerror.h>
 #include <pk11pub.h>
 #include <keyhi.h>
-#include "lswconf.h"
+#include "lswnss.h"
 #include "test_buffer.h"
 
 /* MUST BE THREAD-SAFE */

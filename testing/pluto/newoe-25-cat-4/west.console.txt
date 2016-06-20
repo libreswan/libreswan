@@ -6,7 +6,7 @@ west #
 west #
  cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 west #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
@@ -19,10 +19,8 @@ west #
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
+4 packets transmitted, 2 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo "initdone"
@@ -59,14 +57,12 @@ XFRM state:
 src 192.1.2.254 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.2.45 dst 192.1.2.254
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
 src 192.1.2.45/32 dst 10.0.10.1/32 

@@ -65,14 +65,14 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		if (i != 2) {
 			loglog(RC_INTERNALERR,
 			       "decode_hex_to_chunk: hex buffer \"%s\" contains unexpected space or NUL at \"%s\"\n", string, pos);
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		char *end;
 		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
 		if (end - buf != 2) {
 			loglog(RC_INTERNALERR,
 			       "decode_hex_to_chunk: hex buffer \"%s\" invalid hex character at \"%s\"\n", string, pos);
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		chunk.len++;
 	}

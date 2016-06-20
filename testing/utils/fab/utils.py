@@ -18,8 +18,8 @@ import sys
 def directory(*util):
     return os.path.join(os.path.dirname(sys.argv[0]), *util)
 
-def abspath(*util):
-    return os.path.abspath(directory(util))
+def realpath(*util):
+    return os.path.realpath(directory(util))
 
 def relpath(util=""):
     return os.path.relpath(directory(util))

@@ -8,7 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm with a ping
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ip addr add 10.0.1.254 dev eth0
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-vti-01
 ipsec auto --add westnet-eastnet-vti-02

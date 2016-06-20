@@ -7,7 +7,7 @@ east #
  PATH/bin/modutil -dbdir /etc/ipsec.d -chkfips true
 FIPS mode enabled.
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

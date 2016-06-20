@@ -72,6 +72,8 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 
+#include "pluto_sd.h"
+
 /* bits loading keys from asynchronous DNS */
 
 enum key_add_attempt {
@@ -104,11 +106,14 @@ static void key_add_ugh(const struct id *keyid, err_t ugh)
 	       "failure to fetch key for %s from DNS: %s", name, ugh);
 }
 
-void do_whacklisten()
+static void do_whacklisten()
 {
 	fflush(stderr);
 	fflush(stdout);
 	close_peerlog();    /* close any open per-peer logs */
+#ifdef USE_SYSTEMD_WATCHDOG
+        pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
+#endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
 	daily_log_reset();
@@ -116,6 +121,9 @@ void do_whacklisten()
 	find_ifaces();
 	load_preshared_secrets();
 	load_groups();
+#ifdef USE_SYSTEMD_WATCHDOG
+        pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
+#endif
 }
 
 /* last one out: turn out the lights */
@@ -405,6 +413,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	/* process "listen" before any operation that could require it */
 	if (msg.whack_listen)
 		do_whacklisten();
+
 	if (msg.whack_unlisten) {
 		libreswan_log("no longer listening for IKE messages");
 		listening = FALSE;
@@ -541,6 +550,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_shunt_status)
 		show_shunt_status();
+
+	if (msg.whack_fips_status)
+		show_fips_status();
 
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");

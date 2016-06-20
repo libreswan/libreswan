@@ -190,3 +190,11 @@ OBJDIRTOP?=$(abs_top_builddir)
 	@echo SRCDIR=$(SRCDIR)
 	@echo OBJDIRTOP=$(OBJDIRTOP)
 	@echo LIBRESWANSRCDIR=$(LIBRESWANSRCDIR)
+
+# Targets needing the builddir should add:
+#
+#     | $(builddir)
+#
+# as a soft/order-only dependency.
+$(builddir):
+	mkdir -p $(builddir)

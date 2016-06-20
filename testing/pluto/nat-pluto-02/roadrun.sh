@@ -1,3 +1,4 @@
 ipsec auto --up road-eastnet-nat
-ping -q -c 8 -n 192.0.2.219
+ping -n -c 4 192.0.2.254
+ipsec whack --trafficstatus
 echo done

@@ -552,10 +552,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		}
 
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
 			 st->st_esp.attrs.transattrs.esn_enabled ? "/ESN" : "",
+			 c->sa_tfcpad != 0 && !st->st_seen_no_tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,

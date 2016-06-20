@@ -58,51 +58,6 @@
 
 static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
 
-/* ASN.1 definition of generalNames */
-
-static const asn1Object_t generalNamesObjects[] = {
-	{ 0, "generalNames", ASN1_SEQUENCE, ASN1_LOOP },	/* 0 */
-	{ 1, "generalName", ASN1_EOC, ASN1_RAW },	/* 1 */
-	{ 0, "end loop", ASN1_EOC, ASN1_END }	/* 2 */
-};
-
-#define GENERAL_NAMES_GN 1
-#define GENERAL_NAMES_ROOF 3
-
-/* ASN.1 definition of generalName */
-static const asn1Object_t generalNameObjects[] = {
-	{ 0, "otherName", ASN1_CONTEXT_C_0, ASN1_OPT | ASN1_BODY },	/* 0 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 1 */
-	{ 0, "rfc822Name", ASN1_CONTEXT_S_1, ASN1_OPT | ASN1_BODY },	/* 2 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 3 */
-	{ 0, "dnsName", ASN1_CONTEXT_S_2, ASN1_OPT | ASN1_BODY },	/* 4 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 5 */
-	{ 0, "x400Address", ASN1_CONTEXT_S_3, ASN1_OPT | ASN1_BODY },	/* 6 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 7 */
-	{ 0, "directoryName", ASN1_CONTEXT_C_4, ASN1_OPT | ASN1_BODY },	/* 8 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 9 */
-	{ 0, "ediPartyName", ASN1_CONTEXT_C_5, ASN1_OPT | ASN1_BODY },	/* 10 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 11 */
-	{ 0, "uniformResourceIdentifier", ASN1_CONTEXT_S_6, ASN1_OPT |
-		ASN1_BODY },	/* 12 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 13 */
-	{ 0, "ipAddress", ASN1_CONTEXT_S_7, ASN1_OPT | ASN1_BODY },	/* 14 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END },	/* 15 */
-	{ 0, "registeredID", ASN1_CONTEXT_S_8, ASN1_OPT | ASN1_BODY },	/* 16 */
-	{ 0, "end choice", ASN1_EOC, ASN1_END }	/* 17 */
-};
-
-#define GN_OBJ_OTHER_NAME 0
-#define GN_OBJ_RFC822_NAME 2
-#define GN_OBJ_DNS_NAME 4
-#define GN_OBJ_X400_ADDRESS 6
-#define GN_OBJ_DIRECTORY_NAME 8
-#define GN_OBJ_EDI_PARTY_NAME 10
-#define GN_OBJ_URI 12
-#define GN_OBJ_IP_ADDRESS 14
-#define GN_OBJ_REGISTERED_ID 16
-#define GN_OBJ_ROOF 18
-
 /* coding of X.501 distinguished name */
 typedef struct {
 	const char *name;

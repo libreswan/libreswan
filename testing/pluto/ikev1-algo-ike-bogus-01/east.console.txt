@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --debug-all --impair-send-key-size-check
+east #
+ ipsec auto --add westnet-eastnet-3des
+002 added connection description "westnet-eastnet-3des"
+east #
+ ipsec auto --status |grep westnet-eastnet-3des
+000 "westnet-eastnet-3des": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-3des":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-3des":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-3des":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-3des":   labeled_ipsec:no;
+000 "westnet-eastnet-3des":   policy_label:unset;
+000 "westnet-eastnet-3des":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-3des":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-3des":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-3des":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-3des":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-3des":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-3des":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-3des":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-3des":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1024(2), AES_CBC(7)_256-MD5(1)-MODP1024(2)
+000 "westnet-eastnet-3des":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1024(2), AES_CBC(7)_256-MD5(1)-MODP1024(2)
+000 "westnet-eastnet-3des":   ESP algorithms wanted: AES(12)_000-MD5(1)
+000 "westnet-eastnet-3des":   ESP algorithms loaded: AES(12)_000-MD5(1)
+east #
+ echo "initdone"
+initdone
+east #
+ grep BAD_PROPOSAL_SYNTAX /tmp/pluto.log
+| complete v1 state transition with BAD_PROPOSAL_SYNTAX
+"westnet-eastnet-3des" #2: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

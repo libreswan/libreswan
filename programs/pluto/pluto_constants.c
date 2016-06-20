@@ -54,15 +54,17 @@
 
 static const char *const kern_interface_name[] = {
 	"no-kernel", /* run without stack */
-	"auto-pick", /* obsoleted but punts to netkey */
 	"klips",
 	"netkey",
 	"win2k",
 	"mastklips",
 	"bsdkame"
 };
-enum_names kern_interface_names =
-	{ NO_KERNEL, USE_BSDKAME, kern_interface_name, NULL };
+enum_names kern_interface_names = {
+	NO_KERNEL, USE_BSDKAME,
+	ARRAY_REF(kern_interface_name),
+	NULL
+};
 
 /* DPD actions */
 static const char *const dpd_action_name[] = {
@@ -72,18 +74,26 @@ static const char *const dpd_action_name[] = {
 	"action:restart",
 };
 
-enum_names dpd_action_names =
-	{ DPD_ACTION_DISABLED, DPD_ACTION_RESTART, dpd_action_name, NULL };
+enum_names dpd_action_names = {
+	DPD_ACTION_DISABLED, DPD_ACTION_RESTART,
+	ARRAY_REF(dpd_action_name),
+	NULL
+};
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
-	"action:exit", /* daemon exiting */
-	"action:start", /* daemon starting */
-	"action:error", /* how is this an action? */
-	"action:watchdog", /* the keepalive watchdog ping */
+	"action: exit", /* daemon exiting */
+	"action: start", /* daemon starting */
+	"action: watchdog", /* the keepalive watchdog ping */
+	"action: reloading", /* the keepalive watchdog ping */
+	"action: ready", /* the keepalive watchdog ping */
+	"action: stopping", /* the keepalive watchdog ping */
 };
-enum_names sd_action_names =
-	{ PLUTO_SD_EXIT, PLUTO_SD_WATCHDOG, sd_action_name, NULL };
+enum_names sd_action_names = {
+	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
+	ARRAY_REF(sd_action_name),
+	NULL
+};
 
 /* Timer events */
 static const char *const timer_event_name[] = {
@@ -116,8 +126,11 @@ static const char *const timer_event_name[] = {
 	"EVENT_RETAIN",
 };
 
-enum_names timer_event_names =
-	{ EVENT_NULL, EVENT_RETAIN, timer_event_name, NULL };
+enum_names timer_event_names = {
+	EVENT_NULL, EVENT_RETAIN,
+	ARRAY_REF(timer_event_name),
+	NULL
+};
 
 /* State of exchanges */
 static const char *const state_name[] = {
@@ -171,11 +184,14 @@ static const char *const state_name[] = {
 	"STATE_IKESA_DEL",
 	"STATE_CHILDSA_DEL",
 
-	"STATE_IKEv2_ROOF"
+	"STATE_IKEv2_ROOF",
 };
 
-enum_names state_names =
-	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_name, NULL };
+enum_names state_names = {
+	STATE_UNDEFINED, STATE_IKEv2_ROOF,
+	ARRAY_REF(state_name),
+	NULL
+};
 
 /* story for state */
 
@@ -220,15 +236,23 @@ static const char *const state_story[] = {
 	"invalid state - IKE roof",
 	"invalid state - IKEv2 base",
 	"sent v2I1, expected v2R1",             /* STATE_PARENT_I1 */
-	"sent v2I2, expected v2R2",
-	"PARENT SA established",
-	"received v2I1, sent v2R1",
-	"received v2I2, PARENT SA established",
-	"invalid state - IKEv2 roof"
+	"sent v2I2, expected v2R2",		/* STATE_PARENT_I2 */
+	"PARENT SA established",		/* STATE_PARENT_I3 */
+	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
+	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
+
+	/* ??? better story needed for these */
+	"STATE_IKESA_DEL",	/* STATE_IKESA_DEL */
+	"STATE_CHILDSA_DEL",	/* STATE_CHILDSA_DEL */
+
+	"invalid state - IKEv2 roof",	/* STATE_IKEv2_ROOF */
 };
 
-enum_names state_stories =
-	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_story, NULL };
+enum_names state_stories = {
+	STATE_UNDEFINED, STATE_IKEv2_ROOF,
+	ARRAY_REF(state_story),
+	NULL
+};
 
 /*
  * natt_bit_names is dual purpose:
@@ -246,9 +270,11 @@ const char *const natt_bit_names[] = {
 	NULL	/* end for bitnamesof() */
 };
 
-enum_names natt_method_names =
-	{ NAT_TRAVERSAL_METHOD_none, NATED_PEER,
-	  natt_bit_names, NULL };
+enum_names natt_method_names = {
+	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
+	ARRAY_REF(natt_bit_names)-1,
+	NULL
+};
 
 /* pluto crypto importance */
 static const char *const pluto_cryptoimportance_strings[] = {
@@ -260,9 +286,11 @@ static const char *const pluto_cryptoimportance_strings[] = {
 	"import:admin initiate"
 };
 
-enum_names pluto_cryptoimportance_names =
-	{ pcim_notset_crypto, pcim_demand_crypto,
-	  pluto_cryptoimportance_strings, NULL };
+enum_names pluto_cryptoimportance_names = {
+	pcim_notset_crypto, pcim_demand_crypto,
+	ARRAY_REF(pluto_cryptoimportance_strings),
+	NULL
+	};
 
 /* routing status names */
 
@@ -277,8 +305,10 @@ static const char *const routing_story_strings[] = {
 	"keyed, unrouted",      /* RT_UNROUTED_KEYED: was routed+keyed, but it got turned into an outer policy */
 };
 
-enum_names routing_story =
-	{ RT_UNROUTED, RT_ROUTED_TUNNEL, routing_story_strings, NULL };
+enum_names routing_story = {
+	RT_UNROUTED, RT_UNROUTED_KEYED,
+	ARRAY_REF(routing_story_strings),
+	NULL };
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",
@@ -292,8 +322,11 @@ static const char *const stfstatus_names[] = {
 	"STF_FAIL"
 };
 
-enum_names stfstatus_name =
-	{ STF_IGNORE, STF_FAIL, stfstatus_names, NULL };
+enum_names stfstatus_name = {
+	STF_IGNORE, STF_FAIL,
+	ARRAY_REF(stfstatus_names),
+	NULL
+};
 
 /* Names for sa_policy_bits.
  * Note: we drop the POLICY_ prefix so that logs are more concise.
@@ -376,4 +409,21 @@ const char *prettypolicy(lset_t policy)
 		 fail != 0 ? policy_fail_names[fail] : "",
 		 NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
 	return buf;
+}
+
+static const enum_names *pluto_enum_names_checklist[] = {
+	&kern_interface_names,
+	&dpd_action_names,
+	&sd_action_names,
+	&timer_event_names,
+	&state_names,
+	&state_stories,
+	&natt_method_names,
+	&pluto_cryptoimportance_names,
+	&routing_story,
+	&stfstatus_name,
+};
+
+void init_pluto_constants(void) {
+	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));	
 }

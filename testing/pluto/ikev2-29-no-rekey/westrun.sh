@@ -5,5 +5,5 @@ echo "Waiting 110 seconds... for the tunnel to break"
 sleep 60
 sleep 50
 ipsec status
-ipsec eroute
+ipsec whack --trafficstatus
 echo done

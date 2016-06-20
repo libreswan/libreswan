@@ -11,7 +11,7 @@ iptables -A INPUT -i eth1 -s 192.0.0.0/16 -j DROP
 TESTNAME=multinet-02
 source /testing/pluto/bin/westlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet-subnets

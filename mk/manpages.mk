@@ -65,8 +65,8 @@ local-clean-manpages:
 # $(buildpath) (when .xml isn't generated, they both do not).  The
 # $(notdir $@) in the test is to take care of both possibilities.
 
-%: %.xml
-	@mkdir -p $(builddir)
-	: ignoring $(XMLTO) exit status
-	$(XMLTO) -o $(builddir) man $< || true
+%: %.xml | $(builddir)
+	${TRANSFORM_VARIABLES} < $< > $(builddir)/$(notdir $@).tmp
+	: ignoring seemingly bogus $(XMLTO) exit status
+	cd $(builddir) && $(XMLTO) man $(notdir $@).tmp || true
 	test -r $(builddir)/$(notdir $@)

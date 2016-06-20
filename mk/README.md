@@ -52,8 +52,8 @@ then add the following to Makefile.inc.local:
     KVM_TESTINGDIR = $(abs_top_srcdir)/testing
 
 
-Installing test networks and test domains
-.........................................
+Installing and uninstalling test networks and test domains
+..........................................................
 
 Once the make variables are set, the test networks and test domains
 can be installed with:
@@ -61,42 +61,36 @@ can be installed with:
     make install-kvm-networks
     make install-kvm-domains
 
+If not already present, a base domain, from which the test domains are
+be cloned, is also be created.
+
 Conversely the test domains and networks can be completely uninstalled
 using:
 
     make uninstall-kvm-networks
     make uninstall-kvm-domains
 
+The base domain, from which the test domains are cloned, is not
+uninstalled.  To also remove the base domain use:
 
-Re-installing and updating test domains
-.......................................
+    make uninstall-kvm-domains uninstall-kvm-base-domain
 
-It is also possible to re-install an individual test domain, such as
-east:
-
-    make uninstall-kvm-domain-east
-    make install-kvm-domain-east
-
-and all test domains without re-creating the base domain vis:
-
-    make uninstall-kvm-test-domains
-    make install-kvm-test-domains
-
-These make targets DO NOT update the base .qcow2 image created from
-the base domain.
-
-To also force an update of the base .qcow2 image, that file will need
-to be explicitly deleted.  This is both to prevent accidental domain
-updates; and avoid the unreliable and slow process of creating the
-base .qcow2 file.
+This is both to prevent accidental domain updates; and avoid the
+unreliable and slow process of creating the base .qcow2 file.
 
 
 Logging into a test domain
 --------------------------
 
-To get a shell prompt on a domain, such as east, use:
+To get a shell prompt on a domain, such as east, use either:
 
     ./testing/utils/kvmsh.py east
+
+or:
+
+    make kvmsh-east
+
+to exit enter the escape character '^]'.
 
 
 Installing libreswan

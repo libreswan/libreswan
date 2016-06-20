@@ -1,6 +1,7 @@
 /* pluto_sd.h
  * Status notifications for systemd
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,15 +16,15 @@
 
 #ifndef _PLUTO_SD_H
 #define _PLUTO_SD_H
+#ifdef USE_SYSTEMD_WATCHDOG
 
 #include <systemd/sd-daemon.h>
 
-#define SD_WATCHDOG_INTERVAL 15
-
 #define SD_REPORT_NO_STATUS 0
 
+extern void pluto_sd_init(void);
+extern void pluto_sd(int action, int status);
 extern void sd_watchdog_event(void);
-extern void pluto_sd_watchdog_start(void);
-extern void pluto_sd_watchdog_exit(int status);
 
+#endif
 #endif /* _PLUTO_SD_H */

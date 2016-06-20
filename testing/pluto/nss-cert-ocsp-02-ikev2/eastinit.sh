@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 certutil -d sql:/etc/ipsec.d -D -n west
 #normal test things:
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add nss-cert-ocsp
 ipsec auto --status |grep nss-cert-ocsp

@@ -5,7 +5,7 @@ route add -net default gw 192.1.2.45
 
 arp -an
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add block

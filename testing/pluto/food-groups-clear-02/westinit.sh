@@ -17,7 +17,7 @@ ping -c 1 -n 192.1.2.62
 : try hitting east before doing IPsec
 ping -c 1 -n 192.1.2.23
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-policy-loaded
 
 ipsec auto --add us-to-anyone

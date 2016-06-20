@@ -5,7 +5,7 @@ ipsec auto --up SAwest-east
 # use the tunnel
 ping -q -c 4 -n 192.1.2.23
 # show the tunnel!
-ipsec eroute
+ipsec whack --trafficstatus
 # "Time to shut down my computer!"...
 ipsec whack --shutdown
 # ...but unless the delete SA is acknowledged, this ping will fail,

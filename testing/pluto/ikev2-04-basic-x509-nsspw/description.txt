@@ -1,0 +1,13 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder.
+It uses certificates, and it includes a configuration that should work
+against racoon2. Note that this test no longer needs to be the model
+for a racoon2 test, as we have interop-ikev2-racoon-* tests now.
+
+This also tests having public keys loaded from certificates, but not
+use the DN as the ID.  Pluto also loads the public key in the certificate
+file with the name given.
+
+This test does not use or reply on any CA cert.
+
+This is called "out of bound PKIX", as the certificates are not sent
+in-band.

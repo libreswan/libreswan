@@ -5,14 +5,12 @@ default: check
 check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
 
 .PRECIOUS: %.fax
-%.fax:
-	mkdir -p $(builddir)
+%.fax: | $(builddir)
 	curl -o $(builddir)/$@.bz2 https://download.libreswan.org/cavs/$@.bz2
 	bunzip2 $(builddir)/$@.bz2
 
 .PRECIOUS: %.out
-%.out: %.fax $(top_builddir)/programs/pluto/cavp
-	mkdir -p $(builddir)
+%.out: %.fax $(top_builddir)/programs/pluto/cavp | $(builddir)
 	$(top_builddir)/programs/pluto/cavp \
 		$(builddir)/$*.fax \
 		> $(builddir)/$*.tmp

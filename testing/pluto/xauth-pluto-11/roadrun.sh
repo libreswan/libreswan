@@ -1,3 +1,2 @@
-ipsec auto --up xauth-road--eastnet
-echo done.
-
+ipsec auto --up xauth-road-eastnet
+echo done

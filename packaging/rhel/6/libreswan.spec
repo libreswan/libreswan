@@ -11,7 +11,7 @@
 %global development 0
 %global cavstests 1
 
-%global prever dr2
+%global prever dr3
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -44,6 +44,9 @@ BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
+%endif
+%if %{USE_LABELED_IPSEC}
+BuildRequires: libselinux-devel
 %endif
 %if %{USE_FIPSCHECK}
 # we need fipshmac
@@ -123,9 +126,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac %{buildroot}%{_sbindir}/ipsec \
-    fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
-    rm -f %{buildroot}%{_libexecdir}/ipsec/.cavp.hmac \
+    fipshmac %{buildroot}%{_libexecdir}/ipsec/pluto \
 %{nil}
 %endif
 
@@ -224,8 +225,7 @@ fi
 %{_initrddir}/ipsec
 
 %if %{USE_FIPSCHECK}
-%{_sbindir}/.ipsec.hmac
-%{_libexecdir}/ipsec/.*.hmac
+%{_libexecdir}/ipsec/.pluto.hmac
 
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
@@ -233,5 +233,5 @@ fi
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr2
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr3
 - Automated build from release tar ball

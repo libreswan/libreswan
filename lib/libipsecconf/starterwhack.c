@@ -458,6 +458,9 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
+				starter_log(LOG_LEVEL_DEBUG,
+					    "\tsending %s %srsasigkey=%s",
+					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				ret = send_whack_msg(&msg, cfg->ctlbase);
 			}
@@ -492,6 +495,9 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
+				starter_log(LOG_LEVEL_DEBUG,
+					    "\tsending %s %srsasigkey2=%s",
+					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				return send_whack_msg(&msg, cfg->ctlbase);
 			}
@@ -538,6 +544,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.connmtu = conn->options[KBF_CONNMTU];
 	if (conn->options_set[KBF_PRIORITY])
 		msg.sa_priority = conn->options[KBF_PRIORITY];
+	if (conn->options_set[KBF_TFCPAD])
+		msg.sa_tfcpad = conn->options[KBF_TFCPAD];
+	if (conn->options_set[KBF_NO_ESP_TFC])
+		msg.send_no_esp_tfc = conn->options[KBF_NO_ESP_TFC];
 	if (conn->options_set[KBF_NFLOG_CONN])
 		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
@@ -659,7 +669,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		conn->name, msg.vti_iface);
 	if (conn->options_set[KBF_VTI_ROUTING])
 		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
-
+	if (conn->options_set[KBF_VTI_SHARED])
+		msg.vti_shared = conn->options[KBF_VTI_SHARED];
 
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];

@@ -92,15 +92,9 @@ returns.</para>
 	# RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
 	# for signatures only, UNSAFE FOR ENCRYPTION
 	#pubkey=0sAQOF8tZ2NZt...Y1P+buFuFn/
+	#ckaid=7ddad7f1d5842e...043c499babf0a
 	Modulus: 0xcc2a86fcf440...cf1011abb82d1
 	PublicExponent: 0x03
-	# everything after this point is secret
-	PrivateExponent: 0x881c59fdf8...ab05c8c77d23
-	Prime1: 0xf49fd1f779...46504c7bf3
-	Prime2: 0xd5a9108453...321d43cb2b
-	Exponent1: 0xa31536a4fb...536d98adda7f7
-	Exponent2: 0x8e70b5ad8d...9142168d7dcc7
-	Coefficient: 0xafb761d001...0c13e98d98
 
 </literallayout> <!-- .fi -->
 The first (comment) line, indicating the nature and date of the key, and

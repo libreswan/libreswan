@@ -1,0 +1,57 @@
+--- north.console.txt	2016-05-21 12:03:48.175685839 -0400
++++ OUTPUT/north.console.txt	2016-05-24 19:15:22.259088220 -0400
+@@ -2,37 +2,19 @@
+ north #
+  # confirm that the network is alive
+ north #
+- ../../pluto/bin/wait-until-alive 192.0.2.254
+-ping -n -c 1 -w 4 192.0.2.254
+-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
+---- 192.0.2.254 ping statistics ---
+-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+-destination 192.0.2.254 is dead
++ ../../pluto/bin/wait-until-alive 192.1.2.23
++destination 192.1.2.23 is alive
+ north #
+  # make sure that clear text does not get through
+ north #
+  iptables -A INPUT -i eth1 -s 192.1.2.23 -p tcp --sport 3 -j REJECT
+ north #
++ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
++north #
+  iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p tcp --dport 3 -j REJECT
+ north #
+  ipsec start
+-[ 00.00] registered KLIPS /proc/sys/net
+-[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+-[ 00.00] 
+ Redirecting to: systemctl start ipsec.service
+-[ 00.00] 
+ north #
+  /testing/pluto/bin/wait-until-pluto-started
+ north #
+@@ -61,6 +43,12 @@
+  echo test | nc 192.1.2.23 2
+ north #
+  echo test | nc 192.1.2.23 3
++Ncat: Connection refused.
++north #
++ ipsec whack --trafficstatus
++000  
++006 #2: "north-east-port3", type=ESP,  add_time=1234567890, inBytes=0, outBytes=0, id='@east'
++000  
+ north #
+  echo done
+ done

@@ -1,3 +1,7 @@
-ipsec auto --up  westnet-eastnet-aes128
-ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ipsec auto --up  westnet-eastnet
+ip xfrm policy
+ip xfrm state
+
+ping -n -c 4 192.0.2.254
+
 echo done

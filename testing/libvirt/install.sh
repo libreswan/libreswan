@@ -119,6 +119,7 @@ for hostname in $(${TESTDIR}/utils/kvmhosts.sh); do
     rm -f vm/${hostname}.converted
     cp vm/${hostname} vm/${hostname}.converted
     sed -i \
+	-e "s:@@NAME@@:${hostname}:" \
 	-e "s:@@TESTINGDIR@@:${TESTINGDIR}:" \
 	-e "s:@@SOURCEDIR@@:${SOURCEDIR}:" \
 	-e "s:@@POOLSPACE@@:${POOLSPACE}:" \

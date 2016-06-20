@@ -5,7 +5,7 @@ TESTNAME=netkey-psk-vhost-01
 ipsec setup stop
 /usr/local/libexec/ipsec/_stackmanager stop
 rm -fr /var/run/pluto/pluto.pid
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add road-east-psk

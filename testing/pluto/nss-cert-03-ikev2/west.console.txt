@@ -3,7 +3,7 @@ Preparing X.509 files
 west #
  certutil -d sql:/etc/ipsec.d -D -n east
 west #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
@@ -15,16 +15,16 @@ west #
 000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west
 000 "nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "nss-cert":   labeled_ipsec:no;
 000 "nss-cert":   policy_label:unset;
 000 "nss-cert":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "nss-cert":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "nss-cert":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "nss-cert":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "nss-cert":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "nss-cert":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
+000 "nss-cert":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "nss-cert":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -39,7 +39,7 @@ west #
 002 "nss-cert" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 002 "nss-cert" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "nss-cert" #2: negotiated connection [192.0.1.254,192.0.1.254:0-65535 0] -> [192.0.2.254,192.0.2.254:0-65535 0]
-004 "nss-cert" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "nss-cert" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  echo done
 done

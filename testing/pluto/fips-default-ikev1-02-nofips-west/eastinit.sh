@@ -3,7 +3,7 @@
 /usr/bin/modutil -dbdir /etc/ipsec.d -chkfips true
 fipscheck
 setenforce 0
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
 echo "initdone"

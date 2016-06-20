@@ -976,6 +976,7 @@ enum ikev1_ipsec_attr {
 	COMPRESS_DICT_SIZE = 8,
 	COMPRESS_PRIVATE_ALG = 9, /* B/V */
 	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
+		ECN_TUNNEL_or_old_SECCTX = ECN_TUNNEL,
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 
@@ -1001,7 +1002,7 @@ enum ikev1_ipsec_attr {
 #define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute ) /* our policy */
-#define SA_LIFE_DURATION_MAXIMUM secs_per_day
+#define SA_LIFE_DURATION_MAXIMUM (8 * secs_per_hour) /* FIPS compliant */
 
 #define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */

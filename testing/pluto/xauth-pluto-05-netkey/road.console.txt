@@ -4,7 +4,7 @@ road #
 road #
  route add -net default gw 192.1.3.254
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
@@ -23,15 +23,15 @@ road #
 000 "modecfg-road-eastnet-psk": 192.1.3.194[@roadrandom,+MC+XC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[@east,MS+XS+S=C]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "modecfg-road-eastnet-psk":     oriented; my_ip=unset; their_ip=unset
 000 "modecfg-road-eastnet-psk":   xauth us:client, xauth them:server,  my_username=[any]; their_username=[any]
-000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "modecfg-road-eastnet-psk":   labeled_ipsec:no;
 000 "modecfg-road-eastnet-psk":   policy_label:unset;
 000 "modecfg-road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "modecfg-road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "modecfg-road-eastnet-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; fake_strongswan:no; send_vendorid:no;
+000 "modecfg-road-eastnet-psk":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "modecfg-road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "modecfg-road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
-000 "modecfg-road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface: unset; vti-routing: no
+000 "modecfg-road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "modecfg-road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "modecfg-road-eastnet-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "modecfg-road-eastnet-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "modecfg-road-eastnet-psk":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP1536(5), 3DES_CBC(5)_000-SHA1(2)-MODP1024(2)

@@ -6,7 +6,7 @@ north #
 north #
  echo "192.1.3.209/32" >> /etc/ipsec.d/policies/private-or-clear
 north #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
@@ -31,7 +31,7 @@ north #
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
-000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
+000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
@@ -113,17 +113,17 @@ north #
 north #
  #these will create passthroguh shunts
 north #
- ping -n -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+ ping -n -c 4 -I 192.1.3.33 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.33 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
- ping -n -c 4 192.1.2.45
-PING 192.1.2.45 (192.1.2.45) 56(84) bytes of data.
+ ping -n -c 4 -I 192.1.3.33 192.1.2.45
+PING 192.1.2.45 (192.1.2.45) from 192.1.3.33 : 56(84) bytes of data.
 64 bytes from 192.1.2.45: icmp_seq=1 ttl=63 time=0.XXX ms
 64 bytes from 192.1.2.45: icmp_seq=2 ttl=63 time=0.XXX ms
 64 bytes from 192.1.2.45: icmp_seq=3 ttl=63 time=0.XXX ms
@@ -141,7 +141,6 @@ north #
 000  
 north #
  iptables -t nat -L -n
-[ 00.00] nf_conntrack version 0.5.0 (7947 buckets, 31788 max)
 Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
 Chain INPUT (policy ACCEPT)
@@ -157,13 +156,11 @@ XFRM state:
 src 192.1.3.209 dst 192.1.3.33
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.33 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.3.33/32 dst 192.1.3.209/32 
 	dir out priority 2080 ptype main 

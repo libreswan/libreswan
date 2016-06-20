@@ -5,6 +5,6 @@ echo >/var/log/auth.log
 syslogd
 
 # start up the system
-ipsec setup start
+ipsec start
 
 

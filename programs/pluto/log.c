@@ -784,14 +784,15 @@ static void show_system_security(void)
 {
 	int selinux = libreswan_selinux();
 #ifdef FIPS_CHECK
-	int fipsmode = libreswan_fipsmode();
+	bool fips = libreswan_fipsmode();
 #else
-	int fipsmode = 0;
+	int fips = FALSE;
 #endif
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "fips mode=%s;",
-		fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
+
+	whack_log(RC_COMMENT, "fips mode=%s;", fips ? "enabled" : "disabled");
+
 	whack_log(RC_COMMENT, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */

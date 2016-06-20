@@ -1,0 +1,14 @@
+Basic pluto test of transport mode.
+
+This time behind a NAT, (see transport-01)
+
+A single transport mode SA is created between north and east, for port 3.
+On north, firewalling makes sure that one can only access port 3 via IPsec.
+
+inetd is started on east, listening on port 2 and 3, spitting out some stuff.
+This is tested with 'telnet | wc'.
+
+Due to the way that KLIPS intercepts traffic, routing for a single
+port/protocol results in capturing all of the data to that host, so we need
+to write a pass route as well.
+

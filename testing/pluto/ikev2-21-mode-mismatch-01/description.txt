@@ -1,0 +1,25 @@
+
+Testing a mismatched tunnel vs transport connection for IKEv2
+
+The RFC states:
+
+   The USE_TRANSPORT_MODE notification MAY be included in a request
+   message that also includes an SA payload requesting a Child SA.  It
+   requests that the Child SA use transport mode rather than tunnel mode
+   for the SA created.  If the request is accepted, the response MUST
+   also include a notification of type USE_TRANSPORT_MODE.  If the
+   responder declines the request, the Child SA will be established in
+   tunnel mode.  If this is unacceptable to the initiator, the initiator
+   MUST delete the SA.  Note: Except when using this option to negotiate
+   transport mode, all Child SAs will use tunnel mode.
+
+We do not allow a configuration of either, so the following mismatch scenarios
+are possible:
+
+1) west initiates with USE_TRANSPORT. east refuses to send back transport mode. West gives up
+   when IKE_AUTH reply is missing USE_TRANSPORT
+
+2) west initiates without USE_TRANSPORT wanting tunnel mode. East insists on transport mode and
+   should refuse the connection (if it allows this then when roles switch we get intermittent failures)
+
+

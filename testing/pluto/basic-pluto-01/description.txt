@@ -1,4 +1,4 @@
-Basic pluto test:
+Basic pluto test (now using XFRM/NETKEY)
 
 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
 
@@ -6,4 +6,4 @@ Basic pluto test:
 2) west adds an iptable rule to block plaintext from eastnet
 3) west pings 192.0.2.254 again, but pong should be dropped by rule
 4) west initiates connection "westnet-eastnet"; east 192.1.2.23 responds
-5) netjig sends ping packets from westnet to eastnet
+5) confirm with ping

@@ -89,7 +89,7 @@ appropriate and reasonable to use <emphasis remap='B'>also=private-or-clear</emp
 
 <refsect1 id='policy_group_files'><title>POLICY GROUP FILES</title>
 <para>The optional files under
-<filename>/etc/ipsec.d/policy</filename>,
+<filename>/etc/ipsec.d/policies</filename>,
 including</para>
 <literallayout remap='.nf'>
 
@@ -130,7 +130,7 @@ resulting instances as normal connections.</para>
 <para>For example, given a suitable connection definition
 <emphasis remap='B'>private</emphasis>,
 and the file
-<filename>/etc/ipsec.d/policy/private</filename>
+<filename>/etc/ipsec.d/policies/private</filename>
 with an entry 192.0.2.3,
 the system creates a connection instance
 <emphasis remap='B'>private#192.0.2.3.</emphasis>

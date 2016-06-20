@@ -5,7 +5,6 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
-%global USE_SYSTEMD_WATCHDOG true
 
 %global _hardened_build 1
 
@@ -13,7 +12,7 @@
 %global development 0
 %global cavstests 1
 
-%global prever dr2
+%global prever dr3
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -47,6 +46,9 @@ BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
+%if %{USE_LABELED_IPSEC}
+BuildRequires: libselinux-devel
+%endif
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel
 # we need fipshmac
@@ -55,9 +57,7 @@ Requires: fipscheck%{_isa}
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
 %endif
-%if %{USE_SYSTEMD_WATCHDOG}
 BuildRequires: systemd-devel
-%endif
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif
@@ -110,7 +110,6 @@ make %{?_smp_mflags} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK="%{USE_FIPSCHECK}" \
     USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-    USE_SYSTEMD_WATCHDOG="%{USE_SYSTEMD_WATCHDOG}" \
     USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
     USE_LDAP=true \
@@ -130,9 +129,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
-    rm -f %{buildroot}%{_libdir}/fipscheck/cavp.hmac
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto
 %{nil}
 %endif
 
@@ -238,12 +235,12 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_libdir}/fipscheck/pluto.hmac
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr2
+* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr3
 - Automated build from release tar ball

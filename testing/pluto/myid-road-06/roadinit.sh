@@ -18,7 +18,7 @@ sleep 2
 TESTNAME=myid-road-05
 source /testing/pluto/bin/roadlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/oe-road-01/policy-wait.sh

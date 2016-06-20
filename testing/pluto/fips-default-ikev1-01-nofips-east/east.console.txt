@@ -6,7 +6,7 @@ fips mode is off
 east #
  setenforce 0
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

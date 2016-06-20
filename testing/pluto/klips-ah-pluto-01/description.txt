@@ -1,0 +1,1 @@
+Basic AH test with no phase2alg=/ah= line specified.

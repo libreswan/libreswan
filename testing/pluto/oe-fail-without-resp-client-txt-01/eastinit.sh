@@ -13,7 +13,7 @@ dig 45.2.1.192.in-addr.arpa. txt
 
 netstat -rne
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add simulate-OE-east-west-1

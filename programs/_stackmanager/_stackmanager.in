@@ -122,7 +122,7 @@ startnetkey() {
 	    exit 1
 	fi
     fi
-	
+
     if [ -f /proc/modules ]; then
 	# load all NETKEY modules
 	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
@@ -140,7 +140,8 @@ startnetkey() {
     fi
     # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
     # Also Time before reserved kernel SPI times out
-    echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires
+    [ -w /proc/sys/net/core/xfrm_acq_expires ] && \
+	echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires || : not writeable
 }
 
 stopklips() {
@@ -483,5 +484,5 @@ case ${action} in
 	exit 1
 	;;
 esac
-	
+
 exit 0

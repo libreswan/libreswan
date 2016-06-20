@@ -8,7 +8,7 @@ route add -net default gw 192.1.2.23
 # start the local name server
 named
 
-ipsec setup start ; i=0 ; while i=`expr $i + 1`; [ $i -lt 20 ] && ! { ipsec auto --status | grep 'prospective erouted' >/dev/null ; } ; do sleep 1 ; done
+ipsec start ; i=0 ; while i=`expr $i + 1`; [ $i -lt 20 ] && ! { ipsec auto --status | grep 'prospective erouted' >/dev/null ; } ; do sleep 1 ; done
 
 ipsec auto --status
 : ==== end ====

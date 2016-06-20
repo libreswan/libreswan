@@ -8,7 +8,7 @@ export PLUTO_CRYPTO_HELPER_DEBUG=true
 TESTNAME=helper-queue-01
 source /testing/pluto/bin/westlocal.sh
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet-aggr

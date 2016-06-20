@@ -2,7 +2,7 @@
 ping -q -n -c 2 192.1.2.23
 ipsec auto --up road-east-x509-ipv4
 ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
-ipsec eroute
+ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
 echo "Waiting 15 seconds..."
 sleep 15

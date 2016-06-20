@@ -216,9 +216,9 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 
 stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 			      pb_stream *outpbs,
-			      enum original_role role,
-			      struct connection *c0,
-			      lset_t policy UNUSED)
+			      const enum original_role role,
+			      const struct connection *c0,
+			      const enum next_payload_types_ikev2 np)
 {
 	struct state *st = md->st;
 	struct traffic_selector *ts_i, *ts_r;
@@ -240,30 +240,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 		if (ret != STF_OK)
 			return ret;
 
-		if (role == ORIGINAL_INITIATOR) {
-			ret = ikev2_emit_ts(md, outpbs,
-					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
-					    ts_r, ORIGINAL_RESPONDER);
-		} else {
-			const struct payload_digest *p;
-
-			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
-			     p = p->next) {
-				if (p->payload.v2n.isan_type ==
-				    v2N_USE_TRANSPORT_MODE) {
-					DBG_log("Received v2N_USE_TRANSPORT_MODE from the other end, next payload is v2N_USE_TRANSPORT_MODE notification");
-					ret = ikev2_emit_ts(md, outpbs,
-							    ISAKMP_NEXT_v2N,
-							    ts_r, ORIGINAL_RESPONDER);
-					break;
-				}
-			}
-			if (p == NULL) {
-				ret = ikev2_emit_ts(md, outpbs,
-						    ISAKMP_NEXT_v2NONE,
-						    ts_r, ORIGINAL_RESPONDER);
-			}
-		}
+		ret = ikev2_emit_ts(md, outpbs, np, ts_r, ORIGINAL_RESPONDER);
 
 		if (ret != STF_OK)
 			return ret;
@@ -990,6 +967,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct state *pst = md->st;	/* parent state */
 	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	bool send_use_transport;
 	stf_status ret;
 
 	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -1005,6 +983,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	md->st = cst;
 	c = cst->st_connection;
+
+	send_use_transport = (cst->st_seen_use_transport &&
+		 (c->policy & POLICY_TUNNEL) == LEMPTY);
 
 	if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		ikev2_send_cp(c, ISAKMP_NEXT_v2SA, outpbs);
@@ -1060,6 +1041,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		/* there MUST be an authenticated IKE SA! */
+		if (!IS_IKE_SA_ESTABLISHED(pst)) {
+			libreswan_log("Received CREATE_CHILD exchange not allowed on partial IKE SA");
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+
 		/* send NONCE */
 		struct ikev2_generic in;
 		pb_stream pb_nr;
@@ -1078,38 +1065,67 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		close_output_pbs(&pb_nr);
 	}
 
+	if (role == ORIGINAL_RESPONDER) {
+		struct payload_digest *ntfy;
+
+		/* Process all NOTIFY payloads */
+		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+			switch(ntfy->payload.v2n.isan_type) {
+			case v2N_NAT_DETECTION_SOURCE_IP:
+			case v2N_NAT_DETECTION_DESTINATION_IP:
+			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			case v2N_COOKIE:
+				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
+				break;
+			case v2N_USE_TRANSPORT_MODE:
+				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
+				cst->st_seen_use_transport = TRUE;
+				break;
+			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
+				cst->st_seen_no_tfc = TRUE;
+				break;
+			default:
+				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
+			}
+		}
+	}
+
 	{
-		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role, c, c->policy);
+		bool send_ntfy = send_use_transport || c->send_no_esp_tfc;
+
+		/* verify if transport / tunnel mode is matches */
+		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
+			/* we should have received transport mode request - and send one */
+			if (!cst->st_seen_use_transport) {
+				libreswan_log("policy dictates Transport Mode, but peer requested Tunnel Mode");
+				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			}
+		} else {
+			if (cst->st_seen_use_transport) {
+				/* RFC allows us to ignore their (wrong) request for transport mode */
+				libreswan_log("policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
+			}
+		}
+
+		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role, c,
+			send_ntfy ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
 
 		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */
 	}
 
 	if (role == ORIGINAL_RESPONDER) {
-		struct payload_digest *p;
 
-		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-			if (p->payload.v2n.isan_type ==
-			    v2N_USE_TRANSPORT_MODE) {
-				if (cst->st_connection->policy &
-				    POLICY_TUNNEL) {
-					DBG_log("Although local policy is tunnel, received USE_TRANSPORT_MODE");
-					DBG_log("So switching to transport mode, and responding with USE_TRANSPORT_MODE notify");
-				} else {
-					DBG_log("Local policy is transport, received USE_TRANSPORT_MODE");
-					DBG_log("Now responding with USE_TRANSPORT_MODE notify");
-				}
-
-				/* In v2, for parent, protoid must be 0 and SPI must be empty */
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-					      ISAKMP_PAYLOAD_NONCRITICAL,
-					      PROTO_v2_RESERVED,
-					      &empty_chunk,
-					      v2N_USE_TRANSPORT_MODE,
-					      &empty_chunk,
-					      outpbs))
-					return STF_INTERNAL_ERROR;
-
+		if (cst->st_seen_use_transport) {
+			if (c->policy & POLICY_TUNNEL) {
+				libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");
+			} else {
+				DBG(DBG_CONTROL, DBG_log("Local policy is transport mode and received USE_TRANSPORT_MODE"));
 				if (cst->st_esp.present) {
 					cst->st_esp.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
@@ -1118,8 +1134,34 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					cst->st_ah.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
 				}
-				break;
+				/* In v2, for parent, protoid must be 0 and SPI must be empty */
+				if (!ship_v2N(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+				      ISAKMP_PAYLOAD_NONCRITICAL,
+				      PROTO_v2_RESERVED,
+				      &empty_chunk,
+				      v2N_USE_TRANSPORT_MODE,
+				      &empty_chunk,
+				      outpbs))
+				return STF_INTERNAL_ERROR;
 			}
+		} else {
+			/* the peer wants tunnel mode */
+			if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
+				libreswan_log("Local policy is transport mode, but peer did not request that");
+				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			}
+		}
+
+		if (c->send_no_esp_tfc) {
+			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
+				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+				      ISAKMP_PAYLOAD_NONCRITICAL,
+				      PROTO_v2_RESERVED,
+				      &empty_chunk,
+				      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+				      &empty_chunk,
+				      outpbs))
+				return STF_INTERNAL_ERROR;
 		}
 	}
 

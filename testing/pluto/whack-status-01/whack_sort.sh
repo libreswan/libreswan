@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ipsec setup start
+ipsec start
 
 /testing/pluto/whack-status-01/whack_load.sh
 

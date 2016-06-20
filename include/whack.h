@@ -118,6 +118,7 @@ struct whack_message {
 	bool whack_global_status;
 	bool whack_traffic_status;
 	bool whack_shunt_status;
+	bool whack_fips_status;
 
 	bool whack_shutdown;
 
@@ -198,6 +199,8 @@ struct whack_message {
 	int connmtu;
 
 	uint32_t sa_priority;
+	uint32_t sa_tfcpad;
+	bool send_no_esp_tfc;
 	reqid_t sa_reqid;
 	int nflog_group;
 
@@ -298,7 +301,8 @@ struct whack_message {
 	char *conn_mark_out;
 
 	char *vti_iface;
-	bool vti_routing;
+	bool vti_routing; /* perform routing into vti device or not */
+	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
 	/* what metric to put on ipsec routes */
 	int metric;

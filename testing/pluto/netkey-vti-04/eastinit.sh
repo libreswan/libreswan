@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add road-eastnet
 ip tunnel add ipsec0 mode vti local 192.1.2.23 key 20

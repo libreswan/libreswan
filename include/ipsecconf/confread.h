@@ -112,6 +112,7 @@ struct starter_conn {
 	char *conn_mark_out;
 	char *vti_iface;
 	bool vti_routing;
+	bool vti_shared;
 };
 
 struct starter_config {
@@ -127,9 +128,6 @@ struct starter_config {
 
 	/* conn %default */
 	struct starter_conn conn_default;
-
-	struct starter_conn conn_oedefault;
-	bool got_oedefault;
 
 	char *ctlbase;  /* location of pluto control socket */
 

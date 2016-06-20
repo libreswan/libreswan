@@ -12,7 +12,7 @@ road #
 road #
  cp /source/programs/configs/v6neighbor-hole.conf /etc/ipsec.d/
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  # ensure for tests acquires expire before our failureshunt=2m
@@ -67,13 +67,11 @@ XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 0 

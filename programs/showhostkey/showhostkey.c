@@ -1,5 +1,6 @@
 /*
- * show the host keys in various formats
+ * show the host keys in various formats, for libreswan
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -51,18 +52,30 @@
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "secrets.h"
+#include "lswnss.h"
 
 #include <nss.h>
+#include <keyhi.h>
 #include <prerror.h>
 #include <prinit.h>
 
 char usage[] =
-	"Usage: ipsec showhostkey --ipseckey | --left | --right\n"
-	"                         [--precedence <precedence> ] [--gateway <gateway>]\n"
-	"                         [--dump ] [--list ]\n"
-	"                         [--dhclient ] [--file secretfile ]\n"
-	"                         [--keynum count ] [--id identity ]\n"
-	"                         [--rsaid keyid ] [--verbose] [--version]\n";
+  "Usage: ipsec showhostkey [ --verbose ]\n"
+  "                    { --version | --dump | --list | --left | --right |\n"
+  "                      --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
+  "                    [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
+  "                    [ --configdir <configdir> ] [ --password <password> ]\n";
+
+/*
+ * For new options, avoid magic numbers.
+ *
+ * XXX: Can fix old options later.
+ */
+enum opt {
+	OPT_CONFIGDIR,
+	OPT_PASSWORD,
+	OPT_CKAID,
+};
 
 struct option opts[] = {
 	{ "help",      no_argument,    NULL,   '?', },
@@ -73,64 +86,86 @@ struct option opts[] = {
 	{ "ipseckey",  no_argument,    NULL,   'K', },
 	{ "gateway",   required_argument, NULL, 'g', },
 	{ "precedence", required_argument, NULL, 'p', },
-	{ "dhclient",  no_argument,    NULL,   'd', },
-	{ "file",      required_argument, NULL, 'f', },
-	{ "keynum",    required_argument, NULL, 'n', },
-	{ "id",        required_argument, NULL, 'i', },
+	{ "ckaid",     required_argument, NULL, OPT_CKAID, },
 	{ "rsaid",     required_argument, NULL, 'I', },
 	{ "version",   no_argument,     NULL,  'V', },
 	{ "verbose",   no_argument,     NULL,  'v', },
+	{ "configdir", required_argument,     NULL,  OPT_CONFIGDIR, },
+	{ "password",  required_argument,     NULL,  OPT_PASSWORD, },
 	{ 0,           0,      NULL,   0, }
 };
 
 char *progname = "ipsec showhostkey";   /* for messages */
 
-static void print_key(struct secret *secret,
-		      struct private_key_stuff *pks,
-		      bool disclose)
+static void print(struct private_key_stuff *pks,
+		  int count, struct id *id, bool disclose)
 {
-	int lineno = lsw_get_secretlineno(secret);
-	struct id_list *l = lsw_get_idlist(secret);
-	char idb[IDTOA_BUF];
-	int count = 1;
+	char idb[IDTOA_BUF] = "n/a";
+	if (id) {
+		idtoa(id, idb, IDTOA_BUF);
+	}
 
-	char pskbuf[128];
-
+	char pskbuf[128] = "";
 	if (pks->kind == PPK_PSK || pks->kind == PPK_XAUTH) {
 		datatot(pks->u.preshared_secret.ptr,
 			pks->u.preshared_secret.len,
 			'x', pskbuf, sizeof(pskbuf));
 	}
 
-	while (l != NULL) {
-		idtoa(&l->id, idb, IDTOA_BUF);
+	if (count) {
+		/* ipsec.secrets format */
+		printf("%d(%d): ", pks->line, count);
+	} else {
+		/* NSS format */
+		printf("<%2d> ", pks->line);
+	}
 
-		switch (pks->kind) {
-		case PPK_PSK:
-			printf("%d(%d): PSK keyid: %s\n", lineno, count, idb);
-			if (disclose)
-				printf("    psk: \"%s\"\n", pskbuf);
-			break;
+	switch (pks->kind) {
+	case PPK_PSK:
+		printf("PSK keyid: %s\n", idb);
+		if (disclose)
+			printf("    psk: \"%s\"\n", pskbuf);
+		break;
 
-		case PPK_RSA:
-			printf("%d(%d): RSA keyid: %s with id: %s\n", lineno,
-			       count, pks->u.RSA_private_key.pub.keyid, idb);
-			break;
-
-		case PPK_XAUTH:
-			printf("%d(%d): XAUTH keyid: %s\n", lineno, count,
-			       idb);
-			if (disclose)
-				printf("    xauth: \"%s\"\n", pskbuf);
-			break;
-		case PPK_NULL:
-			/* can't happen but the compiler does not know that */
-			printf("%d(%d): NULL authentication -- cannot happen: %s\n", lineno, count, idb);
-			abort();
+	case PPK_RSA: {
+		printf("RSA");
+		char *keyid = pks->u.RSA_private_key.pub.keyid;
+		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
+		if (id) {
+			printf(" id: %s", idb);
 		}
+		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
+		printf(" ckaid: %s\n", ckaid);
+		pfree(ckaid);
+		break;
+	}
 
-		l = l->next;
-		count++;
+	case PPK_XAUTH:
+		printf("XAUTH keyid: %s\n", idb);
+		if (disclose)
+			printf("    xauth: \"%s\"\n", pskbuf);
+		break;
+	case PPK_NULL:
+		/* can't happen but the compiler does not know that */
+		printf("NULL authentication -- cannot happen: %s\n", idb);
+		abort();
+	}
+}
+
+static void print_key(struct secret *secret,
+		      struct private_key_stuff *pks,
+		      bool disclose)
+{
+	if (secret) {
+		int count = 1;
+		struct id_list *l = lsw_get_idlist(secret);
+		while (l != NULL) {
+			print(pks, count, &l->id, disclose);
+			l = l->next;
+			count++;
+		}
+	} else {
+		print(pks, 0, NULL, disclose);
 	}
 }
 
@@ -150,117 +185,71 @@ static int dump_key(struct secret *secret,
 	return 1;
 }
 
-static int pickbyid(struct secret *secret UNUSED,
-		    struct private_key_stuff *pks,
-		    void *uservoid)
+static int pick_by_rsaid(struct secret *secret UNUSED,
+			 struct private_key_stuff *pks,
+			 void *uservoid)
 {
-	char *rsakeyid = (char *)uservoid;
+	char *rsaid = (char *)uservoid;
 
-	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
+	if (pks->kind == PPK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
+		/* stop */
 		return 0;
-
-	return 1;
-}
-
-static struct secret *get_key_byid(struct secret *host_secrets, char *rsakeyid)
-{
-	return lsw_foreach_secret(host_secrets, pickbyid, rsakeyid);
-}
-
-static void list_keys(struct secret *host_secrets)
-{
-	(void)lsw_foreach_secret(host_secrets, list_key, NULL);
-}
-
-static void dump_keys(struct secret *host_secrets)
-{
-	(void)lsw_foreach_secret(host_secrets, dump_key, NULL);
-}
-
-static struct secret *pick_key(struct secret *host_secrets,
-			char *idname)
-{
-	struct id id;
-	struct secret *s;
-	err_t e = atoid(idname, &id, FALSE, FALSE);
-
-	if (e != NULL) {
-		printf("%s: key '%s' is invalid\n", progname, idname);
-		exit(4);
-	}
-
-	s = lsw_find_secret_by_id(host_secrets, PPK_RSA,
-				  &id, NULL, TRUE /* asymmetric */);
-
-	if (s == NULL) {
-		char abuf[IDTOA_BUF];
-		idtoa(&id, abuf, IDTOA_BUF);
-		printf("%s: cannot find key: %s (%s)\n", progname, idname,
-		       abuf);
-		exit(5);
-	}
-
-	return s;
-}
-
-static unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
-				 unsigned int *keybuflen)
-{
-	unsigned char *buf;
-	unsigned char *p;
-	unsigned int elen;
-
-	/* XXX: this has always leaked memory */
-	chunk_t e = chunk_clone(pub->e, "e");
-	chunk_t n = chunk_clone(pub->n, "n");
-	elen = e.len;
-
-	buf = alloc_bytes(e.len + n.len + 3, "buffer for rfc3110");
-	p = buf;
-
-	if (elen <= 255) {
-		*p++ = elen;
-	} else if ((elen & ~0xffff) == 0) {
-		*p++ = 0;
-		*p++ = (elen >> 8) & 0xff;
-		*p++ = elen & 0xff;
 	} else {
-		pfree(buf);
-		return 0; /* unrepresentable exponent length */
+		/* try again */
+		return 1;
 	}
-
-	memcpy(p, e.ptr, e.len);
-	p += e.len;
-	memcpy(p, n.ptr, n.len);
-	p += n.len;
-
-	*keybuflen = (p - buf);
-
-	return buf;
 }
 
-static void show_dnskey(struct secret *s,
-			int precedence,
-			char *gateway)
+static int pick_by_ckaid(struct secret *secret UNUSED,
+			 struct private_key_stuff *pks,
+			 void *uservoid)
+{
+	char *start = (char *)uservoid;
+	if (pks->kind == PPK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+		/* stop */
+		return 0;
+	} else {
+		/* try again */
+		return 1;
+	}
+}
+
+static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
+{
+	if (pub->e.len == 0 || pub->n.len == 0) {
+		fprintf(stderr, "%s: public key not found\n",
+			progname);
+		return NULL;
+	}
+	char* base64;
+	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
+	if (err) {
+		fprintf(stderr, "%s: unexpected error encoing RSA public key '%s'\n",
+			progname, err);
+		return NULL;
+	}
+	return base64;
+}
+
+static int show_dnskey(struct private_key_stuff *pks,
+		       int precedence,
+		       char *gateway)
 {
 	char qname[256];
-	char base64[8192];
 	int gateway_type = 0;
-	const struct private_key_stuff *pks = lsw_get_pks(s);
-	unsigned char *keyblob;
-	unsigned int keybloblen = 0;
 
 	gethostname(qname, sizeof(qname));
 
 	if (pks->kind != PPK_RSA) {
-		printf("%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
+		fprintf(stderr, "%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
 			progname, enum_name(&ppk_names, pks->kind));
-		exit(5);
+		return 5;
 	}
 
-	keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
-
-	datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
+	if (base64 == NULL) {
+		return 5;
+	}
 
 	if (gateway != NULL) {
 		ip_address test;
@@ -271,25 +260,22 @@ static void show_dnskey(struct secret *s,
 			    &test) == NULL) {
 			gateway_type = 2;
 		} else {
-			printf("%s: unknown address family for gateway %s",
-			       progname, gateway);
-			exit(5);
+			fprintf(stderr, "%s: unknown address family for gateway %s",
+				progname, gateway);
+			return 5;
 		}
 	}
 
 	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
 	       qname, precedence, gateway_type,
 	       (gateway == NULL) ? "." : gateway, base64 + sizeof("0s") - 1);
+	pfree(base64);
+	return 0;
 }
 
-static void show_confkey(struct secret *s,
-			 char *side)
+static int show_confkey(struct private_key_stuff *pks,
+			char *side)
 {
-	char base64[8192];
-	const struct private_key_stuff *pks = lsw_get_pks(s);
-	unsigned char *keyblob;
-	unsigned int keybloblen = 0;
-
 	if (pks->kind != PPK_RSA) {
 		char *enumstr = "gcc is crazy";
 		switch (pks->kind) {
@@ -302,44 +288,50 @@ static void show_confkey(struct secret *s,
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}
-		printf("%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n", progname,
-			enumstr);
-		exit(5);
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n",
+			progname, enumstr);
+		return 5;
 	}
 
-	keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
-
-	datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
+	if (base64 == NULL) {
+		return 5;
+	}
 
 	printf("\t# rsakey %s\n",
 	       pks->u.RSA_private_key.pub.keyid);
 	printf("\t%srsasigkey=%s\n", side,
 	       base64);
+	pfree(base64);
+	return 0;
+}
+
+static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid)
+{
+	lsw_nss_buf_t err = {0};
+	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, err);
+	if (err[0]) {
+		fprintf(stderr, "%s: %s\n", progname, err);
+		return NULL;
+	}
+	return pks;
 }
 
 int main(int argc, char *argv[])
 {
-	char secrets_file[PATH_MAX];
 	int opt;
-	int errflg = 0;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;
 	bool dump_flg = FALSE;
 	bool list_flg = FALSE;
 	bool ipseckey_flg = FALSE;
-	bool dhclient_flg = FALSE;
 	char *gateway = NULL;
 	int precedence = 10;
-	int verbose = 0;
-	const struct lsw_conf_options *oco = lsw_init_options();
-	char *rsakeyid, *keyid;
-	struct secret *host_secrets = NULL;
-	struct secret *s;
+	char *ckaid = NULL;
+	char *rsaid = NULL;
 
-	rsakeyid = NULL;
-	keyid = NULL;
-
-	snprintf(secrets_file, PATH_MAX, "%s/ipsec.secrets", oco->confdir);
+	log_to_stderr = FALSE;
+	tool_init_log();
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {
@@ -370,7 +362,7 @@ int main(int argc, char *argv[])
 
 				if (ugh != NULL) {
 					fprintf(stderr,
-						"precedence malformed: %s\n", ugh);
+						"%s: precedence malformed: %s\n", progname, ugh);
 					exit(5);
 				}
 				precedence = u;
@@ -393,16 +385,27 @@ int main(int argc, char *argv[])
 		case 'd':
 			break;
 
-		case 'f': /* --file arg */
-			jam_str(secrets_file, sizeof(secrets_file), optarg);
-			break;
-
-		case 'i':
-			keyid = clone_str(optarg, "keyname");
+		case OPT_CKAID:
+			ckaid = clone_str(optarg, "ckaid");
 			break;
 
 		case 'I':
-			rsakeyid = clone_str(optarg, "rsakeyid");
+			rsaid = clone_str(optarg, "rsaid");
+			break;
+
+		case OPT_CONFIGDIR:
+#if 0
+			/*
+			 * Will mean adding extra --nssdb option.
+			 */
+			lsw_conf_configddir(optarg);
+#else
+			lsw_init_ipsecdir(optarg);
+#endif
+			break;
+
+		case OPT_PASSWORD:
+			lsw_conf_nsspassword(optarg);
 			break;
 
 		case 'n':
@@ -410,7 +413,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'v':
-			verbose++;
+			log_to_stderr = TRUE;
 			break;
 
 		case 'V':
@@ -422,92 +425,110 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (errflg) {
-usage:
-		fputs(usage, stderr);
+	if (!(left_flg + right_flg + ipseckey_flg + dump_flg + list_flg)) {
+		fprintf(stderr, "%s: You must specify an operation\n", progname);
+		goto usage;
+	}
+
+	if ((left_flg + right_flg + ipseckey_flg + dump_flg + list_flg) > 1) {
+		fprintf(stderr, "%s: You must specify only one operation\n",
+			progname);
+		goto usage;
+	}
+
+	if ((left_flg + right_flg + ipseckey_flg) && !ckaid && !rsaid) {
+		fprintf(stderr, "%s: You must select a key using --ckaid or --rsaid\n",
+			progname);
+		goto usage;
+	}
+
+	if ((dump_flg + list_flg) && (ckaid || rsaid)) {
+		fprintf(stderr, "%s: You must not select a key\n",
+			progname);
+		goto usage;
+	}
+
+	/*
+	 * Don't fetch the config options until after they have been
+	 * processed, and really are "constant".
+	 */
+	const struct lsw_conf_options *oco = lsw_init_options();
+	libreswan_log("using config directory \"%s\"\n", oco->confddir);
+
+	/*
+	 * Set up for NSS - contains key pairs.
+	 */
+	int status = 0;
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(oco->nssdb, LSW_NSS_READONLY,
+			   lsw_nss_get_password, err)) {
+		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}
-
-	if (!left_flg && !right_flg && !dump_flg && !list_flg &&
-	    !ipseckey_flg && !dhclient_flg) {
-		fprintf(stderr, "You must specify some operation\n");
-		goto usage;
-	}
-
-	if ((left_flg + right_flg + dump_flg + list_flg +
-	     ipseckey_flg + dhclient_flg) > 1) {
-		fprintf(stderr, "You must specify only one operation\n");
-		goto usage;
-	}
-
-	if (verbose)
-		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
-			oco->confddir);
-	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-
-	{
-		SECStatus rv = NSS_InitReadWrite(oco->confddir);
-
-		if (rv != SECSuccess) {
-			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-				progname, PR_GetError());
-			exit(1);
-		}
-	}
-
-	PK11_SetPasswordFunc(getNSSPassword);
-
-	lsw_load_preshared_secrets(&host_secrets, secrets_file);
-
-	NSS_Shutdown();
-	PR_Cleanup();
 
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		dump_keys(host_secrets);
-		exit(0);
+		foreach_secret(dump_key, NULL);
+		goto out;
 	}
 
 	if (list_flg) {
-		list_keys(host_secrets);
-		exit(0);
+		foreach_secret(list_key, NULL);
+		goto out;
 	}
 
-	if (rsakeyid != NULL) {
-		if (verbose)
-			printf("; picking by rsakeyid=%s\n", rsakeyid);
-		s = get_key_byid(host_secrets, rsakeyid);
-	} else if (keyid != NULL) {
-		if (verbose)
-			printf("; picking by keyid=%s\n", keyid);
-		s = pick_key(host_secrets, keyid);
+	struct private_key_stuff *pks;
+	if (rsaid != NULL) {
+		if (log_to_stderr)
+			printf("%s picking by rsaid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", rsaid);
+		pks = foreach_secret(pick_by_rsaid, rsaid);
+	} else if (ckaid != NULL) {
+		if (log_to_stderr) {
+			printf("%s picking by ckaid=%s\n",
+			       ipseckey_flg ? ";" : "\t#", ckaid);
+		}
+		pks = foreach_secret(pick_by_ckaid, ckaid);
 	} else {
-		/* Paul: This assumption is WRONG. Mostly I have PSK's above my
-		 * multiline default : RSA entry, and then this assumption breaks
-		 * The proper test would be for ": RSA" vs "@something :RSA"
-		 */
-		/* default key is the *LAST* key, because it is first in the file.*/
-		s = lsw_get_defaultsecret(host_secrets);
+		fprintf(stderr, "%s: nothing to do\n", progname);
+		status = 1;
+		goto out;
 	}
 
-	if (s == NULL) {
-		printf("No keys found\n");
-		exit(20);
+	if (pks == NULL) {
+		fprintf(stderr, "%s: No keys found\n", progname);
+		status = 20;
+		goto out;
 	}
 
 	if (left_flg) {
-		show_confkey(s, "left");
-		exit(0);
+		status = show_confkey(pks, "left");
+		goto out;
 	}
 
 	if (right_flg) {
-		show_confkey(s, "right");
-		exit(0);
+		status = show_confkey(pks, "right");
+		goto out;
 	}
 
-	if (ipseckey_flg)
-		show_dnskey(s, precedence, gateway);
+	if (ipseckey_flg) {
+		status = show_dnskey(pks, precedence, gateway);
+		goto out;
+	}
 
-	exit(0);
+out:
+	/*
+	 * XXX: pks is being leaked.
+	 *
+	 * Problem is that for a secret the PKS can't be freed but for
+	 * NSS it can.  Not really a problem since the entire secret
+	 * table gets leaked anyway.
+	 */
+	lsw_nss_shutdown();
+	exit(status);
+
+usage:
+	fputs(usage, stderr);
+	exit(1);
 }

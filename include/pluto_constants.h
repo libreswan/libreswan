@@ -76,11 +76,14 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
+/* corresponding name table is sd_action_names */
 enum sd_actions {
-	PLUTO_SD_EXIT = 0,
-	PLUTO_SD_START = 1,
-	PLUTO_SD_ERROR = 2,
+	PLUTO_SD_EXIT = 1,
+	PLUTO_SD_START = 2,
 	PLUTO_SD_WATCHDOG = 3,
+	PLUTO_SD_RELOADING = 4,
+	PLUTO_SD_READY = 5,
+	PLUTO_SD_STOPPING = 6,
 };
 
 /*
@@ -217,7 +220,7 @@ typedef enum {
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
-#define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 32
 
@@ -844,3 +847,4 @@ enum pluto_exit_code {
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 
+extern void init_pluto_constants(void);

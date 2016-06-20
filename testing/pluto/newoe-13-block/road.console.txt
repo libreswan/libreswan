@@ -6,7 +6,7 @@ road #
 road #
  echo "192.1.2.23/32"  >> /etc/ipsec.d/policies/block
 road #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started

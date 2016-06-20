@@ -846,7 +846,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 
 	/* if no CA is defined, use issuer as default */
 	if (dst->ca.ptr == NULL) {
-		dst->ca = secitem_to_chunk(cert->derIssuer);
+		dst->ca = same_secitem_as_chunk(cert->derIssuer);
 	}
 }
 
@@ -897,13 +897,20 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 	case WHACK_PUBKEY_CKAID: {
 		/*
-		 * XXX: The pubkey might already be loaded and in
-		 * either &pluto_secrets or %pluto_pubkeys.  For now
-		 * ignore this (ipsec.secrets RSA pubkeys get put in
-		 * pluto_secrets, sigh).
+		 * Perhaps it is already loaded?  Or perhaps it was
+		 * specified using an earlier rsasigkey=.
 		 */
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
-		load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		struct pubkey *key = get_pubkey_with_matching_ckaid(src->pubkey);
+		if (key != NULL) {
+			/*
+			 * Convert the CKAID into the corresponding ID
+			 * so that a search will re-find it.
+			 */
+			dst->id = key->id;
+		} else {
+			CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
+			load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		}
 		break;
 	}
 	default:
@@ -965,7 +972,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
+			er = ttoaddr(dst->host_addr_name, 0, dst->host_addr.u.v4.sin_family,
 				&dst->host_addr);
 
 			/* The above call wipes out the port, put it again */
@@ -1502,6 +1509,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->vti_iface = wm->vti_iface;
 		c->vti_routing = wm->vti_routing;
+		c->vti_shared = wm->vti_shared;
 
 		} /* !NEVER_NEGOTIATE() */
 
@@ -1515,6 +1523,8 @@ void add_connection(const struct whack_message *wm)
 #endif
 		c->nflog_group = wm->nflog_group;
 		c->sa_priority = wm->sa_priority;
+		c->sa_tfcpad = wm->sa_tfcpad;
+		c->send_no_esp_tfc = wm->send_no_esp_tfc;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
@@ -2616,7 +2626,7 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		 */
 		{
 			struct connection *d = find_host_connection(me,
-					pluto_port, (ip_address*)NULL, his_port,
+					pluto_port /* not my_port? */, (ip_address*)NULL, his_port,
 					policy, LEMPTY);
 
 			while (d != NULL) {
@@ -3817,6 +3827,7 @@ void show_one_connection(const struct connection *c)
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];
+	char satfcstr[13];
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
@@ -3872,13 +3883,14 @@ void show_one_connection(const struct connection *c)
 		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; fake_strongswan:%s; send_vendorid:%s;",
+		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
 		  (c->sha2_truncbug) ? "yes" : "no",
 		  (c->initial_contact) ? "yes" : "no",
 		  (c->cisco_unity) ? "yes" : "no",
 		  (c->fake_strongswan) ? "yes" : "no",
-		  (c->send_vendorid) ? "yes" : "no");
+		  (c->send_vendorid) ? "yes" : "no",
+		  (c->send_no_esp_tfc) ? "yes" : "no");
 
 	if (c->policy_next != NULL) {
 		whack_log(RC_COMMENT,
@@ -3904,14 +3916,19 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(sapriostr, "auto");
 
+	if (c->sa_tfcpad != 0)
+		snprintf(satfcstr, sizeof(satfcstr), "%u", c->sa_tfcpad);
+	else
+		strcpy(satfcstr, "none");
+
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s;",
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		  c->name, instance,
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr, sapriostr
+		  mtustr, sapriostr, satfcstr
 	);
 
 	if (c->nflog_group != 0)
@@ -3927,10 +3944,11 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface: %s; vti-routing: %s",
+		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s;",
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
-		  c->vti_routing ? "yes" : "no"
+		  c->vti_routing ? "yes" : "no",
+		  c->vti_shared ? "yes" : "no"
 	);
 
 	/* slightly complicated stuff to avoid extra crap */

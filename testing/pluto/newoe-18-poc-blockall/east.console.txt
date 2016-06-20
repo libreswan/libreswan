@@ -4,7 +4,7 @@ east #
 east #
  echo "0.0.0.0/0"  >> /etc/ipsec.d/policies/block
 east #
- ipsec setup start
+ ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

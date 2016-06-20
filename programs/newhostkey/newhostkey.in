@@ -5,6 +5,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2014 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -25,7 +26,7 @@ bits=
 verbose=
 host=
 seeddev="--seeddev /dev/random"
-output="@FINALCONFDIR@/ipsec.secrets"
+output=""
 configdir="@FINALNSSDIR@"
 password=
 for dummy; do
@@ -88,13 +89,13 @@ for dummy; do
     shift
 done
 
-if [ -d "${output}" ]; then
+if [ -n "${output}" -a -d "${output}" ]; then
     echo "ERROR: output file should be a secrets file, not a directory"
     exit 255
 fi
 
-if [ -s "${output}" ]; then
-    echo "${0}: WARNING: file \"${output}\" exists, appending to it" >&2
+if [ -n "${output}" -a -s "${output}" ]; then
+    printf "%s: WARNING: file \"%s\" exists, appending to it\n" "${0}" "${output}" >&2
 fi
 
 if [ ! -d ${configdir} ]; then
@@ -102,7 +103,7 @@ if [ ! -d ${configdir} ]; then
     exit 255
 fi
 
-certutil -L -d sql:$configdir >/dev/null 2>/dev/null
+certutil -L -d "sql:$configdir" >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
     echo "NSS database in $configdir not initialized."
@@ -110,23 +111,26 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir sql:${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir ${configdir} ${password} ${host} ${bits})
 RETVAL=$?
-if [ ${RETVAL} -eq 0 ]; then
+if [ ${RETVAL} -ne 0 ]; then
+    exit ${RETVAL}
+fi
+
+out()
+(
+    echo ': RSA	{'
+    printf "%s\n" "${key}"
+    echo '	}'
+    echo '# do not change the indenting of that "}"'
+)
+
+# Write out the #ckaid= and #pubkey= lines
+# echo "${key}" | sed -n 's/.*#\([a-z]*)=/\1/p'
+
+if [ -n "${output}" ]; then
     umask 077
     TEMPFILE=$(/bin/mktemp ${output}.XXXXXXX)
-    (
-	echo ': RSA	{'
-	echo "${key}"
-	echo '	}'
-	echo '# do not change the indenting of that "}"'
-    ) > ${TEMPFILE}
-    if [ -s "${output}" ]; then
-	cat ${TEMPFILE} >> ${output}
-	rm ${TEMPFILE}
-    else
-	mv ${TEMPFILE} ${output}
-    fi
-else
-    exit ${RETVAL}
+    out > ${TEMPFILE}
+    mv ${TEMPFILE} ${output}
 fi

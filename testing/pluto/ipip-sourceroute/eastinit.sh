@@ -3,7 +3,7 @@
 /sbin/ip link set ip.tun up
 
 /testing/guestbin/swan-prep
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add ipip-sourceroute
 ipsec auto --status

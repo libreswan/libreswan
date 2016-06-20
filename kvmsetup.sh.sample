@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # This is the configuration file that helps setup for
-# a kernel pool for KVM compilation w/FreeSWAN.
+# a kernel pool for KVM compilation with libreswan.
 #
-# Copy this file to the top of your FreeSWAN source directory as
+# Copy this file to the top of your libreswan source directory as
 # kvmsetup.sh, edit that copy, and populate the paths.
 
 

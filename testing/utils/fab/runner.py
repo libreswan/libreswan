@@ -1,12 +1,12 @@
 # Test driver, for libreswan
 #
 # Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -16,34 +16,51 @@ import os
 import sys
 import pexpect
 import time
+from datetime import datetime
 from concurrent import futures
+
 from fab import virsh
 from fab import testsuite
 from fab import remote
 from fab import logutil
 from fab import utils
 from fab import post
+from fab import skip
+from fab import ignore
 
 
 def add_arguments(parser):
-    group = parser.add_argument_group("Run arguments", "Arguments controlling how tests are run")
+    group = parser.add_argument_group("Test Runner arguments",
+                                      "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
                        help="default: %(default)s")
+    group.add_argument("--prefix", metavar="DOMAIN-PREFIX", action="append",
+                       help="prefix to prepend to each domain")
 
+    group.add_argument("--attempts", type=int, default=1,
+                       help="number of times to attempt a test before giving up; default %(default)s")
+
+    # Default to BACKUP under the current directory.  Name is
+    # arbitrary, chosen for its hopefully unique first letter
+    # (avoiding Makefile, OBJ, README, ... :-).
+    parser.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
+                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
 def log_arguments(logger, args):
-    logger.info("Runner arguments:")
+    logger.info("Test Runner arguments:")
     logger.info("  workers: %s", args.workers)
-
+    logger.info("  prefix: %s", args.prefix)
+    logger.info("  attempts: %s", args.attempts)
+    logger.info("  backup-directory: %s", args.backup_directory)
 
 TEST_TIMEOUT = 120
 
 class TestDomain:
 
-    def __init__(self, domain_name, test):
+    def __init__(self, domain_name, host_name, test):
         self.test = test
         # Get the domain
-        self.domain = virsh.Domain(domain_name)
+        self.domain = virsh.Domain(domain_name=domain_name, host_name=host_name)
         self.logger = logutil.getLogger(__name__, test.name, domain_name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
@@ -123,14 +140,15 @@ class TestDomain:
 
 class TestDomains:
 
-    def __init__(self, logger, test, domain_names):
+    def __init__(self, logger, test, domain_prefix, host_names):
         self.logger = logger
         # Create a table of test domain objects; they are used during
         # cleanup; and they are used as the values of the JOBS table.
         self.test_domains = {}
-        for domain_name in domain_names:
-            test_domain = TestDomain(domain_name, test)
-            self.test_domains[domain_name] = test_domain
+        for host_name in host_names:
+            domain_name = domain_prefix + host_name
+            test_domain = TestDomain(domain_name, host_name, test)
+            self.test_domains[host_name] = test_domain
 
     def __enter__(self):
         self.logger.debug("all test domains: %s", self.test_domains)
@@ -143,131 +161,299 @@ class TestDomains:
         for test_domain in self.test_domains.values():
             test_domain.close()
 
+
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
     jobs[job] = domain
     logger.debug("scheduled %s on %s", job, domain)
 
 
-def wait_for_jobs(jobs, logger):
-    logger.debug("waiting for jobs %s", jobs)
-    for job in futures.as_completed(jobs):
-        logger.debug("job %s on %s completed", job, jobs[job])
-        # propogate any exception
-        job.result()
-
-
-def execute_on_domains(executor, jobs, logger, domains, work):
-    for domain in domains:
-        submit_job_for_domain(executor, jobs, logger, domain, work)
-    wait_for_jobs(jobs, logger)
-
-
-def run_test(test, max_workers=1):
+def run_test(test, args, domain_prefix, boot_executor):
     # Lots of WITH/TRY blocks so things always clean up.
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
 
-    with TestDomains(logger, test, testsuite.DOMAIN_NAMES) as all_test_domains:
-        try:
+    with TestDomains(logger, test, domain_prefix, testsuite.HOST_NAMES) as all_test_domains:
 
-            # Python doesn't have an easy way to obtain an executor's
-            # current jobs (futures) so track them using the JOBS map.
-            # If there's a crash, any remaining members of JOBS are
-            # canceled or killed in the finally block below.  The
-            # executor is cleaned up explicitly in the finally clause.
-            executor = futures.ThreadPoolExecutor(max_workers=max_workers)
-            jobs = {}
-            logger.info("starting test")
-            run_test_on_executor(executor, jobs, logger, test, all_test_domains)
-            logger.info("finishing test")
+        logger.info("starting test")
 
-        finally:
+        test_domains = set()
+        for host_name in test.host_names:
+            test_domains.add(all_test_domains[host_name])
+        logger.debug("test domains: %s", strset(test_domains))
 
-            # Control-c, timeouts, along with any other crash, and
-            # even a normal exit, all end up here!
+        unused_domains = set()
+        for test_domain in all_test_domains.values():
+            if test_domain not in test_domains:
+                unused_domains.add(test_domain)
+        logger.debug("unused domains: %s", strset(unused_domains))
 
-            # Start with a list of jobs still in the queue; one or
-            # more of them may be running.
-            done, not_done = futures.wait(jobs, timeout=0)
-            logger.debug("jobs done %s not done %s", done, not_done)
+        boot_test_domains(logger, test_domains, unused_domains, boot_executor)
 
-            # First: cancel all outstanding jobs (otherwise killing
-            # one job would just result in the next job starting).
-            # Calling cancel() on running jobs has no effect so need
-            # to stop them some other way; ulgh!
-            not_canceled = set()
-            for job in not_done:
-                logger.info("trying to cancel job %s on %s", job, jobs[job])
-                if job.cancel():
-                    logger.info("job %s on %s canceled", job, jobs[job])
-                else:
-                    logger.info("job %s on %s did not cancel", job, jobs[job])
-                    not_canceled.add(job)
-            # Second: cause any un-canceled jobs (presumably they are
-            # running) to crash.  The crash() call, effectively, pulls
-            # the rug out from under the code interacting with the
-            # domain.
-            for job in not_canceled:
-                logger.info("trying to crash job %s on %s", job, jobs[job])
-                jobs[job].crash()
-            # finally shutdown the executor; it will reap all the
-            # crashed jobs.
-            executor.shutdown()
+        # re-direct the test-result log file
+        for test_domain in test_domains:
+            output = os.path.join(test.output_directory,
+                                  test_domain.domain.host_name + ".console.verbose.txt")
+            test_domain.console.output(open(output, "w"))
+
+        # Run the scripts directly
+        logger.info("running scripts: %s", " ".join(str(script) for script in test.scripts))
+        for script in test.scripts:
+            test_domain = all_test_domains[script.host_name]
+            test_domain.read_file_run(script.script)
+
+        logger.info("finishing test")
+
 
 def strset(s):
     return " ".join(str(e) for e in s)
 
-def run_test_on_executor(executor, jobs, logger, test, all_test_domains):
+def boot_test_domains(logger, test_domains, unused_domains, executor):
 
-    test_domains = set()
-    for domain_name in test.domain_names():
-        test_domains.add(all_test_domains[domain_name])
-    logger.debug("test domains: %s", strset(test_domains))
+    try:
 
-    idle_test_domains = set()
-    for test_domain in all_test_domains.values():
-        if test_domain not in test_domains:
-            idle_test_domains.add(test_domain)
-    logger.info("idle domains: %s", strset(idle_test_domains))
-    for test_domain in idle_test_domains:
-        submit_job_for_domain(executor, jobs, logger, test_domain,
-                              TestDomain.shutdown)
-    wait_for_jobs(jobs, logger)
-    
-    # There's a tradeoff here between speed and reliability.
-    #
-    # In theory, since booting is largely I/O bound, and the host has
-    # multiple cores, it should be possible to have several domains
-    # booting in parallel; hence separate boot and login jobs (domains
-    # continue to boot after the boot jobs finish).
-    #
-    # In reality, the boot process sometimes becomes gets bogged down,
-    # taking longer than expected, and resulting in timeouts.  For
-    # instance, if more than two domains are booting at once, or the
-    # host is busy with other jobs.
+        boot_start_time = time.time()
+        logger.info("starting domains")
 
-    boot_and_login = True
-    if boot_and_login:
-        logger.info("boot and login domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot_and_login)
-    else:
-        logger.info("boot domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.boot)
-        logger.info("login domains: %s", strset(test_domains))
-        execute_on_domains(executor, jobs, logger, test_domains, TestDomain.login)
+        # There's a tradeoff here between speed and reliability.
+        #
+        # In theory, the boot process is mostly I/O bound.
+        # Consequently, having lots of domains boot in parallel should
+        # be harmless.
+        #
+        # In reality, the [fedora] boot process is very much CPU bound
+        # (a rule of thumb is two cores per domain).  Consequently, it
+        # is best to serialize the boot/login process.  This is done
+        # using a futures pool shared across test runners.
 
-    # re-direct the test-result log file
-    for test_domain in test_domains:
-        output = os.path.join(test.output_directory,
-                              test_domain.domain.name + ".console.verbose.txt")
-        test_domain.console.output(open(output, "w"))
+        # Python doesn't have an easy way to obtain the jobs submitted
+        # for the current test so track them locally using the JOBS
+        # map.
+        #
+        # If there's a crash, any remaining members of JOBS are
+        # canceled or killed in the finally block below.
 
-    for scripts in test.scripts():
-        tasks = " ".join(("%s:%s") % (domain_name, script) for domain_name, script in scripts.items())
-        logger.info("running scripts: %s", tasks)
-        for domain_name, script in scripts.items():
-            submit_job_for_domain(executor, jobs, logger, all_test_domains[domain_name],
-                                  lambda test_domain: test_domain.read_file_run(script))
-        wait_for_jobs(jobs, logger)
+        jobs = {}
+
+        logger.info("shutting down unused domains: %s", strset(unused_domains))
+        for test_domain in unused_domains:
+            submit_job_for_domain(executor, jobs, logger, test_domain,
+                                  TestDomain.shutdown)
+
+        logger.info("booting and loging into test domains: %s", strset(test_domains))
+        for domain in test_domains:
+            submit_job_for_domain(executor, jobs, logger, domain,
+                                  TestDomain.boot_and_login)
+
+        # Wait for the jobs to finish.  If one crashes, propogate the
+        # exception - will force things into the finally block.
+        logger.debug("waiting for jobs %s", jobs)
+        for job in futures.as_completed(jobs):
+            logger.debug("job %s on %s completed", job, jobs[job])
+            # propogate any exception
+            job.result()
+
+        logger.info("domains started after %d seconds",
+                    time.time() - boot_start_time)
+
+    finally:
+
+        # Control-c, timeouts, along with any other crash, and even a
+        # normal exit, all end up here!
+
+        # Start with a list of jobs still in the queue; one or more of
+        # them may be running.
+        done, not_done = futures.wait(jobs, timeout=0)
+        logger.debug("jobs done %s not done %s", done, not_done)
+
+        # First: cancel all outstanding jobs (otherwise killing one
+        # job would just result in the next job starting).  Calling
+        # cancel() on running jobs has no effect so need to stop them
+        # some other way; ulgh!
+        not_canceled = set()
+        for job in not_done:
+            logger.info("trying to cancel job %s on %s", job, jobs[job])
+            if job.cancel():
+                logger.info("job %s on %s canceled", job, jobs[job])
+            else:
+                logger.info("job %s on %s did not cancel", job, jobs[job])
+                not_canceled.add(job)
+
+        # Second: cause any un-canceled jobs (presumably they are
+        # running) to crash.  The crash() call, effectively, pulls
+        # the rug out from under the code interacting with the
+        # domain.
+        for job in not_canceled:
+            logger.info("trying to crash job %s on %s", job, jobs[job])
+            jobs[job].crash()
+
+        # Finally wait again, but this time infinitely as all jobs
+        # should already be done.
+        futures.wait(jobs)
+
+def run_tests(logger, args, tests, test_stats, result_stats, start_time):
+
+    suffix = "******"
+    test_count = 0
+    for test in tests:
+
+        test_stats.add(test, "total")
+        test_count += 1
+        # Would the number of tests to be [re]run be better?
+        test_start_time = time.time()
+        test_prefix = "%s %s (test %d of %d)" % (suffix, test.name, test_count, len(tests))
+
+        ignored, include_ignored, details = ignore.test(logger, args, test)
+        if ignored and not include_ignored:
+            result_stats.add_ignored(test, ignored)
+            test_stats.add(test, "ignored")
+            # No need to log all the ignored tests when an
+            # explicit sub-set of tests is being run.  For
+            # instance, when running just one test.
+            if not args.test_name:
+                logger.info("%s ignored (%s)", test_prefix, details)
+            continue
+
+        # Be lazy with gathering the results, don't run the
+        # sanitizer or diff.
+        #
+        # XXX: There is a bug here where the only difference is
+        # white space.  The test will show up as failed when it
+        # previousl showed up as a whitespace pass.
+        #
+        # The presence of the RESULT file is a proxy for detecting
+        # that the test was incomplete.
+        old_result = post.mortem(test, args, test_finished=None,
+                                 skip_diff=True, skip_sanitize=True)
+        if skip.result(logger, args, old_result):
+            logger.info("%s skipped (previously %s)", test_prefix, old_result)
+            test_stats.add(test, "skipped")
+            result_stats.add_skipped(old_result)
+            continue
+
+        if old_result:
+            test_stats.add(test, "tests", "retry")
+            logger.info("%s started (previously %s) ....", test_prefix, old_result)
+        else:
+            test_stats.add(test, "tests", "try")
+            logger.info("%s started ....", test_prefix)
+        test_stats.add(test, "tests")
+
+        # Move the contents of the existing OUTPUT directory to
+        # BACKUP_DIRECTORY.  Do it file-by-file so that, at no
+        # point, the directory is empty.
+        #
+        # By moving each test just before it is started a trail of
+        # what tests were attempted at each run is left.
+        #
+        # XXX: During boot, swan-transmogrify runs "chcon -R
+        # testing/pluto".  Of course this means that each time a
+        # test is added and/or a test is run (adding files under
+        # <test>/OUTPUT), the boot process (and consequently the
+        # time taken to run a test) keeps increasing.
+        #
+        # Always moving the directory contents to the
+        # BACKUP_DIRECTORY mitigates this some.
+
+        backup_directory = None
+        if os.path.exists(test.output_directory):
+            backup_directory = os.path.join(args.backup_directory,
+                                            start_time.strftime("%Y%m%d%H%M%S"),
+                                            test.name)
+            logger.info("moving contents of '%s' to '%s'",
+                        test.output_directory, backup_directory)
+            # Copy "empty" OUTPUT directories too.
+            args.dry_run or os.makedirs(backup_directory, exist_ok=True)
+            for name in os.listdir(test.output_directory):
+                src = os.path.join(test.output_directory, name)
+                dst = os.path.join(backup_directory, name)
+                logger.debug("moving '%s' to '%s'", src, dst)
+                args.dry_run or os.replace(src, dst)
+
+        debugfile = None
+        result = None
+
+        # At least one iteration; above will have filtered out
+        # skips and ignored
+        for attempt in range(args.attempts):
+            test_stats.add(test, "attempts")
+
+            # Create the OUTPUT directory.
+            try:
+                if not args.dry_run:
+                    os.mkdir(test.output_directory)
+                elif os.exists(test.output_directory):
+                    raise FileExistsError()
+            except FileExistsError:
+                # On first attempt, the OUTPUT directory will
+                # be empty (see above) so no need to save.
+                if attempt > 0:
+                    backup_directory = os.path.join(test.output_directory, str(attempt))
+                    logger.info("moving contents of '%s' to '%s'",
+                                test.output_directory, backup_directory)
+                    args.dry_run or os.makedirs(backup_directory, exist_ok=True)
+                    for name in os.listdir(test.output_directory):
+                        if os.path.isfile(src):
+                            src = os.path.join(test.output_directory, name)
+                            dst = os.path.join(backup_directory, name)
+                            logger.debug("moving '%s' to '%s'", src, dst)
+                            args.dry_run or os.replace(src, dst)
+
+            # Start a debug log in the OUTPUT directory; include
+            # timing for this specific test attempt.
+            with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
+                attempt_start_time = time.time()
+                attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
+                logger.info("%s started ....", attempt_prefix)
+
+                if backup_directory:
+                    logger.info("contents of '%s' moved to '%s'",
+                                test.output_directory, backup_directory)
+                backup_directory = None
+
+                ending = "undefined"
+                try:
+                    if not args.dry_run:
+                        with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
+                            domain_prefix = args.prefix and args.prefix[0] or ""
+                            run_test(test, args, domain_prefix, boot_executor)
+                    ending = "finished"
+                    result = post.mortem(test, args, test_finished=True,
+                                         update=(not args.dry_run))
+                    if not args.dry_run:
+                        # Store enough to fool the script
+                        # pluto-testlist-scan.sh and leave a
+                        # marker to indicate that the test
+                        # finished.
+                        logger.info("storing result in '%s'", test.result_file())
+                        with open(test.result_file(), "w") as f:
+                            f.write('"result": "%s"\n' % result)
+                except pexpect.TIMEOUT as e:
+                    logger.exception("**** test %s timed out ****", test.name)
+                    ending = "timed-out"
+                    # Still peform post-mortem so that errors are
+                    # captured, but force the result to incomplete.
+                    result = post.mortem(test, args, test_finished=False,
+                                         update=(not args.dry_run))
+                # Since the OUTPUT directory exists, all paths to
+                # here should have a non-null RESULT.
+                test_stats.add(test, "attempts", ending, str(result))
+                logger.info("%s %s%s%s after %d seconds %s", attempt_prefix, result,
+                            result.errors and " ", result.errors,
+                            time.time() - attempt_start_time, suffix)
+                if result.passed:
+                    break
+
+        # Above will have set RESULT.  During a control-c or crash
+        # the below will not be executed.
+
+        test_stats.add(test, "tests", str(result))
+        result_stats.add_result(result, old_result)
+
+        logger.info("%s %s%s%s after %d seconds %s", test_prefix, result,
+                    result.errors and " ", result.errors,
+                    time.time() - test_start_time, suffix)
+
+        test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
+        result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")

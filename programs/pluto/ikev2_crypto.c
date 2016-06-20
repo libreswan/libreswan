@@ -84,7 +84,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	ipi->attrs.transattrs.ei = ei;
 
 	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
-	int authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+	unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
 	switch (ei->transid) {
@@ -118,10 +118,8 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	}
 
 	DBG(DBG_CONTROL,
-		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%" PRIu32 ", keymat_len=%" PRIu16,
-			ei->enckeylen,
-			authkeylen,
-			ipi->keymat_len));
+		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%u, keymat_len=%" PRIu16,
+			ei->enckeylen, authkeylen, ipi->keymat_len));
 
 	/*
 	 *

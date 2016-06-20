@@ -3,7 +3,7 @@ gcc -fPIC -fno-stack-protector -c mypam.c
 ld -x --shared -o /lib64/security/mypam.so mypam.o
 mv /etc/pam.d/pluto /etc/pam.d/pluto.stock
 cp pluto.pam /etc/pam.d/pluto
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add xauth-road-eastnet
 echo "initdone"

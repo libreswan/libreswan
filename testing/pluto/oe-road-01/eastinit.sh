@@ -8,7 +8,7 @@ dig road.uml.freeswan.org. key
 
 ping -n -c 4 192.0.2.2
 
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/oe-road-01/policy-wait.sh

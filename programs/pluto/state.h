@@ -466,18 +466,19 @@ struct state {
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
-	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
-						   to receive */
+	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct pluto_event *st_dpd_event;		/* backpointer for DPD events */
+	struct pluto_event *st_dpd_event;	/* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
-	generalName_t *st_requested_ca;	/* collected certificate requests */
+	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
+	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
+	generalName_t *st_requested_ca;		/* collected certificate requests */
 };
 
 /* global variables */

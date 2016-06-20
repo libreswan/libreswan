@@ -76,6 +76,7 @@ d.ipsec.conf/retransmit-interval.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
+d.ipsec.conf/tfc.xml
 d.ipsec.conf/nflog.xml
 d.ipsec.conf/mark.xml
 d.ipsec.conf/vti.xml
@@ -123,7 +124,7 @@ d.ipsec.conf/logappend.xml
 d.ipsec.conf/logtime.xml
 d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml
-d.ipsec.conf/ddos-ike-treshold.xml
+d.ipsec.conf/ddos-ike-threshold.xml
 d.ipsec.conf/max-halfopen-ike.xml
 d.ipsec.conf/shuntlifetime.xml
 d.ipsec.conf/xfrmlifetime.xml
