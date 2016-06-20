@@ -124,21 +124,21 @@ case "${1}" in
 		GOTTWO="${f}"
 	    else
 		# second of two entries, we can print
-		echo -n "	${GOTTWO}"
+		printf "\t%s" "${GOTTWO}"
 		if [ "${#GOTTWO}" -ge 16 ]; then
-		    echo -e -n  "\t"
+		    printf  "\t"
 		elif [ "${#GOTTWO}" -ge 8 ]; then
-		    echo -e -n "\t\t"
+		    printf "\t\t"
 		else
-		    echo -e -n "\t\t\t"
+		    printf "\t\t\t"
 		fi
-		echo "${f}"
+		printf "%s\n" "${f}"
 		GOTTWO=""
 	    fi
 	done
 	if [ -n "${GOTTWO}" ]; then
 	    # leftover entry
-	    echo "	${GOTTWO}"
+	    printf "\t%s" "${GOTTWO}"
 	fi
 	echo
 	echo "See also: man ipsec <command> or ipsec <command> --help"
@@ -154,7 +154,7 @@ case "${1}" in
 	exit 0
 	;;
     --directory)
-	echo "${IPSEC_DIR}"
+	printf "%s\n" "${IPSEC_DIR}"
 	exit 0
 	;;
 
@@ -286,7 +286,7 @@ case "${1}" in
 			cat "${IPSEC_NSSPW}" >> "${NSSTMP}/nsspassword.txt"
 		    fi
 		    # For the empty password prompt:
-		    echo -e "\n\n" > "${NSSTMP}/nsspassword2.txt"
+		    printf "\n\n" > "${NSSTMP}/nsspassword2.txt"
 		    # Change blank pw to the current, and use
 		    # for certutil --upgrade-merge
 		    certutil -W -d sql:"${NSSTMP}" \
@@ -311,7 +311,7 @@ case "${1}" in
 			    filename=$(basename "${file}")
 			    name=${filename%%.*}
 			    certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
-			    [ $? -eq 0 ] || echo "${file}"
+			    [ $? -eq 0 ] || printf "%s\n" "${file}"
 			fi
 		    done
 		fi
@@ -319,7 +319,7 @@ case "${1}" in
 		    for file in "${CRLDIR}"/*; do
 			if [ -f "${file}" ]; then
 			    crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
-			    [ $? -eq 0 ] || echo "${file}"
+			    [ $? -eq 0 ] || printf "%s\n" "${file}"
 			fi
 		    done
 		fi
@@ -358,7 +358,7 @@ case "${1}" in
 	exit 0
 	;;
     --*)
-	echo "${0}: unknown option \"${1}\" (perhaps command name was omitted?)" >&2
+	printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
 	exit 1
 	;;
 esac
@@ -371,7 +371,7 @@ path="${IPSEC_EXECDIR}/${cmd}"
 if [ ! -x "${path}" ]; then
     path="${IPSEC_EXECDIR}/${cmd}"
     if [ ! -x "${path}" ]; then
-	echo "${0}: unknown IPsec command \"${cmd}\" (\"ipsec --help\" for list)" >&2
+	printf "%s: unknown IPsec command \"%s\" (\"ipsec --help\" for list)\n" "${0}" "${cmd}" >&2
 	exit 1
     fi
 fi
