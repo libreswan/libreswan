@@ -546,7 +546,8 @@ extern void initialize_new_state(struct state *st,
 				 int whack_sock,
 				 enum crypto_importance importance);
 
-extern void show_states_status(bool list_traffic);
+extern void show_traffic_status(void);
+extern void show_states_status(void);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 

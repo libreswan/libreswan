@@ -2023,89 +2023,116 @@ static int state_compare(const void *a, const void *b)
 	return connection_compare(ca, cb);
 }
 
-void show_states_status(bool list_traffic)
+/*
+ * NULL terminated array of state pointers.
+ */
+static struct state **sort_states(void)
 {
-	int i;
-	int count;
-
-	if (list_traffic) {
-		whack_log(RC_COMMENT, " ");             /* spacer */
-	}	else {
-		whack_log(RC_COMMENT, " ");             /* spacer */
-		whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
-			require_ddos_cookies() ? "REQUIRED" : "not required",
-			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
-
-		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
-			  total_ike(),
-			  category.half_open_ike.count,
-			  category.open_ike.count,
-			  category.authenticated_ike.count,
-			  category.anonymous_ike.count);
-		whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
-			  total_ipsec(),
-			  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
-		whack_log(RC_COMMENT, " ");             /* spacer */
+	/* COUNT the number of states. */
+	int count = 0;
+	{
+		int i;
+		for (i = 0; i < STATE_TABLE_SIZE; i++) {
+			struct state *st UNUSED;
+			FOR_EACH_ENTRY(st, i, {
+					count++;
+				});
+		}
 	}
 
-	/* make count of states */
-	count = 0;
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st UNUSED;
-		FOR_EACH_ENTRY(st, i, {
-			count++;
-		});
+	if (count == 0) {
+		return NULL;
 	}
 
-	if (count != 0) {
-		monotime_t n = mononow();
-#if 1
-		/* C99's VLA feature is just what we need */
-		struct state *array[count];
-#else
-		/* no VLA: use alloca (ouch!) */
-		struct state **array = alloca(sizeof(struct state *) * count);
-#endif
-
-		/* build the array */
-		count = 0;
+	/*
+	 * Create an array of COUNT+1 (NULL terminal) state pointers.
+	 */
+	struct state **array = alloc_things(struct state *, count + 1, "sorted state");
+	{
+		int p = 0;
+		int i;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
 			FOR_EACH_ENTRY(st, i, {
-				array[count++] = st;
-			});
+					passert(st != NULL);
+					array[p++] = st;
+				});
 		}
+		passert(p == count);
+		array[p] = NULL;
+	}
 
-		/* sort it! */
-		qsort(array, count, sizeof(struct state *), state_compare);
+	/* sort it!  */
+	qsort(array, count, sizeof(struct state *), state_compare);
 
-		/* now print sorted results */
-		for (i = 0; i < count; i++) {
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
+	return array;
+}
+
+void show_traffic_status(void)
+{
+	whack_log(RC_COMMENT, " ");             /* spacer */
+
+	struct state **array = sort_states();
+
+	/* now print sorted results */
+	if (array != NULL) {
+		int i;
+		for (i = 0; array[i] != NULL; i++) {
 			struct state *st = array[i];
 
-			if (list_traffic) {
-				fmt_list_traffic(st, state_buf,
-						sizeof(state_buf));
-				if (state_buf[0] != '\0')
-					whack_log(RC_INFORMATIONAL_TRAFFIC,
-						"%s", state_buf);
-			} else {
+			char state_buf[LOG_WIDTH];
+			fmt_list_traffic(st, state_buf, sizeof(state_buf));
+			if (state_buf[0] != '\0')
+				whack_log(RC_INFORMATIONAL_TRAFFIC,
+					  "%s", state_buf);
+		}
+		whack_log(RC_COMMENT, " "); /* spacer */
+		pfree(array);
+	}
+}
 
-				fmt_state(st, n, state_buf, sizeof(state_buf),
-						state_buf2, sizeof(state_buf2));
-				whack_log(RC_COMMENT, "%s", state_buf);
-				if (state_buf2[0] != '\0')
-					whack_log(RC_COMMENT, "%s", state_buf2);
+void show_states_status(void)
+{
+	whack_log(RC_COMMENT, " ");             /* spacer */
+	whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
+		  require_ddos_cookies() ? "REQUIRED" : "not required",
+		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-				/* show any associated pending Phase 2s */
-				if (IS_IKE_SA(st))
-					show_pending_phase2(st->st_connection, st);
-			}
+	whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
+		  total_ike(),
+		  category.half_open_ike.count,
+		  category.open_ike.count,
+		  category.authenticated_ike.count,
+		  category.anonymous_ike.count);
+	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
+		  total_ipsec(),
+		  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
+	whack_log(RC_COMMENT, " ");             /* spacer */
+
+	struct state **array = sort_states();
+
+	if (array != NULL) {
+		monotime_t n = mononow();
+		/* now print sorted results */
+		int i;
+		for (i = 0; array[i] != NULL; i++) {
+			struct state *st = array[i];
+
+			char state_buf[LOG_WIDTH];
+			char state_buf2[LOG_WIDTH];
+			fmt_state(st, n, state_buf, sizeof(state_buf),
+				  state_buf2, sizeof(state_buf2));
+			whack_log(RC_COMMENT, "%s", state_buf);
+			if (state_buf2[0] != '\0')
+				whack_log(RC_COMMENT, "%s", state_buf2);
+
+			/* show any associated pending Phase 2s */
+			if (IS_IKE_SA(st))
+				show_pending_phase2(st->st_connection, st);
 		}
 
 		whack_log(RC_COMMENT, " "); /* spacer */
+		pfree(array);
 	}
 }
 
