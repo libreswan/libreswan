@@ -3339,8 +3339,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
-				DBG_log("ikev2_child_sa_respond returned %s",
-					enum_name(&stfstatus_name, ret));
+				DBG(DBG_CONTROL,
+				    DBG_log("ikev2_child_sa_respond returned %s",
+					enum_name(&stfstatus_name, ret)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
