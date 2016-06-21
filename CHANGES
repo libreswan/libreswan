@@ -32,6 +32,7 @@ v3.18 (unreleased)
 * libswan: Fix unbound dnsctx handling [Hugh/Paul]
 * libswan/libipsecconf: Clean up SECRETS code [Andrew]
 * addconn: Find peer IP address when resolving default route [Daniel M. Weeks]
+* barf: if systemd detected, use journalctl to get logs [Paul]
 * building: the make variable NSSLIBS was renamed to NSS_LDFLAGS [Andrew]
 * packaging: updates for debian packaging [dkg]
 
