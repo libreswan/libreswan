@@ -104,7 +104,7 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static int build_ikev2_version();
+static int build_ikev2_version(void);
 
 static crypto_req_cont_func ikev2_child_inIoutR_continue;	/* type assertion */
 
@@ -5061,7 +5061,7 @@ bool ikev2_delete_out(struct state *st)
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-static int build_ikev2_version()
+static int build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))

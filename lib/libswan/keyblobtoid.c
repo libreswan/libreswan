@@ -97,7 +97,7 @@ size_t dstlen;
 
 #include <stdio.h>
 
-void regress();
+void regress(void);
 
 int main(argc, argv)
 int argc;

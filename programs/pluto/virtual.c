@@ -112,7 +112,7 @@ static bool read_subnet(const char *src, size_t len,
 	return TRUE;
 }
 
-void free_virtual_ip()
+void free_virtual_ip(void)
 {
        /* These might be NULL if empty in ipsec.conf */
 	private_net_incl_len = 0;
@@ -456,7 +456,7 @@ static void show_virtual_private_kind(const char *kind,
 	}
 }
 
-void show_virtual_private()
+void show_virtual_private(void)
 {
 	if (nat_traversal_enabled) {
 		whack_log(RC_COMMENT, "virtual-private (%%priv):");

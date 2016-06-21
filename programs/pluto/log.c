@@ -1100,7 +1100,7 @@ void log_state(struct state *st, enum state_kind new_state)
 }
 
 #ifdef USE_LINUX_AUDIT
-void linux_audit_init()
+void linux_audit_init(void)
 {
 	libreswan_log("Linux audit support [enabled]");
 	/* test and log if audit is enabled on the system */

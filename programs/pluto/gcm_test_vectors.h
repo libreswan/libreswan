@@ -12,7 +12,7 @@
  * for more details.
  */
 
-bool test_aes_gcm();
+bool test_aes_gcm(void);
 
 bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
 		u_int8_t *wire_iv, size_t wire_iv_size,

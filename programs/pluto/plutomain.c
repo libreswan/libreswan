@@ -136,7 +136,7 @@ static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 
-static void free_pluto_main()
+static void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(coredir);
@@ -1694,7 +1694,7 @@ void exit_pluto(int status)
 	exit(status);	/* exit, with our error code */
 }
 
-void show_setup_plutomain()
+void show_setup_plutomain(void)
 {
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */

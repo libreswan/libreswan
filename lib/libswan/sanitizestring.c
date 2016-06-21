@@ -146,7 +146,7 @@ struct rtab {
 	{ NULL, NULL }
 };
 
-void regress()
+void regress(void)
 {
 	struct rtab *r;
 	ip_address a;

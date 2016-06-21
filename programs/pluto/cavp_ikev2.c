@@ -46,7 +46,7 @@ static struct cavp_entry config_entries[] = {
 	{ .key = NULL }
 };
 
-static void ikev2_config()
+static void ikev2_config(void)
 {
 	config_number("g^ir length", g_ir_length);
 	config_key(hasher_name);

@@ -316,7 +316,7 @@ struct print {
 	char buf[1024];
 };
 
-static struct print *print_buf()
+static struct print *print_buf(void)
 {
 	return alloc_thing(struct print, "print buf");
 }

@@ -294,8 +294,8 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 
-extern void show_shunt_status();
-extern int show_shunt_count();
+extern void show_shunt_status(void);
+extern int show_shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,
@@ -404,7 +404,7 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
-extern void expire_bare_shunts();
+extern void expire_bare_shunts(void);
 
 
 /*

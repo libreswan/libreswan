@@ -237,7 +237,7 @@ static void cavp_parser()
 	}
 }
 
-static void usage()
+static void usage(void)
 {
 	fprintf(stderr, "Usage: cavp [ -OPTION ] <test-vector>|-\n");
 	struct cavp **cavpp;

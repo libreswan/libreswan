@@ -49,17 +49,17 @@ const char libreswan_vendorid[] = OUR_VENDOR_VID;
 MODULE_VERSION(V);
 #endif
 
-const char *ipsec_version_code()
+const char *ipsec_version_code(void)
 {
 	return libreswan_number;
 }
 
-const char *ipsec_version_string()
+const char *ipsec_version_string(void)
 {
 	return libreswan_string;
 }
 
-const char *ipsec_version_vendorid()
+const char *ipsec_version_vendorid(void)
 {
 	return libreswan_vendorid;
 }

@@ -1071,7 +1071,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-int show_shunt_count()
+int show_shunt_count(void)
 {
 	int i = 0;
 	const struct bare_shunt *bs;
@@ -1084,7 +1084,7 @@ int show_shunt_count()
 	return i;
 }
 
-void show_shunt_status()
+void show_shunt_status(void)
 {
 	const struct bare_shunt *bs;
 
@@ -2604,7 +2604,7 @@ void init_kernel(void)
 	}
 }
 
-void show_kernel_interface()
+void show_kernel_interface(void)
 {
 	if (kernel_ops != NULL) {
 		whack_log(RC_COMMENT, "using kernel interface: %s",
@@ -3292,12 +3292,12 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 }
 
 /* This wrapper is to make the seam_* files in testing/ easier */
-bool kernel_overlap_supported()
+bool kernel_overlap_supported(void)
 {
 	return kernel_ops->overlap_supported;
 }
 
-const char *kernel_if_name()
+const char *kernel_if_name(void)
 {
 	return kernel_ops->kern_name;
 }
@@ -3485,7 +3485,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 }
 
 /* XXX move to proper kernel_ops in kernel_netlink */
-void expire_bare_shunts()
+void expire_bare_shunts(void)
 {
 	struct bare_shunt **bspp;
 

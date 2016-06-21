@@ -1142,7 +1142,7 @@ void process_pfkey_nat_t_new_mapping(
 			ugh);
 }
 
-void show_setup_natt()
+void show_setup_natt(void)
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",

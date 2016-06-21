@@ -82,7 +82,7 @@
 
 static struct secret *pluto_secrets = NULL;
 
-void load_preshared_secrets()
+void load_preshared_secrets(void)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile);

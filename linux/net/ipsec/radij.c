@@ -937,7 +937,7 @@ int off;
 	return 1;
 }
 
-void rj_init()
+void rj_init(void)
 {
 	char *cp, *cplim;
 

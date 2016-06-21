@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	tncfg01main(argc, argv);
 }
 
-int tncfg01getpid()
+int tncfg01getpid(void)
 {
 	return 9999;
 }
