@@ -1500,6 +1500,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 
 #define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, .valid = TRUE, }
 #define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, .valid = TRUE, }
+#define DH_MODP3072 { .id = OAKLEY_GROUP_MODP3072, .valid = TRUE, }
 #define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, .valid = TRUE, }
 #define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, .valid = TRUE, }
 
@@ -1514,7 +1515,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	 * AES_GCM[256]
 	 * NULL
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP4096, MODP8192
+	 * MODP2048, MODP3072, MODP4096, MODP8192
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1526,14 +1527,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
 		},
 	},
         /*
 	 * AES_CBC[256]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1545,14 +1546,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
         /*
 	 * AES_CBC[128]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1564,7 +1565,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
 };
