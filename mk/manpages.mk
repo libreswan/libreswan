@@ -23,14 +23,9 @@ MANDIR.3 ?= $(MANTREE)/man3
 MANDIR.5 ?= $(MANTREE)/man5
 MANDIR.8 ?= $(MANTREE)/man8
 
-# PROGRAM=pluto -> MANPAGES+=ipsec_pluto.8
-ifeq ($(origin MANPROGPREFIX),undefined)
-MANPROGPREFIX ?= ipsec_
-endif
-
-# If PROGRAM is empty, PROGRAM_MANPAGE also ends up empty.
-PROGRAM_MANPAGE = $(addprefix $(MANPROGPREFIX), $(addsuffix .8, $(PROGRAM)))
-MANPAGES += $(PROGRAM_MANPAGE)
+# If PROGRAM is empty, PROGRAM_MANPAGE also ends up empty.  On the
+# other hand, if there's a program then there must also be a man page.
+MANPAGES += $(addsuffix .8, $(PROGRAM))
 
 # List of the intermediate (transformed) man pages.  Don't let GNU
 # make delete these.
