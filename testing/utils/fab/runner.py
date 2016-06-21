@@ -203,6 +203,11 @@ def run_test(test, args, domain_prefix, boot_executor):
             test_domain = all_test_domains[script.host_name]
             test_domain.read_file_run(script.script)
 
+        # Close the redirected test-result log files
+        for test_domain in test_domains:
+            logfile = test_domain.console.output()
+            logfile.close()
+
         logger.info("finishing test")
 
 
