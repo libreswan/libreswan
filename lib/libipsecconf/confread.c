@@ -54,15 +54,11 @@
 			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
 	}
 
-
 #ifdef DNSSEC
 # include <unbound.h>
 # include <errno.h>
-#include <arpa/inet.h> /* for inet_ntop */
+# include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
-#else /* DNSSEC */
-struct ub_ctx {
-};
 #endif /* DNSSEC */
 
 /**
@@ -393,10 +389,9 @@ static bool load_setup(struct starter_config *cfg,
  * @return bool TRUE if failed
  */
 
-#ifndef DNSSEC
-static bool validate_end(struct ub_ctx *dnsctx UNUSED,
-#else
-static bool validate_end(struct ub_ctx *dnsctx ,
+static bool validate_end(
+#ifdef DNSSEC
+			struct ub_ctx *dnsctx,
 #endif
 			struct starter_conn *conn_st,
 			struct starter_end *end,
@@ -945,10 +940,9 @@ static void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
+static bool load_conn(
 #ifdef DNSSEC
-static bool load_conn(struct ub_ctx *dnsctx,
-#else
-static bool load_conn(struct ub_ctx *dnsctx UNUSED,
+		     struct ub_ctx *dnsctx,
 #endif
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
@@ -1327,8 +1321,16 @@ static bool load_conn(struct ub_ctx *dnsctx UNUSED,
 		}
 	}
 
-	err |= validate_end(dnsctx, conn, &conn->left, "left", resolvip, perr);
-	err |= validate_end(dnsctx, conn, &conn->right, "right", resolvip, perr);
+	err |= validate_end(
+#ifdef DNSSEC
+		dnsctx,
+#endif
+		conn, &conn->left, "left", resolvip, perr);
+	err |= validate_end(
+#ifdef DNSSEC
+		dnsctx,
+#endif
+		conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1411,7 +1413,10 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name
 	return conn;
 }
 
-static bool init_load_conn(struct ub_ctx *dnsctx,
+static bool init_load_conn(
+#ifdef DNSSEC
+		   struct ub_ctx *dnsctx,
+#endif
 		   struct starter_config *cfg,
 		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
@@ -1423,8 +1428,12 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
-			    defaultconn, resolvip, perr);
+	bool connerr = load_conn(
+#ifdef DNSSEC
+				dnsctx,
+#endif
+				conn, cfgp, sconn, TRUE,
+				defaultconn, resolvip, perr);
 
 	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
@@ -1442,7 +1451,6 @@ struct starter_config *confread_load(const char *file,
 				     bool setuponly)
 {
 	bool err = FALSE;
-	bool connerr;
 
 	/**
 	 * Load file
@@ -1497,8 +1505,6 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(
 #ifdef DNSSEC
 						dnsctx,
-#else
-						NULL,
 #endif
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
@@ -1514,15 +1520,13 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default"))
 				continue;
+			err |= init_load_conn(
 #ifdef DNSSEC
-			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
-#else
-			connerr = init_load_conn(NULL, cfg, cfgp, sconn,
+						 dnsctx,
 #endif
+						 cfg, cfgp, sconn,
 						 FALSE,
 						 resolvip, perr);
-
-			err |= connerr;
 		}
 	}
 
