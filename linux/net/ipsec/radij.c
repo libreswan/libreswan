@@ -173,7 +173,6 @@ void *m_arg, *n_arg;
 
 		if (*n++ != *m++)
 			masks_are_equal = 0;
-
 	}
 	while (n < lim2)
 		if (*n++)
@@ -938,7 +937,7 @@ int off;
 	return 1;
 }
 
-void rj_init()
+void rj_init(void)
 {
 	char *cp, *cplim;
 

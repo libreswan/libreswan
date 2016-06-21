@@ -276,7 +276,6 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 	    ((type == ASN1_UTCTIME) ? 12 : 14)) {
 		if (sscanf(eot - 2, "%2d", &t.tm_sec) != 1)
 			return undefinedrealtime();	/* error in ss seconds field format */
-
 	} else {
 		t.tm_sec = 0;
 	}

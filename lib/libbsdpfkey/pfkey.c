@@ -1654,7 +1654,7 @@ u_int32_t spid;
  *	-1: fail.
  *	others : success and return value of socket.
  */
-int pfkey_open()
+int pfkey_open(void)
 {
 	int so;
 	const int bufsiz = 128 * 1024;  /*is 128K enough?*/

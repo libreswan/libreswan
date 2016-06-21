@@ -16,7 +16,7 @@ func genid(prefix, id, trunc,  n, i) {
 
 func subid(id,  new) {
     old = $0
-    new = gensub("( |=)(" id ")( |$)", "\\1" ids[id] "\\3", "g", old)
+    new = gensub("([ ='])(" id ")([ ']|$)", "\\1" ids[id] "\\3", "g", old)
     if (debug) print "subid", "id:", id, "old:", old, "new:", new
     if (old == new) return 0
     $0 = new
@@ -33,7 +33,7 @@ func subid(id,  new) {
     while (1) {
 	# Above should have filtered out existing IDs; look for new
 	# ones.
-	id = gensub(/^.*(CKAID|ckaid:) ([0-9a-f]+)( .*|)$/, "\\2", 1, $0)
+	id = gensub(/^.*(CKAID|ckaid:) +[']?([0-9a-f]+)([ '].*|)$/, "\\2", 1, $0)
 	if (id == $0) break
 	# convert to CKAID-xxxxxxx", the "-" stops re-matches
 	if (!subid(genid("CKAID-", id))) break;

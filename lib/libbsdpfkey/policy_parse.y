@@ -217,8 +217,6 @@ yyerror(msg)
 {
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libipsecyytext);
-
-	return;
 }
 
 static struct sockaddr *
@@ -261,7 +259,7 @@ parse_sockaddr(buf)
 }
 
 static int
-rule_check()
+rule_check(void)
 {
 	if (p_type == IPSEC_POLICY_IPSEC) {
 		if (p_protocol == IPPROTO_IP) {
@@ -292,7 +290,7 @@ rule_check()
 }
 
 static int
-init_x_policy()
+init_x_policy(void)
 {
 	struct sadb_x_policy *p;
 
@@ -370,7 +368,7 @@ set_sockaddr(addr)
 }
 
 static void
-policy_parse_request_init()
+policy_parse_request_init(void)
 {
 	p_protocol = IPPROTO_IP;
 	p_mode = IPSEC_MODE_ANY;
@@ -384,8 +382,6 @@ policy_parse_request_init()
 		free(p_dst);
 		p_dst = NULL;
 	}
-
-	return;
 }
 
 static caddr_t

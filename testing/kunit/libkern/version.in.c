@@ -26,7 +26,7 @@ static const char libreswan_string[] = "Linux Libreswan testing lib " V;
 /*
    - ipsec_version_code - return IPsec version number/code, as string
  */
-const char *ipsec_version_code()
+const char *ipsec_version_code(void)
 {
 	return libreswan_number;
 }
@@ -34,7 +34,7 @@ const char *ipsec_version_code()
 /*
    - ipsec_version_string - return full version string
  */
-const char *ipsec_version_string()
+const char *ipsec_version_string(void)
 {
 	return libreswan_string;
 }

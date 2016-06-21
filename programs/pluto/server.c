@@ -629,7 +629,6 @@ static void main_loop(void)
 	passert (r == 0);
 
 	pluto_event_free(&pluto_evs);
-	return;
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
@@ -1422,5 +1421,4 @@ void set_whack_pluto_ddos(enum ddos_mode mode)
 	pluto_ddos_mode = mode;
 	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
-
 }

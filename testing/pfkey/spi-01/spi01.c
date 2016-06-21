@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	spi01main(argc, argv);
 }
 
-int spi01getpid()
+int spi01getpid(void)
 {
 	return 9999;
 }

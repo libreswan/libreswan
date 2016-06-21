@@ -1,0 +1,33 @@
+Querks when specifying the CKAID of a raw RSA key in a basic IKEv2
+connection.
+
+When loading a connection, pluto uses the search sequence:
+
+     CKAID -> [pubkey|certificate] -> private key
+
+things don't go well:
+
+- "ipsec auto --add westnet-eastnet-ikev2" which specifies CKAIDs and
+  RSASIGKEYs doesn't work as the RSASIGKEYs only get added to the
+  pubkey list _after_ the connection has been added; and of course that
+  fails because they haven't yet been added ...
+
+- having the pubkey in /etc/ipsec.secrets doesn't help: they get
+  stored in the private-key list, not the pubkey one.  Since pubkeys
+  shouldn't even be in ipsec.secrets, lets ignore this.
+
+- having a direct CKAID -> private key lookup would help with the
+  private key but not for the pubkey side of things (as an aside, it
+  is arguable that the CKAID, and not the ID, is a better tool for
+  identifying keys)
+
+But there's a work-around:
+
+1. "ipsec auto --add westnet-eastnet-ipv4"
+
+   this has the side effect of adding the RSASIGKEYs to the pubkey
+   list
+
+2. "ipsec auto --add westnet-eastnet-ikev2-ckaid"
+
+   loads because the line above loaded the RSASIGKEYs.

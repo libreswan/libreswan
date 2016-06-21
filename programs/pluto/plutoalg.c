@@ -337,11 +337,11 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 	switch (alg_info->ai.alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
 		alg_info_snprint_esp(buf, buflen, alg_info);
-		return;
+		break;
 
 	case PROTO_IPSEC_AH:
 		alg_info_snprint_ah(buf, buflen, alg_info);
-		return;
+		break;
 
 	default:
 		bad_case(alg_info->ai.alg_info_protoid);

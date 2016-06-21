@@ -116,7 +116,7 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
  * Only pluto needs to know UNKNOWN, so it can abort. Every other caller can
  * just check for fips mode using: if (libreswan_fipsmode())
  */
-bool libreswan_fipsmode()
+bool libreswan_fipsmode(void)
 {
 	if (fips_mode == LSW_FIPS_UNSET)
 		fips_mode = lsw_get_fips_mode();

@@ -103,7 +103,7 @@ char **av;
 	exit(0);
 }
 
-int test1()
+int test1(void)
 {
 	int i;
 	int result;
@@ -217,7 +217,7 @@ char addr[] = {
 	0, 0, 0, 0,
 };
 
-int test2()
+int test2(void)
 {
 	int so;
 	char *pol1 = "out ipsec";

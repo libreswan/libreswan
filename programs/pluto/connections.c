@@ -897,13 +897,20 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 	case WHACK_PUBKEY_CKAID: {
 		/*
-		 * XXX: The pubkey might already be loaded and in
-		 * either &pluto_secrets or %pluto_pubkeys.  For now
-		 * ignore this (ipsec.secrets RSA pubkeys get put in
-		 * pluto_secrets, sigh).
+		 * Perhaps it is already loaded?  Or perhaps it was
+		 * specified using an earlier rsasigkey=.
 		 */
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
-		load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		struct pubkey *key = get_pubkey_with_matching_ckaid(src->pubkey);
+		if (key != NULL) {
+			/*
+			 * Convert the CKAID into the corresponding ID
+			 * so that a search will re-find it.
+			 */
+			dst->id = key->id;
+		} else {
+			CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
+			load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
+		}
 		break;
 	}
 	default:
@@ -1277,12 +1284,11 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_LOG_SERIOUS,
 				"Connection without either AH or ESP cannot negotiate");
 			return;
-		} else {
-			if (wm->policy & POLICY_TUNNEL) {
-				loglog(RC_LOG_SERIOUS,
-					"connection with type=tunnel cannot have authby=never");
-				return;
-			}
+		}
+		if (wm->policy & POLICY_TUNNEL) {
+			loglog(RC_LOG_SERIOUS,
+				"connection with type=tunnel cannot have authby=never");
+			return;
 		}
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
@@ -1377,19 +1383,18 @@ void add_connection(const struct whack_message *wm)
 							     c->alg_info_esp);
 				DBG_log("phase2alg string values: %s", buf);
 			});
-			if (c->alg_info_esp != NULL) {
-				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
-					loglog(RC_LOG_SERIOUS,
-						"got 0 transforms for "
-						"esp=\"%s\"",
-						wm->esp);
-					pfree(c);
-					return;
-				}
-			} else {
+			if (c->alg_info_esp == NULL) {
 				loglog(RC_LOG_SERIOUS,
 					"phase2alg string error: %s",
 					err_buf);
+				pfree(c);
+				return;
+			}
+			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
+				loglog(RC_LOG_SERIOUS,
+					"got 0 transforms for "
+					"esp=\"%s\"",
+					wm->esp);
 				pfree(c);
 				return;
 			}
@@ -1406,19 +1411,18 @@ void add_connection(const struct whack_message *wm)
 				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
 			});
-			if (c->alg_info_ike != NULL) {
-				if (c->alg_info_ike->ai.alg_info_cnt == 0) {
-					loglog(RC_LOG_SERIOUS,
-						"got 0 transforms for "
-						"ike=\"%s\"",
-						wm->ike);
-					pfree(c);
-					return;
-				}
-			} else {
+			if (c->alg_info_ike == NULL) {
 				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
 					err_buf);
+				pfree(c);
+				return;
+			}
+			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
+				loglog(RC_LOG_SERIOUS,
+					"got 0 transforms for "
+					"ike=\"%s\"",
+					wm->ike);
 				pfree(c);
 				return;
 			}

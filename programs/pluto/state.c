@@ -175,7 +175,7 @@ static unsigned int total_ipsec(void)
 		category.anonymous_ipsec.count;
 }
 
-static unsigned int total()
+static unsigned int total(void)
 {
 	return total_ike() + total_ipsec() + category.unknown.count;
 }
@@ -1729,7 +1729,6 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
 		}
-
 	}
 
 
@@ -2302,14 +2301,14 @@ void clear_dh_from_state(struct state *st)
 	}
 }
 
-bool require_ddos_cookies()
+bool require_ddos_cookies(void)
 {
 	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
 		(pluto_ddos_mode == DDOS_AUTO &&
 		 category.half_open_ike.count >= pluto_ddos_threshold);
 }
 
-bool drop_new_exchanges()
+bool drop_new_exchanges(void)
 {
 	return category.half_open_ike.count >= pluto_max_halfopen;
 }

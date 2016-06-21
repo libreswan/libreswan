@@ -557,7 +557,6 @@ int main(int argc, char *argv[])
 				printf("Sending a keepalive packet\n");
 			send_keepalive_packet(&options);
 		}
-
 	}
 
 	return 1;

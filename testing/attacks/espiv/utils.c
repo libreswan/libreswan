@@ -259,7 +259,6 @@ int read_arguments_from_file(char *fname, option_data *opt)
 		}
 		*bp = c;
 		bp++;
-
 	}
 
 	fclose(fp);

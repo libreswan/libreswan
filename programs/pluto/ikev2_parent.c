@@ -104,7 +104,7 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static int build_ikev2_version();
+static int build_ikev2_version(void);
 
 static crypto_req_cont_func ikev2_child_inIoutR_continue;	/* type assertion */
 
@@ -713,7 +713,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		dc.ptr = dcookie;
 		dc.len = SHA2_256_DIGEST_SIZE;
 
-		if(seen_dcookie) {
+		if (seen_dcookie) {
 			const pb_stream *dc_pbs;
 			chunk_t idc;
 
@@ -835,7 +835,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			}
                         p = p->next;
                 }
-
 	} else {
 		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
 	}
@@ -961,7 +960,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		if (seen_ntfy_frag)
 			st->st_seen_fragvid = TRUE;
-
 	} else {
 		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
 		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
@@ -1113,7 +1111,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	/* Ni in */
@@ -2890,8 +2887,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 		close(fds[0]);
 		p->master_fd = NULL_FD;
 		return STF_INTERNAL_ERROR;
-
 	}
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] started IKEv2 PAM helper thread '%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial, p->pam.name));
@@ -3342,8 +3339,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
-				DBG_log("ikev2_child_sa_respond returned %s",
-					enum_name(&stfstatus_name, ret));
+				DBG(DBG_CONTROL,
+				    DBG_log("ikev2_child_sa_respond returned %s",
+					enum_name(&stfstatus_name, ret)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
@@ -3819,7 +3817,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				}
 			}
 		} /* for */
-
 	} /* notification block */
 
 	ikev2_derive_child_keys(st, md->original_role);
@@ -5065,7 +5062,7 @@ bool ikev2_delete_out(struct state *st)
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-static int build_ikev2_version()
+static int build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))

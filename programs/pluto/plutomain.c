@@ -128,6 +128,7 @@ extern bool ocsp_enable;
 extern char *curl_iface;
 extern long curl_timeout;
 extern bool pluto_drop_oppo_null;
+extern int bare_shunt_interval;
 
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
@@ -135,7 +136,7 @@ static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 
-static void free_pluto_main()
+static void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(coredir);
@@ -532,6 +533,7 @@ static const struct option long_opts[] = {
 	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
 	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
+	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
 	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 #ifdef HAVE_LABELED_IPSEC
 	/* ??? really an attribute type, not a value */
@@ -851,6 +853,13 @@ int main(int argc, char **argv)
 
 		case '8':	/* --drop-oppo-null */
 			pluto_drop_oppo_null = TRUE;
+			continue;
+
+		case '9':	/* --expire-bare-shunt <interval> */
+			ugh = ttoulb(optarg, 0, 10, 1000, &u);
+			if (ugh != NULL)
+				break;
+			bare_shunt_interval = u;
 			continue;
 
 		case 'k':	/* --use-klips */
@@ -1519,7 +1528,6 @@ int main(int argc, char **argv)
 		const char *vc = ipsec_version_code();
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
-
 	}
 
 	libreswan_log("core dump dir: %s", coredir);
@@ -1686,7 +1694,7 @@ void exit_pluto(int status)
 	exit(status);	/* exit, with our error code */
 }
 
-void show_setup_plutomain()
+void show_setup_plutomain(void)
 {
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */

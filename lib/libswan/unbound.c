@@ -14,7 +14,7 @@
  * for more details.
  */
 #ifndef DNSSEC
-#error this file should only be compiled when using USE_DNSSEC
+# error this file should only be compiled when using DNSSEC
 #endif
 
 #include <stdlib.h>
@@ -135,7 +135,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	}
 
 	if (result->bogus) {
-		libreswan_log("ERROR: %s failed DNSSEC valdation!",
+		libreswan_log("ERROR: %s failed DNSSEC validation!",
 			result->qname);
 		ub_resolve_free(result);
 		return FALSE;
@@ -154,7 +154,6 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		}
 		ub_resolve_free(result);
 		return FALSE;
-
 	} else if (!result->bogus) {
 		if (!result->secure) {
 			DBG(DBG_DNS,

@@ -527,36 +527,31 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	switch (p->payload.nat_oa.isanoa_idtype) {
 	case ID_IPV4_ADDR:
-		if (pbs_left(&p->pbs) == sizeof(struct in_addr)) {
-			initaddr(p->pbs.cur, pbs_left(&p->pbs),
-				AF_INET, &ip);
-		} else {
+		if (pbs_left(&p->pbs) != sizeof(struct in_addr)) {
 			loglog(RC_LOG_SERIOUS,
-				"NAT-Traversal: received IPv4 NAT-OA "
-				"with invalid IP size (%d)",
+				"NAT-Traversal: received IPv4 NAT-OA with invalid IP size (%d)",
 				(int)pbs_left(&p->pbs));
 			return;
 		}
+
+		initaddr(p->pbs.cur, pbs_left(&p->pbs), AF_INET, &ip);
 		break;
 
 	case ID_IPV6_ADDR:
-		if (pbs_left(&p->pbs) == sizeof(struct in6_addr)) {
-			initaddr(p->pbs.cur, pbs_left(&p->pbs),
-				AF_INET6, &ip);
-		} else {
+		if (pbs_left(&p->pbs) != sizeof(struct in6_addr)) {
 			loglog(RC_LOG_SERIOUS,
 				"NAT-Traversal: received IPv6 NAT-OA with invalid IP size (%d)",
 				(int)pbs_left(&p->pbs));
 			return;
 		}
+
+		initaddr(p->pbs.cur, pbs_left(&p->pbs), AF_INET6, &ip);
 		break;
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
 			p->payload.nat_oa.isanoa_idtype);
 		return;
-
-		break;
 	}
 
 	DBG(DBG_NATT, {
@@ -1147,7 +1142,7 @@ void process_pfkey_nat_t_new_mapping(
 			ugh);
 }
 
-void show_setup_natt()
+void show_setup_natt(void)
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",

@@ -1456,7 +1456,6 @@ int main(int argc, char *argv[])
 		default:
 			break;
 		}
-
 	}
 
 	if (natt != 0) {

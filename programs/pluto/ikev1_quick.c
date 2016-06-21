@@ -1414,7 +1414,6 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 				       isanyaddr(&hv.st_nat_oa));
 			}
 		}
-
 	} else {
 		/* implicit IDci and IDcr: peer and self */
 		if (!sameaddrtype(&c->spd.this.host_addr,

@@ -292,7 +292,6 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
 			}
 			ifaddr = ifaddr->ifa_next;
 		}
-
 	}
 
 	/* otherwise, find the appropriate route & create an rcache entry */
@@ -459,7 +458,6 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 			}
 			ifaddr = ifaddr->ifa_next;
 		}
-
 	}
 
 	/* otherwise, find the appropriate route & create an rcache entry */

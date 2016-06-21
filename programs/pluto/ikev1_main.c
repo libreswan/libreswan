@@ -2259,7 +2259,6 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		 * Also, only the side that proposed IKEv2 can figure out there
 		 * was a bid down attack to begin with. The side that did not propose
 		 * cannot distinguish attack from regular ikev1 operation.
-		 * if(st->st_connection->policy & POLICY_IKEV2_ALLOW) {
 		 */
 		if (st->st_connection->policy & POLICY_IKEV2_PROPOSE) {
 			libreswan_log(

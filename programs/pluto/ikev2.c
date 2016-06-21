@@ -845,7 +845,6 @@ void process_v2_packet(struct msg_digest **mdp)
 				enum_show(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
-
 	} else if (!msg_r) {
 		/*
 		 * A request; send it to the parent.
@@ -939,12 +938,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Is the original role correct?
 	 */
-	if (st != NULL) {
-		if (st->st_original_role != md->original_role) {
-			DBG(DBG_CONTROL,
-			    DBG_log("state and md roles conflict; dropping packet"));
-			return;
-		}
+	if (st != NULL && st->st_original_role != md->original_role) {
+		DBG(DBG_CONTROL,
+		    DBG_log("state and md roles conflict; dropping packet"));
+		return;
 	}
 
 	/*
@@ -1130,14 +1127,13 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-	} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-		if (id_kind(&peer) != ID_DER_ASN1_DN) {
-			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
-			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+				return FALSE;
+			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
-		duplicate_id(&st->st_connection->spd.that.id, &peer);
-	}
-
 	} else {
 		struct connection *r = NULL;
 		bool fromcert = FALSE;
@@ -1624,7 +1620,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 					deltasecs(c->dpd_delay) : MIN_LIVENESS,
 				       st);
 		}
-
 	}
 }
 

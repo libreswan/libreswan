@@ -93,7 +93,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 		 * there is no long-form code.
 		 */
 		bad_case(type);
-
 	}
 	return TRUE;
 }
@@ -317,7 +316,7 @@ struct print {
 	char buf[1024];
 };
 
-static struct print *print_buf()
+static struct print *print_buf(void)
 {
 	return alloc_thing(struct print, "print buf");
 }
@@ -1043,7 +1042,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 				*best_transforms->transform = *matching_transform;
 			}
 		}
-
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
 	stf_status status;
@@ -1489,25 +1487,20 @@ static void append_transform(struct ikev2_proposal *proposal,
 
 #define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, .valid = TRUE, }
-#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, .valid = TRUE, }
-#define ENCR_3DES { .id = IKEv2_ENCR_3DES, .valid = TRUE, }
 
 #define PRF_SHA2_512 { .id = IKEv2_PRF_HMAC_SHA2_512, .valid = TRUE, }
 #define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, .valid = TRUE, }
-#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, .valid = TRUE, }
 #define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, .valid = TRUE, }
-#define PRF_MD5 { .id = IKEv2_PRF_HMAC_MD5, .valid = TRUE, }
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, .valid = TRUE, }
 #define AUTH_SHA2_512_256 { .id = IKEv2_AUTH_HMAC_SHA2_512_256, .valid = TRUE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, .valid = TRUE, }
-#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, .valid = TRUE, }
 #define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, .valid = TRUE, }
-#define AUTH_MD5_96 { .id = IKEv2_AUTH_HMAC_MD5_96, .valid = TRUE, }
 
 #define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, .valid = TRUE, }
 #define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, .valid = TRUE, }
+#define DH_MODP3072 { .id = OAKLEY_GROUP_MODP3072, .valid = TRUE, }
 #define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, .valid = TRUE, }
 #define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, .valid = TRUE, }
 
@@ -1519,11 +1512,10 @@ static void append_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	/*
-	 * IKEv2 proposal #0:
 	 * AES_GCM[256]
 	 * NULL
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP4096, MODP8192
+	 * MODP2048, MODP3072, MODP4096, MODP8192
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1535,35 +1527,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
 		},
 	},
         /*
-	 * IKEv2 proposal #1:
-	 * AES_GCM[128]
-	 * NULL
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP4096, MODP8192
-	 *
-	 * Note: Strongswan cherry-picks proposals (for instance will
-	 * pick AES_128 over AES_256 when both are in the same
-	 * proposal) so, for moment, don't merge things.
-	 */
-	{
-		.protoid = IKEv2_SEC_PROTO_IKE,
-		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
-		},
-	},
-        /*
-	 * IKEv2 proposal #2:
 	 * AES_CBC[256]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1575,15 +1546,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
         /*
-	 * IKEv2 proposal #3:
 	 * AES_CBC[128]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1595,7 +1565,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
 };
@@ -1773,14 +1743,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
-		},
-	},
-	{
-		.protoid = IKEv2_SEC_PROTO_ESP,
-		.transforms = {
-			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},

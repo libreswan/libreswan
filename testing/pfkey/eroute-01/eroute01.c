@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	eroute01main(argc, argv);
 }
 
-int eroute01getpid()
+int eroute01getpid(void)
 {
 	return 9999;
 }

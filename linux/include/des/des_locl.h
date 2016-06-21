@@ -510,7 +510,7 @@ extern const DES_LONG des_SPtrans[8][64];
 void fcrypt_body(DES_LONG *out, des_key_schedule ks,
 		 DES_LONG Eswap0, DES_LONG Eswap1);
 #else
-void fcrypt_body();
+void fcrypt_body(void);
 #endif
 #endif /* NO_FCRYPT */
 

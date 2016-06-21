@@ -1071,7 +1071,6 @@ static void gen_tabs(void)
 		im_tab[2][b] = upr(w, 2);
 		im_tab[3][b] = upr(w, 3);
 #endif
-
 	}
 }
 

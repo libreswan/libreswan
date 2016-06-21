@@ -770,7 +770,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		req.u.p.sel.sport = htons(icmp_type);
 		req.u.p.sel.dport = htons(icmp_code);
-
 	}
 
 	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
@@ -1057,7 +1056,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
 		req.p.sel.family = src->addr.u.v4.sin_family;
-
 	}
 
 	req.p.reqid = sa->reqid;
@@ -1633,34 +1631,29 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	/* ??? would next call ever succeed AA_2015 MAY */
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
 				"Get policy", "?")) {
-		return;
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 				req.id.dir, req.id.index));
-		return;
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.pol))) {
 		libreswan_log(
 			"netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %lu < %lu bytes; ignore message",
 			(unsigned long) rsp.n.nlmsg_len,
 			(unsigned long) sizeof(rsp.pol));
-		return;
 	} else if (req.id.index != rsp.pol.index) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
 				req.id.dir, req.id.index, rsp.pol.index));
-		return;
 	} else if (upe->pol.curlft.add_time != rsp.pol.curlft.add_time) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
 				req.id.dir, req.id.index));
-		return;
-	}
-
-	switch (upe->pol.dir) {
-	case XFRM_POLICY_OUT:
-		netlink_shunt_expire(&rsp.pol);
-		break;
+	} else {
+		switch (upe->pol.dir) {
+		case XFRM_POLICY_OUT:
+			netlink_shunt_expire(&rsp.pol);
+			break;
+		}
 	}
 }
 

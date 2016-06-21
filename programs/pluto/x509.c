@@ -675,7 +675,6 @@ static void gntoid(struct id *id, const generalName_t *gn)
 				"Warning: gntoid() failed to initaddr(): %s",
 				ugh);
 		}
-
 	}
 	break;
 	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */

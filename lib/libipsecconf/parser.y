@@ -104,7 +104,6 @@ section_or_include:
 		parser_comments = &parser_cfg->comments;
 		if (yydebug)
 			fprintf(stderr, "\nconfig setup read\n");
-
 	} kw_sections
 	| CONN STRING EOL {
 		struct section_list *section = malloc(sizeof(struct section_list));
