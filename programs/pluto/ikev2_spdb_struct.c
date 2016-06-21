@@ -1488,20 +1488,15 @@ static void append_transform(struct ikev2_proposal *proposal,
 #define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, .valid = TRUE, }
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, .valid = TRUE, }
-#define ENCR_3DES { .id = IKEv2_ENCR_3DES, .valid = TRUE, }
 
 #define PRF_SHA2_512 { .id = IKEv2_PRF_HMAC_SHA2_512, .valid = TRUE, }
 #define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, .valid = TRUE, }
-#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, .valid = TRUE, }
 #define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, .valid = TRUE, }
-#define PRF_MD5 { .id = IKEv2_PRF_HMAC_MD5, .valid = TRUE, }
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, .valid = TRUE, }
 #define AUTH_SHA2_512_256 { .id = IKEv2_AUTH_HMAC_SHA2_512_256, .valid = TRUE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, .valid = TRUE, }
-#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, .valid = TRUE, }
 #define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, .valid = TRUE, }
-#define AUTH_MD5_96 { .id = IKEv2_AUTH_HMAC_MD5_96, .valid = TRUE, }
 
 #define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, .valid = TRUE, }
 #define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, .valid = TRUE, }
