@@ -1070,7 +1070,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		/* Process all NOTIFY payloads */
 		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch(ntfy->payload.v2n.isan_type) {
+			switch (ntfy->payload.v2n.isan_type) {
 			case v2N_NAT_DETECTION_SOURCE_IP:
 			case v2N_NAT_DETECTION_DESTINATION_IP:
 			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:

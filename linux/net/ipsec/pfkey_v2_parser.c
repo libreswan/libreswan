@@ -2271,7 +2271,6 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 
 	if (extr->ips->ips_flags & SADB_X_SAFLAGS_INFLOW ||
 	    extr->ips->ips_flags & SADB_X_SAFLAGS_POLICYONLY) {
-/*	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) */
 		struct ipsec_sa *ipsp, *ipsq;
 		char sa[SATOT_BUF];
 		size_t sa_len;

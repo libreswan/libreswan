@@ -59,7 +59,8 @@ int main(int argc, char *argv[])
 	//[[conn connName] getCString:cConnName maxLength:20 encoding:NSMacOSRomanStringEncoding];
 
 	new_conn = alloc_add_conn(cfg, "test", &perr);
-	if(new_conn == NULL) printf("%s", perr);
+	if (new_conn == NULL)
+		printf("%s", perr);
 
 	cfg->setup.options_set[KBF_NATTRAVERSAL] = 1;
 	cfg->setup.options[KBF_NATTRAVERSAL] = 0;
