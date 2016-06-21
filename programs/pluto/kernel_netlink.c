@@ -880,7 +880,12 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				struct xfrm_mark xfrm_mark;
 				struct rtattr* mark_attr;
 
-				xfrm_mark.v = sa_mark.val;
+				if (sa_mark.val == 666) {
+					// HACK grab spi as mark
+					xfrm_mark.v = (uint32_t)new_spi;
+				} else {
+					xfrm_mark.v = sa_mark.val;
+				}
 				xfrm_mark.m = sa_mark.mask;
 				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 				mark_attr->rta_type = XFRMA_MARK;
@@ -2436,7 +2441,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	 * if netlink  specific changes are needed.
 	 */
 	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
-	.overlap_supported = FALSE,
+	.overlap_supported = TRUE,
 	.sha2_truncbug_support = TRUE,
 };
 #endif	/* linux && NETKEY_SUPPORT */
