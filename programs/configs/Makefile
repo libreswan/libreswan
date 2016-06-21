@@ -12,7 +12,7 @@
 # for more details.
 
 # the man page source is generated
-MANPAGES += $(builddir)/ipsec.conf.5
+MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
 
 #different mode
@@ -35,10 +35,7 @@ endif
 
 xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
 
-$(builddir)/ipsec.conf.5.xml: $(xmlsources) | $(builddir)
-	cat $(xmlsources) > $@
-
-local-clean-manpages: local-clean-xml-manpages
-.PHONY: clean-local-xml-manpages
-local-clean-xml-manpages:
-	rm -f $(builddir)/ipsec.conf.5.xml
+# Custom transform rule since man page is generated.
+$(builddir)/ipsec.conf.5.tmp: $(xmlsources) | $(builddir)
+	cat $(xmlsources) | $(TRANSFORM_VARIABLES) > $@.tmp
+	mv $@.tmp $@
