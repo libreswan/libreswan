@@ -3,8 +3,8 @@
 # prefix command to run stuff from our programs directory
 #
 # Copyright (C) 1998-2002  Henry Spencer.
-# Copyright (C) 2013-2015  Tuomo Soini <tis@foobar.fi>
-# Copyright (C) 2013-2014  Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2013-2016  Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2016  Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
