@@ -15,28 +15,29 @@ This has been decoupled from /etc/ipsec.d/policies because we expect
 expect the NSS database to be controlled programmatically by libreswan
 (e.g. "ipsec import", "ipsec rsasigkey", "ipsec rsanewhostkey", etc).
 
-The documentation changes, at least, are not applicable upstream
-because they hardcode the preferred debian path.  A better fix for
-upstream would be to parameterize/substitute the documentation
-sources (maybe xml.in would work, i haven't tried it yet)
+The documentation changes in README.nss, at least, are not applicable
+upstream because they hardcode the preferred debian path.
+
+Could we parameterize README.nss as well?  If it's intended as
+user/admin documentation, that should be OK.  If it's intended as
+developer documentation, it would make it hard to read.
 ---
  README.nss                                   | 17 ++++++++---------
  programs/_import_crl/ipsec__import_crl.8.xml |  2 +-
  programs/auto/ipsec_auto.8.xml               |  4 ++--
- programs/configs/d.ipsec.conf/ipsecdir.xml   | 14 ++++----------
+ programs/configs/d.ipsec.conf/ipsecdir.xml   | 16 +++++-----------
  programs/ipsec/ipsec_import.8.xml            |  2 +-
  programs/ipsec/ipsec_initnss.8.xml           |  3 ++-
  programs/look/look.in                        |  4 ++--
- programs/newhostkey/ipsec_newhostkey.8.xml   |  7 ++++---
  programs/pluto/ipsec_pluto.8.xml             |  2 +-
  programs/pluto/plutomain.c                   |  3 ++-
  programs/rsasigkey/ipsec_rsasigkey.8.xml     |  6 +++---
  programs/rsasigkey/rsasigkey.c               |  4 ++--
  programs/showhostkey/showhostkey.c           |  2 +-
- 13 files changed, 33 insertions(+), 37 deletions(-)
+ 12 files changed, 30 insertions(+), 35 deletions(-)
 
 diff --git a/README.nss b/README.nss
-index d1cef45..d018eec 100644
+index d1cef45..b815f26 100644
 --- a/README.nss
 +++ b/README.nss
 @@ -62,7 +62,7 @@ using:
@@ -44,7 +45,7 @@ index d1cef45..d018eec 100644
  	ipsec initnss
  
 -By default the NSS db is created in /etc/ipsec.d/
-+By default the NSS db is created in /var/lib/libreswan/nss
++By default the NSS db is created in /var/lib/ipsec/nss
  
  When creating a database, you are prompted for a password. The default
  libreswan package install for RHEL/Fedora/CentOS uses an empty password.
@@ -53,7 +54,7 @@ index d1cef45..d018eec 100644
  To change the empty password, run:
  
 -	certutil -W -d sql:/etc/ipsec.d
-+	certutil -W -d sql:/var/lib/libreswan/nss
++	certutil -W -d sql:/var/lib/ipsec/nss
  
  Enter return for the "old password", then enter your new password.
  
@@ -72,7 +73,7 @@ index d1cef45..d018eec 100644
  
  	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
 -		-t "CT,," -x -d sql:/etc/ipsec.d
-+		-t "CT,," -x -d sql:/var/lib/libreswan/nss
++		-t "CT,," -x -d sql:/var/lib/ipsec/nss
  
  It creates a certificate with RSA keys (-k rsa) with the nick name
  "ExampleCA", and with common name "Example CA Inc". The option
@@ -81,7 +82,7 @@ index d1cef45..d018eec 100644
  
  	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
 -		-w 12 -t "u,u,u" -d sql:/etc/ipsec.d
-+		-w 12 -t "u,u,u" -d sql:/var/lib/libreswan/nss
++		-w 12 -t "u,u,u" -d sql:/var/lib/ipsec/nss
  
  It creates a user cert with nick name "user1" with attributes
  "u,u,u" signed by the CA cert "ExampleCA".
@@ -90,7 +91,7 @@ index d1cef45..d018eec 100644
  	ipsec import certkey.p12
  
 -NOTE: the ipsec command uses "pk12util -i certkey.p12 -d /etc/ipsec.d"
-+NOTE: the ipsec command uses "pk12util -i certkey.p12 -d /var/lib/libreswan/nss"
++NOTE: the ipsec command uses "pk12util -i certkey.p12 -d /var/lib/ipsec/nss"
  
  If you did not pick a name using the -name option, you can use
  certutil -L -d /etc/ipsec.d to figure out the name NSS picked durnig
@@ -99,18 +100,18 @@ index d1cef45..d018eec 100644
  To export the CA certificate:
  
 -	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
-+	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /var/lib/libreswan/nss
++	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /var/lib/ipsec/nss
  
  Copy the file "cacert1.p12" to the new machine and import it using:
  
  	ipsec import cacert1.p12
 -	certutil -M -n cacert1 -t "CT,," -d sql:/etc/ipsec.d
-+	certutil -M -n cacert1 -t "CT,," -d sql:/var/lib/libreswan/nss
++	certutil -M -n cacert1 -t "CT,," -d sql:/var/lib/ipsec/nss
  
  Example connection for ipsec.conf:
  
 diff --git a/programs/_import_crl/ipsec__import_crl.8.xml b/programs/_import_crl/ipsec__import_crl.8.xml
-index 6b250db..8e9e0a9 100644
+index 6b250db..0eb4eb5 100644
 --- a/programs/_import_crl/ipsec__import_crl.8.xml
 +++ b/programs/_import_crl/ipsec__import_crl.8.xml
 @@ -23,7 +23,7 @@
@@ -118,12 +119,12 @@ index 6b250db..8e9e0a9 100644
  is spawned by
  <emphasis remap='B'>pluto</emphasis>
 -in order to add or update a CRL in the NSS database (default: /etc/ipsec.d)</para>
-+in order to add or update a CRL in the NSS database (default: /var/lib/libreswan/nss)</para>
++in order to add or update a CRL in the NSS database (default: @FINALNSSDIR@)</para>
  </refsect1>
  
  <refsect1 id='see_also'><title>SEE ALSO</title>
 diff --git a/programs/auto/ipsec_auto.8.xml b/programs/auto/ipsec_auto.8.xml
-index e6ec853..10c9db3 100644
+index e6ec853..4edd6eb 100644
 --- a/programs/auto/ipsec_auto.8.xml
 +++ b/programs/auto/ipsec_auto.8.xml
 @@ -252,7 +252,7 @@ but that may change.)</para>
@@ -131,7 +132,7 @@ index e6ec853..10c9db3 100644
  <para>      The  <option>--listcerts</option>  operation  lists  all  X.509 certificates
         loaded  locally  using  the  rightcert  and  leftcert   parameters   in
 -       ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d /etc/ipsec.d -L</option>.
-+       ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d /var/lib/libreswan/nss -L</option>.
++       ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d @FINALNSSDIR@ -L</option>.
  </para>
  <para>      The  <option>--checkpubkeys</option>  operation  lists  all loaded X.509 certificates
         which are about to expire or have been expired.
@@ -140,15 +141,21 @@ index e6ec853..10c9db3 100644
  <literallayout remap='.nf'>
  /etc/ipsec.conf			default IPSEC configuration file
 -/etc/ipsec.d/			X.509 and Opportunistic Encryption files
-+/var/lib/libreswan/nss		X.509 and Opportunistic Encryption files
++@FINALNSSDIR@			X.509 and Opportunistic Encryption files
  /var/run/pluto/pluto.ctl	Pluto command socket
  </literallayout>
  </para>
 diff --git a/programs/configs/d.ipsec.conf/ipsecdir.xml b/programs/configs/d.ipsec.conf/ipsecdir.xml
-index 954a088..294f424 100644
+index 954a088..2ce6059 100644
 --- a/programs/configs/d.ipsec.conf/ipsecdir.xml
 +++ b/programs/configs/d.ipsec.conf/ipsecdir.xml
-@@ -23,16 +23,6 @@
+@@ -18,21 +18,11 @@
+         <term>nsspassword</term>
+         <listitem><para>
+           (optional) passwords needed to unlock the NSS database
+-          in /var/lib/libreswan/nss (this file should not be
++          in @FINALNSSDIR@ (this file should not be
+           world-readable).  See README.nss for more information.
          </para></listitem>
        </varlistentry>
        <varlistentry>
@@ -176,7 +183,7 @@ index 954a088..294f424 100644
    </listitem>
    </varlistentry>
 diff --git a/programs/ipsec/ipsec_import.8.xml b/programs/ipsec/ipsec_import.8.xml
-index 7944a36..f710303 100644
+index 7944a36..80b74cf 100644
 --- a/programs/ipsec/ipsec_import.8.xml
 +++ b/programs/ipsec/ipsec_import.8.xml
 @@ -27,7 +27,7 @@
@@ -184,12 +191,12 @@ index 7944a36..f710303 100644
  <para><emphasis remap='I'>ipsec import</emphasis>
  Import PKCS#12 files into the IPsec NSS database located at the
 -ipsec data directory (default: /etc/ipsec.d/)
-+ipsec NSS data directory (default: /var/lib/libreswan/nss)
++ipsec NSS data directory (default: @FINALNSSDIR@)
  </para>
  </refsect1>
  
 diff --git a/programs/ipsec/ipsec_initnss.8.xml b/programs/ipsec/ipsec_initnss.8.xml
-index f88a3d7..1c3b85d 100644
+index f88a3d7..7a563e0 100644
 --- a/programs/ipsec/ipsec_initnss.8.xml
 +++ b/programs/ipsec/ipsec_initnss.8.xml
 @@ -29,7 +29,8 @@
@@ -198,7 +205,7 @@ index f88a3d7..1c3b85d 100644
  return an error. To remove an existing IPsec NSS database, remove all the
 -*.db files and pkcs11.txt from the NSS data directory (default: /etc/ipsec.d/)
 +*.db files and pkcs11.txt from the NSS data directory
-+(default: /var/lib/libreswan/nss).
++(default: @FINALNSSDIR@).
  </para>
  </refsect1>
  
@@ -221,26 +228,8 @@ index 77d7c04..231b839 100755
      echo NSS_CERTIFICATES
      certutil -L -d @IPSEC_NSSDIR@ | head -4
      certutil -L -d @IPSEC_NSSDIR@ | \
-diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
-index 87ac766..1c0f37d 100644
---- a/programs/newhostkey/ipsec_newhostkey.8.xml
-+++ b/programs/newhostkey/ipsec_newhostkey.8.xml
-@@ -81,9 +81,10 @@
-       <varlistentry>
- 	<term><option>--configdir</option>&nbsp;<replaceable>nssdbdir</replaceable></term>
- 	<listitem>
--	  <para>The <option>--configdir</option> option specifies the NSS
--	  configuration directory where the certificate key, and
--	  modsec databases reside (default <filename>@FINALNSSDIR@</filename>.</para>
-+	  <para>The <option>--configdir</option> option specifies the
-+	  NSS configuration directory where the certificate key, and
-+	  modsec databases reside (default:
-+	  <filename>@FINALNSSDIR@</filename>).</para>
- 	</listitem>
-       </varlistentry>
- 
 diff --git a/programs/pluto/ipsec_pluto.8.xml b/programs/pluto/ipsec_pluto.8.xml
-index 56e937c..30b1f95 100644
+index 56e937c..2fb0fc2 100644
 --- a/programs/pluto/ipsec_pluto.8.xml
 +++ b/programs/pluto/ipsec_pluto.8.xml
 @@ -1065,7 +1065,7 @@
@@ -248,12 +237,12 @@ index 56e937c..30b1f95 100644
        <para>Pluto supports X.509 Certificates. All certificate handling is done using
        the NSS library and all certificate material is stored in an NSS database in
 -      /etc/ipsec.d or another directory as specified by <option>--ipsecdir</option>.</para>
-+      /var/lib/libreswan/nss.  This is not currently overridable.</para>
++      @FINALNSSDIR@.  This is not currently overridable.</para>
  
        <para>Pluto may core dump. It will normally do so into the current
        working directory. You can specify the --coredir option for pluto, or
 diff --git a/programs/pluto/plutomain.c b/programs/pluto/plutomain.c
-index f83648d..8a26e77 100644
+index f83648d..4e477a4 100644
 --- a/programs/pluto/plutomain.c
 +++ b/programs/pluto/plutomain.c
 @@ -1691,11 +1691,12 @@ void show_setup_plutomain()
@@ -266,12 +255,12 @@ index f83648d..8a26e77 100644
  		oco->conffile,
  		oco->secretsfile,
  		oco->confddir,
-+		oco->nssdir,
++		oco->nssdb,
  		coredir,
  		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
  
 diff --git a/programs/rsasigkey/ipsec_rsasigkey.8.xml b/programs/rsasigkey/ipsec_rsasigkey.8.xml
-index 6e49a76..ec0742a 100644
+index 6e49a76..1194bef 100644
 --- a/programs/rsasigkey/ipsec_rsasigkey.8.xml
 +++ b/programs/rsasigkey/ipsec_rsasigkey.8.xml
 @@ -72,7 +72,7 @@ prevented when the system is running in FIPS mode.</para>
@@ -279,7 +268,7 @@ index 6e49a76..ec0742a 100644
  <para>The <option>--configdir</option> option specifies the nss configuration directory to use.
  This is the directory where the NSS certificate, key and security modules databases reside. The
 -default value is <filename>/etc/ipsec.d</filename>.</para>
-+default value is <filename>sql:/var/lib/libreswan/nss</filename>.</para>
++default value is <filename>@FINALNSSDIR@</filename>.</para>
  
  <para>The <option>--password</option> option specifies the nss cryptographic module authentication
  password if the NSS module has been configured to require it.  A password is required by hardware
@@ -289,7 +278,7 @@ index 6e49a76..ec0742a 100644
  entropy. In such a situation, consider generating the RSA key on another machine,
 -and copying <filename>ipsec.secrets</filename> and the <filename>ipsec.d/*db</filename>
 -files to the embedded platform. Note that NSS embeds the full path in the DB files, so
-+and copying <filename>ipsec.secrets</filename> and the <filename>/var/lib/libreswan/nss</filename>
++and copying <filename>ipsec.secrets</filename> and the <filename>@FINALNSSDIR@</filename>
 +directory tree to the embedded platform. Note that NSS embeds the full path in the DB files, so
  the path on proxy machine must be identical to the path on the destination machine.
  </para>
