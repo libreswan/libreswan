@@ -229,6 +229,7 @@ distclean: moduleclean module24clean module26clean clean-kvm-keys
 	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf OBJ.* $(OBJDIR)
+	rm -rf BACKUP
 
 # proxies for major kernel make operations
 
