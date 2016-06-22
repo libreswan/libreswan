@@ -333,8 +333,8 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
 000  
 road #
  echo done
@@ -347,8 +347,8 @@ PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP,  add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
 000  
 road #
  iptables -t nat -L -n

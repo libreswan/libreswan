@@ -50,7 +50,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ipsec whack --trafficstatus
 000  
-006 #2: "northnet-eastnet-nat", type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+006 #2: "northnet-eastnet-nat", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 000  
 north #
  echo done

@@ -20,7 +20,7 @@ initdone
 east #
  ipsec whack --trafficstatus
 000  
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP,  add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
 000  
 east #
  iptables -t nat -L -n

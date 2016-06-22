@@ -72,7 +72,7 @@ west #
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "tfc", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 000  
 west #
  echo done
@@ -80,7 +80,7 @@ done
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "tfc", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 000  
 west #
  # ESP should not show TFC

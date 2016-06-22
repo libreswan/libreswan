@@ -13,7 +13,7 @@ initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 000  
-006 #2: "westnet-eastnet-ikev1", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #2: "westnet-eastnet-ikev1", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 000  
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi

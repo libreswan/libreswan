@@ -1718,7 +1718,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	{
 		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
-				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
+				sizeof(traffic_buf) - 1, ", type=%s, add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;

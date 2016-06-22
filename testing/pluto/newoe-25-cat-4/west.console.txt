@@ -38,7 +38,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP,  add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
+006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL'
 000  
 west #
  iptables -t nat -L -n
