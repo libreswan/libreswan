@@ -106,16 +106,17 @@ bool orient(struct connection *c)
 					     sr->this.host_port ==
 					     pluto_port)) {
 						if (oriented(*c)) {
-							if (c->interface->
-							    ip_dev ==
-							    p->ip_dev) {
+							if (c->interface->ip_dev == p->ip_dev) {
+								char cib[CONN_INST_BUF];
 								loglog(RC_LOG_SERIOUS,
-									"both sides of \"%s\" are our interface %s!",
-									c->name,
+									"both sides of \"%s\"%s are our interface %s!",
+									c->name, fmt_conn_instance(c, cib),
 									p->ip_dev->id_rname);
 							} else {
-								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\" (%s, %s)",
-									c->name, c->interface->ip_dev->id_rname,
+								char cib[CONN_INST_BUF];
+								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
+									c->name, fmt_conn_instance(c, cib),
+									c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
 							terminate_connection(c->name);
@@ -1380,33 +1381,43 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	if (!isanyaddr(&c->spd.that.host_addr)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" has address",
-			    c->name));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s has address",
+				c->name, fmt_conn_instance(c, cib));
+		});
 		return;
 	}
 
 	if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
-			    c->name));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s with wildcard not started",
+				c->name, fmt_conn_instance(c, cib));
+		});
 		return;
 	}
 
 	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
-			    c->name, c->dnshostname, e));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s lookup of \"%s\" failed: %s",
+				c->name, fmt_conn_instance(c, cib),
+				c->dnshostname, e);
+		});
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
-			    c->name, c->dnshostname));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s still no address for \"%s\"",
+				c->name, fmt_conn_instance(c, cib),
+				c->dnshostname);
+		});
 		return;
 	}
 
@@ -1496,31 +1507,38 @@ void connection_check_phase2(void)
 		cnext = c->ac_next;
 
 		if (NEVER_NEGOTIATE(c->policy)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("pending review: connection \"%s\" has no negotiated policy, skipped",
-				    c->name));
+			DBG(DBG_CONTROL, {
+				char cib[CONN_INST_BUF];
+				DBG_log("pending review: connection \"%s\"%s has no negotiated policy, skipped",
+					c->name, fmt_conn_instance(c, cib));
+			});
 			continue;
 		}
 
 		if (!(c->policy & POLICY_UP)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("pending review: connection \"%s\" was not up, skipped",
-				    c->name));
+			char cib[CONN_INST_BUF];
+			DBG(DBG_CONTROL, {
+				DBG_log("pending review: connection \"%s\"%s was not up, skipped",
+					c->name, fmt_conn_instance(c, cib));
+			});
 			continue;
 		}
 
-		DBG(DBG_CONTROL,
-		    DBG_log("pending review: connection \"%s\" checked",
-			    c->name));
+		DBG(DBG_CONTROL, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending review: connection \"%s\"%s checked",
+				c->name, fmt_conn_instance(c, cib));
+		});
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 
 			libreswan_log(
-				"pending Quick Mode with %s \"%s\" took too long -- replacing phase 1",
+				"pending Quick Mode with %s \"%s\"%s took too long -- replacing phase 1",
 				ipstr(&c->spd.that.host_addr, &b),
-				c->name);
+				c->name, fmt_conn_instance(c, cib));
 
 			p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |

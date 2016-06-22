@@ -328,9 +328,11 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 
 	{
 		ipstr_buf b;
+		char cib[CONN_INST_BUF];
 
-		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\" from %s",
-			st->st_serialno, st->st_connection->name,
+		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
+			st->st_serialno,
+			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
 			ipstr(&c->spd.that.host_addr, &b));
 	}
 

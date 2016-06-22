@@ -203,10 +203,13 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	deltatime_t nextdelay;
 	u_int32_t seqno;
 
-	DBG(DBG_DPD,
-	    DBG_log("DPD: processing for state #%lu (\"%s\")",
-		    st->st_serialno,
-		    st->st_connection->name));
+	DBG(DBG_DPD, {
+		char cib[CONN_INST_BUF];
+		DBG_log("DPD: processing for state #%lu (\"%s\"%s)",
+			st->st_serialno,
+			st->st_connection->name,
+			fmt_conn_instance(st->st_connection, cib));
+	});
 
 	/* If no DPD, then get out of here */
 	if (!st->hidden_variables.st_peer_supports_dpd) {
@@ -441,12 +444,15 @@ stf_status dpd_inI_outR(struct state *p1st,
 		p1st->st_dpd_rdupcount = 0;
 	}
 
-	DBG(DBG_DPD,
-	    DBG_log("DPD: received R_U_THERE seq:%u monotime:%ld (state=#%lu name=\"%s\")",
-		    seqno,
-		    (long)nw.mono_secs,
-		    p1st->st_serialno,
-		    p1st->st_connection->name));
+	DBG(DBG_DPD, {
+		char cib[CONN_INST_BUF];
+		DBG_log("DPD: received R_U_THERE seq:%u monotime:%ld (state=#%lu name=\"%s\"%s)",
+			seqno,
+			(long)nw.mono_secs,
+			p1st->st_serialno,
+			p1st->st_connection->name,
+			fmt_conn_instance(p1st->st_connection, cib));
+	});
 
 	p1st->st_dpd_peerseqno = seqno;
 

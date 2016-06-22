@@ -1797,10 +1797,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
 		     p == NULL) {
 			p = c;
-			DBG(DBG_CONTROL,
-			    DBG_log("using (something - hopefully the IP we or they are"
-				    " NAT'ed to) for transport mode connection \"%s\"",
-				    p->name));
+			DBG(DBG_CONTROL, {
+				char cib[CONN_INST_BUF];
+				DBG_log("using (something - hopefully the IP we or they are NAT'ed to) for transport mode connection \"%s\"%s",
+				    p->name, fmt_conn_instance(p, cib));
+			});
 		}
 
 		if (p == NULL) {
@@ -1931,9 +1932,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 				set_debugging(
 					cur_debugging | p->extra_debugging);
-				DBG(DBG_CONTROL,
-				    DBG_log("using connection \"%s\"",
-					    p->name));
+				DBG(DBG_CONTROL, {
+					char cib[CONN_INST_BUF];
+					DBG_log("using connection \"%s\"%s",
+						p->name, fmt_conn_instance(p, cib));
+				});
 				set_debugging(old_cur_debugging);
 			}
 			c = p;

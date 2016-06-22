@@ -265,10 +265,11 @@ void delete_connection(struct connection *c, bool relations)
 		ipstr_buf b;
 
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			char cib[CONN_INST_BUF];
+
 			libreswan_log(
-				"deleting connection \"%s\" instance with peer %s "
-				"{isakmp=#%lu/ipsec=#%lu}",
-				c->name,
+				"deleting connection \"%s\"%s instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
+				c->name, fmt_conn_instance(c, cib),
 				ipstr(&c->spd.that.host_addr, &b),
 				c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
@@ -1084,12 +1085,11 @@ static bool check_connection_end(const struct whack_end *this,
 				if (!NEVER_NEGOTIATE(c->policy) &&
 					((c->policy ^ wm->policy) &
 						(POLICY_PSK | POLICY_RSASIG))) {
+					char cib[CONN_INST_BUF];
+
 					loglog(RC_CLASH,
-						"authentication method "
-						"disagrees with \"%s\", "
-						"which is also for an "
-						"unspecified peer",
-						c->name);
+						"authentication method disagrees with \"%s\"%s, which is also for an unspecified peer",
+						c->name, fmt_conn_instance(c, cib));
 					return FALSE;
 				}
 #endif
@@ -1968,10 +1968,12 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 
 	DBG(DBG_CONTROL, {
 			char topo[CONN_BUF_LEN];
+			char cib[CONN_INST_BUF];
 
 			(void) format_connection(topo, sizeof(topo), d,
 						&d->spd);
-			DBG_log("instantiated \"%s\": %s", d->name, topo);
+			DBG_log("instantiated \"%s\"%s: %s",
+				d->name, fmt_conn_instance(d, cib), topo);
 		});
 	return d;
 }
@@ -1994,9 +1996,8 @@ struct connection *oppo_instantiate(struct connection *c,
 			enum_name(&routing_story, d->spd.routing)));
 	DBG(DBG_CONTROL, {
 			char instbuf[512];
-			DBG_log("new oppo instance: %s",
-				(format_connection(instbuf, sizeof(instbuf), d,
-						&d->spd), instbuf));
+			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
+			DBG_log("new oppo instance: %s", instbuf);
 		});
 
 	passert(d->spd.spd_next == NULL);
@@ -2663,10 +2664,12 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		}
 		if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 
 			DBG(DBG_CONTROL, DBG_log(
-				"initial parent SA message received on %s:%u for \"%s\" with kind=%s dropped",
-				ipstr(me, &b), pluto_port, c->name,
+				"initial parent SA message received on %s:%u for \"%s\"%s with kind=%s dropped",
+				ipstr(me, &b), pluto_port,
+				c->name, fmt_conn_instance(c, cib),
 				enum_name(&connection_kind_names, c->kind)));
 			*cp = NULL;
 			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
@@ -3167,9 +3170,9 @@ static bool is_virtual_net_used(struct connection *c,
 				idtoa(&d->spd.that.id, buf, sizeof(buf));
 
 				libreswan_log(
-					"Virtual IP %s overlaps with connection %s\"%s\" (kind=%s) '%s'",
-					client, d->name,
-					fmt_conn_instance(d, cbuf),
+					"Virtual IP %s overlaps with connection \"%s\"%s (kind=%s) '%s'",
+					client,
+					d->name, fmt_conn_instance(d, cbuf),
 					enum_name(&connection_kind_names,
 						d->kind),
 					buf);

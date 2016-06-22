@@ -861,9 +861,10 @@ static enum routability could_route(struct connection *c)
 	 * This is as it should be -- it will arise during rekeying.
 	 */
 	if (ro != NULL && !routes_agree(ro, c)) {
+		char cib[CONN_INST_BUF];
 		loglog(RC_LOG_SERIOUS,
-		       "cannot route -- route already in use for \"%s\"",
-		       ro->name);
+		       "cannot route -- route already in use for \"%s\"%s",
+		       ro->name, fmt_conn_instance(ro, cib));
 		/* We ignore this if the stack supports overlapping, and this
 		 * connection was marked that overlapping is OK.  Below we will
 		 * check the other eroute, ero.
@@ -2691,9 +2692,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 			}
 
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 			loglog(RC_LOG_SERIOUS,
-			       "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route",
-			       o->name, ipstr(&o->spd.that.host_addr, &b));
+			       "route to peer's client conflicts with \"%s\"%s %s; releasing old connection to free the route",
+			       o->name, fmt_conn_instance(o, cib),
+			       ipstr(&o->spd.that.host_addr, &b));
 			release_connection(o, FALSE);
 		}
 	}

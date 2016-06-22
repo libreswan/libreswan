@@ -683,13 +683,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 
-			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
-				"received on %s:%u "
-				"but \"%s\" forbids connection",
-				ipstr(&md->iface->ip_addr, &b),
-				pluto_port,
-				c->name);
+			loglog(RC_LOG_SERIOUS,
+				"initial Main Mode message received on %s:%u but \"%s\"%s forbids connection",
+				ipstr(&md->iface->ip_addr, &b), pluto_port,
+				c->name, fmt_conn_instance(c, cib));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else {
@@ -700,9 +699,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 */
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("instantiating \"%s\" for initial "
+				char cib[CONN_INST_BUF];
+				DBG_log("instantiating \"%s\"%s for initial "
 					"Main Mode message received on %s:%u",
-					c->name,
+					c->name, fmt_conn_instance(c, cib),
 					ipstr(&md->iface->ip_addr, &b),
 					pluto_port);
 			});

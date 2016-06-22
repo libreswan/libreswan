@@ -2578,15 +2578,19 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			DBG(DBG_CONTROL | DBG_CRYPT, {
 				ipstr_buf b;
-				DBG_log("policy for \"%s\" requires encryption but ESP not in Proposal from %s",
-					c->name, ipstr(&c->spd.that.host_addr, &b));
+				char cib[CONN_INST_BUF];
+				DBG_log("policy for \"%s\"%s requires encryption but ESP not in Proposal from %s",
+					c->name, fmt_conn_instance(c, cib),
+					ipstr(&c->spd.that.host_addr, &b));
 			});
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
 			DBG(DBG_CONTROL | DBG_CRYPT, {
 				ipstr_buf b;
-				DBG_log("policy for \"%s\" requires authentication but none in Proposal from %s",
-					c->name, ipstr(&c->spd.that.host_addr, &b));
+				char cib[CONN_INST_BUF];
+				DBG_log("policy for \"%s\"%s requires authentication but none in Proposal from %s",
+					c->name, fmt_conn_instance(c, cib),
+					ipstr(&c->spd.that.host_addr, &b));
 			});
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
@@ -2597,11 +2601,12 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			if (!(st->st_policy & POLICY_COMPRESS)) {
 				ipstr_buf b;
+				char cib[CONN_INST_BUF];
 
 				libreswan_log(
-					"compression proposed by %s, but policy for \"%s\" forbids it",
+					"compression proposed by %s, but policy for \"%s\"%s forbids it",
 					ipstr(&c->spd.that.host_addr, &b),
-					c->name);
+					c->name, fmt_conn_instance(c, cib));
 				return BAD_PROPOSAL_SYNTAX;
 			}
 
