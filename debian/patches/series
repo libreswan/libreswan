@@ -1,6 +1,4 @@
 0001-do-not-use-git-version.patch
 0002-debian-pam.d-pluto.patch
-0003-avoid-another-flex-gcc-warning.patch
 0004-ipsec-newhostkey-default-to-etc-ipsec.d-newhostkey-g.patch
-0005-section-intro-line-needs-whitespace-between-type-and.patch
 0006-fix-variant-default-NSS-dir-documentation-and-code.patch

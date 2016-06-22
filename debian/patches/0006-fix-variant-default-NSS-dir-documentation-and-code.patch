@@ -20,22 +20,20 @@ because they hardcode the preferred debian path.  A better fix for
 upstream would be to parameterize/substitute the documentation
 sources (maybe xml.in would work, i haven't tried it yet)
 ---
- README.nss                                      | 17 ++++---
- lib/libswan/lswconf.c                           |  1 -
- programs/_import_crl/ipsec__import_crl.8.xml    |  2 +-
- programs/auto/ipsec_auto.8.xml                  |  4 +-
- programs/configs/d.ipsec.conf/implicitconns.xml |  4 +-
- programs/configs/d.ipsec.conf/ipsecdir.xml      | 59 ++++++++++++++++++++++---
- programs/ipsec/ipsec_import.8.xml               |  4 +-
- programs/ipsec/ipsec_initnss.8.xml              |  3 +-
- programs/look/look.in                           |  4 +-
- programs/newhostkey/ipsec_newhostkey.8.xml      |  9 ++--
- programs/pluto/ipsec_pluto.8.xml                |  2 +-
- programs/pluto/plutomain.c                      |  3 +-
- programs/rsasigkey/ipsec_rsasigkey.8.xml        |  6 +--
- programs/rsasigkey/rsasigkey.c                  |  6 ++-
- programs/showhostkey/showhostkey.c              |  4 +-
- 15 files changed, 91 insertions(+), 37 deletions(-)
+ README.nss                                   | 17 ++++++++---------
+ programs/_import_crl/ipsec__import_crl.8.xml |  2 +-
+ programs/auto/ipsec_auto.8.xml               |  4 ++--
+ programs/configs/d.ipsec.conf/ipsecdir.xml   | 14 ++++----------
+ programs/ipsec/ipsec_import.8.xml            |  2 +-
+ programs/ipsec/ipsec_initnss.8.xml           |  3 ++-
+ programs/look/look.in                        |  4 ++--
+ programs/newhostkey/ipsec_newhostkey.8.xml   |  7 ++++---
+ programs/pluto/ipsec_pluto.8.xml             |  2 +-
+ programs/pluto/plutomain.c                   |  3 ++-
+ programs/rsasigkey/ipsec_rsasigkey.8.xml     |  6 +++---
+ programs/rsasigkey/rsasigkey.c               |  4 ++--
+ programs/showhostkey/showhostkey.c           |  2 +-
+ 13 files changed, 33 insertions(+), 37 deletions(-)
 
 diff --git a/README.nss b/README.nss
 index d1cef45..d018eec 100644
@@ -111,18 +109,6 @@ index d1cef45..d018eec 100644
  
  Example connection for ipsec.conf:
  
-diff --git a/lib/libswan/lswconf.c b/lib/libswan/lswconf.c
-index 1adf099..acdeda9 100644
---- a/lib/libswan/lswconf.c
-+++ b/lib/libswan/lswconf.c
-@@ -124,7 +124,6 @@ void lsw_init_ipsecdir(const char *ipsec_dir)
- 	if (!setup)
- 		lsw_conf_setdefault();
- 	global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
--	global_oco.nssdir = clone_str(ipsec_dir, "override nssdir");
- 	lsw_conf_calculate(&global_oco);
- 	setup = TRUE;
- 
 diff --git a/programs/_import_crl/ipsec__import_crl.8.xml b/programs/_import_crl/ipsec__import_crl.8.xml
 index 6b250db..8e9e0a9 100644
 --- a/programs/_import_crl/ipsec__import_crl.8.xml
@@ -137,7 +123,7 @@ index 6b250db..8e9e0a9 100644
  
  <refsect1 id='see_also'><title>SEE ALSO</title>
 diff --git a/programs/auto/ipsec_auto.8.xml b/programs/auto/ipsec_auto.8.xml
-index fb38f1e..0b2d8da 100644
+index e6ec853..10c9db3 100644
 --- a/programs/auto/ipsec_auto.8.xml
 +++ b/programs/auto/ipsec_auto.8.xml
 @@ -252,7 +252,7 @@ but that may change.)</para>
@@ -158,100 +144,39 @@ index fb38f1e..0b2d8da 100644
  /var/run/pluto/pluto.ctl	Pluto command socket
  </literallayout>
  </para>
-diff --git a/programs/configs/d.ipsec.conf/implicitconns.xml b/programs/configs/d.ipsec.conf/implicitconns.xml
-index ae349cb..bc36ab9 100644
---- a/programs/configs/d.ipsec.conf/implicitconns.xml
-+++ b/programs/configs/d.ipsec.conf/implicitconns.xml
-@@ -89,7 +89,7 @@ appropriate and reasonable to use <emphasis remap='B'>also=private-or-clear</emp
- 
- <refsect1 id='policy_group_files'><title>POLICY GROUP FILES</title>
- <para>The optional files under
--<filename>/etc/ipsec.d/policy</filename>,
-+<filename>/etc/ipsec.d/policies</filename>,
- including</para>
- <literallayout remap='.nf'>
- 
-@@ -130,7 +130,7 @@ resulting instances as normal connections.</para>
- <para>For example, given a suitable connection definition
- <emphasis remap='B'>private</emphasis>,
- and the file
--<filename>/etc/ipsec.d/policy/private</filename>
-+<filename>/etc/ipsec.d/policies/private</filename>
- with an entry 192.0.2.3,
- the system creates a connection instance
- <emphasis remap='B'>private#192.0.2.3.</emphasis>
 diff --git a/programs/configs/d.ipsec.conf/ipsecdir.xml b/programs/configs/d.ipsec.conf/ipsecdir.xml
-index d90ac88..658f3d5 100644
+index 954a088..294f424 100644
 --- a/programs/configs/d.ipsec.conf/ipsecdir.xml
 +++ b/programs/configs/d.ipsec.conf/ipsecdir.xml
-@@ -1,11 +1,60 @@
-   <varlistentry>
-   <term><emphasis remap='B'>ipsecdir</emphasis></term>
-   <listitem>
--<para>in what directory the X509, NSS and OE related files should be stored.
--The default value is <emphasis remap='I'>/etc/ipsec.d</emphasis>. When SELinux
--runs in enforced mode, changing this requires a similar change in the SELinux policy
--for the pluto daemon. Note that NSS generated db files contain their location within
--their files, so you cannot move this directory without re-creating the NSS files.
-+    <para>Specifies a directory for administrator-controlled
-+    configuration files and directories.  The default value is
-+    <emphasis remap='I'>/etc/ipsec.d</emphasis>.  It may contain
-+    the following files and directories:</para>
-+    <variablelist remap='IP'>
-+      <varlistentry>
-+        <term>passwd</term>
-+        <listitem><para>
-+          (optional) for XAUTH support if not using PAM (this file
-+          should not be world-readable). See README.XAUTH for more
-+          information.
-+        </para></listitem>
-+      </varlistentry>
-+      <varlistentry>
-+        <term>nsspassword</term>
-+        <listitem><para>
-+          (optional) passwords needed to unlock the NSS database
-+          in /var/lib/libreswan/nss (this file should not be
-+          world-readable).  See README.nss for more information.
-+        </para></listitem>
-+      </varlistentry>
-+      <varlistentry>
-+        <term>policies/</term>
-+        <listitem><para>
-+          a directory containing policy group configuration
-+          information.  See <emphasis remap='B'>POLICY GROUP
-+          FILES</emphasis> in this document for more information.
-+        </para></listitem>
-+      </varlistentry>
-+      <varlistentry>
-+        <term>cacerts/</term>
-+        <listitem><para>
-+          DEPRECATED: a directory to store trust anchors (root
-+          certificate authority certificates).  The preferred (and
-+          default) approach is to store CA certs in the NSS database
-+          instead.  See README.nss for more information.
-+        </para></listitem>
-+      </varlistentry>
-+      <varlistentry>
-+        <term>crls/</term>
-+        <listitem><para>
-+          DEPRECATED: a directory to store certificate revocation
-+          lists. The preferred (and default) approach is to store CRLs
-+          in the NSS database instead. See README.nss for more information. 
-+        </para></listitem>
-+      </varlistentry>
-+    </variablelist>
-+    <para>
-+When SELinux runs in enforced mode, changing this requires a similar
-+change in the SELinux policy for the pluto daemon.
-+</para>
+@@ -23,16 +23,6 @@
+         </para></listitem>
+       </varlistentry>
+       <varlistentry>
+-        <term>cert9.db, key4.db, pkcs11.txt, *.db</term>
+-        <listitem><para>
+-          These files constitute the NSS database, which includes
+-          private key material, X.509 certificates, CRLs, OCSP
+-          responses, and possibly other info.  They will be created
+-          and managed automatically by libreswan and should not be
+-          world-readable.  See README.nss for more information.
+-        </para></listitem>
+-      </varlistentry>
+-      <varlistentry>
+         <term>policies/</term>
+         <listitem><para>
+           a directory containing policy group configuration
+@@ -62,5 +52,9 @@
+ When SELinux runs in enforced mode, changing this requires a similar
+ change in the SELinux policy for the pluto daemon.
+ </para>
 +<para>
 +  On debian systems, the NSS database itself is not controlled by this
-+  value, and is instead located in /var/lib/libreswan/nss.
- </para>
++  value, and is instead located in @FINALNSSDIR@.
++</para>
    </listitem>
    </varlistentry>
 diff --git a/programs/ipsec/ipsec_import.8.xml b/programs/ipsec/ipsec_import.8.xml
-index 5204416..f710303 100644
+index 7944a36..f710303 100644
 --- a/programs/ipsec/ipsec_import.8.xml
 +++ b/programs/ipsec/ipsec_import.8.xml
 @@ -27,7 +27,7 @@
@@ -263,25 +188,16 @@ index 5204416..f710303 100644
  </para>
  </refsect1>
  
-@@ -37,7 +37,7 @@ ipsec data directory (default: /etc/ipsec.d/)
- 
- 
- <refsect1 id='bugs'><title>BUGS</title>
--<para>This still needs an option for using an ipsec.d directory at a no-default location</para>
-+<para>This still needs an option for using an NSS directory at a non-default location</para>
- </refsect1>
- </refentry>
- 
 diff --git a/programs/ipsec/ipsec_initnss.8.xml b/programs/ipsec/ipsec_initnss.8.xml
-index 292e923..81afc3a 100644
+index f88a3d7..1c3b85d 100644
 --- a/programs/ipsec/ipsec_initnss.8.xml
 +++ b/programs/ipsec/ipsec_initnss.8.xml
 @@ -29,7 +29,8 @@
  initialises the NSS database where all private keys for RSA and
  certificate keypairs are stored. If already initialised, it will
  return an error. To remove an existing IPsec NSS database, remove all the
--*.db files from the ipsec data directory (default: /etc/ipsec.d/)
-+*.db files and pkcs11.txt from the ipsec data directory
+-*.db files and pkcs11.txt from the NSS data directory (default: /etc/ipsec.d/)
++*.db files and pkcs11.txt from the NSS data directory
 +(default: /var/lib/libreswan/nss).
  </para>
  </refsect1>
@@ -306,30 +222,28 @@ index 77d7c04..231b839 100755
      certutil -L -d @IPSEC_NSSDIR@ | head -4
      certutil -L -d @IPSEC_NSSDIR@ | \
 diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
-index 9326cef..df3dbbb 100644
+index 87ac766..1c0f37d 100644
 --- a/programs/newhostkey/ipsec_newhostkey.8.xml
 +++ b/programs/newhostkey/ipsec_newhostkey.8.xml
-@@ -57,10 +57,11 @@ and the output is appended to the file.</para>
- <emphasis remap='I'>rsasigkey</emphasis> narrative and the
- existing-file warning message.</para>
+@@ -81,9 +81,10 @@
+       <varlistentry>
+ 	<term><option>--configdir</option>&nbsp;<replaceable>nssdbdir</replaceable></term>
+ 	<listitem>
+-	  <para>The <option>--configdir</option> option specifies the NSS
+-	  configuration directory where the certificate key, and
+-	  modsec databases reside (default <filename>@FINALNSSDIR@</filename>.</para>
++	  <para>The <option>--configdir</option> option specifies the
++	  NSS configuration directory where the certificate key, and
++	  modsec databases reside (default:
++	  <filename>@FINALNSSDIR@</filename>).</para>
+ 	</listitem>
+       </varlistentry>
  
--<para> When compiled with NSS support (the default), <option>--configdir</option>
--specifies the nss configuration directory where the certificate key, and
--modsec databases reside. There is no default value, though /etc/ipsec.d
--might be sensible choice.</para>
-+<para> When compiled with NSS support (the default),
-+<option>--configdir</option> specifies the nss configuration directory
-+where the certificate key, and modsec databases reside.  The default
-+is <emphasis remap='I'>/var/lib/libreswan/nss</emphasis>.</para>
-+
- <para> When compiled with NSS support (the default), <option>--password</option>
- specifies a module authentication password that may be required if FIPS
- mode is enabled </para>
 diff --git a/programs/pluto/ipsec_pluto.8.xml b/programs/pluto/ipsec_pluto.8.xml
-index a91b384..ede9112 100644
+index 56e937c..30b1f95 100644
 --- a/programs/pluto/ipsec_pluto.8.xml
 +++ b/programs/pluto/ipsec_pluto.8.xml
-@@ -1064,7 +1064,7 @@
+@@ -1065,7 +1065,7 @@
  
        <para>Pluto supports X.509 Certificates. All certificate handling is done using
        the NSS library and all certificate material is stored in an NSS database in
@@ -339,10 +253,10 @@ index a91b384..ede9112 100644
        <para>Pluto may core dump. It will normally do so into the current
        working directory. You can specify the --coredir option for pluto, or
 diff --git a/programs/pluto/plutomain.c b/programs/pluto/plutomain.c
-index 3317a7d..b56807c 100644
+index f83648d..8a26e77 100644
 --- a/programs/pluto/plutomain.c
 +++ b/programs/pluto/plutomain.c
-@@ -1711,11 +1711,12 @@ void show_setup_plutomain()
+@@ -1691,11 +1691,12 @@ void show_setup_plutomain()
  	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
  	whack_log(RC_COMMENT, " ");	/* spacer */
  	whack_log(RC_COMMENT,
@@ -350,14 +264,14 @@ index 3317a7d..b56807c 100644
 +		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
  		oco->confdir,
  		oco->conffile,
- 		pluto_shared_secrets_file,
+ 		oco->secretsfile,
  		oco->confddir,
 +		oco->nssdir,
  		coredir,
  		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
  
 diff --git a/programs/rsasigkey/ipsec_rsasigkey.8.xml b/programs/rsasigkey/ipsec_rsasigkey.8.xml
-index a5cf6d0..d8d0e4d 100644
+index 6e49a76..ec0742a 100644
 --- a/programs/rsasigkey/ipsec_rsasigkey.8.xml
 +++ b/programs/rsasigkey/ipsec_rsasigkey.8.xml
 @@ -72,7 +72,7 @@ prevented when the system is running in FIPS mode.</para>
@@ -369,7 +283,7 @@ index a5cf6d0..d8d0e4d 100644
  
  <para>The <option>--password</option> option specifies the nss cryptographic module authentication
  password if the NSS module has been configured to require it.  A password is required by hardware
-@@ -187,8 +187,8 @@ be arbitrarily delayed if the system's entropy pool is low on
+@@ -181,8 +181,8 @@ be arbitrarily delayed if the system's entropy pool is low on
  randomness, and  the time taken by the search for primes is also somewhat
  unpredictable. Specifically, embedded systems and most virtual machines are low on
  entropy. In such a situation, consider generating the RSA key on another machine,
@@ -381,45 +295,37 @@ index a5cf6d0..d8d0e4d 100644
  </para>
  </refsect1>
 diff --git a/programs/rsasigkey/rsasigkey.c b/programs/rsasigkey/rsasigkey.c
-index 33f9b3e..985f73f 100644
+index 2d075ae..365a0ae 100644
 --- a/programs/rsasigkey/rsasigkey.c
 +++ b/programs/rsasigkey/rsasigkey.c
-@@ -74,7 +74,11 @@
- #define E       3               /* standard public exponent */
- /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
- 
-+#ifdef IPSEC_NSSDIR
-+#define NSSDIR "sql:" IPSEC_NSSDIR
-+#else
- #define NSSDIR "sql:/etc/ipsec.d"
-+#endif
- 
- char *progname;
- char usage[] =
-@@ -316,7 +320,7 @@ int main(int argc, char *argv[])
- 			}
+@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
  			break;
- 		case 'h':       /* help */
--			printf("Usage:\t%s\n", usage);
-+			printf("Usage:\t%s\n\n  --configdir defaults to " NSSDIR "\n", usage);
- 			exit(0);
+ 		case 'c':       /* nss configuration directory */
+ 		case 'd':       /* -d is used for configdir with nss tools */
+-			lsw_conf_confddir(optarg);
++			lsw_conf_nssdb(optarg);
  			break;
- 		case 'V':       /* version */
+ 		case 'P':       /* token authentication password */
+ 			lsw_conf_nsspassword(optarg);
+@@ -287,7 +287,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
+ 	realtime_t now = realnow();
+ 
+ 	lsw_nss_buf_t err;
+-	if (!lsw_nss_setup(oco->confddir, 0, lsw_nss_get_password, err)) {
++	if (!lsw_nss_setup(oco->nssdb, 0, lsw_nss_get_password, err)) {
+ 		fprintf(stderr, "%s: %s\n", progname, err);
+ 		exit(1);
+ 	}
 diff --git a/programs/showhostkey/showhostkey.c b/programs/showhostkey/showhostkey.c
-index 23c0e46..218e97b 100644
+index 1341318..de1a9f8 100644
 --- a/programs/showhostkey/showhostkey.c
 +++ b/programs/showhostkey/showhostkey.c
-@@ -442,11 +442,11 @@ usage:
+@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
+ 	 * processed, and really are "constant".
+ 	 */
+ 	const struct lsw_conf_options *oco = lsw_init_options();
+-	libreswan_log("using config directory \"%s\"\n", oco->confddir);
++	libreswan_log("using config directory \"%s\"\n", oco->nssdb);
  
- 	if (verbose)
- 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
--			oco->confddir);
-+			oco->nssdir);
- 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
- 
- 	{
--		SECStatus rv = NSS_InitReadWrite(oco->confddir);
-+		SECStatus rv = NSS_InitReadWrite(oco->nssdir);
- 
- 		if (rv != SECSuccess) {
- 			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
+ 	/*
+ 	 * Set up for NSS - contains key pairs.
