@@ -65,6 +65,7 @@ kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
+kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev2-30-rw-no-rekey			good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
@@ -75,7 +76,7 @@ kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
-kvmplutotest	ikev2-51-rw-nat-ikeport			wip
+kvmplutotest	ikev2-51-rw-nat-ikeport			good
 
 
 kvmplutotest	ikev2-24-cryptoload			wip
@@ -268,7 +269,7 @@ kvmplutotest	newoe-25-cat-1				good
 kvmplutotest	newoe-25-cat-2				good
 kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
-kvmplutotest 	newoe-25-cat-5				wip
+kvmplutotest 	newoe-25-cat-5				good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
