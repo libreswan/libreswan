@@ -19,6 +19,7 @@ v3.18 (unreleased)
 * IKEv2: for default ESP/AH proposals, do not propose MD5 integrity [Andrew]
 * IKEv2: Fix use of ikev2_cert_req_fields [Lubomir Rintel]
 * IKEv2: extend and improve notify handling [Paul]
+* IKEv2: update ike endpoint as per rfc7296#section-2.23 [Antony/Paul]
 * pluto: Extend mark= support for mark-in= and mark-out= [Paul]
 * pluto: Add systemd watchdog support via USE_SYSTEMD_WATCHDOG [Matt/Paul]
 * pluto: Follow connaddrfamily when resolving hostnames [Daniel M. Weeks]
