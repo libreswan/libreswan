@@ -752,6 +752,7 @@ void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	const struct state_v2_microcode *svm;
+	struct state *st;
 
 	/* Look for an state which matches the various things we know:
 	 *
@@ -782,7 +783,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Find the corresponding state
 	 */
-	struct state *st;
 	if (ix == ISAKMP_v2_SA_INIT) {
 		/*
 		 * For INIT messages, need to lookup using the ICOOKIE
@@ -962,6 +962,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
 	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
@@ -1320,12 +1321,9 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	zero(&st);	/* ??? might not NULL pointer fields */
 	zero(&cnx);	/* ??? might not NULL pointer fields */
 	st.st_connection = &cnx;
-	st.st_remoteaddr = md->sender;
-	st.st_remoteport = md->sender_port;
-	st.st_localaddr  = md->iface->ip_addr;
-	st.st_localport  = md->iface->port;
+	update_ike_endpoints(&st, md);
+
 	cnx.interface = md->iface;
-	st.st_interface = md->iface;
 
 	send_v2_notification(&st, type, NULL,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);

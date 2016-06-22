@@ -944,6 +944,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		get_cookie(FALSE, st->st_rcookie, &md->sender);
 		initialize_new_state(st, c, policy, 0, NULL_FD,
 				     pcim_stranger_crypto);
+		update_ike_endpoints(st, md);
 		st->st_ikev2 = TRUE;
 		change_state(st, STATE_PARENT_R1);
 		st->st_original_role = ORIGINAL_RESPONDER;
@@ -4074,6 +4075,9 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			return ret;
 	}
 
+	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+		update_ike_endpoints(pst, md);
+
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
 		ipstr_buf b;
@@ -4303,6 +4307,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		if (ret != STF_OK)
 			return ret;
 	}
+
+	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
+		update_ike_endpoints(st, md);
 
 	/*
 	 * Generate response message,
