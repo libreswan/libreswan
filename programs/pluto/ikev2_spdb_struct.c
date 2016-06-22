@@ -1487,6 +1487,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 
 #define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, .valid = TRUE, }
+#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, .valid = TRUE, }
 
 #define PRF_SHA2_512 { .id = IKEv2_PRF_HMAC_SHA2_512, .valid = TRUE, }
@@ -1512,7 +1513,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	/*
-	 * AES_GCM[256]
+	 * AES_GCM_16/C[256]
 	 * NULL
 	 * SHA2_512, SHA2_256, SHA1
 	 * MODP2048, MODP3072, MODP4096, MODP8192
@@ -1525,6 +1526,25 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
+		},
+	},
+        /*
+	 * AES_GCM_16/C[128]
+	 * NULL
+	 * SHA2_512, SHA2_256, SHA1
+	 * MODP2048, MODP4096, MODP8192
+	 *
+	 * Note: Strongswan cherry-picks proposals (for instance will
+	 * pick AES_128 over AES_256 when both are in the same
+	 * proposal) so, for moment, don't merge things.
+	 */
+	{
+		.protoid = IKEv2_SEC_PROTO_IKE,
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
@@ -1743,6 +1763,14 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
+			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
+		},
+	},
+	{
+		.protoid = IKEv2_SEC_PROTO_ESP,
+		.transforms = {
+			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
