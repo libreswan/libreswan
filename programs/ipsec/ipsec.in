@@ -216,14 +216,28 @@ case "${1}" in
 	    echo "permision denied on nss operation (must be superuser)"
 	    exit 4
 	fi
-	if [ -z "${2}" ]; then
-	    echo "usage: ipsec import /path/to/pkcs.12" >&2
-	    exit 1
-	else
-	    if [ ! -f "${2}" ]; then
-		echo "usage: ipsec import /path/to/pkcs.12"  >&2
-		exit 1
+	if [ -n "${2}" ]; then
+	    # A lot of nss commands use -d or --configdir to specify
+	    # NSS db location. We use --ipsecdir so we are consistent
+	    # with pluto options
+	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
+		"${2}" = "--ipsecdir" ]
+	    then
+		if [ -d "${3}" ]; then
+		    IPSEC_NSSDIR="${3}"
+		else
+		    echo "usage: ipsec import [--configdir|--ipsecdir /etc/ipsec.d] /path/to/pkcs.12" >&2
+		    exit 1
+		fi
+		shift
+		shift
 	    fi
+	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+	fi
+	if [ -z "${2}" -o ! -f "${2}" ]; then
+	    echo "usage: ipsec import [--configdir|--ipsecdir /etc/ipsec.d] /path/to/pkcs.12" >&2
+	    exit 1
 	fi
 	pk12util -i "${2}" -d "${IPSEC_NSSDIR_SQL}"
 	# check and correct trust bits
