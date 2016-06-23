@@ -218,7 +218,6 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %doc CHANGES COPYING CREDITS README* LICENSE
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/v6neighbor-hole.conf

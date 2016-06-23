@@ -3,38 +3,27 @@ SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
 SYSTEMDFILE=ipsec.service
-SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
 ifeq ($(DESTDIR),)
 SYSTEMDDIR=${UNITDIR}
 else
 SYSTEMDDIR=$(DESTDIR)/${UNITDIR}
 endif
-SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-programs:     systemdfiles sysconfigfiles
+programs:     systemdfiles
 systemdfiles: $(SYSTEMDFILE)
-sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall postcheck
 install-programs: doinstall postcheck
 
-doinstall: programs installsystemdservice installsysconfig oldinitdcheck
+doinstall: programs installsystemdservice oldinitdcheck
 
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
 		systemctl --system daemon-reload ; \
-	fi
-
-installsysconfig:
-	mkdir -p $(SYSCONFIGDIR)
-	@if test ! -f $(SYSCONFIGDIR)/pluto ; then \
-		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
-	else \
-		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto.new ; \
 	fi
 
 oldinitdcheck:
