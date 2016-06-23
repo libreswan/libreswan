@@ -882,7 +882,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 			}
 
-			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
+			if ((c->policy & POLICY_RSASIG) == LEMPTY) {
 				ipstr_buf b1;
 
 				/* no dns queries to find the gateway. create one here */
@@ -1076,7 +1076,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			/* We've finished last DNS queries: IPSECKEY for his client.
 			 * Using the information, try to instantiate a connection
 			 * and start negotiating.
-			 * We now know the peer.  The chosing of "c" ignored this,
+			 * We now know the peer.  The choosing of "c" ignored this,
 			 * so we will disregard its current value.
 			 * !!! We need to randomize the entry in gw that we choose.
 			 */
@@ -1117,11 +1117,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						b->failure_shunt, /* if not from conn, where did this come from? */
 						b->transport_proto,
 						"no suitable connection")) {
-							DBG(DBG_OPPO, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
+							DBG(DBG_OPPO, DBG_log("replaced negotiationshunt with failurehunt=hold because no connection was found"));
 					} else {
-						libreswan_log("failed to replace negotiatinshunt with failurehunt=hold");
+						libreswan_log("failed to replace negotiationshunt with failurehunt=hold");
 					}
 				}
+				/* ??? c == NULL -- what can we do? */
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
@@ -1167,16 +1168,17 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		/* the second chunk: initiate the next DNS query (if any) */
 		DBG(DBG_OPPO | DBG_CONTROL, {
-			ipstr_buf b1;
-			ipstr_buf b2;
-			/* ??? CLANG 3.5 thinks c might be NULL */
-			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
-				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-				ipstr(&b->our_client, &b1),
-				ipstr(&b->peer_client, &b2),
-				oppo_step_name[b->step],
-				ugh ? " - error:" : "",
-				ugh ? ugh : "");
+			if (c != NULL) {
+				ipstr_buf b1;
+				ipstr_buf b2;
+				DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
+					(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+					ipstr(&b->our_client, &b1),
+					ipstr(&b->peer_client, &b2),
+					oppo_step_name[b->step],
+					ugh ? " - error:" : "",
+					ugh ? ugh : "");
+			}
 		});
 
 		if (c == NULL) {
@@ -1185,7 +1187,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * This case has been handled already.
 			 */
 		} else if (ugh != NULL) {
-			/* i dont think this can happen without DNS, and then these value are already set */
+			/* I dont think this can happen without DNS, and then these value are already set */
 			b->policy_prio = c->prio;
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);

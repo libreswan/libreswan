@@ -644,7 +644,7 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 				new_dp = end_dp;
 			}
 
-			add_distribution_points(end_dp, &req->distributionPoints);
+			add_distribution_points(new_dp, &req->distributionPoints);
 			DBG(DBG_CONTROL,
 			    DBG_log("crl fetch request augmented"));
 			break;
