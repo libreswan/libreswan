@@ -863,4 +863,6 @@ kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 # Utility tests like "ipsec showhostkey"
-kvmplutotest	ipsec-hostkey-01		good
+kvmplutotest	ipsec-hostkey-ckaid-01		good
+kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
+kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
