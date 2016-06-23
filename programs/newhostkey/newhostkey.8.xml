@@ -39,7 +39,7 @@
 
   <title>DESCRIPTION</title>
 
-  <para> <emphasis remap='I'>newhostkey</emphasis>generates an RSA
+  <para><emphasis remap='I'>newhostkey</emphasis> generates an RSA
   public/private key pair suitable for authenticating this host is
   generated and stored in the NSS database. </para>
 
