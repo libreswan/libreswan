@@ -1,0 +1,231 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Sun, 19 Jun 2016 12:51:39 -0400
+Subject: fix documentation of default NSS dir
+
+when the default NSS dir varies from upstream defaults, make sure
+documentation reflects this change.
+
+Some replacements were done earlier with @IPSEC_NSSDIR@ and
+@FINALNSSDIR@, but without a clear justification for why to use one or
+the other.  For simplicity and consistency, use only IPSEC_NSSDIR.
+---
+ mk/config.mk                                 |  1 -
+ programs/_import_crl/ipsec__import_crl.8.xml |  2 +-
+ programs/auto/ipsec_auto.8.xml               |  4 ++--
+ programs/configs/d.ipsec.conf/ipsecdir.xml   | 16 +++++-----------
+ programs/ipsec/ipsec_import.8.xml            |  2 +-
+ programs/ipsec/ipsec_initnss.8.xml           |  3 ++-
+ programs/newhostkey/ipsec_newhostkey.8.xml   |  2 +-
+ programs/newhostkey/newhostkey.in            |  2 +-
+ programs/pluto/ipsec_pluto.8.xml             |  2 +-
+ programs/rsasigkey/ipsec_rsasigkey.8.xml     |  6 +++---
+ programs/showhostkey/ipsec_showhostkey.8.xml |  8 ++++----
+ 11 files changed, 21 insertions(+), 27 deletions(-)
+
+diff --git a/mk/config.mk b/mk/config.mk
+index 073acfd..8cd5010 100644
+--- a/mk/config.mk
++++ b/mk/config.mk
+@@ -480,7 +480,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
+ 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
+ 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
+ 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
+-			-e "s:@FINALNSSDIR@:$(FINALNSSDIR):g" \
+ 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
+ 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
+ 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
+diff --git a/programs/_import_crl/ipsec__import_crl.8.xml b/programs/_import_crl/ipsec__import_crl.8.xml
+index 6b250db..82ab267 100644
+--- a/programs/_import_crl/ipsec__import_crl.8.xml
++++ b/programs/_import_crl/ipsec__import_crl.8.xml
+@@ -23,7 +23,7 @@
+ <para><emphasis remap='I'>_import_crl</emphasis>
+ is spawned by
+ <emphasis remap='B'>pluto</emphasis>
+-in order to add or update a CRL in the NSS database (default: /etc/ipsec.d)</para>
++in order to add or update a CRL in the NSS database (default: @IPSEC_NSSDIR@)</para>
+ </refsect1>
+ 
+ <refsect1 id='see_also'><title>SEE ALSO</title>
+diff --git a/programs/auto/ipsec_auto.8.xml b/programs/auto/ipsec_auto.8.xml
+index e6ec853..870f0d9 100644
+--- a/programs/auto/ipsec_auto.8.xml
++++ b/programs/auto/ipsec_auto.8.xml
+@@ -252,7 +252,7 @@ but that may change.)</para>
+ </para>
+ <para>      The  <option>--listcerts</option>  operation  lists  all  X.509 certificates
+        loaded  locally  using  the  rightcert  and  leftcert   parameters   in
+-       ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d /etc/ipsec.d -L</option>.
++       ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d @IPSEC_NSSDIR@ -L</option>.
+ </para>
+ <para>      The  <option>--checkpubkeys</option>  operation  lists  all loaded X.509 certificates
+        which are about to expire or have been expired.
+@@ -317,7 +317,7 @@ for details of the configuration file.
+ <para>
+ <literallayout remap='.nf'>
+ /etc/ipsec.conf			default IPSEC configuration file
+-/etc/ipsec.d/			X.509 and Opportunistic Encryption files
++@IPSEC_NSSDIR@			X.509 and Opportunistic Encryption files
+ /var/run/pluto/pluto.ctl	Pluto command socket
+ </literallayout>
+ </para>
+diff --git a/programs/configs/d.ipsec.conf/ipsecdir.xml b/programs/configs/d.ipsec.conf/ipsecdir.xml
+index 954a088..b5e96a8 100644
+--- a/programs/configs/d.ipsec.conf/ipsecdir.xml
++++ b/programs/configs/d.ipsec.conf/ipsecdir.xml
+@@ -18,21 +18,11 @@
+         <term>nsspassword</term>
+         <listitem><para>
+           (optional) passwords needed to unlock the NSS database
+-          in /var/lib/libreswan/nss (this file should not be
++          in @IPSEC_NSSDIR@ (this file should not be
+           world-readable).  See README.nss for more information.
+         </para></listitem>
+       </varlistentry>
+       <varlistentry>
+-        <term>cert9.db, key4.db, pkcs11.txt, *.db</term>
+-        <listitem><para>
+-          These files constitute the NSS database, which includes
+-          private key material, X.509 certificates, CRLs, OCSP
+-          responses, and possibly other info.  They will be created
+-          and managed automatically by libreswan and should not be
+-          world-readable.  See README.nss for more information.
+-        </para></listitem>
+-      </varlistentry>
+-      <varlistentry>
+         <term>policies/</term>
+         <listitem><para>
+           a directory containing policy group configuration
+@@ -62,5 +52,9 @@
+ When SELinux runs in enforced mode, changing this requires a similar
+ change in the SELinux policy for the pluto daemon.
+ </para>
++<para>
++  On debian systems, the NSS database itself is not controlled by this
++  value, and is instead located in @IPSEC_NSSDIR@.
++</para>
+   </listitem>
+   </varlistentry>
+diff --git a/programs/ipsec/ipsec_import.8.xml b/programs/ipsec/ipsec_import.8.xml
+index 7944a36..ee87562 100644
+--- a/programs/ipsec/ipsec_import.8.xml
++++ b/programs/ipsec/ipsec_import.8.xml
+@@ -27,7 +27,7 @@
+ <refsect1 id='description'><title>DESCRIPTION</title>
+ <para><emphasis remap='I'>ipsec import</emphasis>
+ Import PKCS#12 files into the IPsec NSS database located at the
+-ipsec data directory (default: /etc/ipsec.d/)
++ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+ </para>
+ </refsect1>
+ 
+diff --git a/programs/ipsec/ipsec_initnss.8.xml b/programs/ipsec/ipsec_initnss.8.xml
+index f88a3d7..ef7b3c1 100644
+--- a/programs/ipsec/ipsec_initnss.8.xml
++++ b/programs/ipsec/ipsec_initnss.8.xml
+@@ -29,7 +29,8 @@
+ initialises the NSS database where all private keys for RSA and
+ certificate keypairs are stored. If already initialised, it will
+ return an error. To remove an existing IPsec NSS database, remove all the
+-*.db files and pkcs11.txt from the NSS data directory (default: /etc/ipsec.d/)
++*.db files and pkcs11.txt from the NSS data directory
++(default: @IPSEC_NSSDIR@).
+ </para>
+ </refsect1>
+ 
+diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
+index 1229b75..d24551e 100644
+--- a/programs/newhostkey/ipsec_newhostkey.8.xml
++++ b/programs/newhostkey/ipsec_newhostkey.8.xml
+@@ -82,7 +82,7 @@
+ 	<listitem>
+ 	  <para>The <option>--configdir</option> option specifies the NSS
+ 	  configuration directory where the certificate key, and
+-	  modsec databases reside (default <filename>@FINALNSSDIR@</filename>.</para>
++	  modsec databases reside (default <filename>@IPSEC_NSSDIR@</filename>.</para>
+ 	</listitem>
+       </varlistentry>
+ 
+diff --git a/programs/newhostkey/newhostkey.in b/programs/newhostkey/newhostkey.in
+index 8e867ef..c45a90c 100755
+--- a/programs/newhostkey/newhostkey.in
++++ b/programs/newhostkey/newhostkey.in
+@@ -27,7 +27,7 @@ verbose=
+ host=
+ seeddev="--seeddev /dev/random"
+ output=""
+-configdir="@FINALNSSDIR@"
++configdir="@IPSEC_NSSDIR@"
+ password=
+ for dummy; do
+     case "$1" in
+diff --git a/programs/pluto/ipsec_pluto.8.xml b/programs/pluto/ipsec_pluto.8.xml
+index 56e937c..2c2f4e8 100644
+--- a/programs/pluto/ipsec_pluto.8.xml
++++ b/programs/pluto/ipsec_pluto.8.xml
+@@ -1065,7 +1065,7 @@
+ 
+       <para>Pluto supports X.509 Certificates. All certificate handling is done using
+       the NSS library and all certificate material is stored in an NSS database in
+-      /etc/ipsec.d or another directory as specified by <option>--ipsecdir</option>.</para>
++      @IPSEC_NSSDIR@ or another directory as specified by <option>--ipsecdir</option>.</para>
+ 
+       <para>Pluto may core dump. It will normally do so into the current
+       working directory. You can specify the --coredir option for pluto, or
+diff --git a/programs/rsasigkey/ipsec_rsasigkey.8.xml b/programs/rsasigkey/ipsec_rsasigkey.8.xml
+index 0a1f4f8..e9703d6 100644
+--- a/programs/rsasigkey/ipsec_rsasigkey.8.xml
++++ b/programs/rsasigkey/ipsec_rsasigkey.8.xml
+@@ -72,7 +72,7 @@ prevented when the system is running in FIPS mode.</para>
+ 
+ <para>The <option>--configdir</option> option specifies the nss configuration directory to use.
+ This is the directory where the NSS certificate, key and security modules databases reside. The
+-default value is <filename>/etc/ipsec.d</filename>.</para>
++default value is <filename>@IPSEC_NSSDIR@</filename>.</para>
+ 
+ <para>The <option>--password</option> option specifies the nss cryptographic module authentication
+ password if the NSS module has been configured to require it.  A password is required by hardware
+@@ -181,8 +181,8 @@ be arbitrarily delayed if the system's entropy pool is low on
+ randomness, and  the time taken by the search for primes is also somewhat
+ unpredictable. Specifically, embedded systems and most virtual machines are low on
+ entropy. In such a situation, consider generating the RSA key on another machine,
+-and copying <filename>ipsec.secrets</filename> and the <filename>ipsec.d/*db</filename>
+-files to the embedded platform. Note that NSS embeds the full path in the DB files, so
++and copying <filename>ipsec.secrets</filename> and the <filename>@IPSEC_NSSDIR@</filename>
++directory tree to the embedded platform. Note that NSS embeds the full path in the DB files, so
+ the path on proxy machine must be identical to the path on the destination machine.
+ </para>
+ </refsect1>
+diff --git a/programs/showhostkey/ipsec_showhostkey.8.xml b/programs/showhostkey/ipsec_showhostkey.8.xml
+index 4184dab..7e441be 100644
+--- a/programs/showhostkey/ipsec_showhostkey.8.xml
++++ b/programs/showhostkey/ipsec_showhostkey.8.xml
+@@ -105,7 +105,7 @@
+ 	  <para>
+ 	    Specify the libreswan configuration directory that
+ 	    contains the NSS database (default
+-	    <filename>@FINALNSSDIR@</filename>).
++	    <filename>@IPSEC_NSSDIR@</filename>).
+ 	  </para>
+ 	</listitem>
+       </varlistentry>
+@@ -118,7 +118,7 @@
+ 	  <para>
+ 	    Specify the password to use when accessing the NSS
+ 	    database (default contained in
+-	    <filename>@FINALNSSDIR@/nsspassword</filename>).
++	    <filename>@IPSEC_NSSDIR@/nsspassword</filename>).
+ 	  </para>
+ 	</listitem>
+       </varlistentry>
+@@ -272,8 +272,8 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
+ <refsect1 id='files'>
+   <title>FILES</title>
+   <para>
+-    <filename>@FINALNSSDIR@</filename>,
+-    <filename>@FINALNSSDIR@/nsspassword</filename>
++    <filename>@IPSEC_NSSDIR@</filename>,
++    <filename>@IPSEC_NSSDIR@/nsspassword</filename>
+   </para>
+ </refsect1>
+ 

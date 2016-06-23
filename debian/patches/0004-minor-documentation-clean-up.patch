@@ -1,0 +1,42 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Thu, 23 Jun 2016 01:00:47 -0400
+Subject: minor documentation clean up
+
+---
+ programs/newhostkey/ipsec_newhostkey.8.xml | 2 +-
+ programs/rsasigkey/ipsec_rsasigkey.8.xml   | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
+index b24bd70..1229b75 100644
+--- a/programs/newhostkey/ipsec_newhostkey.8.xml
++++ b/programs/newhostkey/ipsec_newhostkey.8.xml
+@@ -39,7 +39,7 @@
+ 
+   <title>DESCRIPTION</title>
+ 
+-  <para> <emphasis remap='I'>newhostkey</emphasis>generates an RSA
++  <para><emphasis remap='I'>newhostkey</emphasis> generates an RSA
+   public/private key pair suitable for authenticating this host is
+   generated and stored in the NSS database. </para>
+ 
+diff --git a/programs/rsasigkey/ipsec_rsasigkey.8.xml b/programs/rsasigkey/ipsec_rsasigkey.8.xml
+index 6e49a76..0a1f4f8 100644
+--- a/programs/rsasigkey/ipsec_rsasigkey.8.xml
++++ b/programs/rsasigkey/ipsec_rsasigkey.8.xml
+@@ -28,13 +28,13 @@
+     <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
+     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
+     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
+-    <arg choice='opt'>nbits </arg>
++    <arg choice='opt'>nbits</arg>
+ </cmdsynopsis>
+ </refsynopsisdiv>
+ 
+ 
+ <refsect1 id='description'><title>DESCRIPTION</title>
+-<para><emphasis remap='I'>Rsasigkey</emphasis>
++<para><emphasis remap='I'>rsasigkey</emphasis>
+ generates an RSA public/private key pair, suitable for digital signatures, of (exactly)
+ <emphasis remap='I'>nbits</emphasis> bits (that is, two primes each of exactly
+ <emphasis remap='I'>nbits</emphasis>/2 bits, and related numbers) and emits it on standard

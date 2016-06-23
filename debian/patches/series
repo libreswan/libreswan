@@ -1,3 +1,6 @@
 0001-do-not-use-git-version.patch
 0002-debian-pam.d-pluto.patch
-0006-fix-variant-default-NSS-dir-documentation-and-code.patch
+0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
+0004-minor-documentation-clean-up.patch
+0005-Actually-use-distinct-NSS-directory.patch
+0006-fix-documentation-of-default-NSS-dir.patch
