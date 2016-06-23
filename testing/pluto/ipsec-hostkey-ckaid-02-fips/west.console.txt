@@ -15,5 +15,5 @@ west #
 	# rsakey <<KEYID-1...>>
 	leftrsasigkey=<<RSASIGKEY-1...>>
 west #
- 
+ 
 
