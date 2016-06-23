@@ -950,7 +950,6 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	spd->that.client.addr = ipv4;
 	spd->that.client.maskbits = 32; /* export it as value */
 	spd->that.has_client = TRUE;
-	spd->that.has_lease = TRUE;
 
 	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
 	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
@@ -1247,6 +1246,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 			ipstr(&ip, &ip_str));
 
 	c->spd.this.has_client = TRUE;
+	c->spd.this.has_internal_address = TRUE;
 
 	if (c->spd.this.cat) {
 		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",

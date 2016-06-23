@@ -179,7 +179,20 @@ struct end {
 	char *username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
-	bool has_lease;		/* from address pool */
+	/*
+	 * Track lease addresses.
+	 *
+	 * HAS_LEASE indicates that "this" sent "that.CLIENT" has an
+	 * address from the address pool.
+	 *
+	 * HAS_INTERNAL_ADDRESS indicates "that" sent "this.CLIENT" is
+	 * an address, presumably from the address pool.
+	 *
+	 * Probably only one field is needed, but then what if the
+	 * same pluto is receiving and giving out addresses?
+	 */
+	bool has_lease;		/* server gave out lease from address pool */
+	bool has_internal_address;
 	bool modecfg_server;	/* Give local addresses to tunnel's end */
 	bool modecfg_client;	/* request address for local end */
 	bool cat;		/* IPv4 Client Address Translation */

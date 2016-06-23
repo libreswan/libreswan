@@ -1737,21 +1737,37 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		}
 	}
 
+	char lease_ip[SUBNETTOT_BUF] = "";
+	if (c->spd.that.has_lease) {
+		/*
+		 * "this" gave "that" a lease from "this" address
+		 * pool.
+		 */
+		subnettot(&c->spd.that.client, 0, lease_ip, sizeof(lease_ip));
+	} else if (c->spd.this.has_internal_address) {
+		/*
+		 * "this" received an internal address from "that";
+		 * presumably from "that"'s address pool.
+		 */
+		subnettot(&c->spd.this.client, 0, lease_ip, sizeof(lease_ip));
+	}
 
 	if (st->st_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
 	snprintf(state_buf, state_buf_len,
-		"#%lu: \"%s\"%s%s%s%s%s%s%s",
-		st->st_serialno,
-		c->name, inst,
-		(st->st_username[0] != '\0') ? ", username=" : "",
-		(st->st_username[0] != '\0') ? st->st_username : "",
-		(traffic_buf[0] != '\0') ? traffic_buf : "",
-		thatidbuf[0] != '\0' ? ", id='" : "",
-		thatidbuf[0] != '\0' ? thatidbuf : "",
-		thatidbuf[0] != '\0' ? "'" : ""
+		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
+		 st->st_serialno,
+		 c->name, inst,
+		 (st->st_username[0] != '\0') ? ", username=" : "",
+		 (st->st_username[0] != '\0') ? st->st_username : "",
+		 (traffic_buf[0] != '\0') ? traffic_buf : "",
+		 thatidbuf[0] != '\0' ? ", id='" : "",
+		 thatidbuf[0] != '\0' ? thatidbuf : "",
+		 thatidbuf[0] != '\0' ? "'" : "",
+		 lease_ip[0] != '\0' ? ", lease=" : "",
+		 lease_ip[0] != '\0' ? lease_ip : ""
 		);
 }
 
