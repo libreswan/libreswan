@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':       /* nss configuration directory */
 		case 'd':       /* -d is used for configdir with nss tools */
-			lsw_conf_confddir(optarg);
+			lsw_conf_nssdb(optarg);
 			break;
 		case 'P':       /* token authentication password */
 			lsw_conf_nsspassword(optarg);
@@ -287,7 +287,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	realtime_t now = realnow();
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->confddir, 0, lsw_nss_get_password, err)) {
+	if (!lsw_nss_setup(oco->nssdb, 0, lsw_nss_get_password, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}
