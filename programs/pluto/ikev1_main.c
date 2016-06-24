@@ -2380,6 +2380,8 @@ stf_status send_isakmp_notification(struct state *st,
  * Send a notification to the peer. We could decide
  * whether to send the notification, based on the type and the
  * destination, if we care to.
+ * Note: some calls are from send_notification_from_md and
+ * those calls pass a fake state as sndst.
  */
 static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
@@ -2397,24 +2399,39 @@ static void send_notification(struct state *sndst, notification_t type,
 	static monotime_t last_malformed;
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
+
 	struct connection *c = sndst->st_connection;
 
 	r_hashval = NULL;
 	r_hash_start = NULL;
 
-	passert(sndst != NULL && c != NULL);
-
 	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
+		/* ??? this depends on monotime_t having a one-second granularity */
 		if (monobefore(last_malformed, n))
 			return;
 
 		last_malformed = n;
+
+		/*
+		 * If a state gets too many of these, delete it.
+		 *
+		 * Note that the fake state of send_notification_from_md
+		 * will never trigger this (a Good Thing since it
+		 * must not be deleted).
+		 */
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
-			if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			/*
+			 * Log this if it is for a non-opportunistic connection
+			 * or if DBG_OPPO is on.  We don't want a DoS.
+			 * Using DBG_OPPO is kind of odd because this is not
+			 * controlling DBG_log.
+			 */
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+			    DBGP(DBG_OPPO)) {
 				libreswan_log(
 					"too many (%d) malformed payloads. Deleting state",
 					sndst->hidden_variables.st_malformed_sent);
@@ -2424,8 +2441,10 @@ static void send_notification(struct state *sndst, notification_t type,
 			return;
 		}
 
-		libreswan_DBG_dump("payload malformed after possible IV", sndst->st_iv,
-				sndst->st_iv_len);
+		if (sndst->st_iv_len != 0) {
+			libreswan_DBG_dump("payload malformed.  IV:", sndst->st_iv,
+					sndst->st_iv_len);
+		}
 
 		/*
 		 * do not encrypt notification, since #1 reason for malformed
@@ -2449,16 +2468,21 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	{
+	/*
+	 * Log this if it is for a non-opportunistic connection
+	 * or if DBG_OPPO is on.  We don't want a DoS.
+	 * Using DBG_OPPO is kind of odd because this is not
+	 * controlling DBG_log.
+	 */
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+	    DBGP(DBG_OPPO)) {
 		ipstr_buf b;
 
-		if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			libreswan_log("sending %snotification %s to %s:%u",
-				encst ? "encrypted " : "",
-				enum_name(&ikev1_notify_names, type),
-				ipstr(&sndst->st_remoteaddr, &b),
-				sndst->st_remoteport);
-		}
+		libreswan_log("sending %snotification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev1_notify_names, type),
+			ipstr(&sndst->st_remoteaddr, &b),
+			sndst->st_remoteport);
 	}
 
 	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
@@ -2590,21 +2614,40 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
 	/*
-	 * Create a dummy state to be able to use send_ike_msg in
-	 * send_notification
+	 * Note: send_notification_from_md and send_v2_notification_from_md
+	 * share code (and bugs).  Any fix to one should be done to both.
 	 *
-	 * we need to set:
+	 * Create a fake state object to be able to use send_notification.
+	 * This is somewhat dangerous: the fake state must not be deleted
+	 * or have almost any other operation performed on it.
+	 * Ditto for fake connection.
+	 *
+	 * ??? how can we be sure to have faked all salient fields correctly?
+	 *
+	 * Most details must be left blank (eg. pointers
+	 * set to NULL).  struct initialization is good at this.
+	 *
+	 * We need to set [??? we don't -- is this still true?]:
 	 *   st_connection->that.host_addr
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	struct state st;	/* note: not a pointer! */
+	struct connection fake_connection = {
+		.interface = md->iface,
+		.addr_family = addrtypeof(&md->sender),	/* for should_fragment_ike_msg() */
+		.policy = POLICY_IKE_FRAG_FORCE |	/* for should_fragment_ike_msg() */
+			POLICY_OPPORTUNISTIC,	/* for reducing logging various places */
+	};
+
+	struct state fake_state = {
+		.st_serialno = SOS_NOBODY,
+		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
+	};
 
 	passert(md != NULL);
 
-	zero(&st);	/* ??? pointer fields might not be NULLed */
-	update_ike_endpoints(&st, md);
-	send_notification(&st, type, NULL, 0,
+	update_ike_endpoints(&fake_state, md);
+	send_notification(&fake_state, type, NULL, 0,
 			md->hdr.isa_icookie, md->hdr.isa_rcookie,
 			PROTO_ISAKMP);
 }

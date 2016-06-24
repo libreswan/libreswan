@@ -1304,28 +1304,40 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
 				  chunk_t *data)
 {
-	struct state st;	/* note: not a pointer */
-	struct connection cnx;	/* note: not a pointer */
-
-	/**
-	 * Create a dummy state to be able to use send_ike_msg in
-	 * send_notification
+	/*
+	 * Note: send_notification_from_md and send_v2_notification_from_md
+	 * share code (and bugs).  Any fix to one should be done to both.
 	 *
-	 * we need to set:
+	 * Create a fake state object to be able to use send_notification.
+	 * This is somewhat dangerous: the fake state must not be deleted
+	 * or have almost any other operation performed on it.
+	 * Ditto for fake connection.
+	 *
+	 * ??? how can we be sure to have faked all salient fields correctly?
+	 *
+	 * Most details must be left blank (eg. pointers
+	 * set to NULL).  struct initialization is good at this.
+	 *
+	 * We need to set [??? we don't -- is this still true?]:
 	 *   st_connection->that.host_addr
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
+	struct connection fake_connection = {
+		.interface = md->iface,
+		.addr_family = addrtypeof(&md->sender),	/* for ikev2_record_fragments() */
+	};
+
+	struct state fake_state = {
+		.st_serialno = SOS_NOBODY,
+		.st_connection = &fake_connection,
+	};
+
 	passert(md != NULL);
 
-	zero(&st);	/* ??? might not NULL pointer fields */
-	zero(&cnx);	/* ??? might not NULL pointer fields */
-	st.st_connection = &cnx;
-	update_ike_endpoints(&st, md);
+	update_ike_endpoints(&fake_state, md);
 
-	cnx.interface = md->iface;
-
-	send_v2_notification(&st, type, NULL,
+	send_v2_notification(&fake_state, type, NULL,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 }
 
