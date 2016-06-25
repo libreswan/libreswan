@@ -316,11 +316,11 @@ uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_PO
 
 
 # KVM_ISO_URL_$(KVM_OS) = ...
-KVM_ISO_URL_f21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
-KVM_ISO_URL_f22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+KVM_ISO_URL_fedora21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
+KVM_ISO_URL_fedora22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
 # XXX: Next time the ISO needs an update, set KVM_OS to that release
 # and delete the below hack.
-KVM_ISO_URL_fedora = $(KVM_ISO_URL_f22)
+KVM_ISO_URL_fedora = $(KVM_ISO_URL_fedora22)
 KVM_ISO_URL = $(KVM_ISO_URL_$(KVM_OS))
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 .PHONY: kvm-iso
@@ -382,21 +382,25 @@ KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS)base.ks
 endif
 KVM_DEBUGINFO ?= true
 
-$(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
-	$(call check-no-kvm-domain,$*,$(KVM_BASEDIR)/$*.ks)
+# The image file is created as a side effect.
+#
+# NOTE, $(basename) only drops the suffix .ks, unlike UNIX.
+
+$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
+	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN),$@)
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
-	rm -f '$(KVM_BASEDIR)/$*.img'
-	fallocate -l 8G '$(KVM_BASEDIR)/$*.img'
+	rm -f '$(basename $@).img'
+	fallocate -l 8G '$(basename $@).img'
 	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
-		< $(KVM_KICKSTART_FILE) > $(KVM_BASEDIR)/$*.tmp.ks
+		< $(KVM_KICKSTART_FILE) > $@.tmp
 	sudo virt-install \
 		--connect=qemu:///system \
 		--network=network:$(KVM_BASE_NETWORK),model=virtio \
-		--initrd-inject=$(KVM_BASEDIR)/$*.tmp.ks \
-		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$*.tmp.ks console=tty0 console=ttyS0,115200" \
+		--initrd-inject=$@.tmp \
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk path='$(KVM_BASEDIR)/$*.img' \
+		--disk path='$(basename $@).img' \
 		--ram 1024 \
 		--vcpus=1 \
 		--check-cpu \
@@ -405,7 +409,7 @@ $(KVM_BASEDIR)/%.ks $(KVM_BASEDIR)/%.img: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(K
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
-	cp $(KVM_BASEDIR)/$*.tmp.ks $(KVM_BASEDIR)/$*.ks
+	mv $@.tmp $@
 
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
