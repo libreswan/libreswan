@@ -197,13 +197,18 @@ stop() {
 cryptomodules() {
     # load hardware random and crypto related modules.
     # some changed names over time
-    ${MODPROBE} hw_random 2>/dev/null
-    ${MODPROBE} hwrng 2>/dev/null
-    ${MODPROBE} virtio-rng 2>/dev/null
-    ${MODPROBE} amd-rng 2>/dev/null
-    ${MODPROBE} intel-rng 2>/dev/null
-    ${MODPROBE} geode-rng 2>/dev/null
-    ${MODPROBE} timeriomem-rng 2>/dev/null
+    if pidof rngd > /dev/null; then
+	: rngd is running, skip loading hw rng modules
+    else
+	${MODPROBE} hw_random 2>/dev/null
+	${MODPROBE} hwrng 2>/dev/null
+	${MODPROBE} virtio-rng 2>/dev/null
+	${MODPROBE} amd-rng 2>/dev/null
+	${MODPROBE} intel-rng 2>/dev/null
+	${MODPROBE} geode-rng 2>/dev/null
+	${MODPROBE} timeriomem-rng 2>/dev/null
+	${MODPROBE} tpm-rng 2>/dev/null
+    fi
 
     # load any OCF and CryptoAPI modules we might need for acceleration
     # (OCF works for NETKEY and KLIPS/MAST)
