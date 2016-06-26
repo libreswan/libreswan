@@ -1015,7 +1015,7 @@ bool shared_phase1_connection(const struct connection *c)
  * additionally delete any states for which func(st, c)
  * returns true.
  */
-static void foreach_states_by_connection_func_delete(struct connection *c,
+static void foreach_state_by_connection_func_delete(struct connection *c,
 					      bool (*comparefunc)(
 						      struct state *st,
 						      struct connection *c))
@@ -1067,21 +1067,6 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 }
 
 /*
- * delete all states that were created for a given connection.
- * if relations == TRUE, then also delete states that share
- * the same phase 1 SA.
- */
-static bool same_phase1_sa_relations(struct state *this,
-				     struct connection *c)
-{
-	so_serial_t parent_sa = c->newest_isakmp_sa;
-
-	return this->st_connection == c ||
-	       (parent_sa != SOS_NOBODY &&
-		this->st_clonedfrom == parent_sa);
-}
-
-/*
  * Delete all states that have somehow not ben deleted yet
  * but using interfaces that are going down
  */
@@ -1089,8 +1074,10 @@ static bool same_phase1_sa_relations(struct state *this,
 void delete_states_dead_interfaces(void)
 {
 	int i;
+
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *this;
+
 		FOR_EACH_ENTRY(this, i, {
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
@@ -1110,10 +1097,21 @@ void delete_states_dead_interfaces(void)
  * if relations == TRUE, then also delete states that share
  * the same phase 1 SA.
  */
+
 static bool same_phase1_sa(struct state *this,
 			   struct connection *c)
 {
 	return this->st_connection == c;
+}
+
+static bool same_phase1_sa_relations(struct state *this,
+				     struct connection *c)
+{
+	so_serial_t parent_sa = c->newest_isakmp_sa;
+
+	return this->st_connection == c ||
+	       (parent_sa != SOS_NOBODY &&
+		this->st_clonedfrom == parent_sa);
 }
 
 void delete_states_by_connection(struct connection *c, bool relations)
@@ -1132,7 +1130,7 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func_delete(c,
+	foreach_state_by_connection_func_delete(c,
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	const struct spd_route *sr;
@@ -1177,7 +1175,7 @@ void delete_p2states_by_connection(struct connection *c)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func_delete(c, same_phase1_no_phase2);
+	foreach_state_by_connection_func_delete(c, same_phase1_no_phase2);
 
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
