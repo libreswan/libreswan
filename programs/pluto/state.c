@@ -467,7 +467,7 @@ struct state *new_state(void)
 	static so_serial_t next_so = SOS_FIRST;
 	struct state *st;
 
-	st = clone_thing(blank_state, "struct state in new_state()");
+	st = clone_const_thing(blank_state, "struct state in new_state()");
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;

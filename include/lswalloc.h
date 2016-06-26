@@ -38,7 +38,7 @@ extern void report_leaks(void);
  *
  * The macro clone_thing(), for instance, uses __typeof__(THING) to
  * ensure that the type of the original THING and the returned clone
- * match.  Enforcing this flushed out a weird bug bug in the config
+ * match.  Enforcing this flushed out a weird bug in the config
  * parser.
  *
  * While __typeof__() is a non-standard extension, it is widely
@@ -71,6 +71,9 @@ extern void report_leaks(void);
 #define clone_thing(orig, name)						\
 	((__typeof__(&(orig))) clone_bytes((const void *)&(orig),	\
 					   sizeof(orig), (name)))
+
+#define clone_const_thing(orig, name) clone_bytes((const void *)&(orig), \
+					    sizeof(orig), (name))
 
 #define clone_str(str, name) \
 	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
