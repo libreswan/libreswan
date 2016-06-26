@@ -686,16 +686,23 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-
 	/* reduce logging of OE failures */
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		DBG(DBG_LIFECYCLE, DBG_log("deleting state #%lu (%s)",
-			st->st_serialno,
-			enum_show(&state_names, st->st_state)));
+		DBG(DBG_LIFECYCLE, {
+			char cib[CONN_INST_BUF];
+			DBG_log("deleting state #%lu (%s) \"%s\"%s",
+				st->st_serialno,
+				enum_show(&state_names, st->st_state),
+				c->name,
+				fmt_conn_instance(c, cib));
+		});
 	} else {
-		libreswan_log("deleting state #%lu (%s)",
+		char cib[CONN_INST_BUF];
+		libreswan_log("deleting state #%lu (%s) \"%s\"%s",
 			st->st_serialno,
-			enum_show(&state_names, st->st_state));
+			enum_show(&state_names, st->st_state),
+			c->name,
+			fmt_conn_instance(c, cib));
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -1047,16 +1054,6 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 						cur_debugging;
 
 					set_cur_state(this);
-
-					DBG(DBG_CONTROL, {
-						char cib[CONN_INST_BUF];
-						DBG_log("deleting state #%lu (%s) \"%s\"%s",
-							this->st_serialno,
-							enum_show(&state_names,
-								this->st_state),
-							c->name,
-							fmt_conn_instance(c, cib));
-					});
 
 					delete_state(this);
 					/* note: no md->st to clear */
