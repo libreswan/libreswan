@@ -25,6 +25,7 @@ v3.18 (unreleased)
 * pluto: Follow connaddrfamily when resolving hostnames [Daniel M. Weeks]
 * pluto: Check enum names consistency on startup [Hugh]
 * pluto: Log mismatched DH group (KE payload) to log (not debug) [Andrew]
+* pluto: don't try to delete non-existing ipsec sa's (github #50) [Paul]
 * libipsecconf: new keyword left/rightckaid=XXX [Andrew]
 * libipsecconf: Remove legacy keyword subnetwithin= [Hugh]
 * libipsecconf: Clean out kv_auto / kv_manual attributes [Hugh]
