@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -155,8 +155,8 @@ class TestDomains:
         return self.test_domains
 
     def __exit__(self, type, value, traceback):
-        # Finally, and after any cancel(), try closing all the
-        # test domains unconditinally.
+        # Finally, and after any cancel(), try closing all the test
+        # domains unconditinally.
         self.logger.info("closing all test domains")
         for test_domain in self.test_domains.values():
             test_domain.close()
@@ -210,6 +210,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
 
         # Wait for the jobs to finish.  If one crashes, propogate the
         # exception - will force things into the finally block.
+
         logger.debug("waiting for jobs %s", jobs)
         for job in futures.as_completed(jobs):
             logger.debug("job %s on %s completed", job, jobs[job])
@@ -226,6 +227,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
 
         # Start with a list of jobs still in the queue; one or more of
         # them may be running.
+
         done, not_done = futures.wait(jobs, timeout=0)
         logger.debug("jobs done %s not done %s", done, not_done)
 
@@ -233,6 +235,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
         # job would just result in the next job starting).  Calling
         # cancel() on running jobs has no effect so need to stop them
         # some other way; ulgh!
+
         not_canceled = set()
         for job in not_done:
             logger.info("trying to cancel job %s on %s", job, jobs[job])
@@ -243,15 +246,16 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
                 not_canceled.add(job)
 
         # Second: cause any un-canceled jobs (presumably they are
-        # running) to crash.  The crash() call, effectively, pulls
-        # the rug out from under the code interacting with the
-        # domain.
+        # running) to crash.  The crash() call, effectively, pulls the
+        # rug out from under the code interacting with the domain.
+
         for job in not_canceled:
             logger.info("trying to crash job %s on %s", job, jobs[job])
             jobs[job].crash()
 
         # Finally wait again, but this time infinitely as all jobs
         # should already be done.
+
         futures.wait(jobs)
 
 
@@ -309,22 +313,23 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
     if ignored and not include_ignored:
         result_stats.add_ignored(test, ignored)
         test_stats.add(test, "ignored")
-        # No need to log all the ignored tests when an
-        # explicit sub-set of tests is being run.  For
-        # instance, when running just one test.
+        # No need to log all the ignored tests when an explicit
+        # sub-set of tests is being run.  For instance, when running
+        # just one test.
         if not args.test_name:
             logger.info("%s ignored (%s)", test_prefix, details)
         return
 
-    # Be lazy with gathering the results, don't run the
-    # sanitizer or diff.
+    # Be lazy with gathering the results, don't run the sanitizer or
+    # diff.
     #
-    # XXX: There is a bug here where the only difference is
-    # white space.  The test will show up as failed when it
-    # previousl showed up as a whitespace pass.
+    # XXX: There is a bug here where the only difference is white
+    # space.  The test will show up as failed when it previousl showed
+    # up as a whitespace pass.
     #
-    # The presence of the RESULT file is a proxy for detecting
-    # that the test was incomplete.
+    # The presence of the RESULT file is a proxy for detecting that
+    # the test was incomplete.
+
     old_result = post.mortem(test, args, test_finished=None,
                              skip_diff=True, skip_sanitize=True)
     if skip.result(logger, args, old_result):
@@ -342,20 +347,20 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
     test_stats.add(test, "tests")
 
     # Move the contents of the existing OUTPUT directory to
-    # BACKUP_DIRECTORY.  Do it file-by-file so that, at no
-    # point, the directory is empty.
+    # BACKUP_DIRECTORY.  Do it file-by-file so that, at no point, the
+    # directory is empty.
     #
-    # By moving each test just before it is started a trail of
-    # what tests were attempted at each run is left.
+    # By moving each test just before it is started a trail of what
+    # tests were attempted at each run is left.
     #
     # XXX: During boot, swan-transmogrify runs "chcon -R
-    # testing/pluto".  Of course this means that each time a
-    # test is added and/or a test is run (adding files under
-    # <test>/OUTPUT), the boot process (and consequently the
-    # time taken to run a test) keeps increasing.
+    # testing/pluto".  Of course this means that each time a test is
+    # added and/or a test is run (adding files under <test>/OUTPUT),
+    # the boot process (and consequently the time taken to run a test)
+    # keeps increasing.
     #
-    # Always moving the directory contents to the
-    # BACKUP_DIRECTORY mitigates this some.
+    # Always moving the directory contents to the BACKUP_DIRECTORY
+    # mitigates this some.
 
     backup_directory = None
     if os.path.exists(test.output_directory):
@@ -375,8 +380,9 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
     debugfile = None
     result = None
 
-    # At least one iteration; above will have filtered out
-    # skips and ignored
+    # At least one iteration; above will have filtered out skips and
+    # ignored
+
     for attempt in range(args.attempts):
         test_stats.add(test, "attempts")
 
@@ -387,8 +393,8 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
             elif os.exists(test.output_directory):
                 raise FileExistsError()
         except FileExistsError:
-            # On first attempt, the OUTPUT directory will
-            # be empty (see above) so no need to save.
+            # On first attempt, the OUTPUT directory will be empty
+            # (see above) so no need to save.
             if attempt > 0:
                 backup_directory = os.path.join(test.output_directory, str(attempt))
                 logger.info("moving contents of '%s' to '%s'",
@@ -401,8 +407,8 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
                         logger.debug("moving '%s' to '%s'", src, dst)
                         args.dry_run or os.replace(src, dst)
 
-        # Start a debug log in the OUTPUT directory; include
-        # timing for this specific test attempt.
+        # Start a debug log in the OUTPUT directory; include timing
+        # for this specific test attempt.
         with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
             attempt_start_time = time.time()
             attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
@@ -424,9 +430,8 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
                                      update=(not args.dry_run))
                 if not args.dry_run:
                     # Store enough to fool the script
-                    # pluto-testlist-scan.sh and leave a
-                    # marker to indicate that the test
-                    # finished.
+                    # pluto-testlist-scan.sh and leave a marker to
+                    # indicate that the test finished.
                     logger.info("storing result in '%s'", test.result_file())
                     with open(test.result_file(), "w") as f:
                         f.write('"result": "%s"\n' % result)
@@ -437,8 +442,8 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
                 # captured, but force the result to incomplete.
                 result = post.mortem(test, args, test_finished=False,
                                      update=(not args.dry_run))
-            # Since the OUTPUT directory exists, all paths to
-            # here should have a non-null RESULT.
+            # Since the OUTPUT directory exists, all paths to here
+            # should have a non-null RESULT.
             test_stats.add(test, "attempts", ending, str(result))
             logger.info("%s %s%s%s after %d seconds %s", attempt_prefix, result,
                         result.errors and " ", result.errors,
@@ -446,8 +451,8 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
             if result.passed:
                 break
 
-    # Above will have set RESULT.  During a control-c or crash
-    # the below will not be executed.
+    # Above will have set RESULT.  During a control-c or crash the
+    # below will not be executed.
 
     test_stats.add(test, "tests", str(result))
     result_stats.add_result(result, old_result)
