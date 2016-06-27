@@ -1862,12 +1862,25 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	return d;
 }
 
+static uint32_t global_marks = 1001;
+
 struct connection *rw_instantiate(struct connection *c,
 				const ip_address *him,
 				const ip_subnet *his_net,
 				const struct id *his_id)
 {
 	struct connection *d = instantiate(c, him, his_id);
+
+	if (c->sa_marks.in.val == UINT_MAX) {
+		/* -1 means unique marks */
+		d->sa_marks.in.val = global_marks;
+		d->sa_marks.out.val = global_marks;
+		global_marks++;
+		if (global_marks == UINT_MAX - 1) {
+			/* hopefully 2^32 connections ago are no longer around */
+			global_marks = 1001;
+		}
+	}
 
 	if (his_net != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *his_net;
