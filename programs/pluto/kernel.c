@@ -541,6 +541,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* conn-mark - if any */
 			"VTI_IFACE='%s' VTI_ROUTING='%s' VTI_SHARED='%s' "
 			"%s" /* CAT=yes if set */
+			"SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -590,7 +591,13 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		c->vti_iface ? c->vti_iface : "",
 		c->vti_routing ? "yes" : "no",
 		c->vti_shared ? "yes" : "no",
-		catstr
+		catstr,
+		st == NULL ? 0 : st->st_esp.present ? st->st_esp.attrs.spi :
+			st->st_ah.present ? st->st_ah.attrs.spi :
+			st->st_ipcomp.present ? st->st_ipcomp.attrs.spi : 0,
+		st == NULL ? 0 : st->st_esp.present ? st->st_esp.our_spi :
+			st->st_ah.present ? st->st_ah.our_spi :
+			st->st_ipcomp.present ? st->st_ipcomp.our_spi : 0
 		);
 	/*
 	 * works for both old and new way of snprintf() returning

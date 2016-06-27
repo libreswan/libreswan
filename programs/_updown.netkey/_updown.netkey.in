@@ -169,6 +169,9 @@ export LC_ALL
 #	VTI_SHARED=yes|no
 #		Whether or not more conns (or instances) share a VTI device.
 #               If not shared, the VTI device is deleted when tunnel goes down.
+#
+#	SPI_IN / SPI_OUT
+#		The inbound and outbound SPI's of the connection.
 
 # rpm based systems
 if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
