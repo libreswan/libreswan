@@ -21,6 +21,10 @@
 # variable '$*'.  It is used to extract the DOMAIN from targets like
 # kvm-install-DOMAIN.
 
+# Note: Need to better differientate between DOMAINs (what KVM calls
+# test machines) and HOSTs (what the test framework calls the test
+# machines).
+
 
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
@@ -555,8 +559,10 @@ kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
 # For a parallel kvm-install, avoid multiple domains simultaneously
 # re-building libreswan by first explicitly running a build on
 # $(KVM_BUILD_DOMAIN).
-.PHONY: kvm-install kvm-shutdown
+.PHONY: kvm-install kvm-shutdown kvm-uninstall
 kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
+# uninstall is pretty brutal; but it does do what is specified.
+kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
 
 define build_rules
   #(info pool=$(1) domain=$(2))
@@ -625,36 +631,43 @@ endif
 .PHONY: kvm-help
 kvm-help:
 	@echo ''
-	@echo 'For more help see mk/README.md but here the standard make targets:'
-	@echo ''
 	@echo ' To run tests, either:'
 	@echo ''
 	@echo '   <create domains>      - see below'
 	@echo '   check UPDATEONLY=1    - just install'
 	@echo '   check                 - just run swantest'
 	@echo ''
-	@echo ' Or [skip]:'
+	@echo ' Or [optional]:'
 	@echo ''
-	@echo '  [install-kvm-networks] - setup the test networks'
-	@echo '  [install-kvm-domains]  - setup the test domains'
-	@echo '  [kvm-clean]            - delete libreswan build in $(KVM_OBJDIR)'
-	@echo '  [kvm-test-clean]       - delete test results (else saved in BACKUP/)'
-	@echo '   kvm-install           - setup/update/install/... libreswan'
-	@echo '   kvm-test              - test installed libreswan'
-	@echo '  [kvm-check]            - test installed libreswan but skip tests that passed'
+	@echo '   kvm-install           - create test domains; install or update libreswan'
+	@echo '   kvm-test              - run all GOOD tests against previously installed libreswan'
+	@echo '  [kvm-check]            - like kvm-test but skip tests that passed'
+	@echo '  [kvm-clean]            - delete test build in $(KVM_OBJDIR)'
+	@echo '  [kvm-test-clean]       - delete test results in OUTPUT (else saved in BACKUP/)'
+	@echo '  [kvm-uninstall]        - delete test domains/networks ready for a fresh kvm-install'
 	@echo ''
-	@echo ' To force the domains to rebuild:'
-	@echo '   uninstall-kvm-domains       - delete the test domains (not base)'
-	@echo '   uninstall-kvm-networks      - delete the test networks (not base)'
-	@echo '  [uninstall-kvm-base-domain]  - delete the base domain'
-	@echo '  [uninstall-kvm-base-network] - delete the base network'
+	@echo ' To explicitly create and delete domains use the following sequence:'
+	@echo ' (kvm-install and kvm-uninstall do this automatically)'
+	@echo ''
+	@echo '   install-kvm-base-network    - create the base network "$(KVM_BASE_NETWORK)'
+	@echo '   install-kvm-base-domain     - create the base domain "$(KVM_BASE_DOMAIN)"'
+	@echo '   install-kvm-test-networks   - create the test networks "$(KVM_TEST_NETWORKS)"'
+	@echo '   install-kvm-test-domains    - create the test domains "$(KVM_TEST_DOMAINS)"'
+	@echo '   uninstall-kvm-test-domains  - delete the test domains'
+	@echo '   uninstall-kvm-test-networks - delete the test networks'
+	@echo '   uninstall-kvm-base-domain   - delete the base domain'
+	@echo '   uninstall-kvm-base-network  - delete the base network'
 	@echo ''
 	@echo ' Also:'
-	@echo '   kvm-keys              - use the KVM to create the test keys'
-	@echo '   kvmsh-DOMAIN          - open console on DOMAIN'
-	@echo '   kvmsh-DOMAIN-"CMD"    - run CMD on DOMAIN'
-	@echo '   kvm-install-DOMAIN    - only install on DOMAIN'
-	@echo '   kvm-build-DOMAIN      - only build on DOMAIN'
-	@echo '   kvm-shutdown          - shutdown all test domains'
-	@echo '   kvm-shutdown-DOMAIN   - shutdown DOMAIN'
+	@echo ''
+	@echo '   kvm-keys                - use the KVM to create the test keys'
+	@echo '   kvmsh-DOMAIN            - open console on DOMAIN'
+	@echo '   kvm-build-DOMAIN        - build on DOMAIN'
+	@echo '   kvm-install-DOMAIN      - install on DOMAIN'
+	@echo '   kvm-shutdown            - shutdown all domains'
+	@echo '   kvm-shutdown-DOMAIN     - shutdown DOMAIN'
+	@echo '   kvm-make-ACTION         - run "make ACTION" on $(KVM_BUILD_DOMAIN)'
+	@echo '   kvm-DOMAIN-make-ACTION  - run "make ACTION" on DOMAIN'
+	@echo ''
+	@echo 'For more notes see mk/README.md'
 	@echo ''
