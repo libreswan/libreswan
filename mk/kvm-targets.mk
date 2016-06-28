@@ -130,7 +130,7 @@ endef
 # just run tests that have never been started; run tests that haven't
 # yet passed?  Since each alternative has merit, let the user decide.
 
-KVM_TESTS = testing/pluto
+KVM_TESTS ?= testing/pluto
 
 # Given a make command like:
 #
