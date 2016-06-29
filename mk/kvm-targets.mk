@@ -171,7 +171,7 @@ KVM_TEST_CLEAN_TARGETS = \
 	clean-kvm-test kvm-clean-test kvm-test-clean
 .PHONY: $(KVM_TEST_CLEAN_TARGETS)
 $(KVM_TEST_CLEAN_TARGETS):
-	rm -rf $(KVM_TESTS)/*/OUTPUT*
+	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
 
 
 # Build the keys/certificates using the KVM.
