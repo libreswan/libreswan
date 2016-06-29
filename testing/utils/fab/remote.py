@@ -19,6 +19,7 @@ import pexpect
 import time
 from fab import virsh
 from fab import shell
+from fab import timing
 
 
 MOUNTS = {}
@@ -112,9 +113,9 @@ def _startup(domain, console, timeout=STARTUP_TIMEOUT):
     #
     # See: https://github.com/pexpect/pexpect/issues/203
     domain.logger.info("waiting %d seconds for domain to start (%s)", timeout, expected)
-    start_time = time.time()
+    lapsed_time = timing.Lapsed()
     console.expect_exact(expected, timeout=timeout)
-    domain.logger.info("domain started after %d seconds", time.time() - start_time)
+    domain.logger.info("domain started after %s", lapsed_time)
 
 
 # Assuming the machine is booted, try to log-in.
@@ -122,7 +123,7 @@ def _startup(domain, console, timeout=STARTUP_TIMEOUT):
 def _login(domain, console, username, password,
            login_timeout, password_timeout, shell_timeout):
 
-    start_time = time.time()
+    lapsed_time = timing.Lapsed()
 
     domain.logger.info("waiting %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
                        login_timeout, password_timeout, shell_timeout)
@@ -133,7 +134,7 @@ def _login(domain, console, username, password,
     console.sendline("")
     if console.expect(["login: ", console.prompt], timeout=login_timeout):
         # shell prompt
-        domain.logger.info("We're in after %d seconds!  Someone forgot to log out ...", time.time() - start_time)
+        domain.logger.info("We're in after %s!  Someone forgot to log out ...", lapsed_time)
         return
 
     domain.logger.debug("sending username '%s' waiting %s seconds for password or shell prompt", \
@@ -141,14 +142,14 @@ def _login(domain, console, username, password,
     console.sendline(username)
     if console.expect(["Password: ", console.prompt], timeout=password_timeout):
         # shell prompt
-        domain.logger.info("We're in after %d seconds! No password ...", time.time() - start_time)
+        domain.logger.info("We're in after %s! No password ...", lapsed_time)
         return
 
     domain.logger.debug("sending password '%s', waiting %s seconds for shell prompt",
                         password, shell_timeout)
     console.sendline(password)
     console.expect(console.prompt, timeout=shell_timeout)
-    domain.logger.info("We're in after %d seconds!", time.time() - start_time)
+    domain.logger.info("We're in after %s!", lapsed_time)
 
 
 LOGIN_TIMEOUT = 120
@@ -210,14 +211,14 @@ def reboot(domain, console=None,
         domain.logger.error("domain is shutdown")
         return None
     domain.logger.info("waiting %d seconds for domain to reboot", shutdown_timeout)
-    start_time = time.time()
+    lapsed_time = timing.Lapsed()
     domain.reboot()
 
     try:
         console.expect("\[\s*[0-9]+\.[0-9]+]\s+reboot:", timeout=SHUTDOWN_TIMEOUT)
-        domain.logger.info("domain rebooted after %d seconds", time.time() - start_time)
+        domain.logger.info("domain rebooted after %s", lapsed_time)
     except pexpect.TIMEOUT:
-        domain.logger.error("domain failed to reboot after %s seconds, resetting it", time.time() - start_time)
+        domain.logger.error("domain failed to reboot after %s, resetting it", lapsed_time)
         domain.reset()
         # give the domain extra time to start
         startup_timeout = startup_timeout * 4
@@ -226,7 +227,7 @@ def reboot(domain, console=None,
         _startup(domain, console, timeout=startup_timeout)
         return console
     except pexpect.TIMEOUT:
-        domain.logger.error("domain failed to start after %d seconds, power cycling it", time.time() - start_time)
+        domain.logger.error("domain failed to start after %s, power cycling it", lapsed_time)
         # On F23 the domain sometimes becomes wedged in the PAUSED
         # state.  When it does, give it a full reset.
         if domain.state() == virsh.STATE.PAUSED:
@@ -241,7 +242,7 @@ def reboot(domain, console=None,
 # will exit giving an EOF.
 
 def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
-    start_time = time.time()
+    lapsed_time = timing.Lapsed()
     console = console or domain.console()
     if not console:
         domain.logger.error("domain already shutdown")
@@ -255,5 +256,5 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
             domain.logger.error("timeout waiting for destroy, giving up")
             return True
         return False
-    domain.logger.info("domain shutdown after %d seconds", time.time() - start_time)
+    domain.logger.info("domain shutdown after %s", lapsed_time)
     return False

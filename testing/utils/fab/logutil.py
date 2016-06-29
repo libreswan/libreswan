@@ -1,6 +1,6 @@
 # Some argument parsing functions.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -39,7 +39,9 @@
 import logging
 import sys
 from datetime import datetime
+
 from fab import argutil
+from fab import timing
 
 # Avoid having code include both "logging" and "logutil" by
 # re-exporting useful stuff here.  Good idea?  Perhaps.
@@ -192,41 +194,21 @@ class Timer:
     """A stopwatch timer to count time since things started."""
 
     def __init__(self):
-        self.start_times = list()
-        self.__enter__()
+        self.runtimes = [timing.LapsedTime(timing.START_TIME)]
 
     def __enter__(self):
-        self.start_times.append(datetime.now())
+        self.runtimes.append(timing.LapsedTime())
 
     def __exit__(self, type, value, traceback):
-        self.start_times.pop()
-
-    def runtime(self, start_time, now):
-        delta = now - start_time
-        milliseconds = (delta.microseconds / 1000)
-        seconds = delta.seconds % 60
-        minutes = (delta.seconds // 60) % 60
-        hours = (delta.seconds // 60 // 60) % 24
-        days = delta.days
-        if days > 0:
-            # need days
-            return str(delta)
-        elif hours > 0:
-            return "%d:%02d:%02d.%03d" % (hours, minutes, seconds, milliseconds)
-        elif minutes > 0:
-            return "%d:%02d.%03d" % (minutes, seconds, milliseconds)
-        else:
-            return "%d.%03d" % (seconds, milliseconds)
+        self.runtimes.pop()
 
     def __str__(self):
         runtimes = ""
         now = datetime.now()
-        for start_time in self.start_times:
-            runtime = self.runtime(start_time, now)
+        for runtime in self.runtimes:
             if runtimes:
-                runtimes = runtimes + "/" + runtime
-            else:
-                runtimes = runtime
+                runtimes += "/"
+            runtimes += runtime.lapsed(now)
         return runtimes
 
 

@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@ import time
 from datetime import datetime
 from concurrent import futures
 
+from fab import timing
 from fab import virsh
 from fab import testsuite
 from fab import remote
@@ -43,7 +44,8 @@ def add_arguments(parser):
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
     # (avoiding Makefile, OBJ, README, ... :-).
-    parser.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
+    parser.add_argument("--backup-directory", metavar="DIRECTORY",
+                        default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
                         help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
 def log_arguments(logger, args):
@@ -123,7 +125,7 @@ class TestDomain:
     def read_file_run(self, basename):
         self.logger.info("starting script %s", basename)
         filename = os.path.join(self.test.directory, basename)
-        start_time = time.time()
+        lapsed_time = timing.Lapsed()
         with open(filename, "r") as file:
             for line in file:
                 line = line.strip()
@@ -134,8 +136,8 @@ class TestDomain:
                         # XXX: Can't abort as some ping commands are
                         # expected to fail.
                         self.logger.warning("command '%s' failed with status %d", line, status)
-            self.logger.info("script %s finished after %d seconds",
-                             basename, time.time() - start_time)
+            self.logger.info("script %s finished after %s",
+                             basename, lapsed_time)
 
 
 class TestDomains:
@@ -175,7 +177,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
 
     try:
 
-        boot_start_time = time.time()
+        lapsed_time = timing.Lapsed()
         logger.info("starting domains")
 
         # There's a tradeoff here between speed and reliability.
@@ -217,8 +219,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
             # propogate any exception
             job.result()
 
-        logger.info("domains started after %d seconds",
-                    time.time() - boot_start_time)
+        logger.info("domains started after %s", lapsed_time)
 
     finally:
 
@@ -301,12 +302,12 @@ def _run_test(test, args, domain_prefix, boot_executor):
         logger.info("finishing test")
 
 
-def _process_test(logger, args, test, test_stats, result_stats, start_time, test_count, tests_count, boot_executor):
+def _process_test(logger, args, test, test_stats, result_stats, test_count, tests_count, boot_executor):
 
     suffix = "******"
     test_stats.add(test, "total")
     # Would the number of tests to be [re]run be better?
-    test_start_time = time.time()
+    test_lapsed_time = timing.Lapsed()
     test_prefix = "%s %s (test %d of %d)" % (suffix, test.name, test_count, tests_count)
 
     ignored, include_ignored, details = ignore.test(logger, args, test)
@@ -364,9 +365,7 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
 
     backup_directory = None
     if os.path.exists(test.output_directory):
-        backup_directory = os.path.join(args.backup_directory,
-                                        start_time.strftime("%Y%m%d%H%M%S"),
-                                        test.name)
+        backup_directory = os.path.join(args.backup_directory, test.name)
         logger.info("moving contents of '%s' to '%s'",
                     test.output_directory, backup_directory)
         # Copy "empty" OUTPUT directories too.
@@ -410,7 +409,7 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
         # Start a debug log in the OUTPUT directory; include timing
         # for this specific test attempt.
         with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
-            attempt_start_time = time.time()
+            attempt_lapsed_time = timing.Lapsed()
             attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
             logger.info("%s started ....", attempt_prefix)
 
@@ -445,9 +444,9 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
             # Since the OUTPUT directory exists, all paths to here
             # should have a non-null RESULT.
             test_stats.add(test, "attempts", ending, str(result))
-            logger.info("%s %s%s%s after %d seconds %s", attempt_prefix, result,
+            logger.info("%s %s%s%s after %s %s", attempt_prefix, result,
                         result.errors and " ", result.errors,
-                        time.time() - attempt_start_time, suffix)
+                        attempt_lapsed_time, suffix)
             if result.passed:
                 break
 
@@ -457,21 +456,21 @@ def _process_test(logger, args, test, test_stats, result_stats, start_time, test
     test_stats.add(test, "tests", str(result))
     result_stats.add_result(result, old_result)
 
-    logger.info("%s %s%s%s after %d seconds %s", test_prefix, result,
+    logger.info("%s %s%s%s after %s %s", test_prefix, result,
                 result.errors and " ", result.errors,
-                time.time() - test_start_time, suffix)
+                test_lapsed_time, suffix)
 
     test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
     result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _process_tests(logger, args, tests, test_stats, result_stats, start_time, tests_count, boot_executor):
+def _process_tests(logger, args, tests, test_stats, result_stats, tests_count, boot_executor):
     test_count = 0
     for test in tests:
         test_count += 1
-        _process_test(logger, args, test, test_stats, result_stats, start_time, test_count, tests_count, boot_executor)
+        _process_test(logger, args, test, test_stats, result_stats, test_count, tests_count, boot_executor)
 
 
-def run_tests(logger, args, tests, test_stats, result_stats, start_time):
+def run_tests(logger, args, tests, test_stats, result_stats):
     with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-        _process_tests(logger, args, tests, test_stats, result_stats, start_time, len(tests), boot_executor)
+        _process_tests(logger, args, tests, test_stats, result_stats, len(tests), boot_executor)
