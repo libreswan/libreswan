@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -63,6 +63,7 @@ def compile_prompt(logger, username=None, hostname=None):
     logger.debug("prompt '%s'", prompt)
     return re.compile(prompt)
 
+
 def check_prompt_group(logger, match, expected, field):
     if expected:
         found = match.group(field)
@@ -72,6 +73,7 @@ def check_prompt_group(logger, match, expected, field):
             # would have happened.
             raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
                                   % (field, expected, found))
+
 
 def check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
     """Match wild-card  of the prompt pattern; return status"""
@@ -89,6 +91,7 @@ def check_prompt(logger, match, hostname=None, username=None, basename=None, dol
         status = None
     logger.debug("exit code '%s'", status)
     return status
+
 
 # This file-like class passes all writes on to the LOGGER at DEBUG.
 # It is is used to direct pexpect's .logfile_read and .logfile_send
@@ -108,6 +111,7 @@ class Debug:
 
     def flush(self):
         pass
+
 
 class Remote:
 
@@ -193,6 +197,10 @@ class Remote:
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect(expect, timeout=timeout,
                                  searchwindowsize=searchwindowsize)
+
+    def expect_exact(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
+        return self.child.expect_exact(expect, timeout=timeout,
+                                       searchwindowsize=searchwindowsize)
 
     def sendcontrol(self, control):
         return self.child.sendcontrol(control)

@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@ import pexpect
 import time
 from fab import virsh
 from fab import shell
+
 
 MOUNTS = {}
 
@@ -56,6 +57,7 @@ def mounts(domain):
             continue
     return mounts
 
+
 FSTABS = {}
 
 def mount_point(domain, console, device):
@@ -74,6 +76,7 @@ def mount_point(domain, console, device):
     domain.logger.debug("fstab has device '%s' mounted on '%s'", device, mount)
     return mount
 
+
 def directory(domain, console, directory, default=None):
     directory = os.path.realpath(directory)
     for target, source in mounts(domain).items():
@@ -83,6 +86,7 @@ def directory(domain, console, directory, default=None):
             root = mount_point(domain, console, target)
             return root + directory[len(source):]
     return default
+
 
 # Bring a booting machine up to point where key services have started.
 #
@@ -100,14 +104,18 @@ SHUTDOWN_TIMEOUT = 20
 
 def _startup(domain, console, timeout=STARTUP_TIMEOUT):
     expected = "Started Login Service"
-    # XXX: While len(expected) should technically be sufficient, that
-    # isn't clear without looking at sources.  Instead just "double,
-    # and then double again".
-    domain.logger.info("waiting %d seconds for domain to start", timeout)
+    # XXX: While searchwindowsize=len(expected) should technically be
+    # sufficient to speed up matching, it isn't.  In fact, when more
+    # than searchwindowsize is read as a single block, pexpect only
+    # searchs the last searchwindowsize characters missing anything
+    # before it.
+    #
+    # See: https://github.com/pexpect/pexpect/issues/203
+    domain.logger.info("waiting %d seconds for domain to start (%s)", timeout, expected)
     start_time = time.time()
-    console.expect(expected, timeout=timeout,
-                   searchwindowsize=(len(expected)*4))
+    console.expect_exact(expected, timeout=timeout)
     domain.logger.info("domain started after %d seconds", time.time() - start_time)
+
 
 # Assuming the machine is booted, try to log-in.
 
@@ -116,22 +124,14 @@ def _login(domain, console, username, password,
 
     start_time = time.time()
 
-    domain.logger.info("login timeouts: %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
+    domain.logger.info("waiting %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
                        login_timeout, password_timeout, shell_timeout)
     domain.logger.debug("console prompt: %s", console.prompt.pattern)
-
-    # Heuristic for figuring out the search window size.  Assume, in
-    # the worst case, the other end contains the entire current
-    # directory in the prompt.  The number is then "doubled, and then
-    # doubled again".
-    searchwindowsize = max(100, (len(os.getcwd()) + len(console.prompt.pattern) * 4))
-    domain.logger.debug("using search window size of %s", searchwindowsize)
 
     domain.logger.debug("sending control-c+carriage return, waiting %s seconds for login or shell prompt", login_timeout)
     console.sendintr()
     console.sendline("")
-    if console.expect(["login: ", console.prompt], timeout=login_timeout,
-                      searchwindowsize=searchwindowsize):
+    if console.expect(["login: ", console.prompt], timeout=login_timeout):
         # shell prompt
         domain.logger.info("We're in after %d seconds!  Someone forgot to log out ...", time.time() - start_time)
         return
@@ -139,8 +139,7 @@ def _login(domain, console, username, password,
     domain.logger.debug("sending username '%s' waiting %s seconds for password or shell prompt", \
                         username, password_timeout)
     console.sendline(username)
-    if console.expect(["Password: ", console.prompt], timeout=password_timeout,
-                      searchwindowsize=searchwindowsize):
+    if console.expect(["Password: ", console.prompt], timeout=password_timeout):
         # shell prompt
         domain.logger.info("We're in after %d seconds! No password ...", time.time() - start_time)
         return
@@ -150,6 +149,7 @@ def _login(domain, console, username, password,
     console.sendline(password)
     console.expect(console.prompt, timeout=shell_timeout)
     domain.logger.info("We're in after %d seconds!", time.time() - start_time)
+
 
 LOGIN_TIMEOUT = 120
 PASSWORD_TIMEOUT = 5
@@ -172,6 +172,7 @@ def login(domain, console,
            password_timeout=password_timeout,
            shell_timeout=shell_timeout)
     console.sync()
+
 
 def start(domain, startup_timeout=STARTUP_TIMEOUT):
     domain.logger.info("starting domain")
@@ -200,6 +201,7 @@ def start(domain, startup_timeout=STARTUP_TIMEOUT):
     _startup(domain, console, timeout=(end_time - time.time()))
     return console
 
+
 def reboot(domain, console=None,
            shutdown_timeout=SHUTDOWN_TIMEOUT,
            startup_timeout=STARTUP_TIMEOUT):
@@ -210,6 +212,7 @@ def reboot(domain, console=None,
     domain.logger.info("waiting %d seconds for domain to reboot", shutdown_timeout)
     start_time = time.time()
     domain.reboot()
+
     try:
         console.expect("\[\s*[0-9]+\.[0-9]+]\s+reboot:", timeout=SHUTDOWN_TIMEOUT)
         domain.logger.info("domain rebooted after %d seconds", time.time() - start_time)
@@ -218,14 +221,21 @@ def reboot(domain, console=None,
         domain.reset()
         # give the domain extra time to start
         startup_timeout = startup_timeout * 4
+
     try:
         _startup(domain, console, timeout=startup_timeout)
         return console
     except pexpect.TIMEOUT:
         domain.logger.error("domain failed to start after %d seconds, power cycling it", time.time() - start_time)
-        domain.destroy()
+        # On F23 the domain sometimes becomes wedged in the PAUSED
+        # state.  When it does, give it a full reset.
+        if domain.state() == virsh.STATE.PAUSED:
+            domain.destroy()
+        else:
+            domain.shutdown()
         console.expect(pexpect.EOF, timeout=shutdown_timeout)
         return start(domain)
+
 
 # Use the console to detect the shutdown - if/when the domain stops it
 # will exit giving an EOF.
