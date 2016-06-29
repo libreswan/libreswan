@@ -173,6 +173,9 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
 def strset(s):
     return " ".join(str(e) for e in s)
 
+def executor_qsize_hack(executor):
+    return executor._work_queue.qsize()
+
 def boot_test_domains(logger, test_domains, unused_domains, executor):
 
     try:
@@ -200,20 +203,26 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
 
         jobs = {}
 
-        logger.info("shutting down unused domains: %s", strset(unused_domains))
+        # Hack to get at the work queue.
+        logger.info("%d shutdown/reboot jobs ahead of us in the queue", executor_qsize_hack(executor))
+
+        logger.info("submitting shutdown jobs for unused domains: %s", strset(unused_domains))
         for test_domain in unused_domains:
             submit_job_for_domain(executor, jobs, logger, test_domain,
                                   TestDomain.shutdown)
 
-        logger.info("booting and loging into test domains: %s", strset(test_domains))
+        logger.info("submitting boot-and-login jobs for test domains: %s", strset(test_domains))
         for domain in test_domains:
             submit_job_for_domain(executor, jobs, logger, domain,
                                   TestDomain.boot_and_login)
 
+        # Hack to get at the work queue.
+        logger.info("submitted %d jobs; currently %d jobs pending", len(jobs), executor_qsize_hack(executor))
+
         # Wait for the jobs to finish.  If one crashes, propogate the
         # exception - will force things into the finally block.
 
-        logger.debug("waiting for jobs %s", jobs)
+        logger.debug("submitted jobs: %s", jobs)
         for job in futures.as_completed(jobs):
             logger.debug("job %s on %s completed", job, jobs[job])
             # propogate any exception
