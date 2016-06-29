@@ -63,7 +63,7 @@ class TestDomain:
         self.test = test
         # Get the domain
         self.domain = virsh.Domain(host_name=host_name, domain_prefix=domain_prefix)
-        self.logger = logutil.getLogger(__name__, test.name, self.domain.name)
+        self.logger = logutil.getLogger(domain_prefix, __name__, test.name, host_name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
 
@@ -271,7 +271,7 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
 def _run_test(domain_prefix, test, args, boot_executor):
 
     # Time just this test
-    logger = logutil.getLogger(__name__, test.name)
+    logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
     with TestDomains(domain_prefix, testsuite.HOST_NAMES, test, logger) as all_test_domains:
 
@@ -314,6 +314,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
     suffix = "******"
     test_stats.add(test, "total")
+
     # Would the number of tests to be [re]run be better?
     test_lapsed_time = timing.Lapsed()
     test_prefix = "%s %s (test %d of %d)" % (suffix, test.name, test_count, tests_count)
@@ -416,7 +417,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
         # Start a debug log in the OUTPUT directory; include timing
         # for this specific test attempt.
-        with logutil.TIMER, logutil.Debug(logger, os.path.join(test.output_directory, "debug.log")):
+        with logger.timer_stack(), logger.debug_stack(test.output_directory, "debug.log"):
             attempt_lapsed_time = timing.Lapsed()
             attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
             logger.info("%s started ....", attempt_prefix)
@@ -447,6 +448,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 # captured, but force the result to incomplete.
                 result = post.mortem(test, args, test_finished=False,
                                      update=(not args.dry_run))
+
             # Since the OUTPUT directory exists, all paths to here
             # should have a non-null RESULT.
             test_stats.add(test, "attempts", ending, str(result))
@@ -471,7 +473,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
 
 def _process_tests(domain_prefix, tests, args, test_stats, result_stats, tests_count, boot_executor):
-    logger = logutil.getLogger(__name__)
+    logger = logutil.getLogger(domain_prefix, __name__)
     test_count = 0
     for test in tests:
         test_count += 1

@@ -115,9 +115,9 @@ class Debug:
 
 class Remote:
 
-    def __init__(self, command, hostname=None, username=None, logger=None):
+    def __init__(self, command, hostname=None, username=None, prefix=""):
         # Need access to HOSTNAME.
-        self.logger = logger or logutil.getLogger(__name__, hostname)
+        self.logger = logutil.getLogger(prefix, __name__, hostname)
         self.basename = None
         self.hostname = hostname
         self.username = username
