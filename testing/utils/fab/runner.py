@@ -59,11 +59,11 @@ TEST_TIMEOUT = 120
 
 class TestDomain:
 
-    def __init__(self, domain_name, host_name, test):
+    def __init__(self, domain_prefix, host_name, test):
         self.test = test
         # Get the domain
-        self.domain = virsh.Domain(domain_name=domain_name, host_name=host_name)
-        self.logger = logutil.getLogger(__name__, test.name, domain_name)
+        self.domain = virsh.Domain(host_name=host_name, domain_prefix=domain_prefix)
+        self.logger = logutil.getLogger(__name__, test.name, self.domain.name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
 
@@ -142,14 +142,13 @@ class TestDomain:
 
 class TestDomains:
 
-    def __init__(self, logger, test, domain_prefix, host_names):
+    def __init__(self, domain_prefix, host_names, test, logger):
         self.logger = logger
         # Create a table of test domain objects; they are used during
         # cleanup; and they are used as the values of the JOBS table.
         self.test_domains = {}
         for host_name in host_names:
-            domain_name = domain_prefix + host_name
-            test_domain = TestDomain(domain_name, host_name, test)
+            test_domain = TestDomain(domain_prefix, host_name, test)
             self.test_domains[host_name] = test_domain
 
     def __enter__(self):
@@ -269,12 +268,12 @@ def boot_test_domains(logger, test_domains, unused_domains, executor):
         futures.wait(jobs)
 
 
-def _run_test(test, args, domain_prefix, boot_executor):
+def _run_test(domain_prefix, test, args, boot_executor):
 
     # Time just this test
     logger = logutil.getLogger(__name__, test.name)
 
-    with TestDomains(logger, test, domain_prefix, testsuite.HOST_NAMES) as all_test_domains:
+    with TestDomains(domain_prefix, testsuite.HOST_NAMES, test, logger) as all_test_domains:
 
         logger.info("starting test")
 
@@ -311,7 +310,7 @@ def _run_test(test, args, domain_prefix, boot_executor):
         logger.info("finishing test")
 
 
-def _process_test(logger, args, test, test_stats, result_stats, test_count, tests_count, boot_executor):
+def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor, logger):
 
     suffix = "******"
     test_stats.add(test, "total")
@@ -430,8 +429,7 @@ def _process_test(logger, args, test, test_stats, result_stats, test_count, test
             ending = "undefined"
             try:
                 if not args.dry_run:
-                    domain_prefix = args.prefix and args.prefix[0] or ""
-                    _run_test(test, args, domain_prefix, boot_executor)
+                    _run_test(domain_prefix, test, args, boot_executor)
                 ending = "finished"
                 result = post.mortem(test, args, test_finished=True,
                                      update=(not args.dry_run))
@@ -472,13 +470,15 @@ def _process_test(logger, args, test, test_stats, result_stats, test_count, test
     result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _process_tests(logger, args, tests, test_stats, result_stats, tests_count, boot_executor):
+def _process_tests(domain_prefix, tests, args, test_stats, result_stats, tests_count, boot_executor):
+    logger = logutil.getLogger(__name__)
     test_count = 0
     for test in tests:
         test_count += 1
-        _process_test(logger, args, test, test_stats, result_stats, test_count, tests_count, boot_executor)
+        _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor, logger)
 
 
 def run_tests(logger, args, tests, test_stats, result_stats):
     with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-        _process_tests(logger, args, tests, test_stats, result_stats, len(tests), boot_executor)
+        domain_prefix = args.prefix and args.prefix[0] or ""
+        _process_tests(domain_prefix, tests, args, test_stats, result_stats, len(tests), boot_executor)

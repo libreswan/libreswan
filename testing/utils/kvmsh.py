@@ -73,7 +73,7 @@ def main():
     logutil.config(args)
 
     # Get things started
-    domain = virsh.Domain(args.domain, args.host_name)
+    domain = virsh.Domain(domain_name=args.domain, host_name=args.host_name)
 
     status = 0
     console = None
