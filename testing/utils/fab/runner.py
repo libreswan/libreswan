@@ -430,9 +430,8 @@ def _process_test(logger, args, test, test_stats, result_stats, test_count, test
             ending = "undefined"
             try:
                 if not args.dry_run:
-                    with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-                        domain_prefix = args.prefix and args.prefix[0] or ""
-                        _run_test(test, args, domain_prefix, boot_executor)
+                    domain_prefix = args.prefix and args.prefix[0] or ""
+                    _run_test(test, args, domain_prefix, boot_executor)
                 ending = "finished"
                 result = post.mortem(test, args, test_finished=True,
                                      update=(not args.dry_run))
