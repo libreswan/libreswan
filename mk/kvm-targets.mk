@@ -40,10 +40,9 @@ KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
 
-KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVMSH ?= $(KVMSH_COMMAND)
+KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVM_WORKERS ?= 1
-KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -124,7 +123,7 @@ endif
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(call check-kvm-qemu-directory)
-	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
+	$(KVMSH) $(KVMSH_FLAGS) --output ++compile-log.txt --chdir . $(1)
 endef
 
 # [re]run the testsuite.
@@ -148,7 +147,7 @@ $(1): $$(KVM_KEYS)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
 	: KVM_TESTS=$$(STRIPPED_KVM_TESTS)
-	$$(KVMRUNNER_COMMAND)$$(foreach pool,$$(KVM_POOL), --prefix $$(pool))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
+	$$(KVMRUNNER) $$(KVMRUNNER_FLAGS)$$(foreach pool,$$(KVM_POOL), --prefix $$(pool))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
 endef
 
 # "check" runs any test that has not yet passed (that is: failed,
