@@ -16,6 +16,8 @@ import os
 import sys
 import pexpect
 import time
+import threading
+import queue
 from datetime import datetime
 from concurrent import futures
 
@@ -472,15 +474,82 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _process_tests(domain_prefix, tests, args, test_stats, result_stats, tests_count, boot_executor):
+def _run_tests_in_order(domain_prefix, tests, args, test_stats, result_stats, boot_executor):
     logger = logutil.getLogger(domain_prefix, __name__)
     test_count = 0
+    tests_count = len(tests)
     for test in tests:
         test_count += 1
         _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor, logger)
 
 
+class Task:
+    def __init__(self, test, count, total):
+        self.count = count
+        self.total = total
+        self.test = test
+
+
+def _process_test_queue(domain_prefix, test_queue, args, done, test_stats, result_stats, boot_executor):
+    logger = logutil.getLogger(domain_prefix, __name__)
+    try:
+        while True:
+            task = test_queue.get(block=False)
+            _process_test(domain_prefix, task.test, args, test_stats, result_stats, task.count, task.total, boot_executor, logger)
+    except queue.Empty:
+        None
+    finally:
+        done.release()
+
+
+def _run_tests_in_parallel(args, tests, test_stats, result_stats, boot_executor):
+    logger = logutil.getLogger("", __name__)
+
+    test_queue = queue.Queue()
+    done = threading.Semaphore(value=0) # block
+
+    # The queue is "infinite" so .put should never block, if it does
+    # explode.
+    count = 0
+    for test in tests:
+        count += 1
+        test_queue.put(Task(test, count, len(tests)), block=False)
+
+    threads = []
+    for domain_prefix in args.prefix:
+        threads.append(threading.Thread(name=domain_prefix,
+                                        target=_process_test_queue,
+                                        daemon=True,
+                                        args=(domain_prefix, test_queue,
+                                              args, done,
+                                              test_stats, result_stats,
+                                              boot_executor)))
+    for thread in threads:
+        thread.start()
+
+    # Wait for at least one thread to exit
+    logger.info("waiting for first thread to finish")
+    done.acquire()
+
+    # If all went well the TEST_QUEUE is empty and this does nothing.
+    # However if something is going wrong, this will stop the other
+    # threads by draining the queue.
+    try:
+        while True:
+            test = test_queue.get(block=False)
+            logger.info("discarding test %s", test)
+    except queue.Empty:
+        None
+
+    # Finally wait for the other threads to exit.
+    logger.info("waiting for threads to finish")
+    for thread in threads:
+        thread.join()
+
+
 def run_tests(logger, args, tests, test_stats, result_stats):
     with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-        domain_prefix = args.prefix and args.prefix[0] or ""
-        _process_tests(domain_prefix, tests, args, test_stats, result_stats, len(tests), boot_executor)
+        if args.prefix:
+            _run_tests_in_parallel(args, tests, test_stats, result_stats, boot_executor)
+        else:
+            _run_tests_in_order("", tests, args, test_stats, result_stats, boot_executor)
