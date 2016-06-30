@@ -1,4 +1,6 @@
-ipsec look
+ipsec whack --shutdown
+# there should be no vti0 device left
+ip addr show vti0
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
