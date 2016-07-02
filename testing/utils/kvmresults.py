@@ -196,8 +196,9 @@ def results(logger, tests, baseline, args, result_stats):
 
     for test in tests:
 
-        # Produce separate runtimes for each test.
-        with logutil.TIMER:
+        # If debug logging is enabled this will provide per-test
+        # timing.
+        with logger.timer_stack():
 
             logger.debug("start processing test %s", test.name)
 

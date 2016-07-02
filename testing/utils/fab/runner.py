@@ -37,8 +37,10 @@ def add_arguments(parser):
                                       "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
                        help="default: %(default)s")
-    group.add_argument("--prefix", metavar="DOMAIN-PREFIX", action="append",
-                       help="prefix to prepend to each domain")
+    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
+                       help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
+    group.add_argument("--parallel", action="store_true",
+                       help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
 
     group.add_argument("--attempts", type=int, default=1,
                        help="number of times to attempt a test before giving up; default %(default)s")
@@ -50,12 +52,15 @@ def add_arguments(parser):
                         default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
                         help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
+
 def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  attempts: %s", args.attempts)
+    logger.info("  parallel: %s", args.parallel)
     logger.info("  backup-directory: %s", args.backup_directory)
+
 
 TEST_TIMEOUT = 120
 
@@ -474,8 +479,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _run_tests_in_order(domain_prefix, tests, args, test_stats, result_stats, boot_executor):
-    logger = logutil.getLogger(domain_prefix, __name__)
+def _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger):
     test_count = 0
     tests_count = len(tests)
     for test in tests:
@@ -502,21 +506,21 @@ def _process_test_queue(domain_prefix, test_queue, args, done, test_stats, resul
         done.release()
 
 
-def _run_tests_in_parallel(args, tests, test_stats, result_stats, boot_executor):
-    logger = logutil.getLogger("", __name__)
+def _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_stats, boot_executor, logger):
 
-    test_queue = queue.Queue()
-    done = threading.Semaphore(value=0) # block
-
-    # The queue is "infinite" so .put should never block, if it does
-    # explode.
+    # Convert the test list into a queue.
+    #
+    # Since the queue is "infinite", .put() should never block. Assert
+    # this.
     count = 0
+    test_queue = queue.Queue()
     for test in tests:
         count += 1
         test_queue.put(Task(test, count, len(tests)), block=False)
 
+    done = threading.Semaphore(value=0) # block
     threads = []
-    for domain_prefix in args.prefix:
+    for domain_prefix in domain_prefixes:
         threads.append(threading.Thread(name=domain_prefix,
                                         target=_process_test_queue,
                                         daemon=True,
@@ -548,8 +552,17 @@ def _run_tests_in_parallel(args, tests, test_stats, result_stats, boot_executor)
 
 
 def run_tests(logger, args, tests, test_stats, result_stats):
+    logger = logutil.getLogger("", __name__)
+    if args.workers == 1:
+        logger.info("using 1 worker thread to reboot domains")
+    else:
+        logger.info("using a pool of %s worker threads to reboot domains", args.workers)
     with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-        if args.prefix:
-            _run_tests_in_parallel(args, tests, test_stats, result_stats, boot_executor)
+        domain_prefixes = args.prefix or [""]
+        if args.parallel or len(domain_prefixes) > 1:
+            logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
+            _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_stats, boot_executor, logger)
         else:
-            _run_tests_in_order("", tests, args, test_stats, result_stats, boot_executor)
+            domain_prefix = domain_prefixes[0]
+            logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
+            _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger)
