@@ -1,9 +1,0 @@
-This tests production of ESP-3DES packets with a source of ICMP packets.
-
-Note that no authentication is done in this variation. Also, the same
-SPI# is used for incoming and outgoing. This is bizarre, but some 3COM
-gateways do this for "manual keying", and they have some other bizarre
-(and trivially DOS'able!) methods of moving manually keyed SAs from one
-source to another.
-
-

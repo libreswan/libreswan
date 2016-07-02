@@ -1,9 +1,0 @@
-arp who-has 192.0.1.1 tell 192.0.1.254
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)
-192.1.2.23 > 192.0.1.1: icmp: echo request (DF)

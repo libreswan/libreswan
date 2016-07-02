@@ -1,2 +1,0 @@
-IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x1bbdd678,seq=0x1), length 124
-IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x1bbdd678,seq=0x2), length 124

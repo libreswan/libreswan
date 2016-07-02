@@ -1,5 +1,0 @@
-192.0.2.1 > 192.1.2.254: ICMP echo request (DF)
-192.1.2.23 > 192.1.2.45: ESP(spi=0x12345678,seq=0x1), length 292: 192.0.2.1 > 192.0.1.1: ICMP echo request (DF)
-192.1.2.23 > 192.1.2.45: ESP(spi=0x12345678,seq=0x2), length 292: 192.0.2.1 > 192.0.1.1: ICMP echo request (DF)
-192.1.2.23 > 192.1.2.45: ESP(spi=0x12345678,seq=0x3), length 292: 192.0.2.1 > 192.0.1.1: ICMP echo request (DF)
-192.0.2.1 > 192.1.2.254: ICMP echo request (DF)

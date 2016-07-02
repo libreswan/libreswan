@@ -1,1 +1,0 @@
-Test of producing compressed (ipcomp) packets.

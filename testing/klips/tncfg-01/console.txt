@@ -1,6 +1,0 @@
-east:~#
- : test for attaching non-existant device
-east:~#
- ipsec tncfg --attach --virtual ipsec0 --physical xxx
-/usr/local/libexec/ipsec/tncfg: Socket ioctl failed on attach -- No such device.  Is the physical device valid?
-

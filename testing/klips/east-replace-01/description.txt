@@ -1,6 +1,0 @@
-This is a test of adding an SA, then removing it, and then replacing it,
-and then deleting it, and then replacing it.
-
-The last operation should succeed, because replacing something that isn't
-there isn't really an error.
-

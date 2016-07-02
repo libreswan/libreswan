@@ -1,3 +1,0 @@
-#
-tcpdump -i eth1 -N -s 800 ether host 00:60:08:3E:C5:1A and 08:00:20:0E:13:9F -a -vv -e
-

@@ -1,4 +1,0 @@
-This test allocates a few SAref numbers, then deletes them. It does this
-with debugging turned on.
-
-

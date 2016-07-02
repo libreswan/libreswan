@@ -1,5 +1,0 @@
-This test sends enough pfkey messages to klips to roll the SAref pool.
-It deallocates some as it goes. The pattern is determine by a PRNG
-(rand(3) based) in a perl script.
-It verifies that klips is able to reclaim discarded SArefs.
-

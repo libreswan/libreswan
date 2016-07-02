@@ -1,9 +1,0 @@
-This test attempts to send packets from sunrise to sunset through an
-encrypted tunnel running between east and sunset then further running
-those packets through an encrypted tunnel between east and west.
-
-The test here is that a multi-layer eroute must be built. This will
-be needed to do co-terminal connections.
-
-
-

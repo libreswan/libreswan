@@ -1,4 +1,0 @@
-This test takes the output from the double encryption test and removes
-one layer of the crypto, leaving an ESP on the output. We can remove this
-layer with tcpdump as well.
-

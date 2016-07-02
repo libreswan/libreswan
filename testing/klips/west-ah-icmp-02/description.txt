@@ -1,2 +1,0 @@
-Test for decapsulation of AH-SHA1 packets.
-

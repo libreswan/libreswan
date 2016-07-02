@@ -1,3 +1,0 @@
-Test of producing AH protected packets - SHA1 version.
-
-note: This test currently fails because of unknown proto=51.	
