@@ -197,7 +197,7 @@ extern void close_output_pbs(pb_stream *pbs);
  * require them to be zero).
  */
 
-#include <isakmp_hdr.h>
+#include "isakmp_hdr.h"
 
 extern struct_desc isakmp_hdr_desc;
 
