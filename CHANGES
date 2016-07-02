@@ -39,6 +39,7 @@ v3.18 (unreleased)
 * packaging: updates for debian packaging [dkg]
 * ipsec import: add --configdir|--ipsecdir option for nss db location [Tuomo]
 * _stackmanager: remove loading of hardware random modules [Tuomo]
+* programs: removed obsoleted ikeping and livetest [Paul]
 
 v3.17 (April 4, 2016)
 * SECURITY: CVE-2016-3071: IKEv2 aes_xcbc transform causes restart [Andrew]
