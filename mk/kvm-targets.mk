@@ -31,6 +31,7 @@ KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_BASEDIR ?= $(KVM_POOLDIR)
+KVM_PREFIX ?= $(KVM_POOL)
 
 # The KVM's operating system.
 KVM_OS ?= fedora
@@ -40,10 +41,9 @@ KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
 
-KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVMSH ?= $(KVMSH_COMMAND)
+KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVM_WORKERS ?= 1
-KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -124,7 +124,7 @@ endif
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(call check-kvm-qemu-directory)
-	$(KVMSH) --output ++compile-log.txt --chdir . $(1)
+	$(KVMSH) $(KVMSH_FLAGS) --output ++compile-log.txt --chdir . $(1)
 endef
 
 # [re]run the testsuite.
@@ -148,7 +148,7 @@ $(1): $$(KVM_KEYS)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
 	: KVM_TESTS=$$(STRIPPED_KVM_TESTS)
-	$$(KVMRUNNER_COMMAND)$$(foreach pool,$$(KVM_POOL), --prefix $$(pool))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
+	$$(KVMRUNNER) $$(KVMRUNNER_FLAGS)$$(foreach prefix,$$(KVM_PREFIX), --prefix $$(prefix))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
 endef
 
 # "check" runs any test that has not yet passed (that is: failed,
@@ -257,7 +257,7 @@ define check-no-kvm-network
 endef
 
 define kvm-test-network
-  #(info pool=$(1) network=$(2))
+  #(info prefix=$(1) network=$(2))
 
   KVM_TEST_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
 
@@ -290,8 +290,8 @@ define kvm-test-network
 endef
 
 KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
-ifdef KVM_POOL
-$(foreach pool,$(KVM_POOL),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(pool),$(network)))))
+ifdef KVM_PREFIX
+$(foreach prefix,$(KVM_PREFIX),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(prefix),$(network)))))
 else
 $(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,,$(network))))
 endif
@@ -467,7 +467,7 @@ install-kvm-domains: install-kvm-test-domains
 uninstall-kvm-domains: uninstall-kvm-test-domains
 
 define kvm-test-domain
-  #(info pool=$(1) network=$(2))
+  #(info prefix=$(1) network=$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
   KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
@@ -498,8 +498,8 @@ define kvm-test-domain
 	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
 endef
 
-ifdef KVM_POOL
-$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(pool),$(domain)))))
+ifdef KVM_PREFIX
+$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(prefix),$(domain)))))
 else
 $(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,,$(domain))))
 endif
@@ -530,7 +530,7 @@ uninstall-kvm-domains:
 #
 
 # Select the build domain; the choice is arbitrary; most likely it is "east".
-KVM_BUILD_DOMAIN = $(firstword $(KVM_POOL))$(firstword $(KVM_INSTALL_DOMAINS))
+KVM_BUILD_DOMAIN = $(firstword $(KVM_PREFIX))$(firstword $(KVM_INSTALL_DOMAINS))
 
 # Map the documented targets, and their aliases, onto
 # internal/canonical targets.
@@ -565,7 +565,7 @@ kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
 kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
 
 define build_rules
-  #(info pool=$(1) domain=$(2))
+  #(info prefix=$(1) domain=$(2))
 
   # Run "make <anything>" on the specified domain
   kvm-$(1)$(2)-make-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
@@ -599,14 +599,14 @@ define build_rules
 
 endef
 
-ifdef KVM_POOL
-$(foreach pool,$(KVM_POOL),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(pool),$(domain)))))
+ifdef KVM_PREFIX
+$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(prefix),$(domain)))))
 else
 $(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
 endif
 
 # Provide aliases so that "east" maps onto the first "east" in the
-# pool. et.al.
+# first test pool.
 
 define kvm_alias
   .PHONY: kvm-install-$(1)
@@ -617,15 +617,15 @@ define kvm_alias
   kvm-shutdown-$(1): kvm-$(2)-shutdown
 endef
 
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_PREFIX))$(domain))))
 
 define kvmsh_alias
   kvmsh-$(1): kvmsh-$(2)
   kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
 endef
 
-ifneq ($(firstword $(KVM_POOL)),)
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvmsh_alias,$(domain),$(firstword $(KVM_POOL))$(domain))))
+ifneq ($(firstword $(KVM_PREFIX)),)
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvmsh_alias,$(domain),$(firstword $(KVM_PREFIX))$(domain))))
 endif
 
 .PHONY: kvm-help
