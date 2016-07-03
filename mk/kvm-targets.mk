@@ -581,10 +581,18 @@ define build_rules
 
   # "kvm-install" is a little wierd.  It needs to be run on most VMs,
   # and it needs to use the swan-install script.
+  #
+  # After installing shut down the domain.  Otherwise, when KVM_PREFIX
+  # is large, the idle domains will end up consuming all available
+  # memory.
+  #
+  # When KVM_PREFIX is large, "make kvm-install" is dombinated by the
+  # below target.  It should be possible to instead install on one
+  # domain and then clone it.
   kvm-install: kvm-$(1)$(2)-install
   .PHONY: kvm-$(1)$(2)-install
   kvm-$(1)$(2)-install: kvm-build | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,$(1)$(2) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+	$(call kvmsh,--shutdown $(1)$(2) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
   kvm-shutdown: kvm-$(1)$(2)-shutdown
   .PHONY: kvm-$(1)$(2)-shutdown
