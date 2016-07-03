@@ -290,10 +290,10 @@ define kvm-test-network
 endef
 
 KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
-ifdef KVM_PREFIX
-$(foreach prefix,$(KVM_PREFIX),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(prefix),$(network)))))
-else
+ifeq ($(KVM_PREFIX),)
 $(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,,$(network))))
+else
+$(foreach prefix,$(KVM_PREFIX),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(prefix),$(network)))))
 endif
 
 # To avoid the problem where the host has no "default" KVM network
@@ -498,10 +498,10 @@ define kvm-test-domain
 	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
 endef
 
-ifdef KVM_PREFIX
-$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(prefix),$(domain)))))
-else
+ifeq ($(KVM_PREFIX),)
 $(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,,$(domain))))
+else
+$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(prefix),$(domain)))))
 endif
 
 uninstall-kvm-domains:
@@ -607,10 +607,10 @@ define build_rules
 
 endef
 
-ifdef KVM_PREFIX
-$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(prefix),$(domain)))))
-else
+ifeq ($(KVM_PREFIX),)
 $(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
+else
+$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(prefix),$(domain)))))
 endif
 
 # Provide aliases so that "east" maps onto the first "east" in the
