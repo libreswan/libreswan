@@ -36,7 +36,7 @@ def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
     group.add_argument("--workers", default="1", type=int,
-                       help="default: %(default)s")
+                       help="specify the number of worker threads to use when rebooting domains; default: %(default)s")
     group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
     group.add_argument("--parallel", action="store_true",
@@ -317,7 +317,9 @@ def _run_test(domain_prefix, test, args, boot_executor):
         logger.info("finishing test")
 
 
-def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor, logger):
+def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor):
+
+    logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
     suffix = "******"
     test_stats.add(test, "total")
@@ -480,11 +482,12 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
 
 def _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger):
+
     test_count = 0
     tests_count = len(tests)
     for test in tests:
         test_count += 1
-        _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor, logger)
+        _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor)
 
 
 class Task:
@@ -499,7 +502,7 @@ def _process_test_queue(domain_prefix, test_queue, args, done, test_stats, resul
     try:
         while True:
             task = test_queue.get(block=False)
-            _process_test(domain_prefix, task.test, args, test_stats, result_stats, task.count, task.total, boot_executor, logger)
+            _process_test(domain_prefix, task.test, args, test_stats, result_stats, task.count, task.total, boot_executor)
     except queue.Empty:
         None
     finally:
@@ -552,7 +555,6 @@ def _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_st
 
 
 def run_tests(logger, args, tests, test_stats, result_stats):
-    logger = logutil.getLogger("", __name__)
     if args.workers == 1:
         logger.info("using 1 worker thread to reboot domains")
     else:
