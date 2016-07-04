@@ -21,9 +21,6 @@
 # variable '$*'.  It is used to extract the DOMAIN from targets like
 # kvm-install-DOMAIN.
 
-# Note: Need to better differientate between DOMAINs (what KVM calls
-# test machines) and HOSTs (what the test framework calls the test
-# machines).
 
 
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
@@ -40,6 +37,12 @@ KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
+
+# Note: Need to better differientate between DOMAINs (what KVM calls
+# test machines) and HOSTs (what the test framework calls the test
+# machines).
+KVM_TEST_HOST_NAMES = $(KVM_TEST_DOMAINS)
+KVM_TEST_DOMAIN_NAMES = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(prefix),$(KVM_TEST_HOST_NAMES))),$(KVM_TEST_HOST_NAMES))
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVM_WORKERS ?= 1
@@ -144,26 +147,22 @@ KVM_TESTS ?= testing/pluto
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
 define kvm-test
-$(1): $$(KVM_KEYS)
-	$$(call check-kvm-qemu-directory)
-	$$(call check-kvm-entropy)
-	: KVM_TESTS=$$(STRIPPED_KVM_TESTS)
-	$$(KVMRUNNER) $$(KVMRUNNER_FLAGS)$$(foreach prefix,$$(KVM_PREFIX), --prefix $$(prefix))$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) $(2) $$(STRIPPED_KVM_TESTS)
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
+	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) $(KVMRUNNER_FLAGS)$(foreach prefix,$(KVM_PREFIX), --prefix $(prefix))$(if $$(KVM_WORKERS), --workers $(KVM_WORKERS)) $(1) $(STRIPPED_KVM_TESTS)
 endef
 
-# "check" runs any test that has not yet passed (that is: failed,
-# incomplete, and not started).  This is probably the safest option.
-.PHONY: kvm-check kvm-check-good kvm-check-all
-kvm-check: kvm-check-good
-$(eval $(call kvm-test,kvm-check-good, --skip-passed --test-result "good"))
-$(eval $(call kvm-test,kvm-check-all, --skip-passed --test-result "good|wip"))
+# "test" and "check" just runs the entire testsuite.
+.PHONY: kvm-check kvm-test
+kvm-check kvm-test: $(KVM_KEYS)
+	$(call kvm-test, --test-result "good")
 
-# "test" runs tests regardless.  It is best used with the KVM_TESTS
-# varible.
-.PHONY: kvm-test-good kvm-test-all
-kvm-test: kvm-test-good
-$(eval $(call kvm-test, kvm-test-good, --test-result "good"))
-$(eval $(call kvm-test, kvm-test-all,  --test-result "good|wip"))
+# "retest" and "recheck" re-run the testsuite updating things that
+# didn't pass.
+.PHONY: kvm-retest kvm-recheck
+kvm-retest kvm-recheck: $(KVM_KEYS)
+	$(call kvm-test, --test-result "good" --skip-passed)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
@@ -639,20 +638,19 @@ endif
 .PHONY: kvm-help
 kvm-help:
 	@echo ''
-	@echo ' To run tests, either:'
+	@echo ' To set up the test domains, install libreswan, and run the testsuite [optional]:'
 	@echo ''
-	@echo '   <create domains>      - see below'
-	@echo '   check UPDATEONLY=1    - just install'
-	@echo '   check                 - just run swantest'
+	@echo '   kvm-install           - as needed, create the test domains $(KVM_TEST_DOMAIN_NAMES)'
+	@echo '                         - build or rebuild libreswan using $(KVM_BUILD_DOMAIN)'
+	@echo '                         - install libreswan into all test domains'
 	@echo ''
-	@echo ' Or [optional]:'
+	@echo '   kvm-check             - run all GOOD tests against the previously installed libreswan'
+	@echo '                           Use KVM_TESTS=testing/pluto/... to select tests to run'
+	@echo '  [kvm-recheck]          - like kvm-check but skip tests that passed during the last kvm-check'
 	@echo ''
-	@echo '   kvm-install           - create test domains; install or update libreswan'
-	@echo '   kvm-test              - run all GOOD tests against previously installed libreswan'
-	@echo '  [kvm-check]            - like kvm-test but skip tests that passed'
-	@echo '  [kvm-clean]            - delete test build in $(KVM_OBJDIR)'
-	@echo '  [kvm-test-clean]       - delete test results in OUTPUT (else saved in BACKUP/)'
-	@echo '  [kvm-uninstall]        - delete test domains/networks ready for a fresh kvm-install'
+	@echo '  [kvm-clean]            - force a clean build by deleting the KVM build in $(KVM_OBJDIR)'
+	@echo '  [kvm-test-clean]       - force a clean test run by deleting test results in OUTPUT (else saved in BACKUP/)'
+	@echo '  [kvm-uninstall]        - force a clean install by deleting all the test domains and networks'
 	@echo ''
 	@echo ' To explicitly create and delete domains use the following sequence:'
 	@echo ' (kvm-install and kvm-uninstall do this automatically)'
@@ -660,7 +658,7 @@ kvm-help:
 	@echo '   install-kvm-base-network    - create the base network "$(KVM_BASE_NETWORK)'
 	@echo '   install-kvm-base-domain     - create the base domain "$(KVM_BASE_DOMAIN)"'
 	@echo '   install-kvm-test-networks   - create the test networks "$(KVM_TEST_NETWORKS)"'
-	@echo '   install-kvm-test-domains    - create the test domains "$(KVM_TEST_DOMAINS)"'
+	@echo '   install-kvm-test-domains    - create the test domains "$(KVM_TEST_DOMAIN_NAMES)"'
 	@echo '   uninstall-kvm-test-domains  - delete the test domains'
 	@echo '   uninstall-kvm-test-networks - delete the test networks'
 	@echo '   uninstall-kvm-base-domain   - delete the base domain'
@@ -670,8 +668,8 @@ kvm-help:
 	@echo ''
 	@echo '   kvm-keys                - use the KVM to create the test keys'
 	@echo '   kvmsh-DOMAIN            - open console on DOMAIN'
-	@echo '   kvm-build-DOMAIN        - build on DOMAIN'
-	@echo '   kvm-install-DOMAIN      - install on DOMAIN'
+	@echo '   kvm-build-DOMAIN        - run "make base module" on DOMAIN'
+	@echo '   kvm-install-DOMAIN      - run "make install" on DOMAIN'
 	@echo '   kvm-shutdown            - shutdown all domains'
 	@echo '   kvm-shutdown-DOMAIN     - shutdown DOMAIN'
 	@echo '   kvm-make-ACTION         - run "make ACTION" on $(KVM_BUILD_DOMAIN)'
