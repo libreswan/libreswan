@@ -3419,7 +3419,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	DBG(DBG_CONTROL, DBG_log("orphan_holdpass() called for %s with transport_proto '%d'",
 		 c->name, transport_proto));
 
-	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
+	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
+				LELEM(CK_GOING_AWAY), c->kind));
 
 	switch (ro) {
 	case RT_UNROUTED_HOLD:
