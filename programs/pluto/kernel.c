@@ -544,7 +544,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */
 
 		, c->name,
-		c->interface->ip_dev->id_vname,
+		c->interface == NULL ? "NULL" : c->interface->ip_dev->id_vname,
 		nexthop_str,
 		ipstr(&sr->this.host_addr, &bme),
 		secure_myid_str,		/* 5 */
