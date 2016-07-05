@@ -100,7 +100,7 @@ def main():
                         help="a %(metavar)s containing baseline testsuite output")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), test output, or testsuite output")
+                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), a TESTLIST file, test output, or testsuite output")
     # Note: this argument serves as documentation only.  The
     # TEST-DIRECTORY argument always consumes all remaining arguments.
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",

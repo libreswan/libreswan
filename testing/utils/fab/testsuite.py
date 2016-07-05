@@ -258,7 +258,7 @@ def is_test_output_directory(directory):
 TESTLIST = "TESTLIST"
 
 
-def load(logger, args,
+def load(logger, log_level, args,
          testsuite_directory=None,
          testsuite_output_directory=None, # going away
          saved_testsuite_output_directory=None,
@@ -271,17 +271,22 @@ def load(logger, args,
     """
 
     saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
-    # Is DIRECTORY a testsuite?  For instance: testing/pluto.
-    testlist = os.path.join(testsuite_directory, TESTLIST)
-    if os.path.exists(testlist):
-        logger.debug("'%s' is a testsuite directory", testsuite_directory)
-        return Testsuite(logger, testlist, error_level,
-                         testing_directory=args.testing_directory,
-                         testsuite_output_directory=args.testsuite_output,
-                         saved_testsuite_output_directory=saved_testsuite_output_directory)
-
-    logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
-    return None
+    # Is DIRECTORY a testsuite or a testlist file?  For instance:
+    # testing/pluto or testing/pluto/TESTLIST.
+    if os.path.isfile(testsuite_directory):
+        testlist = testsuite_directory
+        testsuite_directory = os.path.dirname(testsuite_directory)
+        logger.log(log_level, "'%s' is a TESTLIST file", testlist)
+    else:
+        testlist = os.path.join(testsuite_directory, TESTLIST)
+        if not os.path.exists(testlist):
+            logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
+            return None
+        logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
+    return Testsuite(logger, testlist, error_level,
+                     testing_directory=args.testing_directory,
+                     testsuite_output_directory=args.testsuite_output,
+                     saved_testsuite_output_directory=saved_testsuite_output_directory)
 
 
 def append_test(tests, args, test_directory=None,
@@ -314,7 +319,7 @@ def load_testsuite_or_tests(logger, directories, args,
                             log_level=logutil.DEBUG):
 
     # Deal with each directory in turn.  It might be a test,
-    # testsuite, or output.
+    # testsuite, testlist, or output.
 
     tests = []
     for directory in directories:
@@ -325,11 +330,10 @@ def load_testsuite_or_tests(logger, directories, args,
             logger.debug("chopping / off '%s'", directory)
             directory = os.path.dirname(directory)
 
-        # perhaps directory is a testsuite?
-        testsuite = load(logger, args, testsuite_directory=directory,
+        # perhaps directory/file is a testsuite?
+        testsuite = load(logger, log_level, args, testsuite_directory=directory,
                          testsuite_output_directory=args.testsuite_output)
         if testsuite:
-            logger.log(log_level, "'%s' is a testsuite", directory)
             # more efficient?
             for test in testsuite:
                 tests.append(test)

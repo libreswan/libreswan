@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help="either a testsuite directory or a list of test directories")
+                        help="a testsuite directory, a TESTLIST file, or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
     post.add_arguments(parser)
