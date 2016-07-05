@@ -806,6 +806,7 @@ kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
 kvmplutotest	nss-cert-07			good
+kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
