@@ -374,7 +374,7 @@ static void liveness_check(struct state *st)
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_DPD,
 				DBG_log("liveness_check error, no parent state"));
 			return;
 		}
@@ -399,7 +399,7 @@ static void liveness_check(struct state *st)
 		if (last_liveness.mono_secs == UNDEFINED_TIME)
 			last_liveness = tm;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_DPD,
 			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
 				(long)last_liveness.mono_secs,
 				(long)tm.mono_secs));
@@ -412,7 +412,7 @@ static void liveness_check(struct state *st)
 
 		if (pst->st_pend_liveness &&
 		    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_DPD,
 				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout));
@@ -427,7 +427,7 @@ static void liveness_check(struct state *st)
 				return;
 
 			case DPD_ACTION_HOLD:
-				DBG(DBG_CONTROL,
+				DBG(DBG_DPD,
 						DBG_log("liveness_check - handling default by rescheduling"));
 				break;
 
@@ -439,14 +439,14 @@ static void liveness_check(struct state *st)
 			stf_status ret = ikev2_send_informational(st);
 
 			if (ret != STF_OK) {
-				DBG(DBG_CONTROL,
+				DBG(DBG_DPD,
 					DBG_log("failed to send informational"));
 				return;
 			}
 		}
 	}
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_DPD,
 		DBG_log("liveness_check - peer is ok"));
 	delete_liveness_event(st);
 	event_schedule(EVENT_v2_LIVENESS,
