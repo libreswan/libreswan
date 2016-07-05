@@ -1736,7 +1736,7 @@ void show_setup_plutomain(void)
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
 		deltasecs(crl_check_interval),
-		pluto_listen ? pluto_listen : "<any>",
+		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
 		);
 
