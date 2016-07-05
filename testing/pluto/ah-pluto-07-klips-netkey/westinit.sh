@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-ip addr add 192.0.1.111/24 dev eth
+ip addr add 192.0.1.111/24 dev eth0
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 ../../pluto/bin/wait-until-alive -I 192.0.1.111 192.0.2.111

@@ -1,4 +1,3 @@
-west #
  /testing/guestbin/swan-prep
 west #
  # confirm that the network is alive
