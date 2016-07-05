@@ -243,13 +243,17 @@ endef
 
 define check-no-kvm-network
 	if sudo virsh net-info '$(1)' 2>/dev/null ; then \
-		echo 'The network $(1) seems to already exist.  Either clean it up with:' ; \
 		echo '' ; \
-		echo '    make uninstall-kvm-network-$(1)' ; \
+		echo '        The network $(1) seems to already exist.' ; \
+		echo '  ' ; \
+		echo '  This is most likely because make was aborted part' ; \
+		echo '  way through creating the network, however it could be' ; \
+		echo '  because the network was created by some other means.' ; \
 		echo '' ; \
-		echo 'Or skip creating the network with:' ; \
+		echo '  To continue the build, the existing network will first need to' ; \
+		echo '  be deleted using:' ; \
 		echo '' ; \
-		echo '    touch $(2)' ; \
+		echo '      make uninstall-kvm-network-$(1)' ; \
 		echo '' ; \
 		exit 1 ; \
 	fi
@@ -364,13 +368,17 @@ endef
 
 define check-no-kvm-domain
 	if sudo virsh dominfo '$(1)' 2>/dev/null ; then \
-		echo 'The domain $(1) seems to already exist.  Either clean it up with:' ; \
 		echo '' ; \
-		echo '    make uninstall-kvm-domain-$(1)' ; \
+		echo '        The domain $(1) seems to already exist.' ; \
 		echo '' ; \
-		echo 'Or skip creating the domain with:' ; \
+		echo '  This is most likely because to make was aborted part' ; \
+		echo '  way through creating the domain, however it could be' ; \
+		echo '  because the domain was created by some other means.' ; \
 		echo '' ; \
-		echo '    touch $(2)' ; \
+		echo '  To continue the build, the existing domain will first need to' ; \
+		echo '  be deleted using:' ; \
+		echo '' ; \
+		echo '      make uninstall-kvm-domain-$(1)' ; \
 		echo '' ; \
 		exit 1; \
 	fi
