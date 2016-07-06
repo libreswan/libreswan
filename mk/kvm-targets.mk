@@ -150,7 +150,7 @@ define kvm-test
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) $(KVMRUNNER_FLAGS)$(foreach prefix,$(KVM_PREFIX), --prefix $(prefix))$(if $$(KVM_WORKERS), --workers $(KVM_WORKERS)) $(1) $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) $(foreach prefix,$(KVM_PREFIX), --prefix $(prefix))$(if $$(KVM_WORKERS), --workers $(KVM_WORKERS)) $(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
 endef
 
 # "test" and "check" just runs the entire testsuite.
