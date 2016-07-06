@@ -1,2 +1,0 @@
-This is a unit test case for the klips26_encap_rcv() function.
-It uses a single input packet that is ESP-UDP encrypted.
