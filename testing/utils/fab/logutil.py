@@ -192,35 +192,14 @@ class DebugStack:
         self.logger.debug("closed debug logfile '%s' at %s", self.file_name, datetime.now())
 
 
-class TimerStack:
-    """A stopwatch timer to count time since things started."""
-
-    def __init__(self):
-        self.runtimes = [timing.LapsedTime(timing.START_TIME)]
-
-    def __enter__(self):
-        self.runtimes.append(timing.LapsedTime())
-
-    def __exit__(self, type, value, traceback):
-        self.runtimes.pop()
-
-    def __str__(self):
-        runtimes = ""
-        now = datetime.now()
-        for runtime in self.runtimes:
-            if runtimes:
-                runtimes += "/"
-            runtimes += runtime.lapsed(now)
-        return runtimes
-
-
 _LOG_POOL = {}
 
 class LogPool:
     def __init__(self, prefix):
         self.name = prefix
-        self.timer_stack = TimerStack()
+        self.timer_stack = timing.LapsedStack()
         self.debug_handler = DebugHandler()
+
 
 class CustomMessageAdapter(logging.LoggerAdapter):
 

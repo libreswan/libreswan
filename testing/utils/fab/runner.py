@@ -426,8 +426,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
         # Start a debug log in the OUTPUT directory; include timing
         # for this specific test attempt.
-        with logger.timer_stack(), logger.debug_stack(test.output_directory, "debug.log"):
-            attempt_lapsed_time = timing.Lapsed()
+        with logger.timer_stack() as attempt_lapsed_time, logger.debug_stack(test.output_directory, "debug.log"):
             attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
             logger.info("%s started ....", attempt_prefix)
 

@@ -16,7 +16,7 @@
 # correct way.
 
 from datetime import datetime
-import time
+
 
 START_TIME = datetime.now()
 
@@ -24,24 +24,11 @@ START_TIME = datetime.now()
 class Lapsed:
     """A lapsed timer with second granularity"""
 
-    def __init__(self):
-        self.start = time.time()
-
-    def __str__(self):
-        lapsed = round(time.time() - self.start)
-        if lapsed == 1:
-            return "1 second"
-        else:
-            return "%d seconds" % lapsed
-
-
-class LapsedTime:
-    """A lapsed timer with millisecond granularity"""
-
     def __init__(self, start=None):
         self.start = start or datetime.now()
 
-    def lapsed(self, now):
+    def format(self, now=None):
+        now = now or datetime.now()
         delta = now - self.start
         milliseconds = (delta.microseconds / 1000)
         seconds = delta.seconds % 60
@@ -58,5 +45,37 @@ class LapsedTime:
         else:
             return "%d.%03d" % (seconds, milliseconds)
 
+    def seconds(self, now=None):
+        now = now or datetime.now()
+        delta = now - self.start
+        return delta.total_seconds()
+
     def __str__(self):
-        return self.lapsed(datetime.now())
+        seconds = round(self.seconds())
+        if seconds == 1:
+            return "1 second"
+        else:
+            return "%d seconds" % seconds
+
+
+class LapsedStack:
+    """A stack of lapsed timers; "with" creates a new level."""
+
+    def __init__(self):
+        self.runtimes = [Lapsed(START_TIME)]
+
+    def __enter__(self):
+        self.runtimes.append(Lapsed())
+        return self.runtimes[-1]
+
+    def __exit__(self, type, value, traceback):
+        self.runtimes.pop()
+
+    def __str__(self):
+        runtimes = ""
+        now = datetime.now()
+        for runtime in self.runtimes:
+            if runtimes:
+                runtimes += "/"
+            runtimes += runtime.format(now)
+        return runtimes
