@@ -686,8 +686,8 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-	/* reduce logging of OE failures */
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
+		/* reduced logging of OE failures */
 		DBG(DBG_LIFECYCLE, {
 			char cib[CONN_INST_BUF];
 			DBG_log("deleting state #%lu (%s) \"%s\"%s",
@@ -696,9 +696,16 @@ void delete_state(struct state *st)
 				c->name,
 				fmt_conn_instance(c, cib));
 		});
+	} else if (cur_state == st) {
+		/*
+		 * Don't log state and connection if it is the same as
+		 * the message prefix.
+		 */
+		libreswan_log("deleting state (%s)",
+			enum_show(&state_names, st->st_state));
 	} else {
 		char cib[CONN_INST_BUF];
-		libreswan_log("deleting state #%lu (%s) \"%s\"%s",
+		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
 			st->st_serialno,
 			enum_show(&state_names, st->st_state),
 			c->name,

@@ -43,9 +43,9 @@ west #
 002 adding interface eth1/eth1 192.1.2.23:4500
 003 two interfaces match "west-east" (eth1, eth1)
 002 "west-east": terminating SAs using this connection
-002 "west-east" #2: deleting state #2 (STATE_QUICK_I2)
+002 "west-east" #2: deleting state (STATE_QUICK_I2)
 005 "west-east" #2: ESP traffic information: in=0B out=0B
-002 "west-east" #1: deleting state #1 (STATE_MAIN_I4)
+002 "west-east" #1: deleting state (STATE_MAIN_I4)
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 loaded private key for keyid: PPK_RSA:AQOm9dY/4

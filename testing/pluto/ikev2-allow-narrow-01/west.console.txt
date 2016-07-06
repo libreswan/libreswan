@@ -86,7 +86,7 @@ west #
 003 "westnet-eastnet-ikev2" #1: missing payload(s) (ISAKMP_NEXT_v2SK). Message dropped.
 207 "westnet-eastnet-ikev2" #1: STATE_PARENT_I2: v2N_INVALID_SYNTAX
 002 "westnet-eastnet-ikev2" #1: deleting state #2 (STATE_PARENT_I2)
-002 "westnet-eastnet-ikev2" #1: deleting state #1 (STATE_PARENT_I2)
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_I2)
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

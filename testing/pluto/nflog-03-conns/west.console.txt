@@ -167,7 +167,7 @@ DROP       all  --  0.0.0.0/0            0.0.0.0/0
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
-002 "west-east-nflog" #3: deleting state #3 (STATE_QUICK_I2)
+002 "west-east-nflog" #3: deleting state (STATE_QUICK_I2)
 005 "west-east-nflog" #3: ESP traffic information: in=0B out=0B
 west #
  iptables -L -n

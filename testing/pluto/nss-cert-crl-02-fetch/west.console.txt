@@ -49,9 +49,9 @@ west #
 west #
  ipsec auto --down nss-cert-crl
 002 "nss-cert-crl": terminating SAs using this connection
-002 "nss-cert-crl" #2: deleting state #2 (STATE_QUICK_I2)
+002 "nss-cert-crl" #2: deleting state (STATE_QUICK_I2)
 005 "nss-cert-crl" #2: ESP traffic information: in=0B out=0B
-002 "nss-cert-crl" #1: deleting state #1 (STATE_MAIN_I4)
+002 "nss-cert-crl" #1: deleting state (STATE_MAIN_I4)
 west #
  sleep 2
 west #
@@ -67,7 +67,7 @@ west #
 003 "nss-cert-crl" #3: discarding duplicate packet; already STATE_MAIN_I3
 002 "nss-cert-crl" #3: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "nss-cert-crl" #3: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-002 "nss-cert-crl" #3: deleting state #3 (STATE_MAIN_I3)
+002 "nss-cert-crl" #3: deleting state (STATE_MAIN_I3)
 west #
  echo done
 done
