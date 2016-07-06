@@ -235,10 +235,6 @@ def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
     logger.info("  testing-directory: '%s'", args.testing_directory)
     logger.info("  testsuite-output: '%s'", args.testsuite_output)
-    logger.info("  test-kind: '%s'" , args.test_kind.pattern)
-    logger.info("  test-name: '%s'" , args.test_name.pattern)
-    logger.info("  test-result: '%s'" , args.test_result.pattern)
-    logger.info("  test-exclude: '%s'" , args.test_exclude.pattern)
 
 
 def is_test_directory(directory):
@@ -408,32 +404,3 @@ def load_testsuite_or_tests(logger, directories, args,
         continue
 
     return tests
-
-
-def ignore(test, args):
-
-    """Identify tests that should be ignored due to filters
-
-    The ignore reason is returned.
-
-    This is different to SKIP where a test isn't run because it has
-    been run before.
-
-    """
-
-    if args.test_kind.pattern and not args.test_kind.search(test.kind):
-        return test.kind, "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
-    if args.test_name.pattern and not args.test_name.search(test.name):
-        return test.name, "name '%s' does not match '%s'" % (test.name, args.test_name.pattern)
-    if args.test_result.pattern and not args.test_result.search(test.expected_result):
-        return test.expected_result, "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
-
-    if args.test_exclude.pattern:
-        if args.test_exclude.search(test.kind):
-            return test.kind, "kind '%s' excluded by regular expression '%s'" % (test.kind, args.test_exclude.pattern)
-        if args.test_exclude.search(test.name):
-            return test.name, "name '%s' excluded by regular expression '%s'" % (test.name, args.test_exclude.pattern)
-        if args.test_exclude.search(test.expected_result):
-            return test.expected_result, "expected test result '%s' excluded by regular expression '%s'" % (test.expected_result, args.test_exclude.pattern)
-
-    return None, None
