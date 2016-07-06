@@ -179,17 +179,17 @@ class DebugStack:
         self.debug_stream = None
 
     def __enter__(self):
-        self.logger.debug("open debug logfile %s", self.file_name)
+        self.logger.debug("opening debug logfile '%s' at %s", self.file_name, datetime.now())
         self.debug_stream = open(self.file_name, "a")
         self.debug_handler.push(self.debug_stream)
-        self.logger.debug("starting debug log")
+        self.logger.debug("starting debug log at %s", datetime.now())
 
     def __exit__(self, type, value, traceback):
         # Restore debug logging before closing the debugfile.
-        self.logger.debug("ending debug log")
+        self.logger.debug("ending debug log at %s", datetime.now())
         self.debug_handler.pop()
         self.debug_stream.close()
-        self.logger.debug("close debug logfile %s", self.file_name)
+        self.logger.debug("closed debug logfile '%s' at %s", self.file_name, datetime.now())
 
 
 class TimerStack:
