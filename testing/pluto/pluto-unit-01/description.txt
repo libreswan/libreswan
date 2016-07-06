@@ -1,5 +1,0 @@
-These tests are Pluto unit tests - it runs IKE in a bottle.
-It does not talk to KLIPS at all, but does require that a number
-of aliases be configured on the loopback device.
-It also requires some entries in DNS.
-

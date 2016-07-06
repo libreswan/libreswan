@@ -271,16 +271,6 @@ kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
 kvmplutotest 	newoe-25-cat-5				good
 
-# pluto-unit-01 - pluto vs. pluto, without KLIPS
-# This runs in a single UML, so ctltest is appropriate
-ctltest	pluto-unit-01	good
-ctltest	pluto-unit-02	good
-
-# regression test for --dontrekey responder with short SA lifetimes:
-# ought to somehow notify other side.
-# Also a unit test.
-ctltest	pluto-dontreky-expiry-01 good
-
 # test food groups
 # these set up a food group, then run a ping from sunrise-sunset
 
@@ -380,11 +370,6 @@ kvmplutotest	ikev1-rekey-connswitch	wip
 # OE TEMP DISABLED umlplutotest	oe-fail-without-resp-client-txt-01	good
 
 #
-# whack --status output should be sorted.
-#
-ctltest		whack-status-01		good
-
-#
 # co-terminal-02 - wavesec+OE, with wavesec started first
 #
 # OE TEMP DISABLED umlXhost	co-terminal-02		good
@@ -414,10 +399,6 @@ ctltest		whack-status-01		good
 # FQDN OE test with KEY, no TXT
 #
 # OE TEMP DISABLED umlXhost	oe-road-04		good
-
-#
-# test for using %dns in VPN conns
-ctltest	 	vpn-dns-01		good
 
 #
 # tests of OE from road warriors (no gateways)
