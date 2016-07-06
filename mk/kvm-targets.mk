@@ -37,10 +37,14 @@ KVM_BASE_DOMAIN = swan$(KVM_OS)base
 KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
 KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
+KVM_BUILD_DOMAIN = $(firstword $(KVM_PREFIX))$(firstword $(KVM_INSTALL_DOMAINS))
 
-# Note: Need to better differientate between DOMAINs (what KVM calls
-# test machines) and HOSTs (what the test framework calls the test
-# machines).
+# Note:
+#
+# Need to better differientate between DOMAINs (what KVM calls test
+# machines) and HOSTs (what the test framework calls the test
+# machines).  This is a transition.
+
 KVM_TEST_HOST_NAMES = $(KVM_TEST_DOMAINS)
 KVM_TEST_DOMAIN_NAMES = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(prefix),$(KVM_TEST_HOST_NAMES))),$(KVM_TEST_HOST_NAMES))
 
@@ -192,7 +196,16 @@ kvm-keys-up-to-date:
 		exit 1 ; \
 	fi
 
-$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT)
+# XXX:
+#
+# Can't yet force the domain's creation.  This target may have been
+# invoked by testing/pluto/Makefile which relies on old domain
+# configurations.
+
+$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_DOMAIN_$(KVM_BUILD_DOMAIN)_FILES)
+	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
+	$(call check-kvm-entropy)
+	$(call check-kvm-qemu-directory)
 	$(MAKE) clean-kvm-keys
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	touch $(KVM_KEYS)
@@ -384,6 +397,15 @@ define check-no-kvm-domain
 	fi
 endef
 
+define check-kvm-domain
+	if sudo virsh dominfo '$(1)' >/dev/null ; then : ; else \
+		echo "" ; \
+		echo "  ERROR: the domain $(1) seems to be missing; run 'make kvm-install'" ; \
+		echo "" ; \
+		exit 1 ; \
+	fi
+endef
+
 # XXX: Once KVM_OS gets re-named to include the release, this hack can
 # be deleted.
 ifeq ($(KVM_OS),fedora)
@@ -535,9 +557,6 @@ uninstall-kvm-domains:
 #
 # Build targets
 #
-
-# Select the build domain; the choice is arbitrary; most likely it is "east".
-KVM_BUILD_DOMAIN = $(firstword $(KVM_PREFIX))$(firstword $(KVM_INSTALL_DOMAINS))
 
 # Map the documented targets, and their aliases, onto
 # internal/canonical targets.
