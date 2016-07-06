@@ -142,7 +142,7 @@ west #
  ipsec auto --down west-east
 002 "west-east": terminating SAs using this connection
 002 "west-east": IKE SA is shared - only terminating IPsec SA
-002 "west-east": deleting state #2 (STATE_QUICK_I2)
+002 "west-east": deleting other state #2 (STATE_QUICK_I2) "west-east"
 005 "west-east": ESP traffic information: in=0B out=0B
 west #
  ipsec status |grep west-
