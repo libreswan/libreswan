@@ -1,8 +1,0 @@
-checksum.h
-ip.h
-protocol.h
-sock.h
-tcp.h
-udp.h
-dst.h
-icmp.h

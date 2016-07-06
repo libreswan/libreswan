@@ -53,7 +53,7 @@
 
 /* The field width must be < IF_NAM_SIZ - strlen("ipsec") - 1. */
 /* With "ipsec" being 5 characters, that means 10 is the max field width */
-/* but machine memory and CPU constraints are not likely to tollerate */
+/* but machine memory and CPU constraints are not likely to tolerate */
 /* more than 3 digits.  The default is one digit. */
 /* Update: userland scripts get upset if they can't find "ipsec0", so */
 /* for now, no "0"-padding should be used (which would have been helpful */

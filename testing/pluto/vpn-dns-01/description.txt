@@ -1,5 +1,0 @@
-This tests VPN usage of the KEY/TXT records by loading several conns
-between east and west. Different combinations of whether or not the
-records exist are used.
-
-

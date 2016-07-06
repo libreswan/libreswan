@@ -1,5 +1,0 @@
-links:
-	cat ${SRCDIR}files.txt | while read file; do ln -f -s ${SRCDIR}../kernelenv.h $$file;done
-	touch madelinks
-
-.PHONY: links
