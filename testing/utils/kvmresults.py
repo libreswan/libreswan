@@ -161,9 +161,8 @@ def main():
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline = testsuite.load(logger, args,
-                                  testsuite_directory=args.directories[-1],
-                                  error_level=logutil.DEBUG)
+        baseline = testsuite.load(logger, logutil.DEBUG, args,
+                                  testsuite_directory=args.directories[-1])
         if baseline:
             # discard the last argument as consumed above.
             logger.debug("discarding baseline testsuite argument '%s'", args.directories[-1])
