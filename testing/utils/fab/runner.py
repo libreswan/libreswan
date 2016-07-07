@@ -15,12 +15,12 @@
 import os
 import sys
 import pexpect
-import time
 import threading
 import queue
 from datetime import datetime
 from concurrent import futures
 
+from fab import jsonutil
 from fab import timing
 from fab import virsh
 from fab import testsuite
@@ -442,12 +442,29 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 result = post.mortem(test, args, test_finished=True,
                                      update=(not args.dry_run))
                 if not args.dry_run:
-                    # Store enough to fool the script
-                    # pluto-testlist-scan.sh and leave a marker to
-                    # indicate that the test finished.
-                    logger.info("storing result in '%s'", test.result_file())
+                    # Emit enough JSON to fool scripts like
+                    # pluto-testlist-scan.sh.  This also leaves a
+                    # simple marker to indicate that the test
+                    # finished.
+                    results = []
+                    for host in sorted(test.host_names):
+                        if host in result.errors:
+                            results.append("%s %s" % (host, " ".join(result.errors[host])))
+                        else:
+                            results.append("%s passed" % host)
+                    j = jsonutil.dumps({
+                        jsonutil.result.testname: test.name,
+                        jsonutil.result.expect: test.expected_result,
+                        jsonutil.result.result: str(result),
+                        jsonutil.result.time: jsonutil.ftime(datetime.now()),
+                        jsonutil.result.runtime: round(attempt_lapsed_time.seconds(), 2),
+                        jsonutil.result.results: results,
+                    })
+                    logger.info("filling '%s' with json: %s", test.result_file(), j)
                     with open(test.result_file(), "w") as f:
-                        f.write('"result": "%s"\n' % result)
+                        f.write(j)
+                        f.write("\n")
+
             except pexpect.TIMEOUT as e:
                 logger.exception("**** test %s timed out ****", test.name)
                 ending = "timed-out"
