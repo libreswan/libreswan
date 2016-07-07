@@ -396,8 +396,10 @@ static void liveness_check(struct state *st)
 		time_t timeout;
 
 		/* ensure that the very first liveness_check works out */
-		if (last_liveness.mono_secs == UNDEFINED_TIME)
-			last_liveness = tm;
+		if (last_liveness.mono_secs == UNDEFINED_TIME) {
+			pst->st_last_liveness = last_liveness = tm;
+			DBG(DBG_DPD, DBG_log("liveness initial timestamp set"));
+		}
 
 		DBG(DBG_DPD,
 			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
@@ -438,10 +440,13 @@ static void liveness_check(struct state *st)
 		} else {
 			stf_status ret = ikev2_send_informational(st);
 
+			DBG(DBG_DPD,
+				DBG_log("liveness_check - peer is missing - giving them some time to come back"));
+
 			if (ret != STF_OK) {
 				DBG(DBG_DPD,
 					DBG_log("failed to send informational"));
-				return;
+				return; /* this prevents any new scheduling ??? */
 			}
 		}
 	}
