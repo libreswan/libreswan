@@ -66,12 +66,21 @@ class Errors:
     def __bool__(self):
         return len(self.errors) > 0
 
-    # Iterate over the actual errors, not who had them.
+    # Iterate over the actual errors, not who had them.  XXX: there's
+    # not much consistency between __iter__(), items(), __contains__()
+    # and __getitem__().  On the other hand, a hashmap iter isn't
+    # consistent either.
     def __iter__(self):
         values = set()
         for errors in self.errors.values():
             values |= errors
         return values.__iter__()
+
+    def __contains__(self, item):
+        return item in self.errors
+
+    def __getitem__(self, item):
+        return self.errors[item]
 
     def items(self):
         return self.errors.items()
