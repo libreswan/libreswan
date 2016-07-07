@@ -1,4 +1,5 @@
-ipsec look
+# should show there are no tunnels up
+ipsec whack --trafficstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

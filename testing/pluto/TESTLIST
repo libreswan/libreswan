@@ -342,14 +342,12 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
-kvmplutotest	ikev2-liveness-01	wip
-kvmplutotest	ikev2-liveness-02	wip
-kvmplutotest	ikev2-liveness-03	wip
-kvmplutotest	ikev2-liveness-04	wip
+kvmplutotest	ikev2-liveness-01	good
+kvmplutotest	ikev2-liveness-02	good
+kvmplutotest	ikev2-liveness-03	good
 kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
-kvmplutotest	ikev2-liveness-08-drop	good
 
 kvmplutotest	delete-sa-01	good
 kvmplutotest	delete-sa-03	good
