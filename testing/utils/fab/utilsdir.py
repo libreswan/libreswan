@@ -12,14 +12,14 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import os
 import sys
+from os import path
 
-def directory(*util):
-    return os.path.join(os.path.dirname(sys.argv[0]), *util)
+def _directory(*util):
+    return path.join(path.dirname(sys.argv[0]), *util)
 
 def realpath(*util):
-    return os.path.realpath(directory(util))
+    return path.realpath(_directory(*util))
 
-def relpath(util=""):
-    return os.path.relpath(directory(util))
+def relpath(*util):
+    return path.relpath(_directory(*util))

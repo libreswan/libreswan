@@ -26,7 +26,6 @@ from fab import virsh
 from fab import testsuite
 from fab import remote
 from fab import logutil
-from fab import utils
 from fab import post
 from fab import skip
 from fab import ignore

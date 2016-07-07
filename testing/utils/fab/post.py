@@ -18,7 +18,7 @@ import subprocess
 import difflib
 from collections import defaultdict
 
-from fab import utils
+from fab import utilsdir
 
 def add_arguments(parser):
     group = parser.add_argument_group("Postmortem arguments",
@@ -153,7 +153,7 @@ def fuzzy_diff(logger, ln, l, rn, r,
 
 
 def sanitize_output(logger, raw_file, test_directory):
-    command = [ utils.relpath("sanitizer.sh"), raw_file, test_directory ]
+    command = [ utilsdir.relpath("sanitizer.sh"), raw_file, test_directory ]
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to re-read the file than read the
     # pre-loaded raw console output.

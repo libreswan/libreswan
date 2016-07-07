@@ -16,8 +16,9 @@ import os
 import re
 import collections
 import subprocess
+
 from fab import logutil
-from fab import utils
+from fab import utilsdir
 
 
 class Test:
@@ -155,7 +156,7 @@ def _scripts(directory):
 
 def _host_names():
     host_names = set()
-    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
+    status, output = subprocess.getstatusoutput(utilsdir.relpath("kvmhosts.sh"))
     for host_name in output.splitlines():
         host_names.add(host_name)
     return host_names
@@ -223,7 +224,7 @@ def add_arguments(parser):
                                       "options for configuring the testsuite or test directories")
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       default=os.path.relpath(utils.directory("..")),
+                       default=utilsdir.relpath(".."),
                        help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
