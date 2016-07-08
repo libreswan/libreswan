@@ -478,6 +478,12 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks 
 	: finished
 	mv $@.tmp $@
 
+.PHONY: uninstall-kvm-clones install-kvm-clones
+uninstall-kvm-clones: kvm-uninstall
+	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+install-kvm-clones: install-kvm-test-domains
+
+
 # Create the test domains in $(KVM_POOLDIR)
 #
 # Since running a domain will likely modify its .qcow2 disk image
@@ -532,26 +538,6 @@ $(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,,$(host))))
 else
 $(foreach prefix,$(KVM_PREFIX),$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,$(prefix),$(host)))))
 endif
-
-uninstall-kvm-domains:
-	@echo ''
-	@echo 'NOTE:'
-	@echo ''
-	@echo '      Neither the base (master) domain nor its cloned disk have been deleted'
-	@echo ''
-	@echo 'To force a rebuild of the test domains using the real base domain disk type:'
-	@echo ''
-	@echo '     rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2'
-	@echo '     make install-kvm-domains'
-	@echo ''
-	@echo 'To force a complete rebuild of all domains including base type:'
-	@echo ''
-	@echo '     make uninstall-kvm-domains uninstall-kvm-base-domain'
-	@echo '     make install-kvm-domains'
-	@echo ''
-	@echo 'Rationale: since the creation of the base domain and its cloned disk is'
-	@echo 'both unreliable and slow, and typically not needed, an explict rule is provided'
-	@echo ''
 
 
 #
@@ -686,6 +672,12 @@ kvm-help:
 	@echo '   uninstall-kvm-test-networks - delete the test networks'
 	@echo '   uninstall-kvm-base-domain   - delete the base domain'
 	@echo '   uninstall-kvm-base-network  - delete the base network'
+	@echo ''
+	@echo ' To explicitly wind back to just the bare base domain:'
+	@echo ' (use this if you modify the base domain and need to re-clone)'
+	@echo ''
+	@echo '   install-kvm-clones          - a.k.a. install-kvm-test-domains'
+	@echo '   uninstall-kvm-clones        - remove anything except the bare base domain'
 	@echo ''
 	@echo ' Also:'
 	@echo ''
