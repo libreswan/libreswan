@@ -37,12 +37,17 @@ def main():
 
     args = parser.parse_args()
 
-    columns = [ "Test", "Expected", "Result", "Run time", "Responder", "..." ]
+    # Force the order
+    host_names = [ "east", "west", "road", "north", "nic" ]
+    columns = [ "Test", "Expected", "Result", "Run time" ]
+    for host in host_names:
+        columns.append(host)
     rows = []
 
     first_time = last_time = None
     total = passed = failed = 0
 
+    sys.stderr.write("processing:")
     for directory in args.directories:
 
         d = directory
@@ -70,7 +75,9 @@ def main():
             sys.stderr.write("%s (%s) contains no results\n" % (directory, d))
             return 1
 
-        sys.stderr.write("%s\n" % d)
+        testname = path.basename(path.dirname(d))
+        sys.stderr.write(" %s" % (testname))
+        sys.stderr.flush()
 
         total += 1
 
@@ -108,7 +115,6 @@ def main():
             debug_runtime = round((debug_end_time - debug_start_time).total_seconds(), 2)
 
         # .../<testname>/OUTPUT
-        testname = path.dirname(path.basename(d))
         if jsonutil.result.testname in RESULT:
             testname = RESULT[jsonutil.result.testname]
 
@@ -142,10 +148,6 @@ def main():
         if not start_time and end_time and runtime:
             start_time = end_time - timedelta(seconds=runtime)
 
-        results = []
-        if jsonutil.result.results in RESULT:
-            results = RESULT[jsonutil.result.results]
-
         if not first_time:
             first_time = start_time
         elif start_time < first_time:
@@ -162,10 +164,17 @@ def main():
             result,
             runtime,
         ]
-        for result in results:
-            row.append(result)
+
+        if jsonutil.result.host_results in RESULT:
+            host_results = RESULT[jsonutil.result.host_results]
+            for host in host_names:
+                if host in host_results:
+                    row.append(host_results[host])
+                else:
+                    row.append("")
 
         rows.append(row)
+    sys.stderr.write("\n")
 
     runtime = "00:00:00"
     if first_time and last_time:
@@ -193,6 +202,7 @@ def main():
     }
     jsonutil.dump(table, sys.stdout)
     sys.stdout.write("\n")
+
     return 0
 
 

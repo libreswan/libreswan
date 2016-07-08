@@ -446,19 +446,19 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     # pluto-testlist-scan.sh.  This also leaves a
                     # simple marker to indicate that the test
                     # finished.
-                    results = []
+                    host_results = {}
                     for host in sorted(test.host_names):
                         if host in result.errors:
-                            results.append("%s %s" % (host, " ".join(result.errors[host])))
+                            host_results[host] = " ".join(result.errors[host])
                         else:
-                            results.append("%s passed" % host)
+                            host_results[host] = "passed"
                     j = jsonutil.dumps({
                         jsonutil.result.testname: test.name,
                         jsonutil.result.expect: test.expected_result,
                         jsonutil.result.result: str(result),
                         jsonutil.result.time: jsonutil.ftime(datetime.now()),
                         jsonutil.result.runtime: round(attempt_lapsed_time.seconds(), 2),
-                        jsonutil.result.results: results,
+                        jsonutil.result.host_results: host_results,
                     })
                     logger.info("filling '%s' with json: %s", test.result_file(), j)
                     with open(test.result_file(), "w") as f:

@@ -46,7 +46,7 @@ class result:
     result = "result"
     time = "time"
     runtime = "runtime"
-    results = "results"
+    host_results = "host_results"
 
 class table:
     rundir = "runDir"
