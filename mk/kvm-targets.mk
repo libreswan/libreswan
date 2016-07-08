@@ -420,7 +420,7 @@ KVM_DEBUGINFO ?= true
 # NOTE, $(basename) only drops the suffix .ks, unlike UNIX.
 
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
-	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN),$@)
+	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	rm -f '$(basename $@).img'
@@ -504,7 +504,7 @@ define kvm-test-domain
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
-	$(call check-no-kvm-domain,$(1)$(2),$$@)
+	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
