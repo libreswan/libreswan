@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ # east should have brought down but NOT re-established the tunnel
+east #
+ ipsec whack --trafficstatus
+000  
+east #
+ # can be seen on east logs
+east #
+ hostname | grep west > /dev/null || grep "IKEv2 liveness action:" /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness action: Clearing Connection westnet-eastnet-ipv4-psk-ikev2[0] CK_PERMANENT
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
