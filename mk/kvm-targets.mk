@@ -33,20 +33,20 @@ KVM_PREFIX ?= $(KVM_POOL)
 # The KVM's operating system.
 KVM_OS ?= fedora
 
-KVM_BASE_DOMAIN = swan$(KVM_OS)base
-KVM_TEST_DOMAINS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
-KVM_INSTALL_DOMAINS = $(filter-out nic, $(KVM_TEST_DOMAINS))
-KVM_DOMAINS = $(KVM_TEST_DOMAINS) $(KVM_BASE_DOMAIN)
-KVM_BUILD_DOMAIN = $(firstword $(KVM_PREFIX))$(firstword $(KVM_INSTALL_DOMAINS))
-
 # Note:
 #
 # Need to better differientate between DOMAINs (what KVM calls test
 # machines) and HOSTs (what the test framework calls the test
 # machines).  This is a transition.
 
-KVM_TEST_HOST_NAMES = $(KVM_TEST_DOMAINS)
-KVM_TEST_DOMAIN_NAMES = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(prefix),$(KVM_TEST_HOST_NAMES))),$(KVM_TEST_HOST_NAMES))
+KVM_BASE_DOMAIN = swan$(KVM_OS)base
+
+KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
+KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
+
+KVM_BUILD_DOMAIN = $(firstword $(KVM_PREFIX))$(firstword $(KVM_INSTALL_HOSTS))
+KVM_INSTALL_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(prefix),$(KVM_INSTALL_HOSTS))),$(KVM_INSTALL_HOSTS))
+KVM_TEST_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(prefix),$(KVM_TEST_HOSTS))),$(KVM_TEST_HOSTS))
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVM_WORKERS ?= 1
@@ -496,7 +496,7 @@ install-kvm-domains: install-kvm-test-domains
 uninstall-kvm-domains: uninstall-kvm-test-domains
 
 define kvm-test-domain
-  #(info prefix=$(1) network=$(2))
+  #(info prefix=$(1) host=$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
   KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
@@ -528,9 +528,9 @@ define kvm-test-domain
 endef
 
 ifeq ($(KVM_PREFIX),)
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,,$(domain))))
+$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,,$(host))))
 else
-$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm-test-domain,$(prefix),$(domain)))))
+$(foreach prefix,$(KVM_PREFIX),$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,$(prefix),$(host)))))
 endif
 
 uninstall-kvm-domains:
@@ -565,8 +565,6 @@ uninstall-kvm-domains:
 kvm-clean clean-kvm:
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
-.PHONY: kvm-distclean distclean-kvm
-kvm-distclean distclean-kvm: kvm-$(KVM_BUILD_DOMAIN)-make-distclean
 
 .PHONY: kvm-build build-kvm
 kvm-build build-kvm: kvm-$(KVM_BUILD_DOMAIN)-build
@@ -590,76 +588,74 @@ kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
 # uninstall is pretty brutal; but it does do what is specified.
 kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
 
-define build_rules
-  #(info prefix=$(1) domain=$(2))
+define domain-build-rules
+  #(info domain=$(1))
 
   # Run "make <anything>" on the specified domain
-  kvm-$(1)$(2)-make-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,$(1)$(2) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
+  kvm-$(1)-make-%: | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call kvmsh,$(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
 
   # kvm-build is special.  To avoid "make base" and "make module"
   # running in parallel on the build machine (stepping on each others
   # toes), this uses sub-makes to explicitly serialize "base" and
   # "modules" targets.
-  kvm-$(1)$(2)-build:
-	$$(MAKE) kvm-$(1)$(2)-make-base
-	$$(MAKE) kvm-$(1)$(2)-make-module
+  kvm-$(1)-build:
+	$$(MAKE) kvm-$(1)-make-base
+	$$(MAKE) kvm-$(1)-make-module
+
 
   # "kvm-install" is a little wierd.  It needs to be run on most VMs,
-  # and it needs to use the swan-install script.
+  # and it needs to use the swan-install script.d install on one
+  # domain and then clone it.
   #
   # After installing shut down the domain.  Otherwise, when KVM_PREFIX
   # is large, the idle domains will end up consuming all available
   # memory.
   #
-  # When KVM_PREFIX is large, "make kvm-install" is dombinated by the
-  # below target.  It should be possible to instead install on one
-  # domain and then clone it.
-  kvm-install: kvm-$(1)$(2)-install
+  # When KVM_PREFIX is large, "make kvm-install" is dominated by the
+  # below target.  It should be possible to instead create one domain
+  # with everything installed and then clone it.
   .PHONY: kvm-$(1)$(2)-install
-  kvm-$(1)$(2)-install: kvm-build | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,--shutdown $(1)$(2) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
+  kvm-$(1)-install: kvm-build | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call kvmsh,--shutdown $(1) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
-  kvm-shutdown: kvm-$(1)$(2)-shutdown
-  .PHONY: kvm-$(1)$(2)-shutdown
-  kvm-$(1)$(2)-shutdown: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,--shutdown $(1)$(2))
+  .PHONY: kvm-$(1)-shutdown
+  kvm-$(1)-shutdown: | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call kvmsh,--shutdown $(1))
 
-  .PHONY: kvmsh-$(1)$(2)
-  kvmsh-$(1)$(2): | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,$(1)$(2))
-  kvmsh-$(1)$(2)-%: | $$(KVM_DOMAIN_$(1)$(2)_FILES)
-	$(call kvmsh,$(1)$(2) $$*)
+  .PHONY: kvmsh-$(1)
+  kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call kvmsh,$(1))
+  kvmsh-$(1)-%: | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call kvmsh,$(1) $$*)
 
 endef
 
-ifeq ($(KVM_PREFIX),)
-$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,,$(domain))))
-else
-$(foreach prefix,$(KVM_PREFIX),$(foreach domain,$(KVM_INSTALL_DOMAINS),$(eval $(call build_rules,$(prefix),$(domain)))))
-endif
+$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call domain-build-rules,$(domain))))
+
+.PHONY: kvm-install
+kvm-install: $(patsubst %,kvm-%-install,$(KVM_INSTALL_DOMAINS))
+kvm-shutdown: $(patsubst %,kvm-%-shutdown,$(KVM_TEST_DOMAINS))
 
 # Provide aliases so that "east" maps onto the first "east" in the
-# first test pool.
+# first test pool.  Should this instead map things onto all domains?
 
-define kvm_alias
+define kvm-alias
   .PHONY: kvm-install-$(1)
   kvm-install-$(1): kvm-$(2)-install
-  .PHONY: kvm-build-$(1)
-  kvm-build-$(1): kvm-$(2)-build
-  .PHONY: kvm-shutdown-$(1)
-  kvm-shutdown-$(1): kvm-$(2)-shutdown
 endef
 
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvm_alias,$(domain),$(firstword $(KVM_PREFIX))$(domain))))
+$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-alias,$(host),$(firstword $(KVM_PREFIX))$(host))))
 
-define kvmsh_alias
+# provide aliases so that "kvmsh-east" maps onto the first "east".
+
+define kvmsh-alias
   kvmsh-$(1): kvmsh-$(2)
   kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
 endef
 
 ifneq ($(firstword $(KVM_PREFIX)),)
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call kvmsh_alias,$(domain),$(firstword $(KVM_PREFIX))$(domain))))
+$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvmsh-alias,$(host),$(firstword $(KVM_PREFIX))$(host))))
 endif
 
 .PHONY: kvm-help
@@ -667,9 +663,9 @@ kvm-help:
 	@echo ''
 	@echo ' To set up the test domains, install libreswan, and run the testsuite [optional]:'
 	@echo ''
-	@echo '   kvm-install           - as needed, create the test domains $(KVM_TEST_DOMAIN_NAMES)'
+	@echo '   kvm-install           - as needed, create the test domains'
 	@echo '                         - build or rebuild libreswan using $(KVM_BUILD_DOMAIN)'
-	@echo '                         - install libreswan into all test domains'
+	@echo '                         - install libreswan into the test domains'
 	@echo ''
 	@echo '   kvm-check             - run all GOOD tests against the previously installed libreswan'
 	@echo '                           Use KVM_TESTS=testing/pluto/... to select tests to run'
@@ -685,7 +681,7 @@ kvm-help:
 	@echo '   install-kvm-base-network    - create the base network "$(KVM_BASE_NETWORK)'
 	@echo '   install-kvm-base-domain     - create the base domain "$(KVM_BASE_DOMAIN)"'
 	@echo '   install-kvm-test-networks   - create the test networks "$(KVM_TEST_NETWORKS)"'
-	@echo '   install-kvm-test-domains    - create the test domains "$(KVM_TEST_DOMAIN_NAMES)"'
+	@echo '   install-kvm-test-domains    - create the test domains "$(KVM_TEST_DOMAINS)"'
 	@echo '   uninstall-kvm-test-domains  - delete the test domains'
 	@echo '   uninstall-kvm-test-networks - delete the test networks'
 	@echo '   uninstall-kvm-base-domain   - delete the base domain'
@@ -693,13 +689,10 @@ kvm-help:
 	@echo ''
 	@echo ' Also:'
 	@echo ''
-	@echo '   kvm-keys                - use the KVM to create the test keys'
+	@echo '   kvm-keys                - use $(KVM_BUILD_DOMAIN) to create the test keys'
 	@echo '   kvmsh-DOMAIN            - open console on DOMAIN'
-	@echo '   kvm-build-DOMAIN        - run "make base module" on DOMAIN'
-	@echo '   kvm-install-DOMAIN      - run "make install" on DOMAIN'
 	@echo '   kvm-shutdown            - shutdown all domains'
-	@echo '   kvm-shutdown-DOMAIN     - shutdown DOMAIN'
-	@echo '   kvm-make-ACTION         - run "make ACTION" on $(KVM_BUILD_DOMAIN)'
+	@echo '   kvm-DOMAIN-shutdown     - shutdown DOMAIN'
 	@echo '   kvm-DOMAIN-make-ACTION  - run "make ACTION" on DOMAIN'
 	@echo ''
 	@echo 'For more notes see mk/README.md'
