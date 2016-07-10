@@ -131,7 +131,7 @@ endif
 define kvmsh
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(call check-kvm-qemu-directory)
-	$(KVMSH) $(KVMSH_FLAGS) --output ++compile-log.txt --chdir . $(1)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(1)
 endef
 
 # [re]run the testsuite.
@@ -226,13 +226,7 @@ $(KVM_KEYS_CLEAN_TARGETS):
 
 KVM_TEST_NETWORK_FILES=
 
-# The offical network targets.
-.PHONY: install-kvm-networks uninstall-kvm-networks
-
-# Mainly for consistency
 .PHONY: install-kvm-test-networks uninstall-kvm-test-networks
-install-kvm-networks: install-kvm-test-networks
-uninstall-kvm-networks: uninstall-kvm-test-networks
 
 # Generate install and uninstall rules for each network within the
 # pool.
@@ -277,8 +271,9 @@ define kvm-test-network
 
   KVM_TEST_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
 
+  install-kvm-test-networks: install-kvm-network-$(1)$(2)
   .PHONY: install-kvm-network-$(1)$(2)
-  install-kvm-test-networks install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml:
 	$(call check-no-kvm-network,$(1)$(2),$$@)
@@ -319,14 +314,16 @@ endif
 KVM_BASE_NETWORK = swandefault
 KVM_BASE_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_BASE_NETWORK).xml
 .PHONY: install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK)
-install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
+install-kvm-base-network: install-kvm-network-$(KVM_BASE_NETWORK)
+install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
 $(KVM_BASE_NETWORK_FILE): | testing/libvirt/net/$(KVM_BASE_NETWORK) $(KVM_POOLDIR)
 	$(call check-no-kvm-network,$(KVM_BASE_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_BASE_NETWORK) $@.tmp
 	$(call install-kvm-network,$(KVM_BASE_NETWORK),$@)
 
 .PHONY: uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK)
-uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_POOLDIR)
+uninstall-kvm-base-network: uninstall-kvm-network-$(KVM_BASE_NETWORK)
+uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_POOLDIR)
 	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK),$(KVM_BASE_NETWORK_FILE))
 
 
@@ -447,7 +444,8 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 # mostly for testing
 .PHONY: install-kvm-base-domain uninstall-kvm-base-domain
 install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
+uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
 	$(call uninstall-kvm-domain,$(KVM_BASE_DOMAIN),$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN))
 
 # Create the base domain's .qcow2 disk image (ready for cloning) in
@@ -493,13 +491,7 @@ install-kvm-clones: install-kvm-test-domains
 
 KVM_TEST_DOMAIN_FILES =
 
-# The offical targets
-.PHONY: install-kvm-domains uninstall-kvm-domains
-
-# for consistency
 .PHONY: install-kvm-test-domains uninstall-kvm-test-domains
-install-kvm-domains: install-kvm-test-domains
-uninstall-kvm-domains: uninstall-kvm-test-domains
 
 define kvm-test-domain
   #(info prefix=$(1) host=$(2))
@@ -508,7 +500,9 @@ define kvm-test-domain
   KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
-  install-kvm-test-domains install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  install-kvm-test-domains: install-kvm-domain-$(1)$(2)
+  install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
@@ -531,6 +525,7 @@ define kvm-test-domain
   uninstall-kvm-test-domains: uninstall-kvm-domain-$(1)$(2)
   uninstall-kvm-domain-$(1)$(2): | $(KVM_POOLDIR)
 	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
+
 endef
 
 ifeq ($(KVM_PREFIX),)
@@ -574,21 +569,22 @@ kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
 # uninstall is pretty brutal; but it does do what is specified.
 kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
 
+kvmmake = $(call kvmsh,--output ++compile-log.txt $(1) 'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
+
 define domain-build-rules
   #(info domain=$(1))
 
   # Run "make <anything>" on the specified domain
   kvm-$(1)-make-%: | $$(KVM_DOMAIN_$(1)_FILES)
-	$(call kvmsh,$(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) "$$(strip $$*)"')
+	$$(call kvmmake,$(1),$$*)
 
   # kvm-build is special.  To avoid "make base" and "make module"
   # running in parallel on the build machine (stepping on each others
   # toes), this uses sub-makes to explicitly serialize "base" and
   # "modules" targets.
-  kvm-$(1)-build:
-	$$(MAKE) kvm-$(1)-make-base
-	$$(MAKE) kvm-$(1)-make-module
-
+  kvm-$(1)-build: | $$(KVM_DOMAIN_$(1)_FILES)
+	$$(call kvmmake,$(1),base)
+	$$(call kvmmake,$(1),module)
 
   # "kvm-install" is a little wierd.  It needs to be run on most VMs,
   # and it needs to use the swan-install script.d install on one
