@@ -1,4 +1,4 @@
- /testing/guestbin/swan-prep
+/testing/guestbin/swan-prep
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
@@ -8,7 +8,7 @@ east #
  ipsec auto --add westnet-eastnet-aes256
 002 added connection description "westnet-eastnet-aes256"
 east #
- ipsec auto --status |grep westnet-eastnet-aes256
+ ipsec auto --status | grep westnet-eastnet-aes256
 000 "westnet-eastnet-aes256": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-aes256":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
