@@ -984,7 +984,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	md->st = cst;
 	c = cst->st_connection;
 
-	send_use_transport = (cst->st_seen_use_transport &&
+	/*
+	 * The notifies are read into the parent state even though it is
+	 * child state related
+	 */
+	send_use_transport = ( pst->st_seen_use_transport &&
 		 (c->policy & POLICY_TUNNEL) == LEMPTY);
 
 	if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
