@@ -321,7 +321,7 @@ int main(int argc, char **argv)
 		switch (errno) {
 		case ENOENT:
 			fprintf(stderr,
-				"device does not exist.  See FreeS/WAN installation procedure.\n");
+				"device does not exist.  See libreswan installation procedure.\n");
 			break;
 		case EACCES:
 			fprintf(stderr, "access denied.  ");
@@ -477,7 +477,7 @@ int main(int argc, char **argv)
 			break;
 		case ENOENT:
 			fprintf(stderr,
-				"device does not exist.  See FreeS/WAN installation procedure.\n");
+				"device does not exist.  See libreswan installation procedure.\n");
 			break;
 		case ENXIO:
 			fprintf(stderr,

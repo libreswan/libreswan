@@ -1693,7 +1693,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 						/* do this only once a day */
 						if (!logged_txt_warning) {
 							loglog(RC_LOG_SERIOUS,
-							       "found KEY RR but not TXT RR. See http://www.freeswan.org/err/txt-change.html.");
+							       "found KEY RR but not TXT RR.");
 							logged_txt_warning =
 								TRUE;
 						}

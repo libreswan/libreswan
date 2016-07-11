@@ -1,4 +1,4 @@
-# FreeS/WAN testing makefile
+# libreswan testing makefile
 # Copyright (C) 2002 Michael Richardson <mcr@freeswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it

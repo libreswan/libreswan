@@ -1398,7 +1398,7 @@ int pfkey_init(void)
 #if 0
 	printk(KERN_INFO
 	       "klips_info:pfkey_init: "
-	       "FreeS/WAN: initialising PF_KEYv2 domain sockets.\n");
+	       "libreswan: initialising PF_KEYv2 domain sockets.\n");
 #endif
 
 	for (i = K_SADB_SATYPE_UNSPEC; i <= K_SADB_SATYPE_MAX; i++) {
