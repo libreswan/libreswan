@@ -963,8 +963,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 		if (trans.isat_transnum <= last_transnum) {
 			/* picky, picky, picky */
-			loglog(RC_LOG_SERIOUS, "Transform Numbers are not monotonically increasing"
-			       " in Oakley Proposal");
+			loglog(RC_LOG_SERIOUS,
+				"Transform Numbers are not monotonically increasing in Oakley Proposal");
 			return BAD_PROPOSAL_SYNTAX;
 		}
 		last_transnum = trans.isat_transnum;
@@ -1750,8 +1750,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 */
 				ipcomp_inappropriate = FALSE;
 				loglog(RC_COMMENT,
-				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION."
-				       "  Ignoring inapproprate attribute.");
+				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			pfs_group = lookup_group(val);
 			if (pfs_group == NULL) {

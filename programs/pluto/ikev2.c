@@ -493,9 +493,9 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 				summary.status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				break;
 			}
-			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
-			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&ikev2_payload_names, np));
+			loglog(RC_COMMENT,
+				"non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+				enum_show(&ikev2_payload_names, np));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}

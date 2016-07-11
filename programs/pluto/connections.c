@@ -982,8 +982,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 			if (er != NULL) {
 				loglog(RC_COMMENT,
-					"failed to convert '%s' at load time: "
-					"%s", dst->host_addr_name, er);
+					"failed to convert '%s' at load time: %s", dst->host_addr_name, er);
 			}
 			break;
 
@@ -1016,8 +1015,7 @@ static bool check_connection_end(const struct whack_end *this,
 		 * !!! overloaded use of RC_CLASH
 		 */
 		loglog(RC_CLASH,
-			"address family inconsistency in this connection=%d "
-			"host=%d/nexthop=%d",
+			"address family inconsistency in this connection=%d host=%d/nexthop=%d",
 			wm->addr_family,
 			addrtypeof(&this->host_addr),
 			addrtypeof(&this->host_nexthop));
@@ -1392,8 +1390,7 @@ void add_connection(const struct whack_message *wm)
 			}
 			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"got 0 transforms for "
-					"esp=\"%s\"",
+					"got 0 transforms for esp=\"%s\"",
 					wm->esp);
 				pfree(c);
 				return;
@@ -1420,8 +1417,7 @@ void add_connection(const struct whack_message *wm)
 			}
 			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"got 0 transforms for "
-					"ike=\"%s\"",
+					"got 0 transforms for ike=\"%s\"",
 					wm->ike);
 				pfree(c);
 				return;
@@ -1440,9 +1436,7 @@ void add_connection(const struct whack_message *wm)
 		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			libreswan_log("conn: %s, rekeymargin (%lds) >= "
-				"salifetime (%lds); "
-				"reducing rekeymargin to %ld seconds",
+			libreswan_log("conn: %s, rekeymargin (%lds) >= salifetime (%lds); reducing rekeymargin to %ld seconds",
 				c->name,
 				(long) deltasecs(c->sa_rekey_margin),
 				(long) deltasecs(c->sa_ipsec_life_seconds),
@@ -1627,8 +1621,7 @@ void add_connection(const struct whack_message *wm)
 			c->kind = CK_TEMPLATE;
 		} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
 			DBG(DBG_CONTROL,
-				DBG_log("based upon policy narrowing=yes, "
-					"the connection is a template."));
+				DBG_log("based upon policy narrowing=yes, the connection is a template."));
 			c->kind = CK_TEMPLATE;
 		} else {
 			c->kind = CK_PERMANENT;
@@ -1696,10 +1689,7 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lds; ipsec_life: %lds; "
-				"rekey_margin: %lds; "
-				"rekey_fuzz: %lu%%; "
-				"keyingtries: %lu; replay_window: %u; policy: %s",
+			DBG_log("ike_life: %lds; ipsec_life: %lds; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s",
 				(long) deltasecs(c->sa_ike_life_seconds),
 				(long) deltasecs(c->sa_ipsec_life_seconds),
 				(long) deltasecs(c->sa_rekey_margin),
@@ -1925,8 +1915,7 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, him, his_id);
 
 	DBG(DBG_CONTROL,
-		DBG_log("ikev2_ts instantiate d=%s from c=%s with c->routing "
-			"%s, d->routing %s",
+		DBG_log("ikev2_ts instantiate d=%s from c=%s with c->routing %s, d->routing %s",
 			d->name, c->name,
 			enum_name(&routing_story, c->spd.routing),
 			enum_name(&routing_story, d->spd.routing)));
@@ -2002,8 +1991,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, him, his_id);
 
 	DBG(DBG_CONTROL,
-		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing "
-			"%s, d->routing %s",
+		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
 			d->name, c->name,
 			enum_name(&routing_story, c->spd.routing),
 			enum_name(&routing_story, d->spd.routing)));
@@ -2180,8 +2168,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		ipstr_buf a;
 		ipstr_buf b;
 
-		DBG_log("find_connection: looking for policy for "
-			"connection: %s:%d/%d -> %s:%d/%d",
+		DBG_log("find_connection: looking for policy for connection: %s:%d/%d -> %s:%d/%d",
 			ipstr(our_client, &a),
 			transport_proto, our_port,
 			ipstr(peer_client, &b),
@@ -2971,9 +2958,7 @@ struct connection *refine_host_connection(const struct state *st,
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_host_connection: checking %s%s "
-					"against %s%s, best=%s with "
-					"match=%d(id=%d/ca=%d/reqca=%d)",
+				DBG_log("refine_host_connection: checking %s%s against %s%s, best=%s with match=%d(id=%d/ca=%d/reqca=%d)",
 					c->name,
 					fmt_conn_instance(c, b1),
 					d->name,
@@ -3121,9 +3106,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 (peer_pathlen == best_peer_pathlen &&
 				  our_pathlen < best_our_pathlen))) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log("refine_host_connection: picking "
-						"new best %s (wild=%d, peer_"
-						"pathlen=%d/our=%d)",
+					DBG_log("refine_host_connection: picking new best %s (wild=%d, peer_pathlen=%d/our=%d)",
 						d->name,
 						wildcards, peer_pathlen,
 						our_pathlen));
@@ -3224,8 +3207,7 @@ static bool is_virtual_net_used(struct connection *c,
 				}
 
 				libreswan_log(
-					"overlap is forbidden (%s%s%s agree%s "
-					"to overlap)",
+					"overlap is forbidden (%s%s%s agree%s to overlap)",
 					cname,
 					cbuf,
 					doesnot,
@@ -3344,9 +3326,7 @@ static struct connection *fc_try(const struct connection *c,
 					sizeof(s3));
 				subnettot(&sr->that.client, 0, d3,
 					sizeof(d3));
-				DBG_log("  fc_try trying "
-					"%s:%s:%d/%d -> %s:%d/%d%s vs "
-					"%s:%s:%d/%d -> %s:%d/%d%s",
+				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
 					c->name, s1, c->spd.this.protocol,
 					c->spd.this.port, d1,
 					c->spd.that.protocol, c->spd.that.port,
@@ -3510,8 +3490,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					sizeof(s3));
 				subnettot(&sr->that.client, 0, d3,
 					sizeof(d3));
-				DBG_log("  fc_try_oppo trying %s:%s -> "
-					"%s vs %s:%s -> %s",
+				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
 			});
 
@@ -3605,8 +3584,7 @@ struct connection *find_client_connection(struct connection *const c,
 
 				subnettot(&sr->this.client, 0, s2, sizeof(s2));
 				subnettot(&sr->that.client, 0, d2, sizeof(d2));
-				DBG_log("  concrete checking against sr#%d "
-					"%s -> %s", srnum, s2, d2);
+				DBG_log("  concrete checking against sr#%d %s -> %s", srnum, s2, d2);
 			});
 
 			if (samesubnet(&sr->this.client, our_net) &&
@@ -3792,8 +3770,7 @@ static void show_one_sr(const struct connection *c,
 		sr->that.username != NULL ? sr->that.username : "[any]");
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-		"policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s;",
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
@@ -3877,8 +3854,7 @@ void show_one_connection(const struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds; replay_window: %u;"
-		" rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds; replay_window: %u; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
 		(long) deltasecs(c->sa_ike_life_seconds),

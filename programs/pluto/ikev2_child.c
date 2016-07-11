@@ -1282,8 +1282,8 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 				st->st_serialno, c->name, c->instance_serial));
 
 	if (cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
-		libreswan_log("ERROR expected IKEv2_CP_CFG_REPLY "
-				"got a %s", enum_name(&ikev2_cp_type_names,cp->isacp_type));
+		libreswan_log("ERROR expected IKEv2_CP_CFG_REPLY got a %s",
+			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
 	}
 	while (pbs_left(attrs) > 0) {

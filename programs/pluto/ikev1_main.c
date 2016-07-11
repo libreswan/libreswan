@@ -293,8 +293,7 @@ stf_status main_outI1(int whack_sock,
 	/* if we are not 0 then something went very wrong above */
 	if (numvidtosend != 0)
 		libreswan_log(
-			"payload alignment problem please check the code in "
-			"main_inR1_outR2 (num=%d)",
+			"payload alignment problem please check the code in main_inR1_outR2 (num=%d)",
 			numvidtosend);
 
 	if (!close_message(&md.rbody, st))
@@ -700,8 +699,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				char cib[CONN_INST_BUF];
-				DBG_log("instantiating \"%s\"%s for initial "
-					"Main Mode message received on %s:%u",
+				DBG_log("instantiating \"%s\"%s for initial Main Mode message received on %s:%u",
 					c->name, fmt_conn_instance(c, cib),
 					ipstr(&md->iface->ip_addr, &b),
 					pluto_port);
@@ -716,9 +714,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 */
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
-				DBG_log("local endpoint has virt (vnet/vhost) "
-					"set without wildcards - needs "
-					"instantiation"));
+				DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
@@ -1365,8 +1361,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("main inI2_outR2: starting async DH "
-				"calculation (group=%d)",
+			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.group->group));
 
 		e = start_dh_secretiv(dh, st,
@@ -1590,8 +1585,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key "
-					"for RSA Signature");
+					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -1719,8 +1713,9 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 	char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
 
 	(void) idtoa(id, id_buf, sizeof(id_buf));
-	loglog(RC_LOG_SERIOUS, "no RSA public key known for '%s'"
-		"; DNS search for KEY failed (%s)", id_buf, ugh);
+	loglog(RC_LOG_SERIOUS,
+		"no RSA public key known for '%s'; DNS search for KEY failed (%s)",
+		id_buf, ugh);
 }
 
 /*
@@ -1775,8 +1770,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			DBG_cond_dump(DBG_CRYPT, "received HASH:",
 				hash_pbs->cur, pbs_left(hash_pbs));
 			loglog(RC_LOG_SERIOUS,
-				"received Hash Payload does not match "
-				"computed value");
+				"received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
 		}
@@ -2105,8 +2099,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key "
-					"for RSA Signature");
+					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -2142,15 +2135,13 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
-				"compatibility."));
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log("Skipping ModeCFG for rekey for "
-					"Cisco Peer compatibility."));
+				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
@@ -2215,15 +2206,13 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
-				"compatibility."));
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log("Skipping ModeCFG for rekey for Cisco "
-					"Peer compatibility."));
+				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
@@ -2863,8 +2852,8 @@ bool accept_delete(struct msg_digest *md,
 	/* If there is no SA related to this request, but it was encrypted */
 	if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
-		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: "
-			"ISAKMP SA not established");
+		loglog(RC_LOG_SERIOUS,
+			"ignoring Delete SA payload: ISAKMP SA not established");
 		return self_delete;
 	}
 

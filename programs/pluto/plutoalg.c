@@ -139,10 +139,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_halg = aalg_id;
 	ike_info[cnt].ike_modp = modp_id;
 	alg_info->ai.alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
-			       "ealg_id=%d ek_bits=%d "
-			       "aalg_id=%d "
-			       "modp_id=%d, cnt=%d",
+	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp_id=%d, cnt=%d",
 			       ealg_id, ek_bits,
 			       aalg_id,
 			       modp_id, alg_info->ai.alg_info_cnt));
@@ -481,8 +478,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
 
 	if (!ESP_AALG_PRESENT(aalg_i)) {
-		DBG_log("kernel_alg_db_add() kernel auth "
-			"aalg_id=%d not present",
+		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
 			aalg_i);
 		return FALSE;
 	}
@@ -562,8 +558,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		protoid = PROTO_IPSEC_AH;
 	}
 
-	DBG(DBG_EMITTING, DBG_log("kernel_alg_db_new() "
-				  "initial trans_cnt=%d",
+	DBG(DBG_EMITTING, DBG_log("kernel_alg_db_new() initial trans_cnt=%d",
 				  trans_cnt));
 
 	/*	pass aprox. number of transforms and attributes */
@@ -614,10 +609,10 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 	struct db_prop  *prop = db_prop_get(ctx_new);
 
-	DBG(DBG_CONTROL | DBG_EMITTING, DBG_log("kernel_alg_db_new() "
-						"will return p_new->protoid=%d, p_new->trans_cnt=%d",
-						prop->protoid,
-						prop->trans_cnt));
+	DBG(DBG_CONTROL | DBG_EMITTING,
+		DBG_log("kernel_alg_db_new() will return p_new->protoid=%d, p_new->trans_cnt=%d",
+			prop->protoid,
+			prop->trans_cnt));
 
 	unsigned int tn = 0;
 	struct db_trans *t;
@@ -625,9 +620,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	     t != NULL && t[tn].transid != 0 && tn < prop->trans_cnt;
 	     tn++) {
 		DBG(DBG_CONTROL | DBG_EMITTING,
-		    DBG_log("kernel_alg_db_new() "
-			    "    trans[%d]: transid=%d, attr_cnt=%d, "
-			    "attrs[0].type=%d, attrs[0].val=%d",
+		    DBG_log("kernel_alg_db_new()     trans[%d]: transid=%d, attr_cnt=%d, attrs[0].type=%d, attrs[0].val=%d",
 			    tn,
 			    t[tn].transid, t[tn].attr_cnt,
 			    t[tn].attrs ? t[tn].attrs[0].type.ipsec : 255,
@@ -695,25 +688,25 @@ void kernel_alg_show_status(void)
 	ESP_EALG_FOR_EACH(sadb_id) {
 		const struct sadb_alg *alg_p = &esp_ealg[sadb_id];
 
-		whack_log(RC_COMMENT, "algorithm ESP encrypt: id=%d, name=%s, "
-			  "ivlen=%d, keysizemin=%d, keysizemax=%d",
-			  sadb_id,
-			  enum_name(&esp_transformid_names, sadb_id),
-			  alg_p->sadb_alg_ivlen,
-			  alg_p->sadb_alg_minbits,
-			  alg_p->sadb_alg_maxbits);
+		whack_log(RC_COMMENT,
+			"algorithm ESP encrypt: id=%d, name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
+			sadb_id,
+			enum_name(&esp_transformid_names, sadb_id),
+			alg_p->sadb_alg_ivlen,
+			alg_p->sadb_alg_minbits,
+			alg_p->sadb_alg_maxbits);
 	}
 
 	ESP_AALG_FOR_EACH(sadb_id) {
 		unsigned id = alg_info_esp_sadb2aa(sadb_id);
 		const struct sadb_alg *alg_p = &esp_aalg[sadb_id];
 
-		whack_log(RC_COMMENT, "algorithm AH/ESP auth: id=%d, name=%s, "
-			  "keysizemin=%d, keysizemax=%d",
-			  id,
-			  enum_name(&auth_alg_names, id),
-			  alg_p->sadb_alg_minbits,
-			  alg_p->sadb_alg_maxbits);
+		whack_log(RC_COMMENT,
+			"algorithm AH/ESP auth: id=%d, name=%s, keysizemin=%d, keysizemax=%d",
+			id,
+			enum_name(&auth_alg_names, id),
+			alg_p->sadb_alg_minbits,
+			alg_p->sadb_alg_maxbits);
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

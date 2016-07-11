@@ -471,26 +471,23 @@ static void pfkey_async(pfkey_buf *buf)
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 
 	if (pfkey_msg_parse(&buf->msg, NULL, extensions, EXT_BITS_OUT)) {
-		libreswan_log("pfkey_async:"
-		     " unparseable PF_KEY message:"
-		     " %s len=%d, errno=%d, seq=%d, pid=%d; message ignored",
+		libreswan_log("pfkey_async: unparseable PF_KEY message: %s len=%d, errno=%d, seq=%d, pid=%d; message ignored",
 		     sparse_val_show(pfkey_type_names, buf->msg.sadb_msg_type),
 		     buf->msg.sadb_msg_len,
 		     buf->msg.sadb_msg_errno,
 		     buf->msg.sadb_msg_seq,
 		     buf->msg.sadb_msg_pid);
 	} else {
-		DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("pfkey_async:"
-						     " %s len=%u, errno=%u, satype=%u, seq=%u, pid=%u",
-						     sparse_val_show(
-							     pfkey_type_names,
-							     buf->msg.
-							     sadb_msg_type),
-						     buf->msg.sadb_msg_len,
-						     buf->msg.sadb_msg_errno,
-						     buf->msg.sadb_msg_satype,
-						     buf->msg.sadb_msg_seq,
-						     buf->msg.sadb_msg_pid));
+		DBG(DBG_CONTROL | DBG_KERNEL,
+			DBG_log("pfkey_async: %s len=%u, errno=%u, satype=%u, seq=%u, pid=%u",
+				sparse_val_show(
+					pfkey_type_names,
+					buf->msg.sadb_msg_type),
+				buf->msg.sadb_msg_len,
+				buf->msg.sadb_msg_errno,
+				buf->msg.sadb_msg_satype,
+				buf->msg.sadb_msg_seq,
+				buf->msg.sadb_msg_pid));
 
 		switch (buf->msg.sadb_msg_type) {
 		case K_SADB_REGISTER:
@@ -671,25 +668,21 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					/* FALL THROUGH */
 					default:
 logerr:
-						libreswan_log_errno_routine(e1, "pfkey write() of %s message %u"
-									    " for %s %s failed",
-									    sparse_val_show(
-										    pfkey_type_names,
-										    pfkey_msg
-										    ->
-										    sadb_msg_type),
-									    pfkey_msg->sadb_msg_seq,
-									    description,
-									    text_said);
+						libreswan_log_errno_routine(e1,
+							"pfkey write() of %s message %u for %s %s failed",
+							sparse_val_show(
+								pfkey_type_names,
+								pfkey_msg->sadb_msg_type),
+							pfkey_msg->sadb_msg_seq,
+							description,
+							text_said);
 						success = FALSE;
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
-					       "ERROR: pfkey write() of %s message %u"
-					       " for %s %s truncated: %ld instead of %ld",
+					       "ERROR: pfkey write() of %s message %u for %s %s truncated: %ld instead of %ld",
 					       sparse_val_show(pfkey_type_names,
-							       pfkey_msg->
-							       sadb_msg_type),
+							pfkey_msg->sadb_msg_type),
 					       pfkey_msg->sadb_msg_seq,
 					       description, text_said,
 					       (long)r, (long)len);

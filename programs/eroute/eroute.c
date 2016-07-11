@@ -408,9 +408,8 @@ int main(int argc, char **argv)
 			break;
 		case 'P':
 			if (transport_proto_opt != NULL) {
-				fprintf(stderr, "%s: Error, --transport-proto"
-					" parameter redefined:%s, "
-					"already defined as:%s\n",
+				fprintf(stderr,
+					"%s: Error, --transport-proto parameter redefined:%s, already defined as:%s\n",
 					progname, optarg,
 					transport_proto_opt);
 				exit(1);
@@ -419,9 +418,8 @@ int main(int argc, char **argv)
 			break;
 		case 'Q':
 			if (src_port_opt != NULL) {
-				fprintf(stderr, "%s: Error, --src-port"
-					" parameter redefined:%s, "
-					"already defined as:%s\n",
+				fprintf(stderr,
+					"%s: Error, --src-port parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, src_port_opt);
 				exit(1);
 			}
@@ -429,9 +427,8 @@ int main(int argc, char **argv)
 			break;
 		case 'R':
 			if (dst_port_opt != NULL) {
-				fprintf(stderr, "%s: Error, --dst-port"
-					" parameter redefined:%s, "
-					"already defined as:%s\n",
+				fprintf(stderr,
+					"%s: Error, --dst-port parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, dst_port_opt);
 				exit(1);
 			}
@@ -623,7 +620,8 @@ int main(int argc, char **argv)
 	case EMT_CLREROUTE:
 		break;
 	default:
-		fprintf(stderr, "%s: exactly one of '--add', '--addin', '--replace', '--del' or '--clear' options must be specified.\n"
+		fprintf(stderr,
+			"%s: exactly one of '--add', '--addin', '--replace', '--del' or '--clear' options must be specified.\n"
 			"Try %s --help' for usage information.\n",
 			progname,
 			progname);
@@ -643,16 +641,18 @@ int main(int argc, char **argv)
 	/* Build an SADB_X_ADDFLOW or SADB_X_DELFLOW message to send down. */
 	/* It needs <base, SA, address(SD), flow(SD), mask(SD)> minimum. */
 	pfkey_extensions_init(extensions);
-	if ((error = pfkey_msg_hdr_build(&extensions[0],
-					 (action_type == EMT_SETEROUTE ||
-					  action_type == EMT_REPLACEROUTE ||
-					  action_type == EMT_INREPLACEROUTE ||
-					  action_type == EMT_INEROUTE) ?
-					 SADB_X_ADDFLOW : SADB_X_DELFLOW,
-					 proto2satype(said.proto),
-					 0,
-					 ++pfkey_seq,
-					 getpid()))) {
+	error = pfkey_msg_hdr_build(
+			&extensions[0],
+			(action_type == EMT_SETEROUTE ||
+			 action_type == EMT_REPLACEROUTE ||
+			 action_type == EMT_INREPLACEROUTE ||
+			 action_type == EMT_INEROUTE) ?
+				SADB_X_ADDFLOW : SADB_X_DELFLOW,
+			proto2satype(said.proto),
+			0,
+			++pfkey_seq,
+			getpid());
+	if (error) {
 		fprintf(stderr,
 			"%s: Trouble building message header, error=%d.\n",
 			progname, error);
@@ -685,14 +685,16 @@ int main(int argc, char **argv)
 
 	case EMT_SETEROUTE:
 sa_build:
-		if ((error = pfkey_sa_build(&extensions[SADB_EXT_SA],
-					    SADB_EXT_SA,
-					    said.spi, /* in network order */
-					    0,
-					    0,
-					    0,
-					    0,
-					    sa_flags))) {
+		error = pfkey_sa_build(
+				&extensions[SADB_EXT_SA],
+				SADB_EXT_SA,
+				said.spi, /* in network order */
+				0,
+				0,
+				0,
+				0,
+				sa_flags);
+		if (error) {
 			fprintf(stderr,
 				"%s: Trouble building sa extension, error=%d.\n",
 				progname, error);
@@ -715,14 +717,13 @@ sa_build:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
 		anyaddr(said_af, &pfkey_address_s_ska);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_EXT_ADDRESS_SRC],
-						 SADB_EXT_ADDRESS_SRC,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_s_ska))))
-		{
+		error = pfkey_address_build(
+				&extensions[SADB_EXT_ADDRESS_SRC],
+				SADB_EXT_ADDRESS_SRC,
+				0,
+				0,
+				sockaddrof(&pfkey_address_s_ska));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -738,12 +739,13 @@ sa_build:
 				progname);
 		}
 
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_EXT_ADDRESS_DST],
-						 SADB_EXT_ADDRESS_DST,
-						 0,
-						 0,
-						 sockaddrof(&said.dst)))) {
+		error = pfkey_address_build(
+				&extensions[SADB_EXT_ADDRESS_DST],
+				SADB_EXT_ADDRESS_DST,
+				0,
+				0,
+				sockaddrof(&said.dst));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -769,15 +771,13 @@ sa_build:
 	case EMT_DELEROUTE:
 		networkof(&s_subnet, &pfkey_address_sflow_ska); /* src flow */
 		add_port(eroute_af, &pfkey_address_sflow_ska, src_port);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_X_EXT_ADDRESS_SRC_FLOW
-						 ],
-						 SADB_X_EXT_ADDRESS_SRC_FLOW,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_sflow_ska))))
-		{
+		error = pfkey_address_build(
+				&extensions[SADB_X_EXT_ADDRESS_SRC_FLOW],
+				SADB_X_EXT_ADDRESS_SRC_FLOW,
+				0,
+				0,
+				sockaddrof(&pfkey_address_sflow_ska));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -794,15 +794,13 @@ sa_build:
 
 		networkof(&d_subnet, &pfkey_address_dflow_ska); /* dst flow */
 		add_port(eroute_af, &pfkey_address_dflow_ska, dst_port);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_X_EXT_ADDRESS_DST_FLOW
-						 ],
-						 SADB_X_EXT_ADDRESS_DST_FLOW,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_dflow_ska))))
-		{
+		error = pfkey_address_build(
+				&extensions[SADB_X_EXT_ADDRESS_DST_FLOW],
+				SADB_X_EXT_ADDRESS_DST_FLOW,
+				0,
+				0,
+				sockaddrof(&pfkey_address_dflow_ska));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -820,15 +818,13 @@ sa_build:
 		maskof(&s_subnet, &pfkey_address_smask_ska); /* src mask */
 		add_port(eroute_af, &pfkey_address_smask_ska,
 			 src_port ? ~0 : 0);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_X_EXT_ADDRESS_SRC_MASK
-						 ],
-						 SADB_X_EXT_ADDRESS_SRC_MASK,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_smask_ska))))
-		{
+		error = pfkey_address_build(
+				&extensions[SADB_X_EXT_ADDRESS_SRC_MASK],
+				SADB_X_EXT_ADDRESS_SRC_MASK,
+				0,
+				0,
+				sockaddrof(&pfkey_address_smask_ska));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -846,15 +842,13 @@ sa_build:
 		maskof(&d_subnet, &pfkey_address_dmask_ska); /* dst mask */
 		add_port(eroute_af, &pfkey_address_dmask_ska,
 			 dst_port ? ~0 : 0);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_X_EXT_ADDRESS_DST_MASK
-						 ],
-						 SADB_X_EXT_ADDRESS_DST_MASK,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_dmask_ska))))
-		{
+		error = pfkey_address_build(
+				&extensions[SADB_X_EXT_ADDRESS_DST_MASK],
+					 SADB_X_EXT_ADDRESS_DST_MASK,
+					 0,
+					 0,
+					 sockaddrof(&pfkey_address_dmask_ska));
+		if (error) {
 			ipstr_buf b;
 
 			fprintf(stderr,
@@ -872,18 +866,19 @@ sa_build:
 	}
 
 	if (transport_proto != 0) {
-		if ((error = pfkey_x_protocol_build(&extensions[
-							    SADB_X_EXT_PROTOCOL
-						    ],
-						    transport_proto))) {
-			fprintf(stderr, "%s: Trouble building transport"
-				" protocol extension, error=%d.\n",
+		error = pfkey_x_protocol_build(
+				&extensions[SADB_X_EXT_PROTOCOL],
+				transport_proto);
+		if (error) {
+			fprintf(stderr,
+				"%s: Trouble building transport protocol extension, error=%d.\n",
 				progname, error);
 			exit(1);
 		}
 	}
 
-	if ((error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN))) {
+	error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN);
+	if (error) {
 		fprintf(stderr,
 			"%s: Trouble building pfkey message, error=%d.\n",
 			progname, error);
@@ -895,10 +890,10 @@ sa_build:
 		fprintf(stdout, "%s: DEBUG: pfkey_msg_build successful.\n",
 			progname);
 
-	if ((error = write(pfkey_sock,
-			   pfkey_msg,
-			   pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) !=
-	    (ssize_t)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) {
+	error = write(pfkey_sock,
+			pfkey_msg,
+			pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
+	if (error != (ssize_t)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) {
 		fprintf(stderr,
 			"%s: pfkey write failed, returning %d with errno=%d.\n",
 			progname, error, errno);

@@ -176,8 +176,7 @@ static int initiate_a_connection(struct connection *c,
 		ipstr_buf a;
 		ipstr_buf b;
 		loglog(RC_ORIENT,
-		       "We cannot identify ourselves with either end of this connection. "
-		       " %s or %s are not usable",
+		       "We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
 		       ipstr(&c->spd.this.host_addr, &a),
 		       ipstr(&c->spd.that.host_addr, &b));
 	} else if (NEVER_NEGOTIATE(c->policy)) {

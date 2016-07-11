@@ -105,10 +105,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 
 	DBG(DBG_KERNEL,
 	    if (ret) {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): "
-			    "blocksize=%d, keyminlen=%d, "
-			    "keydeflen=%d, keymaxlen=%d, "
-			    "ret=%d",
+		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keyminlen=%d, keydeflen=%d, keymaxlen=%d, ret=%d",
 			    ealg, key_len,
 			    (int)enc_desc->enc_blocksize,
 			    enc_desc->keyminlen,
@@ -242,24 +239,21 @@ bool ike_alg_register_hash(struct hash_desc *hash_desc)
 		libreswan_log("ike_alg_register_hash(): hash alg=%d < max=%d",
 		     hash_desc->common.algo_id, OAKLEY_HASH_MAX);
 	} else if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d has "
-		     "ctx_size=%d > hash_ctx=%d",
+		libreswan_log("ike_alg_register_hash(): hash alg=%d has ctx_size=%d > hash_ctx=%d",
 		     hash_desc->common.algo_id,
 		     (int)hash_desc->hash_ctx_size,
 		     (int)sizeof(union hash_ctx));
 	} else if (hash_desc->hash_init == NULL ||
 			hash_desc->hash_update == NULL ||
 			hash_desc->hash_final == NULL) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d missing "
-		     "hash_init(), hash_update(), or hash_final()",
+		libreswan_log("ike_alg_register_hash(): hash alg=%d missing hash_init(), hash_update(), or hash_final()",
 		     hash_desc->common.algo_id);
 	} else {
 		alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
 
 		/* Don't add anything we do not know the name for */
 		if (alg_name == NULL) {
-			libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
-			     "constants.c:oakley_hash_names  ",
+			libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in constants.c:oakley_hash_names",
 			     hash_desc->common.algo_id);
 			alg_name = "<NULL>";
 		} else {

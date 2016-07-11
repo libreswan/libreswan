@@ -1788,12 +1788,10 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	{
 		DBG(DBG_CRYPT | DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("received encrypted packet from %s:%u "
-						" but no exponents for state #%lu"
-						" to decrypt it",
-						ipstr(&md->sender, &b),
-						(unsigned)md->sender_port,
-						st->st_serialno);
+				DBG_log("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
+					ipstr(&md->sender, &b),
+					(unsigned)md->sender_port,
+					st->st_serialno);
 				});
 		return STF_FAIL;
 	}
@@ -2705,9 +2703,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 	gettimeofday(&p->done_time, NULL);
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
-				" finished work. status %s elapsed time"
-				" %lu.%06lu '%s'",
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread finished work. status %s elapsed time %lu.%06lu '%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial,
 				p->pam_status ? "SUCCESS" : "FAIL",
@@ -2773,9 +2769,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
 	if (st == NULL) {
-		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls"
-					" state #%lu, %s[%lu]."
-					" The state is gone. elapsed time %lu.%06lu",
+		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls state #%lu, %s[%lu]. The state is gone. elapsed time %lu.%06lu",
 					p->pam.st_serialno, p->pam.c_name,
 					p->pam.c_instance_serial,
 					(unsigned long)served_delta.tv_sec,
@@ -2787,10 +2781,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 			errno, strerror(errno));
 	}
 
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
-				" can continue. PAM status %s."
-				" elapsed time %lu.%06lu"
-				" PAM auth time %lu.%06lu U='%s'",
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread can continue. PAM status %s. elapsed time %lu.%06lu PAM auth time %lu.%06lu U='%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial,
 				p->pam_status ? "SUCCESS" : "FAIL",
@@ -2879,11 +2870,11 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	thread_status = pthread_create(&p->tid, NULL,
 			ikev2_pam_autherize_thread, (void *)p);
 	if (thread_status != 0) {
-		loglog(RC_LOG_SERIOUS, "#%lu  %s[%lu] failed to start IKEv2 PAM"
-				"helper thread error = %d '%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial,
-				thread_status, p->pam.name);
+		loglog(RC_LOG_SERIOUS,
+			"#%lu  %s[%lu] failed to start IKEv2 PAMhelper thread error = %d '%s'",
+			p->pam.st_serialno, p->pam.c_name,
+			p->pam.c_instance_serial,
+			thread_status, p->pam.name);
 		close(fds[1]);
 		close(fds[0]);
 		p->master_fd = NULL_FD;
@@ -2896,8 +2887,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	st->has_pam_thread = TRUE;
 	pthread_attr_destroy(&pattr);
 
-	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback"
-				" for master fd %d", p->master_fd));
+	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback for master fd %d", p->master_fd));
 	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb, p, NULL);
 
 	return STF_SUSPEND;
@@ -4132,8 +4122,8 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *qke,
 	stf_status e;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
-			DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce"
-				" sending CREATE_CHILD_SA respone", qke->pcrc_serialno));
+		DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce; sending CREATE_CHILD_SA response",
+			qke->pcrc_serialno));
 	if (qke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state", __FUNCTION__);
