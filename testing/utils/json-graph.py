@@ -22,6 +22,7 @@ from fab import jsonutil
 def main():
 
     parser = argparse.ArgumentParser(description="write graph.json to standard output")
+    parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("results", metavar="table.json", nargs="+",
                         help="%(metavar)s files containing results from test runs")
 
@@ -29,8 +30,15 @@ def main():
 
     rows = []
     for result in args.results:
+        args.verbose and sys.stderr.write("%s\n" % result)
         with open(result) as f:
             j = jsonutil.load(f)
+            if not j:
+                sys.stderr.write("%s: invalid json\n" % (result))
+                continue
+            if not jsonutil.table.summary in j:
+                sys.stderr.write("%s: missing summary\n" % (result))
+                continue
             summary = j[jsonutil.table.summary]
             rows.append(summary)
 

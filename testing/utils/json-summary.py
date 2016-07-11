@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--rundir", action="store",
                         default=path.basename(utilsdir.realpath("..", "..")),
                         help="value to assign to runDir")
+    parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("tables", metavar="table.json", nargs="+",
                         help="%(metavar)s containing result json files")
 
@@ -39,17 +40,28 @@ def main():
     rows = []
 
     for table in args.tables:
+        args.verbose and sys.stderr.write("%s\n" % (table))
         with open(table) as f:
             j = jsonutil.load(f)
+            if not j:
+                sys.stderr.write("%s: invalid json\n" % (table))
+                continue
+            if not jsonutil.table.summary in j:
+                sys.stderr.write("%s: missing summary\n" % (table))
+                continue
             summary = j[jsonutil.table.summary]
+            if not jsonutil.table.rundir in j:
+                sys.stderr.write("%s: missing rundir\n" % (table))
+                continue
+            rundir = j[jsonutil.table.rundir]
             row = [
-                path.basename(j[jsonutil.table.rundir]),
+                path.basename(rundir),
                 summary[jsonutil.summary.passed],
                 summary[jsonutil.summary.failed],
                 summary[jsonutil.summary.total],
                 summary[jsonutil.summary.runtime],
             ]
-        rows.append(row)
+            rows.append(row)
 
     table = {
         jsonutil.table.rundir: args.rundir,

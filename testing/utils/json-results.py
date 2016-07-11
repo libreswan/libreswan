@@ -31,6 +31,7 @@ def main():
     parser.add_argument("--rundir", action="store",
                         default=path.basename(utilsdir.realpath("..", "..")),
                         help="what to stuff into the 'runDir:' JSON field")
+    parser.add_argument("--verbose", "-v", action="store_true")
 
     parser.add_argument("directories", metavar="OUTPUT-DIRECTORY", nargs="+",
                         help="output directories containing RESULT files")
@@ -47,7 +48,6 @@ def main():
     first_time = last_time = None
     total = passed = failed = 0
 
-    sys.stderr.write("processing:")
     for directory in args.directories:
 
         d = directory
@@ -58,7 +58,7 @@ def main():
 
         # work around python's basename - remove any trailing "/"
         if not path.basename(d):
-            d = os.path.dirname(d)
+            d = path.dirname(d)
 
         if path.basename(d) != "OUTPUT":
             # try <d>/OUTPUT
@@ -76,8 +76,7 @@ def main():
             return 1
 
         testname = path.basename(path.dirname(d))
-        sys.stderr.write(" %s" % (testname))
-        sys.stderr.flush()
+        args.verbose and sys.stderr.write("%s\n" % (testname))
 
         total += 1
 
@@ -174,7 +173,6 @@ def main():
                     row.append("")
 
         rows.append(row)
-    sys.stderr.write("\n")
 
     runtime = "00:00:00"
     if first_time and last_time:

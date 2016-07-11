@@ -65,10 +65,16 @@ class summary:
     runtime = "runtime"
 
 def load(io):
-    return json.load(io)
+    try:
+        return json.load(io)
+    except ValueError:
+        return None
 
 def loads(s):
-    return json.loads(s)
+    try:
+        return json.loads(s)
+    except ValueError:
+        return None
 
 def dump(j, io):
     json.dump(j, io, indent=2)
