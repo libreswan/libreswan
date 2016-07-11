@@ -31,7 +31,6 @@ static const char namechars[] =
 	"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
 #define ISASCII(c) (((c) & 0x80) == 0)
 
-static err_t tryname(const char *, size_t, int, int, ip_address *);
 static err_t tryhex(const char *, size_t, int, ip_address *);
 static err_t trydotted(const char *, size_t, ip_address *);
 static err_t getbyte(const char **, const char *, int *);
@@ -63,19 +62,19 @@ ttoaddr_base(const char *src,
 	}
 
 	if (af == AF_INET && srclen == HEXLEN && *src == '0') {
-		if (*(src + 1) == 'x' || *(src + 1) == 'X')
+		switch (*(src + 1)) {
+		case 'x':
+		case 'X':
 			return tryhex(src + 2, srclen - 2, 'x', dst);
-
-		if (*(src + 1) == 'h' || *(src + 1) == 'H')
+		case 'h':
+		case 'H':
 			return tryhex(src + 2, srclen - 2, 'h', dst);
+		}
 	}
 
 	if (memchr(src, ':', srclen) != NULL) {
-		if (af == AF_UNSPEC)
-			af = AF_INET6;
-
-		if (af != AF_INET6)
-			return "non-ipv6 address may not contain `:'";
+		if (af == AF_INET)
+			return "IPv4 address may not contain `:'";
 
 		return colon(src, srclen, dst);
 	}
@@ -146,12 +145,13 @@ ip_address *dst;
  *
  * Slightly complicated by lack of reliable NUL termination in source.
  */
-static err_t tryname(src, srclen, nultermd, af, dst)
-const char *src;
-size_t srclen;
-int nultermd;	/* is it known to be NUL-terminated? */
-int af;
-ip_address *dst;
+static err_t tryname(
+	const char *src,
+	size_t srclen,
+	int nultermd,	/* is it known to be NUL-terminated? */
+	int af,
+	int tried_af,	/* kind(s) of numeric addressing tried */
+	ip_address *dst)
 {
 	struct hostent *h;
 	struct netent *ne = NULL;
@@ -185,8 +185,17 @@ ip_address *dst;
 #endif
 	if (p != namebuf)
 		FREE(p);
-	if (h == NULL && ne == NULL)
-		return "does not look numeric and name lookup failed (no validation performed)";
+	if (h == NULL && ne == NULL) {
+		/* intricate because we cannot compose a static string */
+		switch (tried_af) {
+		case AF_INET:
+			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
+		case AF_INET6:
+			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
+		case AF_UNSPEC:	/* guess */
+			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
+		}
+	}
 
 	if (h != NULL) {
 		if (h->h_addrtype != af)
@@ -460,16 +469,11 @@ ttoaddr(const char *src,
 	}
 	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
 
-	if (err && numfailed) {
-		if (af == AF_UNSPEC) {
-			err = tryname(src, srclen, nultermd, AF_INET6, dst);
-			if (err)
-				err = tryname(src, srclen, nultermd, AF_INET,
-					dst);
-		} else {
-			err = tryname(src, srclen, nultermd, af, dst);
-		}
-		return err;
+	if (numfailed) {
+		if (err && af != AF_INET)
+			err = tryname(src, srclen, nultermd, AF_INET6, af, dst);
+		if (err && af != AF_INET6)
+			err = tryname(src, srclen, nultermd, AF_INET, af, dst);
 	}
 
 	return err;
@@ -602,5 +606,4 @@ void regress(void)
 	exit(status);
 }
 
-#endif /* ADDRTOT_MAIN */
-
+#endif /* TTOADDR_MAIN */

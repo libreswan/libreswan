@@ -10,7 +10,7 @@ west #
  # will throw an error about bad unresolvable name
 west #
  ipsec auto --add named
-000 failed to convert 'right.libreswan.org' at load time: does not look numeric and name lookup failed (no validation performed)
+000 failed to convert 'right.libreswan.org' at load time: not a numeric IPv4 address and name lookup failed (no validation performed)
 002 added connection description "named"
 west #
  echo "initdone"
