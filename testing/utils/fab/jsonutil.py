@@ -38,7 +38,6 @@
 
 import json
 from datetime import datetime
-from enum import Enum
 
 class result:
     testname = "testname"
