@@ -160,7 +160,6 @@ SHELL_TIMEOUT = 5
 
 def login(domain, console,
           username="root", password="swan",
-          startup_timeout=STARTUP_TIMEOUT,
           login_timeout=LOGIN_TIMEOUT,
           password_timeout=PASSWORD_TIMEOUT,
           shell_timeout=SHELL_TIMEOUT):
@@ -175,7 +174,7 @@ def login(domain, console,
     console.sync()
 
 
-def start(domain, startup_timeout=STARTUP_TIMEOUT):
+def _start(domain, startup_timeout=STARTUP_TIMEOUT):
     domain.logger.info("starting domain")
     # Bring the machine up from scratch.
     end_time = time.time() + startup_timeout
@@ -198,6 +197,11 @@ def start(domain, startup_timeout=STARTUP_TIMEOUT):
         console = domain.console()
         first_attempt = False
     domain.logger.debug("got console")
+    return console
+
+
+def start(domain, startup_timeout=STARTUP_TIMEOUT):
+    console = _start(domain, startup_timeout)
     # Now wait for it to be usable
     _startup(domain, console, timeout=(end_time - time.time()))
     return console
@@ -258,3 +262,32 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
         return False
     domain.logger.info("domain shutdown after %s", lapsed_time)
     return False
+
+
+def boot_to_login_prompt(domain, console, timeout=(STARTUP_TIMEOUT+LOGIN_TIMEOUT)):
+
+    for attempt in range(2):
+
+        if console:
+            domain.reboot()
+        else:
+            console = _start(domain)
+
+        lapsed_time = timing.Lapsed()
+        domain.logger.info("waiting %s seconds for login prompt", timeout)
+
+        if console.expect_exact([pexpect.TIMEOUT, "login: "], timeout=timeout):
+            domain.logger.info("login prompt appeared after %s", lapsed_time)
+            return console
+
+        domain.logger.error("domain failed to start after %s, power cycling it", lapsed_time)
+        # On F23 the domain sometimes becomes wedged in the PAUSED
+        # state.  When it does, give it a full reset.
+        if domain.state() == virsh.STATE.PAUSED:
+            domain.destroy()
+        else:
+            domain.shutdown()
+            console.expect(pexpect.EOF, timeout=shutdown_timeout)
+        console = None
+
+    raise pexpect.TIMEOUT("Domain %s did not reach login prompt" % domain)

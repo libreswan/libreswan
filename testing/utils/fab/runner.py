@@ -111,22 +111,13 @@ class TestDomain:
     def shutdown(self):
         remote.shutdown(self.domain)
 
-    def boot(self):
-        if self.console:
-            self.console = remote.reboot(self.domain, self.console)
-        else:
-            self.console = remote.start(self.domain)
-
-    def login(self):
+    def boot_and_login(self):
+        self.console = remote.boot_to_login_prompt(self.domain, self.console)
         remote.login(self.domain, self.console)
         test_directory = remote.directory(self.domain, self.console,
                                           self.test.directory)
         self.logger.info("'cd' to %s", test_directory)
         self.console.chdir(test_directory)
-
-    def boot_and_login(self):
-        self.boot()
-        self.login()
 
     def read_file_run(self, basename):
         self.logger.info("starting script %s", basename)

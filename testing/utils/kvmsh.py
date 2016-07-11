@@ -19,10 +19,17 @@ import argparse
 import logging
 import time
 import os
+from enum import Enum
+
 from fab import virsh
 from fab import remote
 from fab import argutil
 from fab import logutil
+
+class Boot(Enum):
+    cold = "cold"
+    warm = "warm"
+
 
 def main():
 
@@ -47,7 +54,7 @@ def main():
                               ", is converted to an absolute remote path before use"
                               " (default: leave directory unchanged)"))
     parser.add_argument("--boot", default=None, action="store",
-                        choices=set(["cold", "warm"]),
+                        type=Boot, choices=[e for e in Boot],
                         help=("force the domain to boot"
                               "; 'cold': power-off any existing domain"
                               "; 'warm': reboot any existing domain"
@@ -75,32 +82,24 @@ def main():
     # Get things started
     domain = virsh.Domain(domain_name=args.domain, host_name=args.host_name)
 
-    status = 0
-    console = None
+    # Find a reason to log-in and interact with the console.
+    batch = args.mode == "batch" or args.command
+    interactive = args.mode == "interactive" or (not args.command and args.boot == None and not args.shutdown)
 
     # Get the current console, this will be None if the machine is
     # shutoff.
     console = domain.console()
     if args.boot:
-        if args.boot == "warm":
-            if console:
-                remote.reboot(domain, console)
-            else:
-                console = remote.start(domain)
-        elif args.boot == "cold":
-            if console:
-                remote.shutdown(domain, console)
-            console = remote.start(domain)
+        if args.boot is Boot.cold and console:
+            remote.shutdown(domain, console)
+            console = None
+        console = remote.boot_to_login_prompt(domain, console)
+    elif (interactive or batch) and not console:
+        console = remote.boot_to_login_prompt(domain, console)
 
-    # Find a reason to log-in and interact with the console.
-    batch = args.mode == "batch" or args.command
-    interactive = args.mode == "interactive" or (not args.command and args.boot == None and not args.shutdown)
-
+    status = 0
     if interactive or batch:
 
-        # If the machine hasn't been booted, do so now.
-        if not console:
-            console = remote.start(domain)
         remote.login(domain, console)
 
         if args.chdir and os.path.isabs(args.chdir):
