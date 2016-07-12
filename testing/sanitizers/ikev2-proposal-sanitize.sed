@@ -1,2 +1,2 @@
-/ IKE proposals: /d
-/ ESP.AH proposals: /d
+/ IKE proposals for [^:]*: /d
+/ ESP.AH proposals for [^:]*: /d

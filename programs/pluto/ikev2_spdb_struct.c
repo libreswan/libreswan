@@ -728,9 +728,10 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_type_transform(buf, type, &remote_transform);
-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %zu",
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %zu",
 							    remote_propnum, remote_transform_nr,
 							    buf->buf, local_propnum,
+							    type, trans_type_name(type),
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
 						*matching_local_transform = local_transform;
@@ -1608,24 +1609,24 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("already determined IKE proposals for %s", what));
 		return;
 	}
 
 	if (alg_info_ike == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("selecting default IKE proposals for %s", what));
 		*result = &default_ikev2_ike_proposals;
 
 		struct print *buf = print_buf();
 		print_proposals(buf, *result);
-		libreswan_log("%s IKE proposals: %s (default)",
-			      name, buf->buf);
+		libreswan_log("%s IKE proposals for %s: %s (default)",
+			      name, what, buf->buf);
 		pfree(buf);
 
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
+	DBG(DBG_CONTROL, DBG_log("constructing IKE proposals for %s", what));
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
 	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
@@ -1753,7 +1754,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 
 	struct print *buf = print_buf();
 	print_proposals(buf, *result);
-	libreswan_log("%s IKE proposals: %s", name, buf->buf);
+	libreswan_log("%s IKE proposals for %s: %s", name, what, buf->buf);
 	pfree(buf);
 }
 
@@ -1858,12 +1859,12 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("already determined ESP/AH proposals for %s", what));
 		return;
 	}
 
 	if (alg_info_esp == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("selecting default ESP/AH proposals for %s", what));
 		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *esn_no_yes_proposals;
 		switch (esp_ah) {
@@ -1898,11 +1899,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			proposals->proposal = clone_bytes(esn_no_yes_proposals->proposal,
 							  sizeof(esn_no_yes_proposals->proposal[0]) * esn_no_yes_proposals->roof,
 							  "ESP/AH proposals");
-			
+
 			int propnum;
 			struct ikev2_proposal *proposal;
 			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-				/* 
+				/*
 				 * invalidate any existing ESN
 				 * proposal list
 				 */
@@ -1918,14 +1919,14 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 		struct print *buf = print_buf();
 		print_proposals(buf, *result);
-		libreswan_log("%s ESP/AH proposals: %s (default)",
-			      name, buf->buf);
+		libreswan_log("%s ESP/AH proposals for %s: %s (default)",
+			      name, what, buf->buf);
 		pfree(buf);
 
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
+	DBG(DBG_CONTROL, DBG_log("constructing ESP/AH proposals for %s", what));
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
@@ -1991,7 +1992,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					}
 				}
 			}
-			
+
 			/* add ESP auth attr (if present) */
 			if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
@@ -2035,7 +2036,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 	struct print *buf = print_buf();
 	print_proposals(buf, *result);
-	libreswan_log("%s ESP/AH proposals: %s", name, buf->buf);
+	libreswan_log("%s ESP/AH proposals for %s: %s", name, what, buf->buf);
 	pfree(buf);
 }
 
