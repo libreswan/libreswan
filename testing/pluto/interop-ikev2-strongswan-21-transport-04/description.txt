@@ -1,0 +1,11 @@
+This tests a mismatch of transport vs tunnel mode.
+
+The RFC says that if transport is not supported, tunnel should be used.
+
+libreswan refuses to use tunnel mode when transport mode is configured, to
+avoid connections that work only when one specific side is the initiator.
+
+Since libreswan initiates with tunnel mode, and strongswan accepts tunnel
+mode when configured for transport mode, the connection establishes.
+i
+when this connection would be initiated by strongswan, the connection would fail.
