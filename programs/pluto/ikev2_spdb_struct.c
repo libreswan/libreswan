@@ -1280,58 +1280,76 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 		if (transforms->transform[0].valid) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
-			case IKEv2_TRANS_TYPE_ENCR:
-				ta.encrypt = transform->id;
-				ta.enckeylen = transform->attr_keylen;
-				ta.encrypter = (const struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
-										     ta.encrypt);
-				if (ta.encrypter == NULL) {
-					/* everything should be in alg_info.  */
+			case IKEv2_TRANS_TYPE_ENCR: {
+				const struct encrypt_desc * encrypter = (const struct encrypt_desc *)
+					ikev2_alg_find(IKE_ALG_ENCRYPT, transform->id);
+				if (encrypter == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
 						    ta.encrypt));
 				}
-				if (ta.enckeylen <= 0) {
-					if (ta.encrypter != NULL) {
-						ta.enckeylen = ta.encrypter->keydeflen;
-					} else {
-						DBG(DBG_CONTROL,
-						    DBG_log("unknown key size for ENCRYPT algorithm %d",
-							    ta.encrypt));
-					}
+				ta.encrypt = transform->id;
+				ta.encrypter = encrypter;
+				ta.enckeylen = transform->attr_keylen;
+				if (transform->attr_keylen > 0) {
+					ta.enckeylen = transform->attr_keylen;
+				} else if (encrypter != NULL) {
+					ta.enckeylen = ta.encrypter->keydeflen;
+				} else {
+					ta.enckeylen = 0;
+					loglog(RC_LOG_SERIOUS, "unknown key size for ENCRYPT algorithm %d",
+					       ta.encrypt);
 				}
-			break;
-			case IKEv2_TRANS_TYPE_PRF:
-				ta.prf_hash = transform->id;
-				ta.prf_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-										   ta.prf_hash);
-				if (ta.prf_hasher == NULL) {
-					/* everything should be in alg_info.  */
+				break;
+			}
+			case IKEv2_TRANS_TYPE_PRF: {
+				const struct hash_desc *prf_hasher = (const struct hash_desc *)
+					ikev2_alg_find(IKE_ALG_HASH, transform->id);
+				if (prf_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_find(IKG_ALG_HASH,%d) failed, assuming ESP/AH",
 						    ta.prf_hash));
 				}
+				ta.prf_hash = transform->id;
+				ta.prf_hasher = prf_hasher;
 				break;
-			case IKEv2_TRANS_TYPE_INTEG:
+			}
+			case IKEv2_TRANS_TYPE_INTEG: {
 				if (transform->id == 0) {
 					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
-				} else {
-					ta.integ_hash = transform->id;
-					ta.integ_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-											     ta.integ_hash);
-					if (ta.integ_hasher == NULL) {
-						/* everything should be in alg_info.  */
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
-							    ta.integ_hash));
-					}
+					break;
 				}
+				const struct hash_desc *integ_hasher = (const struct hash_desc *)
+					ikev2_alg_find(IKE_ALG_INTEG, transform->id);
+				if (integ_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
+						    ta.integ_hash));
+				}
+				ta.integ_hash = transform->id;
+				ta.integ_hasher = integ_hasher;
 				break;
-			case IKEv2_TRANS_TYPE_DH:
-				ta.groupnum = transform->id;
-				ta.group = lookup_group(ta.groupnum);
-				if (ta.group == NULL) {
+			}
+			case IKEv2_TRANS_TYPE_DH: {
+				const struct oakley_group_desc *group =
+					lookup_group(transform->id);
+				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
 					 * kernel, is going to do the
@@ -1339,14 +1357,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * finding the DH group is
 					 * likely really bad.
 					 *
-					 * Stumble on as caller will
-					 * quickly passert.
+					 * Leave everthing NULL so
+					 * that caller can detect
+					 * this.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("lookup_group(%d) failed",
-						    ta.integ_hash));
+					loglog(RC_LOG_SERIOUS,
+					       "accepted proposal contains unknown DH group %d",
+					       transform->id);
+					break;
 				}
+				ta.groupnum = transform->id;
+				ta.group = group;
 				break;
+			}
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
 				case IKEv2_ESN_ENABLED:
