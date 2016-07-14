@@ -880,21 +880,37 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		passert(accepted_ike_proposal == NULL);
 		return ret;
 	}
-	/*
-	 * Must either attach this to "struct state"; or free.
-	 */
 	passert(accepted_ike_proposal != NULL);
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
+
+	/*
+	 * Early return must free: accepted_ike_proposal
+	 */
+
+	/*
+	 * Convert what was accepted to internal form and apply some
+	 * basic validation.  ACCEPTED_OAKLEY does not contain
+	 * allocated data.
+	 */
 	struct trans_attrs accepted_oakley = ikev2_proposal_to_trans_attrs(accepted_ike_proposal);
+	if (accepted_oakley.group == NULL) {
+		loglog(RC_LOG_SERIOUS, "discarding accepted proposal with no DH");
+		/* free early return items */
+		free_ikev2_proposal(&accepted_ike_proposal);
+		return STF_IGNORE;
+	}
+
+	/*
+	 * Early return must free: accepted_ike_proposal
+	 */
 
 	/*
 	 * Check the MODP group matches the accepted proposal.
 	 */
-	if (accepted_oakley.group != NULL) {
+	{
 		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
-			free_ikev2_proposal(&accepted_ike_proposal);
 			struct esb_buf ke_name;
 			struct esb_buf proposal_name;
 			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
@@ -907,6 +923,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 						   "OAKLEY_GROUP_"));
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
+			/* free early return items */
+			free_ikev2_proposal(&accepted_ike_proposal);
 			return STF_FAIL;
 		}
 	}
@@ -915,7 +933,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * Check and read the KE contents.
 	 */
 	chunk_t accepted_gi = empty_chunk;
-	if (accepted_oakley.group != NULL) {
+	{
 		/* note: v1 notification! */
 		if (accept_KE(&accepted_gi, "Gi",
 			      accepted_oakley.group,
@@ -931,6 +949,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 	}
+
+	/*
+	 * Early return must free: accepted_ike_proposal, accepted_gi.
+	 */
 
 	/*
 	 * We've committed to creating a state and, presumably,
