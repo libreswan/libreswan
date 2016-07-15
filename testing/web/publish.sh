@@ -3,14 +3,16 @@
 set -eux
 
 base=results
+basedir=${HOME}/${base}
 
 testingdir=$(pwd)/testing
 utilsdir=$(pwd)/testing/utils
+webdir=$(pwd)/testing/web
 
 timestamp=$(date -d @$(git log -n1 --format="%ct") +%Y-%m-%d-%H%M)
 gitstamp=$(make showversion)
 version=${timestamp}-${gitstamp}
-destdir=$HOME/${base}/$(hostname)/${version}
+destdir=${basedir}/$(hostname)/${version}
 
 echo ${version} ${destdir}
 
@@ -19,13 +21,13 @@ log=${destdir}/log
 
 
 # Rebuild/run; but only if previous attempt didn't crash badly.
-if test ! -r ${destdir}/built.ok ; then
-    (
-	make distclean
-	make kvm-install
-	make kvm-test
-	touch ${destdir}/built.ok
-    ) 2>&1 | tee -a ${log}
+if test -r ${destdir}/built.ok ; then
+    echo "Skipping as ${destdir}/built.ok"
+else
+    make distclean 2>&1 | tee -a ${log}
+    make kvm-install 2>&1 | tee -a ${log}
+    make kvm-test 2>&1 | tee -a ${log}
+    touch ${destdir}/built.ok
 fi
 
 
@@ -41,19 +43,21 @@ test -r ${destdir}/tar.ok
 
 
 (
-    cd $HOME/${base}/$(hostname)/${version}
+    cd ${basedir}/$(hostname)/${version}
     # XXX: rundir gets used by json-summary to determine the directory
     # name :-(
     ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.json
     rm -f index.html
-    # Copy the page so that it it is imune to evolving output.
-    cp ../../i3.html index.html
+    # So that this directory is imune to later changes, just copy the
+    # index page, along with all dependencies.
+    cp ${webdir}/i3.html index.html
+    cp -r ${basedir}/js ${destdir}
     touch ${destdir}/i3.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i3.ok
 
 
-: cd $HOME/${base}/$(hostname)
+: cd ${basedir}/$(hostname)
 # This directory contains no html so generating json isn't very
 # useful.
 : # ${utilsdir}/json-summary.py --rundir . */table.json > table.new
@@ -62,7 +66,7 @@ test -r ${destdir}/i3.ok
 
 
 (
-    cd $HOME/${base}
+    cd ${basedir}
     # XXX: this doesn't handle more than one host
     ${utilsdir}/json-summary.py --rundir $(hostname) */*/table.json > table.new
     ${utilsdir}/json-graph.py */*/table.json > graph.new
