@@ -53,7 +53,9 @@ def main():
             if not jsonutil.table.rundir in j:
                 sys.stderr.write("%s: missing rundir\n" % (table))
                 continue
-            rundir = j[jsonutil.table.rundir]
+            # Given a/b/table.json, this returns just b.  Rely on
+            # --rundir to fix this.
+            rundir = path.dirname(table)
             row = [
                 path.basename(rundir),
                 summary[jsonutil.summary.passed],
