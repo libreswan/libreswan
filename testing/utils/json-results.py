@@ -179,9 +179,9 @@ def main():
         runtime = (last_time - first_time)
         runtime = str(timedelta(days=runtime.days,seconds=runtime.seconds))
 
-    date = "0000-00-00"
+    date = "0000-00-00 00:00"
     if first_time:
-        date = first_time.strftime("%Y-%m-%d")
+        date = first_time.strftime("%Y-%m-%d %H:%M")
 
     summary = {
         jsonutil.summary.total: total,

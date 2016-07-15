@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
 
     columns = [
-        "Dir", "Passed", "Failed", "Tests", "Run Time(Hours)",
+        "Dir", "Date", "Passed", "Failed", "Tests", "Run Time (Hours)",
     ]
 
     rows = []
@@ -58,6 +58,7 @@ def main():
             rundir = path.dirname(table)
             row = [
                 path.basename(rundir),
+                summary[jsonutil.summary.date],
                 summary[jsonutil.summary.passed],
                 summary[jsonutil.summary.failed],
                 summary[jsonutil.summary.total],
