@@ -47,8 +47,10 @@ test -r ${destdir}/tar.ok
     cd ${basedir}/$(hostname)/${version}
     # XXX: rundir gets used by json-summary to determine the directory
     # name :-(
-    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.json
-    rm -f index.html
+    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.new
+    for json in table ; do
+	mv ${json}.new ${json}.json
+    done
     # So that this directory is imune to later changes, just copy the
     # index page, along with all dependencies.
     cp ${webdir}/i3.html index.html
@@ -68,12 +70,14 @@ test -r ${destdir}/i3.ok
 
 (
     cd ${basedir}
-    # XXX: this doesn't handle more than one host
+    # XXX: this doesn't handle more than one host -> the rundir option
+    # shouldn't be needed.
     ${utilsdir}/json-summary.py --rundir $(hostname) */*/table.json > table.new
     ${utilsdir}/json-graph.py */*/table.json > graph.new
     for json in table graph ; do
 	mv ${json}.new ${json}.json
     done
+    cp ${webdir}/i1.html index.html
     touch ${destdir}/i1.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i1.ok
