@@ -439,6 +439,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--nographics \
 		--noreboot \
 		$(KVM_HVM)
+	: ignore the message about starting the domain
 	mv $@.tmp $@
 
 # mostly for testing
@@ -465,6 +466,8 @@ uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
 # in dmesg.
 
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img
+	: make certain the base domain is shutdown
+	$(call kvmsh,--shutdown $(KVM_BASE_DOMAIN))
 	: clone
 	rm -f $@.tmp
 	sudo qemu-img convert -O qcow2 '$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img' $@.tmp
