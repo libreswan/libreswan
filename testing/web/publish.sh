@@ -24,9 +24,10 @@ log=${destdir}/log
 if test -r ${destdir}/built.ok ; then
     echo "Skipping as ${destdir}/built.ok"
 else
-    make distclean 2>&1 | tee -a ${log}
-    make kvm-install 2>&1 | tee -a ${log}
-    make kvm-test 2>&1 | tee -a ${log}
+    make distclean    2>&1 | tee -a ${log}
+    make kvm-install  2>&1 | tee -a ${log}
+    make kvm-test     2>&1 | tee -a ${log}
+    make kvm-shutdown 2>&1 | tee -a ${log}
     touch ${destdir}/built.ok
 fi
 
