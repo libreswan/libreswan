@@ -1344,12 +1344,14 @@ static const char *const ikev2_cp_attribute_type_name[] = {
 	"IKEv2_P_CSCF_IP6_ADDRESS",
 	"IKEv2_FTT_KAT",
 	"IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO", /* 3gpp */
-	"IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK" /* 3gpp */
+	"IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK", /* 3gpp */
+	"IKEv2_INTERNAL_DNS_DOMAIN", /* draft-pauly-ipsecme-split-dns-01 */
+	"IKEv2_INTERNAL_DNSSEC_TA", /* draft-pauly-ipsecme-split-dns-01 */
 };
 
 enum_names ikev2_cp_attribute_type_names = {
 	IKEv2_CP_ATTR_RESERVED,
-	IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
+	IKEv2_INTERNAL_DNSSEC_TA,
 	ARRAY_REF(ikev2_cp_attribute_type_name),
 	NULL
 };

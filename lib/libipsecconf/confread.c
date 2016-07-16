@@ -1222,6 +1222,8 @@ static bool load_conn(
 	str_to_conn(modecfg_dns1, KSCF_MODECFGDNS1);
 	str_to_conn(modecfg_dns2, KSCF_MODECFGDNS2);
 	str_to_conn(modecfg_domain, KSCF_MODECFGDOMAIN);
+	str_to_conn(internal_domain1, KSCF_INTERNALDOMAIN1);
+	str_to_conn(internal_domain2, KSCF_INTERNALDOMAIN2);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
 	/* mark-in= and mark-out= override mark= */
@@ -1387,6 +1389,8 @@ static void conn_default(struct starter_conn *conn,
 
 	conn->modecfg_dns1 = clone_str(def->modecfg_dns1, "conn default dns1");
 	conn->modecfg_dns2 = clone_str(def->modecfg_dns2, "conn default dns2");
+	conn->internal_domain1 = clone_str(def->internal_domain1, "conn default internal-domain1");
+	conn->internal_domain2 = clone_str(def->internal_domain2, "conn default internal-domain2");
 	conn->modecfg_domain = clone_str(def->modecfg_domain, "conn default domain");
 	conn->modecfg_banner = clone_str(def->modecfg_banner, "conn default banner");
 	conn->conn_mark_both = clone_str(def->conn_mark_both, "conn default conn_mark_both");
@@ -1564,6 +1568,8 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	pfreeany(conn->modecfg_dns1);
 	pfreeany(conn->modecfg_dns2);
+	pfreeany(conn->internal_domain1);
+	pfreeany(conn->internal_domain2);
 
 	pfreeany(conn->left.virt);
 	pfreeany(conn->right.virt);

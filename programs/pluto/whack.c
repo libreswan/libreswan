@@ -120,6 +120,8 @@ static void help(void)
 		"	[--addresspool <network range>] \\\n"
 		"	[--modecfgdns1 <ip-address>] [--modecfgdns2 <ip-address>] \\\n"
 		"	[--modecfgdomain <dns-domain>] \\\n"
+		"	[--internaldomain1 <dns-domain>] \\\n"
+		"	[--internaldomain2 <dns-domain>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
@@ -357,6 +359,8 @@ enum option_enums {
 
 	CD_MODECFGDNS1,
 	CD_MODECFGDNS2,
+	CD_INTERNALDOMAIN1,
+	CD_INTERNALDOMAIN2,
 	CD_MODECFGDOMAIN,
 	CD_MODECFGBANNER,
 	CD_METRIC,
@@ -608,6 +612,8 @@ static const struct option long_opts[] = {
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
 	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
 	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
+	{ "internaldomain1", required_argument, NULL, CD_INTERNALDOMAIN1 + OO },
+	{ "internaldomain2", required_argument, NULL, CD_INTERNALDOMAIN2 + OO },
 	{ "modecfgdomain", required_argument, NULL, CD_MODECFGDOMAIN + OO },
 	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
@@ -914,6 +920,8 @@ int main(int argc, char **argv)
 	msg.xauthfail = XAUTHFAIL_HARD;
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
+	msg.internal_domain1 = NULL;
+	msg.internal_domain2 = NULL;
 
 	msg.sa_ike_life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(PLUTO_SA_LIFE_DURATION_DEFAULT);
@@ -1824,6 +1832,16 @@ int main(int argc, char **argv)
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
+			continue;
+
+		case CD_INTERNALDOMAIN1:	/* --internaldomain1 */
+			msg.internal_domain1 = strdup(optarg);
+			fprintf(stderr, "whack: --internaldomain1 %s", optarg);
+			continue;
+
+		case CD_INTERNALDOMAIN2:	/* --internaldomain2 */
+			fprintf(stderr, "whack: --internaldomain2 %s", optarg);
+			msg.internal_domain2 = strdup(optarg);
 			continue;
 
 		case CD_MODECFGDOMAIN:	/* --modecfgdomain */
