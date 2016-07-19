@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<style>
+  <head>
+    <meta charset="utf-8">
+    <style>
 
 body {
   font: 10px sans-serif;
@@ -24,118 +24,73 @@ body {
 	color: red;
 }
 
-</style>
-<body>
+    </style>
 
-<table id="dataTable" style="color: red;"> </table>
-<script type="text/javascript" src="./js/d3.v3.js"></script>
-<script type="text/javascript" src="./js/jquery.min.js"> </script>
-<script src="./js/Tidy-Table-1.63/jquery.tidy.table.js"></script>
+    <script src="js/jquery-3.1.0.min.js"> </script>
+    <script src="js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="js/Tidy-Table-3.0.1/tidy-table.min.css">
+    <script>
 
-<script> 
-	$(document).ready(function() { 
-	 $.ajaxSetup({ cache: false });
- 	 $.getJSON("table.json", function(data){
-		$('#container')
-			.TidyTable({
-				enableCheckbox : false,
-				enableMenu     : false,
-				runDir : data.runDir,
-				suffix : data.suffix
-			},
-			{ 
-			 	columnTitles : data.columns,
-				columnValues : data.rows,
-				runDir : data.runDir,
-				suffix : data.suffix
-			});
-});
+      window.addEventListener('load', function() {
+          $.ajaxSetup({ cache: false });
+
+          // this gets a not well-formed warning
+          $.getJSON("table.json", function(data) {
+
+              // Init Tidy-Table
+              document.getElementById('container')
+                  .TidyTable({
+                      enableCheckbox : false,
+                      enableMenu     : false,
+                  }, {
+                      columnTitles : data.columns,
+                      columnValues : data.rows,
+		      postProcess: {
+		          column: postProcessColumn,
+		      },
+                  });
 	 });
-</script> 
 
-<script>
+      });
 
-var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+      function postProcessColumn(col) {
+          if (col.cellIndex == 0) { // Test Name
+	      var child = col.childNodes[0]
+	      var text = child.data
+              var a = document.createElement("a")
+	      a.setAttribute("href", text + "/OUTPUT")
+	      a.appendChild(document.createTextNode(text))
+	      col.replaceChild(a, child)
+	  } else if (col.cellIndex >= 4) { // east ...
+	      var child = col.childNodes[0]
+	      var results = child.data.split(" ")
+              if (results.length > 1) {
+                  col.removeChild(child)
+	          for (var i = 0; i < results.length; i++) {
+	              result = results[i]
+		      if (i > 0) {
+		          col.appendChild(document.createElement('br'))
+		      }
+	              col.appendChild(document.createTextNode(result))
+                  }
+              }
+	  }
+      }
 
-var parseDate = d3.time.format("%Y-%m-%d").parse;
+    </script>
 
-var x = d3.time.scale()
-    .range([0, width]);
+    <script type="text/javascript" src="js/d3.v4.min.js"></script>
+    <script type="text/javascript" src="js/graph.js"></script>
+    <script>
+      graph("../../graph.json")
+    </script>
 
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
-
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left");
-
-var passedline = d3.svg.line()
-    .x(function(d) { return x(d.date); })
-    .y(function(d) { return y(d.passed); });
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-d3.json("../../graph.json", function(error,data) {
-    if (error) return console.warn(error);
-  data.forEach(function(d) {
-    d.date = parseDate(d.date);
-    d.passed = +d.passed;
-  });
-
-  x.domain(d3.extent(data, function(d) { return d.date; }));
-  y.domain([d3.min(data, function(d) { return 0.95 * d.passed;}),
-	  d3.max(data, function(d) { return 1.05 * d.passed;})]);
-
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Passed");
-
-  svg.append("path")
-      .datum(data)
-      .attr("class", "line")
-      .attr("d", passedline)
-});
-
-</script>
-<!-- CSS include start -->
-
-	<link rel="stylesheet" type="text/css" href="../../js/Tidy-Table-1.63/jquery.tidy.table.min.css">
-
-	<!-- CSS include end -->
-
-
-	<!-- CSS overrides start -->
-
-	<link rel="stylesheet" type="text/css" href="../../js/demo.css">
-
-	<!-- CSS overrides end --> 
-</head>
-<body>  
-<br>
-<center>
-Here is start f table
-<div id="container"></div> 
-
-</body> 
+  </head>
+  <body>
+    <center>
+      <div id="graph"></div>
+      <br/>
+      <div id="container"></div>
+    </center>
+  </body>
 </html>
