@@ -166,10 +166,12 @@ class Remote:
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
-    def stty_sane(self):
+    def stty_sane(self, term="dumb", rows=24, columns=80):
         # Get the PTY inside the VM (not pexpect's PTY) into normal
         # mode.
-        self.run('export TERM=dumb; unset LS_COLORS; stty sane')
+        stty = ("unset LS_COLORS; export TERM=%s; stty sane rows %s columns %s"
+                % (term, rows, columns))
+        self.run(stty)
 
     def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
         self.logger.debug("run '%s' expecting prompt", command)
