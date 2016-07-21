@@ -291,6 +291,8 @@ USE_DNSSEC?=true
 # We only enable this by default if used INITSYSTEM is systemd
 ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG?=true
+SD_RESTART_TYPE?="always"
+SD_PLUTO_OPTIONS?="--leak-detective"
 else
 USE_SYSTEMD_WATCHDOG?=false
 endif
@@ -298,6 +300,7 @@ endif
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
+SD_WATCHDOGSEC?=60
 else
 SD_TYPE=simple
 endif
@@ -502,6 +505,9 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
+			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
+			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
+			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool
