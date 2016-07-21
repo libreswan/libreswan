@@ -257,6 +257,20 @@ struct ikev2_proposal {
 
 struct ikev2_proposal_match {
 	/*
+	 * Set of local transform types to expect in the remote
+	 * proposal.  Because of INTEG=NULL some are OPTIONAL and some
+	 * are REQUIRED.
+	 */
+	lset_t required_local_transform_types;
+	lset_t optional_local_transform_types;
+	/*
+	 * Set of transform types in the remote proposal that matched
+	 * at least one local transform of the same type.
+	 *
+	 * Note: MATCHED <= REQUIRED | OPTIONAL
+	 */
+	lset_t matched_local_transform_types;
+	/*
 	 * Pointer to the best matched transform within the local
 	 * proposal, or the (invalid) sentinel transform.
 	 */
@@ -553,8 +567,6 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		    local_propnum_base, local_propnum_bound - 1,
 		    local_proposals->roof - 1));
 
-	lset_t transform_types_found = LEMPTY;
-
 	/*
 	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
 	 * local proposal.  Each entry points to the best matching or
@@ -573,6 +585,9 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
+			matching_local_proposal->required_local_transform_types = LEMPTY;
+			matching_local_proposal->matched_local_transform_types = LEMPTY;
+			matching_local_proposal->optional_local_transform_types = LEMPTY;
 			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
 				/*
 				 * Find the sentinel transform for
@@ -580,17 +595,70 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 */
 				struct ikev2_transform *sentinel_transform;
 				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
+					/*
+					 * Since the local proposal
+					 * contains at least one
+					 * transform of this type, the
+					 * remote proposal is expected
+					 * to also contain at least
+					 * one of these transform
+					 * types.
+					 *
+					 * However, when the local
+					 * transform has INTEG=null,
+					 * exclude that from the
+					 * REQUIRED set, adding it to
+					 * the OPTIONAL - it is
+					 * optional.
+					 */
+					if (type == IKEv2_TRANS_TYPE_INTEG
+					    && sentinel_transform->id == 0) {
+						matching_local_proposal->optional_local_transform_types |= LELEM(type);
+					} else {
+						matching_local_proposal->required_local_transform_types |= LELEM(type);
+					}
 				}
 				passert(!sentinel_transform->valid);
-				/* save it */
+				/* a transform type can't be both */
+				passert(!(matching_local_proposal->required_local_transform_types & matching_local_proposal->optional_local_transform_types));
+				/* save the sentinel */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("local proposal %d type %s has %td transforms",
 					    local_propnum, trans_type_name(type),
 					    sentinel_transform - local_transforms->transform));
 			}
+			if (DBGP(DBG_CONTROLMORE)) {
+				char required_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names,
+					       matching_local_proposal->required_local_transform_types,
+					       required_bits, sizeof(required_bits));
+				char optional_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names,
+					       matching_local_proposal->optional_local_transform_types,
+					       optional_bits, sizeof(optional_bits));
+				DBG_log("local proposal %d transforms: required: %s; optional: %s",
+					local_propnum, required_bits, optional_bits);
+			}
 		}
 	}
+
+	/*
+	 * Track all the remote transform types included in the
+	 * proposal.
+	 */
+	lset_t proposed_remote_transform_types = LEMPTY;
+	/*
+	 * Track the remote transform types that matched at least one
+	 * local proposal.
+	 *
+	 * IF there is a "proposed remote transform type" missing from
+	 * this set THEN the remote proposal can't have matched (note
+	 * that the coverse does not hold).
+	 *
+	 * See quick check below.
+	 */
+	lset_t matched_remote_transform_types = LEMPTY;
 
 	/*
 	 * Track the first integrity transform's transID.  Needed to
@@ -682,13 +750,15 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			}
 		}
 
-		/* Remember each transform type found. */
-		transform_types_found |= LELEM(type);
-
 		/*
 		 * Accumulate the proposal's transforms in remote_buf.
 		 */
 		print_type_transform(remote_print_buf, type, &remote_transform);
+
+		/*
+		 * Remember each remote transform type found.
+		 */
+		proposed_remote_transform_types |= LELEM(type);
 
 		/*
 		 * Find the proposals that match and flag them.
@@ -734,7 +804,22 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 							    type, trans_type_name(type),
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
+						/*
+						 * Update the sentinel
+						 * with this new best
+						 * match for this
+						 * local proposal.
+						 */
 						*matching_local_transform = local_transform;
+						/*
+						 * Also record that
+						 * the local transform
+						 * type has
+						 * successfully
+						 * matched.
+						 */
+						matched_remote_transform_types |= LELEM(type);
+						matching_local_proposal->matched_local_transform_types |= LELEM(type);
 						break;
 					}
 				}
@@ -742,77 +827,163 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		}
 	}
 
-	/* XXX: Use a set to speed up the comparison?  */
+	/*
+	 * Quick check that all the proposed transform types had at
+	 * least one match.
+	 *
+	 * For instance, if the remote proposal includes one or more
+	 * ESP transforms, then at least one of the local proposals
+	 * must have matched the ESP.  If none did (either they didn't
+	 * include ESP or had the wrong ESP) then the proposal can be
+	 * rejected out-of-hand.
+	 *
+	 * This works because:
+	 *
+	 * - "matched remote transform types" == union of all "matched
+	 *   local transform types"
+	 *
+	 * - "matched remote transform types" <= "proposed remote
+	 *   transform types".
+	 */
+	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
+	if (DBGP(DBG_CONTROLMORE)) {
+		char proposed_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       proposed_remote_transform_types,
+			       proposed_bits, sizeof(proposed_bits));
+		char matched_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       matched_remote_transform_types,
+			       matched_bits, sizeof(matched_bits));
+		char unmatched_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       unmatched_remote_transform_types,
+			       unmatched_bits, sizeof(unmatched_bits));
+		DBG_log("remote proposal %u proposed transforms: %s; matched: %s; unmatched: %s",
+			remote_propnum, proposed_bits, matched_bits, unmatched_bits);
+	}
+	if (unmatched_remote_transform_types) {
+		if (DBGP(DBG_CONTROL)) {
+			char unmatched_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       unmatched_remote_transform_types,
+				       unmatched_bits, sizeof(unmatched_bits));
+			DBG_log("remote proposal %u does not match; unmatched remote transforms: %s",
+				remote_propnum, unmatched_bits);
+		}
+		return 0;
+	}
+
 	int local_propnum;
 	struct ikev2_proposal *local_proposal;
 	FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				   local_propnum_base, local_propnum_bound) {
-		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_propnum));
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		enum ikev2_trans_type type;
-		struct ikev2_transforms *local_transforms;
-		FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
-			/*
-			 * HACK to allow missing NULL integrity:
-			 * 
-			 * If the proposal lacks integrity and the
-			 * only local transform is null-integrity then
-			 * ignore the problem.  Presumably all the
-			 * local auth transforms are AEAD and so will
-			 * only match something valid.
-			 */
-			if (type == IKEv2_TRANS_TYPE_INTEG
-			    && !(transform_types_found & LELEM(type))
-			    && local_transforms->transform[0].valid
-			    && !local_transforms->transform[1].valid
-			    && local_transforms->transform[0].id == 0) {
-				DBG(DBG_CONTROL, DBG_log("allowing no NULL integrity"));
-				continue;
-			}
-			bool local_transform_type_present = local_transforms->transform[0].valid;
-			bool remote_transform_type_present = ((transform_types_found & LELEM(type)) != 0);
-			/*
-			* Check that the local and remote end are
-			* consistent about the transform being
-			* present.
-			*
-			* Transform matching is not optional.
-			* Instead, for something like ESP/AH, DH is
-			* made "optional" by sending two proposals.
-			* One with the transform (DH) present and one
-			* with it absent.
-			*/
-			if (local_transform_type_present != remote_transform_type_present) {
-			   DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
-				local_propnum, trans_type_name(type),
-				local_transform_type_present ?  "present" : "absent",
-				remote_transform_type_present ?  "present" : "absent"));
-			   break;
-			}
-			/*
-			* Check that when the transform type is
-			* required it also matches and vice versa.
-			*
-			* Since !local_transform_type_present implies
-			* !remote_transform_type_matched, the above
-			* test is also required.
-			*/
-			bool remote_transform_type_matched = matching_local_proposal->matching_transform[type]->valid;
-			if (local_transform_type_present != remote_transform_type_matched) {
-			    DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
-							     local_propnum, trans_type_name(type),
-								local_transform_type_present ?  "present" : "absent",
-								remote_transform_type_matched ?  "matched" : "different"));
-				break;
-			}
+		if (DBGP(DBG_CONTROLMORE)) {
+			char matched_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->matched_local_transform_types,
+				       matched_local_bits, sizeof(matched_local_bits));
+			char required_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->required_local_transform_types,
+				       required_local_bits, sizeof(required_local_bits));
+			char optional_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->optional_local_transform_types,
+				       optional_local_bits, sizeof(optional_local_bits));
+			char proposed_remote_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       proposed_remote_transform_types,
+				       proposed_remote_bits, sizeof(proposed_remote_bits));
+			DBG_log("comparing remote proposal %u and local proposal %d transforms: required: %s; optional: %s; proposed: %s; matched: %s",
+				remote_propnum, local_propnum,
+				required_local_bits, optional_local_bits,
+				proposed_remote_bits, matched_local_bits);
 		}
-		/* loop finished cleanly? */
-		if (type == IKEv2_TRANS_TYPE_ROOF) {
-			DBG(DBG_CONTROL,
-			    DBG_log("remote proposal %u matches local proposal %d",
-				    remote_propnum, local_propnum));
-			return local_propnum;
+		/*
+		 * Using the set relationships:
+		 *
+		 *   0 == required_local & optional_local
+		 *   matched_local <= required_local + optional_local
+		 *   matched_local <= proposed_remote
+		 *
+		 * the following can be computed:
+		 *
+		 *   unmatched = proposed_remote - matched_local
+		 *
+		 *     unmatched is zero IFF all the proposed remote
+		 *     transforms matched this local proposal.
+		 */
+		lset_t unmatched =
+			(proposed_remote_transform_types
+			 & ~matching_local_proposal->matched_local_transform_types);
+		/*
+		 *   missing = required_local - matched_local
+		 *
+		 *     missing is zero IFF all the required local
+		 *     transforms were matched
+		 *
+		 *     Optional transforms are not included.
+		 */
+		lset_t missing =
+			(matching_local_proposal->required_local_transform_types
+			 & ~matching_local_proposal->matched_local_transform_types);
+		/*
+		 * vis:
+		 *
+		 *         Local Proposal: ENCR=AEAD+INTEG=NULL
+		 *     required_local = ENCR; optional_local = INTEG
+		 *     unmatched = proposed_remote - matched_local
+		 *     missing = ENCR - matched_local
+		 *
+		 *      Remote            Matched     Unmatched  Missing Accept
+		 *   INTEG=NULL           INTEG       -          ENCR
+		 *   INTEG!NULL           -           INTEG      ENCR
+		 *   ENCR=AEAD            ENCR        -          -       Yes
+		 *   ENCR!AEAD            -           ENCR       ENCR
+		 *   ENCR=AEAD+INTEG=NULL ENCR+INTEG  -          -       Yes
+		 *   ENCR!AEAD+INTEG=NULL INTEG       ENCR       ENCR
+		 *   ENCR=AEAD+INTEG!NULL ENCR        INTEG      -
+		 *   ENCR!AEAD+INTEG!NULL -           ENCR+INTEG ENCR
+		 *   ENCR=AEAD+ESP=NO     ENCR        ESP        -
+		 *   ENCR!AEAD+ESP=NO     -           ESP+ENCR   ENCR
+		 *
+		 *          Local Proposal: ENCR!AEAD+INTEG!NULL
+		 *     required_local = ENCR+INTEG; optional_local =
+		 *     unmatched = proposed_remote - matched_local
+		 *     missing = ENCR+INTEG - matched_local
+		 *
+		 *   Remote Proposal      Matched    Unmatched  Missing    Accept
+		 *   INTEG=NULL           -          INTEG      ENCR+INTEG
+		 *   INTEG!NULL           INTEG      -          ENCR
+		 *   ENCR=AEAD            -          ENCR       ENCR+INTEG
+		 *   ENCR!AEAD            ENCR       -          INTEG
+		 *   ENCR=AEAD+INTEG=NULL -          ENCR+INTEG ENCR+INTEG
+		 *   ENCR!AEAD+INTEG=NULL ENCR       INTEG      INTEG
+		 *   ENCR=AEAD+INTEG!NULL INTEG      ENCR       ENCR
+		 *   ENCR!AEAD+INTEG!NULL ENCR+INTEG -          -          Yes
+		 *   ENCR=AEAD+ESP=NO     -          ENCR+ESP   ENCR+INTEG
+		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
+		 */
+		if (unmatched || missing) {
+			if (DBGP(DBG_CONTROL)) {
+				char unmatched_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names, unmatched,
+					       unmatched_bits, sizeof(unmatched_bits));
+				char missing_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names, missing,
+					       missing_bits, sizeof(missing_bits));
+				DBG_log("remote proposal %d does not match local proposal %d; unmatched transforms: %s; missing transforms: %s",
+					remote_propnum, local_propnum,
+					unmatched_bits, missing_bits);
+			}
+			continue;
 		}
+		DBG(DBG_CONTROL,
+		    DBG_log("remote proposal %u matches local proposal %d",
+			    remote_propnum, local_propnum));
+		return local_propnum;
 	}
 
 	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
