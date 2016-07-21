@@ -311,9 +311,9 @@ def results(logger, tests, baseline, args, result_stats):
                     print(test.saved_output_directory, end="")
                     sep = " "
                 elif p is Print.scripts:
-                    for script in test.scripts:
+                    for host, script in test.host_script_tuples:
                         print(sep, end="")
-                        print(script, end="")
+                        print("%s:%s" % (host, script), end="")
                         sep = ","
                     sep = " "
                 else:

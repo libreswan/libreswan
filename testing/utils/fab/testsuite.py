@@ -1,6 +1,6 @@
 # Lists the tests
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2016-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,10 +15,11 @@
 import os
 import re
 import collections
-import subprocess
 
 from fab import logutil
 from fab import utilsdir
+from fab import scripts
+from fab.hosts import HOST_NAMES
 
 
 class Test:
@@ -82,39 +83,14 @@ class Test:
         # test.directory.
         self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
 
-        scripts = _scripts(self.directory)
+        # Get an ordered list of (host,script) pairs of all the
+        # scripts that need to be run.
+        self.host_script_tuples = scripts.host_script_tuples(self.directory)
 
-        # host_names that this test requires, determine it from the
-        # script names.
+        # Just assume any host mentioned in scripts needs to run.
         self.host_names = set()
-        for host_name in HOST_NAMES:
-            for script in scripts:
-                if re.search(host_name, script):
-                    self.host_names.add(host_name)
-                    break
-
-        # figure out the scripts that need running
-        self.scripts = []
-        # init scripts
-        _add_matching(self.scripts, scripts, ["nic"], "nicinit.sh")
-        _add_matching(self.scripts, scripts, ["east"], "eastinit.sh")
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "init.sh")
-        # run scripts
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "run.sh")
-        # strip out the final script
-        final = []
-        _add_matching(final, scripts, sorted(self.host_names), "final.sh")
-        # what's left is the middle scripts, not exactly a smart way
-        # to do this
-        for script in sorted(scripts):
-            for host_name in sorted(self.host_names):
-                if re.search(host_name, script):
-                    self.scripts.append(Script(host_name, script))
-        # append the final scripts
-        for script in final:
-            self.scripts.append(script)
+        for host, script in self.host_script_tuples:
+            self.host_names.add(host)
 
 
     def result_file(self, directory=None):
@@ -126,41 +102,6 @@ class Test:
 
     def __str__(self):
         return self.full_name
-
-
-class Script:
-    def __init__(self, host_name, script):
-        self.host_name = host_name
-        self.script = script
-    def __str__(self):
-        return "%s:%s" % (self.host_name, self.script)
-
-def _add_matching(run, scripts, host_names, script):
-    if script in scripts:
-        scripts.remove(script)
-        for host_name in host_names:
-            run.append(Script(host_name, script))
-
-def _scripts(directory):
-    scripts = set()
-    if os.path.isdir(directory):
-        for script in os.listdir(directory):
-            if not re.match(r"[a-z0-9].*\.sh$", script):
-                continue
-            path = os.path.join(directory, script)
-            if not os.path.isfile(path):
-                continue
-            # Add more filter-outs
-            scripts.add(script)
-    return scripts
-
-def _host_names():
-    host_names = set()
-    status, output = subprocess.getstatusoutput(utilsdir.relpath("kvmhosts.sh"))
-    for host_name in output.splitlines():
-        host_names.add(host_name)
-    return host_names
-HOST_NAMES = _host_names()
 
 
 # Load the tetsuite defined by TESTLIST

@@ -30,7 +30,6 @@ from fab import post
 from fab import skip
 from fab import ignore
 
-
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
@@ -40,24 +39,26 @@ def add_arguments(parser):
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
     group.add_argument("--parallel", action="store_true",
                        help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
-
     group.add_argument("--attempts", type=int, default=1,
                        help="number of times to attempt a test before giving up; default %(default)s")
+    group.add_argument("--stop-at", metavar="SCRIPT", action="store",
+                       help="stop the test at (before executing) the specified script")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
     # (avoiding Makefile, OBJ, README, ... :-).
-    parser.add_argument("--backup-directory", metavar="DIRECTORY",
-                        default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
-                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
+    group.add_argument("--backup-directory", metavar="DIRECTORY",
+                       default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
+                       help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
 
 def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
-    logger.info("  attempts: %s", args.attempts)
     logger.info("  parallel: %s", args.parallel)
+    logger.info("  attempts: %s", args.attempts)
+    logger.info("  stop-at: %s", args.stop_at)
     logger.info("  backup-directory: %s", args.backup_directory)
 
 
@@ -116,6 +117,10 @@ class TestDomain:
         remote.login(self.domain, self.console)
         test_directory = remote.directory(self.domain, self.console,
                                           self.test.directory)
+        if not test_directory:
+            abspath = os.path.abspath(self.test.directory)
+            self.logger.error("directory %s not mounted on %s", abspath, self.domain)
+            raise Exception("directory '%s' not mounted on %s" % (abspath, self.domain))
         self.logger.info("'cd' to %s", test_directory)
         self.console.chdir(test_directory)
 
@@ -294,10 +299,15 @@ def _run_test(domain_prefix, test, args, boot_executor):
             test_domain.console.output(open(output, "w"))
 
         # Run the scripts directly
-        logger.info("running scripts: %s", " ".join(str(script) for script in test.scripts))
-        for script in test.scripts:
-            test_domain = all_test_domains[script.host_name]
-            test_domain.read_file_run(script.script)
+        logger.info("running scripts: %s",
+                    " ".join(("%s:%s" % (host, script))
+                             for host, script in test.host_script_tuples))
+        for host, script in test.host_script_tuples:
+            if args.stop_at == script:
+                logger.error("stopping test run at (before executing) script %s", script)
+                break
+            test_domain = all_test_domains[host]
+            test_domain.read_file_run(script)
 
         # Close the redirected test-result log files
         for test_domain in test_domains:
