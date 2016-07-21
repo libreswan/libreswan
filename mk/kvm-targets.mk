@@ -350,16 +350,6 @@ $(KVM_ISO): | $(KVM_BASEDIR)
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
-# Build the base domain's disk image in $(KVM_BASEDIR).
-#
-# Use a pattern rule so that GNU make knows that two things are built.
-#
-# This rule uses order-only dependencies so that unintended re-builds,
-# triggered says by switching git branches say, do not occure.
-#
-# This rule uses the .ks file as main target.  Should the target fail
-# the .img file may be in an incomplete state.
-
 define install-kvm-domain
 	sudo virsh define $(2).tmp
 	mv $(2).tmp $(2)
@@ -375,7 +365,6 @@ define uninstall-kvm-domain
 	rm -f $(2).xml
 	rm -f $(2).ks
 	rm -f $(2).qcow2
-	rm -f $(2).img
 endef
 
 define check-no-kvm-domain
@@ -414,16 +403,20 @@ KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS)base.ks
 endif
 KVM_DEBUGINFO ?= true
 
-# The image file is created as a side effect.
+# Create the base domain and, as a side effect, the disk image.
 #
-# NOTE, $(basename) only drops the suffix .ks, unlike UNIX.
+# To avoid unintended re-builds triggered by things like a git branch
+# switch, this target is order-only dependent on its sources.
+#
+# This rule's target is the .ks file - created at the end.  That way
+# the problem of a virt-install crash leaving the disk-image in an
+# incomplete state is avoided.
 
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_NETWORK_FILE) $(KVM_BASEDIR)
 	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
-	rm -f '$(basename $@).img'
-	fallocate -l 8G '$(basename $@).img'
+	rm -f '$(basename $@).qcow2'
 	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
 		< $(KVM_KICKSTART_FILE) > $@.tmp
 	sudo virt-install \
@@ -432,7 +425,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--initrd-inject=$@.tmp \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk path='$(basename $@).img' \
+		--disk size=8,path='$(basename $@).qcow2' \
 		--ram 1024 \
 		--vcpus=1 \
 		--check-cpu \
@@ -451,39 +444,8 @@ uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
 	$(call uninstall-kvm-domain,$(KVM_BASE_DOMAIN),$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN))
 
-# Create the base domain's .qcow2 disk image (ready for cloning) in
-# $(KVM_BASEDIR).
-#
-# The base domain's .img file is an order-only dependency.  This
-# prevents things like rebooting the domain triggering an unexpected
-# update.
-#
-# The base domain's kickstart file is an order-only dependency.  This
-# prevents things like switching branches triggering an unexpected
-# update.
-#
-# XXX: There is a bug where the install sometimes leaves the disk
-# image in a state where the clone result is corrupt.  Since one
-# symptom seems to be a kernel barf involving qemu-img, look for that
-# in dmesg.
-
-$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img
-	: make certain the base domain is shutdown
-	$(call kvmsh,--shutdown $(KVM_BASE_DOMAIN))
-	: clone
-	rm -f $@.tmp
-	sudo qemu-img convert -O qcow2 '$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).img' $@.tmp
-	: try to track down an apparent corruption
-	if dmesg | grep qemu-img ; then \
-		: qemu-img caused a kernel panic, time to reboot ; \
-		exit 1 ; \
-	fi
-	: finished
-	mv $@.tmp $@
-
 .PHONY: uninstall-kvm-clones install-kvm-clones
 uninstall-kvm-clones: kvm-uninstall
-	rm -f $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 install-kvm-clones: install-kvm-test-domains
 
 
@@ -508,7 +470,7 @@ define kvm-test-domain
   install-kvm-test-domains: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
+  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
