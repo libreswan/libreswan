@@ -29,6 +29,18 @@ KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_PREFIX ?= ''
 KVM_WORKERS ?= 1
+KVM_USER ?= $(shell id -u)
+KVM_GROUP ?= $(shell id -g qemu)
+
+# The alternative is qemu:///session and it doesn't require root.
+# However, it has never been used, and the python tools all assume
+# qemu://system. Finally, it comes with a warning: QEMU usermode
+# session is not the virt-manager default.  It is likely that any
+# pre-existing QEMU/KVM guests will not be available.  Networking
+# options are very limited.
+KVM_CONNECTION ?= qemu:///system
+VIRSH = sudo virsh --connect $(KVM_CONNECTION)
+VIRT_INSTALL = sudo virt-install --connect $(KVM_CONNECTION)
 
 # The KVM's operating system.
 KVM_OS ?= fedora
@@ -234,24 +246,24 @@ KVM_TEST_NETWORK_FILES=
 # pool.
 
 define install-kvm-network
-	sudo virsh net-define '$(2).tmp'
-	sudo virsh net-autostart '$(1)'
-	sudo virsh net-start '$(1)'
+	$(VIRSH) net-define '$(2).tmp'
+	$(VIRSH) net-autostart '$(1)'
+	$(VIRSH) net-start '$(1)'
 	mv $(2).tmp $(2)
 endef
 
 define uninstall-kvm-network
-	if sudo virsh net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		sudo virsh net-destroy '$(1)' ; \
+	if $(VIRSH) net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
+		$(VIRSH) net-destroy '$(1)' ; \
 	fi
-	if sudo virsh net-info '$(1)' >/dev/null 2>&1 ; then \
-		sudo virsh net-undefine '$(1)' ; \
+	if $(VIRSH) net-info '$(1)' >/dev/null 2>&1 ; then \
+		$(VIRSH) net-undefine '$(1)' ; \
 	fi
 	rm -f $(2)
 endef
 
 define check-no-kvm-network
-	if sudo virsh net-info '$(1)' 2>/dev/null ; then \
+	if $(VIRSH) net-info '$(1)' 2>/dev/null ; then \
 		echo '' ; \
 		echo '        The network $(1) seems to already exist.' ; \
 		echo '  ' ; \
@@ -351,16 +363,16 @@ $(KVM_ISO): | $(KVM_BASEDIR)
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
 define install-kvm-domain
-	sudo virsh define $(2).tmp
+	$(VIRSH) define $(2).tmp
 	mv $(2).tmp $(2)
 endef
 
 define uninstall-kvm-domain
-	if sudo virsh domstate '$(1)' 2>/dev/null | grep running > /dev/null ; then \
-		sudo virsh destroy '$(1)' ; \
+	if $(VIRSH) domstate '$(1)' 2>/dev/null | grep running > /dev/null ; then \
+		$(VIRSH) destroy '$(1)' ; \
 	fi
-	if sudo virsh dominfo '$(1)' >/dev/null 2>&1 ; then \
-		sudo virsh undefine '$(1)' --remove-all-storage ; \
+	if $(VIRSH) dominfo '$(1)' >/dev/null 2>&1 ; then \
+		$(VIRSH) undefine '$(1)' --remove-all-storage ; \
 	fi
 	rm -f $(2).xml
 	rm -f $(2).ks
@@ -368,7 +380,7 @@ define uninstall-kvm-domain
 endef
 
 define check-no-kvm-domain
-	if sudo virsh dominfo '$(1)' 2>/dev/null ; then \
+	if $(VIRSH) dominfo '$(1)' 2>/dev/null ; then \
 		echo '' ; \
 		echo '        The domain $(1) seems to already exist.' ; \
 		echo '' ; \
@@ -386,7 +398,7 @@ define check-no-kvm-domain
 endef
 
 define check-kvm-domain
-	if sudo virsh dominfo '$(1)' >/dev/null ; then : ; else \
+	if $(VIRSH) dominfo '$(1)' >/dev/null ; then : ; else \
 		echo "" ; \
 		echo "  ERROR: the domain $(1) seems to be missing; run 'make kvm-install'" ; \
 		echo "" ; \
@@ -419,8 +431,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 	rm -f '$(basename $@).qcow2'
 	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
 		< $(KVM_KICKSTART_FILE) > $@.tmp
-	sudo virt-install \
-		--connect=qemu:///system \
+	$(VIRT_INSTALL) \
 		--network=network:$(KVM_BASE_NETWORK),model=virtio \
 		--initrd-inject=$@.tmp \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
@@ -481,8 +492,8 @@ define kvm-test-domain
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
 		-e "s:@@POOLSPACE@@:$$(KVM_POOLDIR):" \
-		-e "s:@@USER@@:$$$$(id -u):" \
-		-e "s:@@GROUP@@:$$$$(id -g qemu):" \
+		-e "s:@@USER@@:$$(KVM_USER):" \
+		-e "s:@@GROUP@@:$$(KVM_GROUP):" \
 		-e "s:network='192_:network='$(1)192_:" \
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
