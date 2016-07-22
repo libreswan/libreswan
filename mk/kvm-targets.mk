@@ -582,7 +582,7 @@ kvm-install: $(patsubst %,kvm-%-install,$(KVM_INSTALL_DOMAINS))
 # Should also do this for uninstall-kvm-domain-DOMAIN.
 
 define uninstall-kvm-domain
-  $(info uninstall-kvm-domain domain=$(strip $(1)) dir=$(strip $(2)) groups=$(strip $(3)))
+  #(info uninstall-kvm-domain domain=$(strip $(1)) dir=$(strip $(2)) groups=$(strip $(3)))
   .PHONY: uninstall-kvm-domain-$(strip $(1))
   uninstall-kvm-domain-$(strip $(1)):
 	if $(VIRSH) domstate $(strip $(1)) 2>/dev/null | grep running > /dev/null ; then \
