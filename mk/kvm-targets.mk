@@ -369,18 +369,6 @@ define install-kvm-domain
 	mv $(2).tmp $(2)
 endef
 
-define uninstall-kvm-domain
-	if $(VIRSH) domstate '$(1)' 2>/dev/null | grep running > /dev/null ; then \
-		$(VIRSH) destroy '$(1)' ; \
-	fi
-	if $(VIRSH) dominfo '$(1)' >/dev/null 2>&1 ; then \
-		$(VIRSH) undefine '$(1)' --remove-all-storage ; \
-	fi
-	rm -f $(2).xml
-	rm -f $(2).ks
-	rm -f $(2).qcow2
-endef
-
 define check-no-kvm-domain
 	if $(VIRSH) dominfo '$(1)' 2>/dev/null ; then \
 		echo '' ; \
@@ -451,11 +439,8 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 	mv $@.tmp $@
 
 # mostly for testing
-.PHONY: install-kvm-base-domain uninstall-kvm-base-domain
+.PHONY: install-kvm-base-domain
 install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-uninstall-kvm-base-domain: uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-uninstall-kvm-domain-$(KVM_BASE_DOMAIN): | $(KVM_BASEDIR)
-	$(call uninstall-kvm-domain,$(KVM_BASE_DOMAIN),$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN))
 
 .PHONY: uninstall-kvm-clones install-kvm-clones
 uninstall-kvm-clones: kvm-uninstall
@@ -471,7 +456,7 @@ install-kvm-clones: install-kvm-test-domains
 
 KVM_TEST_DOMAIN_FILES =
 
-.PHONY: install-kvm-test-domains uninstall-kvm-test-domains
+.PHONY: install-kvm-test-domains
 
 define kvm-test-domain
   #(info prefix=$(1) host=$(2))
@@ -500,12 +485,6 @@ define kvm-test-domain
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
 	$(call install-kvm-domain,$(1)$(2),$$@)
-
-  .PHONY: uninstall-kvm-domain-$(1)$(2)
-  uninstall-kvm-test-domains: uninstall-kvm-domain-$(1)$(2)
-  uninstall-kvm-domain-$(1)$(2): | $(KVM_POOLDIR)
-	$(call uninstall-kvm-domain,$(1)$(2),$(KVM_POOLDIR)/$(1)$(2))
-
 endef
 
 ifeq ($(KVM_PREFIX),)
@@ -594,6 +573,39 @@ $(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call domain-build-rules,$(domain))
 kvm-install: $(patsubst %,kvm-%-install,$(KVM_INSTALL_DOMAINS))
 
 
+# Generate rules to uninstall domains
+#
+# For convenience, provide domain groups.  When removing a group, also
+# remove any dependencies.  Otherwise the dependent qcow2 files become
+# corrupt.
+#
+# Should also do this for uninstall-kvm-domain-DOMAIN.
+
+define uninstall-kvm-domain
+  $(info uninstall-kvm-domain domain=$(strip $(1)) dir=$(strip $(2)) groups=$(strip $(3)))
+  .PHONY: uninstall-kvm-domain-$(strip $(1))
+  uninstall-kvm-domain-$(strip $(1)):
+	if $(VIRSH) domstate $(strip $(1)) 2>/dev/null | grep running > /dev/null ; then \
+		$(VIRSH) destroy $(strip $(1)) ; \
+	fi
+	if $(VIRSH) dominfo $(strip $(1)) >/dev/null 2>&1 ; then \
+		$(VIRSH) undefine $(strip $(1)) ; \
+	fi
+	rm -f $(strip $(2))/$(strip $(1)).xml
+	rm -f $(strip $(2))/$(strip $(1)).ks
+	rm -f $(strip $(2))/$(strip $(1)).qcow2
+	rm -f $(strip $(2))/$(strip $(1)).img
+  .PHONY: $(strip $(3))
+  $(strip $(3)): uninstall-kvm-domain-$(strip $(1))
+endef
+
+$(foreach domain, $(KVM_TEST_DOMAINS), $(eval $(call uninstall-kvm-domain, \
+	$(domain), $(KVM_POOLDIR), uninstall-kvm-base-domain uninstall-kvm-clone-domain uninstall-kvm-test-domains)))
+$(foreach domain, $(KVM_CLONE_DOMAIN), $(eval $(call uninstall-kvm-domain, \
+	$(domain),$(KVM_POOLDIR), uninstall-kvm-base-domain uninstall-kvm-clone-domain)))
+$(foreach domain,$(KVM_BASE_DOMAIN),$(eval $(call uninstall-kvm-domain, \
+	$(domain),$(KVM_BASEDIR), uninstall-kvm-base-domain)))
+
 # Generate rules to shut down all the domains (kvm-shutdown) and
 # individual domains (kvm-shutdown-DOMAIN).
 #
@@ -680,9 +692,9 @@ kvm-help:
 	@echo '                                   $(KVM_BASE_DOMAIN)'
 	@echo '   install-kvm-test-networks   - create the test networks:'
 	@echo '   install-kvm-test-domains    - create the test domains:'
-	@echo '   uninstall-kvm-test-domains  - delete the test domains'
+	@echo ''
+	@echo '   uninstall-kvm-base-domain   - delete the base domain and all its dependencies'
 	@echo '   uninstall-kvm-test-networks - delete the test networks'
-	@echo '   uninstall-kvm-base-domain   - delete the base domain'
 	@echo '   uninstall-kvm-base-network  - delete the base network'
 	@echo ''
 	@echo ' Also:'
