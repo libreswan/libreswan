@@ -357,11 +357,6 @@ $(KVM_ISO): | $(KVM_BASEDIR)
 # XXX: Needed?
 KVM_HVM = $(shell grep vmx /proc/cpuinfo > /dev/null && echo --hvm)
 
-define install-kvm-domain
-	$(VIRSH) define $(2).tmp
-	mv $(2).tmp $(2)
-endef
-
 define check-no-kvm-domain
 	if $(VIRSH) dominfo '$(1)' 2>/dev/null ; then \
 		echo '' ; \
@@ -439,7 +434,6 @@ install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 uninstall-kvm-clones: kvm-uninstall
 install-kvm-clones: install-kvm-test-domains
 
-
 # Create the test domains in $(KVM_POOLDIR)
 #
 # Since running a domain will likely modify its .qcow2 disk image
@@ -447,15 +441,12 @@ install-kvm-clones: install-kvm-test-domains
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
 
-.PHONY: install-kvm-test-domains
-
-define kvm-test-domain
-  #(info prefix=$(1) host=$(2))
+define install-kvm-test-domain
+  #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
 
   .PHONY: install-kvm-domain-$(1)$(2)
-  install-kvm-test-domains: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
   $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
@@ -463,7 +454,9 @@ define kvm-test-domain
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
-	qemu-img create -F qcow2 -f qcow2 -b '$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2' '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
+	qemu-img create \
+		-b $$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2 \
+		-f qcow2 $$(KVM_POOLDIR)/$(1)$(2).qcow2
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
@@ -474,14 +467,17 @@ define kvm-test-domain
 		-e "s:network='192_:network='$(1)192_:" \
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
-	$(call install-kvm-domain,$(1)$(2),$$@)
+	$(VIRSH) define $$@.tmp
+	mv $$@.tmp $$@
 endef
 
-ifeq ($(KVM_PREFIX),)
-$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,,$(host))))
-else
-$(foreach prefix,$(KVM_PREFIX),$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-test-domain,$(call strip-prefix,$(prefix)),$(host)))))
-endif
+$(foreach prefix,$(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
+	$(foreach host,$(KVM_TEST_HOSTS), \
+		$(eval $(call install-kvm-test-domain,$(call strip-prefix,$(prefix)),$(host)))))
+
+.PHONY: install-kvm-test-domains
+install-kvm-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
+
 
 #
 # Build targets
@@ -512,7 +508,8 @@ define kvm-build-domain
 endef
 
 # this includes $(KVM_BASE_DOMAIN), oops
-$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-build-domain,$(domain))))
+$(foreach domain, $(KVM_DOMAINS), \
+	$(eval $(call kvm-build-domain,$(domain))))
 
 .PHONY: kvm-build
 kvm-build: kvm-build-$(KVM_BUILD_DOMAIN)
@@ -538,14 +535,15 @@ define kvm-install-domain
 endef
 
 # this includes $(KVM_BASE_DOMAIN), oops
-$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-install-domain,$(domain))))
+$(foreach domain, $(KVM_DOMAINS), \
+	$(eval $(call kvm-install-domain,$(domain))))
 
 .PHONY: kvm-install
 kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
 # Since the install domains list isn't exhaustive (for instance, nic
 # is missing), add an explicit dependency on the missing domains so
 # that they still get created.
-kvm-install: | $(foreach domain,$(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
+kvm-install: | $(foreach domain, $(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
 
 
 # kvm-uninstall
@@ -564,7 +562,8 @@ define kvmsh-domain
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1)
 endef
-$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvmsh-domain,$(domain))))
+$(foreach domain, $(KVM_DOMAINS), \
+	$(eval $(call kvmsh-domain,$(domain))))
 
 
 # Generate rules to uninstall domains
@@ -576,29 +575,32 @@ $(foreach domain,$(KVM_DOMAINS),$(eval $(call kvmsh-domain,$(domain))))
 # Should also do this for uninstall-kvm-domain-DOMAIN.
 
 define uninstall-kvm-domain
-  #(info uninstall-kvm-domain domain=$(strip $(1)) dir=$(strip $(2)) groups=$(strip $(3)))
-  .PHONY: uninstall-kvm-domain-$(strip $(1))
-  uninstall-kvm-domain-$(strip $(1)):
-	if $(VIRSH) domstate $(strip $(1)) 2>/dev/null | grep running > /dev/null ; then \
-		$(VIRSH) destroy $(strip $(1)) ; \
+  #(info uninstall-kvm-domain domain=$(1) dir=$(2))
+  .PHONY: uninstall-kvm-domain-$(1)
+  uninstall-kvm-domain-$(1):
+	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
+		$(VIRSH) destroy $(1) ; \
 	fi
-	if $(VIRSH) dominfo $(strip $(1)) >/dev/null 2>&1 ; then \
-		$(VIRSH) undefine $(strip $(1)) ; \
+	if $(VIRSH) dominfo $(1) >/dev/null 2>&1 ; then \
+		$(VIRSH) undefine $(1) ; \
 	fi
-	rm -f $(strip $(2))/$(strip $(1)).xml
-	rm -f $(strip $(2))/$(strip $(1)).ks
-	rm -f $(strip $(2))/$(strip $(1)).qcow2
-	rm -f $(strip $(2))/$(strip $(1)).img
-  .PHONY: $(strip $(3))
-  $(strip $(3)): uninstall-kvm-domain-$(strip $(1))
+	rm -f $(2)/$(1).xml
+	rm -f $(2)/$(1).ks
+	rm -f $(2)/$(1).qcow2
+	rm -f $(2)/$(1).img
 endef
 
-$(foreach domain, $(KVM_TEST_DOMAINS), $(eval $(call uninstall-kvm-domain, \
-	$(domain), $(KVM_POOLDIR), uninstall-kvm-base-domain uninstall-kvm-clone-domain uninstall-kvm-test-domains)))
-$(foreach domain, $(KVM_CLONE_DOMAIN), $(eval $(call uninstall-kvm-domain, \
-	$(domain),$(KVM_POOLDIR), uninstall-kvm-base-domain uninstall-kvm-clone-domain)))
-$(foreach domain,$(KVM_BASE_DOMAIN),$(eval $(call uninstall-kvm-domain, \
-	$(domain),$(KVM_BASEDIR), uninstall-kvm-base-domain)))
+$(foreach domain, $(KVM_DOMAINS), \
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_POOLDIR))))
+
+.PHONY: uninstall-kvm-base-domain
+uninstall-kvm-base-domain: $(addprefix uninstall-kvm-domain-,$(KVM_DOMAINS))
+
+.PHONY: uninstall-kvm-clone-domain
+uninstall-kvm-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS) $(KVM_CLONE_DOMAIN))
+
+.PHONY: uninstall-kvm-test-domains
+uninstall-kvm-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
 
 
 # Generate rules to shut down all the domains (kvm-shutdown) and
@@ -606,7 +608,6 @@ $(foreach domain,$(KVM_BASE_DOMAIN),$(eval $(call uninstall-kvm-domain, \
 #
 # Don't require the domains to exist.
 
-.PHONY: kvm-shutdown
 define kvm-shutdown
   #(info kvm-shutdown domain=$(1))
   .PHONY: kvm-shutdown-$(1)
@@ -618,11 +619,18 @@ define kvm-shutdown
 		echo Domain $(1) does not exist ; \
 	fi ; \
 	echo
-  kvm-shutdown: kvm-shutdown-$(1)
 endef
 
-$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-shutdown,$(domain))))
+$(foreach domain, $(KVM_DOMAINS), \
+	$(eval $(call kvm-shutdown,$(domain))))
 
+.PHONY: kvm-shutdown
+kvm-shutdown: $(addprefix kvm-shutdown-,$(KVM_DOMAINS))
+
+
+# Some hints
+#
+# Only what is listed in here is "supported"
 
 .PHONY: kvm-help
 kvm-help:
