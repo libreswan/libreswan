@@ -769,17 +769,44 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				DBG(DBG_CONTROL, DBG_log("allowing no NULL integrity"));
 				continue;
 			}
-			int type_proposed = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = matching_local_proposal->matching_transform[type]->valid;
-			if (type_proposed != type_matched) {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
+			bool local_transform_type_present = local_transforms->transform[0].valid;
+			bool remote_transform_type_present = ((transform_types_found & LELEM(type)) != 0);
+			/*
+			* Check that the local and remote end are
+			* consistent about the transform being
+			* present.
+			*
+			* Transform matching is not optional.
+			* Instead, for something like ESP/AH, DH is
+			* made "optional" by sending two proposals.
+			* One with the transform (DH) present and one
+			* with it absent.
+			*/
+			if (local_transform_type_present != remote_transform_type_present) {
+			   DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
+				local_propnum, trans_type_name(type),
+				local_transform_type_present ?  "present" : "absent",
+				remote_transform_type_present ?  "present" : "absent"));
+			   break;
+			}
+			/*
+			* Check that when the transform type is
+			* required it also matches and vice versa.
+			*
+			* Since !local_transform_type_present implies
+			* !remote_transform_type_matched, the above
+			* test is also required.
+			*/
+			bool remote_transform_type_matched = matching_local_proposal->matching_transform[type]->valid;
+			if (local_transform_type_present != remote_transform_type_matched) {
+			    DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
 							     local_propnum, trans_type_name(type),
-							     type_proposed ? "proposed" : "not-proposed",
-							     type_matched ? "matched" : "not-matched"));
+								local_transform_type_present ?  "present" : "absent",
+								remote_transform_type_matched ?  "matched" : "different"));
 				break;
 			}
 		}
-		/* loop finished? */
+		/* loop finished cleanly? */
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
 			    DBG_log("remote proposal %u matches local proposal %d",
