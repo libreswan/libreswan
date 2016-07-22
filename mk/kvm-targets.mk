@@ -59,9 +59,11 @@ KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
 strip-prefix = $(subst '',,$(subst "",,$(1)))
 first-prefix = $(call strip-prefix,$(firstword $(KVM_PREFIX)))
 
+KVM_CLONE_DOMAIN = $(call first-prefix)clone
 KVM_BUILD_DOMAIN = $(call first-prefix)$(firstword $(KVM_INSTALL_HOSTS))
 KVM_INSTALL_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_INSTALL_HOSTS))),$(KVM_INSTALL_HOSTS))
 KVM_TEST_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))),$(KVM_TEST_HOSTS))
+KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS)
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
@@ -541,7 +543,7 @@ kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
 # For a parallel kvm-install, avoid multiple domains simultaneously
 # re-building libreswan by first explicitly running a build on
 # $(KVM_BUILD_DOMAIN).
-.PHONY: kvm-install kvm-shutdown kvm-uninstall
+.PHONY: kvm-install kvm-uninstall
 kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
 # uninstall is pretty brutal; but it does do what is specified.
 kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
@@ -578,10 +580,6 @@ define domain-build-rules
   kvm-$(1)-install: kvm-build | $$(KVM_DOMAIN_$(1)_FILES)
 	$(call kvmsh,--shutdown $(1) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
 
-  .PHONY: kvm-$(1)-shutdown
-  kvm-$(1)-shutdown: | $$(KVM_DOMAIN_$(1)_FILES)
-	$(call kvmsh,--shutdown $(1))
-
   .PHONY: kvmsh-$(1)
   kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
 	$(call kvmsh,$(1))
@@ -594,7 +592,30 @@ $(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call domain-build-rules,$(domain))
 
 .PHONY: kvm-install
 kvm-install: $(patsubst %,kvm-%-install,$(KVM_INSTALL_DOMAINS))
-kvm-shutdown: $(patsubst %,kvm-%-shutdown,$(KVM_TEST_DOMAINS))
+
+
+# Generate rules to shut down all the domains (kvm-shutdown) and
+# individual domains (kvm-shutdown-DOMAIN).
+#
+# Don't require the domains to exist.
+
+.PHONY: kvm-shutdown
+define kvm-shutdown
+  #(info kvm-shutdown domain=$(1))
+  .PHONY: kvm-shutdown-$(1)
+  kvm-shutdown-$(1):
+	echo ; \
+	if $(VIRSH) dominfo $(1) > /dev/null 2>&1 ; then \
+		$(KVMSH) $(KVMSH_FLAGS) --shutdown $(1) || exit 1 ; \
+	else \
+		echo Domain $(1) does not exist ; \
+	fi ; \
+	echo
+  kvm-shutdown: kvm-shutdown-$(1)
+endef
+
+$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-shutdown,$(domain))))
+
 
 # Provide aliases so that "east" maps onto the first "east" in the
 # first test pool.  Should this instead map things onto all domains?
@@ -667,8 +688,6 @@ kvm-help:
 	@echo ' Also:'
 	@echo ''
 	@echo '   kvm-keys                - use $(KVM_BUILD_DOMAIN) to create the test keys'
-	@echo '   kvmsh-DOMAIN            - open console on DOMAIN'
 	@echo '   kvm-shutdown            - shutdown all domains'
-	@echo '   kvm-DOMAIN-shutdown     - shutdown DOMAIN'
-	@echo '   kvm-DOMAIN-make-ACTION  - run "make ACTION" on DOMAIN'
+	@echo '   kvmsh-DOMAIN            - open console on DOMAIN'
 	@echo ''
