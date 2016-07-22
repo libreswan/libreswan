@@ -430,9 +430,39 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 .PHONY: install-kvm-base-domain
 install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
-.PHONY: uninstall-kvm-clones install-kvm-clones
-uninstall-kvm-clones: kvm-uninstall
+.PHONY: install-kvm-clones uninstall-kvm-clones
 install-kvm-clones: install-kvm-test-domains
+uninstall-kvm-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
+
+# Create the "clone" domain from the base domain.
+KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
+.PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES
+$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_NETWORK_FILE) $(KVM_POOLDIR)
+	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
+	$(call check-kvm-qemu-directory)
+	$(call check-kvm-entropy)
+	qemu-img create \
+		-b $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
+		-f qcow2 $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
+	$(VIRT_INSTALL) \
+		--name $(KVM_CLONE_DOMAIN) \
+		--network network:$(KVM_BASE_NETWORK),model=virtio \
+		--memory 512 \
+		--disk $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
+		--filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource \
+		--filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing \
+		--rng type=random,device=/dev/random \
+		--security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes \
+		--noreboot \
+		--nographics \
+		--noautoconsole \
+		--import
+	: ignore above boot message
+	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
+	mv $@.tmp $@
+.PHONY: install-kvm-clone-domain
+install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
+
 
 # Create the test domains in $(KVM_POOLDIR)
 #
