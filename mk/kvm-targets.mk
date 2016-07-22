@@ -464,7 +464,9 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $
 install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
 
 
-# Create the test domains in $(KVM_POOLDIR)
+# Install the $(KVM_TEST_DOMAINS) in $(KVM_POOLDIR)
+#
+# These are created as clones of $(KVM_CLONE_DOMAIN).
 #
 # Since running a domain will likely modify its .qcow2 disk image
 # (changing MTIME), the domain's disk isn't a good indicator that a
@@ -475,17 +477,17 @@ define install-kvm-test-domain
   #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
-  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2) $(KVM_POOLDIR)
+  $$(KVM_POOLDIR)/$(1)$(2).xml: | $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	qemu-img create \
-		-b $$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).qcow2 \
+		-b $$(KVM_POOLDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
 		-f qcow2 $$(KVM_POOLDIR)/$(1)$(2).qcow2
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
