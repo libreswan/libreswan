@@ -143,13 +143,6 @@ endif
 	false
 
 
-# Invoke KVMSH in the curret directory with $(1).
-define kvmsh
-	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(call check-kvm-qemu-directory)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(1)
-endef
-
 # [re]run the testsuite.
 #
 # If the testsuite is being run a second time (for instance,
@@ -454,15 +447,12 @@ install-kvm-clones: install-kvm-test-domains
 # domain needs updating.  Instead use the .xml file to track the
 # domain's creation time.
 
-KVM_TEST_DOMAIN_FILES =
-
 .PHONY: install-kvm-test-domains
 
 define kvm-test-domain
   #(info prefix=$(1) host=$(2))
 
   KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
-  KVM_TEST_DOMAIN_FILES += $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-test-domains: install-kvm-domain-$(1)$(2)
@@ -505,64 +495,76 @@ kvm-clean clean-kvm:
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
 
-.PHONY: kvm-build build-kvm
-kvm-build build-kvm: kvm-$(KVM_BUILD_DOMAIN)-build
 
-# "kvm-install" is a little wierd.  It needs to be run on most VMs,
-# and it needs to use the swan-install script.
+# kvm-build and kvm-build-DOMAIN
 #
-# To ensure that all test domains are created, include an explict
-# dependency on all the test domain files.  "nic" which doesn't get
-# pluto installed, would otherwise not be created.
-#
-# For a parallel kvm-install, avoid multiple domains simultaneously
-# re-building libreswan by first explicitly running a build on
-# $(KVM_BUILD_DOMAIN).
-.PHONY: kvm-install kvm-uninstall
-kvm-install: kvm-build | $(KVM_TEST_DOMAIN_FILES)
-# uninstall is pretty brutal; but it does do what is specified.
-kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
+# To avoid "make base" and "make module" running in parallel on the
+# build machine (stepping on each others toes), this uses two explicit
+# commands (each invokes make on the domain) to ensre that "make base"
+# and "make modules" are serialized.
 
-kvmmake = $(call kvmsh,--output ++compile-log.txt $(1) 'export OBJDIR=$(KVM_OBJDIR) ; make -j2 OBJDIR=$(KVM_OBJDIR) "$(strip $(2))"')
-
-define domain-build-rules
-  #(info domain=$(1))
-
-  # kvm-build is special.  To avoid "make base" and "make module"
-  # running in parallel on the build machine (stepping on each others
-  # toes), this uses sub-makes to explicitly serialize "base" and
-  # "modules" targets.
-  kvm-$(1)-build: | $$(KVM_DOMAIN_$(1)_FILES)
-	$$(call kvmmake,$(1),base)
-	$$(call kvmmake,$(1),module)
-
-  # "kvm-install" is a little wierd.  It needs to be run on most VMs,
-  # and it needs to use the swan-install script.d install on one
-  # domain and then clone it.
-  #
-  # After installing shut down the domain.  Otherwise, when KVM_PREFIX
-  # is large, the idle domains will end up consuming all available
-  # memory.
-  #
-  # When KVM_PREFIX is large, "make kvm-install" is dominated by the
-  # below target.  It should be possible to instead create one domain
-  # with everything installed and then clone it.
-  .PHONY: kvm-$(1)$(2)-install
-  kvm-$(1)-install: kvm-build | $$(KVM_DOMAIN_$(1)_FILES)
-	$(call kvmsh,--shutdown $(1) 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)')
-
-  .PHONY: kvmsh-$(1)
-  kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
-	$(call kvmsh,$(1))
-  kvmsh-$(1)-%: | $$(KVM_DOMAIN_$(1)_FILES)
-	$(call kvmsh,$(1) $$*)
-
+define kvm-build-domain
+  #(info kvm-build-domain domain=$(1))
+  kvm-build-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call check-kvm-qemu-directory)
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
 endef
 
-$(foreach domain,$(KVM_TEST_DOMAINS),$(eval $(call domain-build-rules,$(domain))))
+# this includes $(KVM_BASE_DOMAIN), oops
+$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-build-domain,$(domain))))
+
+.PHONY: kvm-build
+kvm-build: kvm-build-$(KVM_BUILD_DOMAIN)
+
+
+# kvm-install and kvm-install-DOMAIN
+#
+# "kvm-install-DOMAIN" can't start until the common
+# kvm-build-$(KVM_BUILD_DOMAIN) has completed.
+#
+# After installing shut down the domain.  Otherwise, when KVM_PREFIX
+# is large, the idle domains consume huge amounts of memory.
+#
+# When KVM_PREFIX is large, "make kvm-install" is dominated by the
+# below target.  It should be possible to instead create one domain
+# with everything installed and then clone it.
+
+define kvm-install-domain
+  .PHONY: kvm-install-$(1)
+  kvm-install-$(1): kvm-build-$$(KVM_BUILD_DOMAIN) | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call check-kvm-qemu-directory)
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
+endef
+
+# this includes $(KVM_BASE_DOMAIN), oops
+$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-install-domain,$(domain))))
 
 .PHONY: kvm-install
-kvm-install: $(patsubst %,kvm-%-install,$(KVM_INSTALL_DOMAINS))
+kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
+# Since the install domains list isn't exhaustive (for instance, nic
+# is missing), add an explicit dependency on the missing domains so
+# that they still get created.
+kvm-install: | $(foreach domain,$(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
+
+
+# kvm-uninstall
+#
+# this is simple and brutal
+
+.PHONY: kvm-uninstall
+kvm-uninstall: uninstall-kvm-test-domains
+
+
+# kvmsh-domain
+
+define kvmsh-domain
+  .PHONY: kvmsh-$(1)
+  kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+	$(call check-kvm-qemu-directory)
+	$$(KVMSH) $$(KVMSH_FLAGS) $(1)
+endef
+$(foreach domain,$(KVM_DOMAINS),$(eval $(call kvmsh-domain,$(domain))))
 
 
 # Generate rules to uninstall domains
