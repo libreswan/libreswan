@@ -508,10 +508,6 @@ kvm-clean clean-kvm:
 .PHONY: kvm-build build-kvm
 kvm-build build-kvm: kvm-$(KVM_BUILD_DOMAIN)-build
 
-# A catch all to run "make %" on the build domain; for instance "make
-# kvm-make-manpages'.
-kvm-make-%: kvm-$(KVM_BUILD_DOMAIN)-make-% ; @:
-
 # "kvm-install" is a little wierd.  It needs to be run on most VMs,
 # and it needs to use the swan-install script.
 #
@@ -531,10 +527,6 @@ kvmmake = $(call kvmsh,--output ++compile-log.txt $(1) 'export OBJDIR=$(KVM_OBJD
 
 define domain-build-rules
   #(info domain=$(1))
-
-  # Run "make <anything>" on the specified domain
-  kvm-$(1)-make-%: | $$(KVM_DOMAIN_$(1)_FILES)
-	$$(call kvmmake,$(1),$$*)
 
   # kvm-build is special.  To avoid "make base" and "make module"
   # running in parallel on the build machine (stepping on each others
@@ -606,6 +598,7 @@ $(foreach domain, $(KVM_CLONE_DOMAIN), $(eval $(call uninstall-kvm-domain, \
 $(foreach domain,$(KVM_BASE_DOMAIN),$(eval $(call uninstall-kvm-domain, \
 	$(domain),$(KVM_BASEDIR), uninstall-kvm-base-domain)))
 
+
 # Generate rules to shut down all the domains (kvm-shutdown) and
 # individual domains (kvm-shutdown-DOMAIN).
 #
@@ -628,27 +621,6 @@ endef
 
 $(foreach domain,$(KVM_DOMAINS),$(eval $(call kvm-shutdown,$(domain))))
 
-
-# Provide aliases so that "east" maps onto the first "east" in the
-# first test pool.  Should this instead map things onto all domains?
-
-define kvm-alias
-  .PHONY: kvm-install-$(1)
-  kvm-install-$(1): kvm-$(2)-install
-endef
-
-$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvm-alias,$(host),$(call first-prefix)$(host))))
-
-# provide aliases so that "kvmsh-east" maps onto the first "east".
-
-define kvmsh-alias
-  kvmsh-$(1): kvmsh-$(2)
-  kvmsh-$(1)-%: kvmsh-$(2)-% ; @:
-endef
-
-ifneq ($(call first-prefix),)
-$(foreach host,$(KVM_TEST_HOSTS),$(eval $(call kvmsh-alias,$(host),$(call first-prefix)$(host))))
-endif
 
 .PHONY: kvm-help
 kvm-help:
