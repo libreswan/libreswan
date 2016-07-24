@@ -59,8 +59,12 @@ KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
 strip-prefix = $(subst '',,$(subst "",,$(1)))
 first-prefix = $(call strip-prefix,$(firstword $(KVM_PREFIX)))
 
-KVM_CLONE_DOMAIN = $(call first-prefix)clone
-KVM_BUILD_DOMAIN = $(call first-prefix)$(firstword $(KVM_INSTALL_HOSTS))
+KVM_CLONE_HOST ?= clone
+KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
+
+KVM_CLONE_DOMAIN = $(addprefix $(call first-prefix), $(KVM_CLONE_HOST))
+KVM_BUILD_DOMAIN = $(addprefix $(call first-prefix), $(KVM_BUILD_HOST))
+
 KVM_INSTALL_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_INSTALL_HOSTS))),$(KVM_INSTALL_HOSTS))
 KVM_TEST_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))),$(KVM_TEST_HOSTS))
 KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS)
@@ -441,6 +445,7 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
+	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	qemu-img create \
 		-b $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
 		-f qcow2 $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
@@ -457,12 +462,16 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $
 		--nographics \
 		--noautoconsole \
 		--import
-	: ignore above boot message
+	: Fixing up eth0, must be a better way ...
+	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN) \
+		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/eth0/address)\"/"' \
+			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
+		service network restart \; \
+		ifconfig eth0
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-clone-domain
 install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
-
 
 # Install the $(KVM_TEST_DOMAINS) in $(KVM_POOLDIR)
 #
@@ -485,6 +494,7 @@ define install-kvm-test-domain
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
+	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN)
 	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
 	qemu-img create \
 		-b $$(KVM_POOLDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
@@ -646,7 +656,7 @@ define kvm-shutdown
   kvm-shutdown-$(1):
 	echo ; \
 	if $(VIRSH) dominfo $(1) > /dev/null 2>&1 ; then \
-		$(KVMSH) $(KVMSH_FLAGS) --shutdown $(1) || exit 1 ; \
+		$(KVMSH) --shutdown $(1) || exit 1 ; \
 	else \
 		echo Domain $(1) does not exist ; \
 	fi ; \
