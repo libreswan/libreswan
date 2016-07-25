@@ -72,11 +72,8 @@ test -r ${destdir}/i3.ok
 
 (
     cd ${basedir}
-    # XXX: this doesn't handle more than one host -> the rundir option
-    # shouldn't be needed.
-    ${utilsdir}/json-summary.py --rundir $(hostname) */*/table.json > table.new
     ${utilsdir}/json-graph.py */*/table.json > graph.new
-    for json in table graph ; do
+    for json in graph ; do
 	mv ${json}.new ${json}.json
     done
     cp ${webdir}/i1.html index.html

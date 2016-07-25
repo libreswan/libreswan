@@ -25,40 +25,9 @@ body {
     <script type="text/javascript" src="js/jquery-3.1.0.min.js"> </script>
     <script src="js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
     <link rel="stylesheet" type="text/css" href="js/Tidy-Table-3.0.1/tidy-table.min.css">
+    <script src="js/summary.js"></script>
     <script>
-
-      window.addEventListener('load', function() {
-          $.ajaxSetup({ cache: false });
-
-          // this gets a not well-formed warning
-          $.getJSON("table.json", function(data) {
-
-              // Init Tidy-Table
-              document.getElementById('container')
-                  .TidyTable({
-                      enableCheckbox : false,
-                      enableMenu     : false,
-                  }, {
-                      columnTitles : data.columns,
-                      columnValues : data.rows,
-		      postProcess: {
-		          column: postProcessColumn,
-		      },
-                  });
-	 });
-      });
-
-      function postProcessColumn(col) {
-          if (col.cellIndex == 0) { // Test Directory
-	      var child = col.childNodes[0]
-	      var text = child.data
-              var a = document.createElement("a")
-	      a.setAttribute("href", "testing/" + text)
-	      a.appendChild(document.createTextNode(text))
-	      col.replaceChild(a, child)
-	  }
-      }
-
+      summary("graph.json")
     </script>
 
     <script type="text/javascript" src="js/d3.v4.min.js"></script>
