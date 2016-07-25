@@ -57,11 +57,12 @@ class table:
 class summary:
     passed = "passed"
     failed = "failed"
+    incomplete = "incomplete"
     total = "Total"
-    columns = "columns"
-    rows = "rows"
+    # end-time: YYYY-MM-DD HH:MM see ftime/ptime.
     date = "date"
     runtime = "runtime"
+    directory = "directory"
 
 def load(io):
     try:
