@@ -21,15 +21,16 @@ log=${destdir}/log
 
 
 # Rebuild/run; but only if previous attempt didn't crash badly.
-if test -r ${destdir}/built.ok ; then
-    echo "Skipping as ${destdir}/built.ok"
-else
-    make distclean    2>&1 | tee -a ${log}
-    make kvm-install  2>&1 | tee -a ${log}
-    make kvm-test     2>&1 | tee -a ${log}
-    make kvm-shutdown 2>&1 | tee -a ${log}
-    touch ${destdir}/built.ok
-fi
+for target in distclean kvm-install kvm-test kvm-shutdown ; do
+    # because "make ... | tee bar" does not see make's exit code, use
+    # a file as a hack.
+    if test ! -r ${destdir}/${target}.ok ; then
+	make ${target}
+	touch ${destdir}/${target}.ok
+    fi 2>&1 | tee -a ${log}
+    # above created file?
+    test -r ${destdir}/${target}.ok
+done
 
 
 # Always copy over the results
