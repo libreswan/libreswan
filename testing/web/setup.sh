@@ -11,7 +11,7 @@ cd ${resultsdir}/js
 for tgz in https://github.com/nuxy/Tidy-Table/archive/3.0.1.tar.gz ; do
     if test ! -r $(basename ${tgz}) ; then
 	wget ${tgz}
-	tar xf ${tgz}
+	tar xf $(basename ${tgz})
     fi
 done
 
