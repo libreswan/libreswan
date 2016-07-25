@@ -75,7 +75,7 @@ v3.17 (April 4, 2016)
 * IKEv2: Fix memory leak of dcookies [Paul]
 * IKEv2: Switch pluto to native IKEv2 SA code, disentangle from IKEv1 [Andrew]
 * IKEv2: Log local and remote IKE and ESP/AH proposal sets [Andrew]
-* IKEv2: ESN support (XFRM only) via esn=yes|no|either (default no) [Paul]
+* IKEv2: ESN support (XFRM linux 2.6.39+) via esn=yes|no(default)|either [Paul]
 * IKEv2: Do not include aes_xcbc in proposal list until NSS supports it [Paul]
 * IKEv2: Prefer sha2_512 over sha2_256 over sha1 [Paul]
 * IKEv2: Use SHA2-256 instead of SHA1 as hash algorithm for dcookies [Paul]
