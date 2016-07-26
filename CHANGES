@@ -32,7 +32,7 @@ v3.18 (unreleased)
 * pluto: Log mismatched DH group (KE payload) to log (not debug) [Andrew]
 * pluto: Don't try to delete non-existing ipsec sa's (github #50) [Paul]
 * pluto: Prevent double free of id data [Hugh]
-* pluto: Avoid crashing on gaining remote ip locally (rhbz#1229766( [Paul]
+* pluto: Avoid crashing on gaining remote ip locally (rhbz#1229766) [Paul]
 * pluto: ESN could use uninitialised values and fail [Paul/Andrew]
 * X509: Try subsequent crl distribution points when first one fails [Kim]
 * whack: Display IPv4 lease address in --trafficstatus [Andrew]
