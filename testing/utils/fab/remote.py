@@ -287,7 +287,7 @@ def boot_to_login_prompt(domain, console, timeout=(STARTUP_TIMEOUT+LOGIN_TIMEOUT
             domain.destroy()
         else:
             domain.shutdown()
-            console.expect(pexpect.EOF, timeout=shutdown_timeout)
+            console.expect(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
         console = None
 
     raise pexpect.TIMEOUT("Domain %s did not reach login prompt" % domain)
