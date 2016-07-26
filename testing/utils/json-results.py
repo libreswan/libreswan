@@ -46,7 +46,7 @@ def main():
     rows = []
 
     first_time = last_time = None
-    total = passed = failed = 0
+    total = passed = failed = incomplete = 0
 
     for directory in args.directories:
 
@@ -120,10 +120,12 @@ def main():
         result = "incomplete"
         if jsonutil.result.result in RESULT:
             result = RESULT[jsonutil.result.result]
-            if result == "passed":
-                passed += 1
-            else:
-                failed += 1
+        if result == "passed":
+            passed += 1
+        elif result == "failed":
+            failed += 1
+        else:
+            incomplete += 1
 
         expect = "good"
         if jsonutil.result.expect in RESULT:
@@ -187,6 +189,7 @@ def main():
         jsonutil.summary.total: total,
         jsonutil.summary.passed: passed,
         jsonutil.summary.failed: failed,
+        jsonutil.summary.incomplete: incomplete,
         jsonutil.summary.date: date,
         jsonutil.summary.runtime: runtime,
     }

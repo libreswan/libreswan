@@ -10,13 +10,17 @@ function summary(json) {
 		return r.date.localeCompare(l.date)
 	    })
 
-	    var titles = [ "Date", "Passed", "Failed", "Tests",
+	    var titles = [ "Date", "Passed", "Failed",
+			   "Incomplete", "Tests",
 			   "Run Time", "Directory" ]
 	    var values = []
 	    // form the list of values
 	    summary.forEach(function(d) {
-		// yes Total, not total or tests
-		values.push([d.date, d.passed, d.failed, d.Total,
+		// yes Total, not total
+		var incomplete = d.hasOwnProperty('incomplete')
+		    ? d.incomplete : ""
+		values.push([d.date, d.passed, d.failed,
+			     incomplete, d.Total,
 			     d.runtime, d.directory])
 	    })
 
@@ -37,7 +41,7 @@ function summary(json) {
 }
 
 function postProcessColumn(col) {
-    if (col.cellIndex == 5) { // Test Directory
+    if (col.cellIndex == 6) { // Test Directory
 	var child = col.childNodes[0]
 	var text = child.data
         var a = document.createElement("a")
