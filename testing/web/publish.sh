@@ -54,8 +54,9 @@ test -r ${destdir}/tar.ok
     done
     # So that this directory is imune to later changes, just copy the
     # index page, along with all dependencies.
-    cp ${webdir}/i3.html index.html
+    cp ${webdir}/i3.html ${destdir}/index.html
     cp -r ${basedir}/js ${destdir}
+    cp ${webdir}/*.js ${destdir}/js
     touch ${destdir}/i3.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i3.ok
@@ -79,6 +80,7 @@ test -r ${destdir}/i3.ok
 	mv ${json}.new ${json}.json
     done
     cp ${webdir}/i1.html index.html
+    cp ${webdir}/*.js js/
     touch ${destdir}/i1.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i1.ok
