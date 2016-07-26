@@ -1077,15 +1077,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
 				req.p.replay_window));
 		} else {
-			struct xfrm_replay_state_esn xre;
 			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window + 
 				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
-
-			xre.replay_window = sa->replay_window; /* replay_window must be multiple of 8 */
+			/* this is where we could fill in sequence numbers for this SA */
+			struct xfrm_replay_state_esn xre = {
+				/* replay_window must be multiple of 8 */
+				.replay_window = sa->replay_window,
+				.bmp_len = bmp_size / sizeof(u_int32_t),
+			};
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
 				xre.replay_window));
-			xre.bmp_len = bmp_size / sizeof(u_int32_t);
-			/* this is where we could fill in sequence numbers for this SA */
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
 			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
