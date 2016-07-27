@@ -586,7 +586,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 * this transform-type.
 				 */
 				struct ikev2_transform *sentinel_transform;
-				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms);
+				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
+				}
 				passert(!sentinel_transform->valid);
 				/* save it */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
@@ -1527,7 +1528,8 @@ static void append_transform(struct ikev2_proposal *proposal,
 	struct ikev2_transforms *transforms = &proposal->transforms[type];
 	/* find the end */
 	struct ikev2_transform *transform;
-	FOR_EACH_TRANSFORM(transform, transforms);
+	FOR_EACH_TRANSFORM(transform, transforms) {
+	}
 	/*
 	 * Overflow? Since this is only called from static code and
 	 * local input it can be strict.
