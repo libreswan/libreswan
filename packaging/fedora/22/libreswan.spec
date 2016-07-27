@@ -134,7 +134,6 @@ FS=$(pwd)
     %{__arch_install_post} \
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
