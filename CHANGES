@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.17 (unreleased)
+v3.19 (unreleased)
 * building: libreswan assumes -std=gnu99 when building [Andrew]
 
 v3.18 (July 27,2016)
