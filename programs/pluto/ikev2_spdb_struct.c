@@ -190,22 +190,28 @@ struct ikev2_transform {
 };
 
 /*
- * Upper bound on transforms-per-type.
+ * An array of all the transforms of a specific transform type.
  *
- * The transform array is declared with an extra sentinel element.
+ * The array includes an extra sentinel transform element -
+ * SENTINEL_TRANSFORM which is always invalid.
+ *
+ * FOR_EACH_TRANSFORM(TRANSFORM,TRANSFORMS) iterates over the valid
+ * elements; on loop exit, TRANSFORM points at the first invalid
+ * entry, or SENTINEL_TRANSFORM if the array is full.
+ *
+ * To append entries use append_transform().
  */
 
 struct ikev2_transforms {
 	struct ikev2_transform transform[4 + 1];
 };
 
-/*
- * Transform iterator that always stops on the last (sentinel)
- * element).
- */
+#define SENTINEL_TRANSFORM(TRANSFORMS) \
+	((TRANSFORMS)->transform + elemsof((TRANSFORMS)->transform) - 1)
+
 #define FOR_EACH_TRANSFORM(TRANSFORM,TRANSFORMS)			\
 	for ((TRANSFORM) = &(TRANSFORMS)->transform[0];			\
-	     (TRANSFORM)->valid && (TRANSFORM) < ((TRANSFORMS)->transform + elemsof((TRANSFORMS)->transform) - 1); \
+	     (TRANSFORM)->valid && (TRANSFORM) < SENTINEL_TRANSFORM(TRANSFORMS); \
 	     (TRANSFORM)++)
 
 struct ikev2_spi {
@@ -580,7 +586,8 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				 * this transform-type.
 				 */
 				struct ikev2_transform *sentinel_transform;
-				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms);
+				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
+				}
 				passert(!sentinel_transform->valid);
 				/* save it */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
@@ -1521,8 +1528,18 @@ static void append_transform(struct ikev2_proposal *proposal,
 	struct ikev2_transforms *transforms = &proposal->transforms[type];
 	/* find the end */
 	struct ikev2_transform *transform;
-	FOR_EACH_TRANSFORM(transform, transforms) { }
-	pexpect(!transform->valid);
+	FOR_EACH_TRANSFORM(transform, transforms) {
+	}
+	/*
+	 * Overflow? Since this is only called from static code and
+	 * local input it can be strict.
+	 */
+	passert(transform < SENTINEL_TRANSFORM(transforms));
+	/*
+	 * Corruption?  transform+1<=sentinel from above passert.
+	 */
+	passert(!(transform+0)->valid);
+	passert(!(transform+1)->valid);
 	*transform = (struct ikev2_transform) {
 		.id = id,
 		.attr_keylen = attr_keylen,

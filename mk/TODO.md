@@ -83,8 +83,6 @@ The following are quirks inside of pluto:
 
 - log, as a separate line, the file's basename, line and function
 
-- enable -std=gnu99; hopefully just slog
-
 The following are quirks with /testing:
 
 - don't have /etc/ipsec.conf refer to /testing
