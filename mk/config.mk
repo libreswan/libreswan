@@ -300,7 +300,7 @@ endif
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
-SD_WATCHDOGSEC?=60
+SD_WATCHDOGSEC?=200
 else
 SD_TYPE=simple
 endif
