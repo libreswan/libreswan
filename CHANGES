@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.17 (unreleased)
+* building: libreswan assumes -std=gnu99 when building [Andrew]
 
 v3.18 (July 27,2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]

@@ -16,7 +16,7 @@
 # for more details.
 
 # -D... goes in here
-USERLAND_CFLAGS=
+USERLAND_CFLAGS=-std=gnu99
 
 ifeq ($(origin GCCM),undefined)
 ifeq ($(ARCH),i686)
