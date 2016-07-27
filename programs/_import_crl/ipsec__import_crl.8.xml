@@ -23,7 +23,7 @@
 <para><emphasis remap='I'>_import_crl</emphasis>
 is spawned by
 <emphasis remap='B'>pluto</emphasis>
-in order to add or update a CRL in the NSS database (default: /etc/ipsec.d)</para>
+in order to add or update a CRL in the NSS database (default: @IPSEC_NSSDIR@)</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
