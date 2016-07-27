@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.18 (unreleased)
+v3.18 (July 27, 2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]
 * XFRM: EXPERIMENTAL Support for NAT OE Client Address Translation (leftcat=) [Antony]
 * XFRM: EXPERIMENTAL Support for routed-VPNs using VTI [Paul/Tuomo]
