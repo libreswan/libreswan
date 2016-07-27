@@ -439,10 +439,6 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 .PHONY: install-kvm-base-domain
 install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
-.PHONY: install-kvm-clones uninstall-kvm-clones
-install-kvm-clones: install-kvm-test-domains
-uninstall-kvm-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
-
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES
@@ -594,14 +590,17 @@ kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
 # that they still get created.
 kvm-install: | $(foreach domain, $(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
 
-
-# kvm-uninstall
+# kvm-uninstall et.al.
 #
-# this is simple and brutal
+# these are simple and brutal
 
 .PHONY: kvm-uninstall
-kvm-uninstall: uninstall-kvm-test-domains
+kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
 
+.PHONY: kvm-uninstall-clones
+kvm-uninstall-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
+.PHONY: kvm-uninstall-all
+kvm-uninstall-all: uninstall-kvm-base-domain uninstall-kvm-test-networks uninstall-kvm-base-network
 
 # kvmsh-domain
 
@@ -684,16 +683,26 @@ kvm-shutdown: $(addprefix kvm-shutdown-,$(KVM_DOMAINS))
 .PHONY: kvm-help
 kvm-help:
 	@echo ''
-	@echo ' To set up the test domains and then install or update libreswan:'
+	@echo ' Configuration:'
 	@echo ''
-	@echo '   kvm-install           - create the test networks:'
-	@echo '                             $(KVM_TEST_NETWORKS)'
-	@echo '                         - using $(KVM_BASE_DOMAIN) clone the test domains:'
-	@echo '                             $(KVM_TEST_DOMAINS)'
-	@echo '                         - build or rebuild libreswan using the domain:'
-	@echo '                             $(KVM_BUILD_DOMAIN)'
-	@echo '                         - install libreswan into the domains:'
-	@echo '                             $(KVM_INSTALL_DOMAINS)'
+	@echo '   base:'
+	@echo '     domain: $(KVM_BASE_DOMAIN)'
+	@echo '     network: $(KVM_BASE_NETWORK)'
+	@echo '   clone:'
+	@echo '     domain: $(KVM_CLONE_DOMAIN)'
+	@echo '     network: $(KVM_BASE_NETWORK)'
+	@: $(foreach prefix, $(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
+		; echo '   test group: $(call strip-prefix,$(prefix))' \
+		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
+		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
+		)
+	@echo ''
+	@echo ' To set up the domains and then install or update libreswan:'
+	@echo ''
+	@echo '   kvm-install       - set everything up ready for a test run using kvm-check, that is:'
+	@echo '                       + if needed, create domains and networks'
+	@echo '                       + build or rebuild libreswan using the domain $(KVM_BUILD_DOMAIN)'
+	@echo '                       + install libreswan into the test domains $(KVM_INSTALL_DOMAINS)'
 	@echo ''
 	@echo ' To run the testsuite against libreswan installed on the test domains:'
 	@echo ''
@@ -707,26 +716,22 @@ kvm-help:
 	@echo '   kvm-test-clean        - force a clean test run by deleting test results in OUTPUT (else saved in BACKUP/)'
 	@echo '   kvm-clean             - force a clean build by deleting the KVM build in $(KVM_OBJDIR)'
 	@echo '   kvm-uninstall         - force a clean install by deleting all the test domains and networks'
+	@echo '   distclean             - scrubs the source tree'
 	@echo ''
-	@echo ' To explicitly wind back to just the bare base domain:'
-	@echo ' (use this if you modify the base domain and need to re-clone)'
+	@echo ' To create/destroy the base domain $(KVM_BASE_DOMAIN):'
 	@echo ''
-	@echo '   install-kvm-clones    - a.k.a. install-kvm-test-domains'
-	@echo '   uninstall-kvm-clones  - remove anything except the bare base domain'
+	@echo '   install-kvm-base-domain   - create the base domain/network'
+	@echo '   kvm-uninstall-all         - destroy the base domain, clone domain, test domains, and all networks'
 	@echo ''
-	@echo ' To explicitly create and delete domains use the following sequence:'
-	@echo ' (kvm-install and kvm-uninstall do this automatically)'
+	@echo ' To create/destroy the intermediate clone domain $(KVM_CLONE_DOMAIN):'
 	@echo ''
-	@echo '   install-kvm-base-network    - create the base network:'
-	@echo '                                   $(KVM_BASE_NETWORK)'
-	@echo '   install-kvm-base-domain     - create the base domain:'
-	@echo '                                   $(KVM_BASE_DOMAIN)'
-	@echo '   install-kvm-test-networks   - create the test networks:'
-	@echo '   install-kvm-test-domains    - create the test domains:'
+	@echo '   install-kvm-clone-domain  - create the clone domain from base'
+	@echo '   kvm-uninstall-clones      - destroy the clone domain, test domains, and networks'
 	@echo ''
-	@echo '   uninstall-kvm-base-domain   - delete the base domain and all its dependencies'
-	@echo '   uninstall-kvm-test-networks - delete the test networks'
-	@echo '   uninstall-kvm-base-network  - delete the base network'
+	@echo ' To create/destroy the test domains $(KVM_TEST_DOMAINS):'
+	@echo ''
+	@echo '   install-kvm-test-domains  - create the test domains/networks from clone (does not install libreswan)'
+	@echo '   kvm-uninstall             - destroy the test domains and networks'
 	@echo ''
 	@echo ' Also:'
 	@echo ''
