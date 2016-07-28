@@ -38,7 +38,8 @@ done
     (
 	cd testing/pluto && tar cf - */OUTPUT
     ) | (
-	cd ${destdir} && tar xpvf - && touch ${destdir}/tar.ok
+	cd ${destdir} && tar xpf -
+	touch ${destdir}/tar.ok
     )
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/tar.ok
@@ -70,12 +71,12 @@ test -r ${destdir}/i3.ok
 
 (
     cd ${basedir}
-    ${utilsdir}/json-graph.py */*/results.json > graph.new
-    for json in graph ; do
+    ${webdir}/json-summary.py */*/results.json > summary.new
+    for json in summary ; do
 	mv ${json}.new ${json}.json
     done
-    cp ${webdir}/i1.html index.html
-    cp ${webdir}/*.js js/
+    cp ${webdir}/i1.html ${basedir}/index.html
+    cp ${webdir}/*.js ${basedir}/js/
     touch ${destdir}/i1.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i1.ok

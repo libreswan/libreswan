@@ -16,9 +16,8 @@
 
 import argparse
 import sys
+import json
 from os import path
-
-from fab import jsonutil
 
 def main():
 
@@ -33,20 +32,21 @@ def main():
     for result in args.results:
         args.verbose and sys.stderr.write("%s\n" % result)
         with open(result) as f:
-            j = jsonutil.load(f)
-            if not j:
+            try:
+                j = json.load(f)
+            except ValueError:
                 sys.stderr.write("invalid json: %s\n" % (result))
                 continue
-            if not jsonutil.results.summary in j:
+            if not "summary" in j:
                 sys.stderr.write("missing summary: %s\n" % (result))
                 continue
-            summary = j[jsonutil.results.summary]
+            summary = j["summary"]
             # drop .json and use rest for directory
             directory, _ = path.split(result)
-            summary[jsonutil.summary.directory] = directory
+            summary["directory"] = directory
             rows.append(summary)
 
-    jsonutil.dump(rows, sys.stdout)
+    json.dump(rows, sys.stdout, indent=2)
     sys.stdout.write("\n")
     return 0
 
