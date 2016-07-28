@@ -21,28 +21,26 @@ log=${destdir}/log
 
 
 # Rebuild/run; but only if previous attempt didn't crash badly.
-for target in distclean kvm-install kvm-test kvm-shutdown ; do
+for target in distclean kvm-install kvm-retest kvm-shutdown ; do
     # because "make ... | tee bar" does not see make's exit code, use
     # a file as a hack.
-    if test ! -r ${destdir}/${target}.ok ; then
+    ok= ${destdir}/${target}.ok
+    if test ! -r ${ok} ; then
 	make ${target}
-	touch ${destdir}/${target}.ok
+	touch ${ok}
     fi 2>&1 | tee -a ${log}
     # above created file?
-    test -r ${destdir}/${target}.ok
+    test -r ${ok}
 done
 
 
-# Always copy over the results
+# Always sync up the results
 (
-    (
-	cd testing/pluto && tar cf - */OUTPUT
-    ) | (
-	cd ${destdir} && tar xpf -
-	touch ${destdir}/tar.ok
-    )
+    cd testing/pluto
+    rsync --archive --relative --itemize-changes */OUTPUT ${destdir}
+    touch ${destdir}/rsync.ok
 ) 2>&1 | tee -a ${log}
-test -r ${destdir}/tar.ok
+test -r ${destdir}/rsync.ok
 
 
 (
