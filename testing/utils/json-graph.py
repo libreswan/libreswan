@@ -37,10 +37,10 @@ def main():
             if not j:
                 sys.stderr.write("invalid json: %s\n" % (result))
                 continue
-            if not jsonutil.table.summary in j:
+            if not jsonutil.results.summary in j:
                 sys.stderr.write("missing summary: %s\n" % (result))
                 continue
-            summary = j[jsonutil.table.summary]
+            summary = j[jsonutil.results.summary]
             # drop .json and use rest for directory
             directory, _ = path.split(result)
             summary[jsonutil.summary.directory] = directory

@@ -40,6 +40,7 @@ import json
 from datetime import datetime
 
 class result:
+    directory = "directory"
     testname = "testname"
     expect = "expect"
     result = "result"
@@ -47,17 +48,15 @@ class result:
     runtime = "runtime"
     host_results = "host_results"
 
-class table:
-    rundir = "runDir"
-    suffix = "suffix"
+class results:
     summary = "summary"
-    columns = "columns"
-    rows = "rows"
+    table = "table"
 
 class summary:
     passed = "passed"
     failed = "failed"
     incomplete = "incomplete"
+    good = "good"
     total = "Total"
     # end-time: YYYY-MM-DD HH:MM see ftime/ptime.
     date = "date"
@@ -83,7 +82,9 @@ def dumps(s):
     return json.dumps(s)
 
 def ftime(t):
+    """Format the time"""
     return t.strftime("%Y-%m-%d %H:%M")
 
 def ptime(s):
+    """Parse the time"""
     datetime.strptime(s, "%Y-%m-%d %H:%M")

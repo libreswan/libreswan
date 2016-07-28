@@ -46,10 +46,8 @@ test -r ${destdir}/tar.ok
 
 (
     cd ${basedir}/$(hostname)/${version}
-    # XXX: rundir gets used by json-summary to determine the directory
-    # name :-(
-    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.new
-    for json in table ; do
+    ${utilsdir}/json-results.py */OUTPUT > results.new
+    for json in results ; do
 	mv ${json}.new ${json}.json
     done
     # So that this directory is imune to later changes, just copy the
@@ -72,7 +70,7 @@ test -r ${destdir}/i3.ok
 
 (
     cd ${basedir}
-    ${utilsdir}/json-graph.py */*/table.json > graph.new
+    ${utilsdir}/json-graph.py */*/results.json > graph.new
     for json in graph ; do
 	mv ${json}.new ${json}.json
     done
