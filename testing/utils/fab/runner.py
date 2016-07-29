@@ -39,8 +39,6 @@ def add_arguments(parser):
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
     group.add_argument("--parallel", action="store_true",
                        help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
-    group.add_argument("--attempts", type=int, default=1,
-                       help="number of times to attempt a test before giving up; default %(default)s")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
 
@@ -57,7 +55,6 @@ def log_arguments(logger, args):
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
-    logger.info("  attempts: %s", args.attempts)
     logger.info("  stop-at: %s", args.stop_at)
     logger.info("  backup-directory: %s", args.backup_directory)
 
@@ -362,28 +359,35 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             logger.info("%s %s started ....", prefix, test_prefix)
         test_stats.add(test, "tests")
 
-        # Move the contents of the existing OUTPUT directory to
-        # BACKUP_DIRECTORY.  Do it file-by-file so that, at no point, the
-        # directory is empty.
+        # Create the OUTPUT/ directory; if it already exists, move any
+        # contents to BACKUP/.  Do it file-by-file so that, at no
+        # point, the OUTPUT/ directory missing (presence of OUTPUT/
+        # implies the test was started).
         #
-        # By moving each test just before it is started a trail of what
-        # tests were attempted at each run is left.
+        # By backing up each test just before it is started, a trail
+        # of what tests were attempted during each run is created.
         #
-        # XXX: During boot, swan-transmogrify runs "chcon -R
-        # testing/pluto".  Of course this means that each time a test is
-        # added and/or a test is run (adding files under <test>/OUTPUT),
-        # the boot process (and consequently the time taken to run a test)
-        # keeps increasing.
+        # XXX:
         #
-        # Always moving the directory contents to the BACKUP_DIRECTORY
-        # mitigates this some.
-
-        backup_directory = None
-        if os.path.exists(test.output_directory):
+        # During boot, swan-transmogrify runs "chcon -R
+        # testing/pluto".  Of course this means that each time a test
+        # is added and/or a test is run (adding files under
+        # <test>/OUTPUT), the boot process (and consequently the time
+        # taken to run a test) keeps increasing.
+        #
+        # By moving the directory contents to BACKUP/, which is not
+        # under testing/pluto/ this problem is avoided.
+        try:
+            if not args.dry_run:
+                os.mkdir(test.output_directory)
+            elif os.exists(test.output_directory):
+                # since dry run, fake it
+                raise FileExistsError()
+        except FileExistsError:
             backup_directory = os.path.join(args.backup_directory, test.name)
             logger.info("moving contents of '%s' to '%s'",
                         test.output_directory, backup_directory)
-            # Copy "empty" OUTPUT directories too.
+            # Even if OUTPUT/ is empty, copy it.
             args.dry_run or os.makedirs(backup_directory, exist_ok=True)
             for name in os.listdir(test.output_directory):
                 src = os.path.join(test.output_directory, name)
@@ -391,105 +395,68 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 logger.debug("moving '%s' to '%s'", src, dst)
                 args.dry_run or os.replace(src, dst)
 
-        debugfile = None
-        result = None
+        # Now that the OUTPUT directory is empty, start a debug log
+        # writing to that directory; include timing for this test run.
+        with logger.debug_time("testing %s", test_prefix,
+                               logfile=os.path.join(test.output_directory,
+                                                    "debug.log"),
+                               loglevel=logutil.INFO) as test_lapsed_time:
 
-        # At least one iteration; above will have filtered out skips and
-        # ignored
-
-        for attempt in range(args.attempts):
-            test_stats.add(test, "attempts")
-
-            # Create the OUTPUT directory.
             try:
-                if not args.dry_run:
-                    os.mkdir(test.output_directory)
-                elif os.exists(test.output_directory):
-                    raise FileExistsError()
-            except FileExistsError:
-                # On first attempt, the OUTPUT directory will be empty
-                # (see above) so no need to save.
-                if attempt > 0:
-                    backup_directory = os.path.join(test.output_directory, str(attempt))
-                    logger.info("moving contents of '%s' to '%s'",
-                                test.output_directory, backup_directory)
-                    args.dry_run or os.makedirs(backup_directory, exist_ok=True)
-                    for name in os.listdir(test.output_directory):
-                        if os.path.isfile(src):
-                            src = os.path.join(test.output_directory, name)
-                            dst = os.path.join(backup_directory, name)
-                            logger.debug("moving '%s' to '%s'", src, dst)
-                            args.dry_run or os.replace(src, dst)
-
-            # Start a debug log in the OUTPUT directory; include timing
-            # for this specific test attempt.
-            attempt_prefix = "%s (attempt %d of %d)" % (test_prefix, attempt+1, args.attempts)
-            with logger.debug_time("testing %s", attempt_prefix,
-                                   logfile=os.path.join(test.output_directory,
-                                                        "debug.log"),
-                                   loglevel=logutil.INFO) as attempt_lapsed_time:
-
-                if backup_directory:
-                    logger.info("contents of '%s' moved to '%s'",
-                                test.output_directory, backup_directory)
-                backup_directory = None
-
                 ending = "undefined"
-                try:
-                    if not args.dry_run:
-                        _run_test(domain_prefix, test, args, boot_executor)
-                    ending = "finished"
-                    result = post.mortem(test, args, test_finished=True,
-                                         update=(not args.dry_run))
-                    if not args.dry_run:
-                        # Emit enough JSON to fool scripts like
-                        # pluto-testlist-scan.sh.  This also leaves a
-                        # simple marker to indicate that the test
-                        # finished.
-                        host_results = {}
-                        for host in sorted(test.host_names):
-                            if host in result.errors:
-                                host_results[host] = " ".join(result.errors[host])
-                            else:
-                                host_results[host] = "passed"
-                        j = jsonutil.dumps({
-                            jsonutil.result.testname: test.name,
-                            jsonutil.result.expect: test.expected_result,
-                            jsonutil.result.result: str(result),
-                            jsonutil.result.time: jsonutil.ftime(datetime.now()),
-                            jsonutil.result.runtime: round(attempt_lapsed_time.seconds(), 2),
-                            jsonutil.result.host_results: host_results,
-                        })
-                        logger.info("filling '%s' with json: %s", test.result_file(), j)
-                        with open(test.result_file(), "w") as f:
-                            f.write(j)
-                            f.write("\n")
+                if not args.dry_run:
+                    _run_test(domain_prefix, test, args, boot_executor)
+                ending = "finished"
+                result = post.mortem(test, args, test_finished=True,
+                                     update=(not args.dry_run))
 
-                except pexpect.TIMEOUT as e:
-                    logger.exception("**** test %s timed out ****", test.name)
-                    ending = "timed-out"
-                    # Still peform post-mortem so that errors are
-                    # captured, but force the result to incomplete.
-                    result = post.mortem(test, args, test_finished=False,
-                                         update=(not args.dry_run))
+                if not args.dry_run:
+                    # Since the test passed, emit enough JSON to fool
+                    # scripts like pluto-testlist-scan.sh.  This also
+                    # leaves a simple marker to indicate that the test
+                    # finished.
+                    #
+                    # A more robust way of doing this would be to mark
+                    # each of the console logs as complete as it is
+                    # closed.
+                    #
+                    # More detailed information can be extracted from
+                    # the debug.log.
+                    host_results = {}
+                    for host in sorted(test.host_names):
+                        if host in result.errors:
+                            host_results[host] = " ".join(result.errors[host])
+                        else:
+                            host_results[host] = "passed"
+                    j = jsonutil.dumps({
+                        jsonutil.result.testname: test.name,
+                        jsonutil.result.expect: test.expected_result,
+                        jsonutil.result.result: str(result),
+                        jsonutil.result.time: jsonutil.ftime(datetime.now()),
+                        jsonutil.result.runtime: round(test_lapsed_time.seconds(), 2),
+                        jsonutil.result.host_results: host_results,
+                    })
+                    logger.info("filling '%s' with json: %s", test.result_file(), j)
+                    with open(test.result_file(), "w") as f:
+                        f.write(j)
+                        f.write("\n")
 
-                # Since the OUTPUT directory exists, all paths to here
-                # should have a non-null RESULT.
-                test_stats.add(test, "attempts", ending, str(result))
-                logger.info("%s %s %s%s%s %s", prefix, attempt_prefix, result,
-                            result.errors and " ", result.errors, suffix)
-                if result.passed:
-                    break
+            except pexpect.TIMEOUT as e:
+                logger.exception("**** test %s timed out ****", test.name)
+                ending = "timed-out"
+                # Still peform post-mortem so that errors are
+                # captured, but force the result to incomplete.
+                result = post.mortem(test, args, test_finished=False,
+                                     update=(not args.dry_run))
 
-        # Above will have set RESULT.  During a control-c or crash the
-        # below will not be executed.
-
-        test_stats.add(test, "tests", str(result))
-        result_stats.add_result(result, old_result)
+        # Above will have set RESULT.  Exceptions such as control-c or
+        # a crash bypass this code.
 
         logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                     result.errors and " ", result.errors, suffix)
 
+        test_stats.add(test, "tests", str(result))
+        result_stats.add_result(result, old_result)
         test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
         result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
