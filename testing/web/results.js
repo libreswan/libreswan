@@ -6,7 +6,9 @@ function results(json) {
         $.getJSON(json, function(results) {
 
 	    var domains = ["east", "west", "road", "north", "nic"]
-	    var titles = ["Test", "Result", "Expected", "Runtime"]
+	    var headings = ["Test", "Result", "Expected", "Run time"]
+
+	    var titles = headings.slice(0)
 	    domains.forEach(function(domain) {
 		titles.push(domain)
 	    })
@@ -26,6 +28,9 @@ function results(json) {
 		values.push(line)
 	    })
 
+	    // XXX: track the last test name using a "global"
+	    var TEST = ""
+
             // Init Tidy-Table
             document.getElementById('container')
                 .TidyTable({
@@ -35,34 +40,52 @@ function results(json) {
                     columnTitles : titles,
                     columnValues : values,
 		    postProcess: {
-		        column: postProcessColumn,
+		        column: function(col) {
+			    if (col.cellIndex == 0) {
+				// Test Name: href to output directory
+				var child = col.childNodes[0]
+				// XXX: see above
+				TEST = child.data
+				var a = document.createElement("a")
+				a.setAttribute("href", TEST + "/OUTPUT")
+				a.appendChild(document.createTextNode(TEST))
+				col.replaceChild(a, child)
+			    } else if (col.cellIndex >= headings.length) { // east ...
+				var domain = domains[col.cellIndex - headings.length]
+				var child = col.childNodes[0]
+				var results = child.data.split(" ")
+				col.removeChild(child)
+				for (var i = 0; i < results.length; i++) {
+				    result = results[i]
+				    if (i > 0) {
+					col.appendChild(document.createElement('br'))
+				    }
+				    if (result == "passed") {
+					col.appendChild(document.createTextNode(result))
+				    } else if (result == "output-different") {
+					var a = document.createElement("a")
+					// XXX: saved above
+					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".console.diff")
+					a.appendChild(document.createTextNode(result))
+					col.appendChild(a)
+				    } else if (result == "output-unchecked") {
+					var a = document.createElement("a")
+					// XXX: saved above
+					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".console.txt")
+					a.appendChild(document.createTextNode(result))
+					col.appendChild(a)
+				    } else {
+					var a = document.createElement("a")
+					// XXX: saved above; just assume it is pluto
+					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".pluto.log")
+					a.appendChild(document.createTextNode(result))
+					col.appendChild(a)
+				    }
+				}
+			    }
+			},
 		    },
                 });
-	});
-
+	})
     })
-}
-
-function postProcessColumn(col) {
-    if (col.cellIndex == 0) { // Test Name
-	var child = col.childNodes[0]
-	var text = child.data
-        var a = document.createElement("a")
-	a.setAttribute("href", text + "/OUTPUT")
-	a.appendChild(document.createTextNode(text))
-	col.replaceChild(a, child)
-    } else if (col.cellIndex >= 4) { // east ...
-	var child = col.childNodes[0]
-	var results = child.data.split(" ")
-        if (results.length > 1) {
-            col.removeChild(child)
-	    for (var i = 0; i < results.length; i++) {
-	        result = results[i]
-		if (i > 0) {
-		    col.appendChild(document.createElement('br'))
-		}
-	        col.appendChild(document.createTextNode(result))
-            }
-        }
-    }
 }
