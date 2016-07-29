@@ -194,11 +194,9 @@ def results(logger, tests, baseline, args, result_stats):
 
     for test in tests:
 
-        # If debug logging is enabled this will provide per-test
-        # timing.
-        with logger.timer_stack():
-
-            logger.debug("start processing test %s", test.name)
+        # If debug logging is enabled this will provide fine grained
+        # per-test timing.
+        with logger.debug_time("processing test %s", test.name):
 
             # Filter out tests that are being ignored?
             ignored, include_ignored, details = ignore.test(logger, args, test)
@@ -329,8 +327,6 @@ def results(logger, tests, baseline, args, result_stats):
                             print(line)
 
             sys.stdout.flush()
-
-            logger.debug("stop processing test %s", test.name)
 
 
 if __name__ == "__main__":

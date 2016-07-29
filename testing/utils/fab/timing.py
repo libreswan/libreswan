@@ -22,7 +22,7 @@ START_TIME = datetime.now()
 
 
 class Lapsed:
-    """A lapsed timer with second granularity"""
+    """A lapsed timer that prints as seconds by default"""
 
     def __init__(self, start=None):
         self.start = start or datetime.now()
@@ -30,7 +30,7 @@ class Lapsed:
     def format(self, now=None):
         now = now or datetime.now()
         delta = now - self.start
-        milliseconds = (delta.microseconds / 1000)
+        deciseconds = (delta.microseconds / 100000)
         seconds = delta.seconds % 60
         minutes = (delta.seconds // 60) % 60
         hours = (delta.seconds // 60 // 60) % 24
@@ -39,11 +39,12 @@ class Lapsed:
             # need days
             return str(delta)
         elif hours > 0:
-            return "%d:%02d:%02d.%03d" % (hours, minutes, seconds, milliseconds)
+            return "%d:%02d:%02d.%02d" % (hours, minutes, seconds,
+                                          deciseconds)
         elif minutes > 0:
-            return "%d:%02d.%03d" % (minutes, seconds, milliseconds)
+            return "%d:%02d.%02d" % (minutes, seconds, deciseconds)
         else:
-            return "%d.%03d" % (seconds, milliseconds)
+            return "%d.%02d" % (seconds, deciseconds)
 
     def seconds(self, now=None):
         now = now or datetime.now()
@@ -51,31 +52,4 @@ class Lapsed:
         return delta.total_seconds()
 
     def __str__(self):
-        seconds = round(self.seconds())
-        if seconds == 1:
-            return "1 second"
-        else:
-            return "%d seconds" % seconds
-
-
-class LapsedStack:
-    """A stack of lapsed timers; "with" creates a new level."""
-
-    def __init__(self):
-        self.runtimes = [Lapsed(START_TIME)]
-
-    def __enter__(self):
-        self.runtimes.append(Lapsed())
-        return self.runtimes[-1]
-
-    def __exit__(self, type, value, traceback):
-        self.runtimes.pop()
-
-    def __str__(self):
-        runtimes = ""
-        now = datetime.now()
-        for runtime in self.runtimes:
-            if runtimes:
-                runtimes += "/"
-            runtimes += runtime.format(now)
-        return runtimes
+        return "%.01f seconds" % self.seconds()
