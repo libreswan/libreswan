@@ -24,7 +24,7 @@ log=${destdir}/log
 for target in distclean kvm-install kvm-retest kvm-shutdown ; do
     # because "make ... | tee bar" does not see make's exit code, use
     # a file as a hack.
-    ok= ${destdir}/${target}.ok
+    ok=${destdir}/${target}.ok
     if test ! -r ${ok} ; then
 	make ${target}
 	touch ${ok}
