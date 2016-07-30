@@ -87,4 +87,4 @@ def ftime(t):
 
 def ptime(s):
     """Parse the time"""
-    datetime.strptime(s, "%Y-%m-%d %H:%M")
+    return datetime.strptime(s, "%Y-%m-%d %H:%M")
