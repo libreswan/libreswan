@@ -1699,11 +1699,12 @@ void show_setup_plutomain(void)
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
 	whack_log(RC_COMMENT,
-		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
+		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		oco->secretsfile,
 		oco->confddir,
+		oco->nssdb,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
