@@ -266,7 +266,8 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
 
 def boot_to_login_prompt(domain, console, timeout=(STARTUP_TIMEOUT+LOGIN_TIMEOUT)):
 
-    for attempt in range(2):
+    retried = False
+    while True:
 
         if console:
             domain.reboot()
@@ -280,14 +281,28 @@ def boot_to_login_prompt(domain, console, timeout=(STARTUP_TIMEOUT+LOGIN_TIMEOUT
             domain.logger.info("login prompt appeared after %s", lapsed_time)
             return console
 
-        domain.logger.error("domain failed to start after %s, power cycling it", lapsed_time)
-        # On F23 the domain sometimes becomes wedged in the PAUSED
-        # state.  When it does, give it a full reset.
-        if domain.state() == virsh.STATE.PAUSED:
-            domain.destroy()
-        else:
-            domain.shutdown()
-            console.expect(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
-        console = None
+        if retried:
+            domain.logger.error("domain failed to boot after %s, giving up", laped_time)
+            raise pexpect.TIMEOUT("domain %d failed to boot" % domain)
+        retried = True
 
-    raise pexpect.TIMEOUT("Domain %s did not reach login prompt" % domain)
+        domain.logger.error("domain failed to boot after %s, waiting %d seconds for it to power down",
+                            lapsed_time, SHUTDOWN_TIMEOUT)
+        shutdown_time = timing.Lapsed()
+        domain.shutdown()
+        if console.expect_exact([pexpect.TIMEOUT, pexpect.EOF], timeout=SHUTDOWN_TIMEOUT):
+            domain.logger.info("domain powered down after %s", shutdown_time)
+            console = None
+            continue
+
+        domain.logger.error("domain failed to power down after %s, waiting %d seconds for the power cord to be pulled",
+                            shutdown_time, SHUTDOWN_TIMEOUT)
+        shutdown_time = timing.Lapsed()
+        domain.destroy()
+        if console.expect_exact([pexpect.TIMEOUT, pexpect.EOF], timeout=SHUTDOWN_TIMEOUT):
+            domain.logger.info("domain appears to have switched off after %s", shutdown_time)
+            console = None
+            continue
+
+        domain.logger.error("domain failed to switch off after %s, giving up", shutdown_time)
+        raise pexpect.TIMEOUT("Domain %s is wedged" % domain)

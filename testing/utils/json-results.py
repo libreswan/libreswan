@@ -28,9 +28,6 @@ def main():
 
     parser = argparse.ArgumentParser(description="write 'table.json' to standard output")
 
-    parser.add_argument("--rundir", action="store",
-                        default=path.basename(utilsdir.realpath("..", "..")),
-                        help="what to stuff into the 'runDir:' JSON field")
     parser.add_argument("--verbose", "-v", action="store_true")
 
     parser.add_argument("directories", metavar="OUTPUT-DIRECTORY", nargs="+",
@@ -46,9 +43,11 @@ def main():
     rows = []
 
     first_time = last_time = None
-    total = passed = failed = incomplete = 0
+    total = passed = failed = incomplete = good = 0
 
     for directory in args.directories:
+
+        args.verbose and sys.stderr.write("%s\n" % (directory))
 
         d = directory
 
@@ -73,16 +72,15 @@ def main():
 
         if not path.isfile(result_file) and not path.isfile(debug_log):
             sys.stderr.write("%s (%s) contains no results\n" % (directory, d))
-            return 1
-
-        testname = path.basename(path.dirname(d))
-        args.verbose and sys.stderr.write("%s\n" % (testname))
+            continue
 
         total += 1
 
         runtime = ""
 
         RESULT = {}
+
+        # If the RESULT file exists, use that.
         if path.isfile(result_file):
             # The RESULT file contains lines of JSON.  The last is
             # the result, and within that is the runtime. field.
@@ -113,77 +111,73 @@ def main():
         if debug_start_time and debug_end_time:
             debug_runtime = round((debug_end_time - debug_start_time).total_seconds(), 2)
 
-        # .../<testname>/OUTPUT
-        if jsonutil.result.testname in RESULT:
-            testname = RESULT[jsonutil.result.testname]
+        # fill in anyting that is missing
 
-        result = "incomplete"
-        if jsonutil.result.result in RESULT:
-            result = RESULT[jsonutil.result.result]
-        if result == "passed":
-            passed += 1
-        elif result == "failed":
-            failed += 1
-        else:
+        # Relative path to this directory so that html can construct
+        # link.
+        RESULT[jsonutil.result.directory] = d
+
+        # Testname from .../<testname>/OUTPUT.
+        if not jsonutil.result.testname in RESULT:
+            # Python dirname is really basename(dirname).
+            RESULT[jsonutil.result.testname] = path.dirname(d)
+
+        if not jsonutil.result.result in RESULT:
+            RESULT[jsonutil.result.result] = "incomplete"
             incomplete += 1
+        elif RESULT[jsonutil.result.result] == "passed":
+            passed += 1
+        elif RESULT[jsonutil.result.result] == "failed":
+            failed += 1
 
-        expect = "good"
-        if jsonutil.result.expect in RESULT:
-            expect = RESULT[jsonutil.result.expect]
+        if not jsonutil.result.expect in RESULT:
+            RESULT[jsonutil.result.expect] = "good"
+        if RESULT[jsonutil.result.expect] == "good":
+            good += 1
+
+        # this is the end-time
+        if not jsonutil.result.time in RESULT and debug_end_time:
+            RESULT[jsonutil.result.time] = jsonutil.ftime(debug_end_time)
+        # having separate boottime and testtime would be nice
+        if not jsonutil.result.runtime in RESULT and debug_runtime:
+            RESULT[jsonutil.result.runtime] = debug_runtime
+
+        # Update the total times
 
         end_time = ""
         if debug_end_time:
             end_time = debug_end_time
-        if not end_time and jsonutil.result.time in RESULT:
+        elif jsonutil.result.time in RESULT:
             end_time = jsonutil.ptime(RESULT[jsonutil.result.time])
-
-        runtime = ""
-        if debug_runtime:
-            runtime = debug_runtime
-        if not runtime and jsonutil.result.runtime in RESULT:
-            runtime = RESULT[jsonutil.result.runtime]
 
         start_time = ""
         if debug_start_time:
             start_time = debug_start_time
-        if not start_time and end_time and runtime:
+        elif end_time and runtime:
             start_time = end_time - timedelta(seconds=runtime)
 
-        if not first_time:
-            first_time = start_time
-        elif start_time < first_time:
-            first_time = start_time
+        if start_time:
+            if not first_time:
+                first_time = start_time
+            elif start_time < first_time:
+                first_time = start_time
 
-        if not last_time:
-            last_time = end_time
-        elif end_time > last_time:
-            last_time = end_time
+        if end_time:
+            if not last_time:
+                last_time = end_time
+            elif end_time > last_time:
+                last_time = end_time
 
-        row = [
-            testname,
-            expect,
-            result,
-            runtime,
-        ]
-
-        if jsonutil.result.host_results in RESULT:
-            host_results = RESULT[jsonutil.result.host_results]
-            for host in host_names:
-                if host in host_results:
-                    row.append(host_results[host])
-                else:
-                    row.append("")
-
-        rows.append(row)
+        rows.append(RESULT)
 
     runtime = "00:00:00"
     if first_time and last_time:
         runtime = (last_time - first_time)
         runtime = str(timedelta(days=runtime.days,seconds=runtime.seconds))
 
-    date = "0000-00-00 00:00"
+    date = jsonutil.ftime(datetime.fromordinal(1))
     if first_time:
-        date = first_time.strftime("%Y-%m-%d %H:%M")
+        date = jsonutil.ftime(first_time)
 
     summary = {
         jsonutil.summary.total: total,
@@ -192,14 +186,12 @@ def main():
         jsonutil.summary.incomplete: incomplete,
         jsonutil.summary.date: date,
         jsonutil.summary.runtime: runtime,
+        jsonutil.summary.good: good,
     }
 
     table = {
-        jsonutil.table.rundir: args.rundir,
-        jsonutil.table.suffix: "/OUTPUT",
-        jsonutil.table.summary: summary,
-        jsonutil.table.columns: columns,
-        jsonutil.table.rows: rows,
+        jsonutil.results.summary: summary,
+        jsonutil.results.table: rows,
     }
     jsonutil.dump(table, sys.stdout)
     sys.stdout.write("\n")

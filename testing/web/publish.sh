@@ -21,35 +21,32 @@ log=${destdir}/log
 
 
 # Rebuild/run; but only if previous attempt didn't crash badly.
-for target in distclean kvm-install kvm-test kvm-shutdown ; do
+for target in distclean kvm-install kvm-retest kvm-shutdown ; do
     # because "make ... | tee bar" does not see make's exit code, use
     # a file as a hack.
-    if test ! -r ${destdir}/${target}.ok ; then
+    ok=${destdir}/${target}.ok
+    if test ! -r ${ok} ; then
 	make ${target}
-	touch ${destdir}/${target}.ok
+	touch ${ok}
     fi 2>&1 | tee -a ${log}
     # above created file?
-    test -r ${destdir}/${target}.ok
+    test -r ${ok}
 done
 
 
-# Always copy over the results
+# Always sync up the results
 (
-    (
-	cd testing/pluto && tar cf - */OUTPUT
-    ) | (
-	cd ${destdir} && tar xpvf - && touch ${destdir}/tar.ok
-    )
+    cd testing/pluto
+    rsync --archive --relative --itemize-changes */OUTPUT ${destdir}
+    touch ${destdir}/rsync.ok
 ) 2>&1 | tee -a ${log}
-test -r ${destdir}/tar.ok
+test -r ${destdir}/rsync.ok
 
 
 (
     cd ${basedir}/$(hostname)/${version}
-    # XXX: rundir gets used by json-summary to determine the directory
-    # name :-(
-    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.new
-    for json in table ; do
+    ${utilsdir}/json-results.py */OUTPUT > results.new
+    for json in results ; do
 	mv ${json}.new ${json}.json
     done
     # So that this directory is imune to later changes, just copy the
@@ -72,12 +69,12 @@ test -r ${destdir}/i3.ok
 
 (
     cd ${basedir}
-    ${utilsdir}/json-graph.py */*/table.json > graph.new
-    for json in graph ; do
+    ${webdir}/json-summary.py */*/results.json > summary.new
+    for json in summary ; do
 	mv ${json}.new ${json}.json
     done
-    cp ${webdir}/i1.html index.html
-    cp ${webdir}/*.js js/
+    cp ${webdir}/i1.html ${basedir}/index.html
+    cp ${webdir}/*.js ${basedir}/js/
     touch ${destdir}/i1.ok
 ) 2>&1 | tee -a ${log}
 test -r ${destdir}/i1.ok

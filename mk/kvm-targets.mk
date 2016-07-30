@@ -416,24 +416,28 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
+	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
 	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
 		< $(KVM_KICKSTART_FILE) > $@.tmp
-	: this triggers a bug: $(VIRT_SECURITY)
+	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
 		--vcpus=1 \
 		--memory 1024 \
 		--nographics \
-		--disk size=8,cache=writeback,path='$(basename $@).qcow2' \
+		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
 		$(VIRT_BASE_NETWORK) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$@.tmp \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
 		--noreboot
-	: ignore the message about starting the domain
+	: make certain that the image is accessable
+	test -r $(basename $@).qcow2 || sudo chgrp $(KVM_GROUP) $(basename $@).qcow2
+	test -r $(basename $@).qcow2 || sudo chmod g+r $(basename $@).qcow2
 	mv $@.tmp $@
+	: the reboot message from virt-install can be ignored
 
 # mostly for testing
 .PHONY: install-kvm-base-domain
@@ -461,7 +465,6 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $
 		$(VIRT_SECURITY) \
 		$(VIRT_SOURCEDIR) \
 		$(VIRT_TESTINGDIR) \
-		$(VIRT_HVM) \
 		--import \
 		--noautoconsole \
 		--noreboot
