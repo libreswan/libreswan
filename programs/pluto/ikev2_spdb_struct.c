@@ -592,7 +592,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				/* save it */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("local proposal %d type %s has %zu transforms",
+				    DBG_log("local proposal %d type %s has %td transforms",
 					    local_propnum, trans_type_name(type),
 					    sentinel_transform - local_transforms->transform));
 			}
@@ -735,7 +735,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_type_transform(buf, type, &remote_transform);
-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %zu",
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %td",
 							    remote_propnum, remote_transform_nr,
 							    buf->buf, local_propnum,
 							    type, trans_type_name(type),

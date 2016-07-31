@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	libreswan_log("using config directory \"%s\"\n", oco->confddir);
+	libreswan_log("using config directory \"%s\"\n", oco->nssdb);
 
 	/*
 	 * Set up for NSS - contains key pairs.

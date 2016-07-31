@@ -1093,8 +1093,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				ipstr_buf b1, b2, b3;
 
 				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-				passert(id_is_ipaddr(&ac->gateways_from_dns->
-						     gw_id));
+				passert(ac != NULL &&
+					id_is_ipaddr(&ac->gateways_from_dns->gw_id));
 				loglog(RC_OPPOFAILURE,
 				       "no suitable connection for opportunism between %s and %s with %s as peer",
 				       ipstr(&b->our_client, &b1),
