@@ -911,16 +911,15 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
-			struct esb_buf ke_name;
-			struct esb_buf proposal_name;
+			struct esb_buf ke_esb;
+			struct esb_buf proposal_esb;
+
 			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-				      strip_prefix(enum_showb(&oakley_group_names,
-							      ke_group, &ke_name),
-						   "OAKLEY_GROUP_"),
-				      strip_prefix(enum_showb(&oakley_group_names,
-							      accepted_oakley.group->group,
-							      &proposal_name),
-						   "OAKLEY_GROUP_"));
+				      enum_show_shortb(&oakley_group_names,
+						ke_group, &ke_esb),
+				      enum_show_shortb(&oakley_group_names,
+						accepted_oakley.group->group,
+						&proposal_esb));
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
 			/* free early return items */
@@ -1360,9 +1359,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
-				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
-					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_")));
+				DBG(DBG_CONTROLMORE, {
+					struct esb_buf esb;
+					DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+						enum_show_shortb(&oakley_group_names,
+							sg.sg_group, &esb));
+				});
 				/* wipe our mismatched KE */
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
@@ -1371,9 +1373,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
-					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_")));
+				DBG(DBG_CONTROLMORE, {
+					struct esb_buf esb;
+					DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
+						enum_show_shortb(&oakley_group_names,
+							sg.sg_group, &esb));
+				});
 				return STF_IGNORE;
 			}
 		}

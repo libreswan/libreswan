@@ -63,6 +63,7 @@ static const char *const kern_interface_name[] = {
 enum_names kern_interface_names = {
 	NO_KERNEL, USE_BSDKAME,
 	ARRAY_REF(kern_interface_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -77,6 +78,7 @@ static const char *const dpd_action_name[] = {
 enum_names dpd_action_names = {
 	DPD_ACTION_DISABLED, DPD_ACTION_RESTART,
 	ARRAY_REF(dpd_action_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -92,6 +94,7 @@ static const char *const sd_action_name[] = {
 enum_names sd_action_names = {
 	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
 	ARRAY_REF(sd_action_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -129,6 +132,7 @@ static const char *const timer_event_name[] = {
 enum_names timer_event_names = {
 	EVENT_NULL, EVENT_RETAIN,
 	ARRAY_REF(timer_event_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -190,6 +194,7 @@ static const char *const state_name[] = {
 enum_names state_names = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
 	ARRAY_REF(state_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -251,6 +256,7 @@ static const char *const state_story[] = {
 enum_names state_stories = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
 	ARRAY_REF(state_story),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -273,6 +279,7 @@ const char *const natt_bit_names[] = {
 enum_names natt_method_names = {
 	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
 	ARRAY_REF(natt_bit_names)-1,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -289,6 +296,7 @@ static const char *const pluto_cryptoimportance_strings[] = {
 enum_names pluto_cryptoimportance_names = {
 	pcim_notset_crypto, pcim_demand_crypto,
 	ARRAY_REF(pluto_cryptoimportance_strings),
+	NULL, /* prefix */
 	NULL
 	};
 
@@ -308,6 +316,7 @@ static const char *const routing_story_strings[] = {
 enum_names routing_story = {
 	RT_UNROUTED, RT_UNROUTED_KEYED,
 	ARRAY_REF(routing_story_strings),
+	NULL, /* prefix */
 	NULL };
 
 static const char *const stfstatus_names[] = {
@@ -325,6 +334,7 @@ static const char *const stfstatus_names[] = {
 enum_names stfstatus_name = {
 	STF_IGNORE, STF_FAIL,
 	ARRAY_REF(stfstatus_names),
+	NULL, /* prefix */
 	NULL
 };
 

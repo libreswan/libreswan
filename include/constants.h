@@ -212,6 +212,7 @@ typedef uint_fast64_t lset_t;
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
+extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -219,6 +220,7 @@ struct esb_buf {
 	char buf[14];
 };
 extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
+extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
@@ -237,6 +239,7 @@ extern int enum_search(enum_names *ed, const char *string);
  *
  * enum_enum_table() returns TABLE's enum_names, or NULL.
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
+ * enum_enum_short_name() returns TABLE VAL's short enum, or NULL.
  * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
  */
 
@@ -244,6 +247,8 @@ typedef const struct enum_enum_names enum_enum_names;
 
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
+			   unsigned long val);
+const char *enum_enum_short_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);

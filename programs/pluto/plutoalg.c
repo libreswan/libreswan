@@ -229,13 +229,12 @@ static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
 
 	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
 			sep,
-			strip_prefix(enum_name(&esp_transformid_names,
-					       esp_info->transid), "ESP_"),
+			enum_short_name(&esp_transformid_names,
+					       esp_info->transid),
 			esp_info->transid, eklen,
-			strip_prefix(strip_prefix(enum_name(&auth_alg_names,
-							    esp_info->auth),
-						  "AUTH_ALGORITHM_HMAC_"),
-				     "AUTH_ALGORITHM_"),
+			strip_prefix(enum_short_name(&auth_alg_names,
+						esp_info->auth),
+				"HMAC_"),
 			esp_info->auth);
 }
 
@@ -312,10 +311,9 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 
 		int ret = snprintf(ptr, buflen, "%s%s(%d)",
 			       sep,
-			       strip_prefix(strip_prefix(enum_name(&auth_alg_names,
-								esp_info->auth),
-							"AUTH_ALGORITHM_HMAC_"),
-					"AUTH_ALGORITHM_"),
+			       strip_prefix(enum_name(&auth_alg_names,
+							esp_info->auth),
+					"HMAC_"),
 			       esp_info->auth);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
@@ -354,24 +352,21 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 	passert(!fix_zero || hash_desc != NULL);
 
 	int eklen = ike_info->ike_eklen;
-	if (fix_zero && !eklen)
+	if (fix_zero && eklen == 0)
 		eklen = enc_desc->keydeflen;
 
 	struct esb_buf enc_buf, hash_buf, group_buf;
 	return snprintf(buf, buflen,
-			"%s(%d)_%03d-%s(%d)-%s(%d)",
-			strip_prefix(enum_showb(&oakley_enc_names,
-						ike_info->ike_ealg, &enc_buf),
-				     "OAKLEY_"),
-			ike_info->ike_ealg, eklen,
-			strip_prefix(enum_showb(&oakley_hash_names,
-						ike_info->ike_halg, &hash_buf),
-				     "OAKLEY_"),
-			ike_info->ike_halg,
-			strip_prefix(enum_showb(&oakley_group_names,
-						ike_info->ike_modp, &group_buf),
-				     "OAKLEY_GROUP_"),
-			ike_info->ike_modp);
+		"%s(%d)_%03d-%s(%d)-%s(%d)",
+		enum_show_shortb(&oakley_enc_names,
+			ike_info->ike_ealg, &enc_buf),
+		ike_info->ike_ealg, eklen,
+		enum_show_shortb(&oakley_hash_names,
+			ike_info->ike_halg, &hash_buf),
+		ike_info->ike_halg,
+		enum_show_shortb(&oakley_group_names,
+			ike_info->ike_modp, &group_buf),
+		ike_info->ike_modp);
 }
 
 void alg_info_snprint_ike_info(char *buf, size_t buflen,
@@ -715,7 +710,6 @@ void kernel_alg_show_status(void)
 void kernel_alg_show_connection(const struct connection *c, const char *instance)
 {
 	const char *satype;
-	const char *pfsbuf;
 
 	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 	default:	/* shut up gcc */
@@ -736,12 +730,14 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 		break;
 	}
 
+	const char *pfsbuf;
+	struct esb_buf esb;
+
 	if (c->policy & POLICY_PFS) {
 		/* ??? 0 isn't a legitimate value for esp_pfsgroup */
 		if (c->alg_info_esp != NULL && c->alg_info_esp->esp_pfsgroup != 0) {
-			pfsbuf = strip_prefix(enum_show(&oakley_group_names,
-					   c->alg_info_esp->esp_pfsgroup),
-				"OAKLEY_GROUP_");
+			pfsbuf = enum_show_shortb(&oakley_group_names,
+				c->alg_info_esp->esp_pfsgroup, &esb);
 		} else {
 			pfsbuf = "<Phase1>";
 		}
@@ -775,13 +771,11 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  strip_prefix(enum_name(&esp_transformid_names,
+			  enum_short_name(&esp_transformid_names,
 				    st->st_esp.attrs.transattrs.encrypt),
-				"ESP_"),
 			  st->st_esp.attrs.transattrs.enckeylen,
-			  strip_prefix(enum_name(&auth_alg_names,
+			  enum_short_name(&auth_alg_names,
 				    st->st_esp.attrs.transattrs.integ_hash),
-				"AUTH_ALGORITHM_"),
 			  pfsbuf);
 	}
 
@@ -790,9 +784,8 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  strip_prefix(enum_name(&auth_alg_names,
+			  enum_short_name(&auth_alg_names,
 				    st->st_esp.attrs.transattrs.integ_hash),
-				"AUTH_ALGORITHM_"),
 			  pfsbuf);
 	}
 }

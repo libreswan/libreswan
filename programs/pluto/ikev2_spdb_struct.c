@@ -389,18 +389,19 @@ static void print_name_value(struct print *buf, const char *name, int value)
 static void print_transform(struct print *buf, enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	const char *id  = enum_enum_name(&v2_transform_ID_enums,
-					 type, transform->id);
-	id = strip_prefix(id, "OAKLEY_GROUP_");
-	id = strip_prefix(id, "AUTH_");
-	id = strip_prefix(id, "PRF_");
-	id = strip_prefix(id, "ESN_");
-	print_string(buf, id);
+	print_string(buf,
+		enum_enum_short_name(&v2_transform_ID_enums,
+			type, transform->id));
 	if (transform->attr_keylen > 0) {
 		print_join(buf,
 			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
 				    "_%d", transform->attr_keylen));
 	}
+}
+
+static const char *trans_type_name(enum ikev2_trans_type type)
+{
+	return enum_short_name(&ikev2_trans_type_names, type);
 }
 
 /*
@@ -409,22 +410,14 @@ static void print_transform(struct print *buf, enum ikev2_trans_type type,
 static void print_type_transform(struct print *buf, enum ikev2_trans_type type,
 				 const struct ikev2_transform *transform)
 {
-	print_string(buf, strip_prefix(enum_name(&ikev2_trans_type_names,
-						 type),
-				       "TRANS_TYPE_"));
+	print_string(buf, trans_type_name(type));
 	print_string(buf, "=");
 	print_transform(buf, type, transform);
 }
 
-static const char *trans_type_name(enum ikev2_trans_type type)
-{
-	return strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_");
-}
-
 static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 {
-	return strip_prefix(enum_name(&ikev2_sec_proto_id_names, protoid),
-			    "IKEv2_SEC_PROTO_");
+	return enum_short_name(&ikev2_sec_proto_id_names, protoid);
 }
 
 /*

@@ -1180,7 +1180,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
 	char prfname[IDTOA_BUF];
-	struct esb_buf esb;
+	struct esb_buf esb, esb2;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
 
@@ -1198,8 +1198,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_serialno,
 			st->st_ikev2 ? "2.0" : "1",
 			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
-				strip_prefix(enum_show(&oakley_auth_names,
-					st->st_oakley.auth), "OAKLEY_"));
+				enum_show_shortb(&oakley_auth_names,
+					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
 			st->st_oakley.prf_hasher->common.officname);
@@ -1224,7 +1224,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
-			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
+			enum_short_name(&oakley_group_names, st->st_oakley.group->group));
 		break;
 
 	case LAK_CHILD_START:
@@ -1239,15 +1239,14 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s",
 			st->st_esp.present ?
-				strip_prefix(enum_showb(&esp_transformid_names,
-					st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_") :
+				enum_show_shortb(&esp_transformid_names,
+					st->st_esp.attrs.transattrs.encrypt, &esb) :
 				"none",
 			st->st_esp.present ?
 				st->st_esp.attrs.transattrs.enckeylen :
 				0,
-			strip_prefix(enum_show(&auth_alg_names,
-				st->st_esp.attrs.transattrs.integ_hash),
-				"AUTH_ALGORITHM_"));
+			enum_show_shortb(&auth_alg_names,
+				st->st_esp.attrs.transattrs.integ_hash, &esb2));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",

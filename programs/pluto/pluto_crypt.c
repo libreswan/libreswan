@@ -186,6 +186,7 @@ static const char *const pluto_cryptoop_strings[] = {
 static enum_names pluto_cryptoop_names = {
 	pcr_build_ke_and_nonce, pcr_compute_dh_v2,
 	ARRAY_REF(pluto_cryptoop_strings),
+	NULL, /* prefix */
 	NULL
 };
 

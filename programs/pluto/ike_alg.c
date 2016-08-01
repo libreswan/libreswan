@@ -363,8 +363,8 @@ CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"NSS: Unsupported encryption mechanism for %s",
-			strip_prefix(enum_name(&oakley_enc_names,
-				encrypter->common.algo_id), "OAKLEY_"));
+			enum_short_name(&oakley_enc_names,
+				encrypter->common.algo_id));
 		break;
 	}
 	return mechanism;

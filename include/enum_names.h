@@ -8,6 +8,7 @@ struct enum_names {
 	unsigned long en_last;                  /* last value in range (inclusive) */
 	const char *const *en_names;
 	size_t en_checklen;	/* for checking: elemsof(en_names) == en_last-enfirst+1 */
+	const char *const en_prefix;	/* what to remove for short name */
 	const struct enum_names *en_next_range; /* descriptor of next range */
 };
 

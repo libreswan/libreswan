@@ -1148,15 +1148,13 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)",
-				strip_prefix(enum_name(&esp_transformid_names,
+				enum_short_name(&esp_transformid_names,
 						esp_info->transid),
-					"ESP_"),
 				esp_info->transid,
 				(int)esp_info->enckeylen,
-				strip_prefix(strip_prefix(enum_name(&auth_alg_names,
-								esp_info->auth),
-							"AUTH_ALGORITHM_HMAC_"),
-						"AUTH_ALGORITHM_"),
+				strip_prefix(enum_short_name(&auth_alg_names,
+							esp_info->auth),
+						"HMAC_"),
 				esp_info->auth);
 			ptr += strlen(ptr);
 			if (cnt > 0) {
@@ -1166,9 +1164,8 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 		}
 		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
-				strip_prefix(enum_name(&oakley_group_names,
+				enum_short_name(&oakley_group_names,
 						alg_info_esp->esp_pfsgroup),
-					"OAKLEY_GROUP_"),
 				alg_info_esp->esp_pfsgroup);
 			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
@@ -1182,10 +1179,9 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, be - ptr, "%s(%d)",
-				strip_prefix(strip_prefix(enum_name(&auth_alg_names,
-								esp_info->auth),
-						"AUTH_ALGORITHM_HMAC_"),
-					"AUTH_ALGORITHM_"),
+				strip_prefix(enum_short_name(&auth_alg_names,
+							esp_info->auth),
+					"HMAC_"),
 				esp_info->auth);
 			ptr += strlen(ptr);
 			if (cnt > 0) {
@@ -1195,8 +1191,7 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 		}
 		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
-				strip_prefix(enum_name(&oakley_group_names, alg_info_esp->esp_pfsgroup),
-				   "OAKLEY_GROUP_"),
+				enum_short_name(&oakley_group_names, alg_info_esp->esp_pfsgroup),
 				alg_info_esp->esp_pfsgroup);
 			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
@@ -1225,15 +1220,12 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
 		snprintf(ptr, be - ptr,
 			 "%s(%d)_%03d-%s(%d)-%s(%d)",
-			 strip_prefix(enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				      "OAKLEY_"),
+			 enum_short_name(&oakley_enc_names, ike_info->ike_ealg),
 			 ike_info->ike_ealg,
 			 (int)ike_info->ike_eklen,
-			 strip_prefix(enum_name(&oakley_hash_names, ike_info->ike_halg),
-				      "OAKLEY_"),
+			 enum_short_name(&oakley_hash_names, ike_info->ike_halg),
 			 ike_info->ike_halg,
-			 strip_prefix(enum_name(&oakley_group_names, ike_info->ike_modp),
-				      "OAKLEY_GROUP_"),
+			 enum_short_name(&oakley_group_names, ike_info->ike_modp),
 			 ike_info->ike_modp
 			);
 		ptr += strlen(ptr);

@@ -1280,11 +1280,13 @@ void ikev2_log_parentSA(struct state *st)
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("sending INVALID_KE back with %s(%d)",
-		    strip_prefix(enum_show(&oakley_group_names, group->group),
-				 "OAKLEY_GROUP_"),
-		    group->group));
+
+	DBG(DBG_CONTROL, {
+		struct esb_buf esb;
+		DBG_log("sending INVALID_KE back with %s(%d)",
+			enum_show_shortb(&oakley_group_names, group->group, &esb),
+			group->group);
+	});
 	/* convert group to a raw buffer */
 	const u_int16_t gr = htons(group->group);
 	chunk_t nd;
