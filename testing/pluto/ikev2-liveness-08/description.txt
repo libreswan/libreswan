@@ -1,0 +1,26 @@
+This tests the IKE2 liveness with two RW clients behind the same nat gateway.
+The dpdaction=clear, on east. Also on north and, road - this not significant.
+
+Additionallly on east the following are set.
+shuntlifetime=45s
+
+failureshunt=dorp
+negotiationshunt=drop
+
+After setting up the tunnel north blocks all traffic to east, east will clear tunnel to north. Will it affect road? Because shunt will block all traffic to the gateway nic?
+
+When running manually, traffic to road seems to be affected, however, no packet loss when ran as a test. May be sometimeing issue. 
+
+To manually Reproduce - run the test. 
+Login to road 
+leave a ping running
+ping -n -c90 -I 192.0.2.101 192.1.2.23
+
+login to north
+iptables -F
+iptables -X
+cd /testing/pluto/ikev2-liveness-08/
+./northinit.sh
+
+When ping finish on road you will see a packet loss.
+90 packets transmitted, 60 received, 33% packet loss, time 89574ms
