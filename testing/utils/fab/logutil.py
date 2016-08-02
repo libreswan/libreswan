@@ -213,9 +213,9 @@ class DebugTime(LogTime):
         super().__exit__(type, value, traceback)
         if self.logfile:
             # Restore debug logging before closing the logfile.
-            self.logger_adapter.pool.debug_handler.pop()
             self.logger_adapter.debug("ending debug log at %s",
                                       datetime.now())
+            self.logger_adapter.pool.debug_handler.pop()
             self.debug_stream.close()
             self.logger_adapter.debug("closed debug logfile '%s' at %s",
                                       self.logfile, datetime.now())
