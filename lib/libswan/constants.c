@@ -2156,6 +2156,22 @@ enum_names ppk_names = {
 	NULL
 };
 
+/* magic SPI values (specific to Libreswan: see <libreswan.h>) */
+static const char *const spi_name[] = {
+	"%pass",
+	"%drop",
+	"%reject",
+	"%hold",
+	"%trap",
+	"%trapsubnet",
+};
+enum_names spi_names = {
+	SPI_PASS, SPI_TRAPSUBNET,
+	ARRAY_REF(spi_name),
+	"%",	/* prefix */
+	NULL
+};
+
 /*
  * Values for right= and left=
  */

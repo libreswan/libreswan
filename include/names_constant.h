@@ -127,5 +127,7 @@ extern enum_names
 
 extern enum_names ppk_names;
 
+extern enum_names spi_names;
+
 /* natt traversal types */
 extern const char *const natt_type_bitnames[];
