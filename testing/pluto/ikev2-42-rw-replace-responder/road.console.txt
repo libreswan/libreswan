@@ -183,14 +183,14 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log  | head -9
 | inserting event EVENT_SA_EXPIRE, timeout in 60.000000 seconds for #1
-| state: #1 requesting EVENT_SA_EXPIRE to be deleted
+| state #1 requesting EVENT_SA_EXPIRE to be deleted
 | inserting event EVENT_SA_EXPIRE, timeout in 2848.000000 seconds for #1
 | ikev2 case EVENT_SA_REPLACE for child state for 27838 seconds
 | inserting event EVENT_SA_EXPIRE, timeout in 27838.000000 seconds for #2
 | inserting event EVENT_SA_EXPIRE, timeout in 3330.000000 seconds for #3
 | ikev2 case EVENT_SA_REPLACE for child state for 28530 seconds
 | inserting event EVENT_SA_EXPIRE, timeout in 28530.000000 seconds for #4
-| state: #2 requesting EVENT_SA_EXPIRE to be deleted
+| state #2 requesting EVENT_SA_EXPIRE to be deleted
 road #
  ipsec status
 000 using kernel interface: netkey

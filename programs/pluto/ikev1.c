@@ -1921,7 +1921,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (needed != 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
-			       enum_show(&state_names, from_state),
+			       enum_name(&state_names, from_state),
 			       bitnamesof(payload_name_ikev1, needed));
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;

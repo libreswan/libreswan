@@ -444,7 +444,7 @@ enum state_kind {
  * The bit is used to identify which keying material to use when
  * encrypting and decrypting SK payloads.
  *
- * Separate to this is the IKEv2 "R (Response)" flag
+ * Separate from this is the IKEv2 "R (Response)" flag
  * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
  * that a message is a response to a previous request.  Since either
  * end can send requests, either end can also set the "R" flag.

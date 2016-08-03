@@ -842,7 +842,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		if ((ix != ISAKMP_v2_SA_INIT && ix != ISAKMP_v2_AUTH) &&
 		    !IS_IKE_SA_ESTABLISHED(st)) {
 			libreswan_log("Ignoring %s Exchange as IKE SA for %s has not yet been authenticated",
-				enum_show(&state_names, st->st_state), st->st_connection->name);
+				enum_name(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
 	} else if (!msg_r) {
@@ -961,7 +961,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	    if (st != NULL) {
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
-	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+	    DBG_log("from_state is %s", enum_name(&state_names, from_state)));
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 

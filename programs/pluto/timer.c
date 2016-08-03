@@ -181,7 +181,7 @@ static void retransmit_v1_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
 			st->st_retransmit,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			details);
 		if (try != 0 && (try <= try_limit || try_limit == 0)) {
 			/*
@@ -304,7 +304,7 @@ static void retransmit_v2_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
 			st->st_retransmit,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			details);
 	}
 
@@ -844,12 +844,12 @@ void delete_event(struct state *st)
 	/* ??? isn't this a bug?  Should we not passert? */
 	if (st->st_event == NULL) {
 		DBG(DBG_CONTROLMORE,
-				DBG_log("state: #%lu requesting to delete non existing event",
+				DBG_log("state #%lu requesting to delete non existing event",
 					st->st_serialno));
 		return;
 	}
 	DBG(DBG_CONTROLMORE,
-			DBG_log("state: #%lu requesting %s to be deleted",
+			DBG_log("state #%lu requesting %s to be deleted",
 				st->st_serialno,
 				enum_show(&timer_event_names,
 					st->st_event->ev_type)));
@@ -862,7 +862,7 @@ void delete_event(struct state *st)
 void delete_liveness_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-			DBG_log("state: #%lu requesting event %s to be deleted",
+			DBG_log("state #%lu requesting event %s to be deleted",
 				st->st_serialno,
 				(st->st_liveness_event != NULL ?
 				 enum_show(&timer_event_names,
