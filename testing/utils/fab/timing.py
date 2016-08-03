@@ -22,13 +22,18 @@ START_TIME = datetime.now()
 
 
 class Lapsed:
-    """A lapsed timer that prints as seconds by default"""
+    """A lapsed timer that prints as seconds by default
+
+    As part of 'with' it automatically starts/stops.
+
+    """
 
     def __init__(self, start=None):
         self.start = start or datetime.now()
+        self.stop = None
 
     def format(self, now=None):
-        now = now or datetime.now()
+        now = now or self.stop or datetime.now()
         delta = now - self.start
         deciseconds = (delta.microseconds / 100000)
         seconds = delta.seconds % 60
@@ -47,9 +52,16 @@ class Lapsed:
             return "%d.%02d" % (seconds, deciseconds)
 
     def seconds(self, now=None):
-        now = now or datetime.now()
+        now = now or self.stop or datetime.now()
         delta = now - self.start
         return delta.total_seconds()
+
+    def __enter__(self):
+        self.start = datetime.now()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.stop = datetime.now()
 
     def __str__(self):
         return "%.01f seconds" % self.seconds()

@@ -264,6 +264,8 @@ def _run_test(domain_prefix, test, args, boot_executor):
     # Time just this test
     logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
+    test_script_time = test_boot_time = None
+
     with TestDomains(domain_prefix, testsuite.HOST_NAMES, test, logger) as all_test_domains:
 
         logger.info("starting test")
@@ -279,7 +281,7 @@ def _run_test(domain_prefix, test, args, boot_executor):
                 unused_domains.add(test_domain)
         logger.debug("unused domains: %s", strset(unused_domains))
 
-        with logger.time("booting domains"):
+        with logger.time("booting domains") as test_boot_time:
             _boot_test_domains(logger, test_domains, unused_domains, boot_executor)
 
         # re-direct the test-result log file
@@ -291,7 +293,7 @@ def _run_test(domain_prefix, test, args, boot_executor):
         # Run the scripts directly
         with logger.time("running scripts %s",
                          " ".join(("%s:%s" % (host, script))
-                                  for host, script in test.host_script_tuples)):
+                                  for host, script in test.host_script_tuples)) as test_script_time:
             for host, script in test.host_script_tuples:
                 if args.stop_at == script:
                     logger.error("stopping test run at (before executing) script %s", script)
@@ -305,6 +307,7 @@ def _run_test(domain_prefix, test, args, boot_executor):
             logfile.close()
 
         logger.info("finishing test")
+    return test_boot_time, test_script_time
 
 
 def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor):
@@ -315,9 +318,11 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     suffix = "******"
     test_stats.add(test, "total")
 
+    test_runtime = test_boot_time = test_script_time = test_start_time = test_total_time = None
+
     # Would the number of tests to be [re]run be better?
     test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
-    with logger.time("processing test %s", test_prefix):
+    with logger.time("processing test %s", test_prefix) as test_total_time:
 
         ignored, include_ignored, details = ignore.test(logger, args, test)
         if ignored and not include_ignored:
@@ -400,46 +405,15 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         with logger.debug_time("testing %s", test_prefix,
                                logfile=os.path.join(test.output_directory,
                                                     "debug.log"),
-                               loglevel=logutil.INFO) as test_lapsed_time:
+                               loglevel=logutil.INFO) as test_runtime:
 
             try:
                 ending = "undefined"
                 if not args.dry_run:
-                    _run_test(domain_prefix, test, args, boot_executor)
+                    test_boot_time, test_script_time = _run_test(domain_prefix, test, args, boot_executor)
                 ending = "finished"
                 result = post.mortem(test, args, test_finished=True,
                                      update=(not args.dry_run))
-
-                if not args.dry_run:
-                    # Since the test passed, emit enough JSON to fool
-                    # scripts like pluto-testlist-scan.sh.  This also
-                    # leaves a simple marker to indicate that the test
-                    # finished.
-                    #
-                    # A more robust way of doing this would be to mark
-                    # each of the console logs as complete as it is
-                    # closed.
-                    #
-                    # More detailed information can be extracted from
-                    # the debug.log.
-                    host_results = {}
-                    for host in sorted(test.host_names):
-                        if host in result.errors:
-                            host_results[host] = " ".join(result.errors[host])
-                        else:
-                            host_results[host] = "passed"
-                    j = jsonutil.dumps({
-                        jsonutil.result.testname: test.name,
-                        jsonutil.result.expect: test.expected_result,
-                        jsonutil.result.result: str(result),
-                        jsonutil.result.time: jsonutil.ftime(datetime.now()),
-                        jsonutil.result.runtime: round(test_lapsed_time.seconds(), 2),
-                        jsonutil.result.host_results: host_results,
-                    })
-                    logger.info("filling '%s' with json: %s", test.result_file(), j)
-                    with open(test.result_file(), "w") as f:
-                        f.write(j)
-                        f.write("\n")
 
             except pexpect.TIMEOUT as e:
                 logger.exception("**** test %s timed out ****", test.name)
@@ -449,16 +423,55 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 result = post.mortem(test, args, test_finished=False,
                                      update=(not args.dry_run))
 
-        # Above will have set RESULT.  Exceptions such as control-c or
-        # a crash bypass this code.
+    # Above will have set RESULT.  Exceptions such as control-c or
+    # a crash bypass this code.
 
-        logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
-                    result.errors and " ", result.errors, suffix)
+    logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
+                result.errors and " ", result.errors, suffix)
 
-        test_stats.add(test, "tests", str(result))
-        result_stats.add_result(result, old_result)
-        test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
-        result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
+    if not args.dry_run:
+        # Since the test finished, emit enough JSON to fool scripts
+        # like pluto-testlist-scan.sh.
+        #
+        # This also leaves a simple marker to indicate that the test
+        # finished.
+        #
+        # A more robust way of doing this would be to mark
+        # each of the console logs as complete as it is
+        # closed.
+        #
+        # More detailed information can be extracted from
+        # the debug.log.
+        hosts = {}
+        for host in sorted(test.host_names):
+            if host in result.errors:
+                hosts[host] = [error for error in result.errors[host]]
+            else:
+                hosts[host] = ["passed"]
+        RESULT = {
+            jsonutil.result.testname: test.name,
+            jsonutil.result.expect: test.expected_result,
+            jsonutil.result.result: str(result),
+            jsonutil.result.time: jsonutil.ftime(datetime.now()),
+            jsonutil.result.runtime: round(test_runtime.seconds(), 2),
+            jsonutil.result.total_time: round(test_total_time.seconds(), 2),
+            jsonutil.result.hosts: hosts,
+        }
+        # if the test run dies, these don't get set; see above catch
+        if test_script_time:
+            RESULT[jsonutil.result.script_time] = round(test_script_time.seconds(), 2)
+        if test_boot_time:
+            RESULT[jsonutil.result.boot_time] = round(test_boot_time.seconds(), 2),
+        j = jsonutil.dumps(RESULT)
+        logger.info("filling '%s' with json: %s", test.result_file(), j)
+        with open(test.result_file(), "w") as f:
+            f.write(j)
+            f.write("\n")
+
+    test_stats.add(test, "tests", str(result))
+    result_stats.add_result(result, old_result)
+    test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
+    result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
 def _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger):

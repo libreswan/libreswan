@@ -170,20 +170,20 @@ class DebugHandler(logging.Handler):
 class LogTime:
     """Log/time a with statement"""
 
-    def __init__(self, logger_adapter, loglevel, action):
+    def __init__(self, logger_adapter, loglevel, action, timer):
         # XXX: Can logger argument be eliminated - log direct to
         # handler?
         self.logger_adapter = logger_adapter
         self.action = action
-        self.timer = None
+        self.timer = timer
         self.loglevel = loglevel
 
     def __enter__(self):
         self.logger_adapter.log(self.loglevel, "start %s", self.action)
-        self.timer = timing.Lapsed()
-        return self.timer
+        return self.timer.__enter__()
 
     def __exit__(self, type, value, traceback):
+        self.timer.__exit__(type, value, traceback)
         self.logger_adapter.log(self.loglevel, "stop %s after %s",
                                 self.action, self.timer)
 
@@ -191,8 +191,10 @@ class LogTime:
 class DebugTime(LogTime):
     """Push a new timer onto the timer stack, possibly sending output to DEBUGFILE"""
 
-    def __init__(self, logger_adapter, logfile, loglevel, action):
-        super().__init__(logger_adapter, loglevel, action)
+    def __init__(self, logger_adapter, logfile, loglevel, action, timer):
+        super().__init__(logger_adapter=logger_adapter,
+                         loglevel=loglevel, action=action,
+                         timer=timer)
         self.logfile = logfile
         self.debug_stream = None
 
@@ -249,10 +251,13 @@ class CustomMessageAdapter(logging.LoggerAdapter):
         msg = "%s %s: %s" % (self.logger.name, runtimes, msg)
         return msg, kwargs
 
-    def time(self, fmt, *args, loglevel=INFO):
-        return LogTime(self, loglevel, (fmt % args))
+    def time(self, fmt, *args, loglevel=INFO, timer=None):
+        return LogTime(self, loglevel=loglevel, action=(fmt % args),
+                       timer=(timer or timing.Lapsed()))
 
-    def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG):
-        return DebugTime(self, logfile, loglevel, (fmt % args))
+    def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG, timer=None):
+        return DebugTime(logger_adapter=self, logfile=logfile,
+                         loglevel=loglevel, action=(fmt % args),
+                         timer=(timer or timing.Lapsed()))
 
 __init__()

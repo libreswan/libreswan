@@ -124,11 +124,12 @@ def main():
 
         if not jsonutil.result.result in RESULT:
             RESULT[jsonutil.result.result] = "incomplete"
-            incomplete += 1
-        elif RESULT[jsonutil.result.result] == "passed":
+        if RESULT[jsonutil.result.result] == "passed":
             passed += 1
         elif RESULT[jsonutil.result.result] == "failed":
             failed += 1
+        else:
+            incomplete += 1
 
         if not jsonutil.result.expect in RESULT:
             RESULT[jsonutil.result.expect] = "good"

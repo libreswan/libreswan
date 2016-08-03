@@ -5,31 +5,32 @@ function results(json) {
         // this gets a not well-formed warning
         $.getJSON(json, function(results) {
 
-	    var domains = ["east", "west", "road", "north", "nic"]
-	    var headings = ["Test", "Result", "Expected", "Run time"]
-
-	    var titles = headings.slice(0)
-	    domains.forEach(function(domain) {
-		titles.push(domain)
-	    })
+	    var titles = ["Test", "Result", "Expected", "Hosts", "Boot time", "Script time", "Total Time"]
+	    var hosts = ["east", "west", "road", "north", "nic"]
+	    var hosts_index = 3
 
 	    var values = []
-	    results.table.forEach(function(result) {
-		var line = [result.testname, result.result, result.expect,
-			    result.runtime]
-		domains.forEach(function(domain) {
-		    if (result.hasOwnProperty("host_results")
-			&& result.host_results.hasOwnProperty(domain)) {
-			line.push(result.host_results[domain])
-		    } else {
-			line.push("")
-		    }
-		})
+	    // need index
+	    var i
+	    for (i = 0; i < results.table.length; i++) {
+		var result = results.table[i]
+		var line = []
+		line.push(result.testname)
+		line.push(result.result)
+		line.push(result.expect)
+		// Index of this test result
+		line.push(i)
+		line.push(result.hasOwnProperty("boot_time")
+			  ? result.boot_time
+			  : "")
+		line.push(result.hasOwnProperty("script_time")
+			  ? result.script_time
+			  : "")
+		line.push(result.hasOwnProperty("total_time")
+			  ? result.total_time
+			  : result.runtime)
 		values.push(line)
-	    })
-
-	    // XXX: track the last test name using a "global"
-	    var TEST = ""
+	    }
 
             // Init Tidy-Table
             document.getElementById('container')
@@ -50,42 +51,49 @@ function results(json) {
 				a.setAttribute("href", TEST + "/OUTPUT")
 				a.appendChild(document.createTextNode(TEST))
 				col.replaceChild(a, child)
-			    } else if (col.cellIndex >= headings.length) { // east ...
-				var domain = domains[col.cellIndex - headings.length]
+			    } else if (col.cellIndex == hosts_index) {
 				var child = col.childNodes[0]
-				var results = child.data.split(" ")
+				var result = results.table[parseInt(child.data)]
 				col.removeChild(child)
-				for (var i = 0; i < results.length; i++) {
-				    result = results[i]
-				    if (i > 0) {
-					col.appendChild(document.createElement('br'))
-				    }
-				    if (result == "passed") {
-					col.appendChild(document.createTextNode(result))
-				    } else if (result == "output-different") {
-					var a = document.createElement("a")
-					// XXX: saved above
-					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".console.diff")
-					a.appendChild(document.createTextNode(result))
-					col.appendChild(a)
-				    } else if (result == "output-unchecked") {
-					var a = document.createElement("a")
-					// XXX: saved above
-					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".console.txt")
-					a.appendChild(document.createTextNode(result))
-					col.appendChild(a)
-				    } else {
-					var a = document.createElement("a")
-					// XXX: saved above; just assume it is pluto
-					a.setAttribute("href", TEST + "/OUTPUT/" + domain + ".pluto.log")
-					a.appendChild(document.createTextNode(result))
-					col.appendChild(a)
-				    }
+				if (!result || !result.hasOwnProperty("hosts")) {
+				    col.appendChild(document.createTextNode(""))
+				    return
 				}
+				var sep = 0
+				hosts.forEach(function(host) {
+				    if (result.hosts.hasOwnProperty(host)) {
+					if (sep) {
+					    col.appendChild(document.createElement('br'))
+					}
+					sep = host + ":"
+					result.hosts[host].forEach(function(error) {
+					    col.appendChild(document.createTextNode(sep))
+					    if (error == "passed") {
+						col.appendChild(document.createTextNode(error))
+					    } else if (error == "output-different") {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.diff")
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    } else if (error == "output-unchecked") {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.txt")
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    } else {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".pluto.log")
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    }
+					    sep = ","
+					})
+				    }
+				})
 			    }
-			},
-		    },
-                });
+			}
+		    }
+		})
 	})
     })
 }
