@@ -136,42 +136,16 @@ class TestDomain:
                             self.logger.warning("command '%s' failed with status %d", line, status)
 
 
-class TestDomains:
-
-    def __init__(self, domain_prefix, host_names, test, logger):
-        self.logger = logger
-        # Create a table of test domain objects; they are used during
-        # cleanup; and they are used as the values of the JOBS table.
-        self.test_domains = {}
-        for host_name in host_names:
-            test_domain = TestDomain(domain_prefix, host_name, test)
-            self.test_domains[host_name] = test_domain
-
-    def __enter__(self):
-        self.logger.debug("all test domains: %s", self.test_domains)
-        return self.test_domains
-
-    def __exit__(self, type, value, traceback):
-        # Finally, and after any cancel(), try closing all the test
-        # domains unconditinally.
-        self.logger.info("closing all test domains")
-        for test_domain in self.test_domains.values():
-            test_domain.close()
-
-
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
     jobs[job] = domain
     logger.debug("scheduled %s on %s", job, domain)
 
 
-def strset(s):
-    return " ".join(str(e) for e in s)
-
 def executor_qsize_hack(executor):
     return executor._work_queue.qsize()
 
-def _boot_test_domains(logger, test_domains, unused_domains, executor):
+def _boot_test_domains(logger, test, domain_prefix, executor):
 
     try:
 
@@ -198,18 +172,31 @@ def _boot_test_domains(logger, test_domains, unused_domains, executor):
         # Hack to get at the work queue.
         logger.info("%d shutdown/reboot jobs ahead of us in the queue", executor_qsize_hack(executor))
 
-        logger.info("submitting shutdown jobs for unused domains: %s", strset(unused_domains))
+        test_domains = {}
+        unused_domains = set()
+        for host_name in testsuite.HOST_NAMES:
+            # Test domains have the method "crash()" used below.
+            test_domain = TestDomain(domain_prefix, host_name, test)
+            if host_name in test.host_names:
+                test_domains[host_name] = test_domain
+            else:
+                unused_domains.add(test_domain)
+
+        logger.info("submitting shutdown jobs for unused domains: %s",
+                    " ".join(str(e) for e in unused_domains))
         for test_domain in unused_domains:
             submit_job_for_domain(executor, jobs, logger, test_domain,
                                   TestDomain.shutdown)
 
-        logger.info("submitting boot-and-login jobs for test domains: %s", strset(test_domains))
-        for domain in test_domains:
-            submit_job_for_domain(executor, jobs, logger, domain,
+        logger.info("submitting boot-and-login jobs for test domains: %s",
+                    " ".join(str(e) for e in test_domains.values()))
+        for test_domain in test_domains.values():
+            submit_job_for_domain(executor, jobs, logger, test_domain,
                                   TestDomain.boot_and_login)
 
         # Hack to get at the work queue.
-        logger.info("submitted %d jobs; currently %d jobs pending", len(jobs), executor_qsize_hack(executor))
+        logger.info("submitted %d jobs; currently %d jobs pending",
+                    len(jobs), executor_qsize_hack(executor))
 
         # Wait for the jobs to finish.  If one crashes, propogate the
         # exception - will force things into the finally block.
@@ -219,6 +206,8 @@ def _boot_test_domains(logger, test_domains, unused_domains, executor):
             logger.debug("job %s on %s completed", job, jobs[job])
             # propogate any exception
             job.result()
+
+        return test_domains
 
     finally:
 
@@ -259,57 +248,6 @@ def _boot_test_domains(logger, test_domains, unused_domains, executor):
         futures.wait(jobs)
 
 
-def _run_test(domain_prefix, test, args, boot_executor):
-
-    # Time just this test
-    logger = logutil.getLogger(domain_prefix, __name__, test.name)
-
-    test_script_time = test_boot_time = None
-
-    with TestDomains(domain_prefix, testsuite.HOST_NAMES, test, logger) as all_test_domains:
-
-        logger.info("starting test")
-
-        test_domains = set()
-        for host_name in test.host_names:
-            test_domains.add(all_test_domains[host_name])
-        logger.debug("test domains: %s", strset(test_domains))
-
-        unused_domains = set()
-        for test_domain in all_test_domains.values():
-            if test_domain not in test_domains:
-                unused_domains.add(test_domain)
-        logger.debug("unused domains: %s", strset(unused_domains))
-
-        with logger.time("booting domains") as test_boot_time:
-            _boot_test_domains(logger, test_domains, unused_domains, boot_executor)
-
-        # re-direct the test-result log file
-        for test_domain in test_domains:
-            output = os.path.join(test.output_directory,
-                                  test_domain.domain.host_name + ".console.verbose.txt")
-            test_domain.console.output(open(output, "w"))
-
-        # Run the scripts directly
-        with logger.time("running scripts %s",
-                         " ".join(("%s:%s" % (host, script))
-                                  for host, script in test.host_script_tuples)) as test_script_time:
-            for host, script in test.host_script_tuples:
-                if args.stop_at == script:
-                    logger.error("stopping test run at (before executing) script %s", script)
-                    break
-                test_domain = all_test_domains[host]
-                test_domain.read_file_run(script)
-
-        # Close the redirected test-result log files
-        for test_domain in test_domains:
-            logfile = test_domain.console.output()
-            logfile.close()
-
-        logger.info("finishing test")
-    return test_boot_time, test_script_time
-
-
 def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor):
 
     logger = logutil.getLogger(domain_prefix, __name__, test.name)
@@ -340,8 +278,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         # diff.
         #
         # XXX: There is a bug here where the only difference is white
-        # space.  The test will show up as failed when it previousl showed
-        # up as a whitespace pass.
+        # space.  The test will show up as failed when it previously
+        # showed up as a white-space pass.
         #
         # The presence of the RESULT file is a proxy for detecting that
         # the test was incomplete.
@@ -382,46 +320,80 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         #
         # By moving the directory contents to BACKUP/, which is not
         # under testing/pluto/ this problem is avoided.
+
         try:
-            if not args.dry_run:
-                os.mkdir(test.output_directory)
-            elif os.exists(test.output_directory):
-                # since dry run, fake it
-                raise FileExistsError()
+            os.mkdir(test.output_directory)
         except FileExistsError:
             backup_directory = os.path.join(args.backup_directory, test.name)
             logger.info("moving contents of '%s' to '%s'",
                         test.output_directory, backup_directory)
             # Even if OUTPUT/ is empty, copy it.
-            args.dry_run or os.makedirs(backup_directory, exist_ok=True)
+            os.makedirs(backup_directory, exist_ok=True)
             for name in os.listdir(test.output_directory):
                 src = os.path.join(test.output_directory, name)
                 dst = os.path.join(backup_directory, name)
                 logger.debug("moving '%s' to '%s'", src, dst)
-                args.dry_run or os.replace(src, dst)
+                os.replace(src, dst)
 
         # Now that the OUTPUT directory is empty, start a debug log
         # writing to that directory; include timing for this test run.
+
         with logger.debug_time("testing %s", test_prefix,
                                logfile=os.path.join(test.output_directory,
                                                     "debug.log"),
                                loglevel=logutil.INFO) as test_runtime:
 
-            try:
-                ending = "undefined"
-                if not args.dry_run:
-                    test_boot_time, test_script_time = _run_test(domain_prefix, test, args, boot_executor)
-                ending = "finished"
-                result = post.mortem(test, args, test_finished=True,
-                                     update=(not args.dry_run))
+            with logger.time("booting domains") as test_boot_time:
+                try:
+                    test_domains = _boot_test_domains(logger, test, domain_prefix, boot_executor)
+                except pexpect.TIMEOUT:
+                    logger.exception("timeout while booting domains", test.name)
+                    # Bail before RESULT is written - being unable to
+                    # boot the domains is a disaster.
+                    return
 
-            except pexpect.TIMEOUT as e:
-                logger.exception("**** test %s timed out ****", test.name)
-                ending = "timed-out"
-                # Still peform post-mortem so that errors are
-                # captured, but force the result to incomplete.
-                result = post.mortem(test, args, test_finished=False,
-                                     update=(not args.dry_run))
+
+            # Run the scripts directly
+            with logger.time("running scripts %s",
+                             " ".join(("%s:%s" % (host, script))
+                                      for host, script in test.host_script_tuples)) as test_script_time:
+                try:
+
+                    # re-direct the test-result log file
+                    for test_domain in test_domains.values():
+                        output = os.path.join(test.output_directory,
+                                              test_domain.domain.host_name + ".console.verbose.txt")
+                        test_domain.console.output(open(output, "w"))
+
+                    for host, script in test.host_script_tuples:
+                        if args.stop_at == script:
+                            logger.error("stopping test run at (before executing) script %s", script)
+                            break
+                        test_domain = test_domains[host]
+                        test_domain.read_file_run(script)
+                    result = post.mortem(test, args, test_finished=True, update=True)
+
+                except pexpect.TIMEOUT as e:
+                    logger.exception("**** timeout out while running script %s ****", script)
+                    # Still peform post-mortem so that errors are
+                    # captured, but force the result to
+                    # incomplete.
+                    result = post.mortem(test, args, test_finished=False, update=True)
+
+                finally:
+
+                    # Close the redirected test-result log files
+                    for test_domain in test_domains.values():
+                        logfile = test_domain.console.output()
+                        logfile.close()
+
+                    # Always disconnect from the test domains.
+                    logger.info("closing all test domains")
+                    for test_domain in test_domains.values():
+                        logfile = test_domain.console.output()
+                        if logfile:
+                            logfile.close()
+                        test_domain.close()
 
     # Above will have set RESULT.  Exceptions such as control-c or
     # a crash bypass this code.
@@ -429,44 +401,38 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                 result.errors and " ", result.errors, suffix)
 
-    if not args.dry_run:
-        # Since the test finished, emit enough JSON to fool scripts
-        # like pluto-testlist-scan.sh.
-        #
-        # This also leaves a simple marker to indicate that the test
-        # finished.
-        #
-        # A more robust way of doing this would be to mark
-        # each of the console logs as complete as it is
-        # closed.
-        #
-        # More detailed information can be extracted from
-        # the debug.log.
-        hosts = {}
-        for host in sorted(test.host_names):
-            if host in result.errors:
-                hosts[host] = [error for error in result.errors[host]]
-            else:
-                hosts[host] = ["passed"]
-        RESULT = {
-            jsonutil.result.testname: test.name,
-            jsonutil.result.expect: test.expected_result,
-            jsonutil.result.result: str(result),
-            jsonutil.result.time: jsonutil.ftime(datetime.now()),
-            jsonutil.result.runtime: round(test_runtime.seconds(), 2),
-            jsonutil.result.total_time: round(test_total_time.seconds(), 2),
-            jsonutil.result.hosts: hosts,
-        }
-        # if the test run dies, these don't get set; see above catch
-        if test_script_time:
-            RESULT[jsonutil.result.script_time] = round(test_script_time.seconds(), 2)
-        if test_boot_time:
-            RESULT[jsonutil.result.boot_time] = round(test_boot_time.seconds(), 2),
-        j = jsonutil.dumps(RESULT)
-        logger.info("filling '%s' with json: %s", test.result_file(), j)
-        with open(test.result_file(), "w") as f:
-            f.write(j)
-            f.write("\n")
+    # Since the test finished, emit enough JSON to fool scripts like
+    # pluto-testlist-scan.sh.
+    #
+    # This also leaves a simple marker to indicate that the test
+    # finished.
+    #
+    # A more robust way of doing this would be to mark each of the
+    # console logs as complete as it is closed.
+    #
+    # More detailed information can be extracted from the debug.log.
+    hosts = {}
+    for host in sorted(test.host_names):
+        if host in result.errors:
+            hosts[host] = [error for error in result.errors[host]]
+        else:
+            hosts[host] = ["passed"]
+    RESULT = {
+        jsonutil.result.testname: test.name,
+        jsonutil.result.expect: test.expected_result,
+        jsonutil.result.result: str(result),
+        jsonutil.result.time: jsonutil.ftime(datetime.now()),
+        jsonutil.result.runtime: round(test_runtime.seconds(), 1),
+        jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
+        jsonutil.result.script_time: round(test_script_time.seconds(), 1),
+        jsonutil.result.total_time: round(test_total_time.seconds(), 1),
+        jsonutil.result.hosts: hosts,
+    }
+    j = jsonutil.dumps(RESULT)
+    logger.info("filling '%s' with json: %s", test.result_file(), j)
+    with open(test.result_file(), "w") as f:
+        f.write(j)
+        f.write("\n")
 
     test_stats.add(test, "tests", str(result))
     result_stats.add_result(result, old_result)
