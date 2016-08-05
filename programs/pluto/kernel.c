@@ -1294,88 +1294,89 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	happy(addrtosubnet(dst, &that_client));
 
 	/* ??? this comment might be obsolete.
-	 * if the transport protocol is not the wildcard (0), then we need
+	 * If the transport protocol is not the wildcard (0), then we need
 	 * to look for a host<->host shunt, and replace that with the
 	 * shunt spi, and then we add a %HOLD for what was there before.
 	 *
-	 * this is at odds with !repl, which should delete things.
+	 * This is at odds with !repl, which should delete things.
 	 *
 	 */
 
-	if (transport_proto != 0) {
-		DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
-	}
+	DBG(DBG_CONTROL,
+		if (transport_proto != 0)
+			DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
 
-	{
-		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
+	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
-		DBG(DBG_KERNEL,
-		    DBG_log("%s specific host-to-host bare shunt",
-			    repl ? "replacing" : "removing"));
-		if (raw_eroute(null_host, &this_client,
-				null_host, &that_client,
-			       htonl(cur_shunt_spi),
-			       htonl(new_shunt_spi),
-			       SA_INT, transport_proto,
-			       ET_INT, null_proto_info,
-			       deltatime(SHUNT_PATIENCE),
-			       DEFAULT_IPSEC_SA_PRIORITY,
-			       NULL, /* sa_marks */
-			       op, why
+	DBG(DBG_KERNEL,
+	    DBG_log("%s specific host-to-host bare shunt",
+		    repl ? "replacing" : "removing"));
+	if (raw_eroute(null_host, &this_client,
+			null_host, &that_client,
+		       htonl(cur_shunt_spi),
+		       htonl(new_shunt_spi),
+		       SA_INT, transport_proto,
+		       ET_INT, null_proto_info,
+		       deltatime(SHUNT_PATIENCE),
+		       DEFAULT_IPSEC_SA_PRIORITY,
+		       NULL, /* sa_marks */
+		       op, why
 #ifdef HAVE_LABELED_IPSEC
-			       , NULL
+		       , NULL
 #endif
-			       )) {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_client,
-				&that_client,
-				transport_proto);
+		       ))
+	{
+		struct bare_shunt **bs_pp = bare_shunt_ptr(
+			&this_client,
+			&that_client,
+			transport_proto);
 
-			DBG(DBG_CONTROL, DBG_log("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
-				repl ? "replace" : "delete",
-				transport_proto,
-				(bs_pp == NULL) ? "failed" : "succeeded"));
+		DBG(DBG_CONTROL, DBG_log("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
+			repl ? "replace" : "delete",
+			transport_proto,
+			(bs_pp == NULL) ? "failed" : "succeeded"));
 
-			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
-			/* passert(bs_pp != NULL); */
-			if (bs_pp == NULL) {
-				DBG(DBG_CONTROL, DBG_log("not deleting bare (port) shunt - letting kernel expire it"));
-				return TRUE;
-			}
-			if (repl) {
-				/* change over to new bare eroute
-				 * ours, his, transport_proto are the same.
-				 */
-				struct bare_shunt *bs = *bs_pp;
-
-				bs->why = why;
-				bs->policy_prio = policy_prio;
-				bs->said.spi = htonl(new_shunt_spi);
-				bs->said.proto = SA_INT;
-				bs->said.dst = *null_host;
-				bs->count = 0;
-				bs->last_activity = mononow();
-				DBG_bare_shunt("change", bs);
-			} else {
-				/* delete pluto bare shunt */
-				free_bare_shunt(bs_pp);
-			}
+		/* we can have proto mismatching acquires with netkey - this is a bad workaround */
+		/* ??? what is the nature of those mismatching acquires? */
+		/* passert(bs_pp != NULL); */
+		if (bs_pp == NULL) {
+			/* ??? should this be in the main log? */
+			DBG(DBG_CONTROL, DBG_log("not deleting bare (port) shunt - letting kernel expire it"));
 			return TRUE;
-		} else {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_client,
-				&that_client,
-				transport_proto);
-
-			free_bare_shunt(bs_pp);
-			libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
-				repl ? "replace" : "delete",
-				transport_proto);
-
-			return FALSE;
 		}
-	}
 
+		if (repl) {
+			/* change over to new bare eroute
+			 * ours, his, transport_proto are the same.
+			 */
+			struct bare_shunt *bs = *bs_pp;
+
+			bs->why = why;
+			bs->policy_prio = policy_prio;
+			bs->said.spi = htonl(new_shunt_spi);
+			bs->said.proto = SA_INT;
+			bs->said.dst = *null_host;
+			bs->count = 0;
+			bs->last_activity = mononow();
+			DBG_bare_shunt("change", bs);
+		} else {
+			/* delete pluto bare shunt */
+			free_bare_shunt(bs_pp);
+		}
+		return TRUE;
+	} else {
+		struct bare_shunt **bs_pp = bare_shunt_ptr(
+			&this_client,
+			&that_client,
+			transport_proto);
+
+		free_bare_shunt(bs_pp);
+		libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
+			repl ? "replace" : "delete",
+			transport_proto);
+
+		return FALSE;
+	}
 }
 
 bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
