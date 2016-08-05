@@ -330,14 +330,4 @@ cat << EOD >> /etc/hosts
 192.1.2.254 nic
 EOD
 
-# Extra yum stuff
-
-# Do this last so that should something barf or hang the install is
-# still essentially OK.
-
-# Need pyOpenSSL with ability to dump all certificates
-yum upgrade -y 2>&1 \
-    https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm \
-    | tee /var/tmp/pyOpenSSL.log
-
 %end
