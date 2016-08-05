@@ -314,10 +314,4 @@ yum upgrade -y 2>&1 \
     https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm \
     | tee /var/tmp/pyOpenSSL.log
 
-# Need strongswan with CTR, GCM, and other fixes
-yum upgrade -y 2>&1 \
-    https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc22.x86_64.rpm \
-    https://nohats.ca/ftp/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm \
-    | tee /var/tmp/strongswan.log
-
 %end
