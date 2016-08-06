@@ -117,24 +117,43 @@ static struct event *ev_pq = NULL;
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	DBG(DBG_KERNEL,
-	    {
-		    int ourport = ntohs(portof(&bs->ours.addr));
-		    int hisport = ntohs(portof(&bs->his.addr));
-		    char ourst[SUBNETTOT_BUF];
-		    char hist[SUBNETTOT_BUF];
-		    char sat[SATOT_BUF];
-		    char prio[POLICY_PRIO_BUF];
+	DBG(DBG_KERNEL, {
+		int ourport = ntohs(portof(&bs->ours.addr));
+		int hisport = ntohs(portof(&bs->his.addr));
+		char ourst[SUBNETTOT_BUF];
+		char hist[SUBNETTOT_BUF];
+		char sat[SATOT_BUF];
+		char prio[POLICY_PRIO_BUF];
 
-		    subnettot(&bs->ours, 0, ourst, sizeof(ourst));
-		    subnettot(&bs->his, 0, hist, sizeof(hist));
-		    satot(&bs->said, 0, sat, sizeof(sat));
-		    fmt_policy_prio(bs->policy_prio, prio);
-		    DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
-			    op, (const void *)bs, ourst, ourport,
-			    bs->transport_proto, hist, hisport,
-			    sat, prio, bs->why);
-	    });
+		subnettot(&bs->ours, 0, ourst, sizeof(ourst));
+		subnettot(&bs->his, 0, hist, sizeof(hist));
+		satot(&bs->said, 0, sat, sizeof(sat));
+		fmt_policy_prio(bs->policy_prio, prio);
+		DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
+			op, (const void *)bs, ourst, ourport,
+			bs->transport_proto, hist, hisport,
+			sat, prio, bs->why);
+	});
+}
+
+static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
+{
+	/* same as DBG_bare_shunt but goe to real log */
+	int ourport = ntohs(portof(&bs->ours.addr));
+	int hisport = ntohs(portof(&bs->his.addr));
+	char ourst[SUBNETTOT_BUF];
+	char hist[SUBNETTOT_BUF];
+	char sat[SATOT_BUF];
+	char prio[POLICY_PRIO_BUF];
+
+	subnettot(&bs->ours, 0, ourst, sizeof(ourst));
+	subnettot(&bs->his, 0, hist, sizeof(hist));
+	satot(&bs->said, 0, sat, sizeof(sat));
+	fmt_policy_prio(bs->policy_prio, prio);
+	libreswan_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
+		op, (const void *)bs, ourst, ourport,
+		bs->transport_proto, hist, hisport,
+		sat, prio, bs->why);
 }
 
 /*
@@ -146,6 +165,15 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	int transport_proto, ipsec_spi_t shunt_spi,
 	const char *why)
 {
+
+	/* report any duplication; this should NOT happen */
+	struct bare_shunt **bspp = bare_shunt_ptr(ours, his, transport_proto);
+
+	if (bspp != NULL) {
+		/* maybe: passert(bsp == NULL); */
+		log_bare_shunt("CONFLICTING existing", *bspp);
+	}
+
 	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
 					    "bare shunt");
 
@@ -165,6 +193,11 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	bs->next = bare_shunts;
 	bare_shunts = bs;
 	DBG_bare_shunt("add", bs);
+
+	/* report duplication; this should NOT happen */
+	if (bspp != NULL)
+		log_bare_shunt("CONFLICTING      new", bs);
+
 }
 
 
@@ -1227,8 +1260,8 @@ bool has_bare_hold(const ip_address *src, const ip_address *dst,
 }
 
 /*
- * clear any bare shunt holds that overlap with the network we have just
- * routed
+ * Clear any bare shunt holds that overlap with the network we have just routed.
+ * We only consider "narrow" holds: ones for a single address to single address.
  */
 static void clear_narrow_holds(const ip_subnet *ours,
 			       const ip_subnet *his,
@@ -1237,39 +1270,41 @@ static void clear_narrow_holds(const ip_subnet *ours,
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
-		ip_subnet po, ph;
-
-		/* for now we only care about host-host narrow holds specifically */
-		if (p->ours.maskbits != 32 || p->his.maskbits != 32) {
-			pp = &p->next;
-			continue;
-		}
-
-		if (p->said.spi != htonl(SPI_HOLD)) {
-			pp = &p->next;
-			continue;
-		}
-
-		initsubnet(&p->ours.addr, ours->maskbits, '0', &po);
-		initsubnet(&p->his.addr, his->maskbits, '0', &ph);
-
-		if (samesubnet(ours, &po) && samesubnet(his, &ph) &&
+		if (subnetishost(&p->ours) &&
+		    subnetishost(&p->his) &&
+		    p->said.spi == htonl(SPI_HOLD) &&
+		    addrinsubnet(&p->ours.addr, ours) &&
+		    addrinsubnet(&p->his.addr, his) &&
 		    transport_proto == p->transport_proto &&
 		    portof(&ours->addr) == portof(&p->ours.addr) &&
-		    portof(&his->addr) == portof(&p->his.addr)) {
-
+		    portof(&his->addr) == portof(&p->his.addr))
+		{
 			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
 					transport_proto, SPI_HOLD,
 					"removing clashing narrow hold"))
 			{
-				libreswan_log("delete_bare_shunt() in clear_narrow_holds() failed removing clashing narrow hold");
+				/* ??? we could not delete a bare shunt */
+				log_bare_shunt("failed to delete", p);
+				break;	/* unlikely to succeed a second time */
+			} else if (*pp == p) {
+				/*
+				 * ??? We deleted the wrong bare shunt!
+				 * This happened because more than one entry
+				 * matched and we happened to delete a different
+				 * one.  Log it!  And keep deleting.
+				 */
+				log_bare_shunt("UNEXPECTEDLY SURVIVING", p);
+				pp = &bare_shunts;	/* just in case, start over */
 			}
-
-			/* restart from beginning as we just removed an entry */
-			pp = &bare_shunts;
-			continue;
+			/*
+			 * ??? if we were sure that there could only be one
+			 * matching entry, we could break out of the FOR.
+			 * For an unknown reason this is not always the case,
+			 * so we will continue the loop, with pp unchanged.
+			 */
+		} else {
+			pp = &p->next;
 		}
-		pp = &p->next;
 	}
 }
 
@@ -3507,13 +3542,13 @@ void expire_bare_shunts(void)
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
-			DBG(DBG_OPPO, DBG_bare_shunt("expiring old", bsp));
+			DBG_bare_shunt("expiring old", bsp);
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
 				"expire_bare_shunt");
 			passert(bsp != *bspp);
 		} else {
-			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
+			DBG_bare_shunt("keeping recent", bsp);
 			bspp = &bsp->next;
 		}
 	}
