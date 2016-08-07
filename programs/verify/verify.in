@@ -199,6 +199,8 @@ def cmdchecks():
 		else:
 			print_result("FAIL","IN USE")
 			retcode += 1
+	else:
+		print_result("OK","OK")
 
 def udp500check():
 	global retcode
