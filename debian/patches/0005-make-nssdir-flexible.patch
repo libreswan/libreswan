@@ -1,31 +1,41 @@
-From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
-Date: Sun, 19 Jun 2016 12:51:39 -0400
-Subject: fix documentation of default NSS dir
+From: Paul Wouters <pwouters@redhat.com>
+Date: Sun, 7 Aug 2016 19:43:59 -0400
+Subject: make nssdir flexible
 
-when the default NSS dir varies from upstream defaults, make sure
-documentation reflects this change.
-
-Some replacements were done earlier with @IPSEC_NSSDIR@ and
-@FINALNSSDIR@, but without a clear justification for why to use one or
-the other.  For simplicity and consistency, use only IPSEC_NSSDIR.
+This patch comes from upstream as a suggestion for how to break nssdir
+out and treat it independently.
 ---
- mk/config.mk                                 |  1 -
+ mk/config.mk                                 |  3 +--
  programs/_import_crl/ipsec__import_crl.8.xml |  2 +-
  programs/auto/ipsec_auto.8.xml               |  4 ++--
  programs/configs/d.ipsec.conf/ipsecdir.xml   | 16 +++++-----------
  programs/ipsec/ipsec_import.8.xml            |  2 +-
  programs/ipsec/ipsec_initnss.8.xml           |  3 ++-
+ programs/look/look.in                        |  4 ++--
  programs/newhostkey/ipsec_newhostkey.8.xml   |  2 +-
  programs/newhostkey/newhostkey.in            |  2 +-
+ programs/pluto/ikev2_spdb_struct.c           |  9 ---------
  programs/pluto/ipsec_pluto.8.xml             |  2 +-
+ programs/pluto/plutomain.c                   |  3 ++-
  programs/rsasigkey/ipsec_rsasigkey.8.xml     |  6 +++---
+ programs/rsasigkey/rsasigkey.c               |  4 ++--
  programs/showhostkey/ipsec_showhostkey.8.xml |  8 ++++----
- 11 files changed, 21 insertions(+), 27 deletions(-)
+ programs/showhostkey/showhostkey.c           |  2 +-
+ 16 files changed, 29 insertions(+), 43 deletions(-)
 
 diff --git a/mk/config.mk b/mk/config.mk
-index 1ce7571..676e3d4 100644
+index 1ce7571..3d0e20a 100644
 --- a/mk/config.mk
 +++ b/mk/config.mk
+@@ -117,7 +117,7 @@ SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
+ FINALCONFDDIR?=$(FINALCONFDIR)/ipsec.d
+ CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
+ 
+-FINALNSSDIR?=$(FINALCONFDIR)/ipsec.d
++FINALNSSDIR?=/var/lib/ipsec
+ NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
+ 
+ # sample configuration files go into
 @@ -483,7 +483,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
  			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
  			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
@@ -133,6 +143,25 @@ index f88a3d7..ef7b3c1 100644
  </para>
  </refsect1>
  
+diff --git a/programs/look/look.in b/programs/look/look.in
+index 77d7c04..231b839 100755
+--- a/programs/look/look.in
++++ b/programs/look/look.in
+@@ -99,12 +99,12 @@ echo ROUTING TABLES
+ ip -4 route
+ ip -6 route
+ 
+-if [ -f @IPSEC_CONFDDIR@/cert9.db ]; then
++if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
+     echo NSS_CERTIFICATES
+     certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
+     certutil -L -d sql:@IPSEC_NSSDIR@ | \
+ 	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+-elif [ -f @IPSEC_CONFDDIR@/cert8.db ]; then
++elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
+     echo NSS_CERTIFICATES
+     certutil -L -d @IPSEC_NSSDIR@ | head -4
+     certutil -L -d @IPSEC_NSSDIR@ | \
 diff --git a/programs/newhostkey/ipsec_newhostkey.8.xml b/programs/newhostkey/ipsec_newhostkey.8.xml
 index 1229b75..d24551e 100644
 --- a/programs/newhostkey/ipsec_newhostkey.8.xml
@@ -159,6 +188,33 @@ index 8e867ef..c45a90c 100755
  password=
  for dummy; do
      case "$1" in
+diff --git a/programs/pluto/ikev2_spdb_struct.c b/programs/pluto/ikev2_spdb_struct.c
+index 0d798c9..487f6e8 100644
+--- a/programs/pluto/ikev2_spdb_struct.c
++++ b/programs/pluto/ikev2_spdb_struct.c
+@@ -584,10 +584,6 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
+ 				passert(!sentinel_transform->valid);
+ 				/* save it */
+ 				matching_local_proposal->matching_transform[type] = sentinel_transform;
+-				DBG(DBG_CONTROLMORE,
+-				    DBG_log("local proposal %d type %s has %zu transforms",
+-					    local_propnum, trans_type_name(type),
+-					    sentinel_transform - local_transforms->transform));
+ 			}
+ 		}
+ 	}
+@@ -728,11 +724,6 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
+ 						DBG(DBG_CONTROLMORE,
+ 						    struct print *buf = print_buf();
+ 						    print_type_transform(buf, type, &remote_transform);
+-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %zu",
+-							    remote_propnum, remote_transform_nr,
+-							    buf->buf, local_propnum,
+-							    type, trans_type_name(type),
+-							    local_transform - local_transforms->transform);
+ 						    pfree(buf));
+ 						*matching_local_transform = local_transform;
+ 						break;
 diff --git a/programs/pluto/ipsec_pluto.8.xml b/programs/pluto/ipsec_pluto.8.xml
 index 56e937c..2c2f4e8 100644
 --- a/programs/pluto/ipsec_pluto.8.xml
@@ -172,6 +228,24 @@ index 56e937c..2c2f4e8 100644
  
        <para>Pluto may core dump. It will normally do so into the current
        working directory. You can specify the --coredir option for pluto, or
+diff --git a/programs/pluto/plutomain.c b/programs/pluto/plutomain.c
+index 93629a7..a038076 100644
+--- a/programs/pluto/plutomain.c
++++ b/programs/pluto/plutomain.c
+@@ -1699,11 +1699,12 @@ void show_setup_plutomain(void)
+ 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
+ 	whack_log(RC_COMMENT, " ");	/* spacer */
+ 	whack_log(RC_COMMENT,
+-		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
++		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
+ 		oco->confdir,
+ 		oco->conffile,
+ 		oco->secretsfile,
+ 		oco->confddir,
++		oco->nssdb,
+ 		coredir,
+ 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+ 
 diff --git a/programs/rsasigkey/ipsec_rsasigkey.8.xml b/programs/rsasigkey/ipsec_rsasigkey.8.xml
 index 0a1f4f8..e9703d6 100644
 --- a/programs/rsasigkey/ipsec_rsasigkey.8.xml
@@ -196,6 +270,28 @@ index 0a1f4f8..e9703d6 100644
  the path on proxy machine must be identical to the path on the destination machine.
  </para>
  </refsect1>
+diff --git a/programs/rsasigkey/rsasigkey.c b/programs/rsasigkey/rsasigkey.c
+index 2d075ae..365a0ae 100644
+--- a/programs/rsasigkey/rsasigkey.c
++++ b/programs/rsasigkey/rsasigkey.c
+@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
+ 			break;
+ 		case 'c':       /* nss configuration directory */
+ 		case 'd':       /* -d is used for configdir with nss tools */
+-			lsw_conf_confddir(optarg);
++			lsw_conf_nssdb(optarg);
+ 			break;
+ 		case 'P':       /* token authentication password */
+ 			lsw_conf_nsspassword(optarg);
+@@ -287,7 +287,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
+ 	realtime_t now = realnow();
+ 
+ 	lsw_nss_buf_t err;
+-	if (!lsw_nss_setup(oco->confddir, 0, lsw_nss_get_password, err)) {
++	if (!lsw_nss_setup(oco->nssdb, 0, lsw_nss_get_password, err)) {
+ 		fprintf(stderr, "%s: %s\n", progname, err);
+ 		exit(1);
+ 	}
 diff --git a/programs/showhostkey/ipsec_showhostkey.8.xml b/programs/showhostkey/ipsec_showhostkey.8.xml
 index 4184dab..7e441be 100644
 --- a/programs/showhostkey/ipsec_showhostkey.8.xml
@@ -229,3 +325,16 @@ index 4184dab..7e441be 100644
    </para>
  </refsect1>
  
+diff --git a/programs/showhostkey/showhostkey.c b/programs/showhostkey/showhostkey.c
+index 1341318..de1a9f8 100644
+--- a/programs/showhostkey/showhostkey.c
++++ b/programs/showhostkey/showhostkey.c
+@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
+ 	 * processed, and really are "constant".
+ 	 */
+ 	const struct lsw_conf_options *oco = lsw_init_options();
+-	libreswan_log("using config directory \"%s\"\n", oco->confddir);
++	libreswan_log("using config directory \"%s\"\n", oco->nssdb);
+ 
+ 	/*
+ 	 * Set up for NSS - contains key pairs.

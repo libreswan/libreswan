@@ -2,5 +2,4 @@
 0002-debian-pam.d-pluto.patch
 0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
 0004-minor-documentation-clean-up.patch
-0005-Actually-use-distinct-NSS-directory.patch
-0006-fix-documentation-of-default-NSS-dir.patch
+0005-make-nssdir-flexible.patch
