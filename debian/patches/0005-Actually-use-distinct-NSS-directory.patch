@@ -32,10 +32,10 @@ index 77d7c04..231b839 100755
      certutil -L -d @IPSEC_NSSDIR@ | head -4
      certutil -L -d @IPSEC_NSSDIR@ | \
 diff --git a/programs/pluto/plutomain.c b/programs/pluto/plutomain.c
-index f83648d..4e477a4 100644
+index 93629a7..a038076 100644
 --- a/programs/pluto/plutomain.c
 +++ b/programs/pluto/plutomain.c
-@@ -1691,11 +1691,12 @@ void show_setup_plutomain()
+@@ -1699,11 +1699,12 @@ void show_setup_plutomain(void)
  	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
  	whack_log(RC_COMMENT, " ");	/* spacer */
  	whack_log(RC_COMMENT,
