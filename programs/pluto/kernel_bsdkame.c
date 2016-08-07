@@ -289,9 +289,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 	case SADB_SATYPE_AH:
 		ret = kernel_alg_add(satype, supp_exttype, alg);
 		DBG(DBG_KERNEL,
-		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, "
-			    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-			    "ret=%d",
+		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
 			    alg, supp_exttype,
 			    alg->sadb_alg_id,
 			    alg->sadb_alg_ivlen,
@@ -302,32 +300,30 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 
 	case SADB_SATYPE_ESP:
 		ret = kernel_alg_add(satype, supp_exttype, alg);
-		DBG(DBG_KERNEL, DBG_log("algregister(%p) alg_id=%d, "
-				       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-				       "ret=%d",
-				       alg,
-				       alg->sadb_alg_id,
-				       alg->sadb_alg_ivlen,
-				       alg->sadb_alg_minbits,
-				       alg->sadb_alg_maxbits,
-				       ret));
+		DBG(DBG_KERNEL,
+			DBG_log("algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
+				alg,
+				alg->sadb_alg_id,
+				alg->sadb_alg_ivlen,
+				alg->sadb_alg_minbits,
+				alg->sadb_alg_maxbits,
+				ret));
 		break;
 
 	case SADB_X_SATYPE_IPCOMP:
-		DBG(DBG_KERNEL, DBG_log("ipcomp algregister(%p) alg_id=%d, "
-				       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-				       "ret=%d",
-				       alg,
-				       alg->sadb_alg_id,
-				       alg->sadb_alg_ivlen,
-				       alg->sadb_alg_minbits,
-				       alg->sadb_alg_maxbits,
-				       ret));
+		DBG(DBG_KERNEL,
+			DBG_log("ipcomp algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
+				alg,
+				alg->sadb_alg_id,
+				alg->sadb_alg_ivlen,
+				alg->sadb_alg_minbits,
+				alg->sadb_alg_maxbits,
+				ret));
 		can_do_IPcomp = TRUE;
 		break;
 
 	default:
-		return;
+		break;
 	}
 }
 
@@ -390,7 +386,6 @@ static void bsdkame_dequeue(void)
 		bsdkame_pfkey_async(pi->msg);
 		free(pi->msg);	/* was malloced by pfkey_recv() */
 		pfree(pi);
-
 	}
 }
 
@@ -558,7 +553,6 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		DBG_log("request_len=%u policylen=%u",
 			ir->sadb_x_ipsecrequest_len, policylen);
-
 	} else {
 		DBG_log("setting policy=%d", policy);
 	}

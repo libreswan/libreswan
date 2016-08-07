@@ -1,9 +1,0 @@
-#!/bin/bash
-#
-# This script is OBSOLETE -- rgb, May 6th, 1998
-set +v
-insmod ipsec.o
-tncfg attach ipsec0 eth2
-ifconfig ipsec0 10.2.0.143 up netmask 255.255.0.0
-route del 10.2.0.0
-route add -net 10.2.0.0 netmask 255.255.0.0 dev ipsec0

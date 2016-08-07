@@ -493,9 +493,9 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 				summary.status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				break;
 			}
-			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
-			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&ikev2_payload_names, np));
+			loglog(RC_COMMENT,
+				"non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+				enum_show(&ikev2_payload_names, np));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -752,6 +752,7 @@ void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	const struct state_v2_microcode *svm;
+	struct state *st;
 
 	/* Look for an state which matches the various things we know:
 	 *
@@ -782,7 +783,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Find the corresponding state
 	 */
-	struct state *st;
 	if (ix == ISAKMP_v2_SA_INIT) {
 		/*
 		 * For INIT messages, need to lookup using the ICOOKIE
@@ -845,7 +845,6 @@ void process_v2_packet(struct msg_digest **mdp)
 				enum_show(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
-
 	} else if (!msg_r) {
 		/*
 		 * A request; send it to the parent.
@@ -939,12 +938,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	/*
 	 * Is the original role correct?
 	 */
-	if (st != NULL) {
-		if (st->st_original_role != md->original_role) {
-			DBG(DBG_CONTROL,
-			    DBG_log("state and md roles conflict; dropping packet"));
-			return;
-		}
+	if (st != NULL && st->st_original_role != md->original_role) {
+		DBG(DBG_CONTROL,
+		    DBG_log("state and md roles conflict; dropping packet"));
+		return;
 	}
 
 	/*
@@ -965,6 +962,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
 	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
@@ -1086,7 +1084,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
 	struct id peer;
-	char idbuf[IDTOA_BUF];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1130,16 +1127,14 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-	} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-		if (id_kind(&peer) != ID_DER_ASN1_DN) {
-			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
-			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+				return FALSE;
+			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
-		duplicate_id(&st->st_connection->spd.that.id, &peer);
-	}
-
 	} else {
-		struct connection *r = NULL;
 		bool fromcert = FALSE;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
@@ -1161,7 +1156,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 		if (auth_policy != LEMPTY) {
 			/* should really return c if no better match found */
-			r = refine_host_connection(md->st, &peer, FALSE /*initiator*/, auth_policy, &fromcert);
+			struct connection *r = refine_host_connection(
+				md->st, &peer, FALSE /*initiator*/,
+				auth_policy, &fromcert);
+
 			if (r == NULL) {
 				char buf[IDTOA_BUF];
 
@@ -1189,27 +1187,27 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				}
 
 				update_state_connection(md->st, r);
+				c = r;
 			} else if (c->spd.that.has_id_wildcards) {
-				free_id_content(&c->spd.that.id);
-				c->spd.that.id = peer;
+				duplicate_id(&c->spd.that.id, &peer);
 				c->spd.that.has_id_wildcards = FALSE;
-				unshare_id_content(&c->spd.that.id);
 			} else if (fromcert) {
 				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-				duplicate_id(&r->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer);
 			}
 		}
 	}
 
-	DBG(DBG_CONTROL, {
+	char idbuf[IDTOA_BUF];
 
+	DBG(DBG_CONTROL, {
 		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
 		DBG_log("offered CA: '%s'", idbuf);
 	});
 
 	idtoa(&peer, idbuf, sizeof(idbuf));
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
 			enum_show(&ikev2_idtype_names, v2id->isai_type),
 			idbuf);
@@ -1307,31 +1305,40 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
 				  chunk_t *data)
 {
-	struct state st;	/* note: not a pointer */
-	struct connection cnx;	/* note: not a pointer */
-
-	/**
-	 * Create a dummy state to be able to use send_ike_msg in
-	 * send_notification
+	/*
+	 * Note: send_notification_from_md and send_v2_notification_from_md
+	 * share code (and bugs).  Any fix to one should be done to both.
 	 *
-	 * we need to set:
+	 * Create a fake state object to be able to use send_notification.
+	 * This is somewhat dangerous: the fake state must not be deleted
+	 * or have almost any other operation performed on it.
+	 * Ditto for fake connection.
+	 *
+	 * ??? how can we be sure to have faked all salient fields correctly?
+	 *
+	 * Most details must be left blank (eg. pointers
+	 * set to NULL).  struct initialization is good at this.
+	 *
+	 * We need to set [??? we don't -- is this still true?]:
 	 *   st_connection->that.host_addr
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
+	struct connection fake_connection = {
+		.interface = md->iface,
+		.addr_family = addrtypeof(&md->sender),	/* for ikev2_record_fragments() */
+	};
+
+	struct state fake_state = {
+		.st_serialno = SOS_NOBODY,
+		.st_connection = &fake_connection,
+	};
+
 	passert(md != NULL);
 
-	zero(&st);	/* ??? might not NULL pointer fields */
-	zero(&cnx);	/* ??? might not NULL pointer fields */
-	st.st_connection = &cnx;
-	st.st_remoteaddr = md->sender;
-	st.st_remoteport = md->sender_port;
-	st.st_localaddr  = md->iface->ip_addr;
-	st.st_localport  = md->iface->port;
-	cnx.interface = md->iface;
-	st.st_interface = md->iface;
+	update_ike_endpoints(&fake_state, md);
 
-	send_v2_notification(&st, type, NULL,
+	send_v2_notification(&fake_state, type, NULL,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 }
 
@@ -1624,7 +1631,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 					deltasecs(c->dpd_delay) : MIN_LIVENESS,
 				       st);
 		}
-
 	}
 }
 

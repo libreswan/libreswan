@@ -1,0 +1,5 @@
+An east-west connection where after the tunnel is established,
+east's ip is added to west, and we --listen again.
+
+This caused a crash up to v3.17 in do_command() because PLUTO_INTERFACE=
+was filled in using c->interface which became NULL.

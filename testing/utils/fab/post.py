@@ -18,7 +18,7 @@ import subprocess
 import difflib
 from collections import defaultdict
 
-from fab import utils
+from fab import utilsdir
 
 def add_arguments(parser):
     group = parser.add_argument_group("Postmortem arguments",
@@ -66,12 +66,21 @@ class Errors:
     def __bool__(self):
         return len(self.errors) > 0
 
-    # Iterate over the actual errors, not who had them.
+    # Iterate over the actual errors, not who had them.  XXX: there's
+    # not much consistency between __iter__(), items(), __contains__()
+    # and __getitem__().  On the other hand, a hashmap iter isn't
+    # consistent either.
     def __iter__(self):
         values = set()
         for errors in self.errors.values():
             values |= errors
         return values.__iter__()
+
+    def __contains__(self, item):
+        return item in self.errors
+
+    def __getitem__(self, item):
+        return self.errors[item]
 
     def items(self):
         return self.errors.items()
@@ -144,7 +153,7 @@ def fuzzy_diff(logger, ln, l, rn, r,
 
 
 def sanitize_output(logger, raw_file, test_directory):
-    command = [ utils.relpath("sanitizer.sh"), raw_file, test_directory ]
+    command = [ utilsdir.relpath("sanitizer.sh"), raw_file, test_directory ]
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to re-read the file than read the
     # pre-loaded raw console output.

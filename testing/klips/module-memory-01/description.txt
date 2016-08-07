@@ -1,4 +1,0 @@
-This test loads/unloads the KLIPS module three times.
-It verifies that all the memory allocated by the module is freed
-upon unloading of the module.
-

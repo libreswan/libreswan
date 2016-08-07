@@ -1013,7 +1013,6 @@ enum ipsec_xmit_value ipsec_xmit_esp_ah(struct ipsec_xmit_state *ixs)
 				      ixs->len - ixs->iphlen - ixs->authlen,
 				      &(ixs->dat[ixs->len - ixs->authlen]),
 				      ixs->authlen);
-
 	} else
 #endif  /* CONFIG_KLIPS_ALG */
 	switch (ixs->ipsp->ips_authalg) {

@@ -1,2 +1,0 @@
-This tests reception (decryption) of UDP-NON/ESP-3DES-MD5 packets with a
-source of UDP encrypted ICMP packets.

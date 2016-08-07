@@ -1,1 +1,0 @@
-This test looks for the SAREF= message produced by creating a new SA.

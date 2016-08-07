@@ -56,7 +56,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "westnet-eastnet-dh24", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "westnet-eastnet-dh24", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 000  
 west #
  echo done

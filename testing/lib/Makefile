@@ -1,4 +1,4 @@
-# FreeS/WAN subdir makefile
+# libreswan subdir makefile
 #
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>

@@ -1,3 +1,0 @@
-This test case uses a specially built ipsec.o module to test
-1DES support from CryptoAPI.
-

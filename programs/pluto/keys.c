@@ -82,7 +82,7 @@
 
 static struct secret *pluto_secrets = NULL;
 
-void load_preshared_secrets()
+void load_preshared_secrets(void)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile);
@@ -283,8 +283,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		pfree(n.ptr);
 		pfree(e.ptr);
 		SECKEY_DestroyPublicKey(publicKey);
-		return "12"
-		       "NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
+		return "12NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
 	}
 	signature.type = siBuffer;
 	signature.data = DISCARD_CONST(unsigned char *, sig_val);
@@ -525,8 +524,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 				       "no RSA public key known for '%s'",
 				       id_buf);
 			} else {
-				loglog(RC_LOG_SERIOUS, "no RSA public key known for '%s'"
-				       "; DNS search for KEY failed (%s)",
+				loglog(RC_LOG_SERIOUS, "no RSA public key known for '%s'; DNS search for KEY failed (%s)",
 				       id_buf,
 				       dns_ugh);
 			}
@@ -545,19 +543,16 @@ stf_status RSA_check_signature_gen(struct state *st,
 				       "Signature check (on %s) failed (wrong key?); tried%s",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("public key for %s failed:"
-					    " decrypted SIG payload into a malformed ECB (%s)",
+				    DBG_log("public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
 					    id_buf, s.best_ugh + 1));
 			} else {
 				loglog(RC_LOG_SERIOUS,
-				       "Signature check (on %s) failed:"
-				       " tried%s keys but none worked.",
+				       "Signature check (on %s) failed: tried%s keys but none worked.",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("all %d public keys for %s failed:"
-					    " best decrypted SIG payload into a malformed ECB (%s)",
-					    s.tried_cnt, id_buf, s.best_ugh +
-					    1));
+				    DBG_log("all %d public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
+					    s.tried_cnt, id_buf,
+					    s.best_ugh + 1));
 			}
 			return STF_FAIL + INVALID_KEY_INFORMATION;
 		}

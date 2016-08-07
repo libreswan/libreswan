@@ -1,2 +1,0 @@
-ipsec setup stop
-: ==== end ====

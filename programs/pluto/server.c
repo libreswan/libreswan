@@ -629,7 +629,6 @@ static void main_loop(void)
 	passert (r == 0);
 
 	pluto_event_free(&pluto_evs);
-	return;
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
@@ -998,23 +997,15 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
+					 * Don't bother to report ee_{pad,info,data}.
 					 */
 					libreswan_log((sender != NULL) + "~"
-						"ERROR: asynchronous network error report on %s (sport=%d)"
-						"%s"
-						", complainant %s"
-						": %s"
-						" [errno %lu, origin %s"
-						/* ", pad %d, info %ld" */
-						/* ", data %ld" */
-						"]",
+						"ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]",
 						ifp->ip_dev->id_rname, ifp->port,
 						fromstr,
 						offstr,
 						strerror(ee->ee_errno),
 						(unsigned long) ee->ee_errno, orname
-						/* , ee->ee_pad, (unsigned long)ee->ee_info */
-						/* , (unsigned long)ee->ee_data */
 						);
 					cur_state = old_state;
 				}
@@ -1422,5 +1413,4 @@ void set_whack_pluto_ddos(enum ddos_mode mode)
 	pluto_ddos_mode = mode;
 	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
-
 }

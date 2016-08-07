@@ -65,6 +65,7 @@ kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
+kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev2-30-rw-no-rekey			good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
@@ -75,7 +76,7 @@ kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
-kvmplutotest	ikev2-51-rw-nat-ikeport			wip
+kvmplutotest	ikev2-51-rw-nat-ikeport			good
 
 
 kvmplutotest	ikev2-24-cryptoload			wip
@@ -124,7 +125,7 @@ kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-08			good
 
-kvmplutotest	klips-ikev2-algo-sha2-0			wip
+kvmplutotest	klips-ikev2-algo-sha2-07		wip
 # interop tests for KLIPS-NETKEY with SHA2
 kvmplutotest	ikev1-algo-esp-sha2-01-netkey-klips	good
 kvmplutotest	ikev1-algo-esp-sha2-02-netkey-klips	good
@@ -147,6 +148,7 @@ kvmplutotest	ikev2-algo-esn-02			good
 kvmplutotest	ikev2-algo-esn-03			good
 kvmplutotest	ikev2-algo-esn-04			good
 kvmplutotest	ikev2-algo-esn-05			good
+kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 # Various corner case tests for IKEv2
@@ -268,17 +270,7 @@ kvmplutotest	newoe-25-cat-1				good
 kvmplutotest	newoe-25-cat-2				good
 kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
-kvmplutotest 	newoe-25-cat-5				wip
-
-# pluto-unit-01 - pluto vs. pluto, without KLIPS
-# This runs in a single UML, so ctltest is appropriate
-ctltest	pluto-unit-01	good
-ctltest	pluto-unit-02	good
-
-# regression test for --dontrekey responder with short SA lifetimes:
-# ought to somehow notify other side.
-# Also a unit test.
-ctltest	pluto-dontreky-expiry-01 good
+kvmplutotest 	newoe-25-cat-5				good
 
 # test food groups
 # these set up a food group, then run a ping from sunrise-sunset
@@ -351,14 +343,12 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
-kvmplutotest	ikev2-liveness-01	wip
-kvmplutotest	ikev2-liveness-02	wip
-kvmplutotest	ikev2-liveness-03	wip
-kvmplutotest	ikev2-liveness-04	wip
+kvmplutotest	ikev2-liveness-01	good
+kvmplutotest	ikev2-liveness-02	good
+kvmplutotest	ikev2-liveness-03	good
 kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
-kvmplutotest	ikev2-liveness-08-drop	good
 
 kvmplutotest	delete-sa-01	good
 kvmplutotest	delete-sa-03	good
@@ -377,11 +367,6 @@ kvmplutotest	ikev1-rekey-connswitch	wip
 # that delegates this security gateway to act for the client on our
 # side.
 # OE TEMP DISABLED umlplutotest	oe-fail-without-resp-client-txt-01	good
-
-#
-# whack --status output should be sorted.
-#
-ctltest		whack-status-01		good
 
 #
 # co-terminal-02 - wavesec+OE, with wavesec started first
@@ -413,10 +398,6 @@ ctltest		whack-status-01		good
 # FQDN OE test with KEY, no TXT
 #
 # OE TEMP DISABLED umlXhost	oe-road-04		good
-
-#
-# test for using %dns in VPN conns
-ctltest	 	vpn-dns-01		good
 
 #
 # tests of OE from road warriors (no gateways)
@@ -732,6 +713,10 @@ kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		wip
@@ -757,6 +742,7 @@ kvmplutotest	l2tp-02-netkey				good
 kvmplutotest	l2tp-05-netkey				wip
 
 kvmplutotest	ikeport-01				wip
+kvmplutotest	listen-change-01			good
 
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
@@ -804,6 +790,7 @@ kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
 kvmplutotest	nss-cert-07			good
+kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
@@ -862,4 +849,6 @@ kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 # Utility tests like "ipsec showhostkey"
-kvmplutotest	ipsec-hostkey-01		good
+kvmplutotest	ipsec-hostkey-ckaid-01		good
+kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
+kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good

@@ -1,0 +1,100 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+destination -I 192.1.2.45 192.1.2.23 is alive
+west #
+ strongswan start
+Starting strongSwan X.X.X IPsec [starter]...
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
+peer didn't accept DH group ECP_256, it requested MODP_2048
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test EC CA, E=testing@libreswan.org"
+authentication of 'west' (myself) with pre-shared key
+establishing CHILD_SA westnet-eastnet-ikev2
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ N(NO_PROP) ]
+received message ID 0, expected 1. Ignored
+retransmit 1 of request with message ID 1
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+payload type NOTIFY was not encrypted
+could not decrypt payloads
+integrity check failed
+IKE_AUTH response with message ID 0 processing failed
+retransmit 2 of request with message ID 1
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+payload type NOTIFY was not encrypted
+could not decrypt payloads
+integrity check failed
+IKE_AUTH response with message ID 0 processing failed
+retransmit 3 of request with message ID 1
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+payload type NOTIFY was not encrypted
+could not decrypt payloads
+integrity check failed
+IKE_AUTH response with message ID 0 processing failed
+retransmit 4 of request with message ID 1
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+payload type NOTIFY was not encrypted
+could not decrypt payloads
+integrity check failed
+IKE_AUTH response with message ID 0 processing failed
+retransmit 5 of request with message ID 1
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+payload type NOTIFY was not encrypted
+could not decrypt payloads
+integrity check failed
+IKE_AUTH response with message ID 0 processing failed
+#\[root@west ]#  timedout send line: strongswan up westnet-eastnet-ikev2
+echo done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+done
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+west #
+Status of IKE charon daemon (strongSwan VERSION):
+  uptime: 2 minutes, since Jul 13 05:33:14 2016
+  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
+Listening IP addresses:
+  192.0.1.254
+  192.1.2.45
+  192.9.4.45
+Connections:
+westnet-eastnet-ikev2:  192.1.2.45...192.1.2.23  IKEv2
+westnet-eastnet-ikev2:   local:  [west] uses pre-shared key authentication
+westnet-eastnet-ikev2:   remote: [east] uses pre-shared key authentication
+westnet-eastnet-ikev2:   child:  dynamic === dynamic TUNNEL
+Security Associations (0 up, 1 connecting):
+westnet-eastnet-ikev2[1]: CONNECTING, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r
+westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
+westnet-eastnet-ikev2[1]: Tasks active: IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG CHILD_CREATE IKE_AUTH_LIFETIME IKE_MOBIKE 
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

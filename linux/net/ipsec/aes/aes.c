@@ -1071,7 +1071,6 @@ static void gen_tabs(void)
 		im_tab[2][b] = upr(w, 2);
 		im_tab[3][b] = upr(w, 3);
 #endif
-
 	}
 }
 
@@ -1239,7 +1238,7 @@ void aes_set_key(aes_context *cx, const unsigned char in_key[], int n_bytes,
 		     kf[6] = kf[2] ^ kf[5];
 		     kf[7] = kf[3] ^ kf[6];
 		     kf += 4;
-	} while (kf < kt);
+		} while (kf < kt);
 		break;
 
 	case 6: cx->aes_e_key[4] = const_word_in(in_key + 16);

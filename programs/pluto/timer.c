@@ -87,7 +87,6 @@ static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 			delay_ms << x;
 		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
 			delay_ms = 0;
-
 	}
 
 	if (delay_ms > 0) {
@@ -133,9 +132,11 @@ static void retransmit_v1_msg(struct state *st)
 	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
+		char cib[CONN_INST_BUF];
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
-			c->name, st->st_serialno, try, try_limit);
+			c->name, fmt_conn_instance(c, cib),
+			st->st_serialno, try, try_limit);
 	});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -250,12 +251,15 @@ static void retransmit_v2_msg(struct state *st)
 	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
-			ipstr(&c->spd.that.host_addr, &b), c->name,
+		char cib[CONN_INST_BUF];
+		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu of %lu",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try, try_limit);
 		if (pst != NULL)
-			DBG_log("and parent for %s \"%s\" #%lu attempt %lu of %lu",
-				ipstr(&c->spd.that.host_addr, &b), c->name,
+			DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
+				ipstr(&c->spd.that.host_addr, &b),
+				c->name, fmt_conn_instance(c, cib),
 				pst->st_serialno, pst->st_try, try_limit);
 	});
 
@@ -370,7 +374,7 @@ static void liveness_check(struct state *st)
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_DPD,
 				DBG_log("liveness_check error, no parent state"));
 			return;
 		}
@@ -392,10 +396,12 @@ static void liveness_check(struct state *st)
 		time_t timeout;
 
 		/* ensure that the very first liveness_check works out */
-		if (last_liveness.mono_secs == UNDEFINED_TIME)
-			last_liveness = tm;
+		if (last_liveness.mono_secs == UNDEFINED_TIME) {
+			pst->st_last_liveness = last_liveness = tm;
+			DBG(DBG_DPD, DBG_log("liveness initial timestamp set"));
+		}
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_DPD,
 			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
 				(long)last_liveness.mono_secs,
 				(long)tm.mono_secs));
@@ -408,7 +414,7 @@ static void liveness_check(struct state *st)
 
 		if (pst->st_pend_liveness &&
 		    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_DPD,
 				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout));
@@ -423,7 +429,7 @@ static void liveness_check(struct state *st)
 				return;
 
 			case DPD_ACTION_HOLD:
-				DBG(DBG_CONTROL,
+				DBG(DBG_DPD,
 						DBG_log("liveness_check - handling default by rescheduling"));
 				break;
 
@@ -434,15 +440,18 @@ static void liveness_check(struct state *st)
 		} else {
 			stf_status ret = ikev2_send_informational(st);
 
+			DBG(DBG_DPD,
+				DBG_log("liveness_check - peer is missing - giving them some time to come back"));
+
 			if (ret != STF_OK) {
-				DBG(DBG_CONTROL,
+				DBG(DBG_DPD,
 					DBG_log("failed to send informational"));
-				return;
+				return; /* this prevents any new scheduling ??? */
 			}
 		}
 	}
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_DPD,
 		DBG_log("liveness_check - peer is ok"));
 	delete_liveness_event(st);
 	event_schedule(EVENT_v2_LIVENESS,
@@ -911,9 +920,12 @@ void timer_list(void)
 			(long)deltasecs(monotimediff(ev->ev_time, nw)),
 			st == NULL ? SOS_NOBODY : st->st_serialno);
 
-		if (st != NULL && st->st_connection != NULL)
+		if (st != NULL && st->st_connection != NULL) {
+			char cib[CONN_INST_BUF];
 			whack_log(RC_LOG, "    connection: \"%s\"",
-				st->st_connection->name);
+				st->st_connection->name,
+				fmt_conn_instance(st->st_connection, cib));
+		}
 
 		ev = ev->ev_next;
 	}

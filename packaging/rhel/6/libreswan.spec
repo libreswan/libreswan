@@ -11,7 +11,7 @@
 %global development 0
 %global cavstests 1
 
-%global prever dr3
+#global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -233,5 +233,5 @@ fi
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr3
+* Wed Jul 27 2016 Team Libreswan <team@libreswan.org> - 3.18-1
 - Automated build from release tar ball

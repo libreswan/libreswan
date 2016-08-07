@@ -341,7 +341,6 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 			 st->st_ah.present ? st->st_ah.peer_bytes :
 			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
 			 0);
-
 	}
 	if (get_sa_info(st, TRUE, NULL)) {
 		snprintf(istr, istr_len, "PLUTO_INBYTES='%u' ",
@@ -454,13 +453,13 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		catstr[0] = '\0';
 
 	connmarkstr[0] = '\0';
-	int inend = 0;
 	if (c->sa_marks.in.val != 0) {
-		inend = snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK_IN=%"PRIu32"/%#010x ",
+		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK_IN=%"PRIu32"/%#010x ",
 			c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0) {
-		inend = snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend, "CONNMARK_OUT=%"PRIu32"/%#010x ",
+		size_t inend = strlen(connmarkstr);
+		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend, "CONNMARK_OUT=%"PRIu32"/%#010x ",
 			c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 
@@ -542,9 +541,10 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			"%s" /* conn-mark - if any */
 			"VTI_IFACE='%s' VTI_ROUTING='%s' VTI_SHARED='%s' "
 			"%s" /* CAT=yes if set */
+			"SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */
 
 		, c->name,
-		c->interface->ip_dev->id_vname,
+		c->interface == NULL ? "NULL" : c->interface->ip_dev->id_vname,
 		nexthop_str,
 		ipstr(&sr->this.host_addr, &bme),
 		secure_myid_str,		/* 5 */
@@ -591,7 +591,13 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		c->vti_iface ? c->vti_iface : "",
 		c->vti_routing ? "yes" : "no",
 		c->vti_shared ? "yes" : "no",
-		catstr
+		catstr,
+		st == NULL ? 0 : st->st_esp.present ? st->st_esp.attrs.spi :
+			st->st_ah.present ? st->st_ah.attrs.spi :
+			st->st_ipcomp.present ? st->st_ipcomp.attrs.spi : 0,
+		st == NULL ? 0 : st->st_esp.present ? st->st_esp.our_spi :
+			st->st_ah.present ? st->st_ah.our_spi :
+			st->st_ipcomp.present ? st->st_ipcomp.our_spi : 0
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
@@ -862,9 +868,10 @@ static enum routability could_route(struct connection *c)
 	 * This is as it should be -- it will arise during rekeying.
 	 */
 	if (ro != NULL && !routes_agree(ro, c)) {
+		char cib[CONN_INST_BUF];
 		loglog(RC_LOG_SERIOUS,
-		       "cannot route -- route already in use for \"%s\"",
-		       ro->name);
+		       "cannot route -- route already in use for \"%s\"%s",
+		       ro->name, fmt_conn_instance(ro, cib));
 		/* We ignore this if the stack supports overlapping, and this
 		 * connection was marked that overlapping is OK.  Below we will
 		 * check the other eroute, ero.
@@ -1072,7 +1079,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-int show_shunt_count()
+int show_shunt_count(void)
 {
 	int i = 0;
 	const struct bare_shunt *bs;
@@ -1085,7 +1092,7 @@ int show_shunt_count()
 	return i;
 }
 
-void show_shunt_status()
+void show_shunt_status(void)
 {
 	const struct bare_shunt *bs;
 
@@ -1699,7 +1706,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			proto = SA_ESP;
 			esatype = ET_ESP;
 		}
-
 	} else if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 		/* XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
 		 * XXX FOR IP-in-IP ENCAPSULATION!
@@ -2492,6 +2498,8 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 static char kversion[256];
 
 const struct kernel_ops *kernel_ops = NULL;
+int bare_shunt_interval = SHUNT_SCAN_INTERVAL;
+
 
 void init_kernel(void)
 {
@@ -2604,7 +2612,7 @@ void init_kernel(void)
 	}
 }
 
-void show_kernel_interface()
+void show_kernel_interface(void)
 {
 	if (kernel_ops != NULL) {
 		whack_log(RC_COMMENT, "using kernel interface: %s",
@@ -2691,9 +2699,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 			}
 
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 			loglog(RC_LOG_SERIOUS,
-			       "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route",
-			       o->name, ipstr(&o->spd.that.host_addr, &b));
+			       "route to peer's client conflicts with \"%s\"%s %s; releasing old connection to free the route",
+			       o->name, fmt_conn_instance(o, cib),
+			       ipstr(&o->spd.that.host_addr, &b));
 			release_connection(o, FALSE);
 		}
 	}
@@ -3292,12 +3302,12 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 }
 
 /* This wrapper is to make the seam_* files in testing/ easier */
-bool kernel_overlap_supported()
+bool kernel_overlap_supported(void)
 {
 	return kernel_ops->overlap_supported;
 }
 
-const char *kernel_if_name()
+const char *kernel_if_name(void)
 {
 	return kernel_ops->kern_name;
 }
@@ -3409,7 +3419,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	DBG(DBG_CONTROL, DBG_log("orphan_holdpass() called for %s with transport_proto '%d'",
 		 c->name, transport_proto));
 
-	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
+	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
+				LELEM(CK_GOING_AWAY), c->kind));
 
 	switch (ro) {
 	case RT_UNROUTED_HOLD:
@@ -3485,7 +3496,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 }
 
 /* XXX move to proper kernel_ops in kernel_netlink */
-void expire_bare_shunts()
+void expire_bare_shunts(void)
 {
 	struct bare_shunt **bspp;
 
@@ -3506,7 +3517,7 @@ void expire_bare_shunts()
 		}
 	}
 
-	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
 }
 
 unsigned

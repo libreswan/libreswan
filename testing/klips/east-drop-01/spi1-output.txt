@@ -1,2 +1,0 @@
-192.0.2.1 > 192.1.2.254: ICMP echo request (DF)
-192.0.2.1 > 192.1.2.254: ICMP echo request (DF)

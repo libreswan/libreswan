@@ -1,3 +1,0 @@
-This tests production of ESP-3DES-MD5 using the mast0 device to route the
-packets into.
-

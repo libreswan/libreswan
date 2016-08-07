@@ -4,10 +4,12 @@
 <para>
 If set, the MARK to set for the IPsec SA of this connection. The format of a CONNMARK is
 <emphasis remap='B'>mark/mask</emphasis>. If the mask is left out,
-a default mask of 0xffffffff is used. This option is only available on
-linux NETKEY/XFRM kernels. It can be used with iptables to create
-custom iptables rules using CONNMARK. It can also be used with Virtual Tunnel
-Interfaces ("VTI") to direct marked traffic to specific vtiXX devices.
+a default mask of 0xffffffff is used. A mark value of -1 means to assign a
+new global unique mark number for each instance of the connection. Global
+marks start at 1001.  This option is only available on linux NETKEY/XFRM
+kernels. It can be used with iptables to create custom iptables rules
+using CONNMARK. It can also be used with Virtual Tunnel Interfaces
+("VTI") to direct marked traffic to specific vtiXX devices.
 </para>
   </listitem>
   </varlistentry>

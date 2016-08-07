@@ -106,16 +106,17 @@ bool orient(struct connection *c)
 					     sr->this.host_port ==
 					     pluto_port)) {
 						if (oriented(*c)) {
-							if (c->interface->
-							    ip_dev ==
-							    p->ip_dev) {
+							if (c->interface->ip_dev == p->ip_dev) {
+								char cib[CONN_INST_BUF];
 								loglog(RC_LOG_SERIOUS,
-									"both sides of \"%s\" are our interface %s!",
-									c->name,
+									"both sides of \"%s\"%s are our interface %s!",
+									c->name, fmt_conn_instance(c, cib),
 									p->ip_dev->id_rname);
 							} else {
-								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\" (%s, %s)",
-									c->name, c->interface->ip_dev->id_rname,
+								char cib[CONN_INST_BUF];
+								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
+									c->name, fmt_conn_instance(c, cib),
+									c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
 							terminate_connection(c->name);
@@ -175,8 +176,7 @@ static int initiate_a_connection(struct connection *c,
 		ipstr_buf a;
 		ipstr_buf b;
 		loglog(RC_ORIENT,
-		       "We cannot identify ourselves with either end of this connection. "
-		       " %s or %s are not usable",
+		       "We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
 		       ipstr(&c->spd.this.host_addr, &a),
 		       ipstr(&c->spd.that.host_addr, &b));
 	} else if (NEVER_NEGOTIATE(c->policy)) {
@@ -881,7 +881,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 			}
 
-			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
+			if ((c->policy & POLICY_RSASIG) == LEMPTY) {
 				ipstr_buf b1;
 
 				/* no dns queries to find the gateway. create one here */
@@ -1075,7 +1075,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			/* We've finished last DNS queries: IPSECKEY for his client.
 			 * Using the information, try to instantiate a connection
 			 * and start negotiating.
-			 * We now know the peer.  The chosing of "c" ignored this,
+			 * We now know the peer.  The choosing of "c" ignored this,
 			 * so we will disregard its current value.
 			 * !!! We need to randomize the entry in gw that we choose.
 			 */
@@ -1116,11 +1116,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						b->failure_shunt, /* if not from conn, where did this come from? */
 						b->transport_proto,
 						"no suitable connection")) {
-							DBG(DBG_OPPO, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
+							DBG(DBG_OPPO, DBG_log("replaced negotiationshunt with failurehunt=hold because no connection was found"));
 					} else {
-						libreswan_log("failed to replace negotiatinshunt with failurehunt=hold");
+						libreswan_log("failed to replace negotiationshunt with failurehunt=hold");
 					}
 				}
+				/* ??? c == NULL -- what can we do? */
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
@@ -1166,16 +1167,17 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		/* the second chunk: initiate the next DNS query (if any) */
 		DBG(DBG_OPPO | DBG_CONTROL, {
-			ipstr_buf b1;
-			ipstr_buf b2;
-			/* ??? CLANG 3.5 thinks c might be NULL */
-			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
-				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-				ipstr(&b->our_client, &b1),
-				ipstr(&b->peer_client, &b2),
-				oppo_step_name[b->step],
-				ugh ? " - error:" : "",
-				ugh ? ugh : "");
+			if (c != NULL) {
+				ipstr_buf b1;
+				ipstr_buf b2;
+				DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
+					(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+					ipstr(&b->our_client, &b1),
+					ipstr(&b->peer_client, &b2),
+					oppo_step_name[b->step],
+					ugh ? " - error:" : "",
+					ugh ? ugh : "");
+			}
 		});
 
 		if (c == NULL) {
@@ -1184,7 +1186,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * This case has been handled already.
 			 */
 		} else if (ugh != NULL) {
-			/* i dont think this can happen without DNS, and then these value are already set */
+			/* I dont think this can happen without DNS, and then these value are already set */
 			b->policy_prio = c->prio;
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
@@ -1380,33 +1382,43 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	if (!isanyaddr(&c->spd.that.host_addr)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" has address",
-			    c->name));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s has address",
+				c->name, fmt_conn_instance(c, cib));
+		});
 		return;
 	}
 
 	if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
-			    c->name));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s with wildcard not started",
+				c->name, fmt_conn_instance(c, cib));
+		});
 		return;
 	}
 
 	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
-			    c->name, c->dnshostname, e));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s lookup of \"%s\" failed: %s",
+				c->name, fmt_conn_instance(c, cib),
+				c->dnshostname, e);
+		});
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
-		DBG(DBG_DNS,
-		    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
-			    c->name, c->dnshostname));
+		DBG(DBG_DNS, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending ddns: connection \"%s\"%s still no address for \"%s\"",
+				c->name, fmt_conn_instance(c, cib),
+				c->dnshostname);
+		});
 		return;
 	}
 
@@ -1496,31 +1508,38 @@ void connection_check_phase2(void)
 		cnext = c->ac_next;
 
 		if (NEVER_NEGOTIATE(c->policy)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("pending review: connection \"%s\" has no negotiated policy, skipped",
-				    c->name));
+			DBG(DBG_CONTROL, {
+				char cib[CONN_INST_BUF];
+				DBG_log("pending review: connection \"%s\"%s has no negotiated policy, skipped",
+					c->name, fmt_conn_instance(c, cib));
+			});
 			continue;
 		}
 
 		if (!(c->policy & POLICY_UP)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("pending review: connection \"%s\" was not up, skipped",
-				    c->name));
+			char cib[CONN_INST_BUF];
+			DBG(DBG_CONTROL, {
+				DBG_log("pending review: connection \"%s\"%s was not up, skipped",
+					c->name, fmt_conn_instance(c, cib));
+			});
 			continue;
 		}
 
-		DBG(DBG_CONTROL,
-		    DBG_log("pending review: connection \"%s\" checked",
-			    c->name));
+		DBG(DBG_CONTROL, {
+			char cib[CONN_INST_BUF];
+			DBG_log("pending review: connection \"%s\"%s checked",
+				c->name, fmt_conn_instance(c, cib));
+		});
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 
 			libreswan_log(
-				"pending Quick Mode with %s \"%s\" took too long -- replacing phase 1",
+				"pending Quick Mode with %s \"%s\"%s took too long -- replacing phase 1",
 				ipstr(&c->spd.that.host_addr, &b),
-				c->name);
+				c->name, fmt_conn_instance(c, cib));
 
 			p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |

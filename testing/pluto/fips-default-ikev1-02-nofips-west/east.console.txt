@@ -1,5 +1,6 @@
 /testing/guestbin/swan-prep --fips
-certutil out:Password changed successfully.
+Password changed successfully.
+FIPS mode enabled.
 east #
  PATH/bin/modutil -dbdir /etc/ipsec.d -fips true -force
 FIPS mode enabled.

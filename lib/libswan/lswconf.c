@@ -120,7 +120,7 @@ void lsw_conf_free_oco(void)
 
 	pfreeany(global_oco.nssdb);
 
-	zero(&global_oco);
+	messup(&global_oco);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)

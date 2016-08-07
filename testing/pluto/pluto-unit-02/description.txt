@@ -1,4 +1,0 @@
-This is the second collection of Pluto unit tests.
-It does not talk to KLIPS at all, but does require that a number
-of aliases be configured on the loopback device.
-It also requires some entries in DNS.

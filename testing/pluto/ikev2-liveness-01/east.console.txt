@@ -1,0 +1,60 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ # should be empty if east triggered
+east #
+ hostname | grep west > /dev/null || ipsec whack --trafficstatus
+000  
+east #
+ grep "message ID:" /tmp/pluto.log
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 02
+|    message ID:  00 00 00 02
+|    message ID:  00 00 00 03
+|    message ID:  00 00 00 03
+|    message ID:  00 00 00 04
+|    message ID:  00 00 00 04
+|    message ID:  00 00 00 05
+|    message ID:  00 00 00 05
+|    message ID:  00 00 00 06
+|    message ID:  00 00 00 06
+|    message ID:  00 00 00 07
+|    message ID:  00 00 00 07
+|    message ID:  00 00 00 08
+|    message ID:  00 00 00 08
+|    message ID:  00 00 00 09
+|    message ID:  00 00 00 0a
+|    message ID:  00 00 00 0b
+|    message ID:  00 00 00 0c
+|    message ID:  00 00 00 0d
+|    message ID:  00 00 00 0e
+|    message ID:  00 00 00 0f
+east #
+ # grep on east
+east #
+ hostname | grep west > /dev/null || grep -A 1 "liveness_check - peer has not responded in" /tmp/pluto.log
+| liveness_check - peer has not responded in 30 seconds, with a timeout of 30, taking action
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness action: Clearing Connection westnet-eastnet-ipv4-psk-ikev2[0] CK_PERMANENT
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

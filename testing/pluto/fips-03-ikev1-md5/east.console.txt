@@ -1,10 +1,11 @@
 /testing/guestbin/swan-prep --fips
-certutil out:Password changed successfully.
+Password changed successfully.
+FIPS mode enabled.
 east #
  ipsec checknss
 east #
  PATH/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force
-FIPS mode enabled.
+FIPS mode already enabled.
 east #
  PATH/bin/modutil -dbdir sql:/etc/ipsec.d -chkfips true
 FIPS mode enabled.
@@ -19,12 +20,14 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  grep FIPS /tmp/pluto.log
+NSS Password from file "/etc/ipsec.d/nsspassword" for token "NSS FIPS 140-2 Certificate DB" with length 6 passed to NSS
 FIPS HMAC integrity support [enabled]
-FIPS Kernel Mode detected
-FIPS Product detected
-FIPS mode enabled - pluto daemon is running in FIPS mode
-FIPS mode enabled and NSS library is in FIPS mode
-FIPS mode enabled and HMAC integrity verification tests passed
+FIPS Product: YES
+FIPS Kernel: YES
+FIPS Mode: YES
+FIPS mode enabled for pluto daemon
+NSS library is running in FIPS mode
+FIPS HMAC integrity verification self-test passed
 Starting Pluto (Libreswan Version )
 east #
  ipsec auto --add westnet-eastnet-md5

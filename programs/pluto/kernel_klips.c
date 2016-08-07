@@ -71,7 +71,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 		struct raw_iface *vfp;
 		ip_address lip;
 
-		if (pluto_listen) {
+		if (pluto_listen != NULL) {
 			err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 
 			if (e != NULL) {

@@ -244,7 +244,6 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 				    "klips_debug:ipsec_makeroute: %s / %s\n",
 				    buf1, buf2);
 		}
-
 	}
 
 	retrt = (struct eroute *)kmalloc(sizeof(struct eroute), GFP_ATOMIC);
@@ -494,7 +493,6 @@ int ipsec_rj_walker_show(struct radij_node *rn, void *arg)
 					     &mask->sen_ip6_dst, 0, buf2,
 					     sizeof(buf2));
 		}
-
 	} else if (key->sen_type == SENT_IP4) {
 		buf_len = subnettoa(key->sen_ip_src, mask->sen_ip_src, 0, buf1,
 				    sizeof(buf1));
@@ -506,7 +504,6 @@ int ipsec_rj_walker_show(struct radij_node *rn, void *arg)
 		if (key->sen_dport != 0)
 			sprintf(buf2 + buf_len - 1, ":%d",
 				ntohs(key->sen_dport));
-
 	} else {
 		return 0;
 	}

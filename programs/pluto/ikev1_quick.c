@@ -319,17 +319,14 @@ static void compute_proto_keymat(struct state *st,
 						pi->attrs.transattrs.enckeylen
 						/ BITS_PER_BYTE;
 					DBG(DBG_PARSING,
-					    DBG_log("compute_proto_keymat:"
-						    "key_len=%d from peer",
-						    (int)
-						    needed_len));
+					    DBG_log("compute_proto_keymat: key_len=%d from peer",
+						    (int)needed_len));
 				}
 				break;
 			}
 			bad_case(pi->attrs.transattrs.encrypt);
 		}
-		DBG(DBG_PARSING, DBG_log("compute_proto_keymat:"
-					 "needed_len (after ESP enc)=%d",
+		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
 					 (int)needed_len));
 
 		switch (pi->attrs.transattrs.integ_hash) {
@@ -382,8 +379,7 @@ static void compute_proto_keymat(struct state *st,
 			bad_case(pi->attrs.transattrs.integ_hash);
 		}
 
-		DBG(DBG_PARSING, DBG_log("compute_proto_keymat:"
-					 "needed_len (after ESP auth)=%d",
+		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP auth)=%d",
 					 (int)needed_len));
 		break;
 
@@ -1414,7 +1410,6 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 				       isanyaddr(&hv.st_nat_oa));
 			}
 		}
-
 	} else {
 		/* implicit IDci and IDcr: peer and self */
 		if (!sameaddrtype(&c->spd.this.host_addr,
@@ -1698,7 +1693,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 						/* do this only once a day */
 						if (!logged_txt_warning) {
 							loglog(RC_LOG_SERIOUS,
-							       "found KEY RR but not TXT RR. See http://www.freeswan.org/err/txt-change.html.");
+							       "found KEY RR but not TXT RR.");
 							logged_txt_warning =
 								TRUE;
 						}
@@ -1798,10 +1793,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
 		     p == NULL) {
 			p = c;
-			DBG(DBG_CONTROL,
-			    DBG_log("using (something - hopefully the IP we or they are"
-				    " NAT'ed to) for transport mode connection \"%s\"",
-				    p->name));
+			DBG(DBG_CONTROL, {
+				char cib[CONN_INST_BUF];
+				DBG_log("using (something - hopefully the IP we or they are NAT'ed to) for transport mode connection \"%s\"%s",
+				    p->name, fmt_conn_instance(p, cib));
+			});
 		}
 
 		if (p == NULL) {
@@ -1831,8 +1827,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			l += strlen(buf + l);
 			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
 					 FALSE, LEMPTY, oriented(*c));
-			libreswan_log("cannot respond to IPsec SA request"
-				      " because no connection is known for %s",
+			libreswan_log("cannot respond to IPsec SA request because no connection is known for %s",
 				      buf);
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
@@ -1932,9 +1927,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 				set_debugging(
 					cur_debugging | p->extra_debugging);
-				DBG(DBG_CONTROL,
-				    DBG_log("using connection \"%s\"",
-					    p->name));
+				DBG(DBG_CONTROL, {
+					char cib[CONN_INST_BUF];
+					DBG_log("using connection \"%s\"%s",
+						p->name, fmt_conn_instance(p, cib));
+				});
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
@@ -2606,8 +2603,8 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 					  &c->spd.this.host_addr) ||
 			    !subnetisaddr(&c->spd.that.client,
 					  &c->spd.that.host_addr)) {
-				loglog(RC_LOG_SERIOUS, "IDci, IDcr payloads missing in message"
-				       " but default does not match proposal");
+				loglog(RC_LOG_SERIOUS,
+					"IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;
 			}
 		}

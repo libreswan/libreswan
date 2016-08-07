@@ -537,6 +537,8 @@ int id_count_wildcards(const struct id *id)
 
 void duplicate_id(struct id *dst, const struct id *src)
 {
+	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
+	free_id_content(dst);
 	dst->kind = src->kind;
 	dst->ip_addr = src->ip_addr;
 	clonetochunk(dst->name, src->name.ptr, src->name.len, "copy of id");

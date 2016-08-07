@@ -1,0 +1,15 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+the responder.
+
+This uses  ike and esp values of aes128-sha1 on both sides.
+
+older versions of libreswan did not send a keysize for ike=aes-sha1 and
+required ike=aes128-sha1 for interop. We now specifically use ike=aes-sha1
+on the libreswan end to test conformance of KEY_LENGTH sending.
+
+note libreswan also used to use aes256 when specifying esp=aes-sha1. This
+has been changed to aes128 as that is the only mandatory to implement
+key size as per RFC 3602. This also matches other implementations such as
+strongswan.
+
+

@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=@SD_TYPE@
-Restart=always
+Restart=@SD_RESTART_TYPE@
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 
@@ -14,7 +14,7 @@ Restart=always
 # EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
 # are 60, 90, 120. WatchdogSec=0 disables the action
 NotifyAccess=all
-WatchdogSec=60
+WatchdogSec=@SD_WATCHDOGSEC@
 
 # Check configuration file
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
@@ -25,7 +25,7 @@ ExecStartPre=@FINALSBINDIR@/ipsec --checknss
 # Check for nflog setup
 ExecStartPre=@FINALSBINDIR@/ipsec --checknflog
 # Start the actual IKE daemon
-ExecStart=@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork
+ExecStart=@FINALLIBEXECDIR@/pluto @SD_PLUTO_OPTIONS@ --config @FINALCONFFILE@ --nofork
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush

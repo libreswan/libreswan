@@ -120,8 +120,7 @@ void process_packet(struct msg_digest **mdp)
 		 */
 		DBG(DBG_CONTROL, {
 			DBG_log(
-			"size (%u) in received packet is larger than the size "
-			"specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+			"size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
 			(unsigned) pbs_room(&md->packet_pbs),
 			md->hdr.isa_length);
 			DBG_dump("extraneous bytes:", md->message_pbs.roof,
@@ -434,8 +433,7 @@ static bool read_packet(struct msg_digest *md)
 		 */
 		DBG(DBG_NATT, {
 			ipstr_buf b;
-			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
-				"Ignored. Sender: %s:%u", ipstr(cur_from, &b),
+			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: %s:%u", ipstr(cur_from, &b),
 				(unsigned) cur_from_port);
 		});
 		return FALSE;

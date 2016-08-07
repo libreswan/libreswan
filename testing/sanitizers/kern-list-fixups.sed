@@ -99,7 +99,8 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*PCLMULQDQ-NI instructions are not detected.*$/d
 /^Warning: found NETKEY\/XFRM stack loaded.*$/d
 /.*IPv4 over IPSec tunneling driver$/Id
-/^.* random: nonblocking pool is initialized$/d
+/^.*random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
 s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
+/^.*CPU feature 'AVX registers' is not supported.*$/d

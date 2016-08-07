@@ -1,0 +1,9 @@
+This tests a mismatch of transport vs tunnel mode.
+
+The RFC says that if transport is not supported, tunnel should be used.
+
+libreswan refuses to use tunnel mode when transport mode is configured.
+
+this connection is expected to fail, but strongswan will actually install
+a tunnel mode sa and believe the tunnel is up. libreswan will reject the
+IKE_AUTH reply from strongswan

@@ -229,6 +229,7 @@ distclean: moduleclean module24clean module26clean clean-kvm-keys
 	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf OBJ.* $(OBJDIR)
+	rm -rf BACKUP
 
 # proxies for major kernel make operations
 
@@ -445,7 +446,7 @@ module26:
 	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6+ kernel in what looks like a 2.4 tree"; \
         fi ; \
         ${MAKE}  ${MODBUILDDIR}/Makefile
-	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
+	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} INITSYSTEM=$(INITSYSTEM) MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
 	@echo
 	@echo '========================================================='
 	@echo

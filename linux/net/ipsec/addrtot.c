@@ -411,7 +411,7 @@ struct rtab {
 	{ NULL,                         0, NULL }
 };
 
-void regress()
+void regress(void)
 {
 	struct rtab *r;
 	int status = 0;

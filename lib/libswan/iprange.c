@@ -202,7 +202,7 @@ struct rtab {
 	{ 4, NULL, NULL, 0 },
 };
 
-void regress()
+void regress(void)
 {
 	struct rtab *r;
 	int status = 0;

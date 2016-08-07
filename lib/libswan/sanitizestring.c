@@ -84,7 +84,6 @@ void sanitize_string(char *buf, size_t size)
 		snprintf(fmtd, sizeof(fmtd), "\\%03o", c);
 		memcpy(p + added, fmtd, UGLY_WIDTH);
 	}
-	return;
 
 #undef UGLY_WIDTH
 }
@@ -147,7 +146,7 @@ struct rtab {
 	{ NULL, NULL }
 };
 
-void regress()
+void regress(void)
 {
 	struct rtab *r;
 	ip_address a;

@@ -13,7 +13,7 @@ initdone
 east #
  ipsec whack --trafficstatus
 000  
-006 #2: "tfc", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 000  
 east #
  # ESP should not show TFC

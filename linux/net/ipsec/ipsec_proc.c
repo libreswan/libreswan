@@ -634,7 +634,7 @@ static struct ipsec_proc_list proc_items[]={
     {}
 };
 
-int ipsec_proc_init()
+int ipsec_proc_init(void)
 {
 	int error = 0;
 	struct proc_dir_entry *item;
@@ -672,7 +672,7 @@ int ipsec_proc_init()
 	return error;
 }
 
-void ipsec_proc_cleanup()
+void ipsec_proc_cleanup(void)
 {
 	struct ipsec_proc_list *it;
 

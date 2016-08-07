@@ -569,11 +569,12 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 	DBG(DBG_CONTROLMORE, {
 		char ei3[SUBNETTOT_BUF];
 		char er3[SUBNETTOT_BUF];
+		char cib[CONN_INST_BUF];
 		subnettot(&ei->client,  0, ei3, sizeof(ei3));
 		subnettot(&er->client,  0, er3, sizeof(er3));
-		DBG_log("  ikev2_evaluate_connection_fit evaluating our "
-			"conn=\"%s\" I=%s:%d/%d R=%s:%d/%d %s to their:",
-			d->name, ei3, ei->protocol, ei->port,
+		DBG_log("  ikev2_evaluate_connection_fit evaluating our conn=\"%s\"%s I=%s:%d/%d R=%s:%d/%d %s to their:",
+			d->name, fmt_conn_instance(d, cib),
+			ei3, ei->protocol, ei->port,
 			er3, er->protocol, er->port,
 			is_virtual_connection(d) ? "(virt)" : "");
 	});
@@ -949,7 +950,6 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	spd->that.client.addr = ipv4;
 	spd->that.client.maskbits = 32; /* export it as value */
 	spd->that.has_client = TRUE;
-	spd->that.has_lease = TRUE;
 
 	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
 	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
@@ -984,7 +984,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	md->st = cst;
 	c = cst->st_connection;
 
-	send_use_transport = (cst->st_seen_use_transport &&
+	/*
+	 * The notifies are read into the parent state even though it is
+	 * child state related
+	 */
+	send_use_transport = ( pst->st_seen_use_transport &&
 		 (c->policy & POLICY_TUNNEL) == LEMPTY);
 
 	if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -1002,7 +1006,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
 
-		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
+		ikev2_proposals_from_alg_info_esp(c->name, "responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
@@ -1041,12 +1045,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		/* there MUST be an authenticated IKE SA! */
-		if (!IS_IKE_SA_ESTABLISHED(pst)) {
-			libreswan_log("Received CREATE_CHILD exchange not allowed on partial IKE SA");
-			return STF_FAIL + v2N_INVALID_SYNTAX;
-		}
-
 		/* send NONCE */
 		struct ikev2_generic in;
 		pb_stream pb_nr;
@@ -1070,7 +1068,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		/* Process all NOTIFY payloads */
 		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch(ntfy->payload.v2n.isan_type) {
+			switch (ntfy->payload.v2n.isan_type) {
 			case v2N_NAT_DETECTION_SOURCE_IP:
 			case v2N_NAT_DETECTION_DESTINATION_IP:
 			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
@@ -1246,6 +1244,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 			ipstr(&ip, &ip_str));
 
 	c->spd.this.has_client = TRUE;
+	c->spd.this.has_internal_address = TRUE;
 
 	if (c->spd.this.cat) {
 		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
@@ -1287,8 +1286,8 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 				st->st_serialno, c->name, c->instance_serial));
 
 	if (cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
-		libreswan_log("ERROR expected IKEv2_CP_CFG_REPLY "
-				"got a %s", enum_name(&ikev2_cp_type_names,cp->isacp_type));
+		libreswan_log("ERROR expected IKEv2_CP_CFG_REPLY got a %s",
+			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
 	}
 	while (pbs_left(attrs) > 0) {

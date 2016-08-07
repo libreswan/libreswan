@@ -25,6 +25,7 @@ from fab import post
 from fab import stats
 from fab import skip
 from fab import ignore
+from fab import timing
 
 def main():
     parser = argparse.ArgumentParser(description="Run tests")
@@ -33,7 +34,7 @@ def main():
     parser.add_argument("--dry-run", "-n", action="store_true")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help="either a testsuite directory or a list of test directories")
+                        help="a testsuite directory, a TESTLIST file, or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
     post.add_arguments(parser)
@@ -64,14 +65,13 @@ def main():
 
     test_stats = stats.Tests()
     result_stats = stats.Results()
-    start_time = datetime.now()
 
     try:
         exit_code = 0
-        logger.info("run started at %s", start_time)
-        runner.run_tests(logger, args, tests, test_stats, result_stats, start_time)
+        logger.info("run started at %s", timing.START_TIME)
+        runner.run_tests(logger, args, tests, test_stats, result_stats)
     except KeyboardInterrupt:
-        logger.exception("**** test %s interrupted ****", test.name)
+        logger.exception("**** interrupted ****")
         exit_code = 1
 
     test_stats.log_details(args.verbose and logger.info or logger.debug,
@@ -82,7 +82,7 @@ def main():
     result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
 
     end_time = datetime.now()
-    logger.info("run finished at %s after %s", end_time, end_time - start_time)
+    logger.info("run finished at %s after %s", end_time, end_time - timing.START_TIME)
 
     return exit_code
 

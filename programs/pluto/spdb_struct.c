@@ -124,15 +124,13 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		unsigned eklen = ike_info->ike_eklen;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("oakley_alg_makedb() "
-			    "processing ealg=%u halg=%u modp=%u eklen=%u",
+		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
 			    ealg, halg, modp, eklen));
 
 		const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
 
 		if (enc_desc == NULL) {
-			DBG_log("oakley_alg_makedb() "
-				"ike enc ealg=%d not present",
+			DBG_log("oakley_alg_makedb() ike enc ealg=%d not present",
 				ealg);
 			continue;
 		}
@@ -140,15 +138,13 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 		if (ike_alg_enc_requires_integ(enc_desc)) {
 			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() "
-					"ike hash halg=%d not present but required for integrity",
+				DBG_log("oakley_alg_makedb() ike hash halg=%d not present but required for integrity",
 					halg);
 				continue;
 			}
 		} else {
 			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() "
-					"ike PRF=%d not present but needed for AEAD",
+				DBG_log("oakley_alg_makedb() ike PRF=%d not present but needed for AEAD",
 					halg);
 				continue;
 			}

@@ -1,1 +1,0 @@
-This tests production of ESP-3DES-MD5 packets with a source of ICMP packets.

@@ -425,23 +425,36 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 		return NULL;
 	}
 
-	/*
-	 * XXX Duplicate code with find_dercrl_uri().
-	 * XXX Certificate can have multiple distpoints, convert all of them.
-	 * XXX distPoints[1] seems to be NULL even if multiple?
-	 */
+	CRLDistributionPoint **points = dps->distPoints;
+	generalName_t *gndp_list = NULL;
 
-	CRLDistributionPoint *point = dps->distPoints[0];
-	generalName_t *gndp = NULL;
+	/* Certificate can have multiple distribution points */
+	for (; points != NULL && *points != NULL; points++) {
+		CRLDistributionPoint *point = *points;
 
-	if (point != NULL && point->distPointType == generalName &&
-			     point->distPoint.fullName != NULL &&
-			     point->distPoint.fullName->type == certURI) {
-		gndp = alloc_thing(generalName_t, "converted gn");
-		convert_nss_gn_to_pluto_gn(point->distPoint.fullName, gndp);
+		if (point->distPointType == generalName &&
+			point->distPoint.fullName != NULL) {
+			CERTGeneralName *first_name, *name;
+
+			/* Each point is a linked list. */
+			first_name = name = point->distPoint.fullName;
+			do {
+				if (name->type == certURI) {
+					generalName_t *gndp;
+
+					/* Add single point to return list */
+					gndp = alloc_thing(generalName_t,
+							"converted gn");
+					convert_nss_gn_to_pluto_gn(name, gndp);
+					gndp->next = gndp_list;
+					gndp_list = gndp;
+				}
+				name = CERT_GetNextGeneralName(name);
+			} while (name != NULL && name != first_name);
+		}
 	}
 
-	return gndp;
+	return gndp_list;
 }
 
 static char *find_dercrl_uri(chunk_t *dercrl)
@@ -507,6 +520,9 @@ static char *find_dercrl_uri(chunk_t *dercrl)
 	/*
 	 * MR - do only the first distribution point. Could support more
 	 * in the future
+	 *
+	 * XXX Duplicate code with gndp_from_nss_cert().
+	 * XXX See also comment in gndp_from_nss_cert() about multiple points.
 	 */
 	CRLDistributionPoint *point = dps->distPoints[0];
 
@@ -675,7 +691,6 @@ static void gntoid(struct id *id, const generalName_t *gn)
 				"Warning: gntoid() failed to initaddr(): %s",
 				ugh);
 		}
-
 	}
 	break;
 	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */

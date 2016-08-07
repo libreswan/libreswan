@@ -1535,11 +1535,9 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 	u_int8_t *cur = ins->cur;
 
 	if (ins->roof - cur < (ptrdiff_t)sd->size) {
-		ugh = builddiag("not enough room in input packet for %s"
-				" (remain=%li, sd->size=%zu)",
+		ugh = builddiag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
 				sd->name, (long int)(ins->roof - cur),
 				sd->size);
-
 	} else {
 		u_int8_t *roof = cur + sd->size; /* may be changed by a length field */
 		u_int8_t *outp = struct_ptr;

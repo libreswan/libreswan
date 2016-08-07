@@ -39,7 +39,7 @@ road #
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP,  add_time=1234567890, inBytes=0, outBytes=0
+006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0
 000  
 road #
  ping -n -c4 192.0.2.254
@@ -54,7 +54,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP,  add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 000  
 road #
  echo done

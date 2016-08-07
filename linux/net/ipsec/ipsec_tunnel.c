@@ -1657,7 +1657,6 @@ DEBUG_NO_STATIC int ipsec_tunnel_ioctl(struct net_device *dev,
 			    "unknown command %d.\n",
 			    cmd);
 		return -EOPNOTSUPP;
-
 	}
 }
 

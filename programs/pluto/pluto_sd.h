@@ -16,6 +16,7 @@
 
 #ifndef _PLUTO_SD_H
 #define _PLUTO_SD_H
+
 #ifdef USE_SYSTEMD_WATCHDOG
 
 #include <systemd/sd-daemon.h>
@@ -26,5 +27,6 @@ extern void pluto_sd_init(void);
 extern void pluto_sd(int action, int status);
 extern void sd_watchdog_event(void);
 
-#endif
+#endif /* USE_SYSTEMD_WATCHDOG */
+
 #endif /* _PLUTO_SD_H */

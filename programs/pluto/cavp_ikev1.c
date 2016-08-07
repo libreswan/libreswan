@@ -90,7 +90,7 @@ static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 	free_any_symkey("skeyid_a", &skeyid_a);
 }
 
-static void print_sig_config()
+static void print_sig_config(void)
 {
 	config_number("g^xy length", g_xy_length);
 	config_key(hasher_name);

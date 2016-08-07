@@ -130,8 +130,8 @@ east #
 
 FIX CODE: if properly processed the old IKE SA and IPsec SA should not be active anymore on east
 
-006 #4: "westnet-eastnet", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@west'
-006 #2: "westnet-eastnet", type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #4: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 000  
 east #
  ipsec look

@@ -70,7 +70,7 @@ west #
  ipsec auto --up westnet-eastnet-x509-cr
  ping -n -c 4 192.0.2.254
 002 "westnet-eastnet-x509-cr": deleting connection
-002 "westnet-eastnet-x509-cr" #1: deleting state #1 (STATE_MAIN_I3)
+002 "westnet-eastnet-x509-cr" #1: deleting state (STATE_MAIN_I3)
 002 added connection description "westnet-eastnet-x509-cr"
 west #
  002 "westnet-eastnet-x509-cr" #2: initiating Main Mode

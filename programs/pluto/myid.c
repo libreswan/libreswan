@@ -104,12 +104,10 @@ void set_myid(enum myid_state s, char *idstr)
 		err_t ugh = atoid(idstr, &id, FALSE, FALSE);
 
 		if (ugh != NULL) {
-			loglog(RC_BADID, "myid malformed: %s \"%s\"", ugh,
-			       idstr);
+			loglog(RC_BADID, "myid malformed: %s \"%s\"",
+			        ugh, idstr);
 		} else {
-			free_id_content(&myids[s]);
-			unshare_id_content(&id);
-			myids[s] = id;
+			duplicate_id(&myids[s], &id);
 			if (s == MYID_SPECIFIED)
 				myid_state = MYID_SPECIFIED;
 

@@ -200,7 +200,7 @@ static bool test_gcm_vectors(CK_MECHANISM_TYPE cipher_mechanism,
 	return ok;
 }
 
-bool test_aes_gcm()
+bool test_aes_gcm(void)
 {
 	return test_gcm_vectors(CKM_AES_GCM, do_aes_gcm, aes_gcm_test_vectors);
 }

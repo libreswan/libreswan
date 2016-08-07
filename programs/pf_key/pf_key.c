@@ -241,7 +241,6 @@ int main(int argc, char *argv[])
 				fclose(pidfile);
 			}
 		}
-
 	} else if (infilename != NULL) {
 		pfkey_sock = open(infilename, O_RDONLY);
 		if (pfkey_sock < 0) {

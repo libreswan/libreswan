@@ -523,7 +523,7 @@ void free_crl_fetch(void)
  * Add additional distribution points.
  * Note: clones anything it needs to keep.
  */
-void add_distribution_points(generalName_t *newPoints,
+void add_distribution_points(const generalName_t *newPoints,
 			     generalName_t **distributionPoints)
 {
 	for (; newPoints != NULL; newPoints = newPoints->next) {
@@ -535,7 +535,7 @@ void add_distribution_points(generalName_t *newPoints,
 				 * End of list; not found.
 				 * Clone additional distribution point.
 				 */
-				generalName_t *ngn = clone_thing(*newPoints, "generalName");
+				generalName_t *ngn = clone_const_thing(*newPoints, "generalName");
 				clonetochunk(ngn->name, newPoints->name.ptr,
 					     newPoints->name.len,
 					     "crl uri");
@@ -644,7 +644,7 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 				new_dp = end_dp;
 			}
 
-			add_distribution_points(end_dp, &req->distributionPoints);
+			add_distribution_points(new_dp, &req->distributionPoints);
 			DBG(DBG_CONTROL,
 			    DBG_log("crl fetch request augmented"));
 			break;

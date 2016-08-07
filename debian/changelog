@@ -1,6 +1,5 @@
-libreswan (3.18~dr3-1) experimental; urgency=low
+libreswan (3.18-1) experimental; urgency=low
 
-  * Initial upload of developer's release to debian experimental (Closes:
-    #773459)
+  * Initial upload to debian experimental (Closes: #773459)
 
  -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Sun, 19 Jun 2016 23:39:14 -0400

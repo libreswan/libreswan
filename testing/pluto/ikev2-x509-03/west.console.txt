@@ -57,7 +57,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP,  add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+006 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 000  
 west #
  echo "done"

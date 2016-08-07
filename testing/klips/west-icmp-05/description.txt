@@ -1,3 +1,0 @@
-This tests reception (decryption) of ESP-AES256-MD5 packets with a source
-of encrypted ICMP packets.
-

@@ -1,7 +1,0 @@
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212
-192.0.1.254 > 192.0.1.2: ICMP host 192.0.2.1 unreachable - admin prohibited filter, length 212

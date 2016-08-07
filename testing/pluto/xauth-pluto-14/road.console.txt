@@ -45,7 +45,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "modecfg-road-east", username=use3, type=ESP,  add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "modecfg-road-east", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 000  
 road #
  echo done

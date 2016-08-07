@@ -326,7 +326,6 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 			return FALSE;
 		}
 		*got_lease = TRUE;
-
 	} else {
 		passert(!isanyaddr(&c->spd.that.client.addr));
 		ia->ipaddr = c->spd.that.client.addr;
@@ -1242,14 +1241,13 @@ static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
 	results = do_pam_authentication(&parg);
 	gettimeofday(&served_time, NULL);
 	timersub(&served_time, &start_time, &served_delta);
-	DBG(DBG_CONTROL, DBG_log("XAUTH PAM helper thread call "
-				"state #%lu, %s[%lu] user=%s %s. "
-				"elapsed time %lu.%06lu",
-				parg.st_serialno, parg.c_name,
-				parg.c_instance_serial, parg.name,
-				results ? "SUCCESS" : "FAIL",
-				(unsigned long)served_delta.tv_sec,
-				(unsigned long)(served_delta.tv_usec * 1000000)));
+	DBG(DBG_CONTROL,
+		DBG_log("XAUTH PAM helper thread call state #%lu, %s[%lu] user=%s %s. elapsed time %lu.%06lu",
+			parg.st_serialno, parg.c_name,
+			parg.c_instance_serial, parg.name,
+			results ? "SUCCESS" : "FAIL",
+			(unsigned long)served_delta.tv_sec,
+			(unsigned long)(served_delta.tv_usec * 1000000)));
 
 	pfreeany(parg.ra);
 	return results;

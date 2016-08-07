@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -63,6 +63,7 @@ def compile_prompt(logger, username=None, hostname=None):
     logger.debug("prompt '%s'", prompt)
     return re.compile(prompt)
 
+
 def check_prompt_group(logger, match, expected, field):
     if expected:
         found = match.group(field)
@@ -72,6 +73,7 @@ def check_prompt_group(logger, match, expected, field):
             # would have happened.
             raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
                                   % (field, expected, found))
+
 
 def check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
     """Match wild-card  of the prompt pattern; return status"""
@@ -89,6 +91,7 @@ def check_prompt(logger, match, hostname=None, username=None, basename=None, dol
         status = None
     logger.debug("exit code '%s'", status)
     return status
+
 
 # This file-like class passes all writes on to the LOGGER at DEBUG.
 # It is is used to direct pexpect's .logfile_read and .logfile_send
@@ -109,11 +112,12 @@ class Debug:
     def flush(self):
         pass
 
+
 class Remote:
 
-    def __init__(self, command, hostname=None, username=None, logger=None):
+    def __init__(self, command, hostname=None, username=None, prefix=""):
         # Need access to HOSTNAME.
-        self.logger = logger or logutil.getLogger(__name__, hostname)
+        self.logger = logutil.getLogger(prefix, __name__, hostname)
         self.basename = None
         self.hostname = hostname
         self.username = username
@@ -162,10 +166,12 @@ class Remote:
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
-    def stty_sane(self):
+    def stty_sane(self, term="dumb", rows=24, columns=80):
         # Get the PTY inside the VM (not pexpect's PTY) into normal
         # mode.
-        self.run('export TERM=dumb; unset LS_COLORS; stty sane')
+        stty = ("unset LS_COLORS; export TERM=%s; stty sane rows %s columns %s"
+                % (term, rows, columns))
+        self.run(stty)
 
     def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
         self.logger.debug("run '%s' expecting prompt", command)
@@ -193,6 +199,10 @@ class Remote:
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect(expect, timeout=timeout,
                                  searchwindowsize=searchwindowsize)
+
+    def expect_exact(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
+        return self.child.expect_exact(expect, timeout=timeout,
+                                       searchwindowsize=searchwindowsize)
 
     def sendcontrol(self, control):
         return self.child.sendcontrol(control)

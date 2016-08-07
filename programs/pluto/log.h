@@ -157,7 +157,7 @@ enum linux_audit_kind {
 	LAK_PARENT_DESTROY,
 	LAK_CHILD_DESTROY
 };
-extern void linux_audit_init();
+extern void linux_audit_init(void);
 extern void linux_audit(const int type, const char *message,
 			const char *addr, const int result);
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);

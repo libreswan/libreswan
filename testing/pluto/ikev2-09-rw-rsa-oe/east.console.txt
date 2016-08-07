@@ -130,7 +130,7 @@ initdone
 east #
 ipsec whack --trafficstatus
 000  
-006 #2: "road-eastnet-nonat"[1] 192.1.3.209, type=ESP,  add_time=1234567890, inBytes=336, outBytes=336, id='@road'
+006 #2: "road-eastnet-nonat"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@road'
 000  
 east #
 ipsec look

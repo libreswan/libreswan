@@ -390,7 +390,6 @@ pfkey_ext_track extensions_bitmaps
 			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 		}
-
 	},
 
 /* OUTBOUND EXTENSIONS */

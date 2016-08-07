@@ -10,5 +10,5 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-vti
 # remove the regular route for 192.0.2.0/24
-ip route del 192.0.2.0/24
+#ip route del 192.0.2.0/24
 echo "initdone"

@@ -1,2 +1,0 @@
-Test for case where Responder with --dontrekey wants lifetime shorter
-than Initiator proposes.  KLIPS isn't used.

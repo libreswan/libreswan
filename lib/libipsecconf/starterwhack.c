@@ -775,7 +775,6 @@ int starter_permutate_conns(int
 			struct starter_conn *conn)
 {
 	struct starter_conn sc;
-	bool done = FALSE;
 	int lc, rc;
 	char *leftnets, *rightnets;
 	char tmpconnname[256];
@@ -819,7 +818,7 @@ int starter_permutate_conns(int
 		rc = 1;
 	}
 
-	do {
+	for (;;) {
 		int success;
 
 		/* copy conn  --- we can borrow all pointers, since this
@@ -876,10 +875,9 @@ int starter_permutate_conns(int
 			if (!one_subnet_from_string(conn, &leftnets,
 							conn->left.addr_family,
 							&lnet, "left"))
-				done = 1;
+				break;
 		}
-
-	} while (!done);
+	}
 
 	return 0;	/* success. */
 }

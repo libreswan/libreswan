@@ -385,7 +385,6 @@ pkixredo:
 				NULL);
 
 		//CERT_DestroyCertList(trustcl);
-
 	} else {
 		cur_log = &vfy_log;
 vfyredo:

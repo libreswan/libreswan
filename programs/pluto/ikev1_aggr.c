@@ -280,15 +280,10 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
-	struct state *st = new_state();
+	struct state *st = new_rstate(md);
 
 	cur_state = md->st = st;  /* (caller will reset cur_state) */
 	st->st_connection = c;	/* safe: from new_state */
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
 	change_state(st, STATE_AGGR_R1);
 
 	/*
@@ -313,8 +308,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
 			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s"
-		       " on %s but no connection has been authorized",
+		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
 		       buf, ipstr(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
@@ -333,9 +327,11 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 
 	{
 		ipstr_buf b;
+		char cib[CONN_INST_BUF];
 
-		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\" from %s",
-			st->st_serialno, st->st_connection->name,
+		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
+			st->st_serialno,
+			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
 			ipstr(&c->spd.that.host_addr, &b));
 	}
 
@@ -672,8 +668,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
 			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s"
-		       " on %s but no connection has been authorized",
+		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
 		       buf, ipstr(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;

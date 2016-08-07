@@ -13,8 +13,8 @@ initdone
 west #
  : we can transmit in the clear
 west #
- ping -q -c 8 -n 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+ ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -34,8 +34,8 @@ west #
 west #
  : use the tunnel
 west #
- ping -q -c 8 -n 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+ ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -44,7 +44,7 @@ west #
 west #
  ipsec whack --trafficstatus
 000  
-006 #2: "west-east", type=ESP,  add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
 000  
 west #
  : Let R_U_THERE packets flow
@@ -72,8 +72,8 @@ west #
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- ping -q -c 8 -n 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+ ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 7 received, 12% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -82,7 +82,7 @@ west #
 west #
  ipsec whack --trafficstatus
 000  
-006 #4: "west-east", type=ESP,  add_time=1234567890, inBytes=588, outBytes=588, id='@east'
+006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='@east'
 000  
 west #
  echo done
@@ -104,7 +104,7 @@ src 192.1.2.45 dst 192.1.2.23
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport 34757 dport 1025 dev eth1 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.1.2.45/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 

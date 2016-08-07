@@ -174,7 +174,6 @@ IPSEC_ALG_MODULE_EXIT_STATIC( ipsec_3des_fini )
 #endif
 {
 	unregister_ipsec_alg_enc(&ipsec_alg_3DES);
-	return;
 }
 
 /* Dual, because 3des code is 4-clause BSD licensed */

@@ -1,6 +1,6 @@
 # Lists the tests
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2016-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,9 +15,11 @@
 import os
 import re
 import collections
-import subprocess
+
 from fab import logutil
-from fab import utils
+from fab import utilsdir
+from fab import scripts
+from fab.hosts import HOST_NAMES
 
 
 class Test:
@@ -81,39 +83,14 @@ class Test:
         # test.directory.
         self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
 
-        scripts = _scripts(self.directory)
+        # Get an ordered list of (host,script) pairs of all the
+        # scripts that need to be run.
+        self.host_script_tuples = scripts.host_script_tuples(self.directory)
 
-        # host_names that this test requires, determine it from the
-        # script names.
+        # Just assume any host mentioned in scripts needs to run.
         self.host_names = set()
-        for host_name in HOST_NAMES:
-            for script in scripts:
-                if re.search(host_name, script):
-                    self.host_names.add(host_name)
-                    break
-
-        # figure out the scripts that need running
-        self.scripts = []
-        # init scripts
-        _add_matching(self.scripts, scripts, ["nic"], "nicinit.sh")
-        _add_matching(self.scripts, scripts, ["east"], "eastinit.sh")
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "init.sh")
-        # run scripts
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "run.sh")
-        # strip out the final script
-        final = []
-        _add_matching(final, scripts, sorted(self.host_names), "final.sh")
-        # what's left is the middle scripts, not exactly a smart way
-        # to do this
-        for script in sorted(scripts):
-            for host_name in sorted(self.host_names):
-                if re.search(host_name, script):
-                    self.scripts.append(Script(host_name, script))
-        # append the final scripts
-        for script in final:
-            self.scripts.append(script)
+        for host, script in self.host_script_tuples:
+            self.host_names.add(host)
 
 
     def result_file(self, directory=None):
@@ -125,41 +102,6 @@ class Test:
 
     def __str__(self):
         return self.full_name
-
-
-class Script:
-    def __init__(self, host_name, script):
-        self.host_name = host_name
-        self.script = script
-    def __str__(self):
-        return "%s:%s" % (self.host_name, self.script)
-
-def _add_matching(run, scripts, host_names, script):
-    if script in scripts:
-        scripts.remove(script)
-        for host_name in host_names:
-            run.append(Script(host_name, script))
-
-def _scripts(directory):
-    scripts = set()
-    if os.path.isdir(directory):
-        for script in os.listdir(directory):
-            if not re.match(r"[a-z0-9].*\.sh$", script):
-                continue
-            path = os.path.join(directory, script)
-            if not os.path.isfile(path):
-                continue
-            # Add more filter-outs
-            scripts.add(script)
-    return scripts
-
-def _host_names():
-    host_names = set()
-    status, output = subprocess.getstatusoutput(utils.relpath("kvmhosts.sh"))
-    for host_name in output.splitlines():
-        host_names.add(host_name)
-    return host_names
-HOST_NAMES = _host_names()
 
 
 # Load the tetsuite defined by TESTLIST
@@ -223,7 +165,7 @@ def add_arguments(parser):
                                       "options for configuring the testsuite or test directories")
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       default=os.path.relpath(utils.directory("..")),
+                       default=utilsdir.relpath(".."),
                        help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
@@ -235,10 +177,6 @@ def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
     logger.info("  testing-directory: '%s'", args.testing_directory)
     logger.info("  testsuite-output: '%s'", args.testsuite_output)
-    logger.info("  test-kind: '%s'" , args.test_kind.pattern)
-    logger.info("  test-name: '%s'" , args.test_name.pattern)
-    logger.info("  test-result: '%s'" , args.test_result.pattern)
-    logger.info("  test-exclude: '%s'" , args.test_exclude.pattern)
 
 
 def is_test_directory(directory):
@@ -258,7 +196,7 @@ def is_test_output_directory(directory):
 TESTLIST = "TESTLIST"
 
 
-def load(logger, args,
+def load(logger, log_level, args,
          testsuite_directory=None,
          testsuite_output_directory=None, # going away
          saved_testsuite_output_directory=None,
@@ -271,17 +209,22 @@ def load(logger, args,
     """
 
     saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
-    # Is DIRECTORY a testsuite?  For instance: testing/pluto.
-    testlist = os.path.join(testsuite_directory, TESTLIST)
-    if os.path.exists(testlist):
-        logger.debug("'%s' is a testsuite directory", testsuite_directory)
-        return Testsuite(logger, testlist, error_level,
-                         testing_directory=args.testing_directory,
-                         testsuite_output_directory=args.testsuite_output,
-                         saved_testsuite_output_directory=saved_testsuite_output_directory)
-
-    logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
-    return None
+    # Is DIRECTORY a testsuite or a testlist file?  For instance:
+    # testing/pluto or testing/pluto/TESTLIST.
+    if os.path.isfile(testsuite_directory):
+        testlist = testsuite_directory
+        testsuite_directory = os.path.dirname(testsuite_directory)
+        logger.log(log_level, "'%s' is a TESTLIST file", testlist)
+    else:
+        testlist = os.path.join(testsuite_directory, TESTLIST)
+        if not os.path.exists(testlist):
+            logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
+            return None
+        logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
+    return Testsuite(logger, testlist, error_level,
+                     testing_directory=args.testing_directory,
+                     testsuite_output_directory=args.testsuite_output,
+                     saved_testsuite_output_directory=saved_testsuite_output_directory)
 
 
 def append_test(tests, args, test_directory=None,
@@ -314,7 +257,7 @@ def load_testsuite_or_tests(logger, directories, args,
                             log_level=logutil.DEBUG):
 
     # Deal with each directory in turn.  It might be a test,
-    # testsuite, or output.
+    # testsuite, testlist, or output.
 
     tests = []
     for directory in directories:
@@ -325,11 +268,10 @@ def load_testsuite_or_tests(logger, directories, args,
             logger.debug("chopping / off '%s'", directory)
             directory = os.path.dirname(directory)
 
-        # perhaps directory is a testsuite?
-        testsuite = load(logger, args, testsuite_directory=directory,
+        # perhaps directory/file is a testsuite?
+        testsuite = load(logger, log_level, args, testsuite_directory=directory,
                          testsuite_output_directory=args.testsuite_output)
         if testsuite:
-            logger.log(log_level, "'%s' is a testsuite", directory)
             # more efficient?
             for test in testsuite:
                 tests.append(test)
@@ -404,32 +346,3 @@ def load_testsuite_or_tests(logger, directories, args,
         continue
 
     return tests
-
-
-def ignore(test, args):
-
-    """Identify tests that should be ignored due to filters
-
-    The ignore reason is returned.
-
-    This is different to SKIP where a test isn't run because it has
-    been run before.
-
-    """
-
-    if args.test_kind.pattern and not args.test_kind.search(test.kind):
-        return test.kind, "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
-    if args.test_name.pattern and not args.test_name.search(test.name):
-        return test.name, "name '%s' does not match '%s'" % (test.name, args.test_name.pattern)
-    if args.test_result.pattern and not args.test_result.search(test.expected_result):
-        return test.expected_result, "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
-
-    if args.test_exclude.pattern:
-        if args.test_exclude.search(test.kind):
-            return test.kind, "kind '%s' excluded by regular expression '%s'" % (test.kind, args.test_exclude.pattern)
-        if args.test_exclude.search(test.name):
-            return test.name, "name '%s' excluded by regular expression '%s'" % (test.name, args.test_exclude.pattern)
-        if args.test_exclude.search(test.expected_result):
-            return test.expected_result, "expected test result '%s' excluded by regular expression '%s'" % (test.expected_result, args.test_exclude.pattern)
-
-    return None, None

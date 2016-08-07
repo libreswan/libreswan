@@ -76,7 +76,8 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 
 	if (shared_phase1_connection(c)) {
 		libreswan_log("IKE SA is shared - only terminating IPsec SA");
-		delete_state(state_with_serialno(c->newest_ipsec_sa));
+		if (c->newest_ipsec_sa != SOS_NOBODY)
+			delete_state(state_with_serialno(c->newest_ipsec_sa));
 	} else {
 		DBG(DBG_CONTROL, DBG_log("connection not shared pkilling phase1 and phase2"));
 		delete_states_by_connection(c, FALSE);

@@ -107,6 +107,9 @@ class guest (threading.Thread):
     def __init__(self, hostname, role, testname, args, install=None, compile=None):
         threading.Thread.__init__(self)
         self.hostname = hostname
+        self.dname = hostname
+        if args.instance:
+            self.dname = hostname + str(args.instance)
         self.role = role
         self.testname = testname
         self.status = "NEW"
@@ -130,7 +133,7 @@ class guest (threading.Thread):
                 if not e:
                     e = "end"
             self.log_line('OUTPUT/RESULT', e)
-            logging.info("%s done %s ran %.2fs %s", self.hostname, self.testname,
+            logging.info("%s done %s ran %.2fs %s", self.dname, self.testname,
                          time.time() - self.start, e)
         except Exception as x:
             # XXXX: Bad, but easiest way to get rid of a deadlock when
@@ -146,7 +149,7 @@ class guest (threading.Thread):
 
     def clean_abort(self):
         # we are aborting: set all waiting events end of show.
-        logging.debug("%s set all events to abort", self.hostname)
+        logging.debug("%s set all events to abort", self.dname)
         r_init.set()
         n_init.set()
         i_ran.set()
@@ -158,7 +161,7 @@ class guest (threading.Thread):
 
         prompt = "\[root@%s %s\]# " % (self.hostname, self.testname)
         logging.debug("%s role %s running test %s prompt %s",
-                      self.hostname, self.role, self.testname, prompt.replace("\\", ""))
+                      self.dname, self.role, self.testname, prompt.replace("\\", ""))
 
         child = self.child
         timer = 120
@@ -170,7 +173,7 @@ class guest (threading.Thread):
         try:
             child.expect(prompt, searchwindowsize=100, timeout=timer)
         except:
-            err = "failed [%s] test directory on %s" % (cmd, self.hostname)
+            err = "failed [%s] test directory on %s" % (cmd, self.dname)
             logging.error("%s", err)
             return err
 
@@ -254,7 +257,7 @@ class guest (threading.Thread):
         for line in vmlist.split("\n")[2:]:
             try:
                 num, host, state = line.split()
-                if host == self.hostname and state == "running":
+                if host == self.dname and state == "running":
                     running = True
                     print(("Found %s running already" % self.hostname))
                     continue
@@ -275,9 +278,9 @@ class guest (threading.Thread):
                 if os.path.isfile("OUTPUT/stop-tests-now"):
                     return "aborting: found OUTPUT/stop-tests-now"
 
-                print(("Booting %s %s/%s" % (self.hostname, tries, bootwait)))
+                print(("Booting %s %s/%s" % (self.dname, tries, bootwait)))
                 v_start = subprocess.getoutput(
-                    "sudo virsh start %s" % self.hostname)
+                    "sudo virsh start %s" % self.dname)
                 logging.info(v_start)
                 re_e = re.search(r'error:', v_start, re.I)
                 if re_e:
@@ -288,7 +291,7 @@ class guest (threading.Thread):
 
                     # just abort this test
             if not done:
-                v_start = "KVMERROR %s " % self.hostname + v_start
+                v_start = "KVMERROR %s " % self.dname + v_start
                 logging.error(v_start)
                 self.log_line('OUTPUT/stop-tests-now', v_start)
                 if self.stoponerror:
@@ -298,13 +301,13 @@ class guest (threading.Thread):
 
             time.sleep(pause)
         elif self.reboot:
-            subprocess.getoutput("sudo virsh reboot %s" % self.hostname)
+            subprocess.getoutput("sudo virsh reboot %s" % self.dname)
             print(("Rebooting %s - pausing %s seconds" %
-                   (self.hostname, pause)))
+                   (self.dname, pause)))
             time.sleep(pause)
 
-        print(("Taking %s console by force" % self.hostname))
-        cmd = "sudo virsh console --force %s" % self.hostname
+        print(("Taking %s console by force" % self.dname))
+        cmd = "sudo virsh console --force %s" % self.dname
         timer = 120
         child = pexpect.spawnu(cmd)
         child.delaybeforesend = 0.1
@@ -315,25 +318,25 @@ class guest (threading.Thread):
         done = False
         tries = bootwait - pause + 1
 
-        print(("Waiting on %s login: %s" % (self.hostname, prompt)))
+        print(("Waiting on %s login: %s" % (self.dname, prompt)))
         while not done and tries != 0:
             if os.path.isfile("OUTPUT/stop-tests-now"):
                 return "aborting: found OUTPUT/stop-tests-now"
             try:
                 child.sendline('')
-                print(("%s [%s] waiting on login: or %s" % (self.hostname,
+                print(("%s [%s] waiting on login: or %s" % (self.dname,
                                                             tries, prompt)))
                 res = child.expect(['login: ', prompt], timeout=3)
                 if res == 0:
-                    print(("%s sending login name root" % self.hostname))
+                    print(("%s sending login name root" % self.dname))
                     child.sendline('root')
                     print(
-                        ("%s found, expecting password prompt" % self.hostname))
+                        ("%s found, expecting password prompt" % self.dname))
                     child.expect('Password:', timeout=1)
-                    print(("%s found, sending password" % self.hostname))
+                    print(("%s found, sending password" % self.dname))
                     child.sendline('swan')
                     print(
-                        ("%s waiting on root shell prompt %s" % (self.hostname, prompt)))
+                        ("%s waiting on root shell prompt %s" % (self.dname, prompt)))
                     child.expect('root.*', timeout=1)
                     print(("got prompt %s" % prompt.replace("\\", "")))
                     done = True
@@ -349,7 +352,7 @@ class guest (threading.Thread):
 
         if not done:
             err = 'KVMERROR console is not answering: abort test'
-            logging.error("%s %s %s", self.hostname, err, self.testname)
+            logging.error("%s %s %s", self.dname, err, self.testname)
             self.log_line('OUTPUT/stop-tests-now', err)
 
             if self.stoponerror:
@@ -357,7 +360,7 @@ class guest (threading.Thread):
                 self.log_line('../stop-tests-now', err)
             return err
 
-        remote = Remote(child, self.hostname)
+        remote = Remote(child, self.dname)
         remote.run('TERM=dumb; export TERM; unset LS_COLORS')
         child.setecho(False)  # this does not seems to work
         remote.run("stty sane")
@@ -907,7 +910,11 @@ class scantests:
                 pass
 
     def write_txt(self, table):
-        csvfile = self.trpath + '/' + 'table.txt'
+        if self.args.instance:
+            csvfile = self.trpath + '/' + 'table' + \
+                str(self.args.instance) + '.txt'
+        else:
+            csvfile = self.trpath + '/' + 'table.txt'
         logging.info("write text summary file %s" % csvfile)
 
         with open(csvfile, 'w') as csvfile:
@@ -1119,6 +1126,10 @@ def shut_down_hosts(args, test_hosts):
     all_hosts = list(DEFAULTCONFIG['swanhosts'])
     all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
 
+    if args.instance:
+        for i, host in enumerate(all_hosts):
+            all_hosts[i] += str(args.instance)
+
     if args.noreboot:
         logging.debug(
             "all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
@@ -1281,6 +1292,11 @@ def orient(args, test):
 
     if "others" in test:
         log_line = log_line + " also " + " ".join(test["others"])
+
+    if args.instance:
+        logging.debug("this is a second instance of the test turn")
+        for i, host in enumerate(test_hosts):
+            test_hosts[i] += str(args.instance)
 
     logging.debug("test hosts are initiator %s responder %s %s",
                   test["initiator"], test["responder"], log_line)
@@ -1475,6 +1491,7 @@ DEFAULTCONFIG = {
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
+    'instance': 0,
     'initshwait': 600,
     'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
     'newrun': None,
@@ -1518,7 +1535,7 @@ def cmdline():
                         type=compile_regex_arg, help="Exclude tests that match <regex>")
 
     parser.add_argument("--graphsappend", default='',
-                        help="update this graph entry. for advanced use only")
+                        help="update this graph entry. full path ")
 
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
@@ -1529,6 +1546,10 @@ def cmdline():
     parser.add_argument(
         "--initshwait", default=DEFAULTCONFIG['initshwait'],
         type=int, help="seconds to wait for the init.sh, Python Thread, %s seconds" % DEFAULTCONFIG['initshwait'])
+
+    parser.add_argument(
+        "--instance", default=DEFAULTCONFIG['instance'],
+        type=int, help="instance prefix %s" % DEFAULTCONFIG['instance'])
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -2525,6 +2546,9 @@ def main():
     elif args.scancwd:
         scancwd(args)
         return
+
+    if args.instance:
+        args.leavezombies = True
 
     if not args.leavezombies:
         kill_zombies("swantest")

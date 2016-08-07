@@ -93,7 +93,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 		 * there is no long-form code.
 		 */
 		bad_case(type);
-
 	}
 	return TRUE;
 }
@@ -317,7 +316,7 @@ struct print {
 	char buf[1024];
 };
 
-static struct print *print_buf()
+static struct print *print_buf(void)
 {
 	return alloc_thing(struct print, "print buf");
 }
@@ -729,9 +728,10 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_type_transform(buf, type, &remote_transform);
-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d transform %zu",
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %zu",
 							    remote_propnum, remote_transform_nr,
 							    buf->buf, local_propnum,
+							    type, trans_type_name(type),
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
 						*matching_local_transform = local_transform;
@@ -769,17 +769,44 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				DBG(DBG_CONTROL, DBG_log("allowing no NULL integrity"));
 				continue;
 			}
-			int type_proposed = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = matching_local_proposal->matching_transform[type]->valid;
-			if (type_proposed != type_matched) {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
+			bool local_transform_type_present = local_transforms->transform[0].valid;
+			bool remote_transform_type_present = ((transform_types_found & LELEM(type)) != 0);
+			/*
+			* Check that the local and remote end are
+			* consistent about the transform being
+			* present.
+			*
+			* Transform matching is not optional.
+			* Instead, for something like ESP/AH, DH is
+			* made "optional" by sending two proposals.
+			* One with the transform (DH) present and one
+			* with it absent.
+			*/
+			if (local_transform_type_present != remote_transform_type_present) {
+			   DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
+				local_propnum, trans_type_name(type),
+				local_transform_type_present ?  "present" : "absent",
+				remote_transform_type_present ?  "present" : "absent"));
+			   break;
+			}
+			/*
+			* Check that when the transform type is
+			* required it also matches and vice versa.
+			*
+			* Since !local_transform_type_present implies
+			* !remote_transform_type_matched, the above
+			* test is also required.
+			*/
+			bool remote_transform_type_matched = matching_local_proposal->matching_transform[type]->valid;
+			if (local_transform_type_present != remote_transform_type_matched) {
+			    DBG(DBG_CONTROLMORE, DBG_log("local proposal %d transform type %s failed: local %s and remote %s",
 							     local_propnum, trans_type_name(type),
-							     type_proposed ? "proposed" : "not-proposed",
-							     type_matched ? "matched" : "not-matched"));
+								local_transform_type_present ?  "present" : "absent",
+								remote_transform_type_matched ?  "matched" : "different"));
 				break;
 			}
 		}
-		/* loop finished? */
+		/* loop finished cleanly? */
 		if (type == IKEv2_TRANS_TYPE_ROOF) {
 			DBG(DBG_CONTROL,
 			    DBG_log("remote proposal %u matches local proposal %d",
@@ -1043,7 +1070,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 				*best_transforms->transform = *matching_transform;
 			}
 		}
-
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
 	stf_status status;
@@ -1254,58 +1280,76 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 		if (transforms->transform[0].valid) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
-			case IKEv2_TRANS_TYPE_ENCR:
-				ta.encrypt = transform->id;
-				ta.enckeylen = transform->attr_keylen;
-				ta.encrypter = (const struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
-										     ta.encrypt);
-				if (ta.encrypter == NULL) {
-					/* everything should be in alg_info.  */
+			case IKEv2_TRANS_TYPE_ENCR: {
+				const struct encrypt_desc * encrypter = (const struct encrypt_desc *)
+					ikev2_alg_find(IKE_ALG_ENCRYPT, transform->id);
+				if (encrypter == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
 						    ta.encrypt));
 				}
-				if (ta.enckeylen <= 0) {
-					if (ta.encrypter != NULL) {
-						ta.enckeylen = ta.encrypter->keydeflen;
-					} else {
-						DBG(DBG_CONTROL,
-						    DBG_log("unknown key size for ENCRYPT algorithm %d",
-							    ta.encrypt));
-					}
+				ta.encrypt = transform->id;
+				ta.encrypter = encrypter;
+				ta.enckeylen = transform->attr_keylen;
+				if (transform->attr_keylen > 0) {
+					ta.enckeylen = transform->attr_keylen;
+				} else if (encrypter != NULL) {
+					ta.enckeylen = ta.encrypter->keydeflen;
+				} else {
+					ta.enckeylen = 0;
+					loglog(RC_LOG_SERIOUS, "unknown key size for ENCRYPT algorithm %d",
+					       ta.encrypt);
 				}
-			break;
-			case IKEv2_TRANS_TYPE_PRF:
-				ta.prf_hash = transform->id;
-				ta.prf_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-										   ta.prf_hash);
-				if (ta.prf_hasher == NULL) {
-					/* everything should be in alg_info.  */
+				break;
+			}
+			case IKEv2_TRANS_TYPE_PRF: {
+				const struct hash_desc *prf_hasher = (const struct hash_desc *)
+					ikev2_alg_find(IKE_ALG_HASH, transform->id);
+				if (prf_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_find(IKG_ALG_HASH,%d) failed, assuming ESP/AH",
 						    ta.prf_hash));
 				}
+				ta.prf_hash = transform->id;
+				ta.prf_hasher = prf_hasher;
 				break;
-			case IKEv2_TRANS_TYPE_INTEG:
+			}
+			case IKEv2_TRANS_TYPE_INTEG: {
 				if (transform->id == 0) {
 					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
-				} else {
-					ta.integ_hash = transform->id;
-					ta.integ_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-											     ta.integ_hash);
-					if (ta.integ_hasher == NULL) {
-						/* everything should be in alg_info.  */
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
-							    ta.integ_hash));
-					}
+					break;
 				}
+				const struct hash_desc *integ_hasher = (const struct hash_desc *)
+					ikev2_alg_find(IKE_ALG_INTEG, transform->id);
+				if (integ_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
+						    ta.integ_hash));
+				}
+				ta.integ_hash = transform->id;
+				ta.integ_hasher = integ_hasher;
 				break;
-			case IKEv2_TRANS_TYPE_DH:
-				ta.groupnum = transform->id;
-				ta.group = lookup_group(ta.groupnum);
-				if (ta.group == NULL) {
+			}
+			case IKEv2_TRANS_TYPE_DH: {
+				const struct oakley_group_desc *group =
+					lookup_group(transform->id);
+				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
 					 * kernel, is going to do the
@@ -1313,14 +1357,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * finding the DH group is
 					 * likely really bad.
 					 *
-					 * Stumble on as caller will
-					 * quickly passert.
+					 * Leave everthing NULL so
+					 * that caller can detect
+					 * this.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("lookup_group(%d) failed",
-						    ta.integ_hash));
+					loglog(RC_LOG_SERIOUS,
+					       "accepted proposal contains unknown DH group %d",
+					       transform->id);
+					break;
 				}
+				ta.groupnum = transform->id;
+				ta.group = group;
 				break;
+			}
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
 				case IKEv2_ESN_ENABLED:
@@ -1489,41 +1538,33 @@ static void append_transform(struct ikev2_proposal *proposal,
 
 #define ENCR_AES_CBC_128 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_CBC_256 { .id = IKEv2_ENCR_AES_CBC, .attr_keylen = 256, .valid = TRUE, }
-#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_8, .attr_keylen = 128, .valid = TRUE, }
+#define ENCR_AES_GCM16_128 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 128, .valid = TRUE, }
 #define ENCR_AES_GCM16_256 { .id = IKEv2_ENCR_AES_GCM_16, .attr_keylen = 256, .valid = TRUE, }
-#define ENCR_3DES { .id = IKEv2_ENCR_3DES, .valid = TRUE, }
 
 #define PRF_SHA2_512 { .id = IKEv2_PRF_HMAC_SHA2_512, .valid = TRUE, }
 #define PRF_SHA2_256 { .id = IKEv2_PRF_HMAC_SHA2_256, .valid = TRUE, }
-#define PRF_AES128_XCBC { .id = IKEv2_PRF_AES128_XCBC, .valid = TRUE, }
 #define PRF_SHA1 { .id = IKEv2_PRF_HMAC_SHA1, .valid = TRUE, }
-#define PRF_MD5 { .id = IKEv2_PRF_HMAC_MD5, .valid = TRUE, }
 
 #define AUTH_NONE { .id = IKEv2_AUTH_NONE, .valid = TRUE, }
 #define AUTH_SHA2_512_256 { .id = IKEv2_AUTH_HMAC_SHA2_512_256, .valid = TRUE, }
 #define AUTH_SHA2_256_128 { .id = IKEv2_AUTH_HMAC_SHA2_256_128, .valid = TRUE, }
-#define AUTH_AES_XCBC_96 { .id = IKEv2_AUTH_AES_XCBC_96, .valid = TRUE, }
 #define AUTH_SHA1_96 { .id = IKEv2_AUTH_HMAC_SHA1_96, .valid = TRUE, }
-#define AUTH_MD5_96 { .id = IKEv2_AUTH_HMAC_MD5_96, .valid = TRUE, }
 
 #define DH_MODP1536 { .id = OAKLEY_GROUP_MODP1536, .valid = TRUE, }
 #define DH_MODP2048 { .id = OAKLEY_GROUP_MODP2048, .valid = TRUE, }
+#define DH_MODP3072 { .id = OAKLEY_GROUP_MODP3072, .valid = TRUE, }
 #define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, .valid = TRUE, }
 #define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, .valid = TRUE, }
-
-#define ESN_NO { .id = IKEv2_ESN_DISABLED, .valid = TRUE, }
-#define ESN_YES { .id = IKEv2_ESN_ENABLED, .valid = TRUE, }
 
 #define TR(T, ...) { .transform = { T, __VA_ARGS__ } }
 
 static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	/*
-	 * IKEv2 proposal #0:
-	 * AES_GCM[256]
+	 * AES_GCM_16/C[256]
 	 * NULL
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP4096, MODP8192
+	 * MODP2048, MODP3072, MODP4096, MODP8192
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1535,12 +1576,11 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
 		},
 	},
         /*
-	 * IKEv2 proposal #1:
-	 * AES_GCM[128]
+	 * AES_GCM_16/C[128]
 	 * NULL
 	 * SHA2_512, SHA2_256, SHA1
 	 * MODP2048, MODP4096, MODP8192
@@ -1555,15 +1595,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
 		},
 	},
         /*
-	 * IKEv2 proposal #2:
 	 * AES_CBC[256]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1575,15 +1614,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
         /*
-	 * IKEv2 proposal #3:
 	 * AES_CBC[128]
 	 * SHA2_512, SHA2_256, SHA1
 	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP1536
+	 * MODP2048, MODP3072, MODP1536
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1595,7 +1633,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
 		},
 	},
 };
@@ -1618,24 +1656,24 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("already determined IKE proposals for %s", what));
 		return;
 	}
 
 	if (alg_info_ike == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("selecting default IKE proposals for %s", what));
 		*result = &default_ikev2_ike_proposals;
 
 		struct print *buf = print_buf();
 		print_proposals(buf, *result);
-		libreswan_log("%s IKE proposals: %s (default)",
-			      name, buf->buf);
+		libreswan_log("%s IKE proposals for %s: %s (default)",
+			      name, what, buf->buf);
 		pfree(buf);
 
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
+	DBG(DBG_CONTROL, DBG_log("constructing IKE proposals for %s", what));
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
 	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
@@ -1763,18 +1801,17 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 
 	struct print *buf = print_buf();
 	print_proposals(buf, *result);
-	libreswan_log("%s IKE proposals: %s", name, buf->buf);
+	libreswan_log("%s IKE proposals for %s: %s", name, what, buf->buf);
 	pfree(buf);
 }
 
-static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
+static struct ikev2_proposal default_ikev2_esp_proposal_missing_esn[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1782,7 +1819,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1790,7 +1826,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1798,7 +1833,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	/*
@@ -1809,29 +1843,26 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 };
-static struct ikev2_proposals ikev2_esn_no_yes_esp_proposals = {
-	.proposal = ikev2_esn_no_yes_esp_proposal,
-	.roof = elemsof(ikev2_esn_no_yes_esp_proposal),
+static struct ikev2_proposals default_ikev2_esp_proposals_missing_esn = {
+	.proposal = default_ikev2_esp_proposal_missing_esn,
+	.roof = elemsof(default_ikev2_esp_proposal_missing_esn),
 };
 
-static struct ikev2_proposal ikev2_esn_no_yes_ah_proposal[] = {
+static struct ikev2_proposal default_ikev2_ah_proposal_missing_esn[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 
@@ -1842,13 +1873,12 @@ static struct ikev2_proposal ikev2_esn_no_yes_ah_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 };
-static struct ikev2_proposals ikev2_esn_no_yes_ah_proposals = {
-	.proposal = ikev2_esn_no_yes_ah_proposal,
-	.roof = elemsof(ikev2_esn_no_yes_ah_proposal),
+static struct ikev2_proposals default_ikev2_ah_proposals_missing_esn = {
+	.proposal = default_ikev2_ah_proposal_missing_esn,
+	.roof = elemsof(default_ikev2_ah_proposal_missing_esn),
 };
 
 static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
@@ -1868,20 +1898,20 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("already determined ESP/AH proposals for %s", what));
 		return;
 	}
 
 	if (alg_info_esp == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default %s proposals", what));
+		DBG(DBG_CONTROL, DBG_log("selecting default ESP/AH proposals for %s", what));
 		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
-		struct ikev2_proposals *esn_no_yes_proposals;
+		struct ikev2_proposals *default_proposals_missing_esn;
 		switch (esp_ah) {
 		case POLICY_ENCRYPT:
-			esn_no_yes_proposals = &ikev2_esn_no_yes_esp_proposals;
+			default_proposals_missing_esn = &default_ikev2_esp_proposals_missing_esn;
 			break;
 		case POLICY_AUTHENTICATE:
-			esn_no_yes_proposals = &ikev2_esn_no_yes_ah_proposals;
+			default_proposals_missing_esn = &default_ikev2_ah_proposals_missing_esn;
 			break;
 		default:
 			/*
@@ -1890,52 +1920,34 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			 */
 			bad_case(policy);
 		}
-		switch (policy & (POLICY_ESN_NO | POLICY_ESN_YES)) {
-		case 0: /* screwup */
-		case (POLICY_ESN_NO|POLICY_ESN_YES):
-			*result = esn_no_yes_proposals;
-			break;
-		case POLICY_ESN_NO:
-		case POLICY_ESN_YES: {
-			/*
-			 * Clone the ESN_NO proposals and fix up the
-			 * ESN bits.
-			 */
-			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
-									"cloned ESP/AH proposals");
-			proposals->on_heap = TRUE;
-			proposals->roof = esn_no_yes_proposals->roof;
-			proposals->proposal = clone_bytes(esn_no_yes_proposals->proposal,
-							  sizeof(esn_no_yes_proposals->proposal[0]) * esn_no_yes_proposals->roof,
-							  "ESP/AH proposals");
-			
-			int propnum;
-			struct ikev2_proposal *proposal;
-			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-				/* 
-				 * invalidate any existing ESN
-				 * proposal list
-				 */
-				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) { .valid = FALSE };
-				add_esn_transforms(proposal, policy);
-			}
-			*result = proposals;
-			break;
+		/*
+		 * Clone the default proposal and add the missing ESN.
+		 */
+		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
+								"cloned ESP/AH proposals");
+		proposals->on_heap = TRUE;
+		proposals->roof = default_proposals_missing_esn->roof;
+		proposals->proposal = clone_bytes(default_proposals_missing_esn->proposal,
+						  sizeof(default_proposals_missing_esn->proposal[0]) * default_proposals_missing_esn->roof,
+						  "ESP/AH proposals");
+
+		int propnum;
+		struct ikev2_proposal *proposal;
+		FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
+			add_esn_transforms(proposal, policy);
 		}
-		default:
-			bad_case(policy);
-		}
+		*result = proposals;
 
 		struct print *buf = print_buf();
 		print_proposals(buf, *result);
-		libreswan_log("%s ESP/AH proposals: %s (default)",
-			      name, buf->buf);
+		libreswan_log("%s ESP/AH proposals for %s: %s (default)",
+			      name, what, buf->buf);
 		pfree(buf);
 
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing %s proposals", what));
+	DBG(DBG_CONTROL, DBG_log("constructing ESP/AH proposals for %s", what));
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
@@ -2001,7 +2013,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					}
 				}
 			}
-			
+
 			/* add ESP auth attr (if present) */
 			if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
@@ -2045,7 +2057,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 	struct print *buf = print_buf();
 	print_proposals(buf, *result);
-	libreswan_log("%s ESP/AH proposals: %s", name, buf->buf);
+	libreswan_log("%s ESP/AH proposals for %s: %s", name, what, buf->buf);
 	pfree(buf);
 }
 

@@ -15,6 +15,7 @@
 # for more details.
 
 from collections import defaultdict
+import threading
 
 from fab import logutil
 
@@ -24,40 +25,44 @@ class Counts:
         # Use a default dict so no need to worry about initializing
         # values to zero.
         self.counts = defaultdict(lambda: defaultdict(set))
+        self.lock = threading.Lock()
 
     def add(self, value, *keys, domain=None):
-        key = "/".join(keys)
-        # Include the "None" domain in the set so that it is always
-        # non-empty - makes iterating over it is easier.  See
-        # log_details.
-        self.counts[key][value].add(domain)
+        with self.lock:
+            key = "/".join(keys)
+            # Include the "None" domain in the set so that it is always
+            # non-empty - makes iterating over it is easier.  See
+            # log_details.
+            self.counts[key][value].add(domain)
 
     def log_summary(self, log, header=None, footer=None, prefix=""):
-        if len(self.counts):
-            header and log(header)
-            for key, values in sorted(self.counts.items()):
-                log("%s%s: %d", prefix, key, len(values))
-            footer and log(footer)
+        with self.lock:
+            if len(self.counts):
+                header and log(header)
+                for key, values in sorted(self.counts.items()):
+                    log("%s%s: %d", prefix, key, len(values))
+                footer and log(footer)
 
     def log_details(self, log, header=None, footer=None, prefix=""):
-        if len(self.counts):
-            header and log(header)
-            for key, values in sorted(self.counts.items()):
-                # First invert value:domain creating domain:value
-                table = defaultdict(set)
-                for value, domains in sorted(values.items()):
-                    for domain in domains:
-                        table[domain].add(value)
-                # Second log key[/domain]: value ...
-                for domain, values in sorted(table.items()):
-                    line = ""
-                    for value in sorted(values):
-                        line += " " + value
-                    if domain:
-                        log("%s%s/%s:%s", prefix, key, domain, line)
-                    else:
-                        log("%s%s:%s", prefix, key, line)
-            footer and log(footer)
+        with self.lock:
+            if len(self.counts):
+                header and log(header)
+                for key, values in sorted(self.counts.items()):
+                    # First invert value:domain creating domain:value
+                    table = defaultdict(set)
+                    for value, domains in sorted(values.items()):
+                        for domain in domains:
+                            table[domain].add(value)
+                    # Second log key[/domain]: value ...
+                    for domain, values in sorted(table.items()):
+                        line = ""
+                        for value in sorted(values):
+                            line += " " + value
+                        if domain:
+                            log("%s%s/%s:%s", prefix, key, domain, line)
+                        else:
+                            log("%s%s:%s", prefix, key, line)
+                footer and log(footer)
 
 
 class Tests(Counts):

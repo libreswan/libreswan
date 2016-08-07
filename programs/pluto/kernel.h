@@ -294,8 +294,8 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 
-extern void show_shunt_status();
-extern int show_shunt_count();
+extern void show_shunt_status(void);
+extern int show_shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,

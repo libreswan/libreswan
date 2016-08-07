@@ -1,4 +1,0 @@
-This test that the /proc/net/ipsec/birth/ipv[46] files can store up
-to 256 bytes and read them back, and that each is in fact seperate
-from each other.
-

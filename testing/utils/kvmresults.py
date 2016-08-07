@@ -23,7 +23,6 @@ from fab import testsuite
 from fab import logutil
 from fab import post
 from fab import stats
-from fab import utils
 from fab import skip
 from fab import ignore
 
@@ -100,7 +99,7 @@ def main():
                         help="a %(metavar)s containing baseline testsuite output")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), test output, or testsuite output")
+                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), a TESTLIST file, test output, or testsuite output")
     # Note: this argument serves as documentation only.  The
     # TEST-DIRECTORY argument always consumes all remaining arguments.
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
@@ -161,9 +160,8 @@ def main():
         # one is a baseline.  A baseline might be: a complete
         # testsuite snapshot; or just output saved as
         # testing/pluto/OUTPUT/TESTDIR.
-        baseline = testsuite.load(logger, args,
-                                  testsuite_directory=args.directories[-1],
-                                  error_level=logutil.DEBUG)
+        baseline = testsuite.load(logger, logutil.DEBUG, args,
+                                  testsuite_directory=args.directories[-1])
         if baseline:
             # discard the last argument as consumed above.
             logger.debug("discarding baseline testsuite argument '%s'", args.directories[-1])
@@ -196,8 +194,9 @@ def results(logger, tests, baseline, args, result_stats):
 
     for test in tests:
 
-        # Produce separate runtimes for each test.
-        with logutil.TIMER:
+        # If debug logging is enabled this will provide per-test
+        # timing.
+        with logger.timer_stack():
 
             logger.debug("start processing test %s", test.name)
 
@@ -312,9 +311,9 @@ def results(logger, tests, baseline, args, result_stats):
                     print(test.saved_output_directory, end="")
                     sep = " "
                 elif p is Print.scripts:
-                    for script in test.scripts:
+                    for host, script in test.host_script_tuples:
                         print(sep, end="")
-                        print(script, end="")
+                        print("%s:%s" % (host, script), end="")
                         sep = ","
                     sep = " "
                 else:

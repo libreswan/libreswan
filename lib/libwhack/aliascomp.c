@@ -56,7 +56,6 @@ bool lsw_alias_cmp(const char *needle, const char *haystack)
 				break;
 			}
 		}
-
 	}
 
 	return FALSE;

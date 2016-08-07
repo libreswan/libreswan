@@ -27,7 +27,7 @@ SUBDIRS+=configs _keycensor _plutorun _stackmanager
 SUBDIRS+=_secretcensor _updown
 SUBDIRS+=auto barf verify ipsec look newhostkey
 SUBDIRS+=rsasigkey setup showhostkey
-SUBDIRS+=ikeping readwriteconf
+SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
 
 ifeq ($(USE_KLIPS),true)

@@ -1,0 +1,3 @@
+ESN testing: esn not specified, replay-window=64
+
+The connection should establish

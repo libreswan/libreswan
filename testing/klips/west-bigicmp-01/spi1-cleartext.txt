@@ -1,9 +1,0 @@
-arp who-has 192.0.1.1 tell 192.0.1.254
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 0
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 256
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 512
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 768
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 1024
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 1280
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 1536
-IP (tos 0x0, ttl  62, id 0, offset 0, flags [DF], length: 1488) 192.0.2.1 > 192.0.1.1: icmp 1468: echo request seq 1792

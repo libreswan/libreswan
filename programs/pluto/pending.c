@@ -92,9 +92,10 @@ void add_pending(int whack_sock,
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("Ignored already queued up pending IPsec SA negotiation with %s \"%s\"",
+				char cib[CONN_INST_BUF];
+				DBG_log("Ignored already queued up pending IPsec SA negotiation with %s \"%s\"%s",
 					ipstr(&c->spd.that.host_addr, &b),
-					c->name);
+					c->name, fmt_conn_instance(c, cib));
 			});
 			return;
 		}
@@ -102,9 +103,10 @@ void add_pending(int whack_sock,
 
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"",
+		char cib[CONN_INST_BUF];
+		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s",
 			ipstr(&c->spd.that.host_addr, &b),
-			c->name);
+			c->name, fmt_conn_instance(c, cib));
 	});
 
 	p = alloc_thing(struct pending, "struct pending");
@@ -190,9 +192,19 @@ static void delete_pending(struct pending **pp)
 		connection_discard(p->connection);
 	close_any(p->whack_sock);
 
-	DBG(DBG_DPD,
-	    DBG_log("removing pending policy for \"%s\" {%p}",
-		    p->connection ? p->connection->name : "none", p));
+	DBG(DBG_DPD, {
+		if (p->connection == NULL) {
+			/* ??? when does this happen? */
+			DBG_log("removing pending policy for no connection {%p}",
+				p);
+		} else {
+			char cib[CONN_INST_BUF];
+			DBG_log("removing pending policy for \"%s\"%s {%p}",
+				p->connection->name,
+				fmt_conn_instance(p->connection, cib),
+				p);
+		}
+	});
 
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(p->uctx);
@@ -223,10 +235,12 @@ void unpend(struct state *st)
 		if (p->isakmp_sa == st) {
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("unqueuing pending %s with %s \"%s\" %s",
+				char cib[CONN_INST_BUF];
+				DBG_log("unqueuing pending %s with %s \"%s\"%s %s",
 					st->st_ikev2 ? "Child SA" : "Quick Mode",
 					ipstr(&p->connection->spd.that.host_addr, &b),
 					p->connection->name,
+					fmt_conn_instance(p->connection, cib),
 					enum_name(&pluto_cryptoimportance_names,
 						  st->st_import));
 			});
@@ -283,8 +297,10 @@ bool pending_check_timeout(const struct connection *c)
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
 		DBG(DBG_DPD, {
 			deltatime_t waited = monotimediff(mononow(), p->pend_time);
-			DBG_log("checking connection \"%s\" for stuck phase 2s (waited %lds, patience 3*%lds)",
+			char cib[CONN_INST_BUF];
+			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %lds, patience 3*%lds)",
 				c->name,
+				fmt_conn_instance(c, cib),
 				(long) deltasecs(waited),
 				(long) deltasecs(c->dpd_timeout));
 			});
@@ -293,9 +309,11 @@ bool pending_check_timeout(const struct connection *c)
 			if (!monobefore(mononow(),
 				monotimesum(p->pend_time,
 					deltatimescale(3, 1, c->dpd_timeout)))) {
-				DBG(DBG_DPD,
-				    DBG_log("connection \"%s\" stuck, restarting",
-					    c->name));
+				DBG(DBG_DPD, {
+					char cib[CONN_INST_BUF];
+					DBG_log("connection \"%s\"%s stuck, restarting",
+						c->name, fmt_conn_instance(c, cib));
+				});
 				return TRUE;
 			}
 		}

@@ -293,8 +293,7 @@ stf_status main_outI1(int whack_sock,
 	/* if we are not 0 then something went very wrong above */
 	if (numvidtosend != 0)
 		libreswan_log(
-			"payload alignment problem please check the code in "
-			"main_inR1_outR2 (num=%d)",
+			"payload alignment problem please check the code in main_inR1_outR2 (num=%d)",
 			numvidtosend);
 
 	if (!close_message(&md.rbody, st))
@@ -683,13 +682,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
+			char cib[CONN_INST_BUF];
 
-			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
-				"received on %s:%u "
-				"but \"%s\" forbids connection",
-				ipstr(&md->iface->ip_addr, &b),
-				pluto_port,
-				c->name);
+			loglog(RC_LOG_SERIOUS,
+				"initial Main Mode message received on %s:%u but \"%s\"%s forbids connection",
+				ipstr(&md->iface->ip_addr, &b), pluto_port,
+				c->name, fmt_conn_instance(c, cib));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else {
@@ -700,9 +698,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 */
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("instantiating \"%s\" for initial "
-					"Main Mode message received on %s:%u",
-					c->name,
+				char cib[CONN_INST_BUF];
+				DBG_log("instantiating \"%s\"%s for initial Main Mode message received on %s:%u",
+					c->name, fmt_conn_instance(c, cib),
 					ipstr(&md->iface->ip_addr, &b),
 					pluto_port);
 			});
@@ -716,9 +714,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 */
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
-				DBG_log("local endpoint has virt (vnet/vhost) "
-					"set without wildcards - needs "
-					"instantiation"));
+				DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
@@ -729,16 +725,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
-	md->st = st = new_state();
+	md->st = st = new_rstate(md);
 
 	passert(!st->st_oakley.doing_xauth);
 
 	st->st_connection = c;	/* safe: from new_state */
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
 
 	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
@@ -1370,8 +1361,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("main inI2_outR2: starting async DH "
-				"calculation (group=%d)",
+			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.group->group));
 
 		e = start_dh_secretiv(dh, st,
@@ -1595,8 +1585,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key "
-					"for RSA Signature");
+					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -1724,8 +1713,9 @@ static void report_key_dns_failure(struct id *id, err_t ugh)
 	char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
 
 	(void) idtoa(id, id_buf, sizeof(id_buf));
-	loglog(RC_LOG_SERIOUS, "no RSA public key known for '%s'"
-		"; DNS search for KEY failed (%s)", id_buf, ugh);
+	loglog(RC_LOG_SERIOUS,
+		"no RSA public key known for '%s'; DNS search for KEY failed (%s)",
+		id_buf, ugh);
 }
 
 /*
@@ -1780,8 +1770,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			DBG_cond_dump(DBG_CRYPT, "received HASH:",
 				hash_pbs->cur, pbs_left(hash_pbs));
 			loglog(RC_LOG_SERIOUS,
-				"received Hash Payload does not match "
-				"computed value");
+				"received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
 		}
@@ -2110,8 +2099,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key "
-					"for RSA Signature");
+					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -2147,15 +2135,13 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
-				"compatibility."));
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log("Skipping ModeCFG for rekey for "
-					"Cisco Peer compatibility."));
+				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
@@ -2220,15 +2206,13 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
-				"compatibility."));
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log("Skipping ModeCFG for rekey for Cisco "
-					"Peer compatibility."));
+				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
@@ -2259,7 +2243,6 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		 * Also, only the side that proposed IKEv2 can figure out there
 		 * was a bid down attack to begin with. The side that did not propose
 		 * cannot distinguish attack from regular ikev1 operation.
-		 * if(st->st_connection->policy & POLICY_IKEV2_ALLOW) {
 		 */
 		if (st->st_connection->policy & POLICY_IKEV2_PROPOSE) {
 			libreswan_log(
@@ -2386,6 +2369,8 @@ stf_status send_isakmp_notification(struct state *st,
  * Send a notification to the peer. We could decide
  * whether to send the notification, based on the type and the
  * destination, if we care to.
+ * Note: some calls are from send_notification_from_md and
+ * those calls pass a fake state as sndst.
  */
 static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
@@ -2403,24 +2388,39 @@ static void send_notification(struct state *sndst, notification_t type,
 	static monotime_t last_malformed;
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
+
 	struct connection *c = sndst->st_connection;
 
 	r_hashval = NULL;
 	r_hash_start = NULL;
 
-	passert(sndst != NULL && c != NULL);
-
 	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
+		/* ??? this depends on monotime_t having a one-second granularity */
 		if (monobefore(last_malformed, n))
 			return;
 
 		last_malformed = n;
+
+		/*
+		 * If a state gets too many of these, delete it.
+		 *
+		 * Note that the fake state of send_notification_from_md
+		 * will never trigger this (a Good Thing since it
+		 * must not be deleted).
+		 */
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
-			if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			/*
+			 * Log this if it is for a non-opportunistic connection
+			 * or if DBG_OPPO is on.  We don't want a DoS.
+			 * Using DBG_OPPO is kind of odd because this is not
+			 * controlling DBG_log.
+			 */
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+			    DBGP(DBG_OPPO)) {
 				libreswan_log(
 					"too many (%d) malformed payloads. Deleting state",
 					sndst->hidden_variables.st_malformed_sent);
@@ -2430,8 +2430,10 @@ static void send_notification(struct state *sndst, notification_t type,
 			return;
 		}
 
-		libreswan_DBG_dump("payload malformed after possible IV", sndst->st_iv,
-				sndst->st_iv_len);
+		if (sndst->st_iv_len != 0) {
+			libreswan_DBG_dump("payload malformed.  IV:", sndst->st_iv,
+					sndst->st_iv_len);
+		}
 
 		/*
 		 * do not encrypt notification, since #1 reason for malformed
@@ -2455,16 +2457,21 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	{
+	/*
+	 * Log this if it is for a non-opportunistic connection
+	 * or if DBG_OPPO is on.  We don't want a DoS.
+	 * Using DBG_OPPO is kind of odd because this is not
+	 * controlling DBG_log.
+	 */
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+	    DBGP(DBG_OPPO)) {
 		ipstr_buf b;
 
-		if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			libreswan_log("sending %snotification %s to %s:%u",
-				encst ? "encrypted " : "",
-				enum_name(&ikev1_notify_names, type),
-				ipstr(&sndst->st_remoteaddr, &b),
-				sndst->st_remoteport);
-		}
+		libreswan_log("sending %snotification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev1_notify_names, type),
+			ipstr(&sndst->st_remoteaddr, &b),
+			sndst->st_remoteport);
 	}
 
 	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
@@ -2596,30 +2603,40 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
 	/*
-	 * Create a dummy state to be able to use send_ike_msg in
-	 * send_notification
+	 * Note: send_notification_from_md and send_v2_notification_from_md
+	 * share code (and bugs).  Any fix to one should be done to both.
 	 *
-	 * we need to set:
+	 * Create a fake state object to be able to use send_notification.
+	 * This is somewhat dangerous: the fake state must not be deleted
+	 * or have almost any other operation performed on it.
+	 * Ditto for fake connection.
+	 *
+	 * ??? how can we be sure to have faked all salient fields correctly?
+	 *
+	 * Most details must be left blank (eg. pointers
+	 * set to NULL).  struct initialization is good at this.
+	 *
+	 * We need to set [??? we don't -- is this still true?]:
 	 *   st_connection->that.host_addr
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	struct state st;	/* note: not a pointer! */
-	struct connection cnx;	/* note: not a pointer! */
+	struct connection fake_connection = {
+		.interface = md->iface,
+		.addr_family = addrtypeof(&md->sender),	/* for should_fragment_ike_msg() */
+		.policy = POLICY_IKE_FRAG_FORCE |	/* for should_fragment_ike_msg() */
+			POLICY_OPPORTUNISTIC,	/* for reducing logging various places */
+	};
+
+	struct state fake_state = {
+		.st_serialno = SOS_NOBODY,
+		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
+	};
 
 	passert(md != NULL);
 
-	zero(&st);	/* ??? pointer fields might not be NULLed */
-	zero(&cnx);	/* ??? pointer fields might not be NULLed */
-	st.st_connection = &cnx;
-	st.st_remoteaddr = md->sender;
-	st.st_remoteport = md->sender_port;
-	st.st_localaddr = md->iface->ip_addr;
-	st.st_localport = md->iface->port;
-	cnx.interface = md->iface;
-	st.st_interface = md->iface;
-
-	send_notification(&st, type, NULL, 0,
+	update_ike_endpoints(&fake_state, md);
+	send_notification(&fake_state, type, NULL, 0,
 			md->hdr.isa_icookie, md->hdr.isa_rcookie,
 			PROTO_ISAKMP);
 }
@@ -2835,8 +2852,8 @@ bool accept_delete(struct msg_digest *md,
 	/* If there is no SA related to this request, but it was encrypted */
 	if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
-		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: "
-			"ISAKMP SA not established");
+		loglog(RC_LOG_SERIOUS,
+			"ignoring Delete SA payload: ISAKMP SA not established");
 		return self_delete;
 	}
 

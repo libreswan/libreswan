@@ -1033,8 +1033,6 @@ static enum ipsec_rcv_value ipsec_rcv_init(struct ipsec_rcv_state *irs)
 
 		if (prvdev)
 			stats = (struct net_device_stats *) &(prvdev->mystats);
-
-
 	} else {
 		KLIPS_PRINT(debug_rcv, "klips_debug:ipsec_rcv_init: "
 			    "device supplied with skb is NULL\n");
@@ -1500,22 +1498,21 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 		return IPSEC_RCV_BADLEN;
 	}
 
-	if (irs->authfuncs ||
+	if (irs->authfuncs
 #ifdef CONFIG_KLIPS_OCF
-	    irs->ipsp->ocf_in_use ||
+	    || irs->ipsp->ocf_in_use
 #endif
 #ifdef CONFIG_KLIPS_ALG
-	    irs->ixt_a ||
+	    || irs->ixt_a
 #endif
-	    0) {
+	    ) {
 		if (irs->proto_funcs->rcv_setup_auth) {
-			return (*irs->proto_funcs->rcv_setup_auth)(irs,
-								   irs->skb,
-								   &irs->replay,
-								   &irs->
-								   authenticator);
+			return (*irs->proto_funcs->rcv_setup_auth)(
+					irs,
+					irs->skb,
+					&irs->replay,
+					&irs->authenticator);
 		}
-
 	}
 	return IPSEC_RCV_OK;
 }

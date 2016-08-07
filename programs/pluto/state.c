@@ -175,7 +175,7 @@ static unsigned int total_ipsec(void)
 		category.anonymous_ipsec.count;
 }
 
-static unsigned int total()
+static unsigned int total(void)
 {
 	return total_ike() + total_ipsec() + category.unknown.count;
 }
@@ -461,10 +461,13 @@ static struct state_hash_table statetable = {
  */
 struct state *new_state(void)
 {
+	/* initialized all to zero & NULL */
+	static const struct state blank_state;
+
 	static so_serial_t next_so = SOS_FIRST;
 	struct state *st;
 
-	st = alloc_thing(struct state, "struct state in new_state()");
+	st = clone_const_thing(blank_state, "struct state in new_state()");
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
@@ -486,7 +489,13 @@ struct state *new_state(void)
 
 	return st;
 }
+struct state *new_rstate(struct msg_digest *md)
+{
+	struct state *st = new_state();
+	update_ike_endpoints(st, md);
 
+	return st;
+}
 /*
  * Initialize the state table
  *
@@ -677,16 +686,30 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-
-	/* reduce logging of OE failures */
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		DBG(DBG_LIFECYCLE, DBG_log("deleting state #%lu (%s)",
-			st->st_serialno,
-			enum_show(&state_names, st->st_state)));
-	} else {
-		libreswan_log("deleting state #%lu (%s)",
-			st->st_serialno,
+		/* reduced logging of OE failures */
+		DBG(DBG_LIFECYCLE, {
+			char cib[CONN_INST_BUF];
+			DBG_log("deleting state #%lu (%s) \"%s\"%s",
+				st->st_serialno,
+				enum_show(&state_names, st->st_state),
+				c->name,
+				fmt_conn_instance(c, cib));
+		});
+	} else if (cur_state == st) {
+		/*
+		 * Don't log state and connection if it is the same as
+		 * the message prefix.
+		 */
+		libreswan_log("deleting state (%s)",
 			enum_show(&state_names, st->st_state));
+	} else {
+		char cib[CONN_INST_BUF];
+		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
+			st->st_serialno,
+			enum_show(&state_names, st->st_state),
+			c->name,
+			fmt_conn_instance(c, cib));
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -999,7 +1022,7 @@ bool shared_phase1_connection(const struct connection *c)
  * additionally delete any states for which func(st, c)
  * returns true.
  */
-static void foreach_states_by_connection_func_delete(struct connection *c,
+static void foreach_state_by_connection_func_delete(struct connection *c,
 					      bool (*comparefunc)(
 						      struct state *st,
 						      struct connection *c))
@@ -1039,16 +1062,6 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 
 					set_cur_state(this);
 
-					DBG(DBG_CONTROL, {
-						char cib[CONN_INST_BUF];
-						DBG_log("deleting state #%lu (%s) \"%s\"%s",
-							this->st_serialno,
-							enum_show(&state_names,
-								this->st_state),
-							c->name,
-							fmt_conn_instance(c, cib));
-					});
-
 					delete_state(this);
 					/* note: no md->st to clear */
 
@@ -1061,21 +1074,6 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 }
 
 /*
- * delete all states that were created for a given connection.
- * if relations == TRUE, then also delete states that share
- * the same phase 1 SA.
- */
-static bool same_phase1_sa_relations(struct state *this,
-				     struct connection *c)
-{
-	so_serial_t parent_sa = c->newest_isakmp_sa;
-
-	return this->st_connection == c ||
-	       (parent_sa != SOS_NOBODY &&
-		this->st_clonedfrom == parent_sa);
-}
-
-/*
  * Delete all states that have somehow not ben deleted yet
  * but using interfaces that are going down
  */
@@ -1083,8 +1081,10 @@ static bool same_phase1_sa_relations(struct state *this,
 void delete_states_dead_interfaces(void)
 {
 	int i;
+
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *this;
+
 		FOR_EACH_ENTRY(this, i, {
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
@@ -1104,10 +1104,21 @@ void delete_states_dead_interfaces(void)
  * if relations == TRUE, then also delete states that share
  * the same phase 1 SA.
  */
+
 static bool same_phase1_sa(struct state *this,
 			   struct connection *c)
 {
 	return this->st_connection == c;
+}
+
+static bool same_phase1_sa_relations(struct state *this,
+				     struct connection *c)
+{
+	so_serial_t parent_sa = c->newest_isakmp_sa;
+
+	return this->st_connection == c ||
+	       (parent_sa != SOS_NOBODY &&
+		this->st_clonedfrom == parent_sa);
 }
 
 void delete_states_by_connection(struct connection *c, bool relations)
@@ -1126,7 +1137,7 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func_delete(c,
+	foreach_state_by_connection_func_delete(c,
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	const struct spd_route *sr;
@@ -1171,7 +1182,7 @@ void delete_p2states_by_connection(struct connection *c)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func_delete(c, same_phase1_no_phase2);
+	foreach_state_by_connection_func_delete(c, same_phase1_no_phase2);
 
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
@@ -1712,7 +1723,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	{
 		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
-				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
+				sizeof(traffic_buf) - 1, ", type=%s, add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
@@ -1729,24 +1740,39 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
 		}
-
 	}
 
+	char lease_ip[SUBNETTOT_BUF] = "";
+	if (c->spd.that.has_lease) {
+		/*
+		 * "this" gave "that" a lease from "this" address
+		 * pool.
+		 */
+		subnettot(&c->spd.that.client, 0, lease_ip, sizeof(lease_ip));
+	} else if (c->spd.this.has_internal_address) {
+		/*
+		 * "this" received an internal address from "that";
+		 * presumably from "that"'s address pool.
+		 */
+		subnettot(&c->spd.this.client, 0, lease_ip, sizeof(lease_ip));
+	}
 
 	if (st->st_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
 	snprintf(state_buf, state_buf_len,
-		"#%lu: \"%s\"%s%s%s%s%s%s%s",
-		st->st_serialno,
-		c->name, inst,
-		(st->st_username[0] != '\0') ? ", username=" : "",
-		(st->st_username[0] != '\0') ? st->st_username : "",
-		(traffic_buf[0] != '\0') ? traffic_buf : "",
-		thatidbuf[0] != '\0' ? ", id='" : "",
-		thatidbuf[0] != '\0' ? thatidbuf : "",
-		thatidbuf[0] != '\0' ? "'" : ""
+		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
+		 st->st_serialno,
+		 c->name, inst,
+		 (st->st_username[0] != '\0') ? ", username=" : "",
+		 (st->st_username[0] != '\0') ? st->st_username : "",
+		 (traffic_buf[0] != '\0') ? traffic_buf : "",
+		 thatidbuf[0] != '\0' ? ", id='" : "",
+		 thatidbuf[0] != '\0' ? thatidbuf : "",
+		 thatidbuf[0] != '\0' ? "'" : "",
+		 lease_ip[0] != '\0' ? ", lease=" : "",
+		 lease_ip[0] != '\0' ? lease_ip : ""
 		);
 }
 
@@ -2018,89 +2044,116 @@ static int state_compare(const void *a, const void *b)
 	return connection_compare(ca, cb);
 }
 
-void show_states_status(bool list_traffic)
+/*
+ * NULL terminated array of state pointers.
+ */
+static struct state **sort_states(void)
 {
-	int i;
-	int count;
-
-	if (list_traffic) {
-		whack_log(RC_COMMENT, " ");             /* spacer */
-	}	else {
-		whack_log(RC_COMMENT, " ");             /* spacer */
-		whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
-			require_ddos_cookies() ? "REQUIRED" : "not required",
-			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
-
-		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
-			  total_ike(),
-			  category.half_open_ike.count,
-			  category.open_ike.count,
-			  category.authenticated_ike.count,
-			  category.anonymous_ike.count);
-		whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
-			  total_ipsec(),
-			  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
-		whack_log(RC_COMMENT, " ");             /* spacer */
+	/* COUNT the number of states. */
+	int count = 0;
+	{
+		int i;
+		for (i = 0; i < STATE_TABLE_SIZE; i++) {
+			struct state *st UNUSED;
+			FOR_EACH_ENTRY(st, i, {
+					count++;
+				});
+		}
 	}
 
-	/* make count of states */
-	count = 0;
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st UNUSED;
-		FOR_EACH_ENTRY(st, i, {
-			count++;
-		});
+	if (count == 0) {
+		return NULL;
 	}
 
-	if (count != 0) {
-		monotime_t n = mononow();
-#if 1
-		/* C99's VLA feature is just what we need */
-		struct state *array[count];
-#else
-		/* no VLA: use alloca (ouch!) */
-		struct state **array = alloca(sizeof(struct state *) * count);
-#endif
-
-		/* build the array */
-		count = 0;
+	/*
+	 * Create an array of COUNT+1 (NULL terminal) state pointers.
+	 */
+	struct state **array = alloc_things(struct state *, count + 1, "sorted state");
+	{
+		int p = 0;
+		int i;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
 			FOR_EACH_ENTRY(st, i, {
-				array[count++] = st;
-			});
+					passert(st != NULL);
+					array[p++] = st;
+				});
 		}
+		passert(p == count);
+		array[p] = NULL;
+	}
 
-		/* sort it! */
-		qsort(array, count, sizeof(struct state *), state_compare);
+	/* sort it!  */
+	qsort(array, count, sizeof(struct state *), state_compare);
 
-		/* now print sorted results */
-		for (i = 0; i < count; i++) {
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
+	return array;
+}
+
+void show_traffic_status(void)
+{
+	whack_log(RC_COMMENT, " ");             /* spacer */
+
+	struct state **array = sort_states();
+
+	/* now print sorted results */
+	if (array != NULL) {
+		int i;
+		for (i = 0; array[i] != NULL; i++) {
 			struct state *st = array[i];
 
-			if (list_traffic) {
-				fmt_list_traffic(st, state_buf,
-						sizeof(state_buf));
-				if (state_buf[0] != '\0')
-					whack_log(RC_INFORMATIONAL_TRAFFIC,
-						"%s", state_buf);
-			} else {
+			char state_buf[LOG_WIDTH];
+			fmt_list_traffic(st, state_buf, sizeof(state_buf));
+			if (state_buf[0] != '\0')
+				whack_log(RC_INFORMATIONAL_TRAFFIC,
+					  "%s", state_buf);
+		}
+		whack_log(RC_COMMENT, " "); /* spacer */
+		pfree(array);
+	}
+}
 
-				fmt_state(st, n, state_buf, sizeof(state_buf),
-						state_buf2, sizeof(state_buf2));
-				whack_log(RC_COMMENT, "%s", state_buf);
-				if (state_buf2[0] != '\0')
-					whack_log(RC_COMMENT, "%s", state_buf2);
+void show_states_status(void)
+{
+	whack_log(RC_COMMENT, " ");             /* spacer */
+	whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
+		  require_ddos_cookies() ? "REQUIRED" : "not required",
+		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-				/* show any associated pending Phase 2s */
-				if (IS_IKE_SA(st))
-					show_pending_phase2(st->st_connection, st);
-			}
+	whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
+		  total_ike(),
+		  category.half_open_ike.count,
+		  category.open_ike.count,
+		  category.authenticated_ike.count,
+		  category.anonymous_ike.count);
+	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
+		  total_ipsec(),
+		  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
+	whack_log(RC_COMMENT, " ");             /* spacer */
+
+	struct state **array = sort_states();
+
+	if (array != NULL) {
+		monotime_t n = mononow();
+		/* now print sorted results */
+		int i;
+		for (i = 0; array[i] != NULL; i++) {
+			struct state *st = array[i];
+
+			char state_buf[LOG_WIDTH];
+			char state_buf2[LOG_WIDTH];
+			fmt_state(st, n, state_buf, sizeof(state_buf),
+				  state_buf2, sizeof(state_buf2));
+			whack_log(RC_COMMENT, "%s", state_buf);
+			if (state_buf2[0] != '\0')
+				whack_log(RC_COMMENT, "%s", state_buf2);
+
+			/* show any associated pending Phase 2s */
+			if (IS_IKE_SA(st))
+				show_pending_phase2(st->st_connection, st);
 		}
 
 		whack_log(RC_COMMENT, " "); /* spacer */
+		pfree(array);
 	}
 }
 
@@ -2209,6 +2262,28 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
 	dq->xauth_vid |= sq->xauth_vid;
 }
 
+/*
+ * see https://tools.ietf.org/html/rfc7296#section-2.23
+ *
+ * [...] SHOULD store this as the new address and port combination
+ * for the SA (that is, they SHOULD dynamically update the address).
+ * A host behind a NAT SHOULD NOT do this type of dynamic address
+ * update if a validated packet has different port and/or address
+ * values because it opens a possible DoS attack (such as allowing
+ * an attacker to break the connection with a single packet). 
+ */
+void update_ike_endpoints(struct state *st,
+			  const struct msg_digest *md)
+{
+	/* caller must ensure we are not behind NAT */
+
+	st->st_remoteaddr = md->sender;
+	st->st_remoteport = md->sender_port;
+	st->st_localaddr = md->iface->ip_addr;
+	st->st_localport = md->iface->port;
+	st->st_interface = md->iface;
+}
+
 void set_state_ike_endpoints(struct state *st,
 			     struct connection *c)
 {
@@ -2302,14 +2377,14 @@ void clear_dh_from_state(struct state *st)
 	}
 }
 
-bool require_ddos_cookies()
+bool require_ddos_cookies(void)
 {
 	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
 		(pluto_ddos_mode == DDOS_AUTO &&
 		 category.half_open_ike.count >= pluto_ddos_threshold);
 }
 
-bool drop_new_exchanges()
+bool drop_new_exchanges(void)
 {
 	return category.half_open_ike.count >= pluto_max_halfopen;
 }

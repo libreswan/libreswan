@@ -774,8 +774,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 		char buf[200];	/* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
-			 "%s [%ld] must be greater than"
-			 " rekeymargin*(100+rekeyfuzz)/100 [%ld*(100+%lu)/100 = %ld]",
+			 "%s [%ld] must be greater than rekeymargin*(100+rekeyfuzz)/100 [%ld*(100+%lu)/100 = %ld]",
 			 which,
 			 (long)deltasecs(life),
 			 (long)deltasecs(msg->sa_rekey_margin),

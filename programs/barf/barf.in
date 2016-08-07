@@ -97,22 +97,25 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 	findlog_startline=1		# arbitrary
 }
 
-# try to guess where logs are
-findlog "$fstart" "klips" messages syslog auth.log daemon.log
-if test " $findlog_file" = " /dev/null"
+if test ! -x /usr/bin/journalctl
 then
-echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
-fi
-klog=$findlog_file
-kline=$findlog_startline
+	# no systemd, need to figure out log file location
+	findlog "$fstart" "klips" messages syslog auth.log daemon.log
+	if test " $findlog_file" = " /dev/null"
+	then
+	echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
+	fi
+	klog=$findlog_file
+	kline=$findlog_startline
 
-findlog "$pstart" "Pluto" secure auth.log daemon.log debug
-if test " $findlog_file" = " /dev/null"
-then
-echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
+	findlog "$pstart" "Pluto" secure auth.log daemon.log debug
+	if test " $findlog_file" = " /dev/null"
+	then
+	echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
+	fi
+	plog=$findlog_file
+	pline=$findlog_startline
 fi
-plog=$findlog_file
-pline=$findlog_startline
 
 # /lib/modules examiner
 modulegoo() {
@@ -400,18 +403,18 @@ then
 	tail -100 $LOGS/kern.debug
 fi
 _________________________ klog
-sed -n $kline,'$'p $klog |
-	egrep -i 'ipsec|klips|pluto' |
-	case "$1" in
-	--short)	tail -500	;;
-	*)		cat		;;
-	esac
+dmesg | egrep -i "klips|ipsec"
 _________________________ plog
-sed -n $pline,'$'p $plog |
-	egrep -i 'pluto' |
-	case "$1" in
-	--short)	tail -500	;;
-	*)		cat		;;
-	esac
+if test -x /usr/bin/journalctl
+then
+	journalctl -u ipsec.service --since "1 hour ago"
+else
+	sed -n $pline,'$'p $plog |
+		egrep -i 'pluto' |
+		case "$1" in
+		--short)	tail -500	;;
+		*)		cat		;;
+		esac
+fi
 _________________________ date
 date

@@ -939,8 +939,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * ??? what if this is a duplicate of another message?
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				libreswan_log("initial phase 1 message is invalid:"
-					      " its Encrypted Flag is on");
+				libreswan_log("initial phase 1 message is invalid: its Encrypted Flag is on");
 				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
@@ -1201,29 +1200,29 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			set_cur_state(st);
 
-			DBG(DBG_CONTROLMORE, DBG_log(" processing received "
-						     "isakmp_xchg_type %s.",
-						     enum_show(&ikev1_exchange_names,
-							       md->hdr.isa_xchg)));
-			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
-						     st->st_connection->spd.
-						     this.xauth_server ?
-						     " xauthserver" : "",
-						     st->st_connection->spd.
-						     this.xauth_client ?
-						     " xauthclient" : "",
-						     st->st_connection->spd.
-						     this.modecfg_server ?
-						     " modecfgserver" : "",
-						     st->st_connection->spd.
-						     this.modecfg_client  ?
-						     " modecfgclient" : ""
-						     ));
+			DBG(DBG_CONTROLMORE,
+				DBG_log(" processing received isakmp_xchg_type %s.",
+					enum_show(&ikev1_exchange_names,
+					md->hdr.isa_xchg)));
+			DBG(DBG_CONTROLMORE, {
+				const struct end *this =
+					&st->st_connection->spd.this;
+
+				DBG_log(" this is a%s%s%s%s",
+					this->xauth_server ?
+						" xauthserver" : "",
+					this->xauth_client ?
+						" xauthclient" : "",
+					this->modecfg_server ?
+						" modecfgserver" : "",
+					this->modecfg_client ?
+						" modecfgclient" : "");
+			});
 
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-				       enum_name(&state_names, st->st_state)));
+					enum_name(&state_names, st->st_state)));
 				/* XXX Could send notification back */
 				return;
 			}
@@ -1848,10 +1847,10 @@ void process_packet_tail(struct msg_digest **mdp)
 					      LELEM(ISAKMP_NEXT_D) |
 					      LELEM(ISAKMP_NEXT_CR) |
 					      LELEM(ISAKMP_NEXT_CERT))) {
-					loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
-					       "contains an unexpected payload type (%s)",
-					       excuse,
-					       enum_show(&ikev1_payload_names, np));
+					loglog(RC_LOG_SERIOUS,
+						"%smessage ignored because it contains an unexpected payload type (%s)",
+						excuse,
+						enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -1994,15 +1993,14 @@ void process_packet_tail(struct msg_digest **mdp)
 			if (id != NULL) {
 				if (id->next == NULL ||
 				    id->next->next != NULL) {
-					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
-					       " if any ID payload is present,"
-					       " there must be exactly two");
+					loglog(RC_LOG_SERIOUS,
+						"malformed Quick Mode message: if any ID payload is present, there must be exactly two");
 					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
-					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
-					       " the ID payloads are not adjacent");
+					loglog(RC_LOG_SERIOUS,
+						"malformed Quick Mode message: the ID payloads are not adjacent");
 					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 					return;
 				}
@@ -2475,6 +2473,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				pexpect(s != STF_FAIL);
 				if (s == STF_FAIL)
 					result = STF_FAIL; /* ??? fall through !?! */
+				/* ??? result not subsequently used */
 			}
 		}
 
@@ -2483,8 +2482,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROL,
-						DBG_log("XAUTH: "
-						       "Sending XAUTH Login/Password Request"));
+					DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
 				event_schedule_ms(EVENT_v1_SEND_XAUTH,
 						EVENT_v1_SEND_XAUTH_DELAY, st);
 						break;
@@ -2727,19 +2725,18 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
 	     id->isaid_doi_specific_b == pluto_nat_port)) {
-		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
-			"accepted with port_floating NAT-T",
+		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else if (!(id->isaid_doi_specific_a == 0 &&
 		     id->isaid_doi_specific_b == 0) &&
 		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
 		     id->isaid_doi_specific_b == pluto_port))
 	{
-		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
-		       " but are %d/%d (attempting to continue)",
-		       IPPROTO_UDP, pluto_port,
-		       id->isaid_doi_specific_a,
-		       id->isaid_doi_specific_b);
+		loglog(RC_LOG_SERIOUS,
+			"protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
+			IPPROTO_UDP, pluto_port,
+			id->isaid_doi_specific_a,
+			id->isaid_doi_specific_b);
 		/* we have turned this into a warning because of bugs in other vendors
 		 * products. Specifically CISCO VPN3000.
 		 */
@@ -2801,7 +2798,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 	} else {
 		struct connection *c = st->st_connection;
-		struct connection *r = NULL;
 		bool fromcert;
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
 		lset_t auth_policy = LEMPTY;
@@ -2831,6 +2827,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* check for certificate requests */
 		ikev1_decode_cr(md);
 
+		struct connection *r = NULL;
+
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
 			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
 			pexpect(r != NULL);
@@ -2847,11 +2845,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 
 		DBG(DBG_CONTROL, {
-			    char buf[IDTOA_BUF];
-			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
-					  "%none");
-			    DBG_log("offered CA: '%s'", buf);
-		    });
+			char buf[IDTOA_BUF];
+			dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
+				      "%none");
+			DBG_log("offered CA: '%s'", buf);
+		});
 
 		if (r != c) {
 			char b1[CONN_INST_BUF];
@@ -2871,14 +2869,13 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 
 			update_state_connection(st, r);
+			c = r;	/* value not used */
 		} else if (c->spd.that.has_id_wildcards) {
-			free_id_content(&c->spd.that.id);
-			c->spd.that.id = peer;
+			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = FALSE;
-			unshare_id_content(&c->spd.that.id);
 		} else if (fromcert) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			duplicate_id(&r->spd.that.id, &peer);
+			duplicate_id(&c->spd.that.id, &peer);
 		}
 	}
 
@@ -2932,17 +2929,13 @@ void doi_log_cert_thinking(u_int16_t auth,
 	if (!send_cert) {
 		if (auth == OAKLEY_PRESHARED_KEY) {
 			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate "
-					"because digital signatures are not "
-					"being used. (PSK)"));
+				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
 		} else if (certtype == CERT_NONE) {
 			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate because "
-					"I do not have one."));
+				DBG_log("I did not send a certificate because I do not have one."));
 		} else if (policy == cert_sendifasked) {
 			DBG(DBG_CONTROL,
-				DBG_log("I did not send my certificate "
-					"because I was not asked to."));
+				DBG_log("I did not send my certificate because I was not asked to."));
 		}
 		/* ??? should there be an additional else catch-all? */
 	}

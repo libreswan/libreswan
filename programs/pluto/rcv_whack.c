@@ -106,7 +106,7 @@ static void key_add_ugh(const struct id *keyid, err_t ugh)
 	       "failure to fetch key for %s from DNS: %s", name, ugh);
 }
 
-static void do_whacklisten()
+static void do_whacklisten(void)
 {
 	fflush(stderr);
 	fflush(stdout);
@@ -546,7 +546,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		show_global_status();
 
 	if (msg.whack_traffic_status)
-		show_states_status(TRUE);
+		show_traffic_status();
 
 	if (msg.whack_shunt_status)
 		show_shunt_status();

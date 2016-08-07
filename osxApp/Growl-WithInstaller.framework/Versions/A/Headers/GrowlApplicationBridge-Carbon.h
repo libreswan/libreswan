@@ -359,7 +359,7 @@ struct Growl_Notification {
 			(delegate)->growlNotificationWasClicked = NULL; \
 			(delegate)->growlNotificationTimedOut = NULL; \
 		} \
-	} while(0)
+	} while (0)
 
 /*!	@defined	InitGrowlNotification
  *	@abstract	Callable macro. Initializes a Growl notification structure to defaults.
@@ -383,7 +383,7 @@ struct Growl_Notification {
 			(notification)->clickCallback = NULL; \
 			(notification)->identifier = NULL; \
 		} \
-	} while(0)
+	} while (0)
 
 #pragma mark -
 #pragma mark Public API

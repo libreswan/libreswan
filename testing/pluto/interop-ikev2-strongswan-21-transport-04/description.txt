@@ -1,0 +1,14 @@
+This tests a mismatch of transport vs tunnel mode.
+
+The RFC says that if transport is not supported, tunnel should be used.
+
+libreswan refuses to use tunnel mode when transport mode is configured, to
+avoid connections that work only when one specific side is the initiator.
+
+However, strongswan follows the rfc and will install tunnel mode when it
+has transport mode configured.
+
+This is the reverse test of interop-ikev2-strongswan-21-transport-03
+
+NOTE: since we cannot timeout the strongswan failing up command, this
+testcase might have text flow issues and cause a false positive

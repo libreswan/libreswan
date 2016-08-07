@@ -115,7 +115,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
 ipsec whack --trafficstatus
 000  
-006 #2: "packetdefault"[1] ...192.1.2.23, type=ESP,  add_time=XXXX
+006 #2: "packetdefault"[1] ...192.1.2.23, type=ESP, add_time=XXXX
 000  
 road #
 ipsec whack --shuntstatus

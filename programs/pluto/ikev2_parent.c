@@ -104,7 +104,7 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static int build_ikev2_version();
+static int build_ikev2_version(void);
 
 static crypto_req_cont_func ikev2_child_inIoutR_continue;	/* type assertion */
 
@@ -264,7 +264,8 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		ikev2_proposals_from_alg_info_ike(c->name, "initial IKE modp",
+		ikev2_proposals_from_alg_info_ike(c->name,
+						  "initial initiator (selecting KE)",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -477,7 +478,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		u_char *sa_start = md->rbody.cur;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator",
+			ikev2_proposals_from_alg_info_ike(c->name, "initial initiator",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -713,7 +714,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		dc.ptr = dcookie;
 		dc.len = SHA2_256_DIGEST_SIZE;
 
-		if(seen_dcookie) {
+		if (seen_dcookie) {
 			const pb_stream *dc_pbs;
 			chunk_t idc;
 
@@ -835,7 +836,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			}
                         p = p->next;
                 }
-
 	} else {
 		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
 	}
@@ -858,7 +858,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "initial IKE responder",
+	ikev2_proposals_from_alg_info_ike(c->name, "initial responder",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
@@ -880,21 +880,37 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		passert(accepted_ike_proposal == NULL);
 		return ret;
 	}
-	/*
-	 * Must either attach this to "struct state"; or free.
-	 */
 	passert(accepted_ike_proposal != NULL);
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
+
+	/*
+	 * Early return must free: accepted_ike_proposal
+	 */
+
+	/*
+	 * Convert what was accepted to internal form and apply some
+	 * basic validation.  ACCEPTED_OAKLEY does not contain
+	 * allocated data.
+	 */
 	struct trans_attrs accepted_oakley = ikev2_proposal_to_trans_attrs(accepted_ike_proposal);
+	if (accepted_oakley.group == NULL) {
+		loglog(RC_LOG_SERIOUS, "discarding accepted proposal with no DH");
+		/* free early return items */
+		free_ikev2_proposal(&accepted_ike_proposal);
+		return STF_IGNORE;
+	}
+
+	/*
+	 * Early return must free: accepted_ike_proposal
+	 */
 
 	/*
 	 * Check the MODP group matches the accepted proposal.
 	 */
-	if (accepted_oakley.group != NULL) {
+	{
 		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
-			free_ikev2_proposal(&accepted_ike_proposal);
 			struct esb_buf ke_name;
 			struct esb_buf proposal_name;
 			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
@@ -907,6 +923,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 						   "OAKLEY_GROUP_"));
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
+			/* free early return items */
+			free_ikev2_proposal(&accepted_ike_proposal);
 			return STF_FAIL;
 		}
 	}
@@ -915,7 +933,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * Check and read the KE contents.
 	 */
 	chunk_t accepted_gi = empty_chunk;
-	if (accepted_oakley.group != NULL) {
+	{
 		/* note: v1 notification! */
 		if (accept_KE(&accepted_gi, "Gi",
 			      accepted_oakley.group,
@@ -933,6 +951,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/*
+	 * Early return must free: accepted_ike_proposal, accepted_gi.
+	 */
+
+	/*
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
@@ -945,6 +967,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		get_cookie(FALSE, st->st_rcookie, &md->sender);
 		initialize_new_state(st, c, policy, 0, NULL_FD,
 				     pcim_stranger_crypto);
+		update_ike_endpoints(st, md);
 		st->st_ikev2 = TRUE;
 		change_state(st, STATE_PARENT_R1);
 		st->st_original_role = ORIGINAL_RESPONDER;
@@ -961,7 +984,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		if (seen_ntfy_frag)
 			st->st_seen_fragvid = TRUE;
-
 	} else {
 		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
 		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
@@ -1113,7 +1135,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	/* Ni in */
@@ -1329,7 +1350,8 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			ikev2_proposals_from_alg_info_ike(c->name, "initial IKE validating invalid KE",
+			ikev2_proposals_from_alg_info_ike(c->name,
+							  "initial initiator (validating suggested KE)",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -1461,7 +1483,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_proposals_from_alg_info_ike(c->name, "IKE initiator (accepting)",
+		ikev2_proposals_from_alg_info_ike(c->name, "initial initiator (accepting)",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -1790,12 +1812,10 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	{
 		DBG(DBG_CRYPT | DBG_CONTROL, {
 				ipstr_buf b;
-				DBG_log("received encrypted packet from %s:%u "
-						" but no exponents for state #%lu"
-						" to decrypt it",
-						ipstr(&md->sender, &b),
-						(unsigned)md->sender_port,
-						st->st_serialno);
+				DBG_log("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
+					ipstr(&md->sender, &b),
+					(unsigned)md->sender_port,
+					st->st_serialno);
 				});
 		return STF_FAIL;
 	}
@@ -2611,8 +2631,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		chunk_t local_spi;
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
-		
-		ikev2_proposals_from_alg_info_esp(cc->name, "ESP/AH initiator",
+
+		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 						  cc->alg_info_esp,
 						  cc->policy,
 						  &cc->esp_or_ah_proposals);
@@ -2707,9 +2727,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 	gettimeofday(&p->done_time, NULL);
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
-				" finished work. status %s elapsed time"
-				" %lu.%06lu '%s'",
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread finished work. status %s elapsed time %lu.%06lu '%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial,
 				p->pam_status ? "SUCCESS" : "FAIL",
@@ -2775,9 +2793,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
 	if (st == NULL) {
-		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls"
-					" state #%lu, %s[%lu]."
-					" The state is gone. elapsed time %lu.%06lu",
+		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls state #%lu, %s[%lu]. The state is gone. elapsed time %lu.%06lu",
 					p->pam.st_serialno, p->pam.c_name,
 					p->pam.c_instance_serial,
 					(unsigned long)served_delta.tv_sec,
@@ -2789,10 +2805,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 			errno, strerror(errno));
 	}
 
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
-				" can continue. PAM status %s."
-				" elapsed time %lu.%06lu"
-				" PAM auth time %lu.%06lu U='%s'",
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread can continue. PAM status %s. elapsed time %lu.%06lu PAM auth time %lu.%06lu U='%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial,
 				p->pam_status ? "SUCCESS" : "FAIL",
@@ -2881,25 +2894,24 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	thread_status = pthread_create(&p->tid, NULL,
 			ikev2_pam_autherize_thread, (void *)p);
 	if (thread_status != 0) {
-		loglog(RC_LOG_SERIOUS, "#%lu  %s[%lu] failed to start IKEv2 PAM"
-				"helper thread error = %d '%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial,
-				thread_status, p->pam.name);
+		loglog(RC_LOG_SERIOUS,
+			"#%lu  %s[%lu] failed to start IKEv2 PAMhelper thread error = %d '%s'",
+			p->pam.st_serialno, p->pam.c_name,
+			p->pam.c_instance_serial,
+			thread_status, p->pam.name);
 		close(fds[1]);
 		close(fds[0]);
 		p->master_fd = NULL_FD;
 		return STF_INTERNAL_ERROR;
-
 	}
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] started IKEv2 PAM helper thread '%s'",
 				p->pam.st_serialno, p->pam.c_name,
 				p->pam.c_instance_serial, p->pam.name));
 	st->has_pam_thread = TRUE;
 	pthread_attr_destroy(&pattr);
 
-	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback"
-				" for master fd %d", p->master_fd));
+	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback for master fd %d", p->master_fd));
 	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb, p, NULL);
 
 	return STF_SUSPEND;
@@ -3161,10 +3173,33 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		return STF_FATAL;
 	}
 
-	/* Is there a notify about an error ? */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log(" notify payload detected, should be processed...."));
+	{
+		struct payload_digest *ntfy;
+
+		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+			switch (ntfy->payload.v2n.isan_type) {
+			case v2N_NAT_DETECTION_SOURCE_IP:
+			case v2N_NAT_DETECTION_DESTINATION_IP:
+			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			case v2N_COOKIE:
+				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
+				break;
+			case v2N_USE_TRANSPORT_MODE:
+				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
+				st->st_seen_use_transport = TRUE;
+				break;
+			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
+				st->st_seen_no_tfc = TRUE;
+				break;
+			default:
+				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
+			}
+		}
 	}
 
 	/* good. now create child state */
@@ -3342,8 +3377,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
-				DBG_log("ikev2_child_sa_respond returned %s",
-					enum_name(&stfstatus_name, ret));
+				DBG(DBG_CONTROL,
+				    DBG_log("ikev2_child_sa_respond returned %s",
+					enum_name(&stfstatus_name, ret)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
@@ -3751,7 +3787,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(st, c->policy);
 
-		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH responder",
+		ikev2_proposals_from_alg_info_esp(c->name, "responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
@@ -3819,7 +3855,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				}
 			}
 		} /* for */
-
 	} /* notification block */
 
 	ikev2_derive_child_keys(st, md->original_role);
@@ -4077,6 +4112,9 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			return ret;
 	}
 
+	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+		update_ike_endpoints(pst, md);
+
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
 		ipstr_buf b;
@@ -4131,8 +4169,8 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *qke,
 	stf_status e;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
-			DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce"
-				" sending CREATE_CHILD_SA respone", qke->pcrc_serialno));
+		DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce; sending CREATE_CHILD_SA response",
+			qke->pcrc_serialno));
 	if (qke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state", __FUNCTION__);
@@ -4306,6 +4344,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		if (ret != STF_OK)
 			return ret;
 	}
+
+	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
+		update_ike_endpoints(st, md);
 
 	/*
 	 * Generate response message,
@@ -5065,7 +5106,7 @@ bool ikev2_delete_out(struct state *st)
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-static int build_ikev2_version()
+static int build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))

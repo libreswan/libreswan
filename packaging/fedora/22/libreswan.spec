@@ -13,7 +13,7 @@
 %global development 0
 %global cavstests 1
 
-%global prever dr3
+#global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -134,7 +134,6 @@ FS=$(pwd)
     %{__arch_install_post} \
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
@@ -214,7 +213,6 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %doc CHANGES COPYING CREDITS README* LICENSE
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/v6neighbor-hole.conf
@@ -235,5 +233,5 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Fri Dec 18 2015 Team Libreswan <team@libreswan.org> - 3.18-0.1.dr3
+* Wed Jul 27 2016 Team Libreswan <team@libreswan.org> - 3.18-1
 - Automated build from release tar ball
