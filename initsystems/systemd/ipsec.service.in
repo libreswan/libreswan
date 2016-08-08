@@ -2,6 +2,7 @@
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
 Wants=network-online.target
 After=network-online.target
+Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 
 [Service]
 Type=@SD_TYPE@
