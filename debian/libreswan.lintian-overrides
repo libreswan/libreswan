@@ -1,2 +1,0 @@
-# libreswan Recommends: python. if you do not have it you cannot run ipsec verify but everything else should work
-libreswan: python-script-but-no-python-dep usr/lib/ipsec/verify
