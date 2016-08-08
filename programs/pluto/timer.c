@@ -141,7 +141,7 @@ static void retransmit_v1_msg(struct state *st)
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
-			"supressing retransmit because IMPAIR_RETRANSMITS is set");
+			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay_ms = 0;
 		try = 0;
 	} else {
@@ -265,7 +265,7 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
-			"supressing retransmit because IMPAIR_RETRANSMITS is set");
+			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay_ms = 0;
 		try = 0;
 	} else {

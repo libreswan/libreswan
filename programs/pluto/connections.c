@@ -524,7 +524,7 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
  * Format the topology of a connection end, leaving out defaults.
  * Largest left end looks like: client === host : port [ host_id ] --- hop
  * Note: if that == NULL, skip nexthop
- * Returns strlen of formated result (length excludes NUL at end).
+ * Returns strlen of formatted result (length excludes NUL at end).
  */
 size_t format_end(char *buf,
 		size_t buf_len,

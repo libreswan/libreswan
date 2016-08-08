@@ -28,13 +28,13 @@
     <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
-    <arg choice='opt'>nbits </arg>
+    <arg choice='opt'>nbits</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rsasigkey</emphasis>
+<para><emphasis remap='I'>rsasigkey</emphasis>
 generates an RSA public/private key pair, suitable for digital signatures, of (exactly)
 <emphasis remap='I'>nbits</emphasis> bits (that is, two primes each of exactly
 <emphasis remap='I'>nbits</emphasis>/2 bits, and related numbers) and emits it on standard
