@@ -1,0 +1,19 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Sun, 7 Aug 2016 20:52:52 -0400
+Subject: COPYING calls it "GNU General Public License" -- make LICENSE match
+
+---
+ LICENSE | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/LICENSE b/LICENSE
+index 467dc7f..e901add 100644
+--- a/LICENSE
++++ b/LICENSE
+@@ -1,5 +1,5 @@
+ Except for the DES library, MD5 code, and linux/net/ipsec/radij.c
+-this software is under the GNU Public License, see the file COPYING.
++this software is under the GNU General Public License (GPL), see the file COPYING.
+ See the file CREDITS for details on origins of more of the code.
+ 
+ The linux/net/ipsec/radij.c code is derived from BSD 4.4lite code

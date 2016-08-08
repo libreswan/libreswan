@@ -3,3 +3,7 @@
 0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
 0004-minor-documentation-clean-up.patch
 0005-make-nssdir-flexible.patch
+0006-three-more-spelling-errors.patch
+0007-spell-suppressing-correctly.patch
+0008-COPYING-calls-it-GNU-General-Public-License-make-LIC.patch
+0009-Enable-systemctl-help-ipsec.patch
