@@ -1375,8 +1375,12 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		/* ??? what is the nature of those mismatching acquires? */
 		/* passert(bs_pp != NULL); */
 		if (bs_pp == NULL) {
-			/* ??? should this be in the main log? */
-			DBG(DBG_CONTROL, DBG_log("not deleting bare (port) shunt - letting kernel expire it"));
+			ipstr_buf srcb, dstb;
+
+			libreswan_log("can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
+				repl ? "replace" : "delete",
+				ipstr(src, &srcb), ipstr(dst, &dstb),
+				transport_proto);
 			return TRUE;
 		}
 
