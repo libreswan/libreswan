@@ -39,7 +39,7 @@
 
   <title>DESCRIPTION</title>
 
-  <para> <emphasis remap='I'>newhostkey</emphasis>generates an RSA
+  <para><emphasis remap='I'>newhostkey</emphasis> generates an RSA
   public/private key pair suitable for authenticating this host is
   generated and stored in the NSS database. </para>
 
@@ -56,7 +56,7 @@
 	<term><option>--output</option>&nbsp;<replaceable>filename</replaceable></term>
 	<listitem>
 	  <para>The <option>--output</option> option specifies an
-	  <emphasis remap='I'>ipsec.secrets</emphasis> formated file
+	  <emphasis remap='I'>ipsec.secrets</emphasis> formatted file
 	  (see
 	  <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
 	  to store the public key information.  If the file does not

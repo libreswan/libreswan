@@ -22,7 +22,7 @@ west #
 003 "westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_FLAGS, msgid=00000000, length=12
 003 "westnet-eastnet-ipv4-psk" #1: received and ignored informational message
 003 "westnet-eastnet-ipv4-psk" #1: discarding duplicate packet; already STATE_MAIN_I3
-002 "westnet-eastnet-ipv4-psk" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
+002 "westnet-eastnet-ipv4-psk" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "westnet-eastnet-ipv4-psk" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I3)
 west #
