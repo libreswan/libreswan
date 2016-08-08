@@ -7,7 +7,7 @@ Comment: Security contact: security@libreswan.org
  Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
 
 Files: *
-Copyright: 2011-2015 The Libreswan Project or their individual authors
+Copyright: 2011-2016 The Libreswan Project or their individual authors
 License: GPL-2 or LGPL-2
  On Debian systems, a copy of the GNU General Public License, version 2,
  can be found in the file /usr/share/common-licenses/GPL-2.
@@ -23,7 +23,6 @@ Files: linux/include/zlib/* linux/net/ipsec/zutil.c linux/net/ipsec/infutil.c
        linux/net/ipsec/inffast.c linux/net/ipsec/infblock.h
        linux/net/ipsec/inffast.h linux/net/ipsec/inftrees.c
        linux/net/ipsec/inftrees.h linux/net/ipsec/adler32.c
-       testing/utils/ike-scan/md5.c testing/utils/ike-scan/md5.h
 Copyright: 1995-2002 Jean-loup Gailly and Mark Adler
 License: J-lG-MA-3-clause
  This software is provided 'as-is', without any express or implied
@@ -45,7 +44,7 @@ License: J-lG-MA-3-clause
  Jean-loup Gailly        Mark Adler
  jloup@gzip.org          madler@alumni.caltech.edu
 
-Files: include/sysqueue.h linux/include/libreswan/radij.h linux/net/ipsec/radij.c
+Files: linux/include/libreswan/radij.h linux/net/ipsec/radij.c
 Copyright: 1983, 1987, 1988, 1989, 1990, 1991, 1993, 1994, 1996
       The Regents of the University of California.  All rights reserved.
 License: BSD-4-clause
@@ -167,65 +166,6 @@ License: OpenSSL
  derivative of this code cannot be changed.  i.e. this code cannot simply be
  copied and put under another distribution licence
  [including the GNU Public Licence.]
-
-Files: include/crypto/cryptodev.h
-Copyright: 2006-2007 David McCullough, 2004-2005 Intel Corporation,
-           2000 Angelos D. Keromytis
-           2002-2006 Sam Leffler, Errno Consulting
-           2001 Theo de Raadt
-License: MIT-and-BSD-3-clause
- Copyright (C) 2006-2007 David McCullough
- Copyright (C) 2004-2005 Intel Corporation.
- The license and original author are listed below.
- .
- The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
- Copyright (c) 2002-2006 Sam Leffler, Errno Consulting
- .
- This code was written by Angelos D. Keromytis in Athens, Greece, in
- February 2000. Network Security Technologies Inc. (NSTI) kindly
- supported the development of this code.
- .
- Copyright (c) 2000 Angelos D. Keromytis
- .
- Permission to use, copy, and modify this software with or without fee
- is hereby granted, provided that this entire notice is included in
- all source code copies of any software which is or includes a copy or
- modification of this software.
- .
- THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
- REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
- MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
- PURPOSE.
- .
- Copyright (c) 2001 Theo de Raadt
- .
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- .
- 1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
- 3. The name of the author may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
- .
- THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- .
- Effort sponsored in part by the Defense Advanced Research Projects
- Agency (DARPA) and Air Force Research Laboratory, Air Force
- Materiel Command, USAF, under agreement number F30602-01-2-0537.
 
 Files: linux/include/libreswan/pfkeyv2.h
 Copyright:  U.S. Naval Research Laboratory
