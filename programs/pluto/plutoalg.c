@@ -388,7 +388,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 		    ike_alg_hash_present(ike_info->ike_halg) &&
 		    lookup_group(ike_info->ike_modp) != NULL) {
 			if (strlen(sep) >= buflen) {
-				DBG_log("alg_info_snprint_ike: buffer too short for seperator");
+				DBG_log("alg_info_snprint_ike: buffer too short for separator");
 				break;
 			}
 			strcpy(ptr, sep);

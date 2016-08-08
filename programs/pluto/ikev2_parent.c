@@ -1911,7 +1911,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
-		construct_enc_iv("decription IV/starting-variable", enc_iv,
+		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
 				 pst->st_oakley.encrypter);
 
