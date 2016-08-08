@@ -32,7 +32,6 @@ override_dh_auto_install-arch:
 	echo "removing files debian packaging does not need:"
 	find \
 	     $(CURDIR)/debian/libreswan/var/run \
-	     $(CURDIR)/debian/libreswan/etc/sysconfig \
 	  -print -delete
 
 override_dh_auto_test:
