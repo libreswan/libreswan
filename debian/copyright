@@ -7,13 +7,45 @@ Comment: Security contact: security@libreswan.org
  Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
 
 Files: *
-Copyright: 2011-2016 The Libreswan Project or their individual authors
-License: GPL-2 or LGPL-2
- On Debian systems, a copy of the GNU General Public License, version 2,
- can be found in the file /usr/share/common-licenses/GPL-2.
- .
- On Debian systems, a copy of the GNU Lesser General Public License,
- version 2, can be found in the file /usr/share/common-licenses/LGPL-2.
+Copyright: 1998-2016 The Libreswan Project or their individual authors
+License: GPL-2+
+
+Files: programs/pluto/udpfromto.c
+Copyright:
+ 2001 Miquel van Smoorenburg
+ 2003 Jan Berkel <jan@sitadelle.com>
+License: LGPL-2.1+
+
+Files:
+ lib/libcrypto/libserpent/*
+ lib/libswan/initsaid.c
+ lib/libswan/initsubnet.c
+ lib/libswan/internal.h
+ lib/libswan/iprange.c
+ lib/libswan/keyblobtoid.c
+ lib/libswan/pfkey_error.c
+ lib/libswan/pfkey_sock.c
+ lib/libswan/portof.c
+ lib/libswan/rangetosubnet.c
+ lib/libswan/sameaddr.c
+ lib/libswan/sanitizestring.c
+ lib/libswan/satoa.c
+ lib/libswan/subnettot.c
+ lib/libswan/subnettypeof.c
+ lib/libswan/ttoaddr.c
+ lib/libswan/ttodata.c
+ lib/libswan/ttorange.c
+ lib/libswan/ttosa.c
+ lib/libswan/ttosubnet.c
+ lib/libswan/ttoul.c
+Copyright:
+ 1998-2002 Henry Spencer
+ 1998-2002 D. Hugh Redelmeier <hugh@mimosa.com>
+ 2000 Gisle Sælensminde
+ 2003,2006 Michael Richardson
+ 2013 Antony Antony <antony@phenome.org>
+ 2016 Andrew Cagney <cagney@gnu.org>
+License: LGPL-2+
 
 Files: linux/include/zlib/* linux/net/ipsec/zutil.c linux/net/ipsec/infutil.c
        linux/net/ipsec/infutil.h linux/net/ipsec/inflate.c
@@ -174,3 +206,47 @@ License: public-domain
  key management interface. It was written at the U.S. Naval Research
  Laboratory. This file is in the public domain. The authors ask that
  you leave this credit intact on any copies of this file.
+
+License: LGPL-2+
+ This library is free software; you can redistribute it and/or modify it
+ under the terms of the GNU Library General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ .
+ This library is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ License for more details.
+ .
+ On Debian systems, a copy of the GNU Library General Public License,
+ version 2, can be found in the file
+ /usr/share/common-licenses/LGPL-2.
+
+License: LGPL-2.1+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ Lesser General Public License for more details.
+ .
+ On Debian systems, a copy of the GNU Lesser General Public License,
+ version 2.1, can be found in the file
+ /usr/share/common-licenses/LGPL-2.1.
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ for more details.
+ . 
+ On Debian systems, a copy of the GNU General Public License, version 2,
+ can be found in the file /usr/share/common-licenses/GPL-2.
