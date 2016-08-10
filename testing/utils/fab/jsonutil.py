@@ -44,7 +44,6 @@ class result:
     testname = "testname"
     expect = "expect"
     result = "result"
-    start_time = "start_time"
     script_time = "script_time"
     boot_time = "boot_time"
     total_time = "total_time"

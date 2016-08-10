@@ -262,7 +262,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     suffix = "******"
     test_stats.add(test, "total")
 
-    test_runtime = test_boot_time = test_script_time = test_start_time = test_total_time = None
+    test_runtime = test_boot_time = test_script_time = test_total_time = None
 
     # Would the number of tests to be [re]run be better?
     test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
