@@ -11,16 +11,22 @@ function summary(json) {
 	    })
 
 	    var titles = [ "Date", "Passed", "Failed",
-			   "Incomplete", "Tests",
+			   "Unresolved", "Untested", "Total",
 			   "Run Time", "Directory" ]
 	    var values = []
 	    // form the list of values
 	    summary.forEach(function(d) {
+		var unresolved = (d.hasOwnProperty('incomplete')
+				  ? d.incomplete
+				  : d.hasOwnProperty('unresolved')
+				  ? d.unresolved
+				  : "")
+		var untested = (d.hasOwnProperty('untested')
+				? d.untested
+				: "")
 		// yes Total, not total
-		var incomplete = d.hasOwnProperty('incomplete')
-		    ? d.incomplete : ""
 		values.push([d.date, d.passed, d.failed,
-			     incomplete, d.Total,
+			     unresolved, untested, d.Total,
 			     d.runtime, d.directory])
 	    })
 
@@ -41,7 +47,7 @@ function summary(json) {
 }
 
 function postProcessColumn(col) {
-    if (col.cellIndex == 6) { // Test Directory
+    if (col.cellIndex == 7) { // Test Directory
 	var child = col.childNodes[0]
 	var text = child.data
         var a = document.createElement("a")
