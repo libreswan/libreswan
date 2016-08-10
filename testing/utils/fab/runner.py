@@ -17,6 +17,8 @@ import sys
 import pexpect
 import threading
 import queue
+import re
+import subprocess
 from datetime import datetime
 from concurrent import futures
 
@@ -29,6 +31,7 @@ from fab import logutil
 from fab import post
 from fab import skip
 from fab import ignore
+from fab import tcpdump
 
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
@@ -41,6 +44,8 @@ def add_arguments(parser):
                        help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
+    group.add_argument("--tcpdump", action="store_true",
+                       help="enable experimental TCPDUMP support")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
@@ -56,6 +61,7 @@ def log_arguments(logger, args):
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
     logger.info("  stop-at: %s", args.stop_at)
+    logger.info("  tcpdump: %s", args.tcpdump)
     logger.info("  backup-directory: %s", args.backup_directory)
 
 
@@ -357,43 +363,47 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             with logger.time("running scripts %s",
                              " ".join(("%s:%s" % (host, script))
                                       for host, script in test.host_script_tuples)) as test_script_time:
-                try:
+                with tcpdump.Dump(logger, domain_prefix, test.output_directory,
+                                  [test_domain.domain for test_domain in test_domains.values()],
+                                  enable=args.tcpdump):
 
-                    # re-direct the test-result log file
-                    for test_domain in test_domains.values():
-                        output = os.path.join(test.output_directory,
-                                              test_domain.domain.host_name + ".console.verbose.txt")
-                        test_domain.console.output(open(output, "w"))
+                    try:
 
-                    for host, script in test.host_script_tuples:
-                        if args.stop_at == script:
-                            logger.error("stopping test run at (before executing) script %s", script)
-                            break
-                        test_domain = test_domains[host]
-                        test_domain.read_file_run(script)
-                    result = post.mortem(test, args, test_finished=True, update=True)
+                        # re-direct the test-result log file
+                        for test_domain in test_domains.values():
+                            output = os.path.join(test.output_directory,
+                                                  test_domain.domain.host_name + ".console.verbose.txt")
+                            test_domain.console.output(open(output, "w"))
 
-                except pexpect.TIMEOUT as e:
-                    logger.exception("**** timeout out while running script %s ****", script)
-                    # Still peform post-mortem so that errors are
-                    # captured, but force the result to
-                    # incomplete.
-                    result = post.mortem(test, args, test_finished=False, update=True)
+                        for host, script in test.host_script_tuples:
+                            if args.stop_at == script:
+                                logger.error("stopping test run at (before executing) script %s", script)
+                                break
+                            test_domain = test_domains[host]
+                            test_domain.read_file_run(script)
+                        result = post.mortem(test, args, test_finished=True, update=True)
 
-                finally:
+                    except pexpect.TIMEOUT as e:
+                        logger.exception("**** timeout out while running script %s ****", script)
+                        # Still peform post-mortem so that errors are
+                        # captured, but force the result to
+                        # incomplete.
+                        result = post.mortem(test, args, test_finished=False, update=True)
 
-                    # Close the redirected test-result log files
-                    for test_domain in test_domains.values():
-                        logfile = test_domain.console.output()
-                        logfile.close()
+                    finally:
 
-                    # Always disconnect from the test domains.
-                    logger.info("closing all test domains")
-                    for test_domain in test_domains.values():
-                        logfile = test_domain.console.output()
-                        if logfile:
+                        # Close the redirected test-result log files
+                        for test_domain in test_domains.values():
+                            logfile = test_domain.console.output()
                             logfile.close()
-                        test_domain.close()
+
+                        # Always disconnect from the test domains.
+                        logger.info("closing all test domains")
+                        for test_domain in test_domains.values():
+                            logfile = test_domain.console.output()
+                            if logfile:
+                                logfile.close()
+                            test_domain.close()
 
     # Above will have set RESULT.  Exceptions such as control-c or
     # a crash bypass this code.
