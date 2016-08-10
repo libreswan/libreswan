@@ -100,13 +100,13 @@ class Errors:
     def grep(self, regex, filename, error, host):
         self.logger.debug("grepping host %s file '%s' for '%s' (error %s)", host, filename, regex, error)
         command = ['grep', '-e', regex, filename]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        if process.returncode == 0:
-            self.add(error, host)
-            return True
-        else:
+        if process.returncode or stderr:
             return False
+        self.add(error, host)
+        return True
 
 def strip_space(s):
     s = re.sub(r"[ \t]+", r"", s)
@@ -157,7 +157,8 @@ def sanitize_output(logger, raw_file, test_directory):
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to re-read the file than read the
     # pre-loaded raw console output.
-    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     logger.debug("sanitized output:\n%s", stdout)
     if process.returncode or stderr:
