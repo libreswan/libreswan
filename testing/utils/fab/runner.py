@@ -411,38 +411,38 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                 result.errors and " ", result.errors, suffix)
 
-    # Since the test finished, emit enough JSON to fool scripts like
-    # pluto-testlist-scan.sh.
+    # If the test finished (resolved in POSIX terminology)", emit
+    # enough JSON to fool scripts like pluto-testlist-scan.sh.
     #
-    # This also leaves a simple marker to indicate that the test
-    # finished.
+    # A test that timed-out or crashed, isn't considered resolved.
     #
     # A more robust way of doing this would be to mark each of the
     # console logs as complete as it is closed.
     #
     # More detailed information can be extracted from the debug.log.
-    hosts = {}
-    for host in sorted(test.host_names):
-        if host in result.errors:
-            hosts[host] = [error for error in result.errors[host]]
-        else:
-            hosts[host] = ["passed"]
-    RESULT = {
-        jsonutil.result.testname: test.name,
-        jsonutil.result.expect: test.expected_result,
-        jsonutil.result.result: str(result),
-        jsonutil.result.time: jsonutil.ftime(datetime.now()),
-        jsonutil.result.runtime: round(test_runtime.seconds(), 1),
-        jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
-        jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-        jsonutil.result.total_time: round(test_total_time.seconds(), 1),
-        jsonutil.result.hosts: hosts,
-    }
-    j = jsonutil.dumps(RESULT)
-    logger.info("filling '%s' with json: %s", test.result_file(), j)
-    with open(test.result_file(), "w") as f:
-        f.write(j)
-        f.write("\n")
+    if result.finished:
+        hosts = {}
+        for host in sorted(test.host_names):
+            if host in result.errors:
+                hosts[host] = [error for error in result.errors[host]]
+            else:
+                hosts[host] = ["passed"]
+        RESULT = {
+            jsonutil.result.testname: test.name,
+            jsonutil.result.expect: test.expected_result,
+            jsonutil.result.result: str(result),
+            jsonutil.result.time: jsonutil.ftime(test_total_time.start),
+            jsonutil.result.runtime: round(test_runtime.seconds(), 1),
+            jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
+            jsonutil.result.script_time: round(test_script_time.seconds(), 1),
+            jsonutil.result.total_time: round(test_total_time.seconds(), 1),
+            jsonutil.result.hosts: hosts,
+        }
+        j = jsonutil.dumps(RESULT)
+        logger.info("filling '%s' with json: %s", test.result_file(), j)
+        with open(test.result_file(), "w") as f:
+            f.write(j)
+            f.write("\n")
 
     test_stats.add(test, "tests", str(result))
     result_stats.add_result(result, old_result)

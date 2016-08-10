@@ -193,15 +193,20 @@ class TestResult:
             else:
                 return "unknown"
         elif self.finished is False:
-            # Sounds good doesn't mean anything.  It might be because
-            # the test aborted, but it could also be because the test
-            # is still in-progress.
-            return "incomplete"
+            # Per POSIX 1003.3, the test has an indeterminate result.
+            # Typically because the test aborted with a timeout, but
+            # could also be due to a test still running.
+            return "unresolved"
         else:
             return "untested"
 
     def __bool__(self):
-        # Things started - passed is valid
+        """True if the test was attempted.
+
+        That is POSIX 1003.3 PASS, FAIL, or UNRESOLVED (which leaves
+        UNTESTED).
+
+        """
         return self.finished is not None
 
     def __init__(self, test, skip_diff, skip_sanitize,
@@ -209,6 +214,7 @@ class TestResult:
                  update_diff=False, update_sanitize=False,
                  strip_spaces=False, strip_blank_lines=False):
 
+        # Set things up for an UNTESTED result
         self.test = test
         self.passed = None
         self.finished = None
@@ -218,21 +224,23 @@ class TestResult:
 
         output_directory = output_directory or test.output_directory
 
-        # An OUTPUT directory is a clear indicator that something was
-        # started.
+        # If there is no OUTPUT directory the result is UNTESTED -
+        # presence of the OUTPUT is a clear indicator that some
+        # attempt was made to run the test.
         if not os.path.exists(output_directory):
             test.logger.debug("output directory missing: %s", output_directory)
             return
-        if test_finished is None:
-            # Use RESULT as a proxy for a test finishing.  It isn't
-            # 100% reliable since an in-progress test looks list like
-            # an aborted test.
-            self.finished = os.path.isfile(test.result_file(output_directory));
-        else:
-            self.finished = test_finished;
 
-        # Be optimistic; passed is only really valid when finished is
-        # true.
+        self.finished = test_finished;
+        if self.finished is None:
+            # Use RESULT as a proxy for a test resolved.  It isn't
+            # 100% reliable since an in-progress test looks list like
+            # an aborted test.  Arguably only "good" tests should
+            # resolve.
+            self.finished = os.path.isfile(test.result_file(output_directory));
+
+        # Be optimistic; passed is only really valid when resolved is
+        # True.
         self.passed = True
 
         # crash or other unexpected behaviour.

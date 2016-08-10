@@ -17,7 +17,7 @@ from fab import argutil
 class skip(argutil.List):
     passed = "passed"
     failed = "failed"
-    incomplete = "incomplete"
+    unresolved = "unresolved"
     untested = "untested"
 
 def add_arguments(parser):
@@ -36,8 +36,8 @@ def result(logger, args, result):
         return "passed"
     if skip.failed in args.skip and result.finished and result.passed is False:
         return "failed"
-    if skip.incomplete in args.skip and result.finished is False:
-        return "incomplete"
+    if skip.unresolved in args.skip and result.finished is False:
+        return "unresolved"
     if skip.untested in args.skip and result.finished is None:
         return "untested"
     return None
