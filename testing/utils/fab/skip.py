@@ -12,32 +12,32 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+from fab import argutil
+
+class skip(argutil.List):
+    passed = "passed"
+    failed = "failed"
+    incomplete = "incomplete"
+    untested = "untested"
+
 def add_arguments(parser):
-    group = parser.add_argument_group("Skip arguments",
-                                      "Arguments controlling which existing results to skip")
-    group.add_argument("--skip-passed", action="store_true",
-                       help="skip tests that passed during the previous test run")
-    group.add_argument("--skip-failed", action="store_true",
-                       help="skip tests that failed during the previous test run")
-    group.add_argument("--skip-incomplete", action="store_true",
-                       help="skip tests that did not complete during the previous test run")
-    group.add_argument("--skip-untested", action="store_true",
-                       help="skip tests that have not been previously run")
+    group = parser.add_argument_group("Skip arguments")
+    group.add_argument("--skip", action="store",
+                       default=skip(),
+                       type=skip, metavar=str(skip),
+                       help="comma separated list of previous test results to skip; default: '%(default)s'")
 
 def log_arguments(logger, args):
     logger.info("Skip arguments:")
-    logger.info("  skip-passed: %s", args.skip_passed)
-    logger.info("  skip-failed: %s", args.skip_failed)
-    logger.info("  skip-incomplete: %s", args.skip_incomplete)
-    logger.info("  skip-untested: %s", args.skip_untested)
+    logger.info("  skip: %s", args.skip)
 
 def result(logger, args, result):
-    if args.skip_passed and result.finished and result.passed is True:
+    if skip.passed in args.skip and result.finished and result.passed is True:
         return "passed"
-    if args.skip_failed and result.finished and result.passed is False:
+    if skip.failed in args.skip and result.finished and result.passed is False:
         return "failed"
-    if args.skip_incomplete and result.finished is False:
+    if skip.incomplete in args.skip and result.finished is False:
         return "incomplete"
-    if args.skip_untested and result.finished is None:
+    if skip.untested in args.skip and result.finished is None:
         return "untested"
     return None

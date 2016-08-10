@@ -188,7 +188,7 @@ kvm-check kvm-test: $(KVM_KEYS)
 # didn't pass.
 .PHONY: kvm-retest kvm-recheck
 kvm-retest kvm-recheck: $(KVM_KEYS)
-	$(call kvm-test, --test-result "good" --skip-passed)
+	$(call kvm-test, --test-result "good" --skip passed)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \

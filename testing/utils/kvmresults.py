@@ -25,11 +25,10 @@ from fab import post
 from fab import stats
 from fab import skip
 from fab import ignore
+from fab import argutil
 
 
-class Print(Enum):
-    def __str__(self):
-        return self.value
+class Print(argutil.List):
     diffs = "diffs"
     directory = "directory"
     expected_result = "expected-result"
@@ -42,6 +41,7 @@ class Print(Enum):
     sanitize_directory = "sanitize-directory"
     saved_output_directory = "saved-output-directory"
     scripts = "scripts"
+    errors = "errors"
 
 
 class Prefix(Enum):
@@ -87,9 +87,10 @@ def main():
                         help="prefix to display with each test")
 
     # how to parse --print directory,saved-directory,...?
-    parser.add_argument("--print", action="append", default=[],
-                        choices=[p for p in Print], type=Print,
-                        help="what information to display about each test")
+    parser.add_argument("--print", action="store",
+                        default=Print(Print.result, Print.errors),
+                        type=Print, metavar=str(Print),
+                        help="comman separate list of attributes to print for each test; default: '%(default)s'")
 
     parser.add_argument("--stats", action="store", default=Stats.summary, type=Stats,
                         choices=[c for c in Stats],
@@ -116,10 +117,6 @@ def main():
     logutil.config(args)
     logger = logutil.getLogger("kvmresults")
 
-    # default to printing results
-    if not args.print:
-        args.print = [Print.result]
-
     # The option -vvvvvvv is a short circuit for these; make
     # re-ordering easy by using V as a counter.
     v = 0
@@ -129,6 +126,7 @@ def main():
         logger.info("  Stats: %s", args.stats)
         logger.info("  Print: %s", args.print)
         logger.info("  Prefix: %s", args.prefix)
+        logger.info("  Baseline: %s", args.baseline)
         post.log_arguments(logger, args)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
@@ -206,7 +204,7 @@ def results(logger, tests, baseline, args, result_stats):
 
             # Filter out tests that have not been run
             result = None
-            if Print.result in args.print or Print.diffs in args.print:
+            if args.skip in args.print or Print.result in args.print or Print.diffs in args.print or Print.errors in args.print:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
                                      skip_sanitize=args.quick or args.quick_sanitize,
@@ -214,10 +212,10 @@ def results(logger, tests, baseline, args, result_stats):
                                      update=args.update,
                                      update_sanitize=args.update_sanitize,
                                      update_diff=args.update_diff)
-                if skip.result(logger, args, result):
-                    continue
-
                 result_stats.add_result(result)
+                if skip.result(logger, args, result):
+                    result_stats.add_skipped(result)
+                    continue
 
             sep = ""
 
@@ -248,11 +246,6 @@ def results(logger, tests, baseline, args, result_stats):
                            and test.saved_output_directory
                            or test.output_directory), end="")
                     sep = " "
-
-            if ignored:
-                print(sep, end="")
-                print("ignored", ignored, end="")
-                sep = " "
 
             for p in args.print:
                 if p is Print.diffs:
@@ -288,12 +281,10 @@ def results(logger, tests, baseline, args, result_stats):
                     print(test.output_directory, end="")
                     sep = " "
                 elif p is Print.result:
-                    print(sep, end="")
+                    print(" ", result, end="", sep="")
+                elif p is Print.errors:
                     if result.errors:
-                        print(result, result.errors, end="")
-                    else:
-                        print(result, end="")
-                    sep = " "
+                        print(" ", result.errors, end="", sep="")
                 elif p is Print.sanitize_directory:
                     print(sep, end="")
                     print(test.sanitize_directory, end="")
