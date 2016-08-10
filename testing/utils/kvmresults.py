@@ -199,18 +199,16 @@ def results(logger, tests, baseline, args, result_stats):
         with logger.debug_time("processing test %s", test.name):
 
             # Filter out tests that are being ignored?
-            ignored, include_ignored, details = ignore.test(logger, args, test)
+            ignored, details = ignore.test(logger, args, test)
             if ignored:
                 result_stats.add_ignored(test, ignored)
-                if not include_ignored:
-                    continue
+                continue
 
             # Filter out tests that have not been run
             result = None
-            if not ignored and Print.result in args.print:
+            if Print.result in args.print or Print.diffs in args.print:
                 result = post.mortem(test, args, baseline=baseline,
                                      output_directory=test.saved_output_directory,
-                                     test_finished=None,
                                      skip_sanitize=args.quick or args.quick_sanitize,
                                      skip_diff=args.quick or args.quick_diff,
                                      update=args.update,
@@ -219,10 +217,7 @@ def results(logger, tests, baseline, args, result_stats):
                 if skip.result(logger, args, result):
                     continue
 
-                if not result:
-                    result_stats.add_ignored(test, str(result))
-                else:
-                    result_stats.add_result(result)
+                result_stats.add_result(result)
 
             sep = ""
 
@@ -260,7 +255,7 @@ def results(logger, tests, baseline, args, result_stats):
                 sep = " "
 
             for p in args.print:
-                if p in [Print.diffs]:
+                if p is Print.diffs:
                     continue
                 elif p is Print.directory:
                     print(sep, end="")
@@ -293,13 +288,12 @@ def results(logger, tests, baseline, args, result_stats):
                     print(test.output_directory, end="")
                     sep = " "
                 elif p is Print.result:
-                    if result:
-                        print(sep, end="")
-                        if result.errors:
-                            print(result, result.errors, end="")
-                        else:
-                            print(result, end="")
-                        sep = " "
+                    print(sep, end="")
+                    if result.errors:
+                        print(result, result.errors, end="")
+                    else:
+                        print(result, end="")
+                    sep = " "
                 elif p is Print.sanitize_directory:
                     print(sep, end="")
                     print(test.sanitize_directory, end="")
@@ -316,11 +310,11 @@ def results(logger, tests, baseline, args, result_stats):
                     sep = " "
                 else:
                     print()
-                    print("unknown print option", p)
+                    raise Exception("unhandled print option %s" % p)
 
             print()
 
-            if Print.diffs in args.print and result:
+            if Print.diffs in args.print:
                 for domain in result.diffs:
                     for line in result.diffs[domain]:
                         if line:

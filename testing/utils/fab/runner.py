@@ -268,8 +268,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
     with logger.time("processing test %s", test_prefix) as test_total_time:
 
-        ignored, include_ignored, details = ignore.test(logger, args, test)
-        if ignored and not include_ignored:
+        ignored, details = ignore.test(logger, args, test)
+        if ignored:
             result_stats.add_ignored(test, ignored)
             test_stats.add(test, "ignored")
             # No need to log all the ignored tests when an explicit
