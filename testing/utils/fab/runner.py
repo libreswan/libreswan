@@ -272,12 +272,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         if ignored:
             result_stats.add_ignored(test, ignored)
             test_stats.add(test, "ignored")
-            # No need to log all the ignored tests when an explicit
-            # sub-set of tests is being run.  For instance, when running
-            # just one test.
-            if not args.test_name:
-                logger.info("$s %s ignored (%s) %s",
-                            prefix, test_prefix, details, suffix)
+            logger.info("$s %s ignored (%s) %s",
+                        prefix, test_prefix, details, suffix)
             return
 
         # Be lazy with gathering the results, don't run the sanitizer or
