@@ -3260,7 +3260,6 @@ static bool is_virtual_net_used(struct connection *c,
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
 				const struct host_pair *hp,
-				const struct id *peer_id UNUSED,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
 				const u_int8_t our_protocol,
@@ -3377,8 +3376,7 @@ static struct connection *fc_try(const struct connection *c,
 					     is_virtual_net_used(
 						d,
 						peer_net,
-						peer_id != NULL ?
-						    peer_id : &sr->that.id)))
+						&sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   virtual net not allowed"));
@@ -3609,7 +3607,7 @@ struct connection *find_client_connection(struct connection *const c,
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->host_pair, NULL, our_net, peer_net,
+		d = fc_try(c, c->host_pair, our_net, peer_net,
 			our_protocol, our_port, peer_protocol, peer_port);
 
 		DBG(DBG_CONTROLMORE,
@@ -3650,7 +3648,7 @@ struct connection *find_client_connection(struct connection *const c,
 
 		if (hp != NULL) {
 			/* RW match with actual peer_id or abstract peer_id? */
-			d = fc_try(c, hp, NULL, our_net, peer_net,
+			d = fc_try(c, hp, our_net, peer_net,
 				our_protocol, our_port, peer_protocol,
 				peer_port);
 
