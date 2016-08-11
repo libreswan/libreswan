@@ -36,10 +36,6 @@ def main():
     args = parser.parse_args()
 
     # Force the order
-    host_names = [ "east", "west", "road", "north", "nic" ]
-    columns = [ "Test", "Expected", "Result", "Run time" ]
-    for host in host_names:
-        columns.append(host)
     rows = []
 
     first_time = last_time = None
@@ -94,7 +90,7 @@ def main():
                         break
                     if not j:
                         break
-                    if "result" in j:
+                    if jsonutil.result.result in j:
                         RESULT = j
                         break
 
