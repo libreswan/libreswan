@@ -179,8 +179,10 @@ class LogTime:
         self.loglevel = loglevel
 
     def __enter__(self):
-        self.logger_adapter.log(self.loglevel, "start %s", self.action)
-        return self.timer.__enter__()
+        timer = self.timer.__enter__()
+        self.logger_adapter.log(self.loglevel, "start %s at %s",
+                                self.action, timer.start)
+        return timer
 
     def __exit__(self, type, value, traceback):
         self.timer.__exit__(type, value, traceback)
