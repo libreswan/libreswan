@@ -20,26 +20,6 @@ from collections import defaultdict
 
 from fab import utilsdir
 
-def add_arguments(parser):
-    group = parser.add_argument_group("Postmortem arguments",
-                                      "Options for controlling the analysis of the test results")
-
-    # If it gets decided that these arguments should be enabled by
-    # default then the following can be used to make them like flags:
-    # nargs="?", type=argutil.boolean, const="true", default="false",
-    group.add_argument("--ignore-all-spaces", "-w",
-                       action="store_true",
-                       help="ignore (strip out) all white space")
-    group.add_argument("--ignore-blank-lines", "-B",
-                       action="store_true",
-                       help="ignore (strip out) blank lines")
-
-def log_arguments(logger, args):
-    logger.info("Postmortem arguments")
-    logger.info("  ignore-all-spaces: %s", args.ignore_all_spaces)
-    logger.info("  ignore-blank-lines: %s", args.ignore_blank_lines)
-
-
 # Dictionary to accumulate all the errors for each host from an
 # individual test.
 
@@ -108,34 +88,22 @@ class Errors:
         self.add(error, host)
         return True
 
-def strip_space(s):
+def _strip(s):
     s = re.sub(r"[ \t]+", r"", s)
-    return s
-
-def strip_blank_line(s):
     s = re.sub(r"\n+", r"\n", s)
     s = re.sub(r"^\n", r"", s)
     return s
 
-# Compare two strings; hack to mimic "diff -N -w -B"?
-# Returns:
+# Compare two strings.  Returns:
+#
 #    [], None
 #    [diff..], True # if white space only
 #    [diff...], False
-def fuzzy_diff(logger, ln, l, rn, r,
-               strip_spaces=False,
-               strip_blank_lines=False):
+def fuzzy_diff(logger, ln, l, rn, r):
     if l == r:
         # fast path
         logger.debug("fuzzy_diff fast match")
         return [], None
-    # Could be more efficient
-    if strip_spaces:
-        l = strip_space(l)
-        r = strip_space(r)
-    if strip_blank_lines:
-        l = strip_blank_line(l)
-        r = strip_blank_line(r)
     # compare
     diff = list(difflib.unified_diff(l.splitlines(), r.splitlines(),
                                      fromfile=ln, tofile=rn,
@@ -143,13 +111,8 @@ def fuzzy_diff(logger, ln, l, rn, r,
     logger.debug("fuzzy_diff: %s", diff)
     if not diff:
         return [], None
-    # see if the problem was just white space; hack
-    if not strip_spaces and not strip_blank_lines:
-        l = strip_blank_line(strip_space(l))
-        r = strip_blank_line(strip_space(r))
-        if l == r:
-            return diff, True
-    return diff, False
+    # if the problem was just white space, return that as well
+    return diff, _strip(l) == _strip(r)
 
 
 def sanitize_output(logger, raw_file, test_directory):
@@ -211,8 +174,7 @@ class TestResult:
 
     def __init__(self, test, skip_diff, skip_sanitize,
                  output_directory=None, test_finished=None,
-                 update_diff=False, update_sanitize=False,
-                 strip_spaces=False, strip_blank_lines=False):
+                 update_diff=False, update_sanitize=False):
 
         # Set things up for an UNTESTED result
         self.test = test
@@ -324,8 +286,10 @@ class TestResult:
                     sanitized_console_diff = load_output(test.logger, sanitized_console_diff_file)
                     # be consistent with fuzzy_diff which returns a list
                     # of lines.
+                    #
+                    # This has no easy way to detect whitespace differences, so set it to None
                     if sanitized_console_diff:
-                        diff, whitespace = sanitized_console_diff.splitlines(), False
+                        diff, whitespace = sanitized_console_diff.splitlines(), None
                 if not diff:
                     with open(expected_sanitized_console_output_file) as f:
                         expected_sanitized_console_output = f.read()
@@ -333,9 +297,7 @@ class TestResult:
                                                   "MASTER/" + test.name + "/" + host_name + ".console.txt",
                                                   expected_sanitized_console_output,
                                                   "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                                                  sanitized_console_output,
-                                                  strip_spaces=strip_spaces,
-                                                  strip_blank_lines=strip_blank_lines)
+                                                  sanitized_console_output)
                 if update_diff:
                     test.logger.debug("host %s updating diff file %s", host_name, sanitized_console_diff_file)
                     with open(sanitized_console_diff_file, "w") as f:
@@ -366,15 +328,10 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
     update_diff = update or update_diff
     update_sanitize = update or update_sanitize
 
-    strip_spaces = args.ignore_all_spaces
-    strip_blank_lines = args.ignore_blank_lines
-
     test_result = TestResult(test, skip_diff, skip_sanitize,
                              output_directory, test_finished=test_finished,
                              update_diff=update_diff,
-                             update_sanitize=update_sanitize,
-                             strip_spaces=strip_spaces,
-                             strip_blank_lines=strip_blank_lines)
+                             update_sanitize=update_sanitize)
 
     if not test_result:
         return test_result
@@ -400,9 +357,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         return test_result
 
     base = baseline[test.name]
-    baseline_result = TestResult(base, skip_diff, skip_sanitize,
-                                 strip_spaces=strip_spaces,
-                                 strip_blank_lines=strip_blank_lines)
+    baseline_result = TestResult(base, skip_diff, skip_sanitize)
     if not baseline_result:
         if not test_result.passed:
             test_result.errors.add("missing", "baseline")
@@ -436,9 +391,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
                                                         "BASELINE/" + test.name + "/" + host_name + ".console.txt",
                                                         baseline_result.sanitized_console_output[host_name],
                                                         "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                                                        test_result.sanitized_console_output[host_name],
-                                                        strip_spaces=strip_spaces,
-                                                        strip_blank_lines=strip_blank_lines)
+                                                        test_result.sanitized_console_output[host_name])
         if baseline_diff:
             if baseline_whitespace:
                 test_result.errors.add("baseline-whitespace", host_name)

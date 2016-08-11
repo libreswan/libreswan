@@ -276,15 +276,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         prefix, test_prefix, details, suffix)
             return
 
-        # Be lazy with gathering the results, don't run the sanitizer or
-        # diff.
-        #
-        # XXX: There is a bug here where the only difference is white
-        # space.  The test will show up as failed when it previously
-        # showed up as a white-space pass.
-        #
-        # The presence of the RESULT file is a proxy for detecting that
-        # the test was incomplete.
+        # Be lazy when gathering the results, don't run the sanitizer
+        # or diff.  Let post.mortem figure out if the test finished.
 
         old_result = post.mortem(test, args, test_finished=None,
                                  skip_diff=True, skip_sanitize=True)

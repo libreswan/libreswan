@@ -106,7 +106,6 @@ def main():
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
                         help="an optional testsuite directory (contains a TESTLIST file) containing output from a previous test run")
 
-    post.add_arguments(parser)
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
     skip.add_arguments(parser)
@@ -127,7 +126,6 @@ def main():
         logger.info("  Print: %s", args.print)
         logger.info("  Prefix: %s", args.prefix)
         logger.info("  Baseline: %s", args.baseline)
-        post.log_arguments(logger, args)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
         skip.log_arguments(logger, args)
