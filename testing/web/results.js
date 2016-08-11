@@ -5,9 +5,9 @@ function results(json) {
         // this gets a not well-formed warning
         $.getJSON(json, function(results) {
 
-	    var titles = ["Test", "Result", "Expected", "Hosts", "Boot time", "Script time", "Total Time"]
+	    var titles = ["Test", "Result", "Expected", "Errors", "Boot time", "Script time", "Run Time"]
 	    var hosts = ["east", "west", "road", "north", "nic"]
-	    var hosts_index = 3
+	    var errors_index = 3
 
 	    var values = []
 	    // need index
@@ -17,7 +17,9 @@ function results(json) {
 		var line = []
 		line.push(result.testname)
 		line.push(result.result)
-		line.push(result.expect)
+		line.push(result.hasOwnProperty("expect")
+			  ? result.expect
+			  : "")
 		// Index of this test result
 		line.push(i)
 		line.push(result.hasOwnProperty("boot_time")
@@ -26,9 +28,11 @@ function results(json) {
 		line.push(result.hasOwnProperty("script_time")
 			  ? result.script_time
 			  : "")
-		line.push(result.hasOwnProperty("total_time")
+		line.push(result.hasOwnProperty("runtime")
+			  ? result.runtime
+			  : result.hasOwnProperty("total_time")
 			  ? result.total_time
-			  : result.runtime)
+			  : "")
 		values.push(line)
 	    }
 
@@ -51,7 +55,7 @@ function results(json) {
 				a.setAttribute("href", TEST + "/OUTPUT")
 				a.appendChild(document.createTextNode(TEST))
 				col.replaceChild(a, child)
-			    } else if (col.cellIndex == hosts_index) {
+			    } else if (col.cellIndex == errors_index) {
 				var child = col.childNodes[0]
 				var result = results.table[parseInt(child.data)]
 				col.removeChild(child)
@@ -59,36 +63,41 @@ function results(json) {
 				    col.appendChild(document.createTextNode(""))
 				    return
 				}
-				var sep = 0
+				var br = false
 				hosts.forEach(function(host) {
 				    if (result.hosts.hasOwnProperty(host)) {
-					if (sep) {
+					if (br) {
 					    col.appendChild(document.createElement('br'))
 					}
-					sep = host + ":"
-					result.hosts[host].forEach(function(error) {
-					    col.appendChild(document.createTextNode(sep))
-					    if (error == "passed") {
-						col.appendChild(document.createTextNode(error))
-					    } else if (error == "output-different"
-						       || error == "output-whitespace") {
-						var a = document.createElement("a")
-						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.diff")
-						a.appendChild(document.createTextNode(error))
-						col.appendChild(a)
-					    } else if (error == "output-unchecked") {
-						var a = document.createElement("a")
-						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.txt")
-						a.appendChild(document.createTextNode(error))
-						col.appendChild(a)
-					    } else {
-						var a = document.createElement("a")
-						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".pluto.log")
-						a.appendChild(document.createTextNode(error))
-						col.appendChild(a)
-					    }
-					    sep = ","
-					})
+					br = true
+					if (result.hosts[host].length == 0) {
+					    col.appendChild(document.createTextNode(host + ":passed"))
+					} else {
+					    sep = host + ":"
+					    result.hosts[host].forEach(function(error) {
+						col.appendChild(document.createTextNode(sep))
+						if (error == "passed") {
+						    col.appendChild(document.createTextNode(error))
+						} else if (error == "output-different"
+							   || error == "output-whitespace") {
+						    var a = document.createElement("a")
+						    a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.diff")
+						    a.appendChild(document.createTextNode(error))
+						    col.appendChild(a)
+						} else if (error == "output-unchecked") {
+						    var a = document.createElement("a")
+						    a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.txt")
+						    a.appendChild(document.createTextNode(error))
+						    col.appendChild(a)
+						} else {
+						    var a = document.createElement("a")
+						    a.setAttribute("href", result.testname + "/OUTPUT/")
+						    a.appendChild(document.createTextNode(error))
+						    col.appendChild(a)
+						}
+						sep = ","
+					    })
+					}
 				    }
 				})
 			    }
