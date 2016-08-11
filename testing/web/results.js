@@ -70,7 +70,8 @@ function results(json) {
 					    col.appendChild(document.createTextNode(sep))
 					    if (error == "passed") {
 						col.appendChild(document.createTextNode(error))
-					    } else if (error == "output-different") {
+					    } else if (error == "output-different"
+						       || error == "output-whitespace") {
 						var a = document.createElement("a")
 						a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.diff")
 						a.appendChild(document.createTextNode(error))
