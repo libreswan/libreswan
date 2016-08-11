@@ -3401,11 +3401,12 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, the smallest number of ID wildcards
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred
+			 * - given that, not switching is preferred
 			 */
 			prio = PRIO_WEIGHT * routed(sr->routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
-				1;
+				1 + (c == d) ? 1 : 0;
 			if (prio > best_prio) {
 				best = d;
 				best_prio = prio;
