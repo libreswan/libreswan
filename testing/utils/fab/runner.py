@@ -272,7 +272,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         if ignored:
             result_stats.add_ignored(test, ignored)
             test_stats.add(test, "ignored")
-            logger.info("$s %s ignored (%s) %s",
+            logger.info("%s %s ignored (%s) %s",
                         prefix, test_prefix, details, suffix)
             return
 
