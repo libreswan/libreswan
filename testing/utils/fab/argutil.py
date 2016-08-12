@@ -58,6 +58,8 @@ class List(metaclass=MetaList):
         return ",".join(self.args)
     def __contains__(self, member):
         return member in self.args
+    def __bool__(self):
+        return bool(self.args)
 
 
 def boolean(arg):
