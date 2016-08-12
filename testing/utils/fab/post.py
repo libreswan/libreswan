@@ -16,7 +16,6 @@ import os
 import re
 import subprocess
 import difflib
-from collections import defaultdict
 
 from fab import utilsdir
 
@@ -26,7 +25,8 @@ from fab import utilsdir
 class Errors:
 
     def __init__(self, logger):
-        self.errors = defaultdict(set)
+        # Structure needs to be JSON friendly.
+        self.errors = {}
         self.logger = logger
 
     # this formatting is subject to infinite feedback.
@@ -42,18 +42,23 @@ class Errors:
             s += ",".join(sorted(errors))
         return s
 
+    def json(self):
+        return self.errors
+
     # So, like a real collection, can easily test if non-empty.
     def __bool__(self):
         return len(self.errors) > 0
 
-    # Iterate over the actual errors, not who had them.  XXX: there's
-    # not much consistency between __iter__(), items(), __contains__()
-    # and __getitem__().  On the other hand, a hashmap iter isn't
-    # consistent either.
+    # Iterate over the actual errors, not who had them.
+    #
+    # XXX: there's not much consistency between __iter__(), items(),
+    # __contains__() and __getitem__().  On the other hand, a hashmap
+    # iter isn't consistent either.
     def __iter__(self):
         values = set()
         for errors in self.errors.values():
-            values |= errors
+            for error in errors:
+                values |= error
         return values.__iter__()
 
     def __contains__(self, item):
@@ -65,8 +70,11 @@ class Errors:
     def items(self):
         return self.errors.items()
 
-    def add(self, error, host=None):
-        self.errors[host].add(error)
+    def add(self, error, host):
+        if not host in self.errors:
+            self.errors[host] = []
+        if not error in self.errors[host]:
+            self.errors[host].append(error)
         self.logger.debug("host %s has error %s", host, error)
 
     def search(self, regex, string, error, host):

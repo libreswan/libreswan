@@ -44,6 +44,8 @@ class result:
     testname = "testname"
     expect = "expect"
     result = "result"
+    hosts = "hosts"
+    errors = "errors"
     script_time = "script_time"
     boot_time = "boot_time"
     total_time = "total_time"
@@ -80,11 +82,20 @@ def loads(s):
     except ValueError:
         return None
 
+def default(obj):
+    if hasattr(obj, "json") and callable(getattr(obj, "json")):
+        return obj.json()
+    elif hasattr(obj, "__str__") and callable(getattr(obj, "__str__")):
+        return str(obj)
+    else:
+        print("obj:", obj)
+        raise TypeError(obj)
+
 def dump(j, io):
-    json.dump(j, io, indent=2)
+    json.dump(j, io, indent=2, default=default)
 
 def dumps(s):
-    return json.dumps(s)
+    return json.dumps(s, default=default)
 
 def ftime(t):
     """Format the time"""

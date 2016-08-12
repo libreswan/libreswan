@@ -410,22 +410,17 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     #
     # More detailed information can be extracted from the debug.log.
     if result.finished:
-        hosts = {}
-        for host in sorted(test.host_names):
-            if host in result.errors:
-                hosts[host] = [error for error in result.errors[host]]
-            else:
-                hosts[host] = ["passed"]
         RESULT = {
             jsonutil.result.testname: test.name,
             jsonutil.result.expect: test.expected_result,
-            jsonutil.result.result: str(result),
+            jsonutil.result.result: result,
+            jsonutil.result.errors: result.errors,
+            jsonutil.result.hosts: test.host_names,
             jsonutil.result.time: jsonutil.ftime(test_total_time.start),
             jsonutil.result.runtime: round(test_runtime.seconds(), 1),
             jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
             jsonutil.result.script_time: round(test_script_time.seconds(), 1),
             jsonutil.result.total_time: round(test_total_time.seconds(), 1),
-            jsonutil.result.hosts: hosts,
         }
         j = jsonutil.dumps(RESULT)
         logger.info("filling '%s' with json: %s", test.result_file(), j)
