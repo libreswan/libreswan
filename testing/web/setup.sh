@@ -2,6 +2,9 @@
 
 set -eu
 
+# check dependencies installed
+rpm -q jq
+
 webdir=$(dirname $0)
 resultsdir=${HOME}/results
 

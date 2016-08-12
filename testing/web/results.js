@@ -6,19 +6,18 @@ function results(json) {
         $.getJSON(json, function(results) {
 
 	    var titles = ["Test", "Result", "Expected", "Errors", "Boot time", "Script time", "Run Time"]
-	    var hosts = ["east", "west", "road", "north", "nic"]
 	    var errors_index = 3
 
 	    var values = []
 	    // need index
 	    var i
-	    for (i = 0; i < results.table.length; i++) {
-		var result = results.table[i]
+	    for (i = 0; i < results.length; i++) {
+		var result = results[i]
 		var line = []
-		line.push(result.testname)
+		line.push(result.test_name)
 		line.push(result.result)
-		line.push(result.hasOwnProperty("expect")
-			  ? result.expect
+		line.push(result.hasOwnProperty("expected_result")
+			  ? result.expected_result
 			  : "")
 		// Index of this test result
 		line.push(i)
@@ -49,55 +48,53 @@ function results(json) {
 			    if (col.cellIndex == 0) {
 				// Test Name: href to output directory
 				var child = col.childNodes[0]
-				// XXX: see above
-				TEST = child.data
+				test_name = child.data
 				var a = document.createElement("a")
-				a.setAttribute("href", TEST + "/OUTPUT")
-				a.appendChild(document.createTextNode(TEST))
+				a.setAttribute("href", test_name)
+				a.appendChild(document.createTextNode(test_name))
 				col.replaceChild(a, child)
 			    } else if (col.cellIndex == errors_index) {
 				var child = col.childNodes[0]
-				var result = results.table[parseInt(child.data)]
+				var result = results[parseInt(child.data)]
 				col.removeChild(child)
-				if (!result || !result.hasOwnProperty("hosts")) {
+				if (!result) {
 				    col.appendChild(document.createTextNode(""))
 				    return
 				}
 				var br = false
-				hosts.forEach(function(host) {
-				    if (result.hosts.hasOwnProperty(host)) {
-					if (br) {
-					    col.appendChild(document.createElement('br'))
-					}
-					br = true
-					if (result.hosts[host].length == 0) {
+				result.host_names.forEach(function(host) {
+				    if (br) {
+					col.appendChild(document.createElement('br'))
+				    }
+				    br = true
+				    if (!result.errors.hasOwnProperty(host)
+					|| result.errors[host].length == 0) {
 					    col.appendChild(document.createTextNode(host + ":passed"))
-					} else {
-					    sep = host + ":"
-					    result.hosts[host].forEach(function(error) {
-						col.appendChild(document.createTextNode(sep))
-						if (error == "passed") {
-						    col.appendChild(document.createTextNode(error))
-						} else if (error == "output-different"
-							   || error == "output-whitespace") {
-						    var a = document.createElement("a")
-						    a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.diff")
-						    a.appendChild(document.createTextNode(error))
-						    col.appendChild(a)
-						} else if (error == "output-unchecked") {
-						    var a = document.createElement("a")
-						    a.setAttribute("href", result.testname + "/OUTPUT/" + host + ".console.txt")
-						    a.appendChild(document.createTextNode(error))
-						    col.appendChild(a)
-						} else {
-						    var a = document.createElement("a")
-						    a.setAttribute("href", result.testname + "/OUTPUT/")
-						    a.appendChild(document.createTextNode(error))
-						    col.appendChild(a)
-						}
-						sep = ","
-					    })
-					}
+				    } else {
+					sep = host + ":"
+					result.errors[host].forEach(function(error) {
+					    col.appendChild(document.createTextNode(sep))
+					    if (error == "passed") {
+						col.appendChild(document.createTextNode(error))
+					    } else if (error == "output-different"
+						       || error == "output-whitespace") {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.output_directory + "/" + host + ".console.diff")
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    } else if (error == "output-unchecked") {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.output_directory + "/" + host + ".console.txt")
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    } else {
+						var a = document.createElement("a")
+						a.setAttribute("href", result.output_directory)
+						a.appendChild(document.createTextNode(error))
+						col.appendChild(a)
+					    }
+					    sep = ","
+					})
 				    }
 				})
 			    }
