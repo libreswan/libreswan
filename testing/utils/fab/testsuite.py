@@ -88,9 +88,10 @@ class Test:
         self.host_script_tuples = scripts.host_script_tuples(self.directory)
 
         # Just assume any host mentioned in scripts needs to run.
-        self.host_names = set()
+        host_names = set()
         for host, script in self.host_script_tuples:
-            self.host_names.add(host)
+            host_names.add(host)
+        self.host_names = sorted(host_names)
 
 
     def result_file(self, directory=None):
