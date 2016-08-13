@@ -88,6 +88,8 @@ struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
 
+static uint32_t global_marks = 1001;
+
 /*
  * Find a connection by name.
  *
@@ -1847,19 +1849,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-	connect_to_host_pair(d);
-
-	return d;
-}
-
-static uint32_t global_marks = 1001;
-
-struct connection *rw_instantiate(struct connection *c,
-				const ip_address *him,
-				const ip_subnet *his_net,
-				const struct id *his_id)
-{
-	struct connection *d = instantiate(c, him, his_id);
 
 	if (c->sa_marks.in.val == UINT_MAX) {
 		/* -1 means unique marks */
@@ -1871,6 +1860,19 @@ struct connection *rw_instantiate(struct connection *c,
 			global_marks = 1001;
 		}
 	}
+
+	 connect_to_host_pair(d);
+
+	return d;
+}
+
+
+struct connection *rw_instantiate(struct connection *c,
+				const ip_address *him,
+				const ip_subnet *his_net,
+				const struct id *his_id)
+{
+	struct connection *d = instantiate(c, him, his_id);
 
 	if (his_net != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *his_net;
