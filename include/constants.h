@@ -262,12 +262,18 @@ const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
  *
  * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
  * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
+ *
+ * show_set_short() formats into a caller-supplied buffer -- only form
  */
 extern bool testset(const char *const table[], lset_t val);
 extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
 extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
+
+extern const char *show_set_short(enum_names *sd,
+				 lset_t val,
+				 char *buf, size_t blen);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value
