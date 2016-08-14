@@ -3343,7 +3343,7 @@ static struct connection *fc_try(const struct connection *c,
 					char s3[SUBNETTOT_BUF];
 					subnettot(&sr->this.client, 0, s3,
 						sizeof(s3));
-					DBG_log("   our client(%s) not in our_net (%s)",
+					DBG_log("   our client (%s) not in our_net (%s)",
 						s3, s1));
 
 				continue;
@@ -3362,7 +3362,7 @@ static struct connection *fc_try(const struct connection *c,
 							char d3[SUBNETTOT_BUF];
 							subnettot(&sr->that.client, 0, d3,
 								sizeof(d3));
-							DBG_log("   their client(%s) not in same peer_net (%s)",
+							DBG_log("   their client (%s) not in same peer_net (%s)",
 								d3, d1);
 						});
 						continue;
@@ -3406,7 +3406,8 @@ static struct connection *fc_try(const struct connection *c,
 			prio = PRIO_WEIGHT * routed(sr->routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
-				1 + (c == d) ? 1 : 0;
+				(c == d ? 1 : 0) +
+				1;
 			if (prio > best_prio) {
 				best = d;
 				best_prio = prio;
