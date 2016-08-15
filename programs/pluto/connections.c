@@ -2915,8 +2915,6 @@ struct connection *refine_host_connection(const struct state *st,
 	struct connection *c = st->st_connection;
 	generalName_t *requested_ca = st->st_requested_ca;
 
-	*fromcert = FALSE;
-
 	DBG(DBG_CONTROLMORE,
 		DBG_log("refine_host_connection: starting with %s",
 			c->name));

@@ -1081,7 +1081,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	struct connection *c = md->st->st_connection;
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
-	struct id peer;
+	struct id peer_id;
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1090,9 +1090,9 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 	id_pbs = &id_him->pbs;
 	v2id = &id_him->payload.v2id;
-	peer.kind = v2id->isai_type;
+	peer_id.kind = v2id->isai_type;
 
-	if (!extract_peer_id(&peer, id_pbs)) {
+	if (!extract_peer_id(&peer_id, id_pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
 	}
@@ -1111,7 +1111,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		if (!same_id(&st->st_connection->spd.that.id, &peer_id) &&
 			id_kind(&st->st_connection->spd.that.id) !=
 			ID_FROMCERT) {
 
@@ -1120,20 +1120,21 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 			idtoa(&st->st_connection->spd.that.id, expect,
 				sizeof(expect));
-			idtoa(&peer, found, sizeof(found));
+			idtoa(&peer_id, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
 		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+			if (id_kind(&peer_id) != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 				return FALSE;
 			}
-			duplicate_id(&st->st_connection->spd.that.id, &peer);
+			duplicate_id(&st->st_connection->spd.that.id, &peer_id);
 		}
 	} else {
-		bool fromcert = FALSE;
+		/* why should refine_host_connection() update this? We pulled it from their packet */
+		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
 
@@ -1155,13 +1156,13 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		if (auth_policy != LEMPTY) {
 			/* should really return c if no better match found */
 			struct connection *r = refine_host_connection(
-				md->st, &peer, FALSE /*initiator*/,
+				md->st, &peer_id, FALSE /*initiator*/,
 				auth_policy, &fromcert);
 
 			if (r == NULL) {
 				char buf[IDTOA_BUF];
 
-				idtoa(&peer, buf, sizeof(buf));
+				idtoa(&peer_id, buf, sizeof(buf));
 				DBG(DBG_CONTROL, DBG_log(
 					"no refined connection for peer '%s'", buf));
 				r = c; /* ??? is this safe? */
@@ -1181,17 +1182,17 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 					/* instantiate it, filling in peer's ID */
 					r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer);
+						   NULL, &peer_id);
 				}
 
 				update_state_connection(md->st, r);
 				c = r;
 			} else if (c->spd.that.has_id_wildcards) {
-				duplicate_id(&c->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
 				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-				duplicate_id(&c->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}
 	}
@@ -1203,7 +1204,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		DBG_log("offered CA: '%s'", idbuf);
 	});
 
-	idtoa(&peer, idbuf, sizeof(idbuf));
+	idtoa(&peer_id, idbuf, sizeof(idbuf));
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
