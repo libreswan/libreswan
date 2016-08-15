@@ -16,9 +16,7 @@ function summary(json) {
 	    var values = []
 	    // form the list of values
 	    summary.forEach(function(d) {
-		var unresolved = (d.hasOwnProperty('incomplete')
-				  ? d.incomplete
-				  : d.hasOwnProperty('unresolved')
+		var unresolved = (d.hasOwnProperty('unresolved')
 				  ? d.unresolved
 				  : "")
 		var untested = (d.hasOwnProperty('untested')
@@ -39,20 +37,20 @@ function summary(json) {
                     columnTitles : titles,
                     columnValues : values,
 		    postProcess: {
-			column: postProcessColumn,
+			column: function postProcessColumn(col) {
+			    // Test Directory is last
+			    if (col.cellIndex == titles.length - 1) {
+				var child = col.childNodes[0]
+				var text = child.data
+				var a = document.createElement("a")
+				a.setAttribute("href", text)
+				a.appendChild(document.createTextNode(text))
+				col.replaceChild(a, child)
+			    }
+			}
 		    },
 		});
 	});
     })
 }
 
-function postProcessColumn(col) {
-    if (col.cellIndex == 7) { // Test Directory
-	var child = col.childNodes[0]
-	var text = child.data
-        var a = document.createElement("a")
-	a.setAttribute("href", text)
-	a.appendChild(document.createTextNode(text))
-	col.replaceChild(a, child)
-    }
-}
