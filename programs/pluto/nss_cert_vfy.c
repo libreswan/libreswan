@@ -195,7 +195,7 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
 						chain, PR_FALSE, PR_FALSE, NULL);
 		if (rv != SECSuccess || *chain == NULL) {
-			DBG(DBG_X509, DBG_log("could not decode any certs"));
+			DBG(DBG_X509, DBG_log("could not decode any certs: SECStatus: %d", PORT_GetError()));
 		} else {
 			CERTCertificate **cc;
 
