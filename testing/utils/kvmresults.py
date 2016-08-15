@@ -32,12 +32,11 @@ from fab import jsonutil
 
 class Print(argutil.List):
     diffs = "diffs"
-    directory = "directory"
+    test_name = "test-name"
+    test_directory = "test-directory"
     expected_result = "expected-result"
-    full_name = "full-name"
     host_names = "host-names"
     kind = "kind"
-    name = "name"
     output_directory = "output-directory"
     result = "result"
     sanitize_directory = "sanitize-directory"
@@ -309,13 +308,13 @@ def results(logger, tests, baseline, args, result_stats):
                     b.prefix(Print.saved_output_directory,
                              test.saved_output_directory)
                 else:
-                    b.prefix(Print.directory, test.directory)
+                    b.prefix(Print.test_directory, test.directory)
             else:
                 # Print the test name/path per command line
-                if args.prefix is Prefix.name:
-                    b.prefix(Print.name, test.name)
+                if args.prefix is Prefix.test_name:
+                    b.prefix(Print.test_name, test.name)
                 elif args.prefix is Prefix.test_directory:
-                    b.prefix(Print.directory, test.directory)
+                    b.prefix(Print.test_directory, test.directory)
                 elif args.prefix is Prefix.output_directory:
                     if test.saved_output_directory:
                         b.prefix(Print.saved_output_directory,
@@ -327,18 +326,16 @@ def results(logger, tests, baseline, args, result_stats):
             for p in args.print:
                 if p is Print.diffs:
                     continue
-                elif p is Print.directory:
+                elif p is Print.test_directory:
                     b.add(p, test.directory)
                 elif p is Print.expected_result:
                     b.add(p, test.expected_result)
-                elif p is Print.full_name:
-                    b.add(p, test.full_name)
                 elif p is Print.host_names:
                     b.add(p, test.host_names,
                           string=lambda host_names: " " + ",".join(host_names))
                 elif p is Print.kind:
                     b.add(p, test.kind)
-                elif p is Print.name:
+                elif p is Print.test_name:
                     b.add(p, test.name)
                 elif p is Print.output_directory:
                     b.add(p, test.output_directory)
