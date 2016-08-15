@@ -2090,7 +2090,6 @@ static struct state **sort_states(void)
 
 void show_traffic_status(void)
 {
-	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	struct state **array = sort_states();
 
