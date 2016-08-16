@@ -2105,7 +2105,6 @@ void show_traffic_status(void)
 				whack_log(RC_INFORMATIONAL_TRAFFIC,
 					  "%s", state_buf);
 		}
-		whack_log(RC_COMMENT, " "); /* spacer */
 		pfree(array);
 	}
 }
