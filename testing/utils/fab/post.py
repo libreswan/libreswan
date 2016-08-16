@@ -17,7 +17,6 @@ import re
 import subprocess
 import difflib
 
-from fab import utilsdir
 from fab import logutil
 
 
@@ -125,8 +124,13 @@ def fuzzy_diff(logger, ln, l, rn, r):
     return diff, _strip(l) == _strip(r)
 
 
-def sanitize_output(logger, raw_file, test_directory):
-    command = [ utilsdir.relpath("sanitizer.sh"), raw_file, test_directory ]
+def sanitize_output(logger, raw_file, test):
+    # Run the sanitizer found next to the test_sanitize_directory.
+    command = [
+        test.testing_directory("utils", "sanitizer.sh"),
+        raw_file,
+        test.testing_directory("pluto", test.name)
+    ]
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to re-read the file than read the
     # pre-loaded raw console output.
@@ -137,7 +141,7 @@ def sanitize_output(logger, raw_file, test_directory):
     if process.returncode or stderr:
         # any hint of an error
         logger.error("sanitize command '%s' failed; exit code %s; stderr: '%s'",
-                     command, process.returncode, stderr)
+                     command, process.returncode, stderr.decode("utf8"))
         return None
     return stdout.decode("utf-8")
 
@@ -233,17 +237,17 @@ class TestResult:
             # hosts.  If there isn't then there's a big problem and
             # little point with continuing checks for this host.
 
-            raw_console_file = os.path.join(output_directory,
-                                            host_name + ".console.verbose.txt")
+            raw_console_filename = os.path.join(output_directory,
+                                                host_name + ".console.verbose.txt")
             self.logger.debug("host %s raw console output '%s'",
-                              host_name, raw_console_file)
-            if not os.path.exists(raw_console_file):
+                              host_name, raw_console_filename)
+            if not os.path.exists(raw_console_filename):
                 self.errors.add("output-missing", host_name)
                 self.passed = False
                 continue
 
             self.logger.debug("host %s loading raw console output", host_name)
-            with open(raw_console_file) as f:
+            with open(raw_console_filename) as f:
                 raw_console_output = f.read()
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
@@ -269,37 +273,40 @@ class TestResult:
             #    self.passed = False
             #    continue
 
-            sanitized_console_file = os.path.join(output_directory,
-                                                  host_name + ".console.txt")
+            sanitized_console_filename = os.path.join(output_directory,
+                                                      host_name + ".console.txt")
             self.logger.debug("host %s sanitize console output '%s'",
-                              host_name, sanitized_console_file)
+                              host_name, sanitized_console_filename)
             sanitized_console_output = None
             if quick:
-                sanitized_console_output = load_output(self.logger, sanitized_console_file)
+                sanitized_console_output = load_output(self.logger,
+                                                       sanitized_console_filename)
             if sanitized_console_output is None:
-                sanitized_console_output = sanitize_output(self.logger, raw_console_file,
-                                                           test.sanitize_directory)
+                sanitized_console_output = sanitize_output(self.logger,
+                                                           raw_console_filename,
+                                                           test)
             if sanitized_console_output is None:
                 self.errors.add("sanitizer-failed", host_name)
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
-                                  host_name, sanitized_console_file)
-                with open(sanitized_console_file, "w") as f:
+                                  host_name, sanitized_console_filename)
+                with open(sanitized_console_filename, "w") as f:
                     f.write(sanitized_console_output)
 
             self.sanitized_console_output[host_name] = sanitized_console_output
 
-            expected_sanitized_console_output_file = os.path.join(test.sanitize_directory, host_name + ".console.txt")
+            expected_sanitized_console_output_filename \
+                = test.testing_directory("pluto", test.name, host_name + ".console.txt")
             self.logger.debug("host %s comparing against known-good output '%s'",
-                              host_name, expected_sanitized_console_output_file)
-            if os.path.exists(expected_sanitized_console_output_file):
+                              host_name, expected_sanitized_console_output_filename)
+            if os.path.exists(expected_sanitized_console_output_filename):
 
                 diff, whitespace = None, None
 
-                sanitized_console_diff_file = os.path.join(output_directory, host_name + ".console.diff")
+                sanitized_console_diff_filename = os.path.join(output_directory, host_name + ".console.diff")
                 if quick:
-                    sanitized_console_diff = load_output(logger, sanitized_console_diff_file)
+                    sanitized_console_diff = load_output(logger, sanitized_console_diff_filename)
                     # be consistent with fuzzy_diff which returns a list
                     # of lines.
                     #
@@ -307,7 +314,7 @@ class TestResult:
                     if sanitized_console_diff is not None:
                         diff, whitespace = sanitized_console_diff.splitlines(), None
                 if diff is None:
-                    with open(expected_sanitized_console_output_file) as f:
+                    with open(expected_sanitized_console_output_filename) as f:
                         expected_sanitized_console_output = f.read()
                     diff, whitespace = fuzzy_diff(self.logger,
                                                   "MASTER/" + test.name + "/" + host_name + ".console.txt",
@@ -316,8 +323,8 @@ class TestResult:
                                                   sanitized_console_output)
                 if update:
                     self.logger.debug("host %s updating diff file %s",
-                                      host_name, sanitized_console_diff_file)
-                    with open(sanitized_console_diff_file, "w") as f:
+                                      host_name, sanitized_console_diff_filename)
+                    with open(sanitized_console_diff_filename, "w") as f:
                         if diff:
                             for line in diff:
                                 f.write(line)

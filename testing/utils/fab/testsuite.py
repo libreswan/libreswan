@@ -77,11 +77,17 @@ class Test:
         else:
             self.saved_output_directory = None
 
-        # An instance of the test directory within a tree that
-        # includes all the post-mortem sanitization scripts.  If the
-        # test results have been copied then this will be different to
-        # test.directory.
-        self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
+        # The testing_directory to use when performing post.mortem
+        # tasks such as running the sanitizer.
+        #
+        # Since test.directory may be incomplete (sanitizers directory
+        # may be missing), use the testing directory belonging to this
+        # script.
+        if testing_directory:
+            # trust it
+            self._testing_directory = os.path.relpath(testing_directory)
+        else:
+            self._testing_directory = utilsdir.relpath("..")
 
         # Get an ordered list of (host,script) pairs of all the
         # scripts that need to be run.
@@ -93,6 +99,8 @@ class Test:
             host_names.add(host)
         self.host_names = sorted(host_names)
 
+    def testing_directory(self, *path):
+        return os.path.relpath(os.path.join(self._testing_directory, *path))
 
     def result_file(self, directory=None):
         """The result file in the given directory, or output_directory"""

@@ -39,7 +39,7 @@ class Print(argutil.List):
     kind = "kind"
     output_directory = "output-directory"
     result = "result"
-    sanitize_directory = "sanitize-directory"
+    testing_directory = "testing-directory"
     saved_output_directory = "saved-output-directory"
     scripts = "scripts"
     errors = "errors"
@@ -148,7 +148,7 @@ def main():
         if not baseline:
             # Perhaps the baseline just contains output, magic up the
             # corresponding testsuite directory.
-            baseline_directory = os.path.join(args.testing_directory, "pluto")
+            baseline_directory = args.testing_directory("pluto")
             baseline = testsuite.load(logger, args,
                                       testsuite_directory=baseline_directory,
                                       saved_testsuite_output_directory=args.baseline,
@@ -334,8 +334,8 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, result_cache.result(p))
                 elif p is Print.errors:
                     b.add(p, result_cache.result(p).errors)
-                elif p is Print.sanitize_directory:
-                    b.add(p, test.sanitize_directory)
+                elif p is Print.testing_directory:
+                    b.add(p, test.testing_directory())
                 elif p is Print.saved_output_directory:
                     b.add(p, test.saved_output_directory)
                 elif p is Print.scripts:
