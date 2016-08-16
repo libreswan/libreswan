@@ -18,6 +18,8 @@ import subprocess
 import difflib
 
 from fab import utilsdir
+from fab import logutil
+
 
 # Dictionary to accumulate all the errors for each host from an
 # individual test.
@@ -180,15 +182,15 @@ class TestResult:
         """
         return self.finished is not None
 
-    def __init__(self, test, skip_diff, skip_sanitize,
-                 output_directory=None, test_finished=None,
-                 update_diff=False, update_sanitize=False):
+    def __init__(self, logger, test, quick, update=None,
+                 output_directory=None, finished=None):
 
         # Set things up for an UNTESTED result
+        self.logger = logger
         self.test = test
         self.passed = None
         self.finished = None
-        self.errors = Errors(test.logger)
+        self.errors = Errors(self.logger)
         self.diffs = {}
         self.sanitized_console_output = {}
 
@@ -198,10 +200,10 @@ class TestResult:
         # presence of the OUTPUT is a clear indicator that some
         # attempt was made to run the test.
         if not os.path.exists(output_directory):
-            test.logger.debug("output directory missing: %s", output_directory)
+            self.logger.debug("output directory missing: %s", output_directory)
             return
 
-        self.finished = test_finished;
+        self.finished = finished;
         if self.finished is None:
             # Use RESULT as a proxy for a test resolved.  It isn't
             # 100% reliable since an in-progress test looks list like
@@ -217,7 +219,7 @@ class TestResult:
         for host_name in test.host_names:
             pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
             if os.path.exists(pluto_log):
-                test.logger.debug("checking '%s' for errors", pluto_log)
+                self.logger.debug("checking '%s' for errors", pluto_log)
                 if self.errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
                     self.passed = False
                 # XXX: allow expection failures?
@@ -233,17 +235,19 @@ class TestResult:
 
             raw_console_file = os.path.join(output_directory,
                                             host_name + ".console.verbose.txt")
-            test.logger.debug("host %s raw console output '%s'", host_name, raw_console_file)
+            self.logger.debug("host %s raw console output '%s'",
+                              host_name, raw_console_file)
             if not os.path.exists(raw_console_file):
                 self.errors.add("output-missing", host_name)
                 self.passed = False
                 continue
 
-            test.logger.debug("host %s loading raw console output", host_name)
+            self.logger.debug("host %s loading raw console output", host_name)
             with open(raw_console_file) as f:
                 raw_console_output = f.read()
 
-            test.logger.debug("host %s checking raw console output for signs of a crash", host_name)
+            self.logger.debug("host %s checking raw console output for signs of a crash",
+                              host_name)
             if self.errors.search(r"[\r\n]CORE FOUND", raw_console_output, "CORE", host_name):
                 # keep None
                 self.passed = False
@@ -259,7 +263,7 @@ class TestResult:
             #
             # For moment skip this as the marker for complete output isn't reliable?
 
-            #test.logger.debug("host %s checking if raw console output was incomplete", host_name)
+            #logger.debug("host %s checking if raw console output was incomplete", host_name)
             #if not "# : ==== end ====" in raw_console_output:
             #    self.errors.add("output-incomplete", host_name)
             #    self.passed = False
@@ -267,51 +271,57 @@ class TestResult:
 
             sanitized_console_file = os.path.join(output_directory,
                                                   host_name + ".console.txt")
-            test.logger.debug("host %s sanitize console output '%s'", host_name, sanitized_console_file)
+            self.logger.debug("host %s sanitize console output '%s'",
+                              host_name, sanitized_console_file)
             sanitized_console_output = None
-            if skip_sanitize:
-                sanitized_console_output = load_output(test.logger, sanitized_console_file)
-            if not sanitized_console_output:
-                sanitized_console_output = sanitize_output(test.logger, raw_console_file, test.sanitize_directory)
-            if not sanitized_console_output:
+            if quick:
+                sanitized_console_output = load_output(self.logger, sanitized_console_file)
+            if sanitized_console_output is None:
+                sanitized_console_output = sanitize_output(self.logger, raw_console_file,
+                                                           test.sanitize_directory)
+            if sanitized_console_output is None:
                 self.errors.add("sanitizer-failed", host_name)
                 continue
-            if update_sanitize:
-                test.logger.debug("host %s updating sanitized output file: %s", host_name, sanitized_console_file)
+            if update:
+                self.logger.debug("host %s updating sanitized output file: %s",
+                                  host_name, sanitized_console_file)
                 with open(sanitized_console_file, "w") as f:
                     f.write(sanitized_console_output)
 
             self.sanitized_console_output[host_name] = sanitized_console_output
 
             expected_sanitized_console_output_file = os.path.join(test.sanitize_directory, host_name + ".console.txt")
-            test.logger.debug("host %s comparing against known-good output '%s'", host_name, expected_sanitized_console_output_file)
+            self.logger.debug("host %s comparing against known-good output '%s'",
+                              host_name, expected_sanitized_console_output_file)
             if os.path.exists(expected_sanitized_console_output_file):
 
-                diff, whitespace = [], None
+                diff, whitespace = None, None
 
                 sanitized_console_diff_file = os.path.join(output_directory, host_name + ".console.diff")
-                if skip_diff:
-                    sanitized_console_diff = load_output(test.logger, sanitized_console_diff_file)
+                if quick:
+                    sanitized_console_diff = load_output(logger, sanitized_console_diff_file)
                     # be consistent with fuzzy_diff which returns a list
                     # of lines.
                     #
                     # This has no easy way to detect whitespace differences, so set it to None
-                    if sanitized_console_diff:
+                    if sanitized_console_diff is not None:
                         diff, whitespace = sanitized_console_diff.splitlines(), None
-                if not diff:
+                if diff is None:
                     with open(expected_sanitized_console_output_file) as f:
                         expected_sanitized_console_output = f.read()
-                    diff, whitespace = fuzzy_diff(test.logger,
+                    diff, whitespace = fuzzy_diff(self.logger,
                                                   "MASTER/" + test.name + "/" + host_name + ".console.txt",
                                                   expected_sanitized_console_output,
                                                   "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
                                                   sanitized_console_output)
-                if update_diff:
-                    test.logger.debug("host %s updating diff file %s", host_name, sanitized_console_diff_file)
+                if update:
+                    self.logger.debug("host %s updating diff file %s",
+                                      host_name, sanitized_console_diff_file)
                     with open(sanitized_console_diff_file, "w") as f:
-                        for line in diff:
-                            f.write(line)
-                            f.write("\n")
+                        if diff:
+                            for line in diff:
+                                f.write(line)
+                                f.write("\n")
                 if diff:
                     self.diffs[host_name] = diff
                     if whitespace:
@@ -321,25 +331,24 @@ class TestResult:
                         self.errors.add("output-different", host_name)
             elif host_name == "nic":
                 # NIC never gets its console output checked.
-                test.logger.debug("host %s has unchecked console output", host_name)
+                self.logger.debug("host %s has unchecked console output", host_name)
             else:
                 self.errors.add("output-unchecked", host_name)
 
 
 # XXX: given that most of args are passed in unchagned, this should
-# change to some type of object.
+# change to some type of result factory.
 
-def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
-           output_directory=None, test_finished=None,
-           update=False, update_diff=False, update_sanitize=False):
+def mortem(test, args, domain_prefix="", finished=None,
+           baseline=None, output_directory=None,
+           quick=False, update=False):
 
-    update_diff = update or update_diff
-    update_sanitize = update or update_sanitize
+    logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
-    test_result = TestResult(test, skip_diff, skip_sanitize,
-                             output_directory, test_finished=test_finished,
-                             update_diff=update_diff,
-                             update_sanitize=update_sanitize)
+    test_result = TestResult(logger, test, quick,
+                             output_directory=output_directory,
+                             finished=finished,
+                             update=update)
 
     if not test_result:
         return test_result
@@ -365,7 +374,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
         return test_result
 
     base = baseline[test.name]
-    baseline_result = TestResult(base, skip_diff, skip_sanitize)
+    baseline_result = TestResult(logger, base, quick)
     if not baseline_result:
         if not test_result.passed:
             test_result.errors.add("missing", "baseline")
@@ -395,7 +404,7 @@ def mortem(test, args, baseline=None, skip_diff=False, skip_sanitize=False,
             test_result.errors.add("baseline-passed", host_name)
             continue
 
-        baseline_diff, baseline_whitespace = fuzzy_diff(test.logger,
+        baseline_diff, baseline_whitespace = fuzzy_diff(logger,
                                                         "BASELINE/" + test.name + "/" + host_name + ".console.txt",
                                                         baseline_result.sanitized_console_output[host_name],
                                                         "OUTPUT/" + test.name + "/" + host_name + ".console.txt",

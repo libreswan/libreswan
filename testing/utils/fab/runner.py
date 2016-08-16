@@ -279,8 +279,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         # Be lazy when gathering the results, don't run the sanitizer
         # or diff.  Let post.mortem figure out if the test finished.
 
-        old_result = post.mortem(test, args, test_finished=None,
-                                 skip_diff=True, skip_sanitize=True)
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
@@ -370,14 +369,17 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 break
                             test_domain = test_domains[host]
                             test_domain.read_file_run(script)
-                        result = post.mortem(test, args, test_finished=True, update=True)
+                        result = post.mortem(test, args,
+                                             domain_prefix=domain_prefix,
+                                             finished=True, update=True)
 
                     except pexpect.TIMEOUT as e:
                         logger.exception("**** timeout out while running script %s ****", script)
                         # Still peform post-mortem so that errors are
                         # captured, but force the result to
                         # incomplete.
-                        result = post.mortem(test, args, test_finished=False, update=True)
+                        result = post.mortem(test, args, domain_prefix=domain_prefix,
+                                             finished=False, update=True)
 
                     finally:
 

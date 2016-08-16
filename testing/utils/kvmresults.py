@@ -75,17 +75,9 @@ def main():
 
     parser.add_argument("--quick", action="store_true",
                         help=("Use the previously generated '.console.txt' and '.console.diff' files"))
-    parser.add_argument("--quick-sanitize", action="store_true",
-                        help=("Use the previously generated '.console.txt' file"))
-    parser.add_argument("--quick-diff", action="store_true",
-                        help=("Use the previously generated '.console.diff' file"))
 
     parser.add_argument("--update", action="store_true",
                         help=("Update the '.console.txt' and '.console.diff' files"))
-    parser.add_argument("--update-sanitize", action="store_true",
-                        help=("Update the '.console.txt' file"))
-    parser.add_argument("--update-diff", action="store_true",
-                        help=("Update the '.console.diff' file"))
 
     parser.add_argument("--dump-args", action="store_true")
 
@@ -137,6 +129,8 @@ def main():
         logger.info("  Prefix: %s", args.prefix)
         logger.info("  Baseline: %s", args.baseline)
         logger.info("  Json: %s", args.json)
+        logger.info("  Quick: %s", args.quick)
+        logger.info("  Update: %s", args.update)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
         skip.log_arguments(logger, args)
@@ -249,13 +243,10 @@ class ResultCache:
         if self.cached_result:
             return self.cached_result
         self.logger.debug("loading results for %s", reason)
-        self.cached_result = post.mortem(self.test, self.args, baseline=self.baseline,
+        self.cached_result = post.mortem(self.test, self.args,
+                                         baseline=self.baseline,
                                          output_directory=self.test.saved_output_directory,
-                                         skip_sanitize=self.args.quick or self.args.quick_sanitize,
-                                         skip_diff=self.args.quick or self.args.quick_diff,
-                                         update=self.args.update,
-                                         update_sanitize=self.args.update_sanitize,
-                                         update_diff=self.args.update_diff)
+                                         quick=self.args.quick, update=self.args.update)
         self.result_stats.add_result(self.cached_result)
         return self.cached_result
 
