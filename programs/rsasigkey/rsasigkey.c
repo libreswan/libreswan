@@ -116,7 +116,7 @@ static char *base64_bundle(int e, chunk_t modulus)
 	 * Pack the single-byte exponent into a byte array.
 	 */
 	assert(e <= 255);
-	u_char exponent_byte = 1;
+	u_char exponent_byte = e;
 	chunk_t exponent = {
 		.ptr = &exponent_byte,
 		.len = 1,
