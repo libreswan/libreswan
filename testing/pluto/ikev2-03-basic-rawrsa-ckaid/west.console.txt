@@ -8,7 +8,7 @@ west #
  # see description.txt
 west #
  ! ipsec auto --add westnet-eastnet-ikev2
-036 right certificate with CKAID '<<CKAID-1...>>' not found in NSS DB
+036 right certificate with CKAID '<<CKAID#1>>' not found in NSS DB
 002 added connection description "westnet-eastnet-ikev2"
 west #
  ipsec auto --add westnet-eastnet-ipv4

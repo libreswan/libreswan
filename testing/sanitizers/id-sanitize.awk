@@ -1,63 +1,56 @@
-BEGIN {
-    debug = 0
+func debug(line) {
+    # print "DEBUG:", line >> "/dev/stderr"
 }
 
-func genid(prefix, id, trunc,  n, i) {
-    counts[prefix] += 1
-    # Make unique and truncate to a predictable length
-    n = sprintf("<<" prefix "%x...>>", counts[prefix])
-    # deal with regex characters in ID
-    i = gensub(/([+/])/, "[\\1]", "g", id)
-    if (debug) print "genid", "prefix:", prefix, "id:", id, "i:", i, "n:", n
-    ids[i] = n
-    # return the mangled ID - passed through to subid().
-    return i
-}
+# Pattern matches (prefix) ... (id)
+func find(pattern,  n, fields, nr_fields, field, name, value) {
+    debug("find: pattern: " pattern)
+    nr_fields = patsplit($0, fields, pattern)
+    debug("find: nr_fields: " nr_fields)
+    for (n = 1; n <= nr_fields; n++) {
+	field = fields[n]
+	debug("find: fields[" n "]: " field)
 
-func subid(id,  new) {
-    old = $0
-    new = gensub("([ ='])(" id ")([ ']|$)", "\\1" ids[id] "\\3", "g", old)
-    if (debug) print "subid", "id:", id, "old:", old, "new:", new
-    if (old == new) return 0
-    $0 = new
-    return 1
+	# extract name/value
+	name = toupper(gensub(pattern, "\\1", 1, field))
+	value = gensub(pattern, "\\2", 1, field)
+	debug("find: name: " name " value: " value)
+
+	# deal with regex characters and duplicates
+	value = gensub(/([+/])/, "[\\1]", "g", value)
+	if (value in values) {
+	    debug("find: duplicate value")
+	    continue
+	}
+
+	# add the new value
+	counts[name] += 1
+	values[value] = sprintf("<<" name "#%x>>", counts[name])
+	debug("find: value: " value " replacement: " values[value])
+    }
 }
 
 {
-    # Replace any IDs with unique but predictable values.
-    for (id in ids) {
-	subid(id)
+    debug("INPUT: " $0)
+
+    # Look for name/values, map each to a unique constant.
+    find("(CKAID) ([0-9a-f]+)")
+    find("(CKAID) '([0-9a-f]+)'")
+    find("(ckaid): ([0-9a-f]+)")
+    find("(rsasigkey)=(0s[+=0-9a-zA-Z/]+)")
+    find("(keyid): ([+=0-9a-zA-Z/]+)")
+    find("(pubkey)=(0s[+=0-9a-zA-Z/]+)")
+
+    old = $0
+    for (value in values) {
+	name = values[value]
+	debug("value: " value)
+	debug("name: " name)
+	new = gensub("([ ='])(" value ")([ ']|$)", "\\1" name "\\3", "g", old)
+	debug("old: " old)
+	debug("new: " new)
+	old = new
     }
 
-    # Look for new CKAIDs - map each to a unique constant.
-    while (1) {
-	# Above should have filtered out existing IDs; look for new
-	# ones.
-	id = gensub(/^.*(CKAID|ckaid:) +[']?([0-9a-f]+)([ '].*|)$/, "\\2", 1, $0)
-	if (id == $0) break
-	# convert to CKAID-xxxxxxx", the "-" stops re-matches
-	if (!subid(genid("CKAID-", id))) break;
-    }
-
-    # Look for RSASIGKEYs - map each to something unique
-    while (1) {
-	# Above should have filtered out existing IDs; look for new
-	# ones.
-	id = gensub(/^.*(rsasigkey=)(0s[+=0-9a-zA-Z/]+)( .*|)$/, "\\2", 1, $0)
-	if (id == $0) break
-	# convert to RSASIGKEY-bbbb"; the "-" stops re-matches
-	if (!subid(genid("RSASIGKEY-", id))) break;
-    }
-
-    # Look for new KEYIDs - map each to something unique
-    while (1) {
-	# Above should have filtered out existing IDs; look for new
-	# ones.
-	id = gensub(/^.*(keyid:) ([+=0-9a-zA-Z/]+)( .*|)$/, "\\2", 1, $0)
-	if (id == $0) break
-	# convert to KEYID-bbbb"; the "-" stops re-matches
-	if (!subid(genid("KEYID-", id))) break
-    }
-
-    print
+    print old
 }
