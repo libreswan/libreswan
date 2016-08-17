@@ -125,7 +125,7 @@ def _diff(logger, ln, l, rn, r):
     return diff
 
 
-def sanitize_output(logger, raw_file, test):
+def _sanitize_output(logger, raw_file, test):
     # Run the sanitizer found next to the test_sanitize_directory.
     command = [
         test.testing_directory("utils", "sanitizer.sh"),
@@ -147,13 +147,15 @@ def sanitize_output(logger, raw_file, test):
     return stdout.decode("utf-8")
 
 
-def load_output(logger, output_file):
-    if os.path.exists(output_file):
-        logger.debug("loading pre-generated file: %s", output_file)
-        with open(output_file) as f:
+def _load_file(logger, filename):
+    """Load the specified file; return None if it does not exist"""
+
+    if os.path.exists(filename):
+        logger.debug("loading file: %s", filename)
+        with open(filename) as f:
             return f.read()
     else:
-        logger.debug("no pre-generated file to load: %s", output_file)
+        logger.debug("file %s does not exist", filename)
     return None
 
 
@@ -197,7 +199,7 @@ class TestResult:
         self.finished = None
         self.errors = Errors(self.logger)
         self.diffs = {}
-        self.sanitized_console_output = {}
+        self.sanitized_output = {}
 
         output_directory = output_directory or test.output_directory
 
@@ -238,28 +240,26 @@ class TestResult:
             # hosts.  If there isn't then there's a big problem and
             # little point with continuing checks for this host.
 
-            raw_console_filename = os.path.join(output_directory,
-                                                host_name + ".console.verbose.txt")
+            raw_output_filename = os.path.join(output_directory,
+                                               host_name + ".console.verbose.txt")
             self.logger.debug("host %s raw console output '%s'",
-                              host_name, raw_console_filename)
-            if not os.path.exists(raw_console_filename):
+                              host_name, raw_output_filename)
+
+            raw_output = _load_file(self.logger, raw_output_filename)
+            if raw_output is None:
                 self.errors.add("output-missing", host_name)
                 self.passed = False
                 continue
 
-            self.logger.debug("host %s loading raw console output", host_name)
-            with open(raw_console_filename) as f:
-                raw_console_output = f.read()
-
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
-            if self.errors.search(r"[\r\n]CORE FOUND", raw_console_output, "CORE", host_name):
+            if self.errors.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"SEGFAULT", raw_console_output, "SEGFAULT", host_name):
+            if self.errors.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"GPFAULT", raw_console_output, "GPFAULT", host_name):
+            if self.errors.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
                 # keep None
                 self.passed = False
 
@@ -269,79 +269,86 @@ class TestResult:
             # For moment skip this as the marker for complete output isn't reliable?
 
             #logger.debug("host %s checking if raw console output was incomplete", host_name)
-            #if not "# : ==== end ====" in raw_console_output:
+            #if not "# : ==== end ====" in raw_output:
             #    self.errors.add("output-incomplete", host_name)
             #    self.passed = False
             #    continue
 
-            sanitized_console_filename = os.path.join(output_directory,
-                                                      host_name + ".console.txt")
+            sanitized_output_filename = os.path.join(output_directory,
+                                                     host_name + ".console.txt")
             self.logger.debug("host %s sanitize console output '%s'",
-                              host_name, sanitized_console_filename)
-            sanitized_console_output = None
+                              host_name, sanitized_output_filename)
+            sanitized_output = None
             if quick:
-                sanitized_console_output = load_output(self.logger,
-                                                       sanitized_console_filename)
-            if sanitized_console_output is None:
-                sanitized_console_output = sanitize_output(self.logger,
-                                                           raw_console_filename,
-                                                           test)
-            if sanitized_console_output is None:
+                sanitized_output = _load_file(self.logger,
+                                              sanitized_output_filename)
+            if sanitized_output is None:
+                sanitized_output = _sanitize_output(self.logger,
+                                                    raw_output_filename,
+                                                    test)
+            if sanitized_output is None:
                 self.errors.add("sanitizer-failed", host_name)
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
-                                  host_name, sanitized_console_filename)
-                with open(sanitized_console_filename, "w") as f:
-                    f.write(sanitized_console_output)
+                                  host_name, sanitized_output_filename)
+                with open(sanitized_output_filename, "w") as f:
+                    f.write(sanitized_output)
 
-            self.sanitized_console_output[host_name] = sanitized_console_output
+            self.sanitized_output[host_name] = sanitized_output
 
-            expected_sanitized_console_output_filename \
-                = test.testing_directory("pluto", test.name, host_name + ".console.txt")
+            expected_output_filename = test.testing_directory("pluto", test.name,
+                                                              host_name + ".console.txt")
             self.logger.debug("host %s comparing against known-good output '%s'",
-                              host_name, expected_sanitized_console_output_filename)
-            if os.path.exists(expected_sanitized_console_output_filename):
+                              host_name, expected_output_filename)
 
-                diff = None
+            expected_output = _load_file(self.logger, expected_output_filename)
+            if expected_output is None:
+                if host_name == "nic":
+                    # NIC never gets its console output checked.
+                    self.logger.debug("host %s has unchecked console output", host_name)
+                else:
+                    self.errors.add("output-unchecked", host_name)
+                continue
 
-                sanitized_console_diff_filename = os.path.join(output_directory, host_name + ".console.diff")
-                if quick:
-                    sanitized_console_diff = load_output(logger, sanitized_console_diff_filename)
-                    # Be consistent with _diff which returns a list of
-                    # lines.
-                    if sanitized_console_diff is not None:
-                        diff = sanitized_console_diff.splitlines()
-                if diff is None:
-                    with open(expected_sanitized_console_output_filename) as f:
-                        expected_sanitized_console_output = f.read()
-                    diff = _diff(self.logger,
-                                 "MASTER/" + test.name + "/" + host_name + ".console.txt",
-                                 expected_sanitized_console_output,
-                                 "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                                 sanitized_console_output)
-                if update:
-                    self.logger.debug("host %s updating diff file %s",
-                                      host_name, sanitized_console_diff_filename)
-                    with open(sanitized_console_diff_filename, "w") as f:
-                        if diff:
-                            for line in diff:
-                                f.write(line)
-                                f.write("\n")
-                if diff:
-                    self.diffs[host_name] = diff
-                    whitespace = _whitespace(expected_sanitized_console_output,
-                                             sanitized_console_output)
-                    if whitespace:
-                        self.errors.add("output-whitespace", host_name)
-                    else:
-                        self.passed = False
-                        self.errors.add("output-different", host_name)
-            elif host_name == "nic":
-                # NIC never gets its console output checked.
-                self.logger.debug("host %s has unchecked console output", host_name)
-            else:
-                self.errors.add("output-unchecked", host_name)
+            diff = None
+            diff_filename = os.path.join(output_directory, host_name + ".console.diff")
+
+            if quick:
+                # Try to load the existing diff file.  Like _diff()
+                # save a list of lines.
+                diff = _load_file(self.logger, diff_filename)
+                if diff is not None:
+                    diff = diff.splitlines()
+
+            if diff is None:
+                # use brute force
+                diff = _diff(self.logger,
+                             "MASTER/" + test.name + "/" + host_name + ".console.txt",
+                             expected_output,
+                             "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                             sanitized_output)
+
+            if update:
+                self.logger.debug("host %s updating diff file %s",
+                                  host_name, diff_filename)
+                # Always create the diff file; when there is no diff
+                # leave it empty.
+                with open(diff_filename, "w") as f:
+                    if diff:
+                        for line in diff:
+                            f.write(line)
+                            f.write("\n")
+
+            if diff:
+                self.diffs[host_name] = diff
+                whitespace = _whitespace(expected_output,
+                                         sanitized_output)
+                if whitespace:
+                    self.errors.add("output-whitespace", host_name)
+                else:
+                    self.passed = False
+                    self.errors.add("output-different", host_name)
 
 
 # XXX: given that most of args are passed in unchagned, this should
@@ -396,10 +403,10 @@ def mortem(test, args, domain_prefix="", finished=None,
         if host_name is "nic":
             continue
 
-        if not host_name in test_result.sanitized_console_output:
+        if not host_name in test_result.sanitized_output:
             continue
 
-        if not host_name in baseline_result.sanitized_console_output:
+        if not host_name in baseline_result.sanitized_output:
             test_result.errors.add("baseline-missing", host_name)
             continue
 
@@ -414,12 +421,12 @@ def mortem(test, args, domain_prefix="", finished=None,
 
         baseline_diff = _diff(logger,
                               "BASELINE/" + test.name + "/" + host_name + ".console.txt",
-                              baseline_result.sanitized_console_output[host_name],
+                              baseline_result.sanitized_output[host_name],
                               "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                              test_result.sanitized_console_output[host_name])
+                              test_result.sanitized_output[host_name])
         if baseline_diff:
-            baseline_whitespace = _whitespace(baseline_result.sanitized_console_output[host_name],
-                                              test_result.sanitized_console_output[host_name])
+            baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
+                                              test_result.sanitized_output[host_name])
             if baseline_whitespace:
                 test_result.errors.add("baseline-whitespace", host_name)
             else:
