@@ -33,7 +33,7 @@ webdir=$(cd $(dirname $0) && pwd)
 cd ${repodir}
 if ${checkout} ; then
     gitrev=$(${webdir}/gime-git-rev.sh ${destdir})
-    git checkout $1 ; shift
+    git checkout ${gitrev} ; shift
 fi
 
 test -d ${repodir}/testing/pluto

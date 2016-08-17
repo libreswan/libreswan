@@ -69,8 +69,8 @@ ${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 
 # rebuild-results.sh will delete this file
-${webdir}/build-results --no-checkout ${repodir} ${destdir}
+${webdir}/build-results.sh --no-checkout ${repodir} ${destdir}
 
 
 # rebuild-summary.sh will delete this file
-${webdir}/build-summary --no-checkout ${repodir} ${basedir}
+${webdir}/build-summary.sh --no-checkout ${repodir} ${basedir}
