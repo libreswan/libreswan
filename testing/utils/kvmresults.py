@@ -50,6 +50,8 @@ class Print(argutil.List):
     test_name = "test-name"
     testing_directory = "testing-directory"
     total_time = "total-time"
+    baseline_directory = "baseline-directory"
+    baseline_output_directory = "baseline-output-directory"
 
 
 class Stats(Enum):
@@ -84,8 +86,11 @@ def main():
                         choices=[c for c in Stats],
                         help="provide overview statistics; default: \"%(default)s\"");
 
-    parser.add_argument("--baseline", metavar="DIRECTORY",
+    parser.add_argument("--baseline", "-b", metavar="DIRECTORY",
                         help="a %(metavar)s containing baseline testsuite output")
+
+    parser.add_argument("--json", action="store_true",
+                        help="output each result as an individual json object (pipe the output through 'jq -s .' to convert it to a well formed json list")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), a TESTLIST file, test output, or testsuite output")
@@ -93,9 +98,6 @@ def main():
     # TEST-DIRECTORY argument always consumes all remaining arguments.
     parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
                         help="an optional testsuite directory (contains a TESTLIST file) containing output from a previous test run")
-
-    parser.add_argument("--json", action="store_true",
-                        help="output each result as an individual json object (pipe the output through 'jq -s .' to convert it to a well formed json list")
 
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
@@ -130,14 +132,14 @@ def main():
     if args.baseline:
         # An explict baseline testsuite, can be more forgiving in how
         # it is loaded.
-        baseline = testsuite.load(logger, args,
+        baseline = testsuite.load(logger, logutil.DEBUG, args,
                                   testsuite_directory=args.baseline,
                                   error_level=logutil.DEBUG)
         if not baseline:
             # Perhaps the baseline just contains output, magic up the
             # corresponding testsuite directory.
             baseline_directory = args.testing_directory("pluto")
-            baseline = testsuite.load(logger, args,
+            baseline = testsuite.load(logger, logutil.DEBUG, args,
                                       testsuite_directory=baseline_directory,
                                       saved_testsuite_output_directory=args.baseline,
                                       error_level=logutil.DEBUG)
@@ -319,6 +321,10 @@ def results(logger, tests, baseline, args, result_stats):
                 elif p is Print.scripts:
                     b.add(p, [{ "host": h, "script": s} for h, s in test.host_script_tuples],
                           string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
+                elif p is Print.baseline_directory:
+                    b.add(p, baseline and test.name in baseline and baseline[test.name].directory or None)
+                elif p is Print.baseline_output_directory:
+                    b.add(p, baseline and test.name in baseline and baseline[test.name].output_directory or None)
                 elif p is Print.start_time:
                     b.add(p, result_cache.grub(r"starting debug log at (.*)$"))
                 elif p is Print.end_time:
