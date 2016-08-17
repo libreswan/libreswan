@@ -1,8 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec newhostkey
+ rm -f /tmp/newhostkey.txt
+west #
+ ipsec newhostkey --output /tmp/newhostkey.txt
 Generated RSA key pair with CKAID <<CKAID#1>> was stored in the NSS database
+west #
+ grep pubkey= /tmp/newhostkey.txt
+	#pubkey=<<PUBKEY#1>>
 west #
  ipsec showhostkey --list
 < 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
@@ -11,7 +16,7 @@ west #
 west #
  ipsec showhostkey --left --ckaid $ckaid
 	# rsakey <<KEYID#1>>
-	leftrsasigkey=<<RSASIGKEY#1>>
+	leftrsasigkey=<<PUBKEY#1>>
 west #
  
 
