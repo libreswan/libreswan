@@ -46,6 +46,7 @@ else
     esac
 fi
 
+
 # <test-directory>
 if test $# -gt 0; then
     testdir=$(readlink -f $1) ; shift
@@ -63,7 +64,7 @@ else
     set "$fixupdir"
 fi
 
-# get REF_CONSOLE_FIXUPS
+# Load REF_CONSOLE_FIXUPS et.al.
 if [ -f $testdir/testparams.sh ]; then
     # testparams.sh expects to be sourced from its directory,
     # expecting to be able to include the relative pathed
@@ -74,7 +75,11 @@ if [ -f $testdir/testparams.sh ]; then
 else
     . $testingdir/default-testparams.sh
 fi
-if test "$REF_CONSOLE_FIXUPS" = ""; then
+# The per-host fixup.  Get hostname from the INPUT file name,
+# stripping of what is probably .console.verbose.txt
+host_fixups=$(basename ${input} | sed -e 's;\..*;;' | tr '[a-z]' '[A-Z]')_CONSOLE_FIXUPS
+REF_CONSOLE_FIXUPS=${!host_fixups:-${REF_CONSOLE_FIXUPS}}
+if test -z "$REF_CONSOLE_FIXUPS"; then
     echo "\$REF_CONSOLE_FIXUPS empty" 1>&2 ; exit 1
 fi
 
