@@ -103,25 +103,26 @@ def _strip(s):
     s = re.sub(r"^\n", r"", s)
     return s
 
-# Compare two strings.  Returns:
-#
-#    [], None
-#    [diff..], True # if white space only
-#    [diff...], False
-def fuzzy_diff(logger, ln, l, rn, r):
+def _whitespace(l, r):
+    """Return true if L and R are the same after stripping white space"""
+    return _strip(l) == _strip(r)
+
+def _diff(logger, ln, l, rn, r):
+    """Return the difference between two strings"""
+
     if l == r:
-        # fast path
-        logger.debug("fuzzy_diff fast match")
-        return [], None
+        # slightly faster path
+        logger.debug("_diff '%s' and '%s' fast match", ln, rn)
+        return []
     # compare
     diff = list(difflib.unified_diff(l.splitlines(), r.splitlines(),
                                      fromfile=ln, tofile=rn,
                                      lineterm=""))
-    logger.debug("fuzzy_diff: %s", diff)
+    logger.debug("_diff: %s", diff)
     if not diff:
-        return [], None
-    # if the problem was just white space, return that as well
-    return diff, _strip(l) == _strip(r)
+        # Always return a list.
+        return []
+    return diff
 
 
 def sanitize_output(logger, raw_file, test):
@@ -302,25 +303,23 @@ class TestResult:
                               host_name, expected_sanitized_console_output_filename)
             if os.path.exists(expected_sanitized_console_output_filename):
 
-                diff, whitespace = None, None
+                diff = None
 
                 sanitized_console_diff_filename = os.path.join(output_directory, host_name + ".console.diff")
                 if quick:
                     sanitized_console_diff = load_output(logger, sanitized_console_diff_filename)
-                    # be consistent with fuzzy_diff which returns a list
-                    # of lines.
-                    #
-                    # This has no easy way to detect whitespace differences, so set it to None
+                    # Be consistent with _diff which returns a list of
+                    # lines.
                     if sanitized_console_diff is not None:
-                        diff, whitespace = sanitized_console_diff.splitlines(), None
+                        diff = sanitized_console_diff.splitlines()
                 if diff is None:
                     with open(expected_sanitized_console_output_filename) as f:
                         expected_sanitized_console_output = f.read()
-                    diff, whitespace = fuzzy_diff(self.logger,
-                                                  "MASTER/" + test.name + "/" + host_name + ".console.txt",
-                                                  expected_sanitized_console_output,
-                                                  "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                                                  sanitized_console_output)
+                    diff = _diff(self.logger,
+                                 "MASTER/" + test.name + "/" + host_name + ".console.txt",
+                                 expected_sanitized_console_output,
+                                 "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                                 sanitized_console_output)
                 if update:
                     self.logger.debug("host %s updating diff file %s",
                                       host_name, sanitized_console_diff_filename)
@@ -331,6 +330,8 @@ class TestResult:
                                 f.write("\n")
                 if diff:
                     self.diffs[host_name] = diff
+                    whitespace = _whitespace(expected_sanitized_console_output,
+                                             sanitized_console_output)
                     if whitespace:
                         self.errors.add("output-whitespace", host_name)
                     else:
@@ -411,12 +412,14 @@ def mortem(test, args, domain_prefix="", finished=None,
             test_result.errors.add("baseline-passed", host_name)
             continue
 
-        baseline_diff, baseline_whitespace = fuzzy_diff(logger,
-                                                        "BASELINE/" + test.name + "/" + host_name + ".console.txt",
-                                                        baseline_result.sanitized_console_output[host_name],
-                                                        "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
-                                                        test_result.sanitized_console_output[host_name])
+        baseline_diff = _diff(logger,
+                              "BASELINE/" + test.name + "/" + host_name + ".console.txt",
+                              baseline_result.sanitized_console_output[host_name],
+                              "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                              test_result.sanitized_console_output[host_name])
         if baseline_diff:
+            baseline_whitespace = _whitespace(baseline_result.sanitized_console_output[host_name],
+                                              test_result.sanitized_console_output[host_name])
             if baseline_whitespace:
                 test_result.errors.add("baseline-whitespace", host_name)
             else:
