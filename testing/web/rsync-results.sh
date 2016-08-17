@@ -31,9 +31,9 @@ test -d ${repodir}/testing/pluto
 find ${repodir}/testing/pluto \
      -maxdepth 3 \
      \( \
-     -path '*/pluto/*/OUTPUT/.txt' -o \
-     -path '*/pluto/*/OUTPUT/*.diff' -o \
      -path '*/pluto/*/OUTPUT/*.txt' -o \
+     -path '*/pluto/*/OUTPUT/*.diff' -o \
+     -path '*/pluto/*/OUTPUT/*.log' -o \
      -path '*/pluto/*/OUTPUT/RESULT' \
      \) \
      -printf '%P\n' \
