@@ -341,10 +341,10 @@ class TestResult:
                 self.diffs[host_name] = diff
                 whitespace = _whitespace(expected_output,
                                          sanitized_output)
+                self.passed = False
                 if whitespace:
                     self.errors.add("output-whitespace", host_name)
                 else:
-                    self.passed = False
                     self.errors.add("output-different", host_name)
 
 
