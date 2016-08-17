@@ -31,32 +31,25 @@ from fab import jsonutil
 
 
 class Print(argutil.List):
+    boot_time = "boot-time"
     diffs = "diffs"
-    test_name = "test-name"
-    test_directory = "test-directory"
+    end_time = "end-time"
+    errors = "errors"
     expected_result = "expected-result"
     host_names = "host-names"
     kind = "kind"
     output_directory = "output-directory"
+    path = "path"
     result = "result"
-    testing_directory = "testing-directory"
-    saved_output_directory = "saved-output-directory"
-    scripts = "scripts"
-    errors = "errors"
     runtime = "runtime"
-    total_time = "total-time"
-    start_time = "start-time"
-    end_time = "end-time"
+    saved_output_directory = "saved-output-directory"
     script_time = "script-time"
-    boot_time = "boot-time"
-
-
-class Prefix(Enum):
-    def __str__(self):
-        return self.value
-    name = "name"
+    scripts = "scripts"
+    start_time = "start-time"
     test_directory = "test-directory"
-    output_directory = "output-directory"
+    test_name = "test-name"
+    testing_directory = "testing-directory"
+    total_time = "total-time"
 
 
 class Stats(Enum):
@@ -81,13 +74,9 @@ def main():
 
     parser.add_argument("--dump-args", action="store_true")
 
-    parser.add_argument("--prefix", action="store", type=Prefix,
-                        choices=[p for p in Prefix],
-                        help="prefix to display with each test")
-
     # how to parse --print directory,saved-directory,...?
     parser.add_argument("--print", action="store",
-                        default=Print(Print.result, Print.errors),
+                        default=Print(Print.path, Print.result, Print.errors),
                         type=Print, metavar=str(Print),
                         help="comman separate list of attributes to print for each test; default: '%(default)s'")
 
@@ -126,7 +115,6 @@ def main():
         logger.info("Arguments:")
         logger.info("  Stats: %s", args.stats)
         logger.info("  Print: %s", args.print)
-        logger.info("  Prefix: %s", args.prefix)
         logger.info("  Baseline: %s", args.baseline)
         logger.info("  Json: %s", args.json)
         logger.info("  Quick: %s", args.quick)
@@ -215,13 +203,17 @@ class JsonOutput:
         sys.stdout.flush()
 
 class PrintOutput:
+    def __init__(self):
+        self.sep = ""
     def prefix(self, key, value):
         sys.stdout.write(value)
-    def add(self, *keyval, string=lambda x: x and " " + str(x) or ""):
-        # By default, suppress anything Null or empty/false/...
+    def add(self, *keyval, string=lambda s, sep: s and sep + str(s) or ""):
+        # default is to print value as a string when it is "not
+        # false".
         keys = keyval[0:-1]
         value = keyval[-1]
-        sys.stdout.write(string(value))
+        sys.stdout.write(string(value, self.sep))
+        self.sep = " "
     def flush(self):
         sys.stdout.write("\n")
         sys.stdout.flush()
@@ -290,32 +282,18 @@ def results(logger, tests, baseline, args, result_stats):
             b = args.json and JsonOutput() or PrintOutput()
 
             # Print the test's name/path
-            if not args.prefix:
-                # By default: when the path given on the command line
-                # explicitly specifies a test's output directory
-                # (found in TEST.SAVED_OUTPUT_DIRECTORY), print that;
-                # otherwise print the path to the test's directory.
-                if test.saved_output_directory:
-                    b.prefix(Print.saved_output_directory,
-                             test.saved_output_directory)
-                else:
-                    b.prefix(Print.test_directory, test.directory)
-            else:
-                # Print the test name/path per command line
-                if args.prefix is Prefix.test_name:
-                    b.prefix(Print.test_name, test.name)
-                elif args.prefix is Prefix.test_directory:
-                    b.prefix(Print.test_directory, test.directory)
-                elif args.prefix is Prefix.output_directory:
-                    if test.saved_output_directory:
-                        b.prefix(Print.saved_output_directory,
-                                 test.saved_output_directory)
-                    else:
-                        b.prefix(Print.output_directory,
-                                 test.output_directory)
 
             for p in args.print:
-                if p is Print.diffs:
+                if p is Print.path:
+                    # When the path given on the command line
+                    # explicitly specifies a test's output directory
+                    # (found in TEST.SAVED_OUTPUT_DIRECTORY), print
+                    # that; otherwise print the path to the test's
+                    # directory.
+                    b.add(p, (test.saved_output_directory
+                              and test.saved_output_directory
+                              or test.directory))
+                elif p is Print.diffs:
                     continue
                 elif p is Print.test_directory:
                     b.add(p, test.directory)
@@ -323,7 +301,7 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, test.expected_result)
                 elif p is Print.host_names:
                     b.add(p, test.host_names,
-                          string=lambda host_names: " " + ",".join(host_names))
+                          string=lambda host_names, sep: sep + ",".join(host_names))
                 elif p is Print.kind:
                     b.add(p, test.kind)
                 elif p is Print.test_name:
@@ -340,7 +318,7 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, test.saved_output_directory)
                 elif p is Print.scripts:
                     b.add(p, [{ "host": h, "script": s} for h, s in test.host_script_tuples],
-                          string=lambda scripts: " " + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
+                          string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
                 elif p is Print.start_time:
                     b.add(p, result_cache.grub(r"starting debug log at (.*)$"))
                 elif p is Print.end_time:
@@ -360,7 +338,9 @@ def results(logger, tests, baseline, args, result_stats):
                 result = result_cache.result(Print.diffs)
                 for domain in result.diffs:
                     b.add(Print.diffs, domain, result.diffs[domain],
-                          string=lambda diff: diff and "\n" + "\n".join(diff) or "")
+                          string=(lambda diff, sep: diff
+                                  and (sep and "\n" or "") + "\n".join(diff)
+                                  or ""))
 
             b.flush()
 
