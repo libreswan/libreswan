@@ -68,8 +68,17 @@ ${webdir}/rsync-tests.sh --no-checkout ${repodir} ${destdir}
 ${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 
-# rebuild-results.sh will delete this file
-${webdir}/build-results.sh --no-checkout ${repodir} ${destdir}
+# Find the next-to-last results directory.  "results.json" is used as
+# a marker to identify valid directories.  Since this directory may
+# not yet have a results.json file, create one.
+touch ${destdir}/results.json
+# The result is just the directory name, need to convert it to an
+# absolute path.
+previous=$(cd ${destdir} ; find .. -maxdepth 2 -name results.json -print | sort -n | cut -d/ -f 2 | sed -n -e "/${version}/ {g;p;q} ; h")
+${webdir}/build-results.sh \
+	 $(test -n "${previous}" && echo --baseline ${basedir}/$(hostname)/${previous}) \
+	 --no-checkout \
+	 ${repodir} ${destdir}
 
 
 # rebuild-summary.sh will delete this file

@@ -1,10 +1,12 @@
 #!/bin/sh
 
 checkout=true
+baseline=
 while test $# -gt 0; do
     case $1 in
 	--no-checkout ) checkout=false ; shift ;;
 	--checkout ) checkout=true ; shift ;;
+	--baseline ) baseline=$(cd $2 && pwd) ; shift ; shift ;;
 	--*) echo Unknown option $1 1>&2 ; exit 1 ;;
 	* ) break ;;
     esac
@@ -15,16 +17,20 @@ if test "$#" -lt 2; then
 
 Usage:
 
-   $0 [ --no-checkout ] <repodir> <results-directory> ...
+   $0 [ --no-checkout ] [ --baseline <baseline-dir> ] <repo-dir> <results-dir> ...
 
-Using <repodir>, update the web pages in <results-directory> (it
-doesn't update the OUTPUT files, but perhaps it should).
+Create a results web page under <results-dir>.
 
-Unless --no-checkout, this will checkout the sources (in <repodir>)
-that were used to generate <results-directory>.
+Use "kvmrunner.py" to create <results-dir>/results.json by comparing
+the test output in <results-dir>/*/OUTPUT against the expected output
+in <repo-dir>/testing/pluto/*/ and, if multiple <results-dir>
+parameters, the previous test output as an additional baseline.
 
-Unless --no-checkout is specified, do not run this from the current
-repo.
+--baseline <baseline-dir>: use <baseline-dir> as the baseline for the
+first <results-dir>.
+
+--no-checkout: do not switch <repo-dir> to the checkout used when
+creating the test results.
 
 EOF
     exit 1
@@ -39,7 +45,7 @@ webdir=$(cd $(dirname $0) && pwd)
 
 for d in "$@" ; do
     destdir=$(cd ${d} && pwd)
-    gitrev=$(${webdir}/gime-git-rev.sh $(basename ${d}))
+    gitrev=$(${webdir}/gime-git-rev.sh $(basename ${destdir}))
     if ${checkout} ; then
 	(
 	    cd ${repodir}
@@ -50,7 +56,8 @@ for d in "$@" ; do
 	cd ${destdir}
 
 	${webdir}/results.sh \
-		 --testing-dir ${repodir}/testing \
+		 $(test -n "${baseline}" && echo --baseline "${baseline}") \
+		 --testing-directory ${repodir}/testing \
 		 . > results.tmp
 	jq -s '.' results.tmp > results.new
 	rm results.tmp
@@ -62,4 +69,5 @@ for d in "$@" ; do
 
 	mv results.new results.json
     )
+    baseline=${destdir}
 done

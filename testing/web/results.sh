@@ -21,7 +21,7 @@ ${utilsdir}/kvmresults.py \
 	     --test-kind '' \
 	     --test-result '' \
 	     --json \
-	     --print test-name,test-directory,start-time,end-time,host-names,saved-output-directory,output-directory,result,errors,runtime,total-time,boot-time,script-time,expected-result \
+	     --print test-name,test-directory,start-time,end-time,host-names,saved-output-directory,output-directory,result,errors,runtime,total-time,boot-time,script-time,expected-result,baseline-output-directory \
 	     "$@" \
     | grep -v '^kvmresult'
 
