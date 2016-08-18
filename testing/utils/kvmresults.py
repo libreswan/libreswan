@@ -64,8 +64,8 @@ class Stats(Enum):
 
 def main():
 
-    parser = argparse.ArgumentParser(description="list all tests in the form: <test> [ <directory> ] [ <result> <details...> ]",
-                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).  If a BASELINE directory is specified, anywhere a test result is different to the baseline is also identified.")
+    parser = argparse.ArgumentParser(description="list test results",
+                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
     parser.add_argument("--quick", action="store_true",
@@ -86,18 +86,21 @@ def main():
                         choices=[c for c in Stats],
                         help="provide overview statistics; default: \"%(default)s\"");
 
-    parser.add_argument("--baseline", "-b", metavar="DIRECTORY",
-                        help="a %(metavar)s containing baseline testsuite output")
+    baseline_metavar = "BASELINE-DIRECTORY"
+    baseline_help = "additional %(metavar)s containing results to compare against; any divergence between the test and baseline results are displayed"
+    parser.add_argument("--baseline", "-b",
+                        metavar=baseline_metavar, help=baseline_help)
 
     parser.add_argument("--json", action="store_true",
                         help="output each result as an individual json object (pipe the output through 'jq -s .' to convert it to a well formed json list")
 
-    parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
-                        help="%(metavar)s containing: a test, a testsuite (contains a TESTLIST file), a TESTLIST file, test output, or testsuite output")
-    # Note: this argument serves as documentation only.  The
-    # TEST-DIRECTORY argument always consumes all remaining arguments.
-    parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
-                        help="an optional testsuite directory (contains a TESTLIST file) containing output from a previous test run")
+    parser.add_argument("directories", metavar="DIRECTORY-OR-FILE", nargs="+",
+                        help="a directory containing: a test, testsuite, test output, or testsuite output; or a file containing a 'TESTLIST'")
+
+    # Note: this argument serves as documentation only.  The RESULT
+    # argument should consumes all remaining parameters.
+    parser.add_argument("baseline_ignored", nargs="?",
+                        metavar=baseline_metavar, help=baseline_help)
 
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
