@@ -640,7 +640,6 @@ case "${PLUTO_VERB}" in
 	addvti
 	uproute
 	addnflog
-	addcat
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -662,6 +661,7 @@ case "${PLUTO_VERB}" in
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
+	addcat
 	notifyNM connect
 	;;
     down-client)
