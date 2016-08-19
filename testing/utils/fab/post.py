@@ -304,11 +304,8 @@ class TestResult:
 
             expected_output = _load_file(self.logger, expected_output_filename)
             if expected_output is None:
-                if host_name == "nic":
-                    # NIC never gets its console output checked.
-                    self.logger.debug("host %s has unchecked console output", host_name)
-                else:
-                    self.errors.add("output-unchecked", host_name)
+                self.errors.add("output-unchecked", host_name)
+                # self.finished = False
                 continue
 
             diff = None
