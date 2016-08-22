@@ -24,7 +24,7 @@ repodir=$(cd $1 && pwd) ; shift
 testingdir=${repodir}/testing
 
 # where to put results
-if test $@ -ge 1; then
+if test $# -ge 1; then
     basedir=$(cd $1 && pwd) ; shift
 fi
 
