@@ -5,7 +5,7 @@ while test $# -gt 0; do
     case $1 in
 	--no-checkout ) checkout=false ; shift ;;
 	--checkout ) checkout=true ; shift ;;
-	--*) echo Unknown option $1 1>&2 ; exit 1 ;;
+	-*) echo Unknown option $1 1>&2 ; exit 1 ;;
 	* ) break ;;
     esac
 done
@@ -36,7 +36,7 @@ ${webdir}/summary.sh ${repodir} */*/results.json > summary.tmp
 jq -s '.' summary.tmp > summary.new
 rm summary.tmp
 
-cp ${webdir}/i1.html index.html
-cp ${webdir}/*.js js/
+cp ${webdir}/*.{html,css,js} ${basedir}
+ln -f -s summary.html ${basedir}/index.html
 
 mv summary.new summary.json

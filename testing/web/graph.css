@@ -1,0 +1,31 @@
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+#dataTable.classy {
+	color: red;
+}
+
+.pass {
+    fill: green
+}
+
+.pass_fail {
+    fill: blue
+}
+
+.pass_fail_unresolved {
+    fill: orange
+}
+
+.pass_fail_unresolved_untested {
+    fill: red
+}

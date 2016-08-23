@@ -7,7 +7,7 @@ while test $# -gt 0; do
 	--no-checkout ) checkout=false ; shift ;;
 	--checkout ) checkout=true ; shift ;;
 	--baseline ) baseline=$(cd $2 && pwd) ; shift ; shift ;;
-	--*) echo Unknown option $1 1>&2 ; exit 1 ;;
+	-*) echo Unknown option $1 1>&2 ; exit 1 ;;
 	* ) break ;;
     esac
 done
@@ -62,10 +62,11 @@ for d in "$@" ; do
 	jq -s '.' results.tmp > results.new
 	rm results.tmp
 
-	cp ${webdir}/i3.html ${destdir}/index.html
 	rm -rf ${destdir}/js
 	cp -r ${destdir}/../../js ${destdir}/js
-	cp ${webdir}/*.js ${destdir}/js
+
+	cp ${webdir}/*.{html,css,js} ${destdir}
+	ln -f -s results.html ${destdir}/index.html
 
 	mv results.new results.json
     )
