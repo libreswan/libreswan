@@ -1,36 +1,17 @@
 #!/bin/sh
 
-checkout=true
-baseline=
-while test $# -gt 0; do
-    case $1 in
-	--no-checkout ) checkout=false ; shift ;;
-	--checkout ) checkout=true ; shift ;;
-	--baseline ) baseline=$(cd $2 && pwd) ; shift ; shift ;;
-	-*) echo Unknown option $1 1>&2 ; exit 1 ;;
-	* ) break ;;
-    esac
-done
-
 if test "$#" -lt 2; then
     cat <<EOF > /dev/stderr
 
 Usage:
 
-   $0 [ --no-checkout ] [ --baseline <baseline-dir> ] <repo-dir> <results-dir> ...
+   $0 <repodir> <destdir> [ <previousdir> ]
 
-Create a results web page under <results-dir>.
+Use "kvmrunner.py> to create a results web page under <destdir>.
 
-Use "kvmrunner.py" to create <results-dir>/results.json by comparing
-the test output in <results-dir>/*/OUTPUT against the expected output
-in <repo-dir>/testing/pluto/*/ and, if multiple <results-dir>
-parameters, the previous test output as an additional baseline.
-
---baseline <baseline-dir>: use <baseline-dir> as the baseline for the
-first <results-dir>.
-
---no-checkout: do not switch <repo-dir> to the checkout used when
-creating the test results.
+If <previousdir> is specified, use that as a baseline when generating
+the results.  If <previousdir> is not specified, apply a heuristic to
+determine the previous <destdir>.
 
 EOF
     exit 1
@@ -38,37 +19,34 @@ fi
 
 set -euxv
 
-repodir=$(cd $1 && pwd) ; shift
-
 cwd=$(pwd)
 webdir=$(cd $(dirname $0) && pwd)
+repodir=$(cd $1 && pwd) ; shift
+destdir=$(cd $1 && pwd) ; shift
+if test $# -gt 0; then
+    baseline=$(cd $1 && pwd) ; shift
+else
+    # Use a heuristic to find the previous to this directory name,
+    # need to convert it to an absolute path.
+    previous=$(cd ${destdir} ; find .. -maxdepth 1 -type d -print | sort -n | cut -d/ -f 2 | sed -n -e "/$(basename ${destdir})/ {g;p;q} ; h")
+    # Generate the results page.
+    baseline=$(test -n "${previous}" && cd ${destdir}/../${previous} && pwd)
+fi
 
-for d in "$@" ; do
-    destdir=$(cd ${d} && pwd)
-    gitrev=$(${webdir}/gime-git-rev.sh $(basename ${destdir}))
-    if ${checkout} ; then
-	(
-	    cd ${repodir}
-	    git checkout ${gitrev}
-	)
-    fi
-    (
-	cd ${destdir}
+(
+    cd ${destdir}
+    ${webdir}/results.sh \
+	     $(test -n "${baseline}" && echo --baseline "${baseline}") \
+	     --testing-directory ${repodir}/testing \
+	     .
+) > ${destdir}/results.tmp
+jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
+rm ${destdir}/results.tmp
 
-	${webdir}/results.sh \
-		 $(test -n "${baseline}" && echo --baseline "${baseline}") \
-		 --testing-directory ${repodir}/testing \
-		 . > results.tmp
-	jq -s '.' results.tmp > results.new
-	rm results.tmp
+rm -rf ${destdir}/js
+cp -r ${destdir}/../../js ${destdir}/js
 
-	rm -rf ${destdir}/js
-	cp -r ${destdir}/../../js ${destdir}/js
+cp ${webdir}/*.{html,css,js} ${destdir}
+ln -f -s results.html ${destdir}/index.html
 
-	cp ${webdir}/*.{html,css,js} ${destdir}
-	ln -f -s results.html ${destdir}/index.html
-
-	mv results.new results.json
-    )
-    baseline=${destdir}
-done
+mv ${destdir}/results.new ${destdir}/results.json

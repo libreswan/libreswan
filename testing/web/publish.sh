@@ -1,16 +1,21 @@
 #!/bin/sh
 
-basedir=${HOME}/results
-
-if test $# -lt 1; then
+if test $# -lt 2; then
     cat <<EOF > /dev/stderr
 
-Usate:
+Usage:
 
-  $0 <repodir> [ <basedir> ]
+    $0 <repodir> <basedir>
 
-Run the testsuite in <repodir> publishing the results
-in <basedir> (default ${basedir}) under <host>/<gitver>.
+Build/run the testsuite in <repodir>.  Publish detailed results under
+<basedir>/<version>, and a summary under <basedir>.
+
+<version> is formed from the contaentation of the current checkout
+date and "make showversion".
+
+For instance:
+
+    $0 . ~/results/master
 
 EOF
     exit 1
@@ -19,67 +24,52 @@ fi
 # exit if anything looks weird and be verbose.
 set -euxv
 
-# where the testsuite lives
 repodir=$(cd $1 && pwd) ; shift
-testingdir=${repodir}/testing
-
-# where to put results
-if test $# -ge 1; then
-    basedir=$(cd $1 && pwd) ; shift
-fi
+basedir=$(cd $1 && pwd) ; shift
 
 # where the scripts live
 webdir=$(cd $(dirname $0) && pwd)
 utilsdir=$(cd ${webdir}/../utils && pwd)
 
-cd ${repodir}
-gitstamp=$(make showversion)
-# go backwards from gitstamp to get the git:rev and git:date; this
-# since updates will use the same scripts, this confirms that they are
-# working.
-rev=$(${webdir}/gime-git-rev.sh ${repodir} ${gitstamp})
-date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
+
+# Get the make-version, and then go backwards from that to determine
+# the git:rev and git:date.
+#
+# Since later updates are going to use the same scripts, this helps to
+# confirm that everything is working.
+gitstamp=$(cd ${repodir} ; make showversion)
+gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
+date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev})
 version=$(echo ${date} ${gitstamp} | sed -e 's/://' -e 's/ /-/g')
 
-destdir=${basedir}/$(hostname)/${version}
+destdir=${basedir}/${version}
 echo ${destdir}
 
 mkdir -p ${destdir}
 
+
 # Rebuild/run; but only if previous attempt didn't crash badly.
 for target in distclean kvm-install kvm-retest kvm-shutdown ; do
-    # because "make ... | tee bar" does not see make's exit code, use
-    # a file as a hack.
     ok=${destdir}/make-${target}.ok
     if test ! -r ${ok} ; then
-	make ${target}
+	( cd ${repodir} ; make ${target} )
 	touch ${ok}
     fi
-    # above created file?
-    test -r ${ok}
 done
 
 
 # Copy over all the tests.
-${webdir}/rsync-tests.sh --no-checkout ${repodir} ${destdir}
+${webdir}/rsync-tests.sh ${repodir} ${destdir}
 
 
 # Copy over all the results.
 ${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 
-# Find the next-to-last results directory.  "results.json" is used as
-# a marker to identify valid directories.  Since this directory may
-# not yet have a results.json file, create one.
-touch ${destdir}/results.json
-# The result is just the directory name, need to convert it to an
-# absolute path.
-previous=$(cd ${destdir} ; find .. -maxdepth 2 -name results.json -print | sort -n | cut -d/ -f 2 | sed -n -e "/${version}/ {g;p;q} ; h")
-${webdir}/build-results.sh \
-	 $(test -n "${previous}" && echo --baseline ${basedir}/$(hostname)/${previous}) \
-	 --no-checkout \
-	 ${repodir} ${destdir}
+# Generate the results page.
+${webdir}/build-results.sh ${repodir} ${destdir}
 
 
-# rebuild-summary.sh will delete this file
-${webdir}/build-summary.sh --no-checkout ${repodir} ${basedir}
+# Generate the summary page.
+${webdir}/build-summary.sh ${repodir} ${basedir} ${basedir}/*/results.json
+

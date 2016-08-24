@@ -9,7 +9,7 @@ Usage:
 
    $0 <repodir> <resultsdir> ...
 
-Use <repodir> to copy/update the test source files in <resultsdir>.
+Use <repodir> to rebuild <resultsdir.
 
 Do not run this from the current repo.  It needs to checkout the the
 exact commit used to create <resultsdir>.
@@ -27,5 +27,5 @@ for d in "$@" ; do
     destdir=$(cd ${d} && pwd)
     gitrev=$(${webdir}/gime-git-rev.sh $(basename ${destdir}))
     ( cd ${repodir} && git checkout ${gitrev} )
-    ${webdir}/rsync-tests.sh ${repodir} ${destdir}
+    ${webdir}/build-results.sh ${repodir} ${destdir}
 done

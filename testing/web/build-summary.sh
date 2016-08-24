@@ -1,23 +1,15 @@
 #!/bin/sh
 
-checkout=true
-while test $# -gt 0; do
-    case $1 in
-	--no-checkout ) checkout=false ; shift ;;
-	--checkout ) checkout=true ; shift ;;
-	-*) echo Unknown option $1 1>&2 ; exit 1 ;;
-	* ) break ;;
-    esac
-done
-
-if test "$#" -lt 2; then
+if test "$#" -lt 3; then
     cat <<EOF > /dev/stderr
 
 Usage:
 
-   $0 [ --no-checkout ] <repodir> <basedir> ...
+   $0 <repodir> <basedir> <results.json> ...
 
-Using <repodir>, update the web pages in <basedir>.
+Using <repodir> as a reference for branch information, create/update
+the summary web page in <basedir> using <basedir>/*/results.json as
+input.
 
 EOF
     exit 1
@@ -27,16 +19,13 @@ set -euxv
 
 repodir=$(cd $1 && pwd) ; shift
 basedir=$(cd $1 && pwd) ; shift
-
 webdir=$(cd $(dirname $0) && pwd)
 
-cd ${basedir}
-
-${webdir}/summary.sh ${repodir} */*/results.json > summary.tmp
-jq -s '.' summary.tmp > summary.new
-rm summary.tmp
+${webdir}/summary.sh ${repodir} ${basedir} "$@" > ${basedir}/summary.tmp
+jq -s '.'  ${basedir}/summary.tmp >  ${basedir}/summary.new
+rm  ${basedir}/summary.tmp
 
 cp ${webdir}/*.{html,css,js} ${basedir}
 ln -f -s summary.html ${basedir}/index.html
 
-mv summary.new summary.json
+mv  ${basedir}/summary.new  ${basedir}/summary.json

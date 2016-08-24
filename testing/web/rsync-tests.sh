@@ -1,21 +1,11 @@
 #!/bin/sh
 
-checkout=true
-while test $# -gt 0; do
-    case $1 in
-	--no-checkout ) checkout=false ; shift ;;
-	--checkout ) checkout=true ; shift ;;
-	--*) echo Unknown option $1 1>&2 ; exit 1 ;;
-	* ) break ;;
-    esac
-done
-
 if test $# -lt 2; then
     cat <<EOF > /dev/stderr
 
 Usage:
 
-  $0 [ --no-checkout ] <repodir> <destdir>
+  $0 <repodir> <destdir>
 
 Rsync the test input files under <repodir>/testing/pluto to <destdir>.
 
@@ -31,11 +21,6 @@ destdir=$(cd $1 && pwd) ; shift
 webdir=$(cd $(dirname $0) && pwd)
 
 cd ${repodir}
-if ${checkout} ; then
-    gitrev=$(${webdir}/gime-git-rev.sh ${destdir})
-    git checkout ${gitrev} ; shift
-fi
-
 test -d ${repodir}/testing/pluto
 
 # Notes:
