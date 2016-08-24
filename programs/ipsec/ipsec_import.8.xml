@@ -8,7 +8,7 @@
 <refmeta>
 <refentrytitle>IPSEC_IMPORT</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>24 August 2012</refmiscinfo>
+<refmiscinfo class='date'>24 August 2016</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -20,6 +20,7 @@
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
   <command>ipsec import</command>
+    <arg choise='opt'><arg choise='plain'>--nssdir </arg><arg choise'plain'><replaceable>@IPSEC_NSSDIR@</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -35,9 +36,8 @@ ipsec NSS data directory (default: @IPSEC_NSSDIR@)
 <para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>route</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 
-
 <refsect1 id='bugs'><title>BUGS</title>
-<para>This still needs an option for using an NSS directory at a non-default location</para>
+<para>none</para>
 </refsect1>
 </refentry>
 

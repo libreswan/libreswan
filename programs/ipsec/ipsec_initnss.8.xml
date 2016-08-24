@@ -8,7 +8,7 @@
 <refmeta>
 <refentrytitle>IPSEC_INITNSS</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>24 August 2012</refmiscinfo>
+<refmiscinfo class='date'>24 August 2016</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -20,6 +20,7 @@
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
   <command>ipsec initnss</command>
+    <arg choise='opt'><arc choise='plain'>--nssdir </arg><arg choise'plain'><replaceable>@IPSEC_NSSDIR@</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
