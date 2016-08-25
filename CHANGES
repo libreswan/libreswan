@@ -5,6 +5,8 @@ v3.19 (unreleased)
 * building: libreswan assumes -std=gnu99 when building [Andrew]
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
+* Bugtracker bugs fixed:
+   #270 - newhostkey produces 1 character bug in pubkey [Andrew]
 
 v3.18 (July 27, 2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]
