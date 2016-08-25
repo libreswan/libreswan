@@ -141,7 +141,7 @@ def main():
         if not baseline:
             # Perhaps the baseline just contains output, magic up the
             # corresponding testsuite directory.
-            baseline_directory = args.testing_directory("pluto")
+            baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, logutil.DEBUG, args,
                                       testsuite_directory=baseline_directory,
                                       saved_testsuite_output_directory=args.baseline,
