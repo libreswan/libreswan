@@ -20,27 +20,25 @@ webdir=$(cd $(dirname $0) && pwd)
 for d in "$@"; do
     rev=$(${webdir}/gime-git-rev.sh $(dirname ${d}))
     date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
-    nextrev=$(cd ${repodir} ; git rev-list ${rev}..HEAD | tail -n 2 | head -1)
-    if test -n "${nextrev}" ; then
-	next=$(${webdir}/gime-git-date.sh ${repodir} ${nextrev})
-    else
-	next=""
-    fi
+    next_rev=$(cd ${repodir} ; git rev-list ${rev}..HEAD | tail -n 1)
+    next_date=$(test -z "${next_rev}" || ${webdir}/gime-git-date.sh ${repodir} ${next_rev})
     d=$(realpath ${d})
     (
 	cd ${basedir}
 	jq \
 	    --arg rev "${rev}" \
 	    --arg date "${date}" \
-	    --arg next "${next}" \
+	    --arg next_rev "${next_rev}" \
+	    --arg next_date "${next_date}" \
 	    '
 def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
 
 {
   date: $date,
-  rev: $rev,
-  next_date: $next,
-  Total: (. | length),
+  revision: $rev,
+  next_date: $next_date,
+  next_revision: $next_rev,
+  total: (. | length),
   results: (.[] |= .),
   directory: (input_filename | sub("/[^/]*$";"")),
 }

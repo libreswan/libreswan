@@ -10,22 +10,29 @@ function summary(json) {
 		return r.date.localeCompare(l.date)
 	    })
 
-	    var titles = [ "Date", "Passed", "Failed",
-			   "Unresolved", "Untested", "Total",
-			   "Run Time", "Directory" ]
+	    var titles = [ "Revision", "Date",
+			   "Passed", "Failed", "Unresolved", "Untested", "Total",
+			   "Start Time", "Run Time",
+			   "Directory" ]
 	    var values = []
 	    // form the list of values
+	    var date = function(d) {
+		d = new Date(d)
+		d = d.toISOString()
+		d = d.match("([^T]*)T([0-9]*:[0-9]*)")
+		return d[1] + " " + d[2]
+	    }
 	    summary.forEach(function(d) {
-		var unresolved = (d.hasOwnProperty('unresolved')
-				  ? d.unresolved
-				  : "")
-		var untested = (d.hasOwnProperty('untested')
-				? d.untested
-				: "")
-		// yes Total, not total
-		values.push([d.date, d.passed, d.failed,
-			     unresolved, untested, d.Total,
-			     d.runtime, d.directory])
+		values.push([
+		    d.revision, date(d.date),
+		    d.passed, d.failed,
+		    (d.hasOwnProperty('unresolved') ? d.unresolved : ""),
+		    (d.hasOwnProperty('untested') ? d.untested : ""),
+		    d.total,
+		    date(d.start_time),
+		    d.runtime,
+		    d.directory
+		])
 	    })
 
             // Init Tidy-Table
