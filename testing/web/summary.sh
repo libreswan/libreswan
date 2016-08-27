@@ -20,14 +20,16 @@ webdir=$(cd $(dirname $0) && pwd)
 for d in "$@"; do
     rev=$(${webdir}/gime-git-rev.sh $(dirname ${d}))
     date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
-    next_rev=$(cd ${repodir} ; git rev-list ${rev}..HEAD | tail -n 1)
+    next_rev=$(cd ${repodir} ; git rev-list --first-parent ${rev}..HEAD | tail -n 1)
     next_date=$(test -z "${next_rev}" || ${webdir}/gime-git-date.sh ${repodir} ${next_rev})
+    rank=$(cd ${repodir} ; git rev-list --first-parent ${rev}..HEAD | wc -l)
     d=$(realpath ${d})
     (
 	cd ${basedir}
 	jq \
 	    --arg rev "${rev}" \
 	    --arg date "${date}" \
+	    --arg rank "${rank}" \
 	    --arg next_rev "${next_rev}" \
 	    --arg next_date "${next_date}" \
 	    '
@@ -36,6 +38,7 @@ def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
 {
   date: $date,
   revision: $rev,
+  rank: $rank,
   next_date: $next_date,
   next_revision: $next_rev,
   total: (. | length),
