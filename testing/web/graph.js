@@ -3,8 +3,6 @@ function graph(graph) {
 	d3.json(graph, function(error, data) {
             if (error) return console.warn(error);
 
-            var parseDate = d3.utcParse("%Y-%m-%d %H:%M");
-
 	    var names = [
 		"passed",
 		"failed",
@@ -14,7 +12,7 @@ function graph(graph) {
 
             // Clean up the fields, make date a date.
             data.forEach(function(d) {
-                d.date = parseDate(d.date)
+                d.date = new Date(d.date)
                 d.passed = +d.passed
 		var results = []
 		for (var i = 0; i < names.length; i++) {

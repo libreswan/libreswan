@@ -39,8 +39,12 @@ utilsdir=$(cd ${webdir}/../utils && pwd)
 # confirm that everything is working.
 gitstamp=$(cd ${repodir} ; make showversion)
 gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
-date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev})
-version=$(echo ${date} ${gitstamp} | sed -e 's/://' -e 's/ /-/g')
+isodate=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev})
+date=$(echo ${isodate} \
+	      | sed \
+		    -e 's/T/-/' \
+		    -e 's/^\([^:]*\):\([^:]*\).*$/\1\2/')
+version=${date}-${gitstamp}
 
 destdir=${basedir}/${version}
 echo ${destdir}
