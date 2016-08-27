@@ -1520,6 +1520,7 @@ void add_connection(const struct whack_message *wm)
 		c->send_no_esp_tfc = wm->send_no_esp_tfc;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
+		c->sa_reqid = wm->sa_reqid;
 
 		/*
 		 * Set this up so that we can log which end is which after
@@ -1574,7 +1575,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.spd_next = NULL;
 
-		c->spd.reqid = wm->sa_reqid == 0 ? gen_reqid() : wm->sa_reqid;
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1586,6 +1586,11 @@ void add_connection(const struct whack_message *wm)
 		c->newest_ipsec_sa = SOS_NOBODY;
 		c->spd.eroute_owner = SOS_NOBODY;
 		c->cisco_dns_info = NULL; /* XXX: scratchpad - should be phased out */
+		/*
+		 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
+		 * need one. Does CK_TEMPLATE need one?
+		 */
+		c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 #ifdef XAUTH_HAVE_PAM
 		c->pamh = NULL;
 #endif
@@ -1756,8 +1761,8 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		t->log_file = NULL;
 		t->log_file_err = FALSE;
 
-		t->spd.reqid = group->spd.reqid == 0 ?
-			gen_reqid() : group->spd.reqid;
+		t->spd.reqid = group->sa_reqid == 0 ?
+			gen_reqid() : group->sa_reqid;
 
 		/* add to connections list */
 		t->ac_next = connections;
@@ -1834,7 +1839,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	default_end(&d->spd.this, &d->spd.that.host_addr);
 	d->spd.spd_next = NULL;
 
-	d->spd.reqid = c->spd.reqid == 0 ? gen_reqid() : c->spd.reqid;
+	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 
 	/* set internal fields */
 	d->ac_next = connections;
