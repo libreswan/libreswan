@@ -14,18 +14,18 @@
 	color: red;
 }
 
-.pass {
+.passed {
     fill: green
 }
 
-.pass_fail {
+.failed {
     fill: blue
 }
 
-.pass_fail_unresolved {
+.unresolved {
     fill: orange
 }
 
-.pass_fail_unresolved_untested {
+.untested {
     fill: red
 }
