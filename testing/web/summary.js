@@ -15,12 +15,6 @@ function summary(json) {
 		return r.date > l.date
 	    })
 
-	    var iso_date = function(d) {
-		d = d.toISOString()
-		d = d.match("([^T]*)T([0-9]*:[0-9]*)")
-		return d[1] + " " + d[2]
-	    }
-
 	    var titles = [ "Revision", "Date",
 			   "Passed", "Failed", "Unresolved", "Untested", "Total",
 			   "Start Time", "Run Time",
@@ -30,13 +24,13 @@ function summary(json) {
 	    summary.forEach(function(d) {
 		values.push([
 		    d.revision,
-		    iso_date(d.date),
+		    lsw_date2iso(d.date),
 		    d.passed,
 		    d.failed,
 		    (d.hasOwnProperty('unresolved') ? d.unresolved : ""),
 		    (d.hasOwnProperty('untested') ? d.untested : ""),
 		    d.total,
-		    iso_date(new Date(d.start_time)),
+		    lsw_date2iso(new Date(d.start_time)),
 		    d.runtime,
 		    d.directory
 		])
