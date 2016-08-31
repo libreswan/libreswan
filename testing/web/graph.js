@@ -74,12 +74,6 @@ function graph(graph) {
 		.style("text-anchor", "end")
 		.text("Passed");
 
-	    var iso_date = function(d) {
-		d = d.toISOString()
-		d = d.match("([^T]*)T([0-9]*:[0-9]*)")
-		return d[1] + " " + d[2]
-	    }
-
 	    var dots = svg
 		.selectAll(".dot")
 		.data(data)
@@ -104,7 +98,7 @@ function graph(graph) {
 		    })
 		    .append("title")
 		    .text(function(d) {
-			var text = iso_date(d.date)
+			var text = lsw_date2iso(d.date)
 			for (j = 0; j <= i; j++) {
 				text += "\n" + names[j] + ": " + d.results[j]
 			}
