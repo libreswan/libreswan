@@ -18,8 +18,8 @@ IPCOMP, etc).
 WARNING: Manually assigned reqids are all identical. Instantiations of
 connections (those using %any wildcards) will all use the same reqid.
 If you use manual assigning you should make sure your connections
-only matches single road warrior only or you break multiple road warriors
-behind same NAT router because this feature requies unique reqids to work.
+only match single road warrior only or you break multiple road warriors
+behind same NAT router because this feature requires unique reqids to work.
 </para>
 <para>
 For KLIPS, when using the MAST variant, a different mechanism called
