@@ -3,24 +3,26 @@
   <head>
     <meta charset="utf-8">
 
-    <script src="js/jquery-3.1.0.min.js"> </script>
+    <script type="text/javascript" src="js/d3.v4.min.js"></script>
+
     <script src="js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
     <link rel="stylesheet" type="text/css" href="js/Tidy-Table-3.0.1/tidy-table.min.css">
 
     <script type="text/javascript" src="lsw-date2iso.js"></script>
+    <script type="text/javascript" src="lsw-load-summary.js"></script>
 
     <link rel="stylesheet" type="text/css" href="results.css"> </link>
     <script type="text/javascript" src="results.js"></script>
     <script>
-      results("results.json")
+      results("results", "results.json")
     </script>
-
-    <script type="text/javascript" src="js/d3.v4.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="graph.css"> </link>
     <script type="text/javascript" src="graph.js"></script>
     <script>
-      graph("../summary.json")
+      lsw_load_summary("../summary.json", function(json) {
+        graph("graph", json)
+      })
     </script>
 
   </head>
@@ -28,7 +30,7 @@
     <center>
       <div id="graph"></div>
       <br/>
-      <div id="container"></div>
+      <div id="results"></div>
     </center>
   </body>
 </html>

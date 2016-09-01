@@ -3,24 +3,25 @@
   <head>
     <meta charset="utf-8">
 
-    <script type="text/javascript" src="js/jquery-3.1.0.min.js"> </script>
+    <script type="text/javascript" src="js/d3.v4.min.js"></script>
+
     <script src="js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
     <link rel="stylesheet" type="text/css" href="js/Tidy-Table-3.0.1/tidy-table.min.css">
 
     <script type="text/javascript" src="lsw-date2iso.js"></script>
+    <script type="text/javascript" src="lsw-load-summary.js"></script>
 
     <link rel="stylesheet" type="text/css" href="summary.css"> </link>
     <script type="text/javascript" src="summary.js"></script>
-    <script>
-      summary("summary.json")
-    </script>
-
-    <script type="text/javascript" src="js/d3.v4.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="graph.css"> </link>
     <script type="text/javascript" src="graph.js"></script>
+
     <script>
-      graph("summary.json")
+      lsw_load_summary("summary.json", function(json) {
+        graph("graph", json)
+        summary("summary", json)
+      })
       // hack up a simple status bar
       window.addEventListener('load', function() {
         d3.json("status.json", function(error, json) {
@@ -45,7 +46,7 @@
       <br/>
       <div id="status"></div>
       <br/>
-      <div id="container"></div>
+      <div id="summary"></div>
     </center>
   </body>
 </html>

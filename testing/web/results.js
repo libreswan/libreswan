@@ -1,11 +1,12 @@
-function results(json) {
+function results(div_id, json_file) {
     window.addEventListener('load', function() {
-        $.ajaxSetup({ cache: false });
+	d3.json(json_file, function(error, results) {
+	    if (error) return console.warn(error)
 
-        // this gets a not well-formed warning
-        $.getJSON(json, function(results) {
-
-	    var titles = ["Test", "Result", "Expected", "Errors", "Boot time", "Script time", "Run Time"]
+	    var titles = [
+		"Test", "Result", "Expected", "Errors",
+		"Boot time", "Script time", "Run Time"
+	    ]
 	    var errors_index = 3
 
 	    var values = []
@@ -13,30 +14,32 @@ function results(json) {
 	    var i
 	    for (i = 0; i < results.length; i++) {
 		var result = results[i]
-		var line = []
-		line.push(result.test_name)
-		line.push(result.result)
-		line.push(result.hasOwnProperty("expected_result")
-			  ? result.expected_result
-			  : "")
-		// Index of this test result
-		line.push(i)
-		line.push(result.hasOwnProperty("boot_time")
-			  ? result.boot_time
-			  : "")
-		line.push(result.hasOwnProperty("script_time")
-			  ? result.script_time
-			  : "")
-		line.push(result.hasOwnProperty("runtime")
-			  ? result.runtime
-			  : result.hasOwnProperty("total_time")
-			  ? result.total_time
-			  : "")
+		var line = [
+		    result.test_name,
+		    result.result,
+		    (result.hasOwnProperty("expected_result")
+		     ? result.expected_result
+		     : ""),
+		    // For errors, store the item's index, will fix it
+		    // later.
+		    i,
+		    (result.hasOwnProperty("boot_time")
+		     ? result.boot_time
+		     : ""),
+		    (result.hasOwnProperty("script_time")
+		     ? result.script_time
+		     : ""),
+		    (result.hasOwnProperty("runtime")
+		     ? result.runtime
+		     : result.hasOwnProperty("total_time")
+		     ? result.total_time
+		     : "")
+		]
 		values.push(line)
 	    }
 
             // Init Tidy-Table
-            document.getElementById('container')
+            document.getElementById(div_id)
                 .TidyTable({
                     enableCheckbox : false,
                     enableMenu     : false,
