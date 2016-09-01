@@ -21,12 +21,29 @@
     <script type="text/javascript" src="graph.js"></script>
     <script>
       graph("summary.json")
+      // hack up a simple status bar
+      window.addEventListener('load', function() {
+        d3.json("status.json", function(error, json) {
+          if (error) return console.warn(error)
+          var log = json.log[json.log.length - 1]
+          document.getElementById("status")
+            .TidyTable({
+              enableCheckbox : false,
+              enableMenu     : false,
+            }, {
+	      columnTitles : ["Job", "Date", "Status"],
+              columnValues : [[json.job, log.date, log.status]],
+            })
+        })
+      })
     </script>
 
   </head>
   <body>
     <center>
       <div id="graph"></div>
+      <br/>
+      <div id="status"></div>
       <br/>
       <div id="container"></div>
     </center>
