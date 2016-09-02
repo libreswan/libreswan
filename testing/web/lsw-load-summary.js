@@ -16,7 +16,7 @@ function lsw_load_summary(file, f) {
 
 	    // Start with rank order
 	    json = json.sort(function(l, r) {
-		return +r.rank - +l.rank
+		return +l.rank - +r.rank
 	    })
 
 	    // Clean up the data set.

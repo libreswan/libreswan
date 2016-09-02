@@ -26,11 +26,9 @@ destdir=$(cd $1 && pwd) ; shift
 if test $# -gt 0; then
     baseline=$(cd $1 && pwd) ; shift
 else
-    # Use a heuristic to find the previous to this directory name,
+    # Use "rank" to determine the previous to this directory name,
     # need to convert it to an absolute path.
-    previous=$(cd ${destdir} ; find .. -maxdepth 1 -type d -print | sort -n | cut -d/ -f 2 | sed -n -e "/$(basename ${destdir})/ {g;p;q} ; h")
-    # Generate the results page.
-    baseline=$(test -n "${previous}" && cd ${destdir}/../${previous} && pwd)
+    baseline=$(${webdir}/gime-git-elder.sh ${repodir} ${destdir})
 fi
 
 (

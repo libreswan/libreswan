@@ -1,8 +1,8 @@
 function summary(div_id, json) {
 
-    // Re-order the list with most recent first.
+    // Order the list so that the most recent commit is first.
     json.sort(function(l, r) {
-	return l.rank - r.rank
+	return r.rank - l.rank
     })
 
     var titles = [

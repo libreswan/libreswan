@@ -2,7 +2,7 @@ function graph(div_id, data) {
 
     // In date order.
     data = data.sort(function(l, r) {
-        return l.date - r.date
+        return l.rank - r.rank
     })
 
     var margin = {top: 20, right: 20, bottom: 30, left: 50}
