@@ -43,9 +43,6 @@ fi
 jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
 rm ${destdir}/results.tmp
 
-rm -rf ${destdir}/js
-cp -r ${destdir}/../../js ${destdir}/js
-
 cp ${webdir}/*.{html,css,js} ${destdir}
 ln -f -s results.html ${destdir}/index.html
 
