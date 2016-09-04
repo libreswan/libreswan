@@ -5,6 +5,7 @@ v3.19 (unreleased)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * building: libreswan assumes -std=gnu99 when building [Andrew]
+* KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up  [Richard/Paul]
 * Bugtracker bugs fixed:
    #270 newhostkey: text output produces 1 character bug in pubkey [Andew]
 
