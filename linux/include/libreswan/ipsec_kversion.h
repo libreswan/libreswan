@@ -286,8 +286,7 @@
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22) || (RHEL_RELEASE_CODE >= \
-						       RHEL_RELEASE_VERSION(5, \
-									    2))
+	RHEL_RELEASE_VERSION(5, 2))
 /* need to include ip.h early, no longer pick it up in skbuff.h */
 #include <linux/ip.h>
 /* type of sock.sk_stamp changed from timeval to ktime  */
@@ -535,6 +534,18 @@
 # define        HAVE_NET_DEVICE_OPS
 # define        HAVE_NETIF_QUEUE
 #endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0)
+/* just define for old kernels so we can catch it on new kernels */
+# define NETDEV_UNREGISTER_FINAL 0x0011
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0) || \
+    (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(7, 0) && \
+      LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0))
+# define HAVE_NETDEV_INFO
+#endif
+
 
 #ifdef alloc_netdev
 # if LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0)
