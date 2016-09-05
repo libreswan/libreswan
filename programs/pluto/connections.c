@@ -1140,28 +1140,31 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
  * - is a multiple of 4 (we are actually allocating
  *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
  * - does not duplicate any currently in use
+ *
+ * NOTE: comments seems to lie, we use same reqid for the
+ *       ESP inbound and outbound.
  */
 static reqid_t gen_reqid(void)
 {
-	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
-	reqid_t r = last_reqid;
+	bool looping = FALSE;
 
-	passert(r % 4 == 0);
 	for (;;) {
-		r += 4;	/* may wrap */
-		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
-		if (r <= IPSEC_MANUAL_REQID_MAX)
-			r = IPSEC_MANUAL_REQID_MAX + 1;
-
-		if (r == last_reqid) {
-			/* gone around the clock without success */
-			exit_log("unable to allocate reqid");
+		global_reqids += 4;
+		/* wrapping must skip manual reqids */
+		if (global_reqids <= IPSEC_MANUAL_REQID_MAX) {
+			if (looping) {
+				/* gone around the clock without success */
+				exit_log("unable to allocate reqid");
+			}
+			global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
+			looping = TRUE;
 		}
-		if (!find_connection_by_reqid(r)) {
-			last_reqid = r;
-			return r;
+
+		if (!find_connection_by_reqid(global_reqids)) {
+			return global_reqids;
 		}
 	}
+
 }
 
 static bool preload_wm_cert_secret(const char *side, const char *pubkey,

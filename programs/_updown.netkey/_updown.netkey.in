@@ -140,7 +140,9 @@ export LC_ALL
 #		is NetworkManager used for resolv.conf update
 #
 #	PLUTO_SA_REQID
-#		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
+#		When using KAME or XFRM/NETKEY, the IPsec SA reqid base value.
+#		ESP/AH out is base, ESP/AH in = base + 1
+#		IPCOMP is base + 2 plus for inbound + 1
 #
 #	PLUTO_SA_TYPE
 #		The type of IPsec SA (ESP or AH)

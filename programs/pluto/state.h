@@ -254,6 +254,8 @@ struct state {
 
 	IPsecSAref_t st_ref;			/* our kernel name for our incoming SA */
 	IPsecSAref_t st_refhim;			/* our kernel name for our outgoing SA */
+	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
+
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
