@@ -407,7 +407,11 @@ dmesg | egrep -i "klips|ipsec"
 _________________________ plog
 if test -x /usr/bin/journalctl
 then
-	journalctl -u ipsec.service --no-pager --since "1 hour ago"
+	journalctl -u ipsec.service --no-pager --since "1 hour ago" |
+		case "$1" in
+		--short)	tail -500	;;
+		*)		cat		;;
+		esac
 else
 	sed -n $pline,'$'p $plog |
 		egrep -i 'pluto' |
