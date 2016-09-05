@@ -3,15 +3,34 @@ See also https://libreswan.org/
 
 v3.19 (unreleased)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg]
+* FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
+* KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
+* pluto: connection instances need their own reqid [Antony]
+         (this resolves multiple clients behind same NAT router issue)
+* pluto: Use a global reqid counter instead of looping every time [Paul]
+* pluto: use sets instead of nested loops for transform processing [Andrew]
+* pluto: log the NSS error when CERT_ImportCerts() fails [Paul]
+* pluto: Prefer not switching connections when possible [Paul/Hugh]
+* pluto: Move unique mark from rw_instantiate() to instantiate() for OE [Paul]
+* pluto: log more information when a bare shunt is missing [Hugh]
+* pluto: redo process_encrypted_informational_ikev2 [Hugh]
+* _updown.netkey: Move addcat call from route-host to up-client [Paul]
+* ipsec: use -d or --nssdir for import and initnss directory option.
+* barf: minor improvements with systemd/journalctl [Paul]
+* verify: fix "with FIPS" output to print OK [Paul]
 * building: libreswan assumes -std=gnu99 when building [Andrew]
-* KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up  [Richard/Paul]
+* sysvinit: remove unnecessary warnings about already stopped pluto [Tuomo]
+* initsystems: Enable "systemctl help ipsec" [dkg]
+* testing: various web output fixes (see testing.libreswan.org) [Andrew]
+* documentation: fixup changes in GPL 2.0 / LGPL like FSF address [dkg]
 * Bugtracker bugs fixed:
    #270 newhostkey: text output produces 1 character bug in pubkey [Andew]
 
 v3.18 (July 27, 2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]
-* XFRM: EXPERIMENTAL Support for NAT OE Client Address Translation (leftcat=) [Antony]
+* XFRM: EXPERIMENTAL Support for NAT OE Client Address Translation [Antony]
+        keyword: leftcat=yes|no
 * XFRM: EXPERIMENTAL Support for routed-VPNs using VTI [Paul/Tuomo]
         keywords: vti-interface=<name> vti-routing=yes|no vti-shared=yes|no
 * XFRM: EXPERIMENTAL Support for Traffic Flow Confidentiality tfc=XXX [Paul]
