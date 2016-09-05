@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC_BARF</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>17 March 2002</refmiscinfo>
+<refmiscinfo class='date'>4 September 2016</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -49,6 +49,10 @@ if debug logging is turned on.</para>
 option sets the length of some bits of information,
 currently netstat -rn.  Useful on boxes where the routing
 table is thousands of lines long.  Default is 100.</para>
+
+<para>On systems with systemd, ipsec barf will look for logs
+using the journalctl command. If the logfile= option is used,
+logs will also not be found by the ipsec barf command.</para>
 
 <para><emphasis remap='I'>Barf</emphasis>
 censors its output,
