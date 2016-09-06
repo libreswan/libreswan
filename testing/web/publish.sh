@@ -59,8 +59,7 @@ echo [] | jq --arg job ${version} \
 
 status() {
     jq --arg status "$*" \
-       --arg date "$(date -u +"%Y-%m-%d %H:%M")" \
-       '.log += [{ date: $date, status: $status }]' \
+       '.log += [{ date: (now|todateiso8601), status: $status }]' \
        < ${basedir}/status.json \
        > ${basedir}/status.new
     mv ${basedir}/status.new ${basedir}/status.json

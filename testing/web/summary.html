@@ -32,8 +32,8 @@
               enableCheckbox : false,
               enableMenu     : false,
             }, {
-	      columnTitles : ["Job", "Date", "Status"],
-              columnValues : [[json.job, log.date, log.status]],
+	      columnTitles : ["Job", "Date", "Status", "Current Time"],
+              columnValues : [[json.job, log.date, log.status, lsw_date2iso(new Date())]],
             })
         })
       })
