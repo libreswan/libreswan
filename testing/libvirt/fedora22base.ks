@@ -193,6 +193,13 @@ dnf install -y 2>&1 \
     xmlto \
     | tee /var/tmp/yum-install.log
 
+# Try to avoid wandering version numbers by only upgrading the bare
+# minimum
+
+dnf upgrade -y 2>&1 \
+    pyOpenSSL \
+    | tee /var/tmp/yum-upgrade.log
+
 kvm_debuginfo=true
 $kvm_debuginfo && dnf debuginfo-install -y \
     ElectricFence \
