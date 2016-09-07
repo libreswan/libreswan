@@ -1045,7 +1045,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			SEND_V2_NOTIFICATION(v2N_INVALID_IKE_SPI);
 		}
 		return;
 	}
@@ -1334,6 +1334,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,
+		.st_reply_xchg = md->hdr.isa_xchg,
 	};
 
 	passert(md != NULL);

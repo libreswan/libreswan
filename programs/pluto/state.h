@@ -481,6 +481,7 @@ struct state {
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
+	u_int8_t st_reply_xchg;
 };
 
 /* global variables */

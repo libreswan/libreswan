@@ -3980,6 +3980,8 @@ void send_v2_notification(struct state *p1st,
 			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 			break;
 		}
+		if (p1st->st_reply_xchg != 0)
+			hdr.isa_xchg = p1st->st_reply_xchg; /* use received exchange type */
 
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
