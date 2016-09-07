@@ -691,13 +691,17 @@ kvm-help:
 	@echo '   base:'
 	@echo '     domain: $(KVM_BASE_DOMAIN)'
 	@echo '     network: $(KVM_BASE_NETWORK)'
+	@echo '     os: $(KVM_OS)'
+	@echo '     directory: $(KVM_BASEDIR)'
 	@echo '   clone:'
 	@echo '     domain: $(KVM_CLONE_DOMAIN)'
 	@echo '     network: $(KVM_BASE_NETWORK)'
+	@echo '     directory: $(KVM_POOLDIR)'
 	@: $(foreach prefix, $(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
 		; echo '   test group: $(call strip-prefix,$(prefix))' \
 		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
 		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
+		; echo '     directory: $(KVM_POOLDIR)' \
 		)
 	@echo ''
 	@echo ' To set up the domains and then install or update libreswan:'
