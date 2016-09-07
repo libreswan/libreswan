@@ -24,8 +24,16 @@ webdir=$(cd $(dirname $0) && pwd)
 repodir=$(cd $1 && pwd) ; shift
 
 for d in "$@" ; do
+    if test ! -d "${d}" ; then
+	echo "skipping ${d}: not a directory"
+	continue
+    fi
     destdir=$(cd ${d} && pwd)
     gitrev=$(${webdir}/gime-git-rev.sh $(basename ${destdir}))
+    if test -z "${gitrev}" ; then
+	echo "skipping ${d}: no git revision in directory name"
+	continue
+    fi
     ( cd ${repodir} && git checkout ${gitrev} )
     ${webdir}/build-results.sh ${repodir} ${destdir}
 done
