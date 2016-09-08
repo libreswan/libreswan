@@ -17,10 +17,11 @@ import os
 import logging
 import pexpect
 import time
+
 from fab import virsh
 from fab import shell
 from fab import timing
-
+from fab import logutil
 
 MOUNTS = {}
 
@@ -120,6 +121,22 @@ def _startup(domain, console, timeout=STARTUP_TIMEOUT):
 
 # Assuming the machine is booted, try to log-in.
 
+def _wait_for_login_prompt(domain, console, timeout, matches=[]):
+    # If match is non-empty, append it, so the first index is 1
+    timer = timing.Lapsed()
+    # Create a new list, otherwise the default [] ends up containing
+    # lots of login prompts ...
+    matches = ["login: "] + matches
+    domain.logger.debug("waiting %d seconds for %s",
+                        timeout, " or ".join(ascii(match) for match in matches))
+    match = console.expect(matches, timeout=timeout)
+    # always report a prompt match, let caller decide if other cases
+    # should be verbose.
+    domain.logger.log(match == 0 and logutil.INFO or logutil.DEBUG,
+                      "%s matched after %s", ascii(matches[match]), timer)
+    return match
+
+
 def _login(domain, console, username, password,
            login_timeout, password_timeout, shell_timeout):
 
@@ -132,7 +149,7 @@ def _login(domain, console, username, password,
     domain.logger.debug("sending control-c+carriage return, waiting %s seconds for login or shell prompt", login_timeout)
     console.sendintr()
     console.sendline("")
-    if console.expect(["login: ", console.prompt], timeout=login_timeout):
+    if _wait_for_login_prompt(domain, console, login_timeout, [console.prompt]) == 1:
         # shell prompt
         domain.logger.info("We're in after %s!  Someone forgot to log out ...", lapsed_time)
         return
@@ -263,46 +280,70 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
     domain.logger.info("domain shutdown after %s", lapsed_time)
     return False
 
+def _reboot_to_login_prompt(domain, console):
 
-def boot_to_login_prompt(domain, console, timeout=(STARTUP_TIMEOUT+LOGIN_TIMEOUT)):
+    # Drain any existing output.
+    domain.logger.debug("draining any existing output")
+    console.expect(pexpect.TIMEOUT, timeout=0)
 
-    retried = False
-    while True:
 
-        if console:
-            domain.reboot()
-        else:
-            console = _start(domain)
-
-        lapsed_time = timing.Lapsed()
-        domain.logger.info("waiting %s seconds for login prompt", timeout)
-
-        if console.expect_exact([pexpect.TIMEOUT, "login: "], timeout=timeout):
-            domain.logger.info("login prompt appeared after %s", lapsed_time)
+    #
+    # The reboot pattern needs to match all the output upto the point
+    # where the machine is reset.  That way, the next pattern below
+    # can detect that the reset did something and the machine is
+    # probably rebooting.
+    timeouts = [SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, LOGIN_TIMEOUT]
+    timeout = 0
+    for t in timeouts:
+        timeout += t
+    domain.logger.info("waiting %s seconds for reboot and login prompt", timeout)
+    domain.reboot()
+    timer = timing.Lapsed()
+    for timeout in timeouts:
+        # pexpect's pattern matcher is buggy and, if there is too much
+        # output, it may not match "reboot".
+        match = _wait_for_login_prompt(domain, console, timeout,
+                                       ["reboot: Power down\r\n", pexpect.TIMEOUT])
+        if match == 0:
             return console
+        elif match == 1:
+            domain.logger.info("domain rebooted after %s", timer)
+        elif console.child.buffer == "":
+            # HACK!
+            domain.logger.error("domain appears stuck, no output received after waiting %d seconds",
+                                timeout)
+            break
 
-        if retried:
-            domain.logger.error("domain failed to boot after %s, giving up", laped_time)
-            raise pexpect.TIMEOUT("domain %d failed to boot" % domain)
-        retried = True
+    # On some Fedora releases (F23, F24), instead of resetting, the
+    # domain will hang.  Either it spontaneously suspends (PAUSED) or
+    # it just sits there wedged.
 
-        domain.logger.error("domain failed to boot after %s, waiting %d seconds for it to power down",
-                            lapsed_time, SHUTDOWN_TIMEOUT)
-        shutdown_time = timing.Lapsed()
-        domain.shutdown()
-        if console.expect_exact([pexpect.TIMEOUT, pexpect.EOF], timeout=SHUTDOWN_TIMEOUT):
-            domain.logger.info("domain powered down after %s", shutdown_time)
-            console = None
-            continue
-
-        domain.logger.error("domain failed to power down after %s, waiting %d seconds for the power cord to be pulled",
-                            shutdown_time, SHUTDOWN_TIMEOUT)
-        shutdown_time = timing.Lapsed()
+    destroy = True
+    if domain.state() == virsh.STATE.PAUSED:
+        destroy = False
+        domain.logger.error("domain suspended, trying resume")
+        status, output = domain.resume()
+        if status:
+            domain.logger.error("domain resume failed: %s", output)
+            destroy = True
+    if destroy:
+        domain.logger.error("domain hung, trying to pull the power cord")
         domain.destroy()
-        if console.expect_exact([pexpect.TIMEOUT, pexpect.EOF], timeout=SHUTDOWN_TIMEOUT):
-            domain.logger.info("domain appears to have switched off after %s", shutdown_time)
-            console = None
-            continue
+        console.expect_exact(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
+        console = _start(domain)
 
-        domain.logger.error("domain failed to switch off after %s, giving up", shutdown_time)
-        raise pexpect.TIMEOUT("Domain %s is wedged" % domain)
+    # Now wait for login prompt.
+    _wait_for_login_prompt(domain, console,
+                           STARTUP_TIMEOUT+LOGIN_TIMEOUT)
+    return console
+
+
+def boot_to_login_prompt(domain, console):
+
+    if console:
+        return _reboot_to_login_prompt(domain, console)
+    else:
+        console = _start(domain)
+        _wait_for_login_prompt(domain, console,
+                               STARTUP_TIMEOUT+LOGIN_TIMEOUT)
+        return console
