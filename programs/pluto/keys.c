@@ -716,20 +716,19 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		DBG(DBG_PRIVATE, DBG_log("AUTH_NULl secret - returning empty_chunk"));
+		DBG(DBG_CRYPT, DBG_log("AUTH_NULl secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
-	if (s != NULL)
+	if (s != NULL) {
 		pks = lsw_get_pks(s);
-
-	DBG(DBG_PRIVATE, {
-		if (s == NULL)
-			DBG_log("no Preshared Key Found");
-		else
+		DBG(DBG_PRIVATE, {
 			DBG_dump_chunk("Preshared Key",
 				       pks->u.preshared_secret);
-	});
+		});
+	} else {
+		DBG_log("no Preshared Key Found");
+	}
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
@@ -746,7 +745,7 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-	DBG(DBG_PRIVATE, {
+	DBG(DBG_CRYPT, {
 		if (s == NULL)
 			DBG_log("no RSA key Found");
 		else
