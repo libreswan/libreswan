@@ -1069,7 +1069,7 @@ int main(int argc, char **argv)
 			keep_alive = u;
 			continue;
 
-		case '5':	/* --debug-nat-t */
+		case '5':	/* --debug-nat-t aliases */
 			base_debugging |= DBG_NATT;
 			continue;
 		case '6':	/* --virtual-private */
@@ -1298,6 +1298,17 @@ int main(int argc, char **argv)
 	if (kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
+#endif
+
+#ifdef FIPS_CHECK
+	/* clear out --debug-crypt if set */
+	/* impairs are also not allowed but cannot come in via ipsec.conf, only whack */
+	if (libreswan_fipsmode()) {
+		if (base_debugging & DBG_PRIVATE) {
+			base_debugging &= ~DBG_PRIVATE;
+			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+		}
+	}
 #endif
 
 	/*

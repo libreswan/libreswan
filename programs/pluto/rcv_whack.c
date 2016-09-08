@@ -61,6 +61,7 @@
 #include "kernel.h"             /* needs connections.h */
 #include "rcv_whack.h"
 #include "log.h"
+#include "lswfips.h"
 #include "keys.h"
 #include "secrets.h"
 #include "dnskey.h"     /* needs keys.h and adns.h */
@@ -299,6 +300,14 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
+#ifdef FIPS_CHECK
+			if (libreswan_fipsmode()) {
+				if (msg.debugging & DBG_PRIVATE) {
+					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
+					goto done;
+				}
+			}
+#endif
 			if (msg.name == NULL) {
 				/* we do a two-step so that if either old or new would
 				 * cause the message to print, it will be printed.
