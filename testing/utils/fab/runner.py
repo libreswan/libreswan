@@ -341,7 +341,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 try:
                     test_domains = _boot_test_domains(logger, test, domain_prefix, boot_executor)
                 except pexpect.TIMEOUT:
-                    logger.exception("timeout while booting domains", test.name)
+                    logger.exception("timeout while booting domains")
                     # Bail before RESULT is written - being unable to
                     # boot the domains is a disaster.
                     return
