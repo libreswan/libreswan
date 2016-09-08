@@ -7,3 +7,4 @@ iptables -t nat -A POSTROUTING --source 192.1.3.0/24 --destination 0.0.0.0/0 -j 
 iptables -t nat -L
 
 echo done.
+: ==== end ====

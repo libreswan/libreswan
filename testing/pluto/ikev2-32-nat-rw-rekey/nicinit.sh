@@ -7,3 +7,4 @@ iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -p udp --sport 500 -j SNAT --to-s
 iptables -t nat -A POSTROUTING --source 192.1.3.0/24 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
 iptables -I FORWARD 1 --proto 50 -j LOGDROP
 echo done
+: ==== end ====

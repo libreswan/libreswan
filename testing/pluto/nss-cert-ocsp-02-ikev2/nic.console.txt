@@ -1,0 +1,22 @@
+#start ocsp server here
+nic #
+ cp -r /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
+cp: cannot create regular file ‘/etc/ocspd/private/nic_key.pem’: No such file or directory
+nic #
+ cp -r /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
+cp: cannot create regular file ‘/etc/ocspd/certs/nic.pem’: No such file or directory
+nic #
+ cp -r /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+cp: cannot create regular file ‘/etc/ocspd/certs/mainca.pem’: No such file or directory
+nic #
+ openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+/etc/ocspd/crls/revoked_crl.pem: No such file or directory
+nic #
+ #stock ocspd.conf, used seperate ones for different configs
+nic #
+ ocspd -v -d -c /etc/ocspd/ocspd.conf
+-bash: ocspd: command not found
+nic #
+ echo "done."
+done.
+
