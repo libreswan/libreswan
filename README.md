@@ -43,7 +43,8 @@ For Debian/Ubuntu
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl3-nss-dev flex bison gcc make \
-		libunbound-dev libnss3-tools libevent-dev xmlto
+		libunbound-dev libnss3-tools libevent-dev xmlto \
+		libsystemd-dev
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
