@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.19 (unreleased)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg]
 * FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
+* FIPS: do not allow DBG_PRIVATE to be set when running in FIPS mode [Paul]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * pluto: connection instances need their own reqid [Antony]
