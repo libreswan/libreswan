@@ -82,6 +82,12 @@ class Domain:
     def start(self):
         return self.run_status_output("sudo virsh start %s" % (self.name))
 
+    def suspend(self):
+        return self.run_status_output("sudo virsh suspend %s" % (self.name))
+
+    def resume(self):
+        return self.run_status_output("sudo virsh resume %s" % (self.name))
+
     def dumpxml(self):
         return self.run_status_output("sudo virsh dumpxml %s" % (self.name))
 
