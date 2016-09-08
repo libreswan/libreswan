@@ -27,6 +27,7 @@ KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_BASEDIR ?= $(KVM_POOLDIR)
+KVM_CLONEDIR ?= $(KVM_POOLDIR)
 KVM_PREFIX ?= ''
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
@@ -125,31 +126,38 @@ broken-kvm-qemu-directory:
 	:
 	false
 
-.PHONY: check-kvm-pooldir check-kvm-basedir
-check-kvm-pooldir check-kvm-basedir: | $(KVM_POOLDIR) $(KVM_BASEDIR)
-ifeq ($(KVM_BASEDIR),$(KVM_POOLDIR))
-  $(KVM_POOLDIR):
+
+.PHONY: check-kvm-clonedir check-kvm-basedir
+check-kvm-clonedir check-kvm-basedir: | $(KVM_CLONEDIR) $(KVM_BASEDIR)
+ifeq ($(KVM_BASEDIR),$(KVM_CLONEDIR))
+  $(KVM_CLONEDIR):
 else
-  $(KVM_BASEDIR) $(KVM_POOLDIR):
+  $(KVM_BASEDIR) $(KVM_CLONEDIR):
 endif
 	:
-	:  The pool directory:
+	:  The directory:
 	:
 	:       "$@"
 	:
-	:  used to store kvm disk images and other files, does not exist.
+	:  used to store domain disk images and other files, does not exist.
 	:
-	:  Two make variables determine the pool directory\'s location:
+	:  Three make variables determine the directory or directories used to store
+	:  domain disk images and files:
 	:
 	:      KVM_POOLDIR=$(KVM_POOLDIR)
-	:                  - used for store test domain disk mages and files
+	:                  - the default location to store domain disk images and files
+	:                  - the default is ../pool
+	:
+	:      KVM_CLONEDIR=$(KVM_CLONEDIR)
+	:                  - used for store the cloned test domain disk images and files
+	:                  - the default is KVM_POOLDIR
 	:
 	:      KVM_BASEDIR=$(KVM_BASEDIR)
 	:                  - used for store the base domain disk image and files
-	:                  - by default it is set to KVM_POOLDIR
+	:                  - the default is KVM_POOLDIR
 	:
 	:  Either create the above directory or adjust its location by setting
-	:  the above make variables in the file:
+	:  one or more of the above make variables in the file:
 	:
 	:      Makefile.inc.local
 	:
@@ -291,13 +299,13 @@ endef
 define kvm-test-network
   #(info prefix=$(1) network=$(2))
 
-  KVM_TEST_NETWORK_FILES += $$(KVM_POOLDIR)/$(1)$(2).xml
+  KVM_TEST_NETWORK_FILES += $$(KVM_CLONEDIR)/$(1)$(2).xml
 
   install-kvm-test-networks: install-kvm-network-$(1)$(2)
   .PHONY: install-kvm-network-$(1)$(2)
-  install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
-  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml:
+  install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
+  $$(KVM_CLONEDIR)/$(1)$(2).xml:
 	$(call check-no-kvm-network,$(1)$(2),$$@)
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
@@ -318,7 +326,7 @@ define kvm-test-network
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
-	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_POOLDIR)/$(1)$(2).xml)
+	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
 
 endef
 
@@ -338,14 +346,14 @@ KVM_BASE_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_BASE_NETWORK).xml
 .PHONY: install-kvm-base-network install-kvm-network-$(KVM_BASE_NETWORK)
 install-kvm-base-network: install-kvm-network-$(KVM_BASE_NETWORK)
 install-kvm-network-$(KVM_BASE_NETWORK): $(KVM_BASE_NETWORK_FILE)
-$(KVM_BASE_NETWORK_FILE): | testing/libvirt/net/$(KVM_BASE_NETWORK) $(KVM_POOLDIR)
+$(KVM_BASE_NETWORK_FILE): | testing/libvirt/net/$(KVM_BASE_NETWORK) $(KVM_CLONEDIR)
 	$(call check-no-kvm-network,$(KVM_BASE_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_BASE_NETWORK) $@.tmp
 	$(call install-kvm-network,$(KVM_BASE_NETWORK),$@)
 
 .PHONY: uninstall-kvm-base-network uninstall-kvm-network-$(KVM_BASE_NETWORK)
 uninstall-kvm-base-network: uninstall-kvm-network-$(KVM_BASE_NETWORK)
-uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_POOLDIR)
+uninstall-kvm-network-$(KVM_BASE_NETWORK): | $(KVM_CLONEDIR)
 	$(call uninstall-kvm-network,$(KVM_BASE_NETWORK),$(KVM_BASE_NETWORK_FILE))
 
 
@@ -444,22 +452,22 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
 # Create the "clone" domain from the base domain.
-KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
+KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES
-$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_NETWORK_FILE) $(KVM_POOLDIR)
+$(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_NETWORK_FILE) $(KVM_CLONEDIR)
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	qemu-img create \
 		-b $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
-		-f qcow2 $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
+		-f qcow2 $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).qcow2
 	$(VIRT_INSTALL) \
 		--name $(KVM_CLONE_DOMAIN) \
 		--vcpus=1 \
 		--memory 512 \
 		--nographics \
-		--disk cache=writeback,path=$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
+		--disk cache=writeback,path=$(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
 		$(VIRT_BASE_NETWORK) \
 		$(VIRT_RND) \
 		$(VIRT_SECURITY) \
@@ -477,9 +485,9 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-clone-domain
-install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
+install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 
-# Install the $(KVM_TEST_DOMAINS) in $(KVM_POOLDIR)
+# Install the $(KVM_TEST_DOMAINS) in $(KVM_CLONEDIR)
 #
 # These are created as clones of $(KVM_CLONE_DOMAIN).
 #
@@ -491,25 +499,25 @@ install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_POOLDIR)/
 define install-kvm-test-domain
   #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
 
-  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_POOLDIR)/$(1)$(2).xml
+  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_CLONEDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
-  install-kvm-domain-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml: | $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
+  install-kvm-domain-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
+  $$(KVM_CLONEDIR)/$(1)$(2).xml: | $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN)
-	rm -f '$$(KVM_POOLDIR)/$(1)$(2).qcow2'
+	rm -f '$$(KVM_CLONEDIR)/$(1)$(2).qcow2'
 	qemu-img create \
-		-b $$(KVM_POOLDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
-		-f qcow2 $$(KVM_POOLDIR)/$(1)$(2).qcow2
+		-b $$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
+		-f qcow2 $$(KVM_CLONEDIR)/$(1)$(2).qcow2
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$$(KVM_POOLDIR):" \
+		-e "s:@@POOLSPACE@@:$$(KVM_CLONEDIR):" \
 		-e "s:@@USER@@:$$(KVM_USER):" \
 		-e "s:@@GROUP@@:$$(KVM_GROUP):" \
 		-e "s:network='192_:network='$(1)192_:" \
@@ -642,7 +650,7 @@ define uninstall-kvm-domain
 endef
 
 $(foreach domain, $(KVM_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_POOLDIR))))
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
 
 .PHONY: uninstall-kvm-base-domain
 uninstall-kvm-base-domain: $(addprefix uninstall-kvm-domain-,$(KVM_DOMAINS))
@@ -696,12 +704,12 @@ kvm-help:
 	@echo '   clone:'
 	@echo '     domain: $(KVM_CLONE_DOMAIN)'
 	@echo '     network: $(KVM_BASE_NETWORK)'
-	@echo '     directory: $(KVM_POOLDIR)'
+	@echo '     directory: $(KVM_CLONEDIR)'
 	@: $(foreach prefix, $(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
 		; echo '   test group: $(call strip-prefix,$(prefix))' \
 		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
 		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
-		; echo '     directory: $(KVM_POOLDIR)' \
+		; echo '     directory: $(KVM_CLONEDIR)' \
 		)
 	@echo ''
 	@echo ' To set up the domains and then install or update libreswan:'
