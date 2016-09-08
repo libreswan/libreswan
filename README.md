@@ -88,11 +88,11 @@ name is called "ipsec".  For example, on RHEL7, one would use:
     systemctl enable ipsec.service
     systemctl start ipsec.service
 
-If unsure, the "ipsec" command can also be used to start or stop the ipsec
-service:
+If unsure of the specific init system used on the system, the "ipsec"
+command can also be used to start or stop the ipsec service:
 
-    ipsec setup start
-    ipsec setup stop
+    ipsec start
+    ipsec stop
 
 ## Configuration
 Most of the libreswan configuration is stored in /etc/ipsec.conf and
