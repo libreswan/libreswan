@@ -79,10 +79,9 @@
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
 #include "ikev2.h"
-
 #include "virtual.h"	/* needs connections.h */
-
 #include "hostpair.h"
+#include "lswfips.h"
 
 struct connection *connections = NULL;
 
@@ -1356,6 +1355,19 @@ void add_connection(const struct whack_message *wm)
 		c->dnshostname = wm->dnshostname;
 		c->policy = wm->policy;
 
+#ifdef FIPS_CHECK
+		if (libreswan_fipsmode()) {
+			if (c->policy & POLICY_NEGO_PASS) {
+				c->policy &= ~POLICY_NEGO_PASS;
+				loglog(RC_LOG_SERIOUS,"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+			}
+			if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
+				c->policy &= ~POLICY_FAIL_MASK;
+				c->policy |= POLICY_FAIL_NONE;
+				loglog(RC_LOG_SERIOUS,"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+			}
+		}
+#endif
 		DBG(DBG_CONTROL,
 			DBG_log("Added new connection %s with policy %s",
 				c->name,
