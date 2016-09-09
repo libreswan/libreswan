@@ -17,6 +17,7 @@ import pexpect
 import sys
 import time
 import logging
+
 from fab import shell
 from fab import logutil
 
@@ -51,8 +52,14 @@ class Domain:
 
     def run_status_output(self, command):
         self.logger.debug("running: %s", command)
-        status, output = subprocess.getstatusoutput(command)
-        output = output.strip()
+        # 3.5 has subprocess.run
+        process = subprocess.Popen(command,
+                                   stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        stdout, stderr = process.communicate()
+        status = process.returncode
+        output = stdout.decode("utf-8").strip()
         if status:
             self.logger.debug("virsh exited with unexpected status code %s\n%s",
                               status, output)
@@ -61,38 +68,38 @@ class Domain:
         return status, output
 
     def state(self):
-        status, output = self.run_status_output("sudo virsh domstate %s" % (self.name))
+        status, output = self.run_status_output(["sudo", "virsh", "domstate", self.name])
         if status:
             return None
         else:
             return output
 
     def shutdown(self):
-        return self.run_status_output("sudo virsh shutdown %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "shutdown", self.name])
 
     def reboot(self):
-        return self.run_status_output("sudo virsh reboot %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "reboot", self.name])
 
     def reset(self):
-        return self.run_status_output("sudo virsh reset %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "reset", self.name])
 
     def destroy(self):
-        return self.run_status_output("sudo virsh destroy %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "destroy", self.name])
 
     def start(self):
-        return self.run_status_output("sudo virsh start %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "start", self.name])
 
     def suspend(self):
-        return self.run_status_output("sudo virsh suspend %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "suspend", self.name])
 
     def resume(self):
-        return self.run_status_output("sudo virsh resume %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "resume", self.name])
 
     def dumpxml(self):
-        return self.run_status_output("sudo virsh dumpxml %s" % (self.name))
+        return self.run_status_output(["sudo", "virsh", "dumpxml", self.name])
 
     def console(self, timeout=CONSOLE_TIMEOUT):
-        command = "sudo virsh console --force %s" % (self.name)
+        command = "sudo virsh console --force %s" % self.name
         self.logger.debug("opening console with: %s", command)
         console = shell.Remote(command, hostname=self.host_name,
                                prefix=self.prefix)
