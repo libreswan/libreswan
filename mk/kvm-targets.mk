@@ -48,7 +48,7 @@ VIRT_INSTALL = sudo virt-install --connect $(KVM_CONNECTION)
 
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
-VIRT_BASE_NETWORK ?= --network=network:$(KVM_BASE_NETWORK),model=virtio
+VIRT_BASE_NETWORK ?= --network=network:$(KVM_DEFAULT_NETWORK),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
