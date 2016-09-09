@@ -365,6 +365,7 @@ uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
 # KVM_ISO_URL_$(KVM_OS) = ...
 KVM_ISO_URL_fedora21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
 KVM_ISO_URL_fedora22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+KVM_ISO_URL_fedora23 = http://fedora.bhs.mirrors.ovh.net/linux/releases/23/Server/x86_64/iso/Fedora-Server-DVD-x86_64-23.iso
 # XXX: Next time the ISO needs an update, set KVM_OS to that release
 # and delete the below hack.
 KVM_ISO_URL_fedora = $(KVM_ISO_URL_fedora22)
@@ -405,9 +406,9 @@ endef
 # XXX: Once KVM_OS gets re-named to include the release, this hack can
 # be deleted.
 ifeq ($(KVM_OS),fedora)
-KVM_KICKSTART_FILE = testing/libvirt/fedora22base.ks
+KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 else
-KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS)base.ks
+KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS).ks
 endif
 KVM_DEBUGINFO ?= true
 
