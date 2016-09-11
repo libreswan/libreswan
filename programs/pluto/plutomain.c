@@ -143,6 +143,11 @@ static void free_pluto_main(void)
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfree(pluto_vendorid);
+	pfreeany(ocsp_default_uri);
+	pfreeany(ocsp_trust_name);
+	pfreeany(base_perpeer_logdir);
+	pfreeany(curl_iface);
+	pfreeany(pluto_log_file);
 }
 
 /*
@@ -336,7 +341,11 @@ static struct starter_config *read_cfg_file(char *configfile)
 	return cfg;
 }
 
-/* Helper function for config file mapper: set string option value */
+/*
+ * Helper function for config file mapper: set string option value.
+ * Values passed in are expected to have been allocated using our
+ * own functions.
+ */
 static void set_cfg_string(char **target, char *value)
 {
 	/* Do nothing if value is unset. */
@@ -344,7 +353,7 @@ static void set_cfg_string(char **target, char *value)
 		return;
 
 	/* Don't free previous target, it might be statically set. */
-	*target = strdup(value);
+	*target = clone_str(value, "(ignore) set_cfg_string item");
 }
 
 /*
@@ -839,7 +848,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'g':	/* --logfile */
-			pluto_log_file = optarg;
+			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
 
@@ -913,7 +922,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'Z':	/* --curl-iface */
-			curl_iface = optarg;
+			curl_iface = clone_str(optarg, "curl_iface");
 			continue;
 
 		case 'I':	/* --curl-timeout */
@@ -940,11 +949,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'Y':
-			ocsp_default_uri = optarg;
+			ocsp_default_uri = clone_str(optarg, "ocsp_default_uri");
 			continue;
 
 		case 'J':
-			ocsp_trust_name = optarg;
+			ocsp_trust_name = clone_str(optarg, "ocsp_trust_name");
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
@@ -1055,7 +1064,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			base_perpeer_logdir = optarg;
+			base_perpeer_logdir = clone_str(optarg, "base_perpeer_logdir");
 			continue;
 
 		case 'l':	/* --perpeerlog */
@@ -1073,7 +1082,7 @@ int main(int argc, char **argv)
 			base_debugging |= DBG_NATT;
 			continue;
 		case '6':	/* --virtual-private */
-			virtual_private = optarg;
+			virtual_private = clone_str(optarg, "virtual_private");
 			continue;
 
 		case 'z':	/* --config */

@@ -40,12 +40,6 @@ extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-/* used in some messages to distiguish
- * which pluto is which, when doing
- * unit testing
- */
-extern const char *pluto_ifn_inst;
-
 /* maximum number of files to keep open for per-peer log files */
 #define MAX_PEERLOG_COUNT 16
 

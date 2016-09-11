@@ -99,9 +99,6 @@ bool use_interface(const char *rifn)
 	static int ifnum = 0;
 	err_t e;
 
-	if (pluto_ifn_inst[0] == '\0')
-		pluto_ifn_inst = clone_str(rifn, "genifn");
-
 	ri = alloc_thing(*ri, "static interface");
 
 	e = ttoaddr(rifn, strlen(rifn), AF_UNSPEC, &ri->addr);

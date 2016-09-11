@@ -104,15 +104,6 @@ static int perpeer_count = 0;
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
 
-/*
- * used in some messages to distiguish
- * which pluto is which, when doing unit testing
- * gets set by "use_interface" in server.c, if it is going to be changed.
- * Is used by pluto_helpers in their process-title.
- * could be used by debug routines as well, but is not yet.
- */
-const char *pluto_ifn_inst = "";
-
 /* from sys/queue.h -> NOW private sysdep.h. */
 static CIRCLEQ_HEAD(, connection) perpeer_list;
 
