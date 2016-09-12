@@ -1742,6 +1742,23 @@ static void crl_detail_list(void)
 	}
 }
 
+static CERTCertList *get_all_certificates()
+{
+	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
+
+	if (slot == NULL)
+		return NULL;
+
+	if (PK11_NeedLogin(slot)) {
+		SECStatus rv = PK11_Authenticate(
+			slot, PR_TRUE, lsw_return_nss_password_file_info());
+		if (rv != SECSuccess)
+			return NULL;
+	}
+
+	return PK11_ListCertsInSlot(slot);
+}
+
 static void cert_detail_list(show_cert_t type)
 {
 	char *tstr = "";
@@ -1760,19 +1777,7 @@ static void cert_detail_list(show_cert_t type)
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of X.509 %sCertificates:", tstr);
 
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-
-	if (slot == NULL)
-		return;
-
-	if (PK11_NeedLogin(slot)) {
-		SECStatus rv = PK11_Authenticate(slot, PR_TRUE,
-				lsw_return_nss_password_file_info());
-		if (rv != SECSuccess)
-			return;
-	}
-
-	CERTCertList *certs = PK11_ListCertsInSlot(slot);
+	CERTCertList *certs = get_all_certificates();
 
 	if (certs == NULL)
 		return;
@@ -1785,8 +1790,7 @@ static void cert_detail_list(show_cert_t type)
 			cert_detail_to_whacklog(node->cert);
 	}
 
-	if (certs != NULL)
-		CERT_DestroyCertList(certs);
+	CERT_DestroyCertList(certs);
 }
 
 #if defined(LIBCURL) || defined(LDAP_VER)
@@ -1836,6 +1840,23 @@ void check_crls(void)
 			add_crl_fetch_request_nss(&issuer, NULL);
 		}
 		pubkeys = pubkeys->next;
+	}
+
+	/*
+	 * Iterate all X.509 certificates in database. This is needed to
+	 * process middle and end certificates.
+	 */
+	CERTCertList *certs = get_all_certificates();
+
+	if (certs != NULL) {
+		CERTCertListNode *node;
+
+		for (node = CERT_LIST_HEAD(certs);
+		     !CERT_LIST_END(node, certs);
+		     node = CERT_LIST_NEXT(node))
+			add_crl_fetch_request_nss(&node->cert->derSubject,
+						NULL);
+		CERT_DestroyCertList(certs);
 	}
 }
 #endif
