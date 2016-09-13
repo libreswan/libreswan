@@ -411,7 +411,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     # console logs as complete as it is closed.
     #
     # More detailed information can be extracted from the debug.log.
-    if result.finished:
+    if result.resolution in [result.resolution.PASSED, result.resolution.FAILED]:
         RESULT = {
             jsonutil.result.testname: test.name,
             jsonutil.result.expect: test.expected_result,

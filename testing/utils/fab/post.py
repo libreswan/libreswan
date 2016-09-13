@@ -20,6 +20,35 @@ import difflib
 from fab import logutil
 
 
+class Resolution:
+    PASSED = "passed"
+    FAILED = "failed"
+    UNRESOLVED = "unresolved"
+    UNTESTED = "untested"
+    UNSUPPORTED = "unsupported"
+    def __init__(self):
+        self.state = None
+    def __str__(self):
+        return self.state
+    def __eq__(self, rhs):
+        return self.state == rhs
+    def unsupported(self):
+        assert(self.state in [None])
+        self.state = self.UNSUPPORTED
+    def untested(self):
+        assert(self.state in [None])
+        self.state = self.UNTESTED
+    def passed(self):
+        assert(self.state in [None])
+        self.state = self.PASSED
+    def failed(self):
+        assert(self.state in [self.FAILED, self.PASSED])
+        self.state = self.FAILED
+    def unresolved(self):
+        assert(self.state in [self.PASSED, self.FAILED, None])
+        self.state = self.UNRESOLVED
+
+
 # Dictionary to accumulate all the errors for each host from an
 # individual test.
 
@@ -165,20 +194,7 @@ def _load_file(logger, filename):
 class TestResult:
 
     def __str__(self):
-        if self.finished is True:
-            if self.passed is True:
-                return "passed"
-            elif self.passed is False:
-                return "failed"
-            else:
-                return "unknown"
-        elif self.finished is False:
-            # Per POSIX 1003.3, the test has an indeterminate result.
-            # Typically because the test aborted with a timeout, but
-            # could also be due to a test still running.
-            return "unresolved"
-        else:
-            return "untested"
+        return str(self.resolution)
 
     def __bool__(self):
         """True if the test was attempted.
@@ -187,16 +203,15 @@ class TestResult:
         UNTESTED).
 
         """
-        return self.finished is not None
+        return self.resolution in [self.resolution.PASSED, self.resolution.FAILED, self.resolution.UNRESOLVED]
 
     def __init__(self, logger, test, quick, update=None,
                  output_directory=None, finished=None):
 
-        # Set things up for an UNTESTED result
+        # Set things up for passed
         self.logger = logger
         self.test = test
-        self.passed = None
-        self.finished = None
+        self.resolution = Resolution()
         self.issues = Issues(self.logger)
         self.diffs = {}
         self.sanitized_output = {}
@@ -207,20 +222,21 @@ class TestResult:
         # presence of the OUTPUT is a clear indicator that some
         # attempt was made to run the test.
         if not os.path.exists(output_directory):
+            self.resolution.untested()
             self.logger.debug("output directory missing: %s", output_directory)
             return
 
-        self.finished = finished;
-        if self.finished is None:
-            # Use RESULT as a proxy for a test resolved.  It isn't
-            # 100% reliable since an in-progress test looks list like
-            # an aborted test.  Arguably only "good" tests should
-            # resolve.
-            self.finished = os.path.isfile(test.result_file(output_directory));
-
-        # Be optimistic; passed is only really valid when resolved is
-        # True.
-        self.passed = True
+        if finished:
+            # Be optimistic; start out assuming things have passed.
+            self.resolution.passed()
+        elif finished is None and os.path.isfile(test.result_file(output_directory)):
+            # For moment use RESULT as a proxy for a test resolving.
+            # It isn't 100% reliable since an in-progress test looks
+            # list like an aborted test.
+            self.resolution.passed()
+        else:
+            # test didn't finish
+            self.resolution.unresolved()
 
         # crash or other unexpected behaviour.
         for host_name in test.host_names:
@@ -228,7 +244,7 @@ class TestResult:
             if os.path.exists(pluto_log):
                 self.logger.debug("checking '%s' for errors", pluto_log)
                 if self.issues.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
-                    self.passed = False
+                    self.resolution.failed()
                 # XXX: allow expection failures?
                 self.issues.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", host_name)
 
@@ -248,20 +264,20 @@ class TestResult:
             raw_output = _load_file(self.logger, raw_output_filename)
             if raw_output is None:
                 self.issues.add("output-missing", host_name)
-                self.passed = False
+                self.resolution.failed()
                 continue
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
             if self.issues.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
                 # keep None
-                self.passed = False
+                self.resolution.failed()
             if self.issues.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
                 # keep None
-                self.passed = False
+                self.resolution.failed()
             if self.issues.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
                 # keep None
-                self.passed = False
+                self.resolution.failed()
 
             # Incomplete output won't match expected output so skip
             # any comparisons.
@@ -271,7 +287,7 @@ class TestResult:
             #logger.debug("host %s checking if raw console output was incomplete", host_name)
             #if not "# : ==== end ====" in raw_output:
             #    self.issues.add("output-incomplete", host_name)
-            #    self.passed = False
+            #    self.resolution.failed()
             #    continue
 
             sanitized_output_filename = os.path.join(output_directory,
@@ -305,7 +321,7 @@ class TestResult:
             expected_output = _load_file(self.logger, expected_output_filename)
             if expected_output is None:
                 self.issues.add("output-unchecked", host_name)
-                # self.finished = False
+                # self.resolution.unresolved()
                 continue
 
             diff = None
@@ -341,7 +357,7 @@ class TestResult:
                 self.diffs[host_name] = diff
                 whitespace = _whitespace(expected_output,
                                          sanitized_output)
-                self.passed = False
+                self.resolution.failed()
                 if whitespace:
                     self.issues.add("output-whitespace", host_name)
                 else:
