@@ -23,11 +23,11 @@ from fab import logutil
 # Dictionary to accumulate all the errors for each host from an
 # individual test.
 
-class Errors:
+class Issues:
 
     def __init__(self, logger):
         # Structure needs to be JSON friendly.
-        self.errors = {}
+        self.issues = {}
         self.logger = logger
 
     # this formatting is subject to infinite feedback.
@@ -35,7 +35,7 @@ class Errors:
     # Not exactly efficient.
     def __str__(self):
         s = ""
-        for host, errors in sorted(self.errors.items()):
+        for host, errors in sorted(self.issues.items()):
             if s:
                 s += " "
             if host:
@@ -44,11 +44,11 @@ class Errors:
         return s
 
     def json(self):
-        return self.errors
+        return self.issues
 
     # So, like a real collection, can easily test if non-empty.
     def __bool__(self):
-        return len(self.errors) > 0
+        return len(self.issues) > 0
 
     # Iterate over the actual errors, not who had them.
     #
@@ -57,25 +57,25 @@ class Errors:
     # iter isn't consistent either.
     def __iter__(self):
         values = set()
-        for errors in self.errors.values():
+        for errors in self.issues.values():
             for error in errors:
                 values |= error
         return values.__iter__()
 
     def __contains__(self, item):
-        return item in self.errors
+        return item in self.issues
 
     def __getitem__(self, item):
-        return self.errors[item]
+        return self.issues[item]
 
     def items(self):
-        return self.errors.items()
+        return self.issues.items()
 
     def add(self, error, host):
-        if not host in self.errors:
-            self.errors[host] = []
-        if not error in self.errors[host]:
-            self.errors[host].append(error)
+        if not host in self.issues:
+            self.issues[host] = []
+        if not error in self.issues[host]:
+            self.issues[host].append(error)
         self.logger.debug("host %s has error %s", host, error)
 
     def search(self, regex, string, error, host):
@@ -197,7 +197,7 @@ class TestResult:
         self.test = test
         self.passed = None
         self.finished = None
-        self.errors = Errors(self.logger)
+        self.issues = Issues(self.logger)
         self.diffs = {}
         self.sanitized_output = {}
 
@@ -227,10 +227,10 @@ class TestResult:
             pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
             if os.path.exists(pluto_log):
                 self.logger.debug("checking '%s' for errors", pluto_log)
-                if self.errors.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
+                if self.issues.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
                     self.passed = False
                 # XXX: allow expection failures?
-                self.errors.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", host_name)
+                self.issues.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", host_name)
 
         # Check the raw console output for problems and that it
         # matches expected output.
@@ -247,19 +247,19 @@ class TestResult:
 
             raw_output = _load_file(self.logger, raw_output_filename)
             if raw_output is None:
-                self.errors.add("output-missing", host_name)
+                self.issues.add("output-missing", host_name)
                 self.passed = False
                 continue
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
-            if self.errors.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
+            if self.issues.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
+            if self.issues.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
                 # keep None
                 self.passed = False
-            if self.errors.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
+            if self.issues.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
                 # keep None
                 self.passed = False
 
@@ -270,7 +270,7 @@ class TestResult:
 
             #logger.debug("host %s checking if raw console output was incomplete", host_name)
             #if not "# : ==== end ====" in raw_output:
-            #    self.errors.add("output-incomplete", host_name)
+            #    self.issues.add("output-incomplete", host_name)
             #    self.passed = False
             #    continue
 
@@ -287,7 +287,7 @@ class TestResult:
                                                     raw_output_filename,
                                                     test)
             if sanitized_output is None:
-                self.errors.add("sanitizer-failed", host_name)
+                self.issues.add("sanitizer-failed", host_name)
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
@@ -304,7 +304,7 @@ class TestResult:
 
             expected_output = _load_file(self.logger, expected_output_filename)
             if expected_output is None:
-                self.errors.add("output-unchecked", host_name)
+                self.issues.add("output-unchecked", host_name)
                 # self.finished = False
                 continue
 
@@ -343,9 +343,9 @@ class TestResult:
                                          sanitized_output)
                 self.passed = False
                 if whitespace:
-                    self.errors.add("output-whitespace", host_name)
+                    self.issues.add("output-whitespace", host_name)
                 else:
-                    self.errors.add("output-different", host_name)
+                    self.issues.add("output-different", host_name)
 
 
 # XXX: given that most of args are passed in unchagned, this should
@@ -382,14 +382,14 @@ def mortem(test, args, domain_prefix="", finished=None,
     # same way.
 
     if not test.name in baseline:
-        test_result.errors.add("absent", "baseline")
+        test_result.issues.add("absent", "baseline")
         return test_result
 
     base = baseline[test.name]
     baseline_result = TestResult(logger, base, quick)
     if not baseline_result:
         if not test_result.passed:
-            test_result.errors.add("missing", "baseline")
+            test_result.issues.add("missing", "baseline")
         return test_result
 
     if test_result.passed and baseline_result.passed:
@@ -404,16 +404,16 @@ def mortem(test, args, domain_prefix="", finished=None,
             continue
 
         if not host_name in baseline_result.sanitized_output:
-            test_result.errors.add("baseline-missing", host_name)
+            test_result.issues.add("baseline-missing", host_name)
             continue
 
         if not host_name in test_result.diffs:
             if host_name in baseline_result.diffs:
-                test_result.errors.add("baseline-failed", host_name)
+                test_result.issues.add("baseline-failed", host_name)
             continue
 
         if not host_name in baseline_result.diffs:
-            test_result.errors.add("baseline-passed", host_name)
+            test_result.issues.add("baseline-passed", host_name)
             continue
 
         baseline_diff = _diff(logger,
@@ -425,12 +425,12 @@ def mortem(test, args, domain_prefix="", finished=None,
             baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
                                               test_result.sanitized_output[host_name])
             if baseline_whitespace:
-                test_result.errors.add("baseline-whitespace", host_name)
+                test_result.issues.add("baseline-whitespace", host_name)
             else:
-                test_result.errors.add("baseline-different", host_name)
+                test_result.issues.add("baseline-different", host_name)
             # update the diff to something hopefully closer?
             test_result.diffs[host_name] = baseline_diff
         # else:
-        #    test_result.errors.add("baseline-failed", host_name)
+        #    test_result.issues.add("baseline-failed", host_name)
 
     return test_result

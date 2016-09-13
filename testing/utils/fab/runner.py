@@ -400,7 +400,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     # a crash bypass this code.
 
     logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
-                result.errors and " ", result.errors, suffix)
+                result.issues and " ", result.issues, suffix)
 
     # If the test finished (resolved in POSIX terminology)", emit
     # enough JSON to fool scripts like pluto-testlist-scan.sh.
@@ -416,7 +416,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             jsonutil.result.testname: test.name,
             jsonutil.result.expect: test.expected_result,
             jsonutil.result.result: result,
-            jsonutil.result.errors: result.errors,
+            jsonutil.result.issues: result.issues,
             jsonutil.result.hosts: test.host_names,
             jsonutil.result.time: jsonutil.ftime(test_total_time.start),
             jsonutil.result.runtime: round(test_runtime.seconds(), 1),

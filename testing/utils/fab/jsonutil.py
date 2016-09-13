@@ -45,7 +45,7 @@ class result:
     expect = "expect"
     result = "result"
     hosts = "hosts"
-    errors = "errors"
+    issues = "errors" # for historic reasons, "issues" are publically called "errors"
     script_time = "script_time"
     boot_time = "boot_time"
     total_time = "total_time"

@@ -34,7 +34,7 @@ class Print(argutil.List):
     boot_time = "boot-time"
     diffs = "diffs"
     end_time = "end-time"
-    errors = "errors"
+    issues = "errors" # for historic reasons, "issues" are publically called "errors".
     expected_result = "expected-result"
     host_names = "host-names"
     kind = "kind"
@@ -78,7 +78,7 @@ def main():
 
     # how to parse --print directory,saved-directory,...?
     parser.add_argument("--print", action="store",
-                        default=Print(Print.path, Print.result, Print.errors),
+                        default=Print(Print.path, Print.result, Print.issues),
                         type=Print, metavar=str(Print),
                         help="comman separate list of attributes to print for each test; default: '%(default)s'")
 
@@ -315,8 +315,8 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, test.output_directory)
                 elif p is Print.result:
                     b.add(p, result_cache.result(p))
-                elif p is Print.errors:
-                    b.add(p, result_cache.result(p).errors)
+                elif p is Print.issues:
+                    b.add(p, result_cache.result(p).issues)
                 elif p is Print.testing_directory:
                     b.add(p, test.testing_directory())
                 elif p is Print.saved_output_directory:
