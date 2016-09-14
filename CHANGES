@@ -9,7 +9,6 @@ v3.19 (unreleased)
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * X509: iterate all X.509 certs and try to fetch their crls [Kim]
-
 * pluto: connection instances need their own reqid [Antony]
          (this resolves multiple clients behind same NAT router issue)
 * pluto: Use a global reqid counter instead of looping every time [Paul]
@@ -31,7 +30,6 @@ v3.19 (unreleased)
 * Bugtracker bugs fixed:
    #270 newhostkey: text output produces 1 character bug in pubkey [Andew]
    #272 Option --leak-detective causes assertion failure [Bill / Paul]
-
 
 v3.18 (July 27, 2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]
