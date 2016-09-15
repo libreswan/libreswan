@@ -9,12 +9,13 @@ Usage:
 
    $0 <repodir> <resultsdir> ...
 
-Use <repodir> to rebuild <resultsdir.
+Use <repodir> to rebuild the <resultsdir> directories.
 
-Do not run this from the current repo.  It needs to checkout the the
-exact commit used to create <resultsdir>.
+Because this script modifies the contents of <repodir> (for instance
+to checkout the commit used to generate a test result), it needs a
+dedicated repository.
 
-Any test output under <resultsdir> is left unchanged.
+The test output under <resultsdir> is left unchanged.
 
 EOF
     exit 1
@@ -22,8 +23,17 @@ fi
 
 webdir=$(cd $(dirname $0) && pwd)
 repodir=$(cd $1 && pwd) ; shift
+branch=$(${webdir}/gime-git-limb.sh ${repodir})
+
+# Make certain that the repository has all the latest changes.
+( cd ${repodir} && git checkout ${branch} )
+origin=$(${webdir}/gime-git-origin.sh ${repodir} ${branch})
+( cd ${repodir} && git fetch ${origin} )
+( cd ${repodir} && git rebase ${origin} )
 
 for d in "$@" ; do
+
+    # Set things up
     if test ! -d "${d}" ; then
 	echo "skipping ${d}: not a directory"
 	continue
@@ -34,6 +44,12 @@ for d in "$@" ; do
 	echo "skipping ${d}: no git revision in directory name"
 	continue
     fi
+
+    # Checkout the commit used to create ${destdir}
+    ( cd ${repodir} && git checkout ${branch} )
     ( cd ${repodir} && git checkout ${gitrev} )
+
     ${webdir}/build-results.sh ${repodir} ${destdir}
 done
+
+( cd ${repodir} && git checkout ${branch} )
