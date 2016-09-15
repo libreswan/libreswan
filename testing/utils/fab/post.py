@@ -42,10 +42,11 @@ class Resolution:
         assert(self.state in [None])
         self.state = self.PASSED
     def failed(self):
-        assert(self.state in [self.FAILED, self.PASSED])
-        self.state = self.FAILED
+        assert(self.state in [self.FAILED, self.PASSED, self.UNRESOLVED])
+        if self.state in [self.FAILED, self.PASSED]:
+            self.state = self.FAILED
     def unresolved(self):
-        assert(self.state in [self.PASSED, self.FAILED, None])
+        assert(self.state in [self.PASSED, self.FAILED, self.UNRESOLVED, None])
         self.state = self.UNRESOLVED
 
 
@@ -404,11 +405,12 @@ def mortem(test, args, domain_prefix="", finished=None,
     base = baseline[test.name]
     baseline_result = TestResult(logger, base, quick)
     if not baseline_result:
-        if not test_result.passed:
+        if not test_result.resolution in [test_result.resolution.PASSED]:
             test_result.issues.add("missing", "baseline")
         return test_result
 
-    if test_result.passed and baseline_result.passed:
+    if test_result.resolution in [test_result.resolution.PASSED] \
+    and baseline_result.resolution in [baseline_result.resolution.PASSED]:
         return test_result
 
     for host_name in test.host_names:
