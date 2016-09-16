@@ -27,6 +27,9 @@ function lsw_load_summary(file, f) {
 			       : now)
 		d.start_time = new Date(d.start_time)
 		d.rank = +d.rank
+		d.commits = (d.baseline_revision
+			     ? d.baseline_revision + ".." + d.revision
+			     : d.revision)
 
 		// accumulate results
 		d.results = []

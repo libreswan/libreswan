@@ -18,11 +18,17 @@ basedir=$(cd $1 && pwd) ; shift
 webdir=$(cd $(dirname $0) && pwd)
 
 for d in "$@"; do
+    echo ${d} >> /dev/stderr
     rev=$(${webdir}/gime-git-rev.sh $(dirname ${d}))
     date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
     next_rev=$(cd ${repodir} ; git rev-list --first-parent ${rev}..HEAD | tail -n 1)
     next_date=$(test -z "${next_rev}" || ${webdir}/gime-git-date.sh ${repodir} ${next_rev})
     rank=$(${webdir}/gime-git-rank.sh ${repodir} ${rev})
+
+    baseline=$(${webdir}/gime-git-elder.sh ${repodir} $(dirname ${d}))
+    baseline_rev=$(if test -n "${baseline}" ; then
+		       ${webdir}/gime-git-rev.sh ${baseline}
+		   fi)
     d=$(realpath ${d})
     (
 	cd ${basedir}
@@ -32,6 +38,7 @@ for d in "$@"; do
 	    --argjson rank "${rank}" \
 	    --arg next_rev "${next_rev}" \
 	    --arg next_date "${next_date}" \
+	    --arg baseline_rev "${baseline_rev}" \
 	    '
 def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
 
@@ -41,6 +48,7 @@ def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
   rank: $rank,
   next_date: $next_date,
   next_revision: $next_rev,
+  baseline_revision: $baseline_rev,
   total: (. | length),
   results: (.[] |= .),
   directory: (input_filename | sub("/[^/]*$";"")),

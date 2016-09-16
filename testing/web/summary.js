@@ -6,7 +6,7 @@ function summary(div_id, json) {
     })
 
     var titles = [
-	"Rank", "Revision", "Date Committed",
+	"Rank", "Commits", "Last Commit Date",
 	"Passed", "Failed", "Unresolved", "Untested", "Total",
 	"Start Time", "Run Time",
 	"Directory"
@@ -14,7 +14,7 @@ function summary(div_id, json) {
 
     // "titles" -> "property"
     var map = {
-	"Date Committed": "date",
+	"Last Commit Date": "date",
 	"Run Time": "runtime"
     }
     titles.forEach(function(title) {
