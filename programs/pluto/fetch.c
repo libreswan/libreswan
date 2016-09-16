@@ -443,6 +443,8 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
+	deltatime_t interval = { 5 }; /* First fetch interval, then regular */
+
 	DBG(DBG_CONTROL,
 	    DBG_log("fetch thread started"));
 
@@ -452,11 +454,11 @@ static void *fetch_thread(void *arg UNUSED)
 		int status;
 
 		clock_gettime(CLOCK_REALTIME, &wakeup_time);
-		wakeup_time.tv_sec += deltasecs(crl_check_interval);
+		wakeup_time.tv_sec += deltasecs(interval);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("next regular crl check in %ld seconds",
-			    (long)deltasecs(crl_check_interval)));
+			    (long)deltasecs(interval)));
 		status = pthread_cond_timedwait(&fetch_wake_cond,
 						&fetch_wake_mutex,
 						&wakeup_time);
@@ -467,6 +469,7 @@ static void *fetch_thread(void *arg UNUSED)
 				    DBG_log("*time to check crls");
 			    });
 			check_crls();
+			interval = crl_check_interval;
 		} else {
 			DBG(DBG_CONTROL,
 			    DBG_log("fetch thread was woken up"));
