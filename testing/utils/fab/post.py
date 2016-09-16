@@ -331,7 +331,7 @@ class TestResult:
             expected_output = _load_file(self.logger, expected_output_filename)
             if expected_output is None:
                 self.issues.add("output-unchecked", host_name)
-                # self.resolution.unresolved()
+                self.resolution.unresolved()
                 continue
 
             diff = None
