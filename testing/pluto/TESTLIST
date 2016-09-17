@@ -33,6 +33,7 @@ kvmplutotest	ikev1-initial-contact-01	wip
 
 kvmplutotest	basic-pluto-01-wrongkey		good
 kvmplutotest	basic-pluto-01-nokey		good
+kvmplutotest	basic-pluto-01-vanishingkey	good
 
 #################################################################
 # IKEv2 tests
