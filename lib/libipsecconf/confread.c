@@ -117,6 +117,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
 	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
+	cfg->conn_default.options[KBF_ENCAPS] = encaps_auto;
 
 	/* Network Manager support */
 #ifdef HAVE_NM

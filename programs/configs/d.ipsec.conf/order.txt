@@ -50,7 +50,7 @@ d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote-peer-type.xml
 d.ipsec.conf/nm-configured.xml
-d.ipsec.conf/forceencaps.xml
+d.ipsec.conf/encaps.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml

@@ -106,6 +106,13 @@ static const struct keyword_enum_value kw_esn_values[] = {
 };
 static const struct keyword_enum_values kw_esn_list = VALUES_INITIALIZER(kw_esn_values);
 
+static const struct keyword_enum_value kw_encaps_values[] = {
+	{ "yes",     encaps_yes  },
+	{ "no",    encaps_no },
+	{ "auto",   encaps_auto },
+};
+static const struct keyword_enum_values kw_encaps_list = VALUES_INITIALIZER(kw_encaps_values);
+
 static const struct keyword_enum_value kw_ddos_values[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
@@ -548,7 +555,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "modecfgwins2",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
-  { "forceencaps",  kv_conn,  kt_bool,  KBF_FORCEENCAP,  NOT_ENUM },
+  { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
+  { "forceencaps",  kv_conn | kv_alias,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
 
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT,  NOT_ENUM },
 

@@ -1474,7 +1474,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
-		c->forceencaps = wm->forceencaps;
+		c->encaps = wm->encaps;
 		c->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
@@ -3966,15 +3966,17 @@ void show_one_connection(const struct connection *c)
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			  c->name, instance,
-			  enum_name(&dpd_action_names, c->dpd_action),
-			  (long) deltasecs(c->dpd_delay),
-			  (long) deltasecs(c->dpd_timeout),
-			  (c->forceencaps) ? "yes" : "no",
-			  (c->nat_keepalive) ? "yes" : "no",
-			  (c->ikev1_natt == natt_both) ? "both" :
-			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+			c->name, instance,
+			enum_name(&dpd_action_names, c->dpd_action),
+			(long) deltasecs(c->dpd_delay),
+			(long) deltasecs(c->dpd_timeout),
+			(c->encaps == encaps_auto) ? "auto" :
+			 (c->encaps == encaps_yes) ? "yes" : "no",
+			(c->nat_keepalive) ? "yes" : "no",
+			(c->ikev1_natt == natt_both) ? "both" :
+			 (c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"
+			);
 	}
 
 	if (c->extra_debugging != LEMPTY) {

@@ -307,33 +307,42 @@ static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
 	bool found_me, bool found_him)
 {
-	zero(&st->hidden_variables.st_natd);	/* ??? odd way to set an ip_address field */
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
-	if (!found_me) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL this end is behind NAT"));
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = *sender;
-	}
+	/* update NAT-T settings for local policy */
+	switch (st->st_connection->encaps) {
+	case encaps_auto:
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL encaps using auto-detect"));
+		if (!found_me) {
+			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is behind NAT"));
+			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
+			st->hidden_variables.st_natd = *sender;
+		}
 
-	if (!found_him) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
-				ipstr(sender, &b));
-		});
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
-		st->hidden_variables.st_natd = *sender;
-	}
+		if (!found_him) {
+			DBG(DBG_NATT, {
+				ipstr_buf b;
+				DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
+					ipstr(sender, &b));
+			});
+			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
+			st->hidden_variables.st_natd = *sender;
+		}
+		break;
 
-	if (st->st_connection->forceencaps) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
+	case encaps_no:
+		st->hidden_variables.st_nat_traversal |= LEMPTY;
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy prohibits encapsulation"));
+		break;
 
+	case encaps_yes:
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy enforces encapsulation"));
+
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 		st->hidden_variables.st_nat_traversal |=
 			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = *sender;
+		break;
 	}
 
 	if (st->st_connection->nat_keepalive) {
@@ -450,7 +459,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		secondport = p;
 	}
 
-	if (st->st_connection->forceencaps) {
+	if (st->st_connection->encaps == encaps_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: forceencaps=yes, so mangling hash to force NAT-T detection"));
 		firstport = secondport = 0;

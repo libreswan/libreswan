@@ -111,7 +111,7 @@ static void help(void)
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggrmode] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
-		"	[--forceencaps] [--no-nat-keepalive] \\\n"
+		"	[--encaps <auto|yes|no>] [--no-nat-keepalive] \\\n"
 		"	[--ikev1natt <both|rfc|drafts> \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--dpdaction (clear|hold|restart)] \\\n"
@@ -389,6 +389,7 @@ enum option_enums {
 	CD_DPDTIMEOUT,
 	CD_DPDACTION,
 	CD_FORCEENCAPS,
+	CD_ENCAPS,
 	CD_NO_NAT_KEEPALIVE,
 	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
@@ -585,7 +586,8 @@ static const struct option long_opts[] = {
 
 	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
-	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
+	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO }, /* backwards compatibility */
+	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
@@ -1622,8 +1624,20 @@ int main(int argc, char **argv)
 				msg.send_ca = CA_SEND_NONE;
 			continue;
 
+		/* backwards compatibility */
 		case CD_FORCEENCAPS:
-			msg.forceencaps = TRUE;
+			msg.encaps = encaps_yes;
+			continue;
+
+		case CD_ENCAPS:
+			if (streq(optarg, "auto"))
+				msg.encaps = encaps_auto;
+			else if (streq(optarg, "yes"))
+				msg.encaps = encaps_yes;
+			else if (streq(optarg, "no"))
+				msg.encaps = encaps_no;
+			else
+				diag("--encaps options are 'auto', 'yes' or 'no'");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */

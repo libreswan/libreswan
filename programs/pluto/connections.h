@@ -253,6 +253,7 @@ struct connection {
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
+	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -269,8 +270,6 @@ struct connection {
 
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
-
-	bool forceencaps;			/* always use NAT-T encap */
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */

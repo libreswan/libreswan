@@ -541,13 +541,13 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
-			c->forceencaps) {
-			DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'",
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) 
+			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
-			DBG(DBG_NATT, DBG_log("NAT-T: forceencaps is '%s'",
-				    c->forceencaps ? "enabled" : "disabled"));
-		}
+
+		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
+			    c->encaps == encaps_auto ? "auto" :
+				c->encaps == encaps_yes ? "yes" : "no"));
 
 		struct esb_buf esb_t, esb_a;
 

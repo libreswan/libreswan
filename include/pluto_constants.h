@@ -611,6 +611,13 @@ enum esn_options {
 	esn_yes = 2,
 	esn_either = 3,
 };
+
+enum encaps_options {
+	encaps_auto = 1, /* default */
+	encaps_no = 2,
+	encaps_yes = 3,
+};
+
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,

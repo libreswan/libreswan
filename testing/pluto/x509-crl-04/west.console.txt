@@ -195,7 +195,7 @@ west #
 000 "westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-x509-cr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "westnet-eastnet-x509-cr":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-x509-cr":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-cr":   newest ISAKMP SA: #2; newest IPsec SA: #3;
 000 "westnet-eastnet-x509-cr":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
 000 "westnet-eastnet-x509-cr":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
