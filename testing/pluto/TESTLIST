@@ -31,6 +31,8 @@ kvmplutotest	netkey-audit-01	good
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-initial-contact-01	wip
 
+kvmplutotest	basic-pluto-01-wrongkey		good
+kvmplutotest	basic-pluto-01-nokey		good
 
 #################################################################
 # IKEv2 tests
