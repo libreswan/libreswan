@@ -18,6 +18,7 @@ v3.19 (unreleased)
 * pluto: Move unique mark from rw_instantiate() to instantiate() for OE [Paul]
 * pluto: log more information when a bare shunt is missing [Hugh]
 * pluto: redo process_encrypted_informational_ikev2 [Hugh]
+* libipsecconf: libipsecconf: remove last remnants of manual keying [Paul]
 * _updown.netkey: Move addcat call from route-host to up-client [Paul]
 * ipsec: use -d or --nssdir for import and initnss directory option.
 * barf: minor improvements with systemd/journalctl [Paul]
