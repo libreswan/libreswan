@@ -5,11 +5,11 @@ if test "$#" -lt 3; then
 
 Usage:
 
-   $0 <repodir> <basedir> <results.json> ...
+   $0 <repodir> <summarydir> <results.json> ...
 
-Using <repodir> as a reference for branch information, create/update
-the summary web page in <basedir> using <basedir>/*/results.json as
-input.
+Create the results summary page in <summarydir> from
+<results.json>... and using <repodir> (read-only) for branch
+information.
 
 EOF
     exit 1
@@ -18,14 +18,17 @@ fi
 set -euxv
 
 repodir=$(cd $1 && pwd) ; shift
-basedir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
 webdir=$(cd $(dirname $0) && pwd)
 
-${webdir}/summary.sh ${repodir} ${basedir} "$@" > ${basedir}/summary.tmp
-jq -s '.'  ${basedir}/summary.tmp >  ${basedir}/summary.new
-rm  ${basedir}/summary.tmp
+# generate the individual summary entries
+${webdir}/summary.sh ${repodir} ${summarydir} "$@" > ${summarydir}/summary.tmp
 
-cp ${webdir}/*.{html,css,js} ${basedir}
-ln -f -s summary.html ${basedir}/index.html
+# mash them together as a proper JSON list
+jq -s '.'  ${summarydir}/summary.tmp >  ${summarydir}/summary.new
+rm  ${summarydir}/summary.tmp
 
-mv  ${basedir}/summary.new  ${basedir}/summary.json
+# install
+cp ${webdir}/*.{html,css,js} ${summarydir}
+ln -f -s summary.html ${summarydir}/index.html
+mv  ${summarydir}/summary.new  ${summarydir}/summary.json

@@ -7,14 +7,14 @@ if test $# -lt 3 ; then
 
 Usage:
 
-  $0 <repo> <basedir> <results.json> ...
+  $0 <repo> <summarydir> <results.json> ...
 
 EOF
     exit 1
 fi
 
 repodir=$(cd $1 && pwd) ; shift
-basedir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
 webdir=$(cd $(dirname $0) && pwd)
 
 for d in "$@"; do
@@ -31,7 +31,7 @@ for d in "$@"; do
 		   fi)
     d=$(realpath ${d})
     (
-	cd ${basedir}
+	cd ${summarydir}
 	jq \
 	    --arg rev "${rev}" \
 	    --arg date "${date}" \

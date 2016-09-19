@@ -5,10 +5,10 @@ if test $# -lt 2; then
 
 Usage:
 
-    $0 <repodir> <basedir>
+    $0 <repodir> <summarydir>
 
 Track <repodir>s current branch and test each "interesting" commit.
-Publish results under <basedir>.
+Publish results under <summarydir>.
 
 EOF
     exit 1
@@ -17,7 +17,7 @@ fi
 set -euvx
 
 repodir=$(cd $1 && pwd) ; shift
-basedir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
 webdir=$(dirname $0)
 branch=$(${webdir}/gime-git-branch.sh ${repodir})
 
@@ -36,7 +36,7 @@ while true ; do
 	# The heuristic is trying to identify coding and testsuite
 	# changes; while ignoring infrastructure.
 	if ${webdir}/git-interesting.sh ${repodir} ; then
-	    ${webdir}/publish.sh ${repodir} ${basedir}
+	    ${webdir}/publish.sh ${repodir} ${summarydir}
 	fi
 
 	# If there is already a commit pending, advance to that.

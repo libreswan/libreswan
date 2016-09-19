@@ -5,10 +5,10 @@ if test $# -lt 2; then
 
 Usage:
 
-    $0 <repodir> <basedir>
+    $0 <repodir> <summarydir>
 
 Build/run the testsuite in <repodir>.  Publish detailed results under
-<basedir>/<version>, and a summary under <basedir>.
+<summarydir>/<version>, and a summary under <summarydir>.
 
 <version> is formed from the contaentation of the current checkout
 date and "make showversion".
@@ -25,7 +25,7 @@ fi
 set -euxv
 
 repodir=$(cd $1 && pwd) ; shift
-basedir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
 
 # where the scripts live
 webdir=$(cd $(dirname $0) && pwd)
@@ -45,24 +45,24 @@ date=$(echo ${isodate} \
 		    -e 's/^\([^:]*\):\([^:]*\).*$/\1\2/')
 version=${date}-${gitstamp}
 
-destdir=${basedir}/${version}
+destdir=${summarydir}/${version}
 echo ${destdir}
 
 mkdir -p ${destdir}
 
 # The status file needs to match status.js
 
-rm -f ${basedir}/progress.json
+rm -f ${summarydir}/progress.json
 echo [] | jq --arg job ${version} \
 	     '{ job: $job, log: [] }' \
-	     > ${basedir}/status.json
+	     > ${summarydir}/status.json
 
 status() {
     jq --arg status "$*" \
        '.log += [{ date: (now|todateiso8601), status: $status }]' \
-       < ${basedir}/status.json \
-       > ${basedir}/status.new
-    mv ${basedir}/status.new ${basedir}/status.json
+       < ${summarydir}/status.json \
+       > ${summarydir}/status.new
+    mv ${summarydir}/status.new ${summarydir}/status.json
 }
 
 status "started"
@@ -96,7 +96,7 @@ ${webdir}/build-results.sh ${repodir} ${destdir}
 
 # Generate the summary page.
 status "update summary web page"
-${webdir}/build-summary.sh ${repodir} ${basedir} ${basedir}/*/results.json
+${webdir}/build-summary.sh ${repodir} ${summarydir} ${summarydir}/*/results.json
 
 
 status "finished"
