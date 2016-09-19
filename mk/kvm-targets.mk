@@ -28,7 +28,9 @@ KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_CLONEDIR ?= $(KVM_POOLDIR)
-KVM_PREFIX ?= ''
+# While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
+KVM_PREFIX ?=
+KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
@@ -67,7 +69,7 @@ KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
-first-prefix = $(call strip-prefix,$(firstword $(KVM_PREFIX)))
+first-prefix = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 KVM_CLONE_HOST ?= clone
 KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
@@ -75,8 +77,10 @@ KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
 KVM_CLONE_DOMAIN = $(addprefix $(call first-prefix), $(KVM_CLONE_HOST))
 KVM_BUILD_DOMAIN = $(addprefix $(call first-prefix), $(KVM_BUILD_HOST))
 
-KVM_INSTALL_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_INSTALL_HOSTS))),$(KVM_INSTALL_HOSTS))
-KVM_TEST_DOMAINS = $(if $(KVM_PREFIX),$(foreach prefix,$(KVM_PREFIX),$(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))),$(KVM_TEST_HOSTS))
+KVM_INSTALL_DOMAINS = $(foreach prefix, $(KVM_PREFIXES), \
+	$(addprefix $(call strip-prefix,$(prefix)),$(KVM_INSTALL_HOSTS)))
+KVM_TEST_DOMAINS = $(foreach prefix, $(KVM_PREFIXES), \
+	$(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS)))
 KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS)
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
@@ -184,7 +188,7 @@ define kvm-test
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$(KVMRUNNER) $(foreach prefix,$(KVM_PREFIX), --prefix $(prefix))$(if $$(KVM_WORKERS), --workers $(KVM_WORKERS)) $(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) $(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix))$(if $$(KVM_WORKERS), --workers $(KVM_WORKERS)) $(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
 endef
 
 # "test" and "check" just runs the entire testsuite.
@@ -296,7 +300,7 @@ define check-no-kvm-network
 	fi
 endef
 
-define kvm-test-network
+define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
   KVM_TEST_NETWORK_FILES += $$(KVM_CLONEDIR)/$(1)$(2).xml
@@ -322,20 +326,24 @@ define kvm-test-network
   endif
 	echo "</network>"						>> '$$@.tmp'
 	$(call install-kvm-network,$(1)$(2),$$@)
+endef
+
+define uninstall-kvm-test-network
+  #(info prefix=$(1) network=$(2))
 
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
-
 endef
 
 KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
-ifeq ($(KVM_PREFIX),)
-$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,,$(network))))
-else
-$(foreach prefix,$(KVM_PREFIX),$(foreach network,$(KVM_TEST_NETWORKS),$(eval $(call kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
-endif
+$(foreach prefix, $(KVM_PREFIXES), \
+	$(foreach network, $(KVM_TEST_NETWORKS), \
+		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
+$(foreach prefix, $(KVM_PREFIXES), \
+	$(foreach network, $(KVM_TEST_NETWORKS), \
+		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
 
 # To avoid the problem where the host has no "default" KVM network
 # (there's a rumour that libreswan's main testing machine has this
@@ -528,7 +536,7 @@ define install-kvm-test-domain
 	mv $$@.tmp $$@
 endef
 
-$(foreach prefix,$(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
+$(foreach prefix, $(KVM_PREFIXES), \
 	$(foreach host,$(KVM_TEST_HOSTS), \
 		$(eval $(call install-kvm-test-domain,$(call strip-prefix,$(prefix)),$(host)))))
 
@@ -710,7 +718,7 @@ kvm-help:
 	@echo '     domain: $(KVM_CLONE_DOMAIN)'
 	@echo '     network: $(KVM_DEFAULT_NETWORK)'
 	@echo '     directory: $(KVM_CLONEDIR)'
-	@: $(foreach prefix, $(if $(KVM_PREFIX),$(KVM_PREFIX),''), \
+	@: $(foreach prefix, $(KVM_PREFIXES), \
 		; echo '   test group: $(call strip-prefix,$(prefix))' \
 		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
 		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
