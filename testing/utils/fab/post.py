@@ -253,19 +253,24 @@ class TestResult:
         # matches expected output.
         for host_name in test.host_names:
 
-            # There should always be raw console output from all
-            # hosts.  If there isn't then there's a big problem and
-            # little point with continuing checks for this host.
+            # Try to load this hosts's raw console output.
 
             raw_output_filename = os.path.join(output_directory,
                                                host_name + ".console.verbose.txt")
             self.logger.debug("host %s raw console output '%s'",
                               host_name, raw_output_filename)
-
             raw_output = _load_file(self.logger, raw_output_filename)
+
+            # All hosts must have console output so if the attempt to
+            # load the raw output failed, there is a really big
+            # problem - something a human should look at.
+
             if raw_output is None:
                 self.issues.add("output-missing", host_name)
-                self.resolution.failed()
+                self.resolution.unresolved()
+                # With no raw console output, there's little point in
+                # trying validating it.  Skip remaining tests for this
+                # host.
                 continue
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
