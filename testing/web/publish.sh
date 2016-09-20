@@ -43,9 +43,8 @@ date=$(echo ${isodate} \
 	      | sed \
 		    -e 's/T/-/' \
 		    -e 's/^\([^:]*\):\([^:]*\).*$/\1\2/')
-version=${date}-${gitstamp}
 
-destdir=${summarydir}/${version}
+destdir=${summarydir}/${gitstamp}
 echo ${destdir}
 
 mkdir -p ${destdir}
@@ -53,7 +52,7 @@ mkdir -p ${destdir}
 # The status file needs to match status.js
 
 rm -f ${summarydir}/progress.json
-echo [] | jq --arg job ${version} \
+echo [] | jq --arg job ${gitstamp} \
 	     '{ job: $job, log: [] }' \
 	     > ${summarydir}/status.json
 
