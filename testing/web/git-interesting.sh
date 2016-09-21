@@ -27,6 +27,7 @@ cd ${repodir}
 
 git diff HEAD ^HEAD^ \
     lib \
+    mk \
     programs \
     include \
     testing/pluto \
