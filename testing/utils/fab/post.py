@@ -273,28 +273,32 @@ class TestResult:
                 # host.
                 continue
 
+            # Check that the raw console output includes the "=== end
+            # ===" marker.  If it doesn't then the test most likely
+            # crashed, truncating the output; or the test is a
+            # work-in-progress.
+            #
+            # Don't try to match the prompt ("#").  If this is the
+            # first command in the script, the prompt will not appear
+            # in the output.
+            ending = ": ==== end ===="
+            logger.debug("host %s checking if raw console output contains %s",
+                         host_name, ending)
+            if not ending in raw_output:
+                self.issues.add("output-truncated", host_name)
+                # self.resolution.unresolved()
+                # continue
+
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
             if self.issues.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
-                # keep None
                 self.resolution.failed()
             if self.issues.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
-                # keep None
                 self.resolution.failed()
             if self.issues.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
-                # keep None
                 self.resolution.failed()
 
-            # Incomplete output won't match expected output so skip
-            # any comparisons.
-            #
-            # For moment skip this as the marker for complete output isn't reliable?
-
-            #logger.debug("host %s checking if raw console output was incomplete", host_name)
-            #if not "# : ==== end ====" in raw_output:
-            #    self.issues.add("output-incomplete", host_name)
-            #    self.resolution.failed()
-            #    continue
+            # Sanitize what ever output there is and save it.
 
             sanitized_output_filename = os.path.join(output_directory,
                                                      host_name + ".console.txt")
