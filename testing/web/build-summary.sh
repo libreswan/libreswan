@@ -29,6 +29,7 @@ jq -s '.'  ${summarydir}/summary.tmp >  ${summarydir}/summary.new
 rm  ${summarydir}/summary.tmp
 
 # install
-cp ${webdir}/*.{html,css,js} ${summarydir}
+cp ${webdir}/lsw*.{css,js} ${summarydir}
+cp ${webdir}/summary*.{html,css,js} ${summarydir}
 ln -f -s summary.html ${summarydir}/index.html
 mv  ${summarydir}/summary.new  ${summarydir}/summary.json

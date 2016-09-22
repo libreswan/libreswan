@@ -41,7 +41,8 @@ fi
 jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
 rm ${destdir}/results.tmp
 
-cp ${webdir}/*.{html,css,js} ${destdir}
+cp ${webdir}/lsw*.{css,js} ${destdir}
+cp ${webdir}/results*.{html,css,js} ${destdir}
 ln -f -s results.html ${destdir}/index.html
 
 mv ${destdir}/results.new ${destdir}/results.json

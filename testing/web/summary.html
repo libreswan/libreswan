@@ -14,12 +14,12 @@
     <link rel="stylesheet" type="text/css" href="summary.css"> </link>
     <script type="text/javascript" src="summary.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="graph.css"> </link>
-    <script type="text/javascript" src="graph.js"></script>
+    <link rel="stylesheet" type="text/css" href="lsw-graph-summary.css"> </link>
+    <script type="text/javascript" src="lsw-graph-summary.js"></script>
 
     <script>
       lsw_load_summary("summary.json", function(json) {
-        graph("graph", json)
+        lsw_graph_summary("graph", json)
         summary("summary", json)
       })
       // hack up a simple status bar

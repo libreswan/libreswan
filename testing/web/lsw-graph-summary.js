@@ -1,4 +1,4 @@
-function graph(div_id, data) {
+function lsw_graph_summary(div_id, data) {
 
     // In date order.
     data = data.sort(function(l, r) {
