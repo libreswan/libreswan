@@ -598,6 +598,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	if (conn->options_set[KBF_ENCAPS])
                msg.encaps = conn->options[KBF_ENCAPS];
+	else
+               msg.encaps = encaps_auto;
 
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
