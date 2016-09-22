@@ -1769,14 +1769,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_DETECTED) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is not detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
@@ -1784,25 +1776,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with old IETF drafts",
-					       enum_name(&enc_mode_names,
-							 val));
-					if (st->st_connection->remotepeertype
-					    != CISCO) {
-						return FALSE;
-					}
-					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					   NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
@@ -1810,20 +1783,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (!(st->hidden_variables.st_nat_traversal &
-				     NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names, val));
-					return FALSE;
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					    NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with NAT-T RFC",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			default:
