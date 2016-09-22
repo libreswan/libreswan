@@ -101,6 +101,11 @@ function fixup_results_column(col, errors_index, results) {
 			a.setAttribute("href", result.output_directory + "/" + host + ".console.txt")
 			a.appendChild(document.createTextNode(error))
 			col.appendChild(a)
+		    } else if (error == "output-truncated") {
+			var a = document.createElement("a")
+			a.setAttribute("href", result.output_directory + "/" + host + ".console.verbose.txt")
+			a.appendChild(document.createTextNode(error))
+			col.appendChild(a)
 		    } else if (error == "baseline-missing") {
 			// Probably a new test.
 			col.appendChild(document.createTextNode("previous-missing"))
