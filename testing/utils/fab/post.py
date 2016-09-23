@@ -407,8 +407,21 @@ def mortem(test, args, domain_prefix="", finished=None,
         test_result.issues.add("absent", "baseline")
         return test_result
 
+    # When loading the baseline results use "quick" so that the
+    # original results are used.  This seems to be the best of a bad
+    # bunch.
+    #
+    # Since that the baseline was generated using an old sanitizer and
+    # reference output, using the latest sanitizer scripts (in
+    # testing/) can, confusingly, lead to baselines results being
+    # identified as failures failing yet the diffs show a pass.
+    #
+    # OTOH, when this goes to compare the results against the
+    # baseline, first putting them through the latest sanitizer tends
+    # to result in better diffs.
+
     base = baseline[test.name]
-    baseline_result = TestResult(logger, base, quick)
+    baseline_result = TestResult(logger, base, quick=True)
 
     if not baseline_result.resolution in [test_result.resolution.PASSED,
                                           test_result.resolution.FAILED]:
