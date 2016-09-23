@@ -152,10 +152,8 @@ static int nss_err_to_revfail(CERTVerifyLogNode *node)
 		return ret;
 	}
 
-	DBG(DBG_X509,
-	    DBG_log("Certificate %s failed verification : %s",
-		    node->cert->subjectName,
-		    nss_err_str(node->error)));
+	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification : %s",
+		    node->cert->subjectName, nss_err_str(node->error));
 
 	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
 		ret = VERIFY_RET_REVOKED;

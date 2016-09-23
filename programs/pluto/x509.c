@@ -354,9 +354,7 @@ static char *make_crl_uri_str(chunk_t *uri)
 
 static void dbg_crl_import_err(int err)
 {
-	DBG(DBG_X509,
-	    DBG_log("CRL import error: %s",
-		    nss_err_str((PRInt32)err)));
+	libreswan_log("CRL import error: %s", nss_err_str((PRInt32)err));
 }
 
 bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
