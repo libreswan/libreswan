@@ -420,9 +420,6 @@ def mortem(test, args, domain_prefix="", finished=None,
 
     for host_name in test.host_names:
 
-        if host_name is "nic":
-            continue
-
         if not host_name in test_result.sanitized_output:
             continue
 
