@@ -144,7 +144,7 @@ def main():
             baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, logutil.DEBUG, args,
                                       testsuite_directory=baseline_directory,
-                                      saved_testsuite_output_directory=args.baseline,
+                                      testsuite_output_directory=args.baseline,
                                       error_level=logutil.DEBUG)
         if not baseline:
             logger.info("'%s' is not a baseline", args.baseline)

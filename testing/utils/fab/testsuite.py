@@ -26,7 +26,6 @@ class Test:
 
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
-                 saved_testsuite_output_directory=None,
                  testsuite_output_directory=None,
                  kind="kvmplutotest", expected_result="good"):
         self.logger = logutil.getLogger(__name__)
@@ -57,6 +56,7 @@ class Test:
         # specified, use that.
         if testsuite_output_directory:
             self.output_directory = os.path.join(testsuite_output_directory, self.name)
+            print(self.output_directory)
         else:
             self.output_directory = os.path.join(self.directory, "OUTPUT")
 
@@ -72,8 +72,6 @@ class Test:
         # OUTPUT_DIRECTORY should be used.
         if saved_test_output_directory:
             self.saved_output_directory = saved_test_output_directory
-        elif saved_testsuite_output_directory:
-            self.saved_output_directory = os.path.join(saved_testsuite_output_directory, self.name)
         else:
             self.saved_output_directory = None
 
@@ -119,8 +117,7 @@ class Testsuite:
 
     def __init__(self, logger, testlist, error_level,
                  testing_directory,
-                 testsuite_output_directory=None,
-                 saved_testsuite_output_directory=None):
+                 testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
         with open(testlist, 'r') as testlist_file:
@@ -143,7 +140,6 @@ class Testsuite:
                     continue
                 test = Test(kind=kind, expected_result=expected_result,
                             test_directory=os.path.join(self.directory, name),
-                            saved_testsuite_output_directory=saved_testsuite_output_directory,
                             testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
@@ -207,8 +203,7 @@ TESTLIST = "TESTLIST"
 
 def load(logger, log_level, args,
          testsuite_directory=None,
-         testsuite_output_directory=None, # going away
-         saved_testsuite_output_directory=None,
+         testsuite_output_directory=None,
          error_level=logutil.ERROR):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
@@ -217,7 +212,6 @@ def load(logger, log_level, args,
 
     """
 
-    saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
     # Is DIRECTORY a testsuite or a testlist file?  For instance:
     # testing/pluto or testing/pluto/TESTLIST.
     if os.path.isfile(testsuite_directory):
@@ -232,8 +226,7 @@ def load(logger, log_level, args,
         logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
     return Testsuite(logger, testlist, error_level,
                      testing_directory=args.testing_directory,
-                     testsuite_output_directory=args.testsuite_output,
-                     saved_testsuite_output_directory=saved_testsuite_output_directory)
+                     testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
 
 
 def append_test(tests, args, test_directory=None,
