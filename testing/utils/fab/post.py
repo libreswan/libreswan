@@ -409,9 +409,10 @@ def mortem(test, args, domain_prefix="", finished=None,
 
     base = baseline[test.name]
     baseline_result = TestResult(logger, base, quick)
-    if not baseline_result:
-        if not test_result.resolution in [test_result.resolution.PASSED]:
-            test_result.issues.add("missing", "baseline")
+
+    if not baseline_result.resolution in [test_result.resolution.PASSED,
+                                          test_result.resolution.FAILED]:
+        test_result.issues.add(str(baseline_result), "baseline")
         return test_result
 
     if test_result.resolution in [test_result.resolution.PASSED] \
