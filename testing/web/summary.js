@@ -58,6 +58,14 @@ function summary(div_id, json) {
 			a.setAttribute("href", text)
 			a.appendChild(document.createTextNode(text))
 			col.replaceChild(a, child)
+		    } else if (col.cellIndex == 1) {
+			var child = col.childNodes[0]
+			var text = child.data
+			var a = document.createElement("a")
+			var href = "https://github.com/libreswan/libreswan/compare/" + text
+			a.setAttribute("href", href)
+			a.appendChild(document.createTextNode(text))
+			col.replaceChild(a, child)
 		    }
 		}
 	    },
