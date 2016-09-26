@@ -8,6 +8,7 @@ d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
 d.ipsec.conf/leftsubnet.xml
 d.ipsec.conf/leftsubnets.xml
+d.ipsec.conf/leftvti.xml
 d.ipsec.conf/leftaddresspool.xml
 d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
