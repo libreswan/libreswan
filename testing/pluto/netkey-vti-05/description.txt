@@ -1,0 +1,6 @@
+Basic netkey test but now using marking and vti interfaces with routing.
+
+This test sets up a "routed vpn" with a 0.0.0.0/0 <-> 0.0.0.0/0 policy.
+
+It also uses leftvti= and rightvti= to configure an IP address on the
+VTI interfaces. This is used when running routing daemons over IPsec.
