@@ -592,8 +592,6 @@ static bool validate_end(
 		char *value = end->strings[KSCF_SOURCEIP];
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &end->sourceip) != NULL &&
-		    tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &end->sourceip) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
