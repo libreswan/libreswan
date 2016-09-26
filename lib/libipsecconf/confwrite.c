@@ -339,6 +339,13 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
+	if (!isanyaddr(&end->vti_ip.addr)) {
+			char as[ADDRTOT_BUF];
+
+			subnettot(&end->vti_ip, 0, as, sizeof(as));
+			fprintf(out, "\t%svti=%s\n", side, as);
+	}
+
 	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 

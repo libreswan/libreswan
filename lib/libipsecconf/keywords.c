@@ -458,6 +458,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET,  NOT_ENUM },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS,  NOT_ENUM },
   { "sourceip",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_SOURCEIP,  NOT_ENUM },
+  { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP,  NOT_ENUM },
   { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP,  NOT_ENUM },
   { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN,  NOT_ENUM },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID,  NOT_ENUM },

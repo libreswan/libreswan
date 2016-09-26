@@ -481,6 +481,33 @@ static bool validate_end(
 		break;
 	}
 
+	if (end->strings_set[KSCF_VTI_IP]) {
+		char *value = end->strings[KSCF_VTI_IP];
+
+		if (strchr(value, '/') == NULL) {
+			ERR_FOUND("%svti= needs address/mask", leftright);
+		} else {
+
+			/*
+			 * ttosubnet() helpfully sets the IP address to the lowest IP
+			 * in the subnet. Which is great for subnets but we want to
+			 * retain the specific IP in this case.
+			 * So we subsequently overwrite the IP address of the subnet.
+			 */
+			er = ttosubnet(value, 0, AF_UNSPEC, &end->vti_ip);
+			if (er != NULL) {
+				ERR_FOUND("bad addr %svti=%s [%s]",
+					  leftright, value, er);
+			} else {
+				er = tnatoaddr(value, strchr(value, '/') - value, AF_UNSPEC, &end->vti_ip.addr);
+				if (er != NULL) {
+					ERR_FOUND("bad addr in subnet for %svti=%s [%s]",
+						leftright, value, er);
+				}
+			}
+		}
+	}
+
 	/* validate the KSCF_SUBNET */
 	if (end->strings_set[KSCF_SUBNET]) {
 		char *value = end->strings[KSCF_SUBNET];

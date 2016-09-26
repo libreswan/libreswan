@@ -74,7 +74,8 @@ struct whack_end {
 	ip_address host_addr,
 		   host_nexthop,
 		   host_srcip;
-	ip_subnet client;
+	ip_subnet  client,
+		   host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;

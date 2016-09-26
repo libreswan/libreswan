@@ -70,7 +70,7 @@ static void help(void)
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
-		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
+		"	[--ikeport <port-number>] [--srcip <ip-address>] [--vtiip <ip-address>/mask]\\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--groups <access control groups>] \\\n"
@@ -345,6 +345,7 @@ enum option_enums {
 	END_ADDRESSPOOL,
 	END_SENDCERT,
 	END_SRCIP,
+	END_VTIIP,
 	END_UPDOWN,
 	END_TUNDEV,
 
@@ -542,6 +543,7 @@ static const struct option long_opts[] = {
 	  OO },
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
+	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
 	{ "tundev", required_argument, NULL, END_TUNDEV + OO + NUMERIC_ARG },
 
@@ -1438,6 +1440,16 @@ int main(int argc, char **argv)
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.right.host_srcip), optarg);
+			continue;
+
+		case END_VTIIP:	/* --vtiip <ip-address/mask> */
+			if (strchr(optarg, '/') == NULL)
+				diag("vtiip needs an address/mask value");
+			diagq(ttosubnet(optarg, 0,
+					msg.tunnel_addr_family,
+					&msg.right.host_vtiip), optarg);
+			/* ttosubnet() sets to lowest subnet address, fixup needed */
+			diagq(tnatoaddr(optarg, strchr(optarg, '/') - optarg, AF_UNSPEC, &msg.right.host_vtiip.addr), optarg);
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */

@@ -365,6 +365,9 @@ static void set_whack_end(char *lr,
 	if (!isanyaddr(&l->sourceip))
 		w->host_srcip = l->sourceip;
 
+	if (!isanyaddr(&l->vti_ip.addr))
+		w->host_vtiip = l->vti_ip;
+
 	w->has_client = l->has_client;
 	if (l->has_client)
 		w->client = l->subnet;

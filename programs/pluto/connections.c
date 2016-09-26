@@ -929,11 +929,13 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_addr_name = src->host_addr_name;
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
+	dst->host_vtiip = src->host_vtiip;
 	dst->client = src->client;
 
 #ifdef HAVE_SIN_LEN
 	/* XXX need to fix this for v6 */
 	dst->client.addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
+	dst->host_vtiip.addr.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_addr.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_nexthop.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);

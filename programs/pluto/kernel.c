@@ -403,6 +403,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		myclient_str[SUBNETTOT_BUF],
 		myclientnet_str[ADDRTOT_BUF],
 		myclientmask_str[ADDRTOT_BUF],
+		vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")],
 		peerid_str[IDTOA_BUF],
 		metric_str[sizeof("PLUTO_METRIC= ") + 4],
 		connmtu_str[sizeof("PLUTO_MTU= ") + 4],
@@ -437,11 +438,20 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
+
 	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclientnet_str));
 	networkof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
 	maskof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
+
+	vticlient_str[0] = '\0';
+	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
+		char tmpvti[SUBNETTOT_BUF];
+		subnettot(&sr->this.host_vtiip, 0, tmpvti, sizeof(tmpvti));
+
+		snprintf(vticlient_str, sizeof(vticlient_str), "VTI_IP='%s' ", tmpvti);
+	}
 
 	idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
 	escape_metachar(peerid_str, secure_peerid_str,
@@ -538,27 +548,28 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"PLUTO_INTERFACE='%s' "
 		"%s" /* possible PLUTO_NEXT_HOP */
 		"PLUTO_ME='%s' "
-		"PLUTO_MY_ID='%s' "		/* 5 */
+		"PLUTO_MY_ID='%s' "
 		"PLUTO_MY_CLIENT='%s' "
 		"PLUTO_MY_CLIENT_NET='%s' "
 		"PLUTO_MY_CLIENT_MASK='%s' "
+		"%s" /* VTI_IP */
 		"PLUTO_MY_PORT='%u' "
-		"PLUTO_MY_PROTOCOL='%u' "	/* 10 */
+		"PLUTO_MY_PROTOCOL='%u' "
 		"PLUTO_SA_REQID='%u' "
 		"PLUTO_SA_TYPE='%s' "
 		"PLUTO_PEER='%s' "
 		"PLUTO_PEER_ID='%s' "
-		"PLUTO_PEER_CLIENT='%s' "	/* 15 */
+		"PLUTO_PEER_CLIENT='%s' "
 		"PLUTO_PEER_CLIENT_NET='%s' "
 		"PLUTO_PEER_CLIENT_MASK='%s' "
 		"PLUTO_PEER_PORT='%u' "
 		"PLUTO_PEER_PROTOCOL='%u' "
-		"PLUTO_PEER_CA='%s' "		/* 20 */
+		"PLUTO_PEER_CA='%s' "
 		"PLUTO_STACK='%s' "
 		"%s"		/* optional metric */
 		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
-		"PLUTO_CONN_POLICY='%s' "	/* 25 */
+		"PLUTO_CONN_POLICY='%s' "
 		"PLUTO_CONN_KIND='%s' "
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
@@ -587,6 +598,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		myclient_str,
 		myclientnet_str,
 		myclientmask_str,
+		vticlient_str,
 		sr->this.port,
 		sr->this.protocol,		/* 10 */
 		sr->reqid,
