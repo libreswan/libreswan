@@ -8,6 +8,8 @@ v3.19 (unreleased)
 * FIPS: Ignore failureshunt=passthrough and negotiationshunt=passthrough [Paul]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
+* XFRM: EXPERIMENTAL Support for configuring the VTI device [Paul]
+        keyword: leftvti=address/mask
 * X509: Iterate all X.509 certs and try to fetch their crls [Kim]
 * X509: Start a fetch for CRLs 5 seconds after startup [Kim]
 * pluto: connection instances need their own reqid [Antony]
