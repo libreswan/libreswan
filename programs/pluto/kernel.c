@@ -439,7 +439,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
 
-	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclientnet_str));
+	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclient_str));
 	networkof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
 	maskof(&sr->this.client, &ta);
