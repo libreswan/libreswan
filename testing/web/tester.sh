@@ -35,7 +35,7 @@ while true ; do
 	#
 	# The heuristic is trying to identify coding and testsuite
 	# changes; while ignoring infrastructure.
-	if ${webdir}/git-interesting.sh ${repodir} ; then
+	if ${webdir}/git-interesting.sh ${repodir} HEAD ; then
 	    ${webdir}/publish.sh ${repodir} ${summarydir}
 	fi
 
