@@ -442,6 +442,12 @@ doroute() {
 	"${ROUTE}" != yes ]; then
 	return 0
     fi
+
+    # This is only set if VTI is enabled
+    if [ "${VTI_ROUTING}" = "no" ]; then
+	return 0
+    fi
+
     parms="${PLUTO_PEER_CLIENT}"
     parms2=${IPRARGS}
     # use nexthop if (right/left)nexthop is set and nexthop is not %direct
