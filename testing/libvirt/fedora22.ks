@@ -67,6 +67,7 @@ kernel-headers
 kernel-modules
 kernel-modules-extra
 libcap-ng-devel
+libfaketime
 libevent-devel
 libselinux-devel
 lsof
@@ -166,6 +167,7 @@ dnf install -y 2>&1 \
     ipsec-tools \
     ipsec-tools \
     libcap-ng-devel \
+    libfaketime \
     libevent-devel \
     libselinux-devel \
     lsof \
