@@ -5,7 +5,7 @@
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2014-2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014-2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,7 +60,7 @@ static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
 static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 		       u_int8_t *iv, bool enc);
 
-struct encrypt_desc algo_aes_cbc =
+static struct encrypt_desc algo_aes_cbc =
 {
 	.common = {
 		.name = "aes",
@@ -158,7 +158,7 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
-struct encrypt_desc algo_aes_ctr =
+static struct encrypt_desc algo_aes_ctr =
 {
 	.common = {
 		.name = "aes_ctr",
