@@ -148,10 +148,10 @@ PK11SymKey *merge_symkey_bytes(const char *prefix,
  * of the resulting symkey.
  */
 
-PK11SymKey *merge_symkey_symkey(const char *prefix,
-				PK11SymKey *base_key, PK11SymKey *key,
-				CK_MECHANISM_TYPE derive,
-				CK_MECHANISM_TYPE target)
+static PK11SymKey *merge_symkey_symkey(const char *prefix,
+				       PK11SymKey *base_key, PK11SymKey *key,
+				       CK_MECHANISM_TYPE derive,
+				       CK_MECHANISM_TYPE target)
 {
 	CK_OBJECT_HANDLE key_handle = PK11_GetSymKeyHandle(key);
 	SECItem key_param = {

@@ -130,10 +130,6 @@ PK11SymKey *merge_symkey_bytes(const char *prefix,
 			       const void *bytes, size_t sizeof_bytes,
 			       CK_MECHANISM_TYPE derive,
 			       CK_MECHANISM_TYPE target);
-PK11SymKey *merge_symkey_symkey(const char *prefix,
-			       PK11SymKey *base_key, PK11SymKey *key,
-				CK_MECHANISM_TYPE derive,
-				CK_MECHANISM_TYPE target);
 PK11SymKey *symkey_from_symkey(const char *prefix,
 			       PK11SymKey *base_key,
 			       CK_MECHANISM_TYPE target, CK_FLAGS flags,
