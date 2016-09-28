@@ -109,11 +109,11 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
  * derive: the operation that is to be performed; target: the
  * mechanism/type of the resulting symkey.
  */
-PK11SymKey *merge_symkey_bytes(const char *prefix,
-			       PK11SymKey *base_key,
-			       const void *bytes, size_t sizeof_bytes,
-			       CK_MECHANISM_TYPE derive,
-			       CK_MECHANISM_TYPE target)
+static PK11SymKey *merge_symkey_bytes(const char *prefix,
+				      PK11SymKey *base_key,
+				      const void *bytes, size_t sizeof_bytes,
+				      CK_MECHANISM_TYPE derive,
+				      CK_MECHANISM_TYPE target)
 {
 	passert(sizeof_bytes > 0);
 	CK_KEY_DERIVATION_STRING_DATA string = {
@@ -176,12 +176,11 @@ static PK11SymKey *merge_symkey_symkey(const char *prefix,
 /*
  * Extract a SYMKEY from an existing SYMKEY.
  */
-
-PK11SymKey *symkey_from_symkey(const char *prefix,
-			       PK11SymKey *base_key,
-			       CK_MECHANISM_TYPE target,
-			       CK_FLAGS flags,
-			       size_t next_byte, size_t key_size)
+static PK11SymKey *symkey_from_symkey(const char *prefix,
+				      PK11SymKey *base_key,
+				      CK_MECHANISM_TYPE target,
+				      CK_FLAGS flags,
+				      size_t next_byte, size_t key_size)
 {
 	/* spell out all the parameters */
 	CK_EXTRACT_PARAMS bs = next_byte * BITS_PER_BYTE;
