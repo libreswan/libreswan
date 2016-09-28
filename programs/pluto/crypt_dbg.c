@@ -121,17 +121,10 @@ static void *symkey_bytes(const char *name, PK11SymKey *symkey, int debug)
 /*
  * For testing/debugging, return a symkey.
  */
-PK11SymKey *chunk_to_symkey(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key)
+PK11SymKey *chunk_to_symkey(chunk_t raw_key)
 {
 	PK11SymKey *ephemeral_key = ephemeral_symkey(DBG_CRYPT);
-	PK11SymKey *tmp = merge_symkey_bytes("tmp:", ephemeral_key,
-					     raw_key.ptr, raw_key.len,
-					     CKM_CONCATENATE_DATA_AND_BASE,
-					     CKM_EXTRACT_KEY_FROM_KEY);
-	PK11SymKey *symkey = symkey_from_symkey("symkey: ", tmp, cipher_mechanism,
-						0, 0, raw_key.len);
-	free_any_symkey("tmp:", &tmp);
-	return symkey;
+	return symkey_from_chunk(ephemeral_key, raw_key);
 }
 
 /*

@@ -35,7 +35,7 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
  *
  * It is used by CAVP testing.
  */
-PK11SymKey *chunk_to_symkey(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key);
+PK11SymKey *chunk_to_symkey(chunk_t raw_key);
 
 /*
  * Return the contents of a symkey.  If the operation fails,

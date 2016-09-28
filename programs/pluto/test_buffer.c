@@ -150,8 +150,8 @@ chunk_t extract_chunk(const char *prefix, const chunk_t input, size_t offset, si
 PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
-	chunk_t raw_key = decode_to_chunk("key", encoded_key);
-	PK11SymKey *tmp = chunk_to_symkey(CKM_DH_PKCS_DERIVE, raw_key);
+	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
+	PK11SymKey *tmp = chunk_to_symkey(raw_key);
 	PK11SymKey *symkey = encrypt_key_from_symkey_bytes(tmp, encrypt_desc,
 							   0, raw_key.len);
 	freeanychunk(raw_key);
