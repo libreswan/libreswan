@@ -24,16 +24,19 @@
       })
       // hack up a simple status bar
       window.addEventListener('load', function() {
-        d3.json("status.json", function(error, json) {
-          if (error) return console.warn(error)
-          var log = json.log[json.log.length - 1]
+        d3.json("status.json", function(json) {
           document.getElementById("status")
             .TidyTable({
               enableCheckbox : false,
               enableMenu     : false,
             }, {
-	      columnTitles : ["Job", "Date", "Status", "Current Time"],
-              columnValues : [[json.job, log.date, log.status, lsw_date2iso(new Date())]],
+	      columnTitles : ["Job", "Started", "Last Update", "Details", "Current Time"],
+              columnValues : [[
+                json.job,
+                lsw_date2iso(new Date(json.start)),
+                lsw_date2iso(new Date(json.date)),
+                json.details,
+                lsw_date2iso(new Date())]],
             })
         })
       })

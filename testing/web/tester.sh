@@ -20,6 +20,7 @@ repodir=$(cd $1 && pwd) ; shift
 summarydir=$(cd $1 && pwd) ; shift
 webdir=$(dirname $0)
 branch=$(${webdir}/gime-git-branch.sh ${repodir})
+start=$(date -u -Iseconds)
 
 while true ; do
 
@@ -62,8 +63,13 @@ while true ; do
 	seconds=$(expr 60 \* 60 \* 3)
 	now=$(date +%s)
 	future=$(expr ${now} + ${seconds})
-	echo Currently: $(date -u -d @${now} +%H:%M)
-	echo Sleeping until: $(date -u -d @${future} +%H:%M)
+	date=$(date -Iseconds -u)
+	${webdir}/json-status.sh \
+		 --json ${summarydir}/status.json \
+		 --job "testing branch ${branch}" \
+		 --start "${start}" \
+		 --date "${date}" \
+		 "idle; will retry $(date -u -d @${future} +%H:%M)"
 	sleep ${seconds}
     done
 
