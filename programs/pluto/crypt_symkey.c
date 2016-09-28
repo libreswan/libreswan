@@ -1,7 +1,7 @@
 /*
  * SYMKEY manipulation functions, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -94,31 +94,12 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s key: NULL", prefix);
+		DBG_log("%s: key=NULL", prefix);
 	} else {
-		DBG_log("%s key: %p, size: %zd bytes, type/mechanism: %s (0x%08x)",
+		DBG_log("%s: key@%p, size: %zd bytes, type/mechanism: %s (0x%08x)",
 			prefix, key, sizeof_symkey(key),
 			ckm_to_string(PK11_GetMechanism(key)),
 			(int)PK11_GetMechanism(key));
-	}
-}
-
-void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
-{
-	DBG_symkey(prefix, key);
-	if (key != NULL) {
-		if (DBGP(DBG_PRIVATE)) {
-#ifdef FIPS_CHECK
-			if (libreswan_fipsmode()) {
-				DBG_log("%s secured by FIPS", prefix);
-				return;
-			}
-#else
-			void *bytes = symkey_bytes(prefix, key, NULL, 0);
-			DBG_dump(prefix, bytes, sizeof_symkey(key));
-			pfreeany(bytes);
-#endif
-		}
 	}
 }
 
@@ -152,7 +133,7 @@ PK11SymKey *merge_symkey_bytes(const char *prefix,
 		    base_key, bytes, sizeof_bytes,
 		    ckm_to_string(derive),
 		    ckm_to_string(target));
-	    DBG_symkey("symkey:", base_key);
+	    DBG_symkey("symkey", base_key);
 	    DBG_dump("bytes:", bytes, sizeof_bytes));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &data_param, target,
 					 operation, key_size);
@@ -184,8 +165,8 @@ PK11SymKey *merge_symkey_symkey(const char *prefix,
 		    prefix, base_key, key,
 		    ckm_to_string(derive),
 		    ckm_to_string(target));
-	    DBG_symkey("symkey 1:", base_key);
-	    DBG_symkey("symkey 2:", key));
+	    DBG_symkey("symkey 1", base_key);
+	    DBG_symkey("symkey 2", key));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &key_param, target,
 					 operation, key_size);
 	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
@@ -215,7 +196,7 @@ PK11SymKey *symkey_from_symkey(const char *prefix,
 	    DBG_log("%s symkey from symkey(%p) - next-byte(%zd) key-size(%zd) flags(0x%lx) derive(%s) target(%s)",
 		    prefix, base_key, next_byte, key_size, (long)flags,
 		    ckm_to_string(derive), ckm_to_string(target));
-	    DBG_symkey("symkey:", base_key));
+	    DBG_symkey("symkey", base_key));
 	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
 						  target, operation,
 						  key_size, flags);
@@ -367,7 +348,7 @@ PK11SymKey *hash_symkey_to_symkey(const char *prefix,
 	    DBG_log("%s hash(%s) symkey(%p) to symkey - derive(%s)",
 		    prefix, hasher->common.name,
 		    base_key, ckm_to_string(derive));
-	    DBG_symkey("symkey:", base_key));
+	    DBG_symkey("symkey", base_key));
 	PK11SymKey *result = PK11_Derive(base_key, derive, param, target,
 					 operation, key_size);
 	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
@@ -402,7 +383,7 @@ void *hash_symkey_to_bytes(const char *prefix,
 	DBG(DBG_CRYPT,
 	    DBG_log("%s hash(%s) symkey(%p) to bytes",
 		    prefix, hasher->common.name, base_key);
-	    DBG_symkey("symkey:", base_key));
+	    DBG_symkey("symkey", base_key));
 	SECStatus status;
 	SECOidTag hash_alg = nss_hash_oid(hasher);
 	PK11Context *context = PK11_CreateDigestContext(hash_alg);

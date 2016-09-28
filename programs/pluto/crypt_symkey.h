@@ -1,7 +1,7 @@
 /*
  * SYMKEY manipulation functions, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,16 +25,9 @@ struct hash_desc;
 struct encrypt_desc;
 
 /*
- * Log the details of a SYMKEY.
- *
- * PREFIX should include an explicit colon - it's passed to DBG_dump /
- * DBG_dump_chunk and they do not add a colon.
- *
- * DBG_dump_symkey, when allowed, dumps the contents of the symkey
- * (DBG_PRIVATE and not FIPS).
+ * Log some information on a SYMKEY.
  */
 void DBG_symkey(const char *prefix, PK11SymKey *key);
-void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
  * Free any symkey and then stomp on the pointer.

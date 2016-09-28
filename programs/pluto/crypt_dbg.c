@@ -1,7 +1,7 @@
 /*
  * SYMKEY debug functions, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 
 #include "crypto.h"
 #include "lswnss.h"
+#include "lswfips.h"
 
 static PK11SymKey *ephemeral_symkey(int debug)
 {
@@ -41,14 +42,15 @@ static PK11SymKey *ephemeral_symkey(int debug)
 					    NULL, 128/8, NULL);
 		PK11_FreeSlot(slot); /* reference counted */
 	}
-	DBG(debug, DBG_symkey("ephemeral_key:", ephemeral_key));
+	DBG(debug, DBG_symkey("ephemeral_key", ephemeral_key));
 	return ephemeral_key;
 }
 
 /*
  * For testing and debugging; return a byte array containing the symkey.
  */
-void *symkey_bytes(const char *name, PK11SymKey *symkey, void *bytes, int debug)
+static void *symkey_bytes(const char *name, PK11SymKey *symkey,
+			  void *bytes, int debug)
 {
 	SECStatus status;
 	if (symkey == NULL) {
@@ -59,7 +61,7 @@ void *symkey_bytes(const char *name, PK11SymKey *symkey, void *bytes, int debug)
 	size_t sizeof_bytes = sizeof_symkey(symkey);
 	DBG(debug, DBG_log("%s extracting %zd bytes symkey %p into %p",
 			     name, sizeof_bytes, symkey, bytes));
-	DBG(debug, DBG_symkey("symkey:", symkey));
+	DBG(debug, DBG_symkey("symkey", symkey));
 
 	/* get a secret key */
 	PK11SymKey *ephemeral_key = ephemeral_symkey(debug);
@@ -79,7 +81,7 @@ void *symkey_bytes(const char *name, PK11SymKey *symkey, void *bytes, int debug)
 			return NULL;
 		}
 	}
-	DBG(debug, DBG_symkey("slot_key:", slot_key));
+	DBG(debug, DBG_symkey("slot_key", slot_key));
 
 	SECItem wrapped_key;
 	/* Round up the wrapped key length to a 16-byte boundary.  */
@@ -162,4 +164,24 @@ chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey)
 	setchunk(chunk, bytes, sizeof_symkey(symkey));
 	DBG(DBG_PRIVATE, DBG_dump_chunk(prefix, chunk));
 	return chunk;
+}
+
+void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
+{
+	DBG_symkey(prefix, key);
+	if (key != NULL) {
+		if (DBGP(DBG_PRIVATE)) {
+#ifdef FIPS_CHECK
+			if (libreswan_fipsmode()) {
+				DBG_log("%s secured by FIPS", prefix);
+				return;
+			}
+#else
+			void *bytes = symkey_bytes(prefix, key, NULL, 0);
+			/* NULL suppresses the dump header */
+			DBG_dump(NULL, bytes, sizeof_symkey(key));
+			pfreeany(bytes);
+#endif
+		}
+	}
 }

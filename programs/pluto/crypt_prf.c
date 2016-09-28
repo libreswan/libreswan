@@ -203,7 +203,7 @@ PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
 							 prf->hasher, outer);
 	free_any_symkey("prf outer", &outer);
 	pfree(prf);
-	DBG(DBG_CRYPT, DBG_dump_symkey("prf final result", hashed_outer));
+	DBG(DBG_CRYPT, DBG_symkey("prf final result", hashed_outer));
 	return hashed_outer;
 }
 
