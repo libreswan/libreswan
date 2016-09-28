@@ -38,11 +38,9 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 PK11SymKey *chunk_to_symkey(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key);
 
 /*
- * Return contents of a symkey.  If BYTES is non-NULL then store the
- * contents into that buffer.  If the operation fails then NULL or
+ * Return the contents of a symkey.  If the operation fails,
  * "empty_chunk" is returned.
  */
-void *bytes_from_symkey(const char *prefix, PK11SymKey *symkey, void *bytes);
 chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey);
 
 #endif
