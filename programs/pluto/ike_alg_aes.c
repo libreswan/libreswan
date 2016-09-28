@@ -179,12 +179,12 @@ static struct encrypt_desc algo_aes_ctr =
 	.do_crypt =     do_aes_ctr,
 };
 
-bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
-		u_int8_t *wire_iv, size_t wire_iv_size,
-		u_int8_t *aad, size_t aad_size,
-		u_int8_t *text_and_tag,
-		size_t text_size, size_t tag_size,
-		PK11SymKey *sym_key, bool enc)
+static bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
+		       u_int8_t *wire_iv, size_t wire_iv_size,
+		       u_int8_t *aad, size_t aad_size,
+		       u_int8_t *text_and_tag,
+		       size_t text_size, size_t tag_size,
+		       PK11SymKey *sym_key, bool enc)
 {
 	/* See pk11gcmtest.c */
 	bool ok = TRUE;
@@ -428,7 +428,7 @@ void ike_alg_aes_init(void)
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 
-	if (!test_aes_gcm()) {
+	if (!test_aes_gcm(&algo_aes_gcm_16)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_GCM: test failure");
 	}
 	if (ike_alg_register_enc(&algo_aes_gcm_8) != 1)

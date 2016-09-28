@@ -174,14 +174,13 @@ static int test_cbc_op(const struct encrypt_desc *encrypt_desc,
  * https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/NSS_Tech_Notes/nss_tech_note5
  */
 
-static int test_cbc_vector(CK_MECHANISM_TYPE cipher_mechanism,
-			   const struct encrypt_desc *encrypt_desc,
+static int test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			   const struct cbc_test_vector *test)
 {
 	int ok = 1;
 	DBG(DBG_CRYPT, DBG_log("test_cbc_vector: %s", test->description));
 
-	PK11SymKey *sym_key = decode_to_key(cipher_mechanism, test->key);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
 			 sym_key, test->iv,
 			 "plaintext: ", test->plaintext,
@@ -203,14 +202,13 @@ static int test_cbc_vector(CK_MECHANISM_TYPE cipher_mechanism,
 	return ok;
 }
 
-static int test_cbc_vectors(CK_MECHANISM_TYPE cipher_mechanism,
-			    const struct encrypt_desc *encrypt_desc,
+static int test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
 			    const struct cbc_test_vector *tests)
 {
 	int ok = 1;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		if (!test_cbc_vector(cipher_mechanism, encrypt_desc, test)) {
+		if (!test_cbc_vector(encrypt_desc, test)) {
 			ok = 0;
 		}
 	}
@@ -219,12 +217,10 @@ static int test_cbc_vectors(CK_MECHANISM_TYPE cipher_mechanism,
 
 int test_aes_cbc(const struct encrypt_desc *encrypt_desc)
 {
-	return test_cbc_vectors(CKM_AES_CBC, encrypt_desc,
-				aes_cbc_test_vectors);
+	return test_cbc_vectors(encrypt_desc, aes_cbc_test_vectors);
 }
 
 int test_camellia_cbc(const struct encrypt_desc *encrypt_desc)
 {
-	return test_cbc_vectors(CKM_CAMELLIA_CBC, encrypt_desc,
-				camellia_cbc_test_vectors);
+	return test_cbc_vectors(encrypt_desc, camellia_cbc_test_vectors);
 }

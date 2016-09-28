@@ -85,20 +85,14 @@ const struct gcm_test_vector aes_gcm_test_vectors[] = {
 	}
 };
 
-static bool test_gcm_vector(CK_MECHANISM_TYPE cipher_mechanism,
-			    bool (*do_crypt_hash)(u_int8_t *salt, size_t salt_size,
-						  u_int8_t *wire_iv, size_t wire_iv_size,
-						  u_int8_t *aad, size_t aad_size,
-						  u_int8_t *text_and_tag,
-						  size_t text_size, size_t tag_size,
-						  PK11SymKey *key, bool enc),
+static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct gcm_test_vector *test)
 {
 	DBG(DBG_CRYPT, DBG_log("test_gcm_vector: enter"));
 
 	bool ok = TRUE;
 
-	PK11SymKey *sym_key = decode_to_key(cipher_mechanism, test->key);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 
 	chunk_t salted_iv = decode_to_chunk("salted IV", test->salted_iv);
 	chunk_t salt = extract_chunk("salt", salted_iv, 0, salt_size);
@@ -132,12 +126,12 @@ static bool test_gcm_vector(CK_MECHANISM_TYPE cipher_mechanism,
 			    aad.len, salt.len, wire_iv.len, plaintext.len, tag.len);
 		    DBG_dump_chunk("test_gcm_vector: text+tag on call",
 				   text_and_tag));
-		if (!do_crypt_hash(salt.ptr, salt.len,
-				   wire_iv.ptr, wire_iv.len,
-				   aad.ptr, aad.len,
-				   text_and_tag.ptr,
-				   plaintext.len, tag.len,
-				   sym_key, enc)) {
+		if (!encrypt_desc->do_aead_crypt_auth(salt.ptr, salt.len,
+						      wire_iv.ptr, wire_iv.len,
+						      aad.ptr, aad.len,
+						      text_and_tag.ptr,
+						      plaintext.len, tag.len,
+						      sym_key, enc)) {
 			ok = FALSE;
 		}
 		DBG(DBG_CRYPT, DBG_dump_chunk("test_gcm_vector: text+tag on return",
@@ -181,26 +175,20 @@ static bool test_gcm_vector(CK_MECHANISM_TYPE cipher_mechanism,
 	return ok;
 }
 
-static bool test_gcm_vectors(CK_MECHANISM_TYPE cipher_mechanism,
-			     bool (*do_crypt_hash)(u_int8_t *salt, size_t salt_size,
-						   u_int8_t *wire_iv, size_t wire_iv_size,
-						   u_int8_t *aad, size_t aad_size,
-						   u_int8_t *text_and_tag,
-						   size_t text_size, size_t tag_size,
-						   PK11SymKey *key, bool enc),
+static bool test_gcm_vectors(const struct encrypt_desc *encrypt_desc,
 			     const struct gcm_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {
-		if (!test_gcm_vector(cipher_mechanism, do_crypt_hash, test)) {
+		if (!test_gcm_vector(encrypt_desc, test)) {
 			ok = FALSE;
 		}
 	}
 	return ok;
 }
 
-bool test_aes_gcm(void)
+bool test_aes_gcm(const struct encrypt_desc *encrypt_desc)
 {
-	return test_gcm_vectors(CKM_AES_GCM, do_aes_gcm, aes_gcm_test_vectors);
+	return test_gcm_vectors(encrypt_desc, aes_gcm_test_vectors);
 }

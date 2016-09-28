@@ -24,6 +24,7 @@
 #include "pk11pub.h"
 
 #include "crypt_dbg.h"
+#include "crypt_symkey.h"
 #include "test_buffer.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
@@ -144,19 +145,16 @@ chunk_t extract_chunk(const char *prefix, const chunk_t input, size_t offset, si
 }
 
 /*
- * Turn the raw key into a SECItem and then SymKey.
- *
- * Since slots are referenced counted and ImportSymKey adds a
- * reference, immediate freeing of the local slot is possible.
- *
- * ImportSymKey makes a copy of the key chunk so that can also be
- * released.
+ * Turn the raw key into SymKey.
  */
-PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism,
+PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("key", encoded_key);
-	PK11SymKey *sym_key = chunk_to_symkey(cipher_mechanism, raw_key);
+	PK11SymKey *tmp = chunk_to_symkey(CKM_DH_PKCS_DERIVE, raw_key);
+	PK11SymKey *symkey = encrypt_key_from_symkey_bytes(tmp, encrypt_desc,
+							   0, raw_key.len);
 	freeanychunk(raw_key);
-	return sym_key;
+	free_any_symkey("tmp", &tmp);
+	return symkey;
 }
