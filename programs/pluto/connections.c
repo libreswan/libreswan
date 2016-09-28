@@ -834,7 +834,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(),
 				     FALSE) != secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired/invalid",
+		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired or not yet valid",
 		       which, name);
 		CERT_DestroyCertificate(cert);
 		return;
