@@ -144,7 +144,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct hash_desc *hasher,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat)
 {
-	if (PK11_GetKeyLength(skeyid_e) >= required_keymat) {
+	if (sizeof_symkey(skeyid_e) >= required_keymat) {
 		return encrypt_key_from_symkey_bytes(skeyid_e, encrypter, 0,
 						     required_keymat);
 	}
@@ -160,8 +160,8 @@ static PK11SymKey *appendix_b_keymat_e(const struct hash_desc *hasher,
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_k = key_from_symkey_bytes(keymat, 0, PK11_GetKeyLength(keymat));
-	while (PK11_GetKeyLength(keymat) < required_keymat) {
+	PK11SymKey *old_k = key_from_symkey_bytes(keymat, 0, sizeof_symkey(keymat));
+	while (sizeof_symkey(keymat) < required_keymat) {
 		/* Kn = prf(skeyid_e, Kn-1) */
 		struct crypt_prf *prf = crypt_prf_init("SKEYID_e", hasher, skeyid_e);
 		crypt_prf_init_symkey("SKEYID_e", prf, skeyid_e);

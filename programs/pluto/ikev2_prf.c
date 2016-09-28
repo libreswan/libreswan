@@ -288,8 +288,8 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, PK11_GetKeyLength(prfplus));
-	while (PK11_GetKeyLength(prfplus) < required_keymat) {
+	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, sizeof_symkey(prfplus));
+	while (sizeof_symkey(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init("prf+N",
 						       hasher, key);

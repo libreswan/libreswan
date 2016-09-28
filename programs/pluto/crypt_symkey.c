@@ -78,6 +78,15 @@ void free_any_symkey(const char *prefix, PK11SymKey **key)
 	*key = NULL;
 }
 
+size_t sizeof_symkey(PK11SymKey *key)
+{
+	if (key == NULL) {
+		return 0;
+	} else {
+		return PK11_GetKeyLength(key);
+	}
+}
+
 void DBG_symkey(const char *prefix, PK11SymKey *key)
 {
 	if (key == NULL) {
@@ -85,10 +94,10 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s key is NULL", prefix);
+		DBG_log("%s key: NULL", prefix);
 	} else {
-		DBG_log("%s key(%p) length(%d) type/mechanism(%s 0x%08x)",
-			prefix, key, PK11_GetKeyLength(key),
+		DBG_log("%s key: %p, size: %zd bytes, type/mechanism: %s (0x%08x)",
+			prefix, key, sizeof_symkey(key),
 			ckm_to_string(PK11_GetMechanism(key)),
 			(int)PK11_GetMechanism(key));
 	}
@@ -106,7 +115,7 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 			}
 #else
 			void *bytes = symkey_bytes(prefix, key, NULL, 0);
-			DBG_dump(prefix, bytes, PK11_GetKeyLength(key));
+			DBG_dump(prefix, bytes, sizeof_symkey(key));
 			pfreeany(bytes);
 #endif
 		}

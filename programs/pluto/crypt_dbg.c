@@ -56,7 +56,7 @@ void *symkey_bytes(const char *name, PK11SymKey *symkey, void *bytes, int debug)
 		return NULL;
 	}
 
-	size_t sizeof_bytes = PK11_GetKeyLength(symkey);
+	size_t sizeof_bytes = sizeof_symkey(symkey);
 	DBG(debug, DBG_log("%s extracting %zd bytes symkey %p into %p",
 			     name, sizeof_bytes, symkey, bytes));
 	DBG(debug, DBG_symkey("symkey:", symkey));
@@ -148,7 +148,7 @@ void *bytes_from_symkey(const char *prefix, PK11SymKey *symkey, void *bytes)
 	if (bytes == NULL) {
 		return NULL;
 	}
-	DBG(DBG_PRIVATE, DBG_dump(prefix, bytes, PK11_GetKeyLength(symkey)));
+	DBG(DBG_PRIVATE, DBG_dump(prefix, bytes, sizeof_symkey(symkey)));
 	return bytes;
 }
 
@@ -159,7 +159,7 @@ chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey)
 		return empty_chunk;
 	}
 	chunk_t chunk;
-	setchunk(chunk, bytes, PK11_GetKeyLength(symkey));
+	setchunk(chunk, bytes, sizeof_symkey(symkey));
 	DBG(DBG_PRIVATE, DBG_dump_chunk(prefix, chunk));
 	return chunk;
 }

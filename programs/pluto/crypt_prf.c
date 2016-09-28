@@ -79,8 +79,8 @@ static void update_key(struct crypt_prf *prf, PK11SymKey *key)
 
 void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key)
 {
-	DBG(DBG_CRYPT, DBG_log("%s prf: init symkey %s %p (length %d)",
-			       prf->name, name, key, PK11_GetKeyLength(key)));
+	DBG(DBG_CRYPT, DBG_log("%s prf: init symkey %s %p (size %zd)",
+			       prf->name, name, key, sizeof_symkey(key)));
 	if (prf->key == NULL) {
 		prf->we_own_key = FALSE;
 		prf->key = key;
@@ -113,17 +113,17 @@ void crypt_prf_update(struct crypt_prf *prf)
 	passert(prf->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
 
 	/* If the key is too big, re-hash it down to size. */
-	if (PK11_GetKeyLength(prf->key) > prf->hasher->hash_block_size) {
+	if (sizeof_symkey(prf->key) > prf->hasher->hash_block_size) {
 		update_key(prf, hash_symkey_to_symkey("prf hash to size:",
 						      prf->hasher, prf->key));
 	}
 
 	/* If the key is too small, pad it. */
-	if (PK11_GetKeyLength(prf->key) < prf->hasher->hash_block_size) {
+	if (sizeof_symkey(prf->key) < prf->hasher->hash_block_size) {
 		/* pad it to block_size. */
 		static /*const*/ unsigned char z[MAX_HMAC_BLOCKSIZE] = { 0 };
 		chunk_t hmac_pad_prf = { z,
-			prf->hasher->hash_block_size - PK11_GetKeyLength(prf->key) };
+			prf->hasher->hash_block_size - sizeof_symkey(prf->key) };
 
 		update_key(prf, concat_symkey_chunk(prf->hasher, prf->key,
 						    hmac_pad_prf));
@@ -149,9 +149,9 @@ void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
 void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
 			     PK11SymKey *update)
 {
-	DBG(DBG_CRYPT, DBG_log("%s prf: update symkey %s %p (length %d)",
+	DBG(DBG_CRYPT, DBG_log("%s prf: update symkey %s %p (size %zd)",
 			       prf->name, name, update,
-			       PK11_GetKeyLength(update)));
+			       sizeof_symkey(update)));
 	append_symkey_symkey(prf->hasher, &(prf->inner), update);
 }
 

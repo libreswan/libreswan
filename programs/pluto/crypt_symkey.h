@@ -42,6 +42,15 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 void free_any_symkey(const char *prefix, PK11SymKey **key);
 
 /*
+ * Length of a symkey in bytes.
+ *
+ * If KEY is NULL, return 0 (and hopefully not dump core).  (if we're
+ * not allowed to know the length of the key then this will also
+ * return 0).
+ */
+size_t sizeof_symkey(PK11SymKey *key);
+
+/*
  * Use SCRATCH key as a secure starting point for creating the key
  * from the raw bytes, or chunk.
  */
