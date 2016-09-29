@@ -22,6 +22,9 @@ webdir=$(dirname $0)
 branch=$(${webdir}/gime-git-branch.sh ${repodir})
 start=$(date -u -Iseconds)
 
+# Make certain that origin is up-to-date.
+${webdir}/git-fetch.sh ${repodir} || true
+
 while true ; do
 
     # Start with the current top-of-tree, and then go forward
@@ -37,7 +40,11 @@ while true ; do
 	# The heuristic is trying to identify coding and testsuite
 	# changes; while ignoring infrastructure.
 	if ${webdir}/git-interesting.sh ${repodir} HEAD ; then
+	    ${webdir}/json-pending.sh \
+		     --json ${summarydir}/pending.json \
+		     ${repodir} ${branch}
 	    ${webdir}/publish.sh ${repodir} ${summarydir}
+	    ${webdir}/git-fetch.sh ${repodir} || true
 	fi
 
 	# If there is already a commit pending, advance to that.
@@ -47,19 +54,12 @@ while true ; do
 
     done
 
-    # find some new commits
+    # Nothing new and interesting - the sequence git-fetch,
+    # git-advance... has merged everything in - twiddle thumbs for a
+    # few hours while waiting for the next change to come down the
+    # pipe.
     while true ; do
 
-	# poll the repo's origin, ignoring failures.
-	${webdir}/git-fetch.sh ${repodir} || true
-
-	# Did the fetch pull in some new work?
-	if ${webdir}/git-advance.sh ${repodir} ${branch} ; then
-	    break
-	fi
-
-	# Nothing new; twiddle thumbs for a few hours while we wait
-	# for more changes to come down the pipe.
 	seconds=$(expr 60 \* 60 \* 3)
 	now=$(date +%s)
 	future=$(expr ${now} + ${seconds})
@@ -71,6 +71,14 @@ while true ; do
 		 --date "${date}" \
 		 "idle; will retry $(date -u -d @${future} +%H:%M)"
 	sleep ${seconds}
+
+	# Try again
+	${webdir}/git-fetch.sh ${repodir} || true
+
+	# Did the fetch pull in some new work?
+	if ${webdir}/git-advance.sh ${repodir} ${branch} ; then
+	    break
+	fi
     done
 
 done
