@@ -36,6 +36,27 @@
 #define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
 #define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
 
+/*
+ * IETF has no recommendations
+ * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
+ * We say maximum for either is 1d
+ */
+#define IKE_SA_LIFETIME_DEFAULT secs_per_hour
+#define IKE_SA_LIFETIME_MAXIMUM secs_per_day
+#define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
+#define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
+#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
+
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
+#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
+
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
+#define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
+#define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
+
+#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
+
+
 enum kernel_interface {
 	NO_KERNEL = 1,
 	USE_KLIPS = 2,

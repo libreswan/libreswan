@@ -52,6 +52,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "db_ops.h"
+#include "lswfips.h" /* for libreswan_fipsmode */
 
 #include "nat_traversal.h"
 
@@ -946,7 +947,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		zero(&ta);	/* ??? may not NULL pointer fields */
 
 		/* initialize only optional field in ta */
-		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
+		ta.life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
 
 		if (no_trans_left == 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -1254,13 +1255,11 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val >
-					    OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM)
+					if (val > IKE_SA_LIFETIME_MAXIMUM)
 					{
 						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
-								(long) val,
-								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
-						val = OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM;
+								(long) val, IKE_SA_LIFETIME_MAXIMUM);
+						val = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
 					break;
@@ -1558,7 +1557,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = { SA_LIFE_DURATION_DEFAULT },		/* life_seconds */
+	.life_seconds = { IPSEC_SA_LIFETIME_DEFAULT },		/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -1581,6 +1580,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #endif
 	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
+	unsigned int valmax = IPSEC_SA_LIFETIME_MAXIMUM;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
 		return FALSE;
@@ -1728,9 +1728,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * that val does not exceed
 				 * SA_LIFE_DURATION_MAXIMUM.
 				 */
-				attrs->life_seconds =
-				    val > SA_LIFE_DURATION_MAXIMUM ?
-					deltatime(SA_LIFE_DURATION_MAXIMUM) :
+#ifdef FIPS_CHECK
+				if (libreswan_fipsmode())
+					valmax = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
+#endif
+				attrs->life_seconds = val > valmax ?
+					deltatime(valmax) :
 				    (time_t)val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);

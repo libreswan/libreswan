@@ -990,25 +990,10 @@ enum ikev1_ipsec_attr {
  * SA_LIFE_DURATION_DEFAULT is specified in RFC2407 "The Internet IP
  * Security Domain of Interpretation for ISAKMP" 4.5. It applies when
  * an ISAKMP negotiation does not explicitly specify a life duration.
- * PLUTO_SA_LIFE_DURATION_DEFAULT is specified in pluto(8). It applies
- * when a connection description does not specify --ipseclifetime.
- * The value of SA_LIFE_DURATION_MAXIMUM is our local policy.
  */
 
 #define SA_LIFE_TYPE_SECONDS 1
 #define SA_LIFE_TYPE_KBYTES 2
-
-#define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
-#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
-#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute ) /* our policy */
-#define SA_LIFE_DURATION_MAXIMUM (8 * secs_per_hour) /* FIPS compliant */
-
-#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
-#define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
-#define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
-
-#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
 
 /* Encapsulation Mode attribute */
 
@@ -1057,10 +1042,6 @@ typedef u_int16_t ipsec_auth_t;
 
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
-
-/* XXX These are not IETF constants but pluto constants */
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
 /*
  * Oakley PRF attribute (none defined)

@@ -919,8 +919,8 @@ int main(int argc, char **argv)
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.sa_ike_life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT);
-	msg.sa_ipsec_life_seconds = deltatime(PLUTO_SA_LIFE_DURATION_DEFAULT);
+	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
+	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
@@ -2143,11 +2143,10 @@ int main(int argc, char **argv)
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
 		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
 
-	check_life_time(msg.sa_ike_life_seconds,
-			OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM,
+	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
 			"ikelifetime", &msg);
 
-	check_life_time(msg.sa_ipsec_life_seconds, SA_LIFE_DURATION_MAXIMUM,
+	check_life_time(msg.sa_ipsec_life_seconds, IPSEC_SA_LIFETIME_MAXIMUM,
 			"ipseclifetime", &msg);
 
 	if (deltasecs(msg.dpd_delay) != 0 &&
