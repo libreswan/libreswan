@@ -38,11 +38,7 @@ utilsdir=$(cd ${webdir}/../utils && pwd)
 # confirm that everything is working.
 gitstamp=$(cd ${repodir} ; make showversion)
 gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
-isodate=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev})
-date=$(echo ${isodate} \
-	      | sed \
-		    -e 's/T/-/' \
-		    -e 's/^\([^:]*\):\([^:]*\).*$/\1\2/')
+subject=$(cd ${repodir} ; git show --no-patch --format="%s" HEAD)
 
 destdir=${summarydir}/${gitstamp}
 echo ${destdir}
@@ -51,31 +47,54 @@ mkdir -p ${destdir}
 
 # The status file needs to match status.js
 
-rm -f ${summarydir}/progress.json
-echo [] | jq --arg job ${gitstamp} \
-	     '{ job: $job, log: [] }' \
-	     > ${summarydir}/status.json
+start=$(date -u -Iseconds)
+date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev} \
+	   | sed -e 's/T\([0-9]*:[0-9]*\):.*/ \1/')
 
 status() {
-    jq --arg status "$*" \
-       '.log += [{ date: (now|todateiso8601), status: $status }]' \
-       < ${summarydir}/status.json \
-       > ${summarydir}/status.new
-    mv ${summarydir}/status.new ${summarydir}/status.json
+    ${webdir}/json-status.sh \
+	     --json ${summarydir}/status.json \
+	     --job "${date} - ${gitrev}" \
+	     --start "${start}" \
+	     --date "$(date -u -Iseconds)" \
+	     "${subject} ($*)"
 }
 
 status "started"
 
 
-# Rebuild/run; but only if previous attempt didn't crash badly.
-for target in distclean kvm-install kvm-retest kvm-shutdown ; do
-    ok=${destdir}/make-${target}.ok
-    status "run 'make ${target}'"
-    if test ! -r ${ok} ; then
-	( cd ${repodir} ; make ${target} )
+# If not already done, set up for a test run.
+
+status_make() {
+    status "run 'make $@'"
+    make -C ${repodir} "$@"
+}
+
+for target in distclean kvm-install ; do
+    ok=${destdir}/${target}.ok
+    if test ! -r "${ok}" ; then
+	status_make ${target}
 	touch ${ok}
     fi
 done
+
+
+# Because the make is in a pipeline its status is missed, get around
+# it by testing for ok.
+
+ok=${destdir}/make-kvm-test.ok
+if test ! -r "${ok}" ; then
+    (
+	status_make kvm-test
+	touch ${ok}
+    ) | awk -v script="${webdir}/json-status.sh --json ${summarydir}/status.json --job '${date} - ${gitrev}' --start '${start}' '${subject}'" \
+	    -f ${webdir}/publish-status.awk
+    test -r ${destdir}/make-kvm-test.ok
+fi
+
+
+# always shutdown
+status_make kvm-shutdown
 
 
 # Copy over all the tests.
