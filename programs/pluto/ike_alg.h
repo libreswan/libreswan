@@ -143,15 +143,12 @@ extern bool ike_alg_register_hash(struct hash_desc *a);
 extern const struct ike_alg *ikev1_alg_find(unsigned algo_type,
 			     unsigned algo_id);
 
-static __inline__ const struct hash_desc *ike_alg_get_hasher(int alg)
-{
-	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
-}
-
 static __inline__ const struct encrypt_desc *ike_alg_get_encrypter(int alg)
 {
 	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
+
+const struct hash_desc *ikev1_alg_get_hasher(int alg);
 
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 const struct hash_desc *ikev2_alg_get_hasher(int alg);

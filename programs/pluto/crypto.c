@@ -352,16 +352,6 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
 }
 
 /* hash and prf routines */
-/*==========================================================
- *
- *  ike_alg linked list
- *
- *==========================================================
- */
-const struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
-{
-	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
-}
 
 const struct encrypt_desc *crypto_get_encrypter(int alg)
 {

@@ -74,7 +74,7 @@ bool ike_alg_enc_present(int ealg)
 /*	check if IKE hash algo is present */
 bool ike_alg_hash_present(int halg)
 {
-	const struct hash_desc *hash_desc = ike_alg_get_hasher(halg);
+	const struct hash_desc *hash_desc = ikev1_alg_get_hasher(halg);
 
 	return hash_desc != NULL && hash_desc->hash_digest_len != 0;
 }
@@ -183,6 +183,11 @@ const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 			break;
 	}
 	return e;
+}
+
+const struct hash_desc *ikev1_alg_get_hasher(int alg)
+{
+	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
 }
 
 static const struct ike_alg *ikev2_alg_find(unsigned algo_type,
