@@ -1452,8 +1452,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
-				const struct encrypt_desc * encrypter = (const struct encrypt_desc *)
-					ikev2_alg_find(IKE_ALG_ENCRYPT, transform->id);
+				const struct encrypt_desc * encrypter =
+					ikev2_alg_get_encrypter(transform->id);
 				if (encrypter == NULL) {
 					/*
 					 * For moment assume that this
@@ -1461,7 +1461,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
 						    ta.encrypt));
 				}
 				ta.encrypt = transform->id;
