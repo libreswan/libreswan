@@ -185,8 +185,8 @@ const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 	return e;
 }
 
-const struct ike_alg *ikev2_alg_find(unsigned algo_type,
-				   enum ikev2_trans_type_encr algo_v2id)
+static const struct ike_alg *ikev2_alg_find(unsigned algo_type,
+					    enum ikev2_trans_type_encr algo_v2id)
 {
 	const struct ike_alg *e = ike_alg_base[algo_type];
 
