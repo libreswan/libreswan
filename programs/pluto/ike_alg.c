@@ -215,6 +215,11 @@ const struct hash_desc *ikev2_alg_get_hasher(int id)
 	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_HASH, id);
 }
 
+const struct hash_desc *ikev2_alg_get_integ(int id)
+{
+	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_INTEG, id);
+}
+
 /*
  *      Main "raw" ike_alg list adding function
  */

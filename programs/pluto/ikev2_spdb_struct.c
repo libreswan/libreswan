@@ -1501,8 +1501,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 					break;
 				}
-				const struct hash_desc *integ_hasher = (const struct hash_desc *)
-					ikev2_alg_find(IKE_ALG_INTEG, transform->id);
+				const struct hash_desc *integ_hasher =
+					ikev2_alg_get_integ(transform->id);
 				if (integ_hasher == NULL) {
 					/*
 					 * For moment assume that this
@@ -1510,7 +1510,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_integ(%d) failed, assuming ESP/AH",
 						    ta.integ_hash));
 				}
 				ta.integ_hash = transform->id;
