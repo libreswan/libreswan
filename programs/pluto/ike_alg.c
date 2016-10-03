@@ -172,7 +172,8 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  *      this is also used in ikev2 despite name :/
  */
-static const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
+static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
+					    unsigned algo_id)
 {
 	const struct ike_alg *e;
 
@@ -193,7 +194,7 @@ const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
-static const struct ike_alg *ikev2_alg_find(unsigned algo_type,
+static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
 					    enum ikev2_trans_type_encr algo_v2id)
 {
 	const struct ike_alg *e = ike_alg_base[algo_type];

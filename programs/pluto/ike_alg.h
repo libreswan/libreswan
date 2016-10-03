@@ -8,13 +8,26 @@
 
 struct connection;	/* forward declaration */
 
+/*
+ *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
+ *	here with other name as a way to assure that the
+ *	algorithm hook type is supported (detected at compile time)
+ */
+enum ike_alg_type {
+	IKE_ALG_ENCRYPT,
+	IKE_ALG_HASH,
+	IKE_ALG_INTEG,
+};
+#define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
+
+
 /* common prefix for struct encrypt_desc and struct hash_desc
  * Read-only except for name and algo_next.
  */
 struct ike_alg {
 	const char *name;	/* note: overwritten sometimes */
 	const char *const officname;
-	const u_int16_t algo_type;
+	const enum ike_alg_type algo_type;
 	const u_int16_t algo_id;	/* either hash or enc algo id */
 	const u_int16_t algo_v2id;	/* either hash or enc algo id */
 	const struct ike_alg *algo_next;
@@ -128,14 +141,8 @@ extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int 
 		      struct alg_info_ike *alg_info_ike);
 
 /*
- *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
- *	here with other name as a way to assure that the
- *	algorithm hook type is supported (detected at compile time)
+ * Used by IKE_EALG_FOR_EACH() and IKE_HALG_FOR_EACH.
  */
-#define IKE_ALG_ENCRYPT 0
-#define IKE_ALG_HASH    1
-#define IKE_ALG_INTEG   2
-#define IKE_ALG_ROOF	3
 extern const struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
 extern void ike_alg_add(struct ike_alg *);
 extern bool ike_alg_register_enc(struct encrypt_desc *e);
