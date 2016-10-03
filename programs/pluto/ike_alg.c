@@ -174,7 +174,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  *      this is also used in ikev2 despite name :/
  */
-const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
+static const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 {
 	const struct ike_alg *e;
 
