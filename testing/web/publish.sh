@@ -70,7 +70,7 @@ status_make() {
     make -C ${repodir} "$@"
 }
 
-for target in distclean kvm-install ; do
+for target in distclean kvm-install kvm-keys ; do
     ok=${destdir}/${target}.ok
     if test ! -r "${ok}" ; then
 	status_make ${target}
