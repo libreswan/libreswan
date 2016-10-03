@@ -84,11 +84,15 @@ done
 
 ok=${destdir}/make-kvm-test.ok
 if test ! -r "${ok}" ; then
+    # Need to double escape double quotes in strings so that they make
+    # it through to json-status.sh invoked by publish-status.awk.  The
+    # right tool here might just be perl :-(
+    qsubject=$(echo "${subject}" | sed -e 's;";\\\\";')
+    script="${webdir}/json-status.sh --json ${summarydir}/status.json --job \"${date} - ${gitrev}\" --start ${start} \"${qsubject}\""
     (
 	status_make kvm-test
 	touch ${ok}
-    ) | awk -v script="${webdir}/json-status.sh --json ${summarydir}/status.json --job '${date} - ${gitrev}' --start '${start}' '${subject}'" \
-	    -f ${webdir}/publish-status.awk
+    ) | awk -v script="${script}" -f ${webdir}/publish-status.awk
     test -r ${destdir}/make-kvm-test.ok
 fi
 
