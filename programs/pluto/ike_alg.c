@@ -66,7 +66,7 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 
 bool ike_alg_enc_present(int ealg)
 {
-	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
 
 	return enc_desc != NULL && enc_desc->enc_blocksize != 0;
 }
@@ -84,7 +84,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		    const char **errp, char *ugh_buf, size_t ugh_buf_len)
 {
 	int ret = TRUE;
-	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
 
 	passert(ugh_buf_len != 0);
 	if (enc_desc == NULL) {
@@ -188,6 +188,11 @@ const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 const struct hash_desc *ikev1_alg_get_hasher(int alg)
 {
 	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
+}
+
+const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
+{
+	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
 static const struct ike_alg *ikev2_alg_find(unsigned algo_type,

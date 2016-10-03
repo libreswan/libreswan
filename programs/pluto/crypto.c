@@ -351,13 +351,6 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
 	do_3des_nss(buf, buf_len, key, iv, enc);
 }
 
-/* hash and prf routines */
-
-const struct encrypt_desc *crypto_get_encrypter(int alg)
-{
-	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
-}
-
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 			u_int8_t *buf, size_t size, struct state *st)
 {

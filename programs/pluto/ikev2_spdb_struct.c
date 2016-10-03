@@ -1881,7 +1881,8 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			.propnum = proposals->roof,
 		};
 
-		const struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
+		/* ike_ealg is IKEv1! */
+		const struct encrypt_desc *ealg = ikev1_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg == NULL) {
 			if (ike_info->ike_ealg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);

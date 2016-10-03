@@ -1039,14 +1039,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						   sizeof(ugh_buf))) {
 					/* if (ike_alg_enc_present(val)) { */
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					break;
 
 				case OAKLEY_DES_CBC:
@@ -1501,7 +1499,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = crypto_get_encrypter(ta.encrypt);
+	ta.encrypter = ikev1_alg_get_encrypter(ta.encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
