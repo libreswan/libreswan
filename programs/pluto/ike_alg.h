@@ -157,6 +157,7 @@ static __inline__ const struct encrypt_desc *ike_alg_get_encrypter(int alg)
 }
 
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
+const struct hash_desc *ikev2_alg_get_hasher(int alg);
 
 extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						  lset_t policy);

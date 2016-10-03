@@ -210,6 +210,11 @@ const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
 	return (const struct encrypt_desc *) ikev2_alg_find(IKE_ALG_ENCRYPT, id);
 }
 
+const struct hash_desc *ikev2_alg_get_hasher(int id)
+{
+	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_HASH, id);
+}
+
 /*
  *      Main "raw" ike_alg list adding function
  */
