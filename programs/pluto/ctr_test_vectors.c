@@ -195,14 +195,13 @@ static int test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-static int test_ctr_vector(CK_MECHANISM_TYPE cipher_mechanism,
-			   const struct encrypt_desc *encrypt_desc,
+static int test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 			   const struct ctr_test_vector *test)
 {
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s", test->description));
 	int ok = 1;
 
-	PK11SymKey *sym_key = decode_to_key(cipher_mechanism, test->key);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 	if (!test_ctr_op(encrypt_desc, test->description, 1, sym_key,
 			 test->cb, test->output_cb,
 			 "Plaintext", test->plaintext,
@@ -224,14 +223,13 @@ static int test_ctr_vector(CK_MECHANISM_TYPE cipher_mechanism,
 	return ok;
 }
 
-static int test_ctr_vectors(CK_MECHANISM_TYPE cipher_mechanism,
-			    const struct encrypt_desc *encrypt_desc,
+static int test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
 			    const struct ctr_test_vector *tests)
 {
 	int ok = 1;
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		if (!test_ctr_vector(cipher_mechanism, encrypt_desc, test)) {
+		if (!test_ctr_vector(encrypt_desc, test)) {
 			ok = 0;
 		}
 	}
@@ -240,5 +238,5 @@ static int test_ctr_vectors(CK_MECHANISM_TYPE cipher_mechanism,
 
 int test_aes_ctr(const struct encrypt_desc *encrypt_desc)
 {
-	return test_ctr_vectors(CKM_AES_CTR, encrypt_desc, aes_ctr_test_vectors);
+	return test_ctr_vectors(encrypt_desc, aes_ctr_test_vectors);
 }

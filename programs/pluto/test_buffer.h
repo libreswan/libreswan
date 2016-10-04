@@ -24,4 +24,6 @@ int compare_chunk(const char *prefix,
 chunk_t extract_chunk(const char *prefix, chunk_t input,
 		      size_t offset, size_t length);
 
-PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism, const char *string);
+struct encrypt_desc;
+
+PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string);

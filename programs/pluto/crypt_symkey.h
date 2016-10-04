@@ -121,22 +121,4 @@ void *hash_symkey_to_bytes(const char *prefix,
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
 
-
-/*
- * Low level primitives.
- */
-PK11SymKey *merge_symkey_bytes(const char *prefix,
-			       PK11SymKey *base_key,
-			       const void *bytes, size_t sizeof_bytes,
-			       CK_MECHANISM_TYPE derive,
-			       CK_MECHANISM_TYPE target);
-PK11SymKey *merge_symkey_symkey(const char *prefix,
-			       PK11SymKey *base_key, PK11SymKey *key,
-				CK_MECHANISM_TYPE derive,
-				CK_MECHANISM_TYPE target);
-PK11SymKey *symkey_from_symkey(const char *prefix,
-			       PK11SymKey *base_key,
-			       CK_MECHANISM_TYPE target, CK_FLAGS flags,
-			       size_t next_byte, size_t key_size);
-
 #endif

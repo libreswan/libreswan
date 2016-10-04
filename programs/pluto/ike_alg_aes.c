@@ -5,7 +5,7 @@
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2014-2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014-2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,7 +60,7 @@ static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
 static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 		       u_int8_t *iv, bool enc);
 
-struct encrypt_desc algo_aes_cbc =
+static struct encrypt_desc algo_aes_cbc =
 {
 	.common = {
 		.name = "aes",
@@ -158,7 +158,7 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
-struct encrypt_desc algo_aes_ctr =
+static struct encrypt_desc algo_aes_ctr =
 {
 	.common = {
 		.name = "aes_ctr",
@@ -179,12 +179,12 @@ struct encrypt_desc algo_aes_ctr =
 	.do_crypt =     do_aes_ctr,
 };
 
-bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
-		u_int8_t *wire_iv, size_t wire_iv_size,
-		u_int8_t *aad, size_t aad_size,
-		u_int8_t *text_and_tag,
-		size_t text_size, size_t tag_size,
-		PK11SymKey *sym_key, bool enc)
+static bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
+		       u_int8_t *wire_iv, size_t wire_iv_size,
+		       u_int8_t *aad, size_t aad_size,
+		       u_int8_t *text_and_tag,
+		       size_t text_size, size_t tag_size,
+		       PK11SymKey *sym_key, bool enc)
 {
 	/* See pk11gcmtest.c */
 	bool ok = TRUE;
@@ -428,7 +428,7 @@ void ike_alg_aes_init(void)
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 
-	if (!test_aes_gcm()) {
+	if (!test_aes_gcm(&algo_aes_gcm_16)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_GCM: test failure");
 	}
 	if (ike_alg_register_enc(&algo_aes_gcm_8) != 1)

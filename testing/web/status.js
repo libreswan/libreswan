@@ -10,7 +10,7 @@ function status(div_id, status_json) {
 	    })
 
 	    queue.awaitAll(function(error, results) {
-		var titles = [ "Directory", "Job", "Date", "Status" ]
+		var titles = [ "Directory", "Job", "Started", "Last Update", "Details" ]
 		values = []
 		if (error) {
 		    values.push(["error", files])
@@ -19,13 +19,13 @@ function status(div_id, status_json) {
 			var status = results[i]
 			var directory = status_files[i].match("(.*)/")[1]
 			// should be table within table
-			var row = [ directory, status.job ]
-			for (var l = status.log.length - 1; l >= 0; l--) {
-			    row.push(status.log[l].date)
-			    row.push(status.log[l].status)
-			    values.push(row)
-			    row = ["",""]
-			}
+			values.push([
+			    directory,
+			    status.job,
+			    lsw_date2iso(new Date(status.start)),
+			    lsw_date2iso(new Date(status.date)),
+			    status.details
+			])
 		    }
 		}
 

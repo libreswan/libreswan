@@ -152,8 +152,10 @@ static int nss_err_to_revfail(CERTVerifyLogNode *node)
 		return ret;
 	}
 
-	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification : %s",
-		    node->cert->subjectName, nss_err_str(node->error));
+	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
+		    node->cert->subjectName);
+	loglog(RC_LOG_SERIOUS, "ERROR: %s",
+		    nss_err_str(node->error));
 
 	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
 		ret = VERIFY_RET_REVOKED;
