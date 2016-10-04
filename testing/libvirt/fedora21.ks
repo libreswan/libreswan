@@ -65,6 +65,7 @@ kernel-headers
 kernel-modules
 kernel-modules-extra
 libcap-ng-devel
+libfaketime
 libevent-devel
 libselinux-devel
 lsof
@@ -151,6 +152,7 @@ yum install -y 2>&1 \
     hping3 \
     ipsec-tools \
     libcap-ng-devel \
+    libfaketime \
     libevent-devel \
     nc \
     nc6 \

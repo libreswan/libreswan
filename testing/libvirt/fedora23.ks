@@ -67,6 +67,7 @@ kernel-headers
 kernel-modules
 kernel-modules-extra
 libcap-ng-devel
+libfaketime
 libevent-devel
 libselinux-devel
 lsof
