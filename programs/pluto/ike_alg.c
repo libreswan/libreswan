@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,6 +47,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_3DES
+#include "ike_alg_3des.h"
+#endif
 
 /*==========================================================
 *
@@ -445,4 +449,24 @@ void ike_alg_show_status(void)
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */
+}
+
+/*
+ * Validate and register IKE algorithm objects
+ */
+
+static struct ike_alg *algorithms[] = {
+#ifdef USE_3DES
+	&ike_alg_encrypt_3des_cbc.common,
+#endif
+};
+
+void ike_alg_init(void)
+{
+	for (unsigned i = 0; i < elemsof(algorithms); i++) {
+		struct ike_alg *alg = algorithms[i];
+		DBG(DBG_CRYPT, DBG_log("adding algorithm %s, id: %d, v2id: %d",
+				       alg->name, alg->algo_id, alg->algo_v2id));
+		ike_alg_add(alg);
+	}
 }

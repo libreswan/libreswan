@@ -405,6 +405,7 @@ USE_LIBCURL?=true
 # the same scrutiny that AES and 3DES have received, but offers possibilities
 # of switching away from AES/3DES quickly.
 USE_EXTRACRYPTO?=true
+USE_3DES ?= true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false

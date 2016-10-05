@@ -135,6 +135,7 @@ extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int 
 extern void ike_alg_add(struct ike_alg *);
 extern bool ike_alg_register_enc(struct encrypt_desc *e);
 extern bool ike_alg_register_hash(struct hash_desc *a);
+void ike_alg_init(void);
 
 const struct encrypt_desc *ikev1_alg_get_encrypter(int alg);
 const struct hash_desc *ikev1_alg_get_hasher(int alg);
