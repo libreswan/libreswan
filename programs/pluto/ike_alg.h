@@ -167,10 +167,6 @@ extern struct db_sa *kernel_alg_makedb(lset_t policy,
 
 /* exports from ike_alg_*.c */
 
-#ifdef USE_TWOFISH
-extern void ike_alg_twofish_init(void);
-#endif
-
 #ifdef USE_AES
 extern void ike_alg_aes_init(void);
 #endif

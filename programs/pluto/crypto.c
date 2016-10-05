@@ -165,11 +165,6 @@ void init_crypto(void)
 	bool fips = FALSE;
 #endif
 
-#ifdef USE_TWOFISH
-	if (!fips)
-		ike_alg_twofish_init();
-#endif
-
 	ike_alg_init();
 
 #ifdef USE_AES

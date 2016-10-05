@@ -48,6 +48,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_TWOFISH
+#include "ike_alg_twofish.h"
+#endif
 #ifdef USE_SERPENT
 #include "ike_alg_serpent.h"
 #endif
@@ -467,6 +470,10 @@ void ike_alg_show_status(void)
  */
 
 static struct ike_alg *algorithms[] = {
+#ifdef USE_TWOFISH
+	&ike_alg_encrypt_twofish_ssh.common,
+	&ike_alg_encrypt_twofish_cbc.common,
+#endif
 #ifdef USE_SERPENT
 	&ike_alg_encrypt_serpent_cbc.common,
 #endif
