@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014-2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -160,16 +160,16 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 	}
 };
 
-static int test_ctr_op(const struct encrypt_desc *encrypt_desc,
-		       const char *description, int encrypt,
-		       PK11SymKey *sym_key,
-		       const char *encoded_cb, const char *output_cb,
-		       const char *input_name, const char *input,
-		       const char *output_name, const char *output)
+static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
+			const char *description, int encrypt,
+			PK11SymKey *sym_key,
+			const char *encoded_cb, const char *output_cb,
+			const char *input_name, const char *input,
+			const char *output_name, const char *output)
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
 
-	int ok = 1;
+	bool ok = TRUE;
 	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb);
 	chunk_t tmp = decode_to_chunk(input_name, input);
 	chunk_t expected_output = decode_to_chunk(output_name, output);
@@ -180,11 +180,11 @@ static int test_ctr_op(const struct encrypt_desc *encrypt_desc,
 			       sym_key, cb.ptr, encrypt);
 	if (!compare_chunks(op, expected_output, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: output does not match", description, op));
-		ok = 0;
+		ok = FALSE;
 	}
 	if (!compare_chunks("counter-block", expected_cb, cb)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: counter-block does not match", description, op));
-		ok = 0;
+		ok = FALSE;
 	}
 
 	freeanychunk(cb);
@@ -195,24 +195,24 @@ static int test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-static int test_ctr_vector(const struct encrypt_desc *encrypt_desc,
-			   const struct ctr_test_vector *test)
+static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
+			    const struct ctr_test_vector *test)
 {
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s", test->description));
-	int ok = 1;
+	bool ok = TRUE;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 	if (!test_ctr_op(encrypt_desc, test->description, 1, sym_key,
 			 test->cb, test->output_cb,
 			 "Plaintext", test->plaintext,
 			 "Ciphertext", test->ciphertext)) {
-		ok = 0;
+		ok = FALSE;
 	}
 	if (!test_ctr_op(encrypt_desc, test->description, 0, sym_key,
 			 test->cb, test->output_cb,
 			 "Ciphertext", test->ciphertext,
 			 "Plaintext", test->plaintext)) {
-		ok = 0;
+		ok = FALSE;
 	}
 
 	/* Clean up.  */
@@ -223,20 +223,20 @@ static int test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-static int test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
-			    const struct ctr_test_vector *tests)
+static bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
+			     const struct ctr_test_vector *tests)
 {
-	int ok = 1;
+	bool ok = TRUE;
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		if (!test_ctr_vector(encrypt_desc, test)) {
-			ok = 0;
+			ok = FALSE;
 		}
 	}
 	return ok;
 }
 
-int test_aes_ctr(const struct encrypt_desc *encrypt_desc)
+bool test_aes_ctr(const struct encrypt_desc *encrypt_desc)
 {
 	return test_ctr_vectors(encrypt_desc, aes_ctr_test_vectors);
 }
