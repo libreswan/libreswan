@@ -12,11 +12,11 @@ v3.19 (unreleased)
         keyword: leftvti=address/mask
 * X509: Iterate all X.509 certs and try to fetch their crls [Kim]
 * X509: Start a fetch for CRLs 5 seconds after startup [Kim]
+* X509: log the NSS error when CERT_ImportCerts() fails [Paul]
 * pluto: connection instances need their own reqid [Antony]
          (this resolves multiple clients behind same NAT router issue)
 * pluto: Use a global reqid counter instead of looping every time [Paul]
 * pluto: use sets instead of nested loops for transform processing [Andrew]
-* pluto: log the NSS error when CERT_ImportCerts() fails [Paul]
 * pluto: Prefer not switching connections when possible [Paul/Hugh]
 * pluto: Move unique mark from rw_instantiate() to instantiate() for OE [Paul]
 * pluto: log more information when a bare shunt is missing [Hugh]
