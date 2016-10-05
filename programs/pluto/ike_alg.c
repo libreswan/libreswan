@@ -60,7 +60,7 @@
 	     (A) != NULL;						\
 	     (A) = (A)->algo_next)
 
-const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+static const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
@@ -180,13 +180,11 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
 					    unsigned algo_id)
 {
-	const struct ike_alg *e;
-
-	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
+	IKE_ALG_FOR_EACH(algo_type, e) {
 		if (e->algo_id == algo_id)
-			break;
+			return e;
 	}
-	return e;
+	return NULL;
 }
 
 const struct hash_desc *ikev1_alg_get_hasher(int alg)
@@ -202,13 +200,11 @@ const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
 					    enum ikev2_trans_type_encr algo_v2id)
 {
-	const struct ike_alg *e = ike_alg_base[algo_type];
-
-	for (; e != NULL; e = e->algo_next) {
+	IKE_ALG_FOR_EACH(algo_type, e) {
 		if (e->algo_v2id == algo_v2id)
-			break;
+			return e;
 	}
-	return e;
+	return NULL;
 }
 
 const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
