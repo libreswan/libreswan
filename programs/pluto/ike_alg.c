@@ -47,8 +47,6 @@
 #include "kernel.h"
 #include "plutoalg.h"
 
-#define return_on(var, val) { (var) = (val); goto return_out; }
-
 /*==========================================================
 *
 *       IKE algo list handling
