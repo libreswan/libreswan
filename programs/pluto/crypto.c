@@ -170,11 +170,6 @@ void init_crypto(void)
 		ike_alg_twofish_init();
 #endif
 
-#ifdef USE_SERPENT
-	if (!fips)
-		ike_alg_serpent_init();
-#endif
-
 	ike_alg_init();
 
 #ifdef USE_AES

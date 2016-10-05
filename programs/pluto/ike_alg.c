@@ -48,6 +48,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_SERPENT
+#include "ike_alg_serpent.h"
+#endif
 #ifdef USE_AES
 #include "ike_alg_aes.h"
 #endif
@@ -464,6 +467,9 @@ void ike_alg_show_status(void)
  */
 
 static struct ike_alg *algorithms[] = {
+#ifdef USE_SERPENT
+	&ike_alg_encrypt_serpent_cbc.common,
+#endif
 #ifdef USE_AES
 	&ike_alg_encrypt_aes_cbc.common,
 	&ike_alg_encrypt_aes_ctr.common,
