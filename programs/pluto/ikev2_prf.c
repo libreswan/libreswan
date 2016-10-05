@@ -110,8 +110,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    key_size, salt_size));
 
-	const struct hash_desc *prf_hasher = (struct hash_desc *)
-		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
+	const struct hash_desc *prf_hasher = ikev2_alg_get_hasher(skq->prf_hash);
 	passert(prf_hasher != NULL);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
@@ -132,8 +131,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	int skd_bytes = prf_hasher->hash_key_size;
 	int skp_bytes = prf_hasher->hash_key_size;
-	const struct hash_desc *integ_hasher =
-		(const struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG, skq->integ_hash);
+	const struct hash_desc *integ_hasher = ikev2_alg_get_integ(skq->integ_hash);
 	int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf_hasher, skeyseed_k,

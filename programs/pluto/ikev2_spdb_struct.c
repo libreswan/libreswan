@@ -1452,8 +1452,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
-				const struct encrypt_desc * encrypter = (const struct encrypt_desc *)
-					ikev2_alg_find(IKE_ALG_ENCRYPT, transform->id);
+				const struct encrypt_desc * encrypter =
+					ikev2_alg_get_encrypter(transform->id);
 				if (encrypter == NULL) {
 					/*
 					 * For moment assume that this
@@ -1461,7 +1461,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
 						    ta.encrypt));
 				}
 				ta.encrypt = transform->id;
@@ -1479,8 +1479,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				break;
 			}
 			case IKEv2_TRANS_TYPE_PRF: {
-				const struct hash_desc *prf_hasher = (const struct hash_desc *)
-					ikev2_alg_find(IKE_ALG_HASH, transform->id);
+				const struct hash_desc *prf_hasher =
+					ikev2_alg_get_hasher(transform->id);
 				if (prf_hasher == NULL) {
 					/*
 					 * For moment assume that this
@@ -1488,7 +1488,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_HASH,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_hasher(%d) failed, assuming ESP/AH",
 						    ta.prf_hash));
 				}
 				ta.prf_hash = transform->id;
@@ -1501,8 +1501,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 					break;
 				}
-				const struct hash_desc *integ_hasher = (const struct hash_desc *)
-					ikev2_alg_find(IKE_ALG_INTEG, transform->id);
+				const struct hash_desc *integ_hasher =
+					ikev2_alg_get_integ(transform->id);
 				if (integ_hasher == NULL) {
 					/*
 					 * For moment assume that this
@@ -1510,7 +1510,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_integ(%d) failed, assuming ESP/AH",
 						    ta.integ_hash));
 				}
 				ta.integ_hash = transform->id;
