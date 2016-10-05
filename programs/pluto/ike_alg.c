@@ -34,6 +34,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h"
+#include "lswfips.h"
 
 #include "state.h"
 #include "packet.h"
@@ -464,6 +465,11 @@ static struct ike_alg *algorithms[] = {
 
 void ike_alg_init(void)
 {
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
 	for (unsigned i = 0; i < elemsof(algorithms); i++) {
 		struct ike_alg *alg = algorithms[i];
 		DBG(DBG_CRYPT, DBG_log("adding algorithm %s, id: %d, v2id: %d",
@@ -498,7 +504,15 @@ void ike_alg_init(void)
 			passert(enum_name(ikev2_names[alg->algo_type], alg->algo_v2id));
 		}
 
+		if (fips && !alg->fips) {
+			libreswan_log("Algorithm %s: DISABLED; not FIPS compliant",
+				      alg->name);
+			continue;
+		}
+
 		ike_alg_add(alg);
-		libreswan_log("Algorithm %s: ENABLED", alg->name);
+
+		libreswan_log("Algorithm %s: ENABLED%s", alg->name,
+			      alg->fips ? "; FIPS compliant" : "");
 	}
 }

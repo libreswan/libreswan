@@ -31,6 +31,11 @@ struct ike_alg {
 	const u_int16_t algo_id;	/* either hash or enc algo id */
 	const u_int16_t algo_v2id;	/* either hash or enc algo id */
 	const struct ike_alg *algo_next;
+	/*
+	 * Is this algorithm FIPS approved (i.e., can be enabled in
+	 * FIPS mode)?
+	 */
+	const bool fips;
 };
 
 struct encrypt_desc {
