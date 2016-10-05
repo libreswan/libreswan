@@ -175,11 +175,11 @@ void init_crypto(void)
 		ike_alg_serpent_init();
 #endif
 
+	ike_alg_init();
+
 #ifdef USE_AES
 	ike_alg_aes_init();
 #endif
-
-	ike_alg_init();
 
 #ifdef USE_SHA2
 	ike_alg_sha2_init();

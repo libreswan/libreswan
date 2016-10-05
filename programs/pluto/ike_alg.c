@@ -48,6 +48,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_AES
+#include "ike_alg_aes.h"
+#endif
 #ifdef USE_CAMELLIA
 #include "ike_alg_camellia.h"
 #endif
@@ -461,6 +464,13 @@ void ike_alg_show_status(void)
  */
 
 static struct ike_alg *algorithms[] = {
+#ifdef USE_AES
+	&ike_alg_encrypt_aes_cbc.common,
+	&ike_alg_encrypt_aes_ctr.common,
+	&ike_alg_encrypt_aes_gcm_8.common,
+	&ike_alg_encrypt_aes_gcm_12.common,
+	&ike_alg_encrypt_aes_gcm_16.common,
+#endif
 #ifdef USE_CAMELLIA
 	&ike_alg_encrypt_camellia_cbc.common,
 	&ike_alg_encrypt_camellia_ctr.common,

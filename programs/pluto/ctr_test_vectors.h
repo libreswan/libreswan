@@ -12,4 +12,16 @@
  * for more details.
  */
 
-bool test_aes_ctr(const struct encrypt_desc *encrypt_desc);
+struct ctr_test_vector {
+	/* CK_MECHANISM_TYPE cipher_mechanism; */
+	/* struct encrypt_desc *encrypt_desc; */
+	const char *description;
+	const char *key;
+	const char *cb;
+	const char *plaintext;
+	const char *ciphertext;
+	const char *output_cb;
+};
+
+bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
+		      const struct ctr_test_vector *tests);
