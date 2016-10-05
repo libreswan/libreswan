@@ -48,6 +48,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_CAMELLIA
+#include "ike_alg_camellia.h"
+#endif
 #ifdef USE_3DES
 #include "ike_alg_3des.h"
 #endif
@@ -458,6 +461,10 @@ void ike_alg_show_status(void)
  */
 
 static struct ike_alg *algorithms[] = {
+#ifdef USE_CAMELLIA
+	&ike_alg_encrypt_camellia_cbc.common,
+	&ike_alg_encrypt_camellia_ctr.common,
+#endif
 #ifdef USE_3DES
 	&ike_alg_encrypt_3des_cbc.common,
 #endif
@@ -510,9 +517,16 @@ void ike_alg_init(void)
 			continue;
 		}
 
+		if (alg->do_test && !alg->do_test(alg)) {
+			libreswan_log("Algorithm %s: DISABLED; verification faild",
+				      alg->name);
+			continue;
+		}
+
 		ike_alg_add(alg);
 
-		libreswan_log("Algorithm %s: ENABLED%s", alg->name,
-			      alg->fips ? "; FIPS compliant" : "");
+		libreswan_log("Algorithm %s: ENABLED%s%s", alg->name,
+			      alg->fips ? "; FIPS compliant" : "",
+			      alg->do_test ? "; verified" : "");
 	}
 }

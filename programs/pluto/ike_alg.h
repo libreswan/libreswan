@@ -36,6 +36,11 @@ struct ike_alg {
 	 * FIPS mode)?
 	 */
 	const bool fips;
+	/*
+	 * Test the algorithm.  TRUE indicates validation passed and
+	 * it can be enabled.
+	 */
+	bool (*const do_test)(const struct ike_alg*);
 };
 
 struct encrypt_desc {
@@ -172,10 +177,6 @@ extern void ike_alg_serpent_init(void);
 
 #ifdef USE_AES
 extern void ike_alg_aes_init(void);
-#endif
-
-#ifdef USE_CAMELLIA
-extern void ike_alg_camellia_init(void);
 #endif
 
 #ifdef USE_SHA2

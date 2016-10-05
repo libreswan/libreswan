@@ -179,11 +179,6 @@ void init_crypto(void)
 	ike_alg_aes_init();
 #endif
 
-#ifdef USE_CAMELLIA
-	if (!fips)
-		ike_alg_camellia_init();
-#endif
-
 	ike_alg_init();
 
 #ifdef USE_SHA2

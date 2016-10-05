@@ -27,15 +27,6 @@
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
-struct cbc_test_vector {
-	const char *description;
-	/* mumble something about algorithm setting here. */
-	const char *key;
-	const char *iv;
-	const char *plaintext;
-	const char *ciphertext;
-};
-
 /*
  * Ref: http://tools.ietf.org/html/rfc3602: Test Vectors
  */
@@ -82,45 +73,6 @@ const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		"0f3af07a9a31a9c684db207eb0ef8e4e"
 		"35907aa632c3ffdf868bb7b29d3d46ad"
 		"83ce9f9a102ee99d49a53e87f4c3da55"
-	},
-	{
-		.description = NULL,
-	}
-};
-
-/*
- * https://tools.ietf.org/html/rfc4312
- * https://info.isl.ntt.co.jp/crypt/index.html
- * https://info.isl.ntt.co.jp/crypt/eng/camellia/dl/cryptrec/t_camellia.txt
- */
-const struct cbc_test_vector camellia_cbc_test_vectors[] = {
-	{
-		.description = "Camellia: 16 bytes with 128-bit key",
-		.key = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.plaintext = "0x" "80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.ciphertext = "0x" "07 92 3A 39 EB 0A 81 7D 1C 4D 87 BD B8 2D 1F 1C"
-	},
-	{
-		.description = "Camellia: 16 bytes with 128-bit key",
-		.key = "0x" "00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF",
-		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.plaintext = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 ",
-		.ciphertext = "0x" "14 4D 2B 0F 50 0C 27 B7 EC 2C D1 2D 91 59 6F 37"
-	},
-	{
-		.description = "Camellia: 16 bytes with 256-bit key",
-		.key = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.plaintext = "0x" "80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.ciphertext = "0x" "B0 C6 B8 8A EA 51 8A B0 9E 84 72 48 E9 1B 1B 9D"
-	},
-	{
-		.description = "Camellia: 16 bytes with 256-bit key",
-		.key = "0x" "00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF FF EE DD CC BB AA 99 88 77 66 55 44 33 22 11 00",
-		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-		.plaintext = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01",
-		.ciphertext = "0x" "CC 39 FF EE 18 56 D3 EB 61 02 5E 93 21 9B 65 23 "
 	},
 	{
 		.description = NULL,
@@ -202,8 +154,8 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-static bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
-			     const struct cbc_test_vector *tests)
+bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
+		      const struct cbc_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct cbc_test_vector *test;
@@ -218,9 +170,4 @@ static bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
 bool test_aes_cbc(const struct encrypt_desc *encrypt_desc)
 {
 	return test_cbc_vectors(encrypt_desc, aes_cbc_test_vectors);
-}
-
-bool test_camellia_cbc(const struct encrypt_desc *encrypt_desc)
-{
-	return test_cbc_vectors(encrypt_desc, camellia_cbc_test_vectors);
 }
