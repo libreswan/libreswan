@@ -1039,14 +1039,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						   sizeof(ugh_buf))) {
 					/* if (ike_alg_enc_present(val)) { */
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					break;
 
 				case OAKLEY_DES_CBC:
@@ -1062,12 +1060,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
+					ta.prf_hasher = ikev1_alg_get_hasher(val);
 				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
+					ta.prf_hasher = ikev1_alg_get_hasher(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
@@ -1501,7 +1499,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = crypto_get_encrypter(ta.encrypt);
+	ta.encrypter = ikev1_alg_get_encrypter(ta.encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1514,7 +1512,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf_hasher = crypto_get_hasher(ta.prf_hash);
+	ta.prf_hasher = ikev1_alg_get_hasher(ta.prf_hash);
 	passert(ta.prf_hasher != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
