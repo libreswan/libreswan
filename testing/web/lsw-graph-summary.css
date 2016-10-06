@@ -19,13 +19,13 @@
 }
 
 .failed {
-    fill: blue
-}
-
-.unresolved {
     fill: orange
 }
 
-.untested {
+.unresolved {
     fill: red
+}
+
+.untested {
+    fill: blue
 }

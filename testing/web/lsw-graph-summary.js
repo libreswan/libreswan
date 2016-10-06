@@ -1,11 +1,11 @@
 function lsw_graph_summary(div_id, data) {
 
-    // In date order.
-    data = data.sort(function(l, r) {
-        return l.rank - r.rank
-    })
-
-    var margin = {top: 20, right: 20, bottom: 30, left: 50}
+    var margin = {
+	top: 10,
+	right: 60,
+	bottom: 30,
+	left: 50
+    }
     var width = 960 - margin.left - margin.right
     var height = 500 - margin.top - margin.bottom
 
@@ -61,6 +61,7 @@ function lsw_graph_summary(div_id, data) {
     }
 
     // Overlay scatter plot
+    var radius = 3.5
     var dots = svg
 	.selectAll(".dot")
 	.data(data)
@@ -68,7 +69,7 @@ function lsw_graph_summary(div_id, data) {
     for (var i = 0; i < lsw_result_names.length; i++) {
 	dots.append("circle")
 	    .attr("class", lsw_result_names[i])
-	    .attr("r", 3.5)
+	    .attr("r", radius)
 	    .attr("cx", function(d) { return x(d.date); })
 	    .attr("cy", function(d) { return y(d.totals[i+1]); })
 	    .on("click", function(d) {
@@ -85,4 +86,32 @@ function lsw_graph_summary(div_id, data) {
 		return text
 	    })
     }
+
+    var keys = []
+    for (var i = 0; i < lsw_result_names.length; i++) {
+	keys.push({
+	    name: lsw_result_names[i],
+	    total: data[data.length - 1].totals[i+1],
+	    date: data[data.length - 1].date,
+	    text: (i > 0 ? "+" : "") + lsw_result_names[i]
+	})
+    }
+
+    var enter_keys = svg
+	.selectAll(".key")
+	.data(keys)
+	.enter()
+	.append("text")
+	.attr("class", function(d) {
+	    return d.name
+	})
+	.text(function(d) {
+	    return d.text
+	})
+	.attr("x", function(d) {
+	    return x(d.date) + radius
+	})
+	.attr("y", function(d) {
+	    return y(d.total)
+	})
 }
