@@ -21,7 +21,7 @@ for d in "$@"; do
     echo ${d} >> /dev/stderr
     rev=$(${webdir}/gime-git-rev.sh $(dirname ${d}))
     date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
-    next_rev=$(cd ${repodir} ; git rev-list --first-parent ${rev}..HEAD | tail -n 1)
+    next_rev=$(${webdir}/gime-git-revisions.sh ${repodir} ${rev}..HEAD | head -1)
     next_date=$(test -z "${next_rev}" || ${webdir}/gime-git-date.sh ${repodir} ${next_rev})
     rank=$(${webdir}/gime-git-rank.sh ${repodir} ${rev})
 

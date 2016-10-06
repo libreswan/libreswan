@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014,2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -127,14 +127,14 @@ const struct cbc_test_vector camellia_cbc_test_vectors[] = {
 	}
 };
 
-static int test_cbc_op(const struct encrypt_desc *encrypt_desc,
-		       const char *description, int encrypt,
-		       PK11SymKey *sym_key, const char *encoded_iv,
-		       const char *input_name, const char *input,
-		       const char *output_name, const char *output)
+static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
+			const char *description, int encrypt,
+			PK11SymKey *sym_key, const char *encoded_iv,
+			const char *input_name, const char *input,
+			const char *output_name, const char *output)
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
-	int ok = 1;
+	bool ok = TRUE;
 	chunk_t iv = decode_to_chunk("IV: ", encoded_iv);
 
 	/*
@@ -153,12 +153,12 @@ static int test_cbc_op(const struct encrypt_desc *encrypt_desc,
 
 	if (!compare_chunks(op, expected, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: output does not match", description, op));
-		ok = 0;
+		ok = FALSE;
 	}
 	if (!compare_chunk("updated CBC IV", iv,
 			   expected_iv.ptr + expected_iv.len - iv.len)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: IV does not match", description, op));
-		ok = 0;
+		ok = FALSE;
 	}
 
 	freeanychunk(iv);
@@ -174,10 +174,10 @@ static int test_cbc_op(const struct encrypt_desc *encrypt_desc,
  * https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/NSS_Tech_Notes/nss_tech_note5
  */
 
-static int test_cbc_vector(const struct encrypt_desc *encrypt_desc,
-			   const struct cbc_test_vector *test)
+static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
+			    const struct cbc_test_vector *test)
 {
-	int ok = 1;
+	bool ok = TRUE;
 	DBG(DBG_CRYPT, DBG_log("test_cbc_vector: %s", test->description));
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
@@ -185,13 +185,13 @@ static int test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			 sym_key, test->iv,
 			 "plaintext: ", test->plaintext,
 			 "ciphertext: ", test->ciphertext)) {
-		ok = 0;
+		ok = FALSE;
 	}
 	if (!test_cbc_op(encrypt_desc, test->description, 0,
 			 sym_key, test->iv,
 			 "cipertext: ", test->ciphertext,
 			 "plaintext: ", test->plaintext)) {
-		ok = 0;
+		ok = FALSE;
 	}
 
 	/* Clean up.  */
@@ -202,25 +202,25 @@ static int test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-static int test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
-			    const struct cbc_test_vector *tests)
+static bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
+			     const struct cbc_test_vector *tests)
 {
-	int ok = 1;
+	bool ok = TRUE;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		if (!test_cbc_vector(encrypt_desc, test)) {
-			ok = 0;
+			ok = FALSE;
 		}
 	}
 	return ok;
 }
 
-int test_aes_cbc(const struct encrypt_desc *encrypt_desc)
+bool test_aes_cbc(const struct encrypt_desc *encrypt_desc)
 {
 	return test_cbc_vectors(encrypt_desc, aes_cbc_test_vectors);
 }
 
-int test_camellia_cbc(const struct encrypt_desc *encrypt_desc)
+bool test_camellia_cbc(const struct encrypt_desc *encrypt_desc)
 {
 	return test_cbc_vectors(encrypt_desc, camellia_cbc_test_vectors);
 }

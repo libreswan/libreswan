@@ -15,20 +15,19 @@ fi
 
 set -eu
 
-webdir=$(dirname $0)
 repodir=$1 ; shift
 branch=$1 ; shift
+
+webdir=$(cd $(dirname $0) ; pwd)
 origin=$(${webdir}/gime-git-origin.sh ${repodir} ${branch})
+
+# Where is the branch and where can it go.
+branch_head=$(${webdir}/gime-git-revisions.sh ${repodir} ${branch}^..${branch} | head -1)
+next_head=$(${webdir}/gime-git-revisions.sh ${repodir} HEAD..${branch} | head -1)
+next_origin=$(${webdir}/gime-git-revisions.sh ${repodir} ${branch}..${origin} | head -1)
 
 # Switch to the repo directory; this destroys the above relative paths
 cd ${repodir}
-repodir=
-webdir=
-
-# Where is the branch and where can it go.
-branch_head=$(git rev-list --first-parent ${branch}^..${branch} | head -1)
-next_head=$(git rev-list --first-parent HEAD..${branch} | tail -n 1)
-next_origin=$(git rev-list --first-parent ${branch}..${origin}/${branch} | tail -n 1)
 
 if test "${next_head}" = "${branch_head}"; then
     # Since the next checkout along the branch is the branch HEAD,
@@ -46,4 +45,5 @@ else
     exit 111
 fi
 
-git log HEAD ^HEAD^
+git show HEAD --no-patch
+

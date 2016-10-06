@@ -10,6 +10,7 @@
 
     <script type="text/javascript" src="lsw-date2iso.js"></script>
     <script type="text/javascript" src="lsw-load-summary.js"></script>
+    <script type="text/javascript" src="lsw-load-jobs-table.js"></script>
 
     <link rel="stylesheet" type="text/css" href="summary.css"> </link>
     <script type="text/javascript" src="summary.js"></script>
@@ -18,28 +19,13 @@
     <script type="text/javascript" src="lsw-graph-summary.js"></script>
 
     <script>
-      lsw_load_summary("summary.json", function(json) {
-        lsw_graph_summary("graph", json)
-        summary("summary", json)
-      })
-      // hack up a simple status bar
-      window.addEventListener('load', function() {
-        d3.json("status.json", function(json) {
-          document.getElementById("status")
-            .TidyTable({
-              enableCheckbox : false,
-              enableMenu     : false,
-            }, {
-	      columnTitles : ["Job", "Started", "Last Update", "Details", "Current Time"],
-              columnValues : [[
-                json.job,
-                lsw_date2iso(new Date(json.start)),
-                lsw_date2iso(new Date(json.date)),
-                json.details,
-                lsw_date2iso(new Date())]],
-            })
+        window.addEventListener('load', function() {
+           lsw_load_summary("summary.json", function(json) {
+               lsw_graph_summary("graph", json)
+               summary("summary", json)
+           })
+           lsw_load_jobs_table("jobs", [""]);
         })
-      })
     </script>
 
   </head>
@@ -47,7 +33,7 @@
     <center>
       <div id="graph"></div>
       <br/>
-      <div id="status"></div>
+      <div id="jobs"></div>
       <br/>
       <div id="summary"></div>
     </center>
