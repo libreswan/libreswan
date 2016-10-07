@@ -122,14 +122,6 @@ extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy)
 extern void ike_alg_show_status(void);
 extern void ike_alg_show_connection(const struct connection *c, const char *instance);
 
-/* ??? a is type struct ike_alg * but should be struct encrypt_desc * */
-#define IKE_EALG_FOR_EACH(a) \
-	for ((a) = ike_alg_base[IKE_ALG_ENCRYPT]; (a) != NULL; (a) = (a)->algo_next)
-
-/* ??? a is type struct ike_alg * but should be struct hash_desc * */
-#define IKE_HALG_FOR_EACH(a) \
-	for ((a) = ike_alg_base[IKE_ALG_HASH]; (a) != NULL; (a) = (a)->algo_next)
-
 extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
 extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
@@ -140,10 +132,6 @@ extern bool ike_alg_enc_ok(int ealg, unsigned key_len,
 extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 		      struct alg_info_ike *alg_info_ike);
 
-/*
- * Used by IKE_EALG_FOR_EACH() and IKE_HALG_FOR_EACH.
- */
-extern const struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
 extern void ike_alg_add(struct ike_alg *);
 extern bool ike_alg_register_enc(struct encrypt_desc *e);
 extern bool ike_alg_register_hash(struct hash_desc *a);

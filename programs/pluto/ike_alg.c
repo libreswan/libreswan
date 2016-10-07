@@ -55,7 +55,12 @@
 *       - lookup
 *=========================================================*/
 
-const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+#define IKE_ALG_FOR_EACH(ALG,A)						\
+	for (const struct ike_alg *(A) = ike_alg_base[ALG];		\
+	     (A) != NULL;						\
+	     (A) = (A)->algo_next)
+
+static const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
@@ -175,13 +180,11 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
 					    unsigned algo_id)
 {
-	const struct ike_alg *e;
-
-	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
+	IKE_ALG_FOR_EACH(algo_type, e) {
 		if (e->algo_id == algo_id)
-			break;
+			return e;
 	}
-	return e;
+	return NULL;
 }
 
 const struct hash_desc *ikev1_alg_get_hasher(int alg)
@@ -197,13 +200,11 @@ const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
 					    enum ikev2_trans_type_encr algo_v2id)
 {
-	const struct ike_alg *e = ike_alg_base[algo_type];
-
-	for (; e != NULL; e = e->algo_next) {
+	IKE_ALG_FOR_EACH(algo_type, e) {
 		if (e->algo_v2id == algo_v2id)
-			break;
+			return e;
 	}
-	return e;
+	return NULL;
 }
 
 const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
@@ -391,4 +392,57 @@ CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
 		break;
 	}
 	return mechanism;
+}
+
+/*
+ * Show registered IKE algorithms
+ */
+void ike_alg_show_status(void)
+{
+	whack_log(RC_COMMENT, "IKE algorithms supported:");
+	whack_log(RC_COMMENT, " "); /* spacer */
+
+	IKE_ALG_FOR_EACH(IKE_ALG_ENCRYPT, algo) {
+		struct esb_buf v1namebuf, v2namebuf;
+		const struct encrypt_desc *encrypt = (const struct encrypt_desc *)algo;
+
+		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
+		whack_log(RC_COMMENT,
+			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
+			  algo->algo_id,
+			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
+			  algo->algo_v2id,
+			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
+			  encrypt->enc_blocksize,
+			  encrypt->keydeflen);
+	}
+	IKE_ALG_FOR_EACH(IKE_ALG_HASH, algo) {
+		const struct hash_desc *hash = (const struct hash_desc *)algo;
+		/*
+		 * ??? we think that hash_integ_len is meaningless
+		 * (and 0) for IKE hashes.
+		 *
+		 * Hash algorithms have hash_integ_len == 0.
+		 * Integrity algorithms (a different list) do not.
+		 */
+		pexpect(hash->hash_integ_len == 0);
+		whack_log(RC_COMMENT,
+			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
+			  algo->algo_id,
+			  enum_name(&oakley_hash_names, algo->algo_id),
+			  hash->hash_digest_len);
+	}
+
+	const struct oakley_group_desc *gdesc;
+	for (gdesc = next_oakley_group(NULL);
+	     gdesc != NULL;
+	     gdesc = next_oakley_group(gdesc)) {
+		whack_log(RC_COMMENT,
+			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
+			  gdesc->group,
+			  enum_name(&oakley_group_names, gdesc->group),
+			  (int)gdesc->bytes * BITS_PER_BYTE);
+	}
+
+	whack_log(RC_COMMENT, " "); /* spacer */
 }
