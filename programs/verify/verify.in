@@ -344,24 +344,6 @@ def installchecknetkey():
 	else:
 		print_result("FAIL","NOT ENABLED")
 	
-def randomdevcheck():
-	global retcode
-	printfun("Hardware random device")
-	if os.path.isfile("/dev/hw_random") or os.path.isfile("/dev/hwrng"):
-		p = subprocess.Popen(["pidof", "rngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		output, err = p.communicate()
-		if not output:
-			p = subprocess.Popen(["pidof", "clrngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			output, err = p.communicate()
-			if not output:
-				print_result("FAIL","NO RUNNING (cl)rngd DAEMON FOR HW")
-			else:
-				print_result("OK","CLRNGD")
-		else:
-			print_result("OK","RNGD")
-	else:
-		print_result("OK","N/A")
-
 def ipsecsecretcheck():
 	global retcode
 	# we need to be root, because the only way to check is to reload them
@@ -372,14 +354,20 @@ def ipsecsecretcheck():
 		print(" (run ipsec verify as root to test ipsec.secrets)")
 		return
 
-	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
 	output = output.decode(prefencoding)
 	if "ERROR" in output:
 		print_result("FAIL","PARSE ERROR")
 		for line in output.split("\n"):
 			line = line.strip()
-			if line and not "forgetting secrets" in line:
+			if line and "ERROR" in line:
+				print("  %s"%line)
+	elif "WARNING" in output:
+		print_result("WARNING","OBSOLETE")
+		for line in output.split("\n"):
+			line = line.strip()
+			if line and "WARNING" in line:
 				print("  %s"%line)
 	else:
 		print_result("OK","OK")
@@ -398,11 +386,10 @@ def ipsecconfcheck():
 
 def configsetupcheck():
 	global retcode
-	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	configsetup, err = p.communicate()
 
 	myid = ""
-	oe = "no"
 	# grab obsolete settings
 	printfun("Checking for obsolete ipsec.conf options")
 	if not err:
@@ -411,44 +398,6 @@ def configsetupcheck():
 		print_result("WARN","OBSOLETE KEYWORD")
 		err = err.replace("Warning"," Warning")
 		print(err[:-1])
-
-	printfun("Opportunistic Encryption")
-	for line in configsetup.split("\n"):
-		# grab oe= setting
-		if " oe=" in line:
-			oe = line.split("oe='")[1].split("'")[0]
-		if " myid=" in line:
-			myid = line.split("myid='")[1].split("'")[0]
-	if oe == "no":
-		print_result("OK","DISABLED")
-		return
-	print_result("OK","ENABLED")
-
-	if not myid:
-		myid = socket.gethostname()
-
-	printfun(" FQDN check (%s)"%myid)
-	if "." in myid:
-		print_result("OK","OK")
-	else:
-		print_result("FAIL","UNUSABLE HOSTNAME")
-
-	printfun(" IPSECKEY DNS record present")
-	if not os.path.isfile("/usr/bin/dig") and not os.path.isfile("/bin/dig"):
-		print_result("WARN","UNKNOWN")
-		print("(install the dig command to active this test)")
-		return
-
-	p = subprocess.Popen(["dig","+short","ipseckey", myid ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	ipseckey, err = p.communicate()
-	ipseckey = ipseckey.decode(prefencoding)
-	if not ipseckey:
-		print_result("FAIL","MISSING")
-	try:
-		short = ipseckey.split(" ")[4][:8]
-		print_result("OK", "OK - %s"%short)
-	except:
-		print_result("FAIL","MANGLED")
 
 def main():
 	global retcode
@@ -462,7 +411,6 @@ def main():
 
 	installstartcheck()
 	ipsecconfcheck()
-	randomdevcheck()
 	forwardcheck()
 	rpfiltercheck()
 	plutocheck()
