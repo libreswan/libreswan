@@ -23,7 +23,7 @@ IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:${PATH}
 export PATH
 # export config setup items needs rename of - to _
-eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup|sed "s/-/_/g")
+eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | sed "s/-/_/g")
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
@@ -419,7 +419,7 @@ if [ "$2" = "--netkey" ]; then
 	# manual override for use in docker
 	stack=netkey
 else
-	stack="$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF} --liststack)"
+	stack="$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF} --liststack | grep -v "#")"
 fi
 
 case ${stack} in
