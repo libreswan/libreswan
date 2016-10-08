@@ -16,9 +16,9 @@ BEGIN {
     "date -Iseconds -d '" date "'" | getline date
     test = gensub(/.* processing test ([^ ]*) .*/, "\\1", 1, $0)
     count = gensub(/.* \((test [0-9]* of [0-9]*)\) .*/, "\\1", 1, $0)
-    details = "(processing " test ", " count ")"
+    details = " (processing " test ", " count ")"
     if (debug) print "date=" date, "details=" details >> "/dev/stderr"
     # While updates are not very atomic they are good enough for now
     # and allow json=/dev/stderr for testing.
-    system(script " --date '" date "' '" details "'")
+    system(script " --date " date " '" details "'")
 }

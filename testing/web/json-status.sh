@@ -5,16 +5,21 @@ if test $# -lt 1 ; then
 
 Usage:
 
-    $0 [ --json <json> ] --job <job> --start <start> --date <date> <details> ...
+    $0 [ --json <json> ] [ --commit <repo> <rev> | --job <job> ] --start <start> --date <date> [ <details> ... ]
 
 Update the <json> file with the current status.  Multiple <details>
 are allowed and are appended.
 
-By default, json is written to stdout.
+If --commit <repo> <rev> is specified, then <details> and <job> are
+set based on that commit.
+
+By default, raw json is written to stdout.
 
 EOF
     exit 1
 fi
+
+webdir=$(cd $(dirname $0) && pwd)
 
 details=
 json=
@@ -24,18 +29,18 @@ while test $# -gt 0; do
 	--job ) shift ; job=$1 ; shift ;;
 	--start ) shift ; start=$1 ; shift ;;
 	--date ) shift ; date=$1 ; shift ;;
+	--commit )
+	    shift ; repodir=$1 ; shift ; gitrev=$1 ; shift
+	    details=$(cd ${repodir} && git show --no-patch --format='%s' ${gitrev})
+	    git_date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev} \
+			   | sed -e 's/T\([0-9]*:[0-9]*\):.*/ \1/')
+	    job="${git_date} - ${gitrev}"
+	    ;;
 	-* )
 	    echo "Unrecognized option: $*" >/dev/stderr
 	    exit 1
 	    ;;
-	* )
-	    if test -n "${details}" ; then
-		details="${details} $1"
-	    else
-		details=$1
-	    fi
-	    shift
-	    ;;
+	* ) details="${details}$1" ; shift ;;
     esac
 done
 

@@ -38,26 +38,23 @@ utilsdir=$(cd ${webdir}/../utils && pwd)
 # confirm that everything is working.
 gitstamp=$(cd ${repodir} ; make showversion)
 gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
-subject=$(cd ${repodir} ; git show --no-patch --format="%s" HEAD)
 
 destdir=${summarydir}/${gitstamp}
 echo ${destdir}
 
 mkdir -p ${destdir}
 
-# The status file needs to match status.js
+# The status file needs to match status.js; note the lack of quotes
+# qhen invoking ${script}.  This is matches the unqoted line that gets
+# invoked by the awk script further down.
 
 start=$(date -u -Iseconds)
-date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev} \
-	   | sed -e 's/T\([0-9]*:[0-9]*\):.*/ \1/')
-
+script="${webdir}/json-status.sh \
+  --json ${summarydir}/status.json \
+  --commit ${repodir} ${gitrev} \
+  --start ${start}"
 status() {
-    ${webdir}/json-status.sh \
-	     --json ${summarydir}/status.json \
-	     --job "${date} - ${gitrev}" \
-	     --start "${start}" \
-	     --date "$(date -u -Iseconds)" \
-	     "${subject} ($*)"
+    ${script} --date $(date -u -Iseconds) " ($*)"
 }
 
 status "started"
@@ -84,11 +81,8 @@ done
 
 ok=${destdir}/make-kvm-test.ok
 if test ! -r "${ok}" ; then
-    # Need to double escape double quotes in strings so that they make
-    # it through to json-status.sh invoked by publish-status.awk.  The
-    # right tool here might just be perl :-(
-    qsubject=$(echo "${subject}" | sed -e 's;";\\\\";')
-    script="${webdir}/json-status.sh --json ${summarydir}/status.json --job \"${date} - ${gitrev}\" --start ${start} \"${qsubject}\""
+    # Need to avoid passing anything that might contain a quote (like
+    # the subject).
     (
 	status_make kvm-test
 	touch ${ok}
