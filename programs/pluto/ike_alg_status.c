@@ -52,57 +52,6 @@
 #include "plutoalg.h"
 
 /*
- *      Show registered IKE algorithms
- */
-void ike_alg_show_status(void)
-{
-	const struct ike_alg *algo;
-
-	whack_log(RC_COMMENT, "IKE algorithms supported:");
-	whack_log(RC_COMMENT, " "); /* spacer */
-
-	IKE_EALG_FOR_EACH(algo) {
-		struct esb_buf v1namebuf, v2namebuf;
-
-		passert(algo != NULL);
-		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-			  algo->algo_id,
-			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
-			  algo->algo_v2id,
-			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
-			  ((const struct encrypt_desc *)algo)->enc_blocksize,
-			  ((const struct encrypt_desc *)algo)->keydeflen);
-	}
-	IKE_HALG_FOR_EACH(algo) {
-		/*
-		 * ??? we think that hash_integ_len is meaningless
-		 * (and 0) for IKE hashes
-		 */
-		pexpect(((const struct hash_desc *)algo)->hash_integ_len == 0);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-			  algo->algo_id,
-			  enum_name(&oakley_hash_names, algo->algo_id),
-			  ((const struct hash_desc *)algo)->hash_digest_len);
-	}
-
-	const struct oakley_group_desc *gdesc;
-	for (gdesc = next_oakley_group(NULL);
-	     gdesc != NULL;
-	     gdesc = next_oakley_group(gdesc)) {
-		whack_log(RC_COMMENT,
-			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
-			  gdesc->group,
-			  enum_name(&oakley_group_names, gdesc->group),
-			  (int)gdesc->bytes * BITS_PER_BYTE);
-	}
-
-	whack_log(RC_COMMENT, " "); /* spacer */
-}
-
-/*
  *      Show IKE algorithms for
  *      - this connection (result from ike= string)
  *      - newest SA
