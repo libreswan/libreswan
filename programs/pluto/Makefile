@@ -198,6 +198,11 @@ EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o
 EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT)
 endif
 
+ifeq ($(USE_3DES),true)
+EXTRA_CRYPTO_SRCS += ike_alg_3des.c
+EXTRA_CRYPTO_OBJS += ike_alg_3des.o
+endif
+
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
 endif

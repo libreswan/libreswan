@@ -26,9 +26,6 @@ for d in "$@"; do
     rank=$(${webdir}/gime-git-rank.sh ${repodir} ${rev})
 
     baseline=$(${webdir}/gime-git-elder.sh ${repodir} $(dirname ${d}))
-    baseline_rev=$(if test -n "${baseline}" ; then
-		       ${webdir}/gime-git-rev.sh ${baseline}
-		   fi)
     d=$(realpath ${d})
     (
 	cd ${summarydir}
@@ -38,7 +35,6 @@ for d in "$@"; do
 	    --argjson rank "${rank}" \
 	    --arg next_rev "${next_rev}" \
 	    --arg next_date "${next_date}" \
-	    --arg baseline_rev "${baseline_rev}" \
 	    '
 def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
 
@@ -48,7 +44,6 @@ def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
   rank: $rank,
   next_date: $next_date,
   next_revision: $next_rev,
-  baseline_revision: $baseline_rev,
   total: (. | length),
   results: (.[] |= .),
   directory: (input_filename | sub("/[^/]*$";"")),

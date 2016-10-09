@@ -22,15 +22,16 @@ function lsw_load_summary(file, f) {
 	})
 
 	// Clean up the data set.
-	json.forEach(function(d) {
+	for (var i = 0; i < json.length; i++) {
+	    d = json[i]
 	    d.date = new Date(d.date)
 	    d.next_date = (d.next_date
 			   ? new Date(d.next_date)
 			   : now)
 	    d.start_time = new Date(d.start_time)
 	    d.rank = +d.rank
-	    d.commits = (d.baseline_revision
-			 ? d.baseline_revision + "..." + d.revision
+	    d.commits = (i > 0
+			 ? json[i-1].revision + "..." + d.revision
 			 : d.revision)
 
 	    // accumulate results
@@ -45,7 +46,7 @@ function lsw_load_summary(file, f) {
 		d.results.push(result)
 		d.totals.push(total)
 	    })
-	})
+	}
 
 	f(json)
     })

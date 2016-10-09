@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +34,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h"
+#include "lswfips.h"
 
 #include "state.h"
 #include "packet.h"
@@ -46,6 +48,9 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
+#ifdef USE_3DES
+#include "ike_alg_3des.h"
+#endif
 
 /*==========================================================
 *
@@ -445,4 +450,69 @@ void ike_alg_show_status(void)
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */
+}
+
+
+/*
+ * Validate and register IKE algorithm objects
+ */
+
+static struct ike_alg *algorithms[] = {
+#ifdef USE_3DES
+	&ike_alg_encrypt_3des_cbc.common,
+#endif
+};
+
+void ike_alg_init(void)
+{
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+	for (unsigned i = 0; i < elemsof(algorithms); i++) {
+		struct ike_alg *alg = algorithms[i];
+		DBG(DBG_CRYPT, DBG_log("adding algorithm %s, id: %d, v2id: %d",
+				       alg->name, alg->algo_id, alg->algo_v2id));
+
+		/*
+		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
+		 * entries.
+		 *
+		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
+		 * define the IKEv1 field "common.algo_id" so need to
+		 * handle that.
+		 *
+		 * XXX: The intent here is to deal with any algorithm,
+		 * not just ENCRYPT (algothough that is all that is
+		 * enabled for how).
+		 */
+		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
+		passert(alg->algo_type >= 0 && alg->algo_type < IKE_ALG_ROOF);
+		if (alg->algo_id > 0) {
+			static enum_names *ikev1_names[IKE_ALG_ROOF] = {
+				[IKE_ALG_ENCRYPT] = &oakley_enc_names,
+			};
+			passert(ikev1_names[alg->algo_type]);
+			passert(enum_name(ikev1_names[alg->algo_type], alg->algo_id));
+		}
+		if (alg->algo_v2id > 0) {
+			static enum_names *ikev2_names[IKE_ALG_ROOF] = {
+				[IKE_ALG_ENCRYPT] = &ikev2_trans_type_encr_names,
+			};
+			passert(ikev2_names[alg->algo_type]);
+			passert(enum_name(ikev2_names[alg->algo_type], alg->algo_v2id));
+		}
+
+		if (fips && !alg->fips) {
+			libreswan_log("Algorithm %s: DISABLED; not FIPS compliant",
+				      alg->name);
+			continue;
+		}
+
+		ike_alg_add(alg);
+
+		libreswan_log("Algorithm %s: ENABLED%s", alg->name,
+			      alg->fips ? "; FIPS compliant" : "");
+	}
 }

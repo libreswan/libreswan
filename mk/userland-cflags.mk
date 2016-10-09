@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -91,7 +91,11 @@ USERLAND_CFLAGS+=-DUSE_MD5
 USERLAND_CFLAGS+=-DUSE_SHA2
 USERLAND_CFLAGS+=-DUSE_SHA1
 USERLAND_CFLAGS+=-DUSE_AES
+
+ifeq ($(USE_3DES),true)
 USERLAND_CFLAGS+=-DUSE_3DES
+endif
+
 USERLAND_CFLAGS+=-DUSE_CAMELLIA
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
