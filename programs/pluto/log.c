@@ -786,6 +786,13 @@ static void show_system_security(void)
 
 	whack_log(RC_COMMENT, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
+#ifdef HAVE_SECCOMP
+	whack_log(RC_COMMENT, "seccomp=%s",
+		pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
+			pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
+#else
+	whack_log(RC_COMMENT, "seccomp=unsupported");
+#endif
 	whack_log(RC_COMMENT, " ");     /* spacer */
 
 }

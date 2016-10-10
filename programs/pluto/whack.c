@@ -177,6 +177,10 @@ static void help(void)
 		"\n"
 		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
+#ifdef HAVE_SECCOMP
+		"status: whack --seccomp-crashtest (CAREFULL!)\n"
+		"\n"
+#endif
 		"shutdown: whack --shutdown\n"
 		"\n"
 		"Libreswan %s\n",
@@ -285,6 +289,10 @@ enum option_enums {
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
 	OPT_FIPS_STATUS,
+
+#ifdef HAVE_SECCOMP
+	OPT_SECCOMP_CRASHTEST,
+#endif
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -504,6 +512,9 @@ static const struct option long_opts[] = {
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
+#ifdef HAVE_SECCOMP
+	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
+#endif
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "username", required_argument, NULL, OPT_USERNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
@@ -1236,6 +1247,12 @@ int main(int argc, char **argv)
 		case OPT_FIPS_STATUS:	/* --fipsstatus */
 			msg.whack_fips_status = TRUE;
 			continue;
+
+#ifdef HAVE_SECCOMP
+		case OPT_SECCOMP_CRASHTEST:	/* --seccomp-crashtest */
+			msg.whack_seccomp_crashtest = TRUE;
+			continue;
+#endif
 
 		case OPT_SHUTDOWN:	/* --shutdown */
 			msg.whack_shutdown = TRUE;
@@ -2122,7 +2139,7 @@ int main(int argc, char **argv)
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_fips_status || msg.whack_options || msg.whack_shutdown ||
-	      msg.whack_purgeocsp))
+	      msg.whack_purgeocsp || msg.whack_seccomp_crashtest))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

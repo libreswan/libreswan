@@ -148,6 +148,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
 	KBF_NFLOG_CONN,		/* Enable per-conn nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
+	KBF_SECCOMP,		/* set SECCOMP mode */
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_MAX

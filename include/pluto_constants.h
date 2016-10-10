@@ -200,6 +200,17 @@ enum ddos_mode {
 	DDOS_FORCE_UNLIMITED
 };
 
+/*
+ * seccomp mode
+ * on syscall violation, enabled kills pluto, tolerant ignores syscall
+ */
+enum seccomp_mode {
+	SECCOMP_undefined,
+	SECCOMP_ENABLED,
+	SECCOMP_TOLERANT,
+	SECCOMP_DISABLED
+};
+
 /* status for state-transition-function
  * Note: STF_FAIL + notification_t means fail with that notification
  */
@@ -872,6 +883,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_KERNEL_FAIL = 5,
 	PLUTO_EXIT_NSS_FAIL = 6,
 	PLUTO_EXIT_AUDIT_FAIL = 7,
+	PLUTO_EXIT_SECCOMP_FAIL = 8,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 

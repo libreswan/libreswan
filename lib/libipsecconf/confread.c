@@ -100,6 +100,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 	cfg->setup.options[KBF_DDOS_MODE] = DDOS_AUTO;
 
+	cfg->setup.options[KBF_SECCOMP] = SECCOMP_DISABLED; /* will be enabled in the future */
+
 	/* conn %default */
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
