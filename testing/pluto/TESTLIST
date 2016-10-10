@@ -852,6 +852,10 @@ kvmplutotest	klips-ipv6-tunnel-mode-03-rw	skiptest
 kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
+# seccomp
+kvmplutotest	seccomp-01-enabled		good
+kvmplutotest	seccomp-02-tolerant		good
+
 # Utility tests like "ipsec showhostkey"
 kvmplutotest	ipsec-hostkey-ckaid-01		good
 kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
