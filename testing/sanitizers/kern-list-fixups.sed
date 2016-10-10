@@ -1,3 +1,4 @@
+/^\[ 00.00\] audit.*$/d
 /tracing thread pid = \(.*\)/d
 s/spawn \(.*\) single/spawn PATH single/
 s/Program invoked with \(.*\)\/start.sh/Program invoked with PATH\/start.sh/
