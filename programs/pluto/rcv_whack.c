@@ -69,6 +69,7 @@
 #include "fetch.h"
 #include "timer.h"
 #include "ikev2.h"
+#include "server.h" /* for pluto_seccomp */
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -562,6 +563,58 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_fips_status)
 		show_fips_status();
+
+#ifdef HAVE_SECCOMP
+	if (msg.whack_seccomp_crashtest) {
+		/*
+		 * This is a SECCOMP test, it CAN KILL pluto if successful!
+		 *
+		 * Basically, we call a syscall that pluto does not use and
+		 * that is not on the whitelist. Currently we use getsid()
+		 *
+		 * With seccomp=enabled, pluto will be killed by the kernel
+		 * With seccomp=tolerant or seccomp=disabled, pluto will
+		 * report the test results.
+		 */
+		if(pluto_seccomp_mode == SECCOMP_ENABLED)
+			loglog(RC_LOG_SERIOUS, "pluto is running with seccomp=enabled! pluto is expected to die!");
+		loglog(RC_LOG_SERIOUS, "Performing seccomp security test using getsid() syscall");
+		pid_t testpid = getsid(0);
+
+		/* We did not get shot by the kernel seccomp protection */
+		if (testpid == -1) {
+			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was blocked");
+			switch(pluto_seccomp_mode) {
+			case SECCOMP_TOLERANT:
+				loglog(RC_LOG_SERIOUS, "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
+				break;
+			case SECCOMP_DISABLED:
+				loglog(RC_LOG_SERIOUS, "OK: seccomp security was not enabled and the rogue syscall was blocked");
+				break;
+			case SECCOMP_ENABLED:
+				loglog(RC_LOG_SERIOUS, "ERROR: pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
+				break;
+			default:
+				bad_case(pluto_seccomp_mode);
+			}
+		} else {
+			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was not blocked");
+			switch(pluto_seccomp_mode) {
+			case SECCOMP_TOLERANT:
+				loglog(RC_LOG_SERIOUS, "ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!");
+				break;
+			case SECCOMP_DISABLED:
+				loglog(RC_LOG_SERIOUS, "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
+				break;
+			case SECCOMP_ENABLED:
+				loglog(RC_LOG_SERIOUS, "ERROR: pluto seccomp was enabled but the rogue syscall was not blocked!");
+				break;
+			default:
+				bad_case(pluto_seccomp_mode);
+			}
+		}
+	}
+#endif
 
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");

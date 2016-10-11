@@ -120,6 +120,15 @@ static const struct keyword_enum_value kw_ddos_values[] = {
 };
 static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddos_values);
 
+#ifdef HAVE_SECCOMP
+static const struct keyword_enum_value kw_seccomp_values[] = {
+	{ "enabled", SECCOMP_ENABLED },
+	{ "disabled", SECCOMP_DISABLED },
+	{ "tolerant", SECCOMP_TOLERANT },
+};
+static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_seccomp_values);
+#endif
+
 /*
  * Values for authby={rsasig, secret, null}
  */
@@ -412,6 +421,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "force_busy",  kv_config | kv_alias,  kt_bool,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsolete _ */
   { "force-busy",  kv_config,  kt_bool,  KBF_FORCEBUSY,  NOT_ENUM },  /* obsoleted for ddos-mode=busy */
   { "ddos-mode",  kv_config | kv_processed ,  kt_enum,  KBF_DDOS_MODE,  &kw_ddos_list },
+#ifdef HAVE_SECCOMP
+  { "seccomp",  kv_config | kv_processed ,  kt_enum,  KBF_SECCOMP,  &kw_seccomp_list },
+#endif
   { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD,  NOT_ENUM },
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE,  NOT_ENUM },
   { "ikeport",  kv_config,  kt_number,  KBF_IKEPORT,  NOT_ENUM },

@@ -56,6 +56,11 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
 
+#ifdef HAVE_SECCOMP
+# include <seccomp.h>
+# define EXIT_SECCOMP_FAIL 8
+#endif
+
 char *progname;
 static int verbose = 0;
 
@@ -522,6 +527,59 @@ void resolve_defaultroute(struct starter_conn *conn)
 		resolve_defaultroute_one(&conn->right, &conn->left);
 }
 
+#ifdef HAVE_SECCOMP
+static
+void init_seccomp_addconn(uint32_t def_action)
+{
+	scmp_filter_ctx ctx = seccomp_init(def_action);
+	int rc = 0;
+
+	if (ctx == NULL) {
+			printf("seccomp_init_addconn() failed!");
+			exit(EXIT_SECCOMP_FAIL);
+	}
+
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(access), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(arch_prctl), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(connect), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit_group), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fcntl), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getrlimit), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(ioctl), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(open), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(prctl), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(readlink), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigaction), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigprocmask), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_robust_list), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_tid_address), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socketpair), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(statfs), 0);
+	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
+
+	if (rc != 0) {
+		printf("seccomp_rule_add() failed!");
+		seccomp_release(ctx);
+		exit(EXIT_SECCOMP_FAIL);
+	}
+
+	rc = seccomp_load(ctx);
+	if (rc < 0) {
+		printf("seccomp_load() failed!");
+		seccomp_release(ctx);
+		exit(EXIT_SECCOMP_FAIL);
+	}
+
+}
+#endif
+
 static const char *usage_string = ""
 	"Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile]\n"
 	"               [--varprefix prefix] [--noexport]\n"
@@ -739,6 +797,21 @@ int main(int argc, char *argv[])
 			exit(0);
 		}
 	}
+
+#ifdef HAVE_SECCOMP
+	switch(cfg->setup.options[KBF_SECCOMP]) {
+		case SECCOMP_ENABLED:
+		init_seccomp_addconn(SCMP_ACT_KILL);
+		break;
+	case SECCOMP_TOLERANT:
+		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES));
+		break;
+	case SECCOMP_DISABLED:
+		break;
+	default:
+		bad_case(cfg->setup.options[KBF_SECCOMP]);
+	}
+#endif
 
 	if (autoall) {
 		if (verbose)

@@ -206,6 +206,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
 #endif
+#ifdef HAVE_SECCOMP
+	" SECCOMP"
+#endif
 #ifdef HAVE_LIBCAP_NG
 	" LIBCAP_NG"
 #endif
@@ -549,6 +552,10 @@ static const struct option long_opts[] = {
 	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
 	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
 	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+#endif
+#ifdef HAVE_SECCOMP
+	{ "seccomp-enabled\0", no_argument, NULL, '3' },
+	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
@@ -899,6 +906,15 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
+#ifdef HAVE_SECCOMP
+		case '3':	/* --seccomp-enabled */
+			pluto_seccomp_mode = SECCOMP_ENABLED;
+			continue;
+		case '4':	/* --seccomp-tolerant */
+			pluto_seccomp_mode = SECCOMP_TOLERANT;
+			continue;
+#endif
+
 		case 'Z':	/* --curl-iface */
 			curl_iface = clone_str(optarg, "curl_iface");
 			continue;
@@ -1083,6 +1099,9 @@ int main(int argc, char **argv)
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
+#ifdef HAVE_SECCOMP
+			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
+#endif
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;

@@ -93,6 +93,10 @@
 #include "lsw_select.h"
 #include "lswfips.h"
 
+#ifdef HAVE_SECCOMP
+# include "pluto_seccomp.h"
+#endif
+
 /*
  *  Server main loop and socket initialization routines.
  */
@@ -100,6 +104,7 @@
 struct pluto_events {
 	struct event *ev_ctl ;
 	struct event *ev_sig_hup;
+	struct event *ev_sig_sys;
 	struct event *ev_sig_term;
 	struct event *ev_sig_chld;
 } pluto_evs;
@@ -207,6 +212,9 @@ bool listening = FALSE;  /* should we pay attention to IKE messages? */
 bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE msg? */
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
+#ifdef HAVE_SECCOMP
+enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
+#endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
@@ -536,8 +544,16 @@ static void termhandler(int sig UNUSED)
 	sigtermflag = TRUE;
 }
 
+static volatile sig_atomic_t sigsysflag = FALSE;
+
+static void syshandler(int sig UNUSED)
+{
+	sigsysflag = TRUE;
+}
+
 static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
+	/* logging is probably not signal handling / threa safe */
 	libreswan_log("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
@@ -545,6 +561,16 @@ static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *ar
 {
 	exit_pluto(PLUTO_EXIT_OK);
 }
+#ifdef HAVE_SECCOMP
+static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+	loglog(RC_LOG_SERIOUS,"pluto received SIGSYS - possible SECCOMP violation!");
+	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
+		loglog(RC_LOG_SERIOUS,"seccomp=enabled mandates daemon restart");
+		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
+	}
+}
+#endif
 
 static volatile sig_atomic_t sigchildflag = FALSE;
 
@@ -599,6 +625,7 @@ static void pluto_event_free(struct pluto_events *pluto_evs)
 	event_free(pluto_evs->ev_sig_chld);
 	event_free(pluto_evs->ev_sig_term);
 	event_free(pluto_evs->ev_sig_hup);
+	event_free(pluto_evs->ev_sig_sys);
 }
 
 static void main_loop(void)
@@ -625,6 +652,11 @@ static void main_loop(void)
 	pluto_evs.ev_sig_hup = pluto_event_new(SIGHUP, EV_SIGNAL|EV_PERSIST,
 				     huphandler_cb, NULL, NULL);
 
+#ifdef HAVE_SECCOMP
+	pluto_evs.ev_sig_sys = pluto_event_new(SIGSYS, EV_SIGNAL,
+				      syshandler_cb, NULL, NULL);
+#endif
+
 	r = event_base_loop(pluto_eb, 0);
 	passert (r == 0);
 
@@ -636,7 +668,7 @@ static void main_loop(void)
  */
 void call_server(void)
 {
-	/* catch SIGHUP and SIGTERM */
+	/* catch SIGHUP, SIGTERM, SIGCHLD and SIGSYS */
 	{
 		int r;
 		struct sigaction act;
@@ -651,10 +683,15 @@ void call_server(void)
 		r = sigaction(SIGTERM, &act, NULL);
 		passert(r == 0);
 
+		act.sa_handler = &syshandler;
+		r = sigaction(SIGSYS, &act, NULL);
+		passert(r == 0);
+
 		act.sa_handler = &childhandler;
 		act.sa_flags   = SA_RESTART;
 		r = sigaction(SIGCHLD, &act, NULL);
 		passert(r == 0);
+
 	}
 
 	/* do_whacklisten() is now done by the addconn fork */
@@ -739,6 +776,22 @@ void call_server(void)
 			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
 		/* parent continues */
 	}
+#ifdef HAVE_SECCOMP
+	switch(pluto_seccomp_mode) {
+	case SECCOMP_ENABLED:
+		init_seccomp_main(SCMP_ACT_KILL);
+		break;
+	case SECCOMP_TOLERANT:
+		init_seccomp_main(SCMP_ACT_TRAP);
+		break;
+	case SECCOMP_DISABLED:
+		break;
+	default:
+		bad_case(pluto_seccomp_mode);
+	}
+#else
+	libreswan_log("seccomp security not supported");
+#endif
 	main_loop();
 }
 
