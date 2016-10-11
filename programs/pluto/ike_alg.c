@@ -483,6 +483,9 @@ static struct ike_alg *algorithms[] = {
 	&ike_alg_encrypt_aes_gcm_8.common,
 	&ike_alg_encrypt_aes_gcm_12.common,
 	&ike_alg_encrypt_aes_gcm_16.common,
+	&ike_alg_encrypt_aes_ccm_8.common,
+	&ike_alg_encrypt_aes_ccm_12.common,
+	&ike_alg_encrypt_aes_ccm_16.common,
 #endif
 #ifdef USE_CAMELLIA
 	&ike_alg_encrypt_camellia_cbc.common,

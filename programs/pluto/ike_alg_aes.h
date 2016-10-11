@@ -19,3 +19,6 @@ extern struct encrypt_desc ike_alg_encrypt_aes_ctr;
 extern struct encrypt_desc ike_alg_encrypt_aes_gcm_8;
 extern struct encrypt_desc ike_alg_encrypt_aes_gcm_12;
 extern struct encrypt_desc ike_alg_encrypt_aes_gcm_16;
+extern struct encrypt_desc ike_alg_encrypt_aes_ccm_8;
+extern struct encrypt_desc ike_alg_encrypt_aes_ccm_12;
+extern struct encrypt_desc ike_alg_encrypt_aes_ccm_16;

@@ -554,12 +554,11 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
-#ifdef NOT_YET
 /*
  * XXX: This code is duplicated in kernel_netlink.c.  Once this is
  * enabled, the latter can be deleted.
  */
-static struct encrypt_desc algo_aes_ccm_8 =
+struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -567,6 +566,7 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.algo_id =      OAKLEY_AES_CCM_8,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
+		.fips =         TRUE,
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
@@ -578,7 +578,7 @@ static struct encrypt_desc algo_aes_ccm_8 =
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
-static struct encrypt_desc algo_aes_ccm_12 =
+struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
@@ -586,6 +586,7 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.algo_id =      OAKLEY_AES_CCM_12,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
+		.fips =         TRUE,
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
@@ -597,7 +598,7 @@ static struct encrypt_desc algo_aes_ccm_12 =
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
-static struct encrypt_desc algo_aes_ccm_16 =
+struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
@@ -605,6 +606,7 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.algo_id =      OAKLEY_AES_CCM_16,
 		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
+		.fips =         TRUE,
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -615,7 +617,6 @@ static struct encrypt_desc algo_aes_ccm_16 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
-#endif
 
 static struct hash_desc hash_desc_aes_xcbc = {
 	.common = { .officname =  "aes_xcbc",
@@ -653,19 +654,6 @@ static struct hash_desc integ_desc_aes_xcbc = {
 
 void ike_alg_aes_init(void)
 {
-#ifdef NOT_YET
-	/*
-	 * XXX: This code is duplicated in kernel_netlink.c.  Once
-	 * this is enabled, the latter can be deleted.
-	 */
-	if (!ike_alg_register_enc(&algo_aes_ccm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
-#endif
-
 	/* Waiting on NSS support - but we need registration so ESP will work */
 	if (ike_alg_register_hash(&hash_desc_aes_xcbc) != 1)
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register hash algo_aes_xcbc for IKE");
