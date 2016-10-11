@@ -9,12 +9,14 @@ function lsw_graph_summary(div_id, data) {
     var width = 960 - margin.left - margin.right
     var height = 500 - margin.top - margin.bottom
 
+    var now = new Date()
+
     // XXX: how to get the left bar off the grid with
     // alignment?
     var x = d3.scaleTime()
 	.domain([
 	    d3.min(data, function(d) { return d.date;}),
-	    data[data.length-1].next_date
+	    now,
 	])
 	.range([1, width])
     var y = d3.scaleLinear()

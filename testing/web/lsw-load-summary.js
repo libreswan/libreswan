@@ -14,8 +14,6 @@ function lsw_load_summary(file, f) {
 	    return
 	}
 
-	var now = new Date()
-
 	// Start with rank order
 	json = json.sort(function(l, r) {
 	    return +l.rank - +r.rank
@@ -25,9 +23,6 @@ function lsw_load_summary(file, f) {
 	for (var i = 0; i < json.length; i++) {
 	    d = json[i]
 	    d.date = new Date(d.date)
-	    d.next_date = (d.next_date
-			   ? new Date(d.next_date)
-			   : now)
 	    d.start_time = new Date(d.start_time)
 	    d.rank = +d.rank
 	    d.commits = (i > 0

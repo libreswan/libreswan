@@ -21,8 +21,6 @@ for d in "$@"; do
     echo ${d} >> /dev/stderr
     rev=$(${webdir}/gime-git-rev.sh $(dirname ${d}))
     date=$(${webdir}/gime-git-date.sh ${repodir} ${rev})
-    next_rev=$(${webdir}/gime-git-revisions.sh ${repodir} ${rev}..HEAD | head -1)
-    next_date=$(test -z "${next_rev}" || ${webdir}/gime-git-date.sh ${repodir} ${next_rev})
     rank=$(${webdir}/gime-git-rank.sh ${repodir} ${rev})
 
     baseline=$(${webdir}/gime-git-elder.sh ${repodir} $(dirname ${d}))
@@ -33,8 +31,6 @@ for d in "$@"; do
 	    --arg rev "${rev}" \
 	    --arg date "${date}" \
 	    --argjson rank "${rank}" \
-	    --arg next_rev "${next_rev}" \
-	    --arg next_date "${next_date}" \
 	    '
 def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
 
@@ -42,8 +38,6 @@ def jtime:  sub(" ";"T") | sub("\\..*";"Z") | fromdate ;
   date: $date,
   revision: $rev,
   rank: $rank,
-  next_date: $next_date,
-  next_revision: $next_rev,
   total: (. | length),
   results: (.[] |= .),
   directory: (input_filename | sub("/[^/]*$";"")),
