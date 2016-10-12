@@ -49,6 +49,9 @@ bool all_zero(const unsigned char *m, size_t len)
  * monotonic variant of time(2)
  *
  * NOT INTENDED TO BE REALTIME!
+ *
+ * NOTE: static initializer only happens at load time, so
+ * delta/last_time are only set to 0 once, not each call.
  */
 static monotime_t mononow_fallback(void) {
 	monotime_t m;
@@ -70,6 +73,7 @@ static monotime_t mononow_fallback(void) {
 monotime_t mononow(void)
 {
 	monotime_t m;
+
 #ifdef _POSIX_MONOTONIC_CLOCK
 	struct timespec t;
 	int r = clock_gettime(
@@ -79,10 +83,12 @@ monotime_t mononow(void)
 		CLOCK_MONOTONIC	/* second best */
 #   endif
 		, &t);
+
 	switch (r) {
 	case 0:
 		/* OK */
-		break;
+		m.mono_secs =  t.tv_sec;
+		return m;
 	case EINVAL:
 		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
 		break;
@@ -96,15 +102,8 @@ monotime_t mononow(void)
 		libreswan_log("unknown clock_gettime() error: %d", r);
 		break;
 	}
-	if (r == 0) {
-		return mononow_fallback();
-	}
-
-	m.mono_secs =  t.tv_sec;
-	return m;
-#else
-	return mononow_fallback();
 #   endif
+	return mononow_fallback();
 }
 
 /*
