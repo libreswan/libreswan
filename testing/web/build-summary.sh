@@ -1,15 +1,16 @@
 #!/bin/sh
 
-if test "$#" -lt 3; then
-    cat <<EOF > /dev/stderr
+if test "$#" -ne 2; then
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
-   $0 <repodir> <summarydir> <results.json> ...
+   $0 <repodir> <summarydir>
 
-Create the results summary page in <summarydir> from
-<results.json>... and using <repodir> (read-only) for branch
-information.
+Create a summary-of-results web page in <summarydir> from
+<summarydir>/*/ using <repodir> as a reference.
+
+This script does mot modify <repodir>.
 
 EOF
     exit 1
@@ -17,19 +18,19 @@ fi
 
 set -euxv
 
-repodir=$(cd $1 && pwd) ; shift
-summarydir=$(cd $1 && pwd) ; shift
-webdir=$(cd $(dirname $0) && pwd)
+webdir=$(dirname $0)
 
-# generate the individual summary entries
-${webdir}/summary.sh ${repodir} ${summarydir} "$@" > ${summarydir}/summary.tmp
+repodir=$1 ; shift
+summarydir=$1 ; shift
 
-# mash them together as a proper JSON list
-jq -s '.'  ${summarydir}/summary.tmp >  ${summarydir}/summary.new
-rm  ${summarydir}/summary.tmp
+# Concatenate the individual summary entries; order doesn't matter.
+# Should this add the commit hash?
+
+jq -s '.' ${summarydir}/*/summary.json > ${summarydir}/summaries.new
 
 # install
+
 cp ${webdir}/lsw*.{css,js} ${summarydir}
 cp ${webdir}/summary*.{html,css,js} ${summarydir}
 ln -f -s summary.html ${summarydir}/index.html
-mv  ${summarydir}/summary.new  ${summarydir}/summary.json
+mv ${summarydir}/summaries.new ${summarydir}/summaries.json

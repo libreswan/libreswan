@@ -3,7 +3,6 @@ function lsw_load_jobs_table(div_id, directories) {
     var queue = d3.queue()
     directories.forEach(function(directory) {
 	queue.defer(d3.json, directory + "status.json")
-	queue.defer(d3.json, directory + "pending.json")
     })
 
     queue.awaitAll(function(error, results) {
@@ -21,10 +20,9 @@ function lsw_load_jobs_table(div_id, directories) {
 	]
 
 	var values = []
-	for (var i = 0; i < results.length; i+= 2) {
-	    var status = results[i+0]
-	    var pending = results[i+1]
-	    var directory = directories[i/2]
+	for (var i = 0; i < results.length; i++) {
+	    var status = results[i]
+	    var directory = directories[i]
 	    values.push([
 		directory ? directory : i == 0 ? lsw_date2iso(new Date()) : "",
 		status.job,
@@ -32,15 +30,6 @@ function lsw_load_jobs_table(div_id, directories) {
 		lsw_date2iso(new Date(status.date)),
 		status.details,
 	    ])
-	    pending.forEach(function(p) {
-		values.push([
-		    "",
-		    lsw_date2iso(new Date(p.commit_date)) + " - " + p.hash,
-		    "- pending -",
-		    "",
-		    p.subject,
-		])
-	    })
 	}
 
 	document.getElementById(div_id)

@@ -3,11 +3,11 @@
 set -eu
 
 if test $# -lt 1; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 [ --testing-dir <repo>/testing ] <test-result-or-results> ....
+    $0 <test-result-or-results> ....
 
 Generate results.json records on stdout using kvmresults.py.
 

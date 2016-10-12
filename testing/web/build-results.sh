@@ -1,11 +1,11 @@
 #!/bin/sh
 
 if test "$#" -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
-   $0 <repodir> <destdir> [ <previousdir> ]
+   $0 <repodir> <destdir>
 
 Use "kvmrunner.py> to create a results web page under <destdir>.
 
@@ -23,23 +23,18 @@ cwd=$(pwd)
 webdir=$(cd $(dirname $0) && pwd)
 repodir=$(cd $1 && pwd) ; shift
 destdir=$(cd $1 && pwd) ; shift
-if test $# -gt 0; then
-    baseline=$(cd $1 && pwd) ; shift
-else
-    # Use "rank" to determine the previous to this directory name,
-    # need to convert it to an absolute path.
-    baseline=$(${webdir}/gime-git-elder.sh ${repodir} ${destdir})
-fi
 
 (
     cd ${destdir}
     ${webdir}/results.sh \
-	     $(test -n "${baseline}" && echo --baseline "${baseline}") \
 	     --testing-directory ${repodir}/testing \
 	     .
 ) > ${destdir}/results.tmp
 jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
 rm ${destdir}/results.tmp
+
+${webdir}/json-commit.sh ${repodir} HEAD > ${destdir}/commit.json
+${webdir}/json-summary.sh ${destdir}/results.new > ${destdir}/summary.json
 
 cp ${webdir}/lsw*.{css,js} ${destdir}
 cp ${webdir}/results*.{html,css,js} ${destdir}

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if test $# -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
@@ -10,8 +10,7 @@ Usage:
 Build/run the testsuite in <repodir>.  Publish detailed results under
 <summarydir>/<version>, and a summary under <summarydir>.
 
-<version> is formed from the contaentation of the current checkout
-date and "make showversion".
+<version> is determined by "make showversion".
 
 For instance:
 
@@ -108,11 +107,6 @@ ${webdir}/rsync-results.sh ${repodir} ${destdir}
 # Generate the results page.
 status "create results web page"
 ${webdir}/build-results.sh ${repodir} ${destdir}
-
-
-# Generate the summary page.
-status "update summary web page"
-${webdir}/build-summary.sh ${repodir} ${summarydir} ${summarydir}/*/results.json
 
 
 status "finished"

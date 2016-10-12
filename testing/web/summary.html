@@ -20,9 +20,9 @@
 
     <script>
         window.addEventListener('load', function() {
-           lsw_load_summary("summary.json", function(json) {
-               lsw_graph_summary("graph", json)
-               summary("summary", json)
+           lsw_load_summary("", function(s) {
+               lsw_graph_summary("graph", s)
+               summary("summary", s.first_parent_results)
            })
            lsw_load_jobs_table("jobs", [""]);
         })

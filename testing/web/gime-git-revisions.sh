@@ -1,11 +1,11 @@
 #!/bin/sh
 
-if test $# -ne 2 ; then
+if test $# -lt 2 ; then
     cat >>/dev/stderr <<EOF
 
 Usage:
 
-    $0 <repodir> <gitrevs>
+    $0 <repodir> <gitrevs> ...
 
 List, in cronological order, the hashes for git revisions in the
 range:
@@ -19,8 +19,7 @@ EOF
 fi
 
 repodir=$1 ; shift
-gitrevs=$1 ; shift
 
 cd ${repodir}
 
-git rev-list --reverse --first-parent ${gitrevs}
+git rev-list --abbrev-commit "$@"

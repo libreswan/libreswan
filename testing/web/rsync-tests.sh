@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if test $# -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 

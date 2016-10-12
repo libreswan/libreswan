@@ -1,4 +1,4 @@
-function lsw_graph_summary(div_id, data) {
+function lsw_graph_summary(graph_id, summary) {
 
     var margin = {
 	top: 10,
@@ -8,6 +8,7 @@ function lsw_graph_summary(div_id, data) {
     }
     var width = 960 - margin.left - margin.right
     var height = 500 - margin.top - margin.bottom
+    var radius = 3.5
 
     var now = new Date()
 
@@ -15,22 +16,27 @@ function lsw_graph_summary(div_id, data) {
     // alignment?
     var x = d3.scaleTime()
 	.domain([
-	    d3.min(data, function(d) { return d.date;}),
+	    d3.min(summary.commits, function(d) {
+		return d.committer_date
+	    }),
 	    now,
 	])
-	.range([1, width])
+	.range([radius, width])
     var y = d3.scaleLinear()
 	.domain([
-	    d3.min(data, function(d) { return 0.98 * d.totals[1] }),
-	    d3.max(data, function(d) { return 1.02 * d.totals[d.totals.length - 1] })
+	    d3.min(summary.results, function(d) {
+		return 0.8 * d.totals[1]
+	    }),
+	    d3.max(summary.results, function(d) {
+		return 1.02 * d.totals[d.totals.length - 1]
+	    })
 	])
 	.range([height, 0])
-	.clamp(true)
 
     var xAxis = d3.axisBottom(x)
     var yAxis = d3.axisLeft(y)
 
-    var svg = d3.select("#" + div_id)
+    var svg = d3.select("#" + graph_id)
 	.insert("svg")
 	.attr("width", width + margin.left + margin.right)
 	.attr("height", height + margin.top + margin.bottom)
@@ -54,50 +60,90 @@ function lsw_graph_summary(div_id, data) {
 
     for (var i = 0; i < lsw_result_names.length; i++) {
 	var line = d3.line()
-	    .x(function(d) { return x(d.date); })
-	    .y(function(d) { return y(d.totals[i+1]); });
+	    .x(function(d) {
+		return x(d.commit.committer_date)
+	    })
+	    .y(function(d) {
+		return y(d.totals[i+1])
+	    });
 	svg.append("path")
-	    .datum(data)
+	    .datum(summary.first_parent_results)
 	    .attr("class", "line")
 	    .attr("d", line)
     }
 
-    // Overlay scatter plot
-    var radius = 3.5
+    // Overlay tested scatter plot
     var dots = svg
+	.append("g")
 	.selectAll(".dot")
-	.data(data)
+	.data(summary.results)
 	.enter()
     for (var i = 0; i < lsw_result_names.length; i++) {
 	dots.append("circle")
 	    .attr("class", lsw_result_names[i])
 	    .attr("r", radius)
-	    .attr("cx", function(d) { return x(d.date); })
-	    .attr("cy", function(d) { return y(d.totals[i+1]); })
+	    .attr("cx", function(d) {
+		return x(d.commit.committer_date)
+	    })
+	    .attr("cy", function(d) {
+		return y(d.totals[i+1])
+	    })
 	    .on("click", function(d) {
 		window.location = d.directory
 	    })
 	    .append("title")
 	    .text(function(d) {
-		var text = lsw_date2iso(d.date)
+		var text = lsw_commit_text(d.commit)
+		var sep = "\n"
 		for (j = 0; j <= i; j++) {
-		    text += "\n" + lsw_result_names[j] + ": " + d.results[j]
+		    text += sep + lsw_result_names[j] + ": " + d.results[j]
+		    sep = " + "
 		}
-		text += "\n" + "total: " + d.totals[i+1]
-		text += "\n" + "rank: " + d.rank
 		return text
 	    })
     }
 
+    // Overlay untested scatter plot
+    svg.append("g")
+	.selectAll(".dot")
+	.data(summary.untested_interesting_commits)
+	.enter()
+	.append("circle")
+	.attr("class", function(d) {
+	    return (d.abbreviated_commit_hash == summary.status.hash
+		    ? "current"
+		    : "pending")
+	})
+	.attr("r", radius)
+    	.attr("cx", function(d) { return x(d.committer_date); })
+	.attr("cy", function(d) { return height-radius; })
+	.append("title")
+	.text(function(d) {
+	    if (d.abbreviated_commit_hash == summary.status.hash) {
+		return (summary.status.details
+			+ "\nStarted: " + lsw_date2iso(new Date(summary.status.start))
+			+ "\nLast Update: " + lsw_date2iso(new Date(summary.status.date)))
+	    } else {
+		return (lsw_commit_text(d) + "\nPending")
+	    }
+	})
+
     var keys = []
+    var last_result = summary.first_parent_results[summary.first_parent_results.length - 1]
+    var keys_x = x(last_result.commit.committer_date) + radius
     for (var i = 0; i < lsw_result_names.length; i++) {
+	var name = lsw_result_names[i]
 	keys.push({
-	    name: lsw_result_names[i],
-	    total: data[data.length - 1].totals[i+1],
-	    date: data[data.length - 1].date,
-	    text: (i > 0 ? "+" : "") + lsw_result_names[i]
+	    name: name,
+	    y: y(last_result.totals[i+1]),
+	    text: (i > 0 ? "+" : "") + name.charAt(0).toUpperCase() + name.slice(1),
 	})
     }
+    keys.push({
+	name: "current",
+	y: height-radius,
+	text: "Pending",
+    })
 
     var enter_keys = svg
 	.selectAll(".key")
@@ -110,10 +156,14 @@ function lsw_graph_summary(div_id, data) {
 	.text(function(d) {
 	    return d.text
 	})
-	.attr("x", function(d) {
-	    return x(d.date) + radius
-	})
+	.attr("x", keys_x)
 	.attr("y", function(d) {
-	    return y(d.total)
+	    return d.y
 	})
+}
+
+
+function lsw_commit_text(commit) {
+    return (commit.subject +
+	    "\n" + lsw_date2iso(commit.committer_date) + " " + commit.abbreviated_commit_hash)
 }

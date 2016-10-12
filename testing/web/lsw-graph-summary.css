@@ -29,3 +29,12 @@
 .untested {
     fill: blue
 }
+
+.pending {
+    fill: white;
+    stroke: brown;
+}
+
+.current {
+    fill: brown;
+}

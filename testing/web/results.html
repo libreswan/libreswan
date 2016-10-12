@@ -14,15 +14,19 @@
     <link rel="stylesheet" type="text/css" href="results.css"> </link>
     <script type="text/javascript" src="results.js"></script>
     <script>
-      results("results", "results.json")
+        window.addEventListener('load', function() {
+            results("results", "results.json")
+	})
     </script>
 
     <link rel="stylesheet" type="text/css" href="lsw-graph-summary.css"> </link>
     <script type="text/javascript" src="lsw-graph-summary.js"></script>
     <script>
-      lsw_load_summary("../summary.json", function(json) {
-        lsw_graph_summary("graph", json)
-      })
+        window.addEventListener('load', function() {
+            lsw_load_summary("../", function(summary) {
+                lsw_graph_summary("graph", summary)
+            })
+	})
     </script>
 
   </head>

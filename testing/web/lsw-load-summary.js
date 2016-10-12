@@ -7,42 +7,92 @@ var lsw_result_names = [
     "untested"
 ]
 
-function lsw_load_summary(file, f) {
-    d3.json(file, function(error, json) {
-	if (error) {
-	    console.log(error)
+function lsw_load_summary(prefix, f) {
+    d3.queue()
+	.defer(d3.json, prefix + "summaries.json")
+	.defer(d3.json, prefix + "commits.json")
+	.defer(d3.json, prefix + "status.json")
+	.awaitAll(function(error, results) {
+	    if (error) {
+		console.log(error)
+		return
+	    }
+	    var summary = {
+		raw_results: results[0],
+		commits: results[1],
+		status: results[2],
+	    }
+	    lsw_cleanup_summary(summary)
+	    f(summary)
+	})
+}
+
+function lsw_cleanup_summary(summary) {
+
+    summary.commit_by_hash = []
+    summary.commits.forEach(function (commit) {
+	var hash = commit.abbreviated_commit_hash
+	// Clean up the commit
+	commit.author_date = new Date(commit.author_date)
+	commit.committer_date = new Date(commit.committer_date)
+	// Add to the hash table
+	summary.commit_by_hash[hash] = commit
+    })
+
+    summary.result_by_hash = []
+    summary.results = []
+    summary.raw_results.forEach(function (result) {
+	var hash = result.directory.match(/.*-g([^-]*)-*/)[1]
+	var commit = summary.commit_by_hash[hash]
+	if (!commit) {
+	    console.log("missing commit for result", result)
 	    return
 	}
-
-	// Start with rank order
-	json = json.sort(function(l, r) {
-	    return +l.rank - +r.rank
+	// Clean up the summary
+	result.start_time = new Date(result.start_time)
+	result.commit = commit
+	// accumulate results
+	result.results = []
+	result.totals = [0]
+	var total = 0
+	lsw_result_names.forEach(function(name) {
+	    var count = (result.hasOwnProperty(name)
+			  ? +result[name]
+			  : 0)
+	    total += count
+	    result.results.push(count)
+	    result.totals.push(total)
 	})
+	// add to the hash table
+	summary.result_by_hash[hash] = result
+	summary.results.push(result)
+    })
 
-	// Clean up the data set.
-	for (var i = 0; i < json.length; i++) {
-	    d = json[i]
-	    d.date = new Date(d.date)
-	    d.start_time = new Date(d.start_time)
-	    d.rank = +d.rank
-	    d.commits = (i > 0
-			 ? json[i-1].revision + "..." + d.revision
-			 : d.revision)
-
-	    // accumulate results
-	    d.results = []
-	    d.totals = [0]
-	    var total = 0
-	    lsw_result_names.forEach(function(result) {
-		var result = (d.hasOwnProperty(result)
-			      ? +d[result]
-			      : 0)
-		total += result
-		d.results.push(result)
-		d.totals.push(total)
-	    })
+    // Create a list of first-parent results.  Start with the "HEAD"
+    // commit.
+    summary.first_parent_results = []
+    var hash = summary.commits[0].abbreviated_commit_hash
+    while (true) {
+	if (!hash) break;
+	var commit = summary.commit_by_hash[hash]
+	if (!commit) break;
+	var result = summary.result_by_hash[hash]
+	if (result) {
+	    summary.first_parent_results.push(result)
 	}
+	hash = commit.abbreviated_parent_hashes[0]
+    }
+    // switch HEAD... to ..HEAD
+    summary.first_parent_results.reverse()
 
-	f(json)
+    summary.untested_interesting_commits = []
+    summary.commits.forEach(function(commit) {
+	if (!commit.interesting) {
+	    return
+	}
+	if (summary.result_by_hash[commit.abbreviated_commit_hash]) {
+	    return
+	}
+	summary.untested_interesting_commits.push(commit)
     })
 }
