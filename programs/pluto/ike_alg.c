@@ -313,40 +313,6 @@ bool ike_alg_register_hash(struct hash_desc *hash_desc)
 	return ret;
 }
 
-/*
- *      Validate and register IKE encryption algorithm object
- */
-bool ike_alg_register_enc(struct encrypt_desc *enc_desc)
-{
-	const char *alg_name;
-	bool ret = TRUE;
-
-	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
-	 * "common.algo_id" is not defined need this officname fallback.
-	 * These are defined in kernel_netlink.c and need to move to
-	 * the proper place - even if klips does not support these
-	 */
-	alg_name = enum_name(&oakley_enc_names, enc_desc->common.algo_id);
-	if (alg_name == NULL) {
-		alg_name = enc_desc->common.officname;
-		if (alg_name == NULL) {
-			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in constants.c:oakley_enc_names",
-			     enc_desc->common.algo_id);
-			alg_name = "<NULL>";
-			ret = FALSE;
-		}
-	}
-
-	if (ret)
-		ike_alg_add(&enc_desc->common);
-
-	libreswan_log("ike_alg_register_enc(): Activating %s: %s",
-		      alg_name,
-		      ret? "Ok" : "FAILED");
-
-	return ret;
-}
-
 /* Get pfsgroup for this connection */
 const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)
