@@ -12,8 +12,15 @@ are necessarily supported here.</para>
 instance, "3des-md5" or "aes256-sha1;modp2048" or  "aes-sha1,aes-md5". When
 specifying multiple algorithms, specify the PFSgroup last, e.g. "3des-md5,aes256-sha1;modp2048".
 </para>
-<para>For RFC-5114 DH groups, use the "dh" keyword, eg "aes256-sha1;dh23"
-</para>
+
+<para>For RFC-5114 DH groups, use the "dh" keyword, eg
+"aes256-sha1;dh23". These specific DH groups are extremely controversial
+and MUST NOT be used unless forced (administratively) by the other party.
+Support for these groups will most likely be removed in 2017, as it
+cannot be proven these DH groups do not have a cryptographic trapdoor
+embedded in them (a backdoor by the USG who gave us these primes without
+revealing the seeds and generation process) </para>
+
 <para> The format for AH is AUTH followed by an optional PFSgroup. For
 instance, "md5" or "sha1;modp1536".
 </para>
