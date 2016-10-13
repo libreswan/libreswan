@@ -43,7 +43,7 @@ top_caname=""
 def reset_files():
 	for dir in ['keys/', 'cacerts/', 'certs/', 'pkcs12/',
 			    'pkcs12/curveca', 'pkcs12/mainca',
-				'pkcs12/otherca', 'crls/']:
+				'pkcs12/otherca', 'pkcs12/badca', 'crls/']:
 		if os.path.isdir(dir):
 			shutil.rmtree(dir)
 		os.mkdir(dir)
@@ -101,7 +101,10 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
 	if isCA:
 		ku_str = ku_str + ',keyCertSign,cRLSign'
-		bc = "CA:TRUE"
+		if "badca" in str(issuer.get_subject().commonName):
+			bc = "CA:FALSE"
+		else:
+			bc = "CA:TRUE"
 	else:
 		bc = "CA:FALSE"
 
@@ -163,8 +166,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 	else:
 		ocspuri = True
 
-	set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp,
-															   ocspuri=ocspuri)
+	set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
 	cert.sign(CAkey, sign_alg)
 
 	return cert, certkey
@@ -191,8 +193,7 @@ def create_root_ca(CN, START, END,
 	cacert.set_pubkey(careq.get_pubkey())
 	cacert.set_version(2)
 
-	set_cert_extensions(cacert, cacert,
-						isCA=True, isRoot=True, ocsp=True, ocspuri=True)
+	set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
 	cacert.sign(cakey, sign_alg)
 
 	return cacert, cakey
@@ -232,7 +233,7 @@ def store_cert_and_key(name, cert, key):
 	ext = cert.get_extension(0)
 	if ext.get_short_name() == 'basicConstraints':
 		# compare the bytes for CA:True
-		if '0\x03\x01\x01\xff' == ext.get_data():
+		if name == "badca" or '0\x03\x01\x01\xff' == ext.get_data():
 			ca_certs[name] = cert, key
 		else:
 			end_certs[name] = cert, key
@@ -298,6 +299,8 @@ def create_mainca_end_certs(mainca_end_certs):
 
 		if name == 'signedbyother':
 			signer = 'otherca'
+		elif name[:3] == 'bad':
+			signer = 'badca'
 		else:
 			signer = 'mainca'
 
@@ -577,7 +580,7 @@ def run_dist_certs():
 	certificates, p12 files, keys, and CRLs
 	"""
 	# Add root CAs here
-	basic_pluto_cas =  ('mainca', 'otherca')
+	basic_pluto_cas =  ('mainca', 'otherca', 'badca')
 	# Add end certs here
 	mainca_end_certs = ('nic','east','west', 'road', 'sunset',
 						'sunrise','north','south',
@@ -589,7 +592,7 @@ def run_dist_certs():
 						'notyetvalid','notvalidanymore',
 						'signedbyother','wrongdnorg',
 						'unwisechar','spaceincn','hashsha2',
-						'cnofca','revoked')
+						'cnofca','revoked', 'badwest', 'badeast')
 	# Add chain roots here
 	chain_ca_roots =   ('east_chain', 'west_chain')
 
