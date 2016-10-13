@@ -1465,8 +1465,8 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		{
-			unsigned max_ike = IKE_SA_LIFETIME_MAXIMUM;
-			unsigned max_ipsec = IPSEC_SA_LIFETIME_MAXIMUM;
+			time_t max_ike = IKE_SA_LIFETIME_MAXIMUM;
+			time_t max_ipsec = IPSEC_SA_LIFETIME_MAXIMUM;
 #ifdef FIPS_CHECK
 		if (libreswan_fipsmode()) {
 			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
@@ -1474,12 +1474,12 @@ void add_connection(const struct whack_message *wm)
 		}
 #endif
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %ds",
+				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %lds",
 					max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %ds",
+				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %lds",
 					max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
