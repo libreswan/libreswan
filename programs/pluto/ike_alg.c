@@ -487,7 +487,17 @@ void ike_alg_init(void)
 		 * enabled for how).
 		 */
 		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
-		passert(alg->algo_type >= 0 && alg->algo_type < IKE_ALG_ROOF);
+		/*
+		 * passert(alg->algo_type >= 0 && alg->algo_type < IKE_ALG_ROOF);
+		 *
+		 * Avoid the bogus GCC 4.4 warning: "comparison of
+		 * unsigned expression >= 0 is always true" by forcing
+		 * the value to unsigned and testing that.  ISO C
+		 * considers the integral type (sign, size) used to
+		 * represent an enum implementation dependent, the GCC
+		 * manual claims to use "signed int" by default.
+		 */
+		passert((unsigned)alg->algo_type < IKE_ALG_ROOF);
 		if (alg->algo_id > 0) {
 			static enum_names *ikev1_names[IKE_ALG_ROOF] = {
 				[IKE_ALG_ENCRYPT] = &oakley_enc_names,
