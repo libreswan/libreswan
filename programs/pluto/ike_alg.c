@@ -433,6 +433,9 @@ void ike_alg_show_status(void)
 
 /*
  * Validate and register IKE algorithm objects
+ *
+ * Order the array so that, when listed, the algorithms are in the
+ * order expected by test scripts.
  */
 
 static struct ike_alg *algorithms[] = {
@@ -449,9 +452,6 @@ static struct ike_alg *algorithms[] = {
 	&ike_alg_encrypt_aes_gcm_8.common,
 	&ike_alg_encrypt_aes_gcm_12.common,
 	&ike_alg_encrypt_aes_gcm_16.common,
-	&ike_alg_encrypt_aes_ccm_8.common,
-	&ike_alg_encrypt_aes_ccm_12.common,
-	&ike_alg_encrypt_aes_ccm_16.common,
 #endif
 #ifdef USE_CAMELLIA
 	&ike_alg_encrypt_camellia_cbc.common,
@@ -459,6 +459,12 @@ static struct ike_alg *algorithms[] = {
 #endif
 #ifdef USE_3DES
 	&ike_alg_encrypt_3des_cbc.common,
+#endif
+#ifdef USE_AES
+	/* see note above */
+	&ike_alg_encrypt_aes_ccm_8.common,
+	&ike_alg_encrypt_aes_ccm_12.common,
+	&ike_alg_encrypt_aes_ccm_16.common,
 #endif
 };
 
