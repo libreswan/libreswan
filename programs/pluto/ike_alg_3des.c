@@ -55,7 +55,6 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		    .algo_type =     IKE_ALG_ENCRYPT,
 		    .algo_id =       OAKLEY_3DES_CBC,
 		    .algo_v2id =     IKEv2_ENCR_3DES,
-		    .algo_next =     NULL,
 		    .fips =          TRUE,
 	},
 	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */

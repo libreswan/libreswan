@@ -100,13 +100,6 @@ static const struct type_algorithms prf_algorithms;
 static const struct type_algorithms integ_algorithms;
 static const struct type_algorithms encrypt_algorithms;
 
-#define IKE_ALG_FOR_EACH(ALG,A)						\
-	for (const struct ike_alg *(A) = ike_alg_base[ALG];		\
-	     (A) != NULL;						\
-	     (A) = (A)->algo_next)
-
-static const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
-
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
 	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
@@ -220,17 +213,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 
 /*
  *      return ike_algo object by {type, id}
- *      this is also used in ikev2 despite name :/
  */
-static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
-					    unsigned algo_id)
-{
-	IKE_ALG_FOR_EACH(algo_type, e) {
-		if (e->algo_id == algo_id)
-			return e;
-	}
-	return NULL;
-}
 
 static const struct ike_alg *ikev1_lookup(const struct type_algorithms *algorithms,
 					  unsigned id)
@@ -256,16 +239,6 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg)
 const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 {
 	return (const struct encrypt_desc *) ikev1_lookup(&encrypt_algorithms, alg);
-}
-
-static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
-					    enum ikev2_trans_type_encr algo_v2id)
-{
-	IKE_ALG_FOR_EACH(algo_type, e) {
-		if (e->algo_v2id == algo_v2id)
-			return e;
-	}
-	return NULL;
 }
 
 static const struct ike_alg *ikev2_lookup(const struct type_algorithms *algorithms,
@@ -305,72 +278,6 @@ const struct hash_desc *ikev2_alg_get_hasher(int id)
 const struct hash_desc *ikev2_alg_get_integ(int id)
 {
 	return (const struct hash_desc *) ikev2_lookup(&integ_algorithms, id);
-}
-
-/*
- *      Main "raw" ike_alg list adding function
- */
-void ike_alg_add(struct ike_alg *a)
-{
-	passert(a->algo_type < IKE_ALG_ROOF);
-	passert(a->algo_id != 0 || a->algo_v2id != 0);	/* must be useful for v1 or v2 */
-
-	/* must not duplicate what has already been added */
-	passert(a->algo_id == 0 || ikev1_alg_find(a->algo_type, a->algo_id) == NULL);
-	passert(a->algo_v2id == 0 || ikev2_alg_find(a->algo_type, a->algo_v2id) == NULL);
-
-	passert(a->algo_next == NULL);	/* must not already be on a list */
-	a->algo_next = ike_alg_base[a->algo_type];
-	ike_alg_base[a->algo_type] = a;
-}
-
-/*
- * Validate and register IKE hash algorithm object
- *
- * XXX: BUG: This uses IKEv1 oakley_hash_names, but for
- * IKEv2 we have more entries, see ikev2_trans_type_integ_names
- * ??? why is this only used by ike_alg_sha2_init?
- */
-bool ike_alg_register_hash(struct hash_desc *hash_desc)
-{
-	const char *alg_name = "<none>";
-	bool ret = FALSE;
-
-	if (hash_desc->common.algo_id > OAKLEY_HASH_MAX) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d < max=%d",
-		     hash_desc->common.algo_id, OAKLEY_HASH_MAX);
-	} else if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d has ctx_size=%d > hash_ctx=%d",
-		     hash_desc->common.algo_id,
-		     (int)hash_desc->hash_ctx_size,
-		     (int)sizeof(union hash_ctx));
-	} else if (hash_desc->hash_init == NULL ||
-			hash_desc->hash_update == NULL ||
-			hash_desc->hash_final == NULL) {
-		libreswan_log("ike_alg_register_hash(): hash alg=%d missing hash_init(), hash_update(), or hash_final()",
-		     hash_desc->common.algo_id);
-	} else {
-		alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
-
-		/* Don't add anything we do not know the name for */
-		if (alg_name == NULL) {
-			libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in constants.c:oakley_hash_names",
-			     hash_desc->common.algo_id);
-			alg_name = "<NULL>";
-		} else {
-			/* success! */
-			ret = TRUE;
-			if (hash_desc->common.name == NULL)
-				hash_desc->common.name = clone_str(alg_name, "hasher name (ignore)");
-
-			ike_alg_add(&hash_desc->common);
-		}
-	}
-
-	libreswan_log("ike_alg_register_hash(): Activating %s: %s",
-		      alg_name,
-		      ret ? "Ok" : "FAILED");
-	return ret;
 }
 
 /* Get pfsgroup for this connection */
@@ -445,22 +352,22 @@ void ike_alg_show_status(void)
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	IKE_ALG_FOR_EACH(IKE_ALG_ENCRYPT, algo) {
+	FOR_EACH_IKE_ALGP(encrypt_algorithms, algp) {
 		struct esb_buf v1namebuf, v2namebuf;
-		const struct encrypt_desc *encrypt = (const struct encrypt_desc *)algo;
+		const struct encrypt_desc *alg = (const struct encrypt_desc *)(*algp);
 
-		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
+		passert(alg->common.algo_id != 0 || alg->common.algo_v2id != 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-			  algo->algo_id,
-			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
-			  algo->algo_v2id,
-			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
-			  encrypt->enc_blocksize,
-			  encrypt->keydeflen);
+			  alg->common.algo_id,
+			  enum_showb(&oakley_enc_names, alg->common.algo_id, &v1namebuf),
+			  alg->common.algo_v2id,
+			  enum_showb(&ikev2_trans_type_encr_names, alg->common.algo_v2id, &v2namebuf),
+			  alg->enc_blocksize,
+			  alg->keydeflen);
 	}
-	IKE_ALG_FOR_EACH(IKE_ALG_HASH, algo) {
-		const struct hash_desc *hash = (const struct hash_desc *)algo;
+	FOR_EACH_IKE_ALGP(prf_algorithms, algp) {
+		const struct hash_desc *alg = (const struct hash_desc *)(*algp);
 		/*
 		 * ??? we think that hash_integ_len is meaningless
 		 * (and 0) for IKE hashes.
@@ -468,12 +375,12 @@ void ike_alg_show_status(void)
 		 * Hash algorithms have hash_integ_len == 0.
 		 * Integrity algorithms (a different list) do not.
 		 */
-		pexpect(hash->hash_integ_len == 0);
+		pexpect(alg->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-			  algo->algo_id,
-			  enum_name(&oakley_hash_names, algo->algo_id),
-			  hash->hash_digest_len);
+			  alg->common.algo_id,
+			  enum_name(&oakley_hash_names, alg->common.algo_id),
+			  alg->hash_digest_len);
 	}
 
 	const struct oakley_group_desc *gdesc;

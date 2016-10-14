@@ -21,8 +21,8 @@ enum ike_alg_type {
 #define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
 
 
-/* common prefix for struct encrypt_desc and struct hash_desc
- * Read-only except for name and algo_next.
+/*
+ * Common prefix for struct encrypt_desc and struct hash_desc.
  */
 struct ike_alg {
 	const char *name;	/* note: overwritten sometimes */
@@ -30,7 +30,6 @@ struct ike_alg {
 	const enum ike_alg_type algo_type;
 	const u_int16_t algo_id;	/* either hash or enc algo id */
 	const u_int16_t algo_v2id;	/* either hash or enc algo id */
-	const struct ike_alg *algo_next;
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?
@@ -142,8 +141,6 @@ extern bool ike_alg_enc_ok(int ealg, unsigned key_len,
 extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 		      struct alg_info_ike *alg_info_ike);
 
-extern void ike_alg_add(struct ike_alg *);
-extern bool ike_alg_register_hash(struct hash_desc *a);
 void ike_alg_init(void);
 
 const struct encrypt_desc *ikev1_alg_get_encrypter(int alg);
