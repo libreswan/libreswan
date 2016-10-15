@@ -342,7 +342,6 @@ enum option_enums {
 	END_IKEPORT,
 	END_NEXTHOP,
 	END_CLIENT,
-	END_CLIENTWITHIN,
 	END_CLIENTPROTOPORT,
 	END_DNSKEYONDEMAND,
 	END_XAUTHNAME,
@@ -549,7 +548,6 @@ static const struct option long_opts[] = {
 	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
 	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
 	{ "client", required_argument, NULL, END_CLIENT + OO },
-	{ "clientwithin", required_argument, NULL, END_CLIENTWITHIN + OO },
 	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT +
 	  OO },
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
@@ -1470,8 +1468,6 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
-			if (end_seen & LELEM(END_CLIENTWITHIN - END_FIRST))
-				diag("--client conflicts with --clientwithin");
 
 			tunnel_af_used_by = long_opts[long_index].name;
 			if (startswith(optarg, "vhost:") ||
@@ -1484,17 +1480,6 @@ int main(int argc, char **argv)
 				msg.right.has_client = TRUE;
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
-			continue;
-
-		case END_CLIENTWITHIN:	/* --clientwithin <address range> */
-			if (end_seen & LELEM(END_CLIENT - END_FIRST))
-				diag("--clientwithin conflicts with --client");
-
-			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttosubnet(optarg, 0, msg.tunnel_addr_family,
-					&msg.right.client), optarg);
-			msg.right.has_client = TRUE;
-			msg.right.has_client_wildcard = TRUE;
 			continue;
 
 		/* --clientprotoport <protocol>/<port> */
