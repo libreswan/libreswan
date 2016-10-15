@@ -1,5 +1,6 @@
 /*
- * IKE modular algorithm handling interface
+ * IKE modular algorithm handling interface, for libreswan
+ *
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Copyright (C) 2003 Mathieu Lafon <mlafon@arkoon.net>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
@@ -71,6 +72,22 @@
 *       - registration
 *       - lookup
 *=========================================================*/
+
+#define FOR_EACH_IKE_ALGP(ALGORITHMS,A)					\
+	for (const struct ike_alg **(A) = (ALGORITHMS).descriptors;		\
+	     *(A) != NULL;						\
+	     (A)++)
+
+struct type_algorithms {
+	const struct ike_alg **descriptors;
+	enum ike_alg_type type;
+	const char *const type_name;
+	enum_names *const ikev1_enum_names;
+	enum_names *const ikev2_enum_names;
+	bool (*check_algorithm)(const struct ike_alg*);
+};
+
+static const struct type_algorithms encrypt_algorithms;
 
 #define IKE_ALG_FOR_EACH(ALG,A)						\
 	for (const struct ike_alg *(A) = ike_alg_base[ALG];		\
@@ -204,6 +221,22 @@ static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
 	return NULL;
 }
 
+static const struct ike_alg *ikev1_lookup(const struct type_algorithms *algorithms,
+					  unsigned id)
+{
+	FOR_EACH_IKE_ALGP(*algorithms, algp) {
+		const struct ike_alg *e = *algp;
+		if (e->algo_id == id) {
+			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 id: %u, found %s\n",
+					       algorithms->type_name, id, e->name));
+			return e;
+		}
+	}
+	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 id:%u, not found\n",
+			       algorithms->type_name, id));
+	return NULL;
+}
+
 const struct hash_desc *ikev1_alg_get_hasher(int alg)
 {
 	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
@@ -211,7 +244,7 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg)
 
 const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 {
-	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
+	return (const struct encrypt_desc *) ikev1_lookup(&encrypt_algorithms, alg);
 }
 
 static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
@@ -221,6 +254,22 @@ static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
 		if (e->algo_v2id == algo_v2id)
 			return e;
 	}
+	return NULL;
+}
+
+static const struct ike_alg *ikev2_lookup(const struct type_algorithms *algorithms,
+					  unsigned id)
+{
+	FOR_EACH_IKE_ALGP(*algorithms, algp) {
+		const struct ike_alg *e = *algp;
+		if (e->algo_v2id == id) {
+			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id: %u, found %s\n",
+					       algorithms->type_name, id, e->name));
+			return e;
+		}
+	}
+	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id:%u, not found\n",
+			       algorithms->type_name, id));
 	return NULL;
 }
 
@@ -234,7 +283,7 @@ const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
 	if (id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
 		id = IKEv2_ENCR_CAMELLIA_CBC;
 
-	return (const struct encrypt_desc *) ikev2_alg_find(IKE_ALG_ENCRYPT, id);
+	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms, id);
 }
 
 const struct hash_desc *ikev2_alg_get_hasher(int id)
@@ -438,61 +487,132 @@ void ike_alg_show_status(void)
  * order expected by test scripts.
  */
 
-static struct ike_alg *algorithms[] = {
-#ifdef USE_TWOFISH
-	&ike_alg_encrypt_twofish_ssh.common,
-	&ike_alg_encrypt_twofish_cbc.common,
-#endif
-#ifdef USE_SERPENT
-	&ike_alg_encrypt_serpent_cbc.common,
-#endif
-#ifdef USE_AES
-	&ike_alg_encrypt_aes_cbc.common,
-	&ike_alg_encrypt_aes_ctr.common,
-	&ike_alg_encrypt_aes_gcm_8.common,
-	&ike_alg_encrypt_aes_gcm_12.common,
-	&ike_alg_encrypt_aes_gcm_16.common,
-#endif
-#ifdef USE_CAMELLIA
-	&ike_alg_encrypt_camellia_cbc.common,
-	&ike_alg_encrypt_camellia_ctr.common,
-#endif
-#ifdef USE_3DES
-	&ike_alg_encrypt_3des_cbc.common,
-#endif
-#ifdef USE_AES
-	/* see note above */
-	&ike_alg_encrypt_aes_ccm_8.common,
-	&ike_alg_encrypt_aes_ccm_12.common,
-	&ike_alg_encrypt_aes_ccm_16.common,
-#endif
+/*
+ * PRF [HASH] function.
+ */
+
+static struct hash_desc *prf_descriptors[] = {
+	NULL,
 };
 
-void ike_alg_init(void)
+static bool check_prf_algorithm(const struct ike_alg *alg)
 {
-#ifdef FIPS_CHECK
-	bool fips = libreswan_fipsmode();
-#else
-	bool fips = FALSE;
-#endif
-	for (unsigned i = 0; i < elemsof(algorithms); i++) {
-		struct ike_alg *alg = algorithms[i];
-		DBG(DBG_CRYPT, DBG_log("adding algorithm %s, id: %d, v2id: %d",
-				       alg->name, alg->algo_id, alg->algo_v2id));
+	const struct hash_desc *prf = (const struct hash_desc*)alg;
+	passert(prf->hash_ctx_size <= sizeof(union hash_ctx));
+	passert(prf->hash_init != NULL);
+	passert(prf->hash_update != NULL);
+	passert(prf->hash_final != NULL);
+	return TRUE;
+}
 
+static const struct type_algorithms prf_algorithms = {
+	.descriptors = (const struct ike_alg**)prf_descriptors,
+	.type = IKE_ALG_HASH,
+	.type_name = "PRF",
+	.ikev1_enum_names = &oakley_hash_names,
+	.ikev2_enum_names = &ikev2_trans_type_prf_names,
+	.check_algorithm = check_prf_algorithm,
+};
+
+/*
+ * Integrity.
+ */
+
+static struct hash_desc *integ_descriptors[] = {
+	NULL,
+};
+
+static bool check_integ_algorithm(const struct ike_alg *alg)
+{
+	const struct hash_desc *integ = (const struct hash_desc*)alg;
+	passert(integ->hash_integ_len > 0);
+	return check_prf_algorithm(alg);
+}
+
+static const struct type_algorithms integ_algorithms = {
+	.descriptors = (const struct ike_alg**)integ_descriptors,
+	.type = IKE_ALG_INTEG,
+	.type_name = "Integrity",
+	/*
+	 * IKEv1 uses the same HASH names for PRF and INTEG.
+	 */
+	.ikev1_enum_names = &oakley_hash_names,
+	.ikev2_enum_names = &ikev2_trans_type_integ_names,
+	.check_algorithm = check_integ_algorithm,
+};
+
+/*
+ * Encryption
+ */
+
+static struct encrypt_desc *encrypt_descriptors[] = {
+#ifdef USE_AES
+	&ike_alg_encrypt_aes_ccm_16,
+	&ike_alg_encrypt_aes_ccm_12,
+	&ike_alg_encrypt_aes_ccm_8,
+	/* see note above */
+#endif
+#ifdef USE_3DES
+	&ike_alg_encrypt_3des_cbc,
+#endif
+#ifdef USE_CAMELLIA
+	&ike_alg_encrypt_camellia_ctr,
+	&ike_alg_encrypt_camellia_cbc,
+#endif
+#ifdef USE_AES
+	&ike_alg_encrypt_aes_gcm_16,
+	&ike_alg_encrypt_aes_gcm_12,
+	&ike_alg_encrypt_aes_gcm_8,
+	&ike_alg_encrypt_aes_ctr,
+	&ike_alg_encrypt_aes_cbc,
+#endif
+#ifdef USE_SERPENT
+	&ike_alg_encrypt_serpent_cbc,
+#endif
+#ifdef USE_TWOFISH
+	&ike_alg_encrypt_twofish_cbc,
+	&ike_alg_encrypt_twofish_ssh,
+#endif
+	NULL,
+};
+
+static bool check_encrypt_algorithm(const struct ike_alg *alg UNUSED)
+{
+	return TRUE;
+}
+
+static const struct type_algorithms encrypt_algorithms = {
+	.descriptors = (const struct ike_alg**)encrypt_descriptors,
+	.type_name = "Encryption",
+	.type = IKE_ALG_ENCRYPT,
+	.ikev1_enum_names = &oakley_enc_names,
+	.ikev2_enum_names = &ikev2_trans_type_encr_names,
+	.check_algorithm = check_encrypt_algorithm,
+};
+
+static void add_algorithms(bool fips, const struct type_algorithms *algorithms)
+{
+	const struct ike_alg **end = algorithms->descriptors;
+
+	for (const struct ike_alg **algp = algorithms->descriptors; (*algp) != NULL; algp++) {
 		/*
-		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
-		 * entries.
+		 * Remove the next algorith to be tested, and NULL its
+		 * entry.  This ensures that local lookups for this
+		 * algorithm don't include this or following
+		 * algorithms.
 		 *
-		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
-		 * define the IKEv1 field "common.algo_id" so need to
-		 * handle that.
-		 *
-		 * XXX: The intent here is to deal with any algorithm,
-		 * not just ENCRYPT (algothough that is all that is
-		 * enabled for how).
+		 * If this algorithm passes it will be re-inserted at
+		 * END.  END<=algp.
 		 */
-		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
+		const struct ike_alg *alg = *algp;
+		*algp = NULL;
+
+		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, id: %d, v2id: %d",
+				       algorithms->type_name, alg->name, alg->officname,
+				       alg->algo_id, alg->algo_v2id));
+		passert(alg->name);
+		passert(alg->officname);
+
 		/*
 		 * passert(alg->algo_type >= 0 && alg->algo_type < IKE_ALG_ROOF);
 		 *
@@ -504,37 +624,81 @@ void ike_alg_init(void)
 		 * manual claims to use "signed int" by default.
 		 */
 		passert((unsigned)alg->algo_type < IKE_ALG_ROOF);
+		passert(alg->algo_type == algorithms->type);
+
+		/*
+		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
+		 * entries.
+		 *
+		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
+		 * define the IKEv1 field "common.algo_id" so need to
+		 * handle that.
+		 */
+		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
 		if (alg->algo_id > 0) {
-			static enum_names *ikev1_names[IKE_ALG_ROOF] = {
-				[IKE_ALG_ENCRYPT] = &oakley_enc_names,
-			};
-			passert(ikev1_names[alg->algo_type]);
-			passert(enum_name(ikev1_names[alg->algo_type], alg->algo_id));
+			passert(algorithms->ikev1_enum_names != NULL);
+			const char *name = enum_name(algorithms->ikev1_enum_names, alg->algo_id);
+			passert(name);
+			DBG(DBG_CRYPT, DBG_log("id: %d IKEv1 enum name: %s",
+					       alg->algo_id, name));
 		}
 		if (alg->algo_v2id > 0) {
-			static enum_names *ikev2_names[IKE_ALG_ROOF] = {
-				[IKE_ALG_ENCRYPT] = &ikev2_trans_type_encr_names,
-			};
-			passert(ikev2_names[alg->algo_type]);
-			passert(enum_name(ikev2_names[alg->algo_type], alg->algo_v2id));
+			passert(algorithms->ikev2_enum_names != NULL);
+			const char *name = enum_name(algorithms->ikev2_enum_names, alg->algo_v2id);
+			passert(name);
+			DBG(DBG_CRYPT, DBG_log("v2id: %d IKEv2 enum name: %s",
+					       alg->algo_v2id, name));
 		}
 
+		/*
+		 * Algorithm can't appear twice.
+		 */
+		passert(alg->algo_id == 0 || ikev1_lookup(algorithms, alg->algo_id) == NULL);
+		passert(alg->algo_v2id == 0 || ikev2_lookup(algorithms, alg->algo_v2id) == NULL);
+
+		/*
+		 * Any other algorithm-type specific checks.
+		 */
+		if (!algorithms->check_algorithm(alg)) {
+			libreswan_log("%s algorithm %s: DISABLED; internal check failed",
+				      algorithms->type_name, alg->name);
+			continue;
+		}
+
+		/*
+		 * Check FIPS before trying to run any tests.
+		 */
 		if (fips && !alg->fips) {
-			libreswan_log("Algorithm %s: DISABLED; not FIPS compliant",
-				      alg->name);
+			libreswan_log("%s algorithm %s: DISABLED; not FIPS compliant",
+				      algorithms->type_name, alg->name);
 			continue;
 		}
 
 		if (alg->do_test && !alg->do_test(alg)) {
-			libreswan_log("Algorithm %s: DISABLED; verification faild",
-				      alg->name);
+			libreswan_log("%s algorithm %s: DISABLED; testing failed",
+				      algorithms->type_name, alg->name);
 			continue;
 		}
 
-		ike_alg_add(alg);
+		/* append to validated list */
+		*end++ = alg;
 
-		libreswan_log("Algorithm %s: ENABLED%s%s", alg->name,
+		libreswan_log("%s algorithm %s: ENABLED%s%s",
+			      algorithms->type_name, alg->name,
 			      alg->fips ? "; FIPS compliant" : "",
-			      alg->do_test ? "; verified" : "");
+			      alg->do_test ? "; tested" : "");
+
 	}
+}
+
+void ike_alg_init(void)
+{
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+	add_algorithms(fips, &encrypt_algorithms);
+	add_algorithms(fips, &prf_algorithms);
+	add_algorithms(fips, &integ_algorithms);
 }
