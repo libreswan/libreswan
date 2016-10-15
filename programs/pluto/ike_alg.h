@@ -164,16 +164,6 @@ extern struct db_sa *kernel_alg_makedb(lset_t policy,
 				       struct alg_info_esp *ei,
 				       bool logit);
 
-/* exports from ike_alg_*.c */
-
-#ifdef USE_AES
-extern void ike_alg_aes_init(void);
-#endif
-
-#ifdef USE_SHA2
-extern void ike_alg_sha2_init(void);
-#endif
-
 CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter);
 
 #endif /* _IKE_ALG_H */

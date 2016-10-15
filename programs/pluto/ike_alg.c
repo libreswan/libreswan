@@ -64,6 +64,15 @@
 #ifdef USE_3DES
 #include "ike_alg_3des.h"
 #endif
+#ifdef USE_SHA2
+#include "ike_alg_sha2.h"
+#endif
+#ifdef USE_SHA1
+#include "ike_alg_sha1.h"
+#endif
+#ifdef USE_MD5
+#include "ike_alg_md5.h"
+#endif
 
 /*==========================================================
 *
@@ -87,6 +96,8 @@ struct type_algorithms {
 	bool (*check_algorithm)(const struct ike_alg*);
 };
 
+static const struct type_algorithms prf_algorithms;
+static const struct type_algorithms integ_algorithms;
 static const struct type_algorithms encrypt_algorithms;
 
 #define IKE_ALG_FOR_EACH(ALG,A)						\
@@ -239,7 +250,7 @@ static const struct ike_alg *ikev1_lookup(const struct type_algorithms *algorith
 
 const struct hash_desc *ikev1_alg_get_hasher(int alg)
 {
-	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
+	return (const struct hash_desc *) ikev1_lookup(&prf_algorithms, alg);
 }
 
 const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
@@ -288,12 +299,12 @@ const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
 
 const struct hash_desc *ikev2_alg_get_hasher(int id)
 {
-	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_HASH, id);
+	return (const struct hash_desc *) ikev2_lookup(&prf_algorithms, id);
 }
 
 const struct hash_desc *ikev2_alg_get_integ(int id)
 {
-	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_INTEG, id);
+	return (const struct hash_desc *) ikev2_lookup(&integ_algorithms, id);
 }
 
 /*
@@ -492,6 +503,20 @@ void ike_alg_show_status(void)
  */
 
 static struct hash_desc *prf_descriptors[] = {
+#ifdef USE_MD5
+	&ike_alg_prf_md5,
+#endif
+#ifdef USE_SHA1
+	&ike_alg_prf_sha1,
+#endif
+#ifdef USE_SHA2
+	&ike_alg_prf_sha2_256,
+	&ike_alg_prf_sha2_384,
+	&ike_alg_prf_sha2_512,
+#endif
+#ifdef USE_AES
+	&ike_alg_prf_aes_xcbc,
+#endif
 	NULL,
 };
 
@@ -519,6 +544,22 @@ static const struct type_algorithms prf_algorithms = {
  */
 
 static struct hash_desc *integ_descriptors[] = {
+#ifdef USE_MD5
+	&ike_alg_integ_md5,
+#endif
+#ifdef USE_SHA1
+	&ike_alg_integ_sha1,
+#endif
+#ifdef USE_SHA2
+	&ike_alg_integ_sha2_512,
+	&ike_alg_integ_sha2_384,
+	&ike_alg_integ_sha2_256,
+#endif
+#ifdef USE_AES
+#ifdef NOT_YET
+	&ike_alg_integ_aes_xcbc,
+#endif
+#endif
 	NULL,
 };
 

@@ -208,6 +208,12 @@ EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o
 EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT)
 endif
 
+EXTRA_CRYPTO_SRCS += ike_alg_sha1.c
+EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
+
+EXTRA_CRYPTO_SRCS += ike_alg_md5.c
+EXTRA_CRYPTO_OBJS += ike_alg_md5.o
+
 ifeq ($(USE_3DES),true)
 EXTRA_CRYPTO_SRCS += ike_alg_3des.c
 EXTRA_CRYPTO_OBJS += ike_alg_3des.o

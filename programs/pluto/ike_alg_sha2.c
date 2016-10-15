@@ -3,6 +3,7 @@
  * Copyright (C) 2010-2013 Paul Wouters <paul@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,12 +82,15 @@ static void sha512_final_thunk(u_char *hash, union hash_ctx *ctx)
 	sha512_final(hash, &ctx->ctx_sha512);
 }
 
-static struct hash_desc hash_desc_sha2_256 = {
-	.common = { .officname =  "sha256",
-		    .algo_type = IKE_ALG_HASH,
-		    .algo_id =   OAKLEY_SHA2_256,
-		    .algo_v2id = IKEv2_PRF_HMAC_SHA2_256,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_prf_sha2_256 = {
+	.common = {
+		.name = "OAKLEY_SHA2_256",
+		.officname = "sha256",
+		.algo_type = IKE_ALG_HASH,
+		.algo_id = OAKLEY_SHA2_256,
+		.algo_v2id = IKEv2_PRF_HMAC_SHA2_256,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha256_context),
 	.hash_key_size = SHA2_256_DIGEST_SIZE,
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
@@ -97,12 +101,15 @@ static struct hash_desc hash_desc_sha2_256 = {
 	.hash_final = sha256_final_thunk,
 };
 
-static struct hash_desc integ_desc_sha2_256 = {
-	.common = { .officname =  "sha256",
-		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id =   OAKLEY_SHA2_256,
-		    .algo_v2id = IKEv2_AUTH_HMAC_SHA2_256_128,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_integ_sha2_256 = {
+	.common = {
+		.name = "OAKLEY_SHA2_256",
+		.officname = "sha256",
+		.algo_type = IKE_ALG_INTEG,
+		.algo_id = OAKLEY_SHA2_256,
+		.algo_v2id = IKEv2_AUTH_HMAC_SHA2_256_128,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha256_context),
 	.hash_key_size = SHA2_256_DIGEST_SIZE,
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
@@ -113,12 +120,15 @@ static struct hash_desc integ_desc_sha2_256 = {
 	.hash_final = sha256_final_thunk,
 };
 
-static struct hash_desc hash_desc_sha2_384 = {
-	.common = { .officname =  "sha384",
-		    .algo_type = IKE_ALG_HASH,
-		    .algo_id =   OAKLEY_SHA2_384,
-		    .algo_v2id = IKEv2_PRF_HMAC_SHA2_384,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_prf_sha2_384 = {
+	.common = {
+		.name = "OAKLEY_SHA2_384",
+		.officname = "sha384",
+		.algo_type = IKE_ALG_HASH,
+		.algo_id = OAKLEY_SHA2_384,
+		.algo_v2id = IKEv2_PRF_HMAC_SHA2_384,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha384_context),
 	.hash_key_size = SHA2_384_DIGEST_SIZE,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
@@ -129,12 +139,15 @@ static struct hash_desc hash_desc_sha2_384 = {
 	.hash_final = sha384_final_thunk,
 };
 
-static struct hash_desc integ_desc_sha2_384 = {
-	.common = { .officname =  "sha384",
-		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id =   OAKLEY_SHA2_384,
-		    .algo_v2id = IKEv2_AUTH_HMAC_SHA2_384_192,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_integ_sha2_384 = {
+	.common = {
+		.name = "OAKLEY_SHA2_384",
+		.officname =  "sha384",
+		.algo_type = IKE_ALG_INTEG,
+		.algo_id =   OAKLEY_SHA2_384,
+		.algo_v2id = IKEv2_AUTH_HMAC_SHA2_384_192,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha384_context),
 	.hash_key_size = SHA2_384_DIGEST_SIZE,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
@@ -145,12 +158,15 @@ static struct hash_desc integ_desc_sha2_384 = {
 	.hash_final = sha384_final_thunk,
 };
 
-static struct hash_desc hash_desc_sha2_512 = {
-	.common = { .officname = "sha512",
-		    .algo_type = IKE_ALG_HASH,
-		    .algo_id =   OAKLEY_SHA2_512,
-		    .algo_v2id = IKEv2_PRF_HMAC_SHA2_512,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_prf_sha2_512 = {
+	.common = {
+		.name = "OAKLEY_SHA2_512",
+		.officname = "sha512",
+		.algo_type = IKE_ALG_HASH,
+		.algo_id = OAKLEY_SHA2_512,
+		.algo_v2id = IKEv2_PRF_HMAC_SHA2_512,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha512_context),
 	.hash_key_size = SHA2_512_DIGEST_SIZE,
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
@@ -161,12 +177,15 @@ static struct hash_desc hash_desc_sha2_512 = {
 	.hash_final = sha512_final_thunk,
 };
 
-static struct hash_desc integ_desc_sha2_512 = {
-	.common = { .officname =  "sha512",
-		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id =   OAKLEY_SHA2_512,
-		    .algo_v2id = IKEv2_AUTH_HMAC_SHA2_512_256,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_integ_sha2_512 = {
+	.common = {
+		.name = "OAKLEY_SHA2_512",
+		.officname =  "sha512",
+		.algo_type = IKE_ALG_INTEG,
+		.algo_id =   OAKLEY_SHA2_512,
+		.algo_v2id = IKEv2_AUTH_HMAC_SHA2_512_256,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(sha512_context),
 	.hash_key_size = SHA2_512_DIGEST_SIZE,
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
@@ -176,18 +195,3 @@ static struct hash_desc integ_desc_sha2_512 = {
 	.hash_update = sha512_write_thunk,
 	.hash_final = sha512_final_thunk,
 };
-
-/*
- * IKE_ALG_INIT_NAME: ike_alg_sha2_init
- */
-void ike_alg_sha2_init(void)
-{
-	if (ike_alg_register_hash(&hash_desc_sha2_512))
-		ike_alg_add(&integ_desc_sha2_256.common);
-
-	if (ike_alg_register_hash(&hash_desc_sha2_384))
-		ike_alg_add(&integ_desc_sha2_384.common);
-
-	if (ike_alg_register_hash(&hash_desc_sha2_256))
-		ike_alg_add(&integ_desc_sha2_512.common);
-}

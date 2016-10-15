@@ -65,6 +65,7 @@
 #include "timer.h"
 #include "ike_alg.h"
 #include "ikev2.h"
+#include "ike_alg_sha1.h"
 
 #include "cookie.h"
 #include "sha1.h"
@@ -189,7 +190,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First: one with local (source) IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
+	natd_hash(&ike_alg_prf_sha1, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ?
 			md->hdr.isa_rcookie : st->st_rcookie,
 		&st->st_localaddr, st->st_localport);
@@ -202,7 +203,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second: one with remote (destination) IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
+	natd_hash(&ike_alg_prf_sha1, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
 
@@ -1175,13 +1176,13 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hash_me, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_prf_sha1, hash_me, st->st_icookie, rcookie,
 		&md->iface->ip_addr, md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hash_him, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_prf_sha1, hash_him, st->st_icookie, rcookie,
 		&md->sender, md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {

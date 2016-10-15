@@ -618,12 +618,15 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-static struct hash_desc hash_desc_aes_xcbc = {
-	.common = { .officname =  "aes_xcbc",
-		    .algo_type = IKE_ALG_HASH,
-		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		    .algo_v2id = IKEv2_PRF_AES128_XCBC,
-		    .algo_next = NULL, },
+struct hash_desc ike_alg_prf_aes_xcbc = {
+	.common = {
+		.name = "DISABLED-OAKLEY_AES_XCBC",
+		.officname = "aes_xcbc",
+		.algo_type = IKE_ALG_HASH,
+		.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+		.algo_v2id = IKEv2_PRF_AES128_XCBC,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(aes_xcbc_context),
 	.hash_key_size = AES_XCBC_DIGEST_SIZE,
 	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
@@ -635,12 +638,14 @@ static struct hash_desc hash_desc_aes_xcbc = {
 };
 
 #ifdef NOT_YET
-static struct hash_desc integ_desc_aes_xcbc = {
-	.common = { .officname =  "aes_xcbc",
-		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		    .algo_v2id = IKEv2_AUTH_AES_XCBC_96,
-		    .algo_next = NULL, },
+struct integ_desc ike_alg_integ_aes_xcbc = {
+	.common = {
+		.officname =  "aes_xcbc",
+		.algo_type = IKE_ALG_INTEG,
+		.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+		.algo_v2id = IKEv2_AUTH_AES_XCBC_96,
+		.fips = TRUE,
+	},
 	.hash_ctx_size = sizeof(aes_xcbc_context),
 	.hash_key_size = AES_XCBC_DIGEST_SIZE,
 	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
@@ -651,13 +656,3 @@ static struct hash_desc integ_desc_aes_xcbc = {
 	.hash_final = aes_xcbc_final_thunk,
 };
 #endif
-
-void ike_alg_aes_init(void)
-{
-	/* Waiting on NSS support - but we need registration so ESP will work */
-	if (ike_alg_register_hash(&hash_desc_aes_xcbc) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register hash algo_aes_xcbc for IKE");
-#if 0
-	ike_alg_add(&integ_desc_aes_xcbc.common);
-#endif
-}
