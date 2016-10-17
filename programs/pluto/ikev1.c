@@ -2690,10 +2690,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
 #endif
-		if (IS_PHASE1_INIT(st->st_state)) {
-			delete_event(st);
-			release_whack(st);
-		}
 		if (IS_QUICK(st->st_state)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
