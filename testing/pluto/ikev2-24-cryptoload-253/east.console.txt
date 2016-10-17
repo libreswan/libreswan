@@ -20,10 +20,11 @@ ipsec auto --status
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
+000 seccomp=disabled
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
@@ -107,7 +108,7 @@ ipsec auto --status
 000 "road-eastnet-nonat":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-eastnet-nonat":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-eastnet-nonat":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-DH24(24)
 000 "road-eastnet-nonat":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)-DH24(24)

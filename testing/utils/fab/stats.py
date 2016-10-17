@@ -80,9 +80,9 @@ class Results(Counts):
     def count_result(self, result):
         Counts.add(self, result.test.name, "total")
         Counts.add(self, result.test.name, str(result))
-        for domain, errors in result.errors.items():
-            for error in errors:
-                Counts.add(self, result.test.name, str(result), error, domain=domain)
+        for domain, issues in result.issues.items():
+            for issue in issues:
+                Counts.add(self, result.test.name, str(result), issue, domain=domain)
 
     def add_skipped(self, result):
         Counts.add(self, result.test.name, "skipped", str(result))

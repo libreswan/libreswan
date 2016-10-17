@@ -1,0 +1,18 @@
+Basic pluto test with seccomp enabled.
+
+Once established and disconnected, we run the seccomp
+test. In tolerant mode, pluto will tell us what happened,
+but continue.
+
+The only SECCOMP entry that should show up in the audit log is
+the one for set_sid, (currently 124 but could change over time)
+
+Use /usr/bin/scmp_sys_resolver to match number -> name
+
+The test currently shows:
+
+	003 ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!
+
+This is a little unexpected and depends on the return code of the
+syscall, getsid() - since it got intercepted by SECCOMP, it is expected
+to return a failure, but it does not. This is likely a seccomp artifact.

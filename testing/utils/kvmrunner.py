@@ -31,13 +31,11 @@ def main():
     parser = argparse.ArgumentParser(description="Run tests")
 
     parser.add_argument("--verbose", "-v", action="count", default=0)
-    parser.add_argument("--dry-run", "-n", action="store_true")
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="a testsuite directory, a TESTLIST file, or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
-    post.add_arguments(parser)
     logutil.add_arguments(parser)
     skip.add_arguments(parser)
     ignore.add_arguments(parser)
@@ -49,10 +47,8 @@ def main():
     logger.info("Options:")
     logger.info("  directories: %s", args.directories)
     logger.info("  verbose: %s", args.verbose)
-    logger.info("  dry-run: %s", args.dry_run)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
-    post.log_arguments(logger, args)
     logutil.log_arguments(logger, args)
     skip.log_arguments(logger, args)
     ignore.log_arguments(logger, args)

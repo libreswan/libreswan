@@ -1,9 +1,6 @@
-: ==== start ====
-TESTNAME=multinet-01
-source /testing/pluto/bin/eastlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-
 ipsec auto --add westnet-eastnet-subnets
-
+ipsec status | grep westnet-eastnet
+echo "initdone"

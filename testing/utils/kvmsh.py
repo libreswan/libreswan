@@ -133,8 +133,10 @@ def main():
             console.output(sys.stdout)
             console.run("")
             console.output()
+            # Get this terminals properties.
+            columns, rows = os.get_terminal_size()
             # Normal mode
-            console.stty_sane()
+            console.stty_sane(term=os.getenv("TERM"), rows=rows, columns=columns)
             console.interact()
 
     if args.shutdown:

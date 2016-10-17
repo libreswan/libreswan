@@ -47,7 +47,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		if (strncmp(sql, configdir, strlen(sql)) == 0) {
 			nssdb = strdup(configdir);
 		} else {
-			nssdb = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "nssdb");
+			nssdb = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdb");
 			strcpy(nssdb, sql);
 			strcat(nssdb, configdir);
 		}
@@ -91,6 +91,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 void lsw_nss_shutdown(void)
 {
 	NSS_Shutdown();
+	/* this flag is never set anywhere */
 	if (!(flags & LSW_NSS_SKIP_PR_CLEANUP)) {
 		PR_Cleanup();
 	}

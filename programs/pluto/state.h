@@ -254,6 +254,8 @@ struct state {
 
 	IPsecSAref_t st_ref;			/* our kernel name for our incoming SA */
 	IPsecSAref_t st_refhim;			/* our kernel name for our outgoing SA */
+	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
+
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
@@ -480,6 +482,7 @@ struct state {
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_internal_domain;		/* did we receive CP IKEv2_INTERNAL_DNS_DOMAIN */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
+	u_int8_t st_reply_xchg;
 };
 
 /* global variables */

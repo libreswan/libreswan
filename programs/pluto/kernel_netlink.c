@@ -19,6 +19,7 @@
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -241,74 +242,6 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 }
 
 /*
- * XXX: This code is duplicated in ike_alg_aes.c.  When the latter is
- * enabled, this should be deleted.
- */
-
-static struct encrypt_desc algo_aes_ccm_8 =
-{
-	.common = {
-		.name = "aes_ccm_8",
-		.officname = "aes_ccm_8",
-		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
-		.algo_next =    NULL,
-	},
-	.enc_blocksize =  AES_BLOCK_SIZE,
-	.wire_iv_size =  8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_ccm_12 =
-{
-	.common = {
-		.name = "aes_ccm_12",
-		.officname = "aes_ccm_12",
-		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
-		.algo_next =    NULL,
-	},
-	.enc_blocksize =  AES_BLOCK_SIZE,
-	.wire_iv_size =  8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_ccm_16 =
-{
-	.common = {
-		.name = "aes_ccm_16",
-		.officname = "aes_ccm_16",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-/*
  * wire-in Authenticated Encryption with Associated Data transforms
  * (do both enc and auth in one transform)
  */
@@ -356,17 +289,6 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
-
-	/*
-	 * XXX: This code is duplicated in ike_alg_aes.c.  When the
-	 * latter is enabled, this should be deleted.
-	 */
-	if (!ike_alg_register_enc(&algo_aes_ccm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
@@ -1077,15 +999,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
 				req.p.replay_window));
 		} else {
-			struct xfrm_replay_state_esn xre;
 			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window + 
 				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
-
-			xre.replay_window = sa->replay_window; /* replay_window must be multiple of 8 */
+			/* this is where we could fill in sequence numbers for this SA */
+			struct xfrm_replay_state_esn xre = {
+				/* replay_window must be multiple of 8 */
+				.replay_window = sa->replay_window,
+				.bmp_len = bmp_size / sizeof(u_int32_t),
+			};
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
 				xre.replay_window));
-			xre.bmp_len = bmp_size / sizeof(u_int32_t);
-			/* this is where we could fill in sequence numbers for this SA */
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
 			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);

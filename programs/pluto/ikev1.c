@@ -1921,7 +1921,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (needed != 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
-			       enum_show(&state_names, from_state),
+			       enum_name(&state_names, from_state),
 			       bitnamesof(payload_name_ikev1, needed));
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
@@ -2798,7 +2798,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 	} else {
 		struct connection *c = st->st_connection;
-		struct connection *r = NULL;
 		bool fromcert;
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
 		lset_t auth_policy = LEMPTY;
@@ -2828,6 +2827,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* check for certificate requests */
 		ikev1_decode_cr(md);
 
+		struct connection *r = NULL;
+
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
 			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
 			pexpect(r != NULL);
@@ -2844,11 +2845,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 
 		DBG(DBG_CONTROL, {
-			    char buf[IDTOA_BUF];
-			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
-					  "%none");
-			    DBG_log("offered CA: '%s'", buf);
-		    });
+			char buf[IDTOA_BUF];
+			dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
+				      "%none");
+			DBG_log("offered CA: '%s'", buf);
+		});
 
 		if (r != c) {
 			char b1[CONN_INST_BUF];
@@ -2868,14 +2869,13 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 
 			update_state_connection(st, r);
+			c = r;	/* value not used */
 		} else if (c->spd.that.has_id_wildcards) {
-			free_id_content(&c->spd.that.id);
-			c->spd.that.id = peer;
+			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = FALSE;
-			unshare_id_content(&c->spd.that.id);
 		} else if (fromcert) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			duplicate_id(&r->spd.that.id, &peer);
+			duplicate_id(&c->spd.that.id, &peer);
 		}
 	}
 

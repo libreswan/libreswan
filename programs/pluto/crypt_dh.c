@@ -117,7 +117,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 				  lsw_return_nss_password_file_info());
 
 	if (dhshared != NULL) {
-		unsigned int shortfall = group->bytes - PK11_GetKeyLength(dhshared);
+		unsigned int shortfall = group->bytes - sizeof_symkey(dhshared);
 
 		if (shortfall > 0) {
 			/*

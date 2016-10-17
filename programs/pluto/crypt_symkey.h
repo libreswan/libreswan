@@ -1,7 +1,7 @@
 /*
  * SYMKEY manipulation functions, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,21 +25,23 @@ struct hash_desc;
 struct encrypt_desc;
 
 /*
- * Log the details of a SYMKEY.
- *
- * PREFIX should include an explicit colon - it's passed to DBG_dump /
- * DBG_dump_chunk and they do not add a colon.
- *
- * DBG_dump_symkey, when allowed, dumps the contents of the symkey
- * (DBG_PRIVATE and not FIPS).
+ * Log some information on a SYMKEY.
  */
 void DBG_symkey(const char *prefix, PK11SymKey *key);
-void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
  * Free any symkey and then stomp on the pointer.
  */
 void free_any_symkey(const char *prefix, PK11SymKey **key);
+
+/*
+ * Length of a symkey in bytes.
+ *
+ * If KEY is NULL, return 0 (and hopefully not dump core).  (if we're
+ * not allowed to know the length of the key then this will also
+ * return 0).
+ */
+size_t sizeof_symkey(PK11SymKey *key);
 
 /*
  * Use SCRATCH key as a secure starting point for creating the key
@@ -118,23 +120,5 @@ void *hash_symkey_to_bytes(const char *prefix,
  * XOR a symkey with a chunk.
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
-
-
-/*
- * Low level primitives.
- */
-PK11SymKey *merge_symkey_bytes(const char *prefix,
-			       PK11SymKey *base_key,
-			       const void *bytes, size_t sizeof_bytes,
-			       CK_MECHANISM_TYPE derive,
-			       CK_MECHANISM_TYPE target);
-PK11SymKey *merge_symkey_symkey(const char *prefix,
-			       PK11SymKey *base_key, PK11SymKey *key,
-				CK_MECHANISM_TYPE derive,
-				CK_MECHANISM_TYPE target);
-PK11SymKey *symkey_from_symkey(const char *prefix,
-			       PK11SymKey *base_key,
-			       CK_MECHANISM_TYPE target, CK_FLAGS flags,
-			       size_t next_byte, size_t key_size);
 
 #endif

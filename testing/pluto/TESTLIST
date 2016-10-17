@@ -31,6 +31,9 @@ kvmplutotest	netkey-audit-01	good
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-initial-contact-01	wip
 
+kvmplutotest	basic-pluto-01-wrongkey		good
+kvmplutotest	basic-pluto-01-nokey		good
+kvmplutotest	basic-pluto-01-vanishingkey	good
 
 #################################################################
 # IKEv2 tests
@@ -148,6 +151,7 @@ kvmplutotest	ikev2-algo-esn-02			good
 kvmplutotest	ikev2-algo-esn-03			good
 kvmplutotest	ikev2-algo-esn-04			good
 kvmplutotest	ikev2-algo-esn-05			good
+kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 # Various corner case tests for IKEv2
@@ -348,6 +352,7 @@ kvmplutotest	ikev2-liveness-03	good
 kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
+kvmplutotest	ikev2-liveness-08	wip
 
 kvmplutotest	delete-sa-01	good
 kvmplutotest	delete-sa-03	good
@@ -846,6 +851,10 @@ kvmplutotest	klips-passthrough-00		skiptest
 kvmplutotest	klips-ipv6-tunnel-mode-03-rw	skiptest
 kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
+
+# seccomp
+kvmplutotest	seccomp-01-enabled		good
+kvmplutotest	seccomp-02-tolerant		good
 
 # Utility tests like "ipsec showhostkey"
 kvmplutotest	ipsec-hostkey-ckaid-01		good

@@ -842,7 +842,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		if ((ix != ISAKMP_v2_SA_INIT && ix != ISAKMP_v2_AUTH) &&
 		    !IS_IKE_SA_ESTABLISHED(st)) {
 			libreswan_log("Ignoring %s Exchange as IKE SA for %s has not yet been authenticated",
-				enum_show(&state_names, st->st_state), st->st_connection->name);
+				enum_name(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
 	} else if (!msg_r) {
@@ -961,7 +961,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	    if (st != NULL) {
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
-	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+	    DBG_log("from_state is %s", enum_name(&state_names, from_state)));
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
@@ -1045,7 +1045,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			SEND_V2_NOTIFICATION(v2N_INVALID_IKE_SPI);
 		}
 		return;
 	}
@@ -1084,7 +1084,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
 	struct id peer;
-	char idbuf[IDTOA_BUF];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1136,7 +1135,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
 	} else {
-		struct connection *r = NULL;
 		bool fromcert = FALSE;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
@@ -1158,7 +1156,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 		if (auth_policy != LEMPTY) {
 			/* should really return c if no better match found */
-			r = refine_host_connection(md->st, &peer, FALSE /*initiator*/, auth_policy, &fromcert);
+			struct connection *r = refine_host_connection(
+				md->st, &peer, FALSE /*initiator*/,
+				auth_policy, &fromcert);
+
 			if (r == NULL) {
 				char buf[IDTOA_BUF];
 
@@ -1186,27 +1187,27 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				}
 
 				update_state_connection(md->st, r);
+				c = r;
 			} else if (c->spd.that.has_id_wildcards) {
-				free_id_content(&c->spd.that.id);
-				c->spd.that.id = peer;
+				duplicate_id(&c->spd.that.id, &peer);
 				c->spd.that.has_id_wildcards = FALSE;
-				unshare_id_content(&c->spd.that.id);
 			} else if (fromcert) {
 				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-				duplicate_id(&r->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer);
 			}
 		}
 	}
 
-	DBG(DBG_CONTROL, {
+	char idbuf[IDTOA_BUF];
 
+	DBG(DBG_CONTROL, {
 		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
 		DBG_log("offered CA: '%s'", idbuf);
 	});
 
 	idtoa(&peer, idbuf, sizeof(idbuf));
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
 			enum_show(&ikev2_idtype_names, v2id->isai_type),
 			idbuf);
@@ -1279,11 +1280,13 @@ void ikev2_log_parentSA(struct state *st)
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("sending INVALID_KE back with %s(%d)",
-		    strip_prefix(enum_show(&oakley_group_names, group->group),
-				 "OAKLEY_GROUP_"),
-		    group->group));
+
+	DBG(DBG_CONTROL, {
+		struct esb_buf esb;
+		DBG_log("sending INVALID_KE back with %s(%d)",
+			enum_show_shortb(&oakley_group_names, group->group, &esb),
+			group->group);
+	});
 	/* convert group to a raw buffer */
 	const u_int16_t gr = htons(group->group);
 	chunk_t nd;
@@ -1331,6 +1334,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,
+		.st_reply_xchg = md->hdr.isa_xchg,
 	};
 
 	passert(md != NULL);
@@ -1567,7 +1571,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
 			if (DBGP(IMPAIR_RETRANSMITS)) {
-				libreswan_log("supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set.");
 				if (st->st_rel_whack_event != NULL) {
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;

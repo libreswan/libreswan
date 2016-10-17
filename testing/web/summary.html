@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="../js/d3.v4.min.js"></script>
+
+    <script src="../js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../js/Tidy-Table-3.0.1/tidy-table.min.css">
+
+    <script type="text/javascript" src="lsw-date2iso.js"></script>
+    <script type="text/javascript" src="lsw-load-summary.js"></script>
+    <script type="text/javascript" src="lsw-load-jobs-table.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="summary.css"> </link>
+    <script type="text/javascript" src="summary.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="lsw-graph-summary.css"> </link>
+    <script type="text/javascript" src="lsw-graph-summary.js"></script>
+
+    <script>
+        window.addEventListener('load', function() {
+           lsw_load_summary("summary.json", function(json) {
+               lsw_graph_summary("graph", json)
+               summary("summary", json)
+           })
+           lsw_load_jobs_table("jobs", [""]);
+        })
+    </script>
+
+  </head>
+  <body>
+    <center>
+      <div id="graph"></div>
+      <br/>
+      <div id="jobs"></div>
+      <br/>
+      <div id="summary"></div>
+    </center>
+  </body>
+</html>

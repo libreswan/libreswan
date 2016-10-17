@@ -4,3 +4,4 @@ iptables -F
 iptables -t nat -L -n
 iptables -L -n
 echo "initdone"
+: ==== end ====

@@ -72,7 +72,7 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
 
-static struct encrypt_desc encrypt_desc_serpent =
+struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 {
 	.common = {
 		.name = "serpent",
@@ -91,10 +91,3 @@ static struct encrypt_desc encrypt_desc_serpent =
 	.keymaxlen = SERPENT_KEY_MAX_LEN,
 	.do_crypt = do_serpent,
 };
-
-void ike_alg_serpent_init(void)
-{
-	if (!ike_alg_register_enc(&encrypt_desc_serpent))
-		libreswan_log(
-			"ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
-}

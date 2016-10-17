@@ -143,6 +143,11 @@ static void free_pluto_main(void)
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfree(pluto_vendorid);
+	pfreeany(ocsp_default_uri);
+	pfreeany(ocsp_trust_name);
+	pfreeany(base_perpeer_logdir);
+	pfreeany(curl_iface);
+	pfreeany(pluto_log_file);
 }
 
 /*
@@ -200,6 +205,9 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
+#endif
+#ifdef HAVE_SECCOMP
+	" SECCOMP"
 #endif
 #ifdef HAVE_LIBCAP_NG
 	" LIBCAP_NG"
@@ -336,7 +344,11 @@ static struct starter_config *read_cfg_file(char *configfile)
 	return cfg;
 }
 
-/* Helper function for config file mapper: set string option value */
+/*
+ * Helper function for config file mapper: set string option value.
+ * Values passed in are expected to have been allocated using our
+ * own functions.
+ */
 static void set_cfg_string(char **target, char *value)
 {
 	/* Do nothing if value is unset. */
@@ -344,7 +356,7 @@ static void set_cfg_string(char **target, char *value)
 		return;
 
 	/* Don't free previous target, it might be statically set. */
-	*target = strdup(value);
+	*target = clone_str(value, "(ignore) set_cfg_string item");
 }
 
 /*
@@ -541,6 +553,10 @@ static const struct option long_opts[] = {
 	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
 	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
 #endif
+#ifdef HAVE_SECCOMP
+	{ "seccomp-enabled\0", no_argument, NULL, '3' },
+	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
+#endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
@@ -650,30 +666,8 @@ static void usage(void)
 }
 
 
-#if 0
-/*
- * XXX: Can't use this call to get encrypt_desc struct encrypt_desc
- */
-extern struct encrypt_desc algo_aes_cbc;
-extern struct encrypt_desc algo_camellia_cbc;
-extern struct encrypt_desc algo_aes_ctr;
-#endif
-
 int main(int argc, char **argv)
 {
-#if 0
-	NSS_NoDB_Init(".");
-	if (!test_aes_cbc(&algo_aes_cbc)) {
-		printf("aes-cbc failed\n");
-	}
-	if (!test_camellia_cbc(&algo_camellia_cbc)) {
-		printf("camellia-cbc failed\n");
-	}
-	if (!test_aes_ctr(&algo_aes_ctr)) {
-		printf("aes-ctr failed\n");
-	}
-	exit(0);
-#endif
 
 	int lockfd;
 
@@ -839,7 +833,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'g':	/* --logfile */
-			pluto_log_file = optarg;
+			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
 
@@ -912,8 +906,17 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
+#ifdef HAVE_SECCOMP
+		case '3':	/* --seccomp-enabled */
+			pluto_seccomp_mode = SECCOMP_ENABLED;
+			continue;
+		case '4':	/* --seccomp-tolerant */
+			pluto_seccomp_mode = SECCOMP_TOLERANT;
+			continue;
+#endif
+
 		case 'Z':	/* --curl-iface */
-			curl_iface = optarg;
+			curl_iface = clone_str(optarg, "curl_iface");
 			continue;
 
 		case 'I':	/* --curl-timeout */
@@ -940,11 +943,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'Y':
-			ocsp_default_uri = optarg;
+			ocsp_default_uri = clone_str(optarg, "ocsp_default_uri");
 			continue;
 
 		case 'J':
-			ocsp_trust_name = optarg;
+			ocsp_trust_name = clone_str(optarg, "ocsp_trust_name");
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
@@ -1055,7 +1058,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			base_perpeer_logdir = optarg;
+			base_perpeer_logdir = clone_str(optarg, "base_perpeer_logdir");
 			continue;
 
 		case 'l':	/* --perpeerlog */
@@ -1069,11 +1072,11 @@ int main(int argc, char **argv)
 			keep_alive = u;
 			continue;
 
-		case '5':	/* --debug-nat-t */
+		case '5':	/* --debug-nat-t aliases */
 			base_debugging |= DBG_NATT;
 			continue;
 		case '6':	/* --virtual-private */
-			virtual_private = optarg;
+			virtual_private = clone_str(optarg, "virtual_private");
 			continue;
 
 		case 'z':	/* --config */
@@ -1096,6 +1099,9 @@ int main(int argc, char **argv)
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
+#ifdef HAVE_SECCOMP
+			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
+#endif
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
@@ -1298,6 +1304,17 @@ int main(int argc, char **argv)
 	if (kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
+#endif
+
+#ifdef FIPS_CHECK
+	/* clear out --debug-crypt if set */
+	/* impairs are also not allowed but cannot come in via ipsec.conf, only whack */
+	if (libreswan_fipsmode()) {
+		if (base_debugging & DBG_PRIVATE) {
+			base_debugging &= ~DBG_PRIVATE;
+			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+		}
+	}
 #endif
 
 	/*
@@ -1699,11 +1716,12 @@ void show_setup_plutomain(void)
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
 	whack_log(RC_COMMENT,
-		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
+		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		oco->secretsfile,
 		oco->confddir,
+		oco->nssdb,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 

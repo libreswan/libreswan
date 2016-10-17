@@ -149,11 +149,9 @@ start() {
 
 
 stop() {
-    if [ ! -e ${plutoctl} ]; then
-	echo "Missing control file ${plutoctl} - is pluto still running?"
-    else
+    if [ -e ${plutoctl} ]; then
 	echo "Shutting down pluto IKE daemon"
-	ipsec whack --shutdown
+	ipsec whack --shutdown 2>/dev/null
 	# don't use seq, might not exist on embedded
 	for waitsec in 1 2 3 4 5 6 7 8 9 10; do
 	    if [ -s ${plutopid} ]; then
@@ -165,27 +163,25 @@ stop() {
 	done
 	echo
 	rm -f ${plutoctl} # we won't be using this anymore
-
-	if [ -s ${plutopid} ]; then
-	    # pluto did not die peacefully
-	    echo "Attempt to shut Pluto down failed!  Trying kill"
-	    pid=$(cat ${plutopid})
+    fi
+    if [ -s ${plutopid} ]; then
+	# pluto did not die peacefully
+	pid=$(cat ${plutopid})
+	if [ -d /proc/${pid} ]; then
+	    kill -TERM ${pid}
+	    RETVAL=$?
+	    sleep 5;
 	    if [ -d /proc/${pid} ]; then
-		kill -TERM ${pid}
+		kill -KILL ${pid}
 		RETVAL=$?
-		sleep 5;
-		if [ -d /proc/${pid} ]; then
-		    kill -KILL ${pid}
-		    RETVAL=$?
-		fi
-		if [ ${RETVAL} -ne 0 ]; then
-		    echo "Kill failed - removing orphaned ${plutopid}"
-		fi
-	    else
-		echo "Removing orphaned ${plutopid}"
 	    fi
-	    rm -f ${plutopid}
+	    if [ ${RETVAL} -ne 0 ]; then
+		echo "Kill failed - removing orphaned ${plutopid}"
+	    fi
+	else
+	    echo "Removing orphaned ${plutopid}"
 	fi
+	rm -f ${plutopid}
     fi
 
     ipsec _stackmanager stop

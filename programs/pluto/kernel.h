@@ -23,6 +23,7 @@
 #include <net/if.h>
 
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
+extern reqid_t global_reqids;
 
 /*
  * Declare eroute things early enough for uses.

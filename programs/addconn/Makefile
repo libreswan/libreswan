@@ -15,6 +15,11 @@ PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} ${EFENCE} $(NSS_LDFLAGS)
 
 PROGRAM=addconn
 
+ifeq ($(USE_SECCOMP),true)
+SECCOMP_DEFS=-DHAVE_SECCOMP
+SECCOMP_LIBS=-lseccomp
+endif
+
 # reach into pluto for now.
 INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${SRCDIR}
@@ -25,7 +30,7 @@ else
 include ../../mk/program.mk
 endif
 
-PROGLIBS+=$(UNBOUND_LDFLAGS)
+PROGLIBS+=$(UNBOUND_LDFLAGS) $(SECCOMP_LIBS)
 
 TAGS:	$(DISTSRC)
 	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]

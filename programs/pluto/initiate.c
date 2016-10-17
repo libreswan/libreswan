@@ -541,9 +541,7 @@ static void cannot_oppo(struct connection *c,
 		{
 			DBG(DBG_CONTROL,
 				DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-					(b->failure_shunt == SPI_PASS) ? "pass" :
-					(b->failure_shunt == SPI_HOLD) ? "hold" :
-					"very-unexpected"));
+					enum_short_name(&spi_names, b->failure_shunt)));
 		} else {
 			libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
@@ -845,10 +843,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				setportof(0, &that_client.addr);
 
 				DBG(DBG_OPPO,
-					DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
-						(b->negotiation_shunt == SPI_PASS) ? "pass" :
-						(b->negotiation_shunt == SPI_HOLD) ? "hold" :
-						"unknown?"));
+					DBG_log("going to initiate opportunistic, first installing %s negotiationshunt",
+						enum_short_name(&spi_names, b->negotiation_shunt)));
 
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 				if (!raw_eroute(&b->our_client, &this_client,
@@ -1093,8 +1089,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				ipstr_buf b1, b2, b3;
 
 				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-				passert(id_is_ipaddr(&ac->gateways_from_dns->
-						     gw_id));
+				passert(ac != NULL &&
+					id_is_ipaddr(&ac->gateways_from_dns->gw_id));
 				loglog(RC_OPPOFAILURE,
 				       "no suitable connection for opportunism between %s and %s with %s as peer",
 				       ipstr(&b->our_client, &b1),

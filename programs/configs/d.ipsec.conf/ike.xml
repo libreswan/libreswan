@@ -44,7 +44,11 @@ encryption is available, and should only be used for testing or benchmarking pur
 insecure algorithms to be re-added to libreswan.
 </para>
 <para>Diffie-Hellman groups 22, 23 and 24 are also implemented as per RFC-5114. Instead of the modp
-key syntax, use the "dh" keyword, for example <emphasis>ike=3des-sha1;dh23</emphasis>
+key syntax, use the "dh" keyword, for example <emphasis>ike=3des-sha1;dh23</emphasis>. These specific
+DH groups are extremely controversial and MUST NOT be used unless forced (administratively) by the other party.
+Support for these groups will most likely be removed in 2017, as it cannot be proven these DH groups do not
+have a cryptographic trapdoor embedded in them (a backdoor by the USG who gave us these primes without
+revealing the seeds and generation process)
 </para>
 <para>The modp syntax will be removed in favour of the dh syntax.</para>
   </listitem>

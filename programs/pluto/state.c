@@ -330,10 +330,10 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 	}
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("%s state #%lu: %s(%s) > %s(%s)",
+	    DBG_log("%s state #%lu: %s(%s) => %s(%s)",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, old_state), old_category->description,
-		    enum_show(&state_names, new_state), new_category->description);
+		    enum_name(&state_names, old_state), old_category->description,
+		    enum_name(&state_names, new_state), new_category->description);
 	    struct state_category *state_category;
 	    int category_states = 0;
 	    for (state_category = (struct state_category *)&category;
@@ -483,9 +483,9 @@ struct state *new_state(void)
 				 st->st_serialno, (void *) st));
 	DBG(DBG_CONTROLMORE,
 	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: new > %s(%s)",
+	    DBG_log("%s state #%lu: new => %s(%s)",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, st->st_state), category->description));
+		    enum_name(&state_names, st->st_state), category->description));
 
 	return st;
 }
@@ -692,7 +692,7 @@ void delete_state(struct state *st)
 			char cib[CONN_INST_BUF];
 			DBG_log("deleting state #%lu (%s) \"%s\"%s",
 				st->st_serialno,
-				enum_show(&state_names, st->st_state),
+				enum_name(&state_names, st->st_state),
 				c->name,
 				fmt_conn_instance(c, cib));
 		});
@@ -702,21 +702,21 @@ void delete_state(struct state *st)
 		 * the message prefix.
 		 */
 		libreswan_log("deleting state (%s)",
-			enum_show(&state_names, st->st_state));
+			enum_name(&state_names, st->st_state));
 	} else {
 		char cib[CONN_INST_BUF];
 		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
 			st->st_serialno,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			c->name,
 			fmt_conn_instance(c, cib));
 	}
 
 	DBG(DBG_CONTROLMORE,
 	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: %s(%s) > delete",
+	    DBG_log("%s state #%lu: %s(%s) => delete",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, st->st_state), category->description));
+		    enum_name(&state_names, st->st_state), category->description));
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -733,12 +733,11 @@ void delete_state(struct state *st)
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
-		DBG(DBG_OPPO, DBG_log("OE: orphaning hold with failureshunt"));
-		DBG(DBG_OPPO, DBG_log("negotiationshunt=%s, failureshunt=%s",
-			nego_shunt == SPI_PASS ? "passthrough" : "hold",
-			failure_shunt == SPI_PASS ? "passthrough" : "hold"));
+		DBG(DBG_OPPO, DBG_log(
+			"OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
+			enum_short_name(&spi_names, failure_shunt),
+			enum_short_name(&spi_names, nego_shunt)));
 
-		DBG(DBG_OPPO, DBG_log("OE: delete_state needs to bare the shunt"));
 		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
 			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
 		}
@@ -1369,7 +1368,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 		    } else {
 			    DBG_log("v1 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1402,7 +1401,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1438,7 +1437,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie,
 				    st->st_serialno);
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state)));
+				    enum_name(&state_names, st->st_state)));
 			return st;
 		});
 
@@ -1472,7 +1471,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1522,7 +1521,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 child state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1560,7 +1559,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 		    } else {
 			    DBG_log("p15 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -2411,7 +2410,7 @@ void show_globalstate_status(void)
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
 	{
 		whack_log(RC_COMMENT, "~states.enumerate.%s:%d",
-			enum_show(&state_names, s), state_count[s]);
+			enum_name(&state_names, s), state_count[s]);
 	}
 }
 

@@ -12,8 +12,14 @@ reqid values therefor must be between 1 and 16379.
 <para>
 Automatically generated reqids use a range of 0-3 (eg 16380-16383 for the
 first reqid). These are used depending on the exact policy (AH, AH+ESP,
-IPCOMP, etc). Manually assigned reqids are all identical. Instantiations
-of connections (those using %any wildcards) will all use the same reqid.
+IPCOMP, etc).
+</para>
+<para>
+WARNING: Manually assigned reqids are all identical. Instantiations of
+connections (those using %any wildcards) will all use the same reqid.
+If you use manual assigning you should make sure your connections
+only match single road warrior only or you break multiple road warriors
+behind same NAT router because this feature requires unique reqids to work.
 </para>
 <para>
 For KLIPS, when using the MAST variant, a different mechanism called

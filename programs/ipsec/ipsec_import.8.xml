@@ -3,12 +3,12 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <refentry>
 <refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para></para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_IMPORT</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>24 August 2012</refmiscinfo>
+<refmiscinfo class='date'>24 August 2016</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -20,6 +20,8 @@
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
   <command>ipsec import</command>
+    <arg choice='opt'><arg choice='plain'>--nssdir </arg><arg choice='plain'><replaceable>@IPSEC_NSSDIR@</replaceable></arg></arg>
+    <sbr/>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -27,7 +29,7 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>ipsec import</emphasis>
 Import PKCS#12 files into the IPsec NSS database located at the
-ipsec data directory (default: /etc/ipsec.d/)
+ipsec NSS data directory (default: @IPSEC_NSSDIR@)
 </para>
 </refsect1>
 
@@ -35,9 +37,8 @@ ipsec data directory (default: /etc/ipsec.d/)
 <para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>route</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 
-
 <refsect1 id='bugs'><title>BUGS</title>
-<para>This still needs an option for using an NSS directory at a non-default location</para>
+<para>none</para>
 </refsect1>
 </refentry>
 

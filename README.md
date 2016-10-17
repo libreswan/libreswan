@@ -43,7 +43,8 @@ For Debian/Ubuntu
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl3-nss-dev flex bison gcc make \
-		libunbound-dev libnss3-tools libevent-dev xmlto
+		libunbound-dev libnss3-tools libevent-dev xmlto \
+		libsystemd-dev
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
@@ -87,11 +88,11 @@ name is called "ipsec".  For example, on RHEL7, one would use:
     systemctl enable ipsec.service
     systemctl start ipsec.service
 
-If unsure, the "ipsec" command can also be used to start or stop the ipsec
-service:
+If unsure of the specific init system used on the system, the "ipsec"
+command can also be used to start or stop the ipsec service:
 
-    ipsec setup start
-    ipsec setup stop
+    ipsec start
+    ipsec stop
 
 ## Configuration
 Most of the libreswan configuration is stored in /etc/ipsec.conf and

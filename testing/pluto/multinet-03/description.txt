@@ -1,3 +1,3 @@
 This is a test case for the "subnets=" declaration, including rekeys
 
-
+Paul: unsure how this test shows the actual rekeys :P

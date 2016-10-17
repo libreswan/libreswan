@@ -677,12 +677,14 @@ install-programs:
 	fi
 
 # Test only target (run by swan-install) that generates FIPS .*.hmac
-# files for everything that will be verified by fipscheck.
+# file for pluto that will be verified by fipscheck.
 #
+# (should really use fipshmac -d /usr/lib64/fipscheck but then
+#  we need to hassle with multilib)
 # Without this fipscheck (run in FIPS mode) will fail.
 
 .PHONY: install-fipshmac
 install-fipshmac:
-	fipshmac $(LIBEXECDIR)/* $(PUBDIR)/ipsec
+	fipshmac $(LIBEXECDIR)/pluto
 
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk

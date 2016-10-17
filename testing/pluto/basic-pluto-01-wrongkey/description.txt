@@ -1,0 +1,5 @@
+
+On west, the leftrsasigkey= to use is mangled. Therefor the connection
+should not establishd.
+
+In fact, the connection should fail to load due to missing private key

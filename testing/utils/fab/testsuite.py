@@ -1,6 +1,6 @@
 # Lists the tests
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2016-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,17 +15,17 @@
 import os
 import re
 import collections
-import subprocess
 
 from fab import logutil
 from fab import utilsdir
+from fab import scripts
+from fab.hosts import HOST_NAMES
 
 
 class Test:
 
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
-                 saved_testsuite_output_directory=None,
                  testsuite_output_directory=None,
                  kind="kvmplutotest", expected_result="good"):
         self.logger = logutil.getLogger(__name__)
@@ -56,6 +56,7 @@ class Test:
         # specified, use that.
         if testsuite_output_directory:
             self.output_directory = os.path.join(testsuite_output_directory, self.name)
+            print(self.output_directory)
         else:
             self.output_directory = os.path.join(self.directory, "OUTPUT")
 
@@ -71,51 +72,33 @@ class Test:
         # OUTPUT_DIRECTORY should be used.
         if saved_test_output_directory:
             self.saved_output_directory = saved_test_output_directory
-        elif saved_testsuite_output_directory:
-            self.saved_output_directory = os.path.join(saved_testsuite_output_directory, self.name)
         else:
             self.saved_output_directory = None
 
-        # An instance of the test directory within a tree that
-        # includes all the post-mortem sanitization scripts.  If the
-        # test results have been copied then this will be different to
-        # test.directory.
-        self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
+        # The testing_directory to use when performing post.mortem
+        # tasks such as running the sanitizer.
+        #
+        # Since test.directory may be incomplete (sanitizers directory
+        # may be missing), use the testing directory belonging to this
+        # script.
+        if testing_directory:
+            # trust it
+            self._testing_directory = os.path.relpath(testing_directory)
+        else:
+            self._testing_directory = utilsdir.relpath("..")
 
-        scripts = _scripts(self.directory)
+        # Get an ordered list of (host,script) pairs of all the
+        # scripts that need to be run.
+        self.host_script_tuples = scripts.host_script_tuples(self.directory)
 
-        # host_names that this test requires, determine it from the
-        # script names.
-        self.host_names = set()
-        for host_name in HOST_NAMES:
-            for script in scripts:
-                if re.search(host_name, script):
-                    self.host_names.add(host_name)
-                    break
+        # Just assume any host mentioned in scripts needs to run.
+        host_names = set()
+        for host, script in self.host_script_tuples:
+            host_names.add(host)
+        self.host_names = sorted(host_names)
 
-        # figure out the scripts that need running
-        self.scripts = []
-        # init scripts
-        _add_matching(self.scripts, scripts, ["nic"], "nicinit.sh")
-        _add_matching(self.scripts, scripts, ["east"], "eastinit.sh")
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "init.sh")
-        # run scripts
-        for host_name in sorted(self.host_names):
-            _add_matching(self.scripts, scripts, [host_name], host_name + "run.sh")
-        # strip out the final script
-        final = []
-        _add_matching(final, scripts, sorted(self.host_names), "final.sh")
-        # what's left is the middle scripts, not exactly a smart way
-        # to do this
-        for script in sorted(scripts):
-            for host_name in sorted(self.host_names):
-                if re.search(host_name, script):
-                    self.scripts.append(Script(host_name, script))
-        # append the final scripts
-        for script in final:
-            self.scripts.append(script)
-
+    def testing_directory(self, *path):
+        return os.path.relpath(os.path.join(self._testing_directory, *path))
 
     def result_file(self, directory=None):
         """The result file in the given directory, or output_directory"""
@@ -128,49 +111,13 @@ class Test:
         return self.full_name
 
 
-class Script:
-    def __init__(self, host_name, script):
-        self.host_name = host_name
-        self.script = script
-    def __str__(self):
-        return "%s:%s" % (self.host_name, self.script)
-
-def _add_matching(run, scripts, host_names, script):
-    if script in scripts:
-        scripts.remove(script)
-        for host_name in host_names:
-            run.append(Script(host_name, script))
-
-def _scripts(directory):
-    scripts = set()
-    if os.path.isdir(directory):
-        for script in os.listdir(directory):
-            if not re.match(r"[a-z0-9].*\.sh$", script):
-                continue
-            path = os.path.join(directory, script)
-            if not os.path.isfile(path):
-                continue
-            # Add more filter-outs
-            scripts.add(script)
-    return scripts
-
-def _host_names():
-    host_names = set()
-    status, output = subprocess.getstatusoutput(utilsdir.relpath("kvmhosts.sh"))
-    for host_name in output.splitlines():
-        host_names.add(host_name)
-    return host_names
-HOST_NAMES = _host_names()
-
-
 # Load the tetsuite defined by TESTLIST
 
 class Testsuite:
 
     def __init__(self, logger, testlist, error_level,
                  testing_directory,
-                 testsuite_output_directory=None,
-                 saved_testsuite_output_directory=None):
+                 testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
         with open(testlist, 'r') as testlist_file:
@@ -193,7 +140,6 @@ class Testsuite:
                     continue
                 test = Test(kind=kind, expected_result=expected_result,
                             test_directory=os.path.join(self.directory, name),
-                            saved_testsuite_output_directory=saved_testsuite_output_directory,
                             testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
@@ -257,8 +203,7 @@ TESTLIST = "TESTLIST"
 
 def load(logger, log_level, args,
          testsuite_directory=None,
-         testsuite_output_directory=None, # going away
-         saved_testsuite_output_directory=None,
+         testsuite_output_directory=None,
          error_level=logutil.ERROR):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
@@ -267,7 +212,6 @@ def load(logger, log_level, args,
 
     """
 
-    saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
     # Is DIRECTORY a testsuite or a testlist file?  For instance:
     # testing/pluto or testing/pluto/TESTLIST.
     if os.path.isfile(testsuite_directory):
@@ -282,8 +226,7 @@ def load(logger, log_level, args,
         logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
     return Testsuite(logger, testlist, error_level,
                      testing_directory=args.testing_directory,
-                     testsuite_output_directory=args.testsuite_output,
-                     saved_testsuite_output_directory=saved_testsuite_output_directory)
+                     testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
 
 
 def append_test(tests, args, test_directory=None,

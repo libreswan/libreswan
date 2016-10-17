@@ -67,8 +67,6 @@ struct state;   /* forward declaration, dammit */
 
 struct encrypt_desc;	/* forward */
 struct hash_desc;	/* forward */
-const struct encrypt_desc *crypto_get_encrypter(int alg);
-const struct hash_desc *crypto_get_hasher(oakley_hash_t alg);
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 			size_t size, struct state *st);

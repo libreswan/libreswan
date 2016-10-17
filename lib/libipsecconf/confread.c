@@ -100,6 +100,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 	cfg->setup.options[KBF_DDOS_MODE] = DDOS_AUTO;
 
+	cfg->setup.options[KBF_SECCOMP] = SECCOMP_DISABLED; /* will be enabled in the future */
+
 	/* conn %default */
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
@@ -117,6 +119,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
 	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
+	cfg->conn_default.options[KBF_ENCAPS] = encaps_auto;
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -139,24 +142,18 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      /* esn=no */
 
-	cfg->conn_default.options[KBF_IKELIFETIME] =
-		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
+	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
 
-	cfg->conn_default.options[KBF_REPLAY_WINDOW] =
-		IPSEC_SA_DEFAULT_REPLAY_WINDOW;
+	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 
 	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
 	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
 
-	cfg->conn_default.options[KBF_SALIFETIME] = SA_LIFE_DURATION_DEFAULT;
-	cfg->conn_default.options[KBF_REKEYMARGIN] =
-		SA_REPLACEMENT_MARGIN_DEFAULT;
-	cfg->conn_default.options[KBF_REKEYFUZZ] =
-		SA_REPLACEMENT_FUZZ_DEFAULT;
+	cfg->conn_default.options[KBF_SALIFETIME] = IPSEC_SA_LIFETIME_DEFAULT;
+	cfg->conn_default.options[KBF_REKEYMARGIN] = SA_REPLACEMENT_MARGIN_DEFAULT;
+	cfg->conn_default.options[KBF_REKEYFUZZ] = SA_REPLACEMENT_FUZZ_DEFAULT;
 
-	/* should be stack specific but lib/ can't check kernel_ops->replay_window */
-	cfg->conn_default.options[KBF_KEYINGTRIES] =
-		SA_REPLACEMENT_RETRIES_DEFAULT;
+	cfg->conn_default.options[KBF_KEYINGTRIES] = SA_REPLACEMENT_RETRIES_DEFAULT;
 
 	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
 
@@ -480,6 +477,33 @@ static bool validate_end(
 		break;
 	}
 
+	if (end->strings_set[KSCF_VTI_IP]) {
+		char *value = end->strings[KSCF_VTI_IP];
+
+		if (strchr(value, '/') == NULL) {
+			ERR_FOUND("%svti= needs address/mask", leftright);
+		} else {
+
+			/*
+			 * ttosubnet() helpfully sets the IP address to the lowest IP
+			 * in the subnet. Which is great for subnets but we want to
+			 * retain the specific IP in this case.
+			 * So we subsequently overwrite the IP address of the subnet.
+			 */
+			er = ttosubnet(value, 0, AF_UNSPEC, &end->vti_ip);
+			if (er != NULL) {
+				ERR_FOUND("bad addr %svti=%s [%s]",
+					  leftright, value, er);
+			} else {
+				er = tnatoaddr(value, strchr(value, '/') - value, AF_UNSPEC, &end->vti_ip.addr);
+				if (er != NULL) {
+					ERR_FOUND("bad addr in subnet for %svti=%s [%s]",
+						leftright, value, er);
+				}
+			}
+		}
+	}
+
 	/* validate the KSCF_SUBNET */
 	if (end->strings_set[KSCF_SUBNET]) {
 		char *value = end->strings[KSCF_SUBNET];
@@ -591,8 +615,6 @@ static bool validate_end(
 		char *value = end->strings[KSCF_SOURCEIP];
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &end->sourceip) != NULL &&
-		    tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &end->sourceip) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,

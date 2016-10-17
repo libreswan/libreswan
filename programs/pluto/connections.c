@@ -79,14 +79,15 @@
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
 #include "ikev2.h"
-
 #include "virtual.h"	/* needs connections.h */
-
 #include "hostpair.h"
+#include "lswfips.h"
 
 struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
+
+static uint32_t global_marks = 1001;
 
 /*
  * Find a connection by name.
@@ -524,7 +525,7 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
  * Format the topology of a connection end, leaving out defaults.
  * Largest left end looks like: client === host : port [ host_id ] --- hop
  * Note: if that == NULL, skip nexthop
- * Returns strlen of formated result (length excludes NUL at end).
+ * Returns strlen of formatted result (length excludes NUL at end).
  */
 size_t format_end(char *buf,
 		size_t buf_len,
@@ -837,7 +838,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(),
 				     FALSE) != secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired/invalid",
+		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired or not yet valid",
 		       which, name);
 		CERT_DestroyCertificate(cert);
 		return;
@@ -932,11 +933,13 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_addr_name = src->host_addr_name;
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
+	dst->host_vtiip = src->host_vtiip;
 	dst->client = src->client;
 
 #ifdef HAVE_SIN_LEN
 	/* XXX need to fix this for v6 */
 	dst->client.addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
+	dst->host_vtiip.addr.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_addr.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_nexthop.u.v4.sin_len = sizeof(struct sockaddr_in);
 	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);
@@ -1142,28 +1145,31 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
  * - is a multiple of 4 (we are actually allocating
  *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
  * - does not duplicate any currently in use
+ *
+ * NOTE: comments seems to lie, we use same reqid for the
+ *       ESP inbound and outbound.
  */
 static reqid_t gen_reqid(void)
 {
-	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
-	reqid_t r = last_reqid;
+	bool looping = FALSE;
 
-	passert(r % 4 == 0);
 	for (;;) {
-		r += 4;	/* may wrap */
-		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
-		if (r <= IPSEC_MANUAL_REQID_MAX)
-			r = IPSEC_MANUAL_REQID_MAX + 1;
-
-		if (r == last_reqid) {
-			/* gone around the clock without success */
-			exit_log("unable to allocate reqid");
+		global_reqids += 4;
+		/* wrapping must skip manual reqids */
+		if (global_reqids <= IPSEC_MANUAL_REQID_MAX) {
+			if (looping) {
+				/* gone around the clock without success */
+				exit_log("unable to allocate reqid");
+			}
+			global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
+			looping = TRUE;
 		}
-		if (!find_connection_by_reqid(r)) {
-			last_reqid = r;
-			return r;
+
+		if (!find_connection_by_reqid(global_reqids)) {
+			return global_reqids;
 		}
 	}
+
 }
 
 static bool preload_wm_cert_secret(const char *side, const char *pubkey,
@@ -1355,6 +1361,19 @@ void add_connection(const struct whack_message *wm)
 		c->dnshostname = wm->dnshostname;
 		c->policy = wm->policy;
 
+#ifdef FIPS_CHECK
+		if (libreswan_fipsmode()) {
+			if (c->policy & POLICY_NEGO_PASS) {
+				c->policy &= ~POLICY_NEGO_PASS;
+				loglog(RC_LOG_SERIOUS,"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+			}
+			if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
+				c->policy &= ~POLICY_FAIL_MASK;
+				c->policy |= POLICY_FAIL_NONE;
+				loglog(RC_LOG_SERIOUS,"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+			}
+		}
+#endif
 		DBG(DBG_CONTROL,
 			DBG_log("Added new connection %s with policy %s",
 				c->name,
@@ -1449,6 +1468,27 @@ void add_connection(const struct whack_message *wm)
 			c->sa_rekey_margin = new_rkm;
 		}
 
+		{
+			time_t max_ike = IKE_SA_LIFETIME_MAXIMUM;
+			time_t max_ipsec = IPSEC_SA_LIFETIME_MAXIMUM;
+#ifdef FIPS_CHECK
+		if (libreswan_fipsmode()) {
+			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+			max_ipsec = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
+		}
+#endif
+			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
+				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %lds",
+					max_ike);
+				c->sa_ike_life_seconds = deltatime(max_ike);
+			}
+			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
+				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %lds",
+					max_ipsec);
+				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
+			}
+		}
+
 		/* RFC 3706 DPD */
 		c->dpd_delay = wm->dpd_delay;
 		c->dpd_timeout = wm->dpd_timeout;
@@ -1461,7 +1501,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
-		c->forceencaps = wm->forceencaps;
+		c->encaps = wm->encaps;
 		c->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
@@ -1526,6 +1566,7 @@ void add_connection(const struct whack_message *wm)
 		c->send_no_esp_tfc = wm->send_no_esp_tfc;
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
+		c->sa_reqid = wm->sa_reqid;
 
 		/*
 		 * Set this up so that we can log which end is which after
@@ -1580,7 +1621,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.spd_next = NULL;
 
-		c->spd.reqid = wm->sa_reqid == 0 ? gen_reqid() : wm->sa_reqid;
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1592,6 +1632,11 @@ void add_connection(const struct whack_message *wm)
 		c->newest_ipsec_sa = SOS_NOBODY;
 		c->spd.eroute_owner = SOS_NOBODY;
 		c->cisco_dns_info = NULL; /* XXX: scratchpad - should be phased out */
+		/*
+		 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
+		 * need one. Does CK_TEMPLATE need one?
+		 */
+		c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 #ifdef XAUTH_HAVE_PAM
 		c->pamh = NULL;
 #endif
@@ -1762,8 +1807,8 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		t->log_file = NULL;
 		t->log_file_err = FALSE;
 
-		t->spd.reqid = group->spd.reqid == 0 ?
-			gen_reqid() : group->spd.reqid;
+		t->spd.reqid = group->sa_reqid == 0 ?
+			gen_reqid() : group->sa_reqid;
 
 		/* add to connections list */
 		t->ac_next = connections;
@@ -1840,7 +1885,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	default_end(&d->spd.this, &d->spd.that.host_addr);
 	d->spd.spd_next = NULL;
 
-	d->spd.reqid = c->spd.reqid == 0 ? gen_reqid() : c->spd.reqid;
+	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 
 	/* set internal fields */
 	d->ac_next = connections;
@@ -1855,19 +1900,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-	connect_to_host_pair(d);
-
-	return d;
-}
-
-static uint32_t global_marks = 1001;
-
-struct connection *rw_instantiate(struct connection *c,
-				const ip_address *him,
-				const ip_subnet *his_net,
-				const struct id *his_id)
-{
-	struct connection *d = instantiate(c, him, his_id);
 
 	if (c->sa_marks.in.val == UINT_MAX) {
 		/* -1 means unique marks */
@@ -1879,6 +1911,19 @@ struct connection *rw_instantiate(struct connection *c,
 			global_marks = 1001;
 		}
 	}
+
+	 connect_to_host_pair(d);
+
+	return d;
+}
+
+
+struct connection *rw_instantiate(struct connection *c,
+				const ip_address *him,
+				const ip_subnet *his_net,
+				const struct id *his_id)
+{
+	struct connection *d = instantiate(c, him, his_id);
 
 	if (his_net != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *his_net;
@@ -3268,7 +3313,6 @@ static bool is_virtual_net_used(struct connection *c,
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
 				const struct host_pair *hp,
-				const struct id *peer_id UNUSED,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
 				const u_int8_t our_protocol,
@@ -3350,7 +3394,7 @@ static struct connection *fc_try(const struct connection *c,
 					char s3[SUBNETTOT_BUF];
 					subnettot(&sr->this.client, 0, s3,
 						sizeof(s3));
-					DBG_log("   our client(%s) not in our_net (%s)",
+					DBG_log("   our client (%s) not in our_net (%s)",
 						s3, s1));
 
 				continue;
@@ -3369,7 +3413,7 @@ static struct connection *fc_try(const struct connection *c,
 							char d3[SUBNETTOT_BUF];
 							subnettot(&sr->that.client, 0, d3,
 								sizeof(d3));
-							DBG_log("   their client(%s) not in same peer_net (%s)",
+							DBG_log("   their client (%s) not in same peer_net (%s)",
 								d3, d1);
 						});
 						continue;
@@ -3385,8 +3429,7 @@ static struct connection *fc_try(const struct connection *c,
 					     is_virtual_net_used(
 						d,
 						peer_net,
-						peer_id != NULL ?
-						    peer_id : &sr->that.id)))
+						&sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   virtual net not allowed"));
@@ -3409,10 +3452,12 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, the smallest number of ID wildcards
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred
+			 * - given that, not switching is preferred
 			 */
 			prio = PRIO_WEIGHT * routed(sr->routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
+				(c == d ? 1 : 0) +
 				1;
 			if (prio > best_prio) {
 				best = d;
@@ -3616,7 +3661,7 @@ struct connection *find_client_connection(struct connection *const c,
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->host_pair, NULL, our_net, peer_net,
+		d = fc_try(c, c->host_pair, our_net, peer_net,
 			our_protocol, our_port, peer_protocol, peer_port);
 
 		DBG(DBG_CONTROLMORE,
@@ -3657,7 +3702,7 @@ struct connection *find_client_connection(struct connection *const c,
 
 		if (hp != NULL) {
 			/* RW match with actual peer_id or abstract peer_id? */
-			d = fc_try(c, hp, NULL, our_net, peer_net,
+			d = fc_try(c, hp, our_net, peer_net,
 				our_protocol, our_port, peer_protocol,
 				peer_port);
 
@@ -3959,15 +4004,17 @@ void show_one_connection(const struct connection *c)
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			  c->name, instance,
-			  enum_name(&dpd_action_names, c->dpd_action),
-			  (long) deltasecs(c->dpd_delay),
-			  (long) deltasecs(c->dpd_timeout),
-			  (c->forceencaps) ? "yes" : "no",
-			  (c->nat_keepalive) ? "yes" : "no",
-			  (c->ikev1_natt == natt_both) ? "both" :
-			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+			c->name, instance,
+			enum_name(&dpd_action_names, c->dpd_action),
+			(long) deltasecs(c->dpd_delay),
+			(long) deltasecs(c->dpd_timeout),
+			(c->encaps == encaps_auto) ? "auto" :
+			 (c->encaps == encaps_yes) ? "yes" : "no",
+			(c->nat_keepalive) ? "yes" : "no",
+			(c->ikev1_natt == natt_both) ? "both" :
+			 (c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"
+			);
 	}
 
 	if (c->extra_debugging != LEMPTY) {

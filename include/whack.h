@@ -74,7 +74,8 @@ struct whack_end {
 	ip_address host_addr,
 		   host_nexthop,
 		   host_srcip;
-	ip_subnet client;
+	ip_subnet  client,
+		   host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
@@ -119,6 +120,7 @@ struct whack_message {
 	bool whack_traffic_status;
 	bool whack_shunt_status;
 	bool whack_fips_status;
+	bool whack_seccomp_crashtest;
 
 	bool whack_shutdown;
 
@@ -161,7 +163,7 @@ struct whack_message {
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
-	bool forceencaps;
+	enum encaps_options encaps;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;

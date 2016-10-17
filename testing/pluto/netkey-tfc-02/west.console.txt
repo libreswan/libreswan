@@ -43,7 +43,7 @@ west #
 000 "tfc":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "tfc":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:1500;
 000 "tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "tfc":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "tfc":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "tfc":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
  echo "initdone"

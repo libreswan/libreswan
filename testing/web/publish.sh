@@ -1,78 +1,118 @@
 #!/bin/sh
 
-set -eux
+if test $# -lt 2; then
+    cat <<EOF > /dev/stderr
 
-base=results
-basedir=${HOME}/${base}
+Usage:
 
-testingdir=$(pwd)/testing
-utilsdir=$(pwd)/testing/utils
-webdir=$(pwd)/testing/web
+    $0 <repodir> <summarydir>
 
-timestamp=$(date -d @$(git log -n1 --format="%ct") +%Y-%m-%d-%H%M)
-gitstamp=$(make showversion)
-version=${timestamp}-${gitstamp}
-destdir=${basedir}/$(hostname)/${version}
+Build/run the testsuite in <repodir>.  Publish detailed results under
+<summarydir>/<version>, and a summary under <summarydir>.
 
-echo ${version} ${destdir}
+<version> is formed from the contaentation of the current checkout
+date and "make showversion".
+
+For instance:
+
+    $0 . ~/results/master
+
+EOF
+    exit 1
+fi
+
+# exit if anything looks weird and be verbose.
+set -euxv
+
+repodir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
+
+# where the scripts live
+webdir=$(cd $(dirname $0) && pwd)
+utilsdir=$(cd ${webdir}/../utils && pwd)
+
+# Get the make-version, and then go backwards from that to determine
+# the git:rev and git:date.
+#
+# Since later updates are going to use the same scripts, this helps to
+# confirm that everything is working.
+gitstamp=$(cd ${repodir} ; make showversion)
+gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
+
+destdir=${summarydir}/${gitstamp}
+echo ${destdir}
 
 mkdir -p ${destdir}
-log=${destdir}/log
+
+# The status file needs to match status.js; note the lack of quotes
+# qhen invoking ${script}.  This is matches the unqoted line that gets
+# invoked by the awk script further down.
+
+start=$(date -u -Iseconds)
+script="${webdir}/json-status.sh \
+  --json ${summarydir}/status.json \
+  --commit ${repodir} ${gitrev} \
+  --start ${start}"
+status() {
+    ${script} --date $(date -u -Iseconds) " ($*)"
+}
+
+status "started"
 
 
-# Rebuild/run; but only if previous attempt didn't crash badly.
-if test -r ${destdir}/built.ok ; then
-    echo "Skipping as ${destdir}/built.ok"
-else
-    make distclean 2>&1 | tee -a ${log}
-    make kvm-install 2>&1 | tee -a ${log}
-    make kvm-test 2>&1 | tee -a ${log}
-    touch ${destdir}/built.ok
+# If not already done, set up for a test run.
+
+status_make() {
+    status "run 'make $@'"
+    make -C ${repodir} "$@"
+}
+
+for target in distclean kvm-install kvm-keys ; do
+    ok=${destdir}/${target}.ok
+    if test ! -r "${ok}" ; then
+	status_make ${target}
+	touch ${ok}
+    fi
+done
+
+
+# Because the make is in a pipeline its status is missed, get around
+# it by testing for ok.
+
+ok=${destdir}/make-kvm-test.ok
+if test ! -r "${ok}" ; then
+    # Need to avoid passing anything that might contain a quote (like
+    # the subject).
+    (
+	status_make kvm-test
+	touch ${ok}
+    ) | awk -v script="${script}" -f ${webdir}/publish-status.awk
+    test -r ${destdir}/make-kvm-test.ok
 fi
 
 
-# Always copy over the results
-(
-    (
-	cd testing/pluto && tar cf - */OUTPUT
-    ) | (
-	cd ${destdir} && tar xpvf - && touch ${destdir}/tar.ok
-    )
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/tar.ok
+# always shutdown
+status_make kvm-shutdown
 
 
-(
-    cd ${basedir}/$(hostname)/${version}
-    # XXX: rundir gets used by json-summary to determine the directory
-    # name :-(
-    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.json
-    rm -f index.html
-    # So that this directory is imune to later changes, just copy the
-    # index page, along with all dependencies.
-    cp ${webdir}/i3.html index.html
-    cp -r ${basedir}/js ${destdir}
-    touch ${destdir}/i3.ok
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/i3.ok
+# Copy over all the tests.
+status "copy test sources"
+${webdir}/rsync-tests.sh ${repodir} ${destdir}
 
 
-: cd ${basedir}/$(hostname)
-# This directory contains no html so generating json isn't very
-# useful.
-: # ${utilsdir}/json-summary.py --rundir . */table.json > table.new
-: # ${utilsdir}/json-graph.py */table.json > graph.new
-: mv old to new
+# Copy over all the results.
+status "copy test results"
+${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 
-(
-    cd ${basedir}
-    # XXX: this doesn't handle more than one host
-    ${utilsdir}/json-summary.py --rundir $(hostname) */*/table.json > table.new
-    ${utilsdir}/json-graph.py */*/table.json > graph.new
-    for json in table graph ; do
-	mv ${json}.new ${json}.json
-    done
-    touch ${destdir}/i1.ok
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/i1.ok
+# Generate the results page.
+status "create results web page"
+${webdir}/build-results.sh ${repodir} ${destdir}
+
+
+# Generate the summary page.
+status "update summary web page"
+${webdir}/build-summary.sh ${repodir} ${summarydir} ${summarydir}/*/results.json
+
+
+status "finished"

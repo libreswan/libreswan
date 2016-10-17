@@ -1,0 +1,13 @@
+Basic pluto test with seccomp enabled.
+
+Once established and disconnected, we run the seccomp
+test to confirm pluto died.
+
+If this test shows mangled output, it means a cryptohelper
+was shot - pluto still lives - and it managed to continue.
+That should be considered a bug.
+
+The only SECCOMP entry that should show up in the audit log is
+the one for set_sid, (currently 124 but could change over time)
+
+Use /usr/bin/scmp_sys_resolver to match number -> name

@@ -27,7 +27,7 @@ verbose=
 host=
 seeddev="--seeddev /dev/random"
 output=""
-configdir="@FINALNSSDIR@"
+configdir="@IPSEC_NSSDIR@"
 password=
 for dummy; do
     case "$1" in

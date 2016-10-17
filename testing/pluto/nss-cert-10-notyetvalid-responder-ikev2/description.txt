@@ -1,0 +1,3 @@
+East has a certificate that is not yet valid, west attempts to connect to
+east. This connection should fail.
+

@@ -52,6 +52,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "db_ops.h"
+#include "lswfips.h" /* for libreswan_fipsmode */
 
 #include "nat_traversal.h"
 
@@ -946,7 +947,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		zero(&ta);	/* ??? may not NULL pointer fields */
 
 		/* initialize only optional field in ta */
-		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
+		ta.life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
 
 		if (no_trans_left == 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -1038,14 +1039,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						   sizeof(ugh_buf))) {
 					/* if (ike_alg_enc_present(val)) { */
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_alg_get_encrypter(val);
 					break;
 
 				case OAKLEY_DES_CBC:
@@ -1061,12 +1060,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
+					ta.prf_hasher = ikev1_alg_get_hasher(val);
 				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
+					ta.prf_hasher = ikev1_alg_get_hasher(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
@@ -1254,13 +1253,11 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val >
-					    OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM)
+					if (val > IKE_SA_LIFETIME_MAXIMUM)
 					{
 						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
-								(long) val,
-								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
-						val = OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM;
+								(long) val, IKE_SA_LIFETIME_MAXIMUM);
+						val = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
 					break;
@@ -1502,7 +1499,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = crypto_get_encrypter(ta.encrypt);
+	ta.encrypter = ikev1_alg_get_encrypter(ta.encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1515,7 +1512,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf_hasher = crypto_get_hasher(ta.prf_hash);
+	ta.prf_hasher = ikev1_alg_get_hasher(ta.prf_hash);
 	passert(ta.prf_hasher != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
@@ -1558,7 +1555,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = { SA_LIFE_DURATION_DEFAULT },		/* life_seconds */
+	.life_seconds = { IPSEC_SA_LIFETIME_DEFAULT },		/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -1581,6 +1578,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #endif
 	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
+	unsigned int valmax = IPSEC_SA_LIFETIME_MAXIMUM;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
 		return FALSE;
@@ -1728,9 +1726,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * that val does not exceed
 				 * SA_LIFE_DURATION_MAXIMUM.
 				 */
-				attrs->life_seconds =
-				    val > SA_LIFE_DURATION_MAXIMUM ?
-					deltatime(SA_LIFE_DURATION_MAXIMUM) :
+#ifdef FIPS_CHECK
+				if (libreswan_fipsmode())
+					valmax = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
+#endif
+				attrs->life_seconds = val > valmax ?
+					deltatime(valmax) :
 				    (time_t)val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);
@@ -1769,14 +1770,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_DETECTED) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is not detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
@@ -1784,25 +1777,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with old IETF drafts",
-					       enum_name(&enc_mode_names,
-							 val));
-					if (st->st_connection->remotepeertype
-					    != CISCO) {
-						return FALSE;
-					}
-					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					   NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
@@ -1810,20 +1784,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (!(st->hidden_variables.st_nat_traversal &
-				     NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names, val));
-					return FALSE;
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					    NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with NAT-T RFC",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			default:

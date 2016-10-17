@@ -365,6 +365,9 @@ static void set_whack_end(char *lr,
 	if (!isanyaddr(&l->sourceip))
 		w->host_srcip = l->sourceip;
 
+	if (!isanyaddr(&l->vti_ip.addr))
+		w->host_vtiip = l->vti_ip;
+
 	w->has_client = l->has_client;
 	if (l->has_client)
 		w->client = l->subnet;
@@ -596,8 +599,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.send_ca = CA_SEND_NONE;
 
 
-	if (conn->options_set[KBF_FORCEENCAP])
-		msg.forceencaps = conn->options[KBF_FORCEENCAP];
+	if (conn->options_set[KBF_ENCAPS])
+               msg.encaps = conn->options[KBF_ENCAPS];
+	else
+               msg.encaps = encaps_auto;
+
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else

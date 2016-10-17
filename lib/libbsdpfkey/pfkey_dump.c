@@ -201,7 +201,7 @@ static struct val2str str_alg_comp[] = {
 };
 
 /*
- * dump SADB_MSG formated.  For debugging, you should use kdebug_sadb().
+ * dump SADB_MSG formatted.  For debugging, you should use kdebug_sadb().
  */
 void pfkey_sadump(m)
 struct sadb_msg *m;

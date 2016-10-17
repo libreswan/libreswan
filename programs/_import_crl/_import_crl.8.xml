@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Matt</firstname><surname>Rogers</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>_IMPORT_CRL</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>Feb 2015</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec _import_crl</refname>
+<refpurpose>helper program for importing a crl to the NSS database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>_import_crl</emphasis>
+is spawned by
+<emphasis remap='B'>pluto</emphasis>
+in order to add or update a CRL in the NSS database (default: @IPSEC_NSSDIR@)</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt; by Matt Rogers</para>
+
+</refsect1>
+</refentry>
+

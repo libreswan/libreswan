@@ -3,12 +3,12 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <refentry>
 <refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para></para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_INITNSS</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>24 August 2012</refmiscinfo>
+<refmiscinfo class='date'>24 August 2016</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -20,6 +20,8 @@
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
   <command>ipsec initnss</command>
+    <arg choice='opt'><arg choice='plain'>--nssdir </arg><arg choice='plain'><replaceable>@IPSEC_NSSDIR@</replaceable></arg></arg>
+    <sbr/>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -29,7 +31,8 @@
 initialises the NSS database where all private keys for RSA and
 certificate keypairs are stored. If already initialised, it will
 return an error. To remove an existing IPsec NSS database, remove all the
-*.db files and pkcs11.txt from the NSS data directory (default: /etc/ipsec.d/)
+*.db files and pkcs11.txt from the NSS data directory
+(default: @IPSEC_NSSDIR@).
 </para>
 </refsect1>
 

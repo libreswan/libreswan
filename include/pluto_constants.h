@@ -36,6 +36,27 @@
 #define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
 #define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
 
+/*
+ * IETF has no recommendations
+ * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
+ * We say maximum for either is 1d
+ */
+#define IKE_SA_LIFETIME_DEFAULT secs_per_hour
+#define IKE_SA_LIFETIME_MAXIMUM secs_per_day
+#define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
+#define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
+#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
+
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
+#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
+
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
+#define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
+#define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
+
+#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
+
+
 enum kernel_interface {
 	NO_KERNEL = 1,
 	USE_KLIPS = 2,
@@ -177,6 +198,17 @@ enum ddos_mode {
 	DDOS_AUTO,
 	DDOS_FORCE_BUSY,
 	DDOS_FORCE_UNLIMITED
+};
+
+/*
+ * seccomp mode
+ * on syscall violation, enabled kills pluto, tolerant ignores syscall
+ */
+enum seccomp_mode {
+	SECCOMP_undefined,
+	SECCOMP_ENABLED,
+	SECCOMP_TOLERANT,
+	SECCOMP_DISABLED
 };
 
 /* status for state-transition-function
@@ -444,7 +476,7 @@ enum state_kind {
  * The bit is used to identify which keying material to use when
  * encrypting and decrypting SK payloads.
  *
- * Separate to this is the IKEv2 "R (Response)" flag
+ * Separate from this is the IKEv2 "R (Response)" flag
  * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
  * that a message is a response to a previous request.  Since either
  * end can send requests, either end can also set the "R" flag.
@@ -611,6 +643,13 @@ enum esn_options {
 	esn_yes = 2,
 	esn_either = 3,
 };
+
+enum encaps_options {
+	encaps_auto = 1, /* default */
+	encaps_no = 2,
+	encaps_yes = 3,
+};
+
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
@@ -844,6 +883,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_KERNEL_FAIL = 5,
 	PLUTO_EXIT_NSS_FAIL = 6,
 	PLUTO_EXIT_AUDIT_FAIL = 7,
+	PLUTO_EXIT_SECCOMP_FAIL = 8,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 

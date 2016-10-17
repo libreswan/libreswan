@@ -5,3 +5,4 @@ cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
 openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
 ocspd -v -d -c /etc/ocspd/ocspd.conf
 echo "done."
+: ==== end ====

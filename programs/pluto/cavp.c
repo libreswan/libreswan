@@ -129,7 +129,7 @@ void hash(struct cavp_entry *entry,
 	  const char *value UNUSED)
 {
 	strcpy(hasher_name, entry->key);
-	hasher = ike_alg_get_hasher(entry->value);
+	hasher = ikev1_alg_get_hasher(entry->value);
 	if (hasher == NULL) {
 		fprintf(stderr, "hasher %s not found\n", entry->key);
 	}
@@ -147,7 +147,7 @@ void symkey(struct cavp_entry *entry,
 {
 	free_any_symkey(__func__, entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = chunk_to_symkey(CKM_DH_PKCS_DERIVE, chunk);
+	*(entry->symkey) = chunk_to_symkey(chunk);
 	freeanychunk(chunk);
 }
 

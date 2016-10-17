@@ -43,28 +43,6 @@
 
 #include "lswfips.h"
 
-#ifdef USE_3DES
-static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
-		    u_int8_t *iv, bool enc);
-static struct encrypt_desc crypto_encrypter_3des =
-{
-	.common = { .name = "oakley_3des_cbc",
-		    .officname =     "3des",
-		    .algo_type =     IKE_ALG_ENCRYPT,
-		    .algo_id =       OAKLEY_3DES_CBC,
-		    .algo_v2id =     IKEv2_ENCR_3DES,
-		    .algo_next =     NULL, },
-	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */
-	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
-	.wire_iv_size =           DES_CBC_BLOCK_SIZE,
-	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
-	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
-	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
-	.do_crypt =         do_3des,
-};
-#endif
-
 #ifdef USE_MD5
 
 static void lsMD5Init_thunk(union hash_ctx *context)
@@ -187,27 +165,10 @@ void init_crypto(void)
 	bool fips = FALSE;
 #endif
 
-#ifdef USE_TWOFISH
-	if (!fips)
-		ike_alg_twofish_init();
-#endif
-
-#ifdef USE_SERPENT
-	if (!fips)
-		ike_alg_serpent_init();
-#endif
+	ike_alg_init();
 
 #ifdef USE_AES
 	ike_alg_aes_init();
-#endif
-
-#ifdef USE_CAMELLIA
-	if (!fips)
-		ike_alg_camellia_init();
-#endif
-
-#ifdef USE_3DES
-	ike_alg_add(&crypto_encrypter_3des.common);
 #endif
 
 #ifdef USE_SHA2
@@ -339,34 +300,6 @@ void get_oakley_group_param(const struct oakley_group_desc *group,
  * 1DES support removed - it is simply too weak
  * BLOWFISH support removed - author suggests TWOFISH instead
  */
-
-/* encrypt or decrypt part of an IKE message using 3DES
- * See RFC 2409 "IKE" Appendix B
- */
-static void do_3des(u_int8_t *buf, size_t buf_len,
-		    PK11SymKey *key, u_int8_t *iv, bool enc)
-{
-	passert(key != NULL);
-
-	do_3des_nss(buf, buf_len, key, iv, enc);
-}
-
-/* hash and prf routines */
-/*==========================================================
- *
- *  ike_alg linked list
- *
- *==========================================================
- */
-const struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
-{
-	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
-}
-
-const struct encrypt_desc *crypto_get_encrypter(int alg)
-{
-	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
-}
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 			u_int8_t *buf, size_t size, struct state *st)

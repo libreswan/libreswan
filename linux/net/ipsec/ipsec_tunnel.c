@@ -1,8 +1,8 @@
 /*
  * IPSEC Tunneling code. Heavily based on drivers/net/new_tunnel.c
  * Copyright (C) 1996, 1997  John Ioannidis.
- * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Richard Guy Briggs.
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2016 Richard Guy Briggs.
+ * Copyright (C) 2012, 2016 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
  *
  * OCF/receive state machine written by
@@ -1874,7 +1874,11 @@ struct net_device *ipsec_get_device(int inst)
 int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 		       void *ptr)
 {
+#ifdef HAVE_NETDEV_INFO
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+#else
 	struct net_device *dev = ptr;
+#endif
 	struct net_device *ipsec_dev;
 	struct ipsecpriv *priv;
 	int i;
@@ -1886,16 +1890,22 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 			    event);
 		return NOTIFY_DONE;
 	}
-
 	/* check for loopback devices */
 	if (dev && (dev->flags & IFF_LOOPBACK))
 		return NOTIFY_DONE;
+
+	if (strlen(dev->name) == 0) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
+			    "klips_debug:ipsec_device_event: "
+			    "dev=\"\" ??? for event type.\n");
+	}
 
 	switch (event) {
 	case NETDEV_DOWN:
 	/* look very carefully at the scope of these compiler
 	   directives before changing anything... -- RGB */
 	case NETDEV_UNREGISTER:
+	case NETDEV_UNREGISTER_FINAL:
 		switch (event) {
 		case NETDEV_DOWN:
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1916,6 +1926,13 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->name,
 				    dev->flags);
 			break;
+		case NETDEV_UNREGISTER_FINAL:
+			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
+				    "klips_debug:ipsec_device_event: "
+				    "NETDEV_UNREGISTER_FINAL dev=%s flags=%x\n",
+				    dev->name,
+				    dev->flags);
+			break;
 		}
 
 		/* find the attached physical device and detach it. */
@@ -1927,8 +1944,6 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 			priv = netdev_to_ipsecpriv(ipsec_dev);
 			if (priv) {
 				if (((struct net_device *)(priv->dev)) == dev) {
-					/* dev_close(ipsec_dev); */
-					/* return */
 					ipsec_tunnel_detach(ipsec_dev);
 					KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 						    "klips_debug:ipsec_device_event: "

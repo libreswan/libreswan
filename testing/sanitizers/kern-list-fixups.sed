@@ -1,3 +1,4 @@
+/^\[ 00.00\] audit.*$/d
 /tracing thread pid = \(.*\)/d
 s/spawn \(.*\) single/spawn PATH single/
 s/Program invoked with \(.*\)\/start.sh/Program invoked with PATH\/start.sh/
@@ -99,7 +100,7 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*PCLMULQDQ-NI instructions are not detected.*$/d
 /^Warning: found NETKEY\/XFRM stack loaded.*$/d
 /.*IPv4 over IPSec tunneling driver$/Id
-/^.* random: nonblocking pool is initialized$/d
+/^.*random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
 s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/

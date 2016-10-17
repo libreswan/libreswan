@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +34,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include "crypto.h"
+#include "lswfips.h"
 
 #include "state.h"
 #include "packet.h"
@@ -46,8 +48,21 @@
 #include "connections.h"
 #include "kernel.h"
 #include "plutoalg.h"
-
-#define return_on(var, val) { (var) = (val); goto return_out; }
+#ifdef USE_TWOFISH
+#include "ike_alg_twofish.h"
+#endif
+#ifdef USE_SERPENT
+#include "ike_alg_serpent.h"
+#endif
+#ifdef USE_AES
+#include "ike_alg_aes.h"
+#endif
+#ifdef USE_CAMELLIA
+#include "ike_alg_camellia.h"
+#endif
+#ifdef USE_3DES
+#include "ike_alg_3des.h"
+#endif
 
 /*==========================================================
 *
@@ -57,7 +72,12 @@
 *       - lookup
 *=========================================================*/
 
-const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+#define IKE_ALG_FOR_EACH(ALG,A)						\
+	for (const struct ike_alg *(A) = ike_alg_base[ALG];		\
+	     (A) != NULL;						\
+	     (A) = (A)->algo_next)
+
+static const struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
@@ -66,7 +86,7 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 
 bool ike_alg_enc_present(int ealg)
 {
-	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
 
 	return enc_desc != NULL && enc_desc->enc_blocksize != 0;
 }
@@ -74,7 +94,7 @@ bool ike_alg_enc_present(int ealg)
 /*	check if IKE hash algo is present */
 bool ike_alg_hash_present(int halg)
 {
-	const struct hash_desc *hash_desc = ike_alg_get_hasher(halg);
+	const struct hash_desc *hash_desc = ikev1_alg_get_hasher(halg);
 
 	return hash_desc != NULL && hash_desc->hash_digest_len != 0;
 }
@@ -84,7 +104,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		    const char **errp, char *ugh_buf, size_t ugh_buf_len)
 {
 	int ret = TRUE;
-	const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
 
 	passert(ugh_buf_len != 0);
 	if (enc_desc == NULL) {
@@ -174,36 +194,57 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  *      this is also used in ikev2 despite name :/
  */
-const struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
+static const struct ike_alg *ikev1_alg_find(enum ike_alg_type algo_type,
+					    unsigned algo_id)
 {
-	const struct ike_alg *e;
-
-	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
+	IKE_ALG_FOR_EACH(algo_type, e) {
 		if (e->algo_id == algo_id)
-			break;
+			return e;
 	}
-	return e;
+	return NULL;
 }
 
-const struct ike_alg *ikev2_alg_find(unsigned algo_type,
-				   enum ikev2_trans_type_encr algo_v2id)
+const struct hash_desc *ikev1_alg_get_hasher(int alg)
 {
-	const struct ike_alg *e = ike_alg_base[algo_type];
-	int search_algo_v2id = algo_v2id;
+	return (const struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
+}
 
+const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
+{
+	return (const struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
+}
+
+static const struct ike_alg *ikev2_alg_find(enum ike_alg_type algo_type,
+					    enum ikev2_trans_type_encr algo_v2id)
+{
+	IKE_ALG_FOR_EACH(algo_type, e) {
+		if (e->algo_v2id == algo_v2id)
+			return e;
+	}
+	return NULL;
+}
+
+const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
+{
 	/*
 	 * these types are mixed up, so go along with it :(
 	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1
 	 * IKEv2_ENCR_CAMELLIA_CBC == ESP_CAMELLIA
 	 */
-	if (algo_type == IKE_ALG_ENCRYPT && algo_v2id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
-		search_algo_v2id = IKEv2_ENCR_CAMELLIA_CBC;
+	if (id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
+		id = IKEv2_ENCR_CAMELLIA_CBC;
 
-	for (; e != NULL; e = e->algo_next) {
-		if (e->algo_v2id == search_algo_v2id)
-			break;
-	}
-	return e;
+	return (const struct encrypt_desc *) ikev2_alg_find(IKE_ALG_ENCRYPT, id);
+}
+
+const struct hash_desc *ikev2_alg_get_hasher(int id)
+{
+	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_HASH, id);
+}
+
+const struct hash_desc *ikev2_alg_get_integ(int id)
+{
+	return (const struct hash_desc *) ikev2_alg_find(IKE_ALG_INTEG, id);
 }
 
 /*
@@ -272,40 +313,6 @@ bool ike_alg_register_hash(struct hash_desc *hash_desc)
 	return ret;
 }
 
-/*
- *      Validate and register IKE encryption algorithm object
- */
-bool ike_alg_register_enc(struct encrypt_desc *enc_desc)
-{
-	const char *alg_name;
-	bool ret = TRUE;
-
-	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
-	 * "common.algo_id" is not defined need this officname fallback.
-	 * These are defined in kernel_netlink.c and need to move to
-	 * the proper place - even if klips does not support these
-	 */
-	alg_name = enum_name(&oakley_enc_names, enc_desc->common.algo_id);
-	if (alg_name == NULL) {
-		alg_name = enc_desc->common.officname;
-		if (alg_name == NULL) {
-			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in constants.c:oakley_enc_names",
-			     enc_desc->common.algo_id);
-			alg_name = "<NULL>";
-			ret = FALSE;
-		}
-	}
-
-	if (ret)
-		ike_alg_add(&enc_desc->common);
-
-	libreswan_log("ike_alg_register_enc(): Activating %s: %s",
-		      alg_name,
-		      ret? "Ok" : "FAILED");
-
-	return ret;
-}
-
 /* Get pfsgroup for this connection */
 const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)
@@ -363,9 +370,171 @@ CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"NSS: Unsupported encryption mechanism for %s",
-			strip_prefix(enum_name(&oakley_enc_names,
-				encrypter->common.algo_id), "OAKLEY_"));
+			enum_short_name(&oakley_enc_names,
+				encrypter->common.algo_id));
 		break;
 	}
 	return mechanism;
+}
+
+/*
+ * Show registered IKE algorithms
+ */
+void ike_alg_show_status(void)
+{
+	whack_log(RC_COMMENT, "IKE algorithms supported:");
+	whack_log(RC_COMMENT, " "); /* spacer */
+
+	IKE_ALG_FOR_EACH(IKE_ALG_ENCRYPT, algo) {
+		struct esb_buf v1namebuf, v2namebuf;
+		const struct encrypt_desc *encrypt = (const struct encrypt_desc *)algo;
+
+		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
+		whack_log(RC_COMMENT,
+			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
+			  algo->algo_id,
+			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
+			  algo->algo_v2id,
+			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
+			  encrypt->enc_blocksize,
+			  encrypt->keydeflen);
+	}
+	IKE_ALG_FOR_EACH(IKE_ALG_HASH, algo) {
+		const struct hash_desc *hash = (const struct hash_desc *)algo;
+		/*
+		 * ??? we think that hash_integ_len is meaningless
+		 * (and 0) for IKE hashes.
+		 *
+		 * Hash algorithms have hash_integ_len == 0.
+		 * Integrity algorithms (a different list) do not.
+		 */
+		pexpect(hash->hash_integ_len == 0);
+		whack_log(RC_COMMENT,
+			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
+			  algo->algo_id,
+			  enum_name(&oakley_hash_names, algo->algo_id),
+			  hash->hash_digest_len);
+	}
+
+	const struct oakley_group_desc *gdesc;
+	for (gdesc = next_oakley_group(NULL);
+	     gdesc != NULL;
+	     gdesc = next_oakley_group(gdesc)) {
+		whack_log(RC_COMMENT,
+			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
+			  gdesc->group,
+			  enum_name(&oakley_group_names, gdesc->group),
+			  (int)gdesc->bytes * BITS_PER_BYTE);
+	}
+
+	whack_log(RC_COMMENT, " "); /* spacer */
+}
+
+
+/*
+ * Validate and register IKE algorithm objects
+ *
+ * Order the array so that, when listed, the algorithms are in the
+ * order expected by test scripts.
+ */
+
+static struct ike_alg *algorithms[] = {
+#ifdef USE_TWOFISH
+	&ike_alg_encrypt_twofish_ssh.common,
+	&ike_alg_encrypt_twofish_cbc.common,
+#endif
+#ifdef USE_SERPENT
+	&ike_alg_encrypt_serpent_cbc.common,
+#endif
+#ifdef USE_AES
+	&ike_alg_encrypt_aes_cbc.common,
+	&ike_alg_encrypt_aes_ctr.common,
+	&ike_alg_encrypt_aes_gcm_8.common,
+	&ike_alg_encrypt_aes_gcm_12.common,
+	&ike_alg_encrypt_aes_gcm_16.common,
+#endif
+#ifdef USE_CAMELLIA
+	&ike_alg_encrypt_camellia_cbc.common,
+	&ike_alg_encrypt_camellia_ctr.common,
+#endif
+#ifdef USE_3DES
+	&ike_alg_encrypt_3des_cbc.common,
+#endif
+#ifdef USE_AES
+	/* see note above */
+	&ike_alg_encrypt_aes_ccm_8.common,
+	&ike_alg_encrypt_aes_ccm_12.common,
+	&ike_alg_encrypt_aes_ccm_16.common,
+#endif
+};
+
+void ike_alg_init(void)
+{
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+	for (unsigned i = 0; i < elemsof(algorithms); i++) {
+		struct ike_alg *alg = algorithms[i];
+		DBG(DBG_CRYPT, DBG_log("adding algorithm %s, id: %d, v2id: %d",
+				       alg->name, alg->algo_id, alg->algo_v2id));
+
+		/*
+		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
+		 * entries.
+		 *
+		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
+		 * define the IKEv1 field "common.algo_id" so need to
+		 * handle that.
+		 *
+		 * XXX: The intent here is to deal with any algorithm,
+		 * not just ENCRYPT (algothough that is all that is
+		 * enabled for how).
+		 */
+		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
+		/*
+		 * passert(alg->algo_type >= 0 && alg->algo_type < IKE_ALG_ROOF);
+		 *
+		 * Avoid the bogus GCC 4.4 warning: "comparison of
+		 * unsigned expression >= 0 is always true" by forcing
+		 * the value to unsigned and testing that.  ISO C
+		 * considers the integral type (sign, size) used to
+		 * represent an enum implementation dependent, the GCC
+		 * manual claims to use "signed int" by default.
+		 */
+		passert((unsigned)alg->algo_type < IKE_ALG_ROOF);
+		if (alg->algo_id > 0) {
+			static enum_names *ikev1_names[IKE_ALG_ROOF] = {
+				[IKE_ALG_ENCRYPT] = &oakley_enc_names,
+			};
+			passert(ikev1_names[alg->algo_type]);
+			passert(enum_name(ikev1_names[alg->algo_type], alg->algo_id));
+		}
+		if (alg->algo_v2id > 0) {
+			static enum_names *ikev2_names[IKE_ALG_ROOF] = {
+				[IKE_ALG_ENCRYPT] = &ikev2_trans_type_encr_names,
+			};
+			passert(ikev2_names[alg->algo_type]);
+			passert(enum_name(ikev2_names[alg->algo_type], alg->algo_v2id));
+		}
+
+		if (fips && !alg->fips) {
+			libreswan_log("Algorithm %s: DISABLED; not FIPS compliant",
+				      alg->name);
+			continue;
+		}
+
+		if (alg->do_test && !alg->do_test(alg)) {
+			libreswan_log("Algorithm %s: DISABLED; verification faild",
+				      alg->name);
+			continue;
+		}
+
+		ike_alg_add(alg);
+
+		libreswan_log("Algorithm %s: ENABLED%s%s", alg->name,
+			      alg->fips ? "; FIPS compliant" : "",
+			      alg->do_test ? "; verified" : "");
+	}
 }

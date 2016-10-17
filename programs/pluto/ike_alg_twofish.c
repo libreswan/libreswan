@@ -29,6 +29,7 @@
 #include "libtwofish/twofish_cbc.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_twofish.h"
 
 #define  TWOFISH_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)
 #define  TWOFISH_KEY_MIN_LEN    128
@@ -76,7 +77,7 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
-static struct encrypt_desc encrypt_desc_twofish =
+struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 {
 	.common = {
 		.name = "twofish",
@@ -96,7 +97,7 @@ static struct encrypt_desc encrypt_desc_twofish =
 	.do_crypt = do_twofish,
 };
 
-static struct encrypt_desc encrypt_desc_twofish_ssh =
+struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 {
 	.common = {
 		.name = "twofish_ssh", /* We don't know if this is right */
@@ -115,14 +116,3 @@ static struct encrypt_desc encrypt_desc_twofish_ssh =
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
 	.do_crypt = do_twofish,
 };
-
-void ike_alg_twofish_init(void)
-{
-	if (!ike_alg_register_enc(&encrypt_desc_twofish_ssh))
-		libreswan_log(
-			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
-
-	if (!ike_alg_register_enc(&encrypt_desc_twofish))
-		libreswan_log(
-			"ike_alg_twofish_init(): OAKLEY_TWOFISH_CBC activation failed");
-}

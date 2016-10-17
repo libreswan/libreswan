@@ -1,6 +1,6 @@
 # Manpage rules, for Libreswan.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -23,50 +23,64 @@ MANDIR.3 ?= $(MANTREE)/man3
 MANDIR.5 ?= $(MANTREE)/man5
 MANDIR.8 ?= $(MANTREE)/man8
 
-# PROGRAM=pluto -> MANPAGES+=ipsec_pluto.8
-ifeq ($(origin MANPROGPREFIX),undefined)
-MANPROGPREFIX ?= ipsec_
-endif
+# If PROGRAM is empty, PROGRAM_MANPAGE also ends up empty.  On the
+# other hand, if there's a program then there must also be a man page.
+MANPAGES += $(addsuffix .8, $(PROGRAM))
 
-# If PROGRAM is empty, PROGRAM_MANPAGE also ends up empty.
-PROGRAM_MANPAGE = $(addprefix $(MANPROGPREFIX), $(addsuffix .8, $(PROGRAM)))
-MANPAGES += $(PROGRAM_MANPAGE)
+# List of the intermediate (transformed) man pages.  Don't let GNU
+# make delete these.
+TRANSFORMED_MANPAGES = $(addprefix $(builddir)/,$(addsuffix .tmp,$(MANPAGES)))
+.PRECIOUS: $(TRANSFORMED_MANPAGES)
 
-local-manpages: $(MANPAGES)
+# Given the file MANPAGE.[0-9].{xml,tmp}, generate a list of
+# <refname/> entries, including the section number.
 
-# Generate a list of <refname/> entries, including the section number,
-# from the original xml source.
+refnames = $(shell $(SHELL) $(top_srcdir)/packaging/utils/refnames.sh $(1))
 
-refnames = $(foreach manpage, $(1), \
-		$(addsuffix $(suffix $(manpage)), \
-			$(shell $(SHELL) $(abs_top_srcdir)/packaging/utils/refnames.sh $(manpage).xml)))
+# Man pages to build, since the list of generated man pages isn't
+# predictable (see refnames.sh) use a fake target to mark that each
+# page has been generated.
+
+local-manpages: $(addprefix $(builddir)/,$(addsuffix .man,$(MANPAGES)))
 
 local-install-manpages: local-manpages
-	@set -eu $(foreach refname,$(call refnames,$(MANPAGES)), \
-		; src=$(builddir)/$(refname) \
-		; destdir=$(MANDIR$(suffix $(refname))) \
-		; echo $$src '->' $$destdir \
-		; mkdir -p $$destdir \
-		; $(INSTALL) $(INSTMANFLAGS) $$src $$destdir)
+	@set -eu $(foreach manpage,$(MANPAGES), \
+		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
+		$(foreach destdir,$(MANDIR$(suffix $(refname))), \
+		; echo $(refname) '->' $(destdir) \
+		; mkdir -p $(destdir) \
+		; $(INSTALL) $(INSTMANFLAGS) $(builddir)/$(refname) $(destdir))))
 
-list-local-manpages:
-	@set -eu $(foreach refname,$(call refnames,$(MANPAGES)), \
-		; echo $(MANDIR$(suffix $(refname)))/$(refname))
+list-local-manpages: $(TRANSFORMED_MANPAGES)
+	@set -eu $(foreach manpage,$(MANPAGES), \
+		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
+		; echo $(MANDIR$(suffix $(refname)))/$(refname)))
 
 local-clean-manpages:
 	rm -f $(builddir)/*.[1-8]
+	rm -f $(builddir)/*.[1-8].tmp
+	rm -f $(builddir)/*.[1-8].man
 
-# Always write the output to $(builddir).
+# Default rule for creating the TRANSFORMED_MANPAGES.
 #
-# Note: XMLTO seems to fail even when it succeeds so ignore its exit
-# status.  Instead check for the expected output.
-#
-# Note: When the .xml file is generated, both $< and $@ will include
-# $(buildpath) (when .xml isn't generated, they both do not).  The
-# $(notdir $@) in the test is to take care of both possibilities.
+# Directories, such as programs/configs/, that generate the man page
+# source, should provide a custom equivalent of this rule.
 
-%: %.xml | $(builddir)
-	${TRANSFORM_VARIABLES} < $< > $(builddir)/$(notdir $@).tmp
+$(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
+	${TRANSFORM_VARIABLES} < $< > $@.tmp
+	mv $@.tmp $@
+
+# Default rule for creating the man pages from the intermediate
+# (transormed) input.
+#
+# Note: XMLTO seems to fail even when it succeeds so ignore the exit
+# status and instead explicitlay check for the expected output files.
+#
+# Use a dummy target since the generated man pages probably don't
+# match the target name.
+
+$(builddir)/%.man: $(builddir)/%.tmp
 	: ignoring seemingly bogus $(XMLTO) exit status
-	cd $(builddir) && $(XMLTO) man $(notdir $@).tmp || true
-	test -r $(builddir)/$(notdir $@)
+	$(XMLTO) man $< -o $(builddir) || true
+	test -z "" $(foreach refname,$(call refnames,$<), -a -r $(builddir)/$(refname))
+	touch $@

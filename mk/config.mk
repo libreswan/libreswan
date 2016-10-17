@@ -117,7 +117,9 @@ SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
 FINALCONFDDIR?=$(FINALCONFDIR)/ipsec.d
 CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
 
-FINALNSSDIR?=$(FINALCONFDIR)/ipsec.d
+FINALNSSDIR?=/etc/ipsec.d
+# Debian uses /var/lib/ipsec
+#FINALNSSDIR?=/var/lib/ipsec
 NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
 
 # sample configuration files go into
@@ -291,6 +293,8 @@ USE_DNSSEC?=true
 # We only enable this by default if used INITSYSTEM is systemd
 ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG?=true
+SD_RESTART_TYPE?="always"
+SD_PLUTO_OPTIONS?="--leak-detective"
 else
 USE_SYSTEMD_WATCHDOG?=false
 endif
@@ -298,6 +302,7 @@ endif
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
+SD_WATCHDOGSEC?=200
 else
 SD_TYPE=simple
 endif
@@ -377,6 +382,9 @@ endif
 # Enable Labeled IPSec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
+# Enable seccomp support (whitelist allows syscalls)
+USE_SECCOMP?=false
+
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true
 ifeq ($(OSDEP),darwin)
@@ -400,6 +408,7 @@ USE_LIBCURL?=true
 # the same scrutiny that AES and 3DES have received, but offers possibilities
 # of switching away from AES/3DES quickly.
 USE_EXTRACRYPTO?=true
+USE_3DES ?= true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -480,7 +489,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
-			-e "s:@FINALNSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
@@ -502,6 +510,9 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
+			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
+			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
+			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool

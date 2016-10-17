@@ -1,6 +1,6 @@
 # Some argument parsing functions.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,7 +13,54 @@
 # for more details.
 
 import sys
+
 from fab import tee
+
+class MetaList(type):
+    def __new__(cls, name, bases, namespace, **kwds):
+        result = type.__new__(cls, name, bases, namespace, **kwds)
+
+        # The string names are mapped onto the canonical member names
+        # so that that the construct:
+        #
+        #    for p in List(List.member): p is List.member"
+        #
+        # works.
+        members = {}
+        for name, value in namespace.items():
+            # good enough for now
+            if name.startswith("__"):
+                continue
+            members[value] = value
+        result._members_ = members
+        result._metavar_ = "{" + ",".join(sorted(members)) + "},..."
+        return result
+    def __str__(cls):
+        return cls._metavar_
+
+class List(metaclass=MetaList):
+    def __init__(self, *args):
+        self.args = []
+        for arg in args:
+            for member in arg.split(","):
+                if not member:
+                    # ignore ''
+                    continue
+                if member in self._members_:
+                    # Form the list using the member values, not some
+                    # equivalent string.  Ignore ''.
+                    self.args.append(self._members_[member])
+                else:
+                    raise ValueError()
+    def __iter__(self):
+        return self.args.__iter__()
+    def __str__(self):
+        return ",".join(self.args)
+    def __contains__(self, member):
+        return member in self.args
+    def __bool__(self):
+        return bool(self.args)
+
 
 def boolean(arg):
     a = arg.lower()

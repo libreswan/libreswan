@@ -47,7 +47,7 @@ struct starter_end {
 	enum keyword_host nexttype;
 	ip_address addr, nexthop, sourceip;
 	bool has_client;
-	ip_subnet subnet;
+	ip_subnet subnet, vti_ip;
 	char *iface;
 	char *id;
 

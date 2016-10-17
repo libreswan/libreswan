@@ -492,7 +492,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
-		       "DPD: recevied R_U_THERE_ACK for unestablished ISKAMP SA");
+		       "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
 		return STF_FAIL;
 	}
 

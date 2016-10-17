@@ -127,10 +127,11 @@ west #
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
+000 seccomp=disabled
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=yes, crlcheckinterval=5, listen=<any>
@@ -195,7 +196,7 @@ west #
 000 "westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-x509-cr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "westnet-eastnet-x509-cr":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-x509-cr":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-cr":   newest ISAKMP SA: #2; newest IPsec SA: #3;
 000 "westnet-eastnet-x509-cr":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
 000 "westnet-eastnet-x509-cr":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>

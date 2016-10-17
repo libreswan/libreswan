@@ -364,7 +364,6 @@ err_t lease_an_address(const struct connection *c,
 				DBG_log("grabbed lingering lease index %u from %s",
 					i, thatidbuf);
 			});
-			free_id_content(&ll->thatid);
 			duplicate_id(&ll->thatid, &c->spd.that.id);
 			c->pool->lingering--;
 			ll->refcnt++;

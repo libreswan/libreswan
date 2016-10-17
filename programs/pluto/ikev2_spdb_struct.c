@@ -190,22 +190,28 @@ struct ikev2_transform {
 };
 
 /*
- * Upper bound on transforms-per-type.
+ * An array of all the transforms of a specific transform type.
  *
- * The transform array is declared with an extra sentinel element.
+ * The array includes an extra sentinel transform element -
+ * SENTINEL_TRANSFORM which is always invalid.
+ *
+ * FOR_EACH_TRANSFORM(TRANSFORM,TRANSFORMS) iterates over the valid
+ * elements; on loop exit, TRANSFORM points at the first invalid
+ * entry, or SENTINEL_TRANSFORM if the array is full.
+ *
+ * To append entries use append_transform().
  */
 
 struct ikev2_transforms {
 	struct ikev2_transform transform[4 + 1];
 };
 
-/*
- * Transform iterator that always stops on the last (sentinel)
- * element).
- */
+#define SENTINEL_TRANSFORM(TRANSFORMS) \
+	((TRANSFORMS)->transform + elemsof((TRANSFORMS)->transform) - 1)
+
 #define FOR_EACH_TRANSFORM(TRANSFORM,TRANSFORMS)			\
 	for ((TRANSFORM) = &(TRANSFORMS)->transform[0];			\
-	     (TRANSFORM)->valid && (TRANSFORM) < ((TRANSFORMS)->transform + elemsof((TRANSFORMS)->transform) - 1); \
+	     (TRANSFORM)->valid && (TRANSFORM) < SENTINEL_TRANSFORM(TRANSFORMS); \
 	     (TRANSFORM)++)
 
 struct ikev2_spi {
@@ -250,6 +256,20 @@ struct ikev2_proposal {
 	     (TYPE)++, (TRANSFORMS)++)
 
 struct ikev2_proposal_match {
+	/*
+	 * Set of local transform types to expect in the remote
+	 * proposal.  Because of INTEG=NULL some are OPTIONAL and some
+	 * are REQUIRED.
+	 */
+	lset_t required_local_transform_types;
+	lset_t optional_local_transform_types;
+	/*
+	 * Set of transform types in the remote proposal that matched
+	 * at least one local transform of the same type.
+	 *
+	 * Note: MATCHED <= REQUIRED | OPTIONAL
+	 */
+	lset_t matched_local_transform_types;
 	/*
 	 * Pointer to the best matched transform within the local
 	 * proposal, or the (invalid) sentinel transform.
@@ -383,18 +403,19 @@ static void print_name_value(struct print *buf, const char *name, int value)
 static void print_transform(struct print *buf, enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	const char *id  = enum_enum_name(&v2_transform_ID_enums,
-					 type, transform->id);
-	id = strip_prefix(id, "OAKLEY_GROUP_");
-	id = strip_prefix(id, "AUTH_");
-	id = strip_prefix(id, "PRF_");
-	id = strip_prefix(id, "ESN_");
-	print_string(buf, id);
+	print_string(buf,
+		enum_enum_short_name(&v2_transform_ID_enums,
+			type, transform->id));
 	if (transform->attr_keylen > 0) {
 		print_join(buf,
 			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
 				    "_%d", transform->attr_keylen));
 	}
+}
+
+static const char *trans_type_name(enum ikev2_trans_type type)
+{
+	return enum_short_name(&ikev2_trans_type_names, type);
 }
 
 /*
@@ -403,22 +424,14 @@ static void print_transform(struct print *buf, enum ikev2_trans_type type,
 static void print_type_transform(struct print *buf, enum ikev2_trans_type type,
 				 const struct ikev2_transform *transform)
 {
-	print_string(buf, strip_prefix(enum_name(&ikev2_trans_type_names,
-						 type),
-				       "TRANS_TYPE_"));
+	print_string(buf, trans_type_name(type));
 	print_string(buf, "=");
 	print_transform(buf, type, transform);
 }
 
-static const char *trans_type_name(enum ikev2_trans_type type)
-{
-	return strip_prefix(enum_name(&ikev2_trans_type_names, type), "TRANS_TYPE_");
-}
-
 static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 {
-	return strip_prefix(enum_name(&ikev2_sec_proto_id_names, protoid),
-			    "IKEv2_SEC_PROTO_");
+	return enum_short_name(&ikev2_sec_proto_id_names, protoid);
 }
 
 /*
@@ -554,8 +567,6 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		    local_propnum_base, local_propnum_bound - 1,
 		    local_proposals->roof - 1));
 
-	lset_t transform_types_found = LEMPTY;
-
 	/*
 	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
 	 * local proposal.  Each entry points to the best matching or
@@ -574,23 +585,80 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
+			matching_local_proposal->required_local_transform_types = LEMPTY;
+			matching_local_proposal->matched_local_transform_types = LEMPTY;
+			matching_local_proposal->optional_local_transform_types = LEMPTY;
 			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
 				/*
 				 * Find the sentinel transform for
 				 * this transform-type.
 				 */
 				struct ikev2_transform *sentinel_transform;
-				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms);
+				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
+					/*
+					 * Since the local proposal
+					 * contains at least one
+					 * transform of this type, the
+					 * remote proposal is expected
+					 * to also contain at least
+					 * one of these transform
+					 * types.
+					 *
+					 * However, when the local
+					 * transform has INTEG=null,
+					 * exclude that from the
+					 * REQUIRED set, adding it to
+					 * the OPTIONAL - it is
+					 * optional.
+					 */
+					if (type == IKEv2_TRANS_TYPE_INTEG
+					    && sentinel_transform->id == 0) {
+						matching_local_proposal->optional_local_transform_types |= LELEM(type);
+					} else {
+						matching_local_proposal->required_local_transform_types |= LELEM(type);
+					}
+				}
 				passert(!sentinel_transform->valid);
-				/* save it */
+				/* a transform type can't be both */
+				passert(!(matching_local_proposal->required_local_transform_types & matching_local_proposal->optional_local_transform_types));
+				/* save the sentinel */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("local proposal %d type %s has %zu transforms",
+				    DBG_log("local proposal %d type %s has %td transforms",
 					    local_propnum, trans_type_name(type),
 					    sentinel_transform - local_transforms->transform));
 			}
+			if (DBGP(DBG_CONTROLMORE)) {
+				char required_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names,
+					       matching_local_proposal->required_local_transform_types,
+					       required_bits, sizeof(required_bits));
+				char optional_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names,
+					       matching_local_proposal->optional_local_transform_types,
+					       optional_bits, sizeof(optional_bits));
+				DBG_log("local proposal %d transforms: required: %s; optional: %s",
+					local_propnum, required_bits, optional_bits);
+			}
 		}
 	}
+
+	/*
+	 * Track all the remote transform types included in the
+	 * proposal.
+	 */
+	lset_t proposed_remote_transform_types = LEMPTY;
+	/*
+	 * Track the remote transform types that matched at least one
+	 * local proposal.
+	 *
+	 * IF there is a "proposed remote transform type" missing from
+	 * this set THEN the remote proposal can't have matched (note
+	 * that the coverse does not hold).
+	 *
+	 * See quick check below.
+	 */
+	lset_t matched_remote_transform_types = LEMPTY;
 
 	/*
 	 * Track the first integrity transform's transID.  Needed to
@@ -682,13 +750,15 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			}
 		}
 
-		/* Remember each transform type found. */
-		transform_types_found |= LELEM(type);
-
 		/*
 		 * Accumulate the proposal's transforms in remote_buf.
 		 */
 		print_type_transform(remote_print_buf, type, &remote_transform);
+
+		/*
+		 * Remember each remote transform type found.
+		 */
+		proposed_remote_transform_types |= LELEM(type);
 
 		/*
 		 * Find the proposals that match and flag them.
@@ -728,13 +798,28 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 						DBG(DBG_CONTROLMORE,
 						    struct print *buf = print_buf();
 						    print_type_transform(buf, type, &remote_transform);
-						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %zu",
+						    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %td",
 							    remote_propnum, remote_transform_nr,
 							    buf->buf, local_propnum,
 							    type, trans_type_name(type),
 							    local_transform - local_transforms->transform);
 						    pfree(buf));
+						/*
+						 * Update the sentinel
+						 * with this new best
+						 * match for this
+						 * local proposal.
+						 */
 						*matching_local_transform = local_transform;
+						/*
+						 * Also record that
+						 * the local transform
+						 * type has
+						 * successfully
+						 * matched.
+						 */
+						matched_remote_transform_types |= LELEM(type);
+						matching_local_proposal->matched_local_transform_types |= LELEM(type);
 						break;
 					}
 				}
@@ -742,50 +827,163 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 		}
 	}
 
-	/* XXX: Use a set to speed up the comparison?  */
+	/*
+	 * Quick check that all the proposed transform types had at
+	 * least one match.
+	 *
+	 * For instance, if the remote proposal includes one or more
+	 * ESP transforms, then at least one of the local proposals
+	 * must have matched the ESP.  If none did (either they didn't
+	 * include ESP or had the wrong ESP) then the proposal can be
+	 * rejected out-of-hand.
+	 *
+	 * This works because:
+	 *
+	 * - "matched remote transform types" == union of all "matched
+	 *   local transform types"
+	 *
+	 * - "matched remote transform types" <= "proposed remote
+	 *   transform types".
+	 */
+	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
+	if (DBGP(DBG_CONTROLMORE)) {
+		char proposed_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       proposed_remote_transform_types,
+			       proposed_bits, sizeof(proposed_bits));
+		char matched_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       matched_remote_transform_types,
+			       matched_bits, sizeof(matched_bits));
+		char unmatched_bits[20]; /* arbitrary limit */
+		show_set_short(&ikev2_trans_type_names,
+			       unmatched_remote_transform_types,
+			       unmatched_bits, sizeof(unmatched_bits));
+		DBG_log("remote proposal %u proposed transforms: %s; matched: %s; unmatched: %s",
+			remote_propnum, proposed_bits, matched_bits, unmatched_bits);
+	}
+	if (unmatched_remote_transform_types) {
+		if (DBGP(DBG_CONTROL)) {
+			char unmatched_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       unmatched_remote_transform_types,
+				       unmatched_bits, sizeof(unmatched_bits));
+			DBG_log("remote proposal %u does not match; unmatched remote transforms: %s",
+				remote_propnum, unmatched_bits);
+		}
+		return 0;
+	}
+
 	int local_propnum;
 	struct ikev2_proposal *local_proposal;
 	FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				   local_propnum_base, local_propnum_bound) {
-		DBG(DBG_CONTROLMORE, DBG_log("Seeing if local proposal %d matched", local_propnum));
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		enum ikev2_trans_type type;
-		struct ikev2_transforms *local_transforms;
-		FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
-			/*
-			 * HACK to allow missing NULL integrity:
-			 * 
-			 * If the proposal lacks integrity and the
-			 * only local transform is null-integrity then
-			 * ignore the problem.  Presumably all the
-			 * local auth transforms are AEAD and so will
-			 * only match something valid.
-			 */
-			if (type == IKEv2_TRANS_TYPE_INTEG
-			    && !(transform_types_found & LELEM(type))
-			    && local_transforms->transform[0].valid
-			    && !local_transforms->transform[1].valid
-			    && local_transforms->transform[0].id == 0) {
-				DBG(DBG_CONTROL, DBG_log("allowing no NULL integrity"));
-				continue;
-			}
-			int type_proposed = ((transform_types_found & LELEM(type)) != 0);
-			int type_matched = matching_local_proposal->matching_transform[type]->valid;
-			if (type_proposed != type_matched) {
-				DBG(DBG_CONTROLMORE, DBG_log("local proposal %d type %s failed: %s and %s",
-							     local_propnum, trans_type_name(type),
-							     type_proposed ? "proposed" : "not-proposed",
-							     type_matched ? "matched" : "not-matched"));
-				break;
-			}
+		if (DBGP(DBG_CONTROLMORE)) {
+			char matched_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->matched_local_transform_types,
+				       matched_local_bits, sizeof(matched_local_bits));
+			char required_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->required_local_transform_types,
+				       required_local_bits, sizeof(required_local_bits));
+			char optional_local_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       matching_local_proposal->optional_local_transform_types,
+				       optional_local_bits, sizeof(optional_local_bits));
+			char proposed_remote_bits[20]; /* arbitrary limit */
+			show_set_short(&ikev2_trans_type_names,
+				       proposed_remote_transform_types,
+				       proposed_remote_bits, sizeof(proposed_remote_bits));
+			DBG_log("comparing remote proposal %u and local proposal %d transforms: required: %s; optional: %s; proposed: %s; matched: %s",
+				remote_propnum, local_propnum,
+				required_local_bits, optional_local_bits,
+				proposed_remote_bits, matched_local_bits);
 		}
-		/* loop finished? */
-		if (type == IKEv2_TRANS_TYPE_ROOF) {
-			DBG(DBG_CONTROL,
-			    DBG_log("remote proposal %u matches local proposal %d",
-				    remote_propnum, local_propnum));
-			return local_propnum;
+		/*
+		 * Using the set relationships:
+		 *
+		 *   0 == required_local & optional_local
+		 *   matched_local <= required_local + optional_local
+		 *   matched_local <= proposed_remote
+		 *
+		 * the following can be computed:
+		 *
+		 *   unmatched = proposed_remote - matched_local
+		 *
+		 *     unmatched is zero IFF all the proposed remote
+		 *     transforms matched this local proposal.
+		 */
+		lset_t unmatched =
+			(proposed_remote_transform_types
+			 & ~matching_local_proposal->matched_local_transform_types);
+		/*
+		 *   missing = required_local - matched_local
+		 *
+		 *     missing is zero IFF all the required local
+		 *     transforms were matched
+		 *
+		 *     Optional transforms are not included.
+		 */
+		lset_t missing =
+			(matching_local_proposal->required_local_transform_types
+			 & ~matching_local_proposal->matched_local_transform_types);
+		/*
+		 * vis:
+		 *
+		 *         Local Proposal: ENCR=AEAD+INTEG=NULL
+		 *     required_local = ENCR; optional_local = INTEG
+		 *     unmatched = proposed_remote - matched_local
+		 *     missing = ENCR - matched_local
+		 *
+		 *      Remote            Matched     Unmatched  Missing Accept
+		 *   INTEG=NULL           INTEG       -          ENCR
+		 *   INTEG!NULL           -           INTEG      ENCR
+		 *   ENCR=AEAD            ENCR        -          -       Yes
+		 *   ENCR!AEAD            -           ENCR       ENCR
+		 *   ENCR=AEAD+INTEG=NULL ENCR+INTEG  -          -       Yes
+		 *   ENCR!AEAD+INTEG=NULL INTEG       ENCR       ENCR
+		 *   ENCR=AEAD+INTEG!NULL ENCR        INTEG      -
+		 *   ENCR!AEAD+INTEG!NULL -           ENCR+INTEG ENCR
+		 *   ENCR=AEAD+ESP=NO     ENCR        ESP        -
+		 *   ENCR!AEAD+ESP=NO     -           ESP+ENCR   ENCR
+		 *
+		 *          Local Proposal: ENCR!AEAD+INTEG!NULL
+		 *     required_local = ENCR+INTEG; optional_local =
+		 *     unmatched = proposed_remote - matched_local
+		 *     missing = ENCR+INTEG - matched_local
+		 *
+		 *   Remote Proposal      Matched    Unmatched  Missing    Accept
+		 *   INTEG=NULL           -          INTEG      ENCR+INTEG
+		 *   INTEG!NULL           INTEG      -          ENCR
+		 *   ENCR=AEAD            -          ENCR       ENCR+INTEG
+		 *   ENCR!AEAD            ENCR       -          INTEG
+		 *   ENCR=AEAD+INTEG=NULL -          ENCR+INTEG ENCR+INTEG
+		 *   ENCR!AEAD+INTEG=NULL ENCR       INTEG      INTEG
+		 *   ENCR=AEAD+INTEG!NULL INTEG      ENCR       ENCR
+		 *   ENCR!AEAD+INTEG!NULL ENCR+INTEG -          -          Yes
+		 *   ENCR=AEAD+ESP=NO     -          ENCR+ESP   ENCR+INTEG
+		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
+		 */
+		if (unmatched || missing) {
+			if (DBGP(DBG_CONTROL)) {
+				char unmatched_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names, unmatched,
+					       unmatched_bits, sizeof(unmatched_bits));
+				char missing_bits[20]; /* arbitrary limit */
+				show_set_short(&ikev2_trans_type_names, missing,
+					       missing_bits, sizeof(missing_bits));
+				DBG_log("remote proposal %d does not match local proposal %d; unmatched transforms: %s; missing transforms: %s",
+					remote_propnum, local_propnum,
+					unmatched_bits, missing_bits);
+			}
+			continue;
 		}
+		DBG(DBG_CONTROL,
+		    DBG_log("remote proposal %u matches local proposal %d",
+			    remote_propnum, local_propnum));
+		return local_propnum;
 	}
 
 	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
@@ -1253,58 +1451,76 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 		if (transforms->transform[0].valid) {
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
-			case IKEv2_TRANS_TYPE_ENCR:
-				ta.encrypt = transform->id;
-				ta.enckeylen = transform->attr_keylen;
-				ta.encrypter = (const struct encrypt_desc *)ikev2_alg_find(IKE_ALG_ENCRYPT,
-										     ta.encrypt);
-				if (ta.encrypter == NULL) {
-					/* everything should be in alg_info.  */
+			case IKEv2_TRANS_TYPE_ENCR: {
+				const struct encrypt_desc * encrypter =
+					ikev2_alg_get_encrypter(transform->id);
+				if (encrypter == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_ENCRYPT,%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
 						    ta.encrypt));
 				}
-				if (ta.enckeylen <= 0) {
-					if (ta.encrypter != NULL) {
-						ta.enckeylen = ta.encrypter->keydeflen;
-					} else {
-						DBG(DBG_CONTROL,
-						    DBG_log("unknown key size for ENCRYPT algorithm %d",
-							    ta.encrypt));
-					}
-				}
-			break;
-			case IKEv2_TRANS_TYPE_PRF:
-				ta.prf_hash = transform->id;
-				ta.prf_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-										   ta.prf_hash);
-				if (ta.prf_hasher == NULL) {
-					/* everything should be in alg_info.  */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_find(IKG_ALG_HASH,%d) failed, assuming ESP/AH",
-						    ta.prf_hash));
+				ta.encrypt = transform->id;
+				ta.encrypter = encrypter;
+				ta.enckeylen = transform->attr_keylen;
+				if (transform->attr_keylen > 0) {
+					ta.enckeylen = transform->attr_keylen;
+				} else if (encrypter != NULL) {
+					ta.enckeylen = ta.encrypter->keydeflen;
+				} else {
+					ta.enckeylen = 0;
+					loglog(RC_LOG_SERIOUS, "unknown key size for ENCRYPT algorithm %d",
+					       ta.encrypt);
 				}
 				break;
-			case IKEv2_TRANS_TYPE_INTEG:
+			}
+			case IKEv2_TRANS_TYPE_PRF: {
+				const struct hash_desc *prf_hasher =
+					ikev2_alg_get_hasher(transform->id);
+				if (prf_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_get_hasher(%d) failed, assuming ESP/AH",
+						    ta.prf_hash));
+				}
+				ta.prf_hash = transform->id;
+				ta.prf_hasher = prf_hasher;
+				break;
+			}
+			case IKEv2_TRANS_TYPE_INTEG: {
 				if (transform->id == 0) {
 					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
-				} else {
-					ta.integ_hash = transform->id;
-					ta.integ_hasher = (const struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-											     ta.integ_hash);
-					if (ta.integ_hasher == NULL) {
-						/* everything should be in alg_info.  */
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("ikev2_alg_find(IKG_ALG_INTEG,%d) failed, assuming ESP/AH",
-							    ta.integ_hash));
-					}
+					break;
 				}
+				const struct hash_desc *integ_hasher =
+					ikev2_alg_get_integ(transform->id);
+				if (integ_hasher == NULL) {
+					/*
+					 * For moment assume that this
+					 * is ESP/AH and just the
+					 * value is needed.
+					 */
+					DBG(DBG_CONTROLMORE,
+					    DBG_log("ikev2_alg_get_integ(%d) failed, assuming ESP/AH",
+						    ta.integ_hash));
+				}
+				ta.integ_hash = transform->id;
+				ta.integ_hasher = integ_hasher;
 				break;
-			case IKEv2_TRANS_TYPE_DH:
-				ta.groupnum = transform->id;
-				ta.group = lookup_group(ta.groupnum);
-				if (ta.group == NULL) {
+			}
+			case IKEv2_TRANS_TYPE_DH: {
+				const struct oakley_group_desc *group =
+					lookup_group(transform->id);
+				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
 					 * kernel, is going to do the
@@ -1312,14 +1528,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * finding the DH group is
 					 * likely really bad.
 					 *
-					 * Stumble on as caller will
-					 * quickly passert.
+					 * Leave everthing NULL so
+					 * that caller can detect
+					 * this.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("lookup_group(%d) failed",
-						    ta.integ_hash));
+					loglog(RC_LOG_SERIOUS,
+					       "accepted proposal contains unknown DH group %d",
+					       transform->id);
+					break;
 				}
+				ta.groupnum = transform->id;
+				ta.group = group;
 				break;
+			}
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
 				case IKEv2_ESN_ENABLED:
@@ -1471,8 +1692,18 @@ static void append_transform(struct ikev2_proposal *proposal,
 	struct ikev2_transforms *transforms = &proposal->transforms[type];
 	/* find the end */
 	struct ikev2_transform *transform;
-	FOR_EACH_TRANSFORM(transform, transforms) { }
-	pexpect(!transform->valid);
+	FOR_EACH_TRANSFORM(transform, transforms) {
+	}
+	/*
+	 * Overflow? Since this is only called from static code and
+	 * local input it can be strict.
+	 */
+	passert(transform < SENTINEL_TRANSFORM(transforms));
+	/*
+	 * Corruption?  transform+1<=sentinel from above passert.
+	 */
+	passert(!(transform+0)->valid);
+	passert(!(transform+1)->valid);
 	*transform = (struct ikev2_transform) {
 		.id = id,
 		.attr_keylen = attr_keylen,
@@ -1505,9 +1736,6 @@ static void append_transform(struct ikev2_proposal *proposal,
 #define DH_MODP3072 { .id = OAKLEY_GROUP_MODP3072, .valid = TRUE, }
 #define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, .valid = TRUE, }
 #define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, .valid = TRUE, }
-
-#define ESN_NO { .id = IKEv2_ESN_DISABLED, .valid = TRUE, }
-#define ESN_YES { .id = IKEv2_ESN_ENABLED, .valid = TRUE, }
 
 #define TR(T, ...) { .transform = { T, __VA_ARGS__ } }
 
@@ -1653,7 +1881,8 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			.propnum = proposals->roof,
 		};
 
-		const struct encrypt_desc *ealg = ike_alg_get_encrypter(ike_info->ike_ealg);
+		/* ike_ealg is IKEv1! */
+		const struct encrypt_desc *ealg = ikev1_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg == NULL) {
 			if (ike_info->ike_ealg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);
@@ -1706,7 +1935,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			}
 		}
 
-		const struct hash_desc *halg = ike_alg_get_hasher(ike_info->ike_halg);
+		const struct hash_desc *halg = ikev1_alg_get_hasher(ike_info->ike_halg);
 		if (halg == NULL) {
 			if (ike_info->ike_halg != 0) {
 				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown hash algorithm %d", ike_info->ike_halg);
@@ -1758,14 +1987,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 	pfree(buf);
 }
 
-static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
+static struct ikev2_proposal default_ikev2_esp_proposal_missing_esn[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1773,7 +2001,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1781,7 +2008,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
@@ -1789,7 +2015,6 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	/*
@@ -1800,29 +2025,26 @@ static struct ikev2_proposal ikev2_esn_no_yes_esp_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 };
-static struct ikev2_proposals ikev2_esn_no_yes_esp_proposals = {
-	.proposal = ikev2_esn_no_yes_esp_proposal,
-	.roof = elemsof(ikev2_esn_no_yes_esp_proposal),
+static struct ikev2_proposals default_ikev2_esp_proposals_missing_esn = {
+	.proposal = default_ikev2_esp_proposal_missing_esn,
+	.roof = elemsof(default_ikev2_esp_proposal_missing_esn),
 };
 
-static struct ikev2_proposal ikev2_esn_no_yes_ah_proposal[] = {
+static struct ikev2_proposal default_ikev2_ah_proposal_missing_esn[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 	{
 		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_256_128),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 
@@ -1833,13 +2055,12 @@ static struct ikev2_proposal ikev2_esn_no_yes_ah_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_ESP,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_ESN] = TR(ESN_NO, ESN_YES),
 		},
 	},
 };
-static struct ikev2_proposals ikev2_esn_no_yes_ah_proposals = {
-	.proposal = ikev2_esn_no_yes_ah_proposal,
-	.roof = elemsof(ikev2_esn_no_yes_ah_proposal),
+static struct ikev2_proposals default_ikev2_ah_proposals_missing_esn = {
+	.proposal = default_ikev2_ah_proposal_missing_esn,
+	.roof = elemsof(default_ikev2_ah_proposal_missing_esn),
 };
 
 static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
@@ -1866,13 +2087,13 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 	if (alg_info_esp == NULL) {
 		DBG(DBG_CONTROL, DBG_log("selecting default ESP/AH proposals for %s", what));
 		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
-		struct ikev2_proposals *esn_no_yes_proposals;
+		struct ikev2_proposals *default_proposals_missing_esn;
 		switch (esp_ah) {
 		case POLICY_ENCRYPT:
-			esn_no_yes_proposals = &ikev2_esn_no_yes_esp_proposals;
+			default_proposals_missing_esn = &default_ikev2_esp_proposals_missing_esn;
 			break;
 		case POLICY_AUTHENTICATE:
-			esn_no_yes_proposals = &ikev2_esn_no_yes_ah_proposals;
+			default_proposals_missing_esn = &default_ikev2_ah_proposals_missing_esn;
 			break;
 		default:
 			/*
@@ -1881,41 +2102,23 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			 */
 			bad_case(policy);
 		}
-		switch (policy & (POLICY_ESN_NO | POLICY_ESN_YES)) {
-		case 0: /* screwup */
-		case (POLICY_ESN_NO|POLICY_ESN_YES):
-			*result = esn_no_yes_proposals;
-			break;
-		case POLICY_ESN_NO:
-		case POLICY_ESN_YES: {
-			/*
-			 * Clone the ESN_NO proposals and fix up the
-			 * ESN bits.
-			 */
-			struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
-									"cloned ESP/AH proposals");
-			proposals->on_heap = TRUE;
-			proposals->roof = esn_no_yes_proposals->roof;
-			proposals->proposal = clone_bytes(esn_no_yes_proposals->proposal,
-							  sizeof(esn_no_yes_proposals->proposal[0]) * esn_no_yes_proposals->roof,
-							  "ESP/AH proposals");
+		/*
+		 * Clone the default proposal and add the missing ESN.
+		 */
+		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
+								"cloned ESP/AH proposals");
+		proposals->on_heap = TRUE;
+		proposals->roof = default_proposals_missing_esn->roof;
+		proposals->proposal = clone_bytes(default_proposals_missing_esn->proposal,
+						  sizeof(default_proposals_missing_esn->proposal[0]) * default_proposals_missing_esn->roof,
+						  "ESP/AH proposals");
 
-			int propnum;
-			struct ikev2_proposal *proposal;
-			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-				/*
-				 * invalidate any existing ESN
-				 * proposal list
-				 */
-				proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0] = (struct ikev2_transform) { .valid = FALSE };
-				add_esn_transforms(proposal, policy);
-			}
-			*result = proposals;
-			break;
+		int propnum;
+		struct ikev2_proposal *proposal;
+		FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
+			add_esn_transforms(proposal, policy);
 		}
-		default:
-			bad_case(policy);
-		}
+		*result = proposals;
 
 		struct print *buf = print_buf();
 		print_proposals(buf, *result);

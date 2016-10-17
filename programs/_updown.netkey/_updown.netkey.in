@@ -140,7 +140,9 @@ export LC_ALL
 #		is NetworkManager used for resolv.conf update
 #
 #	PLUTO_SA_REQID
-#		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
+#		When using KAME or XFRM/NETKEY, the IPsec SA reqid base value.
+#		ESP/AH out is base, ESP/AH in = base + 1
+#		IPCOMP is base + 2 plus for inbound + 1
 #
 #	PLUTO_SA_TYPE
 #		The type of IPsec SA (ESP or AH)
@@ -547,6 +549,9 @@ addvtiiface() {
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.disable_policy=1
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.rp_filter=0
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.forwarding=1
+		if [ -n "${VTI_IP}" ]; then
+		   ip addr add ${VTI_IP} dev ${VTI_IFACE}
+		fi
 		ip link set ${VTI_IFACE} up
 	    else
 		# check there was no conflict if we are sharing
@@ -640,7 +645,6 @@ case "${PLUTO_VERB}" in
 	addvti
 	uproute
 	addnflog
-	addcat
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -662,6 +666,7 @@ case "${PLUTO_VERB}" in
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
+	addcat
 	notifyNM connect
 	;;
     down-client)

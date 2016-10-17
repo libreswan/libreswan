@@ -118,7 +118,7 @@ enum keyword_numeric_config_field {
 	KBF_RETRANSMIT_INTERVAL,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
-	KBF_FORCEENCAP,
+	KBF_ENCAPS,
 	KBF_IKEv2,
 	KBF_ESN,
 	KBF_IKEv2_ALLOW_NARROWING,
@@ -148,6 +148,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
 	KBF_NFLOG_CONN,		/* Enable per-conn nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
+	KBF_SECCOMP,		/* set SECCOMP mode */
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_MAX
@@ -177,6 +178,7 @@ enum keyword_string_conn_field {
 	KSCF_CA,
 	KSCF_PROTOPORT,
 	KSCF_SOURCEIP,
+	KSCF_VTI_IP,
 	KSCF_USERNAME,
 	KSCF_SUBNETS,
 	KSCF_ADDRESSPOOL,
@@ -231,8 +233,6 @@ enum keyword_valid {
 	kv_config = LELEM(0),           /* may be present in config section */
 	kv_conn   = LELEM(1),           /* may be present in conn section */
 	kv_leftright = LELEM(2),        /* comes in leftFOO and rightFOO varients */
-	kv_auto   = LELEM(3),           /* valid when keyingtype=auto */
-	kv_manual = LELEM(4),           /* valid when keyingtype=manual */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
 	kv_policy = LELEM(6),           /* is a policy affecting verb, processed specially */
 	kv_processed = LELEM(7),        /* is processed, do not output literal string */

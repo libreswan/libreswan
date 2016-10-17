@@ -181,8 +181,8 @@ int sign_hash(const struct RSA_private_key *k,
 	privateKey = PK11_FindKeyByKeyID(slot, k->pub.ckaid.nss,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
-		DBG(DBG_CRYPT,
-		    DBG_log("Can't find the private key from the NSS CKA_ID"));
+		loglog(RC_LOG_SERIOUS, "Can't find the private key from the NSS CKA_ID");
+		return 0;
 	}
 
 	/*
@@ -200,9 +200,6 @@ int sign_hash(const struct RSA_private_key *k,
 	pexpect((int)sig_len == PK11_SignatureLen(privateKey));
 
 	PK11_FreeSlot(slot);
-
-	if (privateKey == NULL)
-		return 0;
 
 	data.type = siBuffer;
 	data.len = hash_len;
@@ -716,20 +713,19 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		DBG(DBG_PRIVATE, DBG_log("AUTH_NULl secret - returning empty_chunk"));
+		DBG(DBG_CRYPT, DBG_log("AUTH_NULl secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
-	if (s != NULL)
+	if (s != NULL) {
 		pks = lsw_get_pks(s);
-
-	DBG(DBG_PRIVATE, {
-		if (s == NULL)
-			DBG_log("no Preshared Key Found");
-		else
+		DBG(DBG_PRIVATE, {
 			DBG_dump_chunk("Preshared Key",
 				       pks->u.preshared_secret);
-	});
+		});
+	} else {
+		DBG_log("no Preshared Key Found");
+	}
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
@@ -746,7 +742,7 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-	DBG(DBG_PRIVATE, {
+	DBG(DBG_CRYPT, {
 		if (s == NULL)
 			DBG_log("no RSA key Found");
 		else

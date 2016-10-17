@@ -152,10 +152,10 @@ static int nss_err_to_revfail(CERTVerifyLogNode *node)
 		return ret;
 	}
 
-	DBG(DBG_X509,
-	    DBG_log("Certificate %s failed verification : %s",
-		    node->cert->subjectName,
-		    nss_err_str(node->error)));
+	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
+		    node->cert->subjectName);
+	loglog(RC_LOG_SERIOUS, "ERROR: %s",
+		    nss_err_str(node->error));
 
 	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
 		ret = VERIFY_RET_REVOKED;
@@ -195,7 +195,7 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
 						chain, PR_FALSE, PR_FALSE, NULL);
 		if (rv != SECSuccess || *chain == NULL) {
-			DBG(DBG_X509, DBG_log("could not decode any certs"));
+			DBG(DBG_X509, DBG_log("could not decode any certs: SECStatus: %d", PORT_GetError()));
 		} else {
 			CERTCertificate **cc;
 

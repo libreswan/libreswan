@@ -6,3 +6,4 @@ openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out 
 #stock ocspd.conf, used seperate ones for different configs
 ocspd -v -d -c /etc/ocspd/ocspd.conf
 echo "done."
+: ==== end ====

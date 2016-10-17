@@ -106,12 +106,28 @@ static const struct keyword_enum_value kw_esn_values[] = {
 };
 static const struct keyword_enum_values kw_esn_list = VALUES_INITIALIZER(kw_esn_values);
 
+static const struct keyword_enum_value kw_encaps_values[] = {
+	{ "yes",     encaps_yes  },
+	{ "no",    encaps_no },
+	{ "auto",   encaps_auto },
+};
+static const struct keyword_enum_values kw_encaps_list = VALUES_INITIALIZER(kw_encaps_values);
+
 static const struct keyword_enum_value kw_ddos_values[] = {
 	{ "auto",      DDOS_AUTO },
 	{ "busy",      DDOS_FORCE_BUSY },
 	{ "unlimited", DDOS_FORCE_UNLIMITED },
 };
 static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddos_values);
+
+#ifdef HAVE_SECCOMP
+static const struct keyword_enum_value kw_seccomp_values[] = {
+	{ "enabled", SECCOMP_ENABLED },
+	{ "disabled", SECCOMP_DISABLED },
+	{ "tolerant", SECCOMP_TOLERANT },
+};
+static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_seccomp_values);
+#endif
 
 /*
  * Values for authby={rsasig, secret, null}
@@ -348,9 +364,6 @@ static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(k
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
-#define AUTO  (kv_conn | kv_auto)
-#define AUTOorMANUAL  (kv_conn | kv_auto | kv_manual)
-#define AUTO_LR  (AUTO | kv_leftright)
 
 const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES,  NOT_ENUM },
@@ -408,6 +421,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "force_busy",  kv_config | kv_alias,  kt_bool,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsolete _ */
   { "force-busy",  kv_config,  kt_bool,  KBF_FORCEBUSY,  NOT_ENUM },  /* obsoleted for ddos-mode=busy */
   { "ddos-mode",  kv_config | kv_processed ,  kt_enum,  KBF_DDOS_MODE,  &kw_ddos_list },
+#ifdef HAVE_SECCOMP
+  { "seccomp",  kv_config | kv_processed ,  kt_enum,  KBF_SECCOMP,  &kw_seccomp_list },
+#endif
   { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD,  NOT_ENUM },
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE,  NOT_ENUM },
   { "ikeport",  kv_config,  kt_number,  KBF_IKEPORT,  NOT_ENUM },
@@ -446,32 +462,32 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 
   /*
    * This is "left=" and "right="
-   * ??? note: this isn't kv_auto or kv_manual
    */
   { "",  kv_conn | kv_leftright,  kt_loose_enum,  KSCF_IP,  &kw_host_list },
 
-  { "ike",  AUTO,  kt_string,  KSCF_IKE,  NOT_ENUM },
+  { "ike",  kv_conn,  kt_string,  KSCF_IKE,  NOT_ENUM },
 
-  { "subnet",  AUTO_LR | kv_processed,  kt_subnet,  KSCF_SUBNET,  NOT_ENUM },
-  { "subnets",  AUTO_LR,  kt_appendlist,  KSCF_SUBNETS,  NOT_ENUM },
-  { "sourceip",  AUTO_LR,  kt_ipaddr,  KSCF_SOURCEIP,  NOT_ENUM },
-  { "nexthop",  AUTO_LR,  kt_ipaddr,  KSCF_NEXTHOP,  NOT_ENUM },
-  { "updown",  AUTO_LR,  kt_filename,  KSCF_UPDOWN,  NOT_ENUM },
-  { "id",  AUTO_LR,  kt_idtype,  KSCF_ID,  NOT_ENUM },
-  { "rsasigkey",  AUTO_LR,  kt_rsakey,  KSCF_RSAKEY1,  &kw_rsasigkey_list },
-  { "rsasigkey2",  AUTO_LR,  kt_rsakey,  KSCF_RSAKEY2,  &kw_rsasigkey_list },
-  { "cert",  AUTO_LR,  kt_filename,  KSCF_CERT,  NOT_ENUM },
-  { "ckaid",  AUTO_LR,  kt_string,  KSCF_CKAID,  NOT_ENUM },
-  { "sendcert",  AUTO_LR,  kt_enum,  KNCF_SENDCERT,  &kw_sendcert_list },
-  { "ca",  AUTO_LR,  kt_string,  KSCF_CA,  NOT_ENUM },
-  { "xauthserver",  AUTO_LR,  kt_bool,  KNCF_XAUTHSERVER,  NOT_ENUM },
-  { "xauthclient",  AUTO_LR,  kt_bool,  KNCF_XAUTHCLIENT,  NOT_ENUM },
-  { "modecfgserver",  AUTO_LR,  kt_bool,  KNCF_MODECONFIGSERVER,  NOT_ENUM },
-  { "modecfgclient",  AUTO_LR,  kt_bool,  KNCF_MODECONFIGCLIENT,  NOT_ENUM },
-  { "username",  AUTO_LR,  kt_string,  KSCF_USERNAME,  NOT_ENUM },
-  { "xauthusername",  AUTO_LR | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
-  { "xauthname",  AUTO_LR | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
-  { "addresspool",  AUTO_LR,  kt_range,  KSCF_ADDRESSPOOL,  NOT_ENUM },
+  { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET,  NOT_ENUM },
+  { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS,  NOT_ENUM },
+  { "sourceip",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_SOURCEIP,  NOT_ENUM },
+  { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP,  NOT_ENUM },
+  { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP,  NOT_ENUM },
+  { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN,  NOT_ENUM },
+  { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID,  NOT_ENUM },
+  { "rsasigkey",  kv_conn | kv_leftright,  kt_rsakey,  KSCF_RSAKEY1,  &kw_rsasigkey_list },
+  { "rsasigkey2",  kv_conn | kv_leftright,  kt_rsakey,  KSCF_RSAKEY2,  &kw_rsasigkey_list },
+  { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT,  NOT_ENUM },
+  { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID,  NOT_ENUM },
+  { "sendcert",  kv_conn | kv_leftright,  kt_enum,  KNCF_SENDCERT,  &kw_sendcert_list },
+  { "ca",  kv_conn | kv_leftright,  kt_string,  KSCF_CA,  NOT_ENUM },
+  { "xauthserver",  kv_conn | kv_leftright,  kt_bool,  KNCF_XAUTHSERVER,  NOT_ENUM },
+  { "xauthclient",  kv_conn | kv_leftright,  kt_bool,  KNCF_XAUTHCLIENT,  NOT_ENUM },
+  { "modecfgserver",  kv_conn | kv_leftright,  kt_bool,  KNCF_MODECONFIGSERVER,  NOT_ENUM },
+  { "modecfgclient",  kv_conn | kv_leftright,  kt_bool,  KNCF_MODECONFIGCLIENT,  NOT_ENUM },
+  { "username",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME,  NOT_ENUM },
+  { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
+  { "xauthname",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
+  { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL,  NOT_ENUM },
 
   /* these are conn statements which are not left/right */
   { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KBF_AUTO,  &kw_auto_list },
@@ -479,133 +495,130 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "alsoflip",  kv_conn,  kt_string,  KSCF_ALSOFLIP,  NOT_ENUM },
   { "connaddrfamily",  kv_conn,  kt_enum,  KBF_CONNADDRFAMILY,  &kw_connaddrfamily_list },
   { "type",  kv_conn,  kt_enum,  KBF_TYPE,  &kw_type_list },
-  { "authby",  AUTO,  kt_enum,  KBF_AUTHBY,  &kw_authby_list },
-  { "keyexchange",  AUTO,  kt_enum,  KBF_KEYEXCHANGE,  &kw_keyexchange_list },
-  { "ikev2",  AUTO | kv_processed,  kt_enum,  KBF_IKEv2,  &kw_fourvalued_list },
-  { "esn",  AUTO | kv_processed,  kt_enum,  KBF_ESN,  &kw_esn_list },
-  { "ike_frag",  AUTO | kv_processed | kv_alias,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },  /* obsolete _ */
-  { "ike-frag",  AUTO | kv_processed | kv_alias,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },  /* obsolete name */
-  { "fragmentation",  AUTO | kv_processed,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },
-  { "narrowing",  AUTO,  kt_bool,  KBF_IKEv2_ALLOW_NARROWING,  NOT_ENUM },
-  { "pam-authorize",  AUTO,  kt_bool,  KBF_IKEv2_PAM_AUTHORIZE,  NOT_ENUM },
-  { "sareftrack",  AUTO | kv_processed,  kt_enum,  KBF_SAREFTRACK,  &kw_sareftrack_list },
-  { "pfs",  AUTO,  kt_bool,  KBF_PFS,  NOT_ENUM },
+  { "authby",  kv_conn,  kt_enum,  KBF_AUTHBY,  &kw_authby_list },
+  { "keyexchange",  kv_conn,  kt_enum,  KBF_KEYEXCHANGE,  &kw_keyexchange_list },
+  { "ikev2",  kv_conn | kv_processed,  kt_enum,  KBF_IKEv2,  &kw_fourvalued_list },
+  { "esn",  kv_conn | kv_processed,  kt_enum,  KBF_ESN,  &kw_esn_list },
+  { "ike_frag",  kv_conn | kv_processed | kv_alias,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },  /* obsolete _ */
+  { "ike-frag",  kv_conn | kv_processed | kv_alias,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },  /* obsolete name */
+  { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list },
+  { "narrowing",  kv_conn,  kt_bool,  KBF_IKEv2_ALLOW_NARROWING,  NOT_ENUM },
+  { "pam-authorize",  kv_conn,  kt_bool,  KBF_IKEv2_PAM_AUTHORIZE,  NOT_ENUM },
+  { "sareftrack",  kv_conn | kv_processed,  kt_enum,  KBF_SAREFTRACK,  &kw_sareftrack_list },
+  { "pfs",  kv_conn,  kt_bool,  KBF_PFS,  NOT_ENUM },
 
-  { "nat_keepalive",  AUTO | kv_alias,  kt_bool,  KBF_NAT_KEEPALIVE,  NOT_ENUM },  /* obsolete _ */
-  { "nat-keepalive",  AUTO,  kt_bool,  KBF_NAT_KEEPALIVE,  NOT_ENUM },
+  { "nat_keepalive",  kv_conn | kv_alias,  kt_bool,  KBF_NAT_KEEPALIVE,  NOT_ENUM },  /* obsolete _ */
+  { "nat-keepalive",  kv_conn,  kt_bool,  KBF_NAT_KEEPALIVE,  NOT_ENUM },
 
-  { "initial_contact",  AUTO | kv_alias,  kt_bool,  KBF_INITIAL_CONTACT,  NOT_ENUM },  /* obsolete _ */
-  { "initial-contact",  AUTO,  kt_bool,  KBF_INITIAL_CONTACT,  NOT_ENUM },
-  { "cisco_unity",  AUTO | kv_alias,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },  /* obsolete _ */
-  { "cisco-unity",  AUTO,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },
-  { "send-no-esp-tfc",  AUTO,  kt_bool,  KBF_NO_ESP_TFC,  NOT_ENUM },
-  { "fake-strongswan",  AUTO,  kt_bool,  KBF_VID_STRONGSWAN,  NOT_ENUM },
-  { "send_vendorid",  AUTO | kv_alias,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },  /* obsolete _ */
-  { "send-vendorid",  AUTO,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },
-  { "sha2_truncbug",  AUTO | kv_alias,  kt_bool,  KBF_SHA2_TRUNCBUG,  NOT_ENUM },  /* obsolete _ */
-  { "sha2-truncbug",  AUTO,  kt_bool,  KBF_SHA2_TRUNCBUG,  NOT_ENUM },
-  { "keylife",  AUTO | kv_alias,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
-  { "lifetime",  AUTO | kv_alias,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
-  { "salifetime",  AUTO,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
+  { "initial_contact",  kv_conn | kv_alias,  kt_bool,  KBF_INITIAL_CONTACT,  NOT_ENUM },  /* obsolete _ */
+  { "initial-contact",  kv_conn,  kt_bool,  KBF_INITIAL_CONTACT,  NOT_ENUM },
+  { "cisco_unity",  kv_conn | kv_alias,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },  /* obsolete _ */
+  { "cisco-unity",  kv_conn,  kt_bool,  KBF_CISCO_UNITY,  NOT_ENUM },
+  { "send-no-esp-tfc",  kv_conn,  kt_bool,  KBF_NO_ESP_TFC,  NOT_ENUM },
+  { "fake-strongswan",  kv_conn,  kt_bool,  KBF_VID_STRONGSWAN,  NOT_ENUM },
+  { "send_vendorid",  kv_conn | kv_alias,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },  /* obsolete _ */
+  { "send-vendorid",  kv_conn,  kt_bool,  KBF_SEND_VENDORID,  NOT_ENUM },
+  { "sha2_truncbug",  kv_conn | kv_alias,  kt_bool,  KBF_SHA2_TRUNCBUG,  NOT_ENUM },  /* obsolete _ */
+  { "sha2-truncbug",  kv_conn,  kt_bool,  KBF_SHA2_TRUNCBUG,  NOT_ENUM },
+  { "keylife",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
+  { "lifetime",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
+  { "salifetime",  kv_conn,  kt_time,  KBF_SALIFETIME,  NOT_ENUM },
 
-  { "retransmit-timeout",  AUTO,  kt_time,  KBF_RETRANSMIT_TIMEOUT,  NOT_ENUM },
-  { "retransmit-interval",  AUTO,  kt_number,  KBF_RETRANSMIT_INTERVAL,  NOT_ENUM },
+  { "retransmit-timeout",  kv_conn,  kt_time,  KBF_RETRANSMIT_TIMEOUT,  NOT_ENUM },
+  { "retransmit-interval",  kv_conn,  kt_number,  KBF_RETRANSMIT_INTERVAL,  NOT_ENUM },
 
-  {"ikepad",  AUTO,  kt_bool,  KBF_IKEPAD,  NOT_ENUM },
-  { "nat-ikev1-method",  AUTO | kv_processed,  kt_enum,  KBF_IKEV1_NATT,  &kw_ikev1natt_list },
+  {"ikepad",  kv_conn,  kt_bool,  KBF_IKEPAD,  NOT_ENUM },
+  { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KBF_IKEV1_NATT,  &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
-  { "labeled_ipsec",  AUTO | kv_alias,  kt_bool,  KBF_LABELED_IPSEC,  NOT_ENUM },  /* obsolete _ */
-  { "labeled-ipsec",  AUTO,  kt_bool,  KBF_LABELED_IPSEC,  NOT_ENUM },
-  { "policy_label",  AUTO | kv_alias,  kt_string,  KSCF_POLICY_LABEL,  NOT_ENUM },  /* obsolete _ */
-  { "policy-label",  AUTO,  kt_string,  KSCF_POLICY_LABEL,  NOT_ENUM },
+  { "labeled_ipsec",  kv_conn | kv_alias,  kt_bool,  KBF_LABELED_IPSEC,  NOT_ENUM },  /* obsolete _ */
+  { "labeled-ipsec",  kv_conn,  kt_bool,  KBF_LABELED_IPSEC,  NOT_ENUM },
+  { "policy_label",  kv_conn | kv_alias,  kt_string,  KSCF_POLICY_LABEL,  NOT_ENUM },  /* obsolete _ */
+  { "policy-label",  kv_conn,  kt_string,  KSCF_POLICY_LABEL,  NOT_ENUM },
 #endif
 
   /* Cisco interop: remote peer type */
-  { "remote_peer_type",  AUTO | kv_alias,  kt_enum,  KBF_REMOTEPEERTYPE,  &kw_remote_peer_type },  /* obsolete _ */
-  { "remote-peer-type",  AUTO,  kt_enum,  KBF_REMOTEPEERTYPE,  &kw_remote_peer_type },
+  { "remote_peer_type",  kv_conn | kv_alias,  kt_enum,  KBF_REMOTEPEERTYPE,  &kw_remote_peer_type },  /* obsolete _ */
+  { "remote-peer-type",  kv_conn,  kt_enum,  KBF_REMOTEPEERTYPE,  &kw_remote_peer_type },
 
   /* Network Manager support */
 #ifdef HAVE_NM
-  { "nm_configured",  AUTO | kv_alias,  kt_bool,  KBF_NMCONFIGURED,  NOT_ENUM },  /* obsolete _ */
-  { "nm-configured",  AUTO,  kt_bool,  KBF_NMCONFIGURED,  NOT_ENUM },
+  { "nm_configured",  kv_conn | kv_alias,  kt_bool,  KBF_NMCONFIGURED,  NOT_ENUM },  /* obsolete _ */
+  { "nm-configured",  kv_conn,  kt_bool,  KBF_NMCONFIGURED,  NOT_ENUM },
 #endif
 
-  { "xauthby",  AUTO,  kt_enum,  KBF_XAUTHBY,  &kw_xauthby },
-  { "xauthfail",  AUTO,  kt_enum,  KBF_XAUTHFAIL,  &kw_xauthfail },
-  { "modecfgpull",  AUTO,  kt_invertbool,  KBF_MODECONFIGPULL,  NOT_ENUM },
+  { "xauthby",  kv_conn,  kt_enum,  KBF_XAUTHBY,  &kw_xauthby },
+  { "xauthfail",  kv_conn,  kt_enum,  KBF_XAUTHFAIL,  &kw_xauthfail },
+  { "modecfgpull",  kv_conn,  kt_invertbool,  KBF_MODECONFIGPULL,  NOT_ENUM },
   /*
    * these are really kt_ipaddr,  but we handle them as string
    * until we load them into a whack message
    */
-  { "modecfgdns1",  AUTO,  kt_string,  KSCF_MODECFGDNS1,  NOT_ENUM },
-  { "modecfgdns2",  AUTO,  kt_string,  KSCF_MODECFGDNS2,  NOT_ENUM },
+  { "modecfgdns1",  kv_conn,  kt_string,  KSCF_MODECFGDNS1,  NOT_ENUM },
+  { "modecfgdns2",  kv_conn,  kt_string,  KSCF_MODECFGDNS2,  NOT_ENUM },
 
-  { "internaldomain1",  AUTO,  kt_string,  KSCF_INTERNALDOMAIN1,  NOT_ENUM },
-  { "internaldomain2",  AUTO,  kt_string,  KSCF_INTERNALDOMAIN2,  NOT_ENUM },
+  { "internaldomain1",  kv_conn,  kt_string,  KSCF_INTERNALDOMAIN1,  NOT_ENUM },
+  { "internaldomain2",  kv_conn,  kt_string,  KSCF_INTERNALDOMAIN2,  NOT_ENUM },
 
-  { "modecfgdomain",  AUTO,  kt_string,  KSCF_MODECFGDOMAIN,  NOT_ENUM },
-  { "modecfgbanner",  AUTO,  kt_string,  KSCF_MODECFGBANNER,  NOT_ENUM },
-  { "mark",  AUTO,  kt_string,  KSCF_CONN_MARK_BOTH,  NOT_ENUM },
-  { "mark-in",  AUTO,  kt_string,  KSCF_CONN_MARK_IN,  NOT_ENUM },
-  { "mark-out",  AUTO,  kt_string,  KSCF_CONN_MARK_OUT,  NOT_ENUM },
-  { "vti-interface",  AUTO,  kt_string,  KSCF_VTI_IFACE,  NOT_ENUM },
-  { "vti-routing",  AUTO,  kt_bool,  KBF_VTI_ROUTING,  NOT_ENUM },
-  { "vti-shared",  AUTO,  kt_bool,  KBF_VTI_SHARED,  NOT_ENUM },
+  { "modecfgdomain",  kv_conn,  kt_string,  KSCF_MODECFGDOMAIN,  NOT_ENUM },
+  { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER,  NOT_ENUM },
+  { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH,  NOT_ENUM },
+  { "mark-in",  kv_conn,  kt_string,  KSCF_CONN_MARK_IN,  NOT_ENUM },
+  { "mark-out",  kv_conn,  kt_string,  KSCF_CONN_MARK_OUT,  NOT_ENUM },
+  { "vti-interface",  kv_conn,  kt_string,  KSCF_VTI_IFACE,  NOT_ENUM },
+  { "vti-routing",  kv_conn,  kt_bool,  KBF_VTI_ROUTING,  NOT_ENUM },
+  { "vti-shared",  kv_conn,  kt_bool,  KBF_VTI_SHARED,  NOT_ENUM },
 
-  { "modecfgwins1",  AUTO,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
-  { "modecfgwins2",  AUTO,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "modecfgwins1",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "modecfgwins2",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
-  { "forceencaps",  AUTO,  kt_bool,  KBF_FORCEENCAP,  NOT_ENUM },
+  { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
+  { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
 
-  { "cat",  AUTO_LR,  kt_bool,  KNCF_CAT,  NOT_ENUM },
+  { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT,  NOT_ENUM },
 
-  { "overlapip",  AUTO,  kt_bool,  KBF_OVERLAPIP,  NOT_ENUM },
-  { "rekey",  AUTO,  kt_bool,  KBF_REKEY,  NOT_ENUM },
-  { "rekeymargin",  AUTO,  kt_time,  KBF_REKEYMARGIN,  NOT_ENUM },
-  { "rekeyfuzz",  AUTO,  kt_percent,  KBF_REKEYFUZZ,  NOT_ENUM },
-  { "keyingtries",  AUTO,  kt_number,  KBF_KEYINGTRIES,  NOT_ENUM },
-  { "replay-window",  AUTO,  kt_number,  KBF_REPLAY_WINDOW,  NOT_ENUM },
-  { "ikelifetime",  AUTO,  kt_time,  KBF_IKELIFETIME,  NOT_ENUM },
-  { "disablearrivalcheck",  AUTO,  kt_invertbool,  KBF_ARRIVALCHECK,  NOT_ENUM },
-  { "failureshunt",  AUTO,  kt_enum,  KBF_FAILURESHUNT,  &kw_failureshunt_list },
-  { "negotiationshunt",  AUTO,  kt_enum,  KBF_NEGOTIATIONSHUNT,  &kw_negotiationshunt_list },
-  { "connalias",  AUTOorMANUAL | kv_processed,  kt_appendstring,  KSCF_CONNALIAS,  NOT_ENUM },
+  { "overlapip",  kv_conn,  kt_bool,  KBF_OVERLAPIP,  NOT_ENUM },
+  { "rekey",  kv_conn,  kt_bool,  KBF_REKEY,  NOT_ENUM },
+  { "rekeymargin",  kv_conn,  kt_time,  KBF_REKEYMARGIN,  NOT_ENUM },
+  { "rekeyfuzz",  kv_conn,  kt_percent,  KBF_REKEYFUZZ,  NOT_ENUM },
+  { "keyingtries",  kv_conn,  kt_number,  KBF_KEYINGTRIES,  NOT_ENUM },
+  { "replay-window",  kv_conn,  kt_number,  KBF_REPLAY_WINDOW,  NOT_ENUM },
+  { "ikelifetime",  kv_conn,  kt_time,  KBF_IKELIFETIME,  NOT_ENUM },
+  { "disablearrivalcheck",  kv_conn,  kt_invertbool,  KBF_ARRIVALCHECK,  NOT_ENUM },
+  { "failureshunt",  kv_conn,  kt_enum,  KBF_FAILURESHUNT,  &kw_failureshunt_list },
+  { "negotiationshunt",  kv_conn,  kt_enum,  KBF_NEGOTIATIONSHUNT,  &kw_negotiationshunt_list },
+  { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS,  NOT_ENUM },
 
   /* attributes of the phase2 policy */
-  { "phase2alg",  AUTOorMANUAL,  kt_string,  KSCF_ESP,  NOT_ENUM },
-  { "esp",  AUTOorMANUAL | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
-  { "ah",  AUTOorMANUAL | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
-  /* ??? note: protoport isn't kv_auto or kv_manual */
+  { "phase2alg",  kv_conn,  kt_string,  KSCF_ESP,  NOT_ENUM },
+  { "esp",  kv_conn | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
+  { "ah",  kv_conn | kv_alias,  kt_string,  KSCF_ESP,  NOT_ENUM },
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT,  NOT_ENUM },
 
-  { "phase2",  AUTOorMANUAL | kv_policy,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
-  { "auth",  AUTOorMANUAL | kv_policy | kv_alias,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
+  { "phase2",  kv_conn | kv_policy,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
+  { "auth",  kv_conn | kv_policy | kv_alias,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
 
-  { "compress",  AUTO,  kt_bool,  KBF_COMPRESS,  NOT_ENUM },
+  { "compress",  kv_conn,  kt_bool,  KBF_COMPRESS,  NOT_ENUM },
 
   /* route metric */
-  { "metric",  AUTO,  kt_number,  KBF_METRIC,  NOT_ENUM },
+  { "metric",  kv_conn,  kt_number,  KBF_METRIC,  NOT_ENUM },
 
   /* DPD */
-  { "dpddelay",  AUTO,  kt_time,  KBF_DPDDELAY,  NOT_ENUM },
-  { "dpdtimeout",  AUTO,  kt_time,  KBF_DPDTIMEOUT,  NOT_ENUM },
-  { "dpdaction",  AUTO,  kt_enum,  KBF_DPDACTION,  &kw_dpdaction_list },
+  { "dpddelay",  kv_conn,  kt_time,  KBF_DPDDELAY,  NOT_ENUM },
+  { "dpdtimeout",  kv_conn,  kt_time,  KBF_DPDTIMEOUT,  NOT_ENUM },
+  { "dpdaction",  kv_conn,  kt_enum,  KBF_DPDACTION,  &kw_dpdaction_list },
 
-  { "sendca",      AUTO,  kt_enum,  KBF_SEND_CA,  &kw_sendca_list },
+  { "sendca",      kv_conn,  kt_enum,  KBF_SEND_CA,  &kw_sendca_list },
 
-  { "mtu",  AUTO,  kt_number,  KBF_CONNMTU,  NOT_ENUM },
-  { "priority",  AUTO,  kt_number,  KBF_PRIORITY,  NOT_ENUM },
-  { "tfc",  AUTO,  kt_number,  KBF_TFCPAD,  NOT_ENUM },
-  { "reqid",  AUTO,  kt_number,  KBF_REQID,  NOT_ENUM },
-  { "nflog",  AUTO,  kt_number,  KBF_NFLOG_CONN,  NOT_ENUM },
+  { "mtu",  kv_conn,  kt_number,  KBF_CONNMTU,  NOT_ENUM },
+  { "priority",  kv_conn,  kt_number,  KBF_PRIORITY,  NOT_ENUM },
+  { "tfc",  kv_conn,  kt_number,  KBF_TFCPAD,  NOT_ENUM },
+  { "reqid",  kv_conn,  kt_number,  KBF_REQID,  NOT_ENUM },
+  { "nflog",  kv_conn,  kt_number,  KBF_NFLOG_CONN,  NOT_ENUM },
 
-  { "aggrmode",  AUTO,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
+  { "aggrmode",  kv_conn,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
 
   { NULL,  0,  0,  0,  NOT_ENUM }
 };
-#undef AUTO
-#undef AUTO_LR
-#undef AUTOorMANUAL
 
 /* distinguished keyword */
 static const struct keyword_def ipsec_conf_keyword_comment =

@@ -1,0 +1,23 @@
+iptables -t nat -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+nic #
+ ip6tables -t nat -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+nic #
+ echo "initdone"
+initdone
+
