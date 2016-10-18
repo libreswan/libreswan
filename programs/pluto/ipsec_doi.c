@@ -644,16 +644,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *auth_name = st->st_ikev2 ? "IKEv2" :
 		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
 
-	/*
-	 * [2015-01-10] Some PRFs get their common.name set to
-	 * "OAKLEY_..." and this leads to the below printing the full
-	 * uppercase name (e.x., prf=OAKLEY_SHA2_256).  This is an
-	 * historic "feature".  See ike_alg.c:ike_alg_register_hash
-	 * for where those names come from.
-	 */
-	const char *prf_common_name =
-		strip_prefix(st->st_oakley.prf_hasher->common.name,
-			     "oakley_");
+	const char *prf_common_name = st->st_oakley.prf_hasher->common.name;
 
 	char prf_name[30] = "";
 	if (st->st_ikev2) {
