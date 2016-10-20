@@ -28,6 +28,7 @@ v3.19 (unreleased)
 * ipsec: use -d or --nssdir for import and initnss directory option.
 * barf: minor improvements with systemd/journalctl [Paul]
 * verify: fix "with FIPS" output to print OK [Paul]
+* _stackmanager: add cmac and chacha20poly1305 to modprobe list [Paul]
 * building: libreswan assumes -std=gnu99 when building [Andrew]
 * sysvinit: remove unnecessary warnings about already stopped pluto [Tuomo]
 * initsystems: Enable "systemctl help ipsec" [dkg]
