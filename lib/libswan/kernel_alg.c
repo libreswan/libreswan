@@ -120,12 +120,28 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	struct sadb_alg *alg_p, tmp_alg;
 	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
-	DBG(DBG_KERNEL,
-		DBG_log("kernel_alg_add(): satype=%d, exttype=%d, alg_id=%d(%s)",
-			satype, exttype, alg_id,
-			enum_name(&esp_transformid_names, alg_id));
-		);
-
+	if (DBGP(DBG_KERNEL||DBG_CRYPT)) {
+		const char *exttype_name =
+			(exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
+			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
+			 : "SADB_EXT_SUPPORTED_???");
+		struct esb_buf alg_name_buf;
+		const char *alg_name =
+			(exttype == SADB_EXT_SUPPORTED_AUTH ? enum_showb(&ah_transformid_names, alg_id, &alg_name_buf)
+			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? alg_name = enum_showb(&esp_transformid_names, alg_id, &alg_name_buf)
+			 : "???");
+		const char *satype_name =
+			(satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
+			 : satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
+			 : "SADB_SATYPE_???");
+		DBG_log("kernel_alg_add(): satype=%d(%s), exttype=%d(%s), alg_id=%d(%s), alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+			satype, satype_name,
+			exttype, exttype_name,
+			alg_id, alg_name,
+			sadb_alg->sadb_alg_ivlen,
+			sadb_alg->sadb_alg_minbits,
+			sadb_alg->sadb_alg_maxbits);
+	}
 	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
 	if (alg_p == NULL) {
 		DBG(DBG_KERNEL,
@@ -309,17 +325,8 @@ bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-
-				int ret = kernel_alg_add(satype, supp_exttype,
-						&sadb_alg);
-				DBG(DBG_CRYPT,
-					DBG_log("kernel_alg_proc_read() alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
-						sadb_alg.sadb_alg_id,
-						sadb_alg.sadb_alg_ivlen,
-						sadb_alg.sadb_alg_minbits,
-						sadb_alg.sadb_alg_maxbits,
-						ret);
-					);
+				kernel_alg_add(satype, supp_exttype,
+					       &sadb_alg);
 				break;
 			}
 			break;
@@ -340,7 +347,6 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 	const void *p;	/* cursor through message */
 	uint8_t satype;
 	size_t msg_left;
-	int i = 0;
 
 	satype = msg->sadb_msg_satype;
 	msg_left = msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN;
@@ -366,25 +372,10 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 		msg_left -= supp_len;
 		for (supp_len -= sizeof(struct sadb_supported);
 		     supp_len >= sizeof(struct sadb_alg);
-		     supp_len -= sizeof(struct sadb_alg), i++) {
+		     supp_len -= sizeof(struct sadb_alg)) {
 			const struct sadb_alg *alg = p;
-			int ret = kernel_alg_add(satype, supp_exttype, alg);
-
+			kernel_alg_add(satype, supp_exttype, alg);
 			p = alg + 1;	/* after alg */
-
-			DBG(DBG_KERNEL,
-				DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: alg[%d], exttype=%d, satype=%d, alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d, ret=%d",
-					satype == SADB_SATYPE_ESP ? "ESP" :
-						satype == SADB_SATYPE_AH ? "AH" :
-						"???",
-					i, supp_exttype, satype,
-					alg->sadb_alg_id,
-					alg->sadb_alg_ivlen,
-					alg->sadb_alg_minbits,
-					alg->sadb_alg_maxbits,
-					alg->sadb_alg_reserved,
-					ret);
-				);
 		}
 		passert(supp_len == 0);
 	}
