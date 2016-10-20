@@ -678,6 +678,33 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
+void flush_pending_quickmode (struct state *pst);
+void flush_pending_quickmode (struct state *pst)
+{
+        struct state *st;
+
+	if (!IS_IKE_SA(pst))
+		return; /* we had better be a parent */
+	if(pst->st_ikev2)
+		return; /* quick mode is only for IKEv1 */
+
+        FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+                if (st->st_clonedfrom == pst->st_serialno) {
+			char cib[CONN_INST_BUF];
+			struct connection *c = st->st_connection;
+			if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
+				continue;
+
+			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
+					"connection\"%s\"%s state #%lu: - the parent is going away",
+					c->name, fmt_conn_instance(c, cib),
+					st->st_serialno);
+
+			delete_event(st);
+			event_schedule( EVENT_SA_REPLACE, 0, st);
+               }
+        });
+}
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -858,6 +885,9 @@ void delete_state(struct state *st)
 	 * deleting our connection.
 	 */
 	flush_pending_by_state(st);
+
+	/* handle pending quick mode IKEv1 states */
+	flush_pending_quickmode(st);
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
