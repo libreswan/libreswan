@@ -231,7 +231,7 @@ cryptomodules() {
     modules="aesni-intel aes-x86_64 geode-aes aes aes_generic des sha512 \
 	sha256 md5 cbc xcbc ecb twofish blowfish serpent ccm gcm ctr cts \
 	deflate cast5 cast6 lzo sha256_generic sha512_generic camellia \
-	${modules}"
+	cmac chacha20poly1305 ${modules}"
     for module in ${modules}
     do
 	module=$(basename ${module} | sed "s/\.ko$//")
