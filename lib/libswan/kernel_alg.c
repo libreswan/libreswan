@@ -120,12 +120,18 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	struct sadb_alg *alg_p, tmp_alg;
 	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
-	if (DBGP(DBG_KERNEL||DBG_CRYPT)) {
+	if (DBGP(DBG_KERNEL|DBG_CRYPT)) {
 		const char *exttype_name =
 			(exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
 			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
 			 : "SADB_EXT_SUPPORTED_???");
 		struct esb_buf alg_name_buf;
+		/*
+		 * XXX: The ALG_ID value found here comes from the
+		 * Linux kernel (see libreswan/pfkeyv2.h) so using
+		 * AH_TRANSFORMID_NAMES and ESP_TRANSFORMID_NAMES is
+		 * only an approximation.
+		 */
 		const char *alg_name =
 			(exttype == SADB_EXT_SUPPORTED_AUTH ? enum_showb(&ah_transformid_names, alg_id, &alg_name_buf)
 			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? alg_name = enum_showb(&esp_transformid_names, alg_id, &alg_name_buf)
