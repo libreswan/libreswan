@@ -30,6 +30,8 @@ v3.19 (unreleased)
 * verify: fix "with FIPS" output to print OK [Paul]
 * _stackmanager: add cmac and chacha20poly1305 to modprobe list [Paul]
 * building: libreswan assumes -std=gnu99 when building [Andrew]
+* building: USE_EXTRACRYPTO replaced by USE_SERPENT and USE_TWOFISH [Paul]
+* building: Disable DH22 by default. To re-enable use USE_DH22=true [Paul]
 * sysvinit: remove unnecessary warnings about already stopped pluto [Tuomo]
 * initsystems: Enable "systemctl help ipsec" [dkg]
 * testing: various web output fixes (see testing.libreswan.org) [Andrew]
