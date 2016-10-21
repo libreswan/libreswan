@@ -925,8 +925,16 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			return "modp group not found";
 		}
 
-		if (modp_id == 22) {
+		if (modp_id == OAKLEY_GROUP_DH22) {
 			return "DH22 from RFC-5114 is no longer supported - see RFC-4307bis";
+		}
+
+		if (modp_id == OAKLEY_GROUP_MODP1024 || modp_id == OAKLEY_GROUP_MODP1536) {
+			loglog(RC_LOG_SERIOUS, "WARNING: DH2 (modp-1024) and DH5 (modp-1536) are getting weak. Support for these in IKEv2 will be removed in the near future");
+		}
+
+		if (modp_id == OAKLEY_GROUP_DH23 || modp_id == OAKLEY_GROUP_DH24) {
+			loglog(RC_LOG_SERIOUS, "WARNING: DH23 and DH24 from RFC-5114 are too weak! Support will be removed in the near future");
 		}
 
 		if (modp_id != 0 && lookup_group(modp_id) == NULL) {
