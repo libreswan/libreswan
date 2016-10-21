@@ -407,8 +407,12 @@ USE_LIBCURL?=true
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities
 # of switching away from AES/3DES quickly.
-USE_EXTRACRYPTO?=true
-USE_3DES ?= true
+# DH22 is too weak - the others listed here are not broken, just not popular
+USE_SERPENT?=true
+USE_TWOFISH?=true
+USE_3DES?=true
+USE_DH22?=false
+USE_CAMELLIA?=true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -465,8 +469,11 @@ LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
 LIBAES_XCBC=${OBJDIRTOP}/lib/libcrypto/libaes_xcbc/libaes_xcbc.a
 CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2} ${LIBAES_XCBC}
 
-ifeq ($(USE_EXTRACRYPTO),true)
-CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
+ifeq ($(USE_TWOFISH),true)
+CRYPTOLIBS+= ${LIBTWOFISH}
+endif
+ifeq ($(USE_SERPENT),true)
+CRYPTOLIBS+= ${LIBSERPENT}
 endif
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a

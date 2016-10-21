@@ -100,12 +100,14 @@ static struct oakley_group_desc oakley_group[] = {
 		.modp = MODP8192_MODULUS,
 		.bytes = BYTES_FOR_BITS(8192),
 	},
+#ifdef USE_DH22
 	{
 		.group = OAKLEY_GROUP_DH22,
 		.gen = MODP_GENERATOR_DH22,
 		.modp = MODP1024_MODULUS_DH22,
 		.bytes = BYTES_FOR_BITS(1024),
 	},
+#endif
 	{
 		.group = OAKLEY_GROUP_DH23,
 		.gen = MODP_GENERATOR_DH23,

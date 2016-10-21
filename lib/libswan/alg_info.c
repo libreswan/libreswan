@@ -925,6 +925,9 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			return "modp group not found";
 		}
 
+		if (modp_id == 22) {
+			return "DH22 from RFC-5114 is no longer supported - see RFC-4307bis";
+		}
 
 		if (modp_id != 0 && lookup_group(modp_id) == NULL) {
 			return "found modp group id, but not supported";
