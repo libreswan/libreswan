@@ -24,7 +24,6 @@ summarydir=$(cd $1 && pwd) ; shift
 branch=$(${webdir}/gime-git-branch.sh ${repodir})
 remote=$(${webdir}/gime-git-remote.sh ${repodir} ${branch})
 start_date=$(date -u -Iseconds)
-start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
 
 status() {
     ${webdir}/json-status.sh \
@@ -34,6 +33,9 @@ status() {
 	     --date "$(date -Iseconds -u)" \
 	     "$@"
 }
+
+status "starting up"
+start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
 
 while true ; do
 
