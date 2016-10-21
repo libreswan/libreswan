@@ -1239,6 +1239,7 @@ typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
 /* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
 enum ike_trans_type_dh {
 	OAKLEY_GROUP_invalid = 0,	/* not in standard */
 	OAKLEY_GROUP_MODP768 = 1,
@@ -1267,11 +1268,14 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
 	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
 	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
-	OAKLEY_GROUP_NON_IKE_27 = 27, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_28 = 28, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_29 = 29, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_30 = 30, /* RFC 6932 - not for use with IKE/IPsec */
-	/* 31 - 32767 Unassigned */
+	/* From here on, values are only valid for IKEv2 */
+	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
+	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
+	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
 /*
