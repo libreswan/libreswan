@@ -12,8 +12,6 @@ function lsw_graph_summary(graph_id, summary) {
 
     var now = new Date()
 
-    // XXX: how to get the left bar off the grid with
-    // alignment?
     var x = d3.scaleTime()
 	.domain([
 	    d3.min(summary.commits, function(d) {
@@ -109,24 +107,41 @@ function lsw_graph_summary(graph_id, summary) {
 	.data(summary.untested_interesting_commits)
 	.enter()
 	.append("circle")
-	.attr("class", function(d) {
-	    return (d.abbreviated_commit_hash == summary.status.hash
-		    ? "current"
-		    : "pending")
-	})
+	.attr("class", "pending")
 	.attr("r", radius)
-    	.attr("cx", function(d) { return x(d.committer_date); })
-	.attr("cy", function(d) { return height-radius; })
+    	.attr("cx", function(d) {
+	    return x(d.committer_date)
+	})
+	.attr("cy", function(d) {
+	    return height-radius
+	})
 	.append("title")
 	.text(function(d) {
-	    if (d.abbreviated_commit_hash == summary.status.hash) {
-		return (summary.status.details
-			+ "\nStarted: " + lsw_date2iso(new Date(summary.status.start))
-			+ "\nLast Update: " + lsw_date2iso(new Date(summary.status.date)))
-	    } else {
-		return (lsw_commit_text(d) + "\nPending")
-	    }
+	    return lsw_commit_text(d)
 	})
+
+    // Overlay the current commit scatter dot.
+    if (summary.current_commit) {
+	svg.append("g")
+	    .selectAll(".dot")
+	    .data([summary.status])
+	    .enter()
+	    .append("circle")
+	    .attr("class", "current")
+	    .attr("r", radius)
+    	    .attr("cx", function(d) {
+		return x(summary.current_commit.committer_date)
+	    })
+	    .attr("cy", function(d) {
+		return height-radius
+	    })
+	    .append("title")
+	    .text(function(d) {
+		return (d.details
+			+ "\nStarted: " + lsw_date2iso(new Date(d.start))
+			+ "\nLast Update: " + lsw_date2iso(new Date(d.date)))
+	    })
+    }
 
     var keys = []
     var last_result = summary.first_parent_results[summary.first_parent_results.length - 1]
@@ -135,14 +150,16 @@ function lsw_graph_summary(graph_id, summary) {
 	var name = lsw_result_names[i]
 	keys.push({
 	    name: name,
+	    x: keys_x,
 	    y: y(last_result.totals[i+1]),
 	    text: (i > 0 ? "+" : "") + name.charAt(0).toUpperCase() + name.slice(1),
 	})
     }
     keys.push({
 	name: "current",
-	y: height-radius,
-	text: "Pending",
+	x: x(now) + radius,
+	y: height - radius,
+	text: "Current",
     })
 
     var enter_keys = svg
@@ -156,7 +173,9 @@ function lsw_graph_summary(graph_id, summary) {
 	.text(function(d) {
 	    return d.text
 	})
-	.attr("x", keys_x)
+	.attr("x", function(d) {
+	    return d.x
+	})
 	.attr("y", function(d) {
 	    return d.y
 	})
