@@ -22,7 +22,7 @@
         window.addEventListener('load', function() {
            lsw_load_summary("", function(s) {
                lsw_graph_summary("graph", s)
-               summary("summary", s.first_parent_results)
+               summary_table("summary", s)
            })
            lsw_load_jobs_table("jobs", [""]);
         })

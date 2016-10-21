@@ -69,6 +69,8 @@ function lsw_cleanup_summary(summary) {
 	})
 	// add to the hash table
 	summary.result_by_hash[hash] = result
+	// and the results table (having filtered out results missing
+	// commits).
 	summary.results.push(result)
     })
 
