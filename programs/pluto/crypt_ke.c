@@ -53,6 +53,7 @@
 #include <keyhi.h>
 #include "lswnss.h"
 #include "test_buffer.h"
+#include "ike_alg.h"
 
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)

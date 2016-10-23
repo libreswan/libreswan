@@ -21,34 +21,13 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#ifdef USE_MD5
-#include "md5.h"
-#endif
-#ifdef USE_SHA1
-#include "sha1.h"
-#endif
-#ifdef USE_SHA2
-#include "sha2.h"
-#endif
-#include "aes_xcbc.h"
-
 #include <nss.h>
 #include <pk11pub.h>
 
 extern void init_crypto(void);
 
-/* Oakley group descriptions */
+struct oakley_group_desc;
 
-struct oakley_group_desc {
-	u_int16_t group;
-	const char *gen;
-	const char *modp;
-	size_t bytes;
-};
-
-extern const struct oakley_group_desc unset_group;      /* magic signifier */
-extern const struct oakley_group_desc *lookup_group(u_int16_t group);
-const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
 void get_oakley_group_param(const struct oakley_group_desc *,
 			    chunk_t *base, chunk_t *prime);
 
@@ -108,19 +87,6 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 	(st)->st_new_iv_len = (tmp_len); \
 	memcpy((st)->st_new_iv, (tmp), (tmp_len)); \
     }
-
-/* unification of cryptographic hashing mechanisms */
-
-union hash_ctx {
-	lsMD5_CTX ctx_md5;
-	SHA1_CTX ctx_sha1;
-#ifdef USE_SHA2
-	sha256_context ctx_sha256;
-	sha384_context ctx_sha384;
-	sha512_context ctx_sha512;
-#endif
-	aes_xcbc_context ctx_aes_xcbc;
-};
 
 /*
  * HMAC package (new code should use crypt_prf).

@@ -32,7 +32,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "crypto.h"
 #include "lswfips.h"
 
 #include "log.h"
@@ -63,6 +62,107 @@
 #ifdef USE_MD5
 #include "ike_alg_md5.h"
 #endif
+
+
+/* Oakley group description
+ *
+ * See:
+ * RFC-2409 "The Internet key exchange (IKE)" Section 6
+ * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
+ */
+
+/* magic signifier */
+const struct oakley_group_desc unset_group = {
+	.group = OAKLEY_GROUP_invalid,
+};
+
+static struct oakley_group_desc oakley_group[] = {
+	/* modp768_modulus no longer supported - too weak */
+	{
+		.group = OAKLEY_GROUP_MODP1024,
+		.gen = MODP_GENERATOR,
+		.modp = MODP1024_MODULUS,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP1536,
+		.gen = MODP_GENERATOR,
+		.modp = MODP1536_MODULUS,
+		.bytes = BYTES_FOR_BITS(1536),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP2048,
+		.gen = MODP_GENERATOR,
+		.modp = MODP2048_MODULUS,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP3072,
+		.gen = MODP_GENERATOR,
+		.modp = MODP3072_MODULUS,
+		.bytes = BYTES_FOR_BITS(3072),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP4096,
+		.gen = MODP_GENERATOR,
+		.modp = MODP4096_MODULUS,
+		.bytes = BYTES_FOR_BITS(4096),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP6144,
+		.gen = MODP_GENERATOR,
+		.modp = MODP6144_MODULUS,
+		.bytes = BYTES_FOR_BITS(6144),
+	},
+	{
+		.group = OAKLEY_GROUP_MODP8192,
+		.gen = MODP_GENERATOR,
+		.modp = MODP8192_MODULUS,
+		.bytes = BYTES_FOR_BITS(8192),
+	},
+#ifdef USE_DH22
+	{
+		.group = OAKLEY_GROUP_DH22,
+		.gen = MODP_GENERATOR_DH22,
+		.modp = MODP1024_MODULUS_DH22,
+		.bytes = BYTES_FOR_BITS(1024),
+	},
+#endif
+	{
+		.group = OAKLEY_GROUP_DH23,
+		.gen = MODP_GENERATOR_DH23,
+		.modp = MODP2048_MODULUS_DH23,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+	{
+		.group = OAKLEY_GROUP_DH24,
+		.gen = MODP_GENERATOR_DH24,
+		.modp = MODP2048_MODULUS_DH24,
+		.bytes = BYTES_FOR_BITS(2048),
+	},
+};
+
+const struct oakley_group_desc *lookup_group(u_int16_t group)
+{
+	int i;
+
+	for (i = 0; i != elemsof(oakley_group); i++)
+		if (group == oakley_group[i].group)
+			return &oakley_group[i];
+
+	return NULL;
+}
+
+const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *group)
+{
+	if (group == NULL) {
+		return &oakley_group[0];
+	} else if (group < &oakley_group[elemsof(oakley_group) - 1]) {
+		return group + 1;
+	} else {
+		return NULL;
+	}
+}
 
 /*==========================================================
 *

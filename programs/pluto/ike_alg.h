@@ -7,6 +7,23 @@
 #include "camellia.h"
 
 /*
+ * See 'union hash_ctx' below.
+ */
+
+#ifdef USE_MD5
+#include "md5.h"
+#endif
+#ifdef USE_SHA1
+#include "sha1.h"
+#endif
+#ifdef USE_SHA2
+#include "sha2.h"
+#endif
+#ifdef USE_AES
+#include "aes_xcbc.h"
+#endif
+
+/*
  *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
  *	here with other name as a way to assure that the
  *	algorithm hook type is supported (detected at compile time)
@@ -105,7 +122,24 @@ struct encrypt_desc {
 				   PK11SymKey *key, bool enc);
 };
 
-union hash_ctx;	/* forward declaration */
+/* unification of cryptographic hashing mechanisms */
+
+union hash_ctx {
+#ifdef USE_MD5
+	lsMD5_CTX ctx_md5;
+#endif
+#ifdef USE_SHA1
+	SHA1_CTX ctx_sha1;
+#endif
+#ifdef USE_SHA2
+	sha256_context ctx_sha256;
+	sha384_context ctx_sha384;
+	sha512_context ctx_sha512;
+#endif
+#ifdef USE_AES
+	aes_xcbc_context ctx_aes_xcbc;
+#endif
+};
 
 typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
@@ -140,5 +174,18 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg);
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 const struct hash_desc *ikev2_alg_get_hasher(int alg);
 const struct hash_desc *ikev2_alg_get_integ(int alg);
+
+/* Oakley group descriptions */
+
+struct oakley_group_desc {
+	u_int16_t group;
+	const char *gen;
+	const char *modp;
+	size_t bytes;
+};
+
+extern const struct oakley_group_desc unset_group;      /* magic signifier */
+extern const struct oakley_group_desc *lookup_group(u_int16_t group);
+const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
 
 #endif /* _IKE_ALG_H */
