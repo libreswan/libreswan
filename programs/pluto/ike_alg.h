@@ -153,12 +153,4 @@ const struct hash_desc *ikev2_alg_get_integ(int alg);
 extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						  lset_t policy);
 
-extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
-				       struct db_sa *basic,
-				       bool single_dh);
-
-extern struct db_sa *kernel_alg_makedb(lset_t policy,
-				       struct alg_info_esp *ei,
-				       bool logit);
-
 #endif /* _IKE_ALG_H */
