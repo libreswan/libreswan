@@ -67,6 +67,62 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 #undef CASE
 }
 
+static CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
+{
+	/* the best wey have for "undefined" */
+	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
+
+	switch ((enum ikev1_encr_attribute) encrypter->common.algo_id) {
+	case OAKLEY_3DES_CBC:
+		mechanism = CKM_DES3_CBC;
+		break;
+	case OAKLEY_CAST_CBC:
+		/* not yet */
+		pexpect(mechanism == CKM_CAST5_CBC);
+		break;
+	case OAKLEY_AES_CBC:
+		mechanism = CKM_AES_CBC;
+		break;
+	case OAKLEY_CAMELLIA_CBC:
+		mechanism = CKM_CAMELLIA_CBC;
+		break;
+	case OAKLEY_AES_CTR:
+		mechanism = CKM_AES_CTR;
+		break;
+	case OAKLEY_AES_CCM_8:
+	case OAKLEY_AES_CCM_12:
+	case OAKLEY_AES_CCM_16:
+		/* not yet */
+		pexpect(mechanism == CKM_AES_CCM);
+		break;
+	case OAKLEY_AES_GCM_8:
+	case OAKLEY_AES_GCM_12:
+	case OAKLEY_AES_GCM_16:
+		mechanism = CKM_AES_GCM;
+		break;
+	case OAKLEY_TWOFISH_CBC:
+		/* not yet */
+		pexpect(mechanism == CKM_TWOFISH_CBC);
+		break;
+	default:
+		break;
+	}
+	if (mechanism == CKM_VENDOR_DEFINED) {
+		loglog(RC_LOG_SERIOUS,
+			"NSS: Unsupported encryption mechanism for %s",
+			enum_short_name(&oakley_enc_names,
+					encrypter->common.algo_id));
+	} else {
+		/* XXX: DBG_CRYPTOMORE */
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("%s(%d) converted to %s(%lu)",
+				encrypter->common.name, encrypter->common.algo_id,
+				ckm_to_string(mechanism), mechanism);
+		}
+	}
+	return mechanism;
+}
+
 void free_any_symkey(const char *prefix, PK11SymKey **key)
 {
 	if (*key != NULL) {
