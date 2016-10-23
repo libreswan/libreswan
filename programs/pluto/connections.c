@@ -82,6 +82,7 @@
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "lswfips.h"
+#include "crypto.h"
 
 struct connection *connections = NULL;
 

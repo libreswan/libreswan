@@ -32,23 +32,13 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "sha1.h"
-#include "md5.h"
 #include "crypto.h"
 #include "lswfips.h"
 
-#include "state.h"
-#include "packet.h"
 #include "log.h"
-#include "whack.h"
-#include "spdb.h"
 #include "alg_info.h"
 #include "ike_alg.h"
-#include "db_ops.h"
-#include "id.h"
-#include "connections.h"
-#include "kernel.h"
-#include "plutoalg.h"
+
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
 #endif
@@ -187,20 +177,6 @@ const struct hash_desc *ikev2_alg_get_hasher(int id)
 const struct hash_desc *ikev2_alg_get_integ(int id)
 {
 	return (const struct hash_desc *) ikev2_lookup(&integ_algorithms, id);
-}
-
-/* Get pfsgroup for this connection */
-const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
-						 lset_t policy)
-{
-	const struct oakley_group_desc * ret = NULL;
-
-	/* ??? 0 isn't a legitimate value for esp_pfsgroup */
-	if ((policy & POLICY_PFS) &&
-	    c->alg_info_esp != NULL &&
-	    c->alg_info_esp->esp_pfsgroup != 0)
-		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
-	return ret;
 }
 
 /*

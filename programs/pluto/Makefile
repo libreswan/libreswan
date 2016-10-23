@@ -353,7 +353,7 @@ DISTSRC = \
 	${NETKEY_SRCS} \
 	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} \
 	kernel_noklips.c kernel_noklips.h \
-	ike_alg.c ike_alg_status.c ike_alg.h \
+	ike_alg.c ike_alg.h \
 	ike_alg_aes.c \
 	ike_alg_camellia.c \
 	rcv_whack.c rcv_whack.h \
@@ -414,7 +414,7 @@ OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o
 OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
-OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
+OBJSPLUTO += ike_alg.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}

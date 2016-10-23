@@ -38,6 +38,7 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 #include "test_buffer.h"
+#include "connections.h"
 
 void init_crypto(void)
 {
@@ -264,5 +265,77 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 
 	default:
 		bad_case(ksproto);
+	}
+}
+
+/* Get pfsgroup for this connection */
+const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
+						 lset_t policy)
+{
+	const struct oakley_group_desc * ret = NULL;
+
+	/* ??? 0 isn't a legitimate value for esp_pfsgroup */
+	if ((policy & POLICY_PFS) &&
+	    c->alg_info_esp != NULL &&
+	    c->alg_info_esp->esp_pfsgroup != 0)
+		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
+	return ret;
+}
+
+/*
+ *      Show IKE algorithms for
+ *      - this connection (result from ike= string)
+ *      - newest SA
+ */
+void ike_alg_show_connection(const struct connection *c, const char *instance)
+{
+	const struct state *st;
+
+	if (c->alg_info_ike != NULL) {
+		char buf[1024];
+
+		alg_info_ike_snprint(buf, sizeof(buf) - 1,
+				     c->alg_info_ike);
+		whack_log(RC_COMMENT,
+			  "\"%s\"%s:   IKE algorithms wanted: %s",
+			  c->name,
+			  instance,
+			  buf);
+
+		alg_info_snprint_ike(buf, sizeof(buf), c->alg_info_ike);
+		whack_log(RC_COMMENT,
+			  "\"%s\"%s:   IKE algorithms found:  %s",
+			  c->name,
+			  instance,
+			  buf);
+	}
+	st = state_with_serialno(c->newest_isakmp_sa);
+	if (st != NULL) {
+		struct esb_buf encbuf, prfbuf, integbuf, groupbuf;
+
+		if (!st->st_ikev2) {
+			/* IKEv1 */
+			whack_log(RC_COMMENT,
+			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
+			  c->name,
+			  instance,
+			  enum_show_shortb(&oakley_enc_names, st->st_oakley.encrypt, &encbuf),
+			  /* st->st_oakley.encrypter->keydeflen, */
+			  st->st_oakley.enckeylen,
+			  enum_show_shortb(&oakley_hash_names, st->st_oakley.prf_hash, &prfbuf),
+			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
+		} else {
+			/* IKEv2 */
+			whack_log(RC_COMMENT,
+			  "\"%s\"%s:   IKEv2 algorithm newest: %s_%03d-%s-%s-%s",
+			  c->name,
+			  instance,
+			  enum_showb(&ikev2_trans_type_encr_names, st->st_oakley.encrypt, &encbuf),
+			  /* st->st_oakley.encrypter->keydeflen, */
+			  st->st_oakley.enckeylen,
+			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
+			  enum_showb(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash, &prfbuf),
+			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
+		}
 	}
 }

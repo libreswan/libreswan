@@ -6,8 +6,6 @@
 
 #include "camellia.h"
 
-struct connection;	/* forward declaration */
-
 /*
  *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
  *	here with other name as a way to assure that the
@@ -129,7 +127,6 @@ struct alg_info_esp;
 extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy);
 
 extern void ike_alg_show_status(void);
-extern void ike_alg_show_connection(const struct connection *c, const char *instance);
 
 extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
@@ -143,8 +140,5 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg);
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 const struct hash_desc *ikev2_alg_get_hasher(int alg);
 const struct hash_desc *ikev2_alg_get_integ(int alg);
-
-extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
-						  lset_t policy);
 
 #endif /* _IKE_ALG_H */
