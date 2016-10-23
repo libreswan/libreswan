@@ -24,10 +24,8 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
 #include "libserpent/serpent_cbc.h"
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)

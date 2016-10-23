@@ -5,7 +5,10 @@
 #include <pk11pub.h>
 
 /*
- * See 'union hash_ctx' below.
+ * Unification of cryptographic hashing mechanisms
+ *
+ * Better might be to define an anonymous struct, and then let each .c
+ * file implement it.
  */
 
 #ifdef USE_MD5
@@ -20,6 +23,23 @@
 #ifdef USE_AES
 #include "aes_xcbc.h"
 #endif
+
+union hash_ctx {
+#ifdef USE_MD5
+	lsMD5_CTX ctx_md5;
+#endif
+#ifdef USE_SHA1
+	SHA1_CTX ctx_sha1;
+#endif
+#ifdef USE_SHA2
+	sha256_context ctx_sha256;
+	sha384_context ctx_sha384;
+	sha512_context ctx_sha512;
+#endif
+#ifdef USE_AES
+	aes_xcbc_context ctx_aes_xcbc;
+#endif
+};
 
 /*
  *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
@@ -118,25 +138,6 @@ struct encrypt_desc {
 				   u_int8_t *text_and_tag,
 				   size_t text_size, size_t tag_size,
 				   PK11SymKey *key, bool enc);
-};
-
-/* unification of cryptographic hashing mechanisms */
-
-union hash_ctx {
-#ifdef USE_MD5
-	lsMD5_CTX ctx_md5;
-#endif
-#ifdef USE_SHA1
-	SHA1_CTX ctx_sha1;
-#endif
-#ifdef USE_SHA2
-	sha256_context ctx_sha256;
-	sha384_context ctx_sha384;
-	sha512_context ctx_sha512;
-#endif
-#ifdef USE_AES
-	aes_xcbc_context ctx_aes_xcbc;
-#endif
 };
 
 typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);

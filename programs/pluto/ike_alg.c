@@ -31,7 +31,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "defs.h"
 #include "lswfips.h"
 
 #include "log.h"

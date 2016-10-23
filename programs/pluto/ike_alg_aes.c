@@ -25,18 +25,14 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
-#include "crypto.h"
 #include "klips-crypto/aes_cbc.h"
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "lswfips.h"
-#include "lswlog.h"
+
 #include "ike_alg_nss_cbc.h"
 #include "ctr_test_vectors.h"
 #include "cbc_test_vectors.h"
@@ -277,9 +273,10 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 {
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
 
+	passert(sym_key);
 	if (sym_key == NULL) {
 		loglog(RC_LOG_SERIOUS, "do_aes_ctr: NSS derived enc key in NULL");
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		impossible();
 	}
 
 	CK_AES_CTR_PARAMS counter_param;
@@ -301,7 +298,7 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 		if (rv != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
 			       "do_aes_ctr: PK11_Encrypt failure (err %d)", PR_GetError());
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			impossible();
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
@@ -310,7 +307,7 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 		if (rv != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
 			       "do_aes_ctr: PK11_Decrypt failure (err %d)", PR_GetError());
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			impossible();
 		}
 	}
 

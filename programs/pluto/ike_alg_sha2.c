@@ -23,10 +23,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
-#include "crypto.h"
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #include <pk11pub.h>

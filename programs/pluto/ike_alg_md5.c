@@ -30,15 +30,10 @@
 #include <errno.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "state.h"
-#include "log.h"
+#include "lswlog.h"
+#include "lswalloc.h"
 #include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
-#include "alg_info.h"
 #include "ike_alg.h"
-#include "test_buffer.h"
 #include "ike_alg_md5.h"
 
 static void lsMD5Init_thunk(union hash_ctx *context)

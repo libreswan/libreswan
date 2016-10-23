@@ -30,12 +30,9 @@
 #include <errno.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "state.h"
-#include "log.h"
+#include "lswlog.h"
 #include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
-#include "alg_info.h"
+
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
 

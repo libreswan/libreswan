@@ -21,7 +21,6 @@
 
 #include <libreswan.h>
 
-#include "defs.h"
 #include "lswlog.h"
 #include "prmem.h"
 #include "prerror.h"
@@ -40,7 +39,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - NSS derived enc key in NULL",
 		       alg->common.name);
-		exit_pluto(10);
+		impossible();
 	}
 
 	SECItem ivitem;
@@ -52,7 +51,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - Failure to set up PKCS11 param (err %d)",
 		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		impossible();
 	}
 
 	PK11Context *enccontext;
@@ -63,7 +62,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - PKCS11 context creation failure (err %d)",
 		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		impossible();
 	}
 
 
@@ -77,7 +76,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - PKCS11 operation failure (err %d)",
 		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		impossible();
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);
