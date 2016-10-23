@@ -160,8 +160,6 @@ struct alg_info_esp;
 
 extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy);
 
-extern void ike_alg_show_status(void);
-
 extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
 extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
@@ -174,6 +172,12 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg);
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 const struct hash_desc *ikev2_alg_get_hasher(int alg);
 const struct hash_desc *ikev2_alg_get_integ(int alg);
+
+/*
+ * Iterate over the IKE enabled algorithms.
+ */
+const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last);
+const struct hash_desc **next_ike_prf_desc(const struct hash_desc **last);
 
 /* Oakley group descriptions */
 

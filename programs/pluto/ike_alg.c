@@ -190,6 +190,33 @@ static const struct type_algorithms prf_algorithms;
 static const struct type_algorithms integ_algorithms;
 static const struct type_algorithms encrypt_algorithms;
 
+static const struct ike_alg **next_alg(const struct ike_alg **first,
+				       const struct ike_alg **last)
+{
+	if (last == NULL) {
+		return first;
+	}
+	passert(last >= first);
+	last++;
+	/* last < end */
+	if (*last == NULL) {
+		return NULL;
+	}
+	return last;
+}
+
+const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last)
+{
+	return (const struct encrypt_desc**)next_alg(encrypt_algorithms.descriptors,
+						     (const struct ike_alg**)last);
+}
+
+const struct hash_desc **next_ike_prf_desc(const struct hash_desc **last)
+{
+	return (const struct hash_desc**)next_alg(prf_algorithms.descriptors,
+						  (const struct ike_alg**)last);
+}
+
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
 	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
@@ -278,60 +305,6 @@ const struct hash_desc *ikev2_alg_get_integ(int id)
 {
 	return (const struct hash_desc *) ikev2_lookup(&integ_algorithms, id);
 }
-
-/*
- * Show registered IKE algorithms
- */
-void ike_alg_show_status(void)
-{
-	whack_log(RC_COMMENT, "IKE algorithms supported:");
-	whack_log(RC_COMMENT, " "); /* spacer */
-
-	FOR_EACH_IKE_ALGP(encrypt_algorithms, algp) {
-		struct esb_buf v1namebuf, v2namebuf;
-		const struct encrypt_desc *alg = (const struct encrypt_desc *)(*algp);
-
-		passert(alg->common.algo_id != 0 || alg->common.algo_v2id != 0);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-			  alg->common.algo_id,
-			  enum_showb(&oakley_enc_names, alg->common.algo_id, &v1namebuf),
-			  alg->common.algo_v2id,
-			  enum_showb(&ikev2_trans_type_encr_names, alg->common.algo_v2id, &v2namebuf),
-			  alg->enc_blocksize,
-			  alg->keydeflen);
-	}
-	FOR_EACH_IKE_ALGP(prf_algorithms, algp) {
-		const struct hash_desc *alg = (const struct hash_desc *)(*algp);
-		/*
-		 * ??? we think that hash_integ_len is meaningless
-		 * (and 0) for IKE hashes.
-		 *
-		 * Hash algorithms have hash_integ_len == 0.
-		 * Integrity algorithms (a different list) do not.
-		 */
-		pexpect(alg->hash_integ_len == 0);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-			  alg->common.algo_id,
-			  enum_name(&oakley_hash_names, alg->common.algo_id),
-			  alg->hash_digest_len);
-	}
-
-	const struct oakley_group_desc *gdesc;
-	for (gdesc = next_oakley_group(NULL);
-	     gdesc != NULL;
-	     gdesc = next_oakley_group(gdesc)) {
-		whack_log(RC_COMMENT,
-			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
-			  gdesc->group,
-			  enum_name(&oakley_group_names, gdesc->group),
-			  (int)gdesc->bytes * BITS_PER_BYTE);
-	}
-
-	whack_log(RC_COMMENT, " "); /* spacer */
-}
-
 
 /*
  * Validate and register IKE algorithm objects
