@@ -154,11 +154,6 @@ struct hash_desc {
 	void (*const hash_final)(u_int8_t *out, union hash_ctx *ctx);
 };
 
-struct alg_info_ike; /* forward reference */
-struct alg_info_esp;
-
-extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy);
-
 extern bool ike_alg_enc_present(int ealg);
 extern bool ike_alg_hash_present(int halg);
 extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
