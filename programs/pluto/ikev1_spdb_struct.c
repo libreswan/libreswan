@@ -830,9 +830,6 @@ static bool ike_alg_enc_ok(int ealg, unsigned key_len,
 	return ret;
 }
 
-/*
- * ML: make F_STRICT logic consider enc,hash/auth,modp algorithms
- */
 static bool ike_alg_ok_final(int ealg, unsigned key_len,
 			     int aalg, unsigned int group,
 			     struct alg_info_ike *alg_info_ike)

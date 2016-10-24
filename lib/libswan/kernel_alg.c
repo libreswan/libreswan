@@ -15,8 +15,6 @@
  * Fixes by:
  *	ML: Mathieu Lafon <mlafon@arkoon.net>
  *
- * Fixes:
- *	ML: kernel_alg_esp_ok_final() function (make F_STRICT consider enc,auth)
  */
 #include <stdio.h>
 #include <string.h>
