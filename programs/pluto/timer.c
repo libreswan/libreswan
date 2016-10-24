@@ -504,6 +504,23 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
 }
 
+static void delete_pluto_event(struct pluto_event **evp)
+{
+        struct pluto_event *e = *evp;
+
+        if (e == NULL) {
+                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
+                return;
+        }
+        /* ??? when would e->ev be NULL? */
+        if (e->ev != NULL) {
+                event_free(e->ev);
+                e->ev = NULL;
+        }
+        pfree(e);
+        *evp = NULL;
+}
+
 static event_callback_routine timer_event_cb;
 static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
@@ -815,25 +832,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		bad_case(type);
 	}
 
-	pfree(ev);
+	delete_pluto_event(&ev);
 	reset_cur_state();
-}
-
-static void delete_pluto_event(struct pluto_event **evp)
-{
-	struct pluto_event *e = *evp;
-
-	if (e == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-		return;
-	}
-	/* ??? when would e->ev be NULL? */
-	if (e->ev != NULL) {
-		event_free(e->ev);
-		e->ev = NULL;
-	}
-	pfree(e);
-	*evp = NULL;
 }
 
 /*
