@@ -19,24 +19,95 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#include <prerror.h>
+#include <prmem.h>
+
 #include <libreswan.h>
 
-#include <errno.h>
-
 #include "constants.h"
-#include "defs.h"
-#include "state.h"
-#include "log.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
-#include "test_buffer.h"
+#include "ike_alg_3des.h"
 
-#include "pem.h"
+static void do_3des_nss(u_int8_t *buf, size_t buf_len,
+			PK11SymKey *symkey, u_int8_t *iv, bool enc)
+{
+	u_int8_t *tmp_buf;
+	u_int8_t *new_iv;
 
-#include "lswfips.h"
+	CK_MECHANISM_TYPE ciphermech;
+	SECItem ivitem;
+	SECItem *secparam;
+	PK11Context *enccontext = NULL;
+	SECStatus rv;
+	int outlen;
+
+	DBG(DBG_CRYPT,
+		DBG_log("NSS: do_3des init start"));
+
+	ciphermech = CKM_DES3_CBC;	/* libreswan provides padding */
+
+	if (symkey == NULL) {
+		loglog(RC_LOG_SERIOUS,
+			"do_3des: NSS derived enc key is NULL");
+		abort();
+	}
+
+	ivitem.type = siBuffer;
+	ivitem.data = iv;
+	ivitem.len = DES_CBC_BLOCK_SIZE;
+
+	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
+	if (secparam == NULL) {
+		loglog(RC_LOG_SERIOUS,
+			"do_3des: Failure to set up PKCS11 param (err %d)",
+			PR_GetError());
+		abort();
+	}
+
+	outlen = 0;
+	tmp_buf = PR_Malloc((PRUint32)buf_len);
+	new_iv = (u_int8_t*)PR_Malloc((PRUint32)DES_CBC_BLOCK_SIZE);
+
+	if (!enc)
+		memcpy(new_iv, (char*) buf + buf_len - DES_CBC_BLOCK_SIZE,
+			DES_CBC_BLOCK_SIZE);
+
+	enccontext = PK11_CreateContextBySymKey(ciphermech,
+						enc ? CKA_ENCRYPT :
+						CKA_DECRYPT, symkey,
+						secparam);
+	if (enccontext == NULL) {
+		loglog(RC_LOG_SERIOUS,
+			"do_3des: PKCS11 context creation failure (err %d)",
+			PR_GetError());
+		abort();
+	}
+	rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf,
+			buf_len);
+	if (rv != SECSuccess) {
+		loglog(RC_LOG_SERIOUS,
+			"do_3des: PKCS11 operation failure (err %d)",
+			PR_GetError());
+		abort();
+	}
+
+	if (enc)
+		memcpy(new_iv, (char*) tmp_buf + buf_len - DES_CBC_BLOCK_SIZE,
+			DES_CBC_BLOCK_SIZE);
+
+	memcpy(buf, tmp_buf, buf_len);
+	memcpy(iv, new_iv, DES_CBC_BLOCK_SIZE);
+	PK11_DestroyContext(enccontext, PR_TRUE);
+	PR_Free(tmp_buf);
+	PR_Free(new_iv);
+
+	if (secparam != NULL)
+		SECITEM_FreeItem(secparam, PR_TRUE);
+
+	DBG(DBG_CRYPT,
+		DBG_log("NSS: do_3des init end"));
+}
 
 /* encrypt or decrypt part of an IKE message using 3DES
  * See RFC 2409 "IKE" Appendix B
