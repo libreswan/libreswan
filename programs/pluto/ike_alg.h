@@ -4,8 +4,6 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-#include "camellia.h"
-
 /*
  * See 'union hash_ctx' below.
  */
