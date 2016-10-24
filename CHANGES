@@ -39,6 +39,7 @@ v3.19 (unreleased)
 * Bugtracker bugs fixed:
    #270 newhostkey: text output produces 1 character bug in pubkey [Andew]
    #272 Option --leak-detective causes assertion failure [Bill / Paul]
+   #277 pluto: fix pluto events leak in timer_event_cb [Bill Rios]
 
 v3.18 (July 27, 2016)
 * SECURITY: CVE-2016-5391: IKEv2 proposal lacking DH causes restart [Andrew]
