@@ -27,7 +27,7 @@ west #
 000 "nss-cert-crl":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-crl":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-crl":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert-crl":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-crl":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-crl":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
  echo "initdone"
@@ -42,6 +42,7 @@ west #
 108 "nss-cert-crl" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert-crl" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-crl" #1: received and ignored informational message
+003 "nss-cert-crl" #1: discarding duplicate packet; already STATE_MAIN_I3
 002 "nss-cert-crl" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "nss-cert-crl" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "nss-cert-crl" #1: deleting state (STATE_MAIN_I3)
@@ -52,10 +53,6 @@ west #
  crlutil -L -d sql:/etc/ipsec.d | grep mainca
 west #
  ipsec auto --listall | grep -A10 "List of CRLs" | egrep 'Issuer|Entry|Serial'
-west #
- # find "CRL updated" twice on east
-west #
- grep "CRL imported" /tmp/pluto.log
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

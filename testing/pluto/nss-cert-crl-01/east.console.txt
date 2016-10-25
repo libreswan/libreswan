@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- cp /testing/x509/crls/cacrlvalid.crl /etc/ipsec.d/crls
+ crlutil -I -i /testing/x509/crls/cacrlvalid.crl -d sql:/etc/ipsec.d
 east #
  certutil -d sql:/etc/ipsec.d -D -n west
 east #
@@ -27,7 +27,7 @@ east #
 000 "nss-cert-crl":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-crl":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-crl":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert-crl":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-crl":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-crl":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
  echo "initdone"
