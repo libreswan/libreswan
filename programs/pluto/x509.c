@@ -915,6 +915,7 @@ void ikev1_decode_cr(struct msg_digest *md)
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->next = requested_ca;
 				requested_ca = gn;
+				st->st_requested_ca = requested_ca;
 			}
 
 			DBG(DBG_X509 | DBG_CONTROL, {
@@ -969,6 +970,7 @@ void ikev2_decode_cr(struct msg_digest *md)
 				gn->name = ca_name;
 				gn->next = requested_ca;
 				requested_ca = gn;
+				st->st_requested_ca = requested_ca;
 			}
 
 			DBG(DBG_X509, {
