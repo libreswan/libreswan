@@ -10,9 +10,12 @@ v3.19 (unreleased)
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * XFRM: EXPERIMENTAL Support for configuring the VTI device [Paul]
         keyword: leftvti=address/mask
+* X509: Obsolete /etc/ipsec.d/crls (load_crls()) and whack --rereadcrls [Paul]
+* X509: New whack --fetchcrls (alias ipsec crls) to trigger a fetch [Paul]
 * X509: Iterate all X.509 certs and try to fetch their crls [Kim]
 * X509: Start a fetch for CRLs 5 seconds after startup [Kim]
 * X509: log the NSS error when CERT_ImportCerts() fails [Paul]
+* X509: Don't attempt to fetch crl->uri for fetching when not present [Paul/Matt]
 * pluto: SECCOMP support (seccomp=enabled|tolerant|disabled) [Paul]
 * pluto: connection instances need their own reqid [Antony]
          (this resolves multiple clients behind same NAT router issue)
@@ -35,6 +38,7 @@ v3.19 (unreleased)
 * sysvinit: remove unnecessary warnings about already stopped pluto [Tuomo]
 * initsystems: Enable "systemctl help ipsec" [dkg]
 * testing: various web output fixes (see testing.libreswan.org) [Andrew]
+* testing: various test updates / additions [Paul]
 * documentation: fixup changes in GPL 2.0 / LGPL like FSF address [dkg]
 * Bugtracker bugs fixed:
    #270 newhostkey: text output produces 1 character bug in pubkey [Andew]
