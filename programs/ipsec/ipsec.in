@@ -316,9 +316,10 @@ case "${1}" in
 
 		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		if [ $? -ne 0 ]; then
+		${rc}=$?
+		if [ ${rc} -ne 0 ]; then
 		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
-		    exit $?
+		    exit ${rc}
 		fi
 		# import cacerts and crls
 		if [ -d "${CACERTDIR}" ]; then
@@ -371,7 +372,15 @@ case "${1}" in
 	;;
     secrets)
 	"${IPSEC_EXECDIR}/whack" --rereadsecrets
-	exit 0
+	exit $?
+	;;
+    rereadcrls|--rereadcrls)
+	echo "ipsec auto: --rereadcrls and /etc/ipsec.d/crls/ are obsoleted. did you mean: ipsec crls"
+	exit 1
+	;;
+    crls|fetchcrls)
+	"${IPSEC_EXECDIR}/whack" --fetchcrls
+	exit $?
 	;;
     --*)
 	printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2

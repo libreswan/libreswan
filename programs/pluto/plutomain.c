@@ -1647,7 +1647,6 @@ int main(int argc, char **argv)
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
 #endif
-	load_crls();
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif

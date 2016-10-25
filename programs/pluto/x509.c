@@ -455,179 +455,6 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	return gndp_list;
 }
 
-static char *find_dercrl_uri(chunk_t *dercrl)
-{
-	/* these are used by out so must be initialized */
-	CERTCertificate *cacert = NULL;
-	CERTSignedCrl *crl = NULL;
-	char *uri = NULL;
-
-	SECItem crlval;
-
-	PLArenaPool *arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
-
-	SECItem crl_si = same_chunk_as_dercert_secitem(*dercrl);
-
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-
-	if (handle == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("could not get db handle %d", PORT_GetError()));
-		goto out;
-	}
-	/*
-	 * arena gets owned/freed by crl
-	 */
-	crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE);
-	if (crl == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("could not decode crl %d", PORT_GetError()));
-		goto out;
-	}
-
-	cacert = CERT_FindCertByName(handle, &crl->crl.derName);
-	if (cacert == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("could not find cert by crl.derName %d",
-							       PORT_GetError()));
-		goto out;
-	}
-
-	DBG(DBG_X509,
-	DBG_log("crl issuer found %s : nick %s", cacert->nickname,
-						 cacert->subjectName));
-
-	if (CERT_FindCertExtension(cacert, SEC_OID_X509_CRL_DIST_POINTS,
-						       &crlval) != SECSuccess) {
-		DBG(DBG_X509,
-		    DBG_log("could not find CRL URI ext %d", PORT_GetError()));
-
-		goto out;
-	}
-
-	CERTCrlDistributionPoints *dps =
-		CERT_DecodeCRLDistributionPoints(cacert->arena, &crlval);
-
-	if (dps == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("could not decode distribution points ext %d",
-							       PORT_GetError()));
-		goto out;
-	}
-
-	/*
-	 * MR - do only the first distribution point. Could support more
-	 * in the future
-	 *
-	 * XXX Duplicate code with gndp_from_nss_cert().
-	 * XXX See also comment in gndp_from_nss_cert() about multiple points.
-	 */
-	CRLDistributionPoint *point = dps->distPoints[0];
-
-	if (point != NULL && point->distPointType == generalName &&
-			     point->distPoint.fullName != NULL) {
-		CERTGeneralName *dp_gn = point->distPoint.fullName;
-		/*
-		 * XXX - name or OthName.name? Needs a look
-		 */
-		SECItem *name = &dp_gn->name.other;
-
-		if (dp_gn->type == certURI && name->data != NULL &&
-					      name->len > 0) {
-			chunk_t uri_chunk = same_secitem_as_chunk(*name);
-			uri = make_crl_uri_str(&uri_chunk);
-			if (uri != NULL) {
-				DBG(DBG_X509, DBG_log("using URI:%s from CA %s", uri,
-							   cacert->subjectName));
-			}
-		}
-	}
-
-out:
-	if (cacert != NULL)
-		CERT_DestroyCertificate(cacert);
-
-	if (crl != NULL)
-		SEC_DestroyCrl(crl);
-
-	return uri;
-}
-
-/*
- * Filter for scandir(3): eliminate the directory entries starting with ".".
- */
-static int filter_dotfiles(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	struct dirent *entry)
-{
-	return entry->d_name[0] != '.';
-
-}
-
-/*
- *  Loads CRLs
- */
-void load_crls(void)
-{
-	char buf[PATH_MAX];
-	const struct lsw_conf_options *oco = lsw_init_options();
-
-	/* legacy CRL reading - will go away soon */
-	/* change directory to specified path */
-
-	char *save_dir = getcwd(buf, PATH_MAX);
-
-	if (chdir(oco->crls_dir) == -1) {
-		DBG(DBG_X509, DBG_log("Could not change to legacy CRL directory '%s': %d %s",
-			      oco->crls_dir, errno, strerror(errno)));
-	} else {
-		struct dirent **filelist;
-
-		DBG(DBG_X509,
-		    DBG_log("Changing to directory '%s'", oco->crls_dir));
-
-		int n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
-			    alphasort);
-
-		if (n < 0) {
-			int e = errno;
-
-			libreswan_log(
-				"Scanning directory '%s' failed - (%d %s)",
-				oco->crls_dir, e, strerror(e));
-		}
-		while (n > 0) {
-			n--;
-			chunk_t blob = empty_chunk;
-			char *filename = filelist[n]->d_name;
-
-			if (load_coded_file(filename, "crl", &blob)) {
-				/* get uri from the CA */
-				char *uri = find_dercrl_uri(&blob);
-
-				if (uri != NULL) {
-					(void)insert_crl_nss(&blob,
-							    NULL,
-							    uri);
-					pfree(uri);
-				}
-			}
-			free(filelist[n]);	/* was malloced by scandir(3) */
-		}
-		free(filelist);	/* was malloced by scandir(3) */
-	}
-	/* restore directory path */
-	if (chdir(save_dir) == -1) {
-		int e = errno;
-
-		libreswan_log(
-			"Changing back to directory '%s' failed - (%d %s)",
-			save_dir, e, strerror(e));
-	}
-}
-
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
@@ -863,8 +690,6 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 	return j;
 }
 
-#define CRL_CHECK_ENABLED() (deltasecs(crl_check_interval) > 0)
-
 #if defined(LIBCURL) || defined(LDAP_VER)
 /*
  * Do our best to find the CA for the fetch request
@@ -940,7 +765,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		cont = FALSE;
 	}
 #if defined(LIBCURL) || defined(LDAP_VER)
-	if ((ret & VERIFY_RET_CRL_NEED) && CRL_CHECK_ENABLED()) {
+	if ((ret & VERIFY_RET_CRL_NEED) && deltasecs(crl_check_interval) > 0) {
 		generalName_t *end_cert_dp = NULL;
 
 		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {

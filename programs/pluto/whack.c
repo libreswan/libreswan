@@ -173,7 +173,7 @@ static void help(void)
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--rereadcrls] [--rereadall] \\\n"
+		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall] \\\n"
 		"\n"
 		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
@@ -279,6 +279,7 @@ enum option_enums {
 
 	OPT_REREADSECRETS,
 	OPT_REREADCRLS,
+	OPT_FETCHCRLS,
 	OPT_REREADALL,
 
 	OPT_PURGEOCSP,
@@ -501,7 +502,8 @@ static const struct option long_opts[] = {
 	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
 
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
-	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
+	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO }, /* obsolete */
+	{ "fetchcrls", no_argument, NULL, OPT_FETCHCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 
 	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
@@ -1215,6 +1217,7 @@ int main(int argc, char **argv)
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
 		case OPT_REREADCRLS:    /* --rereadcrls */
+		case OPT_FETCHCRLS:    /* --fetchcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
 			continue;
 

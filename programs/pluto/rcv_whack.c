@@ -442,7 +442,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 		clear_ocsp_cache();
 
 	if (msg.whack_reread & REREAD_CRLS)
-		load_crls();
+		loglog(RC_LOG_SERIOUS, "ipsec whack: rereadcrls command obsoleted did you mean ipsec fetchcrls");
+
+#if defined(LIBCURL) || defined(LDAP_VER)
+	if (msg.whack_reread & REREAD_FETCH)
+			wake_fetch_thread("whack command");
+#endif
 
 	if (msg.whack_list & LIST_PSKS)
 		list_psks();

@@ -370,8 +370,9 @@ struct whack_message {
 
 #define REREAD_NONE	0x00		/* don't reread anything */
 #define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
-#define REREAD_CRLS	0x02		/* reread crls in /etc/ipsec.d/crls */
-#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)	/* all reread options */
+#define REREAD_CRLS	0x02		/* obsoleted - just gives a warning */
+#define REREAD_FETCH	0x04		/* update CRL from distribution point(s) */
+#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_FETCH)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;
