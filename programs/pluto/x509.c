@@ -1635,18 +1635,19 @@ void check_crls(void)
 		if (crl_node->crl != NULL) {
 			SECItem *issuer = &crl_node->crl->crl.derName;
 
-			add_crl_fetch_request_nss(issuer, NULL);
-
-			generalName_t end_dp = {
-				.kind = GN_URI,
-				.name = {
-					.ptr = (u_char *)crl_node->crl->url,
-					.len = strlen(crl_node->crl->url)
-				},
-				.next = NULL
-			};
-
-			add_crl_fetch_request_nss(issuer, &end_dp);
+			if (crl_node->crl->url == NULL) {
+				add_crl_fetch_request_nss(issuer, NULL);
+			} else {
+				generalName_t end_dp = {
+					.kind = GN_URI,
+					.name = {
+						.ptr = (u_char *)crl_node->crl->url,
+						.len = strlen(crl_node->crl->url)
+					},
+					.next = NULL
+				};
+				add_crl_fetch_request_nss(issuer, &end_dp);
+			}
 		}
 		crl_node = crl_node->next;
 	}
