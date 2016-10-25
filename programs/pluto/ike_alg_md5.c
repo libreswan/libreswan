@@ -51,39 +51,44 @@ static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_c
 	lsMD5Final(digest, &context->ctx_md5);
 }
 
-struct hash_desc ike_alg_prf_md5 = {
-	.common = {
-		.name = "oakley_md5",
-		.officname = "md5",
-		.algo_type = IKE_ALG_HASH,
-		.algo_id = OAKLEY_MD5,
-		.algo_v2id = IKEv2_PRF_HMAC_MD5,
+struct prf_desc ike_alg_prf_md5 = {
+	.hasher = {
+		.common = {
+			.name = "oakley_md5",
+			.officname = "md5",
+			.algo_type = IKE_ALG_HASH,
+			.algo_id = OAKLEY_MD5,
+			.algo_v2id = IKEv2_PRF_HMAC_MD5,
+			.do_ike_test = ike_alg_true,
+		},
+		.hash_ctx_size = sizeof(lsMD5_CTX),
+		.hash_key_size = MD5_DIGEST_SIZE,
+		.hash_digest_len = MD5_DIGEST_SIZE,
+		.hash_integ_len = 0,    /* Not applicable */
+		.hash_block_size = 64,	/* B from RFC 2104 */
+		.hash_init = lsMD5Init_thunk,
+		.hash_update = lsMD5Update_thunk,
+		.hash_final = lsMD5Final_thunk,
 	},
-	.hash_ctx_size = sizeof(lsMD5_CTX),
-	.hash_key_size = MD5_DIGEST_SIZE,
-	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_integ_len = 0,    /* Not applicable */
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = lsMD5Init_thunk,
-	.hash_update = lsMD5Update_thunk,
-	.hash_final = lsMD5Final_thunk,
 };
 
-struct hash_desc ike_alg_integ_md5 =
-{
-	.common = {
-		.name = "oakley_md5",
-		.officname = "md5",
-		.algo_type = IKE_ALG_INTEG,
-		.algo_id = OAKLEY_MD5,
-		.algo_v2id = IKEv2_AUTH_HMAC_MD5_96,
+struct integ_desc ike_alg_integ_md5 = {
+	.hasher = {
+		.common = {
+			.name = "oakley_md5",
+			.officname = "md5",
+			.algo_type = IKE_ALG_INTEG,
+			.algo_id = OAKLEY_MD5,
+			.algo_v2id = IKEv2_AUTH_HMAC_MD5_96,
+			.do_ike_test = ike_alg_true,
+		},
+		.hash_ctx_size = sizeof(lsMD5_CTX),
+		.hash_key_size =   MD5_DIGEST_SIZE,
+		.hash_digest_len = MD5_DIGEST_SIZE,
+		.hash_integ_len = MD5_DIGEST_SIZE_96,
+		.hash_block_size = 64,	/* B from RFC 2104 */
+		.hash_init = lsMD5Init_thunk,
+		.hash_update = lsMD5Update_thunk,
+		.hash_final = lsMD5Final_thunk,
 	},
-	.hash_ctx_size = sizeof(lsMD5_CTX),
-	.hash_key_size =   MD5_DIGEST_SIZE,
-	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_integ_len = MD5_DIGEST_SIZE_96,
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = lsMD5Init_thunk,
-	.hash_update = lsMD5Update_thunk,
-	.hash_final = lsMD5Final_thunk,
 };

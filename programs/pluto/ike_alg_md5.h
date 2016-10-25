@@ -14,5 +14,5 @@
  *
  */
 
-extern struct hash_desc ike_alg_prf_md5;
-extern struct hash_desc ike_alg_integ_md5;
+extern struct prf_desc ike_alg_prf_md5;
+extern struct integ_desc ike_alg_integ_md5;

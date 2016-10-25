@@ -51,40 +51,46 @@ static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ct
 	SHA1Final(digest, &context->ctx_sha1);
 }
 
-struct hash_desc ike_alg_prf_sha1 = {
-	.common = {
-		.name = "sha",
-		.officname = "sha1",
-		.algo_type = IKE_ALG_HASH,
-		.algo_id =   OAKLEY_SHA1,
-		.algo_v2id = IKEv2_PRF_HMAC_SHA1,
-		.fips = TRUE,
+struct prf_desc ike_alg_prf_sha1 = {
+	.hasher = {
+		.common = {
+			.name = "sha",
+			.officname = "sha1",
+			.algo_type = IKE_ALG_HASH,
+			.algo_id =   OAKLEY_SHA1,
+			.algo_v2id = IKEv2_PRF_HMAC_SHA1,
+			.fips = TRUE,
+			.do_ike_test = ike_alg_true,
+		},
+		.hash_ctx_size = sizeof(SHA1_CTX),
+		.hash_key_size =   SHA1_DIGEST_SIZE,
+		.hash_digest_len = SHA1_DIGEST_SIZE,
+		.hash_integ_len = 0,	/* Not applicable */
+		.hash_block_size = 64,	/* B from RFC 2104 */
+		.hash_init = SHA1Init_thunk,
+		.hash_update = SHA1Update_thunk,
+		.hash_final = SHA1Final_thunk,
 	},
-	.hash_ctx_size = sizeof(SHA1_CTX),
-	.hash_key_size =   SHA1_DIGEST_SIZE,
-	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = 0,	/* Not applicable */
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = SHA1Init_thunk,
-	.hash_update = SHA1Update_thunk,
-	.hash_final = SHA1Final_thunk,
 };
 
-struct hash_desc ike_alg_integ_sha1 = {
-	.common = {
-		.name = "sha",
-		.officname = "sha1",
-		.algo_type = IKE_ALG_INTEG,
-		.algo_id =   OAKLEY_SHA1,
-		.algo_v2id = IKEv2_AUTH_HMAC_SHA1_96,
-		.fips = TRUE,
+struct integ_desc ike_alg_integ_sha1 = {
+	.hasher = {
+		.common = {
+			.name = "sha",
+			.officname = "sha1",
+			.algo_type = IKE_ALG_INTEG,
+			.algo_id =   OAKLEY_SHA1,
+			.algo_v2id = IKEv2_AUTH_HMAC_SHA1_96,
+			.fips = TRUE,
+			.do_ike_test = ike_alg_true,
+		},
+		.hash_ctx_size = sizeof(SHA1_CTX),
+		.hash_key_size =   SHA1_DIGEST_SIZE,
+		.hash_digest_len = SHA1_DIGEST_SIZE,
+		.hash_integ_len = SHA1_DIGEST_SIZE_96,
+		.hash_block_size = 64,	/* B from RFC 2104 */
+		.hash_init = SHA1Init_thunk,
+		.hash_update = SHA1Update_thunk,
+		.hash_final = SHA1Final_thunk,
 	},
-	.hash_ctx_size = sizeof(SHA1_CTX),
-	.hash_key_size =   SHA1_DIGEST_SIZE,
-	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = SHA1_DIGEST_SIZE_96,
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = SHA1Init_thunk,
-	.hash_update = SHA1Update_thunk,
-	.hash_final = SHA1Final_thunk,
 };

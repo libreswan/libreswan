@@ -121,12 +121,14 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
 
 struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
-	.common = { .name = "oakley_3des_cbc",
-		    .officname =     "3des",
-		    .algo_type =     IKE_ALG_ENCRYPT,
-		    .algo_id =       OAKLEY_3DES_CBC,
-		    .algo_v2id =     IKEv2_ENCR_3DES,
-		    .fips =          TRUE,
+	.common = {
+		.name = "oakley_3des_cbc",
+		.officname =     "3des",
+		.algo_type =     IKE_ALG_ENCRYPT,
+		.algo_id =       OAKLEY_3DES_CBC,
+		.algo_v2id =     IKEv2_ENCR_3DES,
+		.fips =          TRUE,
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,

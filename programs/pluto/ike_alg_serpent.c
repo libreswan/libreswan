@@ -78,6 +78,7 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.algo_id = OAKLEY_SERPENT_CBC,
 		.algo_v2id = IKEv2_ENCR_SERPENT_CBC,
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,

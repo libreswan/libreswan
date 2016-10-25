@@ -127,7 +127,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 		.algo_id =     OAKLEY_AES_CBC,
 		.algo_v2id =   IKEv2_ENCR_AES_CBC,
 		.fips =        TRUE,
-		.do_test =     test_aes_cbc,
+		.do_ike_test = test_aes_cbc,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
@@ -349,7 +349,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 		.algo_id =     OAKLEY_AES_CTR,
 		.algo_v2id =   IKEv2_ENCR_AES_CTR,
 		.fips =        TRUE,
-		.do_test =     test_aes_ctr,
+		.do_ike_test = test_aes_ctr,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -430,29 +430,6 @@ static bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
 	return ok;
 }
 
-struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
-{
-	.common = {
-		.name = "aes_gcm",
-		.officname = "aes_gcm",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_GCM_8,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
-		.fips =        TRUE,
-		/* XXX: .do_test =     test_aes_gcm, */
-	},
-	.enc_ctxsize =   sizeof(aes_context),
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
-	.wire_iv_size =	8,
-	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =    AES_GCM_KEY_MIN_LEN,
-	.keydeflen =    AES_GCM_KEY_DEF_LEN,
-	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
-	.aead_tag_size = 8,
-	.do_aead_crypt_auth =     do_aes_gcm,
-};
-
 /*
  * Ref: http://csrc.nist.gov/groups/STM/cavp/documents/mac/gcmtestvectors.zip
  *
@@ -502,6 +479,29 @@ static bool test_aes_gcm(const struct ike_alg *alg)
 				aes_gcm_test_vectors);
 }
 
+struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
+{
+	.common = {
+		.name = "aes_gcm",
+		.officname = "aes_gcm",
+		.algo_type =   IKE_ALG_ENCRYPT,
+		.algo_id =     OAKLEY_AES_GCM_8,
+		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
+		.fips =        TRUE,
+		.do_ike_test = ike_alg_true,
+	},
+	.enc_ctxsize =   sizeof(aes_context),
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.pad_to_blocksize = FALSE,
+	.wire_iv_size =	8,
+	.salt_size = AES_GCM_SALT_BYTES,
+	.keyminlen =    AES_GCM_KEY_MIN_LEN,
+	.keydeflen =    AES_GCM_KEY_DEF_LEN,
+	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
+	.aead_tag_size = 8,
+	.do_aead_crypt_auth =     do_aes_gcm,
+};
+
 struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 {
 	.common = {
@@ -511,7 +511,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.algo_id =     OAKLEY_AES_GCM_12,
 		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
 		.fips =        TRUE,
-		/* XXX: .do_test =     test_aes_gcm, */
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -533,7 +533,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.algo_id =     OAKLEY_AES_GCM_16,
 		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
 		.fips =        TRUE,
-		.do_test =     test_aes_gcm,
+		.do_ike_test = test_aes_gcm,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -559,6 +559,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.algo_id =      0 /* OAKLEY_AES_CCM_8*/,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
 		.fips =         TRUE,
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -578,6 +579,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.algo_id =      0 /*OAKLEY_AES_CCM_12*/,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
 		.fips =         TRUE,
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -597,6 +599,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.algo_id =     0 /*OAKLEY_AES_CCM_16*/,
 		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
 		.fips =         TRUE,
+		.do_ike_test = ike_alg_true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -607,41 +610,46 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-struct hash_desc ike_alg_prf_aes_xcbc = {
-	.common = {
-		.name = "DISABLED-OAKLEY_AES_XCBC",
-		.officname = "aes_xcbc",
-		.algo_type = IKE_ALG_HASH,
-		.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		.algo_v2id = IKEv2_PRF_AES128_XCBC,
-		.fips = TRUE,
+struct prf_desc ike_alg_prf_aes_xcbc = {
+	.hasher = {
+		.common = {
+			.name = "DISABLED-OAKLEY_AES_XCBC",
+			.officname = "aes_xcbc",
+			.algo_type = IKE_ALG_HASH,
+			.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+			.algo_v2id = IKEv2_PRF_AES128_XCBC,
+			.fips = TRUE,
+			.do_ike_test = ike_alg_true,
+		},
+		.hash_ctx_size = sizeof(aes_xcbc_context),
+		.hash_key_size = AES_XCBC_DIGEST_SIZE,
+		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
+		.hash_integ_len = 0,    /* Not applicable */
+		.hash_block_size = AES_CBC_BLOCK_SIZE,
+		.hash_init = aes_xcbc_init_thunk,
+		.hash_update = aes_xcbc_write_thunk,
+		.hash_final = aes_xcbc_final_thunk,
 	},
-	.hash_ctx_size = sizeof(aes_xcbc_context),
-	.hash_key_size = AES_XCBC_DIGEST_SIZE,
-	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_integ_len = 0,    /* Not applicable */
-	.hash_block_size = AES_CBC_BLOCK_SIZE,
-	.hash_init = aes_xcbc_init_thunk,
-	.hash_update = aes_xcbc_write_thunk,
-	.hash_final = aes_xcbc_final_thunk,
 };
 
 #ifdef NOT_YET
 struct integ_desc ike_alg_integ_aes_xcbc = {
-	.common = {
-		.officname =  "aes_xcbc",
-		.algo_type = IKE_ALG_INTEG,
-		.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		.algo_v2id = IKEv2_AUTH_AES_XCBC_96,
-		.fips = TRUE,
+	.hash = {
+		.common = {
+			.officname =  "aes_xcbc",
+			.algo_type = IKE_ALG_INTEG,
+			.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+			.algo_v2id = IKEv2_AUTH_AES_XCBC_96,
+			.fips = TRUE,
+		},
+		.hash_ctx_size = sizeof(aes_xcbc_context),
+		.hash_key_size = AES_XCBC_DIGEST_SIZE,
+		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
+		.hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+		.hash_block_size = AES_CBC_BLOCK_SIZE,
+		.hash_init = aes_xcbc_init_thunk,
+		.hash_update = aes_xcbc_write_thunk,
+		.hash_final = aes_xcbc_final_thunk,
 	},
-	.hash_ctx_size = sizeof(aes_xcbc_context),
-	.hash_key_size = AES_XCBC_DIGEST_SIZE,
-	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
-	.hash_block_size = AES_CBC_BLOCK_SIZE,
-	.hash_init = aes_xcbc_init_thunk,
-	.hash_update = aes_xcbc_write_thunk,
-	.hash_final = aes_xcbc_final_thunk,
 };
 #endif
