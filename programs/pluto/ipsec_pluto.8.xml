@@ -626,7 +626,7 @@
       <arg choice="opt">--utc</arg>
 
       <arg choice="opt">--rereadsecrets</arg>
-      <arg choice="opt">--rereadcrls</arg>
+      <arg choice="opt">--fetchcrls</arg>
       <arg choice="opt">--rereadall</arg>
 
     </cmdsynopsis>
