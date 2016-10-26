@@ -442,9 +442,7 @@ static struct integ_desc *integ_descriptors[] = {
 	&ike_alg_integ_sha2_256,
 #endif
 #ifdef USE_AES
-#ifdef NOT_YET
 	&ike_alg_integ_aes_xcbc,
-#endif
 #endif
 };
 

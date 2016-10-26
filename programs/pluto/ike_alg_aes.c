@@ -613,13 +613,13 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 struct prf_desc ike_alg_prf_aes_xcbc = {
 	.hasher = {
 		.common = {
-			.name = "DISABLED-OAKLEY_AES_XCBC",
+			.name = "aes_xcbc",
 			.officname = "aes_xcbc",
 			.algo_type = IKE_ALG_HASH,
 			.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
 			.algo_v2id = IKEv2_PRF_AES128_XCBC,
 			.fips = TRUE,
-			.do_ike_test = ike_alg_true,
+			.do_ike_test = NULL, /* No NSS support */
 		},
 		.hash_ctx_size = sizeof(aes_xcbc_context),
 		.hash_key_size = AES_XCBC_DIGEST_SIZE,
@@ -631,24 +631,24 @@ struct prf_desc ike_alg_prf_aes_xcbc = {
 	},
 };
 
-#ifdef NOT_YET
 struct integ_desc ike_alg_integ_aes_xcbc = {
-	.hash = {
+	.hasher = {
 		.common = {
+			.name = "aes_xcbc",
 			.officname =  "aes_xcbc",
 			.algo_type = IKE_ALG_INTEG,
 			.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
 			.algo_v2id = IKEv2_AUTH_AES_XCBC_96,
 			.fips = TRUE,
+			.do_ike_test = NULL, /* No NSS support */
 		},
 		.hash_ctx_size = sizeof(aes_xcbc_context),
 		.hash_key_size = AES_XCBC_DIGEST_SIZE,
 		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-		.hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 		.hash_block_size = AES_CBC_BLOCK_SIZE,
 		.hash_init = aes_xcbc_init_thunk,
 		.hash_update = aes_xcbc_write_thunk,
 		.hash_final = aes_xcbc_final_thunk,
 	},
+	.integ_hash_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
-#endif
