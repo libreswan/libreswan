@@ -125,9 +125,12 @@ static enum ikev2_trans_type_integ v1hash_to_v2integ(enum ikev1_hash_attribute h
 		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
-		loglog(RC_LOG_SERIOUS, "IKEv1 HASH %d -> IKEv2 INTEG failed",
-		       hash);
+	{
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS, "IKEv1 HASH %s=%d -> IKEv2 INTEG failed",
+		       enum_showb(&oakley_hash_names, hash, &buf), hash);
 		return IKEv2_AUTH_INVALID;
+	}
 	}
 }
 
@@ -160,9 +163,12 @@ static enum ikev2_trans_type_integ v1auth_to_v2integ(enum ikev1_auth_attribute a
 		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
-		loglog(RC_LOG_SERIOUS, "IKEv1 AUTH %d -> IKEv2 INTEG failed",
-		       auth);
+	{
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS, "IKEv1 AUTH %s=%d -> IKEv2 INTEG failed",
+		       enum_showb(&auth_alg_names, auth, &buf), auth);
 		return IKEv2_AUTH_INVALID;
+	}
 	}
 }
 
@@ -1461,7 +1467,9 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_encrypter(%s=%d) failed, assuming ESP/AH",
+						    enum_name(&ikev2_trans_type_encr_names,
+							      transform->id),
 						    transform->id));
 				}
 				ta.encrypt = transform->id;
@@ -1473,8 +1481,12 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else {
 					ta.enckeylen = 0;
-					loglog(RC_LOG_SERIOUS, "unknown key size for ENCRYPT algorithm %d",
-					       ta.encrypt);
+					struct esb_buf buf;
+					loglog(RC_LOG_SERIOUS,
+					       "unknown key size for ENCRYPT algorithm %s=%d",
+					       enum_showb(&ikev2_trans_type_encr_names,
+							  transform->id, &buf),
+					       transform->id);
 				}
 				break;
 			}
@@ -1488,7 +1500,9 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_hasher(%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_alg_get_hasher(%s=%d) failed, assuming ESP/AH",
+						    enum_name(&ikev2_trans_type_prf_names,
+							      transform->id),
 						    transform->id));
 				}
 				ta.prf_hash = transform->id;
@@ -1509,7 +1523,9 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_get_integ_desc(%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_get_integ_desc(%s=%d) failed, assuming ESP/AH",
+						    enum_name(&ikev2_trans_type_integ_names,
+							      transform->id),
 						    transform->id));
 				}
 				ta.integ_hash = transform->id;
@@ -1531,8 +1547,10 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * that caller can detect
 					 * this.
 					 */
+					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
-					       "accepted proposal contains unknown DH group %d",
+					       "accepted proposal contains unknown DH group %s=%d",
+					       enum_showb(&oakley_group_names, transform->id, &buf),
 					       transform->id);
 					break;
 				}
@@ -1550,7 +1568,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					break;
 				default:
 					ta.esn_enabled = FALSE;
-					loglog(RC_LOG_SERIOUS, "accepted proposal contains invalid ESN %d",
+					loglog(RC_LOG_SERIOUS,
+					       "accepted proposal contains an unknown ESN value %d",
 					       transform->id);
 					break;
 				}
@@ -1636,9 +1655,15 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				}
 				break;
 			default:
-				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter for %d - refusing proposal", ta.encrypt);
+			{
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "Did not find valid ESP encrypter for %s=%d - refusing proposal",
+				       enum_showb(&ikev2_trans_type_encr_names, ta.encrypt, &buf),
+				       ta.encrypt);
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return FALSE;
+			}
 			}
 		}
 	}
@@ -1884,7 +1909,11 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		const struct encrypt_desc *ealg = ikev1_alg_get_encrypter(ike_info->ike_ealg);
 		if (ealg == NULL) {
 			if (ike_info->ike_ealg != 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "dropping proposal containing unsupported encrypt algorithm %s=%d",
+				       enum_showb(&oakley_enc_names, ike_info->ike_ealg, &buf),
+				       ike_info->ike_ealg);
 				continue;
 			}
 		} else {
@@ -1937,7 +1966,11 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		const struct hash_desc *halg = ikev1_alg_get_hasher(ike_info->ike_halg);
 		if (halg == NULL) {
 			if (ike_info->ike_halg != 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown hash algorithm %d", ike_info->ike_halg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "dropping proposal containing unsupported hash algorithm %s=%d",
+				       enum_showb(&oakley_hash_names, ike_info->ike_halg, &buf),
+				       ike_info->ike_halg);
 				continue;
 			}
 		} else {
@@ -1966,7 +1999,11 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		const struct oakley_group_desc *group = lookup_group(ike_info->ike_modp);
 		if (group == NULL) {
 			if (ike_info->ike_modp > 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown modp group %d", ike_info->ike_modp);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "dropping proposal containing unsupported modp group %s=%d",
+				       enum_showb(&oakley_group_names, ike_info->ike_modp, &buf),
+				       ike_info->ike_modp);
 				continue;
 			}
 		} else {
@@ -2162,8 +2199,10 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 			unsigned ealg = esp_info->transid;
 			if (!ESP_EALG_PRESENT(ealg)) {
-				loglog(RC_LOG_SERIOUS, "requested kernel enc ealg_id=%u not present",
-				        ealg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "requested kernel enc ealg_id=%s=%u not present",
+				       enum_showb(&esp_transformid_names, ealg, &buf), ealg);
 				continue;
 			}
 			pexpect(ealg != 0);
@@ -2199,8 +2238,12 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
 				if (!ESP_AALG_PRESENT(aalg)) {
-					loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
-					       aalg);
+					struct esb_buf buf;
+					/* XXX: correct enum??? */
+					loglog(RC_LOG_SERIOUS,
+					       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
+					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+					       esp_info->auth);
 					continue;
 				}
 				enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
@@ -2212,8 +2255,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			proposal->protoid = IKEv2_SEC_PROTO_AH;
 			int aalg = alg_info_esp_aa2sadb(esp_info->auth);
 			if (!ESP_AALG_PRESENT(aalg)) {
-				loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
-				       aalg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
+				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+				       esp_info->auth);
 				continue;
 			}
 			enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
