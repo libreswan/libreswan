@@ -269,14 +269,6 @@ void ike_alg_show_status(void)
 	     algp != NULL;
 	     algp = next_ike_prf_desc(algp)) {
 		const struct hash_desc *alg = (*algp);
-		/*
-		 * ??? we think that hash_integ_len is meaningless
-		 * (and 0) for IKE hashes.
-		 *
-		 * Hash algorithms have hash_integ_len == 0.
-		 * Integrity algorithms (a different list) do not.
-		 */
-		pexpect(alg->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  alg->common.algo_id,

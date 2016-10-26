@@ -345,11 +345,6 @@ const struct hash_desc *ikev2_alg_get_hasher(int id)
 	return &ikev2_get_ike_prf_desc(id)->hasher;
 }
 
-const struct hash_desc *ikev2_alg_get_integ(int id)
-{
-	return &ikev2_get_ike_integ_desc(id)->hasher;
-}
-
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
 {
 	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.all, id);
@@ -456,7 +451,7 @@ static struct integ_desc *integ_descriptors[] = {
 static void check_ike_integ_desc(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = (const struct integ_desc*)alg;
-	passert(integ->hasher.hash_integ_len > 0);
+	passert(integ->integ_hash_len > 0);
 	check_ike_hash_desc(&integ->hasher);
 }
 

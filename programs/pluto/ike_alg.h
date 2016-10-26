@@ -152,7 +152,6 @@ struct hash_desc {
 	const size_t hash_key_size;	/* in bits */
 	const size_t hash_ctx_size;
 	const size_t hash_digest_len;
-	const size_t hash_integ_len;	/* truncated output len when used as an integrity algorithm in IKEV2 */
 	const size_t hash_block_size;
 	void (*const hash_init)(union hash_ctx *ctx);
 	const hash_update_t hash_update;
@@ -174,6 +173,7 @@ struct prf_desc {
 
 struct integ_desc {
 	struct hash_desc hasher;
+	const size_t integ_hash_len;	/* truncated output len */
 };
 
 /*
@@ -234,7 +234,6 @@ const struct hash_desc *ikev1_alg_get_hasher(int alg);
 
 const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 const struct hash_desc *ikev2_alg_get_hasher(int alg);
-const struct hash_desc *ikev2_alg_get_integ(int alg);
 
 /*
  * Return true always.

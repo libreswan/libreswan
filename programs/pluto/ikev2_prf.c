@@ -131,8 +131,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	int skd_bytes = prf_hasher->hash_key_size;
 	int skp_bytes = prf_hasher->hash_key_size;
-	const struct hash_desc *integ_hasher = ikev2_alg_get_integ(skq->integ_hash);
-	int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
+	const struct integ_desc *integ_hasher = ikev2_get_integ_desc(skq->integ_hash);
+	int integ_size = integ_hasher != NULL ? integ_hasher->hasher.hash_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf_hasher, skeyseed_k,
 						   ni, nr, spii, spir,

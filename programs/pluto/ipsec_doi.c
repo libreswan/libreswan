@@ -655,13 +655,13 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *integ_name;
 	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ_hasher == NULL) {
+		if (st->st_oakley.integ == NULL) {
 			integ_name = "n/a";
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),
 				 "%s_%zu",
-				 st->st_oakley.integ_hasher->common.officname,
-				 (st->st_oakley.integ_hasher->hash_integ_len *
+				 st->st_oakley.integ->hasher.common.officname,
+				 (st->st_oakley.integ->integ_hash_len *
 				  BITS_PER_BYTE));
 			integ_name = integ_buf;
 		}

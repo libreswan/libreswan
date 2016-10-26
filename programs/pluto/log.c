@@ -1202,10 +1202,10 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		snprintf(prfname, sizeof(prfname), "%s",
 			st->st_oakley.prf_hasher->common.officname);
 
-		if (st->st_oakley.integ_hasher != NULL) {
+		if (st->st_oakley.integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.integ_hasher->common.officname,
-				st->st_oakley.integ_hasher->hash_integ_len *
+				st->st_oakley.integ->hasher.common.officname,
+				st->st_oakley.integ->integ_hash_len *
 				BITS_PER_BYTE);
 		} else {
 			if (!st->st_ikev2) {

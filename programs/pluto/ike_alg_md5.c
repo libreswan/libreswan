@@ -64,7 +64,6 @@ struct prf_desc ike_alg_prf_md5 = {
 		.hash_ctx_size = sizeof(lsMD5_CTX),
 		.hash_key_size = MD5_DIGEST_SIZE,
 		.hash_digest_len = MD5_DIGEST_SIZE,
-		.hash_integ_len = 0,    /* Not applicable */
 		.hash_block_size = 64,	/* B from RFC 2104 */
 		.hash_init = lsMD5Init_thunk,
 		.hash_update = lsMD5Update_thunk,
@@ -85,10 +84,10 @@ struct integ_desc ike_alg_integ_md5 = {
 		.hash_ctx_size = sizeof(lsMD5_CTX),
 		.hash_key_size =   MD5_DIGEST_SIZE,
 		.hash_digest_len = MD5_DIGEST_SIZE,
-		.hash_integ_len = MD5_DIGEST_SIZE_96,
 		.hash_block_size = 64,	/* B from RFC 2104 */
 		.hash_init = lsMD5Init_thunk,
 		.hash_update = lsMD5Update_thunk,
 		.hash_final = lsMD5Final_thunk,
 	},
+	.integ_hash_len = MD5_DIGEST_SIZE_96,
 };

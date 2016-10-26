@@ -624,7 +624,6 @@ struct prf_desc ike_alg_prf_aes_xcbc = {
 		.hash_ctx_size = sizeof(aes_xcbc_context),
 		.hash_key_size = AES_XCBC_DIGEST_SIZE,
 		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-		.hash_integ_len = 0,    /* Not applicable */
 		.hash_block_size = AES_CBC_BLOCK_SIZE,
 		.hash_init = aes_xcbc_init_thunk,
 		.hash_update = aes_xcbc_write_thunk,

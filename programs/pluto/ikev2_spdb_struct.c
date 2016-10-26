@@ -1501,20 +1501,19 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 					break;
 				}
-				const struct hash_desc *integ_hasher =
-					ikev2_alg_get_integ(transform->id);
-				if (integ_hasher == NULL) {
+				const struct integ_desc *integ = ikev2_get_integ_desc(transform->id);
+				if (integ == NULL) {
 					/*
 					 * For moment assume that this
 					 * is ESP/AH and just the
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_integ(%d) failed, assuming ESP/AH",
+					    DBG_log("ikev2_get_integ_desc(%d) failed, assuming ESP/AH",
 						    ta.integ_hash));
 				}
 				ta.integ_hash = transform->id;
-				ta.integ_hasher = integ_hasher;
+				ta.integ = integ;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_DH: {
