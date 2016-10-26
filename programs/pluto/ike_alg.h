@@ -60,8 +60,22 @@ struct ike_alg {
 	const char *name;	/* note: overwritten sometimes */
 	const char *const officname;
 	const enum ike_alg_type algo_type;
-	const u_int16_t algo_id;	/* either hash or enc algo id */
-	const u_int16_t algo_v2id;	/* either hash or enc algo id */
+	/*
+	 * IKEv1 IKE values:
+	 *
+	 * ENCRYPT: enum ikev1_encr_attribute
+	 * PRF(HASH): enum ikev1_hash_attribute
+	 * INTEG: enum ikev1_hash_attribute
+	 */
+	const u_int16_t algo_id;
+	/*
+	 * IKEv2 Values:
+	 *
+	 * ENCRYPT: enum ikev2_trans_type_encr
+	 * PRF: enum ikev2_trans_type_prf
+	 * INTEG: enum ikev2_trans_type_integ
+	 */
+	const u_int16_t algo_v2id;
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?
