@@ -1462,7 +1462,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
-						    ta.encrypt));
+						    transform->id));
 				}
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
@@ -1489,7 +1489,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_alg_get_hasher(%d) failed, assuming ESP/AH",
-						    ta.prf_hash));
+						    transform->id));
 				}
 				ta.prf_hash = transform->id;
 				ta.prf_hasher = prf_hasher;
@@ -1510,7 +1510,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_get_integ_desc(%d) failed, assuming ESP/AH",
-						    ta.integ_hash));
+						    transform->id));
 				}
 				ta.integ_hash = transform->id;
 				ta.integ = integ;
