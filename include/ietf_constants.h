@@ -896,7 +896,6 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
-	IKEv2_AUTH_HMAC_SHA2_256_128_TRUNCBUG = 252, /* our own value */
 	IKEv2_AUTH_INVALID = 65536
 };
 
