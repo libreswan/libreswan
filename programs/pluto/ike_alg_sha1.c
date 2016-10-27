@@ -79,6 +79,7 @@ struct integ_desc ike_alg_integ_sha1 = {
 			.officname = "sha1",
 			.algo_type = IKE_ALG_INTEG,
 			.algo_id =   OAKLEY_SHA1,
+			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA1,
 			.algo_v2id = IKEv2_AUTH_HMAC_SHA1_96,
 			.fips = TRUE,
 			.do_ike_test = ike_alg_true,

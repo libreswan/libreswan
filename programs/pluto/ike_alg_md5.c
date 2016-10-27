@@ -78,6 +78,7 @@ struct integ_desc ike_alg_integ_md5 = {
 			.officname = "md5",
 			.algo_type = IKE_ALG_INTEG,
 			.algo_id = OAKLEY_MD5,
+			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_MD5,
 			.algo_v2id = IKEv2_AUTH_HMAC_MD5_96,
 			.do_ike_test = ike_alg_true,
 		},

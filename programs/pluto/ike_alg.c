@@ -35,6 +35,7 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "ike_alg.h"
+#include "alg_info.h"
 
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
@@ -190,7 +191,8 @@ struct type_algorithms {
 	struct algorithm_table all;
 	struct algorithm_table ike;
 	enum ike_alg_type type;
-	enum_names *const ikev1_enum_names;
+	enum_names *const ikev1_ike_enum_names;
+	enum_names *const ikev1_esp_enum_names;
 	enum_names *const ikev2_enum_names;
 	void (*check_ike_desc)(const struct ike_alg*);
 };
@@ -255,8 +257,8 @@ bool ike_alg_hash_present(int halg)
  *      return ike_algo object by {type, id}
  */
 
-static const struct ike_alg *ikev1_lookup(const struct algorithm_table *table,
-					  unsigned id)
+static const struct ike_alg *ikev1_ike_lookup(const struct algorithm_table *table,
+					      unsigned id)
 {
 	FOR_EACH_IKE_ALGP(table, algp) {
 		const struct ike_alg *e = *algp;
@@ -283,32 +285,77 @@ const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
 
 const struct encrypt_desc *ikev1_get_encrypt_desc(enum ikev1_encr_attribute id)
 {
-	return (const struct encrypt_desc *) ikev1_lookup(&encrypt_algorithms.all, id);
+	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.all, id);
 }
 
 const struct prf_desc *ikev1_get_prf_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct prf_desc *) ikev1_lookup(&prf_algorithms.all, id);
+	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.all, id);
 }
 
 const struct integ_desc *ikev1_get_integ_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct integ_desc *) ikev1_lookup(&integ_algorithms.all, id);
+	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.all, id);
 }
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
 {
-	return (const struct encrypt_desc *) ikev1_lookup(&encrypt_algorithms.ike, id);
+	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.ike, id);
 }
 
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct prf_desc *) ikev1_lookup(&prf_algorithms.ike, id);
+	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.ike, id);
 }
 
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct integ_desc *) ikev1_lookup(&integ_algorithms.ike, id);
+	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.ike, id);
+}
+
+const struct encrypt_desc *ikev1_get_ike_info_encrypt_desc(const struct ike_info *ike)
+{
+	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.ike,
+							      ike->ike_ealg);
+}
+
+const struct prf_desc *ikev1_get_ike_info_prf_desc(const struct ike_info *ike)
+{
+	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.ike,
+							  ike->ike_halg);
+}
+
+const struct integ_desc *ikev1_get_ike_info_integ_desc(const struct ike_info *ike)
+{
+	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.ike,
+							    ike->ike_halg);
+}
+
+static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *table, int id)
+{
+	FOR_EACH_IKE_ALGP(table, algp) {
+		const struct ike_alg *e = *algp;
+		if (e->ikev1_esp_id == id) {
+			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 ESP id: %d, found %s\n",
+					       table->name, id, e->name));
+			return e;
+		}
+	}
+	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 ESP id:%d, not found\n",
+			       table->name, id));
+	return NULL;
+}
+
+const struct encrypt_desc *ikev1_get_esp_info_encrypt_desc(const struct esp_info *esp)
+{
+	return (const struct encrypt_desc *) ikev1_esp_lookup(&encrypt_algorithms.all,
+							      esp->transid);
+}
+
+const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info *esp)
+{
+	return (const struct integ_desc *) ikev1_esp_lookup(&integ_algorithms.all,
+							    esp->auth);
 }
 
 static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table,
@@ -353,21 +400,6 @@ const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 {
 	return (const struct integ_desc *) ikev2_lookup(&integ_algorithms.all, id);
-}
-
-const struct encrypt_desc *ikev2_get_ike_encrypt_desc(enum ikev2_trans_type_encr id)
-{
-	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.ike, id);
-}
-
-const struct prf_desc *ikev2_get_ike_prf_desc(enum ikev2_trans_type_prf id)
-{
-	return (const struct prf_desc *) ikev2_lookup(&prf_algorithms.ike, id);
-}
-
-const struct integ_desc *ikev2_get_ike_integ_desc(enum ikev2_trans_type_integ id)
-{
-	return (const struct integ_desc *) ikev2_lookup(&integ_algorithms.ike, id);
 }
 
 /*
@@ -415,7 +447,8 @@ static void check_ike_prf_desc(const struct ike_alg *alg)
 static struct type_algorithms prf_algorithms = {
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
 	.type = IKE_ALG_HASH,
-	.ikev1_enum_names = &oakley_hash_names,
+	.ikev1_ike_enum_names = &oakley_hash_names,
+	.ikev1_esp_enum_names = NULL, /* ESP/AH uses IKE PRF */
 	.ikev2_enum_names = &ikev2_trans_type_prf_names,
 	.check_ike_desc = check_ike_prf_desc,
 };
@@ -451,10 +484,8 @@ static void check_ike_integ_desc(const struct ike_alg *alg)
 static struct type_algorithms integ_algorithms = {
 	.all = ALGORITHM_TABLE("Integrity", integ_descriptors),
 	.type = IKE_ALG_INTEG,
-	/*
-	 * IKEv1 uses the same HASH names for PRF and INTEG.
-	 */
-	.ikev1_enum_names = &oakley_hash_names,
+	.ikev1_ike_enum_names = &oakley_hash_names,
+	.ikev1_esp_enum_names = &auth_alg_names,
 	.ikev2_enum_names = &ikev2_trans_type_integ_names,
 	.check_ike_desc = check_ike_integ_desc,
 };
@@ -500,10 +531,23 @@ static void check_ike_encrypt_desc(const struct ike_alg *alg UNUSED)
 static struct type_algorithms encrypt_algorithms = {
 	.all = ALGORITHM_TABLE("Encryption", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
-	.ikev1_enum_names = &oakley_enc_names,
+	.ikev1_ike_enum_names = &oakley_enc_names,
+	.ikev1_esp_enum_names = &esp_transformid_names,
 	.ikev2_enum_names = &ikev2_trans_type_encr_names,
 	.check_ike_desc = check_ike_encrypt_desc,
 };
+
+static void check_enum_name(const char *what, int id, enum_names *names)
+{
+	if (id > 0) {
+		const char *name = names ? enum_name(names, id) : "(NULL)";
+		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: %s", what, id, name));
+		passert(names != NULL);
+		passert(name);
+	} else {
+		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
+	}
+}
 
 static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 {
@@ -532,21 +576,13 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		 * define the IKEv1 field "common.algo_id" so need to
 		 * handle that.
 		 */
-		passert(alg->algo_id > 0 || alg->algo_v2id > 0);
-		if (alg->algo_id > 0) {
-			passert(algorithms->ikev1_enum_names != NULL);
-			const char *name = enum_name(algorithms->ikev1_enum_names, alg->algo_id);
-			passert(name);
-			DBG(DBG_CRYPT, DBG_log("id: %d IKEv1 enum name: %s",
-					       alg->algo_id, name));
-		}
-		if (alg->algo_v2id > 0) {
-			passert(algorithms->ikev2_enum_names != NULL);
-			const char *name = enum_name(algorithms->ikev2_enum_names, alg->algo_v2id);
-			passert(name);
-			DBG(DBG_CRYPT, DBG_log("v2id: %d IKEv2 enum name: %s",
-					       alg->algo_v2id, name));
-		}
+		passert(alg->algo_id > 0 || alg->algo_v2id > 0 || alg->ikev1_esp_id > 0);
+		check_enum_name("IKEv1 IKE", alg->algo_id,
+				algorithms->ikev1_ike_enum_names);
+		check_enum_name("IKEv1 ESP/AH", alg->ikev1_esp_id,
+				algorithms->ikev1_esp_enum_names);
+		check_enum_name("IKEv2", alg->algo_v2id,
+				algorithms->ikev2_enum_names);
 
 		/*
 		 * Algorithm can't appear twice.
@@ -555,7 +591,8 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		 */
 		struct algorithm_table scratch = algorithms->all;
 		scratch.end = algp;
-		passert(alg->algo_id == 0 || ikev1_lookup(&scratch, alg->algo_id) == NULL);
+		passert(alg->algo_id == 0 || ikev1_ike_lookup(&scratch, alg->algo_id) == NULL);
+		passert(alg->ikev1_esp_id == 0 || ikev1_esp_lookup(&scratch, alg->ikev1_esp_id) == NULL);
 		passert(alg->algo_v2id == 0 || ikev2_lookup(&scratch, alg->algo_v2id) == NULL);
 
 		/*

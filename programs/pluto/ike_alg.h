@@ -61,21 +61,54 @@ struct ike_alg {
 	const char *const officname;
 	const enum ike_alg_type algo_type;
 	/*
-	 * IKEv1 IKE values:
+	 * These tables use the following numeric indexes:
 	 *
-	 * ENCRYPT: enum ikev1_encr_attribute
-	 * PRF(HASH): enum ikev1_hash_attribute
-	 * INTEG: enum ikev1_hash_attribute
-	 */
-	const u_int16_t algo_id;
-	/*
-	 * IKEv2 Values:
+	 *                  ENUM                ENUM->STRING                PREFIX
 	 *
-	 * ENCRYPT: enum ikev2_trans_type_encr
-	 * PRF: enum ikev2_trans_type_prf
-	 * INTEG: enum ikev2_trans_type_integ
+	 * ikev1_ike_id / struct ike_info:
+	 *
+	 * ENCRYPT:  ikev1_encr_attribute    oakley_enc_names              OAKLEY
+	 * PRF:      ikev1_hash_attribute    oakley_hash_names             OAKLEY
+	 * INTEG:    ikev1_hash_attribute    oakley_hash_names             OAKLEY
+	 *
+	 * ikev1_esp_id / struct esp_info:
+	 *
+	 * ENCRYPT:  ipsec_cipher_algo       esp_transformid_names         ESP
+	 * INTEG:    ikev1_auth_attribute    auth_alg_names                AUTH_ALGORITHM
+	 *
+	 * ikev2_id:
+	 *
+	 * ENCRYPT:  ikev2_trans_type_encr   ikev2_trans_type_encr_names   IKEv2_ENCR
+	 * PRF:      ikev2_trans_type_prf    ikev2_trans_type_prf_names    IKEv2_AUTH
+	 * INTEG:    ikev2_trans_type_integ  ikev2_trans_type_integ_names  IKEv2_INTEG
+	 *
+	 * Notes:
+	 *
+	 * For ESP/AH, since PRF is not negotiated (the IKE SA's PRF
+	 * is used) the field "PRF.ikev1_esp_id" should be left blank.
+	 * Since, for IKEv2, "PRF.ikev2_id" is used by IKE, it should
+	 * be defined.
+	 *
+	 * "struct ike_info" uses ikev1_ike_id values as defined
+	 * above.  See plutoalg.c:ealg_getbyname_ike() and
+	 * plutoalg.c:aalg_getbyname_ike().
+	 *
+	 * "struct esp_info" uses ikev1_esp_id values as defined
+	 * above.  See alg_info.c:ealg_getbyname_esp() and
+	 * alg_info.c:aalg_getbyname_esp().
+	 *
+	 * This doesn't deal with kernel codes (some kernel interfaces
+	 * use numbers, some use strings), for moment keep them in a
+	 * separate table.
+	 *
+	 * XXX: Still missing is a name/alias lookup letting some of
+	 * alg_info be eliminated.
+	 *
+	 * XXX: As you can tell, there is a rename comming.
 	 */
-	const u_int16_t algo_v2id;
+	const u_int16_t algo_id;	/* const int ikev1_ike_id */
+	const int ikev1_esp_id;
+	const u_int16_t algo_v2id;	/* const int ikev2_id */
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?
@@ -191,13 +224,13 @@ struct integ_desc {
 };
 
 /*
- * Find the IKEv1/IKEv2 algorithm descriptor:
+ * Find an IKEv2 IKE_ALG using wire-values:
  *
- * ikeN_get_XXX_DESC(enum): return the specified algorithm; else
- * return NULL.  In the case of ESP/AH native support isn't required.
- * Further, because of races such as a crypto module being loaded, it
- * is only really possible to detect support for ESP/AH at the time
- * the XFRM entry is added.
+ * ike[12]_get_encrypt_desc(enum) and ikev2_get_integ_desc(enum):
+ * return the specified algorithm; else return NULL.  In the case of
+ * ESP/AH native support isn't required.  Further, because of races
+ * such as a crypto module being loaded, it is only really possible to
+ * detect support for ESP/AH at the time the XFRM entry is added.
  *
  * ikeN_get_ike_XXX_desc(enum): return the specified algorithm but
  * only if there is a native (in process) support; else return NULL.
@@ -208,14 +241,7 @@ struct integ_desc {
  *
  * The enum lookups are intended for wire data (in and out).
  * Unfortunately, they are also used to lookup "struct alg_info"
- * elements.  A speculative cleanup is for alg_info to contain
- * descriptors instead of enums, and use use something like:
- *
- * (TODO???) ikeN_find{,_ike}_XXX_desc(string): per above, but perform
- * lookup based on STRING.
- *
- * For IKEv1 PRF and INTEG are both identifed using the AUTH algorithm
- * attribute.  Strange but true.
+ * elements.
  */
 
 const struct encrypt_desc *ikev1_get_encrypt_desc(enum ikev1_encr_attribute);
@@ -230,9 +256,31 @@ const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute)
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
 
-const struct encrypt_desc *ikev2_get_ike_encrypt_desc(enum ikev2_trans_type_encr);
-const struct prf_desc *ikev2_get_ike_prf_desc(enum ikev2_trans_type_prf);
-const struct integ_desc *ikev2_get_ike_integ_desc(enum ikev2_trans_type_integ);
+/*
+ * Return the ENCRYPT/PRF/INTEG IKE_ALG as specified by IKE_INFO or
+ * ESP_INFO.
+ *
+ * For IKE_INFO, the lookup is limited to native algorithms.  For
+ * ESP_INFO there is no such limitation.
+ *
+ * Since IKE_INFO and ESP_INFO use IKEv1 numbers to identify the
+ * relevant algorithm, these functions have an IKEv1 prefix.
+ *
+ * XXX: IKE_INFO/ESP_INFO should instead contain IKE_ALG pointers and
+ * be done with all this.  Presumably that would mean adding a
+ * lookup-by-string function to IKE_ALG.
+ */
+
+struct ike_info;
+
+const struct encrypt_desc *ikev1_get_ike_info_encrypt_desc(const struct ike_info*);
+const struct prf_desc *ikev1_get_ike_info_prf_desc(const struct ike_info*);
+const struct integ_desc *ikev1_get_ike_info_integ_desc(const struct ike_info*);
+
+struct esp_info;
+
+const struct encrypt_desc *ikev1_get_esp_info_encrypt_desc(const struct esp_info*);
+const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info*);
 
 /*
  * Older interfaces.

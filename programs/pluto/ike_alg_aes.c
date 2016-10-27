@@ -638,6 +638,7 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 			.officname =  "aes_xcbc",
 			.algo_type = IKE_ALG_INTEG,
 			.algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+			.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
 			.algo_v2id = IKEv2_AUTH_AES_XCBC_96,
 			.fips = TRUE,
 			.do_ike_test = NULL, /* No NSS support */

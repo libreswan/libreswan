@@ -98,44 +98,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 }
 
 /*
- * Convert an IKEv1 (ESP/AH/CHILD) payload AUTH attribute to IKEv2
- * INTEG.
- *
- * Not to be confused with converting the IKEv1 HASH algorithm to
- * IKEv2 INTEG as performed by the above.
- */
-static enum ikev2_trans_type_integ v1auth_to_v2integ(enum ikev1_auth_attribute auth)
-{
-	switch (auth) {
-	case AUTH_ALGORITHM_HMAC_MD5:
-		return IKEv2_AUTH_HMAC_MD5_96;
-
-	case AUTH_ALGORITHM_HMAC_SHA1:
-		return IKEv2_AUTH_HMAC_SHA1_96;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_256:
-		return IKEv2_AUTH_HMAC_SHA2_256_128;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_384:
-		return IKEv2_AUTH_HMAC_SHA2_384_192;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_512:
-		return IKEv2_AUTH_HMAC_SHA2_512_256;
-
-	case AUTH_ALGORITHM_AES_XCBC:
-		return IKEv2_AUTH_AES_XCBC_96;
-
-	default:
-	{
-		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS, "IKEv1 AUTH %s=%d -> IKEv2 INTEG failed",
-		       enum_showb(&auth_alg_names, auth, &buf), auth);
-		return IKEv2_AUTH_INVALID;
-	}
-	}
-}
-
-/*
  * Raw (IETF numbered) chosen proposal/transform.
  */
 struct ikev2_transform {
@@ -1457,17 +1419,20 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				const struct prf_desc *prf = ikev2_get_prf_desc(transform->id);
 				if (prf == NULL) {
 					/*
-					 * For moment assume that this
-					 * is ESP/AH and just the
-					 * value is needed.
+					 * Since we only propse
+					 * algorithms we know about so
+					 * the lookup should always
+					 * succeed.
+					 *
+					 * Stumble on, the caller
+					 * should drop the packet.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_hasher(%s=%d) failed, assuming ESP/AH",
-						    enum_name(&ikev2_trans_type_prf_names,
-							      transform->id),
-						    transform->id));
+					loglog(RC_LOG_SERIOUS, "IKEv2 PRF lookup %s=%d failed",
+					       enum_name(&ikev2_trans_type_prf_names,
+							 transform->id),
+					       transform->id);
 				}
-				ta.prf_hash = transform->id;
+				ta.prf_hash = prf ? transform->id : 0;
 				ta.prf = prf;
 				break;
 			}
@@ -1480,17 +1445,20 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				const struct integ_desc *integ = ikev2_get_integ_desc(transform->id);
 				if (integ == NULL) {
 					/*
-					 * For moment assume that this
-					 * is ESP/AH and just the
-					 * value is needed.
+					 * Since we only propse
+					 * algorithms we know about so
+					 * the lookup should always
+					 * succeed.
+					 *
+					 * Stumble on, the caller
+					 * should drop the packet.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_get_integ_desc(%s=%d) failed, assuming ESP/AH",
-						    enum_name(&ikev2_trans_type_integ_names,
-							      transform->id),
-						    transform->id));
+					loglog(RC_LOG_SERIOUS, "IKEv2 INTEG lookup %s=%d failed",
+					       enum_name(&ikev2_trans_type_integ_names,
+							 transform->id),
+					       transform->id);
 				}
-				ta.integ_hash = transform->id;
+				ta.integ_hash = integ ? transform->id : 0;
 				ta.integ = integ;
 				break;
 			}
@@ -1868,12 +1836,12 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		};
 
 		/* ike_ealg is IKEv1! */
-		const struct encrypt_desc *ealg = ikev1_get_ike_encrypt_desc(ike_info->ike_ealg);
+		const struct encrypt_desc *ealg = ikev1_get_ike_info_encrypt_desc(ike_info);
 		if (ealg == NULL) {
 			if (ike_info->ike_ealg != 0) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
-				       "dropping proposal containing unsupported encrypt algorithm %s=%d",
+				       "dropping local IKE proposal containing unsupported ENCRYPT algorithm %s=%d",
 				       enum_showb(&oakley_enc_names, ike_info->ike_ealg, &buf),
 				       ike_info->ike_ealg);
 				continue;
@@ -1929,12 +1897,12 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		}
 
 		/* ike_halg is IKEv1 */
-		const struct prf_desc *prf = ikev1_get_ike_prf_desc(ike_info->ike_halg);
+		const struct prf_desc *prf = ikev1_get_ike_info_prf_desc(ike_info);
 		if (prf == NULL) {
 			if (ike_info->ike_halg != 0) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
-				       "dropping proposal containing unsupported prf algorithm %s=%d",
+				       "dropping local IKE proposal containing unsupported PRF algorithm %s=%d",
 				       enum_showb(&oakley_hash_names, ike_info->ike_halg, &buf),
 				       ike_info->ike_halg);
 				continue;
@@ -1952,12 +1920,12 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			 * Use the IKEv1 HASH algorithm, projected
 			 * onto IKEv2 INTEG, as the integrity.
 			 */
-			const struct integ_desc *integ = ikev1_get_ike_integ_desc(ike_info->ike_halg);
+			const struct integ_desc *integ = ikev1_get_ike_info_integ_desc(ike_info);
 			if (integ == NULL) {
 				if (ike_info->ike_halg != 0) {
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
-					       "dropping proposal containing unsupported integ algorithm %s=%d",
+					       "dropping local IKE proposal containing unsupported INTEG algorithm %s=%d",
 					       enum_showb(&oakley_hash_names, ike_info->ike_halg, &buf),
 					       ike_info->ike_halg);
 					continue;
@@ -1986,7 +1954,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			if (ike_info->ike_modp > 0) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
-				       "dropping proposal containing unsupported modp group %s=%d",
+				       "dropping local proposal containing unsupported modp group %s=%d",
 				       enum_showb(&oakley_group_names, ike_info->ike_modp, &buf),
 				       ike_info->ike_modp);
 				continue;
@@ -2231,8 +2199,17 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					       esp_info->auth);
 					continue;
 				}
-				enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
+				const struct integ_desc *integ = ikev1_get_esp_info_integ_desc(esp_info);
+				if (integ == NULL) {
+					struct esb_buf buf;
+					loglog(RC_LOG_SERIOUS,
+					       "dropping local ESP proposal containing unsupported INTEG algorithm %s=%d",
+					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+					       esp_info->auth);
+					continue;
+				}
+				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+						 integ->hasher.common.algo_v2id, 0);
 			}
 			break;
 
@@ -2247,10 +2224,17 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       esp_info->auth);
 				continue;
 			}
-			enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
-			if (integ != 0) {
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
+			const struct integ_desc *integ = ikev1_get_esp_info_integ_desc(esp_info);
+			if (integ == NULL) {
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "dropping local AH proposal containing unsupported INTEG algorithm %s=%d",
+				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+				       esp_info->auth);
+				continue;
 			}
+			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+					 integ->hasher.common.algo_v2id, 0);
 			break;
 
 		default:
