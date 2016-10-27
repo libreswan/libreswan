@@ -98,7 +98,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info);
 
-struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen);
+bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen,
+				   struct trans_attrs  *);
 
 struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
 

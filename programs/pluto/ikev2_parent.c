@@ -889,12 +889,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	/*
 	 * Convert what was accepted to internal form and apply some
-	 * basic validation.  ACCEPTED_OAKLEY does not contain
-	 * allocated data.
+	 * basic validation.  If this somehow fails (it shouldn't but
+	 * ...), drop everything.
 	 */
-	struct trans_attrs accepted_oakley = ikev2_proposal_to_trans_attrs(accepted_ike_proposal);
-	if (accepted_oakley.group == NULL) {
-		loglog(RC_LOG_SERIOUS, "discarding accepted proposal with no DH");
+	struct trans_attrs accepted_oakley;
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal, &accepted_oakley)) {
+		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&accepted_ike_proposal);
 		return STF_IGNORE;
@@ -1501,14 +1501,22 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
-		if (ret == STF_OK) {
-			passert(st->st_accepted_ike_proposal != NULL);
-			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
-		}
-
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return ret;
+		}
+		passert(st->st_accepted_ike_proposal != NULL);
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
+						   &st->st_oakley)) {
+			loglog(RC_LOG_SERIOUS, "IKE initiator proposed an unsupported algorithm");
+			free_ikev2_proposal(&st->st_accepted_ike_proposal);
+			passert(st->st_accepted_ike_proposal == NULL);
+			/*
+			 * Assume caller et.al. will clean up the
+			 * reset of the mess?
+			 */
+			return STF_FAIL;
 		}
 	}
 

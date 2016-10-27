@@ -1371,10 +1371,17 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal)
+bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
+				   struct trans_attrs *ta_out)
 {
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
+
+	/*
+	 * blank everything and only update TA_OUT on success.
+	 */
 	struct trans_attrs ta = { .encrypt = 0 };
+	*ta_out = ta;
+
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
@@ -1396,6 +1403,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 						    enum_name(&ikev2_trans_type_encr_names,
 							      transform->id),
 						    transform->id));
+					/* return FALSE */
 				}
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
@@ -1405,13 +1413,13 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				} else if (encrypter != NULL) {
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else {
-					ta.enckeylen = 0;
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
 					       "unknown key size for ENCRYPT algorithm %s=%d",
 					       enum_showb(&ikev2_trans_type_encr_names,
 							  transform->id, &buf),
 					       transform->id);
+					return FALSE;
 				}
 				break;
 			}
@@ -1419,18 +1427,16 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				const struct prf_desc *prf = ikev2_get_prf_desc(transform->id);
 				if (prf == NULL) {
 					/*
-					 * Since we only propse
+					 * Since we only propose
 					 * algorithms we know about so
 					 * the lookup should always
 					 * succeed.
-					 *
-					 * Stumble on, the caller
-					 * should drop the packet.
 					 */
 					loglog(RC_LOG_SERIOUS, "IKEv2 PRF lookup %s=%d failed",
 					       enum_name(&ikev2_trans_type_prf_names,
 							 transform->id),
 					       transform->id);
+					return FALSE;
 				}
 				ta.prf_hash = prf ? transform->id : 0;
 				ta.prf = prf;
@@ -1449,14 +1455,12 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * algorithms we know about so
 					 * the lookup should always
 					 * succeed.
-					 *
-					 * Stumble on, the caller
-					 * should drop the packet.
 					 */
 					loglog(RC_LOG_SERIOUS, "IKEv2 INTEG lookup %s=%d failed",
 					       enum_name(&ikev2_trans_type_integ_names,
 							 transform->id),
 					       transform->id);
+					return FALSE;
 				}
 				ta.integ_hash = integ ? transform->id : 0;
 				ta.integ = integ;
@@ -1472,17 +1476,13 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * DH calculation, then not
 					 * finding the DH group is
 					 * likely really bad.
-					 *
-					 * Leave everthing NULL so
-					 * that caller can detect
-					 * this.
 					 */
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
 					       "accepted proposal contains unknown DH group %s=%d",
 					       enum_showb(&oakley_group_names, transform->id, &buf),
 					       transform->id);
-					break;
+					return FALSE;
 				}
 				ta.groupnum = transform->id;
 				ta.group = group;
@@ -1501,28 +1501,38 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					loglog(RC_LOG_SERIOUS,
 					       "accepted proposal contains an unknown ESN value %d",
 					       transform->id);
-					break;
+					return FALSE;
 				}
 				break;
 			default:
-				bad_case(type);
+				loglog(RC_LOG_SERIOUS,
+				       "accepted proposal contains an unknown trans type %d",
+				       type);
+				return FALSE;
 			}
 		}
 	}
-	return ta;
+	*ta_out = ta;
+	return TRUE;
 }
 
 bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info)
 {
 	/*
-	 * Quick hack to convert much of the stuff.
+	 * Start with ZERO for everything.
 	 */
-	struct trans_attrs ta = ikev2_proposal_to_trans_attrs(proposal);
-
 	pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size);
 	memcpy(&proto_info->attrs.spi, proposal->remote_spi.bytes,
 	       sizeof(proto_info->attrs.spi));
+
+	/*
+	 * Quick hack to convert much of the stuff.
+	 */
+	struct trans_attrs ta;
+	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
+		return FALSE;
+	}
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
