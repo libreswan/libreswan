@@ -97,7 +97,7 @@ struct trans_attrs {
 
 	/* used in phase1/PARENT SA */
 	const struct encrypt_desc *encrypter;	/* package of encryption routines */
-	const struct hash_desc *prf_hasher;	/* package of hashing routines */
+	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *integ;		/* package of integrity routines */
 	const struct oakley_group_desc *group;	/* Oakley group */
 

@@ -360,7 +360,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct state *st = md->st;
-	const struct hash_desc *const hasher = st->st_oakley.prf_hasher;
+	const struct hash_desc *const hasher = &st->st_oakley.prf->hasher;
 	const size_t hl = hasher->hash_digest_len;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 	const struct payload_digest *p;
@@ -432,7 +432,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	const ip_address *first, *second;
 	unsigned short firstport, secondport;
 
-	passert(st->st_oakley.prf_hasher != NULL);
+	passert(st->st_oakley.prf != NULL);
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
@@ -469,25 +469,25 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/*
 	 * First one with sender IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		st->st_rcookie, first, firstport);
+	natd_hash(&st->st_oakley.prf->hasher, hash, st->st_icookie,
+		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
+		  st->st_rcookie, first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
-				st->st_oakley.prf_hasher->hash_digest_len,
-				"NAT-D"))
+				   st->st_oakley.prf->hasher.hash_digest_len,
+				   "NAT-D"))
 		return FALSE;
 
 	/*
 	 * Second one with my IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash,
-		st->st_icookie, is_zero_cookie(st->st_rcookie) ?
-		md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
+	natd_hash(&st->st_oakley.prf->hasher, hash,
+		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
+		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
-	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs,
-			hash, st->st_oakley.prf_hasher->hash_digest_len,
-			"NAT-D");
+	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs, hash,
+				     st->st_oakley.prf->hasher.hash_digest_len,
+				     "NAT-D");
 }
 
 /*
@@ -703,7 +703,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->st->st_oakley.prf_hasher == NULL) {
+		if (md->st->st_oakley.prf == NULL) {
 			/*
 			 * This connection is doomed - no PRF for NATD hash
 			 * Probably in FIPS trying MD5 ?

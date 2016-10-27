@@ -340,11 +340,6 @@ const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
 	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.ike, id);
 }
 
-const struct hash_desc *ikev2_alg_get_hasher(int id)
-{
-	return &ikev2_get_ike_prf_desc(id)->hasher;
-}
-
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
 {
 	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.all, id);

@@ -1147,14 +1147,21 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				break;
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
+				/*
+				 * this logic makes no sense
+				 *
+				 * It is negotiating IKE (Phase 1), so
+				 * the PRF had both better be present
+				 * and working.
+				 */
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
-					ta.prf_hasher = ikev1_alg_get_hasher(val);
+					ta.prf = ikev1_get_ike_prf_desc(val);
 				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
-					ta.prf_hasher = ikev1_alg_get_hasher(val);
+					ta.prf = ikev1_get_ike_prf_desc(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
@@ -1601,8 +1608,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf_hasher = ikev1_alg_get_hasher(ta.prf_hash);
-	passert(ta.prf_hasher != NULL);
+	ta.prf = ikev1_get_prf_desc(ta.prf_hash);
+	passert(ta.prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */

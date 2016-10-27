@@ -1454,9 +1454,8 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				break;
 			}
 			case IKEv2_TRANS_TYPE_PRF: {
-				const struct hash_desc *prf_hasher =
-					ikev2_alg_get_hasher(transform->id);
-				if (prf_hasher == NULL) {
+				const struct prf_desc *prf = ikev2_get_prf_desc(transform->id);
+				if (prf == NULL) {
 					/*
 					 * For moment assume that this
 					 * is ESP/AH and just the
@@ -1469,7 +1468,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 						    transform->id));
 				}
 				ta.prf_hash = transform->id;
-				ta.prf_hasher = prf_hasher;
+				ta.prf = prf;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_INTEG: {

@@ -110,8 +110,9 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    key_size, salt_size));
 
-	const struct hash_desc *prf_hasher = ikev2_alg_get_hasher(skq->prf_hash);
-	passert(prf_hasher != NULL);
+	const struct prf_desc *prf = ikev2_get_prf_desc(skq->prf_hash);
+	passert(prf != NULL);
+	const struct hash_desc *prf_hasher = &prf->hasher;
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
