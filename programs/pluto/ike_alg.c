@@ -573,9 +573,40 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		algorithms->all.end = end;
 	}
 
+	/*
+	 * Completely filter out and flag any broken IKE algorithms.
+	 *
+	 * While, technically broken IKE algorithms only need to be
+	 * removed from the IKE list (and left in ALL for ESP/AH), it
+	 * is easier just remove them.  Arguably, it should instead
+	 * passert().
+	 *
+	 * After applying this filter, common.do_ike_test becomes a
+	 * proxy for a working native IKE algorithm.
+	 */
+	{
+		const struct ike_alg **end = algorithms->all.start;
+		FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
+			const struct ike_alg *alg = *algp;
+			if (alg->do_ike_test != NULL
+			    && !alg->do_ike_test(alg)) {
+				loglog(RC_LOG_SERIOUS,
+				       "%s algorithm %s: BROKEN; testing failed",
+				       algorithms->all.name, alg->name);
+				/*
+				 * When FIPS, this is fatal.  When not
+				 * FIPS, this must come close.
+				 */
+				passert(!fips);
+				continue;
+			}
+			*end++ = alg;
+		}
+		algorithms->all.end = end;
+	}
+
         /*
-	 * Go through ALL algorithms identifying and testing stuff
-	 * suitable for IKE.
+	 * Go through ALL algorithms identifying any suitable for IKE.
 	 *
 	 * For simplicity, the IKE table is overallocated a little.
 	 */
@@ -595,18 +626,14 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		const struct ike_alg *alg = *algp;
 
 		const char *ike_enabled;
-		if (alg->do_ike_test) {
-			if (alg->do_ike_test(alg)) {
-				*algorithms->ike.end++ = alg;
-				ike_enabled = "ENABLED";
-			} else {
-				ike_enabled = "DISABLED (testing failed)";
-			}
+		if (alg->do_ike_test != NULL) {
+			*algorithms->ike.end++ = alg;
+			ike_enabled = "ENABLED";
 		} else {
 			ike_enabled = "DISABLED (not supported)";
 		}
-
 		const char *esp_enabled = "ENABLED"; /* for now */
+
 		libreswan_log("%s algorithm %s: IKE: %s; ESP/AH: %s%s",
 			      algorithms->all.name, alg->name,
 			      ike_enabled, esp_enabled,
