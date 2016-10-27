@@ -196,7 +196,8 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 {
 	oakley_auth_t auth = skq->auth;
 	oakley_hash_t hash = skq->prf_hash;
-	const struct hash_desc *hasher = ikev1_alg_get_hasher(hash);
+	const struct prf_desc *prf = ikev1_get_ike_prf_desc(hash);
+	const struct hash_desc *hasher = prf ? &prf->hasher : NULL;
 	chunk_t ni;
 	chunk_t nr;
 	chunk_t gi;

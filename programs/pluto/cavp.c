@@ -129,7 +129,8 @@ void hash(struct cavp_entry *entry,
 	  const char *value UNUSED)
 {
 	strcpy(hasher_name, entry->key);
-	hasher = ikev1_alg_get_hasher(entry->value);
+	const struct prf_desc *prf = ikev1_get_ike_prf_desc(entry->value);
+	hasher = prf ? &prf->hasher : NULL;
 	if (hasher == NULL) {
 		fprintf(stderr, "hasher %s not found\n", entry->key);
 	}

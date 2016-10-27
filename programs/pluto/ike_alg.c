@@ -238,21 +238,6 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
 }
 
-bool ike_alg_enc_present(int ealg)
-{
-	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
-
-	return enc_desc != NULL && enc_desc->enc_blocksize != 0;
-}
-
-/*	check if IKE hash algo is present */
-bool ike_alg_hash_present(int halg)
-{
-	const struct hash_desc *hash_desc = ikev1_alg_get_hasher(halg);
-
-	return hash_desc != NULL && hash_desc->hash_digest_len != 0;
-}
-
 /*
  *      return ike_algo object by {type, id}
  */
@@ -271,31 +256,6 @@ static const struct ike_alg *ikev1_ike_lookup(const struct algorithm_table *tabl
 	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 id:%u, not found\n",
 			       table->name, id));
 	return NULL;
-}
-
-const struct hash_desc *ikev1_alg_get_hasher(int alg)
-{
-	return &ikev1_get_ike_prf_desc(alg)->hasher;
-}
-
-const struct encrypt_desc *ikev1_alg_get_encrypter(int alg)
-{
-	return ikev1_get_ike_encrypt_desc(alg);
-}
-
-const struct encrypt_desc *ikev1_get_encrypt_desc(enum ikev1_encr_attribute id)
-{
-	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.all, id);
-}
-
-const struct prf_desc *ikev1_get_prf_desc(enum ikev1_auth_attribute id)
-{
-	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.all, id);
-}
-
-const struct integ_desc *ikev1_get_integ_desc(enum ikev1_auth_attribute id)
-{
-	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.all, id);
 }
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
@@ -372,19 +332,6 @@ static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table,
 	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id:%u, not found\n",
 			       table->name, id));
 	return NULL;
-}
-
-const struct encrypt_desc *ikev2_alg_get_encrypter(int id)
-{
-	/*
-	 * these types are mixed up, so go along with it :(
-	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1
-	 * IKEv2_ENCR_CAMELLIA_CBC == ESP_CAMELLIA
-	 */
-	if (id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
-		id = IKEv2_ENCR_CAMELLIA_CBC;
-
-	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.ike, id);
 }
 
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)

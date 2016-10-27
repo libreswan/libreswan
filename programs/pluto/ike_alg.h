@@ -224,33 +224,23 @@ struct integ_desc {
 };
 
 /*
- * Find an IKEv2 IKE_ALG using wire-values:
+ * Find the IKEv2 ENCRYPT/PRF/INTEG algorithm using IKEv2 wire-values.
  *
- * ike[12]_get_encrypt_desc(enum) and ikev2_get_integ_desc(enum):
- * return the specified algorithm; else return NULL.  In the case of
- * ESP/AH native support isn't required.  Further, because of races
- * such as a crypto module being loaded, it is only really possible to
- * detect support for ESP/AH at the time the XFRM entry is added.
- *
- * ikeN_get_ike_XXX_desc(enum): return the specified algorithm but
- * only if there is a native (in process) support; else return NULL.
- * The initial IKE negotiation (phase 1 in IKEv1?) is implemented
- * using native (in process) crypto.  Similarly, the CHILD_SA
- * negotiation, uses the native IKE PRF when computing its keying
- * material.
- *
- * The enum lookups are intended for wire data (in and out).
- * Unfortunately, they are also used to lookup "struct alg_info"
- * elements.
+ * The returned algorithm may not have native support.  Native
+ * algorithms have do_ike_test non-NULL.
  */
-
-const struct encrypt_desc *ikev1_get_encrypt_desc(enum ikev1_encr_attribute);
-const struct prf_desc *ikev1_get_prf_desc(enum ikev1_auth_attribute);
-const struct integ_desc *ikev1_get_integ_desc(enum ikev1_auth_attribute);
 
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
+
+/*
+ * Find the IKEv1 ENCRYPT/PRF/INTEG algorithm using IKEv1 OAKLEY
+ * values.
+ *
+ * Unlike IKEv2, IKEv1 uses different wire-values for IKE, ESP, and
+ * AH.  This just deals with OAKLEY.
+ */
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
@@ -283,18 +273,13 @@ const struct encrypt_desc *ikev1_get_esp_info_encrypt_desc(const struct esp_info
 const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info*);
 
 /*
- * Older interfaces.
+ * Does the encryption algorithm require separate integrity (FALSE
+ * implies AEAD).
  */
-extern bool ike_alg_enc_present(int ealg);
-extern bool ike_alg_hash_present(int halg);
+
 extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
 
 void ike_alg_init(void);
-
-const struct encrypt_desc *ikev1_alg_get_encrypter(int alg);
-const struct hash_desc *ikev1_alg_get_hasher(int alg);
-
-const struct encrypt_desc *ikev2_alg_get_encrypter(int alg);
 
 /*
  * Return true always.

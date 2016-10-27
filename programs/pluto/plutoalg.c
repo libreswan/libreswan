@@ -346,9 +346,10 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 			    bool fix_zero)
 {
-	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ike_info->ike_ealg);
+	const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
 	passert(!fix_zero || enc_desc != NULL);
-	const struct hash_desc *hash_desc = ikev1_alg_get_hasher(ike_info->ike_halg);
+	const struct prf_desc *prf_desc = ikev1_get_ike_info_prf_desc(ike_info);
+	const struct hash_desc *hash_desc = prf_desc ? &prf_desc->hasher : NULL;
 	passert(!fix_zero || hash_desc != NULL);
 
 	int eklen = ike_info->ike_eklen;
@@ -384,8 +385,8 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 	const char *sep = "";
 
 	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
-		if (ike_alg_enc_present(ike_info->ike_ealg) &&
-		    ike_alg_hash_present(ike_info->ike_halg) &&
+		if (ikev1_get_ike_info_encrypt_desc(ike_info) != NULL &&
+		    ikev1_get_ike_info_prf_desc(ike_info) != NULL &&
 		    lookup_group(ike_info->ike_modp) != NULL) {
 			if (strlen(sep) >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for separator");

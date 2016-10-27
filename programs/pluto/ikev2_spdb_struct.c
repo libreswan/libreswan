@@ -1384,7 +1384,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
 				const struct encrypt_desc * encrypter =
-					ikev2_alg_get_encrypter(transform->id);
+					ikev2_get_encrypt_desc(transform->id);
 				if (encrypter == NULL) {
 					/*
 					 * For moment assume that this

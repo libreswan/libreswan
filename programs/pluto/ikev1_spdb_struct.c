@@ -792,7 +792,7 @@ static bool ike_alg_enc_ok(int ealg, unsigned key_len,
 			   const char **errp, char *ugh_buf, size_t ugh_buf_len)
 {
 	int ret = TRUE;
-	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
+	const struct encrypt_desc *enc_desc = ikev1_get_ike_encrypt_desc(ealg);
 
 	passert(ugh_buf_len != 0);
 	if (enc_desc == NULL) {
@@ -1128,12 +1128,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						   sizeof(ugh_buf))) {
 					/* if (ike_alg_enc_present(val)) { */
 					ta.encrypt = val;
-					ta.encrypter = ikev1_alg_get_encrypter(val);
+					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
-					ta.encrypter = ikev1_alg_get_encrypter(val);
+					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
 					break;
 
 				case OAKLEY_DES_CBC:
@@ -1154,7 +1154,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				 * the PRF had both better be present
 				 * and working.
 				 */
-				if (ike_alg_hash_present(val)) {
+				if (ikev1_get_ike_prf_desc(val) != NULL) {
 					ta.prf_hash = val;
 					ta.prf = ikev1_get_ike_prf_desc(val);
 				} else switch (val) {
@@ -1595,7 +1595,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = ikev1_alg_get_encrypter(ta.encrypt);
+	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1608,7 +1608,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf = ikev1_get_prf_desc(ta.prf_hash);
+	ta.prf = ikev1_get_ike_prf_desc(ta.prf_hash);
 	passert(ta.prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);

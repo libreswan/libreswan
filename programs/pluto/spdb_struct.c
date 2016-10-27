@@ -127,8 +127,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
 			    ealg, halg, modp, eklen));
 
-		const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
-
+		const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
 		if (enc_desc == NULL) {
 			DBG_log("oakley_alg_makedb() ike enc ealg=%d not present",
 				ealg);
@@ -136,18 +135,17 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		}
 		passert(enc_desc != NULL);
 
-		if (ike_alg_enc_requires_integ(enc_desc)) {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike hash halg=%d not present but required for integrity",
-					halg);
-				continue;
-			}
-		} else {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike PRF=%d not present but needed for AEAD",
-					halg);
-				continue;
-			}
+		if (ikev1_get_ike_info_prf_desc(ike_info) == NULL) {
+			DBG_log("oakley_alg_makedb() ike PRF/hash=%d not present",
+				halg);
+			continue;
+		}
+
+		if (ike_alg_enc_requires_integ(enc_desc) &&
+		    ikev1_get_ike_info_integ_desc(ike_info) == NULL) {
+			DBG_log("oakley_alg_makedb() ike INTEG/hash=%d not present",
+				halg);
+			continue;
 		}
 
 		if (eklen != 0 &&
@@ -318,7 +316,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
 
 			if (def_ks != 0) {
-				const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ike_info->ike_ealg);
+				const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
 				int max_ks = enc_desc->keymaxlen;
 				int ks;
 
