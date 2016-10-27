@@ -168,64 +168,6 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 }
 
 /*
- * should change all algorithms to use IKEv2 numbers, and translate
- * at edges only
- */
-enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
-{
-	switch (ti) {
-	case IKEv2_AUTH_NONE:
-		return AUTH_ALGORITHM_NONE;
-
-	case IKEv2_AUTH_HMAC_MD5_96:
-		return AUTH_ALGORITHM_HMAC_MD5;
-
-	case IKEv2_AUTH_HMAC_SHA1_96:
-		return AUTH_ALGORITHM_HMAC_SHA1;
-
-	case IKEv2_AUTH_HMAC_SHA2_256_128:
-		return AUTH_ALGORITHM_HMAC_SHA2_256;
-
-	case IKEv2_AUTH_HMAC_SHA2_256_128_TRUNCBUG:
-		return AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG;
-
-	case IKEv2_AUTH_HMAC_SHA2_384_192:
-		return AUTH_ALGORITHM_HMAC_SHA2_384;
-
-	case IKEv2_AUTH_HMAC_SHA2_512_256:
-		return AUTH_ALGORITHM_HMAC_SHA2_512;
-
-	/* IKEv2 does not do RIPEMD */
-
-	case IKEv2_AUTH_AES_XCBC_96:
-		return AUTH_ALGORITHM_AES_XCBC;
-
-	/* AH_RSA */
-
-	case IKEv2_AUTH_AES_128_GMAC:
-		return AUTH_ALGORITHM_AES_128_GMAC;
-
-	case IKEv2_AUTH_AES_192_GMAC:
-		return AUTH_ALGORITHM_AES_192_GMAC;
-
-	case IKEv2_AUTH_AES_256_GMAC:
-		return AUTH_ALGORITHM_AES_256_GMAC;
-
-	/* invalid or not yet supported */
-	case IKEv2_AUTH_DES_MAC:
-	case IKEv2_AUTH_KPDK_MD5:
-	case IKEv2_AUTH_INVALID:
-
-	/* not available as IPSEC AH / ESP auth - IKEv2 only */
-	case IKEv2_AUTH_HMAC_MD5_128:
-	case IKEv2_AUTH_HMAC_SHA1_160:
-	case IKEv2_AUTH_AES_CMAC_96:
-	default:
-		bad_case(ti);
-	}
-}
-
-/*
  * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
  * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
  *

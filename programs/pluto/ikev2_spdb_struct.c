@@ -1605,10 +1605,15 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	proto_info->attrs.transattrs = ta;
 
 	/*
-	 * here we obtain auth value for esp, but lose what is correct
-	 * to be sent in the proposal
+	 * Replace the contents of INTEG_HASH (an IKEv2 INTEG value)
+	 * with the equivalent IKEv1 AUTH_ALGORITHM value.
+	 *
+	 * From this point on, IKEv1 code gets involved and that
+	 * doesn't yet trust INTEG.
 	 */
-	proto_info->attrs.transattrs.integ_hash = alg_info_esp_v2tov1aa(ta.integ_hash);
+	proto_info->attrs.transattrs.integ_hash = ta.integ
+		? ta.integ->hasher.common.ikev1_esp_id
+		: AUTH_ALGORITHM_NONE;
 	proto_info->present = TRUE;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
