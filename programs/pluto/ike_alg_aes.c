@@ -649,3 +649,32 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 	},
 	.integ_hash_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
+
+struct integ_desc ike_alg_integ_aes_cmac = {
+	.hasher = {
+		.common = {
+			.name = "aes_cmac",
+			.officname =  "aes_cmac",
+			.algo_type = IKE_ALG_INTEG,
+#if 0
+			/* not supported */
+			.ikev1_oakley_id = AUTH_ALGORITHM_AES_CMAC_96,
+#endif
+			.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
+			.algo_v2id = IKEv2_AUTH_AES_CMAC_96,
+			.fips = TRUE,
+			.do_ike_test = NULL, /* No NSS support */
+		},
+		.hash_key_size = BYTES_FOR_BITS(128),
+		.hash_digest_len = BYTES_FOR_BITS(128),
+		.hash_block_size = BYTES_FOR_BITS(128),
+#if 0
+		/* not implemented */
+		.hash_ctx_size = sizeof(aes_cmac_context),
+		.hash_init = aes_cmac_init_thunk,
+		.hash_update = aes_cmac_write_thunk,
+		.hash_final = aes_cmac_final_thunk,
+#endif
+	},
+	.integ_hash_len = BYTES_FOR_BITS(96), /* truncated */
+};

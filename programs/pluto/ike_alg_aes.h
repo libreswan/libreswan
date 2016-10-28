@@ -25,3 +25,4 @@ extern struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
 
 extern struct prf_desc ike_alg_prf_aes_xcbc;
 extern struct integ_desc ike_alg_integ_aes_xcbc;
+extern struct integ_desc ike_alg_integ_aes_cmac;

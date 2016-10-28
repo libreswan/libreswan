@@ -424,6 +424,7 @@ static struct integ_desc *integ_descriptors[] = {
 #endif
 #ifdef USE_AES
 	&ike_alg_integ_aes_xcbc,
+	&ike_alg_integ_aes_cmac,
 #endif
 };
 

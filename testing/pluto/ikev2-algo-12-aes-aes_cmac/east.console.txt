@@ -23,8 +23,8 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_000-AES_XCBC(9)
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_000-AES_XCBC(9)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_000-AES_CMAC_96(250)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_000-AES_CMAC_96(250)
 east #
  echo "initdone"
 initdone
@@ -35,12 +35,12 @@ XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc xcbc(aes) 0xHASHKEY 96
+	auth-trunc cmac(aes) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc xcbc(aes) 0xHASHKEY 96
+	auth-trunc cmac(aes) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.1.0/24 

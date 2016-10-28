@@ -84,6 +84,7 @@ static int aalg_getbyname_or_alias(const struct parser_context *context,
 		{ "sha2_512",	{ "sha512", NULL } },
 		{ "sha1",	{ "sha", NULL } },
 		{ "sha1",	{ "sha1_96", NULL } },
+		{ "aes_cmac_96", { "aes_cmac", NULL } },
 		{ NULL, { NULL } }
 	};
 
@@ -158,6 +159,9 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	case AUTH_ALGORITHM_AES_256_GMAC:
 		return AH_AES_256_GMAC;
 
+	case AUTH_ALGORITHM_AES_CMAC_96: /* private use 250 */
+		return AH_AES_CMAC_96;
+
 	case AUTH_ALGORITHM_NULL_KAME:
 	case AUTH_ALGORITHM_NONE: /* private use 251 */
 		return AH_NONE;
@@ -219,6 +223,9 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
 		auth = AUTH_ALGORITHM_AES_256_GMAC;
 		break;
 	/* private use numbers */
+	case SADB_X_AALG_AES_CMAC_96:
+		auth = AUTH_ALGORITHM_AES_CMAC_96;
+		break;
 	case SADB_X_AALG_NULL:
 		auth = AUTH_ALGORITHM_NULL_KAME;
 		break;

@@ -269,6 +269,8 @@ enum sadb_sastate {
 #define SADB_X_AALG_AH_AES_192_GMAC	12
 #define SADB_X_AALG_AH_AES_256_GMAC	13
 
+#define SADB_X_AALG_AES_CMAC_96         250             /* used internally */
+
 #define SADB_X_AALG_NULL		251		/* kame */
 #define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG	252	/* used internally to signal for broken linux kernel behaviour */
 
@@ -286,6 +288,7 @@ enum sadb_aalg {
 	K_SADB_X_AALG_AH_AES_128_GMAC=	SADB_X_AALG_AH_AES_128_GMAC,
 	K_SADB_X_AALG_AH_AES_192_GMAC=	SADB_X_AALG_AH_AES_192_GMAC,
 	K_SADB_X_AALG_AH_AES_256_GMAC=	SADB_X_AALG_AH_AES_256_GMAC, /* 13 */
+	K_SADB_X_AALG_AES_CMAC_96=      SADB_X_AALG_AES_CMAC_96,
 	K_SADB_X_AALG_NULL=		SADB_X_AALG_NULL, /* 251 */
 };
 #define K_SADB_AALG_MAX			255	/* Is this really one octets, not two? */

@@ -1024,6 +1024,7 @@ enum ikev1_auth_attribute {
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
+	AUTH_ALGORITHM_AES_CMAC_96 = 250,  /* IKEv2==8 */
 	AUTH_ALGORITHM_NULL_KAME = 251,	/* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
@@ -1572,6 +1573,7 @@ enum ipsec_authentication_algo {
 	/* IKEv1 249 - 255 Reserved for private use */
 	/* IKEv2 15-1023 Unassigned */
 	/* IKEv2 1024 - 65535 Reserved for private use */
+	AH_AES_CMAC_96 = 250,      /* IKEv2=8 */
 	AH_NULL = 251,		/* comes from kame? */
 	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };

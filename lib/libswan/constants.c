@@ -547,12 +547,13 @@ enum_names isakmp_transformid_names = {
 /* IPsec AH transform values */
 
 static const char *const ah_transform_name_private_use[] = {
+	"AH_AES_CMAC_96",
 	"AH_NULL",	/* verify with kame source? 251 */
 	"AH_SHA2_256_TRUNC",	/* our own to signal bad truncation to kernel */
 };
 
 static enum_names ah_transformid_names_private_use = {
-	AH_NULL,
+	AH_AES_CMAC_96,
 	AH_SHA2_256_TRUNC,
 	ARRAY_REF(ah_transform_name_private_use),
 	NULL, /* prefix */
@@ -1027,6 +1028,7 @@ enum_names enc_mode_names = {
 /* Auth Algorithm attribute */
 
 static const char *const auth_alg_name_stolen_use[] = {
+	"AUTH_ALGORITHM_AES_CMAC_96",
 	"AUTH_ALGORITHM_NULL_KAME",	/*
 					 * according to our source code
 					 * comments from jjo, needs
@@ -1035,7 +1037,7 @@ static const char *const auth_alg_name_stolen_use[] = {
 };
 
 static enum_names auth_alg_names_stolen_use = {
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_AES_CMAC_96,
 	AUTH_ALGORITHM_NULL_KAME,
 	ARRAY_REF(auth_alg_name_stolen_use),
 	NULL, /* prefix */
