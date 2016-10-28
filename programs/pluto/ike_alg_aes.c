@@ -546,20 +546,16 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
-/*
- * XXX: This code is duplicated in kernel_netlink.c.  Once this is
- * enabled, the latter can be deleted.
- */
 struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
 		.officname = "aes_ccm_8",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_id =      0 /* OAKLEY_AES_CCM_8*/,
+		.algo_id =      OAKLEY_AES_CCM_8,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
 		.fips =         TRUE,
-		.do_ike_test = ike_alg_true,
+		.do_ike_test = NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -576,10 +572,10 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.name = "aes_ccm_12",
 		.officname = "aes_ccm_12",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_id =      0 /*OAKLEY_AES_CCM_12*/,
+		.algo_id =      OAKLEY_AES_CCM_12,
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
 		.fips =         TRUE,
-		.do_ike_test = ike_alg_true,
+		.do_ike_test = NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -596,10 +592,10 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.name = "aes_ccm_16",
 		.officname = "aes_ccm_16",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     0 /*OAKLEY_AES_CCM_16*/,
+		.algo_id =     OAKLEY_AES_CCM_16,
 		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
 		.fips =         TRUE,
-		.do_ike_test = ike_alg_true,
+		.do_ike_test = NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
