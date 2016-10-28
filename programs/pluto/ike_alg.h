@@ -54,59 +54,89 @@ enum ike_alg_type {
 #define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
 
 /*
- * Common prefix for struct encrypt_desc and struct hash_desc.
+ * Common prefix for struct encrypt_desc and struct hash_desc (struct
+ * prf_desc and struct integ_desc).
+ *
+ * These tables use the following numeric indexes:
+ *
+ * USE       ENUM                       ENUM->STRING                  PREFIX
+ *
+ * ikev2_id (algo_v2id) / IKEv2 IKE / IKEv2 ESP / IKEv2 AH:
+ *
+ * No confusion here.
+ *
+ * ENCRYPT:  ikev2_trans_type_encr      ikev2_trans_type_encr_names   IKEv2_ENCR
+ * PRF:      ikev2_trans_type_prf       ikev2_trans_type_prf_names    IKEv2_AUTH
+ * INTEG:    ikev2_trans_type_integ     ikev2_trans_type_integ_names  IKEv2_INTEG
+ *
+ * ikev1_oakley_id / struct ike_info.ike_ealg / struct ike_info.ike_halg:
+ *
+ * The only querk here is the use of the HASH (PRF) to select INTEG.
+ * The suffix "oakley_id", rather than "ike_id" or "id", is used since
+ * it is consistent with the enum values this field contains
+ * (apparently IKEv1 IKE (phase 1) is based on the OAKLEY protocol).
+ * See ealg_getbyname_ike() and aalg_getbyname_ike().
+ *
+ * ENCRYPT:  ikev1_encr_attribute       oakley_enc_names              OAKLEY
+ * PRF:      ikev1_hash_attribute       oakley_hash_names             OAKLEY
+ * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
+ *
+ * ikev1_esp_info_id (ikev1_esp_id) / struct esp_info.transid / struct esp_info.auth:
+ *
+ * Here be trouble.  While the obvious problem is that struct esp_info
+ * is using both IKEv1 (INTEG) and IPSEC (ENCRYPT) enum types, that is
+ * of no real importance.  The real issue here is with INTEG where
+ * things have badly convoluted IKEv1 and IKEv2 ESP numbers and names.
+ * For instance, while the enum ipsec_cipher_algo contains
+ * ESP_CAMELLIA=23 (IKEv2), the name table esp_transformid_names
+ * returns 22 (IKEv1) for the string "ESP_CAMELLIA".  See
+ * ealg_getbyname_esp() and aalg_getbyname_esp().
+ *
+ * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
+ * INTEG:    ikev1_auth_attribute       auth_alg_names                AUTH_ALGORITHM
+ *
+ * (not yet if ever) ikev[12]_ipsec_id:
+ *
+ * While these values started out being consistent with IKEv1 and (I
+ * suspect) SADB/KLIPS, the've gone off the rails.  Over time they've
+ * picked up IKEv2 values making for general confusion.  Worse, as noted above, For instance,
+ * CAMELLIA has the IKEv2 value 23 (IKEv1 is 22) resulting in code
+ * never being sure if which it is dealing with.
+ *
+ * These values are not included in this table.
+ *
+ * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
+ * INTEG:    ipsec_authentication_algo  ah_transformid_names          AH
+ *
+ * (not yet if ever) SADB / KLIPS:
+ *
+ * These values, which I suspect are used to interface with KLIPS,
+ * seem to follow the original IKEv1 ESP/AH numbering (which means
+ * that they almost but not quite match the mashed up values above).
+ *
+ * These values are not included in this table
+ *
+ * ENCRYPT:  sadb_ealg                  ?                             K_SADB*EALG
+ * INTEG:    sadb_aalg                  ?                             K_SADB*AALG
+ *
+ * (not yet if ever) XFRM names:
+ *
+ * The XFRM interface uses strings to identify algorithms.
+ *
+ * Notes:
+ *
+ * For ESP/AH, since the PRF is not negotiated (the IKE SA's PRF is
+ * used) the field "PRF.ikev1_esp_id" should be left blank.  Since,
+ * for IKEv2, "PRF.ikev2_id" is used by IKE, it should be defined.
+ *
+ * XXX: Still missing is a name/alias lookup letting some of alg_info
+ * be eliminated.
  */
 struct ike_alg {
 	const char *name;	/* note: overwritten sometimes */
 	const char *const officname;
 	const enum ike_alg_type algo_type;
-	/*
-	 * These tables use the following numeric indexes:
-	 *
-	 *                  ENUM                ENUM->STRING                PREFIX
-	 *
-	 * ikev1_ike_id / struct ike_info:
-	 *
-	 * ENCRYPT:  ikev1_encr_attribute    oakley_enc_names              OAKLEY
-	 * PRF:      ikev1_hash_attribute    oakley_hash_names             OAKLEY
-	 * INTEG:    ikev1_hash_attribute    oakley_hash_names             OAKLEY
-	 *
-	 * ikev1_esp_id / struct esp_info:
-	 *
-	 * ENCRYPT:  ipsec_cipher_algo       esp_transformid_names         ESP
-	 * INTEG:    ikev1_auth_attribute    auth_alg_names                AUTH_ALGORITHM
-	 *
-	 * ikev2_id:
-	 *
-	 * ENCRYPT:  ikev2_trans_type_encr   ikev2_trans_type_encr_names   IKEv2_ENCR
-	 * PRF:      ikev2_trans_type_prf    ikev2_trans_type_prf_names    IKEv2_AUTH
-	 * INTEG:    ikev2_trans_type_integ  ikev2_trans_type_integ_names  IKEv2_INTEG
-	 *
-	 * Notes:
-	 *
-	 * For ESP/AH, since PRF is not negotiated (the IKE SA's PRF
-	 * is used) the field "PRF.ikev1_esp_id" should be left blank.
-	 * Since, for IKEv2, "PRF.ikev2_id" is used by IKE, it should
-	 * be defined.
-	 *
-	 * "struct ike_info" uses ikev1_ike_id values as defined
-	 * above.  See plutoalg.c:ealg_getbyname_ike() and
-	 * plutoalg.c:aalg_getbyname_ike().
-	 *
-	 * "struct esp_info" uses ikev1_esp_id values as defined
-	 * above.  See alg_info.c:ealg_getbyname_esp() and
-	 * alg_info.c:aalg_getbyname_esp().
-	 *
-	 * This doesn't deal with kernel codes (some kernel interfaces
-	 * use numbers, some use strings), for moment keep them in a
-	 * separate table.
-	 *
-	 * XXX: Still missing is a name/alias lookup letting some of
-	 * alg_info be eliminated.
-	 *
-	 * XXX: As you can tell, there is a rename comming.
-	 */
-	const u_int16_t algo_id;	/* const int ikev1_ike_id */
+	const u_int16_t ikev1_oakley_id;
 	const int ikev1_esp_id;
 	const u_int16_t algo_v2id;	/* const int ikev2_id */
 	/*

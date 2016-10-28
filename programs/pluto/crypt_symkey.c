@@ -72,7 +72,7 @@ static CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypte
 	/* the best wey have for "undefined" */
 	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
 
-	switch ((enum ikev1_encr_attribute) encrypter->common.algo_id) {
+	switch ((enum ikev1_encr_attribute) encrypter->common.ikev1_oakley_id) {
 	case OAKLEY_3DES_CBC:
 		mechanism = CKM_DES3_CBC;
 		break;
@@ -111,12 +111,12 @@ static CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypte
 		loglog(RC_LOG_SERIOUS,
 			"NSS: Unsupported encryption mechanism for %s",
 			enum_short_name(&oakley_enc_names,
-					encrypter->common.algo_id));
+					encrypter->common.ikev1_oakley_id));
 	} else {
 		/* XXX: DBG_CRYPTOMORE */
 		if (DBGP(DBG_CRYPT)) {
 			DBG_log("%s(%d) converted to %s(%lu)",
-				encrypter->common.name, encrypter->common.algo_id,
+				encrypter->common.name, encrypter->common.ikev1_oakley_id,
 				ckm_to_string(mechanism), mechanism);
 		}
 	}
@@ -412,7 +412,7 @@ PK11SymKey *hash_symkey_to_symkey(const char *prefix,
 
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 {
-	switch (hasher->common.algo_id) {
+	switch (hasher->common.ikev1_oakley_id) {
 	case OAKLEY_MD5:
 		return SEC_OID_MD5;
 	case OAKLEY_SHA1:

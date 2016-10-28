@@ -191,7 +191,7 @@ struct type_algorithms {
 	struct algorithm_table all;
 	struct algorithm_table ike;
 	enum ike_alg_type type;
-	enum_names *const ikev1_ike_enum_names;
+	enum_names *const ikev1_oakley_enum_names;
 	enum_names *const ikev1_esp_enum_names;
 	enum_names *const ikev2_enum_names;
 	void (*check_ike_desc)(const struct ike_alg*);
@@ -242,53 +242,59 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
  *      return ike_algo object by {type, id}
  */
 
-static const struct ike_alg *ikev1_ike_lookup(const struct algorithm_table *table,
-					      unsigned id)
+static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorithms,
+						 unsigned id)
 {
-	FOR_EACH_IKE_ALGP(table, algp) {
+	FOR_EACH_IKE_ALGP(&algorithms->ike, algp) {
 		const struct ike_alg *e = *algp;
-		if (e->algo_id == id) {
-			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 id: %u, found %s\n",
-					       table->name, id, e->name));
+		if (e->ikev1_oakley_id == id) {
+			DBG(DBG_CRYPT,
+			    struct esb_buf buf;
+			    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, found %s\n",
+				    enum_showb(algorithms->ikev1_oakley_enum_names, id, &buf),
+				    id, e->name));
 			return e;
 		}
 	}
-	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 id:%u, not found\n",
-			       table->name, id));
+	DBG(DBG_CRYPT,
+	    struct esb_buf buf;
+	    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, not found\n",
+		    enum_showb(algorithms->ikev1_oakley_enum_names, id, &buf),
+		    id));
 	return NULL;
 }
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
 {
-	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.ike, id);
+	return (const struct encrypt_desc *) ikev1_oakley_lookup(&encrypt_algorithms, id);
 }
 
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.ike, id);
+	return (const struct prf_desc *) ikev1_oakley_lookup(&prf_algorithms, id);
 }
 
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.ike, id);
+	return (const struct integ_desc *) ikev1_oakley_lookup(&integ_algorithms, id);
 }
 
 const struct encrypt_desc *ikev1_get_ike_info_encrypt_desc(const struct ike_info *ike)
 {
-	return (const struct encrypt_desc *) ikev1_ike_lookup(&encrypt_algorithms.ike,
-							      ike->ike_ealg);
+	return (const struct encrypt_desc *) ikev1_oakley_lookup(&encrypt_algorithms,
+								 ike->ike_ealg);
 }
 
 const struct prf_desc *ikev1_get_ike_info_prf_desc(const struct ike_info *ike)
 {
-	return (const struct prf_desc *) ikev1_ike_lookup(&prf_algorithms.ike,
-							  ike->ike_halg);
+	return (const struct prf_desc *) ikev1_oakley_lookup(&prf_algorithms,
+							     ike->ike_halg);
 }
 
 const struct integ_desc *ikev1_get_ike_info_integ_desc(const struct ike_info *ike)
 {
-	return (const struct integ_desc *) ikev1_ike_lookup(&integ_algorithms.ike,
-							    ike->ike_halg);
+	return (const struct integ_desc *) ikev1_oakley_lookup(&integ_algorithms,
+							       ike->ike_halg);
 }
 
 static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *table, int id)
@@ -394,7 +400,7 @@ static void check_ike_prf_desc(const struct ike_alg *alg)
 static struct type_algorithms prf_algorithms = {
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
 	.type = IKE_ALG_HASH,
-	.ikev1_ike_enum_names = &oakley_hash_names,
+	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = NULL, /* ESP/AH uses IKE PRF */
 	.ikev2_enum_names = &ikev2_trans_type_prf_names,
 	.check_ike_desc = check_ike_prf_desc,
@@ -431,7 +437,7 @@ static void check_ike_integ_desc(const struct ike_alg *alg)
 static struct type_algorithms integ_algorithms = {
 	.all = ALGORITHM_TABLE("Integrity", integ_descriptors),
 	.type = IKE_ALG_INTEG,
-	.ikev1_ike_enum_names = &oakley_hash_names,
+	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = &auth_alg_names,
 	.ikev2_enum_names = &ikev2_trans_type_integ_names,
 	.check_ike_desc = check_ike_integ_desc,
@@ -478,7 +484,7 @@ static void check_ike_encrypt_desc(const struct ike_alg *alg UNUSED)
 static struct type_algorithms encrypt_algorithms = {
 	.all = ALGORITHM_TABLE("Encryption", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
-	.ikev1_ike_enum_names = &oakley_enc_names,
+	.ikev1_oakley_enum_names = &oakley_enc_names,
 	.ikev1_esp_enum_names = &esp_transformid_names,
 	.ikev2_enum_names = &ikev2_trans_type_encr_names,
 	.check_ike_desc = check_ike_encrypt_desc,
@@ -508,9 +514,11 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
 
-		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, id: %d, v2id: %d",
+		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
 				       algorithms->all.name, alg->name, alg->officname,
-				       alg->algo_id, alg->algo_v2id));
+				       alg->ikev1_oakley_id,
+				       alg->ikev1_esp_id,
+				       alg->algo_v2id));
 		passert(alg->name);
 		passert(alg->officname);
 		passert(alg->algo_type == algorithms->type);
@@ -520,13 +528,13 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		 * entries.
 		 *
 		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
-		 * define the IKEv1 field "common.algo_id" so need to
+		 * define the IKEv1 field "common.ikev1_oakley_id" so need to
 		 * handle that.
 		 */
-		passert(alg->algo_id > 0 || alg->algo_v2id > 0 || alg->ikev1_esp_id > 0);
-		check_enum_name("IKEv1 IKE", alg->algo_id,
-				algorithms->ikev1_ike_enum_names);
-		check_enum_name("IKEv1 ESP/AH", alg->ikev1_esp_id,
+		passert(alg->ikev1_oakley_id > 0 || alg->algo_v2id > 0 || alg->ikev1_esp_id > 0);
+		check_enum_name("IKEv1 OAKLEY", alg->ikev1_oakley_id,
+				algorithms->ikev1_oakley_enum_names);
+		check_enum_name("IKEv1 ESP_INFO", alg->ikev1_esp_id,
 				algorithms->ikev1_esp_enum_names);
 		check_enum_name("IKEv2", alg->algo_v2id,
 				algorithms->ikev2_enum_names);
@@ -534,13 +542,18 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		/*
 		 * Algorithm can't appear twice.
 		 *
-		 * Lookup existing algorithms using a sub-table.
+		 * Fudge up the ALL and IKE tables so that they only
+		 * contain the previously verified algorithms.
 		 */
-		struct algorithm_table scratch = algorithms->all;
-		scratch.end = algp;
-		passert(alg->algo_id == 0 || ikev1_ike_lookup(&scratch, alg->algo_id) == NULL);
-		passert(alg->ikev1_esp_id == 0 || ikev1_esp_lookup(&scratch, alg->ikev1_esp_id) == NULL);
-		passert(alg->algo_v2id == 0 || ikev2_lookup(&scratch, alg->algo_v2id) == NULL);
+		struct type_algorithms scratch = *algorithms;
+		scratch.all.end = algp;
+		scratch.ike = scratch.all;
+		passert(alg->ikev1_oakley_id == 0 ||
+			ikev1_oakley_lookup(&scratch, alg->ikev1_oakley_id) == NULL);
+		passert(alg->ikev1_esp_id == 0 ||
+			ikev1_esp_lookup(&scratch.all, alg->ikev1_esp_id) == NULL);
+		passert(alg->algo_v2id == 0 ||
+			ikev2_lookup(&scratch.all, alg->algo_v2id) == NULL);
 
 		/*
 		 * Extra IKE specific native validation.

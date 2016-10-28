@@ -254,11 +254,11 @@ void ike_alg_show_status(void)
 		struct esb_buf v1namebuf, v2namebuf;
 		const struct encrypt_desc *alg = (*algp);
 
-		passert(alg->common.algo_id != 0 || alg->common.algo_v2id != 0);
+		passert(alg->common.ikev1_oakley_id != 0 || alg->common.algo_v2id != 0);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-			  alg->common.algo_id,
-			  enum_showb(&oakley_enc_names, alg->common.algo_id, &v1namebuf),
+			  alg->common.ikev1_oakley_id,
+			  enum_showb(&oakley_enc_names, alg->common.ikev1_oakley_id, &v1namebuf),
 			  alg->common.algo_v2id,
 			  enum_showb(&ikev2_trans_type_encr_names, alg->common.algo_v2id, &v2namebuf),
 			  alg->enc_blocksize,
@@ -271,8 +271,8 @@ void ike_alg_show_status(void)
 		const struct hash_desc *alg = (*algp);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-			  alg->common.algo_id,
-			  enum_name(&oakley_hash_names, alg->common.algo_id),
+			  alg->common.ikev1_oakley_id,
+			  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
 			  alg->hash_digest_len);
 	}
 

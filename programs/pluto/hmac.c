@@ -82,7 +82,7 @@ CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 {
 	CK_MECHANISM_TYPE mechanism = 0x80000000;
 
-	switch (hasher->common.algo_id) {
+	switch (hasher->common.ikev1_oakley_id) {
 	case OAKLEY_MD5:
 		mechanism = CKM_MD5_KEY_DERIVATION;
 		break;

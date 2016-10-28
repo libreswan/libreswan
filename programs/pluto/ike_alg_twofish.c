@@ -81,7 +81,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.name = "twofish",
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.algo_id = OAKLEY_TWOFISH_CBC,
+		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
 		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC,
 		.do_ike_test = ike_alg_true,
 	},
@@ -101,7 +101,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.name = "twofish_ssh", /* We don't know if this is right */
 		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
-		.algo_id = OAKLEY_TWOFISH_CBC_SSH,
+		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
 		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC_SSH,
 		.do_ike_test = ike_alg_true,
 	},
