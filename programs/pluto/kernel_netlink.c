@@ -67,6 +67,7 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
+#include "ike_alg_aes.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -291,6 +292,16 @@ static void linux_pfkey_add_hard_wired(void)
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
+
+	/*
+	 * IPSEC integrity algorithms.
+	 */
+	kernel_integ_add(SADB_X_AALG_AES_CMAC_96, &ike_alg_integ_aes_cmac,
+			 "cmac(aes)");
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Registered new AUTH algorithms"));
+
 }
 
 /*
