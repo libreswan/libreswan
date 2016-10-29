@@ -70,6 +70,7 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+#include "ike_alg.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
@@ -3578,6 +3579,24 @@ void expire_bare_shunts(void)
 unsigned
 ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 {
+	/*
+	 * New way.
+	 *
+	 * In truth the lookup shouln't be needed, instead they should
+	 * just hang onto the kernel_integ object.
+	 */
+	const struct kernel_integ *ki =
+		kernel_integ_by_ikev1_auth_attribute(auth);
+	if (ki != NULL) {
+		if (alg) {
+			*alg = ki->sadb_aalg;
+		}
+		return ki->integ->hasher.hash_key_size; /* bytes */
+	}
+        /*
+         * Old way.  Callers should just hang onto the kernel_integ
+         * object.
+         */
 	int authalg;
 	unsigned key_len;
 

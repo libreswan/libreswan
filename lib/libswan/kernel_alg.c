@@ -35,6 +35,8 @@
 #include "kernel_alg.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "ike_alg.h"
+#include "ietf_constants.h"
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
@@ -204,6 +206,56 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 
 	*alg_p = tmp_alg;
 	return 1;
+}
+
+static struct kernel_integ *kernel_integ;
+
+void kernel_integ_add(enum sadb_aalg sadb_aalg,
+		      const struct integ_desc *integ,
+		      const char *netlink_name)
+{
+	struct sadb_alg alg = {
+		.sadb_alg_minbits = integ->hasher.hash_key_size * BITS_PER_BYTE,
+		.sadb_alg_maxbits = integ->hasher.hash_key_size * BITS_PER_BYTE,
+		.sadb_alg_id = sadb_aalg,
+	};
+	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register %s for ESP",
+		       integ->hasher.common.name);
+		return;
+	}
+	struct kernel_integ *new = alloc_thing(struct kernel_integ, "kernel integ");
+	*new = (struct kernel_integ) {
+		.sadb_aalg = sadb_aalg,
+		.integ = integ,
+		.netlink_name = netlink_name,
+		.next = kernel_integ,
+	};
+	kernel_integ = new;
+}
+
+const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg sadb_aalg)
+{
+	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
+		if (k->sadb_aalg == sadb_aalg) {
+			return k;
+		}
+	}
+	return NULL;
+}
+
+const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute id)
+{
+	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
+		/*
+		 * For integ, the ESP_ID contains enum
+		 * ikev1_auth_attribute
+		 */
+		if ((enum ikev1_auth_attribute) k->integ->hasher.common.ikev1_esp_id == id) {
+			return k;
+		}
+	}
+	return NULL;
 }
 
 err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)

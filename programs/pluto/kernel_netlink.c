@@ -67,7 +67,6 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
-#include "ike_alg.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -242,15 +241,15 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 }
 
 /*
- * wire-in Authenticated Encryption with Associated Data transforms
- * (do both enc and auth in one transform)
+ * Wire-in Authenticated Encryption with Associated Data transforms
+ * (do both enc and auth in one transform); along with "aes(cmac)".
  */
-static void linux_pfkey_add_aead(void)
+
+static void linux_pfkey_add_hard_wired(void)
 {
 	struct sadb_alg alg;
 
 	alg.sadb_alg_reserved = 0;
-
 
 	/* IPsec algos (encryption and authentication combined) */
 	alg.sadb_alg_ivlen = 8;
@@ -340,8 +339,16 @@ static void init_netlink(void)
 	 */
 	init_pfkey();
 
-	/* ??? why do we have to wire these in? */
-	linux_pfkey_add_aead();
+	/*
+	 * The PFKEY interface is on life support.  Since it isn't
+	 * being extended to support new algorithms, they need to be
+	 * hard wired.
+	 *
+	 * Kind of lame since pluto should query the kernel for what
+	 * it supports.  OTOH, the query might happen before the
+	 * crypto module gets loaded.
+	 */
+	linux_pfkey_add_hard_wired();
 }
 
 /*
@@ -1019,7 +1026,18 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->authkeylen != 0) {
-		const char *name = sparse_name(aalg_list, sa->authalg);
+		const char *name;
+		/*
+		 * SA should just contain a pointer to struct
+		 * kernel_integ
+		 */
+		const struct kernel_integ *ki =
+			kernel_integ_by_ikev1_auth_attribute(sa->authalg);
+		if (ki != NULL) {
+			name = ki->netlink_name;
+		} else {
+			name = sparse_name(aalg_list, sa->authalg);
+		}
 
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
