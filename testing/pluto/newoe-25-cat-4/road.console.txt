@@ -29,7 +29,7 @@ road #
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
-000 seccomp=disabled
+000 seccomp=OFF
 000  
 000 config setup options:
 000  
