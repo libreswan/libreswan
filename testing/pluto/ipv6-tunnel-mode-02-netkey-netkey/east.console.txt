@@ -92,7 +92,6 @@ east #
 000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
-000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
 000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
 000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
 000  
