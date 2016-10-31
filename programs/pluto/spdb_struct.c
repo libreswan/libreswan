@@ -88,14 +88,12 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				bool single_dh)
 {
 	struct db_sa *gsp = NULL;
-	struct ike_info *ike_info;
 
 	/* Next two are for multiple proposals in agressive mode... */
 	unsigned last_modp = 0;
 	bool warned_dropped_dhgr = FALSE;
 
 	int transcnt = 0;
-	int i;
 
 	/*
 	 * start by copying the proposal that would have been picked by
@@ -115,7 +113,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * when creating each item, we will use the first transform
 	 * from the base item as the template.
 	 */
-	ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
+	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
 		unsigned ealg = ike_info->ike_ealg;

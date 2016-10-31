@@ -252,15 +252,13 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 				 struct alg_info_esp *alg_info)
 {
 	char *ptr = buf;
-	struct esp_info *esp_info;
-	int cnt;
 	const char *sep = "";
 
 	passert(buflen >= sizeof("none"));
 
 	jam_str(buf, buflen, "none");
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
 		err_t ugh = check_kernel_encrypt_alg(esp_info->transid, 0);
 
 		if (ugh != NULL) {
@@ -295,14 +293,12 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 				struct alg_info_esp *alg_info)
 {
 	char *ptr = buf;
-	struct esp_info *esp_info;
-	int cnt;
 	const char *sep = "";
 
 	passert(buflen >= sizeof("none"));
 	jam_str(buf, buflen, "none");
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
 		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
 			DBG_log("auth algid=%d not available",
 				esp_info->auth);
@@ -380,11 +376,9 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
 	char *ptr = buf;
-	struct ike_info *ike_info;
-	int cnt;
 	const char *sep = "";
 
-	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
+	FOR_EACH_IKE_INFO(alg_info, ike_info) {
 		if (ikev1_get_ike_info_encrypt_desc(ike_info) != NULL &&
 		    ikev1_get_ike_info_prf_desc(ike_info) != NULL &&
 		    lookup_group(ike_info->ike_modp) != NULL) {
@@ -570,10 +564,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 	bool success = TRUE;
 	if (alg_info != NULL) {
-		const struct esp_info *esp_info;
-		int i;
-
-		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		FOR_EACH_ESP_INFO(alg_info, esp_info) {
 			if (!kernel_alg_db_add(ctx_new,
 					esp_info,
 					policy, logit))
@@ -631,16 +622,13 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 			const struct alg_info_esp *alg_info)
 {
-	const struct esp_info *esp_info;
-	int i;
-
 	if (alg_info == NULL)
 		return TRUE;
 
 	if (key_len == 0)
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
 		if (esp_info->transid == ealg &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
@@ -658,13 +646,10 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 
 bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 {
-	const struct esp_info *esp_info;	/* really AH */
-	int i;
-
 	if (alg_info == NULL)
 		return TRUE;
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
 		if (esp_info->auth == aalg)
 			return TRUE;
 	}

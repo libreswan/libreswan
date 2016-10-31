@@ -842,10 +842,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 
 	if (ealg_insecure || alg_info_ike != NULL) {
 		if (alg_info_ike != NULL) {
-			struct ike_info *ike_info;
-			int i;
-
-			ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, i) {
+			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
 				if (ike_info->ike_ealg == ealg &&
 				    (ike_info->ike_eklen == 0 ||
 				     key_len == 0 ||

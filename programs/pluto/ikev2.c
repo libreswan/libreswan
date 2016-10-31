@@ -68,7 +68,7 @@
 #include "vendor.h"
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
-#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+#include "alg_info.h" /* for ike_info / esp_info */
 
 #include "ietf_constants.h"
 

@@ -157,11 +157,22 @@ void alg_info_snprint_ike_info(char *buf, size_t buflen,
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
 			       const struct esp_info *esp_info);
 
-#define ALG_INFO_ESP_FOREACH(aie, ai_esp, i) \
-	for ((i) = (aie)->ai.alg_info_cnt, (ai_esp) = (aie)->esp; (i)--; (ai_esp)++)
+/*
+ * Iterate through the elements of an ESP or IKE table.
+ *
+ * Use __typeof__ instead of const to get around ALG_INFO some times
+ * being const and sometimes not.
+ */
 
-#define ALG_INFO_IKE_FOREACH(aii, ai_ike, i) \
-	for ((i) = (aii)->ai.alg_info_cnt, (ai_ike) = (aii)->ike; (i)--; (ai_ike)++)
+#define FOR_EACH_ESP_INFO(ALG_INFO, ESP_INFO)				\
+	for (__typeof__((ALG_INFO)->esp[0]) *(ESP_INFO) = (ALG_INFO)->esp; \
+	     (ESP_INFO) < (ALG_INFO)->esp + (ALG_INFO)->ai.alg_info_cnt; \
+	     (ESP_INFO)++)
+
+#define FOR_EACH_IKE_INFO(ALG_INFO, IKE_INFO)				\
+	for (__typeof__((ALG_INFO)->ike[0]) *(IKE_INFO) = (ALG_INFO)->ike; \
+	     (IKE_INFO) < (ALG_INFO)->ike + (ALG_INFO)->ai.alg_info_cnt; \
+	     (IKE_INFO)++)
 
 extern int alg_enum_search(enum_names *ed, const char *prefix,
 			   const char *postfix, const char *name);

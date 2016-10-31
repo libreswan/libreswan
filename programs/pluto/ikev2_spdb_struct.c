@@ -1830,9 +1830,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
-	struct ike_info *ike_info;
-	int ixxxx;
-	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, ixxxx) {
+	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
 		DBG(DBG_CONTROL,
 		    char buf[1024];
 		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
@@ -2141,9 +2139,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
-	const struct esp_info *esp_info;
-	int ixxxx;
-	ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, ixxxx) {
+	FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
 		DBG(DBG_CONTROL,
 		    char buf[1024];
 		    alg_info_snprint_esp_info(buf, sizeof(buf), esp_info);

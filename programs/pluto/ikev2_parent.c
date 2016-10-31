@@ -64,7 +64,7 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 #include "pam_conv.h"
-#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+#include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
 

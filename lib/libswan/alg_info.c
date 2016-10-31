@@ -1103,24 +1103,20 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 	switch (alg_info_esp->ai.alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
 	{
-		const struct esp_info *esp_info;
-		int cnt;
-
-		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)",
-				enum_short_name(&esp_transformid_names,
-						esp_info->transid),
-				esp_info->transid,
-				(int)esp_info->enckeylen,
-				strip_prefix(enum_short_name(&auth_alg_names,
-							esp_info->auth),
-						"HMAC_"),
-				esp_info->auth);
+		const char *sep = "";
+		FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
+			snprintf(ptr, be - ptr,
+				 "%s%s(%d)_%03d-%s(%d)", sep,
+				 enum_short_name(&esp_transformid_names,
+						 esp_info->transid),
+				 esp_info->transid,
+				 (int)esp_info->enckeylen,
+				 strip_prefix(enum_short_name(&auth_alg_names,
+							      esp_info->auth),
+					      "HMAC_"),
+				 esp_info->auth);
 			ptr += strlen(ptr);
-			if (cnt > 0) {
-				snprintf(ptr, be - ptr, ", ");
-				ptr += strlen(ptr);
-			}
+			sep = ", ";
 		}
 		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
@@ -1134,20 +1130,16 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 
 	case PROTO_IPSEC_AH:
 	{
-		const struct esp_info *esp_info;
-		int cnt;
-
-		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-			snprintf(ptr, be - ptr, "%s(%d)",
-				strip_prefix(enum_short_name(&auth_alg_names,
-							esp_info->auth),
-					"HMAC_"),
-				esp_info->auth);
+		const char *sep = "";
+		FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
+			snprintf(ptr, be - ptr,
+				 "%s%s(%d)", sep,
+				 strip_prefix(enum_short_name(&auth_alg_names,
+							      esp_info->auth),
+					      "HMAC_"),
+				 esp_info->auth);
 			ptr += strlen(ptr);
-			if (cnt > 0) {
-				snprintf(ptr, be - ptr, ", ");
-				ptr += strlen(ptr);
-			}
+			sep = ", ";
 		}
 		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
@@ -1175,12 +1167,11 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 
 	passert(buflen > 0);
 
-	const struct ike_info *ike_info;
-	int cnt;
-	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
+	const char *sep = "";
+	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
 		snprintf(ptr, be - ptr,
-			 "%s(%d)_%03d-%s(%d)-%s(%d)",
-			 enum_short_name(&oakley_enc_names, ike_info->ike_ealg),
+			 "%s%s(%d)_%03d-%s(%d)-%s(%d)",
+			 sep, enum_short_name(&oakley_enc_names, ike_info->ike_ealg),
 			 ike_info->ike_ealg,
 			 (int)ike_info->ike_eklen,
 			 enum_short_name(&oakley_hash_names, ike_info->ike_halg),
@@ -1189,9 +1180,6 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 			 ike_info->ike_modp
 			);
 		ptr += strlen(ptr);
-		if (cnt > 0) {
-			snprintf(ptr, be - ptr, ", ");
-			ptr += strlen(ptr);
-		}
+		sep = ", ";
 	}
 }
