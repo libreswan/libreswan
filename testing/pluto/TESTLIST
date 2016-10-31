@@ -597,7 +597,6 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 # tests for usnig multiple subnets using conn aliases
 #
 umlXhost	multinet-01		good
-umlXhost	multinet-02		good
 umlXhost	multinet-03		good
 umlXhost	multinet-04		good
 
