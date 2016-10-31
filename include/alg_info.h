@@ -62,20 +62,52 @@ struct parser_context {
 };
 
 struct esp_info {
-	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
-	u_int16_t auth;         /* AUTH */
+	/*
+	 * The encryption algorithm and key length; if required by
+	 * ESP.
+	 *
+	 * Because struct encrypt_desc still specifies multiple key
+	 * lengths, ENCKEYLEN is still required.
+	 */
+	const struct encrypt_desc *encrypt;
+	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
-	u_int8_t encryptalg;    /* normally  encryptalg=transid */
-	u_int16_t authalg;	/* normally  authalg=auth+1
+	/*
+	 * The authentication algorithm; if required by ESP/AH.
+	 */
+	const struct integ_desc *integ;
+	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
+	/*
+	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
+	 * used by the kernel backends.
+	 */
+	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
+	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
 				 * Paul: apparently related to magic at
 				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
 				 */
 };
 
 struct ike_info {
-	u_int16_t ike_ealg;             /* encryption algorithm - bit 15 set for reserved */
-	u_int8_t ike_halg;              /* hash algorithm */
+	/*
+	 * Encryption.
+	 *
+	 * Because struct encrypt_desc still specifies multiple key
+	 * lengths, ENCKEYLEN is still required.
+	 */
+	const struct encrypt_desc *encrypt;
+	u_int16_t ike_ealg;             /* enum ikev1_encr_attribute: bit 15 set for reserved */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
+	/*
+	 * Integrity and PRF.
+	 */
+	const struct prf_desc *prf;
+	const struct integ_desc *integ;
+	u_int8_t ike_halg;              /* enum ikev1_hash_attribute: hash algorithm */
+	/*
+	 * MODP group
+	 */
+	const struct oakley_group *group;
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
