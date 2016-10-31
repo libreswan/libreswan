@@ -1924,43 +1924,54 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 		const struct esp_info *ei;
 
-		/* ??? table of non-registered algorithms? */
+		/*
+		 * ??? table of non-registered algorithms?
+		 *
+		 * Looks like a hardwired and limited map from ESP/AH
+		 * to SADB (KLIPS).
+		 *
+		 * Since the allowed combinations are fixed, limited
+		 * and old (anything recent is instead handled by
+		 * kernel_alg_esp_info()) it may well be possible to
+		 * delete this table.
+		 */
 		static const struct esp_info esp_info[] = {
-			{ ESP_NULL, AUTH_ALGORITHM_HMAC_MD5,
-			  0,
-			  SADB_EALG_NULL, SADB_AALG_MD5HMAC },
-			{ ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
-			  0,
-			  SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
-			{ ESP_3DES, AUTH_ALGORITHM_NONE,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_NONE },
-			{ ESP_3DES, AUTH_ALGORITHM_HMAC_MD5,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_MD5HMAC },
-			{ ESP_3DES, AUTH_ALGORITHM_HMAC_SHA1,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_NULL, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = 0,
+			  .encryptalg = SADB_EALG_NULL, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_NULL, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = 0,
+			  .encryptalg = SADB_EALG_NULL, .authalg = SADB_AALG_SHA1HMAC, },
 
-			{ ESP_AES, AUTH_ALGORITHM_NONE,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_NONE },
-			{ ESP_AES, AUTH_ALGORITHM_HMAC_MD5,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_MD5HMAC },
-			{ ESP_AES, AUTH_ALGORITHM_HMAC_SHA1,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_SHA1HMAC, },
 
-			{ ESP_CAST, AUTH_ALGORITHM_NONE,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_NONE },
-			{ ESP_CAST, AUTH_ALGORITHM_HMAC_MD5,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_MD5HMAC },
-			{ ESP_CAST, AUTH_ALGORITHM_HMAC_SHA1,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_SHA1HMAC, },
+
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_SHA1HMAC, },
 		};
 
 		u_int8_t natt_type = 0;
