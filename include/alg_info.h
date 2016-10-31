@@ -62,7 +62,6 @@ struct parser_context {
 };
 
 struct esp_info {
-	bool esp_default;
 	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
 	u_int16_t auth;         /* AUTH */
 	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
