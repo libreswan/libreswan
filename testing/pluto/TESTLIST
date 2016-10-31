@@ -664,7 +664,7 @@ umlplutotest	sourceip-02			good
 # IPv6 tests
 #################################################################
 kvmplutotest	ipv6-v6-through-v6-klips-klips		wip
-umlplutotest	ipv6-v6-through-v6-netkey-netkey	good
+umlplutotest	ipv6-v6-through-v6-netkey-netkey	wip
 umlplutotest	ipv6-v6-through-v6-klips-netkey		good
 umlplutotest	ipv6-v4-through-v6-klips-klips		good
 umlplutotest	ipv6-v6-through-v4-klips-klips		good
