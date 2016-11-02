@@ -45,8 +45,8 @@ kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-04-basic-x509-ckaid		good
 kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-dcookie-01			good
-kvmplutotest	ikev2-dcookie-02			good
-kvmplutotest	ikev2-dcookie-03			good
+kvmplutotest	ikev2-dcookie-02			wip
+kvmplutotest	ikev2-dcookie-03			wip
 
 kvmplutotest	ikev2-07-biddown			wip
 kvmplutotest	ikev2-08-delete-notify			good
@@ -66,7 +66,7 @@ kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
-kvmplutotest	ikev2-19-x509-auto-start		good
+kvmplutotest	ikev2-19-x509-auto-start		wip
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
 kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev2-30-rw-no-rekey			good
@@ -201,7 +201,7 @@ kvmplutotest	nflog-03-conns				good
 
 kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
-kvmplutotest	netkey-vti-03				good
+kvmplutotest	netkey-vti-03				wip
 
 kvmplutotest	netkey-tfc-01				good
 kvmplutotest	netkey-tfc-02				good
@@ -234,7 +234,7 @@ kvmplutotest	newoe-13-block				good
 kvmplutotest	newoe-14-clear-in-block-clear		good
 kvmplutotest	newoe-15-portpass			good
 kvmplutotest	newoe-16-pass-hold			good
-kvmplutotest	newoe-17-block-in-clear-clear		good
+kvmplutotest	newoe-17-block-in-clear-clear		wip
 # 
 kvmplutotest 	newoe-18-poc-poc 			good
 kvmplutotest 	newoe-18-poc-cop 			good
@@ -459,7 +459,7 @@ kvmplutotest	nat-pluto-04		good
 kvmplutotest	nat-pluto-07		good
 kvmplutotest	nat-pluto-08		good
 kvmplutotest	nat-pluto-09		good
-kvmplutotest	nat-pluto-10		good
+kvmplutotest	nat-pluto-10		wip
 
 #
 # Test of NAT traversal w/DPD
@@ -493,8 +493,8 @@ kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
 kvmplutotest	xauth-pluto-09		good
 
-kvmplutotest	xauth-pluto-10		good
-kvmplutotest	xauth-pluto-11		good
+kvmplutotest	xauth-pluto-10		wip
+kvmplutotest	xauth-pluto-11		wip
 kvmplutotest	xauth-pluto-12		good
 kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
@@ -582,7 +582,7 @@ kvmplutotest	klips-basic-pluto-01	good
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
-kvmplutotest    algo-pluto-04          good
+kvmplutotest    algo-pluto-04          wip
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
 kvmplutotest    algo-pluto-07          good
@@ -685,7 +685,7 @@ kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	wip
 #################################################################
 # Interop tests
 #################################################################
-kvmplutotest    interop-ikev2-racoon-01-noconn			good
+kvmplutotest    interop-ikev2-racoon-01-noconn			wip
 kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
 kvmplutotest    interop-ikev2-racoon-03-psk-initiator		good
 kvmplutotest    interop-ikev2-racoon-04-x509-responder		wip
