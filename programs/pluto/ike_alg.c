@@ -227,10 +227,16 @@ const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **la
 						     (const struct ike_alg**)last);
 }
 
-const struct hash_desc **next_ike_prf_desc(const struct hash_desc **last)
+const struct prf_desc **next_ike_prf_desc(const struct prf_desc **last)
 {
-	return (const struct hash_desc**)next_alg(&prf_algorithms.ike,
-						  (const struct ike_alg**)last);
+	return (const struct prf_desc**)next_alg(&prf_algorithms.ike,
+						 (const struct ike_alg**)last);
+}
+
+const struct integ_desc **next_ike_integ_desc(const struct integ_desc **last)
+{
+	return (const struct integ_desc**)next_alg(&integ_algorithms.ike,
+						   (const struct ike_alg**)last);
 }
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)

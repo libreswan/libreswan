@@ -322,7 +322,8 @@ extern bool ike_alg_true(const struct ike_alg*);
  * Iterate over the IKE enabled algorithms.
  */
 const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last);
-const struct hash_desc **next_ike_prf_desc(const struct hash_desc **last);
+const struct prf_desc **next_ike_prf_desc(const struct prf_desc **last);
+const struct integ_desc **next_ike_integ_desc(const struct integ_desc **last);
 
 /* Oakley group descriptions */
 

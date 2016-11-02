@@ -265,10 +265,10 @@ void ike_alg_show_status(void)
 			  alg->keydeflen);
 	}
 
-	for (const struct hash_desc **algp = next_ike_prf_desc(NULL);
+	for (const struct prf_desc **algp = next_ike_prf_desc(NULL);
 	     algp != NULL;
 	     algp = next_ike_prf_desc(algp)) {
-		const struct hash_desc *alg = (*algp);
+		const struct hash_desc *alg = &(*algp)->hasher;
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  alg->common.ikev1_oakley_id,
