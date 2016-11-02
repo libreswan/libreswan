@@ -107,7 +107,7 @@ struct ike_info {
 	/*
 	 * MODP group
 	 */
-	const struct oakley_group *group;
+	const struct oakley_group_desc *group;
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
