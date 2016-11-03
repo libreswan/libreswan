@@ -1,10 +1,10 @@
 /*
- * sanitize a string into a printable format.
+ * Panic, for libreswan.
  *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -29,9 +29,6 @@ typedef void (*libreswan_passert_fail_t)(const char *pred_str,
 
 extern libreswan_passert_fail_t libreswan_passert_fail;
 
-extern void pexpect_log(const char *pred_str,
-			const char *file_str, unsigned long line_no);
-
 #define impossible()  libreswan_passert_fail("impossible", __FILE__, __LINE__)
 
 extern void libreswan_switch_fail(int n,
@@ -48,10 +45,28 @@ extern void libreswan_switch_fail(int n,
 		}							\
 	}
 
+
+/*
+ * Check/log a pexpect failure to the "panic" channel.
+ *
+ * Notes:
+ *
+ * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
+ * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
+ * workarounds.
+ *
+ * "pexpect()" does use the shorter statement "if(!(pred))" in the
+ * below as it will suppresses -Wparen (i.e., assignment in if
+ * statement).
+ */
+
+extern void pexpect_log(const char *file_str, unsigned long line_no,
+			const char *fmt, ...)  PRINTF_LIKE(3);
+#define PEXPECT_LOG(FMT, ...) pexpect_log(__FILE__, __LINE__, FMT,  __VA_ARGS__)
+
 #define pexpect(pred) {							\
-		/* Shorter if(!(pred)) suppresses -Wparen */		\
 		if (pred) {} else {					\
-			pexpect_log(#pred, __FILE__, __LINE__);		\
+			PEXPECT_LOG("%s", #pred);			\
 		}							\
 	}
 

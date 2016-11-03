@@ -632,14 +632,6 @@ void passert_fail(const char *pred_str, const char *file_str,
 	libreswan_log_abort(file_str, line_no);
 }
 
-void pexpect_log(const char *pred_str, const char *file_str,
-		 unsigned long line_no)
-{
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
-}
-
 lset_t
 	base_debugging = DBG_NONE, /* default to reporting nothing */
 	cur_debugging =  DBG_NONE;
