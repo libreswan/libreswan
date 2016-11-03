@@ -56,12 +56,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-# -DOLD_RESOLVER.  At some point, the resolver interface changed.
-#    This macro enables Pluto support for the old interface.
-#    It is automatically defined, based on the value of the <resolver.h>
-#    macro __RES.  We don't know the correct threshold, so you may
-#    find that you must manually define this.  If so, please inform
-#    us so that we can refine the threshold.
 
 # The following are best left undefined -- each can be overridden at runtime
 # if need be.
