@@ -243,7 +243,8 @@ class ResultCache:
         self.cached_result = post.mortem(self.test, self.args,
                                          baseline=self.baseline,
                                          output_directory=self.test.saved_output_directory,
-                                         quick=self.args.quick, update=self.args.update)
+                                         quick=self.args.quick, update=self.args.update,
+                                         finished=None)
         self.result_stats.add_result(self.cached_result)
         return self.cached_result
 
