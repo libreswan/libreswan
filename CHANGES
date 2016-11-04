@@ -16,6 +16,9 @@ v3.19 (unreleased)
 * X509: Start a fetch for CRLs 5 seconds after startup [Kim]
 * X509: log the NSS error when CERT_ImportCerts() fails [Paul]
 * X509: Don't attempt to fetch crl->uri for fetching when not present [Paul/Matt]
+* X509: Additional OCSP options to tweak the cache and fetch method [Paul]
+        (new keywords: ocsp-method ocsp-cache-size ocsp-cache-min-age
+                       ocsp-cache-max-age)
 * pluto: Fix ca name and generalName leak lsbz#276 [Bill Rios]
 * pluto: SECCOMP support (seccomp=enabled|tolerant|disabled) [Paul]
 * pluto: connection instances need their own reqid [Antony]
