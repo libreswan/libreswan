@@ -122,22 +122,31 @@ class Testsuite:
         self.testlist = collections.OrderedDict()
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
+                # clean up the line, but save the original for logging
+                orig = line.strip("\r\n")
+                if "#" in line:
+                    line = line[:line.find("#")]
                 line = line.strip()
-                # these three log lines are ment to align
+                # the two log messages should align
                 if not line:
-                    logger.debug("%7s: ", "blank")
+                    logger.debug("empty: %s", orig)
                     continue
-                if line[0] == '#':
-                    logger.debug("%7s: %s", "comment", line)
-                    continue
-                logger.debug("%7s: %s", "input", line)
-                try:
-                    kind, name, expected_result = line.split()
-                except ValueError:
+                else:
+                    logger.debug("input: %s", orig)
+                # Extract the fields
+                fields = line.split()
+                if len(fields) < 3:
                     # This is serious
-                    logger.log(error_level,
-                                    "****** malformed line: %s", line)
+                    logger.log(error_level, "****** missing fields: %s", orig)
                     continue
+                if len(fields) > 4:
+                    # This is serious
+                    logger.log(error_level, "****** too many fields: %s", orig)
+                    continue
+                kind = fields[0]
+                name = fields[1]
+                expected_result = fields[2]
+                # pr = fields[3]?
                 test = Test(kind=kind, expected_result=expected_result,
                             test_directory=os.path.join(self.directory, name),
                             testsuite_output_directory=testsuite_output_directory,
