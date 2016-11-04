@@ -23,8 +23,8 @@ kvmplutotest	basic-pluto-00	good
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-02			good
 kvmplutotest	basic-pluto-03			good
-kvmplutotest    basic-pluto-04			good
-kvmplutotest    basic-pluto-07-sourceip		good
+kvmplutotest    basic-pluto-04			wip
+kvmplutotest    basic-pluto-07-sourceip		wip
 
 kvmplutotest	netkey-audit-01	good
 
@@ -65,7 +65,7 @@ kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
-kvmplutotest	ikev2-18-x509-alias			good
+kvmplutotest	ikev2-18-x509-alias			wip
 kvmplutotest	ikev2-19-x509-auto-start		wip
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
 kvmplutotest	ikev2-32-nat-rw-rekey			good
@@ -77,7 +77,7 @@ kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
-kvmplutotest	ikev2-49-hub-spoke			good
+kvmplutotest	ikev2-49-hub-spoke			wip
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
 
@@ -184,8 +184,8 @@ kvmplutotest	ikev2-auth-null-01			good
 kvmplutotest	ikev2-ddos-01				wip
 
 kvmplutotest	ikev2-switchnat-01			wip
-kvmplutotest	ikev1-switchnat-01			good
-kvmplutotest	ikev1-hub-spoke 			good
+kvmplutotest	ikev1-switchnat-01			wip
+kvmplutotest	ikev1-hub-spoke 			wip
 
 kvmplutotest	pluto-ipcmp-01	good
 
@@ -440,7 +440,7 @@ kvmplutotest	ikev1-rekey-connswitch	wip
 kvmplutotest	x509-pluto-01		good
 kvmplutotest	x509-pluto-02		good
 kvmplutotest	x509-pluto-03		good
-kvmplutotest	x509-pluto-04		good
+kvmplutotest	x509-pluto-04		wip
 
 kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
@@ -615,7 +615,7 @@ umlplutotest	protoport-02		good
 kvmplutotest    netkey-klips-pluto-03		good
 umlplutotest    netkey-pluto-05			good
 kvmplutotest    klips-netkey-pluto-06		good
-kvmplutotest    netkey-psk-pluto-06		good
+kvmplutotest    netkey-psk-pluto-06		wip
 umlplutotest	netkey-psk-vhost-01		good
 umlplutotest	netkey-psk-vhost-02		good
 umlplutotest	netkey-psk-vhost-03		good
@@ -660,9 +660,9 @@ kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	wip
 #################################################################
 kvmplutotest    interop-ikev2-racoon-01-noconn			wip
 kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
-kvmplutotest    interop-ikev2-racoon-03-psk-initiator		good
+kvmplutotest    interop-ikev2-racoon-03-psk-initiator		wip
 kvmplutotest    interop-ikev2-racoon-04-x509-responder		wip
-kvmplutotest    interop-ikev2-racoon-05-x509-initiator		good
+kvmplutotest    interop-ikev2-racoon-05-x509-initiator		wip
 
 kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
