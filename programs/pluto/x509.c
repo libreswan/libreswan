@@ -82,8 +82,8 @@
 #include <secder.h>
 #include <ocsp.h>
 
-bool strict_crl_policy = FALSE;
-bool strict_ocsp_policy = FALSE;
+bool crl_strict = FALSE;
+bool ocsp_strict = FALSE;
 bool ocsp_enable = FALSE;
 char *curl_iface = NULL;
 long curl_timeout = -1;
@@ -742,8 +742,8 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	bool rev_opts[RO_SZ];
 
 	rev_opts[RO_OCSP] = ocsp_enable;
-	rev_opts[RO_OCSP_S] = strict_ocsp_policy;
-	rev_opts[RO_CRL_S] = strict_crl_policy;
+	rev_opts[RO_OCSP_S] = ocsp_strict;
+	rev_opts[RO_CRL_S] = crl_strict;
 
 	CERTCertificate *end_cert = NULL;
 

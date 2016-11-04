@@ -100,6 +100,12 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 	cfg->setup.options[KBF_DDOS_MODE] = DDOS_AUTO;
 
+	cfg->setup.options[KBF_OCSP_CACHE_SIZE] = OCSP_DEFAULT_CACHE_SIZE;
+	cfg->setup.options[KBF_OCSP_CACHE_MIN] = OCSP_DEFAULT_CACHE_MIN_AGE;
+	cfg->setup.options[KBF_OCSP_CACHE_MAX] = OCSP_DEFAULT_CACHE_MAX_AGE;
+	cfg->setup.options[KBF_OCSP_METHOD] = OCSP_METHOD_GET;
+	cfg->setup.options[KBF_OCSP_TIMEOUT] = OCSP_DEFAULT_TIMEOUT;
+
 	cfg->setup.options[KBF_SECCOMP] = SECCOMP_DISABLED; /* will be enabled in the future */
 
 	/* conn %default */
