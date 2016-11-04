@@ -1,0 +1,10 @@
+ocsp: west sends REVOKED cert
+      east sends OK cert
+
+	successful ocsp response - revoked
+	fail
+
+This uses ocsp-method=post
+
+Sadly, there isn't any logging to show we did a POST and not a GET. ocspd has
+no logging whatsoever. We manually inspected a capture dump to confirm this.

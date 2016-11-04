@@ -1,6 +1,7 @@
-certutil -L -d sql:/etc/ipsec.d
+# only expected to show failure on west
+grep "ERROR" /tmp/pluto.log
+
 : ==== cut ====
-ipsec auto --status
 : ==== tuc ====
 if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

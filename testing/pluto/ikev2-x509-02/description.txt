@@ -1,7 +1,0 @@
-Similar to ikev2-x509-01, but with less hardcoded keywords and id's
-
-East does *NOT* have West's X.509 Cert locally.  west is FORCED to
-send it. And visa versa.
-
-This configuration does not set any left/rightca=, ID's or any
-left/rightsendcert= option. It should still come up successfully.

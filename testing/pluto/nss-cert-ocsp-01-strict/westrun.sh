@@ -1,2 +1,2 @@
-ipsec auto --up nss-cert-ocsp
+ipsec auto --up nss-cert
 echo done

@@ -98,7 +98,6 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
 kvmplutotest	ikev2-x509-01		good
-umlplutotest	ikev2-x509-02		good
 kvmplutotest	ikev2-10-2behind-nat	wip
 
 # modp tests for checking if we deal with sending different KE's
@@ -443,9 +442,6 @@ kvmplutotest	x509-pluto-02		good
 kvmplutotest	x509-pluto-03		good
 kvmplutotest	x509-pluto-04		good
 
-umlplutotest	x509-pluto-05		good
-umlXhost	x509-pluto-06		good
-
 kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
 kvmplutotest	x509-pluto-frag-02	good
@@ -513,7 +509,6 @@ kvmplutotest	xauth-pluto-20-pam	good
 #
 kvmplutotest	aggr-pluto-01		good
 kvmplutotest	aggr-pluto-02		good
-kvmplutotest	aggr-pluto-03		wip
 kvmplutotest	aggr-pluto-04		wip
 
 # Various algo tests
@@ -529,28 +524,6 @@ kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit wip
-
-#
-# test cases of what happens to X.509 based authorization system
-# when certain error conditions are met or parts of the CA are
-# missing or CRL's expired, etc.
-#
-#
-umlplutotest	fail-x509-01		good
-umlplutotest	fail-x509-02		good
-
-# not implemented yet
-#umlplutotest	fail-x509-03		good
-#umlplutotest	fail-x509-04		good
-#umlplutotest	fail-x509-05		good
-
-umlplutotest	fail-x509-06		good
-umlplutotest	fail-x509-07		good
-umlplutotest	fail-x509-08		good
-umlplutotest	fail-x509-09		good
-umlplutotest	fail-x509-10		good
-umlplutotest	fail-x509-11		good
-umlplutotest	fail-x509-12		good
 
 # this tests rekeys (--down/--up) when behind a NAT. a --replace
 # may cancel things that the --down/--up may not. This also
@@ -812,17 +785,21 @@ kvmplutotest	nss-cert-ocsp-01-ikev2		good
 kvmplutotest	nss-cert-ocsp-01-strict		good
 kvmplutotest	nss-cert-ocsp-02		good
 kvmplutotest	nss-cert-ocsp-02-ikev2		good
-kvmplutotest	nss-cert-ocsp-02-strict		good
 kvmplutotest	nss-cert-ocsp-03		good
 kvmplutotest	nss-cert-ocsp-03-ikev2		good
 kvmplutotest	nss-cert-ocsp-03-strict		good
 kvmplutotest	nss-cert-ocsp-04		good
-kvmplutotest	nss-cert-ocsp-04-strict		good
 kvmplutotest	nss-cert-ocsp-05		good
 kvmplutotest	nss-cert-ocsp-05-ikev2		good
 kvmplutotest	nss-cert-ocsp-05-strict		good
 kvmplutotest	nss-cert-ocsp-06		good
 kvmplutotest	nss-cert-ocsp-07-nourl		good
+kvmplutotest	nss-cert-ocsp-08-post		good
+#
+kvmplutotest	nss-cert-09-notyetvalid-initiator	good
+kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev2	good
+kvmplutotest	nss-cert-10-notyetvalid-responder	good
+kvmplutotest	nss-cert-10-notyetvalid-responder-ikev2	good
 
 kvmplutotest	ikev1-2behind-nat-01		wip
 

@@ -1,8 +1,0 @@
-Basic pluto X.509 test
-
-East does *NOT* have West's X.509 Cert locally.  east is FORCED to send it.
-
-identical to fail-x509-07, but the rightca on both is setup wrong.
-this results in an invalid packet. (??)
-
-

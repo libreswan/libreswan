@@ -1,21 +1,21 @@
 cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
-cp: cannot create regular file ‘/etc/ocspd/ocspd.conf’: No such file or directory
 nic #
  cp /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
-cp: cannot create regular file ‘/etc/ocspd/private/nic_key.pem’: No such file or directory
 nic #
  cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
-cp: cannot create regular file ‘/etc/ocspd/certs/nic.pem’: No such file or directory
 nic #
  cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
-cp: cannot create regular file ‘/etc/ocspd/certs/mainca.pem’: No such file or directory
 nic #
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
-/etc/ocspd/crls/revoked_crl.pem: No such file or directory
 nic #
- ocspd -v -d -c /etc/ocspd/ocspd.conf
--bash: ocspd: command not found
+ systemctl start ocspd.service
 nic #
- echo "done."
-done.
+ echo "initdone"
+initdone
+nic #
+ journalctl --no-pager -b -xn -u ocspd.service | egrep "status|request" | sed "s/^.*: //"
+request for certificate serial 2
+status VALID for 2
+request for certificate serial 4
+status VALID for 4
 
