@@ -25,19 +25,17 @@ repodir=$(cd $1 && pwd) ; shift
 destdir=$(cd $1 && pwd) ; shift
 
 (
+    # kvmresults needs to be in the current directory
     cd ${destdir}
-    ${webdir}/results.sh \
+    ${webdir}/json-results.sh \
+	     --json results.json \
 	     --testing-directory ${repodir}/testing \
 	     .
-) > ${destdir}/results.tmp
-jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
-rm ${destdir}/results.tmp
+)
 
 ${webdir}/json-commit.sh ${repodir} HEAD > ${destdir}/commit.json
-${webdir}/json-summary.sh ${destdir}/results.new > ${destdir}/summary.json
+${webdir}/json-summary.sh ${destdir}/results.json > ${destdir}/summary.json
 
 cp ${webdir}/lsw*.{css,js} ${destdir}
 cp ${webdir}/results*.{html,css,js} ${destdir}
 ln -f -s results.html ${destdir}/index.html
-
-mv ${destdir}/results.new ${destdir}/results.json
