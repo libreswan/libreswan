@@ -40,10 +40,11 @@ def main():
     skip.add_arguments(parser)
     ignore.add_arguments(parser)
 
+    # These three calls go together
     args = parser.parse_args()
-    logutil.config(args)
-
+    logutil.config(args, sys.stdout)
     logger = logutil.getLogger("kvmrunner")
+
     logger.info("Options:")
     logger.info("  directories: %s", args.directories)
     logger.info("  verbose: %s", args.verbose)

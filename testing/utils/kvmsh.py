@@ -76,8 +76,11 @@ def main():
                         help="run shell command non-interactively; WARNING#1: this simply concatenates remaining arguments with spaces; WARNING#2: this does not try to escape arguments before passing them onto the domain's shell")
 
     logutil.add_arguments(parser)
+
+    # These three calls go together
     args = parser.parse_args()
-    logutil.config(args)
+    logutil.config(args, sys.stderr)
+    logger = logutil.getLogger("kvmsh")
 
     # Get things started
     domain = virsh.Domain(domain_name=args.domain, host_name=args.host_name)
@@ -125,10 +128,10 @@ def main():
             print()
             output = console.output(None)
             if output:
-                print("info: disabled --output as it makes pexpect crash when in interactive mode.")
+                logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
             if args.debug:
-                print("info: pexpect ignores --debug in interactive mode!")
-            print("Escape character is ^]")
+                logger.info("info: pexpect ignores --debug in interactive mode!")
+            logger.info("Escape character is ^]")
             # Hack so that the prompt appears
             console.output(sys.stdout)
             console.run("")

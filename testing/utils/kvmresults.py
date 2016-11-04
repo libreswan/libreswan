@@ -107,9 +107,9 @@ def main():
     skip.add_arguments(parser)
     ignore.add_arguments(parser)
 
+    # These three calls go together
     args = parser.parse_args()
-
-    logutil.config(args)
+    logutil.config(args, sys.stderr)
     logger = logutil.getLogger("kvmresults")
 
     # The option -vvvvvvv is a short circuit for these; make

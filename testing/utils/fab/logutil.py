@@ -53,20 +53,37 @@ DEBUG = logging.DEBUG
 INFO = logging.INFO
 NONE = 100 # something large
 
-_STDOUT_HANDLER = None
-_LOG_LEVEL = "info"
+class StreamProxy:
+    def __init__(self):
+        self.stream = None
+    def write(self, record):
+        self.stream.write(record)
+    def flush(self):
+        self.stream.flush()
+    def delegate(self, stream):
+        if self.stream:
+            self.stream.flush()
+        self.stream = stream
+        return self
 
+_DEFAULT_STREAM = None
+_DEFAULT_HANDLER = None
+_LOG_LEVEL = "info"
 
 def __init__():
 
-    global _STDOUT_HANDLER
-    _STDOUT_HANDLER = logging.StreamHandler(sys.stdout)
-    _STDOUT_HANDLER.setFormatter(logging.Formatter("%(message)s"))
-    _STDOUT_HANDLER.setLevel(_LOG_LEVEL.upper())
+    # Start with things being sent to stderr, if it needs to switch do
+    # that after argument parsing.
+    global _DEFAULT_STREAM
+    global _DEFAULT_HANDLER
+    _DEFAULT_STREAM = StreamProxy().delegate(sys.stdout)
+    _DEFAULT_HANDLER = logging.StreamHandler(_DEFAULT_STREAM)
+    _DEFAULT_HANDLER.setFormatter(logging.Formatter("%(message)s"))
+    _DEFAULT_HANDLER.setLevel(_LOG_LEVEL.upper())
 
-    # Force the root-logger to pass everything on to STDOUT; and then
+    # Force the root-logger to pass everything on to STDERR; and then
     # let the handlers filter just their log-records.
-    logging.basicConfig(level=logging.NOTSET, handlers=[_STDOUT_HANDLER])
+    logging.basicConfig(level=logging.NOTSET, handlers=[_DEFAULT_HANDLER])
 
 
 def getLogger(prefix, name=None, *suffixes):
@@ -105,9 +122,8 @@ def getLogger(prefix, name=None, *suffixes):
 def add_arguments(parser):
     group = parser.add_argument_group("Logging arguments",
                                       "Options for directing logging level and output")
-    group.add_argument("--log-level", default=None,
-                       help=("console log level"
-                             " (default: " + _LOG_LEVEL + ")"))
+    group.add_argument("--log-level", default=_LOG_LEVEL,
+                       help=("console log level (default: %(default)s)"))
     group.add_argument("--debug", "-d", default=None, metavar="FILE",
                        type=argutil.stdout_or_open_file,
                        help=("write a debug-level log to %(metavar)s"
@@ -117,17 +133,17 @@ def add_arguments(parser):
 
 def log_arguments(logger, args):
     logger.info("Logging arguments:")
-    logger.info("  log-level: '%s'", args.log_level or _LOG_LEVEL)
+    logger.info("  log-level: '%s'", args.log_level)
     logger.info("  debug: '%s'", args.debug)
 
 
 _DEBUG_STREAM = None
 _DEBUG_FORMATTER = logging.Formatter("%(levelname)s %(message)s")
 
-def config(args):
-    # Update the log-level
-    if args.log_level:
-        _STDOUT_HANDLER.setLevel(args.log_level.upper())
+def config(args, stream):
+    # Update the default stream
+    _DEFAULT_STREAM.delegate(stream)
+    _DEFAULT_HANDLER.setLevel(args.log_level.upper())
     # Direct debugging to a stream if specified
     if args.debug:
         _DEBUG_STREAM = logging.StreamHandler(args.debug)
