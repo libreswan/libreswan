@@ -98,7 +98,7 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
 kvmplutotest	ikev2-x509-01		good
-kvmplutotest	ikev2-10-2behind-nat	wip
+kvmplutotest	ikev2-10-2behind-nat	good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
