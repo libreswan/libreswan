@@ -6,7 +6,7 @@
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
- * (C)opyright 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * (C)opyright 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -115,34 +115,74 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 			       unsigned ek_bits, int aalg_id,
 			       unsigned int modp_id)
 {
-	struct ike_info *ike_info = alg_info->ike;
-	int cnt = alg_info->ai.alg_info_cnt;
-	int i;
+	/*
+	 * Check for overflows up front; could delay until after
+	 * filters, but that complicates things.
+	 */
+	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ike));
+	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ike)) {
+		loglog(RC_LOG_SERIOUS, "more than %zu IKE algorithms specified",
+		       elemsof(alg_info->ike));
+		/* drop it like a rock */
+		return;
+	}
 
-	/* don't add duplicates */
-	/* ??? why is 0 wildcard for ek_bits and ak_bits? */
-	for (i = 0; i < cnt; i++) {
-		if (ike_info[i].ike_ealg == ealg_id &&
-		    (ek_bits == 0 || ike_info[i].ike_eklen == ek_bits) &&
-		    ike_info[i].ike_halg == aalg_id &&
-		    ike_info[i].ike_modp == modp_id) {
+	/*
+	 * Initialize the new entry and use it as scratch.  If there's
+	 * a problem just return.  Only when everything checks out is
+	 * it added.
+	 */
+	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
+	*new_info = (struct ike_info) {
+		.ike_ealg = ealg_id,
+		.ike_eklen = ek_bits,
+		.ike_halg = aalg_id,
+		.ike_modp = modp_id,
+	};
+
+	/*
+	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
+	 *
+	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
+	 * algorithms?
+	 *
+	 * For the case of alg=0 / "null", should this have a real
+	 * object?
+	 *
+	 * XXX: work-in-progress
+	 */
+
+	/*
+	 * don't add duplicates
+	 *
+	 * ??? why is 0 wildcard for ek_bits and ak_bits?
+	 *
+	 * keylen==0 is magic implying all key lengths should be
+	 * included; so a zero key-length duplicates anything
+	 *
+	 * Perform the check after the algorithms have been found so
+	 * that duplicates can be identified by simply comparing
+	 * opaque pointers.
+	 *
+	 * XXX: work-in-progress
+	 */
+	FOR_EACH_IKE_INFO(alg_info, ike_info) {
+		if (ike_info->ike_ealg == new_info->ike_ealg &&
+		    (new_info->ike_eklen == 0 ||
+		     ike_info->ike_eklen == new_info->ike_eklen) &&
+		    ike_info->ike_halg == new_info->ike_halg &&
+		    ike_info->ike_modp == new_info->ike_modp) {
 			return;
 		}
 	}
 
-	/* check for overflows */
-	/* ??? passert seems dangerous */
-	passert(cnt < (int)elemsof(alg_info->ike));
-
-	ike_info[cnt].ike_ealg = ealg_id;
-	ike_info[cnt].ike_eklen = ek_bits;
-	ike_info[cnt].ike_halg = aalg_id;
-	ike_info[cnt].ike_modp = modp_id;
+	/*
+	 * All is good, add it.
+	 */
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp_id=%d, cnt=%d",
-			       ealg_id, ek_bits,
-			       aalg_id,
-			       modp_id, alg_info->ai.alg_info_cnt));
+			       ealg_id, ek_bits, aalg_id, modp_id,
+			       alg_info->ai.alg_info_cnt));
 }
 
 /*
