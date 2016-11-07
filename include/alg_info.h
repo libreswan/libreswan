@@ -102,7 +102,7 @@ struct ike_info {
 	 * Integrity and PRF.
 	 */
 	const struct prf_desc *ike_prf;
-	const struct integ_desc *integ;
+	const struct integ_desc *ike_integ;
 	u_int8_t ike_halg;              /* enum ikev1_hash_attribute: hash algorithm */
 	/*
 	 * MODP group

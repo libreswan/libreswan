@@ -194,6 +194,22 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		return;
 	}
 
+	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
+		for (const struct integ_desc **integp = next_ike_integ_desc(NULL);
+		     integp != NULL; integp = next_ike_integ_desc(integp)) {
+			if ((*integp)->hasher.common.ikev1_oakley_id == aalg_id) {
+				new_info->ike_integ = *integp;
+				break;
+			}
+		}
+		if (new_info->ike_integ == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS, "unsupported INTEG algorithm %s",
+			       enum_showb(&oakley_hash_names, new_info->ike_halg, &buf));
+			return;
+		}
+	}
+
 	/*
 	 * don't add duplicates
 	 *
@@ -213,6 +229,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		    (new_info->ike_eklen == 0 ||
 		     ike_info->ike_eklen == new_info->ike_eklen) &&
 		    ike_info->ike_prf == new_info->ike_prf &&
+		    ike_info->ike_integ == new_info->ike_integ &&
 		    ike_info->ike_modp == new_info->ike_modp) {
 			return;
 		}
