@@ -285,24 +285,6 @@ const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 	return (const struct integ_desc *) ikev1_oakley_lookup(&integ_algorithms, id);
 }
 
-const struct encrypt_desc *ikev1_get_ike_info_encrypt_desc(const struct ike_info *ike)
-{
-	return (const struct encrypt_desc *) ikev1_oakley_lookup(&encrypt_algorithms,
-								 ike->ike_ealg);
-}
-
-const struct prf_desc *ikev1_get_ike_info_prf_desc(const struct ike_info *ike)
-{
-	return (const struct prf_desc *) ikev1_oakley_lookup(&prf_algorithms,
-							     ike->ike_halg);
-}
-
-const struct integ_desc *ikev1_get_ike_info_integ_desc(const struct ike_info *ike)
-{
-	return (const struct integ_desc *) ikev1_oakley_lookup(&integ_algorithms,
-							       ike->ike_halg);
-}
-
 static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *table, int id)
 {
 	FOR_EACH_IKE_ALGP(table, algp) {

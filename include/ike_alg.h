@@ -277,25 +277,15 @@ const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
 
 /*
- * Return the ENCRYPT/PRF/INTEG IKE_ALG as specified by IKE_INFO or
- * ESP_INFO.
+ * Return the ENCRYPT/PRF/INTEG IKE_ALG as specified by ESP_INFO.
  *
- * For IKE_INFO, the lookup is limited to native algorithms.  For
- * ESP_INFO there is no such limitation.
+ * Since ESP_INFO use IKEv1 numbers to identify the relevant
+ * algorithm, these functions have an IKEv1 prefix.
  *
- * Since IKE_INFO and ESP_INFO use IKEv1 numbers to identify the
- * relevant algorithm, these functions have an IKEv1 prefix.
- *
- * XXX: IKE_INFO/ESP_INFO should instead contain IKE_ALG pointers and
- * be done with all this.  Presumably that would mean adding a
- * lookup-by-string function to IKE_ALG.
+ * XXX: ESP_INFO should instead contain IKE_ALG pointers and be done
+ * with all this.  Presumably that would mean adding a lookup-by-name
+ * function to IKE_ALG.
  */
-
-struct ike_info;
-
-const struct encrypt_desc *ikev1_get_ike_info_encrypt_desc(const struct ike_info*);
-const struct prf_desc *ikev1_get_ike_info_prf_desc(const struct ike_info*);
-const struct integ_desc *ikev1_get_ike_info_integ_desc(const struct ike_info*);
 
 struct esp_info;
 

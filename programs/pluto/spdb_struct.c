@@ -125,35 +125,31 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
 			    ealg, halg, modp, eklen));
 
-		const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
+		const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
 		if (enc_desc == NULL) {
-			DBG_log("oakley_alg_makedb() ike enc ealg=%d not present",
-				ealg);
+			PEXPECT_LOG("%s", "IKEv1 proposal with no ENCRYPT should have been dropped");
 			continue;
 		}
-		passert(enc_desc != NULL);
 
-		if (ikev1_get_ike_info_prf_desc(ike_info) == NULL) {
-			DBG_log("oakley_alg_makedb() ike PRF/hash=%d not present",
-				halg);
+		if (ike_info->ike_prf == NULL) {
+			PEXPECT_LOG("%s", "IKEv1 proposal with no PRF/hash should have been dropped");
 			continue;
 		}
 
 		if (ike_alg_enc_requires_integ(enc_desc) &&
-		    ikev1_get_ike_info_integ_desc(ike_info) == NULL) {
-			DBG_log("oakley_alg_makedb() ike INTEG/hash=%d not present",
-				halg);
+		    ike_info->ike_integ == NULL) {
+			PEXPECT_LOG("%s", "IKEv1 proposal with no INTEG/hash should have been dropped");
 			continue;
 		}
 
 		if (eklen != 0 &&
 		    (eklen < enc_desc->keyminlen ||
 		     eklen > enc_desc->keymaxlen)) {
-			DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
-				ealg,
-				eklen,
-				enc_desc->keyminlen,
-				enc_desc->keymaxlen);
+			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid min=%d, max=%d should have been dropped",
+				    enc_desc->common.name,
+				    eklen,
+				    enc_desc->keyminlen,
+				    enc_desc->keymaxlen);
 			continue;
 		}
 
@@ -314,7 +310,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
 
 			if (def_ks != 0) {
-				const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
+				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
 				int max_ks = enc_desc->keymaxlen;
 				int ks;
 

@@ -449,9 +449,9 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 			    bool fix_zero)
 {
-	const struct encrypt_desc *enc_desc = ikev1_get_ike_info_encrypt_desc(ike_info);
+	const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
 	passert(!fix_zero || enc_desc != NULL);
-	const struct prf_desc *prf_desc = ikev1_get_ike_info_prf_desc(ike_info);
+	const struct prf_desc *prf_desc = ike_info->ike_prf;
 	const struct hash_desc *hash_desc = prf_desc ? &prf_desc->hasher : NULL;
 	passert(!fix_zero || hash_desc != NULL);
 
@@ -486,9 +486,9 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 	const char *sep = "";
 
 	FOR_EACH_IKE_INFO(alg_info, ike_info) {
-		if (ikev1_get_ike_info_encrypt_desc(ike_info) != NULL &&
-		    ikev1_get_ike_info_prf_desc(ike_info) != NULL &&
-		    lookup_group(ike_info->ike_modp) != NULL) {
+		if (ike_info->ike_encrypt != NULL &&
+		    ike_info->ike_prf != NULL &&
+		    ike_info->ike_dh_group != NULL) {
 			if (strlen(sep) >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for separator");
 				break;

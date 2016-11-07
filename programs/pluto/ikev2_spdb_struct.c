@@ -1848,20 +1848,18 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			.propnum = proposals->roof,
 		};
 
-		/* ike_ealg is IKEv1! */
-		const struct encrypt_desc *ealg = ikev1_get_ike_info_encrypt_desc(ike_info);
+		/*
+		 * Encryption
+		 */
+		const struct encrypt_desc *ealg = ike_info->ike_encrypt;
 		if (ealg == NULL) {
-			if (ike_info->ike_ealg != 0) {
-				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "dropping local IKE proposal containing unsupported ENCRYPT algorithm %s=%d",
-				       enum_showb(&oakley_enc_names, ike_info->ike_ealg, &buf),
-				       ike_info->ike_ealg);
-				continue;
-			} else {
-				/* XXX: why? */
-				DBG(DBG_CONTROL, DBG_log("ike_ealg is zero, ENCR suppressed"));
-			}
+			PEXPECT_LOG("%s", "IKEv2 proposal with no ENCRYPT should have been dropped");
+			continue;
+		} else if (ealg->common.algo_v2id == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "IKEv2 proposal contains unsupported ENCRYPT algorithm %s",
+			       ealg->common.name);
+			continue;
 		} else {
 			if (ike_info->ike_eklen != 0) {
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -1909,43 +1907,36 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			}
 		}
 
-		/* ike_halg is IKEv1 */
-		const struct prf_desc *prf = ikev1_get_ike_info_prf_desc(ike_info);
+		/*
+		 * PRF
+		 */
+		const struct prf_desc *prf = ike_info->ike_prf;
 		if (prf == NULL) {
-			if (ike_info->ike_halg != 0) {
-				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "dropping local IKE proposal containing unsupported PRF algorithm %s=%d",
-				       enum_showb(&oakley_hash_names, ike_info->ike_halg, &buf),
-				       ike_info->ike_halg);
-				continue;
-			} else {
-				/* XXX: why? */
-				DBG(DBG_CONTROL, DBG_log("ike_halg is zero, PRF suppressed"));
-			}
+			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
+			continue;
+		} else if (prf->hasher.common.algo_v2id == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "IKEv2 proposal contains unsupported PRF algorithm %s",
+			       prf->hasher.common.name);
+			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
 					 prf->hasher.common.algo_v2id, 0);
 		}
 
-		if (ealg != NULL && ike_alg_enc_requires_integ(ealg)) {
-			/*
-			 * Use the IKEv1 HASH algorithm, projected
-			 * onto IKEv2 INTEG, as the integrity.
-			 */
-			const struct integ_desc *integ = ikev1_get_ike_info_integ_desc(ike_info);
+		/*
+		 * INTEG
+		 */
+		if (ike_alg_enc_requires_integ(ealg)) {
+			const struct integ_desc *integ = ike_info->ike_integ;
 			if (integ == NULL) {
-				if (ike_info->ike_halg != 0) {
-					struct esb_buf buf;
-					loglog(RC_LOG_SERIOUS,
-					       "dropping local IKE proposal containing unsupported INTEG algorithm %s=%d",
-					       enum_showb(&oakley_hash_names, ike_info->ike_halg, &buf),
-					       ike_info->ike_halg);
-					continue;
-				} else {
-					/* XXX: why? */
-					DBG(DBG_CONTROL, DBG_log("ike_halg is zero, INTEG suppressed"));
-				}
+				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
+				continue;
+			} else if (integ->hasher.common.algo_v2id == 0) {
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
+				       integ->hasher.common.name);
+				continue;
 			} else {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
 						 integ->hasher.common.algo_v2id, 0);
@@ -1962,16 +1953,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 					 0, 0);
 		}
 
-		const struct oakley_group_desc *group = lookup_group(ike_info->ike_modp);
+		/*
+		 * DH GROUP
+		 */
+		const struct oakley_group_desc *group = ike_info->ike_dh_group;
 		if (group == NULL) {
-			if (ike_info->ike_modp > 0) {
-				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "dropping local proposal containing unsupported modp group %s=%d",
-				       enum_showb(&oakley_group_names, ike_info->ike_modp, &buf),
-				       ike_info->ike_modp);
-				continue;
-			}
+			PEXPECT_LOG("%s", "IKEv2 proposal with no DH_GROUP should have been dropped");
+			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
 					 ike_info->ike_modp, 0);
