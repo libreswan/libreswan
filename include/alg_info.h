@@ -95,7 +95,7 @@ struct ike_info {
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
-	const struct encrypt_desc *encrypt;
+	const struct encrypt_desc *ike_encrypt;
 	u_int16_t ike_ealg;             /* enum ikev1_encr_attribute: bit 15 set for reserved */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
 	/*

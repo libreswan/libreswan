@@ -152,6 +152,34 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 * XXX: work-in-progress
 	 */
 
+	for (const struct encrypt_desc **encryptp = next_ike_encrypt_desc(NULL);
+	     encryptp != NULL; encryptp = next_ike_encrypt_desc(encryptp)) {
+		/*
+		 * keylen==0 implies use default or defaults.
+		 */
+		if ((*encryptp)->common.ikev1_oakley_id == ealg_id) {
+			new_info->ike_encrypt = *encryptp;
+			break;
+		}
+	}
+	if (new_info->ike_encrypt == NULL) {
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS, "ENCRYPT algorithm %s is not supported",
+		       enum_showb(&oakley_enc_names, ealg_id, &buf));
+		return;
+	}
+	if (ek_bits != 0
+	    && new_info->ike_encrypt->keyminlen != ek_bits
+	    && new_info->ike_encrypt->keydeflen != ek_bits
+	    && new_info->ike_encrypt->keymaxlen != ek_bits) {
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS,
+		       "ENCRYPT algorithm %s with key length %u is not supported",
+		       enum_showb(&oakley_enc_names, ealg_id, &buf),
+		       ek_bits);
+		return;
+	}
+
 	/*
 	 * don't add duplicates
 	 *
@@ -167,7 +195,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 * XXX: work-in-progress
 	 */
 	FOR_EACH_IKE_INFO(alg_info, ike_info) {
-		if (ike_info->ike_ealg == new_info->ike_ealg &&
+		if (ike_info->ike_encrypt == new_info->ike_encrypt &&
 		    (new_info->ike_eklen == 0 ||
 		     ike_info->ike_eklen == new_info->ike_eklen) &&
 		    ike_info->ike_halg == new_info->ike_halg &&
