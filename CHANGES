@@ -10,6 +10,7 @@ v3.19 (unreleased)
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * XFRM: EXPERIMENTAL Support for configuring the VTI device [Paul]
         keyword: leftvti=address/mask
+* XFRM: Fix NAT-T support when userland compiled without KLIPS support [Paul]
 * X509: Obsolete /etc/ipsec.d/crls (load_crls()) and whack --rereadcrls [Paul]
 * X509: New whack --fetchcrls (alias ipsec crls) to trigger a fetch [Paul]
 * X509: Iterate all X.509 certs and try to fetch their crls [Kim]
