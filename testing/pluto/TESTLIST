@@ -10,11 +10,13 @@
 #  kvmplutotest - coverted to use KVM, will be run with 'make check'
 #  skiptest - skip this test
 #  hwtest - connect to physical test machines, not KVM [FUTURE]
+#  umlXhost - ????
 
 # expectation:
 #  good - output matches known output
 #  bad  - output should NOT match [only for unit tests, not pluto test]
 #  wip  - this test still need work.
+#  skiptest - presumably never test
 
 # run the lib/libswan/ tests
 kvmplutotest	basic-pluto-00	good
@@ -234,7 +236,7 @@ kvmplutotest	newoe-14-clear-in-block-clear		good
 kvmplutotest	newoe-15-portpass			good
 kvmplutotest	newoe-16-pass-hold			good
 kvmplutotest	newoe-17-block-in-clear-clear		wip
-# 
+#
 kvmplutotest 	newoe-18-poc-poc 			good
 kvmplutotest 	newoe-18-poc-cop 			good
 kvmplutotest 	newoe-18-poc-private 			good
@@ -279,62 +281,62 @@ kvmplutotest 	newoe-25-cat-5				good
 # these set up a food group, then run a ping from sunrise-sunset
 
 # clear peer
-# OE TEMP DISABLED umlplutotest	food-groups-clear-01	good
+umlplutotest	food-groups-clear-01	good # OE TEMP DISABLED
 # oe peer
 #
 # this test is disabled because the OE peer (west) is not
 # properly configured yet.
-#umlplutotest	food-groups-clear-02	bad
+umlplutotest	food-groups-clear-02	skiptest # bad
 
 # clear peer
-# OE TEMP DISABLED umlplutotest	food-groups-clear-or-oe-01	good
+umlplutotest	food-groups-clear-or-oe-01	good # OE TEMP DISABLED
 
 # oe peer
 #
 # this test is disabled because the OE peer (west) is not
 # properly configured yet.
-#umlplutotest	food-groups-clear-or-oe-02	bad
+umlplutotest	food-groups-clear-or-oe-02	skiptest # bad
 
 # clear peer
-# OE TEMP DISABLED umlplutotest	food-groups-never-01	good
+umlplutotest	food-groups-never-01	good # OE TEMP DISABLED
 
 # oe peer
 # This test is disabled, since no packets should ever arrive at west, so
 # it could never reply. A test of replies needs to be done instead.
 #
-#umlplutotest	food-groups-never-02	bad
+umlplutotest	food-groups-never-02	skiptest # bad
 
 # oe peer
-# OE TEMP DISABLED umlplutotest	food-groups-oe-or-clear-01	good
+umlplutotest	food-groups-oe-or-clear-01	good # OE TEMP DISABLED
 
 # clear peer
 #
 # this test is disabled because the OE peer (west) is not
 # properly configured yet.
-#umlplutotest	food-groups-oe-or-clear-02	bad
+umlplutotest	food-groups-oe-or-clear-02	skiptest # bad
 
 # oe peer
-# OE TEMP DISABLED umlplutotest	food-groups-oe-or-die-01	good
+umlplutotest	food-groups-oe-or-die-01	good # OE TEMP DISABLED
 
 # clear peer
 #
 # this test is disabled because the OE peer (west) is not
 # properly configured yet.
-#umlplutotest	food-groups-oe-or-die-02	bad
+umlplutotest	food-groups-oe-or-die-02	skiptest # bad
 
 # Foodgroups bug: used to forget name of target when target is
 # preserved across --listen.
-# OE TEMP DISABLED umlplutotest	food-groups-bug-01	good
+umlplutotest	food-groups-bug-01	good # OE TEMP DISABLED
 
 # bug: OE should not be attempted if our private key is missing
-# OE TEMP DISABLED umlplutotest	oe-fail-without-private-key-01	good
+umlplutotest	oe-fail-without-private-key-01	good # OE TEMP DISABLED
 
 # bug: pluto and _pluto_adns can deadlock in a flood
-# OE TEMP DISABLED umlplutotest	oe-flood-deadlock-01	good
+umlplutotest	oe-flood-deadlock-01	good # OE TEMP DISABLED
 
 # Foodgroups orderly transition: policy groups must be transitioned properly
 # when changed
-# umlplutotest	food-groups-orderly-transition-01	good
+umlplutotest	food-groups-orderly-transition-01	skiptest # good
 #
 
 # RFC 3706 DPD and IKEv2 liveness tests
@@ -363,76 +365,76 @@ kvmplutotest	ikev1-rekey-connswitch	wip
 
 # oe-snat-01 - do Source address NAT and then OE
 #
-# OE TEMP DISABLED umlplutotest	oe-snat-01	good
+umlplutotest	oe-snat-01	good # OE TEMP DISABLED
 
 #
 # oe-fail-without-resp-client-txt-01 - when responding using an OE
 # connection, checks that there is a TXT (and possibly KEY) record
 # that delegates this security gateway to act for the client on our
 # side.
-# OE TEMP DISABLED umlplutotest	oe-fail-without-resp-client-txt-01	good
+umlplutotest	oe-fail-without-resp-client-txt-01	good # OE TEMP DISABLED
 
 #
 # co-terminal-02 - wavesec+OE, with wavesec started first
 #
-# OE TEMP DISABLED umlXhost	co-terminal-02		good
+umlXhost	co-terminal-02		good # OE TEMP DISABLED
 
 #
 # co-terminal-03 - wavesec+OE, with OE started first
 #
-# OE TEMP DISABLED umlXhost	co-terminal-03		good
+umlXhost	co-terminal-03		good # OE TEMP DISABLED
 
 #
 # tests of OE from road warriors (no gateways)
 # full OE test
 #
-# OE TEMP DISABLED umlXhost	oe-road-01		good
+umlXhost	oe-road-01		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with TXT RR, no KEY
 #
-# OE TEMP DISABLED umlXhost	oe-road-02		good
+umlXhost	oe-road-02		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with TXT, mangled
 #
-# OE TEMP DISABLED umlXhost	oe-road-03		good
+umlXhost	oe-road-03		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with KEY, no TXT
 #
-# OE TEMP DISABLED umlXhost	oe-road-04		good
+umlXhost	oe-road-04		good # OE TEMP DISABLED
 
 #
 # tests of OE from road warriors (no gateways)
 # full OE test
 #
-# OE TEMP DISABLED umlXhost	myid-road-01		good
+umlXhost	myid-road-01		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with TXT RR, no KEY
 #
-# OE TEMP DISABLED umlXhost	myid-road-02		good
+umlXhost	myid-road-02		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with TXT, mangled
 #
-# OE TEMP DISABLED umlXhost	myid-road-03		good
+umlXhost	myid-road-03		good # OE TEMP DISABLED
 
 #
 # FQDN OE test with KEY, no TXT
 #
-# OE TEMP DISABLED umlXhost	myid-road-04		good
+umlXhost	myid-road-04		good # OE TEMP DISABLED
 
 #
 # FQDN OE with trailing dot
 #
-# OE TEMP DISABLED umlXhost	myid-road-05		good
+umlXhost	myid-road-05		good # OE TEMP DISABLED
 
 #
 # a test of rekeying an OE connection
 #
-# OE TEMP DISABLED umlXhost	pluto-rekey-01		good
+umlXhost	pluto-rekey-01		good # OE TEMP DISABLED
 
 #
 # a test of using X.509 keys
