@@ -450,6 +450,9 @@ kvmplutotest	x509-pluto-frag-04	good
 
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
+kvmplutotest	nat-pluto-02-klips-netkey	good
+kvmplutotest	nat-pluto-02-netkey-klips	good
+kvmplutotest	nat-pluto-02-klips-klips	good
 kvmplutotest	nat-pluto-03		good
 kvmplutotest	nat-pluto-04		good
 kvmplutotest	nat-pluto-07		good
