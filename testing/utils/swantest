@@ -109,7 +109,7 @@ class guest (threading.Thread):
         self.hostname = hostname
         self.dname = hostname
         if args.instance:
-            self.dname = hostname + str(args.instance)
+            self.dname = str(args.instance) + hostname
         self.role = role
         self.testname = testname
         self.status = "NEW"
@@ -1549,7 +1549,7 @@ def cmdline():
 
     parser.add_argument(
         "--instance", default=DEFAULTCONFIG['instance'],
-        type=int, help="instance prefix %s" % DEFAULTCONFIG['instance'])
+        help="instance prefix %s" % DEFAULTCONFIG['instance'])
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
