@@ -1,5 +1,5 @@
 Same as ikev2-03-basic-rawrsa, but now pluto on east is forced to be "busy" using
-the force_busy=yes option, simulating a Denial of Service attack.
+the ddos-mode=busy option, simulating a Denial of Service attack.
 
 east will return the packet with a request for a dcookie without creating
 a new state. west needs to send a new I1 that includes the dcookie payload
