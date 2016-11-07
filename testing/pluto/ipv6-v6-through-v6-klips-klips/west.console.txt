@@ -20,14 +20,17 @@ west #
 west #
  ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1736 SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1736 SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1736 SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1736 SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1750 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1750 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1750 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=104 TC=0 HOPLIMIT=64 FLOWLBL=0 PROTO=ICMPv6 TYPE=129 CODE=0 ID=1750 SEQ=4 
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  ipsec start
+Warning: ignored obsolete keyword 'oe'
+Warning: ignored obsolete keyword 'oe'
+Warning: ignored obsolete keyword 'oe'
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -49,6 +52,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-6in6
+Warning: ignored obsolete keyword 'oe'
 002 added connection description "westnet-eastnet-6in6"
 west #
  ipsec auto --status
@@ -69,6 +73,9 @@ west #
 000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+000 ocsp-trust-name=<unset>
+000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug none
