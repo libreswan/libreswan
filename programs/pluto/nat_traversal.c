@@ -732,63 +732,67 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 	int *fdp = (int *) &ifr.ifr_data;
 	const char *ifn;
 
-	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying new style NAT-T"));
-	zero(&ifr);
-	switch (kern_interface) {
-	case USE_MASTKLIPS:	/* using mast0 will break it! */
-	case USE_KLIPS:
-		ifn = "ipsec0";
-		break;
-	case USE_NETKEY:
-		/* Let's hope we have at least one ethernet device */
-		ifn = "eth0";
-		break;
-	case USE_BSDKAME:
-		/* Let's hope we have at least one ethernet device */
-		ifn = "en0";
-		break;
-	default:
-		/* ??? We have nothing, really prob just abort and return -1 */
-		ifn = "eth0";
-		break;
-	}
-	strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+#if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
+	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
+		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
+		const int type = ESPINUDP_WITH_NON_ESP; /* no longer supporting natt draft 00 or 01 */
+		const int os_opt = UDP_ESPINUDP;
 
-	fdp[0] = sk;
-	fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
-	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);
-	if (r == -1) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for new style NAT-T family %s (errno=%d)",
-				ESPINUDP_WITH_NON_ESP, fam, errno));
+#if defined(BSD_KAME)
+		if (USE_BSDKAME)
+			os_opt = UDP_ENCAP_ESPINUDP; /* defined as 2 */
+#endif
+		r = setsockopt(sk, SOL_UDP, os_opt, &type, sizeof(type));
+		if (r == -1) {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
+					ESPINUDP_WITH_NON_ESP, fam, errno));
+		} else {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
+					ESPINUDP_WITH_NON_ESP, fam));
+			return r;
+		}
 	} else {
 		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for new style NAT-T family %s",
-				ESPINUDP_WITH_NON_ESP, fam));
-		return r;
+			DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not available for this kernel"));
 	}
+#else
+	DBG(DBG_NATT,
+		DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not compiled in"));
+#endif
 
 #if defined(KLIPS)
-	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old style NAT-T"));
-	const int type = ESPINUDP_WITH_NON_ESP;
-	r = setsockopt(sk, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
-	if (r == -1) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old style NAT-T family %s (errno=%d)",
-				ESPINUDP_WITH_NON_ESP, fam, errno));
+	if (kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS) {
+		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
+		zero(&ifr);
+		ifn = "ipsec0"; /* mast must use ipsec0 too */
+		strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+		fdp[0] = sk;
+		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
+		r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
+		if (r == -1) {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old ioctl style NAT-T family %s (errno=%d)",
+					ESPINUDP_WITH_NON_ESP, fam, errno));
+		} else {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old ioctl style NAT-T family %s",
+					ESPINUDP_WITH_NON_ESP, fam));
+			return r;
+		}
 	} else {
 		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old style NAT-T family %s",
-				ESPINUDP_WITH_NON_ESP, fam));
-		return r;
+			DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not available for this kernel"));
 	}
-# else
+#else
 	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: ESPINUDP() setup for old style NAT-T family not available - KLIPS support not compiled in"));
-# endif
+		DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not compiled in"));
+#endif
 
+	/* all methods failed to detect NAT-T support */
 	loglog(RC_LOG_SERIOUS,
-		"NAT-Traversal: ESPINUDP(%d) not supported by kernel for family %s",
+		"NAT-Traversal: ESPINUDP(%d) for this kernel not supported or not found for family %s",
 		ESPINUDP_WITH_NON_ESP, fam);
 	libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
 	nat_traversal_enabled = FALSE;
