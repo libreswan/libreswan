@@ -6,6 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-aggr
+003 WARNING: DH2 (modp-1024) and DH5 (modp-1536) are getting weak. Support for these in IKEv2 will be removed in the near future
 002 added connection description "westnet-eastnet-aggr"
 east #
  ipsec auto --status | grep westnet-eastnet-aggr
