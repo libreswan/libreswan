@@ -180,6 +180,20 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		return;
 	}
 
+	for (const struct prf_desc **prfp = next_ike_prf_desc(NULL);
+	     prfp != NULL; prfp = next_ike_prf_desc(prfp)) {
+		if ((*prfp)->hasher.common.ikev1_oakley_id == aalg_id) {
+			new_info->ike_prf = *prfp;
+			break;
+		}
+	}
+	if (new_info->ike_prf == NULL) {
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS, "unsupported PRF algorithm %s",
+		       enum_showb(&oakley_hash_names, new_info->ike_halg, &buf));
+		return;
+	}
+
 	/*
 	 * don't add duplicates
 	 *
@@ -198,7 +212,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		if (ike_info->ike_encrypt == new_info->ike_encrypt &&
 		    (new_info->ike_eklen == 0 ||
 		     ike_info->ike_eklen == new_info->ike_eklen) &&
-		    ike_info->ike_halg == new_info->ike_halg &&
+		    ike_info->ike_prf == new_info->ike_prf &&
 		    ike_info->ike_modp == new_info->ike_modp) {
 			return;
 		}
