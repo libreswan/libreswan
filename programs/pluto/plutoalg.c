@@ -210,6 +210,14 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		}
 	}
 
+	new_info->ike_dh_group = lookup_group(new_info->ike_modp);
+	if (new_info->ike_dh_group == NULL) {
+		struct esb_buf buf;
+		loglog(RC_LOG_SERIOUS, "unsupported DH GROUP %s",
+		       enum_showb(&oakley_group_names, new_info->ike_modp, &buf));
+		return;
+	}
+
 	/*
 	 * don't add duplicates
 	 *
@@ -230,7 +238,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		     ike_info->ike_eklen == new_info->ike_eklen) &&
 		    ike_info->ike_prf == new_info->ike_prf &&
 		    ike_info->ike_integ == new_info->ike_integ &&
-		    ike_info->ike_modp == new_info->ike_modp) {
+		    ike_info->ike_dh_group == new_info->ike_dh_group) {
 			return;
 		}
 	}

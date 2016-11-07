@@ -105,9 +105,9 @@ struct ike_info {
 	const struct integ_desc *ike_integ;
 	u_int8_t ike_halg;              /* enum ikev1_hash_attribute: hash algorithm */
 	/*
-	 * MODP group
+	 * DH Group
 	 */
-	const struct oakley_group_desc *group;
+	const struct oakley_group_desc *ike_dh_group;
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
