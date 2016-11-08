@@ -127,7 +127,7 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.algo_type =     IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_3DES_CBC,
 		.ikev1_esp_id = ESP_3DES,
-		.algo_v2id =     IKEv2_ENCR_3DES,
+		.ikev2_id = IKEv2_ENCR_3DES,
 		.fips =          TRUE,
 		.do_ike_test = ike_alg_true,
 	},

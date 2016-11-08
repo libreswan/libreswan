@@ -1698,7 +1698,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		PEXPECT_LOG("IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
 		return FALSE;
 	}
-	if (encrypt->common.algo_v2id == 0) {
+	if (encrypt->common.ikev2_id == 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "IKEv2 %s %s ENCRYPT transform is not supported",
 		       protocol, encrypt->common.name);
@@ -1715,7 +1715,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 
 	if (keylen > 0) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.algo_v2id, keylen);
+				 encrypt->common.ikev2_id, keylen);
 	} else if (encrypt->keylen_omitted) {
 		/*
 		 * 3DES doesn't expect the key length
@@ -1724,14 +1724,14 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
 					 protocol, encrypt->common.name));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.algo_v2id, 0);
+				 encrypt->common.ikev2_id, 0);
 	} else if (encrypt->keydeflen == 0 || encrypt->keydeflen == encrypt->keymaxlen) {
 		pexpect(encrypt->keymaxlen > 0);
 		DBG(DBG_CONTROL,
 		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
 			    protocol, encrypt->common.name, encrypt->keymaxlen));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.algo_v2id, encrypt->keymaxlen);
+				 encrypt->common.ikev2_id, encrypt->keymaxlen);
 	} else {
 		/*
 		 * XXX:
@@ -1770,9 +1770,9 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				    protocol, encrypt->common.name,
 				    encrypt->keymaxlen, encrypt->keydeflen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.algo_v2id, encrypt->keymaxlen);
+					 encrypt->common.ikev2_id, encrypt->keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.algo_v2id, encrypt->keydeflen);
+					 encrypt->common.ikev2_id, encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
 			DBG(DBG_CONTROL,
@@ -1780,9 +1780,9 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				    protocol, encrypt->common.name,
 				    encrypt->keydeflen, encrypt->keymaxlen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.algo_v2id, encrypt->keydeflen);
+					 encrypt->common.ikev2_id, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.algo_v2id, encrypt->keymaxlen);
+					 encrypt->common.ikev2_id, encrypt->keymaxlen);
 			break;
 		default:
 			/* presumably AH */
@@ -1977,14 +1977,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		if (prf == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
 			continue;
-		} else if (prf->hasher.common.algo_v2id == 0) {
+		} else if (prf->hasher.common.ikev2_id == 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "IKEv2 proposal contains unsupported PRF algorithm %s",
 			       prf->hasher.common.name);
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
-					 prf->hasher.common.algo_v2id, 0);
+					 prf->hasher.common.ikev2_id, 0);
 		}
 
 		/*
@@ -1995,14 +1995,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			if (integ == NULL) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
-			} else if (integ->hasher.common.algo_v2id == 0) {
+			} else if (integ->hasher.common.ikev2_id == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
 				       integ->hasher.common.name);
 				continue;
 			} else {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->hasher.common.algo_v2id, 0);
+						 integ->hasher.common.ikev2_id, 0);
 			}
 		} else {
 			/*
@@ -2237,7 +2237,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			 * it if things look suspect for now.
 			 */
 			const struct encrypt_desc *encrypt = ikev1_get_esp_info_encrypt_desc(esp_info);
-			if (encrypt != NULL && encrypt->common.algo_v2id != 0) {
+			if (encrypt != NULL && encrypt->common.ikev2_id != 0) {
 				if (!append_encrypt_transform(proposal, encrypt,
 							      esp_info->enckeylen)) {
 					continue;
@@ -2293,7 +2293,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					continue;
 				}
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->hasher.common.algo_v2id, 0);
+						 integ->hasher.common.ikev2_id, 0);
 			}
 			break;
 
@@ -2318,7 +2318,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				continue;
 			}
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 integ->hasher.common.algo_v2id, 0);
+					 integ->hasher.common.ikev2_id, 0);
 			break;
 
 		default:

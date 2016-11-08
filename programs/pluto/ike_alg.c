@@ -312,13 +312,12 @@ const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info *es
 							    esp->auth);
 }
 
-static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table,
-					  unsigned id)
+static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table, int id)
 {
 	FOR_EACH_IKE_ALGP(table, algp) {
 		const struct ike_alg *e = *algp;
-		if (e->algo_v2id == id) {
-			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id: %u, found %s\n",
+		if (e->ikev2_id == id) {
+			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id: %d, found %s\n",
 					       table->name, id, e->name));
 			return e;
 		}
@@ -507,7 +506,7 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 				       algorithms->all.name, alg->name, alg->officname,
 				       alg->ikev1_oakley_id,
 				       alg->ikev1_esp_id,
-				       alg->algo_v2id));
+				       alg->ikev2_id));
 		passert(alg->name);
 		passert(alg->officname);
 		passert(alg->algo_type == algorithms->type);
@@ -520,12 +519,12 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		 * define the IKEv1 field "common.ikev1_oakley_id" so need to
 		 * handle that.
 		 */
-		passert(alg->ikev1_oakley_id > 0 || alg->algo_v2id > 0 || alg->ikev1_esp_id > 0);
+		passert(alg->ikev1_oakley_id > 0 || alg->ikev2_id > 0 || alg->ikev1_esp_id > 0);
 		check_enum_name("IKEv1 OAKLEY", alg->ikev1_oakley_id,
 				algorithms->ikev1_oakley_enum_names);
 		check_enum_name("IKEv1 ESP_INFO", alg->ikev1_esp_id,
 				algorithms->ikev1_esp_enum_names);
-		check_enum_name("IKEv2", alg->algo_v2id,
+		check_enum_name("IKEv2", alg->ikev2_id,
 				algorithms->ikev2_enum_names);
 
 		/*
@@ -541,8 +540,8 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 			ikev1_oakley_lookup(&scratch, alg->ikev1_oakley_id) == NULL);
 		passert(alg->ikev1_esp_id == 0 ||
 			ikev1_esp_lookup(&scratch.all, alg->ikev1_esp_id) == NULL);
-		passert(alg->algo_v2id == 0 ||
-			ikev2_lookup(&scratch.all, alg->algo_v2id) == NULL);
+		passert(alg->ikev2_id == 0 ||
+			ikev2_lookup(&scratch.all, alg->ikev2_id) == NULL);
 
 		/*
 		 * Extra IKE specific native validation.

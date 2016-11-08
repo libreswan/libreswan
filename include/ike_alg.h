@@ -61,9 +61,9 @@ enum ike_alg_type {
  *
  * USE       ENUM                       ENUM->STRING                  PREFIX
  *
- * ikev2_id (algo_v2id) / IKEv2 IKE / IKEv2 ESP / IKEv2 AH:
+ * ikev2_id / IKEv2 IKE / IKEv2 ESP / IKEv2 AH / IKEv2 DH:
  *
- * No confusion here.
+ * Almost no confusion.  DH is using IKEv1.
  *
  * ENCRYPT:  ikev2_trans_type_encr      ikev2_trans_type_encr_names   IKEv2_ENCR
  * PRF:      ikev2_trans_type_prf       ikev2_trans_type_prf_names    IKEv2_AUTH
@@ -138,7 +138,7 @@ struct ike_alg {
 	const enum ike_alg_type algo_type;
 	const u_int16_t ikev1_oakley_id;
 	const int ikev1_esp_id;
-	const u_int16_t algo_v2id;	/* const int ikev2_id */
+	const int ikev2_id;
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?
