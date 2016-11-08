@@ -1681,6 +1681,120 @@ static void append_transform(struct ikev2_proposal *proposal,
 }
 
 /*
+ * Append one or more encrypt transforms depending on KEYLEN.
+ *
+ * If problems, return false.
+ */
+static bool append_encrypt_transform(struct ikev2_proposal *proposal,
+				     const struct encrypt_desc *encrypt,
+				     unsigned keylen)
+{
+	const char *protocol = enum_short_name(&ikev2_protocol_names, proposal->protoid);
+	if (proposal->protoid == 0 || protocol == NULL) {
+		PEXPECT_LOG("%s", "IKEv2 ENCRYPT transform protocol unknown");
+		return FALSE;
+	}
+	if (encrypt == NULL) {
+		PEXPECT_LOG("IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
+		return FALSE;
+	}
+	if (encrypt->common.algo_v2id == 0) {
+		loglog(RC_LOG_SERIOUS,
+		       "IKEv2 %s %s ENCRYPT transform is not supported",
+		       protocol, encrypt->common.name);
+		return FALSE;
+	}
+	if (keylen > 0
+	    && keylen != encrypt->keyminlen
+	    && keylen != encrypt->keydeflen
+	    && keylen != encrypt->keymaxlen) {
+		PEXPECT_LOG("IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
+			    protocol, encrypt->common.name, keylen);
+		return FALSE;
+	}
+
+	if (keylen > 0) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.algo_v2id, keylen);
+	} else if (encrypt->keylen_omitted) {
+		/*
+		 * 3DES doesn't expect the key length
+		 * attribute.
+		 */
+		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
+					 protocol, encrypt->common.name));
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.algo_v2id, 0);
+	} else if (encrypt->keydeflen == 0 || encrypt->keydeflen == encrypt->keymaxlen) {
+		pexpect(encrypt->keymaxlen > 0);
+		DBG(DBG_CONTROL,
+		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
+			    protocol, encrypt->common.name, encrypt->keymaxlen));
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.algo_v2id, encrypt->keymaxlen);
+	} else {
+		/*
+		 * XXX:
+		 *
+		 * Should the parser, or something else have taken
+		 * care of this?  If a keylen of zero makes it all the
+		 * way through to here then, isn't that the intent?
+		 *
+		 * The problem is that, for some algorithms, keylen=0
+		 * is interpreted as propose two key-lengths.
+		 * Describing that in the parser could get tricky,
+		 * perhaps the info should contain an array of ENCRYPT
+		 * algorithms?
+		 *
+		 * XXX: There's a rumor that strongswan proposes
+		 * AES_000, this won't match that.
+		 *
+		 * Could this be better handled by searching the
+		 * algorithm database for anything matching the
+		 * encryption algorithm and marked as a default.
+		 *
+		 * Also muddying the waters is ESP which proposes a
+		 * smaller key in preference to a larger one.
+		 *
+		 * If one of these keys turns out to be 0 or a
+		 * duplicate then the worst that happens is a bogus or
+		 * redundant proposal is made.
+		 */
+		pexpect(encrypt->keymaxlen > 0);
+		pexpect(encrypt->keydeflen > 0);
+		pexpect(encrypt->keydeflen < encrypt->keymaxlen);
+		switch (proposal->protoid) {
+		case IKEv2_SEC_PROTO_IKE:
+			DBG(DBG_CONTROL,
+			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
+				    protocol, encrypt->common.name,
+				    encrypt->keymaxlen, encrypt->keydeflen));
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.algo_v2id, encrypt->keymaxlen);
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.algo_v2id, encrypt->keydeflen);
+			break;
+		case IKEv2_SEC_PROTO_ESP:
+			DBG(DBG_CONTROL,
+			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
+				    protocol, encrypt->common.name,
+				    encrypt->keydeflen, encrypt->keymaxlen));
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.algo_v2id, encrypt->keydeflen);
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.algo_v2id, encrypt->keymaxlen);
+			break;
+		default:
+			/* presumably AH */
+			libreswan_log("dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
+				      protocol, encrypt->common.name);
+			break;
+		}
+	}
+	return TRUE;
+}
+
+/*
  * Define macros to save some typing, perhaps avoid some duplication
  * errors, and ease the pain of occasionally rearanging these data
  * structures.
@@ -1852,59 +1966,8 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		 * Encryption
 		 */
 		const struct encrypt_desc *ealg = ike_info->ike_encrypt;
-		if (ealg == NULL) {
-			PEXPECT_LOG("%s", "IKEv2 proposal with no ENCRYPT should have been dropped");
+		if (!append_encrypt_transform(proposal, ealg, ike_info->ike_eklen)) {
 			continue;
-		} else if (ealg->common.algo_v2id == 0) {
-			loglog(RC_LOG_SERIOUS,
-			       "IKEv2 proposal contains unsupported ENCRYPT algorithm %s",
-			       ealg->common.name);
-			continue;
-		} else {
-			if (ike_info->ike_eklen != 0) {
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-						 ealg->common.algo_v2id, ike_info->ike_eklen);
-			} else if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
-				/*
-				 * XXX: crypto_req_keysize(), seems to
-				 * be the easiest way to determine if
-				 * a zero keylen is valid in a
-				 * proposal.  If it is, just propose
-				 * that.
-				 */
-				DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-						 ealg->common.algo_v2id, 0);
-			} else {
-				/*
-				 * XXX: The parser, or something else,
-				 * should have taken care of this.  If
-				 * a keylen of zero makes it all the
-				 * way through to here then, isn't
-				 * that the intent?
-				 *
-				 * XXX: There's a rumor that
-				 * strongswan proposes AES_000, this
-				 * won't match that.
-				 *
-				 * Could this be better handled by
-				 * searching the algorithm database
-				 * for anything matching the
-				 * encryption algorithm and marked as
-				 * a default.
-				 */
-				if (ealg->keymaxlen != 0) {
-					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keymaxlen);
-				}
-				if (ealg->keydeflen != 0 && ealg->keydeflen < ealg->keymaxlen) {
-					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
-								 ealg->keydeflen));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keydeflen);
-				}
-			}
 		}
 
 		/*
@@ -2167,7 +2230,24 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				ealg = IKEv2_ENCR_CAMELLIA_CBC;
 			}
 
-			if (esp_info->enckeylen > 0) {
+			/*
+			 * Encryption.
+			 *
+			 * XXX: Try to use the generic code, but avoid
+			 * it if things look suspect for now.
+			 */
+			const struct encrypt_desc *encrypt = ikev1_get_esp_info_encrypt_desc(esp_info);
+			if (encrypt != NULL && encrypt->common.algo_v2id != 0) {
+				if (!append_encrypt_transform(proposal, encrypt,
+							      esp_info->enckeylen)) {
+					continue;
+				}
+			} else if (esp_info->enckeylen > 0) {
+				DBG(DBG_CONTROL,
+				    struct esb_buf buf;
+				    DBG_log("No IKEv2 ESP IKE_ALG for %s using %u key-length",
+					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
+					    esp_info->enckeylen));
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, esp_info->enckeylen);
 			} else {
 				/*
@@ -2177,6 +2257,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				 */
 				unsigned ekeylen = crypto_req_keysize(CRK_ESPorAH,
 								      esp_info->transid);
+				DBG(DBG_CONTROL,
+				    struct esb_buf buf;
+				    DBG_log("No IKEv2 ESP IKE_ALG for %s defaulting to %u key-length",
+					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
+					    ekeylen));
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen);
 				if (ekeylen != 0) {
 					unsigned ekeylen2 = BITS_PER_BYTE * kernel_alg_esp_enc_max_keylen(esp_info->transid);

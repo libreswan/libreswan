@@ -185,6 +185,15 @@ struct encrypt_desc {
 	 */
 	const size_t wire_iv_size;
 
+	/*
+	 * Should the key-length attribute be omitted when
+	 * constructing the proposal's encrypt transform?
+	 *
+	 * Conversely, should a proposal be accepted when the encrypt
+	 * transform contains no key-length?
+	 */
+	const bool keylen_omitted;
+
 	const unsigned keydeflen;
 	const unsigned keymaxlen;
 	const unsigned keyminlen;
