@@ -31,23 +31,29 @@ from fab import jsonutil
 
 
 class Print(argutil.List):
+    # tests
+    test_directory = "test-directory"
+    test_host_names = "test-host-names"
+    test_kind = "test-kind"
+    test_name = "test-name"
+    test_scripts = "test-scripts"
+    test_status = "test-status"
+    # results
     boot_time = "boot-time"
     diffs = "diffs"
     end_time = "end-time"
-    issues = "errors" # for historic reasons, "issues" are publically called "errors".
-    expected_result = "expected-result"
-    host_names = "host-names"
-    kind = "kind"
+    issues = "errors"                      # for historic reasons
+    expected_result = "expected-result"    # test_status
+    host_names = "host-names"              # test_host_names
+    kind = "kind"                          # test_kind
     output_directory = "output-directory"
     path = "path"
     result = "result"
     runtime = "runtime"
     saved_output_directory = "saved-output-directory"
     script_time = "script-time"
-    scripts = "scripts"
+    scripts = "scripts"                    # test_scripts
     start_time = "start-time"
-    test_directory = "test-directory"
-    test_name = "test-name"
     testing_directory = "testing-directory"
     total_time = "total-time"
     baseline_directory = "baseline-directory"
@@ -303,12 +309,12 @@ def results(logger, tests, baseline, args, result_stats):
                     continue
                 elif p is Print.test_directory:
                     b.add(p, test.directory)
-                elif p is Print.expected_result:
+                elif p is Print.test_status or p is Print.expected_result:
                     b.add(p, test.expected_result)
-                elif p is Print.host_names:
+                elif p is Print.test_host_names or p is Print.host_names:
                     b.add(p, test.host_names,
                           string=lambda host_names, sep: sep + ",".join(host_names))
-                elif p is Print.kind:
+                elif p is Print.test_kind or p is Print.kind:
                     b.add(p, test.kind)
                 elif p is Print.test_name:
                     b.add(p, test.name)
@@ -322,7 +328,7 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, test.testing_directory())
                 elif p is Print.saved_output_directory:
                     b.add(p, test.saved_output_directory)
-                elif p is Print.scripts:
+                elif p is Print.test_scripts or p is Print.scripts:
                     b.add(p, [{ "host": h, "script": s} for h, s in test.host_script_tuples],
                           string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
                 elif p is Print.baseline_directory:
