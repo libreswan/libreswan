@@ -848,7 +848,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 				     key_len == 0 ||
 				     ike_info->ike_eklen == key_len) &&
 				    ike_info->ike_halg == aalg &&
-				    ike_info->ike_modp == group) {
+				    ike_info->ike_dh_group->group == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",

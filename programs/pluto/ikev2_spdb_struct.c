@@ -2025,7 +2025,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 ike_info->ike_modp, 0);
+					 ike_info->ike_dh_group->group, 0);
 		}
 
 		DBG(DBG_CONTROL,

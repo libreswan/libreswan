@@ -33,6 +33,7 @@
 
 #include "constants.h"
 #include "alg_info.h"
+#include "ike_alg.h"
 #include "lswlog.h"
 #include "lswalloc.h"
 
@@ -1176,8 +1177,9 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 			 (int)ike_info->ike_eklen,
 			 enum_short_name(&oakley_hash_names, ike_info->ike_halg),
 			 ike_info->ike_halg,
-			 enum_short_name(&oakley_group_names, ike_info->ike_modp),
-			 ike_info->ike_modp
+			 enum_short_name(&oakley_group_names,
+					 ike_info->ike_dh_group->group),
+			 ike_info->ike_dh_group->group
 			);
 		ptr += strlen(ptr);
 		sep = ", ";

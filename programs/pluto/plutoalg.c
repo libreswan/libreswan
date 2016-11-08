@@ -137,7 +137,6 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		.ike_ealg = ealg_id,
 		.ike_eklen = ek_bits,
 		.ike_halg = aalg_id,
-		.ike_modp = modp_id,
 	};
 
 	/*
@@ -210,11 +209,12 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		}
 	}
 
-	new_info->ike_dh_group = lookup_group(new_info->ike_modp);
+	new_info->ike_dh_group = lookup_group(modp_id);
 	if (new_info->ike_dh_group == NULL) {
 		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS, "unsupported DH GROUP %s",
-		       enum_showb(&oakley_group_names, new_info->ike_modp, &buf));
+		loglog(RC_LOG_SERIOUS, "unsupported DH GROUP %s=%d",
+		       enum_showb(&oakley_group_names, modp_id, &buf),
+		       modp_id);
 		return;
 	}
 
@@ -461,16 +461,17 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 
 	struct esb_buf enc_buf, hash_buf, group_buf;
 	return snprintf(buf, buflen,
-		"%s(%d)_%03d-%s(%d)-%s(%d)",
-		enum_show_shortb(&oakley_enc_names,
-			ike_info->ike_ealg, &enc_buf),
-		ike_info->ike_ealg, eklen,
-		enum_show_shortb(&oakley_hash_names,
-			ike_info->ike_halg, &hash_buf),
-		ike_info->ike_halg,
-		enum_show_shortb(&oakley_group_names,
-			ike_info->ike_modp, &group_buf),
-		ike_info->ike_modp);
+			"%s(%d)_%03d-%s(%d)-%s(%d)",
+			enum_show_shortb(&oakley_enc_names,
+					 ike_info->ike_ealg, &enc_buf),
+			ike_info->ike_ealg, eklen,
+			enum_show_shortb(&oakley_hash_names,
+					 ike_info->ike_halg, &hash_buf),
+			ike_info->ike_halg,
+			enum_show_shortb(&oakley_group_names,
+					 ike_info->ike_dh_group->group,
+					 &group_buf),
+			ike_info->ike_dh_group->group);
 }
 
 void alg_info_snprint_ike_info(char *buf, size_t buflen,

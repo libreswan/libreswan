@@ -108,7 +108,6 @@ struct ike_info {
 	 * DH Group
 	 */
 	const struct oakley_group_desc *ike_dh_group;
-	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
 /* common prefix of struct alg_info_esp and struct alg_info_ike */

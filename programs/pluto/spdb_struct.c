@@ -118,7 +118,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 		unsigned ealg = ike_info->ike_ealg;
 		unsigned halg = ike_info->ike_halg;
-		unsigned modp = ike_info->ike_modp;
+		unsigned modp = ike_info->ike_dh_group->group;
 		unsigned eklen = ike_info->ike_eklen;
 
 		DBG(DBG_CONTROL,
@@ -261,7 +261,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    ike_info->ike_modp != last_modp) {
+		    ike_info->ike_dh_group->group != last_modp) {
 			if (last_modp == OAKLEY_GROUP_MODP1024 ||
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
@@ -276,11 +276,11 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-					"transform (%s,%s,%s keylen %ld) ignored.",
-					enum_name(&oakley_enc_names, ike_info->ike_ealg),
-					enum_name(&oakley_hash_names, ike_info->ike_halg),
-					enum_name(&oakley_group_names, ike_info->ike_modp),
-					(long)ike_info->ike_eklen);
+				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
+				       enum_name(&oakley_hash_names, ike_info->ike_halg),
+				       enum_name(&oakley_group_names, ike_info->ike_dh_group->group),
+				       (long)ike_info->ike_eklen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -378,7 +378,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = ike_info->ike_modp;
+			last_modp = ike_info->ike_dh_group->group;
 		}
 
 		transcnt++;
