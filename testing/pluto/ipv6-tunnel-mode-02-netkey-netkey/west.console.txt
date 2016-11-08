@@ -26,15 +26,11 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  ipsec start
-Warning: ignored obsolete keyword 'oe'
-Warning: ignored obsolete keyword 'oe'
-Warning: ignored obsolete keyword 'oe'
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add v6-tunnel
-Warning: ignored obsolete keyword 'oe'
 002 added connection description "v6-tunnel"
 west #
  ipsec auto --status

@@ -1,9 +1,6 @@
 /testing/guestbin/swan-prep --46
 east #
  ipsec start
-Warning: ignored obsolete keyword 'oe'
-Warning: ignored obsolete keyword 'oe'
-Warning: ignored obsolete keyword 'oe'
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -25,7 +22,6 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-6in6
-Warning: ignored obsolete keyword 'oe'
 002 added connection description "westnet-eastnet-6in6"
 east #
  ipsec auto --status
