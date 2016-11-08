@@ -95,19 +95,19 @@ struct ike_info {
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
-	const struct encrypt_desc *encrypt;
+	const struct encrypt_desc *ike_encrypt;
 	u_int16_t ike_ealg;             /* enum ikev1_encr_attribute: bit 15 set for reserved */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
 	/*
 	 * Integrity and PRF.
 	 */
-	const struct prf_desc *prf;
-	const struct integ_desc *integ;
+	const struct prf_desc *ike_prf;
+	const struct integ_desc *ike_integ;
 	u_int8_t ike_halg;              /* enum ikev1_hash_attribute: hash algorithm */
 	/*
-	 * MODP group
+	 * DH Group
 	 */
-	const struct oakley_group_desc *group;
+	const struct oakley_group_desc *ike_dh_group;
 	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
