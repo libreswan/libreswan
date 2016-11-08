@@ -85,11 +85,12 @@ while true ; do
 	# Starting with HEAD, work backwards looking for anything
 	# untested.
 
-	if hash=$(${webdir}/gime-pending.sh ${summarydir} ${repodir} ${start_hash}..HEAD | head -1) ; then
+	hash=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${start_hash})
+	if test -n "${hash}" ; then
 	    status "checking out ${hash}"
-	    # Now wind back to the commit needing testing, making
-	    # that HEAD.  This could have the effect of switching
-	    # branches, take care.
+	    # Now discard everything back to the commit to be tested,
+	    # making that HEAD.  This could have the effect of
+	    # switching branches, take care.
 	    ( cd ${repodir} && git reset --hard ${hash} )
 	    break
 	fi
