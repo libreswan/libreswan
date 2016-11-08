@@ -223,7 +223,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf_hash = st->st_oakley.prf_hash;
 	dhq->integ_hash = st->st_oakley.integ_hash;
-	dhq->oakley_group = st->st_oakley.groupnum;
+	dhq->oakley_group = st->st_oakley.group->group;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.encrypter->salt_size;

@@ -271,7 +271,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 		passert(c->ike_proposals != NULL);
 		st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
 		passert(st->st_oakley.group != NULL); /* known! */
-		st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 
 		/*
 		 * Calculate KE and Nonce.
@@ -513,8 +512,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
-	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.groupnum, &md->rbody,
-			   ISAKMP_NEXT_v2Ni))
+	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.group->group,
+			   &md->rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
 	/* send NONCE */
@@ -1357,7 +1356,6 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
 
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
-				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
 				DBG(DBG_CONTROLMORE, {
 					struct esb_buf esb;

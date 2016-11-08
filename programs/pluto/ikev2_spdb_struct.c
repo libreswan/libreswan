@@ -1484,7 +1484,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					       transform->id);
 					return FALSE;
 				}
-				ta.groupnum = transform->id;
 				ta.group = group;
 				break;
 			}
