@@ -54,7 +54,7 @@ static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_c
 struct prf_desc ike_alg_prf_md5 = {
 	.hasher = {
 		.common = {
-			.name = "oakley_md5",
+			.name = "md5",
 			.officname = "md5",
 			.algo_type = IKE_ALG_HASH,
 			.ikev1_oakley_id = OAKLEY_MD5,
@@ -74,7 +74,7 @@ struct prf_desc ike_alg_prf_md5 = {
 struct integ_desc ike_alg_integ_md5 = {
 	.hasher = {
 		.common = {
-			.name = "oakley_md5",
+			.name = "md5",
 			.officname = "md5",
 			.algo_type = IKE_ALG_INTEG,
 			.ikev1_oakley_id = OAKLEY_MD5,

@@ -133,8 +133,19 @@ enum ike_alg_type {
  * be eliminated.
  */
 struct ike_alg {
-	const char *name;	/* note: overwritten sometimes */
+	/*
+	 * ??? why two names ???
+	 *
+	 * Seemingly (see ikev2.c:ikev2_log_parentSA()) OFFICNAME is
+	 * expected to match tcpdump's -E option.  A check of the
+	 * tcpdump man page would suggest otherwise.  For instance,
+	 * "aes" vs "aes-cbc".
+	 */
+	const char *name;
 	const char *const officname;
+	/*
+	 * See above.
+	 */
 	const enum ike_alg_type algo_type;
 	const u_int16_t ikev1_oakley_id;
 	const int ikev1_esp_id;
