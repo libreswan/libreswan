@@ -194,17 +194,13 @@ struct type_algorithms {
 	enum_names *const ikev1_oakley_enum_names;
 	enum_names *const ikev1_esp_enum_names;
 	enum_names *const ikev2_enum_names;
-	void (*check_ike_desc)(const struct ike_alg*);
+	void (*desc_check)(const struct ike_alg*);
+	bool (*desc_is_ike)(const struct ike_alg*);
 };
 
 static struct type_algorithms prf_algorithms;
 static struct type_algorithms integ_algorithms;
 static struct type_algorithms encrypt_algorithms;
-
-bool ike_alg_true(const struct ike_alg *alg UNUSED)
-{
-	return TRUE;
-}
 
 static const struct ike_alg **next_alg(const struct algorithm_table *table,
 				       const struct ike_alg **last)
@@ -370,18 +366,32 @@ static struct prf_desc *prf_descriptors[] = {
 #endif
 };
 
-static void check_ike_hash_desc(const struct hash_desc *hash)
+static void hash_desc_check(const struct hash_desc *hash)
 {
 	passert(hash->hash_ctx_size <= sizeof(union hash_ctx));
-	passert(hash->hash_init != NULL);
-	passert(hash->hash_update != NULL);
-	passert(hash->hash_final != NULL);
+	passert((hash->hash_init != NULL &&
+		 hash->hash_update != NULL &&
+		 hash->hash_final != NULL) ||
+		(hash->hash_init == NULL &&
+		 hash->hash_update == NULL &&
+		 hash->hash_final == NULL));
 }
 
-static void check_ike_prf_desc(const struct ike_alg *alg)
+static bool hash_desc_is_ike(const struct hash_desc *hash)
+{
+	return hash->hash_init != NULL;
+}
+
+static void prf_desc_check(const struct ike_alg *alg)
 {
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
-	check_ike_hash_desc(&prf->hasher);
+	hash_desc_check(&prf->hasher);
+}
+
+static bool prf_desc_is_ike(const struct ike_alg *alg)
+{
+	const struct prf_desc *prf = (const struct prf_desc*)alg;
+	return hash_desc_is_ike(&prf->hasher);
 }
 
 static struct type_algorithms prf_algorithms = {
@@ -390,7 +400,8 @@ static struct type_algorithms prf_algorithms = {
 	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = NULL, /* ESP/AH uses IKE PRF */
 	.ikev2_enum_names = &ikev2_trans_type_prf_names,
-	.check_ike_desc = check_ike_prf_desc,
+	.desc_check = prf_desc_check,
+	.desc_is_ike = prf_desc_is_ike,
 };
 
 /*
@@ -415,11 +426,17 @@ static struct integ_desc *integ_descriptors[] = {
 #endif
 };
 
-static void check_ike_integ_desc(const struct ike_alg *alg)
+static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = (const struct integ_desc*)alg;
 	passert(integ->integ_hash_len > 0);
-	check_ike_hash_desc(&integ->hasher);
+	hash_desc_check(&integ->hasher);
+}
+
+static bool integ_desc_is_ike(const struct ike_alg *alg)
+{
+	const struct prf_desc *prf = (const struct prf_desc*)alg;
+	return hash_desc_is_ike(&prf->hasher);
 }
 
 static struct type_algorithms integ_algorithms = {
@@ -428,7 +445,8 @@ static struct type_algorithms integ_algorithms = {
 	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = &auth_alg_names,
 	.ikev2_enum_names = &ikev2_trans_type_integ_names,
-	.check_ike_desc = check_ike_integ_desc,
+	.desc_check = integ_desc_check,
+	.desc_is_ike = integ_desc_is_ike,
 };
 
 /*
@@ -465,8 +483,18 @@ static struct encrypt_desc *encrypt_descriptors[] = {
 #endif
 };
 
-static void check_ike_encrypt_desc(const struct ike_alg *alg UNUSED)
+static void encrypt_desc_check(const struct ike_alg *alg)
 {
+	const struct encrypt_desc *encrypt = (const struct encrypt_desc *)alg;
+	/* if one, only one */
+	passert((encrypt->do_crypt == NULL && encrypt->do_aead_crypt_auth == NULL)
+		|| ((encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL)));
+}
+
+static bool encrypt_desc_is_ike(const struct ike_alg *alg)
+{
+	const struct encrypt_desc *encrypt = (const struct encrypt_desc *)alg;
+	return (encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL);
 }
 
 static struct type_algorithms encrypt_algorithms = {
@@ -475,7 +503,8 @@ static struct type_algorithms encrypt_algorithms = {
 	.ikev1_oakley_enum_names = &oakley_enc_names,
 	.ikev1_esp_enum_names = &esp_transformid_names,
 	.ikev2_enum_names = &ikev2_trans_type_encr_names,
-	.check_ike_desc = check_ike_encrypt_desc,
+	.desc_check = encrypt_desc_check,
+	.desc_is_ike = encrypt_desc_is_ike,
 };
 
 static void check_enum_name(const char *what, int id, enum_names *names)
@@ -544,13 +573,10 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 			ikev2_lookup(&scratch.all, alg->ikev2_id) == NULL);
 
 		/*
-		 * Extra IKE specific native validation.
-		 *
-		 * Should Non-IKE algorithms get a subset?
+		 * Extra algorithm specific checks.
 		 */
-		if (alg->do_ike_test) {
-			algorithms->check_ike_desc(alg);
-		}
+		passert(algorithms->desc_check);
+		algorithms->desc_check(alg);
 	}
 
 	/*
@@ -573,6 +599,7 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		}
 		algorithms->all.end = end;
 	}
+
 
 	/*
 	 * Completely filter out and flag any broken IKE algorithms.
@@ -627,7 +654,8 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		const struct ike_alg *alg = *algp;
 
 		const char *ike_enabled;
-		if (alg->do_ike_test != NULL) {
+		passert(algorithms->desc_is_ike);
+		if (algorithms->desc_is_ike(alg)) {
 			*algorithms->ike.end++ = alg;
 			ike_enabled = "ENABLED";
 		} else {

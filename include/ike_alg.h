@@ -344,13 +344,6 @@ extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
 void ike_alg_init(void);
 
 /*
- * Return true always.
- *
- * Useful default for ike_alg.do_ike_test().
- */
-extern bool ike_alg_true(const struct ike_alg*);
-
-/*
  * Iterate over the IKE enabled algorithms.
  */
 const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last);

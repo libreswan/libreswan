@@ -126,7 +126,6 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.ikev1_esp_id = ESP_3DES,
 		.ikev2_id = IKEv2_ENCR_3DES,
 		.fips =          TRUE,
-		.do_ike_test = ike_alg_true,
 	},
 	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,

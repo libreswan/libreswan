@@ -39,6 +39,7 @@
 #include "gcm_test_vectors.h"
 #include "ike_alg_aes.h"
 
+#ifdef NOT_YET
 static void aes_xcbc_init_thunk(union hash_ctx *ctx)
 {
 	aes_xcbc_init(&ctx->ctx_aes_xcbc);
@@ -53,6 +54,7 @@ static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
 {
 	aes_xcbc_final(hash, &ctx->ctx_aes_xcbc);
 }
+#endif
 
 /*
  * Ref: http://tools.ietf.org/html/rfc3602: Test Vectors
@@ -485,7 +487,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
 		.ikev2_id = IKEv2_ENCR_AES_GCM_8,
 		.fips =        TRUE,
-		.do_ike_test = ike_alg_true,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -509,7 +510,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.ikev1_oakley_id = OAKLEY_AES_GCM_12,
 		.ikev2_id = IKEv2_ENCR_AES_GCM_12,
 		.fips =        TRUE,
-		.do_ike_test = ike_alg_true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -630,9 +630,11 @@ struct prf_desc ike_alg_prf_aes_xcbc = {
 		.hash_key_size = AES_XCBC_DIGEST_SIZE,
 		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
 		.hash_block_size = AES_CBC_BLOCK_SIZE,
+#ifdef NOT_YET
 		.hash_init = aes_xcbc_init_thunk,
 		.hash_update = aes_xcbc_write_thunk,
 		.hash_final = aes_xcbc_final_thunk,
+#endif
 	},
 };
 
@@ -652,9 +654,11 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 		.hash_key_size = AES_XCBC_DIGEST_SIZE,
 		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
 		.hash_block_size = AES_CBC_BLOCK_SIZE,
+#ifdef NOT_YET
 		.hash_init = aes_xcbc_init_thunk,
 		.hash_update = aes_xcbc_write_thunk,
 		.hash_final = aes_xcbc_final_thunk,
+#endif
 	},
 	.integ_hash_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
