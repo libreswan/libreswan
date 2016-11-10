@@ -208,11 +208,18 @@ struct encrypt_desc {
 	const unsigned keydeflen;
 	const unsigned keymaxlen;
 	const unsigned keyminlen;
-	void (*const do_crypt)(u_int8_t *dat,
-			 size_t datasize,
-			 PK11SymKey *key,
-			 u_int8_t *iv,
-			 bool enc);
+
+	/*
+	 * Perform simple encryption.
+	 *
+	 * Presumably something else is implementing the integrity.
+	 */
+	void (*const do_crypt)(const struct encrypt_desc *alg,
+			       u_int8_t *dat,
+			       size_t datasize,
+			       PK11SymKey *key,
+			       u_int8_t *iv,
+			       bool enc);
 
 	/*
 	 * For Authenticated Encryption with Associated Data (AEAD),
@@ -234,12 +241,13 @@ struct encrypt_desc {
 	 *
 	 * All sizes are in 8-bit bytes.
 	 */
-	bool (*const do_aead_crypt_auth)(u_int8_t *salt, size_t salt_size,
-				   u_int8_t *wire_iv, size_t wire_iv_size,
-				   u_int8_t *aad, size_t aad_size,
-				   u_int8_t *text_and_tag,
-				   size_t text_size, size_t tag_size,
-				   PK11SymKey *key, bool enc);
+	bool (*const do_aead_crypt_auth)(const struct encrypt_desc *alg,
+					 u_int8_t *salt, size_t salt_size,
+					 u_int8_t *wire_iv, size_t wire_iv_size,
+					 u_int8_t *aad, size_t aad_size,
+					 u_int8_t *text_and_tag,
+					 size_t text_size, size_t tag_size,
+					 PK11SymKey *key, bool enc);
 };
 
 typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);

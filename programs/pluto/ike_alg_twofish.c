@@ -34,7 +34,8 @@
 #define  TWOFISH_KEY_DEF_LEN    128
 #define  TWOFISH_KEY_MAX_LEN    256
 
-static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
+static void do_twofish(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		       u_int8_t *iv, bool enc)
 {
 	twofish_context twofish_ctx;

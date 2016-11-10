@@ -112,11 +112,11 @@ static bool test_aes_cbc(const struct ike_alg *alg)
 				 aes_cbc_test_vectors);
 }
 
-static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
+static void do_aes_cbc(const struct encrypt_desc *alg,
+		       u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 		       u_int8_t *iv, bool enc)
 {
-	ike_alg_nss_cbc(CKM_AES_CBC, &ike_alg_encrypt_aes_cbc,
-			buf, buf_len, symkey, iv, enc);
+	ike_alg_nss_cbc(CKM_AES_CBC, alg, buf, buf_len, symkey, iv, enc);
 }
 
 struct encrypt_desc ike_alg_encrypt_aes_cbc = {
@@ -268,7 +268,8 @@ static bool test_aes_ctr(const struct ike_alg *alg)
 				aes_ctr_test_vectors);
 }
 
-static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
+static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 		       u_int8_t *counter_block, bool encrypt)
 {
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
@@ -362,7 +363,8 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.do_crypt =     do_aes_ctr,
 };
 
-static bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
+static bool do_aes_gcm(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *salt, size_t salt_size,
 		       u_int8_t *wire_iv, size_t wire_iv_size,
 		       u_int8_t *aad, size_t aad_size,
 		       u_int8_t *text_and_tag,

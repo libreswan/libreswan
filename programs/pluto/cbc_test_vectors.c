@@ -48,7 +48,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected = decode_to_chunk(output_name, output);
 
 	/* do_crypt modifies the data and IV in place.  */
-	encrypt_desc->do_crypt(tmp.ptr, tmp.len,
+	encrypt_desc->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 			       sym_key, iv.ptr, encrypt);
 
 	if (!compare_chunks(op, expected, tmp)) {

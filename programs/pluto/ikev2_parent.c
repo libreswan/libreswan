@@ -1728,7 +1728,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 		    DBG_dump("data before encryption:", enc_start, enc_size));
 
 		/* now, encrypt */
-		(st->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
+		(st->st_oakley.encrypter->do_crypt)(st->st_oakley.encrypter,
+						    enc_start, enc_size,
 						    cipherkey,
 						    enc_iv, TRUE);
 
@@ -1770,12 +1771,13 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->
-			do_aead_crypt_auth(salt.ptr, salt.len,
-					   wire_iv_start, wire_iv_size,
-					   aad_start, aad_size,
-					   enc_start, enc_size, integ_size,
-					   cipherkey, TRUE)) {
+		if (!st->st_oakley.encrypter->do_aead_crypt_auth(
+			    st->st_oakley.encrypter,
+			    salt.ptr, salt.len,
+			    wire_iv_start, wire_iv_size,
+			    aad_start, aad_size,
+			    enc_start, enc_size, integ_size,
+			    cipherkey, TRUE)) {
 			return STF_FAIL;
 		}
 		DBG(DBG_CRYPT,
@@ -1922,7 +1924,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload before decryption:", enc_start, enc_size));
-		(pst->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
+		(pst->st_oakley.encrypter->do_crypt)(pst->st_oakley.encrypter,
+						     enc_start, enc_size,
 						     cipherkey,
 						     enc_iv, FALSE);
 		DBG(DBG_CRYPT,
@@ -1949,11 +1952,12 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
 		if (!st->st_oakley.encrypter->
-			do_aead_crypt_auth(salt.ptr, salt.len,
-					   wire_iv_start, wire_iv_size,
-					   aad_start, aad_size,
-					   enc_start, enc_size, integ_size,
-					   cipherkey, FALSE)) {
+		    do_aead_crypt_auth(st->st_oakley.encrypter,
+				       salt.ptr, salt.len,
+				       wire_iv_start, wire_iv_size,
+				       aad_start, aad_size,
+				       enc_start, enc_size, integ_size,
+				       cipherkey, FALSE)) {
 			return STF_FAIL; /* sub-code? */
 		}
 		DBG(DBG_CRYPT,

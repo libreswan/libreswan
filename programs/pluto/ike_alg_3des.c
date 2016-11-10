@@ -29,7 +29,14 @@
 #include "ike_alg.h"
 #include "ike_alg_3des.h"
 
-static void do_3des_nss(u_int8_t *buf, size_t buf_len,
+/* encrypt or decrypt part of an IKE message using 3DES
+ * See RFC 2409 "IKE" Appendix B
+ *
+ * This is probably a duplicate if ike_alg_nss_cbc().
+ */
+
+static void do_3des_nss(const struct encrypt_desc *alg UNUSED,
+			u_int8_t *buf, size_t buf_len,
 			PK11SymKey *symkey, u_int8_t *iv, bool enc)
 {
 	u_int8_t *tmp_buf;
@@ -109,16 +116,6 @@ static void do_3des_nss(u_int8_t *buf, size_t buf_len,
 		DBG_log("NSS: do_3des init end"));
 }
 
-/* encrypt or decrypt part of an IKE message using 3DES
- * See RFC 2409 "IKE" Appendix B
- */
-static void do_3des(u_int8_t *buf, size_t buf_len,
-		    PK11SymKey *key, u_int8_t *iv, bool enc)
-{
-	passert(key != NULL);
-	do_3des_nss(buf, buf_len, key, iv, enc);
-}
-
 struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
 	.common = {
@@ -139,5 +136,5 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
-	.do_crypt =         do_3des,
+	.do_crypt = do_3des_nss,
 };

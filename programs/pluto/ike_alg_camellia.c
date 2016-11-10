@@ -90,11 +90,11 @@ static const struct cbc_test_vector camellia_cbc_test_vectors[] = {
 	}
 };
 
-static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
+static void do_camellia_cbc(const struct encrypt_desc *alg,
+			    u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 			    u_int8_t *iv, bool enc)
 {
-	ike_alg_nss_cbc(CKM_CAMELLIA_CBC, &ike_alg_encrypt_camellia_cbc,
-			buf, buf_len, symkey, iv, enc);
+	ike_alg_nss_cbc(CKM_CAMELLIA_CBC, alg, buf, buf_len, symkey, iv, enc);
 }
 
 static bool test_camellia_cbc(const struct ike_alg *alg)
@@ -120,6 +120,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
+
 	.do_crypt =     do_camellia_cbc,
 };
 

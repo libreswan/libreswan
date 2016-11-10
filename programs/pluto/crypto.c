@@ -73,7 +73,7 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 		    st->st_new_iv, enc));
 #endif
 
-	e->do_crypt(buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
+	e->do_crypt(e, buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
 }
 
 /*
