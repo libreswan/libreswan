@@ -29,11 +29,14 @@
 #include "ike_alg.h"
 #include "ike_alg_nss_cbc.h"
 
-void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *alg,
-		u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-		u_int8_t *iv, bool enc)
+void ike_alg_nss_cbc(const struct encrypt_desc *alg,
+		     u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
+		     u_int8_t *iv, bool enc)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
+
+	passert(alg->nss_mechanism != CKM_VENDOR_DEFINED);
+	passert(alg->nss_mechanism != 0);
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -46,7 +49,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 	ivitem.type = siBuffer;
 	ivitem.data = iv;
 	ivitem.len = alg->enc_blocksize;
-	SECItem *secparam = PK11_ParamFromIV(ciphermech, &ivitem);
+	SECItem *secparam = PK11_ParamFromIV(alg->nss_mechanism, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - Failure to set up PKCS11 param (err %d)",
@@ -55,7 +58,7 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 	}
 
 	PK11Context *enccontext;
-	enccontext = PK11_CreateContextBySymKey(ciphermech,
+	enccontext = PK11_CreateContextBySymKey(alg->nss_mechanism,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014, 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,7 +12,7 @@
  * for more details.
  */
 
-extern void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *algo,
-			    u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
-			    u_int8_t *iv, bool enc);
+void ike_alg_nss_cbc(const struct encrypt_desc *algo,
+		     u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
+		     u_int8_t *iv, bool enc);
 

@@ -67,62 +67,6 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 #undef CASE
 }
 
-static CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
-{
-	/* the best wey have for "undefined" */
-	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
-
-	switch ((enum ikev1_encr_attribute) encrypter->common.ikev1_oakley_id) {
-	case OAKLEY_3DES_CBC:
-		mechanism = CKM_DES3_CBC;
-		break;
-	case OAKLEY_CAST_CBC:
-		/* not yet */
-		pexpect(mechanism == CKM_CAST5_CBC);
-		break;
-	case OAKLEY_AES_CBC:
-		mechanism = CKM_AES_CBC;
-		break;
-	case OAKLEY_CAMELLIA_CBC:
-		mechanism = CKM_CAMELLIA_CBC;
-		break;
-	case OAKLEY_AES_CTR:
-		mechanism = CKM_AES_CTR;
-		break;
-	case OAKLEY_AES_CCM_8:
-	case OAKLEY_AES_CCM_12:
-	case OAKLEY_AES_CCM_16:
-		/* not yet */
-		pexpect(mechanism == CKM_AES_CCM);
-		break;
-	case OAKLEY_AES_GCM_8:
-	case OAKLEY_AES_GCM_12:
-	case OAKLEY_AES_GCM_16:
-		mechanism = CKM_AES_GCM;
-		break;
-	case OAKLEY_TWOFISH_CBC:
-		/* not yet */
-		pexpect(mechanism == CKM_TWOFISH_CBC);
-		break;
-	default:
-		break;
-	}
-	if (mechanism == CKM_VENDOR_DEFINED) {
-		loglog(RC_LOG_SERIOUS,
-			"NSS: Unsupported encryption mechanism for %s",
-			enum_short_name(&oakley_enc_names,
-					encrypter->common.ikev1_oakley_id));
-	} else {
-		/* XXX: DBG_CRYPTOMORE */
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("%s(%d) converted to %s(%lu)",
-				encrypter->common.name, encrypter->common.ikev1_oakley_id,
-				ckm_to_string(mechanism), mechanism);
-		}
-	}
-	return mechanism;
-}
-
 void free_any_symkey(const char *prefix, PK11SymKey **key)
 {
 	if (*key != NULL) {
@@ -369,8 +313,30 @@ PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
 					  const struct encrypt_desc *encrypter,
 					  size_t next_byte, size_t sizeof_symkey)
 {
+	/*
+	 * NSS expects an encryption key's mechanism to specify the
+	 * algorithm that they key will be used by.  If this is wrong
+	 * then the encryption will not work.
+	 *
+	 * Unfortunately, some encryption algorithms are not
+	 * implemented by NSS, so the correct key type can't always be
+	 * specified.  For those specify CKM_VENDOR_DEFINED.
+	 */
+
+	CK_MECHANISM_TYPE mechanism = (encrypter->nss_mechanism
+				       ? encrypter->nss_mechanism
+				       : CKM_VENDOR_DEFINED);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s NSS encryption key mechanism %s(%lu)%s",
+			encrypter->common.name,
+			ckm_to_string(mechanism),
+			mechanism,
+			(mechanism == CKM_VENDOR_DEFINED
+			 ? " (algorithm is not using NSS)"
+			 : ""));
+	}
 	return symkey_from_symkey("crypt key:", source_key,
-				  nss_encryption_mech(encrypter),
+				  mechanism,
 				  CKF_ENCRYPT | CKF_DECRYPT,
 				  next_byte, sizeof_symkey);
 }

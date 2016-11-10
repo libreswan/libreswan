@@ -136,5 +136,6 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
+	.nss_mechanism = CKM_DES3_CBC,
 	.do_crypt = do_3des_nss,
 };

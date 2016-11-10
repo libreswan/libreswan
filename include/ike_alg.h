@@ -210,6 +210,20 @@ struct encrypt_desc {
 	const unsigned keyminlen;
 
 	/*
+	 * The NSS encryption mechanism (passed to NSS's encrypt
+	 * functions).
+	 *
+	 * Note that the SYMKEY object passed to .do_crypt() et.al.)
+	 * must also have its mechanism (type) set to this value.  If
+	 * it isn't, the crypt operation fails.
+	 *
+	 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
+	 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
+	 * has no meaning in this context so it is safe.
+	 */
+	CK_MECHANISM_TYPE nss_mechanism;
+
+	/*
 	 * Perform simple encryption.
 	 *
 	 * Presumably something else is implementing the integrity.
