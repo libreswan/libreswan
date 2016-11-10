@@ -123,12 +123,6 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.do_crypt =     do_camellia_cbc,
 };
 
-static void do_camellia_ctr(u_int8_t *buf UNUSED, size_t buf_len UNUSED, PK11SymKey *symkey UNUSED,
-			    u_int8_t *nonce_iv UNUSED, bool enc UNUSED)
-{
-	DBG(DBG_CRYPT, DBG_log("NSS do_camellia_ctr: stubb only"));
-}
-
 struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 {
 	.common = {
@@ -137,7 +131,6 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CTR,
 		.ikev2_id = IKEv2_ENCR_CAMELLIA_CTR,
-		.do_ike_test = ike_alg_true,
 	},
 	.enc_ctxsize =   sizeof(camellia_context),
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
@@ -146,5 +139,4 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
-	.do_crypt =     do_camellia_ctr,
 };
