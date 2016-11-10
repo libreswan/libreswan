@@ -175,7 +175,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	zero(skr);	/* ??? pointer fields might not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
 
 	SECKEYPrivateKey *ltsecret = dhq.secret;

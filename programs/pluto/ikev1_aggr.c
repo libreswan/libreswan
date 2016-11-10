@@ -197,10 +197,9 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 			"aggr outR1 DH",
 			st, md);
 
-		e = start_dh_secretiv(dh, st,
-				      st->st_import,
+		e = start_dh_secretiv(dh, st, st->st_import,
 				      ORIGINAL_RESPONDER,
-				      st->st_oakley.group->group);
+				      st->st_oakley.group);
 
 		if (e != STF_SUSPEND) {
 			passert(dh->pcrc_md != NULL);
@@ -709,10 +708,9 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 			"aggr outR1 DH",
 			st, md);
 
-		return start_dh_secretiv(dh, st,
-					 st->st_import,
+		return start_dh_secretiv(dh, st, st->st_import,
 					 ORIGINAL_INITIATOR,
-					 st->st_oakley.group->group);
+					 st->st_oakley.group);
 	}
 }
 

@@ -208,8 +208,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			    )
 {
 	oakley_auth_t auth = skq->auth;
-	oakley_hash_t hash = skq->prf_hash;
-	const struct prf_desc *prf_desc = ikev1_get_ike_prf_desc(hash);
+	const struct prf_desc *prf_desc = skq->prf;
 	const struct hash_desc *hasher = prf_desc ? &prf_desc->hasher : NULL;
 	chunk_t ni;
 	chunk_t nr;
@@ -306,7 +305,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	zero(skr);	/* ??? pointer fields may not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
 
 	SECKEYPrivateKey *ltsecret = dhq.secret;

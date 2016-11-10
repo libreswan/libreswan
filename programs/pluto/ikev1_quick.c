@@ -2158,10 +2158,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 		unpack_KE_from_helper(st, r, &st->st_gr);
 
-		e = start_dh_secret(dh, st,
-				    st->st_import,
+		e = start_dh_secret(dh, st, st->st_import,
 				    ORIGINAL_RESPONDER,
-				    st->st_pfs_group->group);
+				    st->st_pfs_group);
 
 		/*
 		 * In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has
@@ -2468,10 +2467,9 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 			quick_inR1_outI2_continue, "quick outI2 DH",
 			st, md);
 
-		return start_dh_secret(dh, st,
-				       st->st_import,
+		return start_dh_secret(dh, st, st->st_import,
 				       ORIGINAL_INITIATOR,
-				       st->st_pfs_group->group);
+				       st->st_pfs_group);
 	} else {
 		/* just call the tail function */
 		return quick_inR1_outI2_cryptotail(md, NULL);

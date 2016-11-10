@@ -106,19 +106,18 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
-		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
+		    skq->prf->hasher.common.name,
+		    (skq->integ ? skq->integ->hasher.common.name : "n/a"),
 		    key_size, salt_size));
 
-	const struct prf_desc *prf_desc = ikev2_get_prf_desc(skq->prf_hash);
-	passert(prf_desc != NULL);
-	const struct hash_desc *prf_hasher = &prf_desc->hasher;
+	passert(skq->prf != NULL);
+	const struct hash_desc *prf_hasher = &skq->prf->hasher;
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = ikev2_ike_sa_skeyseed(prf_desc, ni, nr, shared);
+	skeyseed_k = ikev2_ike_sa_skeyseed(skq->prf, ni, nr, shared);
 	passert(skeyseed_k != NULL);
 
 	/* now we have to generate the keys for everything */
@@ -132,10 +131,9 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	int skd_bytes = prf_hasher->hash_key_size;
 	int skp_bytes = prf_hasher->hash_key_size;
-	const struct integ_desc *integ_hasher = ikev2_get_integ_desc(skq->integ_hash);
-	int integ_size = integ_hasher != NULL ? integ_hasher->hasher.hash_key_size : 0;
+	int integ_size = skq->integ ? skq->integ->hasher.hash_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
-	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf_desc, skeyseed_k,
+	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
 						   ni, nr, spii, spir,
 						   total_keysize);
 
@@ -231,7 +229,7 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 	*skr = zero_pcr_skeycalc_v2_r;
 	INIT_WIRE_ARENA(*skr);
 
-	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
 
 	SECKEYPrivateKey *ltsecret = dhq.secret;

@@ -167,10 +167,10 @@ struct pcr_kenonce {
 struct pcr_skeyid_q {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	oakley_group_t oakley_group;
-	oakley_auth_t auth;
-	oakley_hash_t integ_hash;
-	oakley_hash_t prf_hash;
+	const struct oakley_group_desc *oakley_group;
+	oakley_auth_t auth; /*IKEv1 AUTH*/
+	const struct integ_desc *integ;
+	const struct prf_desc *prf;
 	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* ov IV salt, in bytes */
@@ -367,7 +367,7 @@ extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 				    struct state *st,
 				    enum crypto_importance importance,
 				    enum original_role role,
-				    oakley_group_t oakley_group2);
+				    const struct oakley_group_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
@@ -376,7 +376,7 @@ extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 				  struct state *st,
 				  enum crypto_importance importance,
 				  enum original_role role,
-				  oakley_group_t oakley_group2);
+				  const struct oakley_group_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);

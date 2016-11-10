@@ -1364,10 +1364,9 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.group->group));
 
-		e = start_dh_secretiv(dh, st,
-				st->st_import,
-				ORIGINAL_RESPONDER,
-				st->st_oakley.group->group);
+		e = start_dh_secretiv(dh, st, st->st_import,
+				      ORIGINAL_RESPONDER,
+				      st->st_oakley.group);
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("started dh_secretiv, returned: stf=%s",
@@ -1697,10 +1696,9 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 
 	dh = new_pcrc(main_inR2_outI3_cryptotail, "aggr outR1 DH",
 		st, md);
-	return start_dh_secretiv(dh, st,
-				st->st_import,
-				ORIGINAL_INITIATOR,
-				st->st_oakley.group->group);
+	return start_dh_secretiv(dh, st, st->st_import,
+				 ORIGINAL_INITIATOR,
+				 st->st_oakley.group);
 }
 
 /*
