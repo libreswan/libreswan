@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,17 +20,19 @@
 #ifndef ikev1_prf_h
 #define ikev1_prf_h
 
+struct prf_desc;
+
 /*
  * IKE SA SKEYID for authentication
  *
  * Be warned, this is not DSS (even though NIST call it Digital
  * Signature Algorithm).  It is used by RSA-SIG.
  */
-PK11SymKey *ikev1_signature_skeyid(const struct hash_desc *hasher,
+PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   const chunk_t Ni_b, const chunk_t Nr_b,
 				   PK11SymKey *dh_secret);
 
-PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
+PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
 					chunk_t Ni_b, chunk_t Nr_b,
 					PK11SymKey *scratch);
@@ -41,17 +43,17 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
  *  Perhaps this should just return a struct?
  */
 
-PK11SymKey *ikev1_skeyid_d(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r);
 
-PK11SymKey *ikev1_skeyid_a(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r);
 
-PK11SymKey *ikev1_skeyid_e(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r);

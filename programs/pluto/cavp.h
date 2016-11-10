@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +22,7 @@ struct cavp_entry {
 	chunk_t *chunk;
 	PK11SymKey **symkey;
 	int *number;
-	struct hash_desc **hasher;
+	const struct prf_desc *prf;
 	int value;
 };
 
@@ -35,9 +35,13 @@ struct cavp {
 	struct cavp_entry *data;
 };
 
-extern const struct hash_desc *hasher;
-extern char hasher_name[];
-void hash(struct cavp_entry *entry, const char *value);
+
+/*
+ * Select the given PRF.
+ */
+void op_prf(struct cavp_entry *entry, const char *value);
+extern const struct prf_desc *prf;
+extern const char *prf_name;
 
 void ignore(struct cavp_entry *entry, const char *value);
 void chunk(struct cavp_entry *entry, const char *value);

@@ -122,17 +122,16 @@ static void next_state(enum what what)
 	}
 }
 
-const struct hash_desc *hasher;
-char hasher_name[BUF_SIZE];
+const struct prf_desc *prf;
+const char *prf_name;
 
-void hash(struct cavp_entry *entry,
-	  const char *value UNUSED)
+void op_prf(struct cavp_entry *entry,
+	    const char *value UNUSED)
 {
-	strcpy(hasher_name, entry->key);
-	const struct prf_desc *prf = ikev1_get_ike_prf_desc(entry->value);
-	hasher = prf ? &prf->hasher : NULL;
-	if (hasher == NULL) {
-		fprintf(stderr, "hasher %s not found\n", entry->key);
+	prf_name = entry->key;
+	prf = entry->prf;
+	if (prf == NULL) {
+		fprintf(stderr, "PRF %s not supported\n", entry->key);
 	}
 }
 
