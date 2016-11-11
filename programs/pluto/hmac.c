@@ -73,35 +73,3 @@ void hmac_final(u_char *output, struct hmac_ctx *ctx)
 {
 	crypt_prf_final_bytes(ctx->prf, output, ctx->hmac_digest_len);
 }
-
-/*
- * XXX: This should be moved to crypt_symkey.c and made private.
- */
-
-CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
-{
-	CK_MECHANISM_TYPE mechanism = 0x80000000;
-
-	switch (hasher->common.ikev1_oakley_id) {
-	case OAKLEY_MD5:
-		mechanism = CKM_MD5_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA1:
-		mechanism = CKM_SHA1_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_256:
-		mechanism = CKM_SHA256_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_384:
-		mechanism = CKM_SHA384_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_512:
-		mechanism = CKM_SHA512_KEY_DERIVATION;
-		break;
-	default:
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: key derivation mechanism not supported"));
-		break;
-	}
-	return mechanism;
-}

@@ -118,8 +118,6 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 		hmac_final((ch).ptr, (ctx)); \
 }
 
-extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
-
 enum crk_proto {
 	CRK_ESPorAH,
 	CRK_IKEv1,
