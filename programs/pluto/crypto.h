@@ -111,13 +111,6 @@ extern void hmac_update(struct hmac_ctx *ctx,
 
 extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 
-#define hmac_final_chunk(ch, name, ctx) { \
-		pfreeany((ch).ptr); \
-		(ch).len = (ctx)->hmac_digest_len; \
-		(ch).ptr = alloc_bytes((ch).len, name); \
-		hmac_final((ch).ptr, (ctx)); \
-}
-
 enum crk_proto {
 	CRK_ESPorAH,
 	CRK_IKEv1,
