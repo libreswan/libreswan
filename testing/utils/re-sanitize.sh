@@ -37,7 +37,7 @@ else
     . ${LIBRESWANSRCDIR}/testing/default-testparams.sh
 fi
 
-. ../setup.sh
+. $LIBRESWANSRCDIR/testing/pluto/setup.sh
 
 failure=0
 
@@ -59,7 +59,7 @@ check_pluto_log_for()
     fi
 }
 
-for host in $(../../utils/kvmhosts.sh); do
+for host in $(${LIBRESWANSRCDIR}/testing/utils/kvmhosts.sh); do
     # The host list includes "nic" but that is ok as the checks below
     # filter it out.
     if [ -f "${host}.console.txt" ]; then

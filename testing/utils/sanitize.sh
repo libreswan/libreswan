@@ -22,7 +22,7 @@ then
     . ./add-testparams.sh
 fi
 
-. ../setup.sh
+. ${LIBRESWANSRCDIR}/testing/pluto/setup.sh
 . ${LIBRESWANSRCDIR}/testing/utils/functions.sh
 
 if [ -f eastinit.sh ] ; then
