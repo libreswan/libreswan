@@ -55,8 +55,6 @@ struct crypt_prf *crypt_prf_init(const char *name,
 void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key);
 void crypt_prf_init_chunk(const char *name, struct crypt_prf *prf,
 			  chunk_t key);
-void crypt_prf_init_bytes(const char *name, struct crypt_prf *prf,
-			  const void *key, size_t sizeof_key);
 
 /*
  * Then call this to flip to seed/data/text mode; always.
