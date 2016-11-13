@@ -660,8 +660,8 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),
 				 "%s_%zu",
-				 st->st_oakley.integ->hasher.common.officname,
-				 (st->st_oakley.integ->integ_hash_len *
+				 st->st_oakley.integ->common.officname,
+				 (st->st_oakley.integ->integ_hash_size *
 				  BITS_PER_BYTE));
 			integ_name = integ_buf;
 		}

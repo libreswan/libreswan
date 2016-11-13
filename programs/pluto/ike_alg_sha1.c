@@ -72,23 +72,25 @@ struct prf_desc ike_alg_prf_sha1 = {
 };
 
 struct integ_desc ike_alg_integ_sha1 = {
-	.hasher = {
-		.common = {
-			.name = "sha",
-			.officname = "sha1",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_SHA1,
-			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA1,
-			.ikev2_id = IKEv2_AUTH_HMAC_SHA1_96,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(SHA1_CTX),
-		.hash_key_size =   SHA1_DIGEST_SIZE,
-		.hash_digest_len = SHA1_DIGEST_SIZE,
-		.hash_block_size = 64,	/* B from RFC 2104 */
-		.hash_init = SHA1Init_thunk,
-		.hash_update = SHA1Update_thunk,
-		.hash_final = SHA1Final_thunk,
+	.common = {
+		.name = "sha",
+		.officname = "sha1",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_SHA1,
+		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA1,
+		.ikev2_id = IKEv2_AUTH_HMAC_SHA1_96,
+		.fips = TRUE,
 	},
-	.integ_hash_len = SHA1_DIGEST_SIZE_96,
+#if 0
+	.hash_ctx_size = sizeof(SHA1_CTX),
+	.hash_key_size =   SHA1_DIGEST_SIZE,
+	.hash_digest_len = SHA1_DIGEST_SIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
+#endif
+	.integ_key_size = SHA1_DIGEST_SIZE,
+	.integ_hash_size = SHA1_DIGEST_SIZE_96,
+	.prf = &ike_alg_prf_sha1,
 };

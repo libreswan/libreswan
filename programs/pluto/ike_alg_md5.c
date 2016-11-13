@@ -71,22 +71,24 @@ struct prf_desc ike_alg_prf_md5 = {
 };
 
 struct integ_desc ike_alg_integ_md5 = {
-	.hasher = {
-		.common = {
-			.name = "md5",
-			.officname = "md5",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_MD5,
-			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_MD5,
-			.ikev2_id = IKEv2_AUTH_HMAC_MD5_96,
-		},
-		.hash_ctx_size = sizeof(lsMD5_CTX),
-		.hash_key_size =   MD5_DIGEST_SIZE,
-		.hash_digest_len = MD5_DIGEST_SIZE,
-		.hash_block_size = 64,	/* B from RFC 2104 */
-		.hash_init = lsMD5Init_thunk,
-		.hash_update = lsMD5Update_thunk,
-		.hash_final = lsMD5Final_thunk,
+	.common = {
+		.name = "md5",
+		.officname = "md5",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_MD5,
+		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_MD5,
+		.ikev2_id = IKEv2_AUTH_HMAC_MD5_96,
 	},
-	.integ_hash_len = MD5_DIGEST_SIZE_96,
+#if 0
+	.hash_ctx_size = sizeof(lsMD5_CTX),
+	.hash_key_size =   MD5_DIGEST_SIZE,
+	.hash_digest_len = MD5_DIGEST_SIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
+#endif
+	.integ_key_size = MD5_DIGEST_SIZE,
+	.integ_hash_size = MD5_DIGEST_SIZE_96,
+	.prf = &ike_alg_prf_md5,
 };

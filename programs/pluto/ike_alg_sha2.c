@@ -102,25 +102,27 @@ struct prf_desc ike_alg_prf_sha2_256 = {
 };
 
 struct integ_desc ike_alg_integ_sha2_256 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_256",
-			.officname = "sha256",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_SHA2_256,
-			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_256,
-			.ikev2_id = IKEv2_AUTH_HMAC_SHA2_256_128,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha256_context),
-		.hash_key_size = SHA2_256_DIGEST_SIZE,
-		.hash_digest_len = SHA2_256_DIGEST_SIZE,
-		.hash_block_size = 64,	/* from RFC 4868 */
-		.hash_init = sha256_init_thunk,
-		.hash_update = sha256_write_thunk,
-		.hash_final = sha256_final_thunk,
+	.common = {
+		.name = "sha2_256",
+		.officname = "sha256",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_SHA2_256,
+		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_256,
+		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_256_128,
+		.fips = TRUE,
 	},
-	.integ_hash_len = SHA2_256_DIGEST_SIZE / 2,
+#if 0
+	.hash_ctx_size = sizeof(sha256_context),
+	.hash_key_size = SHA2_256_DIGEST_SIZE,
+	.hash_digest_len = SHA2_256_DIGEST_SIZE,
+	.hash_block_size = 64,	/* from RFC 4868 */
+	.hash_init = sha256_init_thunk,
+	.hash_update = sha256_write_thunk,
+	.hash_final = sha256_final_thunk,
+#endif
+	.integ_key_size = SHA2_256_DIGEST_SIZE,
+	.integ_hash_size = SHA2_256_DIGEST_SIZE / 2,
+	.prf = &ike_alg_prf_sha2_256,
 };
 
 struct prf_desc ike_alg_prf_sha2_384 = {
@@ -144,25 +146,27 @@ struct prf_desc ike_alg_prf_sha2_384 = {
 };
 
 struct integ_desc ike_alg_integ_sha2_384 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_384",
-			.officname =  "sha384",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_SHA2_384,
-			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_384,
-			.ikev2_id = IKEv2_AUTH_HMAC_SHA2_384_192,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha384_context),
-		.hash_key_size = SHA2_384_DIGEST_SIZE,
-		.hash_digest_len = SHA2_384_DIGEST_SIZE,
-		.hash_block_size = 128,	/* from RFC 4868 */
-		.hash_init = sha384_init_thunk,
-		.hash_update = sha384_write_thunk,
-		.hash_final = sha384_final_thunk,
+	.common = {
+		.name = "sha2_384",
+		.officname =  "sha384",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_SHA2_384,
+		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_384,
+		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_384_192,
+		.fips = TRUE,
 	},
-	.integ_hash_len = SHA2_384_DIGEST_SIZE / 2,
+#if 0
+	.hash_ctx_size = sizeof(sha384_context),
+	.hash_key_size = SHA2_384_DIGEST_SIZE,
+	.hash_digest_len = SHA2_384_DIGEST_SIZE,
+	.hash_block_size = 128,	/* from RFC 4868 */
+	.hash_init = sha384_init_thunk,
+	.hash_update = sha384_write_thunk,
+	.hash_final = sha384_final_thunk,
+#endif
+	.integ_key_size = SHA2_384_DIGEST_SIZE,
+	.integ_hash_size = SHA2_384_DIGEST_SIZE / 2,
+	.prf = &ike_alg_prf_sha2_384,
 };
 
 struct prf_desc ike_alg_prf_sha2_512 = {
@@ -186,23 +190,25 @@ struct prf_desc ike_alg_prf_sha2_512 = {
 };
 
 struct integ_desc ike_alg_integ_sha2_512 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_512",
-			.officname =  "sha512",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_SHA2_512,
-			.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_512,
-			.ikev2_id = IKEv2_AUTH_HMAC_SHA2_512_256,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha512_context),
-		.hash_key_size = SHA2_512_DIGEST_SIZE,
-		.hash_digest_len = SHA2_512_DIGEST_SIZE,
-		.hash_block_size = 128,	/* from RFC 4868 */
-		.hash_init = sha512_init_thunk,
-		.hash_update = sha512_write_thunk,
-		.hash_final = sha512_final_thunk,
+	.common = {
+		.name = "sha2_512",
+		.officname =  "sha512",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_SHA2_512,
+		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA2_512,
+		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_512_256,
+		.fips = TRUE,
 	},
-	.integ_hash_len = SHA2_512_DIGEST_SIZE / 2,
+#if 0
+	.hash_ctx_size = sizeof(sha512_context),
+	.hash_key_size = SHA2_512_DIGEST_SIZE,
+	.hash_digest_len = SHA2_512_DIGEST_SIZE,
+	.hash_block_size = 128,	/* from RFC 4868 */
+	.hash_init = sha512_init_thunk,
+	.hash_update = sha512_write_thunk,
+	.hash_final = sha512_final_thunk,
+#endif
+	.integ_key_size = SHA2_512_DIGEST_SIZE,
+	.integ_hash_size = SHA2_512_DIGEST_SIZE / 2,
+	.prf = &ike_alg_prf_sha2_512,
 };

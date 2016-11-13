@@ -639,55 +639,53 @@ struct prf_desc ike_alg_prf_aes_xcbc = {
 };
 
 struct integ_desc ike_alg_integ_aes_xcbc = {
-	.hasher = {
-		.common = {
-			.name = "aes_xcbc",
-			.officname =  "aes_xcbc",
-			.algo_type = IKE_ALG_INTEG,
-			.ikev1_oakley_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-			.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
-			.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
-			.fips = TRUE,
-			.do_ike_test = NULL, /* No NSS support */
-		},
-		.hash_ctx_size = sizeof(aes_xcbc_context),
-		.hash_key_size = AES_XCBC_DIGEST_SIZE,
-		.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-		.hash_block_size = AES_CBC_BLOCK_SIZE,
-#ifdef NOT_YET
-		.hash_init = aes_xcbc_init_thunk,
-		.hash_update = aes_xcbc_write_thunk,
-		.hash_final = aes_xcbc_final_thunk,
-#endif
+	.common = {
+		.name = "aes_xcbc",
+		.officname =  "aes_xcbc",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_oakley_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
+		.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
+		.fips = TRUE,
+		.do_ike_test = NULL, /* No NSS support */
 	},
-	.integ_hash_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+#ifdef NOT_IMPLMENTED
+	.hash_ctx_size = sizeof(aes_xcbc_context),
+	.hash_key_size = AES_XCBC_DIGEST_SIZE,
+	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
+	.hash_block_size = AES_CBC_BLOCK_SIZE,
+	.hash_init = aes_xcbc_init_thunk,
+	.hash_update = aes_xcbc_write_thunk,
+	.hash_final = aes_xcbc_final_thunk,
+#endif
+	.integ_key_size = AES_XCBC_DIGEST_SIZE,
+	.integ_hash_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
 
 struct integ_desc ike_alg_integ_aes_cmac = {
-	.hasher = {
-		.common = {
-			.name = "aes_cmac",
-			.officname =  "aes_cmac",
-			.algo_type = IKE_ALG_INTEG,
-#if 0
-			/* not supported */
-			.ikev1_oakley_id = AUTH_ALGORITHM_AES_CMAC_96,
+	.common = {
+		.name = "aes_cmac",
+		.officname =  "aes_cmac",
+		.algo_type = IKE_ALG_INTEG,
+#ifdef NOT_IMPLMENTED
+		/* not supported */
+		.ikev1_oakley_id = AUTH_ALGORITHM_AES_CMAC_96,
 #endif
-			.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
-			.ikev2_id = IKEv2_AUTH_AES_CMAC_96,
-			.fips = TRUE,
-			.do_ike_test = NULL, /* No NSS support */
-		},
-		.hash_key_size = BYTES_FOR_BITS(128),
-		.hash_digest_len = BYTES_FOR_BITS(128),
-		.hash_block_size = BYTES_FOR_BITS(128),
-#if 0
-		/* not implemented */
-		.hash_ctx_size = sizeof(aes_cmac_context),
-		.hash_init = aes_cmac_init_thunk,
-		.hash_update = aes_cmac_write_thunk,
-		.hash_final = aes_cmac_final_thunk,
-#endif
+		.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
+		.ikev2_id = IKEv2_AUTH_AES_CMAC_96,
+		.fips = TRUE,
+		.do_ike_test = NULL, /* No NSS support */
 	},
-	.integ_hash_len = BYTES_FOR_BITS(96), /* truncated */
+#if 0
+	.hash_key_size = BYTES_FOR_BITS(128),
+	.hash_digest_len = BYTES_FOR_BITS(128),
+	.hash_block_size = BYTES_FOR_BITS(128),
+	/* not implemented */
+	.hash_ctx_size = sizeof(aes_cmac_context),
+	.hash_init = aes_cmac_init_thunk,
+	.hash_update = aes_cmac_write_thunk,
+	.hash_final = aes_cmac_final_thunk,
+#endif
+	.integ_key_size = BYTES_FOR_BITS(128),
+	.integ_hash_size = BYTES_FOR_BITS(96), /* truncated */
 };

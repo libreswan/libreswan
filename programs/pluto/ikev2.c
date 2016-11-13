@@ -1240,7 +1240,7 @@ void ikev2_log_parentSA(struct state *st)
 		    st->st_oakley.encrypter == NULL)
 			return;
 
-		authalgo = st->st_oakley.integ->hasher.common.officname;
+		authalgo = st->st_oakley.integ->common.officname;
 
 		if (st->st_oakley.enckeylen != 0) {
 			/* 3des will use '3des', while aes becomes 'aes128' */

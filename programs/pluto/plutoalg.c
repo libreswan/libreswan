@@ -196,7 +196,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
 		for (const struct integ_desc **integp = next_ike_integ_desc(NULL);
 		     integp != NULL; integp = next_ike_integ_desc(integp)) {
-			if ((*integp)->hasher.common.ikev1_oakley_id == aalg_id) {
+			if ((*integp)->common.ikev1_oakley_id == aalg_id) {
 				new_info->ike_integ = *integp;
 				break;
 			}

@@ -107,7 +107,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
 		    skq->prf->hasher.common.name,
-		    (skq->integ ? skq->integ->hasher.common.name : "n/a"),
+		    (skq->integ ? skq->integ->common.name : "n/a"),
 		    key_size, salt_size));
 
 	passert(skq->prf != NULL);
@@ -131,7 +131,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	int skd_bytes = prf_hasher->hash_key_size;
 	int skp_bytes = prf_hasher->hash_key_size;
-	int integ_size = skq->integ ? skq->integ->hasher.hash_key_size : 0;
+	int integ_size = skq->integ ? skq->integ->integ_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
 						   ni, nr, spii, spir,

@@ -3590,7 +3590,7 @@ ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 		if (alg) {
 			*alg = ki->sadb_aalg;
 		}
-		return ki->integ->hasher.hash_key_size; /* bytes */
+		return ki->integ->integ_key_size; /* bytes */
 	}
         /*
          * Old way.  Callers should just hang onto the kernel_integ

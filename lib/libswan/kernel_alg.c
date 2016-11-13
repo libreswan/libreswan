@@ -215,13 +215,13 @@ void kernel_integ_add(enum sadb_aalg sadb_aalg,
 		      const char *netlink_name)
 {
 	struct sadb_alg alg = {
-		.sadb_alg_minbits = integ->hasher.hash_key_size * BITS_PER_BYTE,
-		.sadb_alg_maxbits = integ->hasher.hash_key_size * BITS_PER_BYTE,
+		.sadb_alg_minbits = integ->integ_key_size * BITS_PER_BYTE,
+		.sadb_alg_maxbits = integ->integ_key_size * BITS_PER_BYTE,
 		.sadb_alg_id = sadb_aalg,
 	};
 	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register %s for ESP",
-		       integ->hasher.common.name);
+		       integ->common.name);
 		return;
 	}
 	struct kernel_integ *new = alloc_thing(struct kernel_integ, "kernel integ");
@@ -251,7 +251,7 @@ const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_
 		 * For integ, the ESP_ID contains enum
 		 * ikev1_auth_attribute
 		 */
-		if ((enum ikev1_auth_attribute) k->integ->hasher.common.ikev1_esp_id == id) {
+		if ((enum ikev1_auth_attribute) k->integ->common.ikev1_esp_id == id) {
 			return k;
 		}
 	}

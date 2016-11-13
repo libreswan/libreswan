@@ -390,6 +390,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 
 static bool prf_desc_is_ike(const struct ike_alg *alg)
 {
+	passert(alg->algo_type == IKE_ALG_HASH); /*XXX: PRF */
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
 	return hash_desc_is_ike(&prf->hasher);
 }
@@ -429,14 +430,20 @@ static struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = (const struct integ_desc*)alg;
-	passert(integ->integ_hash_len > 0);
-	hash_desc_check(&integ->hasher);
+	passert(integ->integ_hash_size > 0);
+	passert(integ->integ_key_size > 0);
+	if (integ->prf) {
+		passert(integ->integ_key_size == integ->prf->hasher.hash_key_size);
+		passert(integ->integ_hash_size <= integ->prf->hasher.hash_digest_len);
+		passert(prf_desc_is_ike(&integ->prf->hasher.common));
+	}
 }
 
 static bool integ_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct prf_desc *prf = (const struct prf_desc*)alg;
-	return hash_desc_is_ike(&prf->hasher);
+	passert(alg->algo_type == IKE_ALG_INTEG);
+	const struct integ_desc *integ = (const struct integ_desc*)alg;
+	return integ->prf != NULL;
 }
 
 static struct type_algorithms integ_algorithms = {

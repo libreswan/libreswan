@@ -1674,7 +1674,7 @@ static unsigned char *ikev2_authloc(struct state *st,
 
 	b12 = e_pbs->cur;
 	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
-			    ? pst->st_oakley.integ->integ_hash_len
+			    ? pst->st_oakley.integ->integ_hash_size
 			    : pst->st_oakley.encrypter->aead_tag_size);
 	if (integ_size == 0) {
 		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
@@ -1739,7 +1739,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* okay, authenticate from beginning of IV */
 		struct hmac_ctx ctx;
-		hmac_init(&ctx, &pst->st_oakley.integ->hasher, authkey);
+		hmac_init(&ctx, &pst->st_oakley.integ->prf->hasher, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(integ_start, &ctx);
 
@@ -1747,7 +1747,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			    DBG_dump("data being hmac:", auth_start,
 				     integ_start - auth_start);
 			    DBG_dump("out calculated auth:", integ_start,
-				     pst->st_oakley.integ->integ_hash_len);
+				     pst->st_oakley.integ->integ_hash_size);
 		    });
 	} else {
 		size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
@@ -1829,7 +1829,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	u_char *wire_iv_start = chunk->ptr + iv;
 	size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
 	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
-			     ? pst->st_oakley.integ->integ_hash_len
+			     ? pst->st_oakley.integ->integ_hash_size
 			     : pst->st_oakley.encrypter->aead_tag_size);
 
 	/*
@@ -1894,7 +1894,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, &pst->st_oakley.integ->hasher, authkey);
+		hmac_init(&ctx, &pst->st_oakley.integ->prf->hasher, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(td, &ctx);
 
@@ -2353,7 +2353,7 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
 	len -= ike_alg_enc_requires_integ(st->st_oakley.encrypter) ?
-	       st->st_oakley.integ->integ_hash_len :
+	       st->st_oakley.integ->integ_hash_size :
 	       st->st_oakley.encrypter->aead_tag_size;
 
 	if (st->st_oakley.encrypter->pad_to_blocksize)

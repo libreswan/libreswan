@@ -1196,8 +1196,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		if (st->st_oakley.integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.integ->hasher.common.officname,
-				st->st_oakley.integ->integ_hash_len *
+				st->st_oakley.integ->common.officname,
+				st->st_oakley.integ->integ_hash_size *
 				BITS_PER_BYTE);
 		} else {
 			if (!st->st_ikev2) {

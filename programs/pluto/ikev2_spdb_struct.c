@@ -1621,7 +1621,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 * doesn't yet trust INTEG.
 	 */
 	proto_info->attrs.transattrs.integ_hash = ta.integ
-		? ta.integ->hasher.common.ikev1_esp_id
+		? ta.integ->common.ikev1_esp_id
 		: AUTH_ALGORITHM_NONE;
 	proto_info->present = TRUE;
 	proto_info->our_lastused = mononow();
@@ -1994,14 +1994,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			if (integ == NULL) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
-			} else if (integ->hasher.common.ikev2_id == 0) {
+			} else if (integ->common.ikev2_id == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
-				       integ->hasher.common.name);
+				       integ->common.name);
 				continue;
 			} else {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->hasher.common.ikev2_id, 0);
+						 integ->common.ikev2_id, 0);
 			}
 		} else {
 			/*
@@ -2292,7 +2292,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					continue;
 				}
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->hasher.common.ikev2_id, 0);
+						 integ->common.ikev2_id, 0);
 			}
 			break;
 
@@ -2317,7 +2317,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				continue;
 			}
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 integ->hasher.common.ikev2_id, 0);
+					 integ->common.ikev2_id, 0);
 			break;
 
 		default:
