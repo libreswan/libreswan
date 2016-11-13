@@ -290,39 +290,39 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-void whack_process(int whackfd, const struct whack_message msg)
+void whack_process(int whackfd, const struct whack_message *const m)
 {
 	/* May be needed in future:
 	 * const struct lsw_conf_options *oco = lsw_init_options();
 	 */
-	if (msg.whack_options) {
-		switch (msg.opt_set) {
+	if (m->whack_options) {
+		switch (m->opt_set) {
 		case WHACK_ADJUSTOPTIONS:
 #ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
-				if (msg.debugging & DBG_PRIVATE) {
+				if (m->debugging & DBG_PRIVATE) {
 					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
 					goto done;
 				}
 			}
 #endif
-			if (msg.name == NULL) {
+			if (m->name == NULL) {
 				/* we do a two-step so that if either old or new would
 				 * cause the message to print, it will be printed.
 				 */
-				set_debugging(cur_debugging | msg.debugging);
+				set_debugging(cur_debugging | m->debugging);
 				DBG(DBG_CONTROL,
 				    DBG_log("base debugging = %s",
 					    bitnamesof(debug_bit_names,
-						       msg.debugging)));
-				base_debugging = msg.debugging;
+						       m->debugging)));
+				base_debugging = m->debugging;
 				set_debugging(base_debugging);
-			} else if (!msg.whack_connection) {
-				struct connection *c = con_by_name(msg.name,
+			} else if (!m->whack_connection) {
+				struct connection *c = con_by_name(m->name,
 								   TRUE);
 
 				if (c != NULL) {
-					c->extra_debugging = msg.debugging;
+					c->extra_debugging = m->debugging;
 					DBG(DBG_CONTROL,
 					    DBG_log("\"%s\" extra_debugging = %s",
 						    c->name,
@@ -347,7 +347,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			}
 			whackrecordfile = NULL;
 
-			openwhackrecordfile(msg.string1);
+			openwhackrecordfile(m->string1);
 
 			/* do not do any other processing for these */
 			goto done;
@@ -365,35 +365,35 @@ void whack_process(int whackfd, const struct whack_message msg)
 		}
 	}
 
-	if (msg.whack_myid)
-		set_myid(MYID_SPECIFIED, msg.myid);
+	if (m->whack_myid)
+		set_myid(MYID_SPECIFIED, m->myid);
 
 	/* Deleting combined with adding a connection works as replace.
 	 * To make this more useful, in only this combination,
 	 * delete will silently ignore the lack of the connection.
 	 */
-	if (msg.whack_delete)
-		delete_connections_by_name(msg.name, !msg.whack_connection);
+	if (m->whack_delete)
+		delete_connections_by_name(m->name, !m->whack_connection);
 
-	if (msg.whack_deleteuser) {
+	if (m->whack_deleteuser) {
 		DBG_log("received whack to delete connection by user %s",
-				msg.name);
-		for_each_state(v1_delete_state_by_username, msg.name);
+				m->name);
+		for_each_state(v1_delete_state_by_username, m->name);
 	}
 
-	if (msg.whack_deleteid) {
+	if (m->whack_deleteid) {
 		DBG_log("received whack to delete connection by id %s",
-				msg.name);
-		for_each_state(delete_state_by_id_name, msg.name);
+				m->name);
+		for_each_state(delete_state_by_id_name, m->name);
 	}
 
-	if (msg.whack_deletestate) {
+	if (m->whack_deletestate) {
 		struct state *st =
-			state_with_serialno(msg.whack_deletestateno);
+			state_with_serialno(m->whack_deletestateno);
 
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
-					msg.whack_deletestateno);
+					m->whack_deletestateno);
 		} else {
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
@@ -411,70 +411,70 @@ void whack_process(int whackfd, const struct whack_message msg)
 		}
 	}
 
-	if (msg.whack_crash)
-		delete_states_by_peer(&msg.whack_crash_peer);
+	if (m->whack_crash)
+		delete_states_by_peer(&m->whack_crash_peer);
 
-	if (msg.whack_connection)
-		add_connection(&msg);
+	if (m->whack_connection)
+		add_connection(m);
 
 	/* process "listen" before any operation that could require it */
-	if (msg.whack_listen)
+	if (m->whack_listen)
 		do_whacklisten();
 
-	if (msg.whack_unlisten) {
+	if (m->whack_unlisten) {
 		libreswan_log("no longer listening for IKE messages");
 		listening = FALSE;
 	}
 
-	if (msg.whack_ddos != DDOS_undefined)
-		set_whack_pluto_ddos(msg.whack_ddos);
+	if (m->whack_ddos != DDOS_undefined)
+		set_whack_pluto_ddos(m->whack_ddos);
 
-	if (msg.whack_reread & REREAD_SECRETS)
+	if (m->whack_reread & REREAD_SECRETS)
 		load_preshared_secrets();
 
-	if (msg.whack_list & LIST_PUBKEYS)
-		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
+	if (m->whack_list & LIST_PUBKEYS)
+		list_public_keys(m->whack_utc, m->whack_check_pub_keys);
 
-	if (msg.whack_purgeocsp)
+	if (m->whack_purgeocsp)
 		clear_ocsp_cache();
 
-	if (msg.whack_reread & REREAD_CRLS)
+	if (m->whack_reread & REREAD_CRLS)
 		loglog(RC_LOG_SERIOUS, "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
 
 #if defined(LIBCURL) || defined(LDAP_VER)
-	if (msg.whack_reread & REREAD_FETCH)
+	if (m->whack_reread & REREAD_FETCH)
 			wake_fetch_thread("whack command");
 #endif
 
-	if (msg.whack_list & LIST_PSKS)
+	if (m->whack_list & LIST_PSKS)
 		list_psks();
 
-	if (msg.whack_list & LIST_CERTS)
+	if (m->whack_list & LIST_CERTS)
 		list_certs();
 
-	if (msg.whack_list & LIST_CACERTS)
+	if (m->whack_list & LIST_CACERTS)
 		list_authcerts();
 
-	if (msg.whack_list & LIST_CRLS) {
+	if (m->whack_list & LIST_CRLS) {
 		list_crls();
 #if defined(LIBCURL) || defined(LDAP_VER)
-		list_crl_fetch_requests(msg.whack_utc);
+		list_crl_fetch_requests(m->whack_utc);
 #endif
 	}
 
-	if (msg.whack_list & LIST_EVENTS)
+	if (m->whack_list & LIST_EVENTS)
 		timer_list();
 
-	if (msg.whack_key) {
+	if (m->whack_key) {
 		/* add a public key */
-		key_add_request(&msg);
+		key_add_request(m);
 	}
 
-	if (msg.whack_route) {
+	if (m->whack_route) {
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --route");
 		} else {
-			struct connection *c = con_by_name(msg.name, TRUE);
+			struct connection *c = con_by_name(m->name, TRUE);
 
 			if (c != NULL) {
 				set_cur_connection(c);
@@ -493,8 +493,8 @@ void whack_process(int whackfd, const struct whack_message msg)
 		}
 	}
 
-	if (msg.whack_unroute) {
-		struct connection *c = con_by_name(msg.name, TRUE);
+	if (m->whack_unroute) {
+		struct connection *c = con_by_name(m->name, TRUE);
 
 		if (c != NULL) {
 			const struct spd_route *sr;
@@ -517,28 +517,28 @@ void whack_process(int whackfd, const struct whack_message msg)
 		}
 	}
 
-	if (msg.whack_initiate) {
+	if (m->whack_initiate) {
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --initiate");
 		} else {
-			initiate_connection(msg.name,
-					    msg.whack_async ?
+			initiate_connection(m->name,
+					    m->whack_async ?
 					      NULL_FD :
 					      dup_any(whackfd),
-					    msg.debugging,
+					    m->debugging,
 					    pcim_demand_crypto);
 		}
 	}
 
-	if (msg.whack_oppo_initiate) {
+	if (m->whack_oppo_initiate) {
 		if (!listening) {
 			whack_log(RC_DEAF,
 				  "need --listen before opportunistic initiation");
 		} else {
-			initiate_ondemand(&msg.oppo_my_client,
-						&msg.oppo_peer_client, 0,
+			initiate_ondemand(&m->oppo_my_client,
+						&m->oppo_peer_client, 0,
 						FALSE,
-						msg.whack_async ?
+						m->whack_async ?
 						  NULL_FD :
 						  dup_any(whackfd),
 #ifdef HAVE_LABELED_IPSEC
@@ -548,26 +548,26 @@ void whack_process(int whackfd, const struct whack_message msg)
 		}
 	}
 
-	if (msg.whack_terminate)
-		terminate_connection(msg.name);
+	if (m->whack_terminate)
+		terminate_connection(m->name);
 
-	if (msg.whack_status)
+	if (m->whack_status)
 		show_status();
 
-	if (msg.whack_global_status)
+	if (m->whack_global_status)
 		show_global_status();
 
-	if (msg.whack_traffic_status)
+	if (m->whack_traffic_status)
 		show_traffic_status();
 
-	if (msg.whack_shunt_status)
+	if (m->whack_shunt_status)
 		show_shunt_status();
 
-	if (msg.whack_fips_status)
+	if (m->whack_fips_status)
 		show_fips_status();
 
 #ifdef HAVE_SECCOMP
-	if (msg.whack_seccomp_crashtest) {
+	if (m->whack_seccomp_crashtest) {
 		/*
 		 * This is a SECCOMP test, it CAN KILL pluto if successful!
 		 *
@@ -618,7 +618,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	}
 #endif
 
-	if (msg.whack_shutdown) {
+	if (m->whack_shutdown) {
 		libreswan_log("shutting down");
 		exit_pluto(PLUTO_EXIT_OK); /* delete lock and leave, with 0 status */
 	}
@@ -733,7 +733,7 @@ static void whack_handle(int whackctlfd)
 	/* dump record if necessary */
 	writewhackrecord((char *)&msg_saved, n);
 
-	whack_process(whackfd, msg);
+	whack_process(whackfd, &msg);
 }
 
 /*
