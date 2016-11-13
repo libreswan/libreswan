@@ -16,86 +16,77 @@
 
 #include "readwhackmsg.h"
 
+/* readwhackmsg must match writewhackrecord */
+
 void readwhackmsg(char *infile)
 {
-	int iocount;
-	FILE *record;
-	char b1[8192];
-	u_int32_t plen;
+	FILE *record = fopen(infile, "r");
 
-	if ((record = fopen(infile, "r")) == NULL) {
+	if (record == NULL) {
 		perror(infile);
 		exit(9);
 	}
 
-	/* okay, eat first line, it's a comment, but log it. */
-	if (fgets(b1, sizeof(b1), record) == NULL)
-		DBG(DBG_PARSING, DBG_log("readwhackmsg: fgets returned NULL"));
+	/* log the first line: it's a comment */
+	{
+		char b1[8192];
 
+		if (fgets(b1, sizeof(b1), record) == NULL)
+			DBG(DBG_PARSING, DBG_log("readwhackmsg: fgets returned NULL"));
 
-	printf("Pre-amble: %s", b1);
+		printf("Pre-amble: %s", b1);
+	}
 
-	plen = 0;
-	while ((iocount = fread(&plen, 4, 1, record)) == 1) {
-		u_int32_t a[2];
-		err_t ugh = NULL;
+	u_int32_t header[3];	/* length, high time, low time */
+
+	while (fread(header, sizeof(header), 1, record) != 1) {
+		size_t buflen = header[0] - sizeof(header);
 		struct whackpacker wp;
 		struct whack_message m1;
-		size_t abuflen;
 
-		if (fread(&a, 4, 2, record) == 0) /* eat time stamp */
-			DBG(DBG_PARSING,
-			    DBG_log("readwhackmsg: fread returned 0"));
+		/* round up */
+		size_t abuflen = (buflen + sizeof(header[0]) - 1) & ~(sizeof(header[0]) - 1);
 
-		/* account for this header we just consumed */
-		plen -= 12;
-
-		/* round up to multiple of 4 */
-		abuflen = (plen + 3) & ~0x3;
-
-		if (abuflen > sizeof(m1) || abuflen < plen) {
+		if (abuflen > sizeof(m1) || abuflen < buflen) {
 			fprintf(stderr,
-				"whackmsg file has too big a record=%zu > %zu\n",
+				"whackmsg file record too big: %zu > %zu\n",
 				abuflen, sizeof(m1));
-			fclose(record);
 			exit(6);
 		}
 
-		if ((iocount = fread(&m1, abuflen, 1, record)) != 1) {
-			if (feof(record))
-				break;
-			perror(infile);
-			fclose(record);
-			exit(5);
-		}
+		if (fread(&m1, abuflen, 1, record) != 1)
+			break;
 
-		if (plen <= 4) {
-			/* empty message */
+		if (abuflen == sizeof(u_int32_t) &&
+		    *(u_int32_t *)&m1 == WHACK_BASIC_MAGIC)
+		{
+			/* ignore initial WHACK_BASIC_MAGIC message */
 			continue;
 		}
 
 		wp.msg = &m1;
-		wp.n   = plen;
+		wp.n = buflen;
 		wp.str_next = m1.string;
-		wp.str_roof = (unsigned char *)&m1 + plen;
+		wp.str_roof = (unsigned char *)&m1 + buflen;
 
-		if ((ugh = unpack_whack_msg(&wp)) != NULL) {
+		err_t ugh = unpack_whack_msg(&wp);
+		if (ugh != NULL) {
 			fprintf(stderr, "failed to parse whack msg: %s\n",
 				ugh);
-			continue;
+			exit(7);
 		}
 
-		m1.keyval.ptr = wp.str_next; /* grab chunk */
-
 		/*
-		 * okay, we have plen bytes in b1, so turn it into a whack
+		 * okay, we have buflen bytes in b1, so turn it into a whack
 		 * message, and call whack_handle.
 		 */
 		whack_process(NULL_FD, m1);
 	}
 
-	if (iocount != 0 || !feof(record)) {
-		fclose(record);
+	if (ferror(record)) {
 		perror(infile);
+		exit(5);
 	}
+
+	fclose(record);
 }

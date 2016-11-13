@@ -151,15 +151,13 @@ static char whackrecordname[PATH_MAX];
 static FILE *whackrecordfile = NULL;
 
 /*
- * writes out 64-bit time, even though we actually
- * only have 32-bit time here. Assumes that time will
- * be written out in big-endian format, with MSB word
- * being first.
- *
+ * writewhackrecord must match readwhackmsg.
+ * Writes out 64 bits for time, even if we only have 32-bit time_t.
  */
 static bool writewhackrecord(char *buf, size_t buflen)
 {
-	u_int32_t header[3];
+	u_int32_t header[3];	/* length, high time, low time */
+	time_t now = time(NULL);
 
 	/* round up buffer length */
 	size_t abuflen = (buflen + sizeof(header[0]) - 1) & ~(sizeof(header[0]) - 1);
@@ -169,10 +167,10 @@ static bool writewhackrecord(char *buf, size_t buflen)
 		return TRUE;
 
 	header[0] = buflen + sizeof(header);
-	header[1] = 0;
-	header[2] = time(NULL);	/* ??? is this reasonable? 2038 */
+	header[1] = now >> 32;
+	header[2] = now;
 
-	/* DBG_log("buflen: %u abuflen: %u", header[0], abuflen); */
+	/* DBG_log("buflen: %zu abuflen: %zu", buflen, abuflen); */
 
 	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
 		DBG_log("writewhackrecord: fwrite error when writing header");
@@ -193,7 +191,7 @@ static bool openwhackrecordfile(char *file)
 {
 	char when[256];
 	char FQDN[HOST_NAME_MAX + 1];
-	u_int32_t magic;
+	const u_int32_t magic = WHACK_BASIC_MAGIC;
 	struct tm tm1, *tm;
 	realtime_t n = realnow();
 
@@ -215,7 +213,6 @@ static bool openwhackrecordfile(char *file)
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);
 
-	magic = WHACK_BASIC_MAGIC;
 	writewhackrecord((char *)&magic, sizeof(magic));
 
 	DBG(DBG_CONTROL,
@@ -720,10 +717,8 @@ static void whack_handle(int whackctlfd)
 					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
 					msg.magic, WHACK_MAGIC);
 			}
-		} else if ((ugh = unpack_whack_msg(&wp)) != NULL) {
-			/* nothing, ugh is already set */
 		} else {
-			msg.keyval.ptr = wp.str_next; /* grab chunk */
+			ugh = unpack_whack_msg(&wp);
 		}
 
 		if (ugh != NULL) {
