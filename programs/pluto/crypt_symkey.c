@@ -294,6 +294,18 @@ PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
 	return concat_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
 }
 
+chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs)
+{
+	size_t len = lhs.len + rhs.len;
+	chunk_t cat = {
+		.len = len,
+		.ptr = alloc_things(u_int8_t, len, name),
+	};
+	memcpy(cat.ptr, lhs.ptr, lhs.len);
+	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
+	return cat;
+}
+
 /*
  * Append new keying material to an existing key; replace the existing
  * key with the result.
@@ -329,6 +341,13 @@ void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs)
 {
 	append_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
+}
+
+void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
+{
+	chunk_t new = concat_chunk_chunk(name, *lhs, rhs);
+	freeanychunk(*lhs);
+	*lhs = new;
 }
 
 /*

@@ -66,6 +66,7 @@ PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
 			       PK11SymKey *lhs, uint8_t rhs);
+chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
 
 /*
  * Append new keying material to an existing key; replace the existing
@@ -82,6 +83,7 @@ void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs);
 void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs);
+void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
