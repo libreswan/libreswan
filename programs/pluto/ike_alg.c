@@ -361,9 +361,6 @@ static struct prf_desc *prf_descriptors[] = {
 	&ike_alg_prf_sha2_384,
 	&ike_alg_prf_sha2_512,
 #endif
-#ifdef USE_AES
-	&ike_alg_prf_aes_xcbc,
-#endif
 };
 
 static void hash_desc_check(const struct hash_desc *hash)
