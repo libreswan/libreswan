@@ -96,6 +96,81 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 #undef CASE
 }
 
+struct nss_alg {
+	CK_FLAGS flags;
+	CK_MECHANISM_TYPE mechanism;
+};
+
+static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
+			      const struct ike_alg *alg)
+{
+	/*
+	 * NSS expects a key's mechanism to match the NSS algorithm
+	 * the key is intended for.  If this is wrong then the
+	 * operation fails.
+	 *
+	 * Unfortunately, some algorithms are not implemented by NSS,
+	 * so the correct key type can't always be specified.  For
+	 * those specify CKM_VENDOR_DEFINED.
+	 */
+	CK_FLAGS flags;
+	CK_MECHANISM_TYPE mechanism;
+	if (alg == NULL) {
+		/*
+		 * Something of an old code hack.  Keys fed to the
+		 * hasher get this type.
+		 */
+		mechanism = CKM_EXTRACT_KEY_FROM_KEY;
+		flags = 0;
+		if (DBGP(debug)) {
+			DBG_log("%s %s for non-NSS algorithm: NULL (legacy hack), mechanism: %s(%lu), flags: %lx",
+				verb, name,
+				ckm_to_string(mechanism), mechanism,
+				flags);
+		}
+	} else if (alg->nss_mechanism == 0) {
+		/*
+		 * A non-NSS algorithm.  The values shouldn't matter.
+		 */
+		mechanism = CKM_VENDOR_DEFINED;
+		flags = 0;
+		if (DBGP(debug)) {
+			DBG_log("%s %s for non-NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
+				verb, name, alg->name,
+				ckm_to_string(mechanism), mechanism,
+				flags);
+		}
+	} else {
+		mechanism = alg->nss_mechanism;
+		switch (alg->algo_type) {
+		case IKE_ALG_ENCRYPT:
+			flags = CKF_ENCRYPT | CKF_DECRYPT;
+			break;
+		case IKE_ALG_PRF:
+		case IKE_ALG_INTEG:
+			flags = CKF_SIGN;
+			break;
+		case IKE_ALG_HASH:
+			flags = CKF_DIGEST;
+			break;
+		default:
+			flags = 0;
+			/* crypto will likely fail */
+			PEXPECT_LOG("algorithm type %d unknown", alg->algo_type);
+		}
+		if (DBGP(debug)) {
+			DBG_log("%s %s for NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
+				verb, name, alg->name,
+				ckm_to_string(mechanism), mechanism,
+				flags);
+		}
+	}
+	return (struct nss_alg) {
+		.mechanism = mechanism,
+		.flags = flags,
+	};
+}
+
 void free_any_symkey(const char *prefix, PK11SymKey **key)
 {
 	if (*key != NULL) {
@@ -354,39 +429,27 @@ void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *
- * Offset into the SYMKEY is in either BITS or BYTES.
+ * Offset into the SYMKEY is in BYTES.
  */
 
-PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
-					  const struct encrypt_desc *encrypter,
-					  size_t next_byte, size_t sizeof_symkey)
+PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
+				     const struct ike_alg *symkey_alg,
+				     size_t symkey_start_byte, size_t sizeof_symkey,
+				     PK11SymKey *source_key)
 {
 	/*
-	 * NSS expects an encryption key's mechanism to specify the
-	 * algorithm that they key will be used by.  If this is wrong
-	 * then the encryption will not work.
+	 * NSS expects a key's mechanism to match the NSS algorithm
+	 * the key is intended for.  If this is wrong then the
+	 * operation fails.
 	 *
-	 * Unfortunately, some encryption algorithms are not
-	 * implemented by NSS, so the correct key type can't always be
-	 * specified.  For those specify CKM_VENDOR_DEFINED.
+	 * Unfortunately, some algorithms are not implemented by NSS,
+	 * so the correct key type can't always be specified.  For
+	 * those specify CKM_VENDOR_DEFINED.
 	 */
-
-	CK_MECHANISM_TYPE mechanism = (encrypter->common.nss_mechanism
-				       ? encrypter->common.nss_mechanism
-				       : CKM_VENDOR_DEFINED);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s NSS encryption key mechanism %s(%lu)%s",
-			encrypter->common.name,
-			ckm_to_string(mechanism),
-			mechanism,
-			(mechanism == CKM_VENDOR_DEFINED
-			 ? " (algorithm is not using NSS)"
-			 : ""));
-	}
-	return symkey_from_symkey("crypt key:", source_key,
-				  mechanism,
-				  CKF_ENCRYPT | CKF_DECRYPT,
-				  next_byte, sizeof_symkey);
+	struct nss_alg nss = nss_alg("extract symkey", name, debug, symkey_alg);
+	return symkey_from_symkey(name, source_key,
+				  nss.mechanism, nss.flags,
+				  symkey_start_byte, sizeof_symkey);
 }
 
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,

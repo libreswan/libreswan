@@ -26,6 +26,7 @@
 #include "crypt_dbg.h"
 #include "crypt_symkey.h"
 #include "test_buffer.h"
+#include "ike_alg.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
 {
@@ -152,8 +153,9 @@ PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
 	PK11SymKey *tmp = chunk_to_symkey(raw_key);
-	PK11SymKey *symkey = encrypt_key_from_symkey_bytes(tmp, encrypt_desc,
-							   0, raw_key.len);
+	PK11SymKey *symkey = symkey_from_symkey_bytes("symkey", DBG_CRYPT,
+						      &encrypt_desc->common,
+						      0, raw_key.len, tmp);
 	freeanychunk(raw_key);
 	free_any_symkey("tmp", &tmp);
 	return symkey;

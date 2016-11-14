@@ -21,6 +21,7 @@
 #include <pk11pub.h>
 #include "lswalloc.h"
 
+struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
 
@@ -86,18 +87,24 @@ void append_symkey_byte(const struct hash_desc *hasher,
 void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
 
 /*
- * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
- * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
+ * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
+ * can be used to implement ALG).
+ *
+ * For instance, an encryption key needs to have a type matching the
+ * NSS encryption algorithm.
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
-					  const struct encrypt_desc *encrypter,
-					  size_t next_byte, size_t sizeof_symkey);
+PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
+				     const struct ike_alg *symkey_alg,
+				     size_t symkey_start_byte, size_t sizeof_symkey,
+				     PK11SymKey *source_key);
 
 /*
- * Extract SIZEOF_KEY bytes of keying material as a KEY.  It inherits
- * the BASE_KEYs type.  Good for hash keys.
+ * Extract SIZEOF_KEY bytes of keying material as a KEY.
+ *
+ * Good for extracting hash or other keys that don't yet have an NSS
+ * type.
  *
  * Offset into the SYMKEY is in BYTES.
  */
