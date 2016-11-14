@@ -371,8 +371,8 @@ PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
 	 * specified.  For those specify CKM_VENDOR_DEFINED.
 	 */
 
-	CK_MECHANISM_TYPE mechanism = (encrypter->nss_mechanism
-				       ? encrypter->nss_mechanism
+	CK_MECHANISM_TYPE mechanism = (encrypter->common.nss_mechanism
+				       ? encrypter->common.nss_mechanism
 				       : CKM_VENDOR_DEFINED);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s NSS encryption key mechanism %s(%lu)%s",

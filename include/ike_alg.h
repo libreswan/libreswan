@@ -167,6 +167,20 @@ struct ike_alg {
 	 * XXX: While not exactly an ideal way to do this, it works.
 	 */
 	bool (*const do_ike_test)(const struct ike_alg*);
+
+	/*
+	 * The NSS mechanism used to implement this algorithm
+	 * (assuming NSS).
+	 *
+	 * Note that the SYMKEY object passed to NSS also need to have
+	 * the mechanism (type) set to this value.  If it isn't, the
+	 * the operation fails.
+	 *
+	 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
+	 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
+	 * has no meaning in this context so it is safe.
+	 */
+	CK_MECHANISM_TYPE nss_mechanism;
 };
 
 struct encrypt_desc {
@@ -209,20 +223,6 @@ struct encrypt_desc {
 	const unsigned keydeflen;
 	const unsigned keymaxlen;
 	const unsigned keyminlen;
-
-	/*
-	 * The NSS encryption mechanism (passed to NSS's encrypt
-	 * functions).
-	 *
-	 * Note that the SYMKEY object passed to .do_crypt() et.al.)
-	 * must also have its mechanism (type) set to this value.  If
-	 * it isn't, the crypt operation fails.
-	 *
-	 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
-	 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
-	 * has no meaning in this context so it is safe.
-	 */
-	CK_MECHANISM_TYPE nss_mechanism;
 
 	/*
 	 * Perform simple encryption.

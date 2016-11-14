@@ -123,6 +123,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 		.ikev2_id = IKEv2_ENCR_AES_CBC,
 		.fips =        TRUE,
 		.do_ike_test = test_aes_cbc,
+		.nss_mechanism = CKM_AES_CBC,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
@@ -131,7 +132,6 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
-	.nss_mechanism = CKM_AES_CBC,
 	.do_crypt = ike_alg_nss_cbc,
 };
 
@@ -347,6 +347,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 		.ikev2_id = IKEv2_ENCR_AES_CTR,
 		.fips =        TRUE,
 		.do_ike_test = test_aes_ctr,
+		.nss_mechanism = CKM_AES_CTR,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -356,7 +357,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
-	.nss_mechanism = CKM_AES_CTR,
 	.do_crypt =     do_aes_ctr,
 };
 
@@ -487,6 +487,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
 		.ikev2_id = IKEv2_ENCR_AES_GCM_8,
 		.fips =        TRUE,
+		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -497,7 +498,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
 	.aead_tag_size = 8,
-	.nss_mechanism = CKM_AES_GCM,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
@@ -510,6 +510,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.ikev1_oakley_id = OAKLEY_AES_GCM_12,
 		.ikev2_id = IKEv2_ENCR_AES_GCM_12,
 		.fips =        TRUE,
+		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -519,7 +520,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 	.aead_tag_size = 12,
-	.nss_mechanism = CKM_AES_GCM,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
@@ -533,6 +533,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.ikev2_id = IKEv2_ENCR_AES_GCM_16,
 		.fips =        TRUE,
 		.do_ike_test = test_aes_gcm,
+		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -542,7 +543,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 	.aead_tag_size = 16,
-	.nss_mechanism = CKM_AES_GCM,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
@@ -556,6 +556,9 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.ikev2_id = IKEv2_ENCR_AES_CCM_8,
 		.fips =         TRUE,
 		.do_ike_test = NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -564,9 +567,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-#ifdef NOT_YET
-	.nss_mechanism = CKM_AES_CCM,
-#endif
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -579,6 +579,9 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.ikev2_id = IKEv2_ENCR_AES_CCM_12,
 		.fips =         TRUE,
 		.do_ike_test = NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -587,9 +590,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-#ifdef NOT_YET
-	.nss_mechanism = CKM_AES_CCM,
-#endif
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -602,6 +602,9 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.ikev2_id = IKEv2_ENCR_AES_CCM_16,
 		.fips =         TRUE,
 		.do_ike_test = NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -610,9 +613,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-#ifdef NOT_YET
-	.nss_mechanism = CKM_AES_CCM,
-#endif
 };
 
 struct integ_desc ike_alg_integ_aes_xcbc = {

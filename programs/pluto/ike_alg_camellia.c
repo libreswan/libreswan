@@ -105,6 +105,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CBC,
 		.ikev2_id = IKEv2_ENCR_CAMELLIA_CBC,
 		.do_ike_test = test_camellia_cbc,
+		.nss_mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_ctxsize =   sizeof(camellia_context),
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
@@ -113,7 +114,6 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
-	.nss_mechanism = CKM_CAMELLIA_CBC,
 	.do_crypt = ike_alg_nss_cbc,
 };
 

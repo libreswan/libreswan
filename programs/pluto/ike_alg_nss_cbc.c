@@ -35,8 +35,8 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
 
-	passert(alg->nss_mechanism != CKM_VENDOR_DEFINED);
-	passert(alg->nss_mechanism != 0);
+	passert(alg->common.nss_mechanism != CKM_VENDOR_DEFINED);
+	passert(alg->common.nss_mechanism != 0);
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -49,7 +49,7 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	ivitem.type = siBuffer;
 	ivitem.data = iv;
 	ivitem.len = alg->enc_blocksize;
-	SECItem *secparam = PK11_ParamFromIV(alg->nss_mechanism, &ivitem);
+	SECItem *secparam = PK11_ParamFromIV(alg->common.nss_mechanism, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "ike_alg_nss_cbc: %s - Failure to set up PKCS11 param (err %d)",
@@ -58,7 +58,7 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	}
 
 	PK11Context *enccontext;
-	enccontext = PK11_CreateContextBySymKey(alg->nss_mechanism,
+	enccontext = PK11_CreateContextBySymKey(alg->common.nss_mechanism,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {

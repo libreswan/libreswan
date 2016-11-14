@@ -84,6 +84,9 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_TWOFISH_CBC
+#endif
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
@@ -92,9 +95,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
-#ifdef NOT_YET
-	.nss_mechanism = CKM_TWOFISH_CBC
-#endif
 	.do_crypt = do_twofish,
 };
 
@@ -106,6 +106,9 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_TWOFISH_CBC
+#endif
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
@@ -114,8 +117,5 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
-#ifdef NOT_YET
-	.nss_mechanism = CKM_TWOFISH_CBC
-#endif
 	.do_crypt = do_twofish,
 };
