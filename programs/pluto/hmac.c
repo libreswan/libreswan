@@ -49,7 +49,7 @@
  */
 
 void hmac_init(struct hmac_ctx *ctx,
-	       const struct hash_desc *h,
+	       const struct prf_desc *prf_desc,
 	       /*const*/ PK11SymKey *symkey)	/* NSS doesn't like const! */
 {
 	/*
@@ -57,8 +57,8 @@ void hmac_init(struct hmac_ctx *ctx,
 	 * generate secure keying material from nothing.
 	 * crypt_prf_init_symkey() establishes the actual key.
 	 */
-	ctx->prf = crypt_prf_init("hmac", h, symkey);
-	ctx->hmac_digest_len = h->hash_digest_len;
+	ctx->prf = crypt_prf_init("hmac", prf_desc, symkey);
+	ctx->hmac_digest_len = prf_desc->hasher.hash_digest_len;
 	crypt_prf_init_symkey("symkey", ctx->prf, symkey);
 	crypt_prf_update(ctx->prf);
 }

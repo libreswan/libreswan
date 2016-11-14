@@ -51,13 +51,17 @@ struct crypt_prf {
 /*
  * During the init phase, accumulate the key material in KEY.
  */
-struct crypt_prf *crypt_prf_init(const char *name, const struct hash_desc *hasher,
+struct crypt_prf *crypt_prf_init(const char *name, const struct prf_desc *prf_desc,
 				 PK11SymKey *scratch)
 {
 	struct crypt_prf *prf = alloc_bytes(sizeof(struct crypt_prf), name);
 	DBG(DBG_CRYPT, DBG_log("%s prf: init %p", name, prf));
 	prf->name = name;
-	prf->hasher = hasher;
+	/*
+	 * XXX: this assumes that the PRF is being implemented by
+	 * HASHing a MAC.
+	 */
+	prf->hasher = &prf_desc->hasher;
 	prf->scratch = scratch;
 	prf->we_own_key = FALSE;
 	prf->key = NULL;

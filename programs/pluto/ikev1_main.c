@@ -387,7 +387,7 @@ main_mode_hash(struct state *st,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, &st->st_oakley.prf->hasher, st->st_skeyid_nss);
+	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_nss);
 	main_mode_hash_body(st, hashi, idpl, &ctx, NULL);
 	hmac_final(hash_val, &ctx);
 	return ctx.hmac_digest_len;
@@ -2324,7 +2324,7 @@ stf_status send_isakmp_notification(struct state *st,
 		/* finish computing HASH */
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, &st->st_oakley.prf->hasher, st->st_skeyid_a_nss);
+		hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
 		hmac_update(&ctx, (const u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2528,7 +2528,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst) {
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, &encst->st_oakley.prf->hasher,
+		hmac_init(&ctx, encst->st_oakley.prf,
 			  encst->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
@@ -2780,7 +2780,7 @@ bool ikev1_delete_out(struct state *st)
 	{
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, &p1st->st_oakley.prf->hasher,
+		hmac_init(&ctx, p1st->st_oakley.prf,
 			  p1st->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);

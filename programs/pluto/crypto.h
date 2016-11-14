@@ -44,8 +44,9 @@ void get_oakley_group_param(const struct oakley_group_desc *,
 
 struct state;   /* forward declaration, dammit */
 
-struct encrypt_desc;	/* forward */
-struct hash_desc;	/* forward */
+struct encrypt_desc;	/* opaque */
+struct hash_desc;	/* opaque */
+struct prf_desc;        /* opaque */
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 			size_t size, struct state *st);
@@ -100,7 +101,7 @@ struct hmac_ctx {
 };
 
 extern void hmac_init(struct hmac_ctx *ctx,
-		      const struct hash_desc *h,
+		      const struct prf_desc *prf_desc,
 		      /*const*/ PK11SymKey *symkey);
 
 extern void hmac_update(struct hmac_ctx *ctx,

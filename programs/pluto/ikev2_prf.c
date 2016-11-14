@@ -266,7 +266,7 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 	}
 }
 
-static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
+static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 				 PK11SymKey *key, PK11SymKey *seed,
 				 size_t required_keymat)
 {
@@ -276,7 +276,8 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 	PK11SymKey *prfplus;
 	{
 		struct crypt_prf *prf = crypt_prf_init("prf+0",
-						       hasher, key);
+						       prf_desc,
+						       key);
 		crypt_prf_init_symkey("key", prf, key);
 		crypt_prf_update(prf);
 		crypt_prf_update_symkey("seed", prf, seed);
@@ -289,14 +290,15 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 	while (sizeof_symkey(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init("prf+N",
-						       hasher, key);
+						       prf_desc,
+						       key);
 		crypt_prf_init_symkey("key", prf, key);
 		crypt_prf_update(prf);
 		crypt_prf_update_symkey("old_t", prf, old_t);
 		crypt_prf_update_symkey("seed", prf, seed);
 		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final(prf);
-		append_symkey_symkey(hasher, &prfplus, new_t);
+		append_symkey_symkey(&prf_desc->hasher, &prfplus, new_t);
 		free_any_symkey("old_t[N]", &old_t);
 		old_t = new_t;
 	}
@@ -312,7 +314,7 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  PK11SymKey *dh_secret)
 {
 	struct crypt_prf *prf = crypt_prf_init("ike sa SKEYSEED",
-					       &prf_desc->hasher, dh_secret);
+					       prf_desc, dh_secret);
 	/* key = Ni|Nr */
 	crypt_prf_init_chunk("Ni", prf, Ni);
 	crypt_prf_init_chunk("Nr", prf, Nr);
@@ -332,7 +334,7 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					const chunk_t Ni, const chunk_t Nr)
 {
 	struct crypt_prf *prf = crypt_prf_init("ike sa rekey skeyseed",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       new_dh_secret);
 	/* key = SK_d (old) */
 	crypt_prf_init_symkey("SK_d (old)", prf, SK_d_old);
@@ -358,7 +360,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 	append_symkey_chunk(&prf_desc->hasher, &data, Nr);
 	append_symkey_chunk(&prf_desc->hasher, &data, SPIi);
 	append_symkey_chunk(&prf_desc->hasher, &data, SPIr);
-	PK11SymKey *prfplus = ikev2_prfplus(&prf_desc->hasher,
+	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    skeyseed, data,
 					    required_bytes);
 	free_any_symkey(__func__, &data);
@@ -385,7 +387,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 		append_symkey_chunk(&prf_desc->hasher,
 				    &data, Nr);
 	}
-	PK11SymKey *prfplus = ikev2_prfplus(&prf_desc->hasher,
+	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    SK_d, data,
 					    required_bytes);
 	free_any_symkey(__func__, &data);

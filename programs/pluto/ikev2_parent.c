@@ -1739,7 +1739,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* okay, authenticate from beginning of IV */
 		struct hmac_ctx ctx;
-		hmac_init(&ctx, &pst->st_oakley.integ->prf->hasher, authkey);
+		hmac_init(&ctx, pst->st_oakley.integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(integ_start, &ctx);
 
@@ -1894,7 +1894,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, &pst->st_oakley.integ->prf->hasher, authkey);
+		hmac_init(&ctx, pst->st_oakley.integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(td, &ctx);
 
@@ -2533,7 +2533,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 
-		hmac_init(&id_ctx, &pst->st_oakley.prf->hasher, pst->st_skey_pi_nss);
+		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
 				 &pc->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -3078,7 +3078,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, &st->st_oakley.prf->hasher, st->st_skey_pi_nss);
+		hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pi_nss);
 
 		/* calculate hash of IDi for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
@@ -3289,7 +3289,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			unsigned char *id_start;
 			unsigned int id_len;
 
-			hmac_init(&id_ctx, &st->st_oakley.prf->hasher, st->st_skey_pr_nss);
+			hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pr_nss);
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 					 &id_b,
 					 &c->spd.this);
@@ -3518,7 +3518,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, &pst->st_oakley.prf->hasher, pst->st_skey_pr_nss);
+		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pr_nss);
 
 		/* calculate hash of IDr for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));

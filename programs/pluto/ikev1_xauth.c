@@ -355,7 +355,7 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, &st->st_oakley.prf->hasher, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *) &st->st_msgid_phase15,
 		    sizeof(st->st_msgid_phase15));
 	hmac_update(&ctx, start, roof - start);

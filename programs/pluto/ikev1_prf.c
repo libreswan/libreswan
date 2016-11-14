@@ -45,7 +45,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
 {
 	struct crypt_prf *prf = crypt_prf_init("SKEYID sig",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       dh_secret);
 	/* key = Ni|Nr */
 	crypt_prf_init_chunk("Ni", prf, Ni);
@@ -66,7 +66,7 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					PK11SymKey *scratch)
 {
 	struct crypt_prf *prf = crypt_prf_init("SKEYID psk",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       scratch);
 	/* key = pre-shared-key */
 	crypt_prf_init_chunk("psk", prf, pre_shared_key);
@@ -87,7 +87,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r)
 {
 	struct crypt_prf *prf = crypt_prf_init("SKEYID_d",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       dh_secret);
 	/* key = SKEYID */
 	crypt_prf_init_symkey("SKEYID", prf, skeyid);
@@ -110,7 +110,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r)
 {
 	struct crypt_prf *prf = crypt_prf_init("SKEYID_a",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       dh_secret);
 	/* key = SKEYID */
 	crypt_prf_init_symkey("SKEYID", prf, skeyid);
@@ -134,7 +134,7 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r)
 {
 	struct crypt_prf *prf = crypt_prf_init("SKEYID_e",
-					       &prf_desc->hasher,
+					       prf_desc,
 					       dh_secret);
 	/* key = SKEYID */
 	crypt_prf_init_symkey("SKEYID", prf, skeyid);
@@ -162,7 +162,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	PK11SymKey *keymat;
 	{
 		struct crypt_prf *prf = crypt_prf_init("appendix_b",
-						       &prf_desc->hasher,
+						       prf_desc,
 						       skeyid_e);
 		crypt_prf_init_symkey("SKEYID_e", prf, skeyid_e);
 		crypt_prf_update(prf);
@@ -175,7 +175,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	while (sizeof_symkey(keymat) < required_keymat) {
 		/* Kn = prf(skeyid_e, Kn-1) */
 		struct crypt_prf *prf = crypt_prf_init("SKEYID_e",
-						       &prf_desc->hasher,
+						       prf_desc,
 						       skeyid_e);
 		crypt_prf_init_symkey("SKEYID_e", prf, skeyid_e);
 		crypt_prf_update(prf);

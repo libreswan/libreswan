@@ -127,7 +127,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-				       &st->st_oakley.prf->hasher,
+				       st->st_oakley.prf,
 				       st->st_shared_nss/*scratch*/);
 		crypt_prf_init_chunk("shared secret", prf, *pss);
 		crypt_prf_update(prf);
@@ -150,7 +150,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-				       &st->st_oakley.prf->hasher,
+				       st->st_oakley.prf,
 				       st->st_shared_nss /*scratch*/);
 		crypt_prf_init_symkey("<prf-psk>", prf, prf_psk);
 		/*

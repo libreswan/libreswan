@@ -278,14 +278,15 @@ struct hash_desc {
 };
 
 /*
- * PRF_DESC and INTEG_DESC extend HASH_DESC.
+ * Pseudo Random Function:
  *
- * XXX: In fact, for the moment, they are identical.  If nothing else,
- * HASH_INTEG_LEN should be moved out of HASH_DESC.
+ *     PRF(<key>, <data>) -> digest
  *
- * XXX: Could also make hash_desc a separate structure.
+ * While some PRFs are implemented using HMAC (for instance,
+ * HMAC_SHA1), some are not (for instance, AES_CMAC).
+ *
+ * XXX: Having PRF just mimic HASH is wrong.
  */
-
 struct prf_desc {
 	struct hash_desc hasher;
 };

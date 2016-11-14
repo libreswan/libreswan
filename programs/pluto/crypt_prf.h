@@ -42,7 +42,7 @@ struct crypt_prf;
  * from raw bytes (or memory).
  */
 struct crypt_prf *crypt_prf_init(const char *name,
-				 const struct hash_desc *hasher,
+				 const struct prf_desc *prf_desc,
 				 PK11SymKey *scratch);
 
 /*
