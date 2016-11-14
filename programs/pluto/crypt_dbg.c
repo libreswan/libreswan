@@ -25,36 +25,6 @@
 #include "lswnss.h"
 #include "lswfips.h"
 
-static PK11SymKey *ephemeral_symkey(int debug)
-{
-	static int tried;
-	static PK11SymKey *ephemeral_key;
-	if (!tried) {
-		tried = 1;
-		/* get a secret key */
-		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
-						      lsw_return_nss_password_file_info());
-		if (slot == NULL) {
-			loglog(RC_LOG_SERIOUS, "NSS: ephemeral slot error");
-			return NULL;
-		}
-		ephemeral_key = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
-					    NULL, 128/8, NULL);
-		PK11_FreeSlot(slot); /* reference counted */
-	}
-	DBG(debug, DBG_symkey("ephemeral_key", ephemeral_key));
-	return ephemeral_key;
-}
-
-/*
- * For testing/debugging, return a symkey.
- */
-PK11SymKey *chunk_to_symkey(chunk_t raw_key)
-{
-	PK11SymKey *ephemeral_key = ephemeral_symkey(DBG_CRYPT);
-	return symkey_from_chunk(ephemeral_key, raw_key);
-}
-
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 {
 	DBG_symkey(prefix, key);

@@ -48,8 +48,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 	chunk_t key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
 	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID sig", DBG_CRYPT,
 						     prf_desc,
-						     "Ni|Nr", key,
-						     dh_secret);
+						     "Ni|Nr", key);
 	freeanychunk(key);
 	/* seed = g^xy */
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
@@ -62,14 +61,12 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
-					chunk_t Ni, chunk_t Nr,
-					PK11SymKey *scratch)
+					chunk_t Ni, chunk_t Nr)
 {
 	/* key = pre-shared-key */
 	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID psk", DBG_CRYPT,
 						     prf_desc,
-						     "psk", pre_shared_key,
-						     scratch);
+						     "psk", pre_shared_key);
 	/* seed = Ni_b | Nr_b */
 	crypt_prf_update_chunk("Ni", prf, Ni);
 	crypt_prf_update_chunk("Nr", prf, Nr);
@@ -228,7 +225,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 			setchunk_from_wire(pss, skq, &skq->pss);
 			skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
-							     ni, nr, shared);
+							     ni, nr);
 		}
 		break;
 

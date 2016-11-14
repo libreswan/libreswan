@@ -34,8 +34,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
-					chunk_t Ni_b, chunk_t Nr_b,
-					PK11SymKey *scratch);
+					chunk_t Ni_b, chunk_t Nr_b);
 
 /*
  * Authenticated keying material.

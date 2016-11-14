@@ -129,8 +129,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
 					     DBG_CRYPT,
 					     st->st_oakley.prf,
-					     "shared secret", *pss,
-					     st->st_shared_nss/*scratch*/);
+					     "shared secret", *pss);
 		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
 				       psk_key_pad_str, psk_key_pad_str_len);
 		prf_psk = crypt_prf_final(prf);

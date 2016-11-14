@@ -156,10 +156,8 @@ static void run_psk(void)
 		return;
 	}
 
-	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf,
-							 psk,
-							 ni, nr,
-							 g_xy);
+	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk,
+							 ni, nr);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);
 	free_any_symkey("skeyid", &skeyid);

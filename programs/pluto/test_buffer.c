@@ -152,11 +152,9 @@ PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
-	PK11SymKey *tmp = chunk_to_symkey(raw_key);
-	PK11SymKey *symkey = symkey_from_symkey_bytes("symkey", DBG_CRYPT,
-						      &encrypt_desc->common,
-						      0, raw_key.len, tmp);
+	PK11SymKey *symkey = symkey_from_chunk("symkey", DBG_CRYPT,
+					       &encrypt_desc->common,
+					       raw_key);
 	freeanychunk(raw_key);
-	free_any_symkey("tmp", &tmp);
 	return symkey;
 }

@@ -48,8 +48,7 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
 
 struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, chunk_t key,
-				       PK11SymKey *scratch);
+				       const char *key_name, chunk_t key);
 
 /*
  * Call these to accumulate the seed/data/text.

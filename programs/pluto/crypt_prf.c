@@ -81,13 +81,13 @@ static struct crypt_prf *prf_init(const char *name, lset_t debug,
 
 struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, chunk_t key,
-				       PK11SymKey *scratch)
+				       const char *key_name, chunk_t key)
 {
 	struct crypt_prf *prf = prf_init(name, debug, prf_desc);
 	DBG(debug, DBG_log("%s prf: init chunk %s %p (length %zd)",
 			   name, key_name, key.ptr, key.len));
-	prf->key = symkey_from_chunk(scratch, key);
+	/* XXX: use an untyped key */
+	prf->key = symkey_from_chunk(name, debug, NULL, key);
 	prf->we_own_key = TRUE;
 	prf_update(prf);
 	return prf;

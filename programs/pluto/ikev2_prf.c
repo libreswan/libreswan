@@ -318,8 +318,7 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 	struct crypt_prf *prf = crypt_prf_init_chunk("ike sa SKEYSEED",
 						     DBG_CRYPT,
 						     prf_desc,
-						     "Ni|Nr", key,
-						     dh_secret);
+						     "Ni|Nr", key);
 	freeanychunk(key);
 	/* seed = g^ir */
 	crypt_prf_update_symkey("g^ir", prf, dh_secret);
@@ -356,7 +355,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				const chunk_t SPIi, const chunk_t SPIr,
 				size_t required_bytes)
 {
-	PK11SymKey *data = symkey_from_chunk(skeyseed, Ni);
+	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
 	append_symkey_chunk(prf_desc->hasher, &data, Nr);
 	append_symkey_chunk(prf_desc->hasher, &data, SPIi);
 	append_symkey_chunk(prf_desc->hasher, &data, SPIr);
@@ -378,7 +377,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_chunk(SK_d, Ni);
+		data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
 		append_symkey_chunk(prf_desc->hasher,
 				    &data, Nr);
 	} else {

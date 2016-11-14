@@ -366,28 +366,31 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 
 /*
  * SYMKEY I/O operations.
- *
- * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
- * for creating the key.
  */
 
-PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
-			      size_t sizeof_bytes)
+PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      const u_int8_t *bytes, size_t sizeof_bytes)
 {
+	PK11SymKey *scratch = ephemeral_symkey(debug);
 	PK11SymKey *tmp = merge_symkey_bytes("symkey_from_bytes",
 					     scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
-	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, sizeof_bytes);
+	PK11SymKey *key = symkey_from_symkey_bytes(name, debug, alg,
+						   0, sizeof_bytes, tmp);
 	passert(key != NULL);
 	free_any_symkey(__func__, &tmp);
 	return key;
 }
 
-PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
+PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      chunk_t chunk)
 {
-	return symkey_from_bytes(scratch, chunk.ptr, chunk.len);
+	return symkey_from_bytes(name, debug, alg,
+				 chunk.ptr, chunk.len);
 }
 
 /*

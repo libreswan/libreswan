@@ -45,16 +45,6 @@ void free_any_symkey(const char *prefix, PK11SymKey **key);
 size_t sizeof_symkey(PK11SymKey *key);
 
 /*
- * Use SCRATCH key as a secure starting point for creating the key
- * from the raw bytes, or chunk.
- */
-
-PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
-			      size_t sizeof_bytes);
-
-PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
-
-/*
  * Concatenate two pieces of keying material creating a
  * new SYMKEY object.
  */
@@ -103,10 +93,23 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
 /*
  * Extract wire material from a symkey.
  *
- * Used to avoid interface issues with NSS.
+ * Used to avoid interface issues with NSS.  If ALG is null then the
+ * key has a generic mechanism type.
  */
 chunk_t chunk_from_symkey(const char *prefix, lset_t debug,
 			  PK11SymKey *symkey);
+
+/*
+ * Create a key suitable for ALG.
+ *
+ * Used to avoid interface issues with NSS.
+ */
+PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      const u_int8_t *bytes, size_t sizeof_bytes);
+PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      chunk_t chunk);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.

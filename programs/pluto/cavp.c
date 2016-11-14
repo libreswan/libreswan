@@ -147,7 +147,8 @@ void symkey(struct cavp_entry *entry,
 {
 	free_any_symkey(__func__, entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = chunk_to_symkey(chunk);
+	*(entry->symkey) = symkey_from_chunk("symkey", DBG_CRYPT,
+					     NULL, chunk);
 	freeanychunk(chunk);
 }
 
