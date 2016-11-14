@@ -172,7 +172,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_symkey("old_k", prf, old_k);
 		PK11SymKey *new_k = crypt_prf_final(prf);
-		append_symkey_symkey(&prf_desc->hasher, &keymat, new_k);
+		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
 		free_any_symkey("old_k#N", &old_k);
 		old_k = new_k;
 	}
@@ -202,7 +202,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 {
 	oakley_auth_t auth = skq->auth;
 	const struct prf_desc *prf_desc = skq->prf;
-	const struct hash_desc *hasher = prf_desc ? &prf_desc->hasher : NULL;
+	const struct hash_desc *hasher = prf_desc ? prf_desc->hasher : NULL;
 	chunk_t ni;
 	chunk_t nr;
 	chunk_t gi;

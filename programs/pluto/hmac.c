@@ -60,7 +60,7 @@ void hmac_init(struct hmac_ctx *ctx,
 	ctx->prf = crypt_prf_init_symkey("hmac", DBG_CRYPT,
 					 prf_desc,
 					 "symkey", symkey);
-	ctx->hmac_digest_len = prf_desc->hasher.hash_digest_len;
+	ctx->hmac_digest_len = prf_desc->prf_output_size;
 }
 
 void hmac_update(struct hmac_ctx *ctx,

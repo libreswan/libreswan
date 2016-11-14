@@ -75,7 +75,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	const char    *nonce_name;
 	const struct connection *c = st->st_connection;
 	const chunk_t *pss = &empty_chunk;
-	const size_t hash_len =  st->st_oakley.prf->hasher.hash_digest_len;
+	const size_t hash_len =  st->st_oakley.prf->prf_output_size;
 
 	if (!(c->policy & POLICY_AUTH_NULL)) {
 		pss = get_preshared_secret(c);
@@ -185,7 +185,7 @@ bool ikev2_calculate_psk_auth(struct state *st,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs)
 {
-	unsigned int hash_len = st->st_oakley.prf->hasher.hash_digest_len;
+	unsigned int hash_len = st->st_oakley.prf->prf_output_size;
 	unsigned char signed_octets[hash_len];
 
 	if (!ikev2_calculate_psk_sighash(st, role, idhash,
@@ -207,7 +207,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 				 unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
-	unsigned int hash_len = st->st_oakley.prf->hasher.hash_digest_len;
+	unsigned int hash_len = st->st_oakley.prf->prf_output_size;
 	unsigned char calc_hash[hash_len];
 	size_t sig_len = pbs_left(sig_pbs);
 
@@ -217,7 +217,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 
 	if (sig_len != hash_len) {
 		libreswan_log("negotiated prf: %s ",
-			      st->st_oakley.prf->hasher.common.name);
+			      st->st_oakley.prf->common.name);
 		libreswan_log(
 			"I2 hash length:%lu does not match with PRF hash len %lu",
 			(long unsigned) sig_len,

@@ -1976,14 +1976,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		if (prf == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
 			continue;
-		} else if (prf->hasher.common.ikev2_id == 0) {
+		} else if (prf->common.ikev2_id == 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "IKEv2 proposal contains unsupported PRF algorithm %s",
-			       prf->hasher.common.name);
+			       prf->common.name);
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
-					 prf->hasher.common.ikev2_id, 0);
+					 prf->common.ikev2_id, 0);
 		}
 
 		/*

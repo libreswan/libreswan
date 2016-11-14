@@ -190,7 +190,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First: one with local (source) IP & port
 	 */
-	natd_hash(&ike_alg_prf_sha1.hasher, hb, st->st_icookie,
+	natd_hash(ike_alg_prf_sha1.hasher, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ?
 			md->hdr.isa_rcookie : st->st_rcookie,
 		&st->st_localaddr, st->st_localport);
@@ -203,7 +203,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second: one with remote (destination) IP & port
 	 */
-	natd_hash(&ike_alg_prf_sha1.hasher, hb, st->st_icookie,
+	natd_hash(ike_alg_prf_sha1.hasher, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
 
@@ -360,7 +360,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct state *st = md->st;
-	const struct hash_desc *const hasher = &st->st_oakley.prf->hasher;
+	const struct hash_desc *const hasher = st->st_oakley.prf->hasher;
 	const size_t hl = hasher->hash_digest_len;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 	const struct payload_digest *p;
@@ -469,24 +469,24 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/*
 	 * First one with sender IP & port
 	 */
-	natd_hash(&st->st_oakley.prf->hasher, hash, st->st_icookie,
+	natd_hash(st->st_oakley.prf->hasher, hash, st->st_icookie,
 		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		  st->st_rcookie, first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
-				   st->st_oakley.prf->hasher.hash_digest_len,
+				   st->st_oakley.prf->hasher->hash_digest_len,
 				   "NAT-D"))
 		return FALSE;
 
 	/*
 	 * Second one with my IP & port
 	 */
-	natd_hash(&st->st_oakley.prf->hasher, hash,
+	natd_hash(st->st_oakley.prf->hasher, hash,
 		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
 		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
 	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs, hash,
-				     st->st_oakley.prf->hasher.hash_digest_len,
+				     st->st_oakley.prf->hasher->hash_digest_len,
 				     "NAT-D");
 }
 
@@ -1180,14 +1180,14 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(&ike_alg_prf_sha1.hasher, hash_me, st->st_icookie, rcookie,
-		&md->iface->ip_addr, md->iface->port);
+	natd_hash(ike_alg_prf_sha1.hasher, hash_me, st->st_icookie, rcookie,
+		  &md->iface->ip_addr, md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
-	natd_hash(&ike_alg_prf_sha1.hasher, hash_him, st->st_icookie, rcookie,
-		&md->sender, md->sender_port);
+	natd_hash(ike_alg_prf_sha1.hasher, hash_him, st->st_icookie, rcookie,
+		  &md->sender, md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)

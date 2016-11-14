@@ -2489,7 +2489,7 @@ static void send_notification(struct state *sndst, notification_t type,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(encst->st_oakley.prf->hasher.hash_digest_len,
+		if (!out_zero(encst->st_oakley.prf->prf_output_size,
 			      &hash_pbs, "HASH(1)"))
 			impossible();
 		close_output_pbs(&hash_pbs);
@@ -2717,7 +2717,7 @@ bool ikev1_delete_out(struct state *st)
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(p1st->st_oakley.prf->hasher.hash_digest_len,
+		if (!out_zero(p1st->st_oakley.prf->prf_output_size,
 			      &hash_pbs, "HASH(1)"))
 			impossible();
 		close_output_pbs(&hash_pbs);

@@ -181,7 +181,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 
 	for (const struct prf_desc **prfp = next_ike_prf_desc(NULL);
 	     prfp != NULL; prfp = next_ike_prf_desc(prfp)) {
-		if ((*prfp)->hasher.common.ikev1_oakley_id == aalg_id) {
+		if ((*prfp)->common.ikev1_oakley_id == aalg_id) {
 			new_info->ike_prf = *prfp;
 			break;
 		}
@@ -452,8 +452,7 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 	const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
 	passert(!fix_zero || enc_desc != NULL);
 	const struct prf_desc *prf_desc = ike_info->ike_prf;
-	const struct hash_desc *hash_desc = prf_desc ? &prf_desc->hasher : NULL;
-	passert(!fix_zero || hash_desc != NULL);
+	passert(!fix_zero || prf_desc != NULL);
 
 	int eklen = ike_info->ike_eklen;
 	if (fix_zero && eklen == 0)

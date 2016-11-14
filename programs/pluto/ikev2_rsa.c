@@ -84,7 +84,7 @@ static void ikev2_calculate_sighash(struct state *st,
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_chunk(nonce_name, *nonce);
-	    DBG_dump("idhash", idhash, st->st_oakley.prf->hasher.hash_digest_len));
+	    DBG_dump("idhash", idhash, st->st_oakley.prf->prf_output_size));
 
 	SHA1Init(&ctx_sha1);
 	SHA1Update(&ctx_sha1,
@@ -93,7 +93,7 @@ static void ikev2_calculate_sighash(struct state *st,
 	SHA1Update(&ctx_sha1, nonce->ptr, nonce->len);
 
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	SHA1Update(&ctx_sha1, idhash, st->st_oakley.prf->hasher.hash_digest_len);
+	SHA1Update(&ctx_sha1, idhash, st->st_oakley.prf->prf_output_size);
 
 	SHA1Final(sig_octets, &ctx_sha1);
 }

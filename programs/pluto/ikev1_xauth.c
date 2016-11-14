@@ -537,7 +537,7 @@ static stf_status modecfg_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->hasher.hash_digest_len,
+		if (!out_zero(st->st_oakley.prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 
@@ -2281,7 +2281,7 @@ static stf_status xauth_client_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->hasher.hash_digest_len,
+		if (!out_zero(st->st_oakley.prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 
@@ -2744,7 +2744,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->hasher.hash_digest_len,
+		if (!out_zero(st->st_oakley.prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 

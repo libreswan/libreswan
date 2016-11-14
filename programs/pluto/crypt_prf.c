@@ -70,11 +70,11 @@ static struct crypt_prf *prf_init(const char *name, lset_t debug,
 {
 	struct crypt_prf *prf = alloc_thing(struct crypt_prf, name);
 	DBG(DBG_CRYPT, DBG_log("%s prf %s: init %p",
-			       name, prf_desc->hasher.common.name, prf));
+			       name, prf_desc->common.name, prf));
 	*prf = (struct crypt_prf) {
 		.debug = debug,
 		.name = name,
-		.hasher = &prf_desc->hasher,
+		.hasher = prf_desc->hasher,
 	};
 	return prf;
 }

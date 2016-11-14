@@ -265,6 +265,11 @@ struct encrypt_desc {
 					 PK11SymKey *key, bool enc);
 };
 
+/*
+ * A "hash" algorithm is used to compute a simple message
+ * authentication code.
+ */
+
 typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
 struct hash_desc {
@@ -285,11 +290,41 @@ struct hash_desc {
  *
  * While some PRFs are implemented using HMAC (for instance,
  * HMAC_SHA1), some are not (for instance, AES_CMAC).
- *
- * XXX: Having PRF just mimic HASH is wrong.
  */
 struct prf_desc {
-	struct hash_desc hasher;
+	struct ike_alg common;	/* MUST BE FIRST */
+	/*
+	 * Prefered key size of the PRF.
+	 *
+	 * IKEv2 2.13: It is assumed that PRFs accept keys of any
+	 * length, but have a preferred key size.  The preferred key
+	 * size MUST be used as the length of SK_d, SK_pi, and SK_pr.
+	 * For PRFs based on the HMAC construction, the preferred key
+	 * size is equal to the length of the output of the underlying
+	 * hash function.  Other types of PRFs MUST specify their
+	 * preferred key size.
+	*/
+	size_t prf_key_size;
+	/*
+	 * Number of pseudo-random bytes returned by the PRF.
+	 *
+	 * IKEv2 2.13: Keying material will always be derived as the
+	 * output of the negotiated PRF algorithm.  Since the amount
+	 * of keying material needed may be greater than the size of
+	 * the output of the PRF, the PRF is used iteratively.  The
+	 * term "prf+" describes a function that outputs a
+	 * pseudorandom stream based on the inputs to a pseudorandom
+	 * function called "prf".
+	 */
+	size_t prf_output_size;
+	/*
+	 * For native-IKE.  The HASHER used by the HMAC construction.
+	 *
+	 * Non-NULL IFF there is a native implementation.
+	 *
+	 * If non-NULL its values must be consistent with the above.
+	 */
+	struct hash_desc *hasher;
 };
 
 /*

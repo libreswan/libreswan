@@ -268,12 +268,12 @@ void ike_alg_show_status(void)
 	for (const struct prf_desc **algp = next_ike_prf_desc(NULL);
 	     algp != NULL;
 	     algp = next_ike_prf_desc(algp)) {
-		const struct hash_desc *alg = &(*algp)->hasher;
+		const struct prf_desc *alg = (*algp);
 		whack_log(RC_COMMENT,
 			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  alg->common.ikev1_oakley_id,
 			  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
-			  alg->hash_digest_len);
+			  alg->prf_output_size);
 	}
 
 	const struct oakley_group_desc *gdesc;

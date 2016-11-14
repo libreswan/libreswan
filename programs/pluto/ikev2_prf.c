@@ -104,14 +104,14 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	setchunk_from_wire(spii, skq, &skq->icookie);
 	setchunk_from_wire(spir, skq, &skq->rcookie);
 
+	passert(skq->prf != NULL);
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-		    skq->prf->hasher.common.name,
+		    skq->prf->common.name,
 		    (skq->integ ? skq->integ->common.name : "n/a"),
 		    key_size, salt_size));
 
-	passert(skq->prf != NULL);
-	const struct hash_desc *prf_hasher = &skq->prf->hasher;
+	const struct prf_desc *prf = skq->prf;
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
@@ -129,8 +129,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	/* ..._salt needs salt_size*2 bytes */
 	/* SK_a needs integ's key size*2 bytes */
 
-	int skd_bytes = prf_hasher->hash_key_size;
-	int skp_bytes = prf_hasher->hash_key_size;
+	int skd_bytes = prf->prf_key_size;
+	int skp_bytes = prf->prf_key_size;
 	int integ_size = skq->integ ? skq->integ->integ_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
@@ -296,7 +296,7 @@ static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey("seed", prf, seed);
 		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final(prf);
-		append_symkey_symkey(&prf_desc->hasher, &prfplus, new_t);
+		append_symkey_symkey(prf_desc->hasher, &prfplus, new_t);
 		free_any_symkey("old_t[N]", &old_t);
 		old_t = new_t;
 	}
@@ -355,9 +355,9 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes)
 {
 	PK11SymKey *data = symkey_from_chunk(skeyseed, Ni);
-	append_symkey_chunk(&prf_desc->hasher, &data, Nr);
-	append_symkey_chunk(&prf_desc->hasher, &data, SPIi);
-	append_symkey_chunk(&prf_desc->hasher, &data, SPIr);
+	append_symkey_chunk(prf_desc->hasher, &data, Nr);
+	append_symkey_chunk(prf_desc->hasher, &data, SPIi);
+	append_symkey_chunk(prf_desc->hasher, &data, SPIr);
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    skeyseed, data,
 					    required_bytes);
@@ -377,12 +377,12 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
 		data = symkey_from_chunk(SK_d, Ni);
-		append_symkey_chunk(&prf_desc->hasher,
+		append_symkey_chunk(prf_desc->hasher,
 				    &data, Nr);
 	} else {
-		data = concat_symkey_chunk(&prf_desc->hasher,
+		data = concat_symkey_chunk(prf_desc->hasher,
 					   new_dh_secret, Ni);
-		append_symkey_chunk(&prf_desc->hasher,
+		append_symkey_chunk(prf_desc->hasher,
 				    &data, Nr);
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,

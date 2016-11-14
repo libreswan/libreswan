@@ -820,7 +820,8 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
  */
 void init_phase2_iv(struct state *st, const msgid_t *msgid)
 {
-	const struct hash_desc *h = &st->st_oakley.prf->hasher;
+	const struct hash_desc *h = st->st_oakley.prf->hasher;
+	passert(h);
 	union hash_ctx ctx;
 
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",

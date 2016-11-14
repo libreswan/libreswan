@@ -365,6 +365,7 @@ static struct prf_desc *prf_descriptors[] = {
 
 static void hash_desc_check(const struct hash_desc *hash)
 {
+	passert(hash->common.algo_type == IKE_ALG_HASH);
 	passert(hash->hash_ctx_size <= sizeof(union hash_ctx));
 	passert((hash->hash_init != NULL &&
 		 hash->hash_update != NULL &&
@@ -381,20 +382,32 @@ static bool hash_desc_is_ike(const struct hash_desc *hash)
 
 static void prf_desc_check(const struct ike_alg *alg)
 {
+	passert(alg->algo_type == IKE_ALG_PRF);
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
-	hash_desc_check(&prf->hasher);
+	passert(prf->prf_key_size > 0);
+	passert(prf->prf_output_size > 0);
+	/*
+	 * XXX: assume all PRFs are implemnted using HASHER and the
+	 * HMAC construction for now.
+	 */
+	passert(prf->hasher != NULL);
+	hash_desc_check(prf->hasher);
 }
 
 static bool prf_desc_is_ike(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_HASH); /*XXX: PRF */
+	passert(alg->algo_type == IKE_ALG_PRF);
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
-	return hash_desc_is_ike(&prf->hasher);
+	/*
+	 * XXX: assume all PRFs are implemented using HASHER and the
+	 * HMAC construction for now.
+	 */
+	return hash_desc_is_ike(prf->hasher);
 }
 
 static struct type_algorithms prf_algorithms = {
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
-	.type = IKE_ALG_HASH,
+	.type = IKE_ALG_PRF,
 	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = NULL, /* ESP/AH uses IKE PRF */
 	.ikev2_enum_names = &ikev2_trans_type_prf_names,
@@ -430,9 +443,9 @@ static void integ_desc_check(const struct ike_alg *alg)
 	passert(integ->integ_key_size > 0);
 	passert(integ->integ_output_size > 0);
 	if (integ->prf) {
-		passert(integ->integ_key_size == integ->prf->hasher.hash_key_size);
-		passert(integ->integ_output_size <= integ->prf->hasher.hash_digest_len);
-		passert(prf_desc_is_ike(&integ->prf->hasher.common));
+		passert(integ->integ_key_size == integ->prf->prf_key_size);
+		passert(integ->integ_output_size <= integ->prf->prf_output_size);
+		passert(prf_desc_is_ike(&integ->prf->common));
 	}
 }
 

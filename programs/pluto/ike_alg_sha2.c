@@ -81,24 +81,36 @@ static void sha512_final_thunk(u_char *hash, union hash_ctx *ctx)
 	sha512_final(hash, &ctx->ctx_sha512);
 }
 
-struct prf_desc ike_alg_prf_sha2_256 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_256",
-			.officname = "sha256",
-			.algo_type = IKE_ALG_HASH,
-			.ikev1_oakley_id = OAKLEY_SHA2_256,
-			.ikev2_id = IKEv2_PRF_HMAC_SHA2_256,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha256_context),
-		.hash_key_size = SHA2_256_DIGEST_SIZE,
-		.hash_digest_len = SHA2_256_DIGEST_SIZE,
-		.hash_block_size = 64,	/* from RFC 4868 */
-		.hash_init = sha256_init_thunk,
-		.hash_update = sha256_write_thunk,
-		.hash_final = sha256_final_thunk,
+struct hash_desc ike_alg_hash_sha2_256 = {
+	.common = {
+		.name = "sha2_256",
+		.officname = "sha256",
+		.algo_type = IKE_ALG_HASH,
+		.ikev1_oakley_id = OAKLEY_SHA2_256,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_256,
+		.fips = TRUE,
 	},
+	.hash_ctx_size = sizeof(sha256_context),
+	.hash_key_size = SHA2_256_DIGEST_SIZE,
+	.hash_digest_len = SHA2_256_DIGEST_SIZE,
+	.hash_block_size = 64,	/* from RFC 4868 */
+	.hash_init = sha256_init_thunk,
+	.hash_update = sha256_write_thunk,
+	.hash_final = sha256_final_thunk,
+};
+
+struct prf_desc ike_alg_prf_sha2_256 = {
+	.common = {
+		.name = "sha2_256",
+		.officname = "sha256",
+		.algo_type = IKE_ALG_PRF,
+		.ikev1_oakley_id = OAKLEY_SHA2_256,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_256,
+		.fips = TRUE,
+	},
+	.prf_key_size = SHA2_256_DIGEST_SIZE,
+	.prf_output_size = SHA2_256_DIGEST_SIZE,
+	.hasher = &ike_alg_hash_sha2_256,
 };
 
 struct integ_desc ike_alg_integ_sha2_256 = {
@@ -125,24 +137,37 @@ struct integ_desc ike_alg_integ_sha2_256 = {
 	.prf = &ike_alg_prf_sha2_256,
 };
 
-struct prf_desc ike_alg_prf_sha2_384 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_384",
-			.officname = "sha384",
-			.algo_type = IKE_ALG_HASH,
-			.ikev1_oakley_id = OAKLEY_SHA2_384,
-			.ikev2_id = IKEv2_PRF_HMAC_SHA2_384,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha384_context),
-		.hash_key_size = SHA2_384_DIGEST_SIZE,
-		.hash_digest_len = SHA2_384_DIGEST_SIZE,
-		.hash_block_size = 128,	/* from RFC 4868 */
-		.hash_init = sha384_init_thunk,
-		.hash_update = sha384_write_thunk,
-		.hash_final = sha384_final_thunk,
+static struct hash_desc ike_alg_hash_sha2_384 = {
+	.common = {
+		.name = "sha2_384",
+		.officname = "sha384",
+		.algo_type = IKE_ALG_HASH,
+		.ikev1_oakley_id = OAKLEY_SHA2_384,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_384,
+		.fips = TRUE,
 	},
+	.hash_ctx_size = sizeof(sha384_context),
+	.hash_key_size = SHA2_384_DIGEST_SIZE,
+	.hash_digest_len = SHA2_384_DIGEST_SIZE,
+	.hash_block_size = 128,	/* from RFC 4868 */
+	.hash_init = sha384_init_thunk,
+	.hash_update = sha384_write_thunk,
+	.hash_final = sha384_final_thunk,
+};
+
+struct prf_desc ike_alg_prf_sha2_384 = {
+
+	.common = {
+		.name = "sha2_384",
+		.officname = "sha384",
+		.algo_type = IKE_ALG_PRF,
+		.ikev1_oakley_id = OAKLEY_SHA2_384,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_384,
+		.fips = TRUE,
+	},
+	.prf_key_size = SHA2_384_DIGEST_SIZE,
+	.prf_output_size = SHA2_384_DIGEST_SIZE,
+	.hasher = &ike_alg_hash_sha2_384,
 };
 
 struct integ_desc ike_alg_integ_sha2_384 = {
@@ -169,24 +194,36 @@ struct integ_desc ike_alg_integ_sha2_384 = {
 	.prf = &ike_alg_prf_sha2_384,
 };
 
+struct hash_desc ike_alg_hash_sha2_512 = {
+	.common = {
+		.name = "sha2_512",
+		.officname = "sha512",
+		.algo_type = IKE_ALG_HASH,
+		.ikev1_oakley_id = OAKLEY_SHA2_512,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_512,
+		.fips = TRUE,
+	},
+	.hash_ctx_size = sizeof(sha512_context),
+	.hash_key_size = SHA2_512_DIGEST_SIZE,
+	.hash_digest_len = SHA2_512_DIGEST_SIZE,
+	.hash_block_size = 128,	/* from RFC 4868 */
+	.hash_init = sha512_init_thunk,
+	.hash_update = sha512_write_thunk,
+	.hash_final = sha512_final_thunk,
+};
+
 struct prf_desc ike_alg_prf_sha2_512 = {
-	.hasher = {
-		.common = {
-			.name = "sha2_512",
-			.officname = "sha512",
-			.algo_type = IKE_ALG_HASH,
-			.ikev1_oakley_id = OAKLEY_SHA2_512,
-			.ikev2_id = IKEv2_PRF_HMAC_SHA2_512,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(sha512_context),
-		.hash_key_size = SHA2_512_DIGEST_SIZE,
-		.hash_digest_len = SHA2_512_DIGEST_SIZE,
-		.hash_block_size = 128,	/* from RFC 4868 */
-		.hash_init = sha512_init_thunk,
-		.hash_update = sha512_write_thunk,
-		.hash_final = sha512_final_thunk,
-	}
+	.common = {
+		.name = "sha2_512",
+		.officname = "sha512",
+		.algo_type = IKE_ALG_PRF,
+		.ikev1_oakley_id = OAKLEY_SHA2_512,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA2_512,
+		.fips = TRUE,
+	},
+	.prf_key_size = SHA2_512_DIGEST_SIZE,
+	.prf_output_size = SHA2_512_DIGEST_SIZE,
+	.hasher = &ike_alg_hash_sha2_512,
 };
 
 struct integ_desc ike_alg_integ_sha2_512 = {

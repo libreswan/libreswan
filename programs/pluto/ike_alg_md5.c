@@ -51,23 +51,35 @@ static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_c
 	lsMD5Final(digest, &context->ctx_md5);
 }
 
-struct prf_desc ike_alg_prf_md5 = {
-	.hasher = {
-		.common = {
-			.name = "md5",
-			.officname = "md5",
-			.algo_type = IKE_ALG_HASH,
-			.ikev1_oakley_id = OAKLEY_MD5,
-			.ikev2_id = IKEv2_PRF_HMAC_MD5,
-		},
-		.hash_ctx_size = sizeof(lsMD5_CTX),
-		.hash_key_size = MD5_DIGEST_SIZE,
-		.hash_digest_len = MD5_DIGEST_SIZE,
-		.hash_block_size = 64,	/* B from RFC 2104 */
-		.hash_init = lsMD5Init_thunk,
-		.hash_update = lsMD5Update_thunk,
-		.hash_final = lsMD5Final_thunk,
+static struct hash_desc ike_alg_hash_md5 = {
+	.common = {
+		.name = "md5",
+		.officname = "md5",
+		.algo_type = IKE_ALG_HASH,
+		.ikev1_oakley_id = OAKLEY_MD5,
+		.ikev2_id = IKEv2_PRF_HMAC_MD5,
 	},
+	.hash_ctx_size = sizeof(lsMD5_CTX),
+	.hash_key_size = MD5_DIGEST_SIZE,
+	.hash_digest_len = MD5_DIGEST_SIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
+};
+
+
+struct prf_desc ike_alg_prf_md5 = {
+	.common = {
+		.name = "md5",
+		.officname = "md5",
+		.algo_type = IKE_ALG_PRF,
+		.ikev1_oakley_id = OAKLEY_MD5,
+		.ikev2_id = IKEv2_PRF_HMAC_MD5,
+	},
+	.prf_key_size = MD5_DIGEST_SIZE,
+	.prf_output_size = MD5_DIGEST_SIZE,
+	.hasher = &ike_alg_hash_md5,
 };
 
 struct integ_desc ike_alg_integ_md5 = {

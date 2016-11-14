@@ -51,24 +51,36 @@ static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ct
 	SHA1Final(digest, &context->ctx_sha1);
 }
 
-struct prf_desc ike_alg_prf_sha1 = {
-	.hasher = {
-		.common = {
-			.name = "sha",
-			.officname = "sha1",
-			.algo_type = IKE_ALG_HASH,
-			.ikev1_oakley_id = OAKLEY_SHA1,
-			.ikev2_id = IKEv2_PRF_HMAC_SHA1,
-			.fips = TRUE,
-		},
-		.hash_ctx_size = sizeof(SHA1_CTX),
-		.hash_key_size =   SHA1_DIGEST_SIZE,
-		.hash_digest_len = SHA1_DIGEST_SIZE,
-		.hash_block_size = 64,	/* B from RFC 2104 */
-		.hash_init = SHA1Init_thunk,
-		.hash_update = SHA1Update_thunk,
-		.hash_final = SHA1Final_thunk,
+static struct hash_desc ike_alg_hash_sha1 = {
+	.common = {
+		.name = "sha",
+		.officname = "sha1",
+		.algo_type = IKE_ALG_HASH,
+		.ikev1_oakley_id = OAKLEY_SHA1,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
+		.fips = TRUE,
 	},
+	.hash_ctx_size = sizeof(SHA1_CTX),
+	.hash_key_size =   SHA1_DIGEST_SIZE,
+	.hash_digest_len = SHA1_DIGEST_SIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
+};
+
+struct prf_desc ike_alg_prf_sha1 = {
+	.common = {
+		.name = "sha",
+		.officname = "sha1",
+		.algo_type = IKE_ALG_PRF,
+		.ikev1_oakley_id = OAKLEY_SHA1,
+		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
+		.fips = TRUE,
+	},
+	.prf_key_size = SHA1_DIGEST_SIZE,
+	.prf_output_size = SHA1_DIGEST_SIZE,
+	.hasher = &ike_alg_hash_sha1,
 };
 
 struct integ_desc ike_alg_integ_sha1 = {

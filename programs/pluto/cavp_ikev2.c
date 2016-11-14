@@ -110,7 +110,7 @@ static void run_ikev2(void)
 	print_symkey("DKM", dkm, dkm_length / 8);
 
 	/* prf+(SK_d, Ni | Nr) */
-	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->hasher.hash_digest_len);
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size);
 	PK11SymKey *child_sa_dkm =
 		ikev2_child_sa_keymat(prf, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);

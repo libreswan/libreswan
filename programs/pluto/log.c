@@ -1192,7 +1192,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			 st->st_oakley.prf->hasher.common.officname);
+			 st->st_oakley.prf->common.officname);
 
 		if (st->st_oakley.integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
