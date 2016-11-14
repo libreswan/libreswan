@@ -91,6 +91,6 @@ struct integ_desc ike_alg_integ_sha1 = {
 	.hash_final = SHA1Final_thunk,
 #endif
 	.integ_key_size = SHA1_DIGEST_SIZE,
-	.integ_hash_size = SHA1_DIGEST_SIZE_96,
+	.integ_output_size = SHA1_DIGEST_SIZE_96,
 	.prf = &ike_alg_prf_sha1,
 };

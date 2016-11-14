@@ -295,10 +295,10 @@ struct prf_desc {
 /*
  * Data Integrity.
  *
- * Implemented as:
+ * Currently all implementations use:
  *
- *    sizeof(<key>) == integ_key_size
- *    TRUNC(PRF(<key>,<data>), integ_hash_size)
+ *    sizeof(<key>) == integ->integ_key_size
+ *    TRUNC(integ->prf(<key>,<data>), integ->integ_output_size)
  *
  * However only IKE needs the PRF definition.  ESP/AH leave it to the
  * kernel.
@@ -306,14 +306,23 @@ struct prf_desc {
 struct integ_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	/*
-	 * Number of secret bytes needed to prime the integ algorithm,
-	 * and the number of bytes of output to put on the wire.
+	 * Number of secret bytes needed to prime the integ algorithm.
 	 *
-	 * If there's an IKE PRF, then these values need to be
-	 * consistent.
+	 * If there's an IKE PRF implementation, then these values
+	 * need to be consistent with the PRF.
 	 */
 	const size_t integ_key_size;
-	const size_t integ_hash_size;
+	/*
+	 * The size of the output from the integrity algorithm.  This
+	 * is put on the wire as "Integrity Checksum Data".
+	 *
+	 * If there's an IKE PRF implementation, then this must be <=
+	 * the PRF's output size and if that is implemented using a
+	 * HMAC construction, then it matches the HASH digest size.
+	 *
+	 * But none of that can be assumed.
+	 */
+	const size_t integ_output_size;
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is
 	 * truncated down to INTEG_HASH_LEN.

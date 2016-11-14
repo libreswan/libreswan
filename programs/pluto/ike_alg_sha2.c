@@ -121,7 +121,7 @@ struct integ_desc ike_alg_integ_sha2_256 = {
 	.hash_final = sha256_final_thunk,
 #endif
 	.integ_key_size = SHA2_256_DIGEST_SIZE,
-	.integ_hash_size = SHA2_256_DIGEST_SIZE / 2,
+	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_256,
 };
 
@@ -165,7 +165,7 @@ struct integ_desc ike_alg_integ_sha2_384 = {
 	.hash_final = sha384_final_thunk,
 #endif
 	.integ_key_size = SHA2_384_DIGEST_SIZE,
-	.integ_hash_size = SHA2_384_DIGEST_SIZE / 2,
+	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_384,
 };
 
@@ -209,6 +209,6 @@ struct integ_desc ike_alg_integ_sha2_512 = {
 	.hash_final = sha512_final_thunk,
 #endif
 	.integ_key_size = SHA2_512_DIGEST_SIZE,
-	.integ_hash_size = SHA2_512_DIGEST_SIZE / 2,
+	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_512,
 };

@@ -430,11 +430,11 @@ static struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = (const struct integ_desc*)alg;
-	passert(integ->integ_hash_size > 0);
 	passert(integ->integ_key_size > 0);
+	passert(integ->integ_output_size > 0);
 	if (integ->prf) {
 		passert(integ->integ_key_size == integ->prf->hasher.hash_key_size);
-		passert(integ->integ_hash_size <= integ->prf->hasher.hash_digest_len);
+		passert(integ->integ_output_size <= integ->prf->hasher.hash_digest_len);
 		passert(prf_desc_is_ike(&integ->prf->hasher.common));
 	}
 }

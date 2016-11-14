@@ -659,7 +659,7 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 	.hash_final = aes_xcbc_final_thunk,
 #endif
 	.integ_key_size = AES_XCBC_DIGEST_SIZE,
-	.integ_hash_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
 
 struct integ_desc ike_alg_integ_aes_cmac = {
@@ -687,5 +687,5 @@ struct integ_desc ike_alg_integ_aes_cmac = {
 	.hash_final = aes_cmac_final_thunk,
 #endif
 	.integ_key_size = BYTES_FOR_BITS(128),
-	.integ_hash_size = BYTES_FOR_BITS(96), /* truncated */
+	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
 };

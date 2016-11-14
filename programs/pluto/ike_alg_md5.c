@@ -89,6 +89,6 @@ struct integ_desc ike_alg_integ_md5 = {
 	.hash_final = lsMD5Final_thunk,
 #endif
 	.integ_key_size = MD5_DIGEST_SIZE,
-	.integ_hash_size = MD5_DIGEST_SIZE_96,
+	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.prf = &ike_alg_prf_md5,
 };
