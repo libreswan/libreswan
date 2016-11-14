@@ -1,8 +1,8 @@
 s/^\(Starting strongSwan \)\(.*\)\( IPsec.*\)$/\1X.X.X\3/g
 s/^\(Status of IKE charon daemon (strongSwan \).*):$/\1VERSION):/g
-s/\(  uptime: \)\([0-9]*\)\( second[s]*, since \)\(.*\)$/\1XXX\3YYY/g
+s/\(  uptime: \)\([0-9]*\)\( second[s]*\)\(, since \)\(.*\)$/\1XXX second\4YYY/g
 s/  malloc: sbrk [0-9]*, mmap [0-9]*, used [0-9]*, free [0-9]*$/  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX/g
-s/^\(.* ESTABLISHED \)\([0-9]*\)\( second[s]* ago.*\)$/\1XXX\3/g
+s/^\(.* ESTABLISHED \)\([0-9]*\)\( second[s]*\)\( ago.*\)$/\1XXX second\4/g
 #s/^\(.* IKEv[12] SPIs: \)\(.*_i\)+*\( .*_r.\)\(,.*\)$/\1SPISPI_i SPISPI_r\4/g
 s/SPIs: [0-9a-z]*_i\([\*]*\) [0-9a-z]*_r\([\*]*\)/SPIs: SPISPI_i\1 SPISPI_r\2/g
 s/^\(.*  INSTALLED, T[A-Z]*, .* SPIs: \)\(.*_i \)\(.*_o\)$/\1SPISPI_i SPISPI_o/g
