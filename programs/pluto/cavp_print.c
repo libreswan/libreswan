@@ -19,6 +19,7 @@
 
 #include "constants.h"
 #include "lswalloc.h"
+#include "crypt_symkey.h"
 #include "crypt_dbg.h"
 #include "cavp_print.h"
 
@@ -56,7 +57,7 @@ void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
 
 void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
 {
-	chunk_t chunk = chunk_from_symkey(prefix, key);
+	chunk_t chunk = chunk_from_symkey(prefix, DBG_CRYPT, key);
 	print_chunk(prefix, chunk, binlen);
 	freeanychunk(chunk);
 }

@@ -156,7 +156,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += key_size;
 	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
-	initiator_salt = chunk_from_symkey("initiator salt", initiator_salt_key);
+	initiator_salt = chunk_from_symkey("initiator salt", DBG_CRYPT,
+					   initiator_salt_key);
 	free_any_symkey("initiator salt key:", &initiator_salt_key);
 
 	next_byte += salt_size;
@@ -169,18 +170,19 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += key_size;
 	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
-	responder_salt = chunk_from_symkey("responder salt", responder_salt_key);
+	responder_salt = chunk_from_symkey("responder salt", DBG_CRYPT,
+					   responder_salt_key);
 	free_any_symkey("responder salt key:", &responder_salt_key);
 	next_byte += salt_size;
 
 	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k);
+	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", DBG_CRYPT, SK_pi_k);
 	next_byte += skp_bytes;
 
 	SK_pr_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k);
+	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", DBG_CRYPT, SK_pr_k);
 	next_byte += skp_bytes;	/* next_byte not subsequently used */
 
 	DBG(DBG_CRYPT,

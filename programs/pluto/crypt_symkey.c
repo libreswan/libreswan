@@ -130,6 +130,27 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 	};
 }
 
+static PK11SymKey *ephemeral_symkey(int debug)
+{
+	static int tried;
+	static PK11SymKey *ephemeral_key;
+	if (!tried) {
+		tried = 1;
+		/* get a secret key */
+		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
+						      lsw_return_nss_password_file_info());
+		if (slot == NULL) {
+			loglog(RC_LOG_SERIOUS, "NSS: ephemeral slot error");
+			return NULL;
+		}
+		ephemeral_key = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
+					    NULL, 128/8, NULL);
+		PK11_FreeSlot(slot); /* reference counted */
+	}
+	DBG(debug, DBG_symkey("ephemeral_key", ephemeral_key));
+	return ephemeral_key;
+}
+
 void free_any_symkey(const char *prefix, PK11SymKey **key)
 {
 	if (*key != NULL) {
@@ -264,6 +285,83 @@ static PK11SymKey *symkey_from_symkey(const char *prefix,
 						  key_size, flags);
 	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
 	return result;
+}
+
+
+/*
+ * For on-wire algorithms.
+ */
+chunk_t chunk_from_symkey(const char *name, lset_t debug,
+			  PK11SymKey *symkey)
+{
+	SECStatus status;
+	if (symkey == NULL) {
+		DBG(debug, DBG_log("%s NULL key has no bytes", name));
+		return empty_chunk;
+	}
+
+	size_t sizeof_bytes = sizeof_symkey(symkey);
+	DBG(debug, DBG_log("%s extracting all %zd bytes of symkey %p",
+			     name, sizeof_bytes, symkey));
+	DBG(debug, DBG_symkey("symkey", symkey));
+
+	/* get a secret key */
+	PK11SymKey *ephemeral_key = ephemeral_symkey(debug);
+	if (ephemeral_key == NULL) {
+		loglog(RC_LOG_SERIOUS, "%s NSS: ephemeral error", name);
+		return empty_chunk;
+	}
+
+	/* copy the source key to the secret slot */
+	PK11SymKey *slot_key;
+	{
+		PK11SlotInfo *slot = PK11_GetSlotFromKey(ephemeral_key);
+		slot_key = PK11_MoveSymKey(slot, CKA_UNWRAP, 0, 0, symkey);
+		PK11_FreeSlot(slot); /* reference counted */
+		if (slot_key == NULL) {
+			loglog(RC_LOG_SERIOUS, "%s NSS: slot error", name);
+			return empty_chunk;
+		}
+	}
+	DBG(debug, DBG_symkey("slot_key", slot_key));
+
+	SECItem wrapped_key;
+	/* Round up the wrapped key length to a 16-byte boundary.  */
+	wrapped_key.len = (sizeof_bytes + 15) & ~15;
+	wrapped_key.data = alloc_bytes(wrapped_key.len, name);
+	DBG(debug, DBG_log("sizeof bytes %d", wrapped_key.len));
+	status = PK11_WrapSymKey(CKM_AES_ECB, NULL, ephemeral_key, slot_key,
+				 &wrapped_key);
+	if (status != SECSuccess) {
+		loglog(RC_LOG_SERIOUS, "%s NSS: containment error (%d)",
+		       name, status);
+		pfreeany(wrapped_key.data);
+		free_any_symkey("slot_key:", &slot_key);
+		return empty_chunk;
+	}
+	DBG(debug, DBG_dump("wrapper:", wrapped_key.data, wrapped_key.len));
+
+	void *bytes = alloc_bytes(wrapped_key.len, name);
+	unsigned int out_len = 0;
+	status = PK11_Decrypt(ephemeral_key, CKM_AES_ECB, NULL,
+			      bytes, &out_len, wrapped_key.len,
+			      wrapped_key.data, wrapped_key.len);
+	pfreeany(wrapped_key.data);
+	free_any_symkey("slot_key:", &slot_key);
+	if (status != SECSuccess) {
+		loglog(RC_LOG_SERIOUS, "%s NSS: error calculating contents (%d)",
+		       name, status);
+		return empty_chunk;
+	}
+	passert(out_len >= sizeof_bytes);
+
+	DBG(debug, DBG_log("%s extracted len %d bytes at %p", name, out_len, bytes));
+	DBG(debug, DBG_dump("unwrapped:", bytes, out_len));
+
+	return (chunk_t) {
+		.ptr = bytes,
+		.len = sizeof_bytes,
+	};
 }
 
 /*

@@ -101,6 +101,14 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
 				     PK11SymKey *source_key);
 
 /*
+ * Extract wire material from a symkey.
+ *
+ * Used to avoid interface issues with NSS.
+ */
+chunk_t chunk_from_symkey(const char *prefix, lset_t debug,
+			  PK11SymKey *symkey);
+
+/*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.
  *
  * Good for extracting hash or other keys that don't yet have an NSS
