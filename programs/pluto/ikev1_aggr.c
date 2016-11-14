@@ -453,12 +453,6 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	    DBG_log(" I am %ssending a certificate request",
 		    send_cr ? "" : "not "));
 
-	/*
-	 * free collected certificate requests since as initiator
-	 * we don't heed them anyway
-	 */
-	free_generalNames(st->st_requested_ca, TRUE);
-
 	/* done parsing; initialize crypto  */
 
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),

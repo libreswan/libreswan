@@ -1467,13 +1467,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 			send_cr ? "" : "not "));
 
 	/*
-	 * free collected certificate requests
-	 * note: when we are able to ship based on the request
-	 * contents, we'll need them then.
-	 */
-	free_generalNames(st->st_requested_ca, TRUE);
-
-	/*
 	 * Determine if we need to send INITIAL_CONTACT payload
 	 *
 	 * We are INITIATOR in I2, this is not a Quick Mode rekey, so if
