@@ -41,14 +41,15 @@ union hash_ctx {
 #endif
 };
 
+
 /*
- *	This could be just OAKLEY_XXXXXX_ALGORITHM, but it's
- *	here with other name as a way to assure that the
- *	algorithm hook type is supported (detected at compile time)
+ * Different algorithms used by IKEv1/IKEv2.
  */
 enum ike_alg_type {
-	IKE_ALG_ENCRYPT,
+	/* 0 is invalid */
+	IKE_ALG_ENCRYPT = 1,
 	IKE_ALG_HASH,
+	IKE_ALG_PRF,
 	IKE_ALG_INTEG,
 };
 #define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
