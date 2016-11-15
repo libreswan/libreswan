@@ -11,4 +11,3 @@ s/^\[[0-9]\] [0-9]*$/[x] PID/
 /^ (cd \/tmp \&\& xl2tpd.*/ {N; s/^ \((cd \/tmp \&\& xl2tpd.*\)\n\[[0-9]*\] [0-9]*$/ \1\n[B] PID/g}
 # versions of tools used
 s/SSH-2.0-OpenSSH_.*$/SSH-2.0-OpenSSH_XXX/
-/our auth:/d
