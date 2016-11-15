@@ -126,11 +126,11 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	PK11SymKey *prf_psk;
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-				       st->st_oakley.prf,
-				       st->st_shared_nss/*scratch*/);
-		crypt_prf_init_chunk("shared secret", prf, *pss);
-		crypt_prf_update(prf);
+			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
+					     DBG_CRYPT,
+					     st->st_oakley.prf,
+					     "shared secret", *pss,
+					     st->st_shared_nss/*scratch*/);
 		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
 				       psk_key_pad_str, psk_key_pad_str_len);
 		prf_psk = crypt_prf_final(prf);
@@ -149,10 +149,9 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	/* calculate outer prf */
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-				       st->st_oakley.prf,
-				       st->st_shared_nss /*scratch*/);
-		crypt_prf_init_symkey("<prf-psk>", prf, prf_psk);
+			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
+					      DBG_CRYPT, st->st_oakley.prf,
+					      "<prf-psk>", prf_psk);
 		/*
 		 * For the responder, the octets to be signed start
 		 * with the first octet of the first SPI in the header
@@ -166,7 +165,6 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 * neither the nonce Ni nor the value prf(SK_pr,IDr')
 		 * are transmitted.
 		 */
-		crypt_prf_update(prf);
 		crypt_prf_update_chunk("first-packet", prf, firstpacket);
 		crypt_prf_update_chunk("nonce", prf, *nonce);
 		crypt_prf_update_bytes("hash", prf, idhash, hash_len);

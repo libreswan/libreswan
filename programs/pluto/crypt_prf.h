@@ -26,7 +26,11 @@ struct hash_desc;
 struct crypt_prf;
 
 /*
- * Primitives implementing PRF described in rfc2104.
+ * Primitives implementing IKE PRFs.
+ *
+ * Some PRFs are implemented using the HMAC algorithm (described in
+ * rfc2104) and an underlying MAC (hash) function.  Others are (at
+ * least in theory) implemented directly.
  *
  * This implementation tries to keep all the input and output material
  * secure inside SymKeys.  To that end, it should be good for
@@ -36,30 +40,16 @@ struct crypt_prf;
  */
 
 /*
- * Call this first; always.
- *
- * SCRATCH is used as a secure starting point when the key is formed
- * from raw bytes (or memory).
+ * Using KEY, create a PRF.
  */
-struct crypt_prf *crypt_prf_init(const char *name,
-				 const struct prf_desc *prf_desc,
-				 PK11SymKey *scratch);
+struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
+					const struct prf_desc *prf_desc,
+					const char *key_name, PK11SymKey *key);
 
-/*
- * Next load up the raw-key by calling one or more of the following.
- * Multiple calls concatenate the key.
- *
- * Even when SCRATCH above was passed the KEY, the below must be
- * called.
- */
-void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key);
-void crypt_prf_init_chunk(const char *name, struct crypt_prf *prf,
-			  chunk_t key);
-
-/*
- * Then call this to flip to seed/data/text mode; always.
- */
-void crypt_prf_update(struct crypt_prf *prf);
+struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
+				       const struct prf_desc *prf_desc,
+				       const char *key_name, chunk_t key,
+				       PK11SymKey *scratch);
 
 /*
  * Call these to accumulate the seed/data/text.

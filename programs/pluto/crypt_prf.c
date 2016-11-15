@@ -38,9 +38,8 @@
 
 struct crypt_prf {
 	const char *name;
+	lset_t debug;
 	const struct hash_desc *hasher;
-	/* for converting chunks to symkeys */
-	PK11SymKey *scratch;
 	/* Did we allocate KEY? */
 	bool we_own_key;
 	/* intermediate values */
@@ -48,26 +47,7 @@ struct crypt_prf {
 	PK11SymKey *inner;
 };
 
-/*
- * During the init phase, accumulate the key material in KEY.
- */
-struct crypt_prf *crypt_prf_init(const char *name, const struct prf_desc *prf_desc,
-				 PK11SymKey *scratch)
-{
-	struct crypt_prf *prf = alloc_bytes(sizeof(struct crypt_prf), name);
-	DBG(DBG_CRYPT, DBG_log("%s prf: init %p", name, prf));
-	prf->name = name;
-	/*
-	 * XXX: this assumes that the PRF is being implemented by
-	 * HASHing a MAC.
-	 */
-	prf->hasher = &prf_desc->hasher;
-	prf->scratch = scratch;
-	prf->we_own_key = FALSE;
-	prf->key = NULL;
-	prf->inner = NULL;
-	return prf;
-}
+static void prf_update(struct crypt_prf *prf);
 
 /*
  * Update KEY marking it as ours.  Only call with a KEY we created.
@@ -81,34 +61,55 @@ static void update_key(struct crypt_prf *prf, PK11SymKey *key)
 	prf->key = key;
 }
 
-void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key)
+/*
+ * Create a PRF ready to consume data.
+ */
+
+static struct crypt_prf *prf_init(const char *name, lset_t debug,
+				  const struct prf_desc *prf_desc)
 {
-	DBG(DBG_CRYPT, DBG_log("%s prf: init symkey %s %p (size %zd)",
-			       prf->name, name, key, sizeof_symkey(key)));
-	if (prf->key == NULL) {
-		prf->we_own_key = FALSE;
-		prf->key = key;
-	} else {
-		update_key(prf, concat_symkey_symkey(prf->hasher, prf->key, key));
-	}
+	struct crypt_prf *prf = alloc_thing(struct crypt_prf, name);
+	DBG(DBG_CRYPT, DBG_log("%s prf %s: init %p",
+			       name, prf_desc->hasher.common.name, prf));
+	*prf = (struct crypt_prf) {
+		.debug = debug,
+		.name = name,
+		.hasher = &prf_desc->hasher,
+	};
+	return prf;
 }
 
-void crypt_prf_init_chunk(const char *name, struct crypt_prf *prf, chunk_t key)
+struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
+				       const struct prf_desc *prf_desc,
+				       const char *key_name, chunk_t key,
+				       PK11SymKey *scratch)
 {
-	DBG(DBG_CRYPT, DBG_log("%s prf: init chunk %s %p (length %zd)",
-			       prf->name, name, key.ptr, key.len));
-	if (prf->key == NULL) {
-		prf->key = symkey_from_chunk(prf->scratch, key);
-		prf->we_own_key = TRUE;
-	} else {
-		update_key(prf, concat_symkey_chunk(prf->hasher, prf->key, key));
-	}
+	struct crypt_prf *prf = prf_init(name, debug, prf_desc);
+	DBG(debug, DBG_log("%s prf: init chunk %s %p (length %zd)",
+			   name, key_name, key.ptr, key.len));
+	prf->key = symkey_from_chunk(scratch, key);
+	prf->we_own_key = TRUE;
+	prf_update(prf);
+	return prf;
+}
+
+struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
+					const struct prf_desc *prf_desc,
+					const char *key_name, PK11SymKey *key)
+{
+	struct crypt_prf *prf = prf_init(name, debug, prf_desc);
+	DBG(debug, DBG_log("%s prf: init symkey %s %p (size %zd)",
+			   prf->name, key_name, key, sizeof_symkey(key)));
+	prf->we_own_key = FALSE;
+	prf->key = key;
+	prf_update(prf);
+	return prf;
 }
 
 /*
  * Prepare for update phase (accumulate seed material).
  */
-void crypt_prf_update(struct crypt_prf *prf)
+static void prf_update(struct crypt_prf *prf)
 {
 	DBG(DBG_CRYPT, DBG_log("%s prf: update", prf->name));
 	/* create the prf key from KEY.  */
@@ -142,6 +143,10 @@ void crypt_prf_update(struct crypt_prf *prf)
 	prf->inner = xor_symkey_chunk(prf->key, hmac_ipad);
 }
 
+/*
+ * Accumulate data.
+ */
+
 void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
 			    chunk_t update)
 {
@@ -173,6 +178,10 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 			       prf->name, name, update, sizeof_update));
 	append_symkey_bytes(prf->hasher, &(prf->inner), update, sizeof_update);
 }
+
+/*
+ * Finally.
+ */
 
 static PK11SymKey *compute_outer(struct crypt_prf *prf)
 {

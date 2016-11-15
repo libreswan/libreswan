@@ -57,10 +57,10 @@ void hmac_init(struct hmac_ctx *ctx,
 	 * generate secure keying material from nothing.
 	 * crypt_prf_init_symkey() establishes the actual key.
 	 */
-	ctx->prf = crypt_prf_init("hmac", prf_desc, symkey);
+	ctx->prf = crypt_prf_init_symkey("hmac", DBG_CRYPT,
+					 prf_desc,
+					 "symkey", symkey);
 	ctx->hmac_digest_len = prf_desc->hasher.hash_digest_len;
-	crypt_prf_init_symkey("symkey", ctx->prf, symkey);
-	crypt_prf_update(ctx->prf);
 }
 
 void hmac_update(struct hmac_ctx *ctx,
