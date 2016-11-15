@@ -42,9 +42,7 @@ north #
 initdone
 north #
  ipsec whack --trafficstatus
-000  
 006 #2: "north"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org', lease=192.0.2.100/32
-000  
 north #
  ipsec look
 north NOW

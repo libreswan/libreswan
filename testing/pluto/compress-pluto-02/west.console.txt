@@ -63,8 +63,6 @@ west #
 002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I1)
 west #
  ipsec whack --trafficstatus
-000  
-000  
 west #
  echo done
 done

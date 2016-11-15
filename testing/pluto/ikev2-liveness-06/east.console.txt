@@ -15,7 +15,6 @@ east #
  # should show there are no tunnels up
 east #
  ipsec whack --trafficstatus
-000  
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; core=`ls /tmp/core* 2>/dev/null`; gdb --batch PATH/libexec/ipsec/pluto $core; mv /tmp/core* OUTPUT/; fi

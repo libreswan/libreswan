@@ -45,7 +45,6 @@ road #
  # tunnel should be gone
 road #
  ipsec whack --trafficstatus
-000  
 road #
  echo done
 done

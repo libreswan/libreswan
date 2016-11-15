@@ -34,9 +34,7 @@ west #
  # should show traffic
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL'
-000  
 west #
  echo done
 done

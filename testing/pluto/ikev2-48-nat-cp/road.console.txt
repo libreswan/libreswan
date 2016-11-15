@@ -160,9 +160,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east', lease=192.0.2.1/32
-000  
 road #
  echo "done"
 done

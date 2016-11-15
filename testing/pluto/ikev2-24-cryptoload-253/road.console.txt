@@ -4199,7 +4199,6 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.253 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
 ipsec whack --trafficstatus
-000  
 006 #156: "road-eastnet-nonat-100", type=ESP, add_time=1417452384, inBytes=168, outBytes=168
 006 #158: "road-eastnet-nonat-101", type=ESP, add_time=1417452385, inBytes=168, outBytes=168
 006 #160: "road-eastnet-nonat-102", type=ESP, add_time=1417452385, inBytes=168, outBytes=168
@@ -4430,7 +4429,6 @@ ipsec whack --trafficstatus
 006 #150: "road-eastnet-nonat-97", type=ESP, add_time=1417452383, inBytes=168, outBytes=168
 006 #152: "road-eastnet-nonat-98", type=ESP, add_time=1417452383, inBytes=168, outBytes=168
 006 #154: "road-eastnet-nonat-99", type=ESP, add_time=1417452384, inBytes=168, outBytes=168
-000  
 road #
 echo done
 done

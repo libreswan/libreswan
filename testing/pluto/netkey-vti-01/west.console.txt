@@ -70,9 +70,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 pipe 4
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=540, outBytes=0, id='@east'
-000  
 west #
  ip route add 192.0.2.0/24 dev west-east
 west #
@@ -89,9 +87,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=936, outBytes=336, id='@east'
-000  
 west #
  # show iptables works on vti interfaces
 west #
@@ -103,9 +99,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 0 packets transmitted, 0 received
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=1056, outBytes=336, id='@east'
-000  
 west #
  echo done
 done

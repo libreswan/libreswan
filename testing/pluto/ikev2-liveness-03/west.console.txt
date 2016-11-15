@@ -79,7 +79,6 @@ west #
  # east should have brought down but NOT re-established the tunnel
 west #
  ipsec whack --trafficstatus
-000  
 west #
  # can be seen on east logs
 west #

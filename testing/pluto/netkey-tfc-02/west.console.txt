@@ -71,9 +71,7 @@ west #
  # byte counters appear for unencrypted size, not encrypted/padded size
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "tfc", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-000  
 west #
  echo done
 done

@@ -42,9 +42,7 @@ west #
 004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-000  
 west #
  echo done
 done

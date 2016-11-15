@@ -83,9 +83,7 @@ road #
  # Should state state #4 to indicate it has rekeyed
 road #
  ipsec whack --trafficstatus
-000  
 006 #4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL'
-000  
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:

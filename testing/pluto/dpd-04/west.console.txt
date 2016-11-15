@@ -59,11 +59,9 @@ west #
  # show the tunnel
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 006 #3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 006 #4: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-000  
 west #
  : Let R_U_THERE packets flow
 west #
@@ -82,7 +80,6 @@ west #
  : DPD should have triggered now
 west #
  ipsec whack --trafficstatus
-000  
 west #
  # remove the block
 west #
@@ -109,11 +106,9 @@ west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-000  
 006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
-000  
 west #
  echo done
 done

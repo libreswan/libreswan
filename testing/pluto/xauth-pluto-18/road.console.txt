@@ -45,9 +45,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.209 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
-000  
 road #
  ipsec auto --up modecfg-road-eastnet-psk
 002 "modecfg-road-eastnet-psk" #3: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
@@ -65,10 +63,8 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.209 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-000  
 006 #3: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
-000  
 road #
  echo done
 done

@@ -315,7 +315,6 @@ west #
 000  
 west #
  ipsec whack --trafficstatus
-000  
 west #
  echo done
 done
