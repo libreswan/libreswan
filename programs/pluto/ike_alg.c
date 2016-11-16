@@ -369,10 +369,17 @@ static void hash_desc_check(const struct hash_desc *hash)
 	passert(hash->hash_ctx_size <= sizeof(union hash_ctx));
 	passert((hash->hash_init != NULL &&
 		 hash->hash_update != NULL &&
-		 hash->hash_final != NULL) ||
+		 hash->hash_final != NULL &&
+		 hash->hash_ops != NULL &&
+		 hash->hash_ops->init != NULL &&
+		 hash->hash_ops->digest_symkey != NULL &&
+		 hash->hash_ops->digest_bytes != NULL &&
+		 hash->hash_ops->final_bytes != NULL &&
+		 hash->hash_ops->symkey_to_symkey != NULL) ||
 		(hash->hash_init == NULL &&
 		 hash->hash_update == NULL &&
-		 hash->hash_final == NULL));
+		 hash->hash_final == NULL &&
+		 hash->hash_ops == NULL));
 }
 
 static bool hash_desc_is_ike(const struct hash_desc *hash)

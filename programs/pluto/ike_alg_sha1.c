@@ -24,17 +24,15 @@
 #include <string.h>
 #include <stddef.h>
 #include <sys/types.h>
-
-#include <libreswan.h>
-
 #include <errno.h>
 
+#include "libreswan.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "sha1.h"
-
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
+#include "ike_alg_nss_hash_ops.h"
 
 static void SHA1Init_thunk(union hash_ctx *context)
 {
@@ -51,7 +49,7 @@ static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ct
 	SHA1Final(digest, &context->ctx_sha1);
 }
 
-static struct hash_desc ike_alg_hash_sha1 = {
+struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
 		.name = "sha",
 		.officname = "sha1",
@@ -59,6 +57,7 @@ static struct hash_desc ike_alg_hash_sha1 = {
 		.ikev1_oakley_id = OAKLEY_SHA1,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA_1,
 	},
 	.hash_ctx_size = sizeof(SHA1_CTX),
 	.hash_digest_len = SHA1_DIGEST_SIZE,
@@ -66,6 +65,7 @@ static struct hash_desc ike_alg_hash_sha1 = {
 	.hash_init = SHA1Init_thunk,
 	.hash_update = SHA1Update_thunk,
 	.hash_final = SHA1Final_thunk,
+	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
 struct prf_desc ike_alg_prf_sha1 = {
@@ -76,6 +76,7 @@ struct prf_desc ike_alg_prf_sha1 = {
 		.ikev1_oakley_id = OAKLEY_SHA1,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA_1_HMAC,
 	},
 	.prf_key_size = SHA1_DIGEST_SIZE,
 	.prf_output_size = SHA1_DIGEST_SIZE,
@@ -91,6 +92,7 @@ struct integ_desc ike_alg_integ_sha1 = {
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA1,
 		.ikev2_id = IKEv2_AUTH_HMAC_SHA1_96,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA_1_HMAC,
 	},
 #if 0
 	.hash_ctx_size = sizeof(SHA1_CTX),

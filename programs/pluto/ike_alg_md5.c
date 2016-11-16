@@ -35,6 +35,7 @@
 #include "md5.h"
 #include "ike_alg.h"
 #include "ike_alg_md5.h"
+#include "ike_alg_nss_hash_ops.h"
 
 static void lsMD5Init_thunk(union hash_ctx *context)
 {
@@ -58,6 +59,7 @@ static struct hash_desc ike_alg_hash_md5 = {
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_oakley_id = OAKLEY_MD5,
 		.ikev2_id = IKEv2_PRF_HMAC_MD5,
+		.nss_mechanism = CKM_MD5,
 	},
 	.hash_ctx_size = sizeof(lsMD5_CTX),
 	.hash_digest_len = MD5_DIGEST_SIZE,
@@ -65,6 +67,7 @@ static struct hash_desc ike_alg_hash_md5 = {
 	.hash_init = lsMD5Init_thunk,
 	.hash_update = lsMD5Update_thunk,
 	.hash_final = lsMD5Final_thunk,
+	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
 

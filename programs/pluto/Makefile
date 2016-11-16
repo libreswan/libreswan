@@ -195,6 +195,9 @@ CURL_DEFS=-DLIBCURL
 CURL_LLIBS=-lcurl
 endif
 
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_hash_ops.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_hash_ops.o
+
 ifeq ($(USE_SERPENT),true)
 EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
 EXTRA_CRYPTO_OBJS+=ike_alg_serpent.o

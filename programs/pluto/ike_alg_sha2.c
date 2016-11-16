@@ -25,10 +25,8 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "ike_alg.h"
-
-#include <pk11pub.h>
-
 #include "ike_alg_sha2.h"
+#include "ike_alg_nss_hash_ops.h"
 
 /* sha256 thunks */
 
@@ -89,6 +87,7 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 		.ikev1_oakley_id = OAKLEY_SHA2_256,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA2_256,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA256,
 	},
 	.hash_ctx_size = sizeof(sha256_context),
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
@@ -96,6 +95,7 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 	.hash_init = sha256_init_thunk,
 	.hash_update = sha256_write_thunk,
 	.hash_final = sha256_final_thunk,
+	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
 struct prf_desc ike_alg_prf_sha2_256 = {
@@ -136,7 +136,7 @@ struct integ_desc ike_alg_integ_sha2_256 = {
 	.prf = &ike_alg_prf_sha2_256,
 };
 
-static struct hash_desc ike_alg_hash_sha2_384 = {
+struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
 		.officname = "sha384",
@@ -144,6 +144,7 @@ static struct hash_desc ike_alg_hash_sha2_384 = {
 		.ikev1_oakley_id = OAKLEY_SHA2_384,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA2_384,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA384,
 	},
 	.hash_ctx_size = sizeof(sha384_context),
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
@@ -151,6 +152,7 @@ static struct hash_desc ike_alg_hash_sha2_384 = {
 	.hash_init = sha384_init_thunk,
 	.hash_update = sha384_write_thunk,
 	.hash_final = sha384_final_thunk,
+	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
 struct prf_desc ike_alg_prf_sha2_384 = {
@@ -200,6 +202,7 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 		.ikev1_oakley_id = OAKLEY_SHA2_512,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA2_512,
 		.fips = TRUE,
+		.nss_mechanism = CKM_SHA512,
 	},
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_ctx_size = sizeof(sha512_context),
@@ -207,6 +210,7 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 	.hash_init = sha512_init_thunk,
 	.hash_update = sha512_write_thunk,
 	.hash_final = sha512_final_thunk,
+	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
 struct prf_desc ike_alg_prf_sha2_512 = {

@@ -277,9 +277,33 @@ struct hash_desc {
 	const size_t hash_ctx_size;
 	const size_t hash_digest_len;
 	const size_t hash_block_size;
+	const struct hash_ops *hash_ops;
+	/*
+	 * The following interface can be garbage collected.
+	 */
 	void (*const hash_init)(union hash_ctx *ctx);
 	const hash_update_t hash_update;
 	void (*const hash_final)(u_int8_t *out, union hash_ctx *ctx);
+};
+
+/*
+ * Generic implementation of HASH_DESC.
+ */
+struct hash_context;
+struct hash_ops {
+	struct hash_context *(*init)(const struct hash_desc *hash_desc,
+				     const char *name, lset_t debug);
+	void (*digest_symkey)(struct hash_context *hash,
+			      const char *name, PK11SymKey *symkey);
+	void (*digest_bytes)(struct hash_context *hash,
+			     const char *name,
+			     const u_int8_t *bytes, size_t sizeof_bytes);
+	void (*final_bytes)(struct hash_context**,
+			    u_int8_t *bytes, size_t sizeof_bytes);
+	/* FIPS short cuts */
+	PK11SymKey *(*symkey_to_symkey)(const struct hash_desc *hash_desc,
+					const char *name, lset_t debug,
+					const char *symkey_name, PK11SymKey *symkey);
 };
 
 /*

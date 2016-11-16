@@ -527,75 +527,27 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
  */
 
 PK11SymKey *hash_symkey_to_symkey(const char *prefix,
-				  const struct hash_desc *hasher,
+				  const struct hash_desc *hash_desc,
 				  PK11SymKey *base_key)
 {
-	CK_MECHANISM_TYPE derive = nss_key_derivation_mech(hasher);
-	SECItem *param = NULL;
-	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY;
-	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
-	int key_size = 0;
-
-	DBG(DBG_CRYPT,
-	    DBG_log("%s hash(%s) symkey(%p) to symkey - derive(%s)",
-		    prefix, hasher->common.name,
-		    base_key, lsw_nss_ckm_to_string(derive));
-	    DBG_symkey("symkey", base_key));
-	PK11SymKey *result = PK11_Derive(base_key, derive, param, target,
-					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
-	return result;
-}
-
-static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
-{
-	switch (hasher->common.ikev1_oakley_id) {
-	case OAKLEY_MD5:
-		return SEC_OID_MD5;
-	case OAKLEY_SHA1:
-		return SEC_OID_SHA1;
-	case OAKLEY_SHA2_256:
-		return SEC_OID_SHA256;
-	case OAKLEY_SHA2_384:
-		return SEC_OID_SHA384;
-	case OAKLEY_SHA2_512:
-		return SEC_OID_SHA512;
-	}
-	libreswan_log("NSS: hash algorithm %s not supported",
-		      hasher->common.name);
-	/* should trigger a cascading of errors. */
-	return 0;
+	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, prefix, DBG_CRYPT,
+						     "base", base_key);
 }
 
 void *hash_symkey_to_bytes(const char *prefix,
-			   const struct hash_desc *hasher,
+			   const struct hash_desc *hash_desc,
 			   PK11SymKey *base_key,
 			   void *bytes, size_t sizeof_bytes)
 {
-	DBG(DBG_CRYPT,
-	    DBG_log("%s hash(%s) symkey(%p) to bytes",
-		    prefix, hasher->common.name, base_key);
-	    DBG_symkey("symkey", base_key));
-	SECStatus status;
-	SECOidTag hash_alg = nss_hash_oid(hasher);
-	PK11Context *context = PK11_CreateDigestContext(hash_alg);
-	passert(context != NULL);
-	status = PK11_DigestBegin(context);
-	passert(status == SECSuccess);
-	status = PK11_DigestKey(context, base_key);
-	passert(status == SECSuccess);
-	unsigned int out_len;
-	void *out_bytes;
+	struct hash_context *hash = hash_desc->hash_ops->init(hash_desc, prefix, DBG_CRYPT);
+	hash_desc->hash_ops->digest_symkey(hash, "base_key", base_key);
+	u_int8_t *out_bytes;
 	if (bytes != NULL) {
 		out_bytes = bytes;
 	} else {
 		out_bytes = alloc_bytes(sizeof_bytes, prefix);
 	}
-	status = PK11_DigestFinal(context, out_bytes, &out_len, sizeof_bytes);
-	passert(status == SECSuccess);
-	passert(out_len == sizeof_bytes);
-	PK11_DestroyContext(context, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_dump(prefix, out_bytes, sizeof_bytes));
+	hash_desc->hash_ops->final_bytes(&hash, out_bytes, sizeof_bytes);
 	return out_bytes;
 }
 

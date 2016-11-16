@@ -1,5 +1,4 @@
-/* SHA1, for libreswan.
- *
+/*
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -11,9 +10,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
-extern struct prf_desc ike_alg_prf_sha1;
-extern struct integ_desc ike_alg_integ_sha1;
-extern struct hash_desc ike_alg_hash_sha1;
+extern const struct hash_ops ike_alg_nss_hash_ops;
