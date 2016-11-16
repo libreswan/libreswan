@@ -41,7 +41,6 @@ union hash_ctx {
 #endif
 };
 
-
 /*
  * Different algorithms used by IKEv1/IKEv2.
  */
@@ -348,6 +347,26 @@ struct prf_desc {
 	 * If non-NULL its values must be consistent with the above.
 	 */
 	struct hash_desc *hasher;
+	/*
+	 * FIPS controlled native implementation.
+	 */
+	const struct prf_ops *prf_ops;
+};
+
+struct prf_ops {
+	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
+					   const char *name, lset_t debug,
+					   const char *key_name, PK11SymKey *key);
+	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
+					  const char *name, lset_t debug,
+					  const char *key_name,
+					  const u_int8_t *bytes, size_t sizeof_bytes);
+	void (*digest_symkey)(struct prf_context *prf,
+			      const char *name, PK11SymKey *symkey);
+	void (*digest_bytes)(struct prf_context *prf,
+			     const char *name, const u_int8_t *bytes, size_t sizeof_bytes);
+	PK11SymKey *(*final_symkey)(struct prf_context **prf);
+	void (*final_bytes)(struct prf_context **prf, u_int8_t *bytes, size_t sizeof_bytes);
 };
 
 /*

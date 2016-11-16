@@ -36,6 +36,7 @@
 #include "ike_alg.h"
 #include "ike_alg_md5.h"
 #include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_hmac_prf_ops.h"
 
 static void lsMD5Init_thunk(union hash_ctx *context)
 {
@@ -82,6 +83,7 @@ struct prf_desc ike_alg_prf_md5 = {
 	.prf_key_size = MD5_DIGEST_SIZE,
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
+	.prf_ops = &ike_alg_hmac_prf_ops,
 };
 
 struct integ_desc ike_alg_integ_md5 = {

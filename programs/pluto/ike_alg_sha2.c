@@ -27,6 +27,7 @@
 #include "ike_alg.h"
 #include "ike_alg_sha2.h"
 #include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_hmac_prf_ops.h"
 
 /* sha256 thunks */
 
@@ -110,6 +111,7 @@ struct prf_desc ike_alg_prf_sha2_256 = {
 	.prf_key_size = SHA2_256_DIGEST_SIZE,
 	.prf_output_size = SHA2_256_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha2_256,
+	.prf_ops = &ike_alg_hmac_prf_ops,
 };
 
 struct integ_desc ike_alg_integ_sha2_256 = {
@@ -168,6 +170,7 @@ struct prf_desc ike_alg_prf_sha2_384 = {
 	.prf_key_size = SHA2_384_DIGEST_SIZE,
 	.prf_output_size = SHA2_384_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha2_384,
+	.prf_ops = &ike_alg_hmac_prf_ops,
 };
 
 struct integ_desc ike_alg_integ_sha2_384 = {
@@ -225,6 +228,7 @@ struct prf_desc ike_alg_prf_sha2_512 = {
 	.prf_key_size = SHA2_512_DIGEST_SIZE,
 	.prf_output_size = SHA2_512_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha2_512,
+	.prf_ops = &ike_alg_hmac_prf_ops,
 };
 
 struct integ_desc ike_alg_integ_sha2_512 = {

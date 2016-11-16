@@ -36,6 +36,7 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "alg_info.h"
+#include "ike_alg_hmac_prf_ops.h"
 
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
@@ -393,11 +394,19 @@ static void prf_desc_check(const struct ike_alg *alg)
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
 	passert(prf->prf_key_size > 0);
 	passert(prf->prf_output_size > 0);
+	passert(prf->prf_ops == NULL
+		|| (prf->prf_ops->init_symkey != NULL &&
+		    prf->prf_ops->init_bytes != NULL &&
+		    prf->prf_ops->digest_symkey != NULL &&
+		    prf->prf_ops->digest_bytes != NULL &&
+		    prf->prf_ops->final_symkey != NULL &&
+		    prf->prf_ops->final_bytes != NULL));
 	/*
 	 * XXX: assume all PRFs are implemnted using HASHER and the
 	 * HMAC construction for now.
 	 */
 	passert(prf->hasher != NULL);
+	passert(prf->prf_ops == &ike_alg_hmac_prf_ops);
 	hash_desc_check(prf->hasher);
 }
 
