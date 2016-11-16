@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include "constants.h"
+#include "lswlog.h"
 #include "lswalloc.h"
 #include "lswnss.h"
 #include "ike_alg.h"
@@ -125,25 +126,21 @@ static void next_state(enum what what)
 const struct prf_desc *prf;
 const char *prf_name;
 
-void op_prf(struct cavp_entry *entry,
-	    const char *value UNUSED)
+void op_pick(struct cavp_entry *entry,
+	     const char *value UNUSED)
 {
-	prf_name = entry->key;
-	prf = entry->prf;
-	if (prf == NULL) {
-		fprintf(stderr, "PRF %s not supported\n", entry->key);
-	}
+	*(entry->pick) = entry;
 }
 
-void chunk(struct cavp_entry *entry,
-	   const char *value)
+void op_chunk(struct cavp_entry *entry,
+	      const char *value)
 {
 	freeanychunk(*(entry->chunk));
 	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
 }
 
-void symkey(struct cavp_entry *entry,
-	    const char *value)
+void op_symkey(struct cavp_entry *entry,
+	       const char *value)
 {
 	free_any_symkey(__func__, entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
@@ -152,14 +149,14 @@ void symkey(struct cavp_entry *entry,
 	freeanychunk(chunk);
 }
 
-void number(struct cavp_entry *entry,
-	    const char *value)
+void op_number(struct cavp_entry *entry,
+	       const char *value)
 {
 	*(entry->number) = atoi(value);
 }
 
-void ignore(struct cavp_entry *entry UNUSED,
-	    const char *value UNUSED)
+void op_ignore(struct cavp_entry *entry UNUSED,
+	       const char *value UNUSED)
 {
 }
 

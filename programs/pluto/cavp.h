@@ -19,11 +19,17 @@ struct hash_desc;
 struct cavp_entry {
 	const char *key;
 	void (*op)(struct cavp_entry *key, const char *value);
+	/* set by the below */
 	chunk_t *chunk;
 	PK11SymKey **symkey;
 	int *number;
-	const struct prf_desc *prf;
+	struct cavp_entry **pick;
+	/* constant values */
 	int value;
+	const struct encrypt_desc *encrypt;
+	const struct hash_desc *hash;
+	const struct prf_desc *prf;
+	const struct integ_desc *integ;
 };
 
 struct cavp {
@@ -39,11 +45,9 @@ struct cavp {
 /*
  * Select the given PRF.
  */
-void op_prf(struct cavp_entry *entry, const char *value);
-extern const struct prf_desc *prf;
-extern const char *prf_name;
-
-void ignore(struct cavp_entry *entry, const char *value);
-void chunk(struct cavp_entry *entry, const char *value);
-void symkey(struct cavp_entry *entry, const char *value);
-void number(struct cavp_entry *entry, const char *value);
+void op_pick(struct cavp_entry *entry, const char *value);
+void op_ignore(struct cavp_entry *entry, const char *value);
+void op_chunk(struct cavp_entry *entry, const char *value);
+void op_symkey(struct cavp_entry *entry, const char *value);
+void op_number(struct cavp_entry *entry, const char *value);
+void op_boolean(struct cavp_entry *entry, const char *value);
