@@ -132,7 +132,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 					     "shared secret", *pss);
 		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
 				       psk_key_pad_str, psk_key_pad_str_len);
-		prf_psk = crypt_prf_final(prf);
+		prf_psk = crypt_prf_final_symkey(&prf);
 	}
 
 	/* decide nonce based on the role */
@@ -167,7 +167,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		crypt_prf_update_chunk("first-packet", prf, firstpacket);
 		crypt_prf_update_chunk("nonce", prf, *nonce);
 		crypt_prf_update_bytes("hash", prf, idhash, hash_len);
-		crypt_prf_final_bytes(prf, signed_octets, hash_len);
+		crypt_prf_final_bytes(&prf, signed_octets, hash_len);
 	}
 	free_any_symkey("<prf-psk>", &prf_psk);
 

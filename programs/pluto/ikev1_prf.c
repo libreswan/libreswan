@@ -53,7 +53,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 	/* seed = g^xy */
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
@@ -71,7 +71,7 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 	crypt_prf_update_chunk("Ni", prf, Ni);
 	crypt_prf_update_chunk("Nr", prf, Nr);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
@@ -92,7 +92,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("0", prf, 0);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
@@ -114,7 +114,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("1", prf, 1);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
@@ -136,7 +136,7 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("2", prf, 2);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
@@ -157,7 +157,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 							      prf_desc,
 							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_byte("0", prf, 0);
-		keymat = crypt_prf_final(prf);
+		keymat = crypt_prf_final_symkey(&prf);
 	}
 
 	/* make a copy to keep things easy */
@@ -168,7 +168,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 							      prf_desc,
 							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_symkey("old_k", prf, old_k);
-		PK11SymKey *new_k = crypt_prf_final(prf);
+		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
 		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
 		free_any_symkey("old_k#N", &old_k);
 		old_k = new_k;

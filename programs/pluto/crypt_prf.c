@@ -208,25 +208,27 @@ static PK11SymKey *compute_outer(struct crypt_prf *prf)
 	return outer;
 }
 
-PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
+PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 {
-	PK11SymKey *outer = compute_outer(prf);
+	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
 	PK11SymKey *hashed_outer = hash_symkey_to_symkey("prf outer hash",
-							 prf->hasher, outer);
+							 (*prfp)->hasher, outer);
 	free_any_symkey("prf outer", &outer);
-	pfree(prf);
+	pfree(*prfp);
+	*prfp = NULL;
 	DBG(DBG_CRYPT, DBG_symkey("prf final result", hashed_outer));
 	return hashed_outer;
 }
 
-void crypt_prf_final_bytes(struct crypt_prf *prf,
+void crypt_prf_final_bytes(struct crypt_prf **prfp,
 			   void *bytes, size_t sizeof_bytes)
 {
-	PK11SymKey *outer = compute_outer(prf);
+	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
-	hash_symkey_to_bytes("prf outer hash", prf->hasher, outer, bytes, sizeof_bytes);
+	hash_symkey_to_bytes("prf outer hash", (*prfp)->hasher, outer, bytes, sizeof_bytes);
 	free_any_symkey("prf outer", &outer);
-	pfree(prf);
+	pfree(*prfp);
+	*prfp = NULL;
 	DBG(DBG_CRYPT, DBG_dump("prf final bytes", bytes, sizeof_bytes));
 }

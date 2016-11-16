@@ -71,5 +71,5 @@ void hmac_update(struct hmac_ctx *ctx,
 
 void hmac_final(u_char *output, struct hmac_ctx *ctx)
 {
-	crypt_prf_final_bytes(ctx->prf, output, ctx->hmac_digest_len);
+	crypt_prf_final_bytes(&ctx->prf, output, ctx->hmac_digest_len);
 }

@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -64,10 +64,10 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 /*
  * Finally ...
  *
- * This will free PRF.
+ * This will free PRF and blat the pointer.
  */
-PK11SymKey *crypt_prf_final(struct crypt_prf *prf);
-void crypt_prf_final_bytes(struct crypt_prf *prf,
+PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp);
+void crypt_prf_final_bytes(struct crypt_prf **prfp,
 			   void *bytes, size_t sizeof_bytes);
 
 #endif
