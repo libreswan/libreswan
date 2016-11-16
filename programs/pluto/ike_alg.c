@@ -37,6 +37,7 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "ike_alg_hmac_prf_ops.h"
+#include "ike_alg_nss_prf_ops.h"
 #include "ike_alg_nss_hash_ops.h"
 
 #ifdef USE_TWOFISH
@@ -414,6 +415,12 @@ static void prf_desc_check(const struct ike_alg *alg)
 	if (prf->hasher) {
 		hash_desc_check(prf->hasher);
 		passert(prf->prf_output_size == prf->hasher->hash_digest_len);
+	}
+	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
+		passert(prf->hasher != NULL);
+	}
+	if (prf->prf_ops == &ike_alg_nss_prf_ops) {
+		passert(prf->common.nss_mechanism > 0);
 	}
 }
 

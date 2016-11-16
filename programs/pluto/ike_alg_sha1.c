@@ -32,7 +32,7 @@
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_nss_hash_ops.h"
-#include "ike_alg_hmac_prf_ops.h"
+#include "ike_alg_nss_prf_ops.h"
 
 struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -62,7 +62,7 @@ struct prf_desc ike_alg_prf_sha1 = {
 	.prf_key_size = SHA1_DIGEST_SIZE,
 	.prf_output_size = SHA1_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha1,
-	.prf_ops = &ike_alg_hmac_prf_ops,
+	.prf_ops = &ike_alg_nss_prf_ops,
 };
 
 struct integ_desc ike_alg_integ_sha1 = {

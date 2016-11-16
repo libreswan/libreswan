@@ -199,6 +199,8 @@ EXTRA_CRYPTO_SRCS+=ike_alg_nss_hash_ops.c
 EXTRA_CRYPTO_OBJS+=ike_alg_nss_hash_ops.o
 EXTRA_CRYPTO_SRCS+=ike_alg_hmac_prf_ops.c
 EXTRA_CRYPTO_OBJS+=ike_alg_hmac_prf_ops.o
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_prf_ops.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
 
 ifeq ($(USE_SERPENT),true)
 EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
