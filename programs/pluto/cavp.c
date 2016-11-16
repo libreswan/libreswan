@@ -18,6 +18,7 @@
 /* #include <stdbool.h> */
 #include <string.h>
 #include <stdlib.h>
+#include <regex.h>
 
 #include "constants.h"
 #include "lswlog.h"
@@ -203,12 +204,23 @@ static void cavp_parser()
 		} else if (line[0] == '#') {
 			/* # .... comment */
 			if (cavp == NULL) {
-				struct cavp **cavpp;
-				for (cavpp = cavps; *cavpp != NULL; cavpp++) {
-					if (strstr(line, (*cavpp)->description) != NULL) {
-						cavp = *cavpp;
-						fprintf(stderr, "\ntest: %s (guess)\n\n", cavp->description);
-						break;
+				for (struct cavp **cavpp = cavps;
+				     cavp == NULL && *cavpp != NULL;
+				     cavpp++) {
+					for (const char **match = (*cavpp)->match;
+					     cavp == NULL && *match != NULL;
+					     match++) {
+						regex_t regex;
+						if (regcomp(&regex, *match, REG_EXTENDED)) {
+							fprintf(stderr, "bad regex %s\n", *match);
+							exit(1);
+						}
+						if (regexec(&regex, line, 0, NULL, 0) == 0) {
+							cavp = *cavpp;
+							fprintf(stderr, "\ntest: %s (header matched '%s')\n\n",
+								cavp->description, *match);
+						}
+						regfree(&regex);
 					}
 				}
 			}
@@ -250,10 +262,23 @@ static void cavp_parser()
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: cavp [ -OPTION ] <test-vector>|-\n");
-	struct cavp **cavpp;
-	for (cavpp = cavps; *cavpp != NULL; cavpp++) {
-		fprintf(stderr, "\t-%s\t%s\n", (*cavpp)->alias, (*cavpp)->description);
+	fprintf(stderr, "Usage:\n\n");
+	fprintf(stderr, "    cavp [ -TEST ] <test-vector>|-\n\n");
+	fprintf(stderr, "Where -TEST specifies the test type:\n\n");
+	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		fprintf(stderr, "    -%-8s %s\n",
+			(*cavpp)->alias,
+			(*cavpp)->description);
+	}
+	fprintf(stderr, "\n");
+	fprintf(stderr, "If -TEST is omitted then the test type is determined from the\n");
+	fprintf(stderr, "file header by matching one of the patterns:\n\n");
+	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		const char *sep = (*cavpp)->alias;
+		for (const char **matchp = (*cavpp)->match; *matchp; matchp++) {
+			fprintf(stderr, "    %-8s  '%s'\n", sep, *matchp);
+			sep = "";
+		}
 	}
 }
 

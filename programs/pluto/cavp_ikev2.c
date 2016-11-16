@@ -142,4 +142,8 @@ struct cavp cavp_ikev2 = {
 	.run = run_ikev2,
 	.config = config_entries,
 	.data = data_entries,
+	.match = {
+		"IKE v2",
+		NULL,
+	},
 };

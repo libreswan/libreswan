@@ -40,6 +40,7 @@ struct cavp {
 	void (*run)(void);
 	struct cavp_entry *config;
 	struct cavp_entry *data;
+	const char *match[];
 };
 
 /*

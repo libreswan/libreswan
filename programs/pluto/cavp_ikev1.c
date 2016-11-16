@@ -131,6 +131,10 @@ struct cavp cavp_ikev1_sig = {
 	.run = run_sig,
 	.config = config_entries,
 	.data = data_entries,
+	.match = {
+		"IKE v1 Digital Signature Authentication",
+		NULL,
+	},
 };
 
 static void print_psk_config(void)
@@ -171,4 +175,8 @@ struct cavp cavp_ikev1_psk = {
 	.run = run_psk,
 	.config = config_entries,
 	.data = data_entries,
+	.match = {
+		"IKE v1 Pre-shared Key Authentication",
+		NULL,
+	},
 };
