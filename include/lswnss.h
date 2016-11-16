@@ -58,4 +58,6 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 
+const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism);
+
 #endif

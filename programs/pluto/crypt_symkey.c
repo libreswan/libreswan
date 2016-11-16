@@ -24,6 +24,7 @@
 #endif
 #include "crypto.h"
 #include "lswfips.h"
+#include "lswnss.h"
 
 
 static CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
@@ -52,48 +53,6 @@ static CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 		break;
 	}
 	return mechanism;
-}
-
-/*
- * XXX: Is there an NSS version of this?
- */
-
-static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
-{
-	const char *t;
-#define CASE(T) case T: t = #T; eat(t, "CKM_"); return t
-	switch (mechanism) {
-
-		CASE(CKM_CONCATENATE_BASE_AND_DATA);
-		CASE(CKM_CONCATENATE_BASE_AND_KEY);
-		CASE(CKM_CONCATENATE_DATA_AND_BASE);
-
-		CASE(CKM_XOR_BASE_AND_DATA);
-
-		CASE(CKM_EXTRACT_KEY_FROM_KEY);
-
-		CASE(CKM_AES_CBC);
-		CASE(CKM_DES3_CBC);
-		CASE(CKM_CAMELLIA_CBC);
-		CASE(CKM_AES_CTR);
-		CASE(CKM_AES_GCM);
-
-		CASE(CKM_AES_KEY_GEN);
-
-		CASE(CKM_MD5_KEY_DERIVATION);
-		CASE(CKM_SHA1_KEY_DERIVATION);
-		CASE(CKM_SHA256_KEY_DERIVATION);
-		CASE(CKM_SHA384_KEY_DERIVATION);
-		CASE(CKM_SHA512_KEY_DERIVATION);
-
-		CASE(CKM_DH_PKCS_DERIVE);
-
-		CASE(CKM_VENDOR_DEFINED);
-
-	default:
-		return "unknown-mechanism";
-	}
-#undef CASE
 }
 
 struct nss_alg {
@@ -125,7 +84,7 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		if (DBGP(debug)) {
 			DBG_log("%s %s for non-NSS algorithm: NULL (legacy hack), mechanism: %s(%lu), flags: %lx",
 				verb, name,
-				ckm_to_string(mechanism), mechanism,
+				lsw_nss_ckm_to_string(mechanism), mechanism,
 				flags);
 		}
 	} else if (alg->nss_mechanism == 0) {
@@ -137,7 +96,7 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		if (DBGP(debug)) {
 			DBG_log("%s %s for non-NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
 				verb, name, alg->name,
-				ckm_to_string(mechanism), mechanism,
+				lsw_nss_ckm_to_string(mechanism), mechanism,
 				flags);
 		}
 	} else {
@@ -161,7 +120,7 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		if (DBGP(debug)) {
 			DBG_log("%s %s for NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
 				verb, name, alg->name,
-				ckm_to_string(mechanism), mechanism,
+				lsw_nss_ckm_to_string(mechanism), mechanism,
 				flags);
 		}
 	}
@@ -202,7 +161,7 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
 	} else {
 		DBG_log("%s: key@%p, size: %zd bytes, type/mechanism: %s (0x%08x)",
 			prefix, key, sizeof_symkey(key),
-			ckm_to_string(PK11_GetMechanism(key)),
+			lsw_nss_ckm_to_string(PK11_GetMechanism(key)),
 			(int)PK11_GetMechanism(key));
 	}
 }
@@ -235,8 +194,8 @@ static PK11SymKey *merge_symkey_bytes(const char *prefix,
 	    DBG_log("%s merge symkey(%p) bytes(%p/%zd) - derive(%s) target(%s)",
 		    prefix,
 		    base_key, bytes, sizeof_bytes,
-		    ckm_to_string(derive),
-		    ckm_to_string(target));
+		    lsw_nss_ckm_to_string(derive),
+		    lsw_nss_ckm_to_string(target));
 	    DBG_symkey("symkey", base_key);
 	    DBG_dump("bytes:", bytes, sizeof_bytes));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &data_param, target,
@@ -267,8 +226,8 @@ static PK11SymKey *merge_symkey_symkey(const char *prefix,
 	DBG(DBG_CRYPT,
 	    DBG_log("%s merge symkey(1: %p) symkey(2: %p) - derive(%s) target(%s)",
 		    prefix, base_key, key,
-		    ckm_to_string(derive),
-		    ckm_to_string(target));
+		    lsw_nss_ckm_to_string(derive),
+		    lsw_nss_ckm_to_string(target));
 	    DBG_symkey("symkey 1", base_key);
 	    DBG_symkey("symkey 2", key));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &key_param, target,
@@ -298,7 +257,7 @@ static PK11SymKey *symkey_from_symkey(const char *prefix,
 	DBG(DBG_CRYPT,
 	    DBG_log("%s symkey from symkey(%p) - next-byte(%zd) key-size(%zd) flags(0x%lx) derive(%s) target(%s)",
 		    prefix, base_key, next_byte, key_size, (long)flags,
-		    ckm_to_string(derive), ckm_to_string(target));
+		    lsw_nss_ckm_to_string(derive), lsw_nss_ckm_to_string(target));
 	    DBG_symkey("symkey", base_key));
 	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
 						  target, operation,
@@ -479,7 +438,7 @@ PK11SymKey *hash_symkey_to_symkey(const char *prefix,
 	DBG(DBG_CRYPT,
 	    DBG_log("%s hash(%s) symkey(%p) to symkey - derive(%s)",
 		    prefix, hasher->common.name,
-		    base_key, ckm_to_string(derive));
+		    base_key, lsw_nss_ckm_to_string(derive));
 	    DBG_symkey("symkey", base_key));
 	PK11SymKey *result = PK11_Derive(base_key, derive, param, target,
 					 operation, key_size);
