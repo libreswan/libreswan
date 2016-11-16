@@ -46,12 +46,12 @@ struct cavp *cavps[] = {
 static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
 {
 	struct cavp_entry *entry;
-	for (entry = entries; entry->op != NULL; entry++) {
+	for (entry = entries; entry->key != NULL; entry++) {
 		if (strcmp(entry->key, key) == 0) {
-			return entry;
+			break;
 		}
 	}
-	return NULL;
+	return entry;
 }
 
 enum what { HEADER, BODY, BLANK, CONFIG, DATA, IDLE, END } state = HEADER;
@@ -192,6 +192,34 @@ void op_ignore(struct cavp_entry *entry UNUSED,
 {
 }
 
+struct fields {
+	char *key;
+	char *value;
+};
+
+static struct fields parse_fields(char *line)
+{
+	struct fields fields = {0};
+	fields.key = line;
+	char *eq = strchr(line, '=');
+	if (eq != NULL) {
+		char *ke = eq;
+		while (ke > fields.key && ke[-1] == ' ') {
+			ke--;
+		}
+		*ke = '\0';
+	}
+	if (eq == NULL) {
+		fields.value = NULL;
+	} else {
+		fields.value = eq + 1;
+		while (*fields.value == ' ') {
+			fields.value++;
+		}
+	}
+	return fields;
+}
+
 /* size is arbitrary */
 static char line[16384];
 static int line_nr;
@@ -221,9 +249,6 @@ static void cavp_parser()
 		}
 		line[last + 1] = '\0';
 		/* break the line up */
-		char *lparen = strchr(line, '[');
-		char *eq = strchr(line, '=');
-		char *rparen = strchr(line, ']');
 		if (line[0] == '\0') {
 			next_state(BLANK);
 			/* blank */
@@ -253,37 +278,37 @@ static void cavp_parser()
 				}
 			}
 			print_line(line);
-		} else if (lparen != NULL && rparen != NULL) {
+		} else if (line[0] == '[') {
 			next_state(CONFIG);
-			/* "[" <key> [ " = " <value> ] "]" */
+			/* "[" <key> [ " "* "=" " "* <value> ] "]" */
+			char *rparen = strchr(line, ']');
 			*rparen = '\0';
-			char *key = lparen + 1;
-			char *value;
-			if (eq == NULL) {
-				value = NULL;
+			struct fields fields = parse_fields(line + 1);
+			struct cavp_entry *entry = lookup_entry(cavp->config, fields.key);
+			if (entry->key == NULL) {
+				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n",
+					fields.key, fields.value);
+				exit(1);
+			} else if (entry->op == NULL) {
+				fprintf(stderr, "ignoring config entry: ['%s' = '%s']\n",
+					fields.key, fields.value);
 			} else {
-				value = eq + 2;
-				*(eq - 1) = '\0';
+				entry->op(entry, fields.value);
 			}
-			struct cavp_entry *entry = lookup_entry(cavp->config, key);
-			if (entry == NULL) {
-				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n", key, value);
-				exit(1);
-			}
-			entry->op(entry, value);
-		} else if (eq != NULL) {
-			next_state(DATA);
-			*(eq - 1) = '\0';
-			char *key = line;
-			char *value = eq + 2;
-			struct cavp_entry *entry = lookup_entry(cavp->data, key);
-			if (entry == NULL) {
-				fprintf(stderr, "unknown data entry: '%s' = '%s'\n", key, value);
-				exit(1);
-			}
-			entry->op(entry, value);
 		} else {
-			fprintf(stderr, "bad line: '%s'\n", line);
+			next_state(DATA);
+			struct fields fields = parse_fields(line);
+			struct cavp_entry *entry = lookup_entry(cavp->data, fields.key);
+			if (entry->key == NULL) {
+				fprintf(stderr, "unknown data entry: '%s' = '%s'\n",
+					fields.key, fields.value);
+				exit(1);
+			} else if (entry->op == NULL) {
+				fprintf(stderr, "ignoring data entry: '%s' = '%s'\n",
+					fields.key, fields.value);
+			} else {
+				entry->op(entry, fields.value);
+			}
 		}
 	}
 	next_state(END);
