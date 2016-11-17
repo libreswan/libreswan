@@ -2,6 +2,6 @@
 function lsw_date2iso(d) {
     // Force to UTC?
     d = d.toISOString()
-    d = d.match("([^T]*)T([0-9]*:[0-9]*)")
+    d = d.match("([^T]*)T([0-9]*:[0-9]*:[0-9]*)")
     return d[1] + " " + d[2]
 }
