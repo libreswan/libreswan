@@ -68,6 +68,8 @@ kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			wip
+kvmplutotest	ikev2-16-alias-whack-up			wip
+kvmplutotest	ikev2-16-alias-whack-up			wip
 kvmplutotest	ikev2-19-x509-auto-start		wip
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
 kvmplutotest	ikev2-32-nat-rw-rekey			good
