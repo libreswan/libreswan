@@ -54,11 +54,17 @@ static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *k
 	return NULL;
 }
 
-enum what { INITIAL, BLANK, CONFIG, DATA, RUN, FINAL } state = INITIAL;
+enum what { HEADER, BODY, BLANK, CONFIG, DATA, IDLE, END } state = HEADER;
 
-static void error_state(enum what state, enum what what)
+const char *const whats[] = {
+	"HEADER", "BODY", "BLANK", "CONFIG", "DATA", "IDLE", "END",
+};
+
+static void error_state(enum what state, enum what what,
+			const char *message)
 {
-	fprintf(stderr, "bad state %d what %d\n", state, what);
+	fprintf(stderr, "\nbad state transition from %s(%d) to %s(%d)\n%s\n",
+		whats[state], state, whats[what], what, message);
 	exit(1);
 }
 
@@ -67,7 +73,17 @@ static struct cavp *cavp;
 static void next_state(enum what what)
 {
 	switch (state) {
-	case INITIAL:
+	case HEADER:
+		switch (what) {
+		case BODY:
+			state = what;
+			break;
+		default:
+			error_state(state, what,
+				    "expecting header containing file type");
+		}
+		break;
+	case BODY:
 		switch (what) {
 		case CONFIG:
 			state = CONFIG;
@@ -75,7 +91,7 @@ static void next_state(enum what what)
 		case BLANK:
 			break;
 		default:
-			error_state(state, what);
+			error_state(state, what, "expecting config section");
 		}
 		break;
 	case CONFIG:
@@ -87,7 +103,7 @@ static void next_state(enum what what)
 			state = DATA;
 			break;
 		default:
-			error_state(state, what);
+			error_state(state, what, "expecting data section");
 		}
 		break;
 	case DATA:
@@ -96,13 +112,17 @@ static void next_state(enum what what)
 			break;
 		case BLANK:
 			cavp->run();
-			state = RUN;
+			state = IDLE;
+			break;
+		case END:
+			cavp->run();
+			state = END;
 			break;
 		default:
-			error_state(state, what);
+			error_state(state, what, "expecting EOF or CONFIG section");
 		}
 		break;
-	case RUN:
+	case IDLE:
 		switch (what) {
 		case CONFIG:
 			state = CONFIG;
@@ -110,14 +130,17 @@ static void next_state(enum what what)
 		case DATA:
 			state = DATA;
 			break;
+		case END:
+			state = END;
+			break;
 		case BLANK:
 			break;
 		default:
-			error_state(state, what);
+			error_state(state, what, "expecting config section");
 		}
 		break;
 	default:
-		error_state(state, what);
+		error_state(state, what, "expecting the unexpected");
 		break;
 	}
 }
@@ -134,6 +157,10 @@ void op_pick(struct cavp_entry *entry,
 void op_chunk(struct cavp_entry *entry,
 	      const char *value)
 {
+	if (entry->chunk == NULL) {
+		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
+		exit(1);
+	}
 	freeanychunk(*(entry->chunk));
 	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
 }
@@ -219,6 +246,7 @@ static void cavp_parser()
 							cavp = *cavpp;
 							fprintf(stderr, "\ntest: %s (header matched '%s')\n\n",
 								cavp->description, *match);
+							next_state(BODY);
 						}
 						regfree(&regex);
 					}
@@ -258,6 +286,7 @@ static void cavp_parser()
 			fprintf(stderr, "bad line: '%s'\n", line);
 		}
 	}
+	next_state(END);
 }
 
 static void usage(void)
@@ -296,6 +325,7 @@ int main(int argc, char *argv[])
 		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
 			if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
 				cavp = *cavpp;
+				next_state(BODY);
 				fprintf(stderr, "test: %s\n", cavp->description);
 				break;
 			}
