@@ -612,7 +612,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			/*
 			 * We don't know how to implement %hold, but it is okay
 			 * When we need a hold, the kernel XFRM acquire state
-			 * will do the job (by dropping, not holding the packet)
+			 * will do the job (by dropping or holding the packet)
 			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
