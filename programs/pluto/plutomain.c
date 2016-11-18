@@ -464,14 +464,14 @@ u_int16_t secctx_attr_type = SECCTX;
 /*
  * Table of Pluto command-line options.
  *
- * For getopt_ling(3), but with twists.
+ * For getopt_long(3), but with twists.
  *
  * We never find that letting getopt set an option makes sense
  * so flag is always NULL.
  *
- * Trick: we split the "name" string with a '\0'.
- * Before it is the option name, as seen by getopt_long.
- * After it is meta-information:
+ * Trick: we split each "name" string with an explicit '\0'.
+ * Before the '\0' is the option name, as seen by getopt_long.
+ * After the '\0' is meta-information:
  * - _ means: obsolete due to _ in name: replace _ with -
  * - > means: obsolete spelling; use spelling from rest of string
  * - ! means: obsolete and ignored (no replacement)
