@@ -36,7 +36,7 @@ extern bool libreswan_fipsmode(void);
 
 #else
 
-#define libreswan_fipsmode() false
+#define libreswan_fipsmode() FALSE
 
 #endif
 
