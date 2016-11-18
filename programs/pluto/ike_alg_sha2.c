@@ -201,6 +201,7 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 		.ikev2_id = IKEv2_PRF_HMAC_SHA2_512,
 		.fips = TRUE,
 	},
+	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_ctx_size = sizeof(sha512_context),
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_init = sha512_init_thunk,
