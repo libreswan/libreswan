@@ -3581,13 +3581,13 @@ ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 	/*
 	 * New way.
 	 *
-	 * In truth the lookup shouln't be needed, instead they should
+	 * In truth the lookup should not be needed.  Instead they should
 	 * just hang onto the kernel_integ object.
 	 */
 	const struct kernel_integ *ki =
 		kernel_integ_by_ikev1_auth_attribute(auth);
 	if (ki != NULL) {
-		if (alg) {
+		if (alg != NULL) {
 			*alg = ki->sadb_aalg;
 		}
 		return ki->integ->integ_key_size; /* bytes */
