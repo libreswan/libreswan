@@ -30,17 +30,14 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 	DBG_symkey(prefix, key);
 	if (key != NULL) {
 		if (DBGP(DBG_PRIVATE)) {
-#ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
 				DBG_log("%s secured by FIPS", prefix);
-				return;
+			} else {
+				chunk_t bytes = chunk_from_symkey(prefix, 0, key);
+				/* NULL suppresses the dump header */
+				DBG_dump_chunk(NULL, bytes);
+				freeanychunk(bytes);
 			}
-#else
-			void *bytes = symkey_bytes(prefix, key, 0);
-			/* NULL suppresses the dump header */
-			DBG_dump(NULL, bytes, sizeof_symkey(key));
-			pfreeany(bytes);
-#endif
 		}
 	}
 }
