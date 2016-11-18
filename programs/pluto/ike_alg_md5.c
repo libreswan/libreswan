@@ -60,7 +60,6 @@ static struct hash_desc ike_alg_hash_md5 = {
 		.ikev2_id = IKEv2_PRF_HMAC_MD5,
 	},
 	.hash_ctx_size = sizeof(lsMD5_CTX),
-	.hash_key_size = MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = lsMD5Init_thunk,

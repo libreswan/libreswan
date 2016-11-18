@@ -274,7 +274,6 @@ typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
 struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
-	const size_t hash_key_size;	/* in bits */
 	const size_t hash_ctx_size;
 	const size_t hash_digest_len;
 	const size_t hash_block_size;

@@ -61,7 +61,6 @@ static struct hash_desc ike_alg_hash_sha1 = {
 		.fips = TRUE,
 	},
 	.hash_ctx_size = sizeof(SHA1_CTX),
-	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_init = SHA1Init_thunk,

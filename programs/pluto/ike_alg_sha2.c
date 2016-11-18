@@ -91,7 +91,6 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 		.fips = TRUE,
 	},
 	.hash_ctx_size = sizeof(sha256_context),
-	.hash_key_size = SHA2_256_DIGEST_SIZE,
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
 	.hash_init = sha256_init_thunk,
@@ -147,7 +146,6 @@ static struct hash_desc ike_alg_hash_sha2_384 = {
 		.fips = TRUE,
 	},
 	.hash_ctx_size = sizeof(sha384_context),
-	.hash_key_size = SHA2_384_DIGEST_SIZE,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_init = sha384_init_thunk,
@@ -204,8 +202,6 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 		.fips = TRUE,
 	},
 	.hash_ctx_size = sizeof(sha512_context),
-	.hash_key_size = SHA2_512_DIGEST_SIZE,
-	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_init = sha512_init_thunk,
 	.hash_update = sha512_write_thunk,
