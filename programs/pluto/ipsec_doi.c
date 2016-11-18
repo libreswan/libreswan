@@ -249,8 +249,9 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 		       )
 {
-	/* If there's already an ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
+	/*
+         * If there's already an IKEv1 ISAKMP SA established, use that and
+         * go directly to Quick Mode.  We are even willing to use one
 	 * that is still being negotiated, but only if we are the Initiator
 	 * (thus we can be sure that the IDs are not going to change;
 	 * other issues around intent might matter).

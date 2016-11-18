@@ -1533,12 +1533,13 @@ void connection_check_phase2(void)
 			char cib[CONN_INST_BUF];
 
 			libreswan_log(
-				"pending Quick Mode with %s \"%s\"%s took too long -- replacing phase 1",
+				"pending IPsec SA negotiation with %s \"%s\"%s took too long -- replacing phase 1",
 				ipstr(&c->spd.that.host_addr, &b),
 				c->name, fmt_conn_instance(c, cib));
 
 			p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |
+						 IKEV2_ISAKMP_INITIATOR_STATES |
 						 PHASE1_INITIATOR_STATES);
 
 			if (p1st != NULL) {

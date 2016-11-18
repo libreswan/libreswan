@@ -509,9 +509,7 @@ enum original_role {
 				  LELEM(STATE_AGGR_I2) | \
 				  LELEM(STATE_XAUTH_I0) | \
 				  LELEM(STATE_XAUTH_I1) | \
-				  LELEM(STATE_MODE_CFG_I1) | \
-				  LELEM(STATE_PARENT_I1) | \
-				  LELEM(STATE_PARENT_I2))
+				  LELEM(STATE_MODE_CFG_I1))
 
 
 #define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
@@ -534,6 +532,9 @@ enum original_role {
 #define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
 				    && STATE_AGGR_R0 != (s) \
 				    && STATE_AGGR_I1 != (s))
+
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I1) |\
+					LELEM(STATE_PARENT_I2))
 
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
