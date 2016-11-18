@@ -28,24 +28,24 @@
 #include "cavp_print.h"
 #include "cavp_ikev2.h"
 
-static int g_ir_length;
-static int ni_length;
-static int nr_length;
-static int dkm_length;
-static int child_sa_dkm_length;
+static long int g_ir_length;
+static long int ni_length;
+static long int nr_length;
+static long int dkm_length;
+static long int child_sa_dkm_length;
 static struct cavp_entry *prf;
 
 static struct cavp_entry config_entries[] = {
-	{ .key = "g^ir length", .op = op_number, .number = &g_ir_length },
+	{ .key = "g^ir length", .op = op_signed_long, .signed_long = &g_ir_length },
 	{ .key = "SHA-1", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha1, },
 	{ .key = "SHA-224", .op = op_pick, .pick = &prf, },
 	{ .key = "SHA-256", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_256, },
 	{ .key = "SHA-384", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_384, },
 	{ .key = "SHA-512", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_512, },
-	{ .key = "Ni length", .op = op_number, .number = &ni_length },
-	{ .key = "Nr length", .op = op_number, .number = &nr_length },
-	{ .key = "DKM length", .op = op_number, .number = &dkm_length },
-	{ .key = "Child SA DKM length", .op = op_number, .number = &child_sa_dkm_length },
+	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length },
+	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length },
+	{ .key = "DKM length", .op = op_signed_long, .signed_long = &dkm_length },
+	{ .key = "Child SA DKM length", .op = op_signed_long, .signed_long = &child_sa_dkm_length },
 	{ .key = NULL }
 };
 
@@ -59,7 +59,7 @@ static void ikev2_config(void)
 	config_number("Child SA DKM length",child_sa_dkm_length);
 }
 
-static int count;
+static long int count;
 static chunk_t ni;
 static chunk_t nr;
 static PK11SymKey *g_ir;
@@ -68,7 +68,7 @@ static chunk_t spi_i;
 static chunk_t spi_r;
 
 static struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = op_number, .number = &count },
+	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^ir", .op = op_symkey, .symkey = &g_ir },
 	{ .key = "g^ir (new)", .op = op_symkey, .symkey = &g_ir_new },
 	{ .key = "Ni", .op = op_chunk, .chunk = &ni },

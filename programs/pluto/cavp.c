@@ -149,10 +149,16 @@ void op_symkey(struct cavp_entry *entry,
 	freeanychunk(chunk);
 }
 
-void op_number(struct cavp_entry *entry,
-	       const char *value)
+void op_signed_long(struct cavp_entry *entry,
+		    const char *value)
 {
-	*(entry->number) = atoi(value);
+	*(entry->signed_long) = strtol(value, NULL, 10);
+}
+
+void op_unsigned_long(struct cavp_entry *entry,
+		      const char *value)
+{
+	*(entry->unsigned_long) = strtoul(value, NULL, 10);
 }
 
 void op_ignore(struct cavp_entry *entry UNUSED,

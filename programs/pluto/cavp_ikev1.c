@@ -29,10 +29,10 @@
 #include "cavp_print.h"
 #include "cavp_ikev1.h"
 
-static int ni_length;
-static int nr_length;
-static int psk_length;
-static int g_xy_length;
+static long int ni_length;
+static long int nr_length;
+static long int psk_length;
+static long int g_xy_length;
 static struct cavp_entry *prf;
 
 static struct cavp_entry config_entries[] = {
@@ -41,14 +41,14 @@ static struct cavp_entry config_entries[] = {
 	{ .key = "SHA-256", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_256, },
 	{ .key = "SHA-384", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_384, },
 	{ .key = "SHA-512", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_512, },
-	{ .key = "Ni length", .op = op_number, .number = &ni_length, },
-	{ .key = "Nr length", .op = op_number, .number = &nr_length, },
-	{ .key = "pre-shared-key length", .op = op_number, .number = &psk_length, },
-	{ .key = "g^xy length", .op = op_number, .number = &g_xy_length, },
+	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length, },
+	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length, },
+	{ .key = "pre-shared-key length", .op = op_signed_long, .signed_long = &psk_length, },
+	{ .key = "g^xy length", .op = op_signed_long, .signed_long = &g_xy_length, },
 	{ .key = NULL }
 };
 
-static int count;
+static long int count;
 static chunk_t psk;
 static chunk_t ni;
 static chunk_t nr;
@@ -57,7 +57,7 @@ static chunk_t cky_r;
 static PK11SymKey *g_xy;
 
 static struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = op_number, .number = &count },
+	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^xy", .op = op_symkey, .symkey = &g_xy },
 	{ .key = "Ni", .op = op_chunk, .chunk = &ni },
 	{ .key = "Nr", .op = op_chunk, .chunk = &nr },
