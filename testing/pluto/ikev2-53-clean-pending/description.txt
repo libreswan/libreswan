@@ -1,0 +1,5 @@
+To test EVENT_PENDING_PHASE2 clean up of pending phase 2 attempts.
+
+This test has mismatched subnet, so phase 2 fails. And high retransmit time.
+(dpdtimeout * 3 ) < EVENT_PENDING_PHASE2. When the event, EVENT_PENDING_PHASE2,
+fires it teadown ISKAMP and re-start again.
