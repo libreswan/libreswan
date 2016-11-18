@@ -77,9 +77,6 @@ else
 		con1=`echo "$conv" | sed -e "s/console.verbose/console/g"`
 		con=`echo "$con1" | sed -e "s/OUTPUT\///g"`
 		host=`echo "$con" | sed -e "s/.console.txt//g"`
-		if [ "$host" == "nic" ]; then
-			continue
-		fi
 
 		if [ ! -f $conv ]; then
 			echo "can't sanitize missing file $conv"
