@@ -41,34 +41,54 @@ void config_number(const char *key, int number)
 	printf("[%s = %d]%s", key, number, crlf);
 }
 
-void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
+void fprint_chunk(FILE *file, const char *prefix, chunk_t chunk, size_t binlen)
 {
-	printf("%s = ", prefix);
+	fprintf(file, "%s = ", prefix);
 	size_t len = binlen == 0 ? chunk.len
 		: binlen < chunk.len ? binlen
 		: chunk.len;
 
 	size_t i = 0;
 	for (i = 0; i < len; i++) {
-		printf("%02x", chunk.ptr[i]);
+		fprintf(file, "%02x", chunk.ptr[i]);
 	}
-	printf("%s", crlf);
+	fprintf(file, "%s", crlf);
+}
+
+void fprint_symkey(FILE *file, const char *prefix, PK11SymKey *key, size_t binlen)
+{
+	chunk_t chunk = chunk_from_symkey(prefix, DBG_CRYPT, key);
+	fprint_chunk(file, prefix, chunk, binlen);
+	freeanychunk(chunk);
+}
+
+void fprint_number(FILE *file, const char *prefix, int number)
+{
+	fprintf(file, "%s = %d%s", prefix, number, crlf);
+}
+
+void fprint_line(FILE *file, const char *line)
+{
+	fputs(line, file);
+	fputs(crlf, file);
+}
+
+void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
+{
+	fprint_chunk(stdout, prefix, chunk, binlen);
 }
 
 void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
 {
-	chunk_t chunk = chunk_from_symkey(prefix, DBG_CRYPT, key);
-	print_chunk(prefix, chunk, binlen);
-	freeanychunk(chunk);
+	fprint_symkey(stdout, prefix, key, binlen);
 }
 
 void print_number(const char *prefix, int number)
 {
-	printf("%s = %d%s", prefix, number, crlf);
+	fprint_number(stdout, prefix, number);
 }
 
 void print_line(const char *line)
 {
-	fputs(line, stdout);
-	fputs(crlf, stdout);
+	fprint_line(stdout, line);
 }
