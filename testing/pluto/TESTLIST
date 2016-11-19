@@ -56,6 +56,7 @@ kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
 kvmplutotest	ikev2-delete-03-valgrind		bad
 kvmplutotest	ikev2-delete-04				wip
+kvmplutotest	ikev2-delete-05-sa-start		wip
 
 
 kvmplutotest	ikev2-09-rw-rsa				good
@@ -363,6 +364,7 @@ kvmplutotest	delete-sa-01	good
 kvmplutotest	delete-sa-03	good
 kvmplutotest	delete-sa-04	wip
 kvmplutotest	delete-sa-05	wip
+kvmplutotest	delete-sa-06	wip
 
 kvmplutotest	ikev1-rekey-connswitch	wip
 
