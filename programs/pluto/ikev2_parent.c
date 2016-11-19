@@ -4308,6 +4308,44 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 	return STF_OK;
 }
 
+static void delete_or_replace_state(struct state *st) {
+	struct connection *c = st->st_connection;
+
+	if (st->st_event == NULL) { /* this could be an assert/except? */
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu. st_event == NULL",
+				st->st_serialno);
+		delete_state(st);
+		return;
+	}
+
+	if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
+		/* this state  was going to  EXPIRE just let it now*/
+		delete_event(st);
+		event_schedule(EVENT_SA_EXPIRE, 0, st);
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
+				st->st_serialno);
+		return;
+	}
+
+	if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
+		&& ((st->st_event->ev_type == EVENT_SA_REPLACE) ||
+		    (st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED))) {
+		/*
+		 * Last IPsec SA for a permanent  connection that we have initiated.
+		 * Replace it now.  Useful if the other peer is rebooting.
+		 */
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPSEC State #%lu now",
+				st->st_serialno);
+		delete_event(st);
+		st->st_margin = deltatime(0);
+		event_schedule(EVENT_SA_REPLACE, 0, st);
+	} else {
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
+				st->st_serialno);
+		delete_state(st);
+	}
+}
+
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -4607,10 +4645,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 									ntohl(spi));
 							}
 						}
-						/* now delete the state */
-						change_state(dst,
-							STATE_CHILDSA_DEL);
-						delete_state(dst);
+						delete_or_replace_state(dst);
 						/* note: md->st != dst */
 					}
 				} /* for each spi */
