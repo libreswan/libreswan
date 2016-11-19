@@ -42,8 +42,6 @@ struct cavp *cavps[] = {
 	NULL
 };
 
-#define BUF_SIZE 4096
-
 static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
 {
 	struct cavp_entry *entry;
@@ -166,18 +164,27 @@ void op_ignore(struct cavp_entry *entry UNUSED,
 {
 }
 
+/* size is arbitrary */
+static char line[16384];
+static int line_nr;
+
 static void cavp_parser()
 {
-	char line[BUF_SIZE];
 	for (;;) {
+		line_nr++;
 		if (fgets(line, sizeof(line), stdin) == NULL) {
 			int error = ferror(stdin);
 			if (error != 0) {
-				fprintf(stderr, "Unexpected error: %s\n",
-					strerror(error));
+				fprintf(stderr, "unexpected error at line %d: %s(%d)\n",
+					line_nr, strerror(error), error);
 				exit(1);
 			}
 			break;
+		}
+		if (strlen(line) >= sizeof(line) - 1) {
+			fprintf(stderr, "line %d exceeded buffer length of %zu: %s\n",
+				line_nr, sizeof(line), line);
+			exit(1);
 		}
 		/* trim trailing cr/nl. */
 		int last = strlen(line) - 1;
