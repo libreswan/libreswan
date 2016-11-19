@@ -35,6 +35,7 @@
 #include "cavp_ikev1.h"
 #include "cavp_ikev2.h"
 #include "cavp_sha.h"
+#include "cavp_hmac.h"
 
 struct cavp *cavps[] = {
 	&cavp_ikev1_sig,
@@ -42,6 +43,7 @@ struct cavp *cavps[] = {
 	&cavp_ikev2,
 	&cavp_sha_msg,
 	&cavp_sha_monte,
+	&cavp_hmac,
 	NULL
 };
 
