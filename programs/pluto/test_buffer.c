@@ -66,14 +66,16 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		buf[i] = '\0';
 		if (i != 2) {
 			loglog(RC_INTERNALERR,
-			       "decode_hex_to_chunk: hex buffer \"%s\" contains unexpected space or NUL at \"%s\"\n", string, pos);
+			       "unexpected space or NUL character at offset %zu in hex buffer \"%s\" at \"%s\"\n",
+			       pos - string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		char *end;
 		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
 		if (end - buf != 2) {
 			loglog(RC_INTERNALERR,
-			       "decode_hex_to_chunk: hex buffer \"%s\" invalid hex character at \"%s\"\n", string, pos);
+			       "invalid character at offset %zu in hex buffer \"%s\" at \"%s\"\n",
+			       pos-string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		chunk.len++;
