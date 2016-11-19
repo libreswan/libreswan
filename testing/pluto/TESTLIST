@@ -54,7 +54,7 @@ kvmplutotest	ikev2-07-biddown			wip
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
-kvmplutotest	ikev2-delete-03-valgrind		bad
+kvmplutotest	ikev2-delete-03-valgrind		skiptest
 kvmplutotest	ikev2-delete-04				wip
 kvmplutotest	ikev2-delete-05-sa-start		wip
 
@@ -526,12 +526,12 @@ kvmplutotest	aggr-pluto-04		wip
 kvmplutotest	ikev1-algo-ike-pfs-01	good
 kvmplutotest	ikev1-algo-esp-null-01	good
 
-kvmplutotest	basic-pluto-01-valgrind	good
+kvmplutotest	basic-pluto-01-valgrind	skiptest
 
 kvmplutotest	ikev1-algo-ike-bogus-01	good
 
 # passthrough protoport tests
-kvmplutotest	basic-pluto-12		good
+kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit wip
