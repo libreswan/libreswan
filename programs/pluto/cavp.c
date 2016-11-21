@@ -203,8 +203,9 @@ struct fields {
 
 static struct fields parse_fields(char *line)
 {
-	struct fields fields = {0};
-	fields.key = line;
+	struct fields fields = {
+		.key = line,
+	};
 	char *eq = strchr(line, '=');
 	if (eq != NULL) {
 		char *ke = eq;
