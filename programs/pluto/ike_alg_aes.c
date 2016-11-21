@@ -39,23 +39,6 @@
 #include "gcm_test_vectors.h"
 #include "ike_alg_aes.h"
 
-#ifdef NOT_YET
-static void aes_xcbc_init_thunk(union hash_ctx *ctx)
-{
-	aes_xcbc_init(&ctx->ctx_aes_xcbc);
-}
-
-static void aes_xcbc_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
-{
-	aes_xcbc_write(&ctx->ctx_aes_xcbc, datap, length);
-}
-
-static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
-{
-	aes_xcbc_final(hash, &ctx->ctx_aes_xcbc);
-}
-#endif
-
 /*
  * Ref: http://tools.ietf.org/html/rfc3602: Test Vectors
  */
@@ -650,16 +633,6 @@ struct integ_desc ike_alg_integ_aes_cmac = {
 		.fips = TRUE,
 		.do_ike_test = NULL, /* No NSS support */
 	},
-#if 0
-	.hash_key_size = BYTES_FOR_BITS(128),
-	.hash_digest_len = BYTES_FOR_BITS(128),
-	.hash_block_size = BYTES_FOR_BITS(128),
-	/* not implemented */
-	.hash_ctx_size = sizeof(aes_cmac_context),
-	.hash_init = aes_cmac_init_thunk,
-	.hash_update = aes_cmac_write_thunk,
-	.hash_final = aes_cmac_final_thunk,
-#endif
 	.integ_key_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
 };

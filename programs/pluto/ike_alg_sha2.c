@@ -29,57 +29,6 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_hmac_prf_ops.h"
 
-/* sha256 thunks */
-
-static void sha256_init_thunk(union hash_ctx *ctx)
-{
-	sha256_init(&ctx->ctx_sha256);
-}
-
-static void sha256_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
-{
-	sha256_write(&ctx->ctx_sha256, datap, length);
-}
-
-static void sha256_final_thunk(u_char *hash, union hash_ctx *ctx)
-{
-	sha256_final(hash, &ctx->ctx_sha256);
-}
-
-/* sha384 thunks */
-
-static void sha384_init_thunk(union hash_ctx *ctx)
-{
-	sha384_init(&ctx->ctx_sha384);
-}
-
-static void sha384_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
-{
-	sha384_write(&ctx->ctx_sha384, datap, length);
-}
-
-static void sha384_final_thunk(u_char *hash, union hash_ctx *ctx)
-{
-	sha384_final(hash, &ctx->ctx_sha384);
-}
-
-/* sha512 thunks */
-
-static void sha512_init_thunk(union hash_ctx *ctx)
-{
-	sha512_init(&ctx->ctx_sha512);
-}
-
-static void sha512_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
-{
-	sha512_write(&ctx->ctx_sha512, datap, length);
-}
-
-static void sha512_final_thunk(u_char *hash, union hash_ctx *ctx)
-{
-	sha512_final(hash, &ctx->ctx_sha512);
-}
-
 struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
 		.name = "sha2_256",
@@ -92,9 +41,6 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 	},
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
-	.hash_init = sha256_init_thunk,
-	.hash_update = sha256_write_thunk,
-	.hash_final = sha256_final_thunk,
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
@@ -123,15 +69,6 @@ struct integ_desc ike_alg_integ_sha2_256 = {
 		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_256_128,
 		.fips = TRUE,
 	},
-#if 0
-	.hash_ctx_size = sizeof(sha256_context),
-	.hash_key_size = SHA2_256_DIGEST_SIZE,
-	.hash_digest_len = SHA2_256_DIGEST_SIZE,
-	.hash_block_size = 64,	/* from RFC 4868 */
-	.hash_init = sha256_init_thunk,
-	.hash_update = sha256_write_thunk,
-	.hash_final = sha256_final_thunk,
-#endif
 	.integ_key_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_256,
@@ -149,9 +86,6 @@ struct hash_desc ike_alg_hash_sha2_384 = {
 	},
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
-	.hash_init = sha384_init_thunk,
-	.hash_update = sha384_write_thunk,
-	.hash_final = sha384_final_thunk,
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
@@ -181,15 +115,6 @@ struct integ_desc ike_alg_integ_sha2_384 = {
 		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_384_192,
 		.fips = TRUE,
 	},
-#if 0
-	.hash_ctx_size = sizeof(sha384_context),
-	.hash_key_size = SHA2_384_DIGEST_SIZE,
-	.hash_digest_len = SHA2_384_DIGEST_SIZE,
-	.hash_block_size = 128,	/* from RFC 4868 */
-	.hash_init = sha384_init_thunk,
-	.hash_update = sha384_write_thunk,
-	.hash_final = sha384_final_thunk,
-#endif
 	.integ_key_size = SHA2_384_DIGEST_SIZE,
 	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_384,
@@ -207,9 +132,6 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 	},
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
-	.hash_init = sha512_init_thunk,
-	.hash_update = sha512_write_thunk,
-	.hash_final = sha512_final_thunk,
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
@@ -238,15 +160,6 @@ struct integ_desc ike_alg_integ_sha2_512 = {
 		.ikev2_id = IKEv2_AUTH_HMAC_SHA2_512_256,
 		.fips = TRUE,
 	},
-#if 0
-	.hash_ctx_size = sizeof(sha512_context),
-	.hash_key_size = SHA2_512_DIGEST_SIZE,
-	.hash_digest_len = SHA2_512_DIGEST_SIZE,
-	.hash_block_size = 128,	/* from RFC 4868 */
-	.hash_init = sha512_init_thunk,
-	.hash_update = sha512_write_thunk,
-	.hash_final = sha512_final_thunk,
-#endif
 	.integ_key_size = SHA2_512_DIGEST_SIZE,
 	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,
 	.prf = &ike_alg_prf_sha2_512,

@@ -29,26 +29,10 @@
 #include "libreswan.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "sha1.h"
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_hmac_prf_ops.h"
-
-static void SHA1Init_thunk(union hash_ctx *context)
-{
-	SHA1Init(&context->ctx_sha1);
-}
-
-static void SHA1Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
-{
-	SHA1Update(&context->ctx_sha1, input, inputLen);
-}
-
-static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
-{
-	SHA1Final(digest, &context->ctx_sha1);
-}
 
 struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -62,9 +46,6 @@ struct hash_desc ike_alg_hash_sha1 = {
 	},
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = SHA1Init_thunk,
-	.hash_update = SHA1Update_thunk,
-	.hash_final = SHA1Final_thunk,
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 

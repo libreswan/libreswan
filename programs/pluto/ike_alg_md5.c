@@ -32,26 +32,10 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "md5.h"
 #include "ike_alg.h"
 #include "ike_alg_md5.h"
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_hmac_prf_ops.h"
-
-static void lsMD5Init_thunk(union hash_ctx *context)
-{
-	lsMD5Init(&context->ctx_md5);
-}
-
-static void lsMD5Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
-{
-	lsMD5Update(&context->ctx_md5, input, inputLen);
-}
-
-static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
-{
-	lsMD5Final(digest, &context->ctx_md5);
-}
 
 static struct hash_desc ike_alg_hash_md5 = {
 	.common = {
@@ -64,9 +48,6 @@ static struct hash_desc ike_alg_hash_md5 = {
 	},
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = lsMD5Init_thunk,
-	.hash_update = lsMD5Update_thunk,
-	.hash_final = lsMD5Final_thunk,
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
@@ -94,15 +75,6 @@ struct integ_desc ike_alg_integ_md5 = {
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_MD5,
 		.ikev2_id = IKEv2_AUTH_HMAC_MD5_96,
 	},
-#if 0
-	.hash_ctx_size = sizeof(lsMD5_CTX),
-	.hash_key_size =   MD5_DIGEST_SIZE,
-	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = lsMD5Init_thunk,
-	.hash_update = lsMD5Update_thunk,
-	.hash_final = lsMD5Final_thunk,
-#endif
 	.integ_key_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.prf = &ike_alg_prf_md5,

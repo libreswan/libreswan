@@ -5,37 +5,6 @@
 #include <pk11pub.h>
 
 /*
- * Unification of cryptographic hashing mechanisms
- *
- * Better might be to define an anonymous struct, and then let each .c
- * file implement it.
- */
-
-#ifdef USE_MD5
-#include "md5.h"
-#endif
-#ifdef USE_SHA1
-#include "sha1.h"
-#endif
-#ifdef USE_SHA2
-#include "sha2.h"
-#endif
-
-union hash_ctx {
-#ifdef USE_MD5
-	lsMD5_CTX ctx_md5;
-#endif
-#ifdef USE_SHA1
-	SHA1_CTX ctx_sha1;
-#endif
-#ifdef USE_SHA2
-	sha256_context ctx_sha256;
-	sha384_context ctx_sha384;
-	sha512_context ctx_sha512;
-#endif
-};
-
-/*
  * Different algorithms used by IKEv1/IKEv2.
  */
 enum ike_alg_type {
@@ -262,25 +231,18 @@ struct encrypt_desc {
  * authentication code.
  */
 
-typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
-
 struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	const size_t hash_digest_len;
 	const size_t hash_block_size;
 	const struct hash_ops *hash_ops;
-	/*
-	 * The following interface can be garbage collected.
-	 */
-	void (*const hash_init)(union hash_ctx *ctx);
-	const hash_update_t hash_update;
-	void (*const hash_final)(u_int8_t *out, union hash_ctx *ctx);
 };
 
 /*
  * Generic implementation of HASH_DESC.
  */
 struct hash_context;
+
 struct hash_ops {
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
 				     const char *name, lset_t debug);
