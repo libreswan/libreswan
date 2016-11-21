@@ -34,6 +34,7 @@
 #include <prerror.h>
 
 #include "ike_alg_nss_cbc.h"
+#include "ike_alg_nss_gcm.h"
 #include "ctr_test_vectors.h"
 #include "cbc_test_vectors.h"
 #include "gcm_test_vectors.h"
@@ -336,75 +337,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.do_crypt =     do_aes_ctr,
 };
 
-static bool do_aes_gcm(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *salt, size_t salt_size,
-		       u_int8_t *wire_iv, size_t wire_iv_size,
-		       u_int8_t *aad, size_t aad_size,
-		       u_int8_t *text_and_tag,
-		       size_t text_size, size_t tag_size,
-		       PK11SymKey *sym_key, bool enc)
-{
-	/* See pk11gcmtest.c */
-	bool ok = TRUE;
-
-	u_int8_t iv[AES_BLOCK_SIZE];
-	passert(sizeof iv >= wire_iv_size + salt_size);
-	memcpy(iv, salt, salt_size);
-	memcpy(iv + salt_size, wire_iv, wire_iv_size);
-
-	CK_GCM_PARAMS gcm_params;
-	gcm_params.pIv = iv;
-	gcm_params.ulIvLen = salt_size + wire_iv_size;
-	gcm_params.pAAD = aad;
-	gcm_params.ulAADLen = aad_size;
-	gcm_params.ulTagBits = tag_size * 8;
-
-	SECItem param;
-	param.type = siBuffer;
-	param.data = (void*)&gcm_params;
-	param.len = sizeof gcm_params;
-
-	/* Output buffer for transformed data.  */
-	size_t text_and_tag_size = text_size + tag_size;
-	u_int8_t *out_buf = PR_Malloc(text_and_tag_size);
-	unsigned int out_len = 0;
-
-	if (enc) {
-		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_GCM, &param,
-					    out_buf, &out_len, text_and_tag_size,
-					    text_and_tag, text_size);
-		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Encrypt failure (err %d)", PR_GetError());
-			ok = FALSE;
-		} else if (out_len != text_and_tag_size) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Encrypt output length of %u not the expected %zd",
-			       out_len, text_and_tag_size);
-			ok = FALSE;
-		}
-	} else {
-		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_GCM, &param,
-					    out_buf, &out_len, text_and_tag_size,
-					    text_and_tag, text_and_tag_size);
-		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Decrypt failure (err %d)", PR_GetError());
-			ok = FALSE;
-		} else if (out_len != text_size) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Decrypt output length of %u not the expected %zd",
-			       out_len, text_size);
-			ok = FALSE;
-		}
-	}
-
-	memcpy(text_and_tag, out_buf, out_len);
-	PR_Free(out_buf);
-
-	return ok;
-}
-
 /*
  * Ref: http://csrc.nist.gov/groups/STM/cavp/documents/mac/gcmtestvectors.zip
  *
@@ -473,7 +405,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
-	.do_aead_crypt_auth =     do_aes_gcm,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -495,7 +427,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
-	.do_aead_crypt_auth =     do_aes_gcm,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -518,7 +450,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
-	.do_aead_crypt_auth =     do_aes_gcm,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =

@@ -7,7 +7,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -201,6 +201,8 @@ EXTRA_CRYPTO_SRCS+=ike_alg_hmac_prf_ops.c
 EXTRA_CRYPTO_OBJS+=ike_alg_hmac_prf_ops.o
 EXTRA_CRYPTO_SRCS+=ike_alg_nss_prf_ops.c
 EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_gcm.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_gcm.o
 
 ifeq ($(USE_SERPENT),true)
 EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
