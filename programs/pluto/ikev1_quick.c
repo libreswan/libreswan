@@ -68,6 +68,7 @@
 
 #include "pluto_crypt.h"
 #include "crypt_prf.h"
+#include "crypt_hash.h"
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
@@ -820,7 +821,6 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 {
 	const struct hash_desc *h = st->st_oakley.prf->hasher;
 	passert(h);
-	union hash_ctx ctx;
 
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",
 		      st->st_ph1_iv, st->st_ph1_iv_len);
@@ -831,11 +831,11 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	DBG_cond_dump(DBG_CRYPT, "current Phase 1 IV:",
 		      st->st_iv, st->st_iv_len);
 
-	h->hash_init(&ctx);
-	h->hash_update(&ctx, st->st_ph1_iv, st->st_ph1_iv_len);
+	struct crypt_hash *ctx = crypt_hash_init(h, "IV", DBG_CRYPT);
+	crypt_hash_digest_bytes(ctx, "PH1_IV", st->st_ph1_iv, st->st_ph1_iv_len);
 	passert(*msgid != 0);
-	h->hash_update(&ctx, (const u_char *)msgid, sizeof(*msgid));
-	h->hash_final(st->st_new_iv, &ctx);
+	crypt_hash_digest_bytes(ctx, "MSGID", (const u_char *)msgid, sizeof(*msgid));
+	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
 
 	DBG_cond_dump(DBG_CRYPT, "computed Phase 2 IV:",
 		      st->st_new_iv, st->st_new_iv_len);

@@ -32,6 +32,7 @@
 #include "ike_alg.h"
 #include "packet.h"
 #include "pluto_crypt.h"
+#include "crypt_hash.h"
 #include "crypt_symkey.h"
 
 /*
@@ -266,19 +267,17 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 	/* generate IV */
 	{
-		union hash_ctx hash_ctx;
-
-		new_iv->len = hasher->hash_digest_len;
-		new_iv->ptr = alloc_bytes(new_iv->len, "calculated new iv");
+		*new_iv = alloc_chunk(hasher->hash_digest_len,
+				      "calculated new iv");
 
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("DH_i:", gi);
 			    DBG_dump_chunk("DH_r:", gr);
 		    });
-		hasher->hash_init(&hash_ctx);
-		hasher->hash_update(&hash_ctx, gi.ptr, gi.len);
-		hasher->hash_update(&hash_ctx, gr.ptr, gr.len);
-		hasher->hash_final(new_iv->ptr, &hash_ctx);
+		struct crypt_hash *ctx = crypt_hash_init(hasher, "IV", DBG_CRYPT);
+		crypt_hash_digest_chunk(ctx, "GI", gi);
+		crypt_hash_digest_chunk(ctx, "GR", gr);
+		crypt_hash_final_chunk(&ctx, *new_iv);
 		DBG(DBG_CRYPT, DBG_log("end of IV generation"));
 	}
 }

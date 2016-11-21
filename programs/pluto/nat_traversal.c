@@ -66,9 +66,9 @@
 #include "ike_alg.h"
 #include "ikev2.h"
 #include "ike_alg_sha1.h"
+#include "crypt_hash.h"
 
 #include "cookie.h"
-#include "sha1.h"
 #include "crypto.h"
 #include "vendor.h"
 
@@ -120,8 +120,6 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		const ip_address *ip,
 		u_int16_t port /* host order */)
 {
-	union hash_ctx ctx;
-
 	if (is_zero_cookie(icookie))
 		DBG(DBG_NATT, DBG_log("natd_hash: Warning, icookie is zero !!"));
 	if (is_zero_cookie(rcookie))
@@ -134,27 +132,27 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	 *
 	 * All values in network order
 	 */
-	hasher->hash_init(&ctx);
-	hasher->hash_update(&ctx, icookie, COOKIE_SIZE);
-	hasher->hash_update(&ctx, rcookie, COOKIE_SIZE);
+	struct crypt_hash *ctx = crypt_hash_init(hasher, "NATD", DBG_CRYPT);
+	crypt_hash_digest_bytes(ctx, "ICOOKIE", icookie, COOKIE_SIZE);
+	crypt_hash_digest_bytes(ctx, "RCOOKIE", rcookie, COOKIE_SIZE);
 	switch (addrtypeof(ip)) {
 	case AF_INET:
-		hasher->hash_update(&ctx,
-				(const u_char *)&ip->u.v4.sin_addr.s_addr,
-				sizeof(ip->u.v4.sin_addr.s_addr));
+		crypt_hash_digest_bytes(ctx, "SIN_ADDR",
+					(const u_char *)&ip->u.v4.sin_addr.s_addr,
+					sizeof(ip->u.v4.sin_addr.s_addr));
 		break;
 	case AF_INET6:
-		hasher->hash_update(&ctx,
-				(const u_char *)&ip->u.v6.sin6_addr.s6_addr,
-				sizeof(ip->u.v6.sin6_addr.s6_addr));
+		crypt_hash_digest_bytes(ctx, "SIN6_ADDR",
+					(const u_char *)&ip->u.v6.sin6_addr.s6_addr,
+					sizeof(ip->u.v6.sin6_addr.s6_addr));
 		break;
 	}
 	{
 		u_int16_t netorder_port = htons(port);
-
-		hasher->hash_update(&ctx, (const u_char *)&netorder_port, sizeof(netorder_port));
+		crypt_hash_digest_bytes(ctx, "PORT",
+					&netorder_port, sizeof(netorder_port));
 	}
-	hasher->hash_final(hash, &ctx);
+	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_len);
 	DBG(DBG_NATT, {
 			DBG_log("natd_hash: hasher=%p(%d)", hasher,
 				(int)hasher->hash_digest_len);
@@ -190,10 +188,11 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First: one with local (source) IP & port
 	 */
-	natd_hash(ike_alg_prf_sha1.hasher, hb, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ?
-			md->hdr.isa_rcookie : st->st_rcookie,
-		&st->st_localaddr, st->st_localport);
+	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
+		  (is_zero_cookie(st->st_rcookie)
+		   ? md->hdr.isa_rcookie
+		   : st->st_rcookie),
+		  &st->st_localaddr, st->st_localport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -203,9 +202,11 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second: one with remote (destination) IP & port
 	 */
-	natd_hash(ike_alg_prf_sha1.hasher, hb, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
+	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
+		  (is_zero_cookie(st->st_rcookie)
+		   ? md->hdr.isa_rcookie
+		   : st->st_rcookie),
+		  &st->st_remoteaddr, st->st_remoteport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -1180,13 +1181,13 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(ike_alg_prf_sha1.hasher, hash_me, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_hash_sha1, hash_me, st->st_icookie, rcookie,
 		  &md->iface->ip_addr, md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
-	natd_hash(ike_alg_prf_sha1.hasher, hash_him, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
 		  &md->sender, md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {

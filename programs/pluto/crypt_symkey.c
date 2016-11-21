@@ -520,38 +520,6 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 }
 
 /*
- * Run HASHER on the key.
- *
- * This assumes that NSS works.  Based on old code, 3.14 may have had
- * problems with SHA-2.
- */
-
-PK11SymKey *hash_symkey_to_symkey(const char *prefix,
-				  const struct hash_desc *hash_desc,
-				  PK11SymKey *base_key)
-{
-	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, prefix, DBG_CRYPT,
-						     "base", base_key);
-}
-
-void *hash_symkey_to_bytes(const char *prefix,
-			   const struct hash_desc *hash_desc,
-			   PK11SymKey *base_key,
-			   void *bytes, size_t sizeof_bytes)
-{
-	struct hash_context *hash = hash_desc->hash_ops->init(hash_desc, prefix, DBG_CRYPT);
-	hash_desc->hash_ops->digest_symkey(hash, "base_key", base_key);
-	u_int8_t *out_bytes;
-	if (bytes != NULL) {
-		out_bytes = bytes;
-	} else {
-		out_bytes = alloc_bytes(sizeof_bytes, prefix);
-	}
-	hash_desc->hash_ops->final_bytes(&hash, out_bytes, sizeof_bytes);
-	return out_bytes;
-}
-
-/*
  * XOR a symkey with a chunk.
  *
  * XXX: hmac.c had very similar code, only, instead of
