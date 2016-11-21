@@ -48,7 +48,6 @@
 #ifdef USE_SHA2
 #include "sha2.h"
 #endif
-#include "aes_xcbc.h"
 #include <prerror.h>
 #include <nss.h>
 #include <pk11pub.h>

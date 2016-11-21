@@ -20,9 +20,6 @@
 #ifdef USE_SHA2
 #include "sha2.h"
 #endif
-#ifdef USE_AES
-#include "aes_xcbc.h"
-#endif
 
 union hash_ctx {
 #ifdef USE_MD5
@@ -35,9 +32,6 @@ union hash_ctx {
 	sha256_context ctx_sha256;
 	sha384_context ctx_sha384;
 	sha512_context ctx_sha512;
-#endif
-#ifdef USE_AES
-	aes_xcbc_context ctx_aes_xcbc;
 #endif
 };
 
