@@ -44,9 +44,7 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "demux.h"
 #include "ikev2.h"
 #include "ikev2_prf.h"

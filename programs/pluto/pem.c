@@ -42,7 +42,6 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "md5.h"
 #include "pem.h"
 
 #include <pk11pub.h>

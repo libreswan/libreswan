@@ -43,7 +43,7 @@
 #include "id.h"
 #include "connections.h"
 
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "ike_alg.h"
@@ -67,6 +67,7 @@
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
+#include "sha2.h"
 
 #include "ietf_constants.h"
 

@@ -67,9 +67,7 @@
 #include "asn1.h"
 #include "pending.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "secrets.h"
 
 #include "ike_alg.h"

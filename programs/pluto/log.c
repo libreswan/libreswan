@@ -62,7 +62,7 @@
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
-#include "crypto.h"	/* needed for ike_alg_show_status */
+#include "crypto.h"
 
 #ifdef USE_LINUX_AUDIT
 # include <libaudit.h>

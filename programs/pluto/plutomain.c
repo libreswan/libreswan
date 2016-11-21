@@ -75,9 +75,7 @@
 #include "timer.h"
 #include "ipsecconf/confread.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
 

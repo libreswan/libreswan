@@ -57,7 +57,6 @@
 #include "demux.h"      /* needs packet.h */
 #include "connections.h"
 #include "state.h"
-#include "md5.h"
 #include "sha1.h"
 #include "whack.h"
 #include "fetch.h"

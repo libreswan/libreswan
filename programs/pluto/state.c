@@ -66,10 +66,8 @@
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 
-#include "sha1.h"
-#include "md5.h"
 #include "cookie.h"
-#include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "crypt_symkey.h"
 #include "spdb.h"
 #include "ikev2.h"
