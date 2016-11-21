@@ -667,6 +667,7 @@ case "${PLUTO_VERB}" in
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
 	addcat
+	addsource
 	notifyNM connect
 	;;
     down-client)
@@ -675,6 +676,7 @@ case "${PLUTO_VERB}" in
 	delnflog
 	delcat
 	delvti
+	delsource
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
 	notifyNM disconnect
