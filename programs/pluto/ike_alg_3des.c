@@ -128,7 +128,6 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.fips =          TRUE,
 		.nss_mechanism = CKM_DES3_CBC,
 	},
-	.enc_ctxsize =      8 * 16 * 3, /* sizeof(des_key_schedule) * 3 */
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size =           DES_CBC_BLOCK_SIZE,

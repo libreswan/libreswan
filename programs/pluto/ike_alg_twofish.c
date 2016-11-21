@@ -88,7 +88,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.nss_mechanism = CKM_TWOFISH_CBC
 #endif
 	},
-	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
@@ -110,7 +109,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.nss_mechanism = CKM_TWOFISH_CBC
 #endif
 	},
-	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,

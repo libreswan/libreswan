@@ -80,7 +80,6 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 		.ikev1_oakley_id = OAKLEY_SERPENT_CBC,
 		.ikev2_id = IKEv2_ENCR_SERPENT_CBC,
 	},
-	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,

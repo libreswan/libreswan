@@ -178,7 +178,6 @@ struct ike_alg {
 
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST and writable */
-	const size_t enc_ctxsize;
 	const size_t enc_blocksize;
 	/*
 	 * Does this algorithm require padding to the above
