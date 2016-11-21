@@ -226,7 +226,7 @@ static struct fields parse_fields(char *line)
 }
 
 /* size is arbitrary */
-static char line[16384];
+static char line[65536];
 static int line_nr;
 
 static void cavp_parser()
