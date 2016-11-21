@@ -37,6 +37,7 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "ike_alg_hmac_prf_ops.h"
+#include "ike_alg_nss_hash_ops.h"
 
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
@@ -367,24 +368,22 @@ static struct prf_desc *prf_descriptors[] = {
 static void hash_desc_check(const struct hash_desc *hash)
 {
 	passert(hash->common.algo_type == IKE_ALG_HASH);
-	passert((hash->hash_init != NULL &&
-		 hash->hash_update != NULL &&
-		 hash->hash_final != NULL &&
-		 hash->hash_ops != NULL &&
-		 hash->hash_ops->init != NULL &&
-		 hash->hash_ops->digest_symkey != NULL &&
-		 hash->hash_ops->digest_bytes != NULL &&
-		 hash->hash_ops->final_bytes != NULL &&
-		 hash->hash_ops->symkey_to_symkey != NULL) ||
-		(hash->hash_init == NULL &&
-		 hash->hash_update == NULL &&
-		 hash->hash_final == NULL &&
-		 hash->hash_ops == NULL));
+	passert(hash->hash_digest_len > 0);
+	passert(hash->hash_block_size > 0);
+	if (hash->hash_ops) {
+		passert(hash->hash_ops->digest_symkey != NULL &&
+			hash->hash_ops->digest_bytes != NULL &&
+			hash->hash_ops->final_bytes != NULL &&
+			hash->hash_ops->symkey_to_symkey != NULL);
+	}
+	if (hash->hash_ops == &ike_alg_nss_hash_ops) {
+		passert(hash->common.nss_mechanism > 0);
+	}
 }
 
 static bool hash_desc_is_ike(const struct hash_desc *hash)
 {
-	return hash->hash_init != NULL;
+	return hash->hash_ops != NULL;
 }
 
 static void prf_desc_check(const struct ike_alg *alg)
@@ -393,31 +392,36 @@ static void prf_desc_check(const struct ike_alg *alg)
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
 	passert(prf->prf_key_size > 0);
 	passert(prf->prf_output_size > 0);
-	passert(prf->prf_ops == NULL
-		|| (prf->prf_ops->init_symkey != NULL &&
-		    prf->prf_ops->init_bytes != NULL &&
-		    prf->prf_ops->digest_symkey != NULL &&
-		    prf->prf_ops->digest_bytes != NULL &&
-		    prf->prf_ops->final_symkey != NULL &&
-		    prf->prf_ops->final_bytes != NULL));
-	/*
-	 * XXX: assume all PRFs are implemnted using HASHER and the
-	 * HMAC construction for now.
-	 */
-	passert(prf->hasher != NULL);
-	passert(prf->prf_ops == &ike_alg_hmac_prf_ops);
-	hash_desc_check(prf->hasher);
+	if (prf->prf_ops != NULL) {
+		passert(prf->prf_ops->init_symkey != NULL &&
+			prf->prf_ops->init_bytes != NULL &&
+			prf->prf_ops->digest_symkey != NULL &&
+			prf->prf_ops->digest_bytes != NULL &&
+			prf->prf_ops->final_symkey != NULL &&
+			prf->prf_ops->final_bytes != NULL);
+		/*
+		 * IKEv1 IKE algorithms must have a hasher - used for
+		 * things like computing IV.
+		 */
+		passert(prf->common.ikev1_oakley_id == 0
+			|| prf->hasher != NULL);
+	}
+	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
+		passert(prf->hasher != NULL);
+		/* i.e., implemented */
+		passert(hash_desc_is_ike(prf->hasher));
+	}
+	if (prf->hasher) {
+		hash_desc_check(prf->hasher);
+		passert(prf->prf_output_size == prf->hasher->hash_digest_len);
+	}
 }
 
 static bool prf_desc_is_ike(const struct ike_alg *alg)
 {
 	passert(alg->algo_type == IKE_ALG_PRF);
 	const struct prf_desc *prf = (const struct prf_desc*)alg;
-	/*
-	 * XXX: assume all PRFs are implemented using HASHER and the
-	 * HMAC construction for now.
-	 */
-	return hash_desc_is_ike(prf->hasher);
+	return prf->prf_ops != NULL;
 }
 
 static struct type_algorithms prf_algorithms = {
