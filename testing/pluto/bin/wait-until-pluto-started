@@ -10,3 +10,8 @@ do
 	sleep 2
 done
 
+# what took so long?
+if [ $count -eq 0 ]
+then
+        ipsec whack --listen
+fi
