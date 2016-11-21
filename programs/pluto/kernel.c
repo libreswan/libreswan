@@ -218,27 +218,37 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				       , const char *why)
 {
+	ip_address src, dst;
+
 	passert(samesubnettype(ours, his));
 
 	/* Add the kernel shunt to the pluto bare shunt list.
 	 * We need to do this because the %hold shunt was installed by kernel
 	 * and we want to keep track of it inside pluto.
+	 * WARNING: there is different behaviour between KLIPS and NETKEY, and
+	 *          it might be that netkey causes duplicate acquires when the
+	 *          proc value is different from our internal value?
 	 */
-	add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
+
+
+	networkof(ours, &src);
+	networkof(his, &dst);
+
+	/* This check should not be needed :( */
+	if (has_bare_hold(&src, &dst, transport_proto)) {
+		loglog(RC_LOG_SERIOUS, "existing bare shunt found - refusing to add a duplicate");
+		/* should we continue with initiate_ondemand() ? */
+	} else {
+		add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
+	}
 
 	/* actually initiate opportunism / ondemand */
-	{
-		ip_address src, dst;
-
-		networkof(ours, &src);
-		networkof(his, &dst);
-		initiate_ondemand(&src, &dst, transport_proto,
-				      TRUE, NULL_FD,
+	initiate_ondemand(&src, &dst, transport_proto,
+			      TRUE, NULL_FD,
 #ifdef HAVE_LABELED_IPSEC
-				      uctx,
+			      uctx,
 #endif
-				      "acquire");
-	}
+			      "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		/* remove from KLIPS's list */
