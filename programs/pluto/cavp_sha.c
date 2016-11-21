@@ -99,7 +99,7 @@ static void msg_run(void)
 	print_chunk("Msg", msg, 0);
 	struct hash_context *hash = hash_desc->hash_ops->init(hash_desc, "sha", DBG_CRYPT);
 	/* See above, use LEN, not MSG.LEN */
-	hash_desc->hash_ops->digest_bytes(hash, "msg", msg.ptr, len);
+	hash_desc->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
 	chunk_t bytes = alloc_chunk(l, "bytes");
 	hash_desc->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
 	print_chunk("MD", bytes, 0);
