@@ -57,7 +57,6 @@
 #include "demux.h"      /* needs packet.h */
 #include "connections.h"
 #include "state.h"
-#include "sha1.h"
 #include "whack.h"
 #include "fetch.h"
 #include "hostpair.h" /* for find_host_pair_connections */
@@ -80,6 +79,8 @@
 #include <secerr.h>
 #include <secder.h>
 #include <ocsp.h>
+#include "ike_alg_sha1.h"
+#include "crypt_hash.h"
 
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;
@@ -1036,15 +1037,16 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 {
 	unsigned char sighash[SHA1_DIGEST_SIZE];
-	SHA1_CTX ctx_sha1;
 	chunk_t result = empty_chunk;
 
 	zero(&sighash);
 
-	SHA1Init(&ctx_sha1);
-	SHA1Update(&ctx_sha1, (unsigned char *)cert->derPublicKey.data,
-					       cert->derPublicKey.len);
-	SHA1Final(sighash, &ctx_sha1);
+	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha1,
+						 "cert key", DBG_CRYPT);
+	crypt_hash_digest_bytes(ctx, "pubkey",
+				cert->derPublicKey.data,
+				cert->derPublicKey.len);
+	crypt_hash_final_bytes(&ctx, sighash, sizeof(sighash));
 
 	DBG(DBG_CRYPT, DBG_dump("SHA-1 of Certificate Public Key",
 						sighash,

@@ -37,7 +37,7 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_hmac_prf_ops.h"
 
-static struct hash_desc ike_alg_hash_md5 = {
+struct hash_desc ike_alg_hash_md5 = {
 	.common = {
 		.name = "md5",
 		.officname = "md5",

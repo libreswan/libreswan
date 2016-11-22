@@ -44,7 +44,6 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
-#include "sha1.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"
@@ -54,6 +53,8 @@
 #include "vendor.h"
 #include "keys.h"
 #include "secrets.h"
+#include "ike_alg_sha1.h"
+#include "crypt_hash.h"
 
 static u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -67,7 +68,6 @@ static void ikev2_calculate_sighash(struct state *st,
 				    chunk_t firstpacket,
 				    unsigned char *sig_octets)
 {
-	SHA1_CTX ctx_sha1;
 	const chunk_t *nonce;
 	const char    *nonce_name;
 
@@ -85,16 +85,16 @@ static void ikev2_calculate_sighash(struct state *st,
 	    DBG_dump_chunk(nonce_name, *nonce);
 	    DBG_dump("idhash", idhash, st->st_oakley.prf->prf_output_size));
 
-	SHA1Init(&ctx_sha1);
-	SHA1Update(&ctx_sha1,
-		   firstpacket.ptr,
-		   firstpacket.len);
-	SHA1Update(&ctx_sha1, nonce->ptr, nonce->len);
+	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha1,
+						 "sighash", DBG_CRYPT);
+	crypt_hash_digest_chunk(ctx, "first packet", firstpacket);
+	crypt_hash_digest_chunk(ctx, "nunce", *nonce);
 
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	SHA1Update(&ctx_sha1, idhash, st->st_oakley.prf->prf_output_size);
-
-	SHA1Final(sig_octets, &ctx_sha1);
+	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,
+				st->st_oakley.prf->prf_output_size);
+	crypt_hash_final_bytes(&ctx, sig_octets,
+			       ike_alg_hash_sha1.hash_digest_len);
 }
 
 bool ikev2_calculate_rsa_sha1(struct state *st,
