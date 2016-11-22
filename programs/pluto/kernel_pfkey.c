@@ -883,10 +883,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	setportof(dport ? ~0 : 0, &dmask_ska);
 
 	satype = eroute_type_to_pfkey_satype(esatype);
-	if (satype < 0 || satype > K_SADB_SATYPE_MAX) {
-		impossible();
-		return FALSE;
-	}
+	passert(!(satype < 0 || satype > K_SADB_SATYPE_MAX));
 
 	if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype,
 			     "pfkey_msg_hdr flow", text_said, extensions))
@@ -963,10 +960,7 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 	bool success = FALSE;
 
 	klips_satype = eroute_type_to_pfkey_satype(sa->esatype);
-	if (klips_satype > K_SADB_SATYPE_MAX) {
-		impossible();
-		return FALSE;
-	}
+	passert(!(klips_satype > K_SADB_SATYPE_MAX));
 
 	success = pfkey_msg_start(replace ? K_SADB_UPDATE : K_SADB_ADD,
 				  klips_satype,
@@ -1136,16 +1130,10 @@ bool pfkey_grp_sa(const struct kernel_sa *sa0, const struct kernel_sa *sa1)
 	unsigned klips_satype0, klips_satype1;
 
 	klips_satype0 = eroute_type_to_pfkey_satype(sa0->esatype);
-	if (klips_satype0 > K_SADB_SATYPE_MAX) {
-		impossible();
-		return FALSE;
-	}
+	passert(!(klips_satype0 > K_SADB_SATYPE_MAX));
 
 	klips_satype1 = eroute_type_to_pfkey_satype(sa1->esatype);
-	if (klips_satype1 > K_SADB_SATYPE_MAX) {
-		impossible();
-		return FALSE;
-	}
+	passert(!(klips_satype1 > K_SADB_SATYPE_MAX));
 
 	return pfkey_msg_start(K_SADB_X_GRPSA, klips_satype1,
 			       "pfkey_msg_hdr group", sa1->text_said,
@@ -1424,8 +1412,9 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
 
-	if (i == elemsof(proto_info) - 1)
-		impossible(); /* no transform at all! */
+	if (i == elemsof(proto_info) - 1) {
+		PASSERT_FAIL("no transform at all (%d)!", i);
+	}
 
 	if (tunnel) {
 		int j;

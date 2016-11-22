@@ -34,8 +34,6 @@ extern void libreswan_passert_fail(const char *file_str,
 	libreswan_passert_fail(__FILE__, __LINE__,		\
 			       __func__, FMT, __VA_ARGS__)
 
-#define impossible()  libreswan_passert_fail(__FILE__, __LINE__, __func__, "impossible")
-
 #define bad_case(N) {						\
 		long _n = (N);				\
 		PASSERT_FAIL("case %ld/%lu/%lx unexpected",	\

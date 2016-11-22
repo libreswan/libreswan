@@ -1455,9 +1455,8 @@ rsasig_common:
 				pb_stream r_trans_pbs;
 
 				/* Situation */
-				if (!out_struct(&ipsecdoisit, &ipsec_sit_desc,
-						r_sa_pbs, NULL))
-					impossible();
+				passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
+						   r_sa_pbs, NULL));
 
 				/* Proposal */
 #ifdef EMIT_ISAKMP_SPI
@@ -1466,17 +1465,15 @@ rsasig_common:
 				r_proposal.isap_spisize = 0;
 #endif
 				r_proposal.isap_notrans = 1;
-				if (!out_struct(&r_proposal,
-						&isakmp_proposal_desc,
-						r_sa_pbs,
-						&r_proposal_pbs))
-					impossible();
+				passert(out_struct(&r_proposal,
+						   &isakmp_proposal_desc,
+						   r_sa_pbs,
+						   &r_proposal_pbs));
 
 				/* SPI */
 #ifdef EMIT_ISAKMP_SPI
-				if (!out_raw(my_cookie, COOKIE_SIZE,
-					     &r_proposal_pbs, "SPI"))
-					impossible();
+				passert(out_raw(my_cookie, COOKIE_SIZE,
+						&r_proposal_pbs, "SPI"));
 				r_proposal.isap_spisize = COOKIE_SIZE;
 #else
 				/* none (0) */
@@ -1484,15 +1481,13 @@ rsasig_common:
 
 				/* Transform */
 				r_trans.isat_np = ISAKMP_NEXT_NONE;
-				if (!out_struct(&r_trans,
-						&isakmp_isakmp_transform_desc,
-						&r_proposal_pbs,
-						&r_trans_pbs))
-					impossible();
+				passert(out_struct(&r_trans,
+						   &isakmp_isakmp_transform_desc,
+						   &r_proposal_pbs,
+						   &r_trans_pbs));
 
-				if (!out_raw(attr_start, attr_len,
-					     &r_trans_pbs, "attributes"))
-					impossible();
+				passert(out_raw(attr_start, attr_len,
+						&r_trans_pbs, "attributes"));
 				close_output_pbs(&r_trans_pbs);
 				close_output_pbs(&r_proposal_pbs);
 				close_output_pbs(r_sa_pbs);
@@ -2017,9 +2012,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	/* Proposal */
 	r_proposal.isap_np = np;
 	r_proposal.isap_notrans = 1;
-	if (!out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
-			&r_proposal_pbs))
-		impossible();
+	passert(out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
+			   &r_proposal_pbs));
 
 	/* allocate and emit our CPI/SPI */
 	if (r_proposal.isap_protoid == PROTO_IPCOMP) {
@@ -2029,11 +2023,10 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * but we'll ignore that.
 		 */
 		pi->our_spi = get_my_cpi(sr, tunnel_mode);
-		if (!out_raw((u_char *) &pi->our_spi +
-			     IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
-			     IPCOMP_CPI_SIZE,
-			     &r_proposal_pbs, "CPI"))
-			impossible();
+		passert(out_raw((u_char *) &pi->our_spi +
+				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
+				IPCOMP_CPI_SIZE,
+				&r_proposal_pbs, "CPI"));
 	} else {
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
@@ -2041,21 +2034,18 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */
-		if (!out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
-			     &r_proposal_pbs, "SPI"))
-			impossible();
+		passert(out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
+				&r_proposal_pbs, "SPI"));
 	}
 
 	/* Transform */
 	r_trans.isat_np = ISAKMP_NEXT_NONE;
-	if (!out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs))
-		impossible();
+	passert(out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs));
 
 	/* Transform Attributes: pure echo */
 	trans_pbs->cur = trans_pbs->start + sizeof(struct isakmp_transform);
-	if (!out_raw(trans_pbs->cur, pbs_left(trans_pbs),
-		     &r_trans_pbs, "attributes"))
-		impossible();
+	passert(out_raw(trans_pbs->cur, pbs_left(trans_pbs),
+			&r_trans_pbs, "attributes"));
 
 	close_output_pbs(&r_trans_pbs);
 	close_output_pbs(&r_proposal_pbs);
@@ -2742,9 +2732,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			/* emit what we've accepted */
 
 			/* Situation */
-			if (!out_struct(&ipsecdoisit, &ipsec_sit_desc,
-					r_sa_pbs, NULL))
-				impossible();
+			passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
+					   r_sa_pbs, NULL));
 
 			/* AH proposal */
 			if (ah_seen) {

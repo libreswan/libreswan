@@ -253,8 +253,7 @@ static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 
 	passert(sym_key);
 	if (sym_key == NULL) {
-		loglog(RC_LOG_SERIOUS, "do_aes_ctr: NSS derived enc key in NULL");
-		impossible();
+		PASSERT_FAIL("%s", "NSS derived enc key in NULL");
 	}
 
 	CK_AES_CTR_PARAMS counter_param;
@@ -274,18 +273,14 @@ static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_ctr: PK11_Encrypt failure (err %d)", PR_GetError());
-			impossible();
+			PASSERT_FAIL("PK11_Encrypt failure (err %d)", PR_GetError());
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_ctr: PK11_Decrypt failure (err %d)", PR_GetError());
-			impossible();
+			PASSERT_FAIL("PK11_Decrypt failure (err %d)", PR_GetError());
 		}
 	}
 

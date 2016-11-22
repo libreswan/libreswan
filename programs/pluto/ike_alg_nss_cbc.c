@@ -39,10 +39,8 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	passert(alg->common.nss_mechanism != 0);
 
 	if (symkey == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - NSS derived enc key in NULL",
-		       alg->common.name);
-		impossible();
+		PASSERT_FAIL("%s - NSS derived enc key in NULL",
+			     alg->common.name);
 	}
 
 	SECItem ivitem;
@@ -51,10 +49,8 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	ivitem.len = alg->enc_blocksize;
 	SECItem *secparam = PK11_ParamFromIV(alg->common.nss_mechanism, &ivitem);
 	if (secparam == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - Failure to set up PKCS11 param (err %d)",
-		       alg->common.name, PR_GetError());
-		impossible();
+		PASSERT_FAIL("%s - Failure to set up PKCS11 param (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 	PK11Context *enccontext;
@@ -62,10 +58,8 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - PKCS11 context creation failure (err %d)",
-		       alg->common.name, PR_GetError());
-		impossible();
+		PASSERT_FAIL("%s - PKCS11 context creation failure (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 
@@ -76,10 +70,8 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
 				     in_buf, in_buf_len);
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - PKCS11 operation failure (err %d)",
-		       alg->common.name, PR_GetError());
-		impossible();
+		PASSERT_FAIL("%s - PKCS11 operation failure (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);

@@ -2272,8 +2272,7 @@ stf_status send_isakmp_notification(struct state *st,
 		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody));
 	}
 	/* HASH -- create and note space to be filled later */
 	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_N);
@@ -2473,20 +2472,17 @@ static void send_notification(struct state *sndst, notification_t type,
 			memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 		if (rcookie)
 			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
 	}
 
 	/* HASH -- value to be filled later */
 	if (encst) {
 		pb_stream hash_pbs;
-		if (!ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
-					&hash_pbs))
-			impossible();
+		passert(ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
+					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(encst->st_oakley.prf->prf_output_size,
-			      &hash_pbs, "HASH(1)"))
-			impossible();
+		passert(out_zero(encst->st_oakley.prf->prf_output_size,
+				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
 	}
@@ -2540,8 +2536,7 @@ static void send_notification(struct state *sndst, notification_t type,
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
-		if (!encrypt_message(&r_hdr_pbs, encst))
-			impossible();
+		passert(encrypt_message(&r_hdr_pbs, encst));
 
 		restore_iv(encst, old_iv, old_iv_len);
 	} else {
@@ -2699,22 +2694,19 @@ bool ikev1_delete_out(struct state *st)
 		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
-					&r_hdr_pbs))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
+				   &r_hdr_pbs));
 	}
 
 	/* HASH -- value to be filled later */
 	{
 		pb_stream hash_pbs;
 
-		if (!ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
-					&hash_pbs))
-			impossible();
+		passert(ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
+					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(p1st->st_oakley.prf->prf_output_size,
-			      &hash_pbs, "HASH(1)"))
-			impossible();
+		passert(out_zero(p1st->st_oakley.prf->prf_output_size,
+				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
 	}
@@ -2734,11 +2726,10 @@ bool ikev1_delete_out(struct state *st)
 		memcpy(isakmp_spi, st->st_icookie, COOKIE_SIZE);
 		memcpy(isakmp_spi + COOKIE_SIZE, st->st_rcookie, COOKIE_SIZE);
 
-		if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
-					&del_pbs) ||
-			!out_raw(&isakmp_spi, (2 * COOKIE_SIZE), &del_pbs,
-				"delete payload"))
-			impossible();
+		passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
+				   &del_pbs));
+		passert(out_raw(&isakmp_spi, (2 * COOKIE_SIZE), &del_pbs,
+				"delete payload"));
 		close_output_pbs(&del_pbs);
 	} else {
 		while (ns != said) {
@@ -2754,12 +2745,11 @@ bool ikev1_delete_out(struct state *st)
 			isad.isad_protoid = ns->proto;
 
 			isad.isad_nospi = 1;
-			if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
-						&del_pbs) ||
-				!out_raw(&ns->spi, sizeof(ipsec_spi_t),
+			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
+					   &del_pbs));
+			passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
 					&del_pbs,
-					"delete payload"))
-				impossible();
+					"delete payload"));
 			close_output_pbs(&del_pbs);
 		}
 	}
@@ -2795,8 +2785,7 @@ bool ikev1_delete_out(struct state *st)
 		save_iv(p1st, old_iv, old_iv_len);
 		init_phase2_iv(p1st, &msgid);
 
-		if (!encrypt_message(&r_hdr_pbs, p1st))
-			impossible();
+		passert(encrypt_message(&r_hdr_pbs, p1st));
 
 		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
 

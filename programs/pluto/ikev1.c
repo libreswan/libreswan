@@ -880,8 +880,8 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 
 	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
 	hdr.isa_np = np;
-	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
-		impossible(); /* surely must have room and be well-formed */
+	/* surely must have room and be well-formed */
+	passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody));
 }
 
 /* process an input packet, possibly generating a reply.
