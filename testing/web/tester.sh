@@ -34,8 +34,18 @@ status() {
 	     "$@"
 }
 
-status "starting up"
+status "starting up finding first commit"
 start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
+
+status "starting up: building commit list"
+${webdir}/json-commit.sh \
+	 --json ${summarydir}/commits.json \
+	 ${repodir} \
+	 $(${webdir}/gime-git-revisions.sh ${repodir} ${start_hash}..${remote}) \
+	 ${start_hash}
+
+status "starting up: building summary"
+${webdir}/build-summary.sh ${repodir} ${summarydir}
 
 while true ; do
 
