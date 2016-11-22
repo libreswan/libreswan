@@ -349,6 +349,9 @@ notifyNM() {
 
 addsource() {
     st=0
+    if [ -z ${PLUTO_MY_SOURCEIP} ]; then
+        return ${st}
+    fi
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
@@ -381,6 +384,9 @@ addsource() {
 
 delsource() {
     st=0
+    if [ -z ${PLUTO_MY_SOURCEIP} ]; then
+        return ${st}
+    fi
     # check if given sourceip is local and add as alias if not
     if  ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
 	it="ip addr del ${PLUTO_MY_SOURCEIP}/${PLUTO_PEER_CLIENT#*/} dev ${PLUTO_INTERFACE%:*}"
