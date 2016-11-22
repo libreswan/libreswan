@@ -61,8 +61,12 @@ extern void libreswan_switch_fail(int n,
  */
 
 extern void pexpect_log(const char *file_str, unsigned long line_no,
-			const char *fmt, ...)  PRINTF_LIKE(3);
-#define PEXPECT_LOG(FMT, ...) pexpect_log(__FILE__, __LINE__, FMT,  __VA_ARGS__)
+			const char *func_str, const char *fmt, ...)
+	PRINTF_LIKE(4);
+
+#define PEXPECT_LOG(FMT, ...) \
+	pexpect_log(__FILE__, __LINE__, __func__,		\
+		    FMT,  __VA_ARGS__)
 
 #define pexpect(pred) {							\
 		if (pred) {} else {					\

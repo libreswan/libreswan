@@ -19,7 +19,9 @@
 
 #include "lswlog.h"
 
-void pexpect_log(const char *file_str, unsigned long line_no,
+void pexpect_log(const char *file_str,
+		 unsigned long line_no,
+		 const char *func_str,
 		 const char *fmt, ...)
 {
 	va_list ap;
@@ -29,6 +31,6 @@ void pexpect_log(const char *file_str, unsigned long line_no,
 	passert(strlen(m) < sizeof(m));
 	va_end(ap);
 
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s",
-	       file_str, line_no, m);
+	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED: %s (in %s at %s:%lu)",
+	       m, func_str, file_str, line_no);
 }
