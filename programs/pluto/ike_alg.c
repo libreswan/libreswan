@@ -367,7 +367,6 @@ static struct prf_desc *prf_descriptors[] = {
 static void hash_desc_check(const struct hash_desc *hash)
 {
 	passert(hash->common.algo_type == IKE_ALG_HASH);
-	passert(hash->hash_ctx_size <= sizeof(union hash_ctx));
 	passert((hash->hash_init != NULL &&
 		 hash->hash_update != NULL &&
 		 hash->hash_final != NULL &&
