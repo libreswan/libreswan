@@ -62,7 +62,7 @@ status "started"
 # If not already done, set up for a test run.
 
 force=false
-for target in distclean kvm-install kvm-keys kvm-test kvm-shutdown; do
+for target in kvm-shutdown distclean kvm-install kvm-keys kvm-test kvm-shutdown; do
     ok=${destdir}/${target}.ok
     if test ! -r "${ok}" || ${force} ; then
 	force=true
@@ -80,7 +80,12 @@ for target in distclean kvm-install kvm-keys kvm-test kvm-shutdown; do
 	    make -C ${repodir} ${target}
 	    touch ${ok}
 	fi
-	test -r ${ok}
+	if test ! -r ${ok}; then
+	    status "run 'make ${target}' died"
+	    # Stumble on.  Presumably the compile failed, and the
+	    # result is everything untested.
+	    break
+	fi
     fi
 done
 
