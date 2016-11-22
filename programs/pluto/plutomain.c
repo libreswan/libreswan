@@ -136,8 +136,6 @@ static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
 static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
 static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 
-libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
-
 static void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
@@ -708,8 +706,6 @@ int main(int argc, char **argv)
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
-
-	libreswan_passert_fail = passert_fail;
 
 	/* handle arguments */
 	for (;; ) {

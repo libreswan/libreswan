@@ -63,10 +63,6 @@ extern bool whack_prompt_for(int whackfd,
 			     bool echo,
 			     char *ansbuf, size_t ansbuf_len);
 
-extern void passert_fail(const char *pred_str,
-			 const char *file_str,
-			 unsigned long line_no) NEVER_RETURNS;
-
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
 

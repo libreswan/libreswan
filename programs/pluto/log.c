@@ -617,12 +617,12 @@ void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 	char buf[30];
 
 	snprintf(buf, sizeof(buf), "case %d unexpected", n);
-	passert_fail(buf, file_str, line_no);
+	libreswan_passert_fail(buf, file_str, line_no);
 	/* NOTREACHED */
 }
 
-void passert_fail(const char *pred_str, const char *file_str,
-		  unsigned long line_no)
+void libreswan_passert_fail(const char *pred_str, const char *file_str,
+			    unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
 	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",

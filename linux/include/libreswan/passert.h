@@ -23,11 +23,9 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-typedef void (*libreswan_passert_fail_t)(const char *pred_str,
-					 const char *file_str,
-					 unsigned long line_no) NEVER_RETURNS;
-
-extern libreswan_passert_fail_t libreswan_passert_fail;
+extern void libreswan_passert_fail(const char *pred_str,
+				   const char *file_str,
+				   unsigned long line_no) NEVER_RETURNS;
 
 #define impossible()  libreswan_passert_fail("impossible", __FILE__, __LINE__)
 

@@ -46,12 +46,6 @@ bool
 					 * KEY?
 					 */
 
-static void libreswanlib_passert_fail(const char *pred_str,
-				const char *file_str,
-				unsigned long line_no) NEVER_RETURNS;
-
-libreswan_passert_fail_t libreswan_passert_fail = libreswanlib_passert_fail;
-
 void tool_init_log(void)
 {
 	if (log_to_stderr)
@@ -175,8 +169,8 @@ void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 	libreswan_passert_fail(buf, file_str, line_no);
 }
 
-static void libreswanlib_passert_fail(const char *pred_str,
-				const char *file_str, unsigned long line_no)
+void libreswan_passert_fail(const char *pred_str,
+			    const char *file_str, unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
 	libreswan_loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
