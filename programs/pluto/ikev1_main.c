@@ -335,13 +335,10 @@ stf_status main_outI1(int whack_sock,
  */
 
 static void main_mode_hash_body(struct state *st,
-			bool hashi, /* Initiator? */
-			const pb_stream *idpl, /* ID payload, as PBS */
-			struct hmac_ctx *ctx,
-			hash_update_t hash_update_void UNUSED)
+				bool hashi, /* Initiator? */
+				const pb_stream *idpl, /* ID payload, as PBS */
+				struct hmac_ctx *ctx)
 {
-	hash_update_void = NULL;
-
 	if (hashi) {
 		hmac_update_chunk(ctx, st->st_gi);
 		hmac_update_chunk(ctx, st->st_gr);
@@ -386,7 +383,7 @@ main_mode_hash(struct state *st,
 	struct hmac_ctx ctx;
 
 	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_nss);
-	main_mode_hash_body(st, hashi, idpl, &ctx, NULL);
+	main_mode_hash_body(st, hashi, idpl, &ctx);
 	hmac_final(hash_val, &ctx);
 	return ctx.hmac_digest_len;
 }
