@@ -167,8 +167,8 @@ static bool writewhackrecord(char *buf, size_t buflen)
 		return TRUE;
 
 	header[0] = buflen + sizeof(header);
-	header[1] = now >> 32;
-	header[2] = now;
+	header[1] = (now >> 16) >> 16;	/* >> 32 not legal on 32-bit systems */
+	header[2] = now;	/* bottom 32 bits */
 
 	/* DBG_log("buflen: %zu abuflen: %zu", buflen, abuflen); */
 
