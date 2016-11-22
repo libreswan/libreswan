@@ -73,16 +73,23 @@ class Tests(Counts):
 class Results(Counts):
 
     def add_ignored(self, test, reason):
+        """The test has been excluded from the test run"""
         Counts.add(self, test.name, "total")
         Counts.add(self, test.name, "ignored")
+        # Reason might be test.status or test.kind.
         Counts.add(self, test.name, "ignored", reason)
+        # Counts.add(self, test.name, "ignored", test.status)
+        # Counts.add(self, test.name, "ignored", test.status, reason)
 
     def count_result(self, result):
         Counts.add(self, result.test.name, "total")
         Counts.add(self, result.test.name, str(result))
+        Counts.add(self, result.test.name, str(result), result.test.status)
+        # details
         for domain, issues in result.issues.items():
             for issue in issues:
-                Counts.add(self, result.test.name, str(result), issue, domain=domain)
+                Counts.add(self, result.test.name, str(result),
+                           result.test.status, issue, domain=domain)
 
     def add_skipped(self, result):
         Counts.add(self, result.test.name, "skipped", str(result))
@@ -91,4 +98,5 @@ class Results(Counts):
     def add_result(self, result, old_result=None):
         self.count_result(result)
         if old_result:
-            Counts.add(self, result.test.name, str(result), "previous", str(old_result))
+            Counts.add(self, result.test.name, result.test.status,
+                       str(result), "previous", str(old_result))
