@@ -160,21 +160,22 @@ void libreswan_log_abort(const char *file_str, int line_no)
 	abort();
 }
 
-/* Debugging message support */
-void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
+void libreswan_passert_fail(const char *file_str,
+			    unsigned long line_no,
+			    const char *func_str,
+			    const char *fmt, ...)
 {
-	char buf[30];
+	va_list args;
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
-	snprintf(buf, sizeof(buf), "case %d unexpected", n);
-	libreswan_passert_fail(buf, file_str, line_no);
-}
+	va_start(args, fmt);
+	fmt_log(m, sizeof(m), fmt, args);
+	va_end(args);
 
-void libreswan_passert_fail(const char *pred_str,
-			    const char *file_str, unsigned long line_no)
-{
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	libreswan_loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
-			file_str, line_no, pred_str);
+	libreswan_loglog(RC_LOG_SERIOUS,
+			 "ASSERTION FAILED: %s (in %s at %s:%lu)",
+			 m, func_str, file_str, line_no);
 	abort();	/* exiting correctly doesn't always work */
 }
 

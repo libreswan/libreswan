@@ -23,26 +23,31 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-extern void libreswan_passert_fail(const char *pred_str,
-				   const char *file_str,
-				   unsigned long line_no) NEVER_RETURNS;
+extern void libreswan_passert_fail(const char *file_str,
+				   unsigned long line_no,
+				   const char *func_str,
+				   const char *fmt, ...)
+	NEVER_RETURNS
+	PRINTF_LIKE(4);
 
-#define impossible()  libreswan_passert_fail("impossible", __FILE__, __LINE__)
+#define PASSERT_FAIL(FMT, ...)					\
+	libreswan_passert_fail(__FILE__, __LINE__,		\
+			       __func__, FMT, __VA_ARGS__)
 
-extern void libreswan_switch_fail(int n,
-				  const char *file_str,
-				  unsigned long line_no) NEVER_RETURNS;
+#define impossible()  libreswan_passert_fail(__FILE__, __LINE__, __func__, "impossible")
 
-#define bad_case(n) libreswan_switch_fail((int) (n), __FILE__, __LINE__)
+#define bad_case(N) {						\
+		long _n = (N);				\
+		PASSERT_FAIL("case %ld/%lu/%lx unexpected",	\
+			     _n, _n, _n);			\
+	}
 
 #define passert(pred) {							\
 		/* Shorter if(!(pred)) suppresses -Wparen */		\
 		if (pred) {} else {					\
-			libreswan_passert_fail(#pred, __FILE__,		\
-					       __LINE__);		\
+			PASSERT_FAIL("%s", #pred);			\
 		}							\
 	}
-
 
 /*
  * Check/log a pexpect failure to the "panic" channel.
@@ -73,10 +78,11 @@ extern void pexpect_log(const char *file_str, unsigned long line_no,
 	}
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
-#define happy(x) { \
-		err_t ugh = x; \
-		if (ugh != NULL) \
-			libreswan_passert_fail(ugh, __FILE__, __LINE__); \
+#define happy(x) {					\
+		err_t ugh = x;				\
+		if (ugh != NULL) {			\
+			PASSERT_FAIL("%s", ugh);	\
+		}					\
 	}
 
 #endif /* _LIBRESWAN_PASSERT_H */
