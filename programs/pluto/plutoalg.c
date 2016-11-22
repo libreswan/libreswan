@@ -134,9 +134,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 */
 	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
 	*new_info = (struct ike_info) {
-		.ike_ealg = ealg_id,
 		.ike_eklen = ek_bits,
-		.ike_halg = aalg_id,
 	};
 
 	/*
@@ -189,7 +187,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	if (new_info->ike_prf == NULL) {
 		struct esb_buf buf;
 		loglog(RC_LOG_SERIOUS, "unsupported PRF algorithm %s",
-		       enum_showb(&oakley_hash_names, new_info->ike_halg, &buf));
+		       enum_showb(&oakley_hash_names, aalg_id, &buf));
 		return;
 	}
 
@@ -204,7 +202,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		if (new_info->ike_integ == NULL) {
 			struct esb_buf buf;
 			loglog(RC_LOG_SERIOUS, "unsupported INTEG algorithm %s",
-			       enum_showb(&oakley_hash_names, new_info->ike_halg, &buf));
+			       enum_showb(&oakley_hash_names, aalg_id, &buf));
 			return;
 		}
 	}
@@ -462,11 +460,13 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 	return snprintf(buf, buflen,
 			"%s(%d)_%03d-%s(%d)-%s(%d)",
 			enum_show_shortb(&oakley_enc_names,
-					 ike_info->ike_ealg, &enc_buf),
-			ike_info->ike_ealg, eklen,
+					 ike_info->ike_encrypt->common.ikev1_oakley_id,
+					 &enc_buf),
+			ike_info->ike_encrypt->common.ikev1_oakley_id, eklen,
 			enum_show_shortb(&oakley_hash_names,
-					 ike_info->ike_halg, &hash_buf),
-			ike_info->ike_halg,
+					 ike_info->ike_prf->common.ikev1_oakley_id,
+					 &hash_buf),
+			ike_info->ike_prf->common.ikev1_oakley_id,
 			enum_show_shortb(&oakley_group_names,
 					 ike_info->ike_dh_group->group,
 					 &group_buf),

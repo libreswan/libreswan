@@ -114,8 +114,8 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
-		unsigned ealg = ike_info->ike_ealg;
-		unsigned halg = ike_info->ike_halg;
+		unsigned ealg = ike_info->ike_encrypt->common.ikev1_oakley_id;
+		unsigned halg = ike_info->ike_prf->common.ikev1_oakley_id;
 		unsigned modp = ike_info->ike_dh_group->group;
 		unsigned eklen = ike_info->ike_eklen;
 
@@ -275,8 +275,10 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 				loglog(RC_LOG_SERIOUS,
 				       "transform (%s,%s,%s keylen %ld) ignored.",
-				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				       enum_name(&oakley_hash_names, ike_info->ike_halg),
+				       enum_name(&oakley_enc_names,
+						 ike_info->ike_encrypt->common.ikev1_oakley_id),
+				       enum_name(&oakley_hash_names,
+						 ike_info->ike_prf->common.ikev1_oakley_id),
 				       enum_name(&oakley_group_names, ike_info->ike_dh_group->group),
 				       (long)ike_info->ike_eklen);
 				free_sa(&emp_sp);
@@ -305,7 +307,8 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			int def_ks = 0;
 
 			if (ike_info->ike_eklen == 0)
-				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
+				def_ks = crypto_req_keysize(CRK_IKEv1,
+							    ike_info->ike_encrypt->common.ikev1_oakley_id);
 
 			if (def_ks != 0) {
 				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
