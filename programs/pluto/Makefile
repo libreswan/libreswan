@@ -248,7 +248,7 @@ DEFINES = $(EXTRA_DEFINES) \
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2)
+LIBSPLUTO+=${LIBSHA1} $(LIBSHA2)
 LIBSPLUTO+=$(X509_LIBS)
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
