@@ -194,13 +194,13 @@ endef
 # "test" and "check" just runs the entire testsuite.
 .PHONY: kvm-check kvm-test
 kvm-check kvm-test: $(KVM_KEYS)
-	$(call kvm-test, --test-result "good")
+	$(call kvm-test, --test-status "good")
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
 .PHONY: kvm-retest kvm-recheck
 kvm-retest kvm-recheck: $(KVM_KEYS)
-	$(call kvm-test, --test-result "good" --skip passed)
+	$(call kvm-test, --test-status "good" --skip passed)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
