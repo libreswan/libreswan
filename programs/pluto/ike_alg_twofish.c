@@ -103,6 +103,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
+		.ikev1_esp_id = ESP_TWOFISH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_TWOFISH_CBC
