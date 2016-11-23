@@ -413,7 +413,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
     RESULT = {
         jsonutil.result.testname: test.name,
-        jsonutil.result.expect: test.expected_result,
+        jsonutil.result.expect: test.status,
         jsonutil.result.result: result,
         jsonutil.result.issues: result.issues,
         jsonutil.result.hosts: test.host_names,

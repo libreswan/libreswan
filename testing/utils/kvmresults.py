@@ -310,7 +310,7 @@ def results(logger, tests, baseline, args, result_stats):
                 elif p is Print.test_directory:
                     b.add(p, test.directory)
                 elif p is Print.test_status or p is Print.expected_result:
-                    b.add(p, test.expected_result)
+                    b.add(p, test.status)
                 elif p is Print.test_host_names or p is Print.host_names:
                     b.add(p, test.host_names,
                           string=lambda host_names, sep: sep + ",".join(host_names))

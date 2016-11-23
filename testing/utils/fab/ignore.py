@@ -45,7 +45,7 @@ def test(logger, args, test):
 
     if args.test_kind.pattern and not args.test_kind.search(test.kind):
         return test.kind, "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
-    if args.test_result.pattern and not args.test_result.search(test.expected_result):
-        return test.expected_result, "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_result.pattern)
+    if args.test_result.pattern and not args.test_result.search(test.status):
+        return test.status, "expected test result '%s' does not match '%s'" % (test.status, args.test_result.pattern)
 
     return None, None

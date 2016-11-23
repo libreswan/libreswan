@@ -27,11 +27,11 @@ class Test:
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
                  testsuite_output_directory=None,
-                 kind="kvmplutotest", expected_result="good"):
+                 kind="kvmplutotest", status="good"):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
-        self.expected_result = expected_result
+        self.status = status
 
         # The test's name is always identical to the test directory's
         # name (aka basename).  However, since TEST_DIRECTORY could be
@@ -145,9 +145,9 @@ class Testsuite:
                     continue
                 kind = fields[0]
                 name = fields[1]
-                expected_result = fields[2]
+                status = fields[2]
                 # pr = fields[3]?
-                test = Test(kind=kind, expected_result=expected_result,
+                test = Test(kind=kind, status=status,
                             test_directory=os.path.join(self.directory, name),
                             testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
