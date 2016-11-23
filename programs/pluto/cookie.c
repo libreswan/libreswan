@@ -23,9 +23,10 @@
 
 #include "constants.h"
 #include "defs.h"
-#include "sha2.h"
 #include "rnd.h"
 #include "cookie.h"
+#include "ike_alg_sha2.h"
+#include "crypt_hash.h"
 
 const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
 
@@ -54,19 +55,22 @@ void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 					       struct in6_addr B;
 				       })];
 			u_char buffer[SHA2_256_DIGEST_SIZE];
-			sha256_context ctx;
 
 			size_t addr_length =
 				addrbytesof(addr, addr_buff,
 					    sizeof(addr_buff));
-			sha256_init(&ctx);
-			sha256_write(&ctx, addr_buff, addr_length);
-			sha256_write(&ctx, secret_of_the_day,
-				   sizeof(secret_of_the_day));
+			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
+								 "cookie", DBG_CRYPT);
+			crypt_hash_digest_bytes(ctx, "addr",
+						addr_buff, addr_length);
+			crypt_hash_digest_bytes(ctx, "sod",
+						secret_of_the_day,
+						sizeof(secret_of_the_day));
 			counter++;
-			sha256_write(&ctx, (const void *) &counter,
-				   sizeof(counter));
-			sha256_final(buffer, &ctx);
+			crypt_hash_digest_bytes(ctx, "counter",
+						(const void *) &counter,
+						sizeof(counter));
+			crypt_hash_final_bytes(&ctx, buffer, sizeof(buffer));
 			/* cookie size is smaller than any hash output sizes */
 			memcpy(cookie, buffer, COOKIE_SIZE);
 		}

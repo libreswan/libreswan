@@ -67,7 +67,8 @@
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
-#include "sha2.h"
+#include "ike_alg_sha2.h"
+#include "crypt_hash.h"
 
 #include "ietf_constants.h"
 
@@ -3891,20 +3892,21 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
 			      ip_address *addr, chunk_t spiI)
 {
 	size_t addr_length;
-	sha256_context ctx_sha256;
 	unsigned char addr_buff[
 		sizeof(union { struct in_addr A;
 			       struct in6_addr B;
 		       })];
 
 	addr_length = addrbytesof(addr, addr_buff, sizeof(addr_buff));
-	sha256_init(&ctx_sha256);
-	sha256_write(&ctx_sha256, ni.ptr, ni.len);
-	sha256_write(&ctx_sha256, addr_buff, addr_length);
-	sha256_write(&ctx_sha256, spiI.ptr, spiI.len);
-	sha256_write(&ctx_sha256, ikev2_secret_of_the_day,
-		   SHA2_256_DIGEST_SIZE);
-	sha256_final(dcookie, &ctx_sha256);
+
+	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
+						 "dcookie", DBG_CRYPT);
+	crypt_hash_digest_chunk(ctx, "ni", ni);
+	crypt_hash_digest_bytes(ctx, "addr", addr_buff, addr_length);
+	crypt_hash_digest_chunk(ctx, "spiI", spiI);
+	crypt_hash_digest_bytes(ctx, "sod", ikev2_secret_of_the_day,
+				SHA2_256_DIGEST_SIZE);
+	crypt_hash_final_bytes(&ctx, dcookie, SHA2_256_DIGEST_SIZE);
 	DBG(DBG_PRIVATE,
 	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
 		    ikev2_secret_of_the_day,
