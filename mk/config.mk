@@ -461,11 +461,10 @@ LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBSHA1} ${LIBSHA2}
+CRYPTOLIBS=${LIBSHA2}
 
 ifeq ($(USE_TWOFISH),true)
 CRYPTOLIBS+= ${LIBTWOFISH}
@@ -481,7 +480,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWLOGLIB
 export LIBDESSRCDIR
-export LIBSHA1 LIBTWOFISH LIBSERPENT
+export LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1

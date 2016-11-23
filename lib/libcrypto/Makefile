@@ -21,7 +21,7 @@ endif
 include $(top_srcdir)/Makefile.inc
 
 # needs ifdefs for USE_MD5, etc
-SUBDIRS=libsha1 libsha2
+SUBDIRS=libsha2
 
 ifeq ($(USE_SERPENT),true)
 SUBDIRS+=libserpent
