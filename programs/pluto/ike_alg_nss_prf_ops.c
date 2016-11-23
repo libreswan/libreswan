@@ -45,7 +45,10 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 
 {
 	passert(prf_desc->common.nss_mechanism > 0);
-	SECItem ignore = {0};
+	/* lame, screwed up old compilers what this */
+	SECItem ignore = {
+		.len = 0,
+	};
 	PK11Context *context = PK11_CreateContextBySymKey(prf_desc->common.nss_mechanism,
 							  CKA_SIGN,
 							  key, &ignore);
