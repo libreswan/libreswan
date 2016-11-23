@@ -941,3 +941,33 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	    DBG_log("returning new proposal from esp_info"));
 	return n;
 }
+
+void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
+{
+	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+	     algp != NULL; algp = next_encrypt_desc(algp)) {
+		if (esp_info->transid == (*algp)->common.ikev1_esp_id) {
+			esp_info->esp_encrypt = (*algp);
+		}
+	}
+	if (esp_info->esp_encrypt == NULL && DBGP(DBG_CONTROLMORE)) {
+		struct esb_buf buf;
+		DBG_log("XXX: ESP/AH ENCRYPT algorithm %s=%d not found",
+			enum_showb(&esp_transformid_names,
+				   esp_info->transid, &buf),
+			esp_info->transid);
+	}
+	for (const struct integ_desc **algp = next_integ_desc(NULL);
+	     algp != NULL; algp = next_integ_desc(algp)) {
+		if (esp_info->auth == (*algp)->common.ikev1_esp_id) {
+			esp_info->esp_integ = (*algp);
+		}
+	}
+	if (esp_info->esp_integ == NULL && DBGP(DBG_CONTROLMORE)) {
+		struct esb_buf buf;
+		DBG_log("XXX: ESP/AH INTEG algorithm %s=%d not found",
+			enum_showb(&auth_alg_names,
+				   esp_info->auth, &buf),
+			esp_info->auth);
+	}
+}

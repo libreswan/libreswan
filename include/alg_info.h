@@ -69,13 +69,13 @@ struct esp_info {
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
-	const struct encrypt_desc *encrypt;
+	const struct encrypt_desc *esp_encrypt;
 	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
 	/*
 	 * The authentication algorithm; if required by ESP/AH.
 	 */
-	const struct integ_desc *integ;
+	const struct integ_desc *esp_integ;
 	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
 	/*
 	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and

@@ -312,18 +312,6 @@ static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *tabl
 	return NULL;
 }
 
-const struct encrypt_desc *ikev1_get_esp_info_encrypt_desc(const struct esp_info *esp)
-{
-	return (const struct encrypt_desc *) ikev1_esp_lookup(&encrypt_algorithms.all,
-							      esp->transid);
-}
-
-const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info *esp)
-{
-	return (const struct integ_desc *) ikev1_esp_lookup(&integ_algorithms.all,
-							    esp->auth);
-}
-
 static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table, int id)
 {
 	FOR_EACH_IKE_ALGP(table, algp) {

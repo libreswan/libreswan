@@ -1551,7 +1551,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
          *   there are many many functions duplicating the knowlege
          *   the algorithm database already contains.
 	 */
-	DBG(DBG_CONTROLMORE,DBG_log("XXX: Hacking around rumoured lack of ESP/AH algorithms in the crypto database"));
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
 		if (ta.encrypter != NULL) {
 			err_t ugh;
@@ -2233,7 +2232,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			 * XXX: Try to use the generic code, but avoid
 			 * it if things look suspect for now.
 			 */
-			const struct encrypt_desc *encrypt = ikev1_get_esp_info_encrypt_desc(esp_info);
+			const struct encrypt_desc *encrypt = esp_info->esp_encrypt;
 			if (encrypt != NULL && encrypt->common.ikev2_id != 0) {
 				if (!append_encrypt_transform(proposal, encrypt,
 							      esp_info->enckeylen)) {
@@ -2280,7 +2279,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					       esp_info->auth);
 					continue;
 				}
-				const struct integ_desc *integ = ikev1_get_esp_info_integ_desc(esp_info);
+				const struct integ_desc *integ = esp_info->esp_integ;
 				if (integ == NULL) {
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
@@ -2305,7 +2304,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       esp_info->auth);
 				continue;
 			}
-			const struct integ_desc *integ = ikev1_get_esp_info_integ_desc(esp_info);
+			const struct integ_desc *integ = esp_info->esp_integ;
 			if (integ == NULL) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,

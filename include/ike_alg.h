@@ -388,22 +388,6 @@ const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
 
 /*
- * Return the ENCRYPT/PRF/INTEG IKE_ALG as specified by ESP_INFO.
- *
- * Since ESP_INFO use IKEv1 numbers to identify the relevant
- * algorithm, these functions have an IKEv1 prefix.
- *
- * XXX: ESP_INFO should instead contain IKE_ALG pointers and be done
- * with all this.  Presumably that would mean adding a lookup-by-name
- * function to IKE_ALG.
- */
-
-struct esp_info;
-
-const struct encrypt_desc *ikev1_get_esp_info_encrypt_desc(const struct esp_info*);
-const struct integ_desc *ikev1_get_esp_info_integ_desc(const struct esp_info*);
-
-/*
  * Does the encryption algorithm require separate integrity (FALSE
  * implies AEAD).
  */

@@ -1415,6 +1415,14 @@ void add_connection(const struct whack_message *wm)
 				pfree(c);
 				return;
 			}
+			/*
+			 * XXX: Fill in esp_integ and esp_encrypt.
+			 * The alg_info should be setting those fields
+			 * directly.
+			 */
+			FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
+				fill_in_esp_info_ike_algs(esp_info);
+			}
 		}
 
 		c->alg_info_ike = NULL;
