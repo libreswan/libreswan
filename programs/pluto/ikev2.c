@@ -1455,6 +1455,25 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	return delay;
 }
 
+void log_ipsec_sa_established(const char *m, struct state *st)
+{
+	ipstr_buf bul, buh, bhl, bhh;
+
+	/* document IPsec SA details for admin's pleasure */
+	libreswan_log( "%s [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]", m,
+			ipstr(&st->st_ts_this.low, &bul),
+			ipstr(&st->st_ts_this.high, &buh),
+			st->st_ts_this.startport,
+			st->st_ts_this.endport,
+			st->st_ts_this.ipprotoid,
+			ipstr(&st->st_ts_that.low, &bhl),
+			ipstr(&st->st_ts_that.high, &bhh),
+			st->st_ts_that.startport,
+			st->st_ts_that.endport,
+			st->st_ts_that.ipprotoid);
+
+}
+
 static void success_v2_state_transition(struct msg_digest *md)
 {
 	const struct state_v2_microcode *svm = md->svm;
@@ -1483,21 +1502,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		sadetails[0] = '\0';
 
-		/* document IPsec SA details for admin's pleasure */
 		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			ipstr_buf bul, buh, bhl, bhh;
-
-			/* but if this is the parent st, this information is not set! you need to check the child sa! */
-			libreswan_log(
-				"negotiated connection [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]",
-				ipstr(&st->st_ts_this.low, &bul),
-				ipstr(&st->st_ts_this.high, &buh),
-				st->st_ts_this.startport, st->st_ts_this.endport, st->st_ts_this.ipprotoid,
-				ipstr(&st->st_ts_that.low, &bhl),
-				ipstr(&st->st_ts_that.high, &bhh),
-				st->st_ts_that.startport, st->st_ts_that.endport,
-				st->st_ts_that.ipprotoid);
-
+			log_ipsec_sa_established("negotiated connection", st);
 			fmt_ipsec_sa_established(st, sadetails,
 						 sizeof(sadetails));
 			/* log our success */

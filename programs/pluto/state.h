@@ -588,7 +588,7 @@ extern void clear_dh_from_state(struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
-extern void log_newest_sa_change(char *f, struct state *const st);
+extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 
 #ifdef XAUTH_HAVE_PAM

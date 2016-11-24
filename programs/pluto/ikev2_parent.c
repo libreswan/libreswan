@@ -3869,8 +3869,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	if (!install_ipsec_sa(st, TRUE))
 		return STF_FATAL;
 
-	c->newest_ipsec_sa = st->st_serialno;
-	log_newest_sa_change("inR2", st);
+	set_newest_ipsec_sa("inR2", st);
 
 	/*
 	 * Delete previous retransmission event.
@@ -4306,6 +4305,8 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 	}
 
 	record_outbound_ike_msg(cst, &reply_stream, "reply packet for ikev2_child_inIoutR_tail");
+
+	log_ipsec_sa_established("negotiated new IPSec SA", cst);
 
 	return STF_OK;
 }

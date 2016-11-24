@@ -2440,17 +2440,24 @@ void show_globalstate_status(void)
 	}
 }
 
-
-void log_newest_sa_change(char *f, struct state *const st)
+static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
+			  struct state *const st)
 {
-
 	DBG(DBG_CONTROLMORE,
-			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",f,
-				st->st_connection->name,
+			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
+				f, st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
-				st->st_serialno,
-				st->st_connection->newest_ipsec_sa,
-				st->st_connection->spd.
-				eroute_owner, st->st_clonedfrom));
+				st->st_serialno, old_ipsec_sa,
+				st->st_connection->spd.eroute_owner,
+				st->st_clonedfrom));
+}
+
+void set_newest_ipsec_sa(const char *m, struct state *const st)
+{
+	so_serial_t old_ipsec_sa = st->st_connection->newest_ipsec_sa;
+
+	st->st_connection->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change(m, old_ipsec_sa, st);
+
 }

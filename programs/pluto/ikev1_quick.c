@@ -2677,8 +2677,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	st->st_connection->newest_ipsec_sa = st->st_serialno;
-	log_newest_sa_change("inR1_outI2", st);
+	set_newest_ipsec_sa("inR1_outI2", st);
 
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
@@ -2715,8 +2714,7 @@ stf_status quick_inI2(struct msg_digest *md)
 	if (!install_ipsec_sa(st, FALSE))
 		return STF_INTERNAL_ERROR;
 
-	st->st_connection->newest_ipsec_sa = st->st_serialno;
-	log_newest_sa_change("inI2", st);
+	set_newest_ipsec_sa("inI2", st);
 
 	update_iv(st);  /* not actually used, but tidy */
 

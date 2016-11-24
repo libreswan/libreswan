@@ -22,6 +22,8 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern bool ikev2_delete_out(struct state *st);
 
+extern void log_ipsec_sa_established(const char *m, struct state *st);
+
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 
