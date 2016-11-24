@@ -149,13 +149,15 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 * XXX: work-in-progress
 	 */
 
-	for (const struct encrypt_desc **encryptp = next_ike_encrypt_desc(NULL);
-	     encryptp != NULL; encryptp = next_ike_encrypt_desc(encryptp)) {
+	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+	     algp != NULL; algp = next_encrypt_desc(algp)) {
+		const struct encrypt_desc *alg = *algp;
 		/*
 		 * keylen==0 implies use default or defaults.
 		 */
-		if ((*encryptp)->common.ikev1_oakley_id == ealg_id) {
-			new_info->ike_encrypt = *encryptp;
+		if (ike_alg_is_ike(&(alg)->common)
+		    && alg->common.ikev1_oakley_id == ealg_id) {
+			new_info->ike_encrypt = alg;
 			break;
 		}
 	}
@@ -177,10 +179,12 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		return;
 	}
 
-	for (const struct prf_desc **prfp = next_ike_prf_desc(NULL);
-	     prfp != NULL; prfp = next_ike_prf_desc(prfp)) {
-		if ((*prfp)->common.ikev1_oakley_id == aalg_id) {
-			new_info->ike_prf = *prfp;
+	for (const struct prf_desc **algp = next_prf_desc(NULL);
+	     algp != NULL; algp = next_prf_desc(algp)) {
+		const struct prf_desc *alg = *algp;
+		if (ike_alg_is_ike(&(alg)->common)
+		    && alg->common.ikev1_oakley_id == aalg_id) {
+			new_info->ike_prf = alg;
 			break;
 		}
 	}
@@ -192,10 +196,12 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	}
 
 	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
-		for (const struct integ_desc **integp = next_ike_integ_desc(NULL);
-		     integp != NULL; integp = next_ike_integ_desc(integp)) {
-			if ((*integp)->common.ikev1_oakley_id == aalg_id) {
-				new_info->ike_integ = *integp;
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			const struct integ_desc *alg = *algp;
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->common.ikev1_oakley_id == aalg_id) {
+				new_info->ike_integ = alg;
 				break;
 			}
 		}

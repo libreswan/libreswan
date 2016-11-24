@@ -14,6 +14,7 @@ enum ike_alg_type {
 	IKE_ALG_PRF,
 	IKE_ALG_INTEG,
 };
+#define IKE_ALG_FLOOR IKE_ALG_ENCRYPT
 #define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
 
 /*
@@ -412,11 +413,18 @@ extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
 void ike_alg_init(void);
 
 /*
- * Iterate over the IKE enabled algorithms.
+ * Iterate over all enabled algorithms.
  */
-const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last);
-const struct prf_desc **next_ike_prf_desc(const struct prf_desc **last);
-const struct integ_desc **next_ike_integ_desc(const struct integ_desc **last);
+const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
+const struct prf_desc **next_prf_desc(const struct prf_desc **last);
+const struct integ_desc **next_integ_desc(const struct integ_desc **last);
+
+/*
+ * Is the algorithm suitable for IKE (i.e., native)?
+ *
+ * Code should also filter on ikev1_oakley_id and/or ikev2_id.
+ */
+bool ike_alg_is_ike(const struct ike_alg *alg);
 
 /* Oakley group descriptions */
 

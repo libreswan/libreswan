@@ -205,6 +205,14 @@ static struct type_algorithms prf_algorithms;
 static struct type_algorithms integ_algorithms;
 static struct type_algorithms encrypt_algorithms;
 
+static struct type_algorithms *const type_algorithms[] = {
+	/*INVALID*/ NULL,
+	&encrypt_algorithms,
+	/*HASH*/ NULL,
+	&prf_algorithms,
+	&integ_algorithms,
+};
+
 static const struct ike_alg **next_alg(const struct algorithm_table *table,
 				       const struct ike_alg **last)
 {
@@ -220,22 +228,27 @@ static const struct ike_alg **next_alg(const struct algorithm_table *table,
 	return last;
 }
 
-const struct encrypt_desc **next_ike_encrypt_desc(const struct encrypt_desc **last)
+const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last)
 {
-	return (const struct encrypt_desc**)next_alg(&encrypt_algorithms.ike,
+	return (const struct encrypt_desc**)next_alg(&encrypt_algorithms.all,
 						     (const struct ike_alg**)last);
 }
 
-const struct prf_desc **next_ike_prf_desc(const struct prf_desc **last)
+const struct prf_desc **next_prf_desc(const struct prf_desc **last)
 {
-	return (const struct prf_desc**)next_alg(&prf_algorithms.ike,
+	return (const struct prf_desc**)next_alg(&prf_algorithms.all,
 						 (const struct ike_alg**)last);
 }
 
-const struct integ_desc **next_ike_integ_desc(const struct integ_desc **last)
+const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 {
-	return (const struct integ_desc**)next_alg(&integ_algorithms.ike,
+	return (const struct integ_desc**)next_alg(&integ_algorithms.all,
 						   (const struct ike_alg**)last);
+}
+
+bool ike_alg_is_ike(const struct ike_alg *alg)
+{
+	return type_algorithms[alg->algo_type]->desc_is_ike(alg);
 }
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
@@ -720,7 +733,12 @@ void ike_alg_init(void)
 #else
 	bool fips = FALSE;
 #endif
-	add_algorithms(fips, &encrypt_algorithms);
-	add_algorithms(fips, &prf_algorithms);
-	add_algorithms(fips, &integ_algorithms);
+	for (enum ike_alg_type type = IKE_ALG_FLOOR;
+	     type < IKE_ALG_ROOF; type++) {
+		struct type_algorithms *algorithms = type_algorithms[type];
+		if (algorithms) {
+			passert(algorithms->type == type)
+			add_algorithms(fips, algorithms);
+		}
+	}
 }

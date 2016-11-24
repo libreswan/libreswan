@@ -246,32 +246,37 @@ void ike_alg_show_status(void)
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	for (const struct encrypt_desc **algp = next_ike_encrypt_desc(NULL);
-	     algp != NULL;
-	     algp = next_ike_encrypt_desc(algp)) {
-		struct esb_buf v1namebuf, v2namebuf;
+	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
-
-		passert(alg->common.ikev1_oakley_id != 0 || alg->common.ikev2_id != 0);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-			  alg->common.ikev1_oakley_id,
-			  enum_showb(&oakley_enc_names, alg->common.ikev1_oakley_id, &v1namebuf),
-			  alg->common.ikev2_id,
-			  enum_showb(&ikev2_trans_type_encr_names, alg->common.ikev2_id, &v2namebuf),
-			  alg->enc_blocksize,
-			  alg->keydeflen);
+		if (ike_alg_is_ike(&(alg)->common)) {
+			struct esb_buf v1namebuf, v2namebuf;
+			passert(alg->common.ikev1_oakley_id != 0 || alg->common.ikev2_id != 0);
+			whack_log(RC_COMMENT,
+				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
+				  alg->common.ikev1_oakley_id,
+				  enum_showb(&oakley_enc_names,
+					     alg->common.ikev1_oakley_id,
+					     &v1namebuf),
+				  alg->common.ikev2_id,
+				  enum_showb(&ikev2_trans_type_encr_names,
+					     alg->common.ikev2_id,
+					     &v2namebuf),
+				  alg->enc_blocksize,
+				  alg->keydeflen);
+		}
 	}
 
-	for (const struct prf_desc **algp = next_ike_prf_desc(NULL);
-	     algp != NULL;
-	     algp = next_ike_prf_desc(algp)) {
+	for (const struct prf_desc **algp = next_prf_desc(NULL);
+	     algp != NULL; algp = next_prf_desc(algp)) {
 		const struct prf_desc *alg = (*algp);
-		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-			  alg->common.ikev1_oakley_id,
-			  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
-			  alg->prf_output_size);
+		if (ike_alg_is_ike(&(alg)->common)) {
+			whack_log(RC_COMMENT,
+				  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
+				  alg->common.ikev1_oakley_id,
+				  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
+				  alg->prf_output_size);
+		}
 	}
 
 	const struct oakley_group_desc *gdesc;
