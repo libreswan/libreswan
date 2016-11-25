@@ -1025,7 +1025,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 			rst = find_state_to_rekey(ntfy, pst);
 			if(rst == NULL) {
 				libreswan_log("no valid IPSec SA SPI to rekey");
-				return TRUE;
+				return FALSE;
 			}
 			break;
 		default:
@@ -1054,7 +1054,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		ikev2_print_ts(&st->st_ts_that);
 	}
 
-	return (rst == NULL ? TRUE : FALSE);
+	return (rst == NULL ? FALSE : TRUE );
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
@@ -1070,7 +1070,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	stf_status ret = STF_FAIL;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-			! ikev2_rekey_child_copy_ts(md)) {
+			ikev2_rekey_child_copy_ts(md)) {
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
