@@ -527,19 +527,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	struct pluto_event *ev = arg;
 	enum event_type type;
 	struct state *st;
-	char statenum[64];
 
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	if (st != NULL) {
-		snprintf(statenum, sizeof(statenum), " for %s state #%lu",
-			(st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
-			st->st_serialno);
-	}
-	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
-				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
-
+	DBG(DBG_CONTROL,
+	    char statenum[64] = "";
+	    if (st != NULL) {
+		    snprintf(statenum, sizeof(statenum), " for %s state #%lu",
+			     (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
+			     st->st_serialno);
+	    }
+	    DBG_log("handling event %s%s",
+		    enum_show(&timer_event_names, type), statenum));
 
 	passert(GLOBALS_ARE_RESET());
 
