@@ -52,6 +52,7 @@ ElectricFence
 audit-libs-devel
 bind-utils
 bison
+conntrack-tools
 curl-devel
 fipscheck-devel
 flex
