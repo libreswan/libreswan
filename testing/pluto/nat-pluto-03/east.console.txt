@@ -8,6 +8,9 @@ east #
  ipsec auto --add road-eastnet
 002 added connection description "road-eastnet"
 east #
+ ipsec status |grep encaps:
+000 "road-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+east #
  echo "initdone"
 initdone
 east #
