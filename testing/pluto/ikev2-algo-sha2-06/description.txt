@@ -2,5 +2,3 @@ Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This tests SHA2_512 for IKE and ESP using ike=aes-sha2_512;modp1536 and esp=aes256-sha2_512
 
-currently, the netkey kernel seems to refuse sha2_512 and this test fails
-
