@@ -28,7 +28,6 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev1
-003 WARNING: DH23 and DH24 from RFC-5114 are too weak! Support will be removed in the near future
 002 added connection description "westnet-eastnet-ikev1"
 west #
  echo "initdone"

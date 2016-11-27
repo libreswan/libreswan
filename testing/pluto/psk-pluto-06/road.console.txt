@@ -8,7 +8,6 @@ road #
  ipsec whack --debug-all --impair-retransmits
 road #
  ipsec auto --add road-east-psk
-003 WARNING: DH2 (modp-1024) and DH5 (modp-1536) are getting weak. Support for these in IKEv2 will be removed in the near future
 002 added connection description "road-east-psk"
 road #
  echo "initdone"
