@@ -78,7 +78,7 @@ ip_subnet *dst;
 
 	mask = slash + 1;
 	mlen = srclen - (mask - src);
-	oops = ttoaddr(src, slash - src, af, &addrtmp);
+	oops = ttoaddr_num(src, slash - src, af, &addrtmp);
 	if (oops != NULL)
 		return oops;
 
