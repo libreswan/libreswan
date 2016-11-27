@@ -52,7 +52,6 @@ ElectricFence
 audit-libs-devel
 bind-utils
 bison
-conntrack-tools
 curl-devel
 fipscheck-devel
 flex
@@ -123,7 +122,16 @@ yum-utils
 #ifconfig eth0 mtu 1400
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
-ifup ens2
+
+ip addr show scope global >> /var/tmp/network.log
+HWA=`cat /sys/class/net/e[n-t][h-s]?/address`
+#clean up HWADDR line F22 has it F25 not:)
+mv /etc/sysconfig/network-scripts/ifcfg-ens? /etc/sysconfig/network-scripts/ifcfg-eth0
+sed -i '/HWADDR=/d' /etc/sysconfig/network-scripts/ifcfg-eth0
+echo "HWADDR=\"$HWA\"" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
+# sometimes it need another ifup
+ifup ens2 >> /var/tmp/network.log
 
 # Install anything missing from the CD, but found in the "Everything"
 # repo here.
@@ -137,18 +145,14 @@ ifup ens2
 
 rpm -qa > /var/tmp/rpm-qa.log
 
-# workaround for vim fedora22 packaging bug. we want vim-enhanced and
-# that clashes with vim-minimal.
-
-
-# TODO: if rhel/centos, we should install epel-release too
+dnf -y update 2>&1 |  tee /var/tmp/dnf-update.log
 
 # To help avoid duplicates THIS LIST IS SORTED.
-
 dnf install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
     bison \
+    conntrack-tools \
     curl-devel \
     fipscheck-devel \
     flex \
@@ -192,6 +196,7 @@ kvm_debuginfo=true
 $kvm_debuginfo && dnf debuginfo-install -y \
     ElectricFence \
     audit-libs \
+    conntrack-tools \
     cyrus-sasl \
     glibc \
     keyutils \
@@ -275,9 +280,6 @@ EOD
 
 cat << EOD >> /root/.bash_profile
 export GIT_PS1_SHOWDIRTYSTATE=true
-#source /usr/share/git-core/contrib/completion/git-prompt.sh
-#source /usr/share/doc/git/contrib/completion/git-prompt.sh
-#export PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(declare -F __git_ps1 &>/dev/null && __git_ps1 " (%s)")\[\033[00m\]\\$ '
 alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim
 EOD
@@ -301,9 +303,6 @@ Type=oneshot
 WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 systemctl enable sshd-shutdown.service
-
-# ensure pluto does not get restarted by systemd on crash
-sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
 
 #ensure we can get coredumps
 echo " * soft core unlimited" >> /etc/security/limits.conf
