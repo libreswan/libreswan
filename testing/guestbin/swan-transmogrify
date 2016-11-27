@@ -29,30 +29,42 @@ if os.path.isfile("/etc/redhat-release"):
 elif os.path.isfile("/etc/debian_version"):
     GUESTOS = "debian"
 
-eth0 = subprocess.getoutput("cat /sys/class/net/eth0/address")
 
-# on docker the hostname is already set. Use hostname to identify
-hostname = subprocess.getoutput("hostname -s")
+myname = os.path.basename(sys.argv[0])
+subprocess.getstatusoutput("rm -f /var/tmp/%s" % (myname))
+subprocess.getstatusoutput("echo %s > /var/tmp/%s.ran" % (myname, myname))
+
+(status, eth0) = subprocess.getstatusoutput("cat /sys/class/net/eth0/address")
+maclist = None
+if status:
+    # may be this host was never initialized.
+    (status, maclist) = subprocess.getstatusoutput(
+        "cat /sys/class/net/ens*/address")
+    eth0 = None
+else:
+    maclist = eth0
 
 output = ""
 is_docker = None
 is_kvm = None
 
-if hostname in macs:
-    print(("this is a docker instance hostname %s" % hostname))
-    is_docker = True
-    is_kvm = False
-else:
-    hostname = None
-    for h in list(macs.keys()):
-        mac = macs[h]
-        if mac in eth0:
+hostname = None
+for h in list(macs.keys()):
+    mac = macs[h]
+    for m in maclist.split():
+        if mac in m:
             hostname = h
             is_docker = False
             is_kvm = True
 
+if not is_kvm:
+    # on docker the hostname is already set. Use hostname to identify
+    print(("this is a docker instance hostname %s" % hostname))
+    is_docker = True
+
 if not hostname:
-    sys.exit("ERROR: Failed to find our swan hostname based on the mac of eth0")
+    sys.exit(
+        "ERROR: Failed to find our swan hostname based on the mac match knownlist ")
 
 # print "we are %s"%hostname
 # we seem to have found our identity
@@ -88,6 +100,9 @@ output += "\n" + \
 output += "\n" + \
     subprocess.getoutput("cp /testing/baseconfigs/all/root/.ssh/* /root/.ssh/")
 output += "\n" + subprocess.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/*")
+
+shutil.copyfile("/testing/baseconfigs/%s/etc/hostname" %
+                hostname, "/etc/hostname")
 
 if GUESTOS == "redhat":
     shutil.copyfile("/testing/baseconfigs/%s/etc/sysconfig/network" %
@@ -129,8 +144,6 @@ if GUESTOS == "redhat":
 
 
 elif GUESTOS == "debian":
-    shutil.copyfile("/testing/baseconfigs/%s/etc/hostname" %
-                    hostname, "/etc/hostname")
     shutil.copyfile("/testing/baseconfigs/%s/etc/network/interfaces" %
                     hostname, "/etc/network/interfaces")
     output += "\n" + subprocess.getoutput("/etc/init.d/networking restart")
