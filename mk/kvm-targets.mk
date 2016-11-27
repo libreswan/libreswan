@@ -349,7 +349,7 @@ $(foreach prefix, $(KVM_PREFIXES), \
 # (there's a rumour that libreswan's main testing machine has this
 # problem) create a dedicated swandefault.
 
-KVM_DEFAULT_NETWORK = swandefault
+KVM_DEFAULT_NETWORK ?= swandefault
 KVM_DEFAULT_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_DEFAULT_NETWORK).xml
 .PHONY: install-kvm-default-network install-kvm-network-$(KVM_DEFAULT_NETWORK)
 install-kvm-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
@@ -421,6 +421,16 @@ KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS).ks
 endif
 KVM_DEBUGINFO ?= true
 
+ifeq ($(KVM_OS),fedora25)
+	# fedora 25 hack. run swan-transmogrify to initialze Network interscace
+	# It does not seems to run the first time when called from /etc/rc.d/rc.local
+	# This slows down installation. If you 7 prefixes it could cost 40 min:)
+	KVM_F25_HACK=$(KVMSH) --shutdown $(1)$(2) '/testing/guestbin/swan-transmogrify'
+else
+	KVM_F25_HACK=
+endif
+
+
 # Create the base domain and, as a side effect, the disk image.
 #
 # To avoid unintended re-builds triggered by things like a git branch
@@ -486,12 +496,12 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 		--import \
 		--noautoconsole \
 		--noreboot
-	: Fixing up eth0, must be a better way ...
+	: Fixing up eth0, must be a better way ...in F25 This works after a reboot.
 	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN) \
-		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/eth0/address)\"/"' \
+		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
 			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
 		service network restart \; \
-		ifconfig eth0
+		ip address show scope global
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-clone-domain
@@ -534,6 +544,7 @@ define install-kvm-test-domain
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
 	$(VIRSH) define $$@.tmp
+	$(KVM_F25_HACK)
 	mv $$@.tmp $$@
 endef
 
