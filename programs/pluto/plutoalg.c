@@ -167,16 +167,16 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		       enum_showb(&oakley_enc_names, ealg_id, &buf));
 		return;
 	}
-	if (ek_bits != 0
-	    && new_info->ike_encrypt->keyminlen != ek_bits
-	    && new_info->ike_encrypt->keydeflen != ek_bits
-	    && new_info->ike_encrypt->keymaxlen != ek_bits) {
-		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS,
-		       "ENCRYPT algorithm %s with key length %u is not supported",
-		       enum_showb(&oakley_enc_names, ealg_id, &buf),
-		       ek_bits);
-		return;
+	if (ek_bits != 0) {
+		if (!encrypt_has_key_bit_length(new_info->ike_encrypt,
+						ek_bits)) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "ENCRYPT algorithm %s with key length %u is not supported",
+			       enum_showb(&oakley_enc_names, ealg_id, &buf),
+			       ek_bits);
+			return;
+		}
 	}
 
 	for (const struct prf_desc **algp = next_prf_desc(NULL);
