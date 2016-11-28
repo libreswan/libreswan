@@ -206,10 +206,6 @@ struct encrypt_desc {
 	 */
 	const unsigned keydeflen;
 
-	/* these are redundant */
-	const unsigned keymaxlen;
-	const unsigned keyminlen;
-
 	/*
 	 * Perform simple encryption.
 	 *

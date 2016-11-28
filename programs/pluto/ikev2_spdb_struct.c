@@ -1763,7 +1763,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			DBG(DBG_CONTROL,
 			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
 				    protocol, encrypt->common.name,
-				    encrypt->keymaxlen, encrypt->keydeflen));
+				    keymaxlen, encrypt->keydeflen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.ikev2_id, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -1773,7 +1773,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			DBG(DBG_CONTROL,
 			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
 				    protocol, encrypt->common.name,
-				    encrypt->keydeflen, encrypt->keymaxlen));
+				    encrypt->keydeflen, keymaxlen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.ikev2_id, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,

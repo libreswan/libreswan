@@ -111,9 +111,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
-	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
-	.keymaxlen =    AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = ike_alg_nss_cbc,
 };
@@ -336,9 +334,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.pad_to_blocksize = FALSE,
 	.wire_iv_size =	8,
 	.salt_size = 4,
-	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
-	.keymaxlen =    AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt =     do_aes_ctr,
 };
@@ -476,9 +472,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.pad_to_blocksize = FALSE,
 	.wire_iv_size =	8,
 	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =    AES_GCM_KEY_MIN_LEN,
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
-	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
 	.do_aead_crypt_auth =     do_aes_gcm,
@@ -499,9 +493,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
 	.do_aead_crypt_auth =     do_aes_gcm,
@@ -523,9 +515,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
 	.do_aead_crypt_auth =     do_aes_gcm,
@@ -549,9 +539,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, }
 };
 
@@ -573,9 +561,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, }
 };
 
@@ -597,9 +583,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, }
 };
 

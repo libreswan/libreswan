@@ -568,15 +568,6 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 */
 	passert(encrypt->keydeflen > 0);
 	passert(encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
-	/*
-	 * Hard wired key values can be found in the list.
-	 *
-	 * Of these, only keydeflen is useful.
-	 */
-	passert(encrypt->keyminlen == 0
-		|| encrypt_has_key_bit_length(encrypt, encrypt->keyminlen));
-	passert(encrypt->keymaxlen == 0
-		|| encrypt_has_key_bit_length(encrypt, encrypt->keymaxlen));
 }
 
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)

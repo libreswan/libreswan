@@ -92,8 +92,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
-	.keyminlen = TWOFISH_KEY_DEF_LEN,
-	.keymaxlen = TWOFISH_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_twofish,
 };
@@ -114,8 +112,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
-	.keyminlen = TWOFISH_KEY_DEF_LEN,
-	.keymaxlen = TWOFISH_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_twofish,
 };

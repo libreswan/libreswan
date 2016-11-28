@@ -110,9 +110,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size =       CAMELLIA_BLOCK_SIZE,
-	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
-	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = ike_alg_nss_cbc,
 };
@@ -129,8 +127,6 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
 	.wire_iv_size =	CAMELLIA_BLOCK_SIZE,
-	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
-	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
 	.key_bit_lengths = { 256, 192, 128, }
 };
