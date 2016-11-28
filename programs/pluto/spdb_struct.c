@@ -140,14 +140,10 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			continue;
 		}
 
-		if (eklen != 0 &&
-		    (eklen < enc_desc->keyminlen ||
-		     eklen > enc_desc->keymaxlen)) {
-			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid min=%d, max=%d should have been dropped",
+		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
+			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
 				    enc_desc->common.name,
-				    eklen,
-				    enc_desc->keyminlen,
-				    enc_desc->keymaxlen);
+				    eklen);
 			continue;
 		}
 
@@ -312,7 +308,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 			if (def_ks != 0) {
 				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
-				int max_ks = enc_desc->keymaxlen;
+				int max_ks = encrypt_max_key_bit_length(enc_desc);
 				int ks;
 
 				passert(emp_sp->dynamic);

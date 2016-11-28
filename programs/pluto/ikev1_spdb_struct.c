@@ -797,26 +797,21 @@ static bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		/* failure: encrypt algo must be present */
 		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
 		ret = FALSE;
-	} else if (key_len != 0 && (key_len < enc_desc->keyminlen ||
-				    key_len > enc_desc->keymaxlen)) {
+	} else if (key_len != 0 && !encrypt_has_key_bit_length(enc_desc, key_len)) {
 		/* failure: if key_len specified, it must be in range */
 		snprintf(ugh_buf, ugh_buf_len,
-			 "key_len not in range: encalg=%d, key_len=%d, keyminlen=%d, keymaxlen=%d",
-			 ealg, key_len,
-			 enc_desc->keyminlen,
-			 enc_desc->keymaxlen);
+			 "key_len invalid: encalg=%d, key_len=%d",
+			 ealg, key_len);
 		libreswan_log("ike_alg_enc_ok(): %s", ugh_buf);
 		ret = FALSE;
 	}
 
 	DBG(DBG_KERNEL,
 	    if (ret) {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keyminlen=%d, keydeflen=%d, keymaxlen=%d, ret=%d",
+		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keydeflen=%d, ret=%d",
 			    ealg, key_len,
 			    (int)enc_desc->enc_blocksize,
-			    enc_desc->keyminlen,
 			    enc_desc->keydeflen,
-			    enc_desc->keymaxlen,
 			    ret);
 	    } else {
 		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): NO",
