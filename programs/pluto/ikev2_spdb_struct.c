@@ -1700,10 +1700,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		       protocol, encrypt->common.name);
 		return FALSE;
 	}
-	if (keylen > 0
-	    && keylen != encrypt->keyminlen
-	    && keylen != encrypt->keydeflen
-	    && keylen != encrypt->keymaxlen) {
+	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
 		PEXPECT_LOG("IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
 			    protocol, encrypt->common.name, keylen);
 		return FALSE;
@@ -1721,13 +1718,13 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 					 protocol, encrypt->common.name));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.ikev2_id, 0);
-	} else if (encrypt->keydeflen == 0 || encrypt->keydeflen == encrypt->keymaxlen) {
-		pexpect(encrypt->keymaxlen > 0);
+	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
+		passert(encrypt->keydeflen > 0);
 		DBG(DBG_CONTROL,
 		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
-			    protocol, encrypt->common.name, encrypt->keymaxlen));
+			    protocol, encrypt->common.name, encrypt->keydeflen));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.ikev2_id, encrypt->keymaxlen);
+				 encrypt->common.ikev2_id, encrypt->keydeflen);
 	} else {
 		/*
 		 * XXX:
@@ -1756,9 +1753,11 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * duplicate then the worst that happens is a bogus or
 		 * redundant proposal is made.
 		 */
-		pexpect(encrypt->keymaxlen > 0);
-		pexpect(encrypt->keydeflen > 0);
-		pexpect(encrypt->keydeflen < encrypt->keymaxlen);
+		unsigned keymaxlen = encrypt_max_key_bit_length(encrypt);
+		passert(encrypt->keydeflen > 0);
+		passert(keymaxlen > 0);
+		/* equal handled above */
+		passert(keymaxlen > encrypt->keydeflen);
 		switch (proposal->protoid) {
 		case IKEv2_SEC_PROTO_IKE:
 			DBG(DBG_CONTROL,
@@ -1766,7 +1765,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				    protocol, encrypt->common.name,
 				    encrypt->keymaxlen, encrypt->keydeflen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, encrypt->keymaxlen);
+					 encrypt->common.ikev2_id, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.ikev2_id, encrypt->keydeflen);
 			break;
@@ -1778,7 +1777,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.ikev2_id, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, encrypt->keymaxlen);
+					 encrypt->common.ikev2_id, keymaxlen);
 			break;
 		default:
 			/* presumably AH */
