@@ -194,6 +194,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug, NULL,
 					      bytes, sizeof_bytes);
 	pfree(bytes);
+	pfree(*prf); *prf = NULL;
 	return final;
 }
 
