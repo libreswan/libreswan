@@ -114,6 +114,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = ike_alg_nss_cbc,
 };
 
@@ -338,6 +339,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt =     do_aes_ctr,
 };
 
@@ -477,6 +479,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keyminlen =    AES_GCM_KEY_MIN_LEN,
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
@@ -499,6 +502,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
@@ -522,6 +526,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
 	.do_aead_crypt_auth =     do_aes_gcm,
 };
@@ -547,6 +552,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, }
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -570,6 +576,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, }
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -593,6 +600,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, }
 };
 
 struct integ_desc ike_alg_integ_aes_xcbc = {

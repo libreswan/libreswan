@@ -113,6 +113,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = ike_alg_nss_cbc,
 };
 
@@ -131,4 +132,5 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 	.keyminlen =    CAMELLIA_KEY_MIN_LEN,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.keymaxlen =    CAMELLIA_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, }
 };

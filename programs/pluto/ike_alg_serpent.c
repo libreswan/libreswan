@@ -86,5 +86,6 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.keymaxlen = SERPENT_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_serpent,
 };

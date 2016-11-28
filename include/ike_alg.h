@@ -182,7 +182,31 @@ struct encrypt_desc {
 	 */
 	const bool keylen_omitted;
 
+	/*
+	 * Array of valid key lengths in bits.
+	 *
+	 * - must be zero terminated; makes iterating easier.
+	 *
+	 * - must contain at least one entry; else what is going on.
+	 *
+	 * - must be in descending order; so max value is first.
+	 *
+	 * If a key-length is required (!keylen_omitted) but omitted
+	 * from the {ike,esp}= line, then both KEYDEFLEN and (if
+	 * different) key_bit_lengths[0] are used in proposals.
+	 */
+	const unsigned key_bit_lengths[4];
+
+	/*
+	 * The default key length.
+	 *
+	 * XXX: this is not the _prefered_ key length.  IKEv2 IKE
+	 * prefers key_bit_lengths[0], while IKEv2 ESP/AH prefer
+	 * KEYDEFLEN.  Weird.
+	 */
 	const unsigned keydeflen;
+
+	/* these are redundant */
 	const unsigned keymaxlen;
 	const unsigned keyminlen;
 
@@ -409,6 +433,16 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last);
  * Code should also filter on ikev1_oakley_id and/or ikev2_id.
  */
 bool ike_alg_is_ike(const struct ike_alg *alg);
+
+/*
+ * Is the key valid for the encryption algorithm?
+ */
+bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
+
+/*
+ * The largest key size allowed.
+ */
+unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
 
 /* Oakley group descriptions */
 
