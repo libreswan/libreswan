@@ -1403,6 +1403,20 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 						    transform->id));
 					/* return FALSE */
 				}
+				/*
+				 * For IKE, ENCRYPT contains an IKEv2
+				 * value, but for ESP/AH, it contains
+				 * an IKEv1 value!
+				 *
+				 * For moment, set it to the IKEv2
+				 * value, and let the caller patch
+				 * things up.
+				 *
+				 * XXX: Short of deleting it, ENCRYPT
+				 * should at least be moved to enum
+				 * ipsec_trans_attrs
+				 * .ipsec_cipher_alg.
+				 */
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
 				ta.enckeylen = transform->attr_keylen;
@@ -1459,6 +1473,20 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					       transform->id);
 					return FALSE;
 				}
+				/*
+				 * For IKE, INTEG_HASH contains an
+				 * IKEv2, but for ESP/AH it contains
+				 * an IKEv1 value!
+				 *
+				 * For moment, set it to the IKEv2
+				 * value, and let the caller patch
+				 * things up.
+				 *
+				 * XXX: Short of deleting it,
+				 * INTEG_HASH should at least be moved
+				 * to enum ipsec_trans_attrs
+				 * .ipsec_authentication_algo.
+				 */
 				ta.integ_hash = integ ? transform->id : 0;
 				ta.integ = integ;
 				break;
@@ -1524,11 +1552,30 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 
 	/*
 	 * Quick hack to convert much of the stuff.
+	 *
+	 * Fields, such as INTEG_HASH and ENCRYPT, which get set to
+	 * IKEv2 values, will need fixing.
 	 */
 	struct trans_attrs ta;
 	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
 		return FALSE;
 	}
+
+	/*
+	 * If there is integrity, fix INTEG_HASH by replacing the the
+	 * IKEv2 value, with an IKEv1 ESP/AH value expected by the
+	 * kernel backend.
+	 *
+	 * If there is no IKEv1 ESP/AH support then, presumably the
+	 * algorithm has a unique IKEv2 number, and that is expected.
+	 *
+	 * XXX: The real fix is to delete INTEG_HASH.
+	 */
+	ta.integ_hash = (ta.integ == NULL
+			 ? AUTH_ALGORITHM_NONE
+			 : ta.integ->common.ikev1_esp_id > 0
+			 ? ta.integ->common.ikev1_esp_id
+			 : ta.integ->common.ikev2_id);
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
@@ -1552,10 +1599,27 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 */
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
 		if (ta.encrypter != NULL) {
+			/*
+			 * If there's no IKEv1 ESP/AH support then use
+			 * the IKEv2-only value.
+			 *
+			 * This is were screwups like CAMELLIA, where
+			 * IKEv1 and IKEv2 have different and
+			 * conflicting values get "fixed".
+			 *
+			 * XXX: the real fix is to delete ENCRYPT.
+			 */
+			ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
+				      ? ta.encrypter->common.ikev1_esp_id
+				      : ta.encrypter->common.ikev2_id);
 			err_t ugh;
 			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
 			if (ugh != NULL) {
-				libreswan_log("ESP algo %d with key_len %d is not valid (%s)", ta.encrypt, ta.enckeylen, ugh);
+				struct esb_buf buf;
+				libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
+					      enum_showb(&esp_transformid_names,
+							 ta.encrypt, &buf),
+					      ta.encrypt, ta.enckeylen, ugh);
 				/*
 				 * Only realising that the algorithm
 				 * is invalid now is pretty lame!
@@ -1609,16 +1673,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 */
 	proto_info->attrs.transattrs = ta;
 
-	/*
-	 * Replace the contents of INTEG_HASH (an IKEv2 INTEG value)
-	 * with the equivalent IKEv1 AUTH_ALGORITHM value.
-	 *
-	 * From this point on, IKEv1 code gets involved and that
-	 * doesn't yet trust INTEG.
-	 */
-	proto_info->attrs.transattrs.integ_hash = ta.integ
-		? ta.integ->common.ikev1_esp_id
-		: AUTH_ALGORITHM_NONE;
 	proto_info->present = TRUE;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
