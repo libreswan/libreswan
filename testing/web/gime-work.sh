@@ -10,11 +10,13 @@ Usage:
 Print an untested commit hash on stdout.  The commit is selected by
 looking for the first:
 
+   - HEAD
+
    - an untested merge point
 
    - an untested branch point
 
-   - lognest untested run of commits (split)
+   - longest untested run of commits (split)
 
 EOF
   exit 1
@@ -44,45 +46,57 @@ print_selected() {
 
 longest=""
 longest_count=0
-point=
+point_hash=
 point_count=0
 point_name=
+head_hash=""
+head_count=0
 run=""
 count=0
 
 while read hashes ; do
     count=$(expr ${count} + 1)
     hash=$(set -- ${hashes} ; echo $1)
-    # Merge point? Save the first one.
-    parents=$(cd ${repodir} && git show --no-patch --format=%p ${hash} | wc -w)
-    if test ${parents} -gt 1 -a -z "${point_hash}" ; then
-	point_hash=${hash}
-	point_count=${count}
-	point_name="merge-point"
-	echo ${point_name} at ${point_count} with ${point_hash} 1>&2
-	run=""
-	continue
+    # Save the first interesting HEAD commit; there must be one.
+    if test -z "${head_hash}" && ${webdir}/git-interesting.sh ${repodir} ${hash} ; then
+	head_hash=${hash}
+	head_count=${count}
+	echo head ${head_hash} at ${head_count} 1>&2
     fi
-    # Branch point? Save the first one.
-    children=$(set -- ${hashes} ; shift ; echo $@ | wc -w)
-    if test ${children} -gt 1 -a -z "${point_hash}" ; then
-	point_hash=${hash}
-	point_count=${count}
-	point_name="branch-point"
-	echo ${point_name} at ${point_count} with ${point_hash} 1>&2
-	run=""
-	continue
-    fi
-    # already tested? stop the run
+    # already tested? stop the current run and start again
     if test -d ${summarydir}/*-g${hash}-* ; then
 	# if this is longer, save it
 	if test $(echo ${run} | wc -w) -gt $(echo ${longest} | wc -w) ; then
 	    longest="${run}"
 	    longest_count=${count}
-	    echo longest-run $(echo ${longest} | wc -w) at ${longest_count} 1>&2
+	    echo longest $(echo ${longest} | wc -w) at ${longest_count} 1>&2
 	fi
 	run=""
 	continue
+    fi
+    # Save the first untested merge/branch point.
+    #
+    # The above will have already skipped over tested merge/branch
+    # points.  Restart RUN since this breaks the run.
+    if test -z "${point_hash}" ; then
+	parents=$(cd ${repodir} && git show --no-patch --format=%p ${hash} | wc -w)
+	if test ${parents} -gt 1 ; then
+	    point_hash=${hash}
+	    point_count=${count}
+	    point_name="merge-point"
+	    echo ${point_name} ${point_hash} at ${point_count} 1>&2
+	    run=""
+	    continue
+	fi
+	children=$(set -- ${hashes} ; shift ; echo $@ | wc -w)
+	if test ${children} -gt 1 ; then
+	    point_hash=${hash}
+	    point_count=${count}
+	    point_name="branch-point"
+	    echo ${point_name} ${point_hash} at ${point_count} 1>&2
+	    run=""
+	    continue
+	fi
     fi
     # Ignore uninteresting commits when looking for a run.
     if ! ${webdir}/git-interesting.sh ${repodir} ${hash} ; then
@@ -98,11 +112,17 @@ done < <(${webdir}/gime-git-revisions.sh \
 
 # Now which came first?
 
-if test ${longest_count} -lt ${point_count} ; then
+if test ${head_count} -gt 0 \
+	-a ${head_count} -lt ${longest_count} \
+	-a ${head_count} -lt ${point_count} \
+	-a ! -d ${summarydir}/*-g${head_hash}-* ; then
+    print_selected "HEAD" ${head_hash}
+elif test ${point_count} -gt 0 \
+	  -a ${point_count} -lt ${longest_count} ; then
+    print_selected ${point_name} ${point_hash}
+elif test ${longest_count} -gt 0 ; then
     # Split the run in approx two.
     print_selected "longest-run" $(echo ${longest} | awk '{ print $(NF / 2 + 1)}')
-elif test ${point_count} -gt 0 ; then
-    print_selected ${point_name} ${point_hash}
 fi
 
 exit 0
