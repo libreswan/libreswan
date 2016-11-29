@@ -82,36 +82,6 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 int crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
 	switch (ksproto) {
-	case CRK_IKEv2:
-		switch (algo) {
-		case IKEv2_ENCR_CAST:
-			return CAST_KEY_DEF_LEN;
-		case IKEv2_ENCR_AES_CBC:
-		case IKEv2_ENCR_AES_CTR:
-		case IKEv2_ENCR_AES_CCM_8:
-		case IKEv2_ENCR_AES_CCM_12:
-		case IKEv2_ENCR_AES_CCM_16:
-		case IKEv2_ENCR_AES_GCM_8:
-		case IKEv2_ENCR_AES_GCM_12:
-		case IKEv2_ENCR_AES_GCM_16:
-		case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
-		case IKEv2_ENCR_CAMELLIA_CBC:
-		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
-			return AES_KEY_DEF_LEN;
-		case IKEv2_ENCR_CAMELLIA_CTR:
-		case IKEv2_ENCR_CAMELLIA_CCM_A:
-		case IKEv2_ENCR_CAMELLIA_CCM_B:
-		case IKEv2_ENCR_CAMELLIA_CCM_C:
-			return CAMELLIA_KEY_DEF_LEN;
-		/* private use */
-		case IKEv2_ENCR_SERPENT_CBC:
-			return SERPENT_KEY_DEF_LEN;
-		case IKEv2_ENCR_TWOFISH_CBC:
-		case IKEv2_ENCR_TWOFISH_CBC_SSH: /* ?? */
-			return TWOFISH_KEY_DEF_LEN;
-		default:
-			return 0;
-		}
 
 	case CRK_IKEv1:
 		switch (algo) {
