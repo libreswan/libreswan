@@ -103,6 +103,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.officname = "camellia",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CBC,
+		.ikev1_esp_id = ESP_CAMELLIAv1,
 		.ikev2_id = IKEv2_ENCR_CAMELLIA_CBC,
 		.do_ike_test = test_camellia_cbc,
 		.nss_mechanism = CKM_CAMELLIA_CBC,
@@ -122,6 +123,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		.officname = "camellia_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CTR,
+		.ikev1_esp_id = ESP_CAMELLIA_CTR, /* not assigned in/for IKEv1 */
 		.ikev2_id = IKEv2_ENCR_CAMELLIA_CTR,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
