@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -859,9 +860,6 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_TWOFISH_CBC_SSH = 65289,
 	IKEv2_ENCR_INVALID = 65536,
 };
-
-#define IKEv2_ENCR_CAMELLIA_CBC_ikev1 IKEv2_RESERVED_IEEE_P1619_XTS_AES
-
 
 enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */

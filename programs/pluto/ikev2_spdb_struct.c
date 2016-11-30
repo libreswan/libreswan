@@ -1646,7 +1646,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				/* FALL THROUGH */
 			case IKEv2_ENCR_AES_CBC:
 			case IKEv2_ENCR_CAMELLIA_CBC:
-			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
 				/* these all have mandatory key length attributes */
 				if (ta.enckeylen == 0) {
 					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
@@ -2260,7 +2259,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		case POLICY_ENCRYPT:
 			proposal->protoid = IKEv2_SEC_PROTO_ESP;
 
-			unsigned ealg = esp_info->transid;
+			const unsigned ealg = esp_info->transid;
 			if (!ESP_EALG_PRESENT(ealg)) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
@@ -2269,14 +2268,6 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				continue;
 			}
 			pexpect(ealg != 0);
-
-			/*
-			 * IANA ikev1 / ipsec-v3 fixup; presumably
-			 * everything else is both IKEv1 and IKEv2?
-			 */
-			if (ealg == IKEv2_ENCR_CAMELLIA_CBC_ikev1) {
-				ealg = IKEv2_ENCR_CAMELLIA_CBC;
-			}
 
 			/*
 			 * Encryption.
