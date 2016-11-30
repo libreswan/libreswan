@@ -279,7 +279,7 @@ void delete_connection(struct connection *c, bool relations)
 		if (c->pool != NULL)
 			rel_lease_addr(c);
 	} else {
-		libreswan_log("deleting connection");
+		libreswan_log("deleting non-instance connection");
 	}
 	release_connection(c, relations); /* won't delete c */
 
