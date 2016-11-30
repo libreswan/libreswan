@@ -1608,8 +1608,8 @@ enum ipsec_cipher_algo {
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
 	ESP_NULL_AUTH_AES_GMAC = 21, /* IKEv1 is ESP_SEED_CBC */
-	ESP_RESERVED_FOR_IEEE_P1619_XTS_AES = 22, /* IKEv1 is ESP_CAMELLIA */
-	ESP_CAMELLIA = 23, /* IKEv1 is ESP_NULL_AUTH_AES-GMAC */
+	ESP_CAMELLIAv1 = 22, /* IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
+	/* IKEv1: ESP_NULL_AUTH_AES-GMAC = 23, */
 	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
@@ -1626,7 +1626,6 @@ enum ipsec_cipher_algo {
 	ESP_ID254 = 254,
 	ESP_ID255 = 255,
 };
-#define ESP_CAMELLIAv1 22
 
 /* IPCOMP transform values
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5

@@ -734,7 +734,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
-				case ESP_CAMELLIA: /* this value is not used here, due to mixup in v1 and v2 */
 				case ESP_CAMELLIAv1: /* this value is hit instead */
 				case ESP_AES:
 				case ESP_AES_CTR:

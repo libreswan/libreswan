@@ -266,10 +266,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 	 * test #1: encrypt algo must be present
 	 */
 
-	/* fixup broken IANA registry */
-	if (alg_id == ESP_CAMELLIA)
-		alg_id = ESP_CAMELLIAv1;
-
 	if (!ESP_EALG_PRESENT(alg_id)) {
 		DBG(DBG_KERNEL,
 			DBG_log("check_kernel_encrypt_alg(%d,%d): alg not present in system",
@@ -288,7 +284,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 		case ESP_AES_CTR:
-		case ESP_CAMELLIA:
 		case ESP_CAMELLIAv1:
 			/* ??? does 0 make sense here? */
 			if (key_len != 0 && key_len != 128 &&
@@ -526,10 +521,6 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 {
 	int sadb_aalg, sadb_ealg;
 	static struct esp_info ei_buf; /* static ??? fixme */
-
-	/* fixup broken IANA registry */
-	if (transid == ESP_CAMELLIA)
-		transid = ESP_CAMELLIAv1;
 
 	DBG(DBG_PARSING,
 		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
