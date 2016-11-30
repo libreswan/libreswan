@@ -1436,7 +1436,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					       transform->id);
 					return FALSE;
 				}
-				ta.prf_hash = prf ? transform->id : 0;
 				ta.prf = prf;
 				break;
 			}

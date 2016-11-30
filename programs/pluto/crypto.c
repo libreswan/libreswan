@@ -190,7 +190,9 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  enum_show_shortb(&oakley_enc_names, st->st_oakley.encrypt, &encbuf),
 			  /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
-			  enum_show_shortb(&oakley_hash_names, st->st_oakley.prf_hash, &prfbuf),
+			  enum_show_shortb(&oakley_hash_names,
+					   st->st_oakley.prf->common.ikev1_oakley_id,
+					   &prfbuf),
 			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
 		} else {
 			/* IKEv2 */
@@ -202,7 +204,9 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
 			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
-			  enum_showb(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash, &prfbuf),
+			  enum_showb(&ikev2_trans_type_prf_names,
+				     st->st_oakley.prf->common.ikev2_id,
+				     &prfbuf),
 			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
 		}
 	}

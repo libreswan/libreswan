@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -824,7 +825,8 @@ static bool ike_alg_enc_ok(int ealg, unsigned key_len,
 }
 
 static bool ike_alg_ok_final(int ealg, unsigned key_len,
-			     int aalg, unsigned int group,
+			     const struct prf_desc *prf,
+			     unsigned int group,
 			     struct alg_info_ike *alg_info_ike)
 {
 	/*
@@ -840,7 +842,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 				    (ike_info->ike_eklen == 0 ||
 				     key_len == 0 ||
 				     ike_info->ike_eklen == key_len) &&
-				    ike_info->ike_prf->common.ikev1_oakley_id == aalg &&
+				    ike_info->ike_prf == prf &&
 				    ike_info->ike_dh_group->group == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
@@ -856,7 +858,8 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 		libreswan_log(
 			"Oakley Transform [%s (%d), %s, %s] refused%s",
 			enum_name(&oakley_enc_names, ealg), key_len,
-			enum_name(&oakley_hash_names, aalg),
+			enum_name(&oakley_hash_names,
+				  prf->common.ikev1_oakley_id),
 			enum_name(&oakley_group_names, group),
 			ealg_insecure ?
 				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
@@ -1137,23 +1140,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				break;
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				/*
-				 * this logic makes no sense
-				 *
-				 * It is negotiating IKE (Phase 1), so
-				 * the PRF had both better be present
-				 * and working.
-				 */
-				if (ikev1_get_ike_prf_desc(val) != NULL) {
-					ta.prf_hash = val;
-					ta.prf = ikev1_get_ike_prf_desc(val);
-				} else switch (val) {
-				case OAKLEY_MD5:
-				case OAKLEY_SHA1:
-					ta.prf_hash = val;
-					ta.prf = ikev1_get_ike_prf_desc(val);
-					break;
-				default:
+				ta.prf = ikev1_get_ike_prf_desc(val);
+				if (ta.prf == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_hash_names,
 								  val));
@@ -1414,7 +1402,7 @@ rsasig_common:
 		 */
 		if (ugh == NULL) {
 			if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen,
-					      ta.prf_hash,
+					      ta.prf,
 					      ta.group != NULL ?
 						ta.group->group : 65535,
 					      c->alg_info_ike))
@@ -1592,8 +1580,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf = ikev1_get_ike_prf_desc(ta.prf_hash);
+	ta.prf = ikev1_get_ike_prf_desc(hash->val);
 	passert(ta.prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
