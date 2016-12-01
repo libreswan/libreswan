@@ -120,8 +120,10 @@ class Testsuite:
                  testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
+        line_nr = 0
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
+                line_nr += 1
                 # clean up the line, but save the original for logging
                 orig = line.strip("\r\n")
                 if "#" in line:
@@ -137,11 +139,15 @@ class Testsuite:
                 fields = line.split()
                 if len(fields) < 3:
                     # This is serious
-                    logger.log(error_level, "****** missing fields: %s", orig)
+                    logger.log(error_level,
+                               "****** %s:%d: line has too few fields: %s",
+                               testlist, line_nr, orig)
                     continue
                 if len(fields) > 4:
                     # This is serious
-                    logger.log(error_level, "****** too many fields: %s", orig)
+                    logger.log(error_level,
+                               "****** %s:%d: line has too many fields: %s",
+                               testlist, line_nr, orig)
                     continue
                 kind = fields[0]
                 name = fields[1]
@@ -153,11 +159,25 @@ class Testsuite:
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
-                    # This is serious
+                    # This is serious.  However, stumble on.
                     logger.log(error_level,
-                                    "****** invalid test %s: directory not found: %s",
-                                    test.name, test.directory)
+                               "****** %s:%d: invalid test %s: test directory not found: %s",
+                               testlist, line_nr,
+                               test.name, test.directory)
                     continue
+                if test.name in self.testlist:
+                    # This is serious.
+                    #
+                    # However, after reporting continue and select the
+                    # second entry.  Preserves historic behaviour, as
+                    # selecting the first entry would invalidate
+                    # earlier test results.
+                    first = self.testlist[test.name]
+                    logger.log(error_level,
+                               "****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
+                               testlist, line_nr,
+                               test.kind, test.name, test.status,
+                               first.kind, first.name, first.status)
                 # an OrderedDict which saves insertion order
                 self.testlist[test.name] = test
 
