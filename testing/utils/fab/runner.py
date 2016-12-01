@@ -297,10 +297,13 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             logger.info("%s %s started ....", prefix, test_prefix)
         test_stats.add(test, "tests")
 
-        # Create the OUTPUT/ directory; if it already exists, move any
-        # contents to BACKUP/.  Do it file-by-file so that, at no
-        # point, the OUTPUT/ directory missing (presence of OUTPUT/
-        # implies the test was started).
+        # Create just the OUTPUT/ directory; if it already exists,
+        # move any contents to BACKUP/.  Do it file-by-file so that,
+        # at no point, the OUTPUT/ directory is missing (having an
+        # OUTPUT/ directory implies the test was started).
+        #
+        # Don't create the path.  If the parent directory is missing,
+        # this will fail.
         #
         # By backing up each test just before it is started, a trail
         # of what tests were attempted during each run is created.
@@ -318,6 +321,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
         try:
             os.mkdir(test.output_directory)
+        except FileNotFoundError:
+            # Bail, something is messed up (for instance the parent directory doesn't exist).
+            return
         except FileExistsError:
             backup_directory = os.path.join(args.backup_directory, test.name)
             logger.info("moving contents of '%s' to '%s'",
