@@ -79,7 +79,7 @@ for host in $(${LIBRESWANSRCDIR}/testing/utils/kvmhosts.sh); do
 			      ${FIXUPDIR} ${FIXUPDIR2:-} \
 			      > ${fixedoutput}
 
-	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
+	    if diff -N -u ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
 		echo "# ${host} Console output matched"
 	    else
 		echo "# ${host} Console output differed"
