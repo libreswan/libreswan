@@ -11,14 +11,15 @@ rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
 rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
-RUN dnf install -y wget vim-enhanced bison flex nss-devel \
- nspr-devel nss-tools  gcc make unbound-libs ipsec-tools pexpect racoon2 \
- nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel \
- audit-libs-devel strace unbound pexpect net-tools bind-utils \
- rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
- curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography \
- tcpdump trousers traceroute telnet libselinux-devel systemd-devel;
+RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
+ conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
+ hping3 ipsec-tools libcap-ng-devel libevent-devel libselinux-devel lsof make \
+ mtr nc nc6 net-tools nmap nspr-devel nss-devel nss-tools openldap-devel
+ pam-devel pam-devel pexpect pexpect psmisc pyOpenSSL python3-cryptography \
+ python3-pexpect python3-setproctitle racoon2 \
+ redhat-rpm-config rpm-build screen strace systemd-devel tcpdump telnet \
+ traceroute trousers unbound unbound-devel unbound-libs valgrind vim-enhanced \
+ wget xl2tpd xmlto;
 RUN dnf clean all;
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
