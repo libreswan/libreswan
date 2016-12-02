@@ -39,6 +39,7 @@
 #include "ike_alg_hmac_prf_ops.h"
 #include "ike_alg_nss_prf_ops.h"
 #include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_dh.h"
 
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
@@ -64,106 +65,6 @@
 #ifdef USE_MD5
 #include "ike_alg_md5.h"
 #endif
-
-/* Oakley group description
- *
- * See:
- * RFC-2409 "The Internet key exchange (IKE)" Section 6
- * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
- */
-
-/* magic signifier */
-const struct oakley_group_desc unset_group = {
-	.group = OAKLEY_GROUP_invalid,
-};
-
-static struct oakley_group_desc oakley_group[] = {
-	/* modp768_modulus no longer supported - too weak */
-	{
-		.group = OAKLEY_GROUP_MODP1024,
-		.gen = MODP_GENERATOR,
-		.modp = MODP1024_MODULUS,
-		.bytes = BYTES_FOR_BITS(1024),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP1536,
-		.gen = MODP_GENERATOR,
-		.modp = MODP1536_MODULUS,
-		.bytes = BYTES_FOR_BITS(1536),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP2048,
-		.gen = MODP_GENERATOR,
-		.modp = MODP2048_MODULUS,
-		.bytes = BYTES_FOR_BITS(2048),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP3072,
-		.gen = MODP_GENERATOR,
-		.modp = MODP3072_MODULUS,
-		.bytes = BYTES_FOR_BITS(3072),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP4096,
-		.gen = MODP_GENERATOR,
-		.modp = MODP4096_MODULUS,
-		.bytes = BYTES_FOR_BITS(4096),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP6144,
-		.gen = MODP_GENERATOR,
-		.modp = MODP6144_MODULUS,
-		.bytes = BYTES_FOR_BITS(6144),
-	},
-	{
-		.group = OAKLEY_GROUP_MODP8192,
-		.gen = MODP_GENERATOR,
-		.modp = MODP8192_MODULUS,
-		.bytes = BYTES_FOR_BITS(8192),
-	},
-#ifdef USE_DH22
-	{
-		.group = OAKLEY_GROUP_DH22,
-		.gen = MODP_GENERATOR_DH22,
-		.modp = MODP1024_MODULUS_DH22,
-		.bytes = BYTES_FOR_BITS(1024),
-	},
-#endif
-	{
-		.group = OAKLEY_GROUP_DH23,
-		.gen = MODP_GENERATOR_DH23,
-		.modp = MODP2048_MODULUS_DH23,
-		.bytes = BYTES_FOR_BITS(2048),
-	},
-	{
-		.group = OAKLEY_GROUP_DH24,
-		.gen = MODP_GENERATOR_DH24,
-		.modp = MODP2048_MODULUS_DH24,
-		.bytes = BYTES_FOR_BITS(2048),
-	},
-};
-
-const struct oakley_group_desc *lookup_group(u_int16_t group)
-{
-	int i;
-
-	for (i = 0; i != elemsof(oakley_group); i++)
-		if (group == oakley_group[i].group)
-			return &oakley_group[i];
-
-	return NULL;
-}
-
-const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *group)
-{
-	if (group == NULL) {
-		return &oakley_group[0];
-	} else if (group < &oakley_group[elemsof(oakley_group) - 1]) {
-		return group + 1;
-	} else {
-		return NULL;
-	}
-}
 
 /*==========================================================
 *
@@ -203,6 +104,7 @@ struct type_algorithms {
 static struct type_algorithms prf_algorithms;
 static struct type_algorithms integ_algorithms;
 static struct type_algorithms encrypt_algorithms;
+static struct type_algorithms dh_algorithms;
 
 static struct type_algorithms *const type_algorithms[] = {
 	/*INVALID*/ NULL,
@@ -210,6 +112,7 @@ static struct type_algorithms *const type_algorithms[] = {
 	/*HASH*/ NULL,
 	&prf_algorithms,
 	&integ_algorithms,
+	&dh_algorithms,
 };
 
 static const struct ike_alg **next_alg(const struct algorithm_table *table,
@@ -243,6 +146,12 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 {
 	return (const struct integ_desc**)next_alg(&integ_algorithms.all,
 						   (const struct ike_alg**)last);
+}
+
+const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **last)
+{
+	return (const struct oakley_group_desc**)next_alg(&dh_algorithms.all,
+							  (const struct ike_alg**)last);
 }
 
 bool ike_alg_is_ike(const struct ike_alg *alg)
@@ -340,6 +249,17 @@ const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 {
 	return (const struct integ_desc *) ikev2_lookup(&integ_algorithms.all, id);
+}
+
+const struct oakley_group_desc *lookup_group(u_int16_t group)
+{
+	for (const struct oakley_group_desc **groupp = next_oakley_group(NULL);
+	     groupp != NULL; groupp = next_oakley_group(groupp)) {
+		if (group == (*groupp)->group) {
+			return *groupp;
+		}
+	}
+	return NULL;
 }
 
 /*
@@ -586,6 +506,53 @@ static struct type_algorithms encrypt_algorithms = {
 	.desc_is_ike = encrypt_desc_is_ike,
 };
 
+/*
+ * DH group
+ */
+
+static struct oakley_group_desc *dh_descriptors[] = {
+	&oakley_group_modp1024,
+	&oakley_group_modp1536,
+	&oakley_group_modp2048,
+	&oakley_group_modp3072,
+	&oakley_group_modp4096,
+	&oakley_group_modp6144,
+	&oakley_group_modp8192,
+#ifdef USE_DH22
+	&oakley_group_dh22,
+#endif
+	&oakley_group_dh23,
+	&oakley_group_dh24,
+};
+
+static void dh_desc_check(const struct ike_alg *alg)
+{
+	const struct oakley_group_desc *group = (const struct oakley_group_desc *)alg;
+	passert(group->common.ikev1_oakley_id == group->group);
+	passert(group->group > 0);
+	/* more? */
+}
+
+static bool dh_desc_is_ike(const struct ike_alg *alg)
+{
+	passert(alg->algo_type == IKE_ALG_DH);
+	return TRUE;
+}
+
+static struct type_algorithms dh_algorithms = {
+	.all = ALGORITHM_TABLE("DH", dh_descriptors),
+	.type = IKE_ALG_DH,
+	.ikev1_oakley_enum_names = &oakley_enc_names,
+	.ikev1_esp_enum_names = &esp_transformid_names,
+	.ikev2_enum_names = &ikev2_trans_type_encr_names,
+	.desc_check = dh_desc_check,
+	.desc_is_ike = dh_desc_is_ike,
+};
+
+/*
+ * Verify an algorithm table, pruning anything that isn't supported.
+ */
+
 static void check_enum_name(const char *what, int id, enum_names *names)
 {
 	if (id > 0) {
@@ -718,19 +685,39 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
 
+		/*
+		 * Hack while IKEv1 and IKEv2 algorithms are cleaned
+		 * up.
+		 *
+		 * Need to fix things like not even mentioning ESP/AH
+		 * on the PRF line.
+		 */
 		const char *ike_enabled;
-		passert(algorithms->desc_is_ike);
-		if (algorithms->desc_is_ike(alg)) {
+		const char *esp;
+		const char *esp_enabled;
+		switch (alg->algo_type) {
+		case IKE_ALG_DH:
+			esp = "";
+			esp_enabled = "";
 			ike_enabled = "ENABLED";
-		} else {
-			ike_enabled = "DISABLED (not supported)";
+			break;
+		default:
+			passert(algorithms->desc_is_ike);
+			if (algorithms->desc_is_ike(alg)) {
+				ike_enabled = "ENABLED";
+			} else {
+				ike_enabled = "DISABLED (not supported)";
+			}
+			esp = "; ESP/AH: ";
+			esp_enabled = "ENABLED"; /* for now */
+			break;
 		}
-		const char *esp_enabled = "ENABLED"; /* for now */
-
-		libreswan_log("%s algorithm %s: IKE: %s; ESP/AH: %s%s",
+		libreswan_log("%s algorithm %s: IKE: %s%s%s%s",
 			      algorithms->all.name, alg->name,
-			      ike_enabled, esp_enabled,
+			      ike_enabled,
+			      esp, esp_enabled,
 			      alg->fips ? "; FIPS compliant" : "");
+
 	}
 }
 

@@ -13,9 +13,10 @@ enum ike_alg_type {
 	IKE_ALG_HASH,
 	IKE_ALG_PRF,
 	IKE_ALG_INTEG,
+	IKE_ALG_DH,
 };
 #define IKE_ALG_FLOOR IKE_ALG_ENCRYPT
-#define	IKE_ALG_ROOF (IKE_ALG_INTEG+1)
+#define	IKE_ALG_ROOF (IKE_ALG_DH+1)
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
@@ -443,6 +444,7 @@ unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
 /* Oakley group descriptions */
 
 struct oakley_group_desc {
+	struct ike_alg common;		/* must be first */
 	u_int16_t group;
 	const char *gen;
 	const char *modp;
@@ -451,6 +453,6 @@ struct oakley_group_desc {
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */
 extern const struct oakley_group_desc *lookup_group(u_int16_t group);
-const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
+const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **);
 
 #endif /* _IKE_ALG_H */

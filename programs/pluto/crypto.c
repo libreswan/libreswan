@@ -253,10 +253,9 @@ void ike_alg_show_status(void)
 		}
 	}
 
-	const struct oakley_group_desc *gdesc;
-	for (gdesc = next_oakley_group(NULL);
-	     gdesc != NULL;
-	     gdesc = next_oakley_group(gdesc)) {
+	for (const struct oakley_group_desc **gdescp = next_oakley_group(NULL);
+	     gdescp != NULL; gdescp = next_oakley_group(gdescp)) {
+		const struct oakley_group_desc *gdesc = *gdescp;
 		whack_log(RC_COMMENT,
 			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
 			  gdesc->group,
