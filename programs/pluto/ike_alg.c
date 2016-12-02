@@ -192,7 +192,6 @@ struct algorithm_table {
 
 struct type_algorithms {
 	struct algorithm_table all;
-	struct algorithm_table ike;
 	enum ike_alg_type type;
 	enum_names *const ikev1_oakley_enum_names;
 	enum_names *const ikev1_esp_enum_names;
@@ -263,9 +262,10 @@ bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorithms,
 						 unsigned id)
 {
-	FOR_EACH_IKE_ALGP(&algorithms->ike, algp) {
+	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *e = *algp;
-		if (e->ikev1_oakley_id == id) {
+		if (e->ikev1_oakley_id == id
+		    && ike_alg_is_ike(e)) {
 			DBG(DBG_CRYPT,
 			    struct esb_buf buf;
 			    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, found %s\n",
@@ -638,12 +638,12 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		/*
 		 * Algorithm can't appear twice.
 		 *
-		 * Fudge up the ALL and IKE tables so that they only
-		 * contain the previously verified algorithms.
+		 * Fudge up the ALL so that it only contain the
+		 * previously verified algorithms and then use that
+		 * for a search.  The search should fail.
 		 */
 		struct type_algorithms scratch = *algorithms;
 		scratch.all.end = algp;
-		scratch.ike = scratch.all;
 		passert(alg->ikev1_oakley_id == 0 ||
 			ikev1_oakley_lookup(&scratch, alg->ikev1_oakley_id) == NULL);
 		passert(alg->ikev1_esp_id == 0 ||
@@ -714,28 +714,13 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 
         /*
 	 * Go through ALL algorithms identifying any suitable for IKE.
-	 *
-	 * For simplicity, the IKE table is overallocated a little.
 	 */
-	size_t count = algorithms->all.end - algorithms->all.start;
-	const struct ike_alg **ike_table = alloc_things(const struct ike_alg *,
-							count, "ike_algorithms");
-	size_t sizeof_name = strlen("IKE") + 1 + strlen(algorithms->all.name) + 1;
-	char *name = alloc_things(char, sizeof_name, "ike name");
-	snprintf(name, sizeof_name, "IKE %s", algorithms->all.name);
-	algorithms->ike = (struct algorithm_table) {
-		.start = ike_table,
-		.end = ike_table,
-		.name = name,
-	};
-
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
 
 		const char *ike_enabled;
 		passert(algorithms->desc_is_ike);
 		if (algorithms->desc_is_ike(alg)) {
-			*algorithms->ike.end++ = alg;
 			ike_enabled = "ENABLED";
 		} else {
 			ike_enabled = "DISABLED (not supported)";
