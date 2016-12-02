@@ -58,7 +58,8 @@ for h in list(macs.keys()):
             is_kvm = True
 
 if not is_kvm:
-    # on docker the hostname is already set. Use hostname to identify
+    # on docker the hostname is already set. Use hostname to identify ourself
+    hostname = subprocess.getoutput("hostname -s")
     print(("this is a docker instance hostname %s" % hostname))
     is_docker = True
 
