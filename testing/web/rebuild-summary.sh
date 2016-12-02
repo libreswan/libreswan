@@ -21,10 +21,12 @@ summarydir=$1 ; shift
 
 webdir=$(cd $(dirname $0) ; pwd)
 branch=$(${webdir}/gime-git-limb.sh ${repodir})
+start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
 
-for directory in ${summarydir}/*/ ; do
-    test -r ${directory}/results.json || continue
-    ${webdir}/json-summary.sh ${directory}/results.json > ${directory}/summary.json
-done
+${webdir}/json-commit.sh \
+	 --json ${summarydir}/commits.json \
+	 ${repodir} \
+	 $(${webdir}/gime-git-revisions.sh ${repodir} ${start_hash}..${branch}) \
+	 ${start_hash}
 
 ${webdir}/build-summary.sh ${repodir} ${summarydir}

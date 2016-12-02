@@ -31,7 +31,7 @@ ${utilsdir}/kvmresults.py \
 	     --test-kind '' \
 	     --test-result '' \
 	     --json \
-	     --print test-name,test-directory,start-time,end-time,host-names,saved-output-directory,output-directory,result,errors,runtime,total-time,boot-time,script-time,expected-result,baseline-output-directory \
+	     --print test-name,test-kind,test-directory,test-status,test-scripts,test-host-names,start-time,end-time,saved-output-directory,output-directory,result,errors,runtime,total-time,boot-time,script-time,baseline-output-directory \
 	     "$@" | \
     if test -n "${json}" ; then
 	jq -s '.' > ${json}.tmp

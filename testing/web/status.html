@@ -5,9 +5,6 @@
 
     <script type="text/javascript" src="js/d3.v4.min.js"></script>
 
-    <script src="js/Tidy-Table-3.0.1/tidy-table.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="js/Tidy-Table-3.0.1/tidy-table.min.css">
-
     <script type="text/javascript" src="lsw-date2iso.js"></script>
     <script type="text/javascript" src="lsw-load-jobs-table.js"></script>
 
@@ -16,7 +13,7 @@
     <script>
         window.addEventListener('load', function() {
             d3.json("directories.json", function(directories) {
-	        lsw_load_jobs_table("status", directories)
+	        lsw_load_jobs_table("jobs", directories)
             })
         })
     </script>
@@ -24,7 +21,7 @@
   </head>
   <body>
     <center>
-      <div id="status"></div>
+      <div id="jobs"></div>
     </center>
   </body>
 </html>

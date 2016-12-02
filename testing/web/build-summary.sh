@@ -23,14 +23,15 @@ webdir=$(dirname $0)
 repodir=$1 ; shift
 summarydir=$1 ; shift
 
-# Concatenate the individual summary entries; order doesn't matter.
-# Should this add the commit hash?
+# Construct the summary from all the results; order somewhat
+# assending.
 
-jq -s '.' ${summarydir}/*/summary.json > ${summarydir}/summaries.new
+${webdir}/json-summary.sh \
+	 --json ${summarydir}/summaries.json \
+	 $(ls ${summarydir}/*/results.json | sort -V)
 
 # install
 
 cp ${webdir}/lsw*.{css,js} ${summarydir}
 cp ${webdir}/summary*.{html,css,js} ${summarydir}
 ln -f -s summary.html ${summarydir}/index.html
-mv ${summarydir}/summaries.new ${summarydir}/summaries.json
