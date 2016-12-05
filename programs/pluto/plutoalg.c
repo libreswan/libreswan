@@ -191,7 +191,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	if (new_info->ike_prf == NULL) {
 		struct esb_buf buf;
 		loglog(RC_LOG_SERIOUS, "unsupported PRF algorithm %s",
-		       enum_showb(&oakley_hash_names, aalg_id, &buf));
+		       enum_show_shortb(&oakley_hash_names, aalg_id, &buf));
 		return;
 	}
 
@@ -208,7 +208,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		if (new_info->ike_integ == NULL) {
 			struct esb_buf buf;
 			loglog(RC_LOG_SERIOUS, "unsupported INTEG algorithm %s",
-			       enum_showb(&oakley_hash_names, aalg_id, &buf));
+			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf));
 			return;
 		}
 	}
@@ -217,7 +217,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	if (new_info->ike_dh_group == NULL) {
 		struct esb_buf buf;
 		loglog(RC_LOG_SERIOUS, "unsupported DH GROUP %s=%d",
-		       enum_showb(&oakley_group_names, modp_id, &buf),
+		       enum_show_shortb(&oakley_group_names, modp_id, &buf),
 		       modp_id);
 		return;
 	}
