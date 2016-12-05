@@ -528,8 +528,9 @@ static struct oakley_group_desc *dh_descriptors[] = {
 static void dh_desc_check(const struct ike_alg *alg)
 {
 	const struct oakley_group_desc *group = (const struct oakley_group_desc *)alg;
-	passert(group->common.ikev1_oakley_id == group->group);
 	passert(group->group > 0);
+	passert(group->common.ikev2_id == group->group);
+	passert(group->common.ikev1_oakley_id == group->group);
 	/* more? */
 }
 
