@@ -404,7 +404,7 @@ static bool integ_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms integ_algorithms = {
-	.all = ALGORITHM_TABLE("Integrity", integ_descriptors),
+	.all = ALGORITHM_TABLE("INTEG", integ_descriptors),
 	.type = IKE_ALG_INTEG,
 	.ikev1_oakley_enum_names = &oakley_hash_names,
 	.ikev1_esp_enum_names = &auth_alg_names,
@@ -497,7 +497,7 @@ static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms encrypt_algorithms = {
-	.all = ALGORITHM_TABLE("Encryption", encrypt_descriptors),
+	.all = ALGORITHM_TABLE("ENCRYPT", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
 	.ikev1_oakley_enum_names = &oakley_enc_names,
 	.ikev1_esp_enum_names = &esp_transformid_names,
@@ -682,43 +682,58 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 
         /*
 	 * Go through ALL algorithms identifying any suitable for IKE.
+	 *
+	 * Log the result as a pretty table.
 	 */
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
 
 		/*
-		 * Hack while IKEv1 and IKEv2 algorithms are cleaned
-		 * up.
-		 *
 		 * Need to fix things like not even mentioning ESP/AH
 		 * on the PRF line.
 		 */
-		const char *ike_enabled;
-		const char *esp;
-		const char *esp_enabled;
+		bool v1_ike;
+		bool v2_ike;
+		passert(algorithms->desc_is_ike);
+		if (algorithms->desc_is_ike(alg)) {
+			v1_ike = alg->ikev1_oakley_id > 0;
+			v2_ike = alg->ikev2_id > 0;
+		} else {
+			v1_ike = FALSE;
+			v2_ike = FALSE;
+		}
+		bool v1_esp;
+		bool v2_esp;
+		bool v1_ah;
+		bool v2_ah;
 		switch (alg->algo_type) {
+		case IKE_ALG_PRF:
 		case IKE_ALG_DH:
-			esp = "";
-			esp_enabled = "";
-			ike_enabled = "ENABLED";
+			v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
+			break;
+		case IKE_ALG_ENCRYPT:
+			v1_esp = alg->ikev1_esp_id > 0;
+			v2_esp = alg->ikev2_id > 0;
+			v1_ah = FALSE;
+			v2_ah = FALSE;
+			break;
+		case IKE_ALG_INTEG:
+			v1_esp = v1_ah = alg->ikev1_esp_id > 0;
+			v2_esp = v2_ah = alg->ikev2_id > 0;
 			break;
 		default:
-			passert(algorithms->desc_is_ike);
-			if (algorithms->desc_is_ike(alg)) {
-				ike_enabled = "ENABLED";
-			} else {
-				ike_enabled = "DISABLED (not supported)";
-			}
-			esp = "; ESP/AH: ";
-			esp_enabled = "ENABLED"; /* for now */
-			break;
+			bad_case(alg->algo_type);
 		}
-		libreswan_log("%s algorithm %s: IKE: %s%s%s%s",
+		libreswan_log("%s %s:%*s IKEv1: %3s %3s %2s IKEv2: %3s %3s %2s%s",
 			      algorithms->all.name, alg->name,
-			      ike_enabled,
-			      esp, esp_enabled,
-			      alg->fips ? "; FIPS compliant" : "");
-
+			      (int)(19 - strlen(algorithms->all.name) - strlen(alg->name)), "",
+			      v1_ike ? "IKE" : "",
+			      v1_esp ? "ESP" : "",
+			      v1_ah ? "AH" : "",
+			      v2_ike ? "IKE" : "",
+			      v2_esp ? "ESP" : "",
+			      v2_ah ? "AH" : "",
+			      alg->fips ? " FIPS: YES" : "");
 	}
 }
 
