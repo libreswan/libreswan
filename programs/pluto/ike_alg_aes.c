@@ -457,7 +457,7 @@ static bool test_aes_gcm(const struct ike_alg *alg)
 struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
 	.common = {
-		.name = "aes_gcm",
+		.name = "aes_gcm_8",
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
