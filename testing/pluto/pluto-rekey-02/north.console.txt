@@ -30,7 +30,7 @@ north #
 one
 north #
  ipsec auto --replace northnet-eastnet-nat
-002 "northnet-eastnet-nat": deleting connection
+002 "northnet-eastnet-nat": deleting non-instance connection
 002 "northnet-eastnet-nat" #2: deleting state (STATE_QUICK_I2)
 005 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
 002 "northnet-eastnet-nat" #1: deleting state (STATE_MAIN_I4)
