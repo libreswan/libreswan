@@ -536,10 +536,10 @@ static void gntoid(struct id *id, const generalName_t *gn)
  * Convert all CERTCertificate general names to a list of pluto generalName_t
  * Results go in *gn_out.
  */
-static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
+static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out, PRArenaPool *arena)
 {
 	generalName_t *pgn_list = NULL;
-	CERTGeneralName *first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);;
+	CERTGeneralName *first_nss_gn = CERT_GetCertificateNames(cert, arena);
 
 	if (first_nss_gn != NULL) {
 		CERTGeneralName *cur_nss_gn = first_nss_gn;
@@ -598,7 +598,8 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
 	generalName_t *gn = NULL;
 	generalName_t *gnt;
 
-	get_pluto_gn_from_nss_cert(cert, &gn);
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	get_pluto_gn_from_nss_cert(cert, &gn, arena);
 
 	for (gnt = gn; gn != NULL; gn = gn->next) {
 		struct id id;
@@ -612,6 +613,9 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
 	}
 
 	free_generalNames(gnt, FALSE);
+	if (arena != NULL) {
+		PORT_FreeArena(arena, PR_FALSE);
+	}
 }
 
 /*
