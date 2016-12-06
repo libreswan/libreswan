@@ -1343,17 +1343,6 @@ int main(int argc, char **argv)
 
 #endif
 
-#ifdef FIPS_CHECK
-	/* clear out --debug-crypt if set */
-	/* impairs are also not allowed but cannot come in via ipsec.conf, only whack */
-	if (libreswan_fipsmode()) {
-		if (base_debugging & DBG_PRIVATE) {
-			base_debugging &= ~DBG_PRIVATE;
-			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
-		}
-	}
-#endif
-
 	/*
 	 * create control socket.
 	 * We must create it before the parent process returns so that
@@ -1459,6 +1448,35 @@ int main(int argc, char **argv)
 
 	pluto_init_log();
 
+#ifdef FIPS_CHECK
+	/*
+	 * Probe FIPS support.  Part #1 of #2.
+	 *
+	 * This needs to occur very early, after pluto's log has been
+	 * initialized so that the result gets written to a file.
+	 *
+	 * This call is what triggers the FIPS Product: et.al. log
+	 * messages.
+	 */
+	enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
+	if (pluto_fips_mode == LSW_FIPS_ON) {
+		/*
+		 * clear out --debug-crypt if set
+		 *
+		 * impairs are also not allowed but cannot come in via
+		 * ipsec.conf, only whack
+		 */
+		if (base_debugging & DBG_PRIVATE) {
+			base_debugging &= ~DBG_PRIVATE;
+			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+		}
+	}
+	if (DBGP(IMPAIR_FORCE_FIPS)) {
+		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
+		lsw_set_fips_mode(LSW_FIPS_ON);
+	}
+#endif
+
 	if (!pluto_init_nss(oco->nssdb)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
@@ -1477,54 +1495,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_LIBCAP_NG
-	/*
-	 * Drop capabilities - this generates a false positive valgrind warning
-	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
-	 *
-	 * We drop these after creating the pluto socket or else we can't
-	 * create a socket if the parent dir is non-root (eg openstack)
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		/* for google authenticator pam */
-		CAP_SETGID, CAP_SETUID,
-		CAP_DAC_READ_SEARCH,
-		-1);
-	/*
-	 * We need to retain some capabilities for our children (updown):
-	 * CAP_NET_ADMIN to change routes
-	 * CAP_NET_RAW for iptables -t mangle
-	 * CAP_DAC_READ_SEARCH for pam / google authenticator
-	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
-			CAP_DAC_READ_SEARCH, -1);
-	capng_apply(CAPNG_SELECT_BOTH);
-	libreswan_log("libcap-ng support [enabled]");
-#else
-	libreswan_log("libcap-ng support [disabled]");
-#endif
-
 #ifdef FIPS_CHECK
-	libreswan_log("FIPS HMAC integrity support [enabled]");
 	/*
-	 * FIPS mode requires two conditions to be true:
-	 *  - FIPS Kernel mode: fips=1 kernel boot parameter
-	 *  - FIPS Product mode: See FIPSPRODUCTCHECK in Makefile.inc
-	 *     (in RHEL/Fedora, dracut-fips installs $FIPSPRODUCTCHECK)
+	 * Probe FIPS support.  Part #2 of #2.
 	 *
-	 * When FIPS mode, abort on self-check hmac failure. Otherwise, complain
+	 * Now that NSS is initialized, need to verify it matches the
+	 * mode pluto is in.
 	 */
+	libreswan_log("FIPS HMAC integrity support [enabled]");
 	{
-		if (DBGP(IMPAIR_FORCE_FIPS)) {
-			libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
-			lsw_set_fips_mode(LSW_FIPS_ON);
-		}
-
-		enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
 		bool nss_fips_mode = PK11_IsFIPS();
 
 		/*
@@ -1571,6 +1550,37 @@ int main(int argc, char **argv)
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
+#endif
+
+#ifdef HAVE_LIBCAP_NG
+	/*
+	 * Drop capabilities - this generates a false positive valgrind warning
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 *
+	 * We drop these after creating the pluto socket or else we can't
+	 * create a socket if the parent dir is non-root (eg openstack)
+	 */
+	capng_clear(CAPNG_SELECT_BOTH);
+
+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		/* for google authenticator pam */
+		CAP_SETGID, CAP_SETUID,
+		CAP_DAC_READ_SEARCH,
+		-1);
+	/*
+	 * We need to retain some capabilities for our children (updown):
+	 * CAP_NET_ADMIN to change routes
+	 * CAP_NET_RAW for iptables -t mangle
+	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
+			CAP_DAC_READ_SEARCH, -1);
+	capng_apply(CAPNG_SELECT_BOTH);
+	libreswan_log("libcap-ng support [enabled]");
+#else
+	libreswan_log("libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
