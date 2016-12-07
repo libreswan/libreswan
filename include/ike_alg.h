@@ -28,13 +28,15 @@ enum ike_alg_type {
  *
  * ikev2_id / IKEv2 IKE / IKEv2 ESP / IKEv2 AH / IKEv2 DH:
  *
- * Almost no confusion.  DH is using IKEv1.
+ * Almost no confusion.. While IKEv2 DH uses the the IKEv1
+ * OAKLEY_GROUP enum, there are no conflicts so things work.
  *
  * ENCRYPT:  ikev2_trans_type_encr      ikev2_trans_type_encr_names   IKEv2_ENCR
  * PRF:      ikev2_trans_type_prf       ikev2_trans_type_prf_names    IKEv2_AUTH
  * INTEG:    ikev2_trans_type_integ     ikev2_trans_type_integ_names  IKEv2_INTEG
+ * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  *
- * ikev1_oakley_id / struct ike_info.ike_ealg / struct ike_info.ike_halg:
+ * ikev1_oakley_id:
  *
  * The only querk here is the use of the HASH (PRF) to select INTEG.
  * The suffix "oakley_id", rather than "ike_id" or "id", is used since
@@ -45,6 +47,7 @@ enum ike_alg_type {
  * ENCRYPT:  ikev1_encr_attribute       oakley_enc_names              OAKLEY
  * PRF:      ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
+ * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  *
  * ikev1_esp_info_id (ikev1_esp_id) / struct esp_info.transid / struct esp_info.auth:
  *
