@@ -257,79 +257,91 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 }
 
 /*
- *      Proposals will be built by looping over default_ike_groups array and
- *      merging alg_info (ike_info) contents
+ * "ike_info" proposals are built built by first parsing the ike=
+ * line, and second merging it with the below defaults when an
+ * algorithm wasn't specified.
+ *
+ * Do not assume that these hard wired algorithms are actually valid.
  */
+
 static const enum ike_trans_type_dh default_ike_groups[] = {
-	DEFAULT_OAKLEY_GROUPS
+	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024,
 };
 static const enum ikev1_encr_attribute default_ike_ealgs[] = {
-	DEFAULT_OAKLEY_EALGS
+	OAKLEY_AES_CBC, OAKLEY_3DES_CBC,
 };
 static const enum ikev1_hash_attribute default_ike_aalgs[] = {
-	DEFAULT_OAKLEY_AALGS
+	OAKLEY_SHA1, OAKLEY_MD5,
 };
 
 /*
- *	Add IKE alg info _with_ logic (policy):
+ * _Recursively_ add IKE alg info _with_ logic (policy):
  */
-static void per_group_alg_info_ike_add(struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     int modp_id)
-{
-	if (ealg_id == 0) {
-		/* use all our default enc algs */
-		int i;
-
-		for (i=0; i != elemsof(default_ike_ealgs); i++) {
-			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
-				aalg_id, modp_id);
-		}
-	} else {
-		if (aalg_id > 0) {
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				aalg_id,
-				modp_id);
-		} else {
-			int j;
-
-			for (j=0; j != elemsof(default_ike_aalgs); j++) {
-				raw_alg_info_ike_add(
-					(struct alg_info_ike *)alg_info,
-					ealg_id, ek_bits,
-					default_ike_aalgs[j],
-					modp_id);
-			}
-		}
-	}
-}
 
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id,
 			     int modp_id)
 {
-	/*
-	 * XXX: Require ak_bits==0?
-	 */
-	if (modp_id == 0) {
-		/* try each default group */
-		int i;
-
-		for (i=0; i != elemsof(default_ike_groups); i++)
-			per_group_alg_info_ike_add(alg_info,
+	if (ealg_id == 0) {
+		/*
+		 * Recursively add the valid default enc algs
+		 */
+		for (int i = 0; i != elemsof(default_ike_ealgs); i++) {
+			enum ikev1_encr_attribute id = default_ike_ealgs[i];
+			passert(id);
+			if (ikev1_get_ike_encrypt_desc(id) != NULL) {
+				alg_info_ike_add(alg_info,
+						 default_ike_ealgs[i],
+						 ek_bits,
+						 aalg_id, modp_id);
+			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				struct esb_buf buf;
+				DBG_log("dropping invalid default encrypt algorithm %s=%d",
+					enum_showb(&oakley_enc_names, id, &buf), id);
+			}
+		}
+	} else if (aalg_id == 0) {
+		/*
+		 * Recursively add the valid default PRF/HASH
+		 * algorithms.
+		 */
+		for (int j = 0; j != elemsof(default_ike_aalgs); j++) {
+			enum ikev1_hash_attribute id = default_ike_aalgs[j];
+			passert(id);
+			if (ikev1_get_ike_prf_desc(id) != NULL) {
+				alg_info_ike_add(alg_info,
+						 ealg_id, ek_bits,
+						 default_ike_aalgs[j],
+						 modp_id);
+			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				struct esb_buf buf;
+				DBG_log("dropping invalid default PRF (HASH) algorithm %s=%d",
+					enum_showb(&oakley_hash_names, id, &buf), id);
+			}
+		}
+	} else if (modp_id == 0) {
+		/*
+		 * Recursively add the valid default groups.
+		 */
+		for (int i = 0; i != elemsof(default_ike_groups); i++) {
+			enum ike_trans_type_dh id = default_ike_groups[i];
+			passert(id);
+			if (lookup_group(id) != NULL) {
+				alg_info_ike_add(alg_info,
+						 ealg_id, ek_bits,
+						 aalg_id, id);
+			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				struct esb_buf buf;
+				DBG_log("dropping invalid default DH group %s=%d",
+					enum_showb(&oakley_group_names, id, &buf), id);
+			}
+		}
+	} else {
+		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
 				     ealg_id, ek_bits,
 				     aalg_id,
-				     default_ike_groups[i]);
-	} else {
-		/* group determined by caller */
-		per_group_alg_info_ike_add(alg_info,
-			     ealg_id, ek_bits,
-			     aalg_id,
-			     modp_id);
+				     modp_id);
 	}
 }
 

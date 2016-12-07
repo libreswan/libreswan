@@ -30,12 +30,6 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
-/* default proposal values and preferences */
-/* kept small because in IKEv1 it explodes in transforms of all possible combinations */
-#define DEFAULT_OAKLEY_GROUPS    OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024
-#define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
-#define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
-
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
