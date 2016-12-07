@@ -40,7 +40,7 @@ ENCRYPT aes_ccm_8:    IKEv1:     ESP    IKEv2:     ESP    FIPS: YES
 ENCRYPT 3des_cbc:     IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_gcm_16:   IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_gcm_12:   IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
-ENCRYPT aes_gcm:      IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
+ENCRYPT aes_gcm_8:    IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_ctr:      IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes:          IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 PRF algorithm md5: DISABLED; not FIPS compliant
