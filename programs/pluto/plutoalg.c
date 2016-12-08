@@ -112,8 +112,7 @@ static int modp_getbyname_ike(const char *const str)
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-			       unsigned ek_bits, int aalg_id,
-			       unsigned int modp_id)
+				 unsigned ek_bits, int aalg_id, int modp_id)
 {
 	/*
 	 * Check for overflows up front; could delay until after
@@ -163,8 +162,10 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	}
 	if (new_info->ike_encrypt == NULL) {
 		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS, "ENCRYPT algorithm %s is not supported",
-		       enum_showb(&oakley_enc_names, ealg_id, &buf));
+		loglog(RC_LOG_SERIOUS,
+		       "ENCRYPT algorithm %s=%d is not supported",
+		       enum_showb(&oakley_enc_names, ealg_id, &buf),
+		       ealg_id);
 		return;
 	}
 	if (ek_bits != 0) {
@@ -190,8 +191,10 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	}
 	if (new_info->ike_prf == NULL) {
 		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS, "unsupported PRF algorithm %s",
-		       enum_show_shortb(&oakley_hash_names, aalg_id, &buf));
+		loglog(RC_LOG_SERIOUS,
+		       "PRF algorithm %s=%d is not supported",
+		       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
+		       aalg_id);
 		return;
 	}
 
@@ -207,8 +210,10 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		}
 		if (new_info->ike_integ == NULL) {
 			struct esb_buf buf;
-			loglog(RC_LOG_SERIOUS, "unsupported INTEG algorithm %s",
-			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf));
+			loglog(RC_LOG_SERIOUS,
+			       "INTEG algorithm %s=%d is not supported",
+			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
+			       aalg_id);
 			return;
 		}
 	}
@@ -280,68 +285,83 @@ static const enum ikev1_hash_attribute default_ike_aalgs[] = {
 
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     int modp_id)
+			     int aalg_id, int modp_id)
 {
-	if (ealg_id == 0) {
-		/*
-		 * Recursively add the valid default enc algs
-		 */
-		for (int i = 0; i != elemsof(default_ike_ealgs); i++) {
-			enum ikev1_encr_attribute id = default_ike_ealgs[i];
-			passert(id);
-			if (ikev1_get_ike_encrypt_desc(id) != NULL) {
-				alg_info_ike_add(alg_info,
-						 default_ike_ealgs[i],
-						 ek_bits,
-						 aalg_id, modp_id);
-			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
-				struct esb_buf buf;
-				DBG_log("dropping invalid default encrypt algorithm %s=%d",
-					enum_showb(&oakley_enc_names, id, &buf), id);
-			}
-		}
-	} else if (aalg_id == 0) {
-		/*
-		 * Recursively add the valid default PRF/HASH
-		 * algorithms.
-		 */
-		for (int j = 0; j != elemsof(default_ike_aalgs); j++) {
-			enum ikev1_hash_attribute id = default_ike_aalgs[j];
-			passert(id);
-			if (ikev1_get_ike_prf_desc(id) != NULL) {
-				alg_info_ike_add(alg_info,
-						 ealg_id, ek_bits,
-						 default_ike_aalgs[j],
-						 modp_id);
-			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
-				struct esb_buf buf;
-				DBG_log("dropping invalid default PRF (HASH) algorithm %s=%d",
-					enum_showb(&oakley_hash_names, id, &buf), id);
-			}
-		}
-	} else if (modp_id == 0) {
+	/*
+	 * Note that the order in which things are recursively added -
+	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
+	 * things like the order of proposals.
+	 *
+	 * See parser_alg_info_add().  It seems that modp_id=0,
+	 * ealg_id=-1, aalg_id=-1, so check for anything <= 0.
+	 */
+	if (modp_id <= 0) {
 		/*
 		 * Recursively add the valid default groups.
 		 */
 		for (int i = 0; i != elemsof(default_ike_groups); i++) {
 			enum ike_trans_type_dh id = default_ike_groups[i];
+			bool valid = lookup_group(id) != NULL;
 			passert(id);
-			if (lookup_group(id) != NULL) {
-				alg_info_ike_add(alg_info,
-						 ealg_id, ek_bits,
-						 aalg_id, id);
-			} else if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+			if (DBGP(DBGP(DBG_CONTROL|DBG_CRYPT))) {
 				struct esb_buf buf;
-				DBG_log("dropping invalid default DH group %s=%d",
+				DBG_log("%s default DH group %s=%d",
+					valid ? "adding" : "dropping invalid",
 					enum_showb(&oakley_group_names, id, &buf), id);
+			}
+			if (valid) {
+				alg_info_ike_add(alg_info, ealg_id, ek_bits,
+						 aalg_id, id);
+			}
+		}
+	} else if (ealg_id <= 0) {
+		/*
+		 * Recursively add the valid default enc algs
+		 */
+		for (int i = 0; i != elemsof(default_ike_ealgs); i++) {
+			enum ikev1_encr_attribute id = default_ike_ealgs[i];
+			bool valid = ikev1_get_ike_encrypt_desc(id) != NULL;
+			passert(id);
+			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				struct esb_buf buf;
+				DBG_log("%s default ENCRYPT algorithm %s=%d",
+
+					valid ? "adding" : "dropping invalid",
+					enum_showb(&oakley_enc_names, id, &buf), id);
+			}
+			if (valid) {
+				if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				}
+				alg_info_ike_add(alg_info, id, ek_bits,
+						 aalg_id, modp_id);
+			}
+		}
+	} else if (aalg_id <= 0) {
+		/*
+		 * Recursively add the valid default PRF/HASH
+		 * algorithms.
+		 *
+		 * Even AEAD algorithms need a PRF.
+		 */
+		for (int j = 0; j != elemsof(default_ike_aalgs); j++) {
+			enum ikev1_hash_attribute id = default_ike_aalgs[j];
+			bool valid = ikev1_get_ike_prf_desc(id) != NULL;
+			passert(id);
+			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
+				struct esb_buf buf;
+				DBG_log("%s default PRF (HASH) algorithm %s=%d",
+					valid ? "adding" : "dropping invalid",
+					enum_showb(&oakley_hash_names, id, &buf), id);
+			}
+			if (valid) {
+				alg_info_ike_add(alg_info, ealg_id, ek_bits,
+						 id, modp_id);
 			}
 		}
 	} else {
 		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
 				     ealg_id, ek_bits,
-				     aalg_id,
-				     modp_id);
+				     aalg_id, modp_id);
 	}
 }
 
