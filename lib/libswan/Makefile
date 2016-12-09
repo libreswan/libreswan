@@ -27,7 +27,7 @@ include $(top_srcdir)/mk/targets.mk
 
 X509LIB=x509dn.c asn1.c oid.c
 
-SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
+SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c ike_info.c anyaddr.c \
 	constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
