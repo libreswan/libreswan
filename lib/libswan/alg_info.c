@@ -130,7 +130,7 @@ void alg_info_free(struct alg_info *alg_info)
 	pfreeany(alg_info);
 }
 
-static const char *parser_state_esp_names[] = {
+static const char *parser_state_names[] = {
 	"ST_INI",
 	"ST_INI_AA",
 	"ST_EA",
@@ -147,15 +147,15 @@ static const char *parser_state_esp_names[] = {
 	"ST_ERR"
 };
 
-static const char *parser_state_name_esp(enum parser_state_esp state)
+static const char *parser_state_name(enum parser_state state)
 {
-	return parser_state_esp_names[state];
+	return parser_state_names[state];
 }
 
 const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
 
 static inline void parser_set_state(struct parser_context *p_ctx,
-				enum parser_state_esp state)
+				    enum parser_state state)
 {
 	if (state != p_ctx->state) {
 		p_ctx->old_state = p_ctx->state;
@@ -181,7 +181,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 		case ST_AA:
 		case ST_MODP:
 		{
-			enum parser_state_esp next_state = 0;
+			enum parser_state next_state = 0;
 
 			switch (ch) {
 			case '\0':
@@ -643,7 +643,7 @@ struct alg_info *alg_info_parse_str(
 				"%s, just after \"%.*s\" (old_state=%s)",
 				ctx.err,
 				(int)(ptr - alg_str - 1), alg_str,
-				parser_state_name_esp(ctx.old_state));
+				parser_state_name(ctx.old_state));
 
 			pfree(alg_info);
 			return NULL;

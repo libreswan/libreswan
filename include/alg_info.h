@@ -26,7 +26,7 @@
 /*
  *	Creates a new alg_info by parsing passed string
  */
-enum parser_state_esp {
+enum parser_state {
 	ST_INI,         /* parse esp= string */
 	ST_INI_AA,      /* parse ah= string */
 	ST_EA,          /* encrypt algo   */
