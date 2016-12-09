@@ -66,7 +66,7 @@ DH dh23:              IKEv1: IKE        IKEv2: IKE        FIPS: YES
 DH dh24:              IKEv1: IKE        IKEv2: IKE        FIPS: YES
 east #
  ipsec auto --add westnet-eastnet-md5
-003 unsupported PRF algorithm MD5
+003 PRF algorithm MD5=1 is not supported
 003 got 0 transforms for ike="aes-md5"
 east #
  echo "initdone"
