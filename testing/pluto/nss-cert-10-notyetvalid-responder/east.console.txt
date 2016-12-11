@@ -5,12 +5,11 @@ east #
 east #
  ipsec _stackmanager start
 east #
+ mkdir /var/run/pluto
+east #
  # set a time in the future so notyetvalid and west certs are valid
 east #
- # We do get a weird warning about dumpdir
-east #
  faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
-pluto: warning: chdir("/var/run/pluto") to dumpdir failed (2: No such file or directory)
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -22,16 +21,9 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-notyetvalid                                                  u,u,u
-Libreswan test CA for mainca - Libreswan                     CT,, 
-road                                                         P,,  
-north                                                        P,,  
-hashsha2                                                     P,,  
-west-ec                                                      P,,  
-nic                                                          P,,  
+ # only expected to show failure on west
+east #
+ grep "ERROR" /tmp/pluto.log
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
