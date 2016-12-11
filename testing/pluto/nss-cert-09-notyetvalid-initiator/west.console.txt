@@ -7,7 +7,7 @@ west #
 west #
  mkdir /var/run/pluto
 west #
- # set a time in the future so notyetvalid and east certs are valid
+ # set a time in the future so notyetvalid and east certs are valid here
 west #
  faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
 west #
@@ -42,7 +42,7 @@ done
 west #
  # will only show up on east - note "expired" is wrong and should be "not yet valid"
 west #
- grep "Certificate has expired" /tmp/pluto.log
+ grep "ERROR" /tmp/pluto.log
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
