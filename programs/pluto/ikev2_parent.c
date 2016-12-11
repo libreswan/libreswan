@@ -3546,14 +3546,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
 			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
+			 * We cannot send a response as we are processing IKE_AUTH reply
 			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FAIL;
+			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 		}
 		break;
 	}
@@ -3578,8 +3573,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			 *  payloads.  This is an exception for the general rule of not starting
 			 *  new exchanges based on errors in responses."
 			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FAIL;
+			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 		}
 		break;
 	}
@@ -3589,8 +3583,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			      enum_name(&ikev2_auth_names,
 					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
 					v2a.isaa_type));
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED); /* see above comment */
-		return STF_FAIL;
+		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
 	/* authentication good */
