@@ -80,7 +80,7 @@
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
 
 char usage[] =
-	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>] \n"
+	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>]\n"
 	"        [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
 struct option opts[] = {
 	{ "rounds",     1,      NULL,   'p', },	/* obsoleted */
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 			printf("%s %s\n", progname, ipsec_version_code());
 			exit(0);
 			break;
-		case 'c':       /* nssdir directory, obsoleted by --nssdir|-d */
+		case 'c':       /* obsoleted by --nssdir|-d */
 		case 'd':       /* -d is used for nssdirdir with nss tools */
 			lsw_conf_nssdb(optarg);
 			break;
