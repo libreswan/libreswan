@@ -8,7 +8,7 @@
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2009-2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012-2016 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
@@ -402,15 +402,15 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 		nbytes));
 }
 
-static bool pluto_init_nss(char *nssdb)
+static bool pluto_init_nss(char *nssdir)
 {
 	SECStatus rv;
 
 	/* little lie, lsw_nss_setup doesn't have logging */
-	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdb);
+	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdir);
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
+	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
 		loglog(RC_LOG_SERIOUS, "%s", err);
 		return FALSE;
 	}
@@ -1084,7 +1084,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'f':	/* --ipsecdir <ipsec-dir> */
-			lsw_init_ipsecdir(optarg);
+			lsw_conf_confddir(optarg);
 			continue;
 
 		case 'N':	/* --debug-none */
@@ -1195,7 +1195,7 @@ int main(int argc, char **argv)
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* --ipsecdir */
-				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);
+				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR]);
 			}
 
 			/* --perpeerlog */
@@ -1477,7 +1477,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	if (!pluto_init_nss(oco->nssdb)) {
+	if (!pluto_init_nss(oco->nssdir)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
@@ -1768,7 +1768,7 @@ void show_setup_plutomain(void)
 		oco->conffile,
 		oco->secretsfile,
 		oco->confddir,
-		oco->nssdb,
+		oco->nssdir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 

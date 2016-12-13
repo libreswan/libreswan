@@ -43,24 +43,24 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	libreswan_log("Initializing NSS");
 	if (configdir) {
 		const char sql[] = "sql:";
-		char *nssdb;
+		char *nssdir;
 		if (strncmp(sql, configdir, strlen(sql)) == 0) {
-			nssdb = strdup(configdir);
+			nssdir = strdup(configdir);
 		} else {
-			nssdb = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdb");
-			strcpy(nssdb, sql);
-			strcat(nssdb, configdir);
+			nssdir = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdir");
+			strcpy(nssdir, sql);
+			strcat(nssdir, configdir);
 		}
-		libreswan_log("Opening NSS database \"%s\" %s", nssdb,
+		libreswan_log("Opening NSS database \"%s\" %s", nssdir,
 			      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
-		SECStatus rv = NSS_Initialize(nssdb, "", "", SECMOD_DB,
+		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
 			snprintf(err, sizeof(lsw_nss_buf_t),
 				 "Initialization of NSS with %s database \"%s\" failed (%d)",
 				 (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-				 nssdb, PR_GetError());
-			pfree(nssdb);
+				 nssdir, PR_GetError());
+			pfree(nssdir);
 			return FALSE;
 		}
 	} else {

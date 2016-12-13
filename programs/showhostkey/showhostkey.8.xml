@@ -103,7 +103,7 @@
 	</term>
 	<listitem>
 	  <para>
-	    Specify the libreswan nssdb directory that
+	    Specify the libreswan directory that
 	    contains the NSS database (default
 	    <filename>@IPSEC_NSSDIR@</filename>).
 	  </para>

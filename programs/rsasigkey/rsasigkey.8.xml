@@ -25,7 +25,7 @@
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
     <arg choice='opt'>--seed <replaceable>numbits</replaceable></arg>
-    <arg choice='opt'>--nssdir <replaceable>nssdb</replaceable></arg>
+    <arg choice='opt'>--nssdir <replaceable>nssdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
     <arg choice='opt'>nbits</arg>
@@ -70,7 +70,7 @@ Seed bits are rounded up to a multiple of 8.
 <para>The use of a different random device or a reduction of seedbits from the default value is
 prevented when the system is running in FIPS mode.</para>
 
-<para>The <option>--nssdir</option> option specifies the nssdb directory to use.
+<para>The <option>--nssdir</option> option specifies the directory to use for the nss database.
 This is the directory where the NSS certificate, key and security modules databases reside. The
 default value is <filename>@IPSEC_NSSDIR@</filename>.</para>
 

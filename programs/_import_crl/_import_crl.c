@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 
 	const struct lsw_conf_options *oco = lsw_init_options();
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->nssdb, 0, lsw_nss_get_password, err)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}

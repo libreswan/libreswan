@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case 'd':
-			lsw_conf_nssdb(optarg);
+			lsw_conf_nssdir(optarg);
 			break;
 
 		case OPT_PASSWORD:
@@ -446,14 +446,14 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	libreswan_log("using nss directory \"%s\"\n", oco->nssdb);
+	libreswan_log("using nss directory \"%s\"\n", oco->nssdir);
 
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
 	int status = 0;
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->nssdb, LSW_NSS_READONLY,
+	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY,
 			   lsw_nss_get_password, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
