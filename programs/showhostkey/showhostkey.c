@@ -7,7 +7,7 @@
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
- * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2010, 2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
@@ -60,11 +60,11 @@
 #include <prinit.h>
 
 char usage[] =
-  "Usage: ipsec showhostkey [ --verbose ]\n"
-  "                    { --version | --dump | --list | --left | --right |\n"
-  "                      --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
-  "                    [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
-  "                    [ --configdir <configdir> ] [ --password <password> ]\n";
+	"Usage: showhostkey [ --verbose ]\n"
+	"         { --version | --dump | --list | --left | --right |\n"
+	"                 --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
+	"         [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
+	"         [ --nssdir <nssdir> ] [ --password <password> ]\n";
 
 /*
  * For new options, avoid magic numbers.
@@ -78,21 +78,22 @@ enum opt {
 };
 
 struct option opts[] = {
-	{ "help",      no_argument,    NULL,   '?', },
-	{ "left",      no_argument,    NULL,   'l', },
-	{ "right",     no_argument,    NULL,   'r', },
-	{ "dump",      no_argument,    NULL,   'D', },
-	{ "list",      no_argument,    NULL,   'L', },
-	{ "ipseckey",  no_argument,    NULL,   'K', },
-	{ "gateway",   required_argument, NULL, 'g', },
-	{ "precedence", required_argument, NULL, 'p', },
-	{ "ckaid",     required_argument, NULL, OPT_CKAID, },
-	{ "rsaid",     required_argument, NULL, 'I', },
-	{ "version",   no_argument,     NULL,  'V', },
-	{ "verbose",   no_argument,     NULL,  'v', },
-	{ "configdir", required_argument,     NULL,  OPT_CONFIGDIR, },
-	{ "password",  required_argument,     NULL,  OPT_PASSWORD, },
-	{ 0,           0,      NULL,   0, }
+	{ "help",       no_argument,            NULL,   '?', },
+	{ "left",       no_argument,            NULL,   'l', },
+	{ "right",      no_argument,            NULL,   'r', },
+	{ "dump",       no_argument,            NULL,   'D', },
+	{ "list",       no_argument,            NULL,   'L', },
+	{ "ipseckey",   no_argument,            NULL,   'K', },
+	{ "gateway",    required_argument,      NULL,   'g', },
+	{ "precedence", required_argument,      NULL,   'p', },
+	{ "ckaid",      required_argument,      NULL,   OPT_CKAID, },
+	{ "rsaid",      required_argument,      NULL,   'I', },
+	{ "version",    no_argument,            NULL,   'V', },
+	{ "verbose",    no_argument,            NULL,   'v', },
+	{ "configdir",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
+	{ "nssdir",     required_argument,      NULL,   'd', }, /* nss-tools use -d */
+	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
+	{ 0,            0,                      NULL,   0, }
 };
 
 char *progname = "ipsec showhostkey";   /* for messages */
@@ -393,15 +394,9 @@ int main(int argc, char *argv[])
 			rsaid = clone_str(optarg, "rsaid");
 			break;
 
-		case OPT_CONFIGDIR:
-#if 0
-			/*
-			 * Will mean adding extra --nssdb option.
-			 */
-			lsw_conf_configddir(optarg);
-#else
-			lsw_init_ipsecdir(optarg);
-#endif
+		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
+		case 'd':
+			lsw_conf_nssdb(optarg);
 			break;
 
 		case OPT_PASSWORD:
@@ -453,7 +448,7 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	libreswan_log("using config directory \"%s\"\n", oco->nssdb);
+	libreswan_log("using nss directory \"%s\"\n", oco->nssdb);
 
 	/*
 	 * Set up for NSS - contains key pairs.
