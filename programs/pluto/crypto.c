@@ -38,9 +38,25 @@
 #include "test_buffer.h"
 #include "connections.h"
 
+#include "ike_alg_camellia.h"
+#include "ike_alg_aes.h"
+
+#include "ctr_test_vectors.h"
+#include "cbc_test_vectors.h"
+#include "gcm_test_vectors.h"
+
 void init_crypto(void)
 {
 	ike_alg_init();
+
+	passert(test_cbc_vectors(&ike_alg_encrypt_camellia_cbc,
+				 camellia_cbc_tests));
+	passert(test_gcm_vectors(&ike_alg_encrypt_aes_gcm_16,
+				 aes_gcm_tests));
+	passert(test_ctr_vectors(&ike_alg_encrypt_aes_ctr,
+				 aes_ctr_tests));
+	passert(test_cbc_vectors(&ike_alg_encrypt_aes_cbc,
+				 aes_cbc_tests));
 }
 
 void get_oakley_group_param(const struct oakley_group_desc *group,

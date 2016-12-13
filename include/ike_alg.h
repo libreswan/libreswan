@@ -123,17 +123,6 @@ struct ike_alg {
 	 * FIPS mode)?
 	 */
 	const bool fips;
-	/*
-	 * Test the algorithm's native (in process) implementation.
-	 * Return TRUE if it works; FALSE otherwise.  Only algorithms
-	 * with a working native implementation are suitable for IKE
-	 * (phase 1 in IKEv1).
-	 *
-	 * ESP/AH only algorithms should default this field to NULL.
-	 *
-	 * XXX: While not exactly an ideal way to do this, it works.
-	 */
-	bool (*const do_ike_test)(const struct ike_alg*);
 
 	/*
 	 * The NSS mechanism used to implement this algorithm

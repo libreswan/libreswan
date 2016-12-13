@@ -91,12 +91,7 @@ static const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		.description = NULL,
 	}
 };
-
-static bool test_aes_cbc(const struct ike_alg *alg)
-{
-	return test_cbc_vectors((const struct encrypt_desc*)alg,
-				 aes_cbc_test_vectors);
-}
+const struct cbc_test_vector *const aes_cbc_tests = aes_cbc_test_vectors;
 
 struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
@@ -107,7 +102,6 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 		.ikev1_esp_id = ESP_AES,
 		.ikev2_id = IKEv2_ENCR_AES_CBC,
 		.fips =        TRUE,
-		.do_ike_test = test_aes_cbc,
 		.nss_mechanism = CKM_AES_CBC,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
@@ -240,12 +234,7 @@ static const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.description = NULL,
 	}
 };
-
-static bool test_aes_ctr(const struct ike_alg *alg)
-{
-	return test_ctr_vectors((const struct encrypt_desc*)alg,
-				aes_ctr_test_vectors);
-}
+const struct ctr_test_vector *const aes_ctr_tests = aes_ctr_test_vectors;
 
 static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 		       u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
@@ -325,7 +314,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 		.ikev1_esp_id = ESP_AES_CTR,
 		.ikev2_id = IKEv2_ENCR_AES_CTR,
 		.fips =        TRUE,
-		.do_ike_test = test_aes_ctr,
 		.nss_mechanism = CKM_AES_CTR,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -379,12 +367,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.key = NULL,
 	}
 };
-
-static bool test_aes_gcm(const struct ike_alg *alg)
-{
-	return test_gcm_vectors((const struct encrypt_desc*)alg,
-				aes_gcm_test_vectors);
-}
+const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
@@ -440,7 +423,6 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.ikev1_esp_id = ESP_AES_GCM_16,
 		.ikev2_id = IKEv2_ENCR_AES_GCM_16,
 		.fips =        TRUE,
-		.do_ike_test = test_aes_gcm,
 		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
@@ -463,7 +445,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.ikev1_esp_id = ESP_AES_CCM_8,
 		.ikev2_id = IKEv2_ENCR_AES_CCM_8,
 		.fips =         TRUE,
-		.do_ike_test = NULL,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_AES_CCM,
 #endif
@@ -486,7 +467,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.ikev1_esp_id = ESP_AES_CCM_12,
 		.ikev2_id = IKEv2_ENCR_AES_CCM_12,
 		.fips =         TRUE,
-		.do_ike_test = NULL,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_AES_CCM,
 #endif
@@ -509,7 +489,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.ikev1_esp_id = ESP_AES_CCM_16,
 		.ikev2_id = IKEv2_ENCR_AES_CCM_16,
 		.fips =         TRUE,
-		.do_ike_test = NULL,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_AES_CCM,
 #endif
@@ -530,7 +509,6 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
 		.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
 		.fips = TRUE,
-		.do_ike_test = NULL, /* No NSS support */
 	},
 #ifdef NOT_IMPLMENTED
 	.hash_ctx_size = sizeof(aes_xcbc_context),
@@ -557,7 +535,6 @@ struct integ_desc ike_alg_integ_aes_cmac = {
 		.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
 		.ikev2_id = IKEv2_AUTH_AES_CMAC_96,
 		.fips = TRUE,
-		.do_ike_test = NULL, /* No NSS support */
 	},
 	.integ_key_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */

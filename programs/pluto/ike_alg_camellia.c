@@ -89,12 +89,7 @@ static const struct cbc_test_vector camellia_cbc_test_vectors[] = {
 		.description = NULL,
 	}
 };
-
-static bool test_camellia_cbc(const struct ike_alg *alg)
-{
-	return test_cbc_vectors((const struct encrypt_desc*)alg,
-				camellia_cbc_test_vectors);
-}
+const struct cbc_test_vector *const camellia_cbc_tests = camellia_cbc_test_vectors;
 
 struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 {
@@ -105,7 +100,6 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CBC,
 		.ikev1_esp_id = ESP_CAMELLIAv1,
 		.ikev2_id = IKEv2_ENCR_CAMELLIA_CBC,
-		.do_ike_test = test_camellia_cbc,
 		.nss_mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
