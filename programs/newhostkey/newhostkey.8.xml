@@ -26,7 +26,7 @@
      <arg choice='opt'>--quiet </arg>
      <arg choice='opt'>--verbose </arg>
     </group>
-    <arg choice='opt'>--configdir<replaceable>nssdbdir</replaceable></arg>
+    <arg choice='opt'>--nssdir<replaceable>nssdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>password</replaceable></arg>
     <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
     <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
@@ -78,11 +78,11 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>--configdir</option>&nbsp;<replaceable>nssdbdir</replaceable></term>
+	<term><option>--nssdir</option>&nbsp;<replaceable>nssdir</replaceable></term>
 	<listitem>
-	  <para>The <option>--configdir</option> option specifies the NSS
-	  configuration directory where the certificate key, and
-	  modsec databases reside (default <filename>@IPSEC_NSSDIR@</filename>.</para>
+	  <para>The <option>--nssdir</option> option specifies the NSS DB
+	  directory where the certificate key, and modsec databases reside
+	  (default <filename>@IPSEC_NSSDIR@</filename>.</para>
 	</listitem>
       </varlistentry>
 
