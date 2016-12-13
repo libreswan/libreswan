@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -83,6 +84,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
+		.ikev1_esp_id = ESP_TWOFISH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_TWOFISH_CBC
@@ -103,7 +105,6 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
-		.ikev1_esp_id = ESP_TWOFISH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
 #ifdef NOT_YET
 		.nss_mechanism = CKM_TWOFISH_CBC
