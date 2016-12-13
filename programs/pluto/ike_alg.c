@@ -543,9 +543,9 @@ static bool dh_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms dh_algorithms = {
 	.all = ALGORITHM_TABLE("DH", dh_descriptors),
 	.type = IKE_ALG_DH,
-	.ikev1_oakley_enum_names = &oakley_enc_names,
-	.ikev1_esp_enum_names = &esp_transformid_names,
-	.ikev2_enum_names = &ikev2_trans_type_encr_names,
+	.ikev1_oakley_enum_names = &oakley_group_names,
+	.ikev1_esp_enum_names = NULL,
+	.ikev2_enum_names = &oakley_group_names,
 	.desc_check = dh_desc_check,
 	.desc_is_ike = dh_desc_is_ike,
 };
