@@ -153,6 +153,8 @@ void alg_info_snprint_ike_info(char *buf, size_t buflen,
 
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
 			       const struct esp_info *esp_info);
+void alg_info_snprint_phase2(char *buf, size_t buflen,
+			     struct alg_info_esp *alg_info);
 
 /*
  * Iterate through the elements of an ESP or IKE table.

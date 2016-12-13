@@ -10,9 +10,6 @@ struct ike_info;
 extern struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
 
-extern void alg_info_snprint_phase2(char *buf, size_t buflen,
-				    struct alg_info_esp *alg_info);
-
 extern bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 				const struct alg_info_esp *alg_info);
 
