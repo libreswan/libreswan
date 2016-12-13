@@ -527,7 +527,6 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 		.name = "aes_xcbc",
 		.officname =  "aes_xcbc",
 		.algo_type = IKE_ALG_INTEG,
-		.ikev1_oakley_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
 		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
 		.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
 		.fips = TRUE,

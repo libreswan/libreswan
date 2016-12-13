@@ -1117,10 +1117,8 @@ enum ikev1_hash_attribute  {
 	OAKLEY_SHA2_256 = 4,
 	OAKLEY_SHA2_384 = 5,
 	OAKLEY_SHA2_512 = 6,
-
-	OAKLEY_AES_XCBC = 9 /* stolen from ikev2 */
 };
-#define OAKLEY_HASH_MAX 10
+#define OAKLEY_HASH_MAX 9
 
 /*
  * Oakley Authentication Method attribute

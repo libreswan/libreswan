@@ -1315,16 +1315,13 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
-	"UNUSED_7",
-	"UNUSED_8",
-	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_AES_XCBC, /* waiting on NSS support */
+	OAKLEY_SHA2_512,
 	ARRAY_REF(oakley_hash_name),
 	"OAKLEY_", /* prefix */
 	NULL
