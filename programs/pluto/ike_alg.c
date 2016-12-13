@@ -79,6 +79,11 @@
 	     (A) < (TABLE)->end;				\
 	     (A)++)
 
+#define FOR_EACH_IKE_ALG_NAMEP(ALG, NAMEP)				\
+	for (const char *const *(NAMEP) = (ALG)->names;			\
+	     (NAMEP) < (ALG)->names + elemsof((ALG)->names) && *(NAMEP); \
+	     (NAMEP)++)
+
 struct algorithm_table {
 	const struct ike_alg **start;
 	const struct ike_alg **end;
@@ -153,6 +158,25 @@ const struct oakley_group_desc **next_oakley_group(const struct oakley_group_des
 {
 	return (const struct oakley_group_desc**)next_alg(&dh_algorithms.all,
 							  (const struct ike_alg**)last);
+}
+
+static const struct ike_alg *alg_byname(const struct algorithm_table *algorithms,
+					const char *name)
+{
+	for (const struct ike_alg **alg = next_alg(algorithms, NULL);
+	     alg != NULL; alg = next_alg(algorithms, alg)) {
+		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
+			if (strcaseeq(name, *namep)) {
+				return *alg;
+			}
+		}
+	}
+	return NULL;
+}
+
+const struct oakley_group_desc *group_desc_byname(const char *name)
+{
+	return (const struct oakley_group_desc*)alg_byname(&dh_algorithms.all, name);
 }
 
 bool ike_alg_is_ike(const struct ike_alg *alg)
@@ -283,6 +307,31 @@ static void check_alg_in_table(const struct ike_alg *alg,
 }
 
 /*
+ * Check for name in names
+ */
+static void check_name_in_names(const char *adjective,
+				  const char *name,
+				  const struct ike_alg *alg)
+{
+	FOR_EACH_IKE_ALG_NAMEP(alg, namep) {
+		if (strcaseeq(name, *namep)) {
+			return;
+		}
+	}
+	PEXPECT_LOG("%s name %s missing from %s %s names",
+		    adjective, name, type_algorithms[alg->algo_type]->all.name, alg->name);
+}
+
+static void check_names_in_names(const char *adjective,
+				   const struct ike_alg *child,
+				   const struct ike_alg *parent)
+{
+	FOR_EACH_IKE_ALG_NAMEP(child, namep) {
+		check_name_in_names(adjective, *namep, parent);
+	}
+}
+
+/*
  * Simple hash functions.
  */
 
@@ -299,6 +348,7 @@ static void hash_desc_check(const struct ike_alg *alg)
 	const struct hash_desc *hash = (const struct hash_desc*)alg;
 	passert(hash->hash_digest_len > 0);
 	passert(hash->hash_block_size > 0);
+	check_name_in_names("hash", hash->common.name, &hash->common);
 	if (hash->hash_ops) {
 		passert(hash->hash_ops->digest_symkey != NULL &&
 			hash->hash_ops->digest_bytes != NULL &&
@@ -377,6 +427,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 		 */
 		check_alg_in_table(&prf->hasher->common, &hash_algorithms.all);
 		passert(prf->prf_output_size == prf->hasher->hash_digest_len);
+		check_names_in_names("prf hasher", &prf->hasher->common, alg);
 	}
 	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
 		passert(prf->hasher != NULL);
@@ -434,6 +485,7 @@ static void integ_desc_check(const struct ike_alg *alg)
 		passert(integ->integ_key_size == integ->prf->prf_key_size);
 		passert(integ->integ_output_size <= integ->prf->prf_output_size);
 		passert(prf_desc_is_ike(&integ->prf->common));
+		check_names_in_names("integ prf", &integ->prf->common, alg);
 	}
 }
 
@@ -610,6 +662,7 @@ static void check_enum_name(const char *what,
 			    what, id, enum_name));
 		passert(enum_name != NULL);
 		passert(enum_name);
+		check_name_in_names("enum", enum_name, alg);
 	} else {
 		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
 	}
@@ -658,6 +711,14 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		check_enum_name("IKEv2 ID",
 				alg, alg->ikev2_id,
 				algorithms->ikev2_enum_names);
+
+		/*
+		 * Check that name appears in the names list.
+		 *
+		 * Requiring this is easier than trying to ensure that
+		 * changes to NAME don't break NAMES.
+		 */
+		check_name_in_names(algorithms->all.name, alg->name, alg);
 
 		/*
 		 * Algorithm can't appear twice.
@@ -727,7 +788,20 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		default:
 			bad_case(alg->algo_type);
 		}
-		libreswan_log("%s %s:%*s IKEv1: %3s %3s %2s IKEv2: %3s %3s %2s%s",
+		char names[60] = "";
+		const char *sep = "";
+		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
+			/* filter out NAME */
+			if (!strcaseeq(*name, alg->name)) {
+				passert(strlen(names) + strlen(sep) + strlen(*name) < sizeof(names));
+				strcat(names, sep);
+				strcat(names, *name);
+				passert(strlen(names) < sizeof(names));
+				sep = " ";
+			}
+		}
+		/* 19 is eyeballed */
+		libreswan_log("%s %s:%*s  IKEv1: %3s %3s %2s  IKEv2: %3s %3s %2s  %4s%s%s%s",
 			      algorithms->all.name, alg->name,
 			      (int)(19 - strlen(algorithms->all.name) - strlen(alg->name)), "",
 			      v1_ike ? "IKE" : "",
@@ -736,7 +810,8 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 			      v2_ike ? "IKE" : "",
 			      v2_esp ? "ESP" : "",
 			      v2_ah ? "AH" : "",
-			      alg->fips ? " FIPS: YES" : "");
+			      alg->fips ? "FIPS" : "",
+			      *names ? "  (" : "", names, *names ? ")" : "");
 	}
 }
 

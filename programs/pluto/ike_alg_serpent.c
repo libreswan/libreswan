@@ -75,6 +75,7 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 {
 	.common = {
 		.name = "serpent",
+		.names = { "serpent", "serpent_cbc", },
 		.officname = "serpent",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_SERPENT_CBC,
