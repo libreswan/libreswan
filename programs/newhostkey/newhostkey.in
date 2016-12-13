@@ -20,7 +20,7 @@
 
 me="ipsec newhostkey"
 usage="Usage: $me [--output filename] [--seeddev device] [--bits n] \\
-    [--quiet] [--hostname host] [--nssdir nssdbdir] [--password password] "
+    [--quiet] [--hostname host] [--nssdir @IPSEC_NSSDIR@] [--password password] "
 
 bits=
 verbose=
@@ -111,7 +111,7 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir ${nssdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -ne 0 ]; then
     exit ${RETVAL}
