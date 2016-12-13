@@ -2075,86 +2075,6 @@ bool subnetisnone(const ip_subnet *sn)
 	return isanyaddr(&base) && subnetishost(sn);
 }
 
-/* BIND enumerated types */
-#include <arpa/nameser.h>
-
-static const char *const rr_type_name[] = {
-	"T_A",		/* 1 host address */
-	"T_NS",		/* 2 authoritative server */
-	"T_MD",		/* 3 mail destination */
-	"T_MF",		/* 4 mail forwarder */
-	"T_CNAME",	/* 5 canonical name */
-	"T_SOA",	/* 6 start of authority zone */
-	"T_MB",		/* 7 mailbox domain name */
-	"T_MG",		/* 8 mail group member */
-	"T_MR",		/* 9 mail rename name */
-	"T_NULL",	/* 10 null resource record */
-	"T_WKS",	/* 11 well known service */
-	"T_PTR",	/* 12 domain name pointer */
-	"T_HINFO",	/* 13 host information */
-	"T_MINFO",	/* 14 mailbox information */
-	"T_MX",		/* 15 mail routing information */
-	"T_TXT",	/* 16 text strings */
-	"T_RP",		/* 17 responsible person */
-	"T_AFSDB",	/* 18 AFS cell database */
-	"T_X25",	/* 19 X_25 calling address */
-	"T_ISDN",	/* 20 ISDN calling address */
-	"T_RT",		/* 21 router */
-	"T_NSAP",	/* 22 NSAP address */
-	"T_NSAP_PTR",	/* 23 reverse NSAP lookup (deprecated) */
-	"T_SIG",	/* 24 security signature */
-	"T_KEY",	/* 25 security key */
-	"T_PX",		/* 26 X.400 mail mapping */
-	"T_GPOS",	/* 27 geographical position (withdrawn) */
-	"T_AAAA",	/* 28 IP6 Address */
-	"T_LOC",	/* 29 Location Information */
-	"T_NXT",	/* 30 Next Valid Name in Zone */
-	"T_EID",	/* 31 Endpoint identifier */
-	"T_NIMLOC",	/* 32 Nimrod locator */
-	"T_SRV",	/* 33 Server selection */
-	"T_ATMA",	/* 34 ATM Address */
-	"T_NAPTR",	/* 35 Naming Authority PoinTeR */
-};
-
-enum_names rr_type_names = {
-	ns_t_a,
-	ns_t_naptr,
-	ARRAY_REF(rr_type_name),
-	NULL, /* prefix */
-	NULL
-};
-
-/* Query type values which do not appear in resource records */
-static const char *const rr_qtype_name[] = {
-	"T_TKEY",	/* 249 transaction key */
-	"TSIG",		/* 250 transaction signature */
-	"T_IXFR",	/* 251 incremental zone transfer */
-	"T_AXFR",	/* 252 transfer zone of authority */
-	"T_MAILB",	/* 253 transfer mailbox records */
-	"T_MAILA",	/* 254 transfer mail agent records */
-	"T_ANY",	/* 255 wildcard match */
-};
-
-enum_names rr_qtype_names = {
-	ns_t_tkey,
-	ns_t_any,
-	ARRAY_REF(rr_qtype_name),
-	NULL, /* prefix */
-	&rr_type_names
-};
-
-static const char *const rr_class_name[] = {
-	"C_IN",	/* 1 the arpa internet */
-};
-
-enum_names rr_class_names = {
-	ns_c_in,
-	ns_c_in,
-	ARRAY_REF(rr_class_name),
-	NULL, /* prefix */
-	NULL
-};
-
 static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_RSA",
@@ -2537,8 +2457,6 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&rr_qtype_names,
-	&rr_class_names,
 	&ppk_names,
 };
 

@@ -120,11 +120,6 @@ extern const struct af_info
 
 extern const struct af_info *aftoinfo(int af);
 
-extern enum_names
-	rr_qtype_names,
-	rr_type_names,
-	rr_class_names;
-
 extern enum_names ppk_names;
 
 extern enum_names spi_names;
