@@ -73,6 +73,7 @@ char usage[] =
  */
 enum opt {
 	OPT_CONFIGDIR,
+	OPT_DUMP,
 	OPT_PASSWORD,
 	OPT_CKAID,
 };
@@ -81,7 +82,7 @@ struct option opts[] = {
 	{ "help",       no_argument,            NULL,   '?', },
 	{ "left",       no_argument,            NULL,   'l', },
 	{ "right",      no_argument,            NULL,   'r', },
-	{ "dump",       no_argument,            NULL,   'D', },
+	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
 	{ "list",       no_argument,            NULL,   'L', },
 	{ "ipseckey",   no_argument,            NULL,   'K', },
 	{ "gateway",    required_argument,      NULL,   'g', },
@@ -347,7 +348,7 @@ int main(int argc, char *argv[])
 			right_flg = TRUE;
 			break;
 
-		case 'D': /* --dump */
+		case OPT_DUMP:
 			dump_flg = TRUE;
 			break;
 
