@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2014 Paul Wouters <pwouters@redhat.com>
-# Copyright (C) 2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2014, 2016 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -20,14 +20,14 @@
 
 me="ipsec newhostkey"
 usage="Usage: $me [--output filename] [--seeddev device] [--bits n] \\
-    [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] "
+    [--quiet] [--hostname host] [--nssdir nssdbdir] [--password password] "
 
 bits=
 verbose=
 host=
 seeddev="--seeddev /dev/random"
 output=""
-configdir="@IPSEC_NSSDIR@"
+nssdir="@IPSEC_NSSDIR@"
 password=
 for dummy; do
     case "$1" in
@@ -62,8 +62,8 @@ for dummy; do
 	    seeddev="--seeddev ${2}"
 	    shift
 	    ;;
-	--configdir)
-	    configdir="${2}"
+	--nssdir)
+	    nssdir="${2}"
 	    shift
 	    ;;
 	--password)
@@ -98,20 +98,20 @@ if [ -n "${output}" -a -s "${output}" ]; then
     printf "%s: WARNING: file \"%s\" exists, appending to it\n" "${0}" "${output}" >&2
 fi
 
-if [ ! -d ${configdir} ]; then
-    echo "No such directory: ${configdir}"
+if [ ! -d ${nssdir} ]; then
+    echo "No such directory: ${nssdir}"
     exit 255
 fi
 
-certutil -L -d "sql:$configdir" >/dev/null 2>/dev/null
+certutil -L -d "sql:${nssdir}" >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
-    echo "NSS database in $configdir not initialized."
-    echo "    Please run 'ipsec initnss --configdir $configdir'"
+    echo "NSS database in ${nssdir} not initialized."
+    echo "    Please run 'ipsec initnss --nssdir ${nssdir}'"
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir ${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir ${nssdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -ne 0 ]; then
     exit ${RETVAL}
