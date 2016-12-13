@@ -384,9 +384,6 @@ int main(int argc, char *argv[])
 			gateway = clone_str(optarg, "gateway");
 			break;
 
-		case 'd':
-			break;
-
 		case OPT_CKAID:
 			ckaid = clone_str(optarg, "ckaid");
 			break;
