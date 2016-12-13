@@ -50,7 +50,7 @@
     <arg>--precedence <replaceable>precedence</replaceable></arg>
     <sbr/>
 
-    <arg>--configdir <replaceable>configdir</replaceable></arg>
+    <arg>--nssdir <replaceable>nssdir</replaceable></arg>
     <arg>--password <replaceable>password</replaceable></arg>
 
   </cmdsynopsis>
@@ -99,11 +99,11 @@
 
       <varlistentry>
 	<term>
-	  <option>--configdir <replaceable>configdir</replaceable></option>
+	  <option>--nssdir <replaceable>nssdir</replaceable></option>
 	</term>
 	<listitem>
 	  <para>
-	    Specify the libreswan configuration directory that
+	    Specify the libreswan nssdb directory that
 	    contains the NSS database (default
 	    <filename>@IPSEC_NSSDIR@</filename>).
 	  </para>
@@ -118,7 +118,7 @@
 	  <para>
 	    Specify the password to use when accessing the NSS
 	    database (default contained in
-	    <filename>@IPSEC_NSSDIR@/nsspassword</filename>).
+	    <filename>@IPSEC_CONFDDIR@/nsspassword</filename>).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -273,7 +273,7 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
   <title>FILES</title>
   <para>
     <filename>@IPSEC_NSSDIR@</filename>,
-    <filename>@IPSEC_NSSDIR@/nsspassword</filename>
+    <filename>@IPSEC_CONFDDIR@/nsspassword</filename>
   </para>
 </refsect1>
 
