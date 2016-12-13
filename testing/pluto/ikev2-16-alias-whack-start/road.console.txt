@@ -55,7 +55,7 @@ road #
 000 "road-east-ipv4-psk-ikev2/1x0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-ipv4-psk-ikev2/1x0":   newest ISAKMP SA: #2; newest IPsec SA: #4;
 000 "road-east-ipv4-psk-ikev2/1x0":   aliases: road-east-ipv4-psk-ikev2 
-000 "road-east-ipv4-psk-ikev2/1x0":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2-512-MODP2048
+000 "road-east-ipv4-psk-ikev2/1x0":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2_512-MODP2048
 000 "road-east-ipv4-psk-ikev2/1x0":   ESP algorithm newest: AES_GCM_C_256-NONE; pfsgroup=<Phase1>
 000 "road-east-ipv4-psk-ikev2/2x0": 192.0.11.0/24===192.1.3.209<192.1.3.209>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; erouted; eroute owner: #3
 000 "road-east-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east
@@ -73,7 +73,7 @@ road #
 000 "road-east-ipv4-psk-ikev2/2x0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-ipv4-psk-ikev2/2x0":   newest ISAKMP SA: #1; newest IPsec SA: #3;
 000 "road-east-ipv4-psk-ikev2/2x0":   aliases: road-east-ipv4-psk-ikev2 
-000 "road-east-ipv4-psk-ikev2/2x0":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2-512-MODP2048
+000 "road-east-ipv4-psk-ikev2/2x0":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2_512-MODP2048
 000 "road-east-ipv4-psk-ikev2/2x0":   ESP algorithm newest: AES_GCM_C_256-NONE; pfsgroup=<Phase1>
 000 #4: "road-east-ipv4-psk-ikev2/1x0":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#2; idle; import:admin initiate
 000 #4: "road-east-ipv4-psk-ikev2/1x0" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 

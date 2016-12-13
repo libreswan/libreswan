@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1931,9 +1932,9 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_TIGER",
 	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
-	"PRF_HMAC_SHA2-256",
-	"PRF_HMAC_SHA2-384",
-	"PRF_HMAC_SHA2-512",
+	"PRF_HMAC_SHA2_256",
+	"PRF_HMAC_SHA2_384",
+	"PRF_HMAC_SHA2_512",
 	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
