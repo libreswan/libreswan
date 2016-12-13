@@ -34,7 +34,8 @@ v3.19 (unreleased)
 * pluto: change force-encaps=yes|no to encaps=auto|yes|no [Paul/Patrick Kerpan]
 * libipsecconf: libipsecconf: remove last remnants of manual keying [Paul]
 * _updown.netkey: Move addcat call from route-host to up-client [Paul]
-* ipsec: use -d or --nssdir for import and initnss directory option.
+* ipsec: initnss|import use --nssdir for nssdb directory option [Tuomo]
+* newhostkey: use --nssdir for nssdb directory option [Tuomo]
 * barf: minor improvements with systemd/journalctl [Paul]
 * verify: fix "with FIPS" output to print OK [Paul]
 * _stackmanager: add cmac and chacha20poly1305 to modprobe list [Paul]
