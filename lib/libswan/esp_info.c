@@ -241,7 +241,7 @@ static void alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id,
-			     int modp_id UNUSED)
+			     const struct oakley_group_desc *dh_group UNUSED)
 {
 	/* Policy: default to AES */
 	if (ealg_id == 0)
@@ -274,7 +274,7 @@ static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 			    struct alg_info *alg_info,
 			    int ealg_id, int ek_bits,
 			    int aalg_id,
-			    int modp_id UNUSED)
+			    const struct oakley_group_desc *dh_group UNUSED)
 {
 	/* ah=null is invalid */
 	if (aalg_id > 0) {

@@ -564,7 +564,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				   alg_info,
 				   ealg_id, p_ctx->eklen,
 				   aalg_id,
-				   group ? group->group : 0);
+				   group);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
 }

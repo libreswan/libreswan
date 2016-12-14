@@ -42,7 +42,7 @@ struct parser_param {
 			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id,
-			     int modp_id);
+			     const struct oakley_group_desc *dh_group);
 	const struct oakley_group_desc *(*group_byname)(const struct parser_policy *const policy,
 							char *err_buf, size_t err_buf_len,
 							const char *name);
