@@ -477,7 +477,7 @@ u_int16_t secctx_attr_type = SECCTX;
  * The table should be ordered to maximize the clarity of --help.
  *
  * free one letter options as of 2016-12-14
- * '1' 'a' 'd' 'Q' 'R' 'W'
+ * '1' 'a' 'Q' 'R' 'W'
  */
 
 #define DBG_OFFSET 256
@@ -543,6 +543,7 @@ static const struct option long_opts[] = {
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
+	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
 	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
@@ -1087,6 +1088,10 @@ int main(int argc, char **argv)
 			lsw_conf_confddir(optarg);
 			continue;
 
+		case 'd':	/* --nssdir <path> */
+			lsw_conf_nssdir(optarg);
+			continue;
+
 		case 'N':	/* --debug-none */
 			base_debugging = DBG_NONE;
 			continue;
@@ -1196,6 +1201,12 @@ int main(int argc, char **argv)
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* --ipsecdir */
 				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR]);
+			}
+
+			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
+				*cfg->setup.strings[KSF_NSSDIR] != 0) {
+				/* --nssdir <path> */
+				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR]);
 			}
 
 			/* --perpeerlog */

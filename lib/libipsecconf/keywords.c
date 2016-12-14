@@ -407,6 +407,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "plutorestartoncrash",  kv_config,  kt_bool,  KBF_PLUTORESTARTONCRASH,  NOT_ENUM },
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR,  NOT_ENUM },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR,  NOT_ENUM },
+  { "nssdir", kv_config, kt_dirname, KSF_NSSDIR, NOT_ENUM },
   { "secretsfile",  kv_config,  kt_dirname,  KSF_SECRETSFILE,  NOT_ENUM },
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY,  NOT_ENUM },
   { "perpeerlog",  kv_config,  kt_bool,  KBF_PERPEERLOG,  NOT_ENUM },
