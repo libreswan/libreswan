@@ -476,8 +476,8 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  * The table should be ordered to maximize the clarity of --help.
  *
- * free one letter options as of 2016-10-04
- * '0' '1' '3' '4' 'a' 'd' 'Q' 'R' 'W' 'y'
+ * free one letter options as of 2016-12-14
+ * '1' 'a' 'd' 'Q' 'R' 'W'
  */
 
 #define DBG_OFFSET 256
@@ -487,7 +487,7 @@ static const struct option long_opts[] = {
 	{ "help\0", no_argument, NULL, 'h' },
 	{ "version\0", no_argument, NULL, 'v' },
 	{ "config\0<filename>", required_argument, NULL, 'z' },
-	{ "nofork\0", no_argument, NULL, 'd' },
+	{ "nofork\0", no_argument, NULL, '0' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
@@ -828,7 +828,7 @@ int main(int argc, char **argv)
 			continue;
 #endif
 
-		case 'd':	/* --nofork*/
+		case '0':	/* --nofork*/
 			fork_desired = FALSE;
 			continue;
 
