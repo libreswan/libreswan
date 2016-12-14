@@ -237,10 +237,11 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 /*
  * Add ESP alg info _with_ logic (policy):
  */
-static void alg_info_esp_add(struct alg_info *alg_info,
-			int ealg_id, int ek_bits,
-			int aalg_id,
-			int modp_id UNUSED)
+static void alg_info_esp_add(const struct parser_policy *const policy UNUSED,
+			     struct alg_info *alg_info,
+			     int ealg_id, int ek_bits,
+			     int aalg_id,
+			     int modp_id UNUSED)
 {
 	/* Policy: default to AES */
 	if (ealg_id == 0)
@@ -269,10 +270,11 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 /*
  * Add AH alg info _with_ logic (policy):
  */
-static void alg_info_ah_add(struct alg_info *alg_info,
-			int ealg_id, int ek_bits,
-			int aalg_id,
-			int modp_id UNUSED)
+static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
+			    struct alg_info *alg_info,
+			    int ealg_id, int ek_bits,
+			    int aalg_id,
+			    int modp_id UNUSED)
 {
 	/* ah=null is invalid */
 	if (aalg_id > 0) {
@@ -366,8 +368,9 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 }
 
 /* This function is tested in testing/lib/libswan/algparse.c */
-struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
-						char *err_buf, size_t err_buf_len)
+struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
+						  const char *alg_str,
+						  char *err_buf, size_t err_buf_len)
 {
 	/*
 	 * alg_info storage should be sized dynamically
@@ -387,7 +390,8 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 	}
 
 	return (struct alg_info_esp *)
-		alg_info_parse_str(&alg_info_esp->ai,
+		alg_info_parse_str(policy,
+				   &alg_info_esp->ai,
 				   esp_buf,
 				   err_buf, err_buf_len,
 				   &esp_parser_param);
@@ -396,8 +400,9 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 /* This function is tested in testing/lib/libswan/algparse.c */
 /* ??? why is this called _ah_ when almost everything refers to esp? */
 /* ??? the only difference between this and alg_info_esp is in two parameters to alg_info_parse_str */
-struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
-						char *err_buf, size_t err_buf_len)
+struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
+						 const char *alg_str,
+						 char *err_buf, size_t err_buf_len)
 {
 	/*
 	 * alg_info storage should be sized dynamically
@@ -415,7 +420,8 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 	}
 
 	return (struct alg_info_esp *)
-		alg_info_parse_str(&alg_info_esp->ai,
+		alg_info_parse_str(policy,
+				   &alg_info_esp->ai,
 				   esp_buf,
 				   err_buf, err_buf_len,
 				   &ah_parser_param);

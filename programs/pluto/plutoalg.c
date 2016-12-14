@@ -283,7 +283,8 @@ static const enum ikev1_hash_attribute default_ike_aalgs[] = {
  * _Recursively_ add IKE alg info _with_ logic (policy):
  */
 
-static void alg_info_ike_add(struct alg_info *alg_info,
+static void alg_info_ike_add(const struct parser_policy *const policy UNUSED,
+			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id, int modp_id)
 {
@@ -310,7 +311,8 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 					enum_showb(&oakley_group_names, id, &buf), id);
 			}
 			if (valid) {
-				alg_info_ike_add(alg_info, ealg_id, ek_bits,
+				alg_info_ike_add(policy, alg_info,
+						 ealg_id, ek_bits,
 						 aalg_id, id);
 			}
 		}
@@ -332,7 +334,8 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 			if (valid) {
 				if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
 				}
-				alg_info_ike_add(alg_info, id, ek_bits,
+				alg_info_ike_add(policy, alg_info,
+						 id, ek_bits,
 						 aalg_id, modp_id);
 			}
 		}
@@ -354,7 +357,8 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 					enum_showb(&oakley_hash_names, id, &buf), id);
 			}
 			if (valid) {
-				alg_info_ike_add(alg_info, ealg_id, ek_bits,
+				alg_info_ike_add(policy, alg_info,
+						 ealg_id, ek_bits,
 						 id, modp_id);
 			}
 		}
@@ -391,7 +395,8 @@ const struct parser_param ike_parser_param = {
 	.lookup_group = lookup_group,
 };
 
-struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
+struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
 	/*
@@ -402,7 +407,8 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
 	return (struct alg_info_ike *)
-		alg_info_parse_str(&alg_info_ike->ai,
+		alg_info_parse_str(policy,
+				   &alg_info_ike->ai,
 				   alg_str,
 				   err_buf, err_buf_len,
 				   &ike_parser_param);

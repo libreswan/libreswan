@@ -1305,7 +1305,7 @@ void add_connection(const struct whack_message *wm)
 	if (!NEVER_NEGOTIATE(wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
 
-		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+		alg_info_ike = alg_info_ike_create_from_str(wm->policy, wm->ike,
 			err_buf, sizeof(err_buf));
 
 		if (alg_info_ike == NULL) {
@@ -1387,11 +1387,11 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "NULL"));
 
 			if (c->policy & POLICY_ENCRYPT)
-				c->alg_info_esp = alg_info_esp_create_from_str(
+				c->alg_info_esp = alg_info_esp_create_from_str(c->policy,
 					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
-				c->alg_info_esp = alg_info_ah_create_from_str(
+				c->alg_info_esp = alg_info_ah_create_from_str(c->policy,
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {

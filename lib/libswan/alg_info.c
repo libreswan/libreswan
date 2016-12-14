@@ -320,10 +320,6 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			struct alg_info *alg_info,
-			void (*alg_info_add)(struct alg_info *alg_info,
-					int ealg_id, int ek_bits,
-					int aalg_id,
-					int modp_id),
 			const struct oakley_group_desc *(*lookup_group)
 			(u_int16_t group))
 {
@@ -569,26 +565,31 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-	(*alg_info_add)(alg_info,
-			ealg_id, p_ctx->eklen,
-			aalg_id,
-			modp_id);
+	p_ctx->param->alg_info_add(&p_ctx->policy,
+				   alg_info,
+				   ealg_id, p_ctx->eklen,
+				   aalg_id,
+				   modp_id);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
 }
 
 static void parser_init(struct parser_context *ctx,
+			lset_t policy,
 			const struct parser_param *param)
 {
 	param->parser_init(ctx);
 	ctx->param = param;
+	ctx->policy.ikev1 = policy & POLICY_IKEV1_ALLOW;
+	ctx->policy.ikev2 = policy & POLICY_IKEV2_ALLOW;
 }
 
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
  */
-struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
+struct alg_info *alg_info_parse_str(lset_t policy,
+				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
 				    const struct parser_param *param)
@@ -600,11 +601,11 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 	alg_info->alg_info_protoid = param->protoid;
 	err_buf[0] = '\0';
 
-	parser_init(&ctx, param);
+	parser_init(&ctx, policy, param);
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		param->alg_info_add(alg_info, 0, 0, 0, 0);
+		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0);
 
 	ptr = alg_str;
 	do {
@@ -627,9 +628,8 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 		case ST_EOF:
 			{
 				err_t ugh = parser_alg_info_add(&ctx,
-						alg_info,
-						param->alg_info_add,
-						param->lookup_group);
+								alg_info,
+								param->lookup_group);
 
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
@@ -641,7 +641,7 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 				}
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, param);
+			parser_init(&ctx, policy, param);
 			break;
 
 		default:

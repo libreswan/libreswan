@@ -360,7 +360,11 @@ static int decode_esp(char *algname)
 	char err_buf[256] = "";	/* ??? big enough? */
 	int esp_alg;
 
-	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(algname, err_buf, sizeof(err_buf));
+	/*
+	 * POLICY=0 disables checks that the algorithm will work with
+	 * IKEv1 and/or IKEv2.
+	 */
+	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(0, algname, err_buf, sizeof(err_buf));
 
 	if (alg_info != NULL) {
 		int esp_ealg_id, esp_aalg_id;
