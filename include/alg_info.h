@@ -38,7 +38,6 @@ enum parser_state {
 	ST_MODP,        /* modp spec */
 	ST_END,
 	ST_EOF,
-	ST_ERR
 };
 
 /* XXX:jjo to implement different parser for ESP and IKE */
@@ -58,7 +57,6 @@ struct parser_context {
 	bool ealg_permit;
 	bool aalg_permit;
 	int ch;	/* character that stopped parsing */
-	const char *err;
 };
 
 struct esp_info {

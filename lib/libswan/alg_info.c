@@ -144,7 +144,6 @@ static const char *parser_state_names[] = {
 	"ST_MOPD",
 	"ST_END",
 	"ST_EOF",
-	"ST_ERR"
 };
 
 static const char *parser_state_name(enum parser_state state)
@@ -167,9 +166,6 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 static err_t parser_machine(struct parser_context *p_ctx)
 {
 	int ch = p_ctx->ch;
-
-	/* special 'absolute' cases */
-	p_ctx->err = "No error.";
 
 	/* chars that end algo strings */
 	switch (ch) {
@@ -309,7 +305,6 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 		case ST_END:
 		case ST_EOF:
-		case ST_ERR:
 			break;
 		}
 		return NULL;
@@ -609,10 +604,14 @@ struct alg_info *alg_info_parse_str(
 		ctx.ch = *ptr++;
 		{
 			err_t pm_ugh = parser_machine(&ctx);
-
 			if (pm_ugh != NULL) {
-				ctx.err = pm_ugh;
-				parser_set_state(&ctx, ST_ERR);
+				snprintf(err_buf, err_buf_len,
+					 "%s, just after \"%.*s\" (state=%s)",
+					 pm_ugh,
+					 (int)(ptr - alg_str - 1), alg_str,
+					 parser_state_name(ctx.state));
+				pfree(alg_info);
+				return NULL;
 			}
 		}
 		ret = ctx.state;
@@ -638,15 +637,6 @@ struct alg_info *alg_info_parse_str(
 			(*parser_init)(&ctx);
 			break;
 
-		case ST_ERR:
-			snprintf(err_buf, err_buf_len,
-				"%s, just after \"%.*s\" (old_state=%s)",
-				ctx.err,
-				(int)(ptr - alg_str - 1), alg_str,
-				parser_state_name(ctx.old_state));
-
-			pfree(alg_info);
-			return NULL;
 		default:
 			/* ??? this is nonsense: in either case, break will happen */
 			if (ctx.ch != '\0')
