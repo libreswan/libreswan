@@ -294,7 +294,6 @@ static void parser_init_esp(struct parser_context *p_ctx)
 {
 	*p_ctx = empty_p_ctx;
 
-	p_ctx->protoid = PROTO_IPSEC_ESP;
 	p_ctx->ealg_str = p_ctx->ealg_buf;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->modp_str = p_ctx->modp_buf;
@@ -307,6 +306,12 @@ static void parser_init_esp(struct parser_context *p_ctx)
 
 }
 
+const struct parser_param esp_parser_param = {
+	.protoid = PROTO_IPSEC_ESP,
+	.parser_init = parser_init_esp,
+	.alg_info_add = alg_info_esp_add,
+};
+
 /*
  * Must be called for each "new" char, with new
  * character in ctx.ch
@@ -315,7 +320,6 @@ static void parser_init_ah(struct parser_context *p_ctx)
 {
 	*p_ctx = empty_p_ctx;
 
-	p_ctx->protoid = PROTO_IPSEC_AH;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->ealg_permit = FALSE;
 	p_ctx->aalg_permit = TRUE;
@@ -325,6 +329,12 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	p_ctx->aalg_getbyname = aalg_getbyname_esp;
 
 }
+
+const struct parser_param ah_parser_param = {
+	.protoid = PROTO_IPSEC_AH,
+	.parser_init = parser_init_ah,
+	.alg_info_add = alg_info_ah_add,
+};
 
 static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 					char *esp_buf,
@@ -377,14 +387,10 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 	}
 
 	return (struct alg_info_esp *)
-		alg_info_parse_str(
-			PROTO_IPSEC_ESP,
-			&alg_info_esp->ai,
-			esp_buf,
-			err_buf, err_buf_len,
-			parser_init_esp,
-			alg_info_esp_add,
-			NULL);
+		alg_info_parse_str(&alg_info_esp->ai,
+				   esp_buf,
+				   err_buf, err_buf_len,
+				   &esp_parser_param);
 }
 
 /* This function is tested in testing/lib/libswan/algparse.c */
@@ -409,14 +415,10 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 	}
 
 	return (struct alg_info_esp *)
-		alg_info_parse_str(
-			PROTO_IPSEC_AH,
-			&alg_info_esp->ai,
-			esp_buf,
-			err_buf, err_buf_len,
-			parser_init_ah,
-			alg_info_ah_add,
-			NULL);
+		alg_info_parse_str(&alg_info_esp->ai,
+				   esp_buf,
+				   err_buf, err_buf_len,
+				   &ah_parser_param);
 }
 
 /* snprint already parsed transform list (alg_info) */

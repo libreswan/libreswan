@@ -373,8 +373,6 @@ static void parser_init_ike(struct parser_context *p_ctx)
 {
 	*p_ctx = empty_p_ctx;
 
-	p_ctx->protoid = PROTO_ISAKMP;
-
 	p_ctx->ealg_str = p_ctx->ealg_buf;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->modp_str = p_ctx->modp_buf;
@@ -385,6 +383,13 @@ static void parser_init_ike(struct parser_context *p_ctx)
 	p_ctx->ealg_permit = TRUE;
 	p_ctx->aalg_permit = TRUE;
 }
+
+const struct parser_param ike_parser_param = {
+	.protoid = PROTO_ISAKMP,
+	.parser_init = parser_init_ike,
+	.alg_info_add = alg_info_ike_add,
+	.lookup_group = lookup_group,
+};
 
 struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
@@ -397,14 +402,10 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
 	return (struct alg_info_ike *)
-		alg_info_parse_str(
-			PROTO_ISAKMP,
-			&alg_info_ike->ai,
-			alg_str,
-			err_buf, err_buf_len,
-			parser_init_ike,
-			alg_info_ike_add,
-			lookup_group);
+		alg_info_parse_str(&alg_info_ike->ai,
+				   alg_str,
+				   err_buf, err_buf_len,
+				   &ike_parser_param);
 }
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,

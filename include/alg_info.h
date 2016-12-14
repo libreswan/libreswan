@@ -24,6 +24,23 @@
 #include "constants.h"
 
 /*
+ * Parameters to tune the parser.
+ */
+struct parser_context;
+struct alg_info;
+struct oakley_group_desc;
+
+struct parser_param {
+	unsigned protoid;
+	void (*parser_init)(struct parser_context *p_ctx);
+	void (*alg_info_add)(struct alg_info *alg_info,
+			     int ealg_id, int ek_bits,
+			     int aalg_id,
+			     int modp_id);
+	const struct oakley_group_desc *(*lookup_group)(u_int16_t group);
+};
+
+/*
  *	Creates a new alg_info by parsing passed string
  */
 enum parser_state {
@@ -43,7 +60,7 @@ enum parser_state {
 /* XXX:jjo to implement different parser for ESP and IKE */
 struct parser_context {
 	unsigned state, old_state;
-	unsigned protoid;
+	const struct parser_param *param;
 	char ealg_buf[16];
 	char aalg_buf[16];
 	char modp_buf[16];
@@ -182,16 +199,9 @@ extern const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
  */
-extern struct alg_info *alg_info_parse_str(
-	unsigned protoid,
-	struct alg_info *alg_info,
-	const char *alg_str,
-	char *err_buf, size_t err_buf_len,
-	void (*parser_init)(struct parser_context *p_ctx),
-	void (*alg_info_add)(struct alg_info *alg_info,
-			int ealg_id, int ek_bits,
-			int aalg_id,
-			int modp_id),
-	const struct oakley_group_desc *(*lookup_group_f)(u_int16_t group));
+struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
+				    const char *alg_str,
+				    char *err_buf, size_t err_buf_len,
+				    const struct parser_param *param);
 
 #endif /* ALG_INFO_H */

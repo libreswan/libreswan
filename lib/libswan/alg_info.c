@@ -339,7 +339,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 		/* reject things we know but don't like */
-		switch (p_ctx->protoid) {
+		switch (p_ctx->param->protoid) {
 		case PROTO_ISAKMP:
 			switch (ealg_id) {
 			case OAKLEY_DES_CBC:
@@ -377,7 +377,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		 * for testing purposes.
 		 */
 		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch (p_ctx->protoid) {
+			switch (p_ctx->param->protoid) {
 			case PROTO_ISAKMP:
 				switch (ealg_id) {
 				case OAKLEY_3DES_CBC:
@@ -455,7 +455,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 		/* some code stupidly uses INT_MAX for "null" */
 		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
-			switch (p_ctx->protoid) {
+			switch (p_ctx->param->protoid) {
 			case PROTO_IPSEC_ESP:
 				/*
 				 * ESP AEAD ciphers do not require
@@ -504,7 +504,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				return "AH cannot have null authentication";
 			}
 		} else {
-			switch (p_ctx->protoid) {
+			switch (p_ctx->param->protoid) {
 			case PROTO_IPSEC_ESP:
 				/*
 				 * ESP AEAD ciphers do not require
@@ -577,34 +577,34 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 #	undef COMMON_KEY_LENGTH
 }
 
+static void parser_init(struct parser_context *ctx,
+			const struct parser_param *param)
+{
+	param->parser_init(ctx);
+	ctx->param = param;
+}
+
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
  */
-struct alg_info *alg_info_parse_str(
-	unsigned protoid,
-	struct alg_info *alg_info,
-	const char *alg_str,
-	char *err_buf, size_t err_buf_len,
-	void (*parser_init)(struct parser_context *p_ctx),
-	void (*alg_info_add)(struct alg_info *alg_info,
-		int ealg_id, int ek_bits,
-		int aalg_id,
-		int modp_id),
-	const struct oakley_group_desc *(*lookup_group)(u_int16_t group))
+struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
+				    const char *alg_str,
+				    char *err_buf, size_t err_buf_len,
+				    const struct parser_param *param)
 {
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
 
-	alg_info->alg_info_protoid = protoid;
+	alg_info->alg_info_protoid = param->protoid;
 	err_buf[0] = '\0';
 
-	(*parser_init)(&ctx);
+	parser_init(&ctx, param);
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		(*alg_info_add)(alg_info, 0, 0, 0, 0);
+		param->alg_info_add(alg_info, 0, 0, 0, 0);
 
 	ptr = alg_str;
 	do {
@@ -628,8 +628,8 @@ struct alg_info *alg_info_parse_str(
 			{
 				err_t ugh = parser_alg_info_add(&ctx,
 						alg_info,
-						alg_info_add,
-						lookup_group);
+						param->alg_info_add,
+						param->lookup_group);
 
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
@@ -641,7 +641,7 @@ struct alg_info *alg_info_parse_str(
 				}
 			}
 			/* zero out for next run (ST_END) */
-			(*parser_init)(&ctx);
+			parser_init(&ctx, param);
 			break;
 
 		default:
