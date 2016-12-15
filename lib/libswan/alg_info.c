@@ -148,6 +148,7 @@ static const char *parser_state_names[] = {
 
 static const char *parser_state_name(enum parser_state state)
 {
+	passert(state < elemsof(parser_state_names));
 	return parser_state_names[state];
 }
 
@@ -196,6 +197,12 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 
 	for (;;) {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("state=%s ealg_buf='%s' aalg_buf='%s' modp_buf='%s'",
+			    parser_state_name(p_ctx->state),
+			    p_ctx->ealg_buf,
+			    p_ctx->aalg_buf,
+			    p_ctx->modp_buf));
 		/*
 		 * There are three ways out of this switch:
 		 * - break: successful termination of the function
