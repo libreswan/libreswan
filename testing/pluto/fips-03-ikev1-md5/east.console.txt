@@ -34,6 +34,10 @@ ENCRYPT algorithm camellia: DISABLED; not FIPS compliant
 ENCRYPT algorithm serpent: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish_ssh: DISABLED; not FIPS compliant
+PRF algorithm md5: DISABLED; not FIPS compliant
+INTEG algorithm md5: DISABLED; not FIPS compliant
+DH algorithm modp1024: DISABLED; not FIPS compliant
+DH algorithm modp1536: DISABLED; not FIPS compliant
 ENCRYPT aes_ccm_16:   IKEv1:     ESP    IKEv2:     ESP    FIPS: YES
 ENCRYPT aes_ccm_12:   IKEv1:     ESP    IKEv2:     ESP    FIPS: YES
 ENCRYPT aes_ccm_8:    IKEv1:     ESP    IKEv2:     ESP    FIPS: YES
@@ -43,20 +47,16 @@ ENCRYPT aes_gcm_12:   IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_gcm_8:    IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_ctr:      IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes:          IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
-PRF algorithm md5: DISABLED; not FIPS compliant
 PRF sha:              IKEv1: IKE        IKEv2: IKE        FIPS: YES
 PRF sha2_256:         IKEv1: IKE        IKEv2: IKE        FIPS: YES
 PRF sha2_384:         IKEv1: IKE        IKEv2: IKE        FIPS: YES
 PRF sha2_512:         IKEv1: IKE        IKEv2: IKE        FIPS: YES
-INTEG algorithm md5: DISABLED; not FIPS compliant
 INTEG sha:            IKEv1: IKE ESP AH IKEv2: IKE ESP AH FIPS: YES
 INTEG sha2_512:       IKEv1: IKE ESP AH IKEv2: IKE ESP AH FIPS: YES
 INTEG sha2_384:       IKEv1: IKE ESP AH IKEv2: IKE ESP AH FIPS: YES
 INTEG sha2_256:       IKEv1: IKE ESP AH IKEv2: IKE ESP AH FIPS: YES
 INTEG aes_xcbc:       IKEv1:     ESP AH IKEv2:     ESP AH FIPS: YES
 INTEG aes_cmac:       IKEv1:     ESP AH IKEv2:     ESP AH FIPS: YES
-DH algorithm modp1024: DISABLED; not FIPS compliant
-DH algorithm modp1536: DISABLED; not FIPS compliant
 DH modp2048:          IKEv1: IKE        IKEv2: IKE        FIPS: YES
 DH modp3072:          IKEv1: IKE        IKEv2: IKE        FIPS: YES
 DH modp4096:          IKEv1: IKE        IKEv2: IKE        FIPS: YES

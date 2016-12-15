@@ -566,7 +566,7 @@ static void check_enum_name(const char *what, int id, enum_names *names)
 	}
 }
 
-static void add_algorithms(bool fips, struct type_algorithms *algorithms)
+static void check_algorithm_table(struct type_algorithms *algorithms)
 {
 	/*
 	 * Sanity check the raw algorithm table.
@@ -626,27 +626,6 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 		algorithms->desc_check(alg);
 	}
 
-	/*
-	 * If FIPS, filter out anything non FIPS compliant.
-	 */
-
-	if (fips) {
-		const struct ike_alg **end = algorithms->all.start;
-		FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
-			const struct ike_alg *alg = *algp;
-			/*
-			 * Check FIPS before trying to run any tests.
-			 */
-			if (!alg->fips) {
-				libreswan_log("%s algorithm %s: DISABLED; not FIPS compliant",
-					      algorithms->all.name, alg->name);
-				continue;
-			}
-			*end++ = alg;
-		}
-		algorithms->all.end = end;
-	}
-
         /*
 	 * Go through ALL algorithms identifying any suitable for IKE.
 	 *
@@ -704,19 +683,58 @@ static void add_algorithms(bool fips, struct type_algorithms *algorithms)
 	}
 }
 
+/*
+ * Strip out any non-FIPS algorithms.
+ *
+ * This prevents checks being performed on algorithms that are.
+ */
+static void strip_nonfips(struct type_algorithms *algorithms)
+{
+	const struct ike_alg **end = algorithms->all.start;
+	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
+		const struct ike_alg *alg = *algp;
+		/*
+		 * Check FIPS before trying to run any tests.
+		 */
+		if (!alg->fips) {
+			libreswan_log("%s algorithm %s: DISABLED; not FIPS compliant",
+				      algorithms->all.name, alg->name);
+			continue;
+		}
+		*end++ = alg;
+	}
+	algorithms->all.end = end;
+}
+
 void ike_alg_init(void)
 {
-#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
-#else
-	bool fips = FALSE;
-#endif
+
+	/*
+	 * If needed, completely strip out non-FIPS algorithms.
+	 * Prevents inconsistency where a non-FIPS algorithm is
+	 * refering to something that's been disabled.
+	 */
+	if (fips) {
+		for (enum ike_alg_type type = IKE_ALG_FLOOR;
+		     type < IKE_ALG_ROOF; type++) {
+			struct type_algorithms *algorithms = type_algorithms[type];
+			if (algorithms) {
+				passert(algorithms->type == type);
+				strip_nonfips(algorithms);
+			}
+		}
+	}
+
+	/*
+	 * Now verify what is left.
+	 */
 	for (enum ike_alg_type type = IKE_ALG_FLOOR;
 	     type < IKE_ALG_ROOF; type++) {
 		struct type_algorithms *algorithms = type_algorithms[type];
 		if (algorithms) {
 			passert(algorithms->type == type)
-			add_algorithms(fips, algorithms);
+			check_algorithm_table(algorithms);
 		}
 	}
 }
