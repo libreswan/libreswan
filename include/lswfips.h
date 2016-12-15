@@ -28,16 +28,8 @@ enum lsw_fips_mode {
 	LSW_FIPS_ON
 };
 
-#ifdef FIPS_CHECK
-
 extern void lsw_set_fips_mode(enum lsw_fips_mode fips);
 extern enum lsw_fips_mode lsw_get_fips_mode(void);
 extern bool libreswan_fipsmode(void);
-
-#else
-
-#define libreswan_fipsmode() FALSE
-
-#endif
 
 #endif /* _LSW_FIPS_H_ */

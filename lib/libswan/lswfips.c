@@ -17,14 +17,18 @@
  * for more details.
  */
 
-#ifdef FIPS_CHECK
-
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include "lswlog.h"
 #include "lswfips.h"
+
+#ifdef FIPS_CHECK
+#define LSW_FIPS_DEFAULT LSW_FIPS_UNSET
+#else
+#define LSW_FIPS_DEFAULT LSW_FIPS_OFF
+#endif
 
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
@@ -76,7 +80,7 @@ static enum lsw_fips_mode lsw_fipsproduct(void)
 	return LSW_FIPS_ON;
 }
 
-static enum lsw_fips_mode fips_mode = LSW_FIPS_UNSET;
+static enum lsw_fips_mode fips_mode = LSW_FIPS_DEFAULT;
 
 /*
  * Should only be called directly by plutomain.c
@@ -131,5 +135,3 @@ void lsw_set_fips_mode(enum lsw_fips_mode fips)
 {
 	fips_mode = fips;
 }
-
-#endif
