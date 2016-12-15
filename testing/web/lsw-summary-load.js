@@ -155,10 +155,6 @@ function lsw_summary_commits(commit) {
 		// stop when there is a result
 		continue
 	    }
-	    if (parent.current) {
-		// stop at the current commit
-		continue
-	    }
 	    if (commits.indexOf(parent) >= 0) {
 		// stop if this is a duplicate (for instance two
 		// branches joined).
