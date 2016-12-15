@@ -43,7 +43,6 @@ struct hash_desc ike_alg_hash_md5 = {
 		.officname = "md5",
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_oakley_id = OAKLEY_MD5,
-		.ikev2_id = IKEv2_PRF_HMAC_MD5,
 		.nss_mechanism = CKM_MD5,
 	},
 	.hash_digest_len = MD5_DIGEST_SIZE,

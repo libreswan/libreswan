@@ -40,7 +40,6 @@ struct hash_desc ike_alg_hash_sha1 = {
 		.officname = "sha1",
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_oakley_id = OAKLEY_SHA1,
-		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1,
 	},

@@ -34,6 +34,7 @@ ENCRYPT algorithm camellia: DISABLED; not FIPS compliant
 ENCRYPT algorithm serpent: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish_ssh: DISABLED; not FIPS compliant
+HASH algorithm md5: DISABLED; not FIPS compliant
 PRF algorithm md5: DISABLED; not FIPS compliant
 INTEG algorithm md5: DISABLED; not FIPS compliant
 DH algorithm modp1024: DISABLED; not FIPS compliant
@@ -47,6 +48,10 @@ ENCRYPT aes_gcm_12:   IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_gcm_8:    IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes_ctr:      IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
 ENCRYPT aes:          IKEv1: IKE ESP    IKEv2: IKE ESP    FIPS: YES
+HASH sha:             IKEv1: IKE        IKEv2:            FIPS: YES
+HASH sha2_256:        IKEv1: IKE        IKEv2:            FIPS: YES
+HASH sha2_384:        IKEv1: IKE        IKEv2:            FIPS: YES
+HASH sha2_512:        IKEv1: IKE        IKEv2:            FIPS: YES
 PRF sha:              IKEv1: IKE        IKEv2: IKE        FIPS: YES
 PRF sha2_256:         IKEv1: IKE        IKEv2: IKE        FIPS: YES
 PRF sha2_384:         IKEv1: IKE        IKEv2: IKE        FIPS: YES
