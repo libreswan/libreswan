@@ -24,6 +24,7 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "lswnss.h"
+#include "lswfips.h"
 #include "ike_alg.h"
 #include "crypto.h"
 #include "crypt_dbg.h"
@@ -350,23 +351,32 @@ int main(int argc, char *argv[])
 	char **argp = argv + 1;
 
 	/* a -XXX option? */
-	if ((*argp)[0] == '-' && (*argp)[1] != '\0') {
-		struct cavp **cavpp;
-		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
-			if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
-				cavp = *cavpp;
-				next_state(BODY);
-				fprintf(stderr, "test: %s\n", cavp->description);
-				break;
+	while ((*argp)[0] == '-') {
+		if (strcmp(*argp, "--") == 0) {
+			argp++;
+			break;
+		} else if (strcmp(*argp, "-fips") == 0) {
+			argp++;
+			lsw_set_fips_mode(LSW_FIPS_ON);
+		} else {
+			struct cavp **cavpp;
+			for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+				if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
+					cavp = *cavpp;
+					next_state(BODY);
+					fprintf(stderr, "test: %s\n", cavp->description);
+					break;
+				}
 			}
+			if (cavp == NULL) {
+				fprintf(stderr, "Unknown test %s\n", argv[1]);
+				usage();
+				exit(1);
+			}
+			argp++;
 		}
-		if (cavp == NULL) {
-			fprintf(stderr, "Unknown test %s\n", argv[1]);
-			usage();
-			exit(1);
-		}
-		argp++;
-	} else {
+	}
+	if (cavp == NULL) {
 		fprintf(stderr, "Guessing test type ...\n");
 	}
 
