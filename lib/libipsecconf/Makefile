@@ -40,14 +40,21 @@ endif
 # since all the $(OBJS) indirectly depend on the header anyway.
 $(OBJS): $(builddir)/parser.tab.h
 
-# Use UNIX basename to strip off the directory.
-# Use sed to work around two bugs:
+# Avoid flex bugs:
 #
-# - flex < 2.5.35 generates an extern that isn't good
+# - flex 3.5.4 (centos 5) doesn't allow a space between the '-o'
+#   option and the file name.
+#
+#   Fortunately later versions of flex seem to handle this.
+#
+# - flex < 2.5.35 generates an invalid extern
+#
+#   Use sed to strip this out.
 #
 # - flex on RHEL 7 generates code that provokes GCC to warn
 #   about comparing a signed value with an unsigned value
 #   (Combination of a new GCC and an old flex).
+#
 #   Adding one cast makes RHEL 6's GCC unhappy, so we add two.
 #   On RHEL 6, i is int and _yybytes_len is int.
 #   On RHEL 7, i is int and _yybytes_len is yy_size_t
@@ -59,19 +66,20 @@ $(OBJS): $(builddir)/parser.tab.h
 #   also warns about comparisons of different kinds, so we add a third
 #   fix.
 #
-# Avoid sed -i which somehow causes unwritable files
-# on fedora 20 with 9p filesystem mount.
-# Avoid creating the target file until it is done.
+# - avoid sed -i which somehow causes unwritable files on fedora 20
+#   with 9p filesystem mount.
 
 LEX = flex
 
 $(builddir)/lex.yy.c: parser.l
-	$(LEX) -o $@.tmp $<
+	: no space between -o and scratch output file
+	$(LEX) -o$@.tmp $<
 	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
 	    -e '/^extern int isatty.*$$/d' \
 	    -e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
 	    < $@.tmp > $@.sedtmp
 	rm $@.tmp
+	: install result
 	mv $@.sedtmp $@
 
 # Use wild card rule so that GNU Make knows that both are output from
