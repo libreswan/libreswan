@@ -649,6 +649,17 @@ void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 	}
 }
 
+/*
+ * Free the chunks cloned into chain by get_auth_chain(). It is assumed that
+ * the chain array itself is local to the IKEv1 main routines.
+ */
+void free_auth_chain(chunk_t *chain, int chain_len)
+{
+	for (int i = 0; i < chain_len; i++) {
+		freeanychunk(chain[i]);
+	}
+}
+
 int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 						     bool full_chain)
 {

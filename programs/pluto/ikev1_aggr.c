@@ -469,8 +469,10 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody))
+				&md->rbody)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* start of SA out */
@@ -482,14 +484,19 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
+		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody,
+				&r_sa_pbs)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		/* SA body in and out */
 		rn = parse_isakmp_sa_body(&sa_pd->pbs, &sa_pd->payload.sa,
 					  &r_sa_pbs, FALSE, st);
-		if (rn != NOTHING_WRONG)
+		if (rn != NOTHING_WRONG) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
+		}
 	}
 
 	/* don't know until after SA body has been parsed */
@@ -500,12 +507,17 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 	/* KE */
 	if (!ikev1_justship_KE(&st->st_gr,
-			 &md->rbody, ISAKMP_NEXT_NONCE))
+			 &md->rbody, ISAKMP_NEXT_NONCE)) {
+		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* Nr */
-	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID, "Nr"))
+	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID,
+				  "Nr")) {
+		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* IDir out */
 	{
@@ -518,8 +530,10 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&md->rbody, &r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity"))
+		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&r_id_pbs);
 	}
@@ -538,14 +552,19 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&md->rbody,
-				&cert_pbs))
+				&cert_pbs)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-								&cert_pbs, "CERT"))
+								&cert_pbs, "CERT")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&cert_pbs);
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* CR out */

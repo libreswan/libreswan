@@ -1506,8 +1506,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 				&isakmp_ipsec_identification_desc,
 				&md->rbody,
 				&id_pbs) ||
-		    !out_chunk(id_b, &id_pbs, "my identity"))
+		    !out_chunk(id_b, &id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&id_pbs);
 	}
@@ -1525,8 +1527,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 		if (!ikev1_ship_CERT(mycert.ty,
 				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   &md->rbody, np))
+				   &md->rbody, np)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (np == ISAKMP_NEXT_CERT) {
 			/* we've got CA certificates to send */
@@ -1536,9 +1540,12 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 					      &md->rbody,
 					      mycert.ty,
 					      send_cr ? ISAKMP_NEXT_CR :
-							ISAKMP_NEXT_SIG))
+							ISAKMP_NEXT_SIG)) {
+				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
+			}
 		}
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* CR out */
@@ -2033,8 +2040,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&md->rbody, &r_id_pbs) ||
-			!out_chunk(id_b, &r_id_pbs, "my identity"))
+			!out_chunk(id_b, &r_id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&r_id_pbs);
 	}
@@ -2047,17 +2056,22 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
 				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   &md->rbody, npp))
+				   &md->rbody, npp)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (npp == ISAKMP_NEXT_CERT) {
 			libreswan_log("I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain, chain_len,
 							  &md->rbody,
 							  mycert.ty,
-							  ISAKMP_NEXT_SIG))
+							  ISAKMP_NEXT_SIG)) {
+				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
+			}
 		}
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* IKEv2 NOTIFY payload */
