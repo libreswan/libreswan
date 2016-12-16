@@ -141,16 +141,19 @@ static void digest_symkey(struct prf_context *prf,
 			prf->name, symkey_name, symkey,
 			sizeof_symkey(symkey));
 	}
-#if 0
 	/*
-	 * PK11_DigestKey() is not supported with HMAC.
+	 * Feed the key's raw bytes to the digest function.  NSS's
+	 * PK11_DigestKey() doesn't work with HMAC (only simple MAC),
+	 * and there is no NSS HMAC Derive mechansism.
 	 */
+#if 0
 	SECStatus rc = PK11_DigestKey(prf->context, symkey);
 	fprintf(stderr, "symkey update %x\n", rc);
 #endif
-	chunk_t chunk = chunk_from_symkey("hack", prf->debug,
+	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", prf->debug,
 					  symkey);
 	SECStatus rc = PK11_DigestOp(prf->context, chunk.ptr, chunk.len);
+	freeanychunk(chunk);
 	passert(rc == SECSuccess);
 }
 
