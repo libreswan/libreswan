@@ -79,6 +79,7 @@ function lsw_summary_cleanup(summary) {
 	summary.results.push(result)
 	// Fix values
 	result.start_time = new Date(result.start_time)
+	result.end_time = new Date(result.end_time)
 	// Cross link commits and results
 	result.commit = commit
 	commit.result = result
