@@ -1303,12 +1303,13 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if (!NEVER_NEGOTIATE(wm->policy) && wm->ike != NULL) {
-		char err_buf[256];	/* ??? big enough? */
+		char err_buf[256] = "";	/* ??? big enough? */
 
 		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
 			err_buf, sizeof(err_buf));
 
 		if (alg_info_ike == NULL) {
+			pexpect(err_buf[0]); /* something */
 			loglog(RC_LOG_SERIOUS, "ike string error: %s",
 				err_buf);
 			return;
