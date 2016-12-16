@@ -213,6 +213,7 @@ class JsonOutput:
         sys.stdout.write("\n")
         sys.stdout.flush()
 
+
 class PrintOutput:
     def __init__(self):
         self.sep = ""
@@ -336,17 +337,23 @@ def results(logger, tests, baseline, args, result_stats):
                 elif p is Print.baseline_output_directory:
                     b.add(p, baseline and test.name in baseline and baseline[test.name].output_directory or None)
                 elif p is Print.start_time:
-                    b.add(p, result_cache.grub(r"starting debug log at (.*)$"))
+                    b.add(p, result_cache.grub(r"starting debug log at (.*)$",
+                                               cast=jsonutil.ptime))
                 elif p is Print.end_time:
-                    b.add(p, result_cache.grub(r"ending debug log at (.*)$"))
+                    b.add(p, result_cache.grub(r"ending debug log at (.*)$",
+                                               cast=jsonutil.ptime))
                 elif p is Print.runtime:
-                    b.add(p, result_cache.grub(r": stop testing .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop testing .* after (.*) second",
+                                               cast=float))
                 elif p is Print.boot_time:
-                    b.add(p, result_cache.grub(r": stop booting domains after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop booting domains after (.*) second",
+                                               cast=float))
                 elif p is Print.script_time:
-                    b.add(p, result_cache.grub(r": stop running scripts .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop running scripts .* after (.*) second",
+                                               cast=float))
                 elif p is Print.total_time:
-                    b.add(p, result_cache.grub(r": stop processing test .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop processing test .* after (.*) second",
+                                               cast=float))
                 else:
                     raise Exception("unhandled print option %s" % p)
 

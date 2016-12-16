@@ -85,6 +85,9 @@ def loads(s):
 def default(obj):
     if hasattr(obj, "json") and callable(getattr(obj, "json")):
         return obj.json()
+    if hasattr(obj, "isoformat") and callable(getattr(obj, "isoformat")):
+        # date/time objects
+        return obj.isoformat()
     elif hasattr(obj, "__str__") and callable(getattr(obj, "__str__")):
         return str(obj)
     else:
@@ -102,5 +105,14 @@ def ftime(t):
     return t.strftime("%Y-%m-%d %H:%M")
 
 def ptime(s):
-    """Parse the time"""
-    return datetime.strptime(s, "%Y-%m-%d %H:%M")
+    """Tries to parse the time"""
+    # print(s)
+    for hms in ["%H:%M", "%H:%M:%S", "%H:%M:%S.%f"]:
+        for t in [" ", "T"]:
+            try:
+                t = datetime.strptime(s, "%Y-%m-%d" + t + hms)
+                # print(t)
+                return t
+            except:
+                None
+    return None
