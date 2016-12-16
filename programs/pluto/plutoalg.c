@@ -90,22 +90,6 @@ static int aalg_getbyname_ike(const char *str)
 
 	return -1;
 }
-/**
- *      Search oakley_group_names for a match, eg:
- *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
- * @param str String MODP Name (eg: MODP)
- * @return int Registered # of MODP Group, if supported.
- */
-static int modp_getbyname_ike(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-			       " (extension)", str);
-	return ret;
-}
 
 /*
  * Raw add routine: only checks for no duplicates
@@ -369,6 +353,54 @@ static void alg_info_ike_add(const struct parser_policy *const policy UNUSED,
 	}
 }
 
+static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name)
+{
+	const struct oakley_group_desc *group = group_desc_byname(name);
+	if (group == NULL) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not found",
+			 name);
+		return NULL;
+	}
+	/*
+	 * If the connection is IKEv1|IKEv2 then this code will
+	 * exclude anything not supported by both protocols.
+	 */
+	if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv2",
+			 name);
+		return NULL;
+	}
+	if (policy->ikev2 && group->common.ikev2_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv1",
+			 name);
+		return NULL;
+	}
+	/*
+	 * XXX: surely this is dead?
+	 */
+	if (group->group == 22) {
+		snprintf(err_buf, err_buf_len,
+			 "DH22 from RFC-5114 is no longer supported - see RFC-4307bis");
+		return NULL;
+	}
+	/*
+	 * Since the D-H calculation is performed in-process, IKE is
+	 * always required.
+	 */
+	if (!ike_alg_is_ike(&group->common)) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not implemented",
+			 name);
+		return NULL;
+	}
+	return group;
+}
+
 /*
  *	Must be called for each "new" char, with new
  *	character in ctx.ch
@@ -383,7 +415,6 @@ static void parser_init_ike(struct parser_context *p_ctx)
 	p_ctx->state = ST_INI;
 	p_ctx->ealg_getbyname = ealg_getbyname_ike;
 	p_ctx->aalg_getbyname = aalg_getbyname_ike;
-	p_ctx->modp_getbyname = modp_getbyname_ike;
 	p_ctx->ealg_permit = TRUE;
 	p_ctx->aalg_permit = TRUE;
 }
@@ -392,7 +423,7 @@ const struct parser_param ike_parser_param = {
 	.protoid = PROTO_ISAKMP,
 	.parser_init = parser_init_ike,
 	.alg_info_add = alg_info_ike_add,
-	.lookup_group = lookup_group,
+	.group_byname = group_byname,
 };
 
 struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,

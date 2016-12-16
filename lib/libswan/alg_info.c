@@ -24,6 +24,7 @@
 #include "lswalloc.h"
 #include "constants.h"
 #include "alg_info.h"
+#include "ike_alg.h"
 
 /* abstract reference */
 struct oakley_group_desc;
@@ -297,7 +298,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->modp_getbyname != NULL && isalpha(ch)) {
+			if (p_ctx->param->group_byname != NULL && isalpha(ch)) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -318,14 +319,12 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 }
 
-static err_t parser_alg_info_add(struct parser_context *p_ctx,
-			struct alg_info *alg_info,
-			const struct oakley_group_desc *(*lookup_group)
-			(u_int16_t group))
+static const char *parser_alg_info_add(struct parser_context *p_ctx,
+				       char *err_buf, size_t err_buf_len,
+				       struct alg_info *alg_info)
 {
 #	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
 	int ealg_id, aalg_id;
-	int modp_id = 0;
 
 	ealg_id = aalg_id = -1;
 	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
@@ -550,18 +549,14 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {
-		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf);
-		if (modp_id < 0) {
-			return "modp group not found";
-		}
-
-		if (modp_id == 22) {
-			return "DH22 from RFC-5114 is no longer supported - see RFC-4307bis";
-		}
-
-		if (modp_id != 0 && lookup_group(modp_id) == NULL) {
-			return "found modp group id, but not supported";
+	const struct oakley_group_desc *group = NULL;
+	if (p_ctx->param->group_byname != NULL && *p_ctx->modp_buf != '\0') {
+		group = p_ctx->param->group_byname(&p_ctx->policy,
+						   err_buf, err_buf_len,
+						   p_ctx->modp_buf);
+		if (group == NULL) {
+			pexpect(err_buf[0]);
+			return err_buf;
 		}
 	}
 
@@ -569,7 +564,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				   alg_info,
 				   ealg_id, p_ctx->eklen,
 				   aalg_id,
-				   modp_id);
+				   group ? group->group : 0);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
 }
@@ -627,10 +622,9 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 		case ST_END:
 		case ST_EOF:
 			{
-				err_t ugh = parser_alg_info_add(&ctx,
-								alg_info,
-								param->lookup_group);
-
+				char error[100]; /* arbitrary */
+				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
+								alg_info);
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
 						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",

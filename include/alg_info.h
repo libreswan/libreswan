@@ -43,7 +43,9 @@ struct parser_param {
 			     int ealg_id, int ek_bits,
 			     int aalg_id,
 			     int modp_id);
-	const struct oakley_group_desc *(*lookup_group)(u_int16_t group);
+	const struct oakley_group_desc *(*group_byname)(const struct parser_policy *const policy,
+							char *err_buf, size_t err_buf_len,
+							const char *name);
 };
 
 /*
@@ -73,7 +75,6 @@ struct parser_context {
 	char modp_buf[16];
 	int (*ealg_getbyname)(const char *const str);
 	int (*aalg_getbyname)(const char *const str);
-	int (*modp_getbyname)(const char *const str);
 	char *ealg_str;
 	char *aalg_str;
 	char *modp_str;
