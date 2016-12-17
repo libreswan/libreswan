@@ -21,6 +21,7 @@ v3.19 (unreleased)
         (new keywords: ocsp-method ocsp-cache-size ocsp-cache-min-age
                        ocsp-cache-max-age)
 * X509: Fix memory leak in certificate handling (lsbz#278) [William Rios]
+* X509: Fix memory leak in certificate chain handling [Matt]
 * pluto: Fix ca name and generalName leak lsbz#276 [Bill Rios]
 * pluto: SECCOMP support (seccomp=enabled|tolerant|disabled) [Paul]
 * pluto: connection instances need their own reqid [Antony]
