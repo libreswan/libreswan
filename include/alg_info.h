@@ -69,7 +69,7 @@ enum parser_state {
 
 /* XXX:jjo to implement different parser for ESP and IKE */
 struct parser_context {
-	unsigned state, old_state;
+	unsigned state;
 	const struct parser_param *param;
 	struct parser_policy policy;
 	char ealg_buf[16];

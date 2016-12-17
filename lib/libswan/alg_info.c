@@ -158,11 +158,7 @@ const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
 static inline void parser_set_state(struct parser_context *p_ctx,
 				    enum parser_state state)
 {
-	if (state != p_ctx->state) {
-		p_ctx->old_state = p_ctx->state;
-		p_ctx->state = state;
-	}
-
+	p_ctx->state = state;
 }
 
 static err_t parser_machine(struct parser_context *p_ctx)
