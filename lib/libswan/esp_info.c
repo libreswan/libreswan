@@ -303,15 +303,14 @@ static void parser_init_esp(struct parser_context *p_ctx)
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->state = ST_INI;
 
-	p_ctx->ealg_getbyname = ealg_getbyname_esp;
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
-
 }
 
 const struct parser_param esp_parser_param = {
 	.protoid = PROTO_IPSEC_ESP,
 	.parser_init = parser_init_esp,
 	.alg_info_add = alg_info_esp_add,
+	.ealg_getbyname = ealg_getbyname_esp,
+	.aalg_getbyname = aalg_getbyname_esp,
 };
 
 /*
@@ -328,14 +327,13 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
 
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
-
 }
 
 const struct parser_param ah_parser_param = {
 	.protoid = PROTO_IPSEC_AH,
 	.parser_init = parser_init_ah,
 	.alg_info_add = alg_info_ah_add,
+	.aalg_getbyname = aalg_getbyname_esp,
 };
 
 static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,

@@ -457,8 +457,6 @@ static void parser_init_ike(struct parser_context *p_ctx)
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI;
-	p_ctx->ealg_getbyname = ealg_getbyname_ike;
-	p_ctx->aalg_getbyname = aalg_getbyname_ike;
 	p_ctx->ealg_permit = TRUE;
 	p_ctx->aalg_permit = TRUE;
 }
@@ -467,6 +465,8 @@ const struct parser_param ike_parser_param = {
 	.protoid = PROTO_ISAKMP,
 	.parser_init = parser_init_ike,
 	.alg_info_add = alg_info_ike_add,
+	.ealg_getbyname = ealg_getbyname_ike,
+	.aalg_getbyname = aalg_getbyname_ike,
 	.group_byname = group_byname,
 };
 

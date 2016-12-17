@@ -76,7 +76,7 @@ static int aalg_getbyname_or_alias(const struct parser_context *context,
 		{ NULL, { NULL } }
 	};
 
-	return alg_getbyname_or_alias(aliases, str, context->aalg_getbyname);
+	return alg_getbyname_or_alias(aliases, str, context->param->aalg_getbyname);
 }
 
 /*
@@ -102,7 +102,7 @@ static int ealg_getbyname_or_alias(const struct parser_context *context,
 		{ NULL, { NULL } }
 	};
 
-	return alg_getbyname_or_alias(aliases, str, context->ealg_getbyname);
+	return alg_getbyname_or_alias(aliases, str, context->param->ealg_getbyname);
 }
 
 /*
