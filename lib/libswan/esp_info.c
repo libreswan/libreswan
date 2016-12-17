@@ -299,8 +299,6 @@ static void parser_init_esp(struct parser_context *p_ctx)
 	p_ctx->ealg_str = p_ctx->ealg_buf;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->modp_str = p_ctx->modp_buf;
-	p_ctx->ealg_permit = TRUE;
-	p_ctx->aalg_permit = TRUE;
 	p_ctx->state = ST_INI;
 
 }
@@ -322,8 +320,6 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	*p_ctx = empty_p_ctx;
 
 	p_ctx->aalg_str = p_ctx->aalg_buf;
-	p_ctx->ealg_permit = FALSE;
-	p_ctx->aalg_permit = TRUE;
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
 

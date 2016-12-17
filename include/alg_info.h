@@ -79,8 +79,6 @@ struct parser_context {
 	char *aalg_str;
 	char *modp_str;
 	int eklen;
-	bool ealg_permit;
-	bool aalg_permit;
 	int ch;	/* character that stopped parsing */
 };
 

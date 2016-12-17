@@ -327,7 +327,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	int ealg_id, aalg_id;
 
 	ealg_id = aalg_id = -1;
-	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
+	if (p_ctx->param->ealg_getbyname && p_ctx->ealg_buf[0] != '\0') {
 		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
 		if (ealg_id < 0) {
 			return "enc_alg not found";
@@ -442,7 +442,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 	}
-	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
+	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
 		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
 		if (aalg_id < 0) {
 			return "hash_alg not found";
