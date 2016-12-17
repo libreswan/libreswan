@@ -96,6 +96,7 @@ const struct cbc_test_vector *const aes_cbc_tests = aes_cbc_test_vectors;
 struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
 		.name = "aes",
+		.names = { "aes", "aes_cbc", },
 		.officname = "aes",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_CBC,
@@ -308,6 +309,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
 		.name = "aes_ctr",
+		.names = { "aesctr", "aes_ctr", },
 		.officname = "aes_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_CTR,
@@ -373,6 +375,8 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
 	.common = {
 		.name = "aes_gcm_8",
+		.names = { "aes_gcm_8", "aes_gcm_a" },
+		/* XXX: aes_gcm_16 has aes_gcm as alias */
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
@@ -395,6 +399,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
+		.names = { "aes_gcm_12", "aes_gcm_b" },
 		.officname = "aes_gcm_12",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_GCM_12,
@@ -417,6 +422,8 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",
+		/* aes_gcm_8 has aes_gcm as officname */
+		.names = { "aes_gcm", "aes_gcm_16", "aes_gcm_c" },
 		.officname = "aes_gcm_16",
 		.algo_type =  IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_GCM_16,
@@ -439,6 +446,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
+		.names = { "aes_ccm_8", "aes_ccm_a" },
 		.officname = "aes_ccm_8",
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_CCM_8,
@@ -461,6 +469,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
+		.names = { "aes_ccm_12", "aes_ccm_b" },
 		.officname = "aes_ccm_12",
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_CCM_12,
@@ -483,6 +492,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
+		.names = { "aes_ccm", "aes_ccm_16", "aes_ccm_c" },
 		.officname = "aes_ccm_16",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_AES_CCM_16,
@@ -504,6 +514,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 struct integ_desc ike_alg_integ_aes_xcbc = {
 	.common = {
 		.name = "aes_xcbc",
+		.names = { "aes_xcbc", "aes_xcbc_96", },
 		.officname =  "aes_xcbc",
 		.algo_type = IKE_ALG_INTEG,
 		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
@@ -526,6 +537,7 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 struct integ_desc ike_alg_integ_aes_cmac = {
 	.common = {
 		.name = "aes_cmac",
+		.names = { "aes_cmac", "aes_cmac_96", },
 		.officname =  "aes_cmac",
 		.algo_type = IKE_ALG_INTEG,
 #ifdef NOT_IMPLMENTED

@@ -30,14 +30,24 @@ struct parser_context;
 struct alg_info;
 struct oakley_group_desc;
 
+struct parser_policy {
+	bool ikev1;
+	bool ikev2;
+};
+
 struct parser_param {
 	unsigned protoid;
 	void (*parser_init)(struct parser_context *p_ctx);
-	void (*alg_info_add)(struct alg_info *alg_info,
+	void (*alg_info_add)(const struct parser_policy *const policy,
+			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id,
-			     int modp_id);
-	const struct oakley_group_desc *(*lookup_group)(u_int16_t group);
+			     const struct oakley_group_desc *dh_group);
+	int (*ealg_getbyname)(const char *const str);
+	int (*aalg_getbyname)(const char *const str);
+	const struct oakley_group_desc *(*group_byname)(const struct parser_policy *const policy,
+							char *err_buf, size_t err_buf_len,
+							const char *name);
 };
 
 /*
@@ -59,20 +69,16 @@ enum parser_state {
 
 /* XXX:jjo to implement different parser for ESP and IKE */
 struct parser_context {
-	unsigned state, old_state;
+	unsigned state;
 	const struct parser_param *param;
+	struct parser_policy policy;
 	char ealg_buf[16];
 	char aalg_buf[16];
 	char modp_buf[16];
-	int (*ealg_getbyname)(const char *const str);
-	int (*aalg_getbyname)(const char *const str);
-	int (*modp_getbyname)(const char *const str);
 	char *ealg_str;
 	char *aalg_str;
 	char *modp_str;
 	int eklen;
-	bool ealg_permit;
-	bool aalg_permit;
 	int ch;	/* character that stopped parsing */
 };
 
@@ -149,11 +155,13 @@ extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
 
-extern struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
-						   char *err_buf, size_t err_buf_len);
+extern struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
+							 const char *alg_str,
+							 char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
-						  char *err_buf, size_t err_buf_len);
+extern struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
+							const char *alg_str,
+							char *err_buf, size_t err_buf_len);
 
 void alg_info_ike_snprint(char *buf, size_t buflen,
 			  const struct alg_info_ike *alg_info_ike);
@@ -198,8 +206,21 @@ extern const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
+ *
+ * POLICY should be used to guard algorithm supported checks.  For
+ * instance: if POLICY=IKEV1, then IKEv1 support is required (IKEv2 is
+ * don't care); and if POLICY=IKEV1|IKEV2, then both IKEv1 and IKEv2
+ * support is required.
+ *
+ * Parsing with POLICY=IKEV1, but then proposing the result using
+ * IKEv2 is a program error.  The IKEv2 sould complain loudly and
+ * hopefully not crash.
+ *
+ * Parsing with POLICY='0' is allowed. It will accept the algorithms
+ * unconditionally (spi.c seems to need this).
  */
-struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
+struct alg_info *alg_info_parse_str(lset_t policy,
+				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
 				    const struct parser_param *param);

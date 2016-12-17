@@ -120,6 +120,7 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
 	.common = {
 		.name = "3des_cbc",
+		.names = { "3des", "3des_cbc", },
 		.officname =     "3des",
 		.algo_type =     IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_3DES_CBC,

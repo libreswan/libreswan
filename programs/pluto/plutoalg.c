@@ -90,29 +90,14 @@ static int aalg_getbyname_ike(const char *str)
 
 	return -1;
 }
-/**
- *      Search oakley_group_names for a match, eg:
- *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
- * @param str String MODP Name (eg: MODP)
- * @return int Registered # of MODP Group, if supported.
- */
-static int modp_getbyname_ike(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-			       " (extension)", str);
-	return ret;
-}
 
 /*
  * Raw add routine: only checks for no duplicates
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-				 unsigned ek_bits, int aalg_id, int modp_id)
+				 unsigned ek_bits, int aalg_id,
+				 const struct oakley_group_desc *dh_group)
 {
 	/*
 	 * Check for overflows up front; could delay until after
@@ -218,12 +203,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 		}
 	}
 
-	new_info->ike_dh_group = lookup_group(modp_id);
+	new_info->ike_dh_group = dh_group;
 	if (new_info->ike_dh_group == NULL) {
-		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS, "unsupported DH GROUP %s=%d",
-		       enum_show_shortb(&oakley_group_names, modp_id, &buf),
-		       modp_id);
+		PEXPECT_LOG("%s", "missing DH GROUP");
 		return;
 	}
 
@@ -256,8 +238,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 * All is good, add it.
 	 */
 	alg_info->ai.alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp_id=%d, cnt=%d",
-			       ealg_id, ek_bits, aalg_id, modp_id,
+	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp=%s, cnt=%d",
+			       ealg_id, ek_bits, aalg_id,
+			       new_info->ike_dh_group->common.name,
 			       alg_info->ai.alg_info_cnt));
 }
 
@@ -269,9 +252,17 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  * Do not assume that these hard wired algorithms are actually valid.
  */
 
-static const enum ike_trans_type_dh default_ike_groups[] = {
+static const enum ike_trans_type_dh default_ikev1_groups[] = {
 	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024,
 };
+static const enum ike_trans_type_dh default_ikev2_groups[] = {
+#ifdef NOT_YET
+	OAKLEY_GROUP_MODP2048,
+#else
+	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024,
+#endif
+};
+
 static const enum ikev1_encr_attribute default_ike_ealgs[] = {
 	OAKLEY_AES_CBC, OAKLEY_3DES_CBC,
 };
@@ -283,9 +274,11 @@ static const enum ikev1_hash_attribute default_ike_aalgs[] = {
  * _Recursively_ add IKE alg info _with_ logic (policy):
  */
 
-static void alg_info_ike_add(struct alg_info *alg_info,
+static void alg_info_ike_add(const struct parser_policy *const policy,
+			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
-			     int aalg_id, int modp_id)
+			     int aalg_id,
+			     const struct oakley_group_desc *dh_group)
 {
 	/*
 	 * Note that the order in which things are recursively added -
@@ -295,24 +288,61 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 	 * See parser_alg_info_add().  It seems that modp_id=0,
 	 * ealg_id=-1, aalg_id=-1, so check for anything <= 0.
 	 */
-	if (modp_id <= 0) {
+	if (dh_group == NULL) {
 		/*
 		 * Recursively add the valid default groups.
+		 *
+		 * Could use alg_info->ikev2 as an index?
 		 */
-		for (int i = 0; i != elemsof(default_ike_groups); i++) {
-			enum ike_trans_type_dh id = default_ike_groups[i];
-			bool valid = lookup_group(id) != NULL;
-			passert(id);
-			if (DBGP(DBGP(DBG_CONTROL|DBG_CRYPT))) {
-				struct esb_buf buf;
-				DBG_log("%s default DH group %s=%d",
-					valid ? "adding" : "dropping invalid",
-					enum_showb(&oakley_group_names, id, &buf), id);
+		const enum ike_trans_type_dh *default_group_ids
+			= (policy->ikev2 ? default_ikev2_groups
+			   : default_ikev1_groups);
+		const size_t elemsof_default_group_ids
+			= (policy->ikev2 ? elemsof(default_ikev2_groups)
+			   : elemsof(default_ikev1_groups));
+
+		for (const enum ike_trans_type_dh *group_id = default_group_ids;
+		     group_id < default_group_ids + elemsof_default_group_ids;
+		     group_id++) {
+			/*
+			 * Need to check that FIPS didn't disable it.
+			 *
+			 * Lucky for us IKEv1 and IKEv2 have the same
+			 * group numbers.
+			 */
+			const struct oakley_group_desc *group = lookup_group(*group_id);
+			if (group == NULL) {
+				DBG(DBG_CONTROL|DBG_CRYPT,
+				    struct esb_buf buf;
+				    DBG_log("skipping default DH group %s=%d, lookup failed",
+					    enum_showb(&oakley_group_names, *group_id, &buf),
+					    *group_id));
+				continue;
 			}
-			if (valid) {
-				alg_info_ike_add(alg_info, ealg_id, ek_bits,
-						 aalg_id, id);
+			if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
+				DBG(DBG_CONTROL|DBG_CRYPT,
+				    struct esb_buf buf;
+				    DBG_log("skipping default DH group %s=%d, missing ikev1 support",
+					    enum_showb(&oakley_group_names, *group_id, &buf),
+					    *group_id));
+				continue;
 			}
+			if (policy->ikev2 && group->common.ikev2_id == 0) {
+				DBG(DBG_CONTROL|DBG_CRYPT,
+				    struct esb_buf buf;
+				    DBG_log("skipping default DH group %s=%d, missing ikev2 support",
+					    enum_showb(&oakley_group_names, *group_id, &buf),
+					    *group_id));
+				continue;
+			}
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    struct esb_buf buf;
+			    DBG_log("adding default DH group %s=%d",
+				    enum_showb(&oakley_group_names, *group_id, &buf),
+				    *group_id));
+			alg_info_ike_add(policy, alg_info,
+					 ealg_id, ek_bits,
+					 aalg_id, group);
 		}
 	} else if (ealg_id <= 0) {
 		/*
@@ -332,8 +362,9 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 			if (valid) {
 				if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
 				}
-				alg_info_ike_add(alg_info, id, ek_bits,
-						 aalg_id, modp_id);
+				alg_info_ike_add(policy, alg_info,
+						 id, ek_bits,
+						 aalg_id, dh_group);
 			}
 		}
 	} else if (aalg_id <= 0) {
@@ -354,15 +385,64 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 					enum_showb(&oakley_hash_names, id, &buf), id);
 			}
 			if (valid) {
-				alg_info_ike_add(alg_info, ealg_id, ek_bits,
-						 id, modp_id);
+				alg_info_ike_add(policy, alg_info,
+						 ealg_id, ek_bits,
+						 id, dh_group);
 			}
 		}
 	} else {
 		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
 				     ealg_id, ek_bits,
-				     aalg_id, modp_id);
+				     aalg_id, dh_group);
 	}
+}
+
+static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name)
+{
+	const struct oakley_group_desc *group = group_desc_byname(name);
+	if (group == NULL) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not found",
+			 name);
+		return NULL;
+	}
+	/*
+	 * If the connection is IKEv1|IKEv2 then this code will
+	 * exclude anything not supported by both protocols.
+	 */
+	if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv2",
+			 name);
+		return NULL;
+	}
+	if (policy->ikev2 && group->common.ikev2_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv1",
+			 name);
+		return NULL;
+	}
+	/*
+	 * XXX: surely this is dead?
+	 */
+	if (group->group == 22) {
+		snprintf(err_buf, err_buf_len,
+			 "DH22 from RFC-5114 is no longer supported - see RFC-4307bis");
+		return NULL;
+	}
+	/*
+	 * Since the D-H calculation is performed in-process, IKE is
+	 * always required.
+	 */
+	if (!ike_alg_is_ike(&group->common)) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not implemented",
+			 name);
+		return NULL;
+	}
+	return group;
 }
 
 /*
@@ -377,21 +457,19 @@ static void parser_init_ike(struct parser_context *p_ctx)
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI;
-	p_ctx->ealg_getbyname = ealg_getbyname_ike;
-	p_ctx->aalg_getbyname = aalg_getbyname_ike;
-	p_ctx->modp_getbyname = modp_getbyname_ike;
-	p_ctx->ealg_permit = TRUE;
-	p_ctx->aalg_permit = TRUE;
 }
 
 const struct parser_param ike_parser_param = {
 	.protoid = PROTO_ISAKMP,
 	.parser_init = parser_init_ike,
 	.alg_info_add = alg_info_ike_add,
-	.lookup_group = lookup_group,
+	.ealg_getbyname = ealg_getbyname_ike,
+	.aalg_getbyname = aalg_getbyname_ike,
+	.group_byname = group_byname,
 };
 
-struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
+struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
 	/*
@@ -402,7 +480,8 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
 	return (struct alg_info_ike *)
-		alg_info_parse_str(&alg_info_ike->ai,
+		alg_info_parse_str(policy,
+				   &alg_info_ike->ai,
 				   alg_str,
 				   err_buf, err_buf_len,
 				   &ike_parser_param);

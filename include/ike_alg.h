@@ -102,14 +102,21 @@ enum ike_alg_type {
  */
 struct ike_alg {
 	/*
-	 * ??? why two names ???
-	 *
-	 * Seemingly (see ikev2.c:ikev2_log_parentSA()) OFFICNAME is
-	 * expected to match tcpdump's -E option.  A check of the
-	 * tcpdump man page would suggest otherwise.  For instance,
-	 * "aes" vs "aes-cbc".
+	 * Name to print when logging.
 	 */
 	const char *name;
+	/*
+	 * List of all possible names that might be used to specify
+	 * this algorithm.  Must include NAME and enum names.
+	 *
+	 * Easier to just require that this contain everything then
+	 * poke around in multiple places.
+	 */
+	const char *names[5];
+	/*
+	 * Name that should be parsable by tcpdump -E.  It isn't clear
+	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
+	 */
 	const char *const officname;
 	/*
 	 * See above.
@@ -376,6 +383,17 @@ struct integ_desc {
 	 */
 	struct prf_desc *prf;
 };
+
+/*
+ * Find the algorithm matching NAME.
+ */
+
+#ifdef NOT_YET
+const struct encrypt_desc *encrypt_desc_byname(const char *name);
+const struct prf_desc *prf_desc_byname(const char *name);
+const struct integ_desc *integ_desc_byname(const char *name);
+#endif
+const struct oakley_group_desc *group_desc_byname(const char *name);
 
 /*
  * Find the IKEv2 ENCRYPT/PRF/INTEG algorithm using IKEv2 wire-values.

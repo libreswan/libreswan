@@ -95,6 +95,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 {
 	.common = {
 		.name = "camellia",
+		.names = { "camellia", "camellia_cbc", },
 		.officname = "camellia",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CBC,
@@ -114,6 +115,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 {
 	.common = {
 		.name = "camellia_ctr",
+		.names = { "camellia_ctr", },
 		.officname = "camellia_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_CAMELLIA_CTR,

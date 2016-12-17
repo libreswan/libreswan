@@ -24,6 +24,7 @@
 #include "lswalloc.h"
 #include "constants.h"
 #include "alg_info.h"
+#include "ike_alg.h"
 
 /* abstract reference */
 struct oakley_group_desc;
@@ -75,7 +76,7 @@ static int aalg_getbyname_or_alias(const struct parser_context *context,
 		{ NULL, { NULL } }
 	};
 
-	return alg_getbyname_or_alias(aliases, str, context->aalg_getbyname);
+	return alg_getbyname_or_alias(aliases, str, context->param->aalg_getbyname);
 }
 
 /*
@@ -101,7 +102,7 @@ static int ealg_getbyname_or_alias(const struct parser_context *context,
 		{ NULL, { NULL } }
 	};
 
-	return alg_getbyname_or_alias(aliases, str, context->ealg_getbyname);
+	return alg_getbyname_or_alias(aliases, str, context->param->ealg_getbyname);
 }
 
 /*
@@ -157,11 +158,7 @@ const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
 static inline void parser_set_state(struct parser_context *p_ctx,
 				    enum parser_state state)
 {
-	if (state != p_ctx->state) {
-		p_ctx->old_state = p_ctx->state;
-		p_ctx->state = state;
-	}
-
+	p_ctx->state = state;
 }
 
 static err_t parser_machine(struct parser_context *p_ctx)
@@ -297,7 +294,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->modp_getbyname != NULL && isalpha(ch)) {
+			if (p_ctx->param->group_byname != NULL && isalpha(ch)) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -318,21 +315,15 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 }
 
-static err_t parser_alg_info_add(struct parser_context *p_ctx,
-			struct alg_info *alg_info,
-			void (*alg_info_add)(struct alg_info *alg_info,
-					int ealg_id, int ek_bits,
-					int aalg_id,
-					int modp_id),
-			const struct oakley_group_desc *(*lookup_group)
-			(u_int16_t group))
+static const char *parser_alg_info_add(struct parser_context *p_ctx,
+				       char *err_buf, size_t err_buf_len,
+				       struct alg_info *alg_info)
 {
 #	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
 	int ealg_id, aalg_id;
-	int modp_id = 0;
 
 	ealg_id = aalg_id = -1;
-	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
+	if (p_ctx->param->ealg_getbyname && p_ctx->ealg_buf[0] != '\0') {
 		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
 		if (ealg_id < 0) {
 			return "enc_alg not found";
@@ -447,7 +438,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 	}
-	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
+	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
 		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
 		if (aalg_id < 0) {
 			return "hash_alg not found";
@@ -554,41 +545,42 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {
-		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf);
-		if (modp_id < 0) {
-			return "modp group not found";
-		}
-
-		if (modp_id == 22) {
-			return "DH22 from RFC-5114 is no longer supported - see RFC-4307bis";
-		}
-
-		if (modp_id != 0 && lookup_group(modp_id) == NULL) {
-			return "found modp group id, but not supported";
+	const struct oakley_group_desc *group = NULL;
+	if (p_ctx->param->group_byname != NULL && *p_ctx->modp_buf != '\0') {
+		group = p_ctx->param->group_byname(&p_ctx->policy,
+						   err_buf, err_buf_len,
+						   p_ctx->modp_buf);
+		if (group == NULL) {
+			pexpect(err_buf[0]);
+			return err_buf;
 		}
 	}
 
-	(*alg_info_add)(alg_info,
-			ealg_id, p_ctx->eklen,
-			aalg_id,
-			modp_id);
+	p_ctx->param->alg_info_add(&p_ctx->policy,
+				   alg_info,
+				   ealg_id, p_ctx->eklen,
+				   aalg_id,
+				   group);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
 }
 
 static void parser_init(struct parser_context *ctx,
+			lset_t policy,
 			const struct parser_param *param)
 {
 	param->parser_init(ctx);
 	ctx->param = param;
+	ctx->policy.ikev1 = policy & POLICY_IKEV1_ALLOW;
+	ctx->policy.ikev2 = policy & POLICY_IKEV2_ALLOW;
 }
 
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
  */
-struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
+struct alg_info *alg_info_parse_str(lset_t policy,
+				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
 				    const struct parser_param *param)
@@ -600,11 +592,11 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 	alg_info->alg_info_protoid = param->protoid;
 	err_buf[0] = '\0';
 
-	parser_init(&ctx, param);
+	parser_init(&ctx, policy, param);
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		param->alg_info_add(alg_info, 0, 0, 0, 0);
+		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0);
 
 	ptr = alg_str;
 	do {
@@ -626,11 +618,9 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 		case ST_END:
 		case ST_EOF:
 			{
-				err_t ugh = parser_alg_info_add(&ctx,
-						alg_info,
-						param->alg_info_add,
-						param->lookup_group);
-
+				char error[100]; /* arbitrary */
+				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
+								alg_info);
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
 						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",
@@ -641,7 +631,7 @@ struct alg_info *alg_info_parse_str(struct alg_info *alg_info,
 				}
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, param);
+			parser_init(&ctx, policy, param);
 			break;
 
 		default:
