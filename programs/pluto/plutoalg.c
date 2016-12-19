@@ -253,7 +253,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  */
 
 static const enum ike_trans_type_dh default_ikev1_groups[] = {
-	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024,
+	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536,
 };
 static const enum ike_trans_type_dh default_ikev2_groups[] = {
 #ifdef NOT_YET
