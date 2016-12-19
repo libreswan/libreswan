@@ -17,6 +17,12 @@ var lsw_count_names = [
 
 function lsw_summary_graph(graph_id, table_id, summary) {
 
+    // Only plot results with a corresponding commit.
+
+    var results = summary.results.filter(function(result) {
+	return result.commit
+    })
+
     var margin = {
 	top: 10,
 	right: 90,
@@ -33,7 +39,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // Create a dictionary of totals we're interested in.
     //
     var sums = {}
-    summary.results.forEach(function(result) {
+    results.forEach(function(result) {
 	var sum = []
 	// Clean up the totals that we're interested in.  Add
 	// accumulative (sums) and overall totals.
@@ -77,11 +83,11 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.range([radius, width])
     var y = d3.scaleLinear()
 	.domain([
-	    d3.min(summary.results, function(d) {
+	    d3.min(results, function(d) {
 		// very first accumulative value
 		return 0.8 * sums[d.commit.abbreviated_commit_hash][0]
 	    }),
-	    d3.max(summary.results, function(d) {
+	    d3.max(results, function(d) {
 		return 1.02 * d.total
 	    })
 	])
@@ -138,7 +144,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	      }))
     svg.append("g")
 	.selectAll(".dot")
-	.data(summary.results)
+	.data(results)
 	.enter()
 	.append("circle")
 	.attr("class", "untested")
@@ -183,7 +189,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	    .attr("d", line)
 	svg.append("g")
 	    .selectAll(".dot")
-	    .data(summary.results)
+	    .data(results)
 	    .enter()
 	    .append("circle")
 	    .attr("class", sum_klass[sum_index])
