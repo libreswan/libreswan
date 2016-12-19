@@ -132,7 +132,7 @@ void alg_info_free(struct alg_info *alg_info)
 }
 
 static const char *parser_state_names[] = {
-	"ST_INI",
+	"ST_INI_EA",
 	"ST_INI_AA",
 	"ST_EA",
 	"ST_EA_END",
@@ -207,7 +207,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 		 * - continue: repeat the switch
 		 */
 		switch (p_ctx->state) {
-		case ST_INI:
+		case ST_INI_EA:
 			if (isspace(ch))
 				break;
 			if (isalnum(ch)) {
@@ -573,6 +573,9 @@ static void parser_init(struct parser_context *ctx,
 	ctx->param = param;
 	ctx->policy.ikev1 = policy & POLICY_IKEV1_ALLOW;
 	ctx->policy.ikev2 = policy & POLICY_IKEV2_ALLOW;
+	ctx->state = (param->ealg_getbyname
+		      ? ST_INI_EA
+		      : ST_INI_AA);
 }
 
 /*

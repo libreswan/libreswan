@@ -54,7 +54,7 @@ struct parser_param {
  *	Creates a new alg_info by parsing passed string
  */
 enum parser_state {
-	ST_INI,         /* parse esp= string */
+	ST_INI_EA,      /* parse ike= or esp= string */
 	ST_INI_AA,      /* parse ah= string */
 	ST_EA,          /* encrypt algo   */
 	ST_EA_END,
