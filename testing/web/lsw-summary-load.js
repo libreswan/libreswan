@@ -11,7 +11,7 @@ function lsw_summary_load(prefix, f) {
 		return
 	    }
 	    var summary = {
-		raw_results: results[0],
+		results: results[0],
 		commits: results[1],
 		current: results[2],
 	    }
@@ -61,25 +61,25 @@ function lsw_summary_cleanup(summary) {
 	})
     })
 
-    // Clean up the results; cross link with commits.
+    // Clean up the result values; cross link with commits (when
+    // possible).
 
-    summary.results = []
-    summary.raw_results.forEach(function (result) {
-	// Drop any results with an unknown commit.
+    summary.results.forEach(function (result) {
+	// Clean up the contents
+	result.start_time = new Date(result.start_time)
+	result.end_time = new Date(result.end_time)
+	// Try to cross link commit and result
 	var hash = result.hash
 	if (!hash) {
 	    console.warn("missing hash for result", result)
 	    return
 	}
+	// Cross link when possible.
 	var commit = commit_by_hash[hash]
 	if (!commit) {
 	    console.warn("missing commit for result", result)
 	    return
 	}
-	summary.results.push(result)
-	// Fix values
-	result.start_time = new Date(result.start_time)
-	result.end_time = new Date(result.end_time)
 	// Cross link commits and results
 	result.commit = commit
 	commit.result = result
