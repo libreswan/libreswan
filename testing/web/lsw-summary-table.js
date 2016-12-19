@@ -2,14 +2,25 @@
 
 function lsw_summary_table(table_id, summary) {
 
+    var now = new Date()
+
     var columns = [
 	{
 	    title: "Commits",
 	    html: function(row) {
+		// If there are no commits, this (correctly) returns a
+		// blank column.
 		return lsw_commits_html(row.commits)
 	    },
 	    value: function(row) {
-		return row.commits[0].committer_date
+		// The value is used to sort the column.  Should the
+		// commit not be known, use NOW so that a sort will
+		// force the row to the top/bottom.
+		if (row.commits.length) {
+		    return row.commits[0].committer_date
+		} else {
+		    return now
+		}
 	    }
 	},
 	{
