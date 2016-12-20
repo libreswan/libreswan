@@ -256,11 +256,7 @@ static const enum ike_trans_type_dh default_ikev1_groups[] = {
 	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, 0,
 };
 static const enum ike_trans_type_dh default_ikev2_groups[] = {
-#ifdef NOT_YET
 	OAKLEY_GROUP_MODP2048, 0,
-#else
-	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024, 0,
-#endif
 };
 
 static const enum ikev1_encr_attribute default_ike_ealgs[] = {
