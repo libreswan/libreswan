@@ -253,13 +253,13 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  */
 
 static const enum ike_trans_type_dh default_ikev1_groups[] = {
-	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536,
+	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, 0,
 };
 static const enum ike_trans_type_dh default_ikev2_groups[] = {
 #ifdef NOT_YET
-	OAKLEY_GROUP_MODP2048,
+	OAKLEY_GROUP_MODP2048, 0,
 #else
-	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024,
+	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024, 0,
 #endif
 };
 
@@ -292,20 +292,24 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		/*
 		 * Recursively add the valid default groups.
 		 *
-		 * Could use alg_info->ikev2 as an index?
+		 * If there's a hint of IKEv1 being enabled then
+		 * prefer its larger set of defaults.  This hopefully
+		 * increases the odds of both ends interoperating.  If
+		 * IKEv2 defaults are prefered and one end has
+		 * ikev2=never then, in agressive mode, things don't
+		 * work.
+		 *
+		 * Of course ikev2= should just go away.
 		 */
 		const enum ike_trans_type_dh *default_group_ids
-			= (policy->ikev2 ? default_ikev2_groups
-			   : default_ikev1_groups);
-		const size_t elemsof_default_group_ids
-			= (policy->ikev2 ? elemsof(default_ikev2_groups)
-			   : elemsof(default_ikev1_groups));
+			= (policy->ikev1
+			   ? default_ikev1_groups
+			   : default_ikev2_groups);
 
 		for (const enum ike_trans_type_dh *group_id = default_group_ids;
-		     group_id < default_group_ids + elemsof_default_group_ids;
-		     group_id++) {
+		     *group_id; group_id++) {
 			/*
-			 * Need to check that FIPS didn't disable it.
+			 * Check that FIPS didn't disable it.
 			 *
 			 * Lucky for us IKEv1 and IKEv2 have the same
 			 * group numbers.
@@ -319,6 +323,10 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 					    *group_id));
 				continue;
 			}
+			/*
+			 * Check that all the enabled protocols are
+			 * supported.
+			 */
 			if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
 				DBG(DBG_CONTROL|DBG_CRYPT,
 				    struct esb_buf buf;

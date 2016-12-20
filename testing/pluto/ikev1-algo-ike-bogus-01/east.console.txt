@@ -25,8 +25,8 @@ east #
 000 "westnet-eastnet-3des":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "westnet-eastnet-3des":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-3des":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-3des":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1024(2), AES_CBC(7)_256-MD5(1)-MODP1024(2)
-000 "westnet-eastnet-3des":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1024(2), AES_CBC(7)_256-MD5(1)-MODP1024(2)
+000 "westnet-eastnet-3des":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-3des":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
 000 "westnet-eastnet-3des":   ESP algorithms wanted: AES(12)_000-MD5(1)
 000 "westnet-eastnet-3des":   ESP algorithms loaded: AES(12)_000-MD5(1)
 east #
