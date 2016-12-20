@@ -95,40 +95,6 @@ function lsw_summary_cleanup(summary) {
     })
     summary.current.commits = lsw_summary_commits(summary.current.commit)
 
-    // Create a list of first-parent results ordered oldest to
-    // youngest.  This way more recent commits are on top.
-    //
-    // Need to iterate through the commit parents[0] (first-parent)
-    // entries to find them.
-
-    summary.first_parent_results = []
-    for (var commit = summary.commits[0]; commit; commit = commit.parents[0]) {
-	if (commit.result) {
-	    summary.first_parent_results.push(commit.result)
-	}
-    }
-    // oldest first
-    summary.first_parent_results.reverse()
-
-    // List of commits that are inline to be tested, order them oldest
-    // to youngest so that, when graphed, more recent commits are on
-    // top.
-
-    summary.untested_interesting_commits = []
-    summary.commits.forEach(function(commit) {
-	if (!commit.interesting) {
-	    return
-	}
-	if (commit.result) {
-	    return
-	}
-	if (summary.current.commit == commit) {
-	    return
-	}
-	summary.untested_interesting_commits.push(commit)
-    })
-    summary.untested_interesting_commits.reverse()
-
 }
 
 function lsw_commit_texts(commits) {

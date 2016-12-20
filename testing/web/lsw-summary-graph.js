@@ -120,10 +120,26 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.style("text-anchor", "end")
 	.text("Results")
 
+    //
+    // Create a list of first-parent results so that they can be
+    // plotted as a line.
+    //
+    // Need to iterate through the commit parents[0] (first-parent)
+    // entries to find them.  Since this is ordered new-to-old, the
+    // first element is the right most.
+    //
+
+    var first_parent_results = []
+    for (var commit = summary.commits[0]; commit; commit = commit.parents[0]) {
+	if (commit.result) {
+	    first_parent_results.push(commit.result)
+	}
+    }
+
     /*
      * Accumulate the key for each line.
      */
-    var last_result = summary.first_parent_results[summary.first_parent_results.length - 1]
+    var last_result = first_parent_results[0]
     var keys_x = x(last_result.commit.committer_date) + radius
     var keys = []
 
@@ -133,7 +149,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // First as a line of trunk, and then as a scatter plot of all
     // test results.
     svg.append("path")
-	.datum(summary.first_parent_results)
+	.datum(first_parent_results)
 	.attr("class", "line")
 	.attr("d", d3.line()
 	      .x(function(result) {
@@ -184,7 +200,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 		return y(sums[result.commit.abbreviated_commit_hash][sum_index])
 	    })
 	svg.append("path")
-	    .datum(summary.first_parent_results)
+	    .datum(first_parent_results)
 	    .attr("class", "line")
 	    .attr("d", line)
 	svg.append("g")
@@ -219,11 +235,26 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     // The job queue
     //
+    // Plot all the 'interesting' commits (something significant was
+    // apparently changed) that have no result.
+
+    var untested_interesting_commits = summary.commits.filter(function(commit) {
+	if (!commit.interesting) {
+	    return false
+	}
+	if (commit.result) {
+	    return false
+	}
+	if (summary.current.commit == commit) {
+	    return false
+	}
+	return true
+    })
 
     // Overlay untested scatter plot
     svg.append("g")
 	.selectAll(".dot")
-	.data(summary.untested_interesting_commits)
+	.data(untested_interesting_commits)
 	.enter()
 	.append("circle")
 	.attr("class", "pending")
