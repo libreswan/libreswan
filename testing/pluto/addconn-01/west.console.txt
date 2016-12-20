@@ -1,0 +1,14 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ # config contains a conn option in config setup, addconn must deal
+west #
+ cd /tmp
+west #
+ ipsec addconn --config /etc/ipsec.conf --checkconfig
+west #
+ echo done
+done
+west #
