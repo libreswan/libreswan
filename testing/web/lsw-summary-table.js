@@ -17,7 +17,7 @@ function lsw_summary_table(table_id, summary) {
 		// commit not be known, use NOW so that a sort will
 		// force the row to the top/bottom.
 		if (row.commits.length) {
-		    return row.commits[0].committer_date
+		    return row.commits[0].committer.date
 		} else {
 		    return now
 		}

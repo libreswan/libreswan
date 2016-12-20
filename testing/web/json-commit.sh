@@ -7,9 +7,18 @@ Usage:
 
     $0 [ --json <json> ] <repodir> <gitrev> ...
 
-Dump <gitrev>... from <repodir> as raw json.
+Dump <gitrev>... from <repodir> as raw json using a format similar to:
 
-If <json> is specified, write the json into that file as a json
+    https://developer.github.com/v3/git/commits/
+
+Notes:
+
+"parents" is missing (use non-standard abbreviated_parent_hashes);
+"tree" is missing; "url" is missing; "abbreviated_commit_hash" is non
+standard; "rank" is non-standard; "interesting" is non-standard;
+"subject" is non-standard.
+
+If <json> is specified, then write the json into that file as a json
 array.
 
 EOF
@@ -45,9 +54,33 @@ key_format() (
 	   '{ ($key): . }'
 )
 
-for gitrev in "$@" ; do
+date_format() (
+    key=$1 ; shift
+    format=$1 ; shift
+    cd ${repodir}
+    git show --no-patch --format=%${format}I%n%${format}n%n%${format}e ${gitrev} \
+	| jq --raw-input . \
+	| jq -s \
+	     --arg key $key \
+	     '{
+    ($key): {
+        date: .[0],
+        name: .[1],
+        email: .[2],
+    },
+}'
+)
 
+echo -n 'Processing:' 1>&2
+for gitrev in "$@" ; do
+    if ( cd ${repodir} && git show --no-patch --format= ${gitrev} -- > /dev/null 2>&1 ); then
+	echo -n " ${gitrev}" 1>&2
+    else
+	echo -n " invalid:${gitrev}" 1>&2
+	continue
+    fi
     (
+
 	jq --null-input \
 	   --argjson rank "$(${webdir}/gime-git-rank.sh ${repodir} ${gitrev})" \
 	   '{ rank: $rank }'
@@ -58,13 +91,12 @@ for gitrev in "$@" ; do
 	    jq --raw-input '.' | \
 	    jq -s '{ abbreviated_parent_hashes: . }'
 
-	# Convert the body to a list.  Need to strip the trailing
-	# blank line.  Fortunately it seems that the output from %b
-	# always contains at least one trailing blank line.
+	# Create the message, github seems to strip trailing new
+	# lines.
 
-	( cd ${repodir} ; git show --no-patch --format=%b ${gitrev} ) | \
-	    jq --raw-input \
-	       '{ body: ([., inputs] | if .[-1] == "" then .[0:-1] else . end) }'
+	( cd ${repodir} ; git show --no-patch --format=%B ${gitrev} ) \
+	    | jq -s --raw-input \
+		 '{ message: sub("\n\n$";""), }'
 
 	# Add an "interesting" commit attribute.  Only "interesting"
 	# commits get tested.
@@ -77,17 +109,14 @@ for gitrev in "$@" ; do
 
 	# Rest are easy to deal with.
 
-	key_format abbreviated_commit_hash %h
-	key_format author_date %aI
-	key_format author_name %an
-	key_format author_email %ae
-	key_format committer_date %cI
-	key_format committer_name %cn
-	key_format committer_email %ce
 	key_format subject %s
+	key_format sha %H
+	key_format abbreviated_commit_hash %h
+
+	date_format author a
+	date_format committer c
 
     ) | jq -s 'add'
-
 done | \
     if test -n "${json}" ; then
 	jq -s '.' > ${json}.tmp
@@ -95,3 +124,4 @@ done | \
     else
 	cat
     fi
+echo "" 1>&2

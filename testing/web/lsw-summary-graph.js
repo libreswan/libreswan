@@ -76,7 +76,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     var x = d3.scaleTime()
 	.domain([
 	    d3.min(summary.commits, function(d) {
-		return d.committer_date
+		return d.committer.date
 	    }),
 	    now,
 	])
@@ -140,7 +140,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
      * Accumulate the key for each line.
      */
     var last_result = first_parent_results[0]
-    var keys_x = x(last_result.commit.committer_date) + radius
+    var keys_x = x(last_result.commit.committer.date) + radius
     var keys = []
 
     //
@@ -153,7 +153,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.attr("class", "line")
 	.attr("d", d3.line()
 	      .x(function(result) {
-		  return x(result.commit.committer_date)
+		  return x(result.commit.committer.date)
 	      })
 	      .y(function(result) {
 		  return y(result.total)
@@ -166,7 +166,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.attr("class", "untested")
 	.attr("r", radius)
     	.attr("cx", function(result) {
-	    return x(result.commit.committer_date)
+	    return x(result.commit.committer.date)
 	})
 	.attr("cy", function(result) {
 	    return y(result.total)
@@ -194,7 +194,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     for (var sum_index = sum_text.length - 1; sum_index >= 0; sum_index--) {
 	var line = d3.line()
 	    .x(function(result) {
-		return x(result.commit.committer_date)
+		return x(result.commit.committer.date)
 	    })
 	    .y(function(result) {
 		return y(sums[result.commit.abbreviated_commit_hash][sum_index])
@@ -211,7 +211,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	    .attr("class", sum_klass[sum_index])
 	    .attr("r", radius)
 	    .attr("cx", function(result) {
-		return x(result.commit.committer_date)
+		return x(result.commit.committer.date)
 	    })
 	    .attr("cy", function(result) {
 		return y(sums[result.commit.abbreviated_commit_hash][sum_index])
@@ -260,7 +260,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.attr("class", "pending")
 	.attr("r", radius)
     	.attr("cx", function(commit) {
-	    return x(commit.committer_date)
+	    return x(commit.committer.date)
 	})
 	.attr("cy", function(commit) {
 	    return height-radius
@@ -279,7 +279,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	    .attr("class", "current")
 	    .attr("r", radius)
     	    .attr("cx", function(d) {
-		return x(summary.current.commit.committer_date)
+		return x(summary.current.commit.committer.date)
 	    })
 	    .attr("cy", function(d) {
 		return height-radius

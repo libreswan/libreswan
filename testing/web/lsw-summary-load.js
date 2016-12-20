@@ -49,8 +49,8 @@ function lsw_summary_cleanup(summary) {
 
     summary.commits.forEach(function (commit) {
 	// Fix values
-	commit.author_date = new Date(commit.author_date)
-	commit.committer_date = new Date(commit.committer_date)
+	commit.author.date = new Date(commit.author.date)
+	commit.committer.date = new Date(commit.committer.date)
 	// Convert all commit parent hashes to pointers
 	commit.parents = []
 	commit.abbreviated_parent_hashes.forEach(function (parent_hash) {
@@ -101,7 +101,7 @@ function lsw_commit_texts(commits) {
     var subject = ""
     commits.forEach(function(commit) {
 	subject = (subject
-		   + lsw_date2iso(commit.committer_date)
+		   + lsw_date2iso(commit.committer.date)
 		   + ": "
 		   + commit.subject
 		   + "\n")
@@ -139,7 +139,7 @@ function lsw_summary_commits(commit) {
 function lsw_commits_html(commits) {
     html = ""
     commits.forEach(function(commit) {
-	html += lsw_date2iso(commit.committer_date)
+	html += lsw_date2iso(commit.committer.date)
 	html += ": "
 	html += "<a href=\""
 	html += "https://github.com/libreswan/libreswan/commit/"
