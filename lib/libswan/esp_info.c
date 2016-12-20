@@ -292,40 +292,15 @@ static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 	}
 }
 
-static void parser_init_esp(struct parser_context *p_ctx)
-{
-	*p_ctx = empty_p_ctx;
-
-	p_ctx->ealg_str = p_ctx->ealg_buf;
-	p_ctx->aalg_str = p_ctx->aalg_buf;
-	p_ctx->modp_str = p_ctx->modp_buf;
-
-}
-
 const struct parser_param esp_parser_param = {
 	.protoid = PROTO_IPSEC_ESP,
-	.parser_init = parser_init_esp,
 	.alg_info_add = alg_info_esp_add,
 	.ealg_getbyname = ealg_getbyname_esp,
 	.aalg_getbyname = aalg_getbyname_esp,
 };
 
-/*
- * Must be called for each "new" char, with new
- * character in ctx.ch
- */
-static void parser_init_ah(struct parser_context *p_ctx)
-{
-	*p_ctx = empty_p_ctx;
-
-	p_ctx->aalg_str = p_ctx->aalg_buf;
-	p_ctx->modp_str = p_ctx->modp_buf;
-
-}
-
 const struct parser_param ah_parser_param = {
 	.protoid = PROTO_IPSEC_AH,
-	.parser_init = parser_init_ah,
 	.alg_info_add = alg_info_ah_add,
 	.aalg_getbyname = aalg_getbyname_esp,
 };

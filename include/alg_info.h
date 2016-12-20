@@ -37,7 +37,6 @@ struct parser_policy {
 
 struct parser_param {
 	unsigned protoid;
-	void (*parser_init)(struct parser_context *p_ctx);
 	void (*alg_info_add)(const struct parser_policy *const policy,
 			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,

@@ -453,22 +453,8 @@ static const struct oakley_group_desc *group_byname(const struct parser_policy *
 	return group;
 }
 
-/*
- *	Must be called for each "new" char, with new
- *	character in ctx.ch
- */
-static void parser_init_ike(struct parser_context *p_ctx)
-{
-	*p_ctx = empty_p_ctx;
-
-	p_ctx->ealg_str = p_ctx->ealg_buf;
-	p_ctx->aalg_str = p_ctx->aalg_buf;
-	p_ctx->modp_str = p_ctx->modp_buf;
-}
-
 const struct parser_param ike_parser_param = {
 	.protoid = PROTO_ISAKMP,
-	.parser_init = parser_init_ike,
 	.alg_info_add = alg_info_ike_add,
 	.ealg_getbyname = ealg_getbyname_ike,
 	.aalg_getbyname = aalg_getbyname_ike,

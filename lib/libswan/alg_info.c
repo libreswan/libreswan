@@ -569,13 +569,21 @@ static void parser_init(struct parser_context *ctx,
 			lset_t policy,
 			const struct parser_param *param)
 {
-	param->parser_init(ctx);
-	ctx->param = param;
-	ctx->policy.ikev1 = policy & POLICY_IKEV1_ALLOW;
-	ctx->policy.ikev2 = policy & POLICY_IKEV2_ALLOW;
-	ctx->state = (param->ealg_getbyname
-		      ? ST_INI_EA
-		      : ST_INI_AA);
+	*ctx = (struct parser_context) {
+		.param = param,
+		.policy.ikev1 = policy & POLICY_IKEV1_ALLOW,
+		.policy.ikev2 = policy & POLICY_IKEV2_ALLOW,
+		.state = (param->ealg_getbyname
+			  ? ST_INI_EA
+			  : ST_INI_AA),
+		/*
+		 * DANGER: this is a pointer to a very small buffer on
+		 * the stack.
+		 */
+		.ealg_str = ctx->ealg_buf,
+		.aalg_str = ctx->aalg_buf,
+		.modp_str = ctx->modp_buf,
+	};
 }
 
 /*
