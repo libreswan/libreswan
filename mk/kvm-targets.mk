@@ -723,16 +723,13 @@ kvm-shutdown: $(addprefix kvm-shutdown-,$(KVM_DOMAINS))
 kvm-publish:
 	: is KVM_PUBLISHDIR valid
 	test -n "$(KVM_PUBLISHDIR)"
-	$(MAKE) testing/pluto/results.json
+	: generate results.json
+	./testing/web/build-results.sh . testing/pluto
 	: copy over the results
 	dest=$(KVM_PUBLISHDIR)/$(shell id --name --user)-$(shell make showversion) ; \
 	rsync --links -i testing/pluto/*.{css,js,html,json} $$dest/ && \
 	./testing/web/rsync-tests.sh . $$dest && \
 	./testing/web/rsync-results.sh . $$dest
-
-# Hack, stage the html and json directly in testing/pluto
-testing/pluto/results.json:
-	./testing/web/build-results.sh . testing/pluto
 
 # Some hints
 #
