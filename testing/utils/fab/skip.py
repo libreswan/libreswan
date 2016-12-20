@@ -22,10 +22,10 @@ class skip(argutil.List):
     untested = post.Resolution.UNTESTED
     unsupported = post.Resolution.UNSUPPORTED
 
-def add_arguments(parser):
+def add_arguments(parser, *defaults):
     group = parser.add_argument_group("Skip arguments")
     group.add_argument("--skip", action="store",
-                       default=skip(),
+                       default=skip(*defaults),
                        type=skip, metavar=str(skip),
                        help="comma separated list of previous test results to skip; default: '%(default)s'")
 

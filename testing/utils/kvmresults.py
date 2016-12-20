@@ -110,7 +110,7 @@ def main():
 
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
-    skip.add_arguments(parser)
+    skip.add_arguments(parser, skip.skip.untested)
     ignore.add_arguments(parser)
 
     # These three calls go together
