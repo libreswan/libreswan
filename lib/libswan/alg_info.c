@@ -153,8 +153,6 @@ static const char *parser_state_name(enum parser_state state)
 	return parser_state_names[state];
 }
 
-const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
-
 static inline void parser_set_state(struct parser_context *p_ctx,
 				    enum parser_state state)
 {

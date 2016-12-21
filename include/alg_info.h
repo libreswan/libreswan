@@ -200,8 +200,6 @@ extern int alg_enum_search(enum_names *ed, const char *prefix,
 
 struct oakley_group_desc;	/* so it isn't local to the function prototype */
 
-extern const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
-
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
