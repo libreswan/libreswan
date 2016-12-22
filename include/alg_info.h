@@ -49,38 +49,6 @@ struct parser_param {
 							const char *name);
 };
 
-/*
- *	Creates a new alg_info by parsing passed string
- */
-enum parser_state {
-	ST_INI_EA,      /* parse ike= or esp= string */
-	ST_INI_AA,      /* parse ah= string */
-	ST_EA,          /* encrypt algo   */
-	ST_EA_END,
-	ST_EK,          /* enc. key length */
-	ST_EK_END,
-	ST_AA,          /* auth algo */
-	ST_AA_END,
-	ST_MODP,        /* modp spec */
-	ST_END,
-	ST_EOF,
-};
-
-/* XXX:jjo to implement different parser for ESP and IKE */
-struct parser_context {
-	unsigned state;
-	const struct parser_param *param;
-	struct parser_policy policy;
-	char ealg_buf[16];
-	char aalg_buf[16];
-	char modp_buf[16];
-	char *ealg_str;
-	char *aalg_str;
-	char *modp_str;
-	int eklen;
-	int ch;	/* character that stopped parsing */
-};
-
 struct esp_info {
 	/*
 	 * The encryption algorithm and key length; if required by
