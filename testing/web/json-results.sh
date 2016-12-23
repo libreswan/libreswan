@@ -30,6 +30,7 @@ utilsdir=$(cd ${webdir}/../utils && pwd)
 ${utilsdir}/kvmresults.py \
 	     --test-kind '' \
 	     --test-result '' \
+	     --skip '' \
 	     --json \
 	     --print test-name,test-kind,test-directory,test-status,test-scripts,test-host-names,start-time,end-time,saved-output-directory,output-directory,result,errors,runtime,total-time,boot-time,script-time,baseline-output-directory \
 	     "$@" | \
