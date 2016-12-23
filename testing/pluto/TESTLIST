@@ -21,6 +21,8 @@
 # run the lib/libswan/ tests (make changes broke this)
 kvmplutotest	basic-pluto-00	wip
 
+kvmplutotest	addconn-01	good
+
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-02			good
