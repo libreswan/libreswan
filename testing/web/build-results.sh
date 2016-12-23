@@ -5,7 +5,7 @@ if test "$#" -lt 2; then
 
 Usage:
 
-   $0 <repodir> <destdir>
+   $0 <repodir> <resultsdir> <destdir>
 
 Use "kvmrunner.py> to create a results web page under <destdir>.
 
@@ -22,17 +22,21 @@ set -euxv
 cwd=$(pwd)
 webdir=$(cd $(dirname $0) && pwd)
 repodir=$(cd $1 && pwd) ; shift
+resultsdir=$(cd $1 && pwd) ; shift
 destdir=$(cd $1 && pwd) ; shift
+
+test -d ${repodir}/testing/pluto
 
 (
     # kvmresults needs to be in the current directory
-    cd ${destdir}
+    cd ${resultsdir}
     ${webdir}/json-results.sh \
-	     --json results.json \
+	     --json ${repodir}/results.json \
 	     --testing-directory ${repodir}/testing \
 	     .
 )
 
-cp ${webdir}/lsw*.{css,js} ${destdir}
-cp ${webdir}/results*.{html,css,js} ${destdir}
-ln -f -s results.html ${destdir}/index.html
+rsync ${repodir}/results.json ${destdir}
+rsync ${webdir}/lsw*.{css,js} ${destdir}
+rsync ${webdir}/results*.{html,css,js} ${destdir}
+rsync ${webdir}/results.html ${destdir}/index.html

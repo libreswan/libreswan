@@ -719,17 +719,16 @@ kvm-shutdown: $(addprefix kvm-shutdown-,$(KVM_DOMAINS))
 # Hack to push test results onto a remote machine.
 #
 
+KVM_GITSTAMP ?= $(shell id --name --user)-$(shell make showversion)
+
 .PHONY: kvm-publish
 kvm-publish:
 	: is KVM_PUBLISHDIR valid
 	test -n "$(KVM_PUBLISHDIR)"
-	: generate results.json
-	./testing/web/build-results.sh . testing/pluto
-	: copy over the results
-	dest=$(KVM_PUBLISHDIR)/$(shell id --name --user)-$(shell make showversion) ; \
-	rsync --links -i testing/pluto/*.{css,js,html,json} $$dest/ && \
-	./testing/web/rsync-tests.sh . $$dest && \
-	./testing/web/rsync-results.sh . $$dest
+	: generate and copy over the results
+	./testing/web/rsync-tests.sh . $(KVM_PUBLISHDIR)/$(KVM_GITSTAMP)
+	./testing/web/rsync-results.sh . $(KVM_PUBLISHDIR)/$(KVM_GITSTAMP)
+	./testing/web/build-results.sh . testing/pluto $(KVM_PUBLISHDIR)/$(KVM_GITSTAMP)
 
 # Some hints
 #

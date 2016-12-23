@@ -65,7 +65,7 @@ for destdir in "$@" ; do
     ( cd ${repodir} && git reset --hard ${gitrev} )
 
     echo "Rebuilding results"
-    ${webdir}/build-results.sh ${repodir} ${destdir}
+    ${webdir}/build-results.sh ${repodir} ${destdir} ${destdir}
 
     echo "Switching bach to HEAD"
     ( cd ${repodir} && git merge --quiet --ff-only )

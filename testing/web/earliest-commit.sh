@@ -14,10 +14,12 @@ EOF
     exit 1
 fi
 
-webdir=$(dirname $0)
-
+# paths need to be absolute as CDing to $repodir
+webdir=$(cd $(dirname $0) && pwd)
 repodir=$1 ; shift
-summarydir=$1 ; shift
+summarydir=$(cd $1 && pwd) ; shift
+
+cd $repodir
 
 # Create a list of the earliest hashes.  Use xargs to keep the length
 # under control.

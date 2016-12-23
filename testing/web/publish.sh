@@ -89,6 +89,8 @@ for target in kvm-shutdown distclean kvm-install kvm-keys kvm-test kvm-shutdown;
     fi
 done
 
+# XXX: Can't use "make kvm-publish" here - it probably doesn't exist
+# in the source code.
 
 # Copy over all the tests.
 status "copy test sources"
@@ -102,7 +104,7 @@ ${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 # Generate the results page.
 status "create results web page"
-${webdir}/build-results.sh ${repodir} ${destdir}
+${webdir}/build-results.sh ${repodir} ${repodir}/testing/pluto ${destdir}
 
 
 status "finished"
