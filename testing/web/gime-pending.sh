@@ -22,10 +22,10 @@ webdir=$(dirname $0)
 for revlist in "$@" ; do
     ${webdir}/gime-git-revisions.sh ${repodir} ${revlist} | \
 	while read hash ; do \
-	    if test -d ${summarydir}/*-g${hash}-* ; then
+	    if test -d $(echo ${summarydir}/*-g${hash}-* | awk '{print $1}'); then
 		continue
 	    fi
-	    if ${webdir}/git-interesting.sh ${repodir} ${hash} ; then
+	    if ${webdir}/git-interesting.sh ${repodir} ${hash} > /dev/null ; then
 		echo ${hash}
 	    fi
 	done

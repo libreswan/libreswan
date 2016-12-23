@@ -27,7 +27,17 @@ gitrev=$1 ; shift
 
 # All merges (commits with more than one parent) are "interesting".
 
-if test "$(${webdir}/gime-git-parents.sh ${repodir} ${gitrev} | wc -l)" -gt 1 ; then
+parents=$(${webdir}/gime-git-parents.sh ${repodir} ${gitrev} | wc -l)
+if test ${parents} -gt 1 ; then
+    echo "${parents} parents"
+    exit 0
+fi
+
+# All branches (commits with more than one child) are "interesting".
+
+children=$(${webdir}/gime-git-children.sh ${repodir} ${gitrev} | wc -l)
+if test ${children} -gt 1 ; then
+    echo "${children} children"
     exit 0
 fi
 
@@ -45,6 +55,7 @@ if git show ${gitrev} \
     testing/sanitizers \
     testing/baseconfigs \
 	| grep . > /dev/null ; then
+    echo "interesting"
     exit 0
 fi
 

@@ -101,7 +101,7 @@ for gitrev in "$@" ; do
 	# Add an "interesting" commit attribute.  Only "interesting"
 	# commits get tested.
 
-	if ${webdir}/git-interesting.sh ${repodir} ${gitrev} ; then
+	if ${webdir}/git-interesting.sh ${repodir} ${gitrev} > /dev/null ; then
 	    echo true
 	else
 	    echo false

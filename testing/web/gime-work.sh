@@ -58,13 +58,13 @@ while read hashes ; do
     count=$(expr ${count} + 1)
     hash=$(set -- ${hashes} ; echo $1)
     # Save the first interesting HEAD commit; there must be one.
-    if test -z "${head_hash}" && ${webdir}/git-interesting.sh ${repodir} ${hash} ; then
+    if test -z "${head_hash}" && ${webdir}/git-interesting.sh ${repodir} ${hash} > /dev/null ; then
 	head_hash=${hash}
 	head_count=${count}
 	echo head ${head_hash} at ${head_count} 1>&2
     fi
     # already tested? stop the current run and start again
-    if test -d ${summarydir}/*-g${hash}-* ; then
+    if test -d $(echo ${summarydir}/*-g${hash}-* | awk '{print $1}'); then
 	# if this is longer, save it
 	if test $(echo ${run} | wc -w) -gt $(echo ${longest} | wc -w) ; then
 	    longest="${run}"
@@ -79,7 +79,7 @@ while read hashes ; do
     # The above will have already skipped over tested merge/branch
     # points.  Restart RUN since this breaks the run.
     if test -z "${point_hash}" ; then
-	parents=$(cd ${repodir} && git show --no-patch --format=%p ${hash} | wc -w)
+	parents=$(${webdir}/gime-git-parents.sh ${repodir} ${hash} | wc -l)
 	if test ${parents} -gt 1 ; then
 	    point_hash=${hash}
 	    point_count=${count}
@@ -88,7 +88,7 @@ while read hashes ; do
 	    run=""
 	    continue
 	fi
-	children=$(set -- ${hashes} ; shift ; echo $@ | wc -w)
+	children=$(${webdir}/gime-git-children.sh ${repodir} ${hash} | wc -l)
 	if test ${children} -gt 1 ; then
 	    point_hash=${hash}
 	    point_count=${count}
@@ -99,7 +99,7 @@ while read hashes ; do
 	fi
     fi
     # Ignore uninteresting commits when looking for a run.
-    if ! ${webdir}/git-interesting.sh ${repodir} ${hash} ; then
+    if ! ${webdir}/git-interesting.sh ${repodir} ${hash} > /dev/null ; then
 	# don't include uninteresting commits
 	continue
     fi
