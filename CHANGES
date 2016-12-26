@@ -32,7 +32,8 @@ v3.19 (unreleased)
 * pluto: Move unique mark from rw_instantiate() to instantiate() for OE [Paul]
 * pluto: log more information when a bare shunt is missing [Hugh]
 * pluto: redo process_encrypted_informational_ikev2 [Hugh]
-* pluto: change force-encaps=yes|no to encaps=auto|yes|no [Paul/Patrick Kerpan]
+* pluto: Add new config option encapsulation=auto|yes|no [Paul/Patrick Kerpan]
+         replacing forceencaps=yes|no
 * libipsecconf: libipsecconf: remove last remnants of manual keying [Paul]
 * _updown.netkey: Move addcat call from route-host to up-client [Paul]
 * ipsec: initnss|import use --nssdir for nssdb directory option [Tuomo]
