@@ -601,8 +601,10 @@ static void parser_init(struct parser_context *ctx,
 {
 	*ctx = (struct parser_context) {
 		.param = param,
-		.policy.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-		.policy.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
+		.policy = {
+			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
+			.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
+		 },
 		.state = (param->ealg_getbyname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
