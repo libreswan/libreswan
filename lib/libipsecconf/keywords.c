@@ -615,7 +615,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT,  NOT_ENUM },
 
   { "phase2",  kv_conn | kv_policy,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
-  { "auth",  kv_conn | kv_policy | kv_alias,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
 
   { "compress",  kv_conn,  kt_bool,  KBF_COMPRESS,  NOT_ENUM },
 
