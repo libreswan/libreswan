@@ -355,7 +355,7 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		for (int i = 0; i != elemsof(default_ike_ealgs); i++) {
 			enum ikev1_encr_attribute id = default_ike_ealgs[i];
 			bool valid = ikev1_get_ike_encrypt_desc(id) != NULL;
-			passert(id);
+
 			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
 				struct esb_buf buf;
 				DBG_log("%s default ENCRYPT algorithm %s=%d",
@@ -364,8 +364,6 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 					enum_showb(&oakley_enc_names, id, &buf), id);
 			}
 			if (valid) {
-				if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
-				}
 				alg_info_ike_add(policy, alg_info,
 						 id, ek_bits,
 						 aalg_id, dh_group);
@@ -381,7 +379,7 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		for (int j = 0; j != elemsof(default_ike_aalgs); j++) {
 			enum ikev1_hash_attribute id = default_ike_aalgs[j];
 			bool valid = ikev1_get_ike_prf_desc(id) != NULL;
-			passert(id);
+
 			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
 				struct esb_buf buf;
 				DBG_log("%s default PRF (HASH) algorithm %s=%d",

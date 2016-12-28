@@ -933,39 +933,6 @@ void timer_list(void)
 }
 
 /*
- * XXX --- hack alert, but I want to avoid adding new pluto-level
- *   command line arguments for now --- they need to all be whack
- * level items, and all command line arguments go away.
- */
-
-#if 0 /* ??? no longer in use */
-static unsigned long envnumber(const char *name,
-			     unsigned long lwb, unsigned long upb,
-			     unsigned long def)
-{
-	const char *s = getenv(name);
-	unsigned long res;
-	err_t ugh;
-
-	if (s == NULL)
-		return def;
-
-	ugh = ttoulb(s, 0, 10, upb, &res);
-	if (ugh == NULL && res < lwb)
-		ugh = "too small";
-	if (ugh != NULL) {
-		libreswan_log("environment variable %s is \"%s\", %s",
-			name, s, ugh);
-		return def;
-	}
-	DBG(DBG_CONTROL,
-		DBG_log("environment variable %s: '%lu",
-			name, res));
-	return res;
-}
-#endif
-
-/*
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
@@ -980,7 +947,6 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	/*
 	 * Scheduling a month into the future is most likely a bug.
 	 * pexpect() causes us to flag this in our test cases
-	 * But do allow (unwise) people to set insame > 1m lifetimes
 	 */
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
