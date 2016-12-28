@@ -7,24 +7,30 @@ east #
 east #
  ipsec whack --debug-all --impair-send-zero-gx
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk
-002 added connection description "westnet-eastnet-ipv4-psk"
+ ipsec auto --add westnet-eastnet-ipv4-psk-slow
+002 added connection description "westnet-eastnet-ipv4-psk-slow"
 east #
  echo "initdone"
 initdone
 east #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+| processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+| processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
 east #
 east #

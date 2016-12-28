@@ -47,11 +47,11 @@ road #
 002 "road-eastnet-psk" #1: sending notification INVALID_HASH_INFORMATION to 192.1.2.23:500
 002 "road-eastnet-psk" #1: deleting state (STATE_AGGR_I1)
 road #
-echo done
+ echo done
 done
 road #
 road #
-if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
