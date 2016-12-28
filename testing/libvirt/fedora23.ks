@@ -82,6 +82,7 @@ nspr-devel
 nss-devel
 nss-tools
 openldap-devel
+ocspd
 pam-devel
 pexpect
 psmisc
