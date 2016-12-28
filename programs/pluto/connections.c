@@ -1759,30 +1759,37 @@ void add_connection(const struct whack_message *wm)
 
 /*
  * Derive a template connection from a group connection and target.
- * Similar to instantiate(). Happens at whack --listen.
- * Returns name of new connection. May be NULL.
- * Caller is responsible for pfreeing.
+ * Similar to instantiate().  Happens at whack --listen.
+ * Returns name of new connection.  NULL on failure (duplicated name).
+ * Caller is responsible for pfreeing name.
  */
 char *add_group_instance(struct connection *group, const ip_subnet *target)
 {
-	char namebuf[100],
-		targetbuf[SUBNETTOT_BUF];
-	struct connection *t;
-	char *name = NULL;
-
 	passert(group->kind == CK_GROUP);
 	passert(oriented(*group));
 
-	/* manufacture a unique name for this template */
-	subnettot(target, 0, targetbuf, sizeof(targetbuf));
-	snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
+	/*
+	 * Manufacture a unique name for this template.
+	 * If the name gets truncated, that will manifest itself
+	 * in a duplicated name and thus be rejected.
+	 */
+	char namebuf[100];	/* presumed large enough */
+
+	{
+		char targetbuf[SUBNETTOT_BUF];
+
+		subnettot(target, 0, targetbuf, sizeof(targetbuf));
+		snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
+	}
 
 	if (con_by_name(namebuf, FALSE) != NULL) {
 		loglog(RC_DUPNAME,
 			"group name + target yields duplicate name \"%s\"",
 			namebuf);
+		return NULL;
 	} else {
-		t = clone_thing(*group, "group instance");
+		struct connection *t = clone_thing(*group, "group instance");
+
 		t->name = namebuf;	/* trick: unsharing will clone this for us */
 
 		/* suppress virt before unsharing */
@@ -1796,7 +1803,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		}
 
 		unshare_connection(t);
-		name = clone_str(t->name, "group instance name");
+
 		t->spd.that.client = *target;
 		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 		t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -1825,8 +1832,8 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 			if (!trap_connection(t))
 				whack_log(RC_ROUTE, "could not route");
 		}
+		return clone_str(t->name, "group instance name");
 	}
-	return name;
 }
 
 /* An old target has disappeared for a group: delete instance. */
