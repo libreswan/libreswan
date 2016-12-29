@@ -81,7 +81,6 @@ nmap
 nspr-devel
 nss-devel
 nss-tools
-ocspd
 openldap-devel
 pam-devel
 pexpect
@@ -177,6 +176,7 @@ dnf install -y 2>&1 \
     nc6 \
     nspr-devel \
     nss-devel \
+    ocspd \
     nss-tools \
     openldap-devel \
     pam-devel \
