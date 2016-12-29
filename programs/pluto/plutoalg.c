@@ -263,7 +263,7 @@ static const enum ikev1_encr_attribute default_ike_ealgs[] = {
 	OAKLEY_AES_CBC, OAKLEY_3DES_CBC,
 };
 static const enum ikev1_hash_attribute default_ike_aalgs[] = {
-	OAKLEY_SHA1, OAKLEY_MD5,
+	OAKLEY_SHA2_256, OAKLEY_SHA2_512, OAKLEY_SHA1, OAKLEY_MD5,
 };
 
 /*
