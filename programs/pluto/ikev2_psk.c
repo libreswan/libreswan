@@ -69,8 +69,8 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 					chunk_t firstpacket,
 					unsigned char *signed_octets)
 {
-	const chunk_t *nonce;
-	const char    *nonce_name;
+	const chunk_t *nonce = NULL;
+	const char    *nonce_name = NULL;
 	const struct connection *c = st->st_connection;
 	const chunk_t *pss = &empty_chunk;
 	const size_t hash_len =  st->st_oakley.prf->prf_output_size;
