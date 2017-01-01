@@ -739,36 +739,34 @@ kvm-help:
 	@echo ''
 	@echo ' Configuration:'
 	@echo ''
-	@echo '   make:'
-	@echo '     KVM_SOURCEDIR: $(KVM_SOURCEDIR)'
-	@echo '     KVM_TESTINGDIR: $(KVM_TESTINGDIR)'
-	@echo '     KVM_POOLDIR: $(KVM_POOLDIR)'
-	@echo '     KVM_BASEDIR: $(KVM_BASEDIR)'
-	@echo '     KVM_CLONEDIR: $(KVM_CLONEDIR)'
-	@echo '     KVM_PREFIXES: $(KVM_PREFIXES)'
-	@echo '     KVM_WORKERS: $(KVM_WORKERS)'
-	@echo '     KVM_USER: $(KVM_USER)'
-	@echo '     KVM_GROUP: $(KVM_GROUP)'
-	@echo '     KVM_CONNECTION: $(KVM_CONNECTION)'
-	@echo '     KVM_PUBLISHDIR: $(KVM_PUBLISHDIR)'
-	@echo '   base:'
+	@echo '   make variables:'
+	@: $(foreach variable, KVM_SOURCEDIR KVM_TESTINGDIR KVM_POOLDIR KVM_BASEDIR \
+			       KVM_CLONEDIR KVM_PREFIXES KVM_WORKERS KVM_USER KVM_GROUP \
+			       KVM_CONNECTION KVM_PUBLISHDIR, \
+		; echo '     $(variable)=$($(variable))' \
+		; echo '       origin: $(origin $(variable)) value: $(value $(variable))' \
+	)
+	@echo ''
+	@echo '   base domain:'
 	@echo '     domain: $(KVM_BASE_DOMAIN)'
 	@echo '     network: $(KVM_DEFAULT_NETWORK)'
 	@echo '     os: $(KVM_OS)'
 	@echo '     directory: $(KVM_BASEDIR)'
-	@echo '   clone:'
+	@echo ''
+	@echo '   clone domain:'
 	@echo '     domain: $(KVM_CLONE_DOMAIN)'
 	@echo '     network: $(KVM_DEFAULT_NETWORK)'
 	@echo '     directory: $(KVM_CLONEDIR)'
 	@: $(foreach prefix, $(KVM_PREFIXES), \
+		; echo '' \
 		; echo '   test group: $(call strip-prefix,$(prefix))' \
 		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
 		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
 		; echo '     directory: $(KVM_CLONEDIR)' \
 		)
 	@echo ''
-	@echo ' (not recommended) To directly manipulate the underling'
-	@echo ' domains and networks:'
+	@echo ' To directly manipulate the underling domains and networks'
+	@echo ' (not generally recommended):'
 	@echo ''
 	@echo '   Create/destroy the default NAT network $(KVM_DEFAULT_NETWORK):'
 	@echo ''
@@ -801,6 +799,17 @@ kvm-help:
 	@echo '                                 not install libreswan)'
 	@echo '     kvm-uninstall             - destroy the test domains and'
 	@echo '                                 networks'
+	@echo ''
+	@echo ' Extra rules:'
+	@echo ''
+	@echo '   kvm-keys          - use $(KVM_BUILD_DOMAIN) to create the'
+	@echo '                       test keys'
+	@echo '   kvm-shutdown      - shutdown all domains'
+	@echo '   kvmsh-HOST        - open $(call first-prefix)HOST console'
+	@echo '   kvm-publish       - use rsync to publish test results'
+	@echo '                       to KVM_PUBLISHDIR=$(KVM_PUBLISHDIR)'
+	@echo ''
+	@echo ' RECOMMENDED:'
 	@echo ''
 	@echo ' To set up all the necessary domains and networks and then'
 	@echo ' install or update libreswan:'
@@ -835,13 +844,4 @@ kvm-help:
 	@echo '   kvm-uninstall     - force a clean install by deleting all'
 	@echo '                       the test domains and networks'
 	@echo '   distclean         - scrubs the source tree'
-	@echo ''
-	@echo ' Also:'
-	@echo ''
-	@echo '   kvm-keys          - use $(KVM_BUILD_DOMAIN) to create the'
-	@echo '                       test keys'
-	@echo '   kvm-shutdown      - shutdown all domains'
-	@echo '   kvmsh-HOST        - open $(call first-prefix)HOST console'
-	@echo '   kvm-publish       - use rsync to publish test results'
-	@echo '                       to KVM_PUBLISHDIR=$(KVM_PUBLISHDIR)'
 	@echo ''
