@@ -435,10 +435,11 @@ endif
 # To avoid unintended re-builds triggered by things like a git branch
 # switch, this target is order-only dependent on its sources.
 #
-# This rule's target is the .ks file - created at the end.  That way
-# the problem of a virt-install crash leaving the disk-image in an
-# incomplete state is avoided.
+# This rule's target is the .ks file - moved into place right at the
+# very end.  That way the problem of a virt-install crash leaving the
+# disk-image in an incomplete state is avoided.
 
+KVM_DOMAIN_$(KVM_BASE_DOMAIN)_FILES = $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_DEFAULT_NETWORK_FILE) $(KVM_BASEDIR)
 	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
@@ -472,7 +473,7 @@ install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
-.PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES
+.PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
 $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_DEFAULT_NETWORK_FILE) $(KVM_CLONEDIR)
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
