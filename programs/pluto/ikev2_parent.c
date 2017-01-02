@@ -2425,9 +2425,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	if (!finish_dh_v2(pst, r))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG output */
-	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(pst);
+	ikev2_log_parentSA(pst);
 
 	/* XXX This is too early and many failures could lead to not needing a child state */
 	struct state *cst = duplicate_state(pst);	/* child state */
@@ -3059,9 +3057,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (!finish_dh_v2(st, r))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG output */
-	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(st);
+	ikev2_log_parentSA(st);
 
 	/* decrypt things. */
 	{

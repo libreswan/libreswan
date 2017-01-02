@@ -1226,12 +1226,11 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
  *
  * The peerlog will be perfect, the syslog will require that a cut
  * command is used to remove the initial text.
- *
  */
-/* ??? this is kind of odd: regular control flow only selecting DBG output */
 void ikev2_log_parentSA(struct state *st)
 {
-	if (DBGP(DBG_CRYPT)) {
+	DBG(DBG_PRIVATE,
+	{
 		const char *authalgo;
 		char encalgo[128];
 
@@ -1274,6 +1273,7 @@ void ikev2_log_parentSA(struct state *st)
 			authalgo,
 			encalgo);
 	}
+	);
 }
 
 void send_v2_notification_invalid_ke(struct msg_digest *md,
