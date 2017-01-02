@@ -678,6 +678,29 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
+void ikev2_expire_unused_parent(struct state *pst)
+{
+	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
+		return; /* only deal with established parent SA */
+
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+			if (st->st_clonedfrom == pst->st_serialno)
+				return;
+			});
+
+	{
+		char cib[CONN_INST_BUF];
+		struct connection *c = pst->st_connection;
+
+		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
+				pst->st_serialno, c->name,
+				fmt_conn_instance(c, cib));
+		delete_event(pst);
+		event_schedule(EVENT_SA_EXPIRE, 0, pst);
+	}
+}
+
 void flush_pending_quickmode (struct state *pst);
 void flush_pending_quickmode (struct state *pst)
 {

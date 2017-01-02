@@ -807,8 +807,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			delete_my_family(st, FALSE);
 			/* note: no md->st to clear */
 		} else {
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
 			delete_state(st);
 			/* note: no md->st to clear */
+
+			ikev2_expire_unused_parent(pst);
 		}
 		break;
 

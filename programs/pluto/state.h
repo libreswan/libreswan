@@ -614,6 +614,7 @@ extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
+extern void ikev2_expire_unused_parent(struct state *pst);
 
 #ifdef XAUTH_HAVE_PAM
 void ikev2_free_auth_pam(so_serial_t st_serialno);
