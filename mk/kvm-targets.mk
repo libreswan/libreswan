@@ -479,9 +479,9 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
-	qemu-img create \
-		-b $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
-		-f qcow2 $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).qcow2
+	qemu-img convert -p -O qcow2 \
+		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
+		$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
 	$(VIRT_INSTALL) \
 		--name $(KVM_CLONE_DOMAIN) \
 		--vcpus=1 \
