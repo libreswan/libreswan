@@ -60,22 +60,22 @@ static const struct prf_desc *prfs[] = {
 	NULL,
 };
 
-static const struct prf_desc *prf_desc;
+static const struct prf_desc *prf_alg;
 
 static void print_config(void)
 {
 	for (int i = 0; prfs[i]; i++) {
 		if (prfs[i]->prf_output_size == l) {
-			prf_desc = prfs[i];
+			prf_alg = prfs[i];
 			break;
 		}
 	}
 	config_number("L", l);
-	if (prf_desc == NULL) {
+	if (prf_alg == NULL) {
 		fprintf(stderr, "HMAC length %lu not recognised\n", l);
 	} else {
 		fprintf(stderr, "HMAC %s with length %lu\n",
-			prf_desc->common.name, l);
+			prf_alg->common.name, l);
 	}
 }
 
@@ -101,13 +101,13 @@ static void run(void)
 	print_number("Tlen", tlen);
 	print_chunk("Key", key, 0);
 	print_chunk("Msg", msg, 0);
-	if (prf_desc == NULL) {
+	if (prf_alg == NULL) {
 		return;
 	}
 	struct crypt_prf *prf = crypt_prf_init_chunk("run", DBG_CRYPT,
-						     prf_desc, "key", key);
+						     prf_alg, "key", key);
 	crypt_prf_update_chunk("msg", prf, msg);
-	chunk_t bytes = alloc_chunk(prf_desc->prf_output_size, "bytes");
+	chunk_t bytes = alloc_chunk(prf_alg->prf_output_size, "bytes");
 	crypt_prf_final_bytes(&prf, bytes.ptr, bytes.len);
 	print_chunk("Mac", bytes, tlen);
 	freeanychunk(bytes);

@@ -176,7 +176,7 @@ static const struct ike_alg *alg_byname(const struct algorithm_table *algorithms
 
 const struct oakley_group_desc *group_desc_byname(const char *name)
 {
-	return (const struct oakley_group_desc*)alg_byname(&dh_algorithms.all, name);
+	return oakley_group_desc(alg_byname(&dh_algorithms.all, name));
 }
 
 bool ike_alg_is_ike(const struct ike_alg *alg)
@@ -187,6 +187,40 @@ bool ike_alg_is_ike(const struct ike_alg *alg)
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
 {
 	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
+}
+
+/*
+ * Casts
+ */
+
+const struct hash_desc *hash_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_HASH);
+	return (const struct hash_desc *)alg;
+}
+
+const struct prf_desc *prf_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_PRF);
+	return (const struct prf_desc *)alg;
+}
+
+const struct integ_desc *integ_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_INTEG);
+	return (const struct integ_desc *)alg;
+}
+
+const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_ENCRYPT);
+	return (const struct encrypt_desc *)alg;
+}
+
+const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
+	return (const struct oakley_group_desc *)alg;
 }
 
 /*
@@ -218,17 +252,17 @@ static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorit
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
 {
-	return (const struct encrypt_desc *) ikev1_oakley_lookup(&encrypt_algorithms, id);
+	return encrypt_desc(ikev1_oakley_lookup(&encrypt_algorithms, id));
 }
 
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct prf_desc *) ikev1_oakley_lookup(&prf_algorithms, id);
+	return prf_desc(ikev1_oakley_lookup(&prf_algorithms, id));
 }
 
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 {
-	return (const struct integ_desc *) ikev1_oakley_lookup(&integ_algorithms, id);
+	return integ_desc(ikev1_oakley_lookup(&integ_algorithms, id));
 }
 
 static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *table, int id)
@@ -263,17 +297,17 @@ static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table, i
 
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
 {
-	return (const struct encrypt_desc *) ikev2_lookup(&encrypt_algorithms.all, id);
+	return encrypt_desc(ikev2_lookup(&encrypt_algorithms.all, id));
 }
 
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
 {
-	return (const struct prf_desc *) ikev2_lookup(&prf_algorithms.all, id);
+	return prf_desc(ikev2_lookup(&prf_algorithms.all, id));
 }
 
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 {
-	return (const struct integ_desc *) ikev2_lookup(&integ_algorithms.all, id);
+	return integ_desc(ikev2_lookup(&integ_algorithms.all, id));
 }
 
 const struct oakley_group_desc *lookup_group(u_int16_t group)
@@ -345,7 +379,7 @@ static struct hash_desc *hash_descriptors[] = {
 
 static void hash_desc_check(const struct ike_alg *alg)
 {
-	const struct hash_desc *hash = (const struct hash_desc*)alg;
+	const struct hash_desc *hash = hash_desc(alg);
 	passert(hash->hash_digest_len > 0);
 	passert(hash->hash_block_size > 0);
 	check_name_in_names("hash", hash->common.name, &hash->common);
@@ -362,8 +396,7 @@ static void hash_desc_check(const struct ike_alg *alg)
 
 static bool hash_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct hash_desc *hash = (const struct hash_desc*)alg;
-	passert(hash->common.algo_type == IKE_ALG_HASH);
+	const struct hash_desc *hash = hash_desc(alg);
 	return hash->hash_ops != NULL;
 }
 
@@ -398,8 +431,7 @@ static struct prf_desc *prf_descriptors[] = {
 
 static void prf_desc_check(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_PRF);
-	const struct prf_desc *prf = (const struct prf_desc*)alg;
+	const struct prf_desc *prf = prf_desc(alg);
 	passert(prf->prf_key_size > 0);
 	passert(prf->prf_output_size > 0);
 	if (prf->prf_ops != NULL) {
@@ -439,8 +471,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 
 static bool prf_desc_is_ike(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_PRF);
-	const struct prf_desc *prf = (const struct prf_desc*)alg;
+	const struct prf_desc *prf = prf_desc(alg);
 	return prf->prf_ops != NULL;
 }
 
@@ -478,7 +509,7 @@ static struct integ_desc *integ_descriptors[] = {
 
 static void integ_desc_check(const struct ike_alg *alg)
 {
-	const struct integ_desc *integ = (const struct integ_desc*)alg;
+	const struct integ_desc *integ = integ_desc(alg);
 	passert(integ->integ_key_size > 0);
 	passert(integ->integ_output_size > 0);
 	if (integ->prf) {
@@ -491,8 +522,7 @@ static void integ_desc_check(const struct ike_alg *alg)
 
 static bool integ_desc_is_ike(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_INTEG);
-	const struct integ_desc *integ = (const struct integ_desc*)alg;
+	const struct integ_desc *integ = integ_desc(alg);
 	return integ->prf != NULL;
 }
 
@@ -559,7 +589,7 @@ unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt)
 
 static void encrypt_desc_check(const struct ike_alg *alg)
 {
-	const struct encrypt_desc *encrypt = (const struct encrypt_desc *)alg;
+	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	/*
 	 * Only implemented one way, if at all.
 	 */
@@ -585,7 +615,7 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct encrypt_desc *encrypt = (const struct encrypt_desc *)alg;
+	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	return (encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL);
 }
 
@@ -620,7 +650,7 @@ static struct oakley_group_desc *dh_descriptors[] = {
 
 static void dh_desc_check(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *group = (const struct oakley_group_desc *)alg;
+	const struct oakley_group_desc *group = oakley_group_desc(alg);
 	passert(group->group > 0);
 	passert(group->common.ikev2_id == group->group);
 	passert(group->common.ikev1_oakley_id == group->group);

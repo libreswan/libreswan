@@ -465,4 +465,16 @@ extern const struct oakley_group_desc unset_group;      /* magic signifier */
 extern const struct oakley_group_desc *lookup_group(u_int16_t group);
 const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **);
 
+/*
+ * Robustly cast struct ike_alg to underlying object.
+ *
+ * Could be reduced to a macro, but only if passert() returned
+ * something.
+ */
+const struct hash_desc *hash_desc(const struct ike_alg *alg);
+const struct prf_desc *prf_desc(const struct ike_alg *alg);
+const struct integ_desc *integ_desc(const struct ike_alg *alg);
+const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
+const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg);
+
 #endif /* _IKE_ALG_H */

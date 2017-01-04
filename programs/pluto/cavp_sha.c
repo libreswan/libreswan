@@ -59,22 +59,22 @@ static const struct hash_desc *hashes[] = {
 	NULL,
 };
 
-static const struct hash_desc *hash_desc;
+static const struct hash_desc *hash_alg;
 
 static void print_config(void)
 {
 	for (int i = 0; hashes[i]; i++) {
 		if (hashes[i]->hash_digest_len == l) {
-			hash_desc = hashes[i];
+			hash_alg = hashes[i];
 			break;
 		}
 	}
 	config_number("L", l);
-	if (hash_desc == NULL) {
+	if (hash_alg == NULL) {
 		fprintf(stderr, "SHA length %lu not recognised\n", l);
 	} else {
 		fprintf(stderr, "SHA %s with length %lu\n",
-			hash_desc->common.name, l);
+			hash_alg->common.name, l);
 	}
 }
 
@@ -97,11 +97,11 @@ static void msg_run(void)
 	passert((len == 0 && msg.len <= 1)
 		|| (len == msg.len * BITS_PER_BYTE));
 	print_chunk("Msg", msg, 0);
-	struct hash_context *hash = hash_desc->hash_ops->init(hash_desc, "sha", DBG_CRYPT);
+	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha", DBG_CRYPT);
 	/* See above, use LEN, not MSG.LEN */
-	hash_desc->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
+	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
 	chunk_t bytes = alloc_chunk(l, "bytes");
-	hash_desc->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
+	hash_alg->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
 	print_chunk("MD", bytes, 0);
 	freeanychunk(bytes);
 }
@@ -153,10 +153,10 @@ static void monte_run(void)
 			memcpy(Mi.ptr + seed.len * 1, MDi_2.ptr, seed.len);
 			memcpy(Mi.ptr + seed.len * 2, MDi_1.ptr, seed.len);
 			// MDi = SHA(Mi);
-			struct hash_context *hash = hash_desc->hash_ops->init(hash_desc,
-									      "sha", DBG_CRYPT);
-			hash_desc->hash_ops->digest_bytes(hash, "msg", Mi.ptr, Mi.len);
-			hash_desc->hash_ops->final_bytes(&hash, seed.ptr, seed.len);
+			struct hash_context *hash = hash_alg->hash_ops->init(hash_alg,
+									     "sha", DBG_CRYPT);
+			hash_alg->hash_ops->digest_bytes(hash, "msg", Mi.ptr, Mi.len);
+			hash_alg->hash_ops->final_bytes(&hash, seed.ptr, seed.len);
 			// printf("%d ", i);
 			// print_chunk("MDi", seed, 0);
 		}
