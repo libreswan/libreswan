@@ -564,7 +564,7 @@ install-kvm-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
 # internal/canonical targets.
 
 .PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm:
+kvm-clean clean-kvm: kvm-shutdown
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
 
