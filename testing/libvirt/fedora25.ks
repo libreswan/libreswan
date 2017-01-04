@@ -48,63 +48,33 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 # To help avoid duplicates THIS LIST IS SORTED.
 
-ElectricFence
-audit-libs-devel
 bind-utils
-bison
-curl-devel
-fipscheck-devel
-flex
-gcc
 gdb
-git
 glibc-devel
-hping3
-ipsec-tools
 kernel-core
 kernel-devel
 kernel-headers
 kernel-modules
 kernel-modules-extra
-libcap-ng-devel
-libfaketime
-libevent-devel
-libselinux-devel
 lsof
 make
 mtr
 nc
-nc6
 net-tools
 nmap
-nspr-devel
-nss-devel
-nss-tools
-openldap-devel
-pam-devel
 pexpect
 psmisc
 pyOpenSSL
-python3-pexpect
-python3-setproctitle
-racoon2
 redhat-rpm-config
 rpm-build
 screen
 strace
-strongswan
-systemd-devel
 tcpdump
 telnet
 unbound
-unbound-devel
 unbound-libs
-valgrind
-vim-enhanced
 wget
 xl2tpd
-xmlto
-yum-utils
 
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
@@ -161,8 +131,6 @@ dnf install -y 2>&1 \
     git \
     glibc-devel \
     hping3 \
-    hping3 \
-    ipsec-tools \
     ipsec-tools \
     libcap-ng-devel \
     libfaketime \
