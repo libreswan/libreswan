@@ -19,6 +19,16 @@ enum ike_alg_type {
 #define	IKE_ALG_ROOF (IKE_ALG_DH+1)
 
 /*
+ * Different lookup KEYs used by IKEv1/IKEv2
+ */
+enum ike_alg_key {
+	IKE_ALG_IKEv1_OAKLEY_ID,
+	IKE_ALG_IKEv1_ESP_ID,
+	IKE_ALG_IKEv2_ID,
+};
+#define IKE_ALG_KEY_ROOF (IKE_ALG_IKEv2_ID+1)
+
+/*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
  * prf_desc and struct integ_desc).
  *
@@ -28,7 +38,7 @@ enum ike_alg_type {
  *
  * ikev2_id / IKEv2 IKE / IKEv2 ESP / IKEv2 AH / IKEv2 DH:
  *
- * Almost no confusion.. While IKEv2 DH uses the the IKEv1
+ * Almost no confusion.  While IKEv2 DH uses the the IKEv1
  * OAKLEY_GROUP enum, there are no conflicts so things work.
  *
  * ENCRYPT:  ikev2_trans_type_encr      ikev2_trans_type_encr_names   IKEv2_ENCR
@@ -49,7 +59,7 @@ enum ike_alg_type {
  * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  *
- * ikev1_esp_info_id (ikev1_esp_id) / struct esp_info.transid / struct esp_info.auth:
+ * ikev1_esp_id / struct esp_info.transid / struct esp_info.auth:
  *
  * Here be trouble.  While the obvious problem is that struct esp_info
  * is using both IKEv1 (INTEG) and IPSEC (ENCRYPT) enum types, that is

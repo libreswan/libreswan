@@ -99,9 +99,7 @@ struct algorithm_table {
 struct type_algorithms {
 	struct algorithm_table all;
 	enum ike_alg_type type;
-	enum_names *const ikev1_oakley_enum_names;
-	enum_names *const ikev1_esp_enum_names;
-	enum_names *const ikev2_enum_names;
+	enum_names *const enum_names[IKE_ALG_KEY_ROOF];
 	void (*desc_check)(const struct ike_alg*);
 	bool (*desc_is_ike)(const struct ike_alg*);
 };
@@ -237,7 +235,8 @@ static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorit
 			DBG(DBG_CRYPT,
 			    struct esb_buf buf;
 			    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, found %s\n",
-				    enum_showb(algorithms->ikev1_oakley_enum_names, id, &buf),
+				    enum_showb(algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID],
+					       id, &buf),
 				    id, e->name));
 			return e;
 		}
@@ -245,7 +244,7 @@ static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorit
 	DBG(DBG_CRYPT,
 	    struct esb_buf buf;
 	    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, not found\n",
-		    enum_showb(algorithms->ikev1_oakley_enum_names, id, &buf),
+		    enum_showb(algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID], id, &buf),
 		    id));
 	return NULL;
 }
@@ -403,7 +402,9 @@ static bool hash_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms hash_algorithms = {
 	.all = ALGORITHM_TABLE("HASH", hash_descriptors),
 	.type = IKE_ALG_HASH,
-	.ikev1_oakley_enum_names = &oakley_hash_names,
+	.enum_names = {
+		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
+	},
 	.desc_check = hash_desc_check,
 	.desc_is_ike = hash_desc_is_ike,
 };
@@ -478,9 +479,11 @@ static bool prf_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms prf_algorithms = {
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
 	.type = IKE_ALG_PRF,
-	.ikev1_oakley_enum_names = &oakley_hash_names,
-	.ikev1_esp_enum_names = NULL, /* ESP/AH uses IKE PRF */
-	.ikev2_enum_names = &ikev2_trans_type_prf_names,
+	.enum_names = {
+		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKE_ALG_IKEv1_ESP_ID] = NULL, /* ESP/AH uses IKE PRF */
+		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_prf_names,
+	},
 	.desc_check = prf_desc_check,
 	.desc_is_ike = prf_desc_is_ike,
 };
@@ -529,9 +532,11 @@ static bool integ_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms integ_algorithms = {
 	.all = ALGORITHM_TABLE("INTEG", integ_descriptors),
 	.type = IKE_ALG_INTEG,
-	.ikev1_oakley_enum_names = &oakley_hash_names,
-	.ikev1_esp_enum_names = &auth_alg_names,
-	.ikev2_enum_names = &ikev2_trans_type_integ_names,
+	.enum_names = {
+		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKE_ALG_IKEv1_ESP_ID] = &auth_alg_names,
+		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_integ_names,
+	},
 	.desc_check = integ_desc_check,
 	.desc_is_ike = integ_desc_is_ike,
 };
@@ -622,9 +627,11 @@ static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms encrypt_algorithms = {
 	.all = ALGORITHM_TABLE("ENCRYPT", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
-	.ikev1_oakley_enum_names = &oakley_enc_names,
-	.ikev1_esp_enum_names = &esp_transformid_names,
-	.ikev2_enum_names = &ikev2_trans_type_encr_names,
+	.enum_names = {
+		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_enc_names,
+		[IKE_ALG_IKEv1_ESP_ID] = &esp_transformid_names,
+		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_encr_names,
+	},
 	.desc_check = encrypt_desc_check,
 	.desc_is_ike = encrypt_desc_is_ike,
 };
@@ -666,9 +673,11 @@ static bool dh_desc_is_ike(const struct ike_alg *alg)
 static struct type_algorithms dh_algorithms = {
 	.all = ALGORITHM_TABLE("DH", dh_descriptors),
 	.type = IKE_ALG_DH,
-	.ikev1_oakley_enum_names = &oakley_group_names,
-	.ikev1_esp_enum_names = NULL,
-	.ikev2_enum_names = &oakley_group_names,
+	.enum_names = {
+		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_group_names,
+		[IKE_ALG_IKEv1_ESP_ID] = NULL,
+		[IKE_ALG_IKEv2_ID] = &oakley_group_names,
+	},
 	.desc_check = dh_desc_check,
 	.desc_is_ike = dh_desc_is_ike,
 };
@@ -734,13 +743,13 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		passert(alg->ikev1_oakley_id > 0 || alg->ikev2_id > 0 || alg->ikev1_esp_id > 0);
 		check_enum_name("IKEv1 OAKLEY ID",
 				alg, alg->ikev1_oakley_id,
-				algorithms->ikev1_oakley_enum_names);
+				algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID]);
 		check_enum_name("IKEv1 ESP INFO ID",
 				alg, alg->ikev1_esp_id,
-				algorithms->ikev1_esp_enum_names);
+				algorithms->enum_names[IKE_ALG_IKEv1_ESP_ID]);
 		check_enum_name("IKEv2 ID",
 				alg, alg->ikev2_id,
-				algorithms->ikev2_enum_names);
+				algorithms->enum_names[IKE_ALG_IKEv2_ID]);
 
 		/*
 		 * Check that name appears in the names list.
