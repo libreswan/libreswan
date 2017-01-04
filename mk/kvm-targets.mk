@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -185,6 +185,7 @@ KVM_TESTS ?= testing/pluto
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
 define kvm-test
+	: kvm-test param=$(1)
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
@@ -266,6 +267,7 @@ KVM_TEST_NETWORK_FILES=
 # pool.
 
 define install-kvm-network
+        : install-kvm-network network=$(1) file=$(2)
 	$(VIRSH) net-define '$(2).tmp'
 	$(VIRSH) net-autostart '$(1)'
 	$(VIRSH) net-start '$(1)'
@@ -273,6 +275,7 @@ define install-kvm-network
 endef
 
 define uninstall-kvm-network
+        : uninstall-kvm-network network=$(1) file=$(2)
 	if $(VIRSH) net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
 		$(VIRSH) net-destroy '$(1)' ; \
 	fi
@@ -283,6 +286,7 @@ define uninstall-kvm-network
 endef
 
 define check-no-kvm-network
+        : uninstall-kvm-network network=$(1)
 	if $(VIRSH) net-info '$(1)' 2>/dev/null ; then \
 		echo '' ; \
 		echo '        The network $(1) seems to already exist.' ; \
@@ -310,6 +314,7 @@ define install-kvm-test-network
   install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
   $$(KVM_CLONEDIR)/$(1)$(2).xml:
+	: install-kvm-test-network prefix=$(1) network=$(2)
 	$(call check-no-kvm-network,$(1)$(2),$$@)
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
@@ -334,6 +339,7 @@ define uninstall-kvm-test-network
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
+	: uninstall-kvm-test-network prefix=$(1) network=$(2)
 	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
 endef
 
@@ -385,6 +391,7 @@ $(KVM_ISO): | $(KVM_BASEDIR)
 	cd $(KVM_BASEDIR) && wget $(KVM_ISO_URL)
 
 define check-no-kvm-domain
+	: check-no-kvm-domain domain=$(1)
 	if $(VIRSH) dominfo '$(1)' 2>/dev/null ; then \
 		echo '' ; \
 		echo '        The domain $(1) seems to already exist.' ; \
@@ -403,6 +410,7 @@ define check-no-kvm-domain
 endef
 
 define check-kvm-domain
+	: check-kvm-domain domain=$(1)
 	if $(VIRSH) dominfo '$(1)' >/dev/null ; then : ; else \
 		echo "" ; \
 		echo "  ERROR: the domain $(1) seems to be missing; run 'make kvm-install'" ; \
@@ -525,6 +533,7 @@ define install-kvm-test-domain
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
   $$(KVM_CLONEDIR)/$(1)$(2).xml: | $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
+	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
@@ -579,6 +588,7 @@ kvm-clean clean-kvm: kvm-shutdown
 define kvm-build-domain
   #(info kvm-build-domain domain=$(1))
   kvm-build-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+	: kvm-build-domain domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
@@ -607,6 +617,7 @@ kvm-build: kvm-build-$(KVM_BUILD_DOMAIN)
 define kvm-install-domain
   .PHONY: kvm-install-$(1)
   kvm-install-$(1): kvm-build-$$(KVM_BUILD_DOMAIN) | $$(KVM_DOMAIN_$(1)_FILES)
+	: kvm-install-domain domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
 endef
@@ -646,6 +657,7 @@ kvm-uninstall-base: uninstall-kvm-base-domain uninstall-kvm-test-networks
 define kvmsh-host
   .PHONY: kvmsh-$(1)
   kvmsh-$(1): | $$(KVM_DOMAIN_$(call first-prefix)$(1)_FILES)
+	: kvmsh-host host=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) $(call first-prefix)$(1)
 endef
@@ -665,6 +677,7 @@ define uninstall-kvm-domain
   #(info uninstall-kvm-domain domain=$(1) dir=$(2))
   .PHONY: uninstall-kvm-domain-$(1)
   uninstall-kvm-domain-$(1):
+	: uninstall-kvm-domain domain=$(1) dir=$(2)
 	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
 		$(VIRSH) destroy $(1) ; \
 	fi
@@ -699,6 +712,7 @@ define kvm-shutdown
   #(info kvm-shutdown domain=$(1))
   .PHONY: kvm-shutdown-$(1)
   kvm-shutdown-$(1):
+	: kvm-shutdown domain=$(1)
 	echo ; \
 	if $(VIRSH) dominfo $(1) > /dev/null 2>&1 ; then \
 		$(KVMSH) --shutdown $(1) || exit 1 ; \
@@ -743,8 +757,7 @@ kvm-help:
 	@: $(foreach variable, KVM_SOURCEDIR KVM_TESTINGDIR KVM_POOLDIR KVM_BASEDIR \
 			       KVM_CLONEDIR KVM_PREFIXES KVM_WORKERS KVM_USER KVM_GROUP \
 			       KVM_CONNECTION KVM_PUBLISHDIR, \
-		; echo '     $(variable)=$($(variable))' \
-		; echo '       origin: $(origin $(variable)) value: $(value $(variable))' \
+		; echo '     $(variable)=$(value $(variable)) ($($(variable)))' \
 	)
 	@echo ''
 	@echo '   base domain:'
