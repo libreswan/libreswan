@@ -255,12 +255,6 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # Build a pool of networks from scratch
 #
 
-# Accumulate a list of all the files created when building the
-# network.  Can use this as a dependency to force the networks to be
-# built before the domains.
-
-KVM_TEST_NETWORK_FILES=
-
 .PHONY: install-kvm-test-networks uninstall-kvm-test-networks
 
 # Generate install and uninstall rules for each network within the
@@ -306,8 +300,6 @@ endef
 
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
-
-  KVM_TEST_NETWORK_FILES += $$(KVM_CLONEDIR)/$(1)$(2).xml
 
   install-kvm-test-networks: install-kvm-network-$(1)$(2)
   .PHONY: install-kvm-network-$(1)$(2)
@@ -532,7 +524,11 @@ define install-kvm-test-domain
 
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
-  $$(KVM_CLONEDIR)/$(1)$(2).xml: | $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml $(KVM_TEST_NETWORK_FILES) testing/libvirt/vm/$(2)
+  $$(KVM_CLONEDIR)/$(1)$(2).xml: \
+		| \
+		$$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).xml \
+		$$(foreach network,$$(KVM_TEST_NETWORKS), $$(KVM_CLONEDIR)/$(1)$$(network).xml) \
+		testing/libvirt/vm/$(2)
 	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
