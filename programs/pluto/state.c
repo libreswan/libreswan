@@ -701,8 +701,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 	}
 }
 
-void flush_pending_quickmode (struct state *pst);
-void flush_pending_quickmode (struct state *pst)
+static void flush_pending_quickmode (struct state *pst)
 {
         struct state *st;
 
