@@ -52,7 +52,6 @@ ElectricFence
 audit-libs-devel
 bind-utils
 bison
-conntrack-tools
 curl-devel
 fipscheck-devel
 flex
@@ -156,6 +155,7 @@ dnf install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
     bison \
+    conntrack-tools \
     curl-devel \
     fipscheck-devel \
     flex \

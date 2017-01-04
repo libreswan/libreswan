@@ -50,7 +50,6 @@ ElectricFence
 audit-libs-devel
 bind-utils
 bison
-conntrack-tools
 curl-devel
 fipscheck-devel
 flex
@@ -148,6 +147,7 @@ rpm -qa > /var/tmp/rpm-qa.log
 yum install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
+    conntrack-tools \
     curl-devel \
     fipscheck-devel \
     hping3 \
