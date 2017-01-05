@@ -466,6 +466,8 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 	test -r $(basename $@).qcow2 || sudo chmod g+r $(basename $@).qcow2
 	mv $@.tmp $@
 	: the reboot message from virt-install can be ignored
+.PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
+install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
 # mostly for testing
 .PHONY: install-kvm-base-domain
@@ -504,8 +506,11 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 		ip address show scope global
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
+.PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
+install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
+# mostly for testing
 .PHONY: install-kvm-clone-domain
-install-kvm-clone-domain install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
+install-kvm-clone-domain: $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 
 # Install the $(KVM_TEST_DOMAINS) in $(KVM_CLONEDIR)
 #
@@ -588,6 +593,30 @@ $(foreach domain, $(KVM_BASE_DOMAIN), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_POOLDIR))))
 $(foreach domain, $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
+
+
+#
+# Generic kvm-install-* and kvm-uninstall-* rules, point at the
+# install-kvm-* and uninstall-kvm-* versions.
+#
+
+.PHONY: kvm-install-base-domain
+kvm-install-base-domain: $(addprefix install-kvm-domain-,$(KVM_BASE_DOMAIN))
+
+.PHONY: kvm-install-clone-domain
+kvm-install-clone-domain: $(addprefix install-kvm-domain-,$(KVM_CLONE_DOMAIN))
+
+.PHONY: kvm-install-test-domains
+kvm-install-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
+
+.PHONY: kvm-uninstall-base-domain
+kvm-uninstall-base-domain: kvm-uninstall-clone-domain $(addprefix uninstall-kvm-domain-,$(KVM_BASE_DOMAIN))
+
+.PHONY: kvm-uninstall-clone-domain
+kvm-uninstall-clone-domain: kvm-uninstall-test-domains $(addprefix uninstall-kvm-domain-,$(KVM_CLONE_DOMAIN))
+
+.PHONY: kvm-uninstall-test-domains
+kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
 
 
 #
@@ -752,32 +781,115 @@ kvm-help:
 	@echo ' Configuration:'
 	@echo ''
 	@echo '   make variables:'
+	@echo ''
 	@: $(foreach variable, KVM_SOURCEDIR KVM_TESTINGDIR KVM_POOLDIR KVM_BASEDIR \
 			       KVM_CLONEDIR KVM_PREFIXES KVM_WORKERS KVM_USER KVM_GROUP \
 			       KVM_CONNECTION KVM_PUBLISHDIR, \
 		; echo '     $(variable)=$(value $(variable)) ($($(variable)))' \
 	)
 	@echo ''
+	@echo '   default network:'
+	@echo ''
+	@echo '     The default network, used by the base and clone domains,'
+	@echo '     provides a NATed gateway to the real world.'
+	@echo ''
+	@echo '     network: $(KVM_DEFAULT_NETWORK)'
+	@echo ''
 	@echo '   base domain:'
+	@echo ''
+	@echo '     The (per OS) base domain is used as a shared starting'
+	@echo '     point for creating all the other domains.'
+	@echo ''
+	@echo '     Once created the base domain is rarely modified or'
+	@echo '     rebuilt:'
+	@echo ''
+	@echo '     - the process is slow and not 100% reliable'
+	@echo ''
+	@echo '     - the image is shared between build trees'
+	@echo ''
+	@echo '     (instead the clone domain, below, is best suited for'
+	@echo '     trialing new packages and domain modifications).'
+	@echo ''
+	@echo '     os: $(KVM_OS)'
 	@echo '     domain: $(KVM_BASE_DOMAIN)'
 	@echo '     network: $(KVM_DEFAULT_NETWORK)'
-	@echo '     os: $(KVM_OS)'
 	@echo '     directory: $(KVM_BASEDIR)'
 	@echo ''
 	@echo '   clone domain:'
+	@echo ''
+	@echo '     The clone domain, made unique to the build tree by'
+	@echo '     KVM_PREFIXES, is used as the local starting point for all'
+	@echo '     test domains.'
+	@echo ''
+	@echo '     Since it is not shared across build trees, and has access'
+	@echo '     to the real world (via the default network) it is easy to'
+	@echo '     modify or rebuild.  For instance, experimental packages'
+	@echo '     can be installed on the clone domain (and then the'
+	@echo '     test domains rebuilt) without affecting other build trees.'
+	@echo ''
 	@echo '     domain: $(KVM_CLONE_DOMAIN)'
 	@echo '     network: $(KVM_DEFAULT_NETWORK)'
 	@echo '     directory: $(KVM_CLONEDIR)'
+	@echo ''
+	@echo '   test domains'
+	@echo ''
+	@echo '     Groups of test domains, made unique to the build tree by'
+	@echo '     KVM_PREFIXES, are used to run the tests in parallel.'
+	@echo ''
+	@echo '     Separate build directories should use different'
+	@echo '     KVM_PREFIXES (the variable is set in Makefile.inc.local'
 	@: $(foreach prefix, $(KVM_PREFIXES), \
 		; echo '' \
-		; echo '   test group: $(call strip-prefix,$(prefix))' \
-		; echo '     domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
-		; echo '     networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
-		; echo '     directory: $(KVM_CLONEDIR)' \
+		; echo '     test group: $(call strip-prefix,$(prefix))' \
+		; echo '' \
+		; echo '       domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))' \
+		; echo '       networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_NETWORKS))' \
+		; echo '       directory: $(KVM_CLONEDIR)' \
 		)
 	@echo ''
-	@echo ' To directly manipulate the underling domains and networks'
-	@echo ' (not generally recommended):'
+	@echo ' Low-level make targets:'
+	@echo ''
+	@echo '   These directly manipulate the underling domains and'
+	@echo '   networks and are not not generally recommended.'
+	@echo '   For the most part kvm-install and kvm-unsintall are'
+	@echo '   sufficient.'
+	@echo ''
+	@echo '   Their names and behaviour also have a habit of changing'
+	@echo '   over time:'
+	@echo ''
+	@echo '   Creating domains:'
+	@echo ''
+	@echo '     kvm-install-test-domains   - create the test domains'
+	@echo '                                  from the clone domain'
+	@echo '                                  disk image'
+	@echo '                                - if needed, create the'
+	@echo '                                  prerequisite clone domain,'
+	@echo '                                  test networks, base domain,'
+	@echo '                                  and default network'
+	@echo ''
+	@echo '     kvm-install-clone-domain   - create the clone domain'
+	@echo '                                  from the base domain disk'
+	@echo '                                  image'
+	@echo '                                - if needed, create the'
+	@echo '                                  prerequisite base domain'
+	@echo '                                  and default network'
+	@echo ''
+	@echo '     kvm-install-base-domain    - create the base domain'
+	@echo '                                - if needed, create the'
+	@echo '                                  prerequisite default'
+	@echo '                                  network'
+	@echo ''
+	@echo '   Destroying domains:'
+	@echo ''
+	@echo '     kvm-uninstall-test-domains - destroy the test domains'
+	@echo ''
+	@echo '     kvm-uninstall-clone-domain - destroy the clone domain,'
+	@echo '                                - also destroy the derived'
+	@echo '                                  test domains'
+	@echo ''
+	@echo '     kvm-uninstall-base-domain  - destroy the base domain'
+	@echo '                                - also destroy the derived'
+	@echo '                                  clone domain and test domains'
 	@echo ''
 	@echo '   Create/destroy the default NAT network $(KVM_DEFAULT_NETWORK):'
 	@echo ''
@@ -787,29 +899,6 @@ kvm-help:
 	@echo '     uninstall-kvm-default-network  - destroy the default NAT'
 	@echo '                                      network shared between'
 	@echo '                                      base domains'
-	@echo ''
-	@echo '   Create/destroy the base domain $(KVM_BASE_DOMAIN):'
-	@echo ''
-	@echo '     install-kvm-base-domain   - create the base domain and'
-	@echo '                                 default network'
-	@echo '     kvm-uninstall-base        - destroy the base domain,'
-	@echo '                                 clone domain, test domains,'
-	@echo '                                 and test networks'
-	@echo ''
-	@echo '   Create/destroy the intermediate clone domain $(KVM_CLONE_DOMAIN):'
-	@echo ''
-	@echo '     install-kvm-clone-domain  - create just the clone'
-	@echo '                                 domain/network from base'
-	@echo '     kvm-uninstall-clones      - destroy the clone domain,'
-	@echo '                                 test domains, and networks'
-	@echo ''
-	@echo '   Create/destroy the test domains $(KVM_TEST_DOMAINS):'
-	@echo ''
-	@echo '     install-kvm-test-domains  - create the test domains and'
-	@echo '                                 networks from clone (does'
-	@echo '                                 not install libreswan)'
-	@echo '     kvm-uninstall             - destroy the test domains and'
-	@echo '                                 networks'
 	@echo ''
 	@echo ' Additional rules:'
 	@echo ''
