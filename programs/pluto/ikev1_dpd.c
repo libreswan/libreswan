@@ -347,13 +347,14 @@ static void p2_dpd_outI1(struct state *p2st)
 	deltatime_t delay = p2st->st_connection->dpd_delay;
 	deltatime_t timeout = p2st->st_connection->dpd_timeout;
 
-	/* find the related Phase 1 state */
 	st = find_phase1_state(p2st->st_connection,
-			       ISAKMP_SA_ESTABLISHED_STATES);
+		ISAKMP_SA_ESTABLISHED_STATES);
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "DPD: could not find newest phase 1 state");
+		       "DPD: could not find newest phase 1 state - initiating a new one");
+		delete_event(p2st);
+		event_schedule( EVENT_SA_REPLACE, 0, p2st);
 		return;
 	}
 
