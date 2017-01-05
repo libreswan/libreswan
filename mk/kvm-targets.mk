@@ -35,6 +35,12 @@ KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
 
+# To avoid the problem where the host has no "default" KVM network
+# (there's a rumour that libreswan's main testing machine has this
+# problem) define a dedicated swandefault network.
+
+KVM_DEFAULT_NETWORK ?= swandefault
+
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
 # qemu://system. Finally, it comes with a warning: QEMU usermode
@@ -298,6 +304,13 @@ define check-no-kvm-network
 	fi
 endef
 
+KVM_TEST_SUBNETS = \
+	$(notdir $(wildcard testing/libvirt/net/192*))
+
+KVM_TEST_NETWORKS = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)), $(KVM_TEST_SUBNETS)))
+
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
@@ -325,6 +338,10 @@ define install-kvm-test-network
 	$(call install-kvm-network,$(1)$(2),$$@)
 endef
 
+$(foreach prefix, $(KVM_PREFIXES), \
+	$(foreach subnet, $(KVM_TEST_SUBNETS), \
+		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
+
 define uninstall-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
@@ -335,19 +352,10 @@ define uninstall-kvm-test-network
 	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
 endef
 
-KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
 $(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach network, $(KVM_TEST_NETWORKS), \
-		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
-$(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach network, $(KVM_TEST_NETWORKS), \
-		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
+	$(foreach subnet, $(KVM_TEST_SUBNETS), \
+		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
 
-# To avoid the problem where the host has no "default" KVM network
-# (there's a rumour that libreswan's main testing machine has this
-# problem) create a dedicated swandefault.
-
-KVM_DEFAULT_NETWORK ?= swandefault
 KVM_DEFAULT_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_DEFAULT_NETWORK).xml
 .PHONY: install-kvm-default-network install-kvm-network-$(KVM_DEFAULT_NETWORK)
 install-kvm-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
@@ -532,7 +540,7 @@ define install-kvm-test-domain
   $$(KVM_CLONEDIR)/$(1)$(2).xml: \
 		| \
 		$$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).xml \
-		$$(foreach network,$$(KVM_TEST_NETWORKS), $$(KVM_CLONEDIR)/$(1)$$(network).xml) \
+		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_CLONEDIR)/$(1)$$(subnet).xml) \
 		testing/libvirt/vm/$(2)
 	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
