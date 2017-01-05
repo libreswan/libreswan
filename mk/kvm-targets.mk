@@ -626,6 +626,18 @@ kvm-uninstall-clone-domain: kvm-uninstall-test-domains $(addprefix uninstall-kvm
 .PHONY: kvm-uninstall-test-domains
 kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
 
+.PHONY: kvm-install-test-networks
+kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
+
+.PHONY: kvm-uninstall-test-networks
+kvm-uninstall-test-networks: kvm-uninstall-test-domains $(addprefix uninstall-kvm-network-,$(KVM_TEST_NETWORKS))
+
+.PHONY: kvm-install-default-network
+kvm-install-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
+
+.PHONY: kvm-uninstall-default-network
+kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
+
 
 #
 # Build targets
@@ -907,14 +919,27 @@ kvm-help:
 	@echo '                                - also destroy the derived'
 	@echo '                                  clone domain and test domains'
 	@echo ''
-	@echo '   Create/destroy the default NAT network $(KVM_DEFAULT_NETWORK):'
+	@echo '   Creating networks:'
 	@echo ''
-	@echo '     install-kvm-default-network    - create the default NAT'
-	@echo '                                      network shared between'
-	@echo '                                      base domains'
-	@echo '     uninstall-kvm-default-network  - destroy the default NAT'
-	@echo '                                      network shared between'
-	@echo '                                      base domains'
+	@echo '     kvm-install-test-networks   - create the test networks'
+	@echo '     kvm-install-default-network - create the default NAT'
+	@echo '                                   network shared by'
+	@echo '                                   base and clone domains'
+	@echo ''
+	@echo '   Destroying networks:'
+	@echo ''
+	@echo '     kvm-uninstall-test-networks - destroy the test networks'
+	@echo '                                 - also destroy the test'
+	@echo '                                   domains that use the'
+	@echo '                                   test networks'
+	@echo ''
+	@echo '     kvm-uninstall-default-network'
+	@echo '                                 - destroy the default NAT'
+	@echo '                                   network shared between'
+	@echo '                                   base domains'
+	@echo '                                 - also destroy the base'
+	@echo '                                   and clone domains that'
+	@echo '                                   use the default network'
 	@echo ''
 	@echo ' Additional rules:'
 	@echo ''
