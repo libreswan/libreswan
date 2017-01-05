@@ -6,6 +6,7 @@ v3.19 (unreleased)
 * FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
 * FIPS: do not allow DBG_PRIVATE to be set when running in FIPS mode [Paul]
 * FIPS: Ignore failureshunt=passthrough and negotiationshunt=passthrough [Paul]
+* IKEv1: If a queued up DPD probe finds no IKE SA, create a new one [Paul]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * XFRM: EXPERIMENTAL Support for configuring the VTI device [Paul]
