@@ -640,6 +640,17 @@ kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$
 
 
 #
+# Get rid of (almost) everything
+#
+
+.PHONY: kvm-purge
+kvm-purge: kvm-clean kvm-test-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
+
+.PHONY: kvm-demolish
+kvm-demolish: kvm-purge kvm-uninstall-default-network
+
+
+#
 # Build targets
 #
 
@@ -940,6 +951,17 @@ kvm-help:
 	@echo '                                 - also destroy the base'
 	@echo '                                   and clone domains that'
 	@echo '                                   use the default network'
+	@echo ''
+	@echo '   Try to delete (almost) everything:'
+	@echo ''
+	@echo '     kvm-purge                   - delete everything specific'
+	@echo '                                   to this directory, i.e.,'
+	@echo '                                   clone domain, test domains,'
+	@echo '                                   test networks, test'
+	@echo '                                   results, and test build'
+	@echo ''
+	@echo '     kvm-demolish                - also delete the base domain'
+	@echo '                                   and default network'
 	@echo ''
 	@echo ' Additional rules:'
 	@echo ''
