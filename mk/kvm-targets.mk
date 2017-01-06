@@ -703,21 +703,26 @@ kvm-uninstall-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
 kvm-uninstall-base: uninstall-kvm-base-domain uninstall-kvm-test-networks
 
 
-# kvmsh-host
+#
+# kvmsh-HOST
 #
 # Map this onto the first-prefix domain group.  Logging into the other
 # domains can be done by invoking kvmsh.py directly.
+#
 
-define kvmsh-host
+define kvmsh
+  #(info host=$(1) domain=$(2))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1): | $$(KVM_DOMAIN_$(call first-prefix)$(1)_FILES)
+  kvmsh-$(1): | $$(KVM_DOMAIN_$(2)_FILES)
 	: kvmsh-host host=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) $(call first-prefix)$(1)
+	$$(KVMSH) $$(KVMSH_FLAGS) $(2)
 endef
 $(foreach host, $(KVM_TEST_HOSTS), \
-	$(eval $(call kvmsh-host,$(host))))
-
+	$(eval $(call kvmsh,$(host),$(call first-prefix)$(host))))
+$(eval $(call kvmsh,build,$(KVM_BUILD_DOMAIN)))
+$(eval $(call kvmsh,clone,$(KVM_CLONE_DOMAIN)))
+$(eval $(call kvmsh,base,$(KVM_BASE_DOMAIN)))
 
 
 .PHONY: uninstall-kvm-base-domain
@@ -774,6 +779,9 @@ kvm-publish:
 # Some hints
 #
 # Only what is listed in here is "supported"
+
+empty =
+comma = ,
 
 .PHONY: kvm-help
 kvm-help:
@@ -905,7 +913,9 @@ kvm-help:
 	@echo '   kvm-keys          - use the build domain ($(KVM_BUILD_DOMAIN))'
 	@echo '                       to create the test keys'
 	@echo '   kvm-shutdown      - shutdown all domains'
-	@echo '   kvmsh-HOST        - open $(call first-prefix)HOST console'
+	@echo '   kvmsh-{$(subst $(empty) $(empty),$(comma),base clone build $(KVM_TEST_HOSTS))}'
+	@echo '                     - log into the domain using kvmsh.py'
+	@echo '                     - for test domains log into $(call first-prefix)HOST'
 	@echo '   kvm-publish       - use rsync to publish test results'
 	@echo '                       to KVM_PUBLISHDIR=$(KVM_PUBLISHDIR)'
 	@echo ''
