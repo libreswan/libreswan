@@ -1327,6 +1327,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 	cert_t mycert = st->st_connection->spd.this.cert;
 	bool send_certreq = ikev2_send_certreq_INIT_decision(st, role);
 
+	certhdr.isac_enc = mycert.ty;
 	certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
@@ -1334,10 +1335,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
-	certhdr.isac_enc = mycert.ty;
-
 	if (send_certreq) {
-		certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
