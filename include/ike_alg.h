@@ -452,6 +452,18 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last);
 bool ike_alg_is_ike(const struct ike_alg *alg);
 
 /*
+ * Is the algorithm valid (or did FIPS, say, disable it)?
+ */
+
+bool ike_alg_is_valid(const struct ike_alg *alg);
+
+/*
+ * User frendly string representing the algorithm type (family) that
+ * ALG belongs to.
+ */
+const char *ike_alg_type_name(const struct ike_alg *alg);
+
+/*
  * Is the key valid for the encryption algorithm?
  */
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
