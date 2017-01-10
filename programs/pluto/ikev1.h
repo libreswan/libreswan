@@ -3,7 +3,6 @@
 
 #include "pluto_crypt.h"
 #include "ikev1_continuations.h"
-#include "dnskey.h"
 
 /* ikev1.c */
 
@@ -95,34 +94,16 @@ enum key_oppo_step {
 #endif
 };
 
-struct key_continuation {
-	struct adns_continuation ac;    /* common prefix */
-	struct msg_digest   *md;
-	enum   key_oppo_step step;
-	bool failure_ok;
-	err_t last_ugh;
-};
-
-typedef stf_status (key_tail_fn)(struct msg_digest *md,
-				 struct key_continuation *kc);
-
-extern void key_continue(struct adns_continuation *cr,
-			 err_t ugh,
-			 key_tail_fn *tail);
+typedef stf_status (key_tail_fn)(struct msg_digest *md);
 
 extern stf_status oakley_id_and_auth(struct msg_digest *md,
 				     bool initiator,                    /* are we the Initiator? */
-				     bool aggrmode,                     /* aggressive mode? */
-				     cont_fn_t cont_fn,                 /* continuation function */
-				     const struct key_continuation *kc  /* current state, can be NULL */
-				     );
+				     bool aggrmode);                     /* aggressive mode? */
 
 static inline stf_status aggr_id_and_auth(struct msg_digest *md,
-					  bool initiator,               /* are we the Initiator? */
-					  cont_fn_t cont_fn,            /* continuation function */
-					  struct key_continuation *kc)  /* argument */
+					  bool initiator)               /* are we the Initiator? */
 {
-	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
+	return oakley_id_and_auth(md, initiator, TRUE);
 }
 
 extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,

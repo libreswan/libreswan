@@ -53,7 +53,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h" /* needs packet.h */
-#include "dnskey.h" /* needs keys.h and adns.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -106,13 +105,6 @@ stf_status main_outI1(int whack_sock,
 	struct msg_digest md; /* use reply/rbody found inside */
 
 	int numvidtosend = 1; /* we always send DPD VID */
-
-	if (drop_new_exchanges()) {
-		/* Only drop outgoing opportunistic connections */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			return STF_IGNORE;
-		}
-	}
 
 	st = new_state();
 
@@ -477,19 +469,10 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 static stf_status RSA_check_signature(struct state *st,
 				const u_char hash_val[MAX_DIGEST_LEN],
 				size_t hash_len,
-				const pb_stream *sig_pbs,
-#ifdef USE_KEYRR
-				const struct pubkey_list *keys_from_dns,
-#endif /* USE_KEYRR */
-				const struct gw_info *gateways_from_dns)
+				const pb_stream *sig_pbs)
 {
 	return RSA_check_signature_gen(st, hash_val, hash_len,
-				sig_pbs,
-#ifdef USE_KEYRR
-				keys_from_dns,
-#endif
-				gateways_from_dns,
-				try_RSA_signature_v1);
+				sig_pbs, try_RSA_signature_v1);
 }
 
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
@@ -636,8 +619,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
-					if (d->kind == CK_TEMPLATE &&
-						!(d->policy & POLICY_OPPORTUNISTIC)) {
+					if (d->kind == CK_TEMPLATE) {
 						/*
 						 * must be Road Warrior:
 						 * we have a winner
@@ -1697,35 +1679,11 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 }
 
 /*
- * Shared logic for asynchronous lookup of DNS KEY records.
- * Used for STATE_MAIN_R2 and STATE_MAIN_I3.
- */
-
-static void report_key_dns_failure(struct id *id, err_t ugh)
-{
-	char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
-
-	(void) idtoa(id, id_buf, sizeof(id_buf));
-	loglog(RC_LOG_SERIOUS,
-		"no RSA public key known for '%s'; DNS search for KEY failed (%s)",
-		id_buf, ugh);
-}
-
-/*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
- *
- * If a DNS query is still needed to get the other host's public key,
- * the query is initiated and STF_SUSPEND is returned.
- * Note: parameter kc is a continuation containing the results from
- * the previous DNS query, or NULL indicating no query has been issued.
  */
-stf_status oakley_id_and_auth(struct msg_digest *md,
-			bool initiator, /* are we the Initiator? */
-			bool aggrmode, /* aggressive mode? */
-			cont_fn_t cont_fn UNUSED, /* ADNS continuation function */
-			/* current state, can be NULL */
-			const struct key_continuation *kc)
+stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
+			bool aggrmode)
 {
 	struct state *st = md->st;
 	u_char hash_val[MAX_DIGEST_LEN];
@@ -1767,147 +1725,25 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
 		}
+		break;
 	}
-	break;
 
 	case OAKLEY_RSA_SIG:
+	{
 		r = RSA_check_signature(st, hash_val, hash_len,
-					&md->chain[ISAKMP_NEXT_SIG]->pbs,
-#ifdef USE_KEYRR
-					kc == NULL ? NULL :
-					kc->ac.keys_from_dns,
-#endif /* USE_KEYRR */
-					kc == NULL ? NULL :
-					kc->ac.gateways_from_dns);
-
-		if (r == STF_SUSPEND) {
-			/* initiate/resume asynchronous DNS lookup for key */
-			struct key_continuation *nkc =
-				alloc_thing(struct key_continuation,
-					"key continuation");
-			enum key_oppo_step step_done =
-				kc == NULL ? kos_null : kc->step;
-			err_t ugh = NULL;
-
-			/* Record that state is used by a suspended md */
-			passert(st->st_suspended_md == NULL);
-			set_suspended(st, md);
-
-			nkc->failure_ok = FALSE;
-			nkc->md = md;
-
-			switch (step_done) {
-			case kos_null:
-				/* first try: look for the TXT records */
-				nkc->step = kos_his_txt;
-#ifdef USE_KEYRR
-				nkc->failure_ok = TRUE;
-#endif
-				break;
-
-#ifdef USE_KEYRR
-			case kos_his_txt:
-				/* second try: look for the KEY records */
-				nkc->step = kos_his_key;
-				break;
-#endif /* USE_KEYRR */
-
-			default:
-				bad_case(step_done);
-			}
-
-			if (ugh != NULL) {
-				report_key_dns_failure(
-					&st->st_connection->spd.that.id, ugh);
-				unset_suspended(st);
-				r = STF_FAIL + INVALID_KEY_INFORMATION;
-			} else {
-				/*
-				 * since this state is waiting for a DNS query,
-				 * delete any events that might kill it.
-				 */
-				delete_event(st);
-			}
-		}
+					&md->chain[ISAKMP_NEXT_SIG]->pbs);
 		break;
-
+	}
+	/* These are the only IKEv1 AUTH methods we support */
 	default:
 		bad_case(st->st_oakley.auth);
 	}
+
 	if (r == STF_OK)
 		DBG(DBG_CRYPT, DBG_log("authentication succeeded"));
 	return r;
 }
 
-/*
- * This continuation is called as part of either
- * the main_inI3_outR3 state or main_inR3 state.
- *
- * The "tail" function is the corresponding tail
- * function main_inI3_outR3_tail | main_inR3_tail,
- * either directly when the state is started, or via
- * adns continuation.
- *
- * Basically, we go around in a circle:
- *   main_in?3* -> key_continue
- *                ^            \
- *               /              V
- *             adns            main_in?3*_tail
- *              ^               |
- *               \              V
- *                main_id_and_auth
- *
- * until such time as main_id_and_auth is able
- * to find authentication, or we run out of things
- * to try.
- */
-void key_continue(struct adns_continuation *cr,
-		err_t ugh,
-		key_tail_fn *tail)
-{
-	struct key_continuation *kc = (void *)cr;
-	struct msg_digest *md = kc->md;
-	struct state *st;
-
-	if (md == NULL)
-		return;
-
-	st = md->st;
-
-	passert(cur_state == NULL);
-
-	/* if st == NULL, our state has been deleted -- just clean up */
-	if (st != NULL && st->st_suspended_md != NULL) {
-		stf_status r;
-
-		passert(st->st_suspended_md == kc->md);
-		unset_suspended(st); /* no longer connected or suspended */
-		cur_state = st;
-
-		/* cancel any DNS event, since we got an anwer */
-		delete_event(st);
-
-		if (!kc->failure_ok && ugh != NULL) {
-			report_key_dns_failure(&st->st_connection->spd.that.id,
-					ugh);
-			r = STF_FAIL + INVALID_KEY_INFORMATION;
-		} else {
-
-#ifdef USE_KEYRR
-			passert(kc->step == kos_his_txt ||
-				kc->step == kos_his_key);
-#else
-			passert(kc->step == kos_his_txt);
-#endif
-			/* record previous error in case we need it */
-			kc->last_ugh = ugh;
-			r = (*tail)(kc->md, kc);
-		}
-		complete_v1_state_transition(&kc->md, r);
-	}
-	release_any_md(&kc->md);
-	cur_state = NULL;
-}
 
 /*
  * STATE_MAIN_R2:
@@ -1915,40 +1751,16 @@ void key_continue(struct adns_continuation *cr,
  * DS_AUTH: HDR*, IDi1, [ CERT, ] SIG_I --> HDR*, IDr1, [ CERT, ] SIG_R
  * PKE_AUTH, RPKE_AUTH: HDR*, HASH_I --> HDR*, HASH_R
  *
- * Broken into parts to allow asynchronous DNS lookup.
- *
- * - main_inI3_outR3 to start
- * - main_inI3_outR3_tail to finish or suspend for DNS lookup
- * - main_inI3_outR3_continue to start main_inI3_outR3_tail again
  */
-static key_tail_fn main_inI3_outR3_tail; /* forward */
-
-stf_status main_inI3_outR3(struct msg_digest *md)
-{
-	/* handle case where NSS balked at generating DH */
-	return md->st->st_shared_nss == NULL ?
-		STF_FAIL + INVALID_KEY_INFORMATION :
-		main_inI3_outR3_tail(md, NULL);
-}
 
 static inline stf_status main_id_and_auth(struct msg_digest *md,
 					/* are we the Initiator? */
-					bool initiator,
-					/* continuation function */
-					cont_fn_t cont_fn,
-					/* argument */
-					struct key_continuation *kc)
+					bool initiator)
 {
-	return oakley_id_and_auth(md, initiator, FALSE, cont_fn, kc);
+	return oakley_id_and_auth(md, initiator, FALSE);
 }
 
-static void main_inI3_outR3_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, main_inI3_outR3_tail);
-}
-
-static stf_status main_inI3_outR3_tail(struct msg_digest *md,
-				struct key_continuation *kc)
+stf_status main_inI3_outR3(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 	u_int8_t auth_payload;
@@ -1961,17 +1773,19 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	int chain_len = 0;
 	u_int8_t np;
 
+	/* handle case where NSS balked at generating DH */
+	if (st->st_shared_nss == NULL)
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+
 	/*
 	 * ID and HASH_I or SIG_I in
 	 * Note: this may switch the connection being used!
 	 */
 	{
-		stf_status r = main_id_and_auth(md, FALSE,
-						main_inI3_outR3_continue,
-						kc);
-
+		stf_status r = oakley_id_and_auth(md, FALSE, FALSE);
 		if (r != STF_OK)
 			return r;
+
 	}
 
 	/* send certificate if we have one and auth is RSA */
@@ -2160,27 +1974,16 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
  * STATE_MAIN_I3:
  * Handle HDR*;IDir;HASH/SIG_R from responder.
  *
- * Broken into parts to allow asynchronous DNS for KEY records.
- *
- * - main_inR3 to start
- * - main_inR3_tail to finish or suspend for DNS lookup
- * - main_inR3_continue to start main_inR3_tail again
  */
 
-static key_tail_fn main_inR3_tail; /* forward */
+static stf_status main_inR3_tail(struct msg_digest *md);
 
 stf_status main_inR3(struct msg_digest *md)
 {
-	return main_inR3_tail(md, NULL);
+	return main_inR3_tail(md);
 }
 
-static void main_inR3_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, main_inR3_tail);
-}
-
-static stf_status main_inR3_tail(struct msg_digest *md,
-				struct key_continuation *kc)
+static stf_status main_inR3_tail(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
@@ -2189,9 +1992,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	 * Note: this may switch the connection being used!
 	 */
 	{
-		stf_status r = main_id_and_auth(md, TRUE, main_inR3_continue,
-						kc);
-
+		stf_status r = oakley_id_and_auth(md, TRUE, FALSE);
 		if (r != STF_OK)
 			return r;
 	}
@@ -2387,8 +2188,6 @@ static void send_notification(struct state *sndst, notification_t type,
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
-	struct connection *c = sndst->st_connection;
-
 	r_hashval = NULL;
 	r_hash_start = NULL;
 
@@ -2411,18 +2210,9 @@ static void send_notification(struct state *sndst, notification_t type,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
-			/*
-			 * Log this if it is for a non-opportunistic connection
-			 * or if DBG_OPPO is on.  We don't want a DoS.
-			 * Using DBG_OPPO is kind of odd because this is not
-			 * controlling DBG_log.
-			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-			    DBGP(DBG_OPPO)) {
 				libreswan_log(
 					"too many (%d) malformed payloads. Deleting state",
 					sndst->hidden_variables.st_malformed_sent);
-			}
 			delete_state(sndst);
 			/* note: no md->st to clear */
 			return;
@@ -2455,14 +2245,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	/*
-	 * Log this if it is for a non-opportunistic connection
-	 * or if DBG_OPPO is on.  We don't want a DoS.
-	 * Using DBG_OPPO is kind of odd because this is not
-	 * controlling DBG_log.
-	 */
-	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-	    DBGP(DBG_OPPO)) {
+	{
 		ipstr_buf b;
 
 		libreswan_log("sending %snotification %s to %s:%u",
@@ -2618,8 +2401,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct connection fake_connection = {
 		.interface = md->iface,
 		.addr_family = addrtypeof(&md->sender),	/* for should_fragment_ike_msg() */
-		.policy = POLICY_IKE_FRAG_FORCE |	/* for should_fragment_ike_msg() */
-			POLICY_OPPORTUNISTIC,	/* for reducing logging various places */
+		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
 	};
 
 	struct state fake_state = {

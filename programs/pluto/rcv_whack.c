@@ -64,7 +64,6 @@
 #include "lswfips.h"
 #include "keys.h"
 #include "secrets.h"
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
@@ -94,19 +93,9 @@ struct key_add_common {
 };
 
 struct key_add_continuation {
-	struct adns_continuation ac;    /* common prefix */
 	struct key_add_common *common;  /* common data */
 	enum key_add_attempt lookingfor;
 };
-
-static void key_add_ugh(const struct id *keyid, err_t ugh)
-{
-	char name[IDTOA_BUF];   /* longer IDs will be truncated in message */
-
-	(void)idtoa(keyid, name, sizeof(name));
-	loglog(RC_NOKEY,
-	       "failure to fetch key for %s from DNS: %s", name, ugh);
-}
 
 static void do_whacklisten(void)
 {
@@ -128,25 +117,76 @@ static void do_whacklisten(void)
 #endif
 }
 
-/* last one out: turn out the lights */
-static void key_add_merge(struct key_add_common *oc, const struct id *keyid)
+static void key_add_request(const struct whack_message *msg)
 {
-	if (oc->refCount == 0) {
-		enum key_add_attempt kaa;
+	DBG_log("add keyid %s", msg->keyid);
+	struct id keyid;
+	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
 
-		/* if no success, print all diagnostics */
-		if (!oc->success)
-			for (kaa = ka_TXT; kaa != ka_roof; kaa++)
-				key_add_ugh(keyid, oc->diag[kaa]);
+	if (ugh != NULL) {
+		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
+	} else {
+		if (!msg->whack_addkey)
+			delete_public_keys(&pluto_pubkeys, &keyid,
+					   msg->pubkey_alg);
 
-		for (kaa = ka_TXT; kaa != ka_roof; kaa++)
-			pfreeany(oc->diag[kaa]);
+#if 0
+		if (msg->keyval.len == 0) {
+			struct key_add_common *oc =
+				alloc_thing(struct key_add_common,
+					    "key add common things");
+			enum key_add_attempt kaa;
 
-		close(oc->whack_fd);
-		pfree(oc);
+			/* initialize state shared by queries */
+			oc->refCount = 0;
+			oc->whack_fd = dup_any(whack_log_fd);
+			oc->success = FALSE;
+
+			for (kaa = ka_TXT; kaa != ka_roof; kaa++) {
+				struct key_add_continuation *kc =
+					alloc_thing(
+						struct key_add_continuation,
+						"key add continuation");
+
+				oc->diag[kaa] = NULL;
+				oc->refCount++;
+				kc->common = oc;
+				kc->lookingfor = kaa;
+				switch (kaa) {
+				case ka_TXT:
+					break;
+#ifdef USE_KEYRR
+				case ka_KEY:
+					break;
+#endif                                                  /* USE_KEYRR */
+				default:
+					bad_case(kaa);  /* suppress gcc warning */
+				}
+				if (ugh != NULL) {
+					oc->diag[kaa] = clone_str(ugh,
+								  "early key add failure");
+					oc->refCount--;
+				}
+			}
+
+			/* Done launching queries.
+			 * Handle total failure case.
+			 */
+			key_add_merge(oc, &keyid);
+		} else
+#endif
+		if (msg->keyval.len != 0) {
+			DBG_dump_chunk("add pubkey", msg->keyval);
+			ugh = add_public_key(&keyid, DAL_LOCAL,
+					     msg->pubkey_alg,
+					     &msg->keyval, &pluto_pubkeys);
+			if (ugh != NULL)
+				loglog(RC_LOG_SERIOUS, "%s", ugh);
+		} else {
+				loglog(RC_LOG_SERIOUS, "error: Key without keylength from whack not added to key list (needs DNS lookup?)");
+		}
 	}
 }
-
 static char whackrecordname[PATH_MAX];
 static FILE *whackrecordfile = NULL;
 
@@ -221,71 +261,6 @@ static bool openwhackrecordfile(char *file)
 	return TRUE;
 }
 
-static void key_add_request(const struct whack_message *msg)
-{
-	DBG_log("add keyid %s", msg->keyid);
-	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
-
-	if (ugh != NULL) {
-		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
-	} else {
-		if (!msg->whack_addkey)
-			delete_public_keys(&pluto_pubkeys, &keyid,
-					   msg->pubkey_alg);
-
-		if (msg->keyval.len == 0) {
-			struct key_add_common *oc =
-				alloc_thing(struct key_add_common,
-					    "key add common things");
-			enum key_add_attempt kaa;
-
-			/* initialize state shared by queries */
-			oc->refCount = 0;
-			oc->whack_fd = dup_any(whack_log_fd);
-			oc->success = FALSE;
-
-			for (kaa = ka_TXT; kaa != ka_roof; kaa++) {
-				struct key_add_continuation *kc =
-					alloc_thing(
-						struct key_add_continuation,
-						"key add continuation");
-
-				oc->diag[kaa] = NULL;
-				oc->refCount++;
-				kc->common = oc;
-				kc->lookingfor = kaa;
-				switch (kaa) {
-				case ka_TXT:
-					break;
-#ifdef USE_KEYRR
-				case ka_KEY:
-					break;
-#endif                                                  /* USE_KEYRR */
-				default:
-					bad_case(kaa);  /* suppress gcc warning */
-				}
-				if (ugh != NULL) {
-					oc->diag[kaa] = clone_str(ugh,
-								  "early key add failure");
-					oc->refCount--;
-				}
-			}
-
-			/* Done launching queries.
-			 * Handle total failure case.
-			 */
-			key_add_merge(oc, &keyid);
-		} else {
-			DBG_dump_chunk("add pubkey", msg->keyval);
-			ugh = add_public_key(&keyid, DAL_LOCAL,
-					     msg->pubkey_alg,
-					     &msg->keyval, &pluto_pubkeys);
-			if (ugh != NULL)
-				loglog(RC_LOG_SERIOUS, "%s", ugh);
-		}
-	}
-}
 
 /*
  * handle a whack message.
