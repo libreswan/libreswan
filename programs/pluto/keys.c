@@ -713,7 +713,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		DBG(DBG_CRYPT, DBG_log("AUTH_NULl secret - returning empty_chunk"));
+		DBG(DBG_CRYPT, DBG_log("Mutual AUTH_NULl secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
@@ -724,7 +724,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 				       pks->u.preshared_secret);
 		});
 	} else {
-		DBG_log("no Preshared Key Found");
+		DBG(DBG_CONTROL, DBG_log("no Preshared Key Found"));
 	}
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
