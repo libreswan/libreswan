@@ -1097,8 +1097,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 	}
 
-	if (!ikev2_decode_cert(md))
+	if (!ikev2_decode_cert(md)) {
+		libreswan_log("ikev2_decode_cert(md) failed in ikev2_decode_peer_id_and_certs()");
 		return FALSE;
+	}
 
 	/* process any CERTREQ payloads */
 	ikev2_decode_cr(md);
