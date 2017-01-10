@@ -65,6 +65,9 @@
 #ifdef USE_MD5
 #include "ike_alg_md5.h"
 #endif
+#ifdef USE_CAST
+#include "ike_alg_cast.h"
+#endif
 
 /*==========================================================
 *
@@ -587,6 +590,9 @@ static struct encrypt_desc *encrypt_descriptors[] = {
 #ifdef USE_TWOFISH
 	&ike_alg_encrypt_twofish_cbc,
 	&ike_alg_encrypt_twofish_ssh,
+#endif
+#ifdef USE_CAST
+	&ike_alg_encrypt_cast_cbc,
 #endif
 };
 

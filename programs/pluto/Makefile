@@ -216,6 +216,11 @@ EXTRA_CRYPTO_OBJS+=ike_alg_twofish.o
 EXTRA_CRYPTO_LIBS+=$(LIBTWOFISH)
 endif
 
+ifeq ($(USE_CAST),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_cast.c
+EXTRA_CRYPTO_OBJS+=ike_alg_cast.o
+endif
+
 EXTRA_CRYPTO_SRCS += ike_alg_sha1.c
 EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
 

@@ -413,6 +413,7 @@ USE_TWOFISH?=true
 USE_3DES?=true
 USE_DH22?=false
 USE_CAMELLIA?=true
+USE_CAST?=true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
