@@ -61,10 +61,11 @@
 
 char usage[] =
 	"Usage: showhostkey [ --verbose ]\n"
-	"         { --version | --dump | --list | --left | --right |\n"
-	"                 --ipseckey [ --precedence <precedence> ] [ --gateway <gateway> ] }\n"
-	"         [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
-	"         [ --nssdir <nssdir> ] [ --password <password> ]\n";
+	"        { --version | --dump | --list | --left | --right |\n"
+	"                --ipseckey [ --precedence <precedence> ] \n"
+	"                [ --gateway <gateway> ] }\n"
+	"        [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
+	"        [ --nssdir <nssdir> ] [ --password <password> ]\n";
 
 /*
  * For new options, avoid magic numbers.
