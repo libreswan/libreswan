@@ -3194,6 +3194,9 @@ struct connection *refine_host_connection(const struct state *st,
 					(ip_address *)NULL,
 					c->spd.that.host_port);
 	}
+	/* we should never get here */
+	loglog(RC_LOG_SERIOUS,"refine_host_connection() reached end of function without returning a connection");
+	pexpect(FALSE);
 }
 
 /*
