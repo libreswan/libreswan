@@ -360,9 +360,7 @@
  * ESP_CAST is the cast5 algorithm, not cast6
  * We avoid cast-128 padding by enforcing a minimum of 128
  */
-#define  CAST_KEY_MIN_LEN        128
 #define  CAST_KEY_DEF_LEN        128
-#define  CAST_KEY_MAX_LEN        128
 
 /*
  * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
@@ -414,7 +412,6 @@
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define AES_BLOCK_SIZE BYTES_FOR_BITS(128)
-#define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
 

@@ -1974,13 +1974,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_SHA1HMAC, },
 
 			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_NONE,
-			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_NONE, },
 			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_MD5,
-			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_MD5HMAC, },
 			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_SHA1,
-			  .enckeylen = CAST_CBC_BLOCK_SIZE,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_SHA1HMAC, },
 		};
 
