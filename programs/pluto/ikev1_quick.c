@@ -1930,9 +1930,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
-		}
 
-		/* XXX Though c == p, they are used intermixed in the below section */
+		}
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
@@ -1946,14 +1945,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		}
 
 		/* fill in the client's true port */
-		if (p->spd.that.has_port_wildcard) {
+		if (c->spd.that.has_port_wildcard) {
 			int port = htons(b->his.port);
 
-			setportof(port, &p->spd.that.host_addr);
-			setportof(port, &p->spd.that.client.addr);
+			setportof(port, &c->spd.that.host_addr);
+			setportof(port, &c->spd.that.client.addr);
 
-			p->spd.that.port = b->his.port;
-			p->spd.that.has_port_wildcard = FALSE;
+			c->spd.that.port = b->his.port;
+			c->spd.that.has_port_wildcard = FALSE;
 		}
 
 		if (is_virtual_connection(c)) {
