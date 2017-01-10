@@ -942,17 +942,27 @@ void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
 				esp_info->transid);
 		}
 	}
-	for (const struct integ_desc **algp = next_integ_desc(NULL);
-	     algp != NULL; algp = next_integ_desc(algp)) {
-		if (esp_info->auth == (*algp)->common.ikev1_esp_id) {
-			esp_info->esp_integ = (*algp);
+	if (esp_info->esp_encrypt != NULL
+	    && !ike_alg_enc_requires_integ(esp_info->esp_encrypt)
+	    && esp_info->auth == AUTH_ALGORITHM_NONE) {
+		/*
+		 * AEAD algorithms do not have a separate integrity
+		 * algorithm.
+		 */
+		passert(esp_info->esp_integ == NULL);
+	} else {
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			if (esp_info->auth == (*algp)->common.ikev1_esp_id) {
+				esp_info->esp_integ = (*algp);
+			}
 		}
-	}
-	if (esp_info->esp_integ == NULL && DBGP(DBG_CONTROLMORE)) {
-		struct esb_buf buf;
-		DBG_log("XXX: ESP/AH INTEG algorithm %s=%d not found",
-			enum_showb(&auth_alg_names,
-				   esp_info->auth, &buf),
-			esp_info->auth);
+		if (esp_info->esp_integ == NULL && DBGP(DBG_CONTROLMORE)) {
+			struct esb_buf buf;
+			DBG_log("XXX: ESP/AH INTEG algorithm %s=%d not found",
+				enum_showb(&auth_alg_names,
+					   esp_info->auth, &buf),
+				esp_info->auth);
+		}
 	}
 }
