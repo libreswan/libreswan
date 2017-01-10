@@ -4,7 +4,7 @@
 
 var lsw_compare_table_id = "compare"
 
-function lsw_compare_summary(test_runs) {
+function lsw_compare_test_runs(test_runs) {
 
     // Filter out the "current" row?
 

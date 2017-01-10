@@ -17,10 +17,10 @@ var lsw_count_names = [
 
 function lsw_summary_graph(graph_id, table_id, summary) {
 
-    // Only plot results with a corresponding commit.
+    // Only plot test_runs with a corresponding commit.
 
-    var results = summary.results.filter(function(result) {
-	return result.commit
+    var test_runs = summary.test_runs.filter(function(test_run) {
+	return test_run.commit
     })
 
     var margin = {
@@ -39,11 +39,11 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // Create a dictionary of totals we're interested in.
     //
     var sums = {}
-    results.forEach(function(result) {
+    test_runs.forEach(function(test_run) {
 	var sum = []
 	// Clean up the totals that we're interested in.  Add
 	// accumulative (sums) and overall totals.
-	var totals = result.totals
+	var totals = test_run.totals
 	var total = 0
 	lsw_kind_names.forEach(function(kind_name) {
 	    var kind = (totals.hasOwnProperty(kind_name)
@@ -62,7 +62,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 		})
 	    })
 	})
-	sums[result.commit.abbreviated_commit_hash] = sum
+	sums[test_run.commit.abbreviated_commit_hash] = sum
     })
     var sum_text = []
     var sum_klass = []
@@ -83,11 +83,11 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.range([radius, width])
     var y = d3.scaleLinear()
 	.domain([
-	    d3.min(results, function(d) {
+	    d3.min(test_runs, function(d) {
 		// very first accumulative value
 		return 0.8 * sums[d.commit.abbreviated_commit_hash][0]
 	    }),
-	    d3.max(results, function(d) {
+	    d3.max(test_runs, function(d) {
 		return 1.02 * d.total
 	    })
 	])
@@ -121,7 +121,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.text("Results")
 
     //
-    // Create a list of first-parent results so that they can be
+    // Create a list of first-parent test_runs so that they can be
     // plotted as a line.
     //
     // Need to iterate through the commit parents[0] (first-parent)
@@ -129,104 +129,104 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // first element is the right most.
     //
 
-    var first_parent_results = []
+    var first_parent_test_runs = []
     for (var commit = summary.commits[0]; commit; commit = commit.parents[0]) {
-	if (commit.result) {
-	    first_parent_results.push(commit.result)
+	if (commit.test_run) {
+	    first_parent_test_runs.push(commit.test_run)
 	}
     }
 
     /*
      * Accumulate the key for each line.
      */
-    var last_result = first_parent_results[0]
-    var keys_x = x(last_result.commit.committer.date) + radius
+    var last_test_run = first_parent_test_runs[0]
+    var keys_x = x(last_test_run.commit.committer.date) + radius
     var keys = []
 
     //
     // Plot thte grand total
     //
     // First as a line of trunk, and then as a scatter plot of all
-    // test results.
+    // test test_runs.
     svg.append("path")
-	.datum(first_parent_results)
+	.datum(first_parent_test_runs)
 	.attr("class", "line")
 	.attr("d", d3.line()
-	      .x(function(result) {
-		  return x(result.commit.committer.date)
+	      .x(function(test_run) {
+		  return x(test_run.commit.committer.date)
 	      })
-	      .y(function(result) {
-		  return y(result.total)
+	      .y(function(test_run) {
+		  return y(test_run.total)
 	      }))
     svg.append("g")
 	.selectAll(".dot")
-	.data(results)
+	.data(test_runs)
 	.enter()
 	.append("circle")
 	.attr("class", "untested")
 	.attr("r", radius)
-    	.attr("cx", function(result) {
-	    return x(result.commit.committer.date)
+    	.attr("cx", function(test_run) {
+	    return x(test_run.commit.committer.date)
 	})
-	.attr("cy", function(result) {
-	    return y(result.total)
+	.attr("cy", function(test_run) {
+	    return y(test_run.total)
 	})
-	.on("click", function(result) {
-	    lsw_summary_graph_click_result(table_id, result)
+	.on("click", function(test_run) {
+	    lsw_summary_graph_click_test_run(table_id, test_run)
 	})
 	.append("title")
-	.text(function(result) {
-	    return lsw_commit_texts(result.commits)
+	.text(function(test_run) {
+	    return lsw_commit_texts(test_run.commits)
 	})
     keys.push({
 	x: keys_x,
-	y: y(last_result.total),
+	y: y(last_test_run.total),
 	klass: "untested",
 	text: "+untested",
     })
 
     //
-    // Plot the test results proper
+    // Plot the test test_runs proper
     //
-    // First draw the line through the first parent of "good" results;
+    // First draw the line through the first parent of "good" test_runs;
     // but omit untested (should be zero).  And then overlay a scatter
     // plot of everything.
     for (var sum_index = sum_text.length - 1; sum_index >= 0; sum_index--) {
 	var line = d3.line()
-	    .x(function(result) {
-		return x(result.commit.committer.date)
+	    .x(function(test_run) {
+		return x(test_run.commit.committer.date)
 	    })
-	    .y(function(result) {
-		return y(sums[result.commit.abbreviated_commit_hash][sum_index])
+	    .y(function(test_run) {
+		return y(sums[test_run.commit.abbreviated_commit_hash][sum_index])
 	    })
 	svg.append("path")
-	    .datum(first_parent_results)
+	    .datum(first_parent_test_runs)
 	    .attr("class", "line")
 	    .attr("d", line)
 	svg.append("g")
 	    .selectAll(".dot")
-	    .data(results)
+	    .data(test_runs)
 	    .enter()
 	    .append("circle")
 	    .attr("class", sum_klass[sum_index])
 	    .attr("r", radius)
-	    .attr("cx", function(result) {
-		return x(result.commit.committer.date)
+	    .attr("cx", function(test_run) {
+		return x(test_run.commit.committer.date)
 	    })
-	    .attr("cy", function(result) {
-		return y(sums[result.commit.abbreviated_commit_hash][sum_index])
+	    .attr("cy", function(test_run) {
+		return y(sums[test_run.commit.abbreviated_commit_hash][sum_index])
 	    })
-	    .on("click", function(result) {
-		lsw_summary_graph_click_result(table_id, result)
+	    .on("click", function(test_run) {
+		lsw_summary_graph_click_test_run(table_id, test_run)
 		d3.event.stopPropagation()
 	    })
 	    .append("title")
-	    .text(function(result) {
-		return lsw_commit_texts(result.commits)
+	    .text(function(test_run) {
+		return lsw_commit_texts(test_run.commits)
 	    })
 	keys.push({
 	    x: keys_x,
-	    y: y(sums[last_result.commit.abbreviated_commit_hash][sum_index]),
+	    y: y(sums[last_test_run.commit.abbreviated_commit_hash][sum_index]),
 	    klass: sum_klass[sum_index],
 	    text: (sum_index > 0 ? "+" : "") + sum_text[sum_index],
 	})
@@ -236,13 +236,13 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // The job queue
     //
     // Plot all the 'interesting' commits (something significant was
-    // apparently changed) that have no result.
+    // apparently changed) that have no test_run.
 
     var untested_interesting_commits = summary.commits.filter(function(commit) {
 	if (!commit.interesting) {
 	    return false
 	}
-	if (commit.result) {
+	if (commit.test_run) {
 	    return false
 	}
 	if (summary.current.commit == commit) {
