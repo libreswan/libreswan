@@ -6,7 +6,7 @@
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
- * (C)opyright 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -916,18 +916,31 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
 {
-	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
-	     algp != NULL; algp = next_encrypt_desc(algp)) {
-		if (esp_info->transid == (*algp)->common.ikev1_esp_id) {
-			esp_info->esp_encrypt = (*algp);
+	if (esp_info->transid == ESP_ID255
+	    || esp_info->transid == ESP_reserved) {
+		/*
+		 * For AH, where the is no encryption, the u_int8_t
+		 * field .TRANSID ends up with the initial value of
+		 * ealg_id which is -1 (hence, ESP_ID255) (see
+		 * alg_info.c).  Just in case someone decides this is
+		 * silly and changes the AH value to ESP_reserved,
+		 * ignore that also.
+		 */
+		passert(esp_info->esp_encrypt == NULL);
+	} else {
+		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+		     algp != NULL; algp = next_encrypt_desc(algp)) {
+			if (esp_info->transid == (*algp)->common.ikev1_esp_id) {
+				esp_info->esp_encrypt = (*algp);
+			}
 		}
-	}
-	if (esp_info->esp_encrypt == NULL && DBGP(DBG_CONTROLMORE)) {
-		struct esb_buf buf;
-		DBG_log("XXX: ESP/AH ENCRYPT algorithm %s=%d not found",
-			enum_showb(&esp_transformid_names,
-				   esp_info->transid, &buf),
-			esp_info->transid);
+		if (esp_info->esp_encrypt == NULL && DBGP(DBG_CONTROLMORE)) {
+			struct esb_buf buf;
+			DBG_log("XXX: ESP/AH ENCRYPT algorithm %s=%d not found",
+				enum_showb(&esp_transformid_names,
+					   esp_info->transid, &buf),
+				esp_info->transid);
+		}
 	}
 	for (const struct integ_desc **algp = next_integ_desc(NULL);
 	     algp != NULL; algp = next_integ_desc(algp)) {
