@@ -9,7 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -177,9 +177,24 @@ const struct oakley_group_desc *group_desc_byname(const char *name)
 	return oakley_group_desc(alg_byname(&dh_algorithms.all, name));
 }
 
+bool ike_alg_is_valid(const struct ike_alg *alg)
+{
+	FOR_EACH_IKE_ALGP(&type_algorithms[alg->algo_type]->all, algp) {
+		if (*algp == alg) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 bool ike_alg_is_ike(const struct ike_alg *alg)
 {
 	return type_algorithms[alg->algo_type]->desc_is_ike(alg);
+}
+
+const char *ike_alg_type_name(const struct ike_alg *alg)
+{
+	return type_algorithms[alg->algo_type]->all.name;
 }
 
 bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)

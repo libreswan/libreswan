@@ -1,0 +1,2 @@
+test connection switching of road warrior with certificate chain
+	pass

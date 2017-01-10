@@ -6,7 +6,7 @@
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
- * (C)opyright 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * (C)opyright 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,7 @@
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_dh.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -252,11 +253,14 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  * Do not assume that these hard wired algorithms are actually valid.
  */
 
-static const enum ike_trans_type_dh default_ikev1_groups[] = {
-	OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, 0,
+static const struct ike_alg *default_ikev1_groups[] = {
+	&oakley_group_modp2048.common,
+	&oakley_group_modp1536.common,
+	NULL,
 };
-static const enum ike_trans_type_dh default_ikev2_groups[] = {
-	OAKLEY_GROUP_MODP2048, 0,
+static const struct ike_alg *default_ikev2_groups[] = {
+	&oakley_group_modp2048.common,
+	NULL,
 };
 
 static const enum ikev1_encr_attribute default_ike_ealgs[] = {
@@ -265,6 +269,106 @@ static const enum ikev1_encr_attribute default_ike_ealgs[] = {
 static const enum ikev1_hash_attribute default_ike_aalgs[] = {
 	OAKLEY_SHA2_256, OAKLEY_SHA2_512, OAKLEY_SHA1, OAKLEY_MD5,
 };
+
+/*
+ * Strip out algorithms that aren't applicable.
+ */
+static const struct ike_alg **clone_valid(const struct parser_policy *policy,
+					  const struct ike_alg **ikev1_algs,
+					  const struct ike_alg **ikev2_algs)
+{
+	/*
+	 * If there's a hint of IKEv1 being enabled then prefer its
+	 * larger set of defaults.
+	 *
+	 * This should increase the odds of both ends interoperating.
+	 * For instance, if IKEv2 defaults are prefered and one end
+	 * has ikev2=never then, in agressive mode, things don't work.
+	 */
+	const struct ike_alg **default_algs = (policy->ikev1
+					       ? ikev1_algs
+					       : ikev2_algs);
+
+	/*
+	 * Allocate the cloned array.  Keep things simple by assuming
+	 * it is the same size as the original.
+	 */
+	int count = 1;
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		count++;
+	}
+	const struct ike_alg **valid_algs = alloc_things(const struct ike_alg*, count,
+							 "valid algs");
+
+	/*
+	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
+	 */
+	const struct ike_alg **valid_alg = valid_algs;
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		const struct ike_alg *alg = *default_alg;
+		/*
+		 * Check that all the enabled protocols are
+		 * supported.
+		 *
+		 * Done first since it is quick and fast.
+		 */
+		if (policy->ikev1 && alg->ikev1_oakley_id == 0) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing ikev1 support",
+				    ike_alg_type_name(alg),
+				    alg->name));
+			continue;
+		}
+		if (policy->ikev2 && alg->ikev2_id == 0) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing ikev2 support",
+				    ike_alg_type_name(alg),
+				    alg->name));
+			continue;
+		}
+		/*
+		 * Check that the algorithm is backed by an IKE
+		 * (native) implementation.
+		 *
+		 * Having a valid ID (checked above) isn't sufficient.
+		 * For instance, an IKEv2 ESP only algorithm will have
+		 * a valid IKEv2 ID.
+		 */
+		if (!ike_alg_is_ike(alg)) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing IKE implementation",
+				    ike_alg_type_name(alg),
+				    alg->name));
+			continue;
+		}
+		/*
+		 * Check that the algorithm is valid.
+		 *
+		 * FIPS, for instance, will invalidate some algorithms
+		 * during startup.
+		 *
+		 * Since it likely involves a lookup, it is left until
+		 * last.
+		 */
+		if (!ike_alg_is_valid(alg)) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, invalid",
+				    ike_alg_type_name(alg),
+				    alg->name));
+			continue;
+		}
+		DBG(DBG_CONTROL|DBG_CRYPT,
+		    DBG_log("adding default %s %s",
+			    ike_alg_type_name(alg),
+			    alg->name));
+		/* save it */
+		*valid_alg++ = alg;
+	}
+	*valid_alg = NULL;
+	return valid_algs;
+}
 
 /*
  * _Recursively_ add IKE alg info _with_ logic (policy):
@@ -287,67 +391,17 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 	if (dh_group == NULL) {
 		/*
 		 * Recursively add the valid default groups.
-		 *
-		 * If there's a hint of IKEv1 being enabled then
-		 * prefer its larger set of defaults.  This hopefully
-		 * increases the odds of both ends interoperating.  If
-		 * IKEv2 defaults are prefered and one end has
-		 * ikev2=never then, in agressive mode, things don't
-		 * work.
-		 *
-		 * Of course ikev2= should just go away.
 		 */
-		const enum ike_trans_type_dh *default_group_ids
-			= (policy->ikev1
-			   ? default_ikev1_groups
-			   : default_ikev2_groups);
-
-		for (const enum ike_trans_type_dh *group_id = default_group_ids;
-		     *group_id; group_id++) {
-			/*
-			 * Check that FIPS didn't disable it.
-			 *
-			 * Lucky for us IKEv1 and IKEv2 have the same
-			 * group numbers.
-			 */
-			const struct oakley_group_desc *group = lookup_group(*group_id);
-			if (group == NULL) {
-				DBG(DBG_CONTROL|DBG_CRYPT,
-				    struct esb_buf buf;
-				    DBG_log("skipping default DH group %s=%d, lookup failed",
-					    enum_showb(&oakley_group_names, *group_id, &buf),
-					    *group_id));
-				continue;
-			}
-			/*
-			 * Check that all the enabled protocols are
-			 * supported.
-			 */
-			if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
-				DBG(DBG_CONTROL|DBG_CRYPT,
-				    struct esb_buf buf;
-				    DBG_log("skipping default DH group %s=%d, missing ikev1 support",
-					    enum_showb(&oakley_group_names, *group_id, &buf),
-					    *group_id));
-				continue;
-			}
-			if (policy->ikev2 && group->common.ikev2_id == 0) {
-				DBG(DBG_CONTROL|DBG_CRYPT,
-				    struct esb_buf buf;
-				    DBG_log("skipping default DH group %s=%d, missing ikev2 support",
-					    enum_showb(&oakley_group_names, *group_id, &buf),
-					    *group_id));
-				continue;
-			}
-			DBG(DBG_CONTROL|DBG_CRYPT,
-			    struct esb_buf buf;
-			    DBG_log("adding default DH group %s=%d",
-				    enum_showb(&oakley_group_names, *group_id, &buf),
-				    *group_id));
+		const struct ike_alg **valid_groups = clone_valid(policy,
+								  default_ikev1_groups,
+								  default_ikev2_groups);
+		for (const struct ike_alg **group = valid_groups;
+		     *group; group++) {
 			alg_info_ike_add(policy, alg_info,
 					 ealg_id, ek_bits,
-					 aalg_id, group);
+					 aalg_id, oakley_group_desc(*group));
 		}
+		pfree(valid_groups);
 	} else if (ealg_id <= 0) {
 		/*
 		 * Recursively add the valid default enc algs
