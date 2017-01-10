@@ -703,6 +703,7 @@ static bool has_private_rawkey(struct pubkey *pk)
 /* find the appropriate preshared key (see get_secret).
  * Failure is indicated by a NULL pointer.
  * Note: the result is not to be freed by the caller.
+ * Note2: this seems to be called for connections using RSA too?
  */
 const chunk_t *get_preshared_secret(const struct connection *c)
 {
