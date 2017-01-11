@@ -169,9 +169,6 @@ static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 	return NULL;
 }
 
-/*
- * ??? All callers pass NULL for keys_from_dns and gateways_from_dns.
- */
 stf_status ikev2_verify_rsa_sha1(struct state *st,
 				 enum original_role role,
 				 unsigned char *idhash,

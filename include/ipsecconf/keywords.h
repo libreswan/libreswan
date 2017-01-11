@@ -220,6 +220,7 @@ enum keyword_numeric_conn_field {
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,
+	KNCF_AUTH,
 	KNCF_MAX
 };
 

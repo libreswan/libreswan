@@ -70,6 +70,8 @@ struct whack_end {
 	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;	/* access control groups (if any) -- parsed by pluto */
 
+	enum keyword_authby authby;
+
 	enum keyword_host host_type;
 	ip_address host_addr,
 		   host_nexthop,
@@ -192,6 +194,7 @@ struct whack_message {
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
+
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;

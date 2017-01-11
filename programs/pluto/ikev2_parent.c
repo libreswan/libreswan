@@ -789,9 +789,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
-	DBG(DBG_CONTROL,
-		DBG_log("found connection: %s with policy %s",
-			c->name, bitnamesof(sa_policy_bit_names, policy)));
+	DBG(DBG_CONTROL, {
+			char ci[CONN_INST_BUF];
+		DBG_log("found connection: %s%s with policy %s",
+			c->name, fmt_conn_instance(c, ci),
+			bitnamesof(sa_policy_bit_names, policy));});
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
@@ -2175,19 +2177,21 @@ static stf_status ikev2_send_auth(struct connection *c,
 	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
-	lset_t authpolicy = c->policy & POLICY_ID_AUTH_MASK;
+	enum keyword_authby authby = c->spd.this.authby;
+
+	if (authby == AUTH_UNSET) {
+		/* asymmetric policy unset, pick up from symmetric policy */
+		if (c->policy & POLICY_PSK) {
+			authby = AUTH_PSK;
+		} else if (c->policy & POLICY_RSASIG) {
+			authby = AUTH_RSASIG;
+		} else if (c->policy & POLICY_AUTH_NULL) {
+			authby = AUTH_NULL;
+		}
+	}
 
 	/* ??? isn't c redundant? */
 	pexpect(c == st->st_connection)
-
-	/*
-	 * ??? it isn't obvious that a connection's auth policy
-	 * would allow only one auth method.
-	 * Since this code assumes so, let's check.
-	 */
-	pexpect(LSINGLETON(authpolicy));
-
-	/* ??? authpolicy often different from (st->st_policy & POLICY_ID_AUTH_MASK) */
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -2198,16 +2202,19 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	if (authpolicy & POLICY_RSASIG) {
+	switch(authby) {
+	case AUTH_RSASIG:
 		a.isaa_type = IKEv2_AUTH_RSA;
-	} else if (authpolicy & POLICY_PSK) {
+		break;
+	case AUTH_PSK:
 		a.isaa_type = IKEv2_AUTH_PSK;
-	} else if (authpolicy & POLICY_AUTH_NULL) {
+		break;
+	case AUTH_NULL:
 		a.isaa_type = IKEv2_AUTH_NULL;
-	} else {
-		/* what else is there?... DSS not implemented. */
-		loglog(RC_LOG_SERIOUS, "Unknown or not implemented IKEv2 AUTH policy");
-		return STF_FATAL;
+		break;
+	case AUTH_NEVER:
+	default:
+		bad_case(authby);
 	}
 
 	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs))
@@ -2223,7 +2230,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
-		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
+		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs)) {
 				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
 		}
@@ -3052,6 +3059,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
+	bool auth_failed = TRUE;
 
 	/* extract calculated values from r */
 	if (!finish_dh_v2(st, r))
@@ -3067,8 +3075,10 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
+	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+
 
 	{
 		struct hmac_ctx id_ctx;
@@ -3091,60 +3101,79 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		ikev2_decode_cr(md);
 	}
 
+	/* FACTOR ME OUT */
 	/* process AUTH payload now */
-	/* now check signature from RSA key */
+	enum keyword_authby that_authby = st->st_connection->spd.that.authby;
+
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+
 	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
 	case IKEv2_AUTH_RSA:
 	{
+		if (that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attemped RSA authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
 		stf_status authstat = ikev2_verify_rsa_sha1(
-				st,
-				ORIGINAL_RESPONDER,
-				idhash_in,
+				st, ORIGINAL_RESPONDER, idhash_in,
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
-			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FATAL;
+			break;
 		}
+		auth_failed = FALSE;
 		break;
 	}
+
 	case IKEv2_AUTH_PSK:
-	case IKEv2_AUTH_NULL:
-	{
+		if (that_authby != AUTH_PSK) {
+			libreswan_log("Peer attemped PSK authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
+
 		stf_status authstat = ikev2_verify_psk_auth(
-				st,
-				ORIGINAL_RESPONDER,
-				idhash_in,
+				that_authby, st, idhash_in,
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
 		if (authstat != STF_OK) {
-			libreswan_log(
-				"Authentication failed AUTH mismatch!");
-			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FATAL;
+			libreswan_log("PSK Authentication failed: AUTH mismatch!");
+			break;
 		}
+		auth_failed = FALSE;
+		break;
+
+	case IKEv2_AUTH_NULL:
+	{
+		if (that_authby != AUTH_NULL) {
+			libreswan_log("Peer attemped NULL authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
+
+		stf_status authstat = ikev2_verify_psk_auth(
+				that_authby, st, idhash_in,
+				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+
+		if (authstat != STF_OK) {
+			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
+			break;
+		}
+		auth_failed = FALSE;
 		break;
 	}
 	default:
 		libreswan_log("authentication method: %s not supported",
 			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
-					v2a.isaa_type));
+					md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type));
+		break;
+	}
+
+	if (auth_failed) {
+		/* TODO: This should really be an encrypted message! */
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 		return STF_FATAL;
 	}
 
@@ -3457,12 +3486,12 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 stf_status ikev2parent_inR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
 	bool got_transport = FALSE;
 	int cp_r;
+	bool auth_failed = TRUE;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -3503,8 +3532,14 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 	}
 
+	/* XXX this call might change connection in md->st! */
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+
+	struct connection *c = st->st_connection;
+	enum keyword_authby that_authby = c->spd.that.authby;
+
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
 	{
 		struct hmac_ctx id_ctx;
@@ -3522,9 +3557,20 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* process AUTH payload */
 
+	/* XXXX
+	 * refactor so both initiator and responder can use it
+	 * but first we need to fix arguments to ikev2_verify_rsa_sha1()
+	 * so it won't need ORIGINAL_INITIATOR and can be asymmetric
+	 */
 	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
 	case IKEv2_AUTH_RSA:
 	{
+		if (that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attemped RSA authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
+
 		stf_status authstat = ikev2_verify_rsa_sha1(
 				pst,
 				ORIGINAL_INITIATOR,
@@ -3533,45 +3579,64 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
-			/*
-			 * We cannot send a response as we are processing IKE_AUTH reply
-			 */
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			break;
 		}
+		auth_failed = FALSE;
 		break;
 	}
 	case IKEv2_AUTH_PSK:
+		if (that_authby != AUTH_PSK) {
+			libreswan_log("Peer attemped PSK authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
+
+               stf_status authstat = ikev2_verify_psk_auth(
+                               that_authby, pst, idhash_in,
+                               &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+
+               if (authstat != STF_OK) {
+                       libreswan_log("PSK Authentication failed: AUTH mismatch!");
+                       break;
+               }
+               auth_failed = FALSE;
+               break;
+
 	case IKEv2_AUTH_NULL:
 	{
+		if (that_authby != AUTH_NULL) {
+			libreswan_log("Peer attemped NULL authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			break;
+		}
+
 		stf_status authstat = ikev2_verify_psk_auth(
-				pst,
-				ORIGINAL_INITIATOR,
-				idhash_in,
+				that_authby, pst, idhash_in,
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
 		if (authstat != STF_OK) {
-			libreswan_log("Authentication failed");
-			/*
-			 * cannot use STF_FAIL + v2N_AUTHENTICATION_FAILED because IKE_AUTH
-			 * reply cannot receive an IKE_AUTH reply.
-			 *
-			 * The RFC states:
-			 * "If the error occurs on the initiator, the notification MAY be
-			 *  returned in a separate INFORMATIONAL exchange, usually with no other
-			 *  payloads.  This is an exception for the general rule of not starting
-			 *  new exchanges based on errors in responses."
-			 */
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
+			break;
 		}
+		auth_failed = FALSE;
 		break;
 	}
 
 	default:
 		libreswan_log("authentication method: %s not supported",
 			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
-					v2a.isaa_type));
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+					md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type));
+		break;
+	}
+
+	if (auth_failed) {
+		/*
+		 * We cannot send a response as we are processing IKE_AUTH reply
+		 * the RFC states we should pretend IKE_AUTH was okay, and then
+		 * send an INFORMATIONAL DELETE IKE SA but we have not implemented
+		 * that yet.
+		 */
+		return STF_FATAL;
 	}
 
 	/* authentication good */
@@ -3648,10 +3713,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log(" check narrowing - we are responding to I2"));
 
-		struct payload_digest *const tsi_pd =
-			md->chain[ISAKMP_NEXT_v2TSi];
-		struct payload_digest *const tsr_pd =
-			md->chain[ISAKMP_NEXT_v2TSr];
+		struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
+		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
 		struct traffic_selector tsi[16], tsr[16];
 #if 0
 		bool instantiate = FALSE;

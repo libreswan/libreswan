@@ -63,8 +63,8 @@
 static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* 4306  2:15 */
 static const size_t psk_key_pad_str_len = 17;                  /* sizeof(psk_key_pad_str); -1 */
 
-static bool ikev2_calculate_psk_sighash(struct state *st,
-					enum original_role role,
+static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
+					enum keyword_authby authby,
 					unsigned char *idhash,
 					chunk_t firstpacket,
 					unsigned char *signed_octets)
@@ -75,7 +75,14 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	const chunk_t *pss = &empty_chunk;
 	const size_t hash_len =  st->st_oakley.prf->prf_output_size;
 
-	if (!(c->policy & POLICY_AUTH_NULL)) {
+	passert(authby == AUTH_PSK || authby == AUTH_NULL);
+
+	DBG(DBG_CONTROL,DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
+		enum_name(&state_names, st->st_state),
+		verify ? "verify" : "create",
+		enum_name(&ikev2_asym_auth_name, authby)));
+
+	if (authby != AUTH_NULL) {
 		pss = get_preshared_secret(c);
 		if (pss == NULL) {
 			libreswan_log("No matching PSK found for connection:%s",
@@ -85,7 +92,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 	} else {
 		/*
-		 * draft-ietf-ipsecme-ikev2-null-auth-02
+		 * RFC-7619
 		 *
 		 * When using the NULL Authentication Method, the
 		 * content of the AUTH payload is computed using the
@@ -100,20 +107,24 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 */
 		passert(st->hidden_variables.st_skeyid_calculated);
 
-		/*
-		 * This is wrong as role - we need to role for THIS exchange
-		 * But verify calls this routine with the role inverted, so we
-		 * cannot juse st->st_state either.
-		 */
-		if (role == ORIGINAL_INITIATOR) {
-			/* we are sending initiator, or verifying responder */
+		if (st->st_state == STATE_PARENT_I2 && !verify) {
+			/* we are initiator sending PSK */
 			pss = &st->st_skey_chunk_SK_pi;
-		} else {
-			/* we are verifying initiator, or sending responder */
+		} else if (st->st_state == STATE_PARENT_I2 && verify) {
+			/* we are initiator verifying PSK */
 			pss = &st->st_skey_chunk_SK_pr;
+		} else if (st->st_state == STATE_PARENT_R2 && !verify) {
+			/* we are responder sending PSK */
+			pss = &st->st_skey_chunk_SK_pr;
+		} else if (st->st_state == STATE_PARENT_R1 && verify) {
+			/* we are responder verifying PSK */
+			pss = &st->st_skey_chunk_SK_pi;
 		}
+
 		 DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
 	}
+
+	passert(pss->len != 0);
 
 	/*
 	 * RFC 4306 2.15:
@@ -133,14 +144,24 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		prf_psk = crypt_prf_final_symkey(&prf);
 	}
 
-	/* decide nonce based on the role */
-	if (role == ORIGINAL_INITIATOR) {
-		/* on initiator, we need to hash responders nonce */
+	/* pick nonce */
+
+	if (st->st_state == STATE_PARENT_I2 && !verify) {
+		/* we are initiator sending PSK */
 		nonce = &st->st_nr;
-		nonce_name = "inputs to hash2 (responder nonce)";
-	} else {
+		nonce_name = "create: initiator inputs to hash2 (responder nonce)";
+	} else if (st->st_state == STATE_PARENT_I2 && verify) {
+		/* we are initiator verifying PSK */
 		nonce = &st->st_ni;
-		nonce_name = "inputs to hash2 (initiator nonce)";
+		nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
+	} else if (st->st_state == STATE_PARENT_R2 && !verify) {
+		/* we are responder sending PSK */
+		nonce = &st->st_ni;
+		nonce_name = "create: responder inputs to hash2 (initiator nonce)";
+	} else if (st->st_state == STATE_PARENT_R1 && verify) {
+		/* we are responder verifying PSK */
+		nonce = &st->st_nr;
+		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
 	}
 
 	/* calculate outer prf */
@@ -177,18 +198,22 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	return TRUE;
 }
 
-bool ikev2_calculate_psk_auth(struct state *st,
-			      enum original_role role,
+bool ikev2_create_psk_auth(enum keyword_authby authby,
+			      struct state *st,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs)
 {
 	unsigned int hash_len = st->st_oakley.prf->prf_output_size;
 	unsigned char signed_octets[hash_len];
+	/* used to generate _and_ verify PSK, so use state kind */
 
-	if (!ikev2_calculate_psk_sighash(st, role, idhash,
-					 st->st_firstpacket_me,
-					 signed_octets))
+	passert(authby == AUTH_PSK || authby == AUTH_NULL);
+
+	if (!ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+				st->st_firstpacket_me,
+				signed_octets)) {
 		return FALSE;
+	}
 
 	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
@@ -199,8 +224,8 @@ bool ikev2_calculate_psk_auth(struct state *st,
 	return TRUE;
 }
 
-stf_status ikev2_verify_psk_auth(struct state *st,
-				 enum original_role role,
+stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
+				 struct state *st,
 				 unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
@@ -208,9 +233,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 	unsigned char calc_hash[hash_len];
 	size_t sig_len = pbs_left(sig_pbs);
 
-	enum original_role invertrole;
-
-	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
+	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	if (sig_len != hash_len) {
 		libreswan_log("negotiated prf: %s ",
@@ -222,9 +245,11 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 		return STF_FAIL;
 	}
 
-	if (!ikev2_calculate_psk_sighash(st, invertrole, idhash,
-					 st->st_firstpacket_him, calc_hash))
+
+	if (!ikev2_calculate_psk_sighash(TRUE, st, authby, idhash,
+					 st->st_firstpacket_him, calc_hash)) {
 		return STF_FAIL;
+	}
 
 	DBG(DBG_PRIVATE,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);

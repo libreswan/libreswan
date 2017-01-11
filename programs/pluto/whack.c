@@ -69,10 +69,11 @@ static void help(void)
 		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
-		"	[--client <subnet> | --clientwithin <address range>] \\\n"
+		"	[--client <subnet>] \\\n"
 		"	[--ikeport <port-number>] [--srcip <ip-address>] [--vtiip <ip-address>/mask]\\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
 		"	[--updown <updown>] \\\n"
+		"	[--authby <psk | rsasig | null>] \\\n"
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
@@ -354,6 +355,7 @@ enum option_enums {
 	END_SENDCERT,
 	END_SRCIP,
 	END_VTIIP,
+	END_AUTHBY,
 	END_UPDOWN,
 	END_TUNDEV,
 
@@ -555,6 +557,7 @@ static const struct option long_opts[] = {
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
+	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
 	{ "tundev", required_argument, NULL, END_TUNDEV + OO + NUMERIC_ARG },
 
@@ -1470,6 +1473,16 @@ int main(int argc, char **argv)
 			diagq(tnatoaddr(optarg, strchr(optarg, '/') - optarg, AF_UNSPEC, &msg.right.host_vtiip.addr), optarg);
 			continue;
 
+		case END_AUTHBY: /* --authby secret | rsasig | null */
+			if (streq(optarg, "psk"))
+				msg.right.authby = AUTH_PSK;
+			else if (streq(optarg, "null"))
+				msg.right.authby = AUTH_NULL;
+			else if (streq(optarg, "rsasig"))
+				msg.right.authby = AUTH_RSASIG;
+			else diag("authby option is not one of psk, rsasig or null");
+			continue;
+
 		case END_CLIENT:	/* --client <subnet> */
 
 			tunnel_af_used_by = long_opts[long_index].name;
@@ -2075,11 +2088,12 @@ int main(int argc, char **argv)
 				diag("non-shunt connection must have --psk or --rsasig or both");
 		} else {
 			/* not just a shunt: a real ipsec connection */
-			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
+			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
+				msg.left.authby == AUTH_NEVER && msg.right.authby == AUTH_NEVER)
 				diag("must specify --rsasig or --psk for a connection");
 
 			/*
-			 * If neither v1 not v2, default to v1
+			 * If neither v1 nor v2, default to v1
 			 * (backward compatibility)
 			 */
 			if (!(msg.policy & POLICY_IKEV2_MASK))
