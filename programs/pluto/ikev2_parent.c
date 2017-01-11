@@ -182,6 +182,89 @@ static stf_status crypto_helper_build_ke(struct state *st)
 }
 
 /*
+ * Called by ikev2_parent_inI2outR2_tail() and ikev2parent_inR2()
+ * Do the actual AUTH payload verification
+ */
+static bool v2_check_auth(enum ikev2_auth_method atype,
+		   struct state *st,
+		   const enum original_role role,
+		   unsigned char idhash_in[MAX_DIGEST_LEN],
+		   pb_stream *pbs,
+		   const enum keyword_authby that_authby)
+{
+
+	switch (atype) {
+	case IKEv2_AUTH_RSA:
+	{
+		if (that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attemped RSA authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+		stf_status authstat = ikev2_verify_rsa_sha1(
+				st,
+				role,
+				idhash_in,
+				pbs);
+
+		if (authstat != STF_OK) {
+			libreswan_log("RSA authentication failed");
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	case IKEv2_AUTH_PSK:
+	{
+		if (that_authby != AUTH_PSK) {
+			libreswan_log("Peer attemped PSK authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+               stf_status authstat = ikev2_verify_psk_auth(
+                               that_authby, st, idhash_in,
+                               pbs);
+
+               if (authstat != STF_OK) {
+                       libreswan_log("PSK Authentication failed: AUTH mismatch!");
+                       return FALSE;
+               }
+               return TRUE;
+	}
+
+	case IKEv2_AUTH_NULL:
+	{
+		if (that_authby != AUTH_NULL) {
+			libreswan_log("Peer attemped NULL authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+		stf_status authstat = ikev2_verify_psk_auth(
+				that_authby, st, idhash_in,
+				pbs);
+
+		if (authstat != STF_OK) {
+			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	default:
+	{
+		libreswan_log("authentication method: %s not supported",
+			      enum_name(&ikev2_auth_names, atype));
+		return FALSE;
+	}
+
+	}
+}
+
+
+/*
  *
  ***************************************************************
  *****                   PARENT_OUTI1                      *****
@@ -3059,7 +3142,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
-	bool auth_failed = TRUE;
 
 	/* extract calculated values from r */
 	if (!finish_dh_v2(st, r))
@@ -3101,81 +3183,22 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		ikev2_decode_cr(md);
 	}
 
-	/* FACTOR ME OUT */
-	/* process AUTH payload now */
+	/* process AUTH payload */
+
 	enum keyword_authby that_authby = st->st_connection->spd.that.authby;
 
 	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
-	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case IKEv2_AUTH_RSA:
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+		st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+		st->st_connection->spd.that.authby))
 	{
-		if (that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attemped RSA authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-		stf_status authstat = ikev2_verify_rsa_sha1(
-				st, ORIGINAL_RESPONDER, idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication failed");
-			break;
-		}
-		auth_failed = FALSE;
-		break;
-	}
-
-	case IKEv2_AUTH_PSK:
-		if (that_authby != AUTH_PSK) {
-			libreswan_log("Peer attemped PSK authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-
-		stf_status authstat = ikev2_verify_psk_auth(
-				that_authby, st, idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("PSK Authentication failed: AUTH mismatch!");
-			break;
-		}
-		auth_failed = FALSE;
-		break;
-
-	case IKEv2_AUTH_NULL:
-	{
-		if (that_authby != AUTH_NULL) {
-			libreswan_log("Peer attemped NULL authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-
-		stf_status authstat = ikev2_verify_psk_auth(
-				that_authby, st, idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
-			break;
-		}
-		auth_failed = FALSE;
-		break;
-	}
-	default:
-		libreswan_log("authentication method: %s not supported",
-			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type));
-		break;
-	}
-
-	if (auth_failed) {
 		/* TODO: This should really be an encrypted message! */
 		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 		return STF_FATAL;
 	}
+
+	/* AUTH succeeded */
 
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
@@ -3491,7 +3514,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	struct state *pst = st;
 	bool got_transport = FALSE;
 	int cp_r;
-	bool auth_failed = TRUE;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -3557,79 +3579,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* process AUTH payload */
 
-	/* XXXX
-	 * refactor so both initiator and responder can use it
-	 * but first we need to fix arguments to ikev2_verify_rsa_sha1()
-	 * so it won't need ORIGINAL_INITIATOR and can be asymmetric
-	 */
-	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case IKEv2_AUTH_RSA:
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+		pst, ORIGINAL_INITIATOR, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+		that_authby))
 	{
-		if (that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attemped RSA authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-
-		stf_status authstat = ikev2_verify_rsa_sha1(
-				pst,
-				ORIGINAL_INITIATOR,
-				idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication failed");
-			break;
-		}
-		auth_failed = FALSE;
-		break;
-	}
-	case IKEv2_AUTH_PSK:
-		if (that_authby != AUTH_PSK) {
-			libreswan_log("Peer attemped PSK authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-
-               stf_status authstat = ikev2_verify_psk_auth(
-                               that_authby, pst, idhash_in,
-                               &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-               if (authstat != STF_OK) {
-                       libreswan_log("PSK Authentication failed: AUTH mismatch!");
-                       break;
-               }
-               auth_failed = FALSE;
-               break;
-
-	case IKEv2_AUTH_NULL:
-	{
-		if (that_authby != AUTH_NULL) {
-			libreswan_log("Peer attemped NULL authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
-			break;
-		}
-
-		stf_status authstat = ikev2_verify_psk_auth(
-				that_authby, pst, idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
-			break;
-		}
-		auth_failed = FALSE;
-		break;
-	}
-
-	default:
-		libreswan_log("authentication method: %s not supported",
-			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type));
-		break;
-	}
-
-	if (auth_failed) {
 		/*
 		 * We cannot send a response as we are processing IKE_AUTH reply
 		 * the RFC states we should pretend IKE_AUTH was okay, and then
@@ -3639,7 +3592,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		return STF_FATAL;
 	}
 
-	/* authentication good */
+	/* AUTH succeeded */
 
 	/*
 	 * update the parent state to make sure that it knows we have
