@@ -66,7 +66,6 @@
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "dnskey.h" /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
 #include "spdb.h"
@@ -1686,8 +1685,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->extra_debugging = wm->debugging;
 
-		c->gw_info = NULL;
-
 		/* at most one virt can be present */
 		passert(wm->left.virt == NULL || wm->right.virt == NULL);
 
@@ -1963,7 +1960,6 @@ struct connection *rw_instantiate(struct connection *c,
 struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
-				    struct gw_info *gw UNUSED, /* ADNS */
 				const ip_address *our_client,
 				const ip_address *peer_client)
 {
@@ -2284,8 +2280,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
  * find_connection_for_clients. In this case, we know the gateways
  * that we need to instantiate an opportunistic connection.
  */
-struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
-						const ip_address *our_client,
+struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
 						const ip_address *peer_client)
 {
 	struct connection *best = NULL;
@@ -2293,14 +2288,9 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
-	/* We don't know his ID yet, so gw id must be an ipaddr */
-	// valid for AUTH_NULL
-	// passert(gw->key != NULL);
-	// passert(id_is_ipaddr(&gw->gw_id));
-
-	/* for each of our addresses... */
-
 	struct iface_port *p;
+
+	struct connection *c = NULL;
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		/*
@@ -2309,7 +2299,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 		 * We cannot know what port the peer would use, so we assume
 		 * that it is pluto_port (makes debugging easier).
 		 */
-		struct connection *c = find_host_pair_connections(
+		c = find_host_pair_connections(
 			&p->ip_addr, pluto_port,
 			(ip_address *) NULL, pluto_port);
 
@@ -2360,7 +2350,8 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	{
 		return NULL;
 	} else {
-		return oppo_instantiate(best, &gw->gw_id.ip_addr, NULL, gw,
+		/* XXX we might not yet know the ID! */
+		return oppo_instantiate(best, peer_client, NULL,
 					our_client, peer_client);
 	}
 }
@@ -2653,9 +2644,9 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 			*cp = NULL;
 			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
 		}
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/* opporstunistic */
-			c = oppo_instantiate(c, him, &c->spd.that.id, NULL, &c->spd.this.host_addr, him);
+		/* only allow opportunistic for IKEv2 connections */
+		if (LIN(POLICY_OPPORTUNISTIC | POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, c->policy)) {
+			c = oppo_instantiate(c, him, &c->spd.that.id, &c->spd.this.host_addr, him);
 		} else {
 			/* regular roadwarrior */
 			c = rw_instantiate(c, him, NULL, NULL);
@@ -2858,9 +2849,11 @@ struct connection *refine_host_connection(const struct state *st,
 			match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
 			opl == 0) {
 
-			DBG(DBG_CONTROLMORE,
-				DBG_log("refine_host_connection: happy with starting point: %s",
-					c->name));
+			DBG(DBG_CONTROLMORE, {
+				char cib[CONN_INST_BUF];
+				DBG_log("refine_host_connection: happy with starting point: \"%s\"%s",
+					c->name,fmt_conn_instance(c, cib));
+				});
 
 			/* peer ID matches current connection -- look no further */
 			return c;
@@ -2938,7 +2931,7 @@ struct connection *refine_host_connection(const struct state *st,
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_host_connection: checking %s%s against %s%s, best=%s with match=%d(id=%d/ca=%d/reqca=%d)",
+				DBG_log("refine_host_connection: checking \"%s\"%s against \"%s\"%s, best=%s with match=%d(id=%d/ca=%d/reqca=%d)",
 					c->name,
 					fmt_conn_instance(c, b1),
 					d->name,
@@ -3085,9 +3078,11 @@ struct connection *refine_host_connection(const struct state *st,
 				  peer_pathlen < best_peer_pathlen) ||
 				 (peer_pathlen == best_peer_pathlen &&
 				  our_pathlen < best_our_pathlen))) {
+				char cib[CONN_INST_BUF];
 				DBG(DBG_CONTROLMORE,
-					DBG_log("refine_host_connection: picking new best %s (wild=%d, peer_pathlen=%d/our=%d)",
+					DBG_log("refine_host_connection: picking new best \"%s\"%s (wild=%d, peer_pathlen=%d/our=%d)",
 						d->name,
+						fmt_conn_instance(d, cib),
 						wildcards, peer_pathlen,
 						our_pathlen));
 				*fromcert = d_fromcert;

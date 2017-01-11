@@ -302,7 +302,6 @@ struct connection {
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 
-	struct gw_info *gw_info;
 	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
@@ -437,7 +436,6 @@ extern struct connection
 
 /* instantiating routines */
 
-struct gw_info;         /* forward declaration of tag (defined in dnskey.h) */
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *him,
@@ -451,12 +449,10 @@ extern struct connection *instantiate(struct connection *c,
 extern struct connection *oppo_instantiate(struct connection *c,
 					   const ip_address *him,
 					   const struct id *his_id,
-					   struct gw_info *gw,
 					   const ip_address *our_client,
 					   const ip_address *peer_client);
 
 extern struct connection *build_outgoing_opportunistic_connection(
-		struct gw_info *gw,
 		const ip_address *our_client,
 		const ip_address *peer_client);
 
