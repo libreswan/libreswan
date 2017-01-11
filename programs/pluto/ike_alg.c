@@ -68,6 +68,9 @@
 #ifdef USE_CAST
 #include "ike_alg_cast.h"
 #endif
+#ifdef USE_RIPEMD
+#include "ike_alg_ripemd.h"
+#endif
 
 /*==========================================================
 *
@@ -525,6 +528,9 @@ static struct integ_desc *integ_descriptors[] = {
 #ifdef USE_AES
 	&ike_alg_integ_aes_xcbc,
 	&ike_alg_integ_aes_cmac,
+#endif
+#ifdef USE_RIPEMD
+	&ike_alg_integ_hmac_ripemd_160_96,
 #endif
 };
 

@@ -221,6 +221,11 @@ EXTRA_CRYPTO_SRCS+=ike_alg_cast.c
 EXTRA_CRYPTO_OBJS+=ike_alg_cast.o
 endif
 
+ifeq ($(USE_RIPEMD),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_ripemd.c
+EXTRA_CRYPTO_OBJS+=ike_alg_ripemd.o
+endif
+
 EXTRA_CRYPTO_SRCS += ike_alg_sha1.c
 EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
 
