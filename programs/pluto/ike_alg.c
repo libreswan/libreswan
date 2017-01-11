@@ -41,6 +41,7 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_dh.h"
 
+#include "ike_alg_null.h"
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
 #endif
@@ -601,6 +602,7 @@ static struct encrypt_desc *encrypt_descriptors[] = {
 #ifdef USE_CAST
 	&ike_alg_encrypt_cast_cbc,
 #endif
+	&ike_alg_encrypt_null,
 };
 
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt,
@@ -628,28 +630,46 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 */
 	passert((encrypt->do_crypt == NULL && encrypt->do_aead_crypt_auth == NULL)
 		|| ((encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL)));
+
 	/*
 	 * AEAD implementation implies a valid AEAD tag size.
 	 * Converse for non-AEAD implementation.
 	 */
 	passert(encrypt->do_aead_crypt_auth == NULL || encrypt->aead_tag_size > 0);
 	passert(encrypt->do_crypt == NULL || encrypt->aead_tag_size == 0);
-	/*
-	 * - at least one key length
-	 * - 0 terminated
-	 * - in descending order
-	 */
-	passert(encrypt->key_bit_lengths[0] > 0);
-	passert(encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
-	for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
-		/* at end, keyp[1] will be 0 */
-		passert(keyp[0] > keyp[1]);
+
+	if (encrypt->keydeflen) {
+		/*
+		 * Acceptable key bit-length checks (assuming the
+		 * algorithm isn't NULL):
+		 *
+		 * - 0 terminated
+		 *
+		 * - in descending order
+		 *
+		 * - provided there is a KEYDEFLEN (i.e., not the NULL
+		 *   algorithm), there is at least one key length.
+		 */
+		passert(encrypt->key_bit_lengths[0] > 0);
+		passert(encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
+		for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
+			/* at end, keyp[1] will be 0 */
+			passert(keyp[0] > keyp[1]);
+		}
+		/*
+		 * the default appears in the list
+		 */
+		passert(encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
+	} else {
+		/*
+		 * Interpret a zero default key as implying NULL encryption.
+		 */
+		passert(encrypt->common.ikev1_esp_id == ESP_NULL
+			|| encrypt->common.ikev2_id == IKEv2_ENCR_NULL);
+		passert(encrypt->enc_blocksize == 1);
+		passert(encrypt->wire_iv_size == 0);
+		passert(encrypt->key_bit_lengths[0] == 0);
 	}
-	/*
-	 * the default appears in the list
-	 */
-	passert(encrypt->keydeflen > 0);
-	passert(encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
 }
 
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)

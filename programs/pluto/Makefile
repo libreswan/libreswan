@@ -204,6 +204,9 @@ EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
 EXTRA_CRYPTO_SRCS+=ike_alg_nss_gcm.c
 EXTRA_CRYPTO_OBJS+=ike_alg_nss_gcm.o
 
+EXTRA_CRYPTO_SRCS+=ike_alg_null.c
+EXTRA_CRYPTO_OBJS+=ike_alg_null.o
+
 ifeq ($(USE_SERPENT),true)
 EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
 EXTRA_CRYPTO_OBJS+=ike_alg_serpent.o
