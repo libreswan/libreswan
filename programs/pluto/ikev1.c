@@ -2803,7 +2803,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		struct connection *r = NULL;
 
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
+			r = refine_host_connection(st, &peer, initiator,
+				auth_policy, c->spd.this.authby, &fromcert);
 			pexpect(r != NULL);
 		}
 

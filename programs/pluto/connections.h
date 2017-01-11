@@ -174,6 +174,8 @@ struct end {
 
 	struct virtual_t *virt;
 
+	enum keyword_authby authby;
+
 	bool xauth_server;
 	bool xauth_client;
 	char *username;
@@ -373,11 +375,11 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
-			     int whackfd
+			     int whackfd,
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike *uctx
+			     struct xfrm_user_sec_ctx_ike *uctx,
 #endif
-			     , err_t why);
+			     err_t why);
 extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
@@ -421,7 +423,8 @@ extern struct connection
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
-			bool initiator, lset_t auth_policy, bool *fromcert),
+			bool initiator, lset_t auth_policy /* used by ikev1 */,
+			enum keyword_authby, bool *fromcert),
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,

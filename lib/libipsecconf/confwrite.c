@@ -508,7 +508,11 @@ static void confwrite_conn(FILE *out,
 					abs = "never";
 					break;
 				}
-				cwf("authby", abs);
+				if (conn->left.options[KNCF_AUTH] == k_unset ||
+						conn->right.options[KNCF_AUTH]
+						== k_unset) {
+					cwf("authby", abs);
+				}
 			}
 
 			{

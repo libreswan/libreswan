@@ -76,6 +76,47 @@
 
 #include "hostpair.h"
 
+/*
+ * swap ends and try again.
+ * It is a little tricky to see that this loop will stop.
+ * Only continue if the far side matches.
+ * If both sides match, there is an error-out.
+ */
+static void swap_ends(struct connection *c)
+{
+	struct spd_route *sr = &c->spd;
+	struct end t = sr->this;
+
+	sr->this = sr->that;
+	sr->that = t;
+
+	/*
+	 * incase of asymetric auth c->policy contains left.authby
+	 * This magic will help responder to find connction during INIT
+	 */
+	if(sr->this.authby != sr->that.authby)
+	{
+		c->policy &= ~POLICY_ID_AUTH_MASK;
+		switch(sr->this.authby) {
+		case AUTH_PSK:
+			c->policy |= POLICY_PSK;
+			break;
+		case AUTH_RSASIG:
+			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_NULL:
+			c->policy |= POLICY_AUTH_NULL;
+			break;
+		case AUTH_NEVER:
+			/* nothing to add */
+			break;
+		default:
+			bad_case(sr->this.authby);
+		}
+	}
+}
+
+
 bool orient(struct connection *c)
 {
 	if (!oriented(*c)) {
@@ -133,19 +174,30 @@ bool orient(struct connection *c)
 					       pluto_port)))
 						break;
 
-					/* swap ends and try again.
-					 * It is a little tricky to see that this loop will stop.
-					 * Only continue if the far side matches.
-					 * If both sides match, there is an error-out.
-					 */
-					{
-						struct end t = sr->this;
-
-						sr->this = sr->that;
-						sr->that = t;
-					}
+					swap_ends(c);
 				}
 			}
+		}
+	}
+	/*
+	 * If we are oriented, update asymmetric policy into the symmetric one
+	 * which is used by various connection lookup functions.
+	 * add_connection() guaranteed there were no conflicts.
+	 */
+	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {
+		switch(c->spd.this.authby) {
+		case AUTH_RSASIG:
+			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_PSK:
+			c->policy |= POLICY_PSK;
+			break;
+		case AUTH_NULL:
+			c->policy |= POLICY_AUTH_NULL;
+			break;
+		default:
+			bad_case(c->spd.this.authby);
+			break;
 		}
 	}
 	return oriented(*c);

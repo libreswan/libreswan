@@ -1,0 +1,27 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftauth</emphasis></term>
+  <listitem>
+<para>How the security gateways will authenticate to the other side in
+the case of asymmetric authentication;
+acceptable values are <emphasis remap='B'>rsasig</emphasis>
+for RSA digital signatures based authentication,
+<emphasis remap='B'>secret</emphasis> for shared secrets (PSK) authentication
+and <emphasis remap='B'>null</emphasis> for null-authentication. There is no
+default value - if unset, the symmetrical <emphasis remap='B'>authby=</emphasis>
+keyword is used to determine the authentication policy of the connection.
+</para>
+
+<para>
+If asymmetric authentication is requested, IKEv1 must be disabled. If symmetric
+authentication is required, use <emphasis remap='B'>authby=</emphasis> instead
+of leftauth/rightauth. If leftauth is set, rightauth must also be set and
+authby= must not be set. Asymmetric authentication cannot use secret (psk) on one
+side and null on the other side - use psk on both ends instead.
+</para>
+<para>
+Be aware that the symmetric keyword is <emphasis remap='B'>authby=</emphasis>
+but the asymmetric keyword is <emphasis remap='B'>leftauth</emphasis> and
+<emphasis remap='B'>rightauth</emphasis> (without the "by").
+</para>
+  </listitem>
+  </varlistentry>

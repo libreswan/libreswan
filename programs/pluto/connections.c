@@ -950,6 +950,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->xauth_client = src->xauth_client;
 	dst->username = src->username;
 
+	dst->authby = src->authby;
+
 	dst->protocol = src->protocol;
 	dst->port = src->port;
 	dst->has_port_wildcard = src->has_port_wildcard;
@@ -1320,6 +1322,18 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
+	if ((wm->policy & POLICY_IKEV2_PROPOSE) && (wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
+			loglog(RC_LOG_SERIOUS, "Cannot insist on IKEv2 while forbidding it");
+			return;
+	}
+
+	if (wm->policy & POLICY_OPPORTUNISTIC) {
+		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
+			loglog(RC_LOG_SERIOUS, "Opportunistic connection MUST be ikev2=insist");
+			return;
+		}
+	}
+
 	/* we could complain about a lot more whack strings */
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->ike != NULL) {
@@ -1327,6 +1341,89 @@ void add_connection(const struct whack_message *wm)
 		}
 		if (wm->esp != NULL) {
 			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
+		}
+		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
+			loglog(RC_INFORMATIONAL, "Ignored leftauth= / rightauth= option for type=passthrough connection");
+
+		}
+	} else {
+
+		/* reject all bad combinations of authby with leftauth=/rightauth= */
+		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
+			if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
+				loglog(RC_LOG_SERIOUS,
+					"Failed to add connection \"%s\" : leftauth= and rightauth= require ikev2=insist",
+						wm->name);
+				return;
+			}
+			if (wm->left.authby == AUTH_UNSET || wm->right.authby == AUTH_UNSET) {
+				loglog(RC_LOG_SERIOUS,
+					"Failed to add connection \"%s\" : leftauth= and rightauth= must both be set or both be unset",
+						wm->name);
+				return;
+			}
+			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
+			if (wm->left.authby == wm->right.authby) {
+				bool conflict = FALSE;
+				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
+
+				switch(wm->left.authby) {
+				case AUTH_PSK:
+					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
+						loglog(RC_LOG_SERIOUS, "leftauthby=secret but authby= is not secret");
+						conflict = TRUE;
+					}
+					break;
+				case AUTH_RSASIG:
+					if (auth_pol != POLICY_RSASIG && auth_pol != LEMPTY) {
+						loglog(RC_LOG_SERIOUS, "leftauthby=rsasig but authby= is not rsasig");
+						conflict = TRUE;
+					}
+					break;
+				case AUTH_NULL:
+					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
+						loglog(RC_LOG_SERIOUS, "leftauthby=null but authby= is not null");
+						conflict = TRUE;
+					}
+					break;
+				case AUTH_NEVER:
+					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
+						loglog(RC_LOG_SERIOUS, "leftauthby=never but authby= is not never - double huh?");
+						conflict = TRUE;
+					}
+					break;
+				default:
+					bad_case(wm->left.authby);
+				}
+				if (conflict) {
+					loglog(RC_LOG_SERIOUS,
+						"Failed to add connection \"%s\" : leftauth=%s and rightauth=%s must not conflict with authby=%s",
+							wm->name,
+							enum_name(&ikev2_asym_auth_name, wm->left.authby),
+							enum_name(&ikev2_asym_auth_name, wm->right.authby),
+							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
+					return;
+				}
+			} else { /* leftauth != rightauth so authby MUST be unset */
+				if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
+					loglog(RC_LOG_SERIOUS,
+						"Failed to add connection \"%s\" : leftauth=%s is unequal to rightauth=%s so authby=%s must not be set",
+							wm->name,
+							enum_name(&ikev2_asym_auth_name, wm->left.authby),
+							enum_name(&ikev2_asym_auth_name, wm->right.authby),
+							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
+					return;
+				}
+				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
+				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
+					loglog(RC_LOG_SERIOUS,
+						"Failed to add connection \"%s\" : cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
+							wm->name,
+							enum_name(&ikev2_asym_auth_name, wm->left.authby),
+							enum_name(&ikev2_asym_auth_name, wm->right.authby));
+					return;
+				}
+			}
 		}
 	}
 
@@ -1336,7 +1433,6 @@ void add_connection(const struct whack_message *wm)
 				wm->name);
 		return;
 	}
-
 	if (check_connection_end(&wm->right, &wm->left, wm) &&
 	    check_connection_end(&wm->left, &wm->right, wm))
 	{
@@ -1378,6 +1474,19 @@ void add_connection(const struct whack_message *wm)
 
 		if (!NEVER_NEGOTIATE(wm->policy))
 		{
+
+			/* set default to RSASIG if unset and we expect to do IKE */
+			if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+				/* why does this not work?
+				 * if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+				 */
+				if ((c->policy & POLICY_RSASIG) == LEMPTY &&
+					(c->policy & POLICY_PSK) == LEMPTY &&
+					(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
+						/* authby= was also not specified - fill in default */
+						c->policy |= POLICY_RSASIG;
+				}
+			}
 
 		c->alg_info_esp = NULL;
 		if (wm->esp != NULL) {
@@ -1605,6 +1714,35 @@ void add_connection(const struct whack_message *wm)
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
+
+		/*
+		 * If both left/rightauth is unset, fill it in with symmetric policy
+		 */
+		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+			if (c->policy & POLICY_RSASIG)
+				c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
+			if (c->policy & POLICY_PSK)
+				c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
+			if (c->policy & POLICY_AUTH_NULL)
+				c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
+		}
+
+		/* if left/rightauth are set, but symmetric policy is not, fill it in */
+		if (wm->left.authby == wm->right.authby) {
+			switch (wm->left.authby) {
+			case AUTH_RSASIG:
+				c->policy |= POLICY_RSASIG;
+				break;
+			case AUTH_PSK:
+				c->policy |= POLICY_PSK;
+				break;
+			case AUTH_NULL:
+				c->policy |= POLICY_AUTH_NULL;
+				break;
+			default:
+				break;
+			}
+		}
 
 		/*
 		 * force any wildcard host IP address, any wildcard subnet
@@ -2820,21 +2958,22 @@ static chunk_t get_peer_ca(const struct id *peer_id)
 struct connection *refine_host_connection(const struct state *st,
 					const struct id *peer_id,
 					bool initiator,
-					lset_t auth_policy,
+					lset_t auth_policy /* used by ikev1 */,
+					enum keyword_authby this_authby /* used by ikev2 */,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
 	generalName_t *requested_ca = st->st_requested_ca;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("refine_host_connection: starting with %s",
-			c->name));
+	DBG(DBG_CONTROLMORE, {
+		char cib[CONN_INST_BUF];
+		DBG_log("refine_host_connection: starting with \"%s\"%s",
+			c->name, fmt_conn_instance(c, cib));
+		});
 
-	if (auth_policy & POLICY_AUTH_NULL) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("refine_host_connection: cannot refine AUTH_NULL policy which is tied to ephemeral SKEYSEED"));
-		return c;
-	}
+	passert(this_authby != AUTH_NEVER);
+	if (c->spd.this.authby != c->spd.that.authby)
+		passert(this_authby != AUTH_UNSET);
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
@@ -2863,32 +3002,45 @@ struct connection *refine_host_connection(const struct state *st,
 	const chunk_t *psk = NULL;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 
-	if (auth_policy & POLICY_PSK) {
+	switch(this_authby) {
+	case AUTH_PSK:
 		if (initiator) {
 			psk = get_preshared_secret(c);
 			/*
 			 * It should be virtually impossible to fail to find
 			 * PSK: we just used it to decode the current message!
+			 * Paul: only true for IKEv1
 			 */
-			if (psk == NULL)
-				return NULL; /* cannot determine PSK! */
+			if (psk == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find PSK");
+				return c; /* cannot determine PSK, so not switching */
+			}
 		}
-	} else if (auth_policy & POLICY_RSASIG) {
+		break;
+	case AUTH_NULL:
+		/* we know our AUTH_NULL key :) */
+		break;
+
+	case AUTH_RSASIG:
 		if (initiator) {
 			/*
 			 * At this point, we've committed to our RSA private
 			 * key: we used it in our previous message.
+			 * Paul: only true for IKEv1
 			 */
 			my_RSA_pri = get_RSA_private_key(c);
-			if (my_RSA_pri == NULL)
+			if (my_RSA_pri == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
 				 /* cannot determine my RSA private key! */
-				return NULL;
+				return c;
+			}
 		}
-	} else {
-		/* don't die bad_case(auth); */
-		DBG(DBG_CONTROL,
-			DBG_log("refine_host_connection: unexpected auth policy: only handling PSK or RSA"));
-		return NULL;
+		break;
+	default:
+		/* don't die on bad_case(auth); */
+		loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
+			enum_name(&ikev2_asym_auth_name, this_authby));
+		return c;
 	}
 
 	/*
@@ -3011,7 +3163,7 @@ struct connection *refine_host_connection(const struct state *st,
 					d->name,
 					fmt_conn_instance(d, b2)); } );
 
-			if (auth_policy & POLICY_PSK) {
+			if (this_authby == AUTH_PSK) {
 				/* secret must match the one we already used */
 				const chunk_t *dpsk = get_preshared_secret(d);
 
@@ -3032,7 +3184,7 @@ struct connection *refine_host_connection(const struct state *st,
 				}
 			}
 
-			if (auth_policy & POLICY_RSASIG) {
+			if (this_authby == AUTH_RSASIG) {
 				/*
 				 * We must at least be able to find our
 				 * private key.
@@ -3746,6 +3898,14 @@ static void show_one_sr(const struct connection *c,
 			"",
 		sr->this.username != NULL ? sr->this.username : "[any]",
 		sr->that.username != NULL ? sr->that.username : "[any]");
+
+	struct esb_buf auth1,auth2;
+
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   our auth:%s, their auth:%s",
+		c->name, instance,
+		enum_show_shortb(&ikev2_asym_auth_name,sr->this.authby, &auth1),
+		enum_show_shortb(&ikev2_asym_auth_name,sr->that.authby, &auth2));
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s;",
