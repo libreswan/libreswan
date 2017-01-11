@@ -442,6 +442,13 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
+/*
+ * References for AES_CCM.
+ *
+ * https://en.wikipedia.org/wiki/CCM_mode
+ * https://tools.ietf.org/html/rfc4309#section-7.1
+ */
+
 struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
@@ -462,7 +469,8 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.key_bit_lengths = { 256, 192, 128, }
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 8,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -485,7 +493,8 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.key_bit_lengths = { 256, 192, 128, }
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 12,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -508,7 +517,8 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.key_bit_lengths = { 256, 192, 128, }
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 16,
 };
 
 struct integ_desc ike_alg_integ_aes_xcbc = {
