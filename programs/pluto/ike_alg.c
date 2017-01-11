@@ -203,9 +203,10 @@ const char *ike_alg_type_name(const struct ike_alg *alg)
 	return type_algorithms[alg->algo_type]->all.name;
 }
 
-bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
+bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
 {
-	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
+	pexpect(enc_desc != NULL);
+	return enc_desc != NULL && enc_desc->aead_tag_size > 0;
 }
 
 /*
@@ -627,6 +628,12 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 */
 	passert((encrypt->do_crypt == NULL && encrypt->do_aead_crypt_auth == NULL)
 		|| ((encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL)));
+	/*
+	 * AEAD implementation implies a valid AEAD tag size.
+	 * Converse for non-AEAD implementation.
+	 */
+	passert(encrypt->do_aead_crypt_auth == NULL || encrypt->aead_tag_size > 0);
+	passert(encrypt->do_crypt == NULL || encrypt->aead_tag_size == 0);
 	/*
 	 * - at least one key length
 	 * - 0 terminated

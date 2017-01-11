@@ -943,7 +943,7 @@ void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
 		}
 	}
 	if (esp_info->esp_encrypt != NULL
-	    && !ike_alg_enc_requires_integ(esp_info->esp_encrypt)
+	    && ike_alg_is_aead(esp_info->esp_encrypt)
 	    && esp_info->auth == AUTH_ALGORITHM_NONE) {
 		/*
 		 * AEAD algorithms do not have a separate integrity

@@ -429,11 +429,19 @@ const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
 const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
 
 /*
- * Does the encryption algorithm require separate integrity (FALSE
- * implies AEAD).
+ * Is the encryption algorithm AEAD (Authenticated Encryption with
+ * Associated Data)?
+ *
+ * Since AEAD algorithms have integrity built in, separate integrity
+ * is redundant and rejected.
+ *
+ * XXX: The converse (non-AEAD algorithm always require integrity) is
+ * not true.  For instance, with ESP, integrity is optional.  Hence,
+ * the old (reverse) test ike_alg_enc_requires_integ() should go away.
  */
 
-extern bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc);
+extern bool ike_alg_is_aead(const struct encrypt_desc *enc_desc);
+#define ike_alg_enc_requires_integ(ALG) (!ike_alg_is_aead(ALG))
 
 void ike_alg_init(void);
 
