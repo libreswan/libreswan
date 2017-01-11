@@ -20,7 +20,7 @@ initdone
 east #
  # should not show any hits
 east #
- grep fos_start /tmp/pluto.log
+ grep "initiate on demand" /tmp/pluto.log
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
