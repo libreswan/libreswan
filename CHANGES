@@ -2,14 +2,17 @@
 See also https://libreswan.org/
 
 v3.19 (unreleased)
-* NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg]
+* NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]
 * FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
 * FIPS: do not allow DBG_PRIVATE to be set when running in FIPS mode [Paul]
 * FIPS: Ignore failureshunt=passthrough and negotiationshunt=passthrough [Paul]
-* IKEv1: If a queued up DPD probe finds no IKE SA, create a new one [Paul]
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
+* IKEv2: Add asymmetric AUTH support (leftauth= and rightauth=) [Antony/Paul]
+* IKEv2: refactored AUTH handling payload into v2_check_auth() [Paul]
+* IKEv1: If a queued up DPD probe finds no IKE SA, create a new one [Paul]
+* IKEv1: Remove ADNS, DNS continuations and IKEv1 OE code
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
-* XFRM: EXPERIMENTAL Support for configuring the VTI device [Paul]
+* XFRM: EXPERIMENTAL Support for configuring IP address on the VTI device [Paul]
         keyword: leftvti=address/mask
 * XFRM: Fix NAT-T support when userland compiled without KLIPS support [Paul]
 * X509: Obsolete /etc/ipsec.d/crls (load_crls()) and whack --rereadcrls [Paul]
@@ -23,6 +26,8 @@ v3.19 (unreleased)
                        ocsp-cache-max-age)
 * X509: Fix memory leak in certificate handling (lsbz#278) [William Rios]
 * X509: Fix memory leak in certificate chain handling [Matt]
+* pluto: send_packet() now refuses to send a packet to 0.0.0.0 [Paul]
+* pluto: find_hostpair ignore CK_INSTANCES which are ID_NULL [Antony]
 * pluto: Fix ca name and generalName leak lsbz#276 [Bill Rios]
 * pluto: SECCOMP support (seccomp=enabled|tolerant|disabled) [Paul]
 * pluto: connection instances need their own reqid [Antony]
