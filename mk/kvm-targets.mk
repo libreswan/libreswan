@@ -227,7 +227,7 @@ kvm-keys-up-to-date:
 	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
 		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
 		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
-		echo "run 'make clean-kvm-keys kvm-keys' to force an update" ; \
+		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
 		exit 1 ; \
 	fi
 
@@ -241,7 +241,7 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_DOMAIN_$(KV
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
-	$(MAKE) clean-kvm-keys
+	$(MAKE) kvm-keys-clean
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	touch $(KVM_KEYS)
 
@@ -910,14 +910,18 @@ kvm-help:
 	@echo ''
 	@echo ' Additional rules:'
 	@echo ''
-	@echo '   kvm-keys          - use the build domain ($(KVM_BUILD_DOMAIN))'
-	@echo '                       to create the test keys'
-	@echo '   kvm-shutdown      - shutdown all domains'
+	@echo '   kvm-keys                     - use the build domain'
+	@echo '                                  to create the test keys'
+	@echo '   kvm-keys-clean               - delete the test keys'
+	@echo '                                  forcing them to be rebuilt'
+	@echo '   kvm-shutdown                 - shutdown all domains'
 	@echo '   kvmsh-{$(subst $(empty) $(empty),$(comma),base clone build $(KVM_TEST_HOSTS))}'
-	@echo '                     - log into the domain using kvmsh.py'
-	@echo '                     - for test domains log into $(call first-prefix)HOST'
-	@echo '   kvm-publish       - use rsync to publish test results'
-	@echo '                       to KVM_PUBLISHDIR=$(KVM_PUBLISHDIR)'
+	@echo '                                - boot and log into the domain'
+	@echo '                                  using kvmsh.py'
+	@echo '                                - for test domains log into'
+	@echo '                                  $(call first-prefix)HOST'
+	@echo '   kvm-publish                  - use rsync to publish the test'
+	@echo '                                  results to $$(KVM_PUBLISHDIR).'
 	@echo ''
 	@echo ' RECOMMENDED:'
 	@echo ''
