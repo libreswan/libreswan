@@ -45,7 +45,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -657,8 +656,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  *           --> HDR*, [CERT,] SIG_I
  */
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
-				       struct key_continuation *kc); /* forward */
+static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
 
 stf_status aggr_inR1_outI2(struct msg_digest *md)
 {
@@ -758,7 +756,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
-		e = aggr_inR1_outI2_tail(md, NULL);
+		e = aggr_inR1_outI2_tail(md);
 	}
 
 	passert(dh->pcrc_md != NULL);
@@ -767,13 +765,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 	reset_cur_state();
 }
 
-static void aggr_inR1_outI2_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, aggr_inR1_outI2_tail);
-}
-
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
-				       struct key_continuation *kc)
+static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
@@ -781,8 +773,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HASH_R or SIG_R in */
 	{
-		stf_status r = aggr_id_and_auth(md, TRUE,
-						aggr_inR1_outI2_continue, kc);
+		stf_status r = aggr_id_and_auth(md, TRUE);
 
 		if (r != STF_OK)
 			return r;
@@ -925,21 +916,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
  * SMF_PSK_AUTH: HDR*, HASH_I --> done
  * SMF_DS_AUTH:  HDR*, SIG_I  --> done
  */
-static stf_status aggr_inI2_tail(struct msg_digest *md,
-			  struct key_continuation *kc);         /* forward */
-
-static void aggr_inI2_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, aggr_inI2_tail);
-}
 
 stf_status aggr_inI2(struct msg_digest *md)
-{
-	return aggr_inI2_tail(md, NULL);
-}
-
-static stf_status aggr_inI2_tail(struct msg_digest *md,
-			  struct key_continuation *kc)
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
@@ -979,9 +957,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 
 	/* HASH_I or SIG_I in */
 	{
-		stf_status r = aggr_id_and_auth(md, FALSE,
-						aggr_inI2_continue, kc);
-
+		stf_status r = aggr_id_and_auth(md, FALSE);
 		if (r != STF_OK)
 			return r;
 	}
@@ -1114,13 +1090,6 @@ stf_status aggr_outI1(int whack_sock,
 {
 	struct state *st;
 	struct spd_route *sr;
-
-	if (drop_new_exchanges()) {
-		/* Only drop outgoing opportunistic connections */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			return STF_IGNORE;
-		}
-	}
 
 	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
 		loglog(RC_LOG_SERIOUS,

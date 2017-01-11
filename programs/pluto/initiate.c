@@ -63,7 +63,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
 #include "spdb.h"
@@ -76,6 +75,47 @@
 #include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
+
+/*
+ * swap ends and try again.
+ * It is a little tricky to see that this loop will stop.
+ * Only continue if the far side matches.
+ * If both sides match, there is an error-out.
+ */
+static void swap_ends(struct connection *c)
+{
+	struct spd_route *sr = &c->spd;
+	struct end t = sr->this;
+
+	sr->this = sr->that;
+	sr->that = t;
+
+	/*
+	 * incase of asymetric auth c->policy contains left.authby
+	 * This magic will help responder to find connction during INIT
+	 */
+	if(sr->this.authby != sr->that.authby)
+	{
+		c->policy &= ~POLICY_ID_AUTH_MASK;
+		switch(sr->this.authby) {
+		case AUTH_PSK:
+			c->policy |= POLICY_PSK;
+			break;
+		case AUTH_RSASIG:
+			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_NULL:
+			c->policy |= POLICY_AUTH_NULL;
+			break;
+		case AUTH_NEVER:
+			/* nothing to add */
+			break;
+		default:
+			bad_case(sr->this.authby);
+		}
+	}
+}
+
 
 bool orient(struct connection *c)
 {
@@ -134,19 +174,30 @@ bool orient(struct connection *c)
 					       pluto_port)))
 						break;
 
-					/* swap ends and try again.
-					 * It is a little tricky to see that this loop will stop.
-					 * Only continue if the far side matches.
-					 * If both sides match, there is an error-out.
-					 */
-					{
-						struct end t = sr->this;
-
-						sr->this = sr->that;
-						sr->that = t;
-					}
+					swap_ends(c);
 				}
 			}
+		}
+	}
+	/*
+	 * If we are oriented, update asymmetric policy into the symmetric one
+	 * which is used by various connection lookup functions.
+	 * add_connection() guaranteed there were no conflicts.
+	 */
+	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {
+		switch(c->spd.this.authby) {
+		case AUTH_RSASIG:
+			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_PSK:
+			c->policy |= POLICY_PSK;
+			break;
+		case AUTH_NULL:
+			c->policy |= POLICY_AUTH_NULL;
+			break;
+		default:
+			bad_case(c->spd.this.authby);
+			break;
 		}
 	}
 	return oriented(*c);
@@ -393,32 +444,7 @@ void restart_connections_by_peer(struct connection *const c)
  * carries negotiation forward.
  */
 
-enum find_oppo_step {
-	fos_start,
-	fos_myid_ip_txt,
-	fos_myid_hostname_txt,
-	fos_myid_ip_key,
-	fos_myid_hostname_key,
-	fos_our_client,
-	fos_our_txt,
-	fos_his_client,
-	fos_done,
-};
-
-static const char *const oppo_step_name[] = {
-	"fos_start",
-	"fos_myid_ip_txt",
-	"fos_myid_hostname_txt",
-	"fos_myid_ip_key",
-	"fos_myid_hostname_key",
-	"fos_our_client",
-	"fos_our_txt",
-	"fos_his_client",
-	"fos_done"
-};
-
 struct find_oppo_bundle {
-	enum find_oppo_step step;
 	err_t want;
 	bool failure_ok;        /* if true, continue_oppo should not die on DNS failure */
 	ip_address our_client;  /* not pointer! */
@@ -429,11 +455,6 @@ struct find_oppo_bundle {
 	ipsec_spi_t negotiation_shunt; /* in host order! */
 	ipsec_spi_t failure_shunt; /* in host order! */
 	int whackfd;
-};
-
-struct find_oppo_continuation {
-	struct adns_continuation ac;    /* common prefix */
-	struct find_oppo_bundle b;
 };
 
 static void cannot_oppo(struct connection *c,
@@ -548,100 +569,13 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static void initiate_ondemand_body(struct find_oppo_bundle *b,
-				  struct adns_continuation *ac, err_t ac_ugh
+static void initiate_ondemand_body(struct find_oppo_bundle *b
 #ifdef HAVE_LABELED_IPSEC
-				  , struct xfrm_user_sec_ctx_ike *uctx
-#endif
-				  ); /* forward */
-
-void initiate_ondemand(const ip_address *our_client,
-		      const ip_address *peer_client,
-		      int transport_proto,
-		      bool held,
-		      int whackfd
-#ifdef HAVE_LABELED_IPSEC
-		      , struct xfrm_user_sec_ctx_ike *uctx
-#endif
-		      , err_t why)
-{
-	struct find_oppo_bundle b;
-
-	b.want = why;   /* fudge */
-	b.failure_ok = FALSE;
-	b.our_client = *our_client;
-	b.peer_client = *peer_client;
-	b.transport_proto = transport_proto;
-	b.held = held;
-	b.policy_prio = BOTTOM_PRIO;
-	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
-	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
-	b.whackfd = whackfd;
-	b.step = fos_start;
-	initiate_ondemand_body(&b, NULL, NULL
-#ifdef HAVE_LABELED_IPSEC
-				      , uctx
-#endif
-				      );
-}
-
-static err_t check_txt_recs(enum myid_state try_state,
-			    const struct connection *c,
-			    struct adns_continuation *ac)
-{
-	/* Check if IPSECKEY lookup yielded good results.
-	 * Looking up based on our ID.  Used if
-	 * client is ourself, or if IPSECKEY had no public key.
-	 * Note: if c is different this time, there is
-	 * a chance that we did the wrong query.
-	 * If so, treat as a kind of failure.
-	 */
-	enum myid_state old_myid_state = myid_state;
-	const struct RSA_private_key *our_RSA_pri;
-	err_t ugh = NULL;
-
-	myid_state = try_state;
-
-	if (old_myid_state != myid_state &&
-	    old_myid_state == MYID_SPECIFIED) {
-		ugh = "%myid was specified while we were guessing";
-	} else if ((our_RSA_pri = get_RSA_private_key(c)) == NULL) {
-		ugh = "we don't know our own RSA key";
-	} else if (!same_id(&ac->id, &c->spd.this.id)) {
-		ugh = "our ID changed underfoot";
-	} else {
-		/* Similar to code in RSA_check_signature
-		 * for checking the other side.
-		 */
-		struct gw_info *gwp;
-
-		ugh = "no IPSECKEY RR found for us";
-		for (gwp = ac->gateways_from_dns; gwp != NULL;
-		     gwp = gwp->next) {
-			ugh = "all our IPSECKEY RRs have the wrong public key";
-			if (gwp->key->alg == PUBKEY_ALG_RSA &&
-			    same_RSA_public_key(&our_RSA_pri->pub,
-						&gwp->key->u.rsa)) {
-				ugh = NULL; /* good! */
-				break;
-			}
-		}
-	}
-	if (ugh != NULL)
-		myid_state = old_myid_state;
-	return ugh;
-}
-
-/* note: gateways_from_dns must be NULL iff this is the first call */
-static void initiate_ondemand_body(struct find_oppo_bundle *b,
-				  struct adns_continuation *ac,
-				  err_t ac_ugh
-#ifdef HAVE_LABELED_IPSEC
-				  , struct xfrm_user_sec_ctx_ike *uctx
+				   , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  )
 {
-	struct connection *c;
+	struct connection *c = NULL;
 	struct spd_route *sr;
 	char ours[ADDRTOT_BUF];
 	char his[ADDRTOT_BUF];
@@ -672,9 +606,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 #endif
 
 	snprintf(demandbuf, sizeof(demandbuf),
-		 "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
-		 ours, ourport, his, hisport, b->transport_proto,
-		 oppo_step_name[b->step], b->want);
+		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
+		 ours, ourport, his, hisport, b->transport_proto, b->want);
 
 
 	/* ??? DBG and real-world code mixed */
@@ -794,17 +727,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	} else {
 		/* We are handling an opportunistic situation.
 		 * This involves several DNS lookup steps that require suspension.
-		 * Note: many facts might change while we're suspended.
-		 * Here be dragons.
+		 * NOTE: will be re-implemented
 		 *
+		 * old comment:
 		 * The first chunk of code handles the result of the previous
 		 * DNS query (if any).  It also selects the kind of the next step.
 		 * The second chunk initiates the next DNS query (if any).
 		 */
-		enum find_oppo_step next_step;
-		err_t ugh = ac_ugh;
 		char mycredentialstr[IDTOA_BUF];
-		struct gw_info nullgw;
 
 		DBG(DBG_CONTROL, {
 			    char cib[CONN_INST_BUF];
@@ -822,10 +752,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 
-		/* handle any DNS answer; select next step */
-
-		switch (b->step) {
-		case fos_start:
 
 			if (b->negotiation_shunt != SPI_HOLD ||
 				(b->transport_proto != 0 ||
@@ -857,9 +783,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					DEFAULT_IPSEC_SA_PRIORITY,
 					NULL,
 					ERO_ADD, addwidemsg
-	#ifdef HAVE_LABELED_IPSEC
+#ifdef HAVE_LABELED_IPSEC
 					, NULL
-	#endif
+#endif
 					))
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
@@ -877,208 +803,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 			}
 
-			if ((c->policy & POLICY_RSASIG) == LEMPTY) {
-				ipstr_buf b1;
-
-				/* no dns queries to find the gateway. create one here */
-				if (c->policy & POLICY_AUTH_NULL) {
-
-					DBG(DBG_OPPO, DBG_log("use POLICY_AUTH_NULL to initiate to  %s",
-								ipstr(&b->peer_client, &b1)));
-					nullgw.client_id.kind = ID_NULL;
-					nullgw.gw_id.kind = ID_NULL;
-					nullgw.gw_id.ip_addr = b->peer_client;
-				}
-
-				b->step = fos_his_client;
-				goto CASE_fos_his_client;
-			} else {
-				/* just starting out: select first query step */
-				next_step = fos_myid_ip_txt;
-			}
-			break;
-
-		case fos_myid_ip_txt: /* IPSECKEY for our default IP address as %myid */
-			ugh = check_txt_recs(MYID_IP, c, ac);
-			if (ugh != NULL) {
-				/* cannot use our IP as OE identitiy for initiation */
-				DBG(DBG_OPPO,
-				    DBG_log("cannot use our IP (%s:IPSECKEY) as identity: %s",
-					    myid_str[MYID_IP],
-					    ugh));
-				if (!logged_myid_ip_txt_warning) {
-					loglog(RC_LOG_SERIOUS,
-					       "cannot use our IP (%s:IPSECKEY) as identity: %s",
-					       myid_str[MYID_IP],
-					       ugh);
-					logged_myid_ip_txt_warning = TRUE;
-				}
-
-				next_step = fos_myid_hostname_txt;
-				ugh = NULL; /* failure can be recovered from */
-			} else {
-				/* we can use our IP as OE identity for initiation */
-				if (!logged_myid_ip_txt_warning) {
-					loglog(RC_LOG_SERIOUS,
-					       "using our IP (%s:IPSECKEY) as identity!",
-					       myid_str[MYID_IP]);
-					logged_myid_ip_txt_warning = TRUE;
-				}
-
-				next_step = fos_our_client;
-			}
-			break;
-
-		case fos_myid_hostname_txt: /* IPSECKEY for our hostname as %myid */
-			ugh = check_txt_recs(MYID_HOSTNAME, c, ac);
-			if (ugh != NULL) {
-				/* cannot use our hostname as OE identitiy for initiation */
-				DBG(DBG_OPPO,
-				    DBG_log("cannot use our hostname (%s:IPSECKEY) as identity: %s",
-					    myid_str[MYID_HOSTNAME],
-					    ugh));
-				if (!logged_myid_fqdn_txt_warning) {
-					loglog(RC_LOG_SERIOUS,
-					       "cannot use our hostname (%s:IPSECKEY) as identity: %s",
-					       myid_str[MYID_HOSTNAME],
-					       ugh);
-					logged_myid_fqdn_txt_warning = TRUE;
-				}
-				next_step = fos_done;
-			} else {
-				/* we can use our hostname as OE identity for initiation */
-				if (!logged_myid_fqdn_txt_warning) {
-					loglog(RC_LOG_SERIOUS,
-					       "using our hostname (%s:IPSECKEY) as identity!",
-					       myid_str[MYID_HOSTNAME]);
-					logged_myid_fqdn_txt_warning = TRUE;
-				}
-				next_step = fos_our_client;
-			}
-			break;
-
-		case fos_our_client: /* IPSECKEY for our client */
-		{
-			/* Our client is not us: we must check the IPSECKEY records.
-			 * Note: if c is different this time, there is
-			 * a chance that we did the wrong query.
-			 * If so, treat as a kind of failure.
-			 */
-			const struct RSA_private_key *our_RSA_pri =
-				get_RSA_private_key(c);
-
-			next_step = fos_his_client; /* normal situation */
-
-			passert(sr != NULL);
-
-			if (our_RSA_pri == NULL) {
-				ugh = "we don't know our own RSA key";
-			} else if (sameaddr(&sr->this.host_addr,
-					    &b->our_client)) {
-				/* this wasn't true when we started -- bail */
-				ugh = "our IP address changed underfoot";
-			} else if (!same_id(&ac->sgw_id, &sr->this.id)) {
-				/* this wasn't true when we started -- bail */
-				ugh = "our ID changed underfoot";
-			} else {
-				/* Similar to code in quick_inI1_outR1_tail
-				 * for checking the other side.
-				 */
-				struct gw_info *gwp;
-
-				ugh = "no IPSECKEY RR for our client delegates us";
-				for (gwp = ac->gateways_from_dns; gwp != NULL;
-				     gwp = gwp->next) {
-					passert(same_id(&gwp->gw_id,
-							&sr->this.id));
-
-					ugh = "IPSECKEY RR for our client has wrong key";
-					/* If there is a key from the IPSECKEY record,
-					 * we count it as a win if we match the key.
-					 * If there was no key, we have a tentative win:
-					 * we need to check our KEY record to be sure.
-					 */
-					if (!gwp->gw_key_present) {
-						/* Success, but the IPSECKEY had no key
-						 * so we must check our our own KEY records.
-						 */
-						next_step = fos_our_txt;
-						ugh = NULL; /* good! */
-						break;
-					}
-					if (same_RSA_public_key(&our_RSA_pri->
-								pub,
-								&gwp->key->u.
-								rsa)) {
-						ugh = NULL; /* good! */
-						break;
-					}
-				}
-			}
-		}
-		break;
-
-		case fos_our_txt: /* IPSECKEY for us */
-		{
-			/* Check if IPSECKEY lookup yielded good results.
-			 * Looking up based on our ID.  Used if
-			 * client is ourself, or if IPSECKEY had no public key.
-			 * Note: if c is different this time, there is
-			 * a chance that we did the wrong query.
-			 * If so, treat as a kind of failure.
-			 */
-			const struct RSA_private_key *our_RSA_pri =
-				get_RSA_private_key(c);
-
-			next_step = fos_his_client; /* unless we decide to look for KEY RR */
-
-			if (our_RSA_pri == NULL) {
-				ugh = "we don't know our own RSA key";
-			} else if (!same_id(&ac->id, &c->spd.this.id)) {
-				ugh = "our ID changed underfoot";
-			} else {
-				/* Similar to code in RSA_check_signature
-				 * for checking the other side.
-				 */
-				struct gw_info *gwp;
-
-				ugh = "no IPSECKEY RR for us";
-				for (gwp = ac->gateways_from_dns; gwp != NULL;
-				     gwp = gwp->next) {
-					passert(same_id(&gwp->gw_id,
-							&sr->this.id));
-
-					ugh = "IPSECKEY RR for us has wrong key";
-					if (gwp->gw_key_present &&
-					    same_RSA_public_key(&our_RSA_pri->
-								pub,
-								&gwp->key->u.
-								rsa)) {
-						DBG(DBG_OPPO,
-						    DBG_log("initiate on demand found IPSECKEY with right public key at: %s",
-							    mycredentialstr));
-						ugh = NULL;
-						break;
-					}
-				}
-			}
-		}
-		break;
-
-		CASE_fos_his_client:
-		case fos_his_client: /* IPSECKEY for his client */
-		{
-			/* We've finished last DNS queries: IPSECKEY for his client.
-			 * Using the information, try to instantiate a connection
-			 * and start negotiating.
-			 * We now know the peer.  The choosing of "c" ignored this,
-			 * so we will disregard its current value.
-			 * !!! We need to randomize the entry in gw that we choose.
-			 */
-			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				(ac == NULL) ? &nullgw : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
 
@@ -1086,16 +812,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				/* We cannot seem to instantiate a suitable connection:
 				 * complain clearly.
 				 */
-				ipstr_buf b1, b2, b3;
+				ipstr_buf b1, b2;
 
 				/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-				passert(ac != NULL &&
-					id_is_ipaddr(&ac->gateways_from_dns->gw_id));
 				loglog(RC_OPPOFAILURE,
-				       "no suitable connection for opportunism between %s and %s with %s as peer",
+				       "no suitable connection for opportunism between %s and %s",
 				       ipstr(&b->our_client, &b1),
-				       ipstr(&b->peer_client, &b2),
-				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
+				       ipstr(&b->peer_client, &b2));
 
 				/*
 				 * Replace negotiation_shunt with failure_shunt
@@ -1121,7 +844,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
-				// passert(c->gw_info != NULL);
 				passert(HAS_IPSEC_POLICY(c->policy));
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
@@ -1140,10 +862,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					}
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
-				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
+				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d because: %s",
 					    ours, ourport, his, hisport,
 					    b->transport_proto,
-					    oppo_step_name[b->step], b->want));
+					    b->want));
 
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 						  SOS_NOBODY, pcim_local_crypto
@@ -1154,107 +876,49 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				b->whackfd = NULL_FD; /* protect from close */
 			}
 		}
-		break;
-
-		default:
-			next_step = fos_done; /* Not used, but pleases compiler */
-			bad_case(b->step);
-		}
 
 		/* the second chunk: initiate the next DNS query (if any) */
 		DBG(DBG_OPPO | DBG_CONTROL, {
 			if (c != NULL) {
 				ipstr_buf b1;
 				ipstr_buf b2;
-				DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
+				DBG_log("initiate on demand using %s from %s to %s",
 					(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 					ipstr(&b->our_client, &b1),
-					ipstr(&b->peer_client, &b2),
-					oppo_step_name[b->step],
-					ugh ? " - error:" : "",
-					ugh ? ugh : "");
+					ipstr(&b->peer_client, &b2));
 			}
 		});
 
-		if (c == NULL) {
-			/*
-			 * build_outgoing_opportunistic_connection failed.
-			 * This case has been handled already.
-			 */
-		} else if (ugh != NULL) {
-			/* I dont think this can happen without DNS, and then these value are already set */
-			b->policy_prio = c->prio;
-			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-			b->failure_shunt = shunt_policy_spi(c, FALSE);
-			cannot_oppo(c, b, ugh);
-		} else if (next_step != fos_done) {
-			/* set up the next query */
-			struct find_oppo_continuation *cr = alloc_thing(
-				struct find_oppo_continuation,
-				"opportunistic continuation");
-			b->policy_prio = c->prio;
-			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-			b->failure_shunt = shunt_policy_spi(c, FALSE);
-			cr->b = *b; /* copy; start hand off of whackfd */
-			cr->b.failure_ok = FALSE;
-			cr->b.step = next_step;
-
-			for (sr = &c->spd
-			     ; sr != NULL &&
-			      !sameaddr(&sr->this.host_addr, &b->our_client)
-			     ; sr = sr->spd_next)
-				;
-
-			if (sr == NULL)
-				sr = &c->spd;
-
-			/* If a %hold shunt has replaced the eroute for this template,
-			 * record this fact.
-			 */
-			if (b->held &&
-			    sr->routing == RT_ROUTED_PROSPECTIVE &&
-			    eclipsable(sr)) {
-				sr->routing = RT_ROUTED_ECLIPSED;
-				eclipse_count++;
-			}
-
-			/* Switch to issue next query.
-			 * A case may turn out to be unnecessary.  If so, it falls
-			 * through to the next case.
-			 * Figuring out what %myid can stand for must be done before
-			 * our client credentials are looked up: we must know what
-			 * the client credentials may use to identify us.
-			 * On the other hand, our own credentials should be looked
-			 * up after our clients in case our credentials are not
-			 * needed at all.
-			 * XXX this is a wasted effort if we don't have credentials
-			 * BUT they are not needed.
-			 */
-			switch (next_step) {
-			case fos_myid_ip_txt:
-				cr->b.step = fos_myid_hostname_txt;
-			/* FALL THROUGH */
-			case fos_myid_hostname_txt:
-				cr->b.step = fos_our_client;
-			/* FALL THROUGH */
-			case fos_our_client: /* IPSECKEY for our client */
-				cr->b.step = fos_our_txt;
-			/* FALL THROUGH */
-			case fos_our_txt: /* IPSECKEY for us */
-				break;
-			case fos_his_client: /* IPSECKEY for his client */
-				break;
-			default:
-				bad_case(next_step);
-			}
-
-			if (ugh == NULL)
-				b->whackfd = NULL_FD; /* complete hand-off */
-			else
-				cannot_oppo(c, b, ugh);
-		}
-	}
 	close_any(b->whackfd);
+}
+
+void initiate_ondemand(const ip_address *our_client,
+		      const ip_address *peer_client,
+		      int transport_proto,
+		      bool held,
+		      int whackfd,
+#ifdef HAVE_LABELED_IPSEC
+		      struct xfrm_user_sec_ctx_ike *uctx,
+#endif
+		      err_t why)
+{
+	struct find_oppo_bundle b;
+
+	b.want = why;   /* fudge */
+	b.failure_ok = FALSE;
+	b.our_client = *our_client;
+	b.peer_client = *peer_client;
+	b.transport_proto = transport_proto;
+	b.held = held;
+	b.policy_prio = BOTTOM_PRIO;
+	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
+	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
+	b.whackfd = whackfd;
+	initiate_ondemand_body(&b
+#ifdef HAVE_LABELED_IPSEC
+				, uctx
+#endif
+	);
 }
 
 /*
@@ -1265,10 +929,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 bool uniqueIDs = FALSE; /* --uniqueids? */
 
 /*
- * Called by main_inI3_outR3_tail() which is called for initiator and responder
- * alike! So this function should not be in initiate.c. It is also not called
- * in IKEv2 code. All it does is set latest serial in connection and check xauth,
- * so it is ikev1 specific. It is also not called in IKEv1 Aggressive Mode!
+ * Called by main_inI3_outR3_tail() and ikev2_child_sa_respond() which is called for
+ * initiator and responder alike! So this function should not be in initiate.c.
+ * It is also not called in IKEv1 Aggressive Mode!
  */
 void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {

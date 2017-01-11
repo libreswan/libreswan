@@ -762,16 +762,6 @@ static stf_status informational(struct msg_digest *md)
 						    DBG_log("Current interface_addr: %s",
 							    ipstr(&tmp_c->interface->ip_addr, &b)));
 					}
-
-					if (tmp_c->gw_info != NULL) {
-						DBG(DBG_CONTROLMORE, {
-							    DBG_log("Current gw_client_addr: %s",
-								    ipstr(&tmp_c->gw_info->client_id.ip_addr, &b));
-							    DBG_log("Current gw_gw_addr: %s",
-								    ipstr(&tmp_c->gw_info->gw_id.ip_addr, &b));
-						    });
-					}
-
 				}
 
 				/* storing old address for comparison purposes */
@@ -989,8 +979,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			set_cur_state(st);
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-			bool quiet = (st == NULL ||
-				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
+			bool quiet = (st == NULL);
 
 			if (st == NULL) {
 				DBG(DBG_CONTROL, DBG_log(
@@ -1044,9 +1033,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		} else {
 			if (st != NULL &&
 			    IS_ISAKMP_AUTHENTICATED(st->st_state)) {
-				if ((st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					loglog(RC_LOG_SERIOUS, "Informational Exchange message must be encrypted");
-				}
+				loglog(RC_LOG_SERIOUS, "Informational Exchange message must be encrypted");
 				/* XXX Could send notification back */
 				return;
 			}
@@ -1120,18 +1107,14 @@ void process_v1_packet(struct msg_digest **mdp)
 			set_cur_state(st);
 
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					loglog(RC_LOG_SERIOUS, "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
-				}
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 				return;
 			}
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					loglog(RC_LOG_SERIOUS, "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08lx (perhaps this is a duplicated packet)",
 						(unsigned long) md->hdr.isa_msgid);
-				}
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
@@ -1144,10 +1127,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			from_state = STATE_QUICK_R0;
 		} else {
 			if (st->st_oakley.doing_xauth) {
-				if (DBGP(DBG_OPPO) ||
-				    (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					libreswan_log("Cannot do Quick Mode until XAUTH done.");
-				}
+				libreswan_log("Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
 			set_cur_state(st);
@@ -2028,8 +2008,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 				/* FALL THROUGH */
 			default:
-				if (st == NULL || (st != NULL &&
-						   (st->st_connection->policy & POLICY_OPPORTUNISTIC))) {
+				if (st == NULL) {
 					DBG(DBG_CONTROL, DBG_log(
 					       "ignoring informational payload %s, no corresponding state",
 					       enum_show(& ikev1_notify_names,
@@ -2824,7 +2803,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		struct connection *r = NULL;
 
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
+			r = refine_host_connection(st, &peer, initiator,
+				auth_policy, c->spd.this.authby, &fromcert);
 			pexpect(r != NULL);
 		}
 

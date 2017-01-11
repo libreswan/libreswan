@@ -130,18 +130,24 @@ static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_
 #endif
 
 /*
- * Values for authby={rsasig, secret, null}
+ * Values for authby={never, rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
-	/* note: these POLICY bits happen to fit in an unsigned int */
-	{ "never",     LEMPTY },
-	{ "null",      POLICY_AUTH_NULL},
-	{ "secret",    POLICY_PSK },
-	{ "rsasig",    POLICY_RSASIG },
-	{ "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
+        { "never",     LEMPTY },
+        { "null",      POLICY_AUTH_NULL},
+        { "secret",    POLICY_PSK },
+        { "rsasig",    POLICY_RSASIG },
+        { "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
 };
-
 static const struct keyword_enum_values kw_authby_list = VALUES_INITIALIZER(kw_authby_values);
+
+static const struct keyword_enum_value kw_auth_lr_values[] = {
+       { "never",     AUTH_NEVER },
+       { "secret",    AUTH_PSK },
+       { "rsasig",    AUTH_RSASIG },
+       { "null",      AUTH_NULL },
+ };
+static const struct keyword_enum_values kw_auth_lr_list = VALUES_INITIALIZER(kw_auth_lr_values);
 
 /*
  * Values for dpdaction={hold,clear,restart}
@@ -511,6 +517,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
   { "xauthname",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL,  NOT_ENUM },
+  { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  &kw_auth_lr_list },
 
   /* these are conn statements which are not left/right */
   { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KBF_AUTO,  &kw_auto_list },

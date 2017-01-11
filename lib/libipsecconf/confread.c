@@ -140,7 +140,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
 
 	cfg->conn_default.policy =
-		POLICY_RSASIG |
 		POLICY_TUNNEL |
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |	/* ikev2=permit */
@@ -181,6 +180,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.state = STATE_LOADED;
 
 	cfg->ctlbase = clone_str(CTL_FILE, "default base");
+
+	cfg->conn_default.left.authby = AUTH_UNSET;
+	cfg->conn_default.right.authby = AUTH_UNSET;
 }
 
 /*
@@ -1207,6 +1209,7 @@ static bool load_conn(
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
+
 #ifdef STARTER_POLICY_DEBUG
 		starter_log(LOG_LEVEL_DEBUG,
 			    "%s: setting conn->policy=%08x (%08x)",

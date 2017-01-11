@@ -1097,8 +1097,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 	}
 
-	if (!ikev2_decode_cert(md))
+	if (!ikev2_decode_cert(md)) {
+		libreswan_log("ikev2_decode_cert(md) failed in ikev2_decode_peer_id_and_certs()");
 		return FALSE;
+	}
 
 	/* process any CERTREQ payloads */
 	ikev2_decode_cr(md);
@@ -1136,28 +1138,33 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		/* why should refine_host_connection() update this? We pulled it from their packet */
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
-		lset_t auth_policy = LEMPTY;
+		enum keyword_authby authby = AUTH_NEVER;
 
 		switch (auth) {
 		case IKEv2_AUTH_RSA:
-			auth_policy = POLICY_RSASIG;
+			authby = AUTH_RSASIG;
 			break;
 		case IKEv2_AUTH_PSK:
-			auth_policy = POLICY_PSK;
+			authby = AUTH_PSK;
 			break;
 		case IKEv2_AUTH_NULL:
-			/* we cannot switch, parts of SKEYSEED are used as PSK */
+			authby = AUTH_NULL;
 			break;
 		case IKEv2_AUTH_NONE:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
 		}
 
-		if (auth_policy != LEMPTY) {
-			/* should really return c if no better match found */
-			struct connection *r = refine_host_connection(
+		if (authby != AUTH_NEVER) {
+			struct connection *r = NULL;
+
+			if (authby != AUTH_NULL) {
+				/* should never return NULL */
+				r = refine_host_connection(
 				md->st, &peer_id, FALSE /*initiator*/,
-				auth_policy, &fromcert);
+				LEMPTY /* auth_policy */, authby, &fromcert);
+				pexpect(r != NULL);
+			}
 
 			if (r == NULL) {
 				char buf[IDTOA_BUF];

@@ -1,0 +1,2 @@
+iBoth ends use RSA keys but specify these using asymmetric keywords.
+They could have used symmetric authby=rsasig instead.

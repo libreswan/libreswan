@@ -46,7 +46,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -1192,21 +1191,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
  *   It checks and parses enough to learn the Phase 2 IDs
  *
  * - quick_inI1_outR1_authtail does the rest of the job
- *   unless DNS must be consulted.  In that case,
- *   it starts a DNS query, salts away what is needed
- *   to continue, and suspends.  Calls
- *   + quick_inI1_outR1_start_query
- *   + quick_inI1_outR1_process_answer
- *
- * - quick_inI1_outR1_continue will restart quick_inI1_outR1_authtail
- *   when DNS comes back with an answer.
- *
- * A big chunk of quick_inI1_outR1_authtail is executed twice.
- * This is necessary because the set of connections
- * might change while we are awaiting DNS.
- * When first called, gateways_from_dns == NULL.  If DNS is
- * consulted asynchronously, gateways_from_dns != NULL the second time.
- * Remember that our state object might disappear too!
  *
  * At the end of authtail, we have all the info we need, but we
  * haven't done any nonce generation or DH that we might need
@@ -1216,63 +1200,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
  *    quick_inI1_outR1_cryptocontinue2 -- called after DH (if PFS)
  *
  * we have to call nonce/ke and DH if we are doing PFS.
- *
- *
- * If the connection is opportunistic, we must verify delegation.
- *
- * 1. Check that we are authorized to be SG for
- *    our client.  We look for the TXT record that
- *    delegates us.  We also check that the public
- *    key (if present) matches the private key we used.
- *    Eventually, we should probably require DNSSEC
- *    authentication for our side.
- *
- * 2. If our client TXT record did not include a
- *    public key, check the KEY record indicated
- *    by the identity in the TXT record.
- *
- * 3. If the peer's client is the peer itself, we
- *    consider it authenticated.  Otherwise, we check
- *    the TXT record for the client to see that
- *    the identity of the SG matches the peer and
- *    that some public key (if present in the TXT)
- *    matches.  We need not check the public key if
- *    it isn't in the TXT record.
- *
- * Since p isn't yet instantiated, we need to look
- * in c for description of peer.
- *
- * We cannot afford to block waiting for a DNS query.
- * The code here is structured as two halves:
- * - process the result of just completed
- *   DNS query (if any)
- * - if another query is needed, initiate the next
- *   DNS query and suspend
  */
-
-enum verify_oppo_step {
-	vos_fail,
-	vos_start,
-	vos_our_client,
-	vos_our_txt,
-#ifdef USE_KEYRR
-	vos_our_key,
-#endif  /* USE_KEYRR */
-	vos_his_client,
-	vos_done
-};
-
-static const char *const verify_step_name[] = {
-	"vos_fail",
-	"vos_start",
-	"vos_our_client",
-	"vos_our_txt",
-#ifdef USE_KEYRR
-	"vos_our_key",
-#endif  /* USE_KEYRR */
-	"vos_his_client",
-	"vos_done"
-};
 
 /* hold anything we can handle of a Phase 2 ID */
 struct p2id {
@@ -1282,8 +1210,7 @@ struct p2id {
 };
 
 struct verify_oppo_bundle {
-	enum verify_oppo_step step;
-	bool failure_ok;	/* if true, quick_inI1_outR1_continue will try
+	bool failure_ok;	/* if true, quick_inI1_outR1_authtail will try
 				 * other things on DNS failure
 				 */
 	struct msg_digest *md;
@@ -1293,13 +1220,7 @@ struct verify_oppo_bundle {
 	/* int whackfd; */	/* not needed because we are Responder */
 };
 
-struct verify_oppo_continuation {
-	struct adns_continuation ac;    /* common prefix */
-	struct verify_oppo_bundle b;
-};
-
-static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
-					    struct adns_continuation *ac);
+static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b);
 
 stf_status quick_inI1_outR1(struct msg_digest *md)
 {
@@ -1416,7 +1337,6 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		b.his.proto = b.my.proto = 0;
 		b.his.port = b.my.port = 0;
 	}
-	b.step = vos_start;
 	b.md = md;
 	save_new_iv(p1st, b.new_iv, b.new_iv_len);
 
@@ -1426,321 +1346,9 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 	 * quick_inI1_outR1_start_query it saves a pointer to it before
 	 * a crypto (async op).
 	 */
-	return quick_inI1_outR1_authtail(&b, NULL);
+	return quick_inI1_outR1_authtail(&b);
 }
 
-static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
-{
-	struct state *st = b->md->st;
-	ipstr_buf ib1, ib2;
-	ip_address client;
-	err_t which;
-
-	switch (b->step) {
-	case vos_our_client:
-	case vos_our_txt:
-#ifdef USE_KEYRR
-	case vos_our_key:
-#endif          /* USE_KEYRR */
-		which = "our";
-		networkof(&b->my.net, &client);
-		break;
-
-	case vos_his_client:
-		which = "his";
-		networkof(&b->his.net, &client);
-		break;
-
-	case vos_start:
-	case vos_done:
-	case vos_fail:
-	default:
-		bad_case(b->step);
-	}
-
-	loglog(RC_OPPOFAILURE,
-	       "gateway %s wants connection with %s as %s client, but DNS fails to confirm delegation: %s {msgid:%08" PRIx32 "}",
-	       ipstr(&st->st_connection->spd.that.host_addr, &ib1),
-	       ipstr(&client, &ib2),
-	       which, ugh, st->st_msgid);
-}
-
-static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
-					       enum verify_oppo_step next_step)
-{
-	struct msg_digest *md = b->md;
-	struct state *p1st = md->st;
-	struct connection *c = p1st->st_connection;
-	struct verify_oppo_continuation *vc =
-		alloc_thing(struct verify_oppo_continuation,
-			    "verify continuation");
-	const struct id *our_id;
-	struct id id,           /* subject of query */
-		  our_id_space; /* ephemeral: no need for unshare_id_content */
-	ip_address client;
-	err_t ugh = NULL;
-
-	/* Record that state is used by a suspended md */
-	b->step = next_step; /* not just vc->b.step */
-	vc->b = *b;
-	passert(p1st->st_suspended_md == NULL);
-	set_suspended(p1st, b->md);
-
-	DBG(DBG_CONTROL,
-	    {
-		    char ours[SUBNETTOT_BUF];
-		    char his[SUBNETTOT_BUF];
-
-		    subnettot(&c->spd.this.client, 0, ours, sizeof(ours));
-		    subnettot(&c->spd.that.client, 0, his, sizeof(his));
-
-		    DBG_log("responding with DNS query - from %s to %s new state: %s",
-			    ours, his, verify_step_name[b->step]);
-	    });
-
-	/* Resolve %myid in a cheesy way.
-	 * We have to do the resolution because start_adns_query
-	 * et al have insufficient information to do so.
-	 * If %myid is already known, we'll use that value
-	 * (XXX this may be a mistake: it could be stale).
-	 * If %myid is unknown, we should check to see if
-	 * there are credentials for the IP address or the FQDN.
-	 * Instead, we'll just assume the IP address since we are
-	 * acting as the responder and only the IP address would
-	 * have gotten it to us.
-	 * We don't even try to do this for the other side:
-	 * %myid makes no sense for the other side (but it is syntactically
-	 * legal).
-	 */
-	our_id = resolve_myid(&c->spd.this.id);
-	if (our_id->kind == ID_NONE) {
-		iptoid(&c->spd.this.host_addr, &our_id_space);
-		our_id = &our_id_space;
-	}
-	/* ??? our_id not subsequently used */
-
-	switch (next_step) {
-	case vos_our_client:
-		networkof(&b->my.net, &client);
-		iptoid(&client, &id);
-		vc->b.failure_ok = b->failure_ok = FALSE;
-		break;
-
-	case vos_our_txt:
-		vc->b.failure_ok = b->failure_ok = TRUE;
-		break;
-
-#ifdef USE_KEYRR
-	case vos_our_key:
-		vc->b.failure_ok = b->failure_ok = FALSE;
-		break;
-#endif
-
-	case vos_his_client:
-		networkof(&b->his.net, &client);
-		iptoid(&client, &id);
-		vc->b.failure_ok = b->failure_ok = FALSE;
-		break;
-
-	default:
-		bad_case(next_step);
-	}
-
-	if (ugh != NULL) {
-		/* note: we'd like to use vc->b but vc has been freed
-		 * (it got freed by start_adns_query->release_adns_continuation,
-		 *  noting that &vc->ac == vc)
-		 * so we have to use b.  This is why we plunked next_state
-		 * into b, not just vc->b.
-		 */
-		report_verify_failure(b, ugh);
-		unset_suspended(p1st);
-		return STF_FAIL + INVALID_ID_INFORMATION;
-	} else {
-		return STF_SUSPEND;
-	}
-}
-
-static enum verify_oppo_step quick_inI1_outR1_process_answer(
-	struct verify_oppo_bundle *b,
-	struct adns_continuation *ac,
-	struct state *p1st)
-{
-	struct connection *c = p1st->st_connection;
-	enum verify_oppo_step next_step;
-	err_t ugh = NULL;
-
-	DBG(DBG_CONTROL,
-	    {
-		    char ours[SUBNETTOT_BUF];
-		    char his[SUBNETTOT_BUF];
-
-		    subnettot(&c->spd.this.client, 0, ours, sizeof(ours));
-		    subnettot(&c->spd.that.client, 0, his, sizeof(his));
-		    DBG_log("responding on demand from %s to %s state: %s",
-			    ours, his, verify_step_name[b->step]);
-	    });
-
-	/* process just completed DNS query (if any) */
-	switch (b->step) {
-	case vos_start:
-		/* no query to digest */
-		next_step = vos_our_client;
-		break;
-
-	case vos_our_client:
-		next_step = vos_his_client;
-		{
-			const struct RSA_private_key *pri =
-				get_RSA_private_key(c);
-			struct gw_info *gwp;
-
-			if (pri == NULL) {
-				ugh = "we don't know our own key";
-				break;
-			}
-			ugh = "our client does not delegate us as its Security Gateway";
-			for (gwp = ac->gateways_from_dns; gwp != NULL;
-			     gwp = gwp->next) {
-				ugh = "our client delegates us as its Security Gateway but with the wrong public key";
-				/* If there is no key in the TXT record,
-				 * we count it as a win, but we will have
-				 * to separately fetch and check the KEY record.
-				 * If there is a key from the TXT record,
-				 * we count it as a win if we match the key.
-				 */
-				if (!gwp->gw_key_present) {
-					next_step = vos_our_txt;
-					ugh = NULL; /* good! */
-					break;
-				} else if (same_RSA_public_key(&pri->pub,
-							       &gwp->key->u.rsa))
-				{
-					ugh = NULL; /* good! */
-					break;
-				}
-			}
-		}
-		break;
-
-	case vos_our_txt:
-		next_step = vos_his_client;
-		{
-			const struct RSA_private_key *pri =
-				get_RSA_private_key(c);
-
-			if (pri == NULL) {
-				ugh = "we don't know our own key";
-				break;
-			}
-			{
-				struct gw_info *gwp;
-
-				for (gwp = ac->gateways_from_dns; gwp != NULL;
-				     gwp = gwp->next) {
-#ifdef USE_KEYRR
-					/* not an error yet, because we have to check KEY RR as well */
-					ugh = NULL;
-#else
-					ugh = "our client delegation depends on our "
-						RRNAME
-						" record, but it has the wrong public key";
-#endif
-					if (gwp->gw_key_present &&
-					    same_RSA_public_key(&pri->pub,
-								&gwp->key->u.
-								rsa)) {
-						ugh = NULL; /* good! */
-						break;
-					}
-#ifdef USE_KEYRR
-					next_step = vos_our_key;
-#endif
-				}
-			}
-		}
-		break;
-
-#ifdef USE_KEYRR
-	case vos_our_key:
-		next_step = vos_his_client;
-		{
-			const struct RSA_private_key *pri =
-				get_RSA_private_key(c);
-
-			if (pri == NULL) {
-				ugh = "we don't know our own key";
-				break;
-			}
-			{
-				struct pubkey_list *kp;
-
-				ugh = "our client delegation depends on our missing "
-					RRNAME " record";
-				for (kp = ac->keys_from_dns; kp != NULL;
-				     kp = kp->next) {
-					ugh = "our client delegation depends on our "
-						RRNAME
-						" record, but it has the wrong public key";
-					if (same_RSA_public_key(&pri->pub,
-								&kp->key->u.rsa))
-					{
-						/* do this only once a day */
-						if (!logged_txt_warning) {
-							loglog(RC_LOG_SERIOUS,
-							       "found KEY RR but not TXT RR.");
-							logged_txt_warning =
-								TRUE;
-						}
-						ugh = NULL; /* good! */
-						break;
-					}
-				}
-			}
-		}
-		break;
-#endif          /* USE_KEYRR */
-
-	case vos_his_client:
-		next_step = vos_done;
-		{
-			struct gw_info *gwp;
-
-			/* check that the public key that authenticated
-			 * the ISAKMP SA (p1st) will do for this gateway.
-			 */
-
-			ugh = "peer's client does not delegate to peer";
-			for (gwp = ac->gateways_from_dns; gwp != NULL;
-			     gwp = gwp->next) {
-				ugh = "peer and its client disagree about public key";
-				/* If there is a key from the TXT record,
-				 * we count it as a win if we match the key.
-				 * If there was no key, we claim a match since
-				 * it implies fetching a KEY from the same
-				 * place we must have gotten it.
-				 */
-				if (!gwp->gw_key_present ||
-				    same_RSA_public_key(&p1st->st_peer_pubkey->
-							u.rsa,
-							&gwp->key->u.rsa)) {
-					ugh = NULL; /* good! */
-					break;
-				}
-			}
-		}
-		break;
-
-	default:
-		bad_case(b->step);
-	}
-
-	if (ugh != NULL) {
-		report_verify_failure(b, ugh);
-		next_step = vos_fail;
-	}
-	return next_step;
-}
 
 /* forward definitions */
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
@@ -1751,8 +1359,7 @@ static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1;	/* type assertion 
 
 static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2;	/* type assertion */
 
-static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
-					    struct adns_continuation *ac)
+static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 {
 	struct msg_digest *md = b->md;
 	struct state *const p1st = md->st;
@@ -1834,85 +1441,13 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			 * specified clients.  But it may need instantiation.
 			 */
 			if (p->kind == CK_TEMPLATE) {
-				/* Yup, it needs instantiation.  How much?
-				 * Is it a Road Warrior connection (simple)
-				 * or is it an Opportunistic connection (needing gw validation)?
+				/* Plain Road Warrior because no OPPO for IKEv1
+				 * instantiate, carrying over authenticated peer ID
 				 */
-				if (p->policy & POLICY_OPPORTUNISTIC) {
-					/* Opportunistic case: delegation must be verified.
-					 * Here be dragons.
-					 */
-					enum verify_oppo_step next_step;
-					ip_address our_client, his_client;
-
-					passert(subnetishost(our_net) &&
-						subnetishost(his_net));
-					networkof(our_net, &our_client);
-					networkof(his_net, &his_client);
-
-					next_step =
-						quick_inI1_outR1_process_answer(
-							b, ac,
-							p1st);
-					if (next_step == vos_fail)
-						return STF_FAIL +
-						       INVALID_ID_INFORMATION;
-
-					/* short circuit: if peer's client is self,
-					 * accept that we've verified delegation in Phase 1
-					 */
-					if (next_step == vos_his_client &&
-					    sameaddr(&c->spd.that.host_addr,
-						     &his_client))
-						next_step = vos_done;
-
-					/* the second chunk: initiate the next DNS query (if any) */
-					DBG(DBG_CONTROL,
-					    {
-						    char ours[SUBNETTOT_BUF];
-						    char his[SUBNETTOT_BUF];
-
-						    subnettot(&c->spd.this.
-							      client, 0, ours,
-							      sizeof(ours));
-						    subnettot(&c->spd.that.
-							      client, 0, his,
-							      sizeof(his));
-
-						    DBG_log("responding on demand from %s to %s new state: %s",
-							    ours, his,
-							    verify_step_name[
-								    next_step]);
-					    });
-
-					/* start next DNS query and suspend (if necessary) */
-					if (next_step != vos_done) {
-						return quick_inI1_outR1_start_query(
-							b,
-							next_step);
-					}
-
-					/* Instantiate inbound Opportunistic connection,
-					 * carrying over authenticated peer ID
-					 * and filling in a few more details.
-					 * We used to include gateways_from_dns, but that
-					 * seems pointless at this stage of negotiation.
-					 * We should record DNS sec use, if any -- belongs in
-					 * state during perhaps.
-					 */
-					p = oppo_instantiate(p,
-							     &c->spd.that.host_addr, &c->spd.that.id,
-							     NULL, &our_client,
-							     &his_client);
-				} else {
-					/* Plain Road Warrior:
-					 * instantiate, carrying over authenticated peer ID
-					 */
-					p = rw_instantiate(p,
-							   &c->spd.that.host_addr,
-							   his_net,
-							   &c->spd.that.id);
-				}
+				p = rw_instantiate(p,
+						   &c->spd.that.host_addr,
+						   his_net,
+						   &c->spd.that.id);
 			}
 			/* temporarily bump up cur_debugging to get "using..." message
 			 * printed if we'd want it with new connection.
@@ -1930,9 +1465,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
-		}
 
-		/* XXX Though c == p, they are used intermixed in the below section */
+		}
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
@@ -1946,14 +1480,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		}
 
 		/* fill in the client's true port */
-		if (p->spd.that.has_port_wildcard) {
+		if (c->spd.that.has_port_wildcard) {
 			int port = htons(b->his.port);
 
-			setportof(port, &p->spd.that.host_addr);
-			setportof(port, &p->spd.that.client.addr);
+			setportof(port, &c->spd.that.host_addr);
+			setportof(port, &c->spd.that.client.addr);
 
-			p->spd.that.port = b->his.port;
-			p->spd.that.has_port_wildcard = FALSE;
+			c->spd.that.port = b->his.port;
+			c->spd.that.has_port_wildcard = FALSE;
 		}
 
 		if (is_virtual_connection(c)) {

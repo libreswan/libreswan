@@ -12,6 +12,7 @@ extern enum_names dpd_action_names;
 extern enum_names sd_action_names;
 extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
+extern enum_names ikev2_asym_auth_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;
 extern enum_names state_stories;

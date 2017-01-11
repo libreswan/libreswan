@@ -80,6 +80,15 @@ enum keyword_remotepeertype {
 	CISCO = 1,
 };
 
+/* keep in sync with ikev2_asym_auth_names */
+enum keyword_authby {
+	AUTH_UNSET	= 0,
+	AUTH_NEVER	= 1,
+	AUTH_PSK	= 2,
+	AUTH_RSASIG	= 3,
+	AUTH_NULL	= 4,
+};
+
 enum keyword_xauthby {
 	XAUTHBY_FILE = 0,
 	XAUTHBY_PAM = 1,

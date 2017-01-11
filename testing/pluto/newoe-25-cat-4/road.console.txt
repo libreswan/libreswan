@@ -108,6 +108,7 @@ road #
 000 "block": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 000 "block":     oriented; my_ip=unset; their_ip=unset
 000 "block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "block":   our auth:unset, their auth:unset
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "block":   labeled_ipsec:no;
 000 "block":   policy_label:unset;
@@ -122,6 +123,7 @@ road #
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 000 "clear":     oriented; my_ip=unset; their_ip=unset
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "clear":   our auth:unset, their auth:unset
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear":   labeled_ipsec:no;
 000 "clear":   policy_label:unset;
@@ -136,6 +138,7 @@ road #
 000 "clear#192.1.2.253/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.253/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.2.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "clear#192.1.2.253/32":   our auth:unset, their auth:unset
 000 "clear#192.1.2.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.253/32":   labeled_ipsec:no;
 000 "clear#192.1.2.253/32":   policy_label:unset;
@@ -150,6 +153,7 @@ road #
 000 "clear#192.1.3.253/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.3.253/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.3.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "clear#192.1.3.253/32":   our auth:unset, their auth:unset
 000 "clear#192.1.3.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.3.253/32":   labeled_ipsec:no;
 000 "clear#192.1.3.253/32":   policy_label:unset;
@@ -164,6 +168,7 @@ road #
 000 "clear#192.1.3.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.3.254/32":     oriented; my_ip=unset; their_ip=unset
 000 "clear#192.1.3.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "clear#192.1.3.254/32":   our auth:unset, their auth:unset
 000 "clear#192.1.3.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.3.254/32":   labeled_ipsec:no;
 000 "clear#192.1.3.254/32":   policy_label:unset;
@@ -178,6 +183,7 @@ road #
 000 "clear-or-private": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "clear-or-private":   our auth:null, their auth:null
 000 "clear-or-private":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "clear-or-private":   labeled_ipsec:no;
 000 "clear-or-private":   policy_label:unset;
@@ -192,6 +198,7 @@ road #
 000 "private": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 000 "private":     oriented; my_ip=unset; their_ip=unset
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "private":   our auth:null, their auth:null
 000 "private":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private":   labeled_ipsec:no;
 000 "private":   policy_label:unset;
@@ -206,6 +213,7 @@ road #
 000 "private-or-clear": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "private-or-clear":   our auth:null, their auth:null
 000 "private-or-clear":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear":   labeled_ipsec:no;
 000 "private-or-clear":   policy_label:unset;
@@ -220,6 +228,7 @@ road #
 000 "private-or-clear#192.1.2.0/24": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunistic[ID_NULL]===192.1.2.0/24; unrouted; eroute owner: #0
 000 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "private-or-clear#192.1.2.0/24":   our auth:null, their auth:null
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24":   labeled_ipsec:no;
 000 "private-or-clear#192.1.2.0/24":   policy_label:unset;
@@ -339,7 +348,7 @@ PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
 road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 192.1.2.45/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=192.1.2.45/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
 road #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)

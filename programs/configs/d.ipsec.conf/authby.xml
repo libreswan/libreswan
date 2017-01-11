@@ -11,6 +11,11 @@ or accepted (useful for shunt-only conns), and
 <emphasis remap='B'>null</emphasis> for null-authentication.
 </para>
 <para>
+If asymmetric authentication is requested, IKEv2 must be enabled, and the
+options <emphasis remap='B'>leftauth=</emphasis> and <emphasis remap='B'>rightauth=</emphasis>
+should be used instead of authby.
+</para>
+<para>
 Digital signatures are superior in every way to shared secrets. Especially
 IKEv1 in Aggressive Mode is vulnerable to offline dictionary attacks and
 is performed routinely by at least the NSA on monitored internet traffic

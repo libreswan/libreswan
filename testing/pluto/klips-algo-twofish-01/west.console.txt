@@ -120,6 +120,7 @@ west #
 000 "westnet-eastnet-twofish": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-twofish":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-twofish":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-twofish":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-twofish":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-twofish":   labeled_ipsec:no;
 000 "westnet-eastnet-twofish":   policy_label:unset;
@@ -131,8 +132,8 @@ west #
 000 "westnet-eastnet-twofish":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "westnet-eastnet-twofish":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-twofish":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
-000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
 000 "westnet-eastnet-twofish":   ESP algorithms wanted: TWOFISH(253)_000-SHA1(2)
 000 "westnet-eastnet-twofish":   ESP algorithms loaded: TWOFISH(253)_000-SHA1(2)
 000  
@@ -154,7 +155,7 @@ west #
 106 "westnet-eastnet-twofish" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "westnet-eastnet-twofish" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-twofish" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-twofish" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
+004 "westnet-eastnet-twofish" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "westnet-eastnet-twofish" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-twofish" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-twofish" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=TWOFISH_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}

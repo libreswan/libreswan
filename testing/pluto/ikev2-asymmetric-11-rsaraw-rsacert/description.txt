@@ -1,0 +1,7 @@
+
+raw RSA keys on left and RSA cert on right.
+
+WIP: The test harnass needs to be able to load both raw RSA keys and certs
+     but currently the --x509 options seems to cause it that no rsa rsa
+     keys are installed/available
+

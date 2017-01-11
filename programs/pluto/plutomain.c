@@ -67,7 +67,6 @@
 #include "log.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
-#include "dnskey.h"	/* needs keys.h and adns.h */
 #include "rnd.h"
 #include "state.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
@@ -1243,8 +1242,6 @@ int main(int argc, char **argv)
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
 						"pluto_vendorid via --config");
 			}
-
-			/* no config option: pluto_adns_option */
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
 				if (access(cfg->setup.strings[KSF_STATSBINARY], X_OK) == 0) {

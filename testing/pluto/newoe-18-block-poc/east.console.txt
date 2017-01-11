@@ -95,7 +95,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  # should not show any hits because block prevents poc from seeing traffic
 east #
- grep "fos_" /tmp/pluto.log
+ grep "initiate on demand" /tmp/pluto.log
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
