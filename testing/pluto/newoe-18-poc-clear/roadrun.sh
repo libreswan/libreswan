@@ -10,5 +10,5 @@ cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # ping should succeed in the clear
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
 # should show for our failed attempt at OE
-grep fos_start /tmp/pluto.log
+grep "initiate on demand" /tmp/pluto.log
 echo done

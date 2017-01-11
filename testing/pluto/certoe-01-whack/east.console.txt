@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.2.0/24" >> /etc/ipsec.d/policies/clear-or-private
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ 

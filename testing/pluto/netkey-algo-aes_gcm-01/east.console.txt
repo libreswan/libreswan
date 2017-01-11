@@ -101,6 +101,7 @@ east #
 000 "westnet-eastnet-gcm": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-gcm":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-gcm":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-gcm":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-gcm":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-gcm":   labeled_ipsec:no;
 000 "westnet-eastnet-gcm":   policy_label:unset;
@@ -112,8 +113,8 @@ east #
 000 "westnet-eastnet-gcm":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
 000 "westnet-eastnet-gcm":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-gcm":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-gcm":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
-000 "westnet-eastnet-gcm":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-gcm":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-gcm":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
 000 "westnet-eastnet-gcm":   ESP algorithms wanted: AES_GCM_C(20)_192-NONE(0)
 000 "westnet-eastnet-gcm":   ESP algorithms loaded: AES_GCM_C(20)_192-NONE(0)
 000  
