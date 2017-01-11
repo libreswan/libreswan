@@ -156,6 +156,18 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
+		if (p->connections != NULL && (p->connections->kind == CK_INSTANCE) &&
+				(p->connections->spd.that.id.kind == ID_NULL))
+		{
+			DBG(DBG_CONTROLMORE, {
+				char ci[CONN_INST_BUF];
+				DBG_log("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:\"%s\"%s",
+					p->connections->name,
+					fmt_conn_instance(p->connections, ci));
+			});
+			continue;
+		}
+
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
 			ipstr_buf b2;
@@ -195,17 +207,22 @@ struct connection *find_host_pair_connections(const ip_address *myaddr,
 	struct host_pair *hp =
 		find_host_pair(myaddr, myport, hisaddr, hisport);
 
+	/*
 	DBG(DBG_CONTROLMORE, {
 		ipstr_buf bm;
 		ipstr_buf bh;
+		char ci[CONN_INST_BUF];
 
-		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s",
+		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
 			ipstr(myaddr, &bm), myport,
 			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
 			hisport,
 			hp != NULL && hp->connections != NULL ?
-				hp->connections->name : "none");
+				hp->connections->name : "none",
+			hp != NULL && hp->connections != NULL ?
+				fmt_conn_instance(hp->connections, ci) : "");
 	    });
+	    */
 
 	return hp == NULL ? NULL : hp->connections;
 }

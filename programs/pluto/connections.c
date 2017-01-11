@@ -2740,9 +2740,12 @@ struct connection *find_next_host_connection(
 			break;
 	}
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("find_next_host_connection returns %s",
-			c ? c->name : "empty"));
+	DBG(DBG_CONTROLMORE, {
+			char ci[CONN_INST_BUF];
+			DBG_log("find_next_host_connection returns %s%s",
+					c != NULL ? c->name : "empty",
+					c != NULL ? fmt_conn_instance(c, ci) :
+					""); });
 
 	return c;
 }
