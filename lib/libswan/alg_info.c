@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -156,11 +156,6 @@ int alg_enum_search(enum_names *ed, const char *prefix,
 	memcpy(buf + prelen + name_len, postfix, postlen + 1);	/* incl. NUL */
 
 	return enum_search(ed, buf);
-}
-
-void alg_info_free(struct alg_info *alg_info)
-{
-	pfreeany(alg_info);
 }
 
 static const char *parser_state_names[] = {
@@ -620,7 +615,7 @@ static void parser_init(struct parser_context *ctx,
 
 /*
  * on success: returns alg_info
- * on failure: pfree(alg_info) and return NULL;
+ * on failure: alg_info_free(alg_info) and return NULL;
  */
 struct alg_info *alg_info_parse_str(lset_t policy,
 				    struct alg_info *alg_info,
@@ -652,7 +647,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 					 pm_ugh,
 					 (int)(ptr - alg_str - 1), alg_str,
 					 parser_state_name(ctx.state));
-				pfree(alg_info);
+				alg_info_free(alg_info);
 				return NULL;
 			}
 		}
@@ -669,7 +664,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",
 						ugh, ctx.ealg_buf, ctx.eklen, ctx.aalg_buf,
 						ctx.modp_buf);
-					pfree(alg_info);
+					alg_info_free(alg_info);
 					return NULL;
 				}
 			}
@@ -687,10 +682,20 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 }
 
 /*
- * alg_info struct can be shared by
- * several connections instances,
- * handle free() with ref_cnts
+ * alg_info struct can be shared by several connections instances,
+ * handle free() with ref_cnts.
+ *
+ * Use alg_info_free() if the value returned by *_parse_str() is found
+ * to be (semantically) bogus.
  */
+
+void alg_info_free(struct alg_info *alg_info)
+{
+	passert(alg_info);
+	passert(alg_info->ref_cnt == 0);
+	pfree(alg_info);
+}
+
 void alg_info_addref(struct alg_info *alg_info)
 {
 	alg_info->ref_cnt++;

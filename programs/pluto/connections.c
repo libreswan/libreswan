@@ -1521,6 +1521,7 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_LOG_SERIOUS,
 					"got 0 transforms for esp=\"%s\"",
 					wm->esp);
+				alg_info_free(&c->alg_info_esp->ai);
 				pfree(c);
 				return;
 			}
@@ -1556,6 +1557,7 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_LOG_SERIOUS,
 					"got 0 transforms for ike=\"%s\"",
 					wm->ike);
+				alg_info_free(&c->alg_info_ike->ai);
 				pfree(c);
 				return;
 			}
