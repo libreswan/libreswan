@@ -1477,14 +1477,11 @@ void add_connection(const struct whack_message *wm)
 
 			/* set default to RSASIG if unset and we expect to do IKE */
 			if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
-				/* why does this not work?
-				 * if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-				 */
-				if ((c->policy & POLICY_RSASIG) == LEMPTY &&
-					(c->policy & POLICY_PSK) == LEMPTY &&
-					(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
+				 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 						/* authby= was also not specified - fill in default */
-						c->policy |= POLICY_RSASIG;
+						c->policy |= POLICY_DEFAULT;
+						libreswan_log("No policy was set - defaulting to %s",
+							prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
 				}
 			}
 

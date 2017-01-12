@@ -825,6 +825,9 @@ enum sa_policy_bits {
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 
+/* Default policy for now is using RSA - this might change to ECC */
+#define POLICY_DEFAULT POLICY_RSASIG
+
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
 /* Any IPsec policy?  If not, a connection description
