@@ -256,7 +256,8 @@ void ipsecdoi_initiate(int whack_sock,
 	 */
 	struct state *st = find_phase1_state(c,
 					     ISAKMP_SA_ESTABLISHED_STATES |
-					     PHASE1_INITIATOR_STATES);
+					     PHASE1_INITIATOR_STATES |
+					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
 		initiator_function *initiator = pick_initiator(c, policy);
@@ -285,18 +286,25 @@ void ipsecdoi_initiate(int whack_sock,
 				    , uctx
 #endif
 				    );
+		} else if(st->st_ikev2) {
+			ikev2_add_ipsec_child(whack_sock, st, c, policy, try,
+					replacing
+#ifdef HAVE_LABELED_IPSEC
+					, uctx
+#endif
+					);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
 			 * It isn't clear what to do with the error return.
 			 */
 			(void) quick_outI1(whack_sock, st, c, policy, try,
-					   replacing
+					replacing
 #ifdef HAVE_LABELED_IPSEC
-					   , uctx
+					, uctx
 #endif
-					   );
-		}
+					);
+			}
 	}
 }
 
@@ -323,20 +331,19 @@ void ipsecdoi_replace(struct state *st,
 	 */
 	if (IS_IKE_SA(st) || !HAS_IPSEC_POLICY(policy)) {
 		struct connection *c = st->st_connection;
-
-		policy = (c->policy & ~POLICY_IPSEC_MASK & ~policy_del) |
-			policy_add;
+		policy = (c->policy & ~POLICY_IPSEC_MASK &
+				~policy_del) | policy_add;
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
 		if (initiator != NULL) {
-			(void) initiator(whack_sock, st->st_connection, st,
-					 policy,
-					 try, st->st_import
+			(void) initiator(whack_sock, st->st_connection,
+					st, policy,
+					try, st->st_import
 #ifdef HAVE_LABELED_IPSEC
-					 , st->sec_ctx
+					, st->sec_ctx
 #endif
-					 );
+					);
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(whack_sock);
