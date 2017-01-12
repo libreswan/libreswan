@@ -263,11 +263,3 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 		return STF_FAIL;
 	}
 }
-
-void ikev2_copy_cookie_from_sa(struct state *st,
-		struct ikev2_proposal *accepted_ike_proposal)
-{
-	passert(accepted_ike_proposal->remote_spi.size == COOKIE_SIZE);
-	/* st_icookie is an array of len COOKIE_SIZE. only accept this length */
-	memcpy(st->st_icookie, accepted_ike_proposal->remote_spi.bytes, COOKIE_SIZE);
-}
