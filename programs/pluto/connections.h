@@ -340,6 +340,7 @@ struct connection {
 	u_int16_t connmtu;	/* mtu for tunnel routes */
 	u_int32_t statsval;	/* track what we have told statsd */
 	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
+	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 };
 
 extern void parse_mark_mask(const struct connection* c,int * mark, int * mask);
@@ -485,7 +486,7 @@ extern void add_pending(int whack_sock,
 			);
 
 extern void release_pending_whacks(struct state *st, err_t story);
-extern void unpend(struct state *st);
+extern void unpend(struct state *st, struct connection *cc);
 extern void update_pending(struct state *os, struct state *ns);
 extern void flush_pending_by_state(struct state *st);
 

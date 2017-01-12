@@ -77,6 +77,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -1895,9 +1896,13 @@ void add_connection(const struct whack_message *wm)
 				c->sa_replay_window,
 				prettypolicy(c->policy),
 				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+
+		/* non configurable */
+		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
+
 }
 
 /*
