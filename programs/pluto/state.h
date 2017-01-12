@@ -158,6 +158,12 @@ struct ipsec_proto_info {
 	uint64_t add_time;
 };
 
+struct initiate_list {
+	so_serial_t st_serialno;
+//	enum initiate_new_exchagnge send_type;
+	struct  initiate_list *next;
+};
+
 struct ike_frag {
 	struct ike_frag *next;
 	struct msg_digest *md;
@@ -335,6 +341,7 @@ struct state {
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
+	struct initiate_list *send_next_ix;
 
 	/** end of IKEv2-only things **/
 
@@ -537,7 +544,7 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st),
+	*duplicate_state(struct state *st, bool ipsec),
 	*find_state_ikev1(const u_char *icookie,
 			  const u_char *rcookie,
 			  msgid_t msgid),
@@ -547,11 +554,15 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
 
+struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
+		                enum state_kind expected_state);
+
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
-extern struct state *find_state_ikev2_parent_init(const u_char *icookie,
-						  enum state_kind expected_state);
+extern struct state *ikev2_find_state_in_init(const u_char *icookie,
+						  enum state_kind expected_state,
+						  bool is_child);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,
@@ -576,6 +587,10 @@ extern void initialize_new_state(struct state *st,
 
 extern void show_traffic_status(void);
 extern void show_states_status(void);
+
+
+extern void ikev2_repl_est_ipsec(struct state *st, void *data);
+extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 

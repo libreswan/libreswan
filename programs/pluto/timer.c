@@ -49,6 +49,7 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev1_dpd.h"
 #include "ikev2.h"
 #include "pending.h" /* for flush_pending_by_connection */
@@ -360,6 +361,28 @@ static void retransmit_v2_msg(struct state *st)
 	/* note: no md->st to clear */
 }
 
+static void liveness_action(struct connection *c)
+{
+	switch (c->dpd_action) {
+	case DPD_ACTION_CLEAR:
+		liveness_clear_connection(c, "IKEv2 liveness action");
+		return;
+
+	case DPD_ACTION_RESTART:
+		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+		restart_connections_by_peer(c);
+		return;
+
+	case DPD_ACTION_HOLD:
+		DBG(DBG_DPD,
+				DBG_log("liveness_check - handling default by rescheduling"));
+		break;
+
+	default:
+		bad_case(c->dpd_action);
+	}
+}
+
 /* note: this mutates *st by calling get_sa_info */
 static void liveness_check(struct state *st)
 {
@@ -375,7 +398,8 @@ static void liveness_check(struct state *st)
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
 			DBG(DBG_DPD,
-				DBG_log("liveness_check error, no parent state"));
+				DBG_log("liveness_check error, no parent state take dpd action"));
+			liveness_action(c);
 			return;
 		}
 	} else {
@@ -418,24 +442,7 @@ static void liveness_check(struct state *st)
 				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout));
-			switch (c->dpd_action) {
-			case DPD_ACTION_CLEAR:
-				liveness_clear_connection(c, "IKEv2 liveness action");
-				return;
-
-			case DPD_ACTION_RESTART:
-				libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
-				restart_connections_by_peer(c);
-				return;
-
-			case DPD_ACTION_HOLD:
-				DBG(DBG_DPD,
-						DBG_log("liveness_check - handling default by rescheduling"));
-				break;
-
-			default:
-				bad_case(c->dpd_action);
-			}
+			liveness_action(c);
 
 		} else {
 			stf_status ret = ikev2_send_informational(st);
@@ -572,6 +579,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		st->st_send_xauth_event = NULL;
 		break;
 
+	case EVENT_v2_SEND_NEXT_IKE:
+	case EVENT_v2_INITIATE_CHILD:
 	case EVENT_v1_RETRANSMIT:
 	case EVENT_v2_RETRANSMIT:
 	case EVENT_SA_REPLACE:
@@ -668,6 +677,14 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		retransmit_v2_msg(st);
 		break;
 
+	case EVENT_v2_SEND_NEXT_IKE:
+		ikev2_child_send_next(st);
+		break;
+
+	case EVENT_v2_INITIATE_CHILD:
+		ikev2_child_outI(st);
+		break;
+
 	case EVENT_v2_LIVENESS:
 		liveness_check(st);
 		break;
@@ -683,12 +700,16 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 		if (IS_IKE_SA(st)) {
 			newest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa #%lu",
-						newest));
+			DBG(DBG_LIFECYCLE, DBG_log("%s picked newest_isakmp_sa "
+						"#%lu",
+						enum_name(&timer_event_names,
+							type), newest));
 		} else {
 			newest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_ipsec_sa #%lu",
-						newest));
+			DBG(DBG_LIFECYCLE, DBG_log("%s picked newest_ipsec_sa "
+						"#%lu",
+					       enum_name(&timer_event_names,
+							type), newest));
 		}
 
 		if (newest != SOS_NOBODY && newest > st->st_serialno) {
@@ -706,7 +727,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
 				if (cst == NULL)
 					break;
-				DBG(DBG_LIFECYCLE, DBG_log( "#%lu check last used on newest IPSec SA #%lu",
+				DBG(DBG_LIFECYCLE, DBG_log( "#%lu check last used on newest IPsec SA #%lu",
 							st->st_serialno, cst->st_serialno));
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
 					deltaless(c->sa_rekey_margin, last_used_age))
