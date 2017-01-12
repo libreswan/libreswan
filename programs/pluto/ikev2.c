@@ -254,7 +254,7 @@ enum smf2_flags {
  */
 
 static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any packet */
-static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V);	/* if one can appear, many can appear */
+static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
 /* microcode to parent first initiator state: not associated with an input packet */
 const struct state_v2_microcode ikev2_parent_firststate_microcode =
