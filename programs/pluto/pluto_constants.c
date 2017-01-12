@@ -125,6 +125,8 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
 	"EVENT_v2_RELEASE_WHACK",
+	"EVENT_v2_INITIATE_CHILD",
+	"EVENT_v2_SEND_NEXT_IKE",
 	"EVENT_RETAIN",
 };
 
@@ -184,6 +186,17 @@ static const char *const state_name[] = {
 	"STATE_PARENT_I3",
 	"STATE_PARENT_R1",
 	"STATE_PARENT_R2",
+	"STATE_V2_CREATE_I0",
+	"STATE_V2_CREATE_I",
+	"STATE_V2_REKEY_IKE_I0",
+	"STATE_V2_REKEY_IKE_I",
+	"STATE_V2_REKEY_CHILD_I0",
+	"STATE_V2_REKEY_CHILD_I",
+	"STATE_V2_CREATE_R",
+	"STATE_V2_REKEY_IKE_R",
+	"STATE_V2_REKEY_CHILD_R",
+	"STATE_V2_IPSEC_I",
+	"STATE_V2_IPSEC_R",
 	"STATE_IKESA_DEL",
 	"STATE_CHILDSA_DEL",
 
@@ -244,6 +257,17 @@ static const char *const state_story[] = {
 	"PARENT SA established",		/* STATE_PARENT_I3 */
 	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
 	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
+	"STATE_V2_CREATE_I0",
+	"sent IPSec Child req wait response",
+	"STATE_V2_REKEY_IKE_I0",
+	"STATE_V2_REKEY_IKE_I",
+	"STATE_V2_REKEY_CHILD_I0",
+	"STATE_V2_REKEY_CHILD_I",
+	"STATE_V2_CREATE_R",
+	"STATE_V2_REKEY_IKE_R",
+	"STATE_V2_REKEY_CHILD_R",
+	"IPsec SA established",		/* STATE_V2_IPSEC_I */
+	"IPsec SA established",		/* STATE_V2_IPSEC_R */
 
 	/* ??? better story needed for these */
 	"STATE_IKESA_DEL",	/* STATE_IKESA_DEL */
