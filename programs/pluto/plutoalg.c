@@ -914,18 +914,21 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	return n;
 }
 
-void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
+bool fill_in_esp_info_ike_algs(struct esp_info *esp_info,
+			       const char *flag,
+			       const char *value)
 {
+	/*
+	 * Check the encryption.
+	 *
+	 * For AH, where the is no encryption, the u_int8_t field
+	 * .TRANSID ends up with the initial value of ealg_id which is
+	 * -1 (hence, ESP_ID255) (see alg_info.c).  Just in case
+	 * someone decides this is silly and changes the AH value to
+	 * ESP_reserved, ignore that also.
+	 */
 	if (esp_info->transid == ESP_ID255
 	    || esp_info->transid == ESP_reserved) {
-		/*
-		 * For AH, where the is no encryption, the u_int8_t
-		 * field .TRANSID ends up with the initial value of
-		 * ealg_id which is -1 (hence, ESP_ID255) (see
-		 * alg_info.c).  Just in case someone decides this is
-		 * silly and changes the AH value to ESP_reserved,
-		 * ignore that also.
-		 */
 		passert(esp_info->esp_encrypt == NULL);
 	} else {
 		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
@@ -934,21 +937,57 @@ void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
 				esp_info->esp_encrypt = (*algp);
 			}
 		}
-		if (esp_info->esp_encrypt == NULL && DBGP(DBG_CONTROLMORE)) {
+		if (esp_info->esp_encrypt == NULL) {
 			struct esb_buf buf;
-			DBG_log("XXX: ESP/AH ENCRYPT algorithm %s=%d not found",
-				enum_showb(&esp_transformid_names,
-					   esp_info->transid, &buf),
-				esp_info->transid);
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, ENCRYPT algorithm %s=%d not supported",
+			       flag, value,
+			       enum_showb(&esp_transformid_names,
+					  esp_info->transid, &buf),
+			       esp_info->transid);
+			return FALSE;
+		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("ESP encryption algorithm %s",
+			    esp_info->esp_encrypt->common.name));
+	}
+	/*
+	 * Is the key length valid for the given encryption algorithm.
+	 */
+	if (esp_info->esp_encrypt != NULL && esp_info->enckeylen != 0) {
+		if (!encrypt_has_key_bit_length(esp_info->esp_encrypt,
+						esp_info->enckeylen)) {
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, ENCRYPT algorithm %s with key length %u is not supported",
+			       flag, value, esp_info->esp_encrypt->common.name,
+			       (unsigned) esp_info->enckeylen);
+			return FALSE;
 		}
 	}
+	/*
+	 * Did ENCRYPT AEAD and INTEG get mixed up?
+	 *
+	 * With ESP, having separate integrity with an AEAD algorithm
+	 * makes no sense (must be ESP, since AH doesn't have
+	 * encryption).
+	 *
+	 * XXX: Unfortunately esp_info.c, given esp=aes_gcm, has been
+	 * known to add integrity.
+	 */
 	if (esp_info->esp_encrypt != NULL
-	    && ike_alg_is_aead(esp_info->esp_encrypt)
-	    && esp_info->auth == AUTH_ALGORITHM_NONE) {
-		/*
-		 * AEAD algorithms do not have a separate integrity
-		 * algorithm.
-		 */
+	    && ike_alg_is_aead(esp_info->esp_encrypt)) {
+		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, AEAD algorithm %s should have null integrity",
+			       flag, value,
+			       esp_info->esp_encrypt->common.name);
+			return FALSE;
+		}
+	}
+	/*
+	 * Verify the integrity, if not NONE.
+	 */
+	if (esp_info->auth == AUTH_ALGORITHM_NONE) {
 		passert(esp_info->esp_integ == NULL);
 	} else {
 		for (const struct integ_desc **algp = next_integ_desc(NULL);
@@ -957,12 +996,19 @@ void fill_in_esp_info_ike_algs(struct esp_info *esp_info)
 				esp_info->esp_integ = (*algp);
 			}
 		}
-		if (esp_info->esp_integ == NULL && DBGP(DBG_CONTROLMORE)) {
+		if (esp_info->esp_integ == NULL) {
 			struct esb_buf buf;
-			DBG_log("XXX: ESP/AH INTEG algorithm %s=%d not found",
-				enum_showb(&auth_alg_names,
-					   esp_info->auth, &buf),
-				esp_info->auth);
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, INTEG algorithm %s=%d is not supported",
+			       flag, value,
+			       enum_showb(&auth_alg_names,
+					  esp_info->auth, &buf),
+			       esp_info->auth);
+			return FALSE;
 		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("ESP/AH integ algorithm %s",
+			    esp_info->esp_integ->common.name));
 	}
+	return TRUE;
 }
