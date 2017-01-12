@@ -255,6 +255,15 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_XAUTH_I1:
 	case STATE_XAUTH_R0:
 	case STATE_XAUTH_R1:
+	case STATE_V2_CREATE_I0:
+	case STATE_V2_CREATE_I:
+	case STATE_V2_REKEY_IKE_I0:
+	case STATE_V2_REKEY_IKE_I:
+	case STATE_V2_REKEY_CHILD_I0:
+	case STATE_V2_REKEY_CHILD_I:
+	case STATE_V2_CREATE_R:
+	case STATE_V2_REKEY_IKE_R:
+	case STATE_V2_REKEY_CHILD_R:
 		return established_ike;
 
 		/*
@@ -267,6 +276,10 @@ static struct state_category *categorize_state(struct state *st,
 		} else {
 			return established_ipsec;
 		}
+
+	case STATE_V2_IPSEC_I:
+	case STATE_V2_IPSEC_R:
+		return established_ipsec;
 
 	case STATE_IKESA_DEL:
 		return established_ike;
@@ -532,6 +545,43 @@ void v1_delete_state_by_username(struct state *st, void *name)
 	}
 }
 
+static bool eq_pst_msgid_kind(struct state *st,
+		so_serial_t psn, msgid_t st_msgid,
+		enum state_kind expected_state)
+{
+	if (st->st_clonedfrom == psn &&
+			st->st_msgid == st_msgid &&
+			st->st_state == expected_state) {
+		return TRUE;
+	}
+	return FALSE;
+}
+/*
+ * Find the state object that match the following:
+ *	st_msgid (IKE/IPsec initiator state)
+ *	parent duplicated from
+ *	expected state
+ */
+struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
+		enum state_kind expected_state)
+{
+	int i;
+
+	passert (psn >= SOS_FIRST);
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+		FOR_EACH_ENTRY(st, i, {
+				if (eq_pst_msgid_kind(st, psn, st_msgid,
+							expected_state)) {
+				return st;}});
+	}
+	DBG(DBG_CONTROL, DBG_log("no waiting child state matching pst #%lu "
+				"msg id %u expected state %s", psn, ntohs(st_msgid),
+				 enum_name(&state_names, expected_state)));
+	return NULL;
+}
+
 /*
  * Find the state object with this serial number.
  * This allows state object references that don't turn into dangerous
@@ -681,10 +731,11 @@ void release_fragments(struct state *st)
 
 void ikev2_expire_unused_parent(struct state *pst)
 {
+        struct state *st;
+
 	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
 		return; /* only deal with established parent SA */
 
-	struct state *st;
 	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
 			if (st->st_clonedfrom == pst->st_serialno)
 				return;
@@ -702,21 +753,25 @@ void ikev2_expire_unused_parent(struct state *pst)
 	}
 }
 
-static void flush_pending_quickmode (struct state *pst)
+static void flush_pending_ipsec(struct state *pst, struct state *st)
 {
-        struct state *st;
 
 	if (!IS_IKE_SA(pst))
 		return; /* we had better be a parent */
-	if(pst->st_ikev2)
-		return; /* quick mode is only for IKEv1 */
 
-        FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
-                if (st->st_clonedfrom == pst->st_serialno) {
-			char cib[CONN_INST_BUF];
-			struct connection *c = st->st_connection;
-			if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
-				continue;
+	if (st->st_clonedfrom == pst->st_serialno) {
+		char cib[CONN_INST_BUF];
+		struct connection *c = st->st_connection;
+		if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+			if (dpd_active_locally(st)) {
+				liveness_action(st);
+			} else {
+				/* accerlate the next event of the st */
+				st->st_margin = 0;
+				event_schedule(st->st_event->ev_type, 0, st);
+			}
+			return;
+		} else {
 
 			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
 					"connection\"%s\"%s state #%lu: - the parent is going away",
@@ -724,10 +779,20 @@ static void flush_pending_quickmode (struct state *pst)
 					st->st_serialno);
 
 			delete_event(st);
-			event_schedule( EVENT_SA_REPLACE, 0, st);
-               }
-        });
+			event_schedule(EVENT_SA_REPLACE, 0, st);
+	}
 }
+
+static void flush_pending_children(struct state *pst)
+{
+	struct state *st;
+	/* AA_2016 check is it st or pst ? */
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, { 
+			flush_pending_ipsec(pst, st);
+			delete_cryptographic_continuation(st);
+			});
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -909,8 +974,8 @@ void delete_state(struct state *st)
 	 */
 	flush_pending_by_state(st);
 
-	/* handle pending quick mode IKEv1 states */
-	flush_pending_quickmode(st);
+	/* flush unestablished child states */
+	flush_pending_children(st);
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
@@ -1291,27 +1356,37 @@ void delete_states_by_peer(const ip_address *peer)
 
 /*
  * IKEv1: Duplicate a Phase 1 state object, to create a Phase 2 object.
- * IKEv2: Duplicate a Parent SA state object, to create a Child SA object
+ * IKEv2: Duplicate a Parent SA state object, to create an
+ * IPSEC or an IKE SA object
  *
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-struct state *duplicate_state(struct state *st)
+struct state *duplicate_state(struct state *st, sa_t sa_type)
 {
 	struct state *nst;
+	char cib[CONN_INST_BUF];
 
-	/* record use of the Phase 1 / Parent state */
-	st->st_outbound_count++;
-	st->st_outbound_time = mononow();
+	if (sa_type == IPSEC_SA) {
+		/* record use of the Phase 1 / Parent state */
+		st->st_outbound_count++;
+		st->st_outbound_time = mononow();
+	}
 
 	nst = new_state();
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu",
-				 st->st_serialno, nst->st_serialno));
+	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu for %s "
+				"\"%s\"%s",
+				 st->st_serialno, nst->st_serialno,
+				sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA",
+				st->st_connection->name,
+				fmt_conn_instance(st->st_connection, cib)));
 
-	memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
-	memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
 	nst->st_connection = st->st_connection;
+	if (sa_type == IPSEC_SA) {
+		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
+		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
+	}
 
 	nst->quirks = st->quirks;
 	nst->hidden_variables = st->hidden_variables;
@@ -1333,19 +1408,20 @@ struct state *duplicate_state(struct state *st)
 		if (nst->field != NULL) \
 			PK11_ReferenceSymKey(nst->field); \
 	}
-	/* same as st_skeyid_nss */
-	clone_nss_symkey_field(st_skeyseed_nss);
-	/* same as st_skeyid_d_nss */
-	clone_nss_symkey_field(st_skey_d_nss);
-	/* same as st_skeyid_a_nss */
-	clone_nss_symkey_field(st_skey_ai_nss);
-	clone_nss_symkey_field(st_skey_ar_nss);
-	/* same as st_skeyid_e_nss */
-	clone_nss_symkey_field(st_skey_ei_nss);
-	clone_nss_symkey_field(st_skey_er_nss);
-	clone_nss_symkey_field(st_skey_pi_nss);
-	clone_nss_symkey_field(st_skey_pr_nss);
-	clone_nss_symkey_field(st_enc_key_nss);
+	if (sa_type == IPSEC_SA) {
+		/* same as st_skeyid_nss */
+		clone_nss_symkey_field(st_skeyseed_nss);
+		/* same as st_skeyid_d_nss */
+		clone_nss_symkey_field(st_skey_d_nss);
+		/* same as st_skeyid_a_nss */
+		clone_nss_symkey_field(st_skey_ai_nss);
+		clone_nss_symkey_field(st_skey_ar_nss);
+		/* same as st_skeyid_e_nss */
+		clone_nss_symkey_field(st_skey_ei_nss);
+		clone_nss_symkey_field(st_skey_er_nss);
+		clone_nss_symkey_field(st_skey_pi_nss);
+		clone_nss_symkey_field(st_skey_pr_nss);
+		clone_nss_symkey_field(st_enc_key_nss);
 #   undef clone_nss_symkey_field
 #   define clone_any_chunk(field) { \
 		if (st->field.ptr == NULL) { \
@@ -1356,19 +1432,20 @@ struct state *duplicate_state(struct state *st)
 				#field " in duplicate state"); \
 		} \
 	}
-	clone_any_chunk(st_skey_initiator_salt);
-	clone_any_chunk(st_skey_responder_salt);
+		clone_any_chunk(st_skey_initiator_salt);
+		clone_any_chunk(st_skey_responder_salt);
 #    undef clone_any_chunk
 
 	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \
 	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
 
-	clone_chunk(st_ni, "st_ni in duplicate_state");
-	clone_chunk(st_nr, "st_nr in duplicate_state");
+		clone_chunk(st_ni, "st_ni in duplicate_state");
+		clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
-	nst->st_oakley = st->st_oakley;
+		nst->st_oakley = st->st_oakley;
+	}
 
 	jam_str(nst->st_username, sizeof(nst->st_username),
 		st->st_username);
@@ -1461,13 +1538,14 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 
 /*
  * Find a state object for an IKEv2 state, looking by icookie only and
- * only matching "struct state" objects in the correct state.
+ * matching "struct state" objects in the correct state and IS_CHILD.
  *
  * Note: only finds parent states (this is ok as only interested in
  * state objects in the initial state).
  */
-struct state *find_state_ikev2_parent_init(const u_char *icookie,
-					   enum state_kind expected_state)
+struct state *ikev2_find_state_in_init(const u_char *icookie,
+					   enum state_kind expected_state,
+					   bool is_child)
 {
 	struct state *st;
 	FOR_EACH_STATE_ENTRY(st, icookie_chain(icookie), {
@@ -1480,7 +1558,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie,
 			if (!memeq(icookie, st->st_icookie, COOKIE_SIZE)) {
 				continue;
 			}
-			if (IS_CHILD_SA(st)) {
+			if (!is_child && IS_CHILD_SA(st)) {
 				continue;
 			}
 			DBG(DBG_CONTROL,
@@ -1704,6 +1782,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 			if (LHAS(ok_states, st->st_state) &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
+				IS_PARENT_SA(st) && /* AA_2016 why find child */
 				(best == NULL ||
 					best->st_serialno < st->st_serialno))
 				best = st;
@@ -2352,6 +2431,53 @@ bool dpd_active_locally(const struct state *st)
 {
 	return deltasecs(st->st_connection->dpd_delay) != 0 &&
 		deltasecs(st->st_connection->dpd_timeout) != 0;
+}
+
+static void  set_st_clonedfrom(struct state *st, so_serial_t nsn)
+{
+	/* add debug line  too */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit #%lu from parent #%lu",
+				nsn, st->st_serialno,st->st_clonedfrom));
+	st->st_clonedfrom = nsn;
+}
+
+/* Kick the IPsec SA, when the parent is already replaced, to replace now */
+void ikev2_repl_est_ipsec(struct state *st, void *data)
+{
+	so_serial_t predecessor = *(so_serial_t *)data;
+	if (st->st_clonedfrom != predecessor)
+		return;
+
+	if (predecessor != st->st_connection->newest_isakmp_sa) {
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu, replacing #%lu. #%lu is not the newest IKE SA of"
+					" %s", predecessor, st->st_serialno,
+					predecessor, st->st_connection->name));
+	}
+
+	{
+		enum event_type ev_type = st->st_event->ev_type;
+		passert(st->st_event != NULL);
+		delete_event(st);
+		event_schedule(ev_type, 0, st);
+	}
+}
+
+void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
+{
+	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
+
+	int i;
+
+	passert(nsn >= SOS_FIRST);
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+		FOR_EACH_ENTRY(st, i, {
+				if (st->st_clonedfrom == osn) {
+					set_st_clonedfrom(st, nsn);
+				}});
+	}
+	return;
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
