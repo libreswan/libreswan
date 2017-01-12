@@ -47,6 +47,8 @@
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
+#include "ikev2.h"
 
 /* struct pending, the structure representing IPsec SA
  * negotiations delayed until a Keying Channel has been negotiated.

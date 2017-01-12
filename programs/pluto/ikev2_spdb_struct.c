@@ -56,6 +56,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "demux.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "rnd.h"
 

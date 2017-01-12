@@ -64,6 +64,7 @@
 #include "whack.h"
 #include "timer.h"
 #include "ike_alg.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
