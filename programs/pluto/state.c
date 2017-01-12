@@ -764,10 +764,10 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 		struct connection *c = st->st_connection;
 		if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 			if (dpd_active_locally(st)) {
-				liveness_action(st);
+				liveness_action(st->st_connection);
 			} else {
 				/* accerlate the next event of the st */
-				st->st_margin = 0;
+				st->st_margin =  deltatime(0);
 				event_schedule(st->st_event->ev_type, 0, st);
 			}
 			return;
@@ -780,6 +780,7 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 
 			delete_event(st);
 			event_schedule(EVENT_SA_REPLACE, 0, st);
+		}
 	}
 }
 

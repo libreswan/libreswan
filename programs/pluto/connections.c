@@ -4363,3 +4363,25 @@ void suppress_delete(struct connection *c)
 		libreswan_log("did not find old IPsec state to mark for suppressing delete");
 	}
 }
+
+void liveness_action(struct connection *c)
+{
+	switch (c->dpd_action) {
+	case DPD_ACTION_CLEAR:
+		liveness_clear_connection(c, "IKEv2 liveness action");
+		return;
+
+	case DPD_ACTION_RESTART:
+		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+		restart_connections_by_peer(c);
+		return;
+
+	case DPD_ACTION_HOLD:
+		DBG(DBG_DPD,
+				DBG_log("liveness_check - handling default by rescheduling"));
+		break;
+
+	default:
+		bad_case(c->dpd_action);
+	}
+}

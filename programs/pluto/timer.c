@@ -361,28 +361,6 @@ static void retransmit_v2_msg(struct state *st)
 	/* note: no md->st to clear */
 }
 
-static void liveness_action(struct connection *c)
-{
-	switch (c->dpd_action) {
-	case DPD_ACTION_CLEAR:
-		liveness_clear_connection(c, "IKEv2 liveness action");
-		return;
-
-	case DPD_ACTION_RESTART:
-		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
-		restart_connections_by_peer(c);
-		return;
-
-	case DPD_ACTION_HOLD:
-		DBG(DBG_DPD,
-				DBG_log("liveness_check - handling default by rescheduling"));
-		break;
-
-	default:
-		bad_case(c->dpd_action);
-	}
-}
-
 /* note: this mutates *st by calling get_sa_info */
 static void liveness_check(struct state *st)
 {
