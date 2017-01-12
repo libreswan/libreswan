@@ -2570,7 +2570,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * as it is.
 			 *
 			 */
-			unpend(st);
+			unpend(st, NULL);
 		}
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||

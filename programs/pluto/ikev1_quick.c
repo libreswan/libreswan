@@ -901,7 +901,7 @@ stf_status quick_outI1(int whack_sock,
 #endif
 		       )
 {
-	struct state *st = duplicate_state(isakmp_sa);
+	struct state *st = duplicate_state(isakmp_sa, TRUE);
 	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
@@ -1526,7 +1526,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 	/* now that we are sure of our connection, create our new state */
 	{
-		struct state *const st = duplicate_state(p1st);
+		struct state *const st = duplicate_state(p1st, IPSEC_SA);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key
