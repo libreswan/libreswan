@@ -11,6 +11,7 @@ nic #
  #stock ocspd.conf, used separate ones for different configs
 nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
+ocspd - ERROR::General error, please check logs (exit with -1)
 nic #
  echo "done."
 done.

@@ -436,6 +436,8 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
+kvmplutotest	ikev2-child-ipsec	wip
+kvmplutotest	ikev2-child-ipseac-replace-ike	wip
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
@@ -781,7 +783,8 @@ kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	good
+kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
+kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  wip
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good

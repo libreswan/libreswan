@@ -41,7 +41,7 @@ west #
 134 "west-east-delete1" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "west-east-delete1" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "west-east-delete1" #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
-004 "west-east-delete1" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east-delete1" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -168,7 +168,7 @@ west #
 000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
-000 #2: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "west-east-delete1":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
 000 #1: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "west-east-delete1" ref=0 refhim=0 Traffic: 
@@ -182,7 +182,7 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 2
-002 deleting other state #2 (STATE_PARENT_I3) "west-east-delete1"
+002 deleting other state #2 (STATE_V2_IPSEC_I) "west-east-delete1"
 005 ESP traffic information: in=168B out=168B
 west #
  echo "sleeping a bit.. 2"

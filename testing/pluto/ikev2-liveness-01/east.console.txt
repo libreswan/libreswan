@@ -50,7 +50,7 @@ east #
 east #
  hostname | grep west > /dev/null || grep -A 1 "liveness_check - peer has not responded in" /tmp/pluto.log
 | liveness_check - peer has not responded in 30 seconds, with a timeout of 30, taking action
-"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness action: Clearing Connection westnet-eastnet-ipv4-psk-ikev2[0] CK_PERMANENT
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness action clear: Clearing Connection westnet-eastnet-ipv4-psk-ikev2[0] CK_PERMANENT
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

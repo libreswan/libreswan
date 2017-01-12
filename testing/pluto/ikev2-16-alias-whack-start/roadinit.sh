@@ -4,5 +4,6 @@ ifconfig eth0:1 192.0.1.254/24
 ifconfig eth0:11 192.0.11.254/24
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+ipsec whack --debug-all --impair-retransmits
 ipsec auto --add road-east-ipv4-psk-ikev2
 echo "initdone"
