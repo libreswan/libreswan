@@ -9,6 +9,8 @@ v3.19 (unreleased)
 * IKEv2: Don't crash on bogus mixed protocol Delete Payloads [Hugh/Paul]
 * IKEv2: Add asymmetric AUTH support (leftauth= and rightauth=) [Antony/Paul]
 * IKEv2: refactored AUTH handling payload into v2_check_auth() [Paul]
+* IKEv2: support CERT chain sending [Paul]
+* IKEv2: Allow CERT and CERTREQ payloads multiple times [Paul]
 * IKEv1: If a queued up DPD probe finds no IKE SA, create a new one [Paul]
 * IKEv1: Remove ADNS, DNS continuations and IKEv1 OE code
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
