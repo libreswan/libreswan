@@ -1257,9 +1257,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
 	send_certreq = (((c->policy & POLICY_RSASIG) &&
 		!has_preloaded_public_key(st))
-#ifdef USE_GSSAPI
-	 || (c->policy & POLICY_GSSAPI)
-#endif
 		);
 
 	/* Send fragmentation support notification */

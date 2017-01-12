@@ -995,15 +995,6 @@ void ikev2_decode_cr(struct msg_digest *md)
 					DBG_log("requested CA: '%s'", buf);
 				});
 			break;
-#ifdef USE_GSSAPI
-		case CERT_KERBEROS_TOKENS:
-			if ((st->st_connection->policy & POLICY_GSSAPI) == LEMPTY) {
-				DBG(DBG_CONTROL, DBG_log("Ignoring CERTREQ payload of type GSS token for non-kerberos connection"));
-				continue;
-			}
-			libreswan_log("CERTREQ: GSS Token received: need to handle it");
-			break;
-#endif
 		default:
 			loglog(RC_LOG_SERIOUS,
 				"ignoring CERTREQ payload of unsupported type %s",
@@ -1224,23 +1215,6 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs)
 {
-#ifdef USE_GSSAPI
-	if (st->st_connection->policy & POLICY_GSSAPI) {
-		chunk_t token;
-
-		/* XXX placeholder code */
-		token.ptr = alloc_bytes(10, "fake GSS token");
-		token.len = 10;
-
-		if (!ikev2_build_and_ship_CR(CERT_KERBEROS_TOKENS,
-			token, outpbs, np)) {
-			return STF_INTERNAL_ERROR;
-		} else {
-			return STF_OK;
-		}
-	}
-#endif
-
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_X509,
 		    DBG_log("connection->kind is CK_PERMANENT so send CERTREQ"));
