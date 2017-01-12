@@ -331,6 +331,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 			libreswan_log("initiating v2 parent SA to replace #%lu",
 				predecessor->st_serialno);
 		}
+		if (IS_V2_ESTABLISHED( predecessor->st_state)) {
+			if (IS_CHILD_SA(st))
+				st->st_ipsec_pred = predecessor->st_serialno;
+			else
+				st->st_ike_pred = predecessor->st_serialno;
+		}
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
@@ -2609,6 +2615,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(cst);
+	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
 
 	/* send out the IDi payload */
 
@@ -2632,7 +2639,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 
 		r_id.isai_np = send_cert ?
-			ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_v2AUTH;
+			ISAKMP_NEXT_v2CERT : ic ? ISAKMP_NEXT_v2N :
+			ISAKMP_NEXT_v2AUTH;
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -2659,13 +2667,28 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
+		enum next_payload_types_ikev2 np = ic ?
+			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
+
 		stf_status certstat = ikev2_send_cert(cst, md,
 						      ORIGINAL_INITIATOR,
-						      ISAKMP_NEXT_v2AUTH,
-						      &e_pbs_cipher);
+						      np, &e_pbs_cipher);
 
 		if (certstat != STF_OK)
 			return certstat;
+	}
+
+	if (ic) {
+		libreswan_log("sending INITIAL_CONTACT");
+		if (!ship_v2N(ISAKMP_NEXT_v2AUTH, ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_INITIAL_CONTACT,
+					&empty_chunk,
+					&e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
+	} else {
+		DBG(DBG_CONTROL, DBG_log("not sending INITIAL_CONTACT"));
 	}
 
 	/* send out the AUTH payload */
