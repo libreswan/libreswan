@@ -1325,9 +1325,31 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 	struct ikev2_cert certhdr;
 	struct connection *c = st->st_connection;
 	cert_t mycert = st->st_connection->spd.this.cert;
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
+	bool send_authcerts = st->st_connection->send_ca != CA_SEND_NONE;
+	bool send_full_chain = send_authcerts && st->st_connection->send_ca == CA_SEND_ALL;
 	bool send_certreq = ikev2_send_certreq_INIT_decision(st, role);
 
-	certhdr.isac_enc = mycert.ty;
+	if (send_authcerts) {
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
+					mycert.u.nss_cert,
+					send_full_chain ? TRUE : FALSE);
+	}
+
+	if (chain_len < 1)
+		send_authcerts = FALSE;
+
+#if 0
+ need to make that function v2 aware and move it
+
+	doi_log_cert_thinking(st->st_oakley.auth,
+		mycert.ty,
+		st->st_connection->spd.this.sendcert,
+		st->hidden_variables.st_got_certrequest,
+		send_cert,
+		send_authcerts);
+#endif
 	certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
@@ -1335,20 +1357,12 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
-	if (send_certreq) {
-		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
-		certhdr.isac_np = ISAKMP_NEXT_v2CERTREQ;
-	} else {
-		certhdr.isac_np = np;
-		/*
-		 * If we have a remote id configured in the conn,
-		 * we can send it here to signal we insist on it.
-		 * if (st->st_connection->spd.that.id)
-		 *   cert.isaa_np = ISAKMP_NEXT_v2IDr;
-		 */
+	certhdr.isac_enc = mycert.ty;
+	certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
+		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
+		certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
 	/*   send own (Initiator CERT) */
@@ -1358,16 +1372,59 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		DBG(DBG_X509, DBG_log("Sending [CERT] of certificate: %s",
 					mycert.u.nss_cert->subjectName));
 
+		if (send_authcerts) {
+			DBG(DBG_X509, DBG_log("next payload is [CERT]"));
+			certhdr.isac_np = ISAKMP_NEXT_v2CERT;
+		} else if (send_certreq) {
+			DBG(DBG_X509, DBG_log("next payload is [CERTREQ]"));
+			certhdr.isac_np = ISAKMP_NEXT_v2CERTREQ;
+		} else {
+			DBG(DBG_X509, DBG_log("next payload is neither CERT or CERTREQ"));
+			certhdr.isac_np = np;
+		}
+
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs))
+				outpbs, &cert_pbs)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-							  &cert_pbs, "CERT"))
+							  &cert_pbs, "CERT")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&cert_pbs);
 	}
+
+	/* send optional chain CERTs */
+	{
+
+		for (int i = 0; i < chain_len ; i++) {
+			pb_stream cert_pbs;
+
+			DBG(DBG_X509, DBG_log("Sending an authcert"));
+
+			certhdr.isac_np = (i == chain_len - 1) ? (send_certreq ? ISAKMP_NEXT_v2CERTREQ : np)
+				: ISAKMP_NEXT_v2CERT;
+
+			if (!out_struct(&certhdr, &ikev2_certificate_desc,
+				outpbs, &cert_pbs))
+			{
+				free_auth_chain(auth_chain, chain_len);
+				return STF_INTERNAL_ERROR;
+			}
+			if (!out_chunk(auth_chain[i], &cert_pbs, "CERT"))
+			{
+				free_auth_chain(auth_chain, chain_len);
+				return STF_INTERNAL_ERROR;
+			}
+			close_output_pbs(&cert_pbs);
+		}
+		free_auth_chain(auth_chain, chain_len);
+	}
+
 
 	/* send CERTREQ  */
 	if (send_certreq) {
