@@ -1,1 +1,5 @@
+#start ocsp server here
+nic #
+ echo "done."
+done.
 
