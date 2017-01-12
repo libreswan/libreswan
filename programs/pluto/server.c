@@ -578,7 +578,11 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/* perform waitpid() for any children */
+/*
+ * Perform waitpid() for all children.
+ * We used to have more different kinds of children, but these
+ * days we only have one - add_conn
+ */
 static void reapchildren(void)
 {
 	pid_t child;
@@ -586,21 +590,18 @@ static void reapchildren(void)
 
 	errno = 0;
 
-	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
-		if (child == addconn_child_pid) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("reaped addconn helper child"));
-			addconn_child_pid = 0;
-			continue;
-		}
-		/* Threads are created instead of child processes when using LIBNSS */
-		libreswan_log("child pid=%d (status=%d) is not my child!",
-			      child, status);
-	}
-
-	if (child == -1) {
+	child = waitpid(addconn_child_pid, &status, WNOHANG);
+	if (child == addconn_child_pid) {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("reaped addconn helper child"));
+		addconn_child_pid = 0;
+	} else if (child == -1) {
 		libreswan_log("reapchild failed with errno=%d %s",
 			      errno, strerror(errno));
+	} else {
+		libreswan_log("child pid=%d (status=%d) is not my child!",
+				child, status);
+
 	}
 }
 
