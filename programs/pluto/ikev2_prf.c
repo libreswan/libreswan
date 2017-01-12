@@ -116,8 +116,16 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
 
+	if (skq->skey_d_old == NULL) {
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = ikev2_ike_sa_skeyseed(skq->prf, ni, nr, shared);
+		skeyseed_k = ikev2_ike_sa_skeyseed(skq->prf, ni, nr, shared);
+	}  else {
+		skeyseed_k = ikev2_ike_sa_rekey_skeyseed(skq->old_prf,
+					skq->skey_d_old,
+					shared, ni, nr);
+		free_any_symkey("parent SK_d", &skq->skey_d_old);
+	}
+
 	passert(skeyseed_k != NULL);
 
 	/* now we have to generate the keys for everything */
