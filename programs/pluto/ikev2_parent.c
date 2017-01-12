@@ -4461,7 +4461,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	}
 
 	{
-		/* AA_2016 condition need a better fix don't commit */
+		/* AA_2016 condition need a better fix ??? */
 		if (st->st_original_role == ORIGINAL_INITIATOR) {
 			if(!ikev2_emit_sa_proposals(outpbs,
 						st->st_connection->ike_proposals,
@@ -5591,3 +5591,68 @@ void ikev2_free_auth_pam(so_serial_t st_serialno)
 	}
 }
 #endif
+
+void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
+                       struct connection *c, lset_t policy,
+                       unsigned long try, so_serial_t replacing
+#ifdef HAVE_LABELED_IPSEC
+                       , struct xfrm_user_sec_ctx_ike *uctx
+#endif
+                       )
+{
+	struct state *st = duplicate_state(isakmp_sa, IPSEC_SA);
+	char replacestr[32];
+	const char *pfsgroupname = "no-pfs";
+
+	st->st_whack_sock = whack_sock;
+	st->st_connection = c;	/* safe: from duplicate_state */
+	passert(c != NULL);
+
+	set_cur_state(st); /* we must reset before exit */
+	st->st_policy = policy;
+	st->st_try = try;
+
+	freeanychunk(st->st_ni); /* this is from the parent. */
+	freeanychunk(st->st_nr); /* this is from the parent. */
+
+#ifdef HAVE_LABELED_IPSEC
+	st->sec_ctx = NULL;
+	if (uctx != NULL) {
+		st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
+		DBG(DBG_CONTROL,
+		    DBG_log("pending phase 2 with security context \"%s\"",
+			    st->sec_ctx->sec_ctx_value));
+	}
+#endif
+	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
+	change_state(st, STATE_V2_CREATE_I0);
+	st->st_original_role = ORIGINAL_INITIATOR;
+
+	insert_state(st); /* needs cookies, connection, and msgid */
+
+	replacestr[0] = '\0';
+	if (replacing != SOS_NOBODY)
+		snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
+				replacing);
+
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu schedule event to initiate IPsec SA "
+				"%s%s using IKE#%lu pfs=%s",
+				st->st_serialno,
+				prettypolicy(policy),
+				replacestr,
+				isakmp_sa->st_serialno,
+				pfsgroupname));
+	delete_event(st);
+	event_schedule(EVENT_v2_INITIATE_CHILD, 0, st);
+	reset_globals();
+	return;
+}
+
+void ikev2_child_outI(struct state *st)
+{
+	/* figure out PFS group, if any */
+
+	ikev2_crypto_start(NULL, st);
+
+	return;
+}
