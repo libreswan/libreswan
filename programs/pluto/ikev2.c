@@ -56,6 +56,7 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
@@ -266,6 +267,32 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
+	  .crypto_end = ikev2_parent_outI1_tail,
+	  .timeout_event = EVENT_v2_RETRANSMIT, };
+
+/* microcode to child IKE rekey initiator state: not associated with an input packet */
+const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode =
+	/* no state:   --> REKEY_IKE_I
+	 * HDR, SAi1, KEi, Ni -->
+	 */
+	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
+	  .state      = STATE_V2_REKEY_IKE_I0,
+	  .next_state = STATE_V2_REKEY_IKE_I,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_child_out_cont,
+	  .timeout_event = EVENT_v2_RETRANSMIT, };
+
+const struct state_v2_microcode ikev2_create_child_initiate_microcode =
+	/* no state:   --> CREATE IPSec Child Request
+	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
+	 */
+	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
+	  .state      = STATE_V2_CREATE_I0,
+	  .next_state = STATE_V2_CREATE_I,
+	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_child_out_cont,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
 /* microcode for input packet processing */
@@ -308,7 +335,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I3,
+	  .next_state = STATE_V2_IPSEC_I,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
@@ -341,7 +368,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R2,
+	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
@@ -360,27 +387,45 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                <-- HDR, SK {SA, Nr, [KEr], [TSi, TSr]}
 	 */
 
-	/* Create Child SA Exchange */
-	{ .story      = "I3: CREATE_CHILD_SA",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	/*
+	 * Create Child SA Exchange to rekey IKE SA
+	 * no state:   --> REKEY_IKE_R
+	 * HDR, SAi1, KEi, Ni -->
+	 *		<-- HDR, SAr1, KEr, Nr
+	 */
+	{ .story      = "Respond to CREATE_CHILD_SA IKE Rekey",
+	  .state      = STATE_V2_REKEY_IKE_R,
+	  .next_state = STATE_PARENT_R2,
+	  .flags =      SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni),
-	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_child_inIoutR,
+	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
+	  .opt_enc_payloads = P(N),
+	  .processor  = ikev2_child_ike_inIoutR,
+	  .crypto_end = ikev2_child_out_cont,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE },
+
+	{ .story      = "Proces CREATE_CHILD_SA IPsec SA Response",
+	  .state      = STATE_V2_CREATE_I,
+	  .next_state = STATE_V2_IPSEC_I,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
+	  .processor  = ikev2_child_ipsec_inR,
+	  .crypto_end = NULL,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	/* Create Child SA Exchange */
-	{ .story      = "R2: CREATE_CHILD_SA",
-	  .state      = STATE_PARENT_R2,
-	  .next_state = STATE_PARENT_R2,
+	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
+	  .state      = STATE_V2_CREATE_R,
+	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni),
-	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_child_inIoutR,
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
+	  .processor  = ikev2_child_ipsec_inIoutR,
+	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -392,7 +437,17 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
 	 */
 
-	{ .story      = "I3: INFORMATIONAL",
+	{ .story      = "I3: INFORMATIONAL Request",
+	  .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_IKE_I_SET,
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "I3: INFORMATIONAL Response",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_CLEAR,
@@ -402,10 +457,20 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "R2: process INFORMATIONAL",
+	{ .story      = "R2: process INFORMATIONAL Request",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_IKE_I_SET,
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "R2: process INFORMATIONAL Response",
+	  .state      = STATE_PARENT_R2,
+	  .next_state = STATE_PARENT_R2,
+	  .flags      = SMF2_IKE_I_CLEAR,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
