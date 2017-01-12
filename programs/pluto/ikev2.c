@@ -1713,7 +1713,7 @@ void log_ipsec_sa_established(const char *m, struct state *st)
 {
 	ipstr_buf bul, buh, bhl, bhh;
 
-	/* document IPsec SA details for admin's pleasure */
+	/* document Child SA details for admin's pleasure */
 	libreswan_log( "%s [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]", m,
 			ipstr(&st->st_ts_this.low, &bul),
 			ipstr(&st->st_ts_this.high, &buh),
@@ -1728,13 +1728,37 @@ void log_ipsec_sa_established(const char *m, struct state *st)
 
 }
 
+static void ikev2_child_emancipate(struct msg_digest *md)
+{
+	/* st grow up to be an IKE parent. not child anymore.  */
+
+	struct state *st = md->st;
+	so_serial_t osn = st->st_clonedfrom;
+	st->st_clonedfrom = SOS_NOBODY;
+
+	/* And inherit. Child SA from parent */
+	ikev2_inherit_ipsec_sa(osn, st->st_serialno);
+
+	/* initialze the the new IKE SA. reset and message ID */
+	st->st_msgid_lastrecv = v2_INVALID_MSGID;
+	st->st_msgid_nextuse = v2_INITIAL_MSGID;
+
+	ikev2_isakamp_established(st, md->svm, md->svm->next_state,
+			st->st_original_role);
+}
+
+
+
 static void success_v2_state_transition(struct msg_digest *md)
 {
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
+	struct state *pst;
 	enum rc_type w;
+
+	pst = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
 
 	if (from_state != svm->next_state) {
 		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
@@ -1742,10 +1766,14 @@ static void success_v2_state_transition(struct msg_digest *md)
 			      enum_name(&state_names, svm->next_state)));
 	}
 
-	change_state(st, svm->next_state);
-	w = RC_NEW_STATE + st->st_state;
-
+	if (from_state == STATE_V2_REKEY_IKE_R) {
+		ikev2_child_emancipate(md);
+	} else  {
+		change_state(st, svm->next_state);
+	}
 	ikev2_update_msgid_counters(md);
+
+	w = RC_NEW_STATE + st->st_state;
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {
@@ -1788,13 +1816,14 @@ static void success_v2_state_transition(struct msg_digest *md)
 		    from_state != STATE_IKEv2_BASE &&
 		    from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
-			nat_traversal_change_port_lookup(md, st);
+			nat_traversal_change_port_lookup(md, pst);
 		}
 
 		DBG(DBG_CONTROL, {
 			    ipstr_buf b;
-			    DBG_log("sending V2 reply packet to %s:%u (from port %u)",
-				    ipstr(&st->st_remoteaddr, &b),
+			    DBG_log("sending V2 %s packet to %s:%u (from port %u)",
+				    from_state == STATE_IKEv2_BASE ? "new request" :
+				    "reply", ipstr(&st->st_remoteaddr, &b),
 				    st->st_remoteport,
 				    st->st_interface->port);
 		    });
@@ -1814,7 +1843,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
 				pst->st_serialno));
-			unpend(pst);
+			/* a better call unpend in ikev2_isakamp_established? */
+			unpend(pst, st->st_connection);
 			release_whack(pst);
 		}
 	}
@@ -1837,7 +1867,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule(EVENT_v2_RELEASE_WHACK,
 						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
-				delay = ikev2_replace_delay(st, &kind, md->original_role);
+				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
 				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
 				event_schedule(kind, delay, st);
 
@@ -1849,8 +1879,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 						c->r_interval, st);
 			}
 			break;
-		case EVENT_SA_REPLACE: /* IKE or IPsec SA replacement event */
-			delay = ikev2_replace_delay(st, &kind, md->original_role);
+		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
+			delay = ikev2_replace_delay(st, &kind, st->st_original_role);
 			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
 				IS_IKE_SA(st) ? "parent" : "child", delay));
 			delete_event(st);
@@ -2063,11 +2093,20 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 		if (md->note != NOTHING_WRONG) {
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
-				/* We are the exchange responder */
-				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				SEND_V2_NOTIFICATION(md->note);
+				struct state *pst = st;
 
-				if (st != NULL) {
+				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
+				/* We are the exchange responder */
+				if (st != NULL && IS_CHILD_SA(st)) {
+					pst = state_with_serialno(
+							st->st_clonedfrom);
+				}
+
+				if (st == NULL) {
+					SEND_V2_NOTIFICATION(md->note);
+				} else {
+					send_v2_notification_from_state(pst,
+							md->note, NULL);
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {

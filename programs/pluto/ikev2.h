@@ -30,7 +30,12 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 extern stf_status ikev2_send_informational(struct state *st);
 
 extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
-extern stf_status ikev2_child_inIoutR(struct msg_digest *md);
+
+extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
+						struct pluto_crypto_req *r);
+extern stf_status ikev2_child_ike_inIoutR(struct msg_digest *md);
+extern stf_status ikev2_child_ipsec_inR(struct msg_digest *md);
+extern stf_status ikev2_child_ipsec_inIoutR(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
@@ -38,8 +43,24 @@ extern stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md);
 extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
 extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
+extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
+						struct pluto_crypto_req *r);
+extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
+		struct connection *c, lset_t policy, unsigned long try,
+		so_serial_t replacing
+#ifdef HAVE_LABELED_IPSEC
+		, struct xfrm_user_sec_ctx_ike *uctx
+#endif
+		);
+
+extern void ikev2_child_outI(struct state *st);
+extern void ikev2_child_send_next( struct state *st);
 
 extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
+extern const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode;
+extern const struct state_v2_microcode ikev2_create_child_initiate_microcode;
+extern const struct state_v2_microcode ikev2_create_child_initiator_final_microcode;
+
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
@@ -56,6 +77,15 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		  return STF_FAIL + res; \
 	} \
 }
+
+/* a function that returns STF_STATUS on failure */
+#define RETURN_STF_FAILURE_STATUS(f) { \
+	stf_status res = (f); \
+	if (res != STF_OK) { \
+		  return res; \
+	} \
+}
+
 
 struct ikev2_proposal;
 struct ikev2_proposals;
@@ -227,6 +257,16 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 						    pb_stream *in_pbs,
 						    enum next_payload_types_ikev2 np);
 
+extern stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
+					struct ikev2_payloads_summary summary,
+					const struct state_v2_microcode *svm);
+
+struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool
+		verify_pl);
+
+typedef stf_status crypto_transition_fn (struct pluto_crypto_req_cont *cn,
+		                struct pluto_crypto_req *r);
+
 struct ikev2_payload_errors {
 	stf_status status;
 	lset_t bad_repeat;
@@ -244,13 +284,22 @@ struct state_v2_microcode {
 	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
 	enum event_type timeout_event;
 	state_transition_fn *processor;
+	crypto_transition_fn *crypto_end;
 };
+
+void ikev2_copy_cookie_from_sa(struct state *st,
+		                struct ikev2_proposal *accepted_ike_proposal);
 
 struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
 						  const struct state_v2_microcode *svm, bool enc);
 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
 			      struct state *st);
+
+void ikev2_isakamp_established(struct state *st,
+				const struct state_v2_microcode
+				*svm, enum state_kind new_state,
+				enum original_role role);
 
 #define SEND_V2_NOTIFICATION(t) { \
 	if (st != NULL) \
