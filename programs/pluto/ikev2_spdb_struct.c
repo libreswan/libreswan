@@ -2469,3 +2469,11 @@ bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
 	DBG(DBG_CONTROL, DBG_log("No first MODP (DH) transform found"));
 	return FALSE;
 }
+
+void ikev2_copy_cookie_from_sa(struct state *st,
+		struct ikev2_proposal *accepted_ike_proposal)
+{
+	passert(accepted_ike_proposal->remote_spi.size == COOKIE_SIZE);
+	/* st_icookie is an array of len COOKIE_SIZE. only accept this length */
+	memcpy(st->st_icookie, accepted_ike_proposal->remote_spi.bytes, COOKIE_SIZE);
+}
