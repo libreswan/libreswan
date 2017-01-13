@@ -2798,10 +2798,8 @@ bool accept_delete(struct msg_digest *md,
 
 				if (rc->newest_ipsec_sa == SOS_NOBODY) {
 					rc->policy &= ~POLICY_UP;
-					if (!shared_phase1_connection(rc)) {
-						flush_pending_by_connection(rc);
-						delete_states_by_connection(rc, FALSE);
-					}
+					flush_pending_by_connection(rc);
+					delete_states_by_connection(rc, FALSE);
 					reset_cur_connection();
 				}
 				/* reset connection */

@@ -499,7 +499,7 @@ static void compute_proto_keymat(struct state *st,
 		}
 	}
 
-	DBG(DBG_PRIVATE, {
+	DBG(DBG_CRYPT, {
 		    DBG_log("%s KEYMAT", satypename);
 		    DBG_dump("  KEYMAT computed:", pi->our_keymat,
 			     pi->keymat_len);
