@@ -2963,16 +2963,45 @@ struct connection *refine_host_connection(const struct state *st,
 {
 	struct connection *c = st->st_connection;
 	generalName_t *requested_ca = st->st_requested_ca;
+	/* Ensure the caller and us know the IKE version we are looking for */
+	bool ikev1 = auth_policy != LEMPTY;
+	bool ikev2 = this_authby != AUTH_UNSET;
+	bool ikev1_aggr = LIN(POLICY_AGGRESSIVE, auth_policy);
+
+	passert(ikev1 != ikev2);
+	if (ikev1) {
+		passert(this_authby == AUTH_UNSET);
+		passert(!st->st_ikev2);
+	}
+	if (ikev2) {
+		passert(auth_policy == LEMPTY);
+		passert(this_authby != AUTH_NEVER);
+		passert(st->st_ikev2);
+		if (c->spd.this.authby != c->spd.that.authby)
+			passert(this_authby != AUTH_UNSET);
+		passert(ikev1_aggr == FALSE);
+	}
+
+	/*
+	 * Translate the IKEv1 policy onto an IKEv2 policy.
+	 * Saves duplicating the checks for v1 and v2, and the
+	 * v1 policy is a subset of the v2 policy. Use the ikev2
+	 * bool for IKEv2 only feature checks.
+	 */
+	if (ikev1) {
+		if (LIN(POLICY_RSASIG, auth_policy))
+			this_authby = AUTH_RSASIG;
+		if (LIN(POLICY_PSK, auth_policy))
+			this_authby = AUTH_PSK;
+	} /* auth_policy must no longer be used below */
 
 	DBG(DBG_CONTROLMORE, {
 		char cib[CONN_INST_BUF];
-		DBG_log("refine_host_connection: starting with \"%s\"%s",
+		DBG_log("refine_host_connection for %s: starting with \"%s\"%s",
+			ikev1 ? "IKEv1" : "IKEv2",
 			c->name, fmt_conn_instance(c, cib));
 		});
 
-	passert(this_authby != AUTH_NEVER);
-	if (c->spd.this.authby != c->spd.that.authby)
-		passert(this_authby != AUTH_UNSET);
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
@@ -3025,7 +3054,6 @@ struct connection *refine_host_connection(const struct state *st,
 			/*
 			 * At this point, we've committed to our RSA private
 			 * key: we used it in our previous message.
-			 * Paul: only true for IKEv1
 			 */
 			my_RSA_pri = get_RSA_private_key(c);
 			if (my_RSA_pri == NULL) {
@@ -3118,26 +3146,37 @@ struct connection *refine_host_connection(const struct state *st,
 				!same_id(&c->spd.this.id, &d->spd.this.id))
 				continue;
 
-			/*
-			 * Authentication used must fit policy of this
-			 * connection.
-			 */
-			if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
-				/* Our auth isn't OK for this connection. */
-				continue;
-			}
-
 			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
 				/* IKE version has to match */
 				continue;
 			}
 
-			if ((d->policy ^ auth_policy) & POLICY_AGGRESSIVE) {
+			/*
+			 * Authentication used must fit policy of this
+			 * connection.
+			 */
+			if (ikev1) {
+				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
+					/* Our auth isn't OK for this connection. */
+					continue;
+				}
+				/* check AGGR mode matches too */
+				if (((d->policy & POLICY_AGGRESSIVE) == LEMPTY) == ikev1_aggr)
+					continue;
+			} else {
 				/*
-				 * Disallow phase1 main/aggressive mode
-				 * mismatch.
+				 * We need to check if leftauth and rightauth match, but we only know
+				 * what the remote end will send IKE_AUTH message..
+				 * Note with IKEv2 we are guaranteed to be a RESPONDER
+				 * this_authby is the received AUTH payload type in IKE_AUTH reply.
+				 * This also means, we have already sent out AUTH payload, so we cannot
+				 * switch away from previously used this.authby.
 				 */
-				continue;
+				pexpect(initiator == FALSE);
+				if (this_authby != d->spd.that.authby)
+					continue;
+				if (c->spd.this.authby != d->spd.this.authby)
+					continue;
 			}
 
 			if (d->spd.this.xauth_server !=
@@ -3185,11 +3224,10 @@ struct connection *refine_host_connection(const struct state *st,
 
 			if (this_authby == AUTH_RSASIG) {
 				/*
-				 * We must at least be able to find our
-				 * private key.
-				 * If we initiated, it must match the one we
-				 * used in the SIG_I payload that we sent
-				 * previously.
+				 * We must at least be able to find our private key.
+				 * If we initiated, it must match the one we used in
+				 * the IKEv1 SIG_I payload or IKEv2 AUTH payload that
+				 * we sent previously.
 				 */
 				const struct RSA_private_key *pri = get_RSA_private_key(d);
 
