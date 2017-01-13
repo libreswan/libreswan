@@ -27,6 +27,7 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
+#include "lswfips.h"
 
 /*
  * sadb/ESP aa attrib converters - conflicting for v1 and v2
@@ -256,10 +257,22 @@ static void alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 					ealg_id, ek_bits,
 					aalg_id);
 		} else {
-			/* Policy: default to MD5 and SHA1 */
-			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-					ealg_id, ek_bits,
-					AUTH_ALGORITHM_HMAC_MD5);
+			/*
+			 * Policy: default to MD5 and SHA1
+			 *
+			 * XXX: this should use the ike_alg DB and
+			 * code like plutoalg.c:clone_valid() to
+			 * select the default algorithm list.
+			 *
+			 * XXX: this adds INTEG to AEAD algorithms;
+			 * the IKE_ALG DB can be used to identify when
+			 * this is the case
+			 */
+			if (!libreswan_fipsmode()) {
+				raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+						     ealg_id, ek_bits,
+						     AUTH_ALGORITHM_HMAC_MD5);
+			}
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					ealg_id, ek_bits,
 					AUTH_ALGORITHM_HMAC_SHA1);
@@ -282,10 +295,18 @@ static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 				ealg_id, ek_bits,
 				aalg_id);
 	} else {
-		/* Policy: default to MD5 and SHA1 */
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				ealg_id, ek_bits,
-				AUTH_ALGORITHM_HMAC_MD5);
+		/*
+		 * Policy: default to MD5 and SHA1
+		 *
+		 * XXX: this should use the IKE_ALG DB and code like
+		 * plutoalg.c:clone_valid() to select the default
+		 * algorithm list.
+		 */
+		if (!libreswan_fipsmode()) {
+			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+					     ealg_id, ek_bits,
+					     AUTH_ALGORITHM_HMAC_MD5);
+		}
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
 				AUTH_ALGORITHM_HMAC_SHA1);
