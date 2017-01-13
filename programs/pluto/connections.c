@@ -2968,6 +2968,8 @@ struct connection *refine_host_connection(const struct state *st,
 	bool ikev2 = this_authby != AUTH_UNSET;
 	bool ikev1_aggr = LIN(POLICY_AGGRESSIVE, auth_policy);
 
+	*fromcert = FALSE;
+
 	passert(ikev1 != ikev2);
 	if (ikev1) {
 		passert(this_authby == AUTH_UNSET);
