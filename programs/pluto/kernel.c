@@ -2175,7 +2175,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #endif
 		said_next->text_said = text_esp;
 
-		DBG(DBG_CRYPT, {
+		DBG(DBG_PRIVATE, {
 			    DBG_dump("ESP enckey:",  said_next->enckey,
 				     said_next->enckeylen);
 			    DBG_dump("ESP authkey:", said_next->authkey,
@@ -2268,7 +2268,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->esn = TRUE;
 		}
 
-		DBG(DBG_CRYPT, {
+		DBG(DBG_PRIVATE, {
 			DBG_dump("AH authkey:", said_next->authkey,
 				said_next->authkeylen);
 		    });
