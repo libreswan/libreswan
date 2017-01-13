@@ -377,7 +377,7 @@ static void liveness_check(struct state *st)
 		if (pst == NULL) {
 			DBG(DBG_DPD,
 				DBG_log("liveness_check error, no parent state take dpd action"));
-			liveness_action(c);
+			liveness_action_hold(c);
 			return;
 		}
 	} else {
@@ -420,7 +420,8 @@ static void liveness_check(struct state *st)
 				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout));
-			liveness_action(c);
+			if(!liveness_action_hold(c))
+				return;
 
 		} else {
 			stf_status ret = ikev2_send_informational(st);

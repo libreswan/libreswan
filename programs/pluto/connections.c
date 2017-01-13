@@ -4364,24 +4364,24 @@ void suppress_delete(struct connection *c)
 	}
 }
 
-void liveness_action(struct connection *c)
+bool liveness_action_hold(struct connection *c)
 {
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		liveness_clear_connection(c, "IKEv2 liveness action");
-		return;
+		liveness_clear_connection(c, "IKEv2 liveness action clear");
+		return FALSE;
 
 	case DPD_ACTION_RESTART:
 		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
 		restart_connections_by_peer(c);
-		return;
+		return FALSE;
 
 	case DPD_ACTION_HOLD:
-		DBG(DBG_DPD,
-				DBG_log("liveness_check - handling default by rescheduling"));
-		break;
+		DBG(DBG_DPD, DBG_log("liveness_check - handling default by rescheduling"));
+		return TRUE;
 
 	default:
 		bad_case(c->dpd_action);
 	}
+	return FALSE;
 }
