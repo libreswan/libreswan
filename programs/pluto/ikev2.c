@@ -1831,8 +1831,11 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 			} else {
 				/* We are the exchange initiator */
-				pexpect(st !=  NULL && st->st_event != NULL &&
+				/* temporarilly make it less noisy for endusers */
+				if (DBGP(DBG_CONTROL)) {
+					pexpect(st !=  NULL && st->st_event != NULL &&
 						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
+				}
 			}
 		}
 
