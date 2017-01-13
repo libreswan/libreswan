@@ -398,11 +398,12 @@ kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
 
-kvmplutotest	delete-sa-01	good
-kvmplutotest	delete-sa-03	good
+kvmplutotest	delete-sa-01			good
+kvmplutotest	delete-sa-03			good
 kvmplutotest	delete-sa-04	wip
 kvmplutotest	delete-sa-05	wip
 kvmplutotest	delete-sa-06	wip
+kvmplutotest	delete-sa-08-rhbz1311360	good
 
 kvmplutotest	ikev1-rekey-connswitch	wip
 
