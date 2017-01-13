@@ -762,16 +762,7 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 	if (st->st_clonedfrom == pst->st_serialno) {
 		char cib[CONN_INST_BUF];
 		struct connection *c = st->st_connection;
-		if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-			if (dpd_active_locally(st)) {
-				liveness_action(st->st_connection);
-			} else {
-				/* accerlate the next event of the st */
-				st->st_margin =  deltatime(0);
-				event_schedule(st->st_event->ev_type, 0, st);
-			}
-			return;
-		} else {
+		if (!IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 
 			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
 					"connection\"%s\"%s state #%lu: - the parent is going away",
