@@ -17,6 +17,7 @@
 
 #include "lswlog.h"
 #include "x509.h"
+#include "nss_err.h"
 #include "nss_ocsp.h"
 /* NSS needs */
 #include <secerr.h>
@@ -31,15 +32,15 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 
 	if (handle == NULL) {
-		loglog(RC_LOG_SERIOUS, "NSS error getting db handle [%d]",
-			  PORT_GetError());
+		loglog(RC_LOG_SERIOUS, "NSS error getting DB handle: %s",
+				       nss_err_str(PORT_GetError()));
 		return FALSE;
 	}
 
 	rv = CERT_EnableOCSPChecking(handle);
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP checking [%d]",
-					 PORT_GetError());
+		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP checking: %s",
+				       nss_err_str(PORT_GetError()));
 		return FALSE;
 	}
 	DBG(DBG_X509, DBG_log("NSS OCSP checking enabled"));
@@ -66,7 +67,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 					loglog(RC_LOG_SERIOUS, "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
 								trust_cert_name);
 				} else {
-					loglog(RC_LOG_SERIOUS, "NSS unknown error enabling default responder [%d]",err);
+					loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP default responder: %s", nss_err_str(err));
 				}
 			}
 		} else {
@@ -76,7 +77,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 				libreswan_log("OCSP responder cert \"%s\" not found in NSS",
 						 trust_cert_name);
 			} else {
-				libreswan_log("NSS error setting default responder [%d]",err);
+				libreswan_log("NSS error setting default responder: %s", nss_err_str(err));
 			}
 		}
 	}
@@ -86,8 +87,8 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 					 timeout));
 		if (CERT_SetOCSPTimeout(timeout) != SECSuccess) {
 			/* don't shoot pluto over this */
-			loglog(RC_LOG_SERIOUS, "NSS error setting timeout [%d]",
-				PORT_GetError());
+			loglog(RC_LOG_SERIOUS, "NSS error setting OCSP timeout: %s",
+						nss_err_str(PORT_GetError()));
 		}
 	}
 
@@ -97,8 +98,8 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		rv = CERT_SetOCSPFailureMode( ocspMode_FailureIsNotAVerificationFailure);
 
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP failure mode [%d]",
-			PORT_GetError());
+		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP failure mode: %s",
+					nss_err_str(PORT_GetError()));
 		return FALSE;
 	}
 
@@ -109,8 +110,8 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP POST mathod [%d]",
-			 PORT_GetError());
+		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP POST method: %s",
+				       nss_err_str(PORT_GetError()));
 	}
 
 	/*
@@ -123,8 +124,9 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	rv = CERT_OCSPCacheSettings(cache_size, cache_min, cache_max);
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP cache parameters (size=%d, min=%d, max=%d [%d]",
-			 cache_size, cache_min, cache_max, PORT_GetError());
+		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP cache parameters (size=%d, min=%d, max=%d): %s",
+			 cache_size, cache_min, cache_max,
+			 nss_err_str(PORT_GetError()));
 	}
 
 	return TRUE;
