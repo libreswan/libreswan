@@ -5,6 +5,7 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
+%global USE_SECCOMP false
 
 %global fipscheck_version 1.2.0-7
 %global buildefence 0
@@ -44,6 +45,9 @@ BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
+%endif
+%if %{USE_SECCOMP}
+BuildRequires: libseccomp-devel
 %endif
 %if %{USE_LABELED_IPSEC}
 BuildRequires: libselinux-devel
@@ -113,6 +117,7 @@ make %{?_smp_mflags} \
     USE_LDAP=%{USE_CRL_FETCHING} \
     USE_LIBCURL=%{USE_CRL_FETCHING} \
     USE_DNSSEC=%{USE_DNSSEC} \
+    USE_SECCOMP="%{USE_SECCOMP}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     MANTREE=%{_mandir} \
