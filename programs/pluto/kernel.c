@@ -580,7 +580,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"%s"		/* optional metric */
 		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
-		"PLUTO_CONN_POLICY='%s' "
+		"PLUTO_CONN_POLICY='%s%s' "
 		"PLUTO_CONN_KIND='%s' "
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
@@ -631,6 +631,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmtu_str,
 		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
+		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
 		enum_show(&connection_kind_names, c->kind),
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,

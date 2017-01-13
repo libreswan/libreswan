@@ -1185,8 +1185,8 @@ bool ikev2_send_cert_decision(struct state *st)
 
 	if (!(c->policy & POLICY_RSASIG)) {
 		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: policy does not have RSASIG %s",
-						      prettypolicy(c->policy)));
+			DBG_log("IKEv2 CERT: policy does not have RSASIG: %s",
+				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
 		return FALSE;
 	}
 
@@ -1268,8 +1268,8 @@ static bool ikev2_send_certreq_INIT_decision(struct state *st,
 
 	if (!(c->policy & POLICY_RSASIG)) {
 		DBG(DBG_X509,
-		       DBG_log("IKEv2 CERTREQ: policy does not have RSASIG! %s",
-						      prettypolicy(c->policy)));
+		       DBG_log("IKEv2 CERTREQ: policy does not have RSASIG: %s",
+				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
 		return FALSE;
 	}
 

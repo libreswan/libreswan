@@ -425,13 +425,12 @@ const char *prettypolicy(lset_t policy)
 
 	if (bn != pbitnamesbuf)
 		pbitnamesbuf[0] = '\0';
-	snprintf(buf, sizeof(buf), "%s%s%s%s%s%s",
+	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		 pbitnamesbuf,
 		 shunt != 0 ? "+" : "",
 		 shunt != 0 ? policy_shunt_names[shunt] : "",
 		 fail != 0 ? "+failure" : "",
-		 fail != 0 ? policy_fail_names[fail] : "",
-		 NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
+		 fail != 0 ? policy_fail_names[fail] : "");
 	return buf;
 }
 

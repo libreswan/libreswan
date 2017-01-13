@@ -1468,9 +1468,10 @@ void add_connection(const struct whack_message *wm)
 		}
 #endif
 		DBG(DBG_CONTROL,
-			DBG_log("Added new connection %s with policy %s",
+			DBG_log("Added new connection %s with policy %s%s",
 				c->name,
-				prettypolicy(c->policy)));
+				prettypolicy(c->policy),
+				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
 
 		if (!NEVER_NEGOTIATE(wm->policy))
 		{
@@ -1480,8 +1481,8 @@ void add_connection(const struct whack_message *wm)
 				 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 						/* authby= was also not specified - fill in default */
 						c->policy |= POLICY_DEFAULT;
-						libreswan_log("No policy was set - defaulting to %s",
-							prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+						DBG(DBG_CONTROL, DBG_log("No AUTH policy was set - defaulting to %s",
+							prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
 				}
 			}
 
@@ -1878,14 +1879,15 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lds; ipsec_life: %lds; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s",
+			DBG_log("ike_life: %lds; ipsec_life: %lds; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
 				(long) deltasecs(c->sa_ike_life_seconds),
 				(long) deltasecs(c->sa_ipsec_life_seconds),
 				(long) deltasecs(c->sa_rekey_margin),
 				c->sa_rekey_fuzz,
 				c->sa_keying_tries,
 				c->sa_replay_window,
-				prettypolicy(c->policy)));
+				prettypolicy(c->policy),
+				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
@@ -4064,9 +4066,10 @@ void show_one_connection(const struct connection *c)
 			c->name, instance, c->policy_next->name);
 	}
 
-	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s;",
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s%s;",
 		  c->name, instance,
 		  prettypolicy(c->policy),
+		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
 		  c->spd.this.key_from_DNS_on_demand |
 			c->spd.that.key_from_DNS_on_demand ? "; " : "",
 		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
