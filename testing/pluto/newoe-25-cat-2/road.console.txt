@@ -19,6 +19,10 @@ road #
  ipsec auto --add road-west
 conn 'road-west': not found (tried aliases)
 road #
+ # give OE a chance to load conns
+road #
+ sleep 3
+road #
  ipsec auto --status
 000 using kernel interface: netkey
 000 interface lo/lo 127.0.0.1@4500

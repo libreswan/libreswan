@@ -7,5 +7,7 @@ ipsec start
 ipsec whack --debug-all --impair-retransmits
 ipsec auto --add road-east
 ipsec auto --add road-west
+# give OE a chance to load conns
+sleep 3
 ipsec auto --status
 echo "initdone"

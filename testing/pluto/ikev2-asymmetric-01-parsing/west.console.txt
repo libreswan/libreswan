@@ -70,10 +70,10 @@ west #
 003 Failed to add connection "failtestmanual2" : leftauth= and rightauth= require ikev2=insist
 west #
  ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
-003 Failed to add connection "failtestmanual3" : leftauth=null is unequal to rightauth=rsasig so authby=PSK+NEVER_NEGOTIATE must not be set
+003 Failed to add connection "failtestmanual3" : leftauth=null is unequal to rightauth=rsasig so authby=PSK must not be set
 west #
  ipsec whack --name failtestmanual4 --rsasig --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
-003 Failed to add connection "failtestmanual4" : leftauth=null is unequal to rightauth=rsasig so authby=RSASIG+NEVER_NEGOTIATE must not be set
+003 Failed to add connection "failtestmanual4" : leftauth=null is unequal to rightauth=rsasig so authby=RSASIG must not be set
 west #
  # parser testing
 west #
@@ -84,13 +84,13 @@ west #
 003 Failed to add connection "failtest1" : leftauth= and rightauth= require ikev2=insist
 west #
  ipsec auto --add failtest2
-003 Failed to add connection "failtest2" : leftauth=rsasig is unequal to rightauth=secret so authby=PSK+NEVER_NEGOTIATE must not be set
+003 Failed to add connection "failtest2" : leftauth=rsasig is unequal to rightauth=secret so authby=PSK must not be set
 west #
  ipsec auto --add failtest3
-003 Failed to add connection "failtest3" : leftauth=rsasig is unequal to rightauth=secret so authby=RSASIG+NEVER_NEGOTIATE must not be set
+003 Failed to add connection "failtest3" : leftauth=rsasig is unequal to rightauth=secret so authby=RSASIG must not be set
 west #
  ipsec auto --add failtest4
-003 Failed to add connection "failtest4" : leftauth=rsasig is unequal to rightauth=secret so authby=AUTHNULL+NEVER_NEGOTIATE must not be set
+003 Failed to add connection "failtest4" : leftauth=rsasig is unequal to rightauth=secret so authby=AUTHNULL must not be set
 west #
  ipsec auto --add failtest5
 003 Failed to add connection "failtest5" : leftauth= and rightauth= must both be set or both be unset

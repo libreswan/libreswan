@@ -400,7 +400,7 @@ kvmplutotest	ikev2-liveness-08	wip
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
-kvmplutotest	delete-sa-04			wip
+kvmplutotest	delete-sa-04			good
 kvmplutotest	delete-sa-05			wip
 kvmplutotest	delete-sa-06			wip
 kvmplutotest	delete-sa-08-rhbz1311360	good
