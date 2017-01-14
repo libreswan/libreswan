@@ -16,4 +16,6 @@ extern bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 
 extern bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info);
 
-void fill_in_esp_info_ike_algs(struct esp_info *esp_info);
+bool fill_in_esp_info_ike_algs(struct esp_info *esp_info,
+			       const char *field,
+			       const char *value);

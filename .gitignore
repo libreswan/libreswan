@@ -15,6 +15,7 @@ modobj
 modobj24
 modobj26
 testing/*/OUTPUT/*
+testing/*/BACKUP/*
 testing/*/*/OUTPUT*
 testing/x509/*/*
 testing/x509/index.*

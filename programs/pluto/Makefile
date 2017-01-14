@@ -493,6 +493,7 @@ CAVPSRC += cavp_ikev1.c
 CAVPSRC += cavp_ikev2.c
 CAVPSRC += cavp_sha.c
 CAVPSRC += cavp_hmac.c
+CAVPSRC += cavp_gcm.c
 DISTSRC += $(CAVPSRC)
 OBJSCAVP = $(CAVPSRC:.c=.o) $(filter-out plutomain.o, $(OBJSPLUTO))
 cavp: $(OBJSCAVP)

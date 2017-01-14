@@ -354,7 +354,7 @@ static char *make_crl_uri_str(chunk_t *uri)
 
 static void dbg_crl_import_err(int err)
 {
-	libreswan_log("CRL import error: %s", nss_err_str((PRInt32)err));
+	libreswan_log("NSS CRL import error: %s", nss_err_str((PRInt32)err));
 }
 
 bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
@@ -410,7 +410,8 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
 						       &crlval) != SECSuccess) {
 		DBG(DBG_X509,
-		    DBG_log("could not find CRL URI ext %d", PORT_GetError()));
+		    DBG_log("NSS error finding CRL distribution points: %s",
+			    nss_err_str(PORT_GetError())));
 		return NULL;
 	}
 
@@ -418,8 +419,8 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 						    &crlval);
 	if (dps == NULL) {
 		DBG(DBG_X509,
-		    DBG_log("could not decode distribution points ext %d",
-							       PORT_GetError()));
+		    DBG_log("NSS error decoding CRL distribution points: %s",
+			    nss_err_str(PORT_GetError())));
 		return NULL;
 	}
 
@@ -1161,8 +1162,9 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			}
 			freeanychunk(cr_full_hash);
 		} else {
-			DBG(DBG_X509, DBG_log("could not locate CA cert %s for CERTREQ : NSS [%d]",
-						cbuf, PORT_GetError()));
+			DBG(DBG_X509, DBG_log("NSS error locating CA cert \'%s\' for CERTREQ: %s",
+						cbuf,
+						nss_err_str(PORT_GetError())));
 		}
 	}
 	/*

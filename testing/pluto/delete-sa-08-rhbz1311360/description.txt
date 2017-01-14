@@ -1,0 +1,6 @@
+Test for https://bugzilla.redhat.com/show_bug.cgi?id=1311360
+
+on a shared IKE SA, a delete for an IPsec SA should not delete the IKE SA
+
+This test uses down but has auto=add in the config file without manually
+loading connections

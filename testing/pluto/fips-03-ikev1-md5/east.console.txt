@@ -34,9 +34,12 @@ ENCRYPT algorithm camellia: DISABLED; not FIPS compliant
 ENCRYPT algorithm serpent: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish: DISABLED; not FIPS compliant
 ENCRYPT algorithm twofish_ssh: DISABLED; not FIPS compliant
+ENCRYPT algorithm cast: DISABLED; not FIPS compliant
+ENCRYPT algorithm null: DISABLED; not FIPS compliant
 HASH algorithm md5: DISABLED; not FIPS compliant
 PRF algorithm md5: DISABLED; not FIPS compliant
 INTEG algorithm md5: DISABLED; not FIPS compliant
+INTEG algorithm ripemd: DISABLED; not FIPS compliant
 DH algorithm modp1024: DISABLED; not FIPS compliant
 DH algorithm modp1536: DISABLED; not FIPS compliant
 ENCRYPT aes_ccm_16:    IKEv1:     ESP     IKEv2:     ESP     FIPS  (aes_ccm aes_ccm_c)
