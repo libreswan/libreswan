@@ -11,10 +11,9 @@ see README.KLIPS.
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
 
-It can be downloaded from various locations:
+It can be downloaded from:
 
     https://download.libreswan.org/
-    ftp://ftp.libreswan.org/
 
 A Git repository is available at:
 
@@ -51,7 +50,7 @@ For Debian/Ubuntu
 For Fedora/RHEL/CentOS
 
 	yum install nss-devel nspr-devel pkgconfig pam-devel \
-		libcap-ng-devel libselinux-devel \
+		libcap-ng-devel libselinux-devel libseccomp-devel \
 		curl-devel flex bison gcc make \
 		fipscheck-devel unbound-devel libevent-devel xmlto
 
@@ -75,6 +74,11 @@ Runtime requirements (usually already present on the system)
     make programs
     sudo make install
 
+If you want to build without creating and installing manual pages, run:
+
+    make base
+    sudo make install-base
+
 Note: The ipsec-tools package or setkey is not needed. Instead the iproute2
 pacakge (>= 2.6.8) is required. Run `ipsec verify` to determine if your
 system misses any of the requirements. This will also tell you if any of
@@ -96,7 +100,8 @@ command can also be used to start or stop the ipsec service:
 
 ## Configuration
 Most of the libreswan configuration is stored in /etc/ipsec.conf and
-/etc/ipsec.secrets.  See their respective man pages for more information.
+/etc/ipsec.secrets. Include files may be present in /etc/ipsec.d/
+See the respective man pages for more information.
 
 ## NSS initialisation
 Libreswan uses NSS to store private keys and X.509 certificates. The NSS
@@ -115,7 +120,8 @@ migrating from the old Openswan `/etc/ipsec.d/` directories to using NSS.
 ## Upgrading
 If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
 you might need to adjust your config files, although great care has been
-put into making the configuration files full backwards compatible.
+put into making the configuration files full backwards compatible. See
+also: https://libreswan.org/wiki/HOWTO:_openswan_to_libreswan_migration
 
 See 'man ipsec.conf' for the list of options to find any new features.
 
