@@ -137,7 +137,7 @@ complibtest() {
         ${ECHO} "   "Sourcing ${SRCDIR}FLAGS
 	. ${SRCDIR}FLAGS
     fi
-     	
+
     if [ -f ${SRCDIR}FLAGS.$testobj ]
     then
         ${ECHO} "   "Sourcing ${SRCDIR}FLAGS.$testobj

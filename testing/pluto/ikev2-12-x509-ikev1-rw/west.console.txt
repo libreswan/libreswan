@@ -35,6 +35,13 @@ west #
 west #
  grep leak /tmp/pluto.log
 leak-detective enabled
+leak: EVENT_LOG_DAILY, item size: 32
+leak: EVENT_SHUNT_SCAN, item size: 32
+leak: kernel integ, item size: 32
+leak: EVENT_PENDING_PHASE2, item size: 32
+leak: EVENT_PENDING_DDNS, item size: 32
+leak: EVENT_REINIT_SECRET, item size: 32
+leak detective found 6 leaks, total size 192
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #

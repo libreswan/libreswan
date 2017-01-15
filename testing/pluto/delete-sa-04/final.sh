@@ -1,10 +1,10 @@
-# give east 60s for:
-# "west-east-auto" #1: received Delete SA payload: replace IPSEC State #2 in 60 seconds
+# wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
 sleep 45
 sleep 30
-# no IPsec SA should be up - ISAKMP SA should be gone too
+# There should be no IKE SA and no IPsec SA
 ipsec whack --trafficstatus
-ipsec status |grep west-east
+# east howvever, should be attempting to connect to west because it has auto=start
+ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in /EVENT_v1_RETRANSMIT in .../"
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

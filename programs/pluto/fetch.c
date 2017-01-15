@@ -44,6 +44,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "secrets.h"
+#include "nss_err.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -579,8 +580,8 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 	CERTCertificate *ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
 						issuer_dn);
 	if (ca == NULL) {
-		DBG_log("no CA cert found to add fetch request: [%d]",
-							       PORT_GetError());
+		DBG_log("NSS error finding CA to add to fetch request: %s",
+			 nss_err_str(PORT_GetError()));
 		return;
 	}
 

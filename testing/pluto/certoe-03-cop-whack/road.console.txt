@@ -171,11 +171,9 @@ road #
 road #
  # you should see both RSA and NULL
 road #
- grep IKEv2_AUTH_ OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+ grep IKEv2_AUTH_ /tmp/pluto.log
+|    auth method: IKEv2_AUTH_NULL (0xd)
+|    auth method: IKEv2_AUTH_RSA (0x1)
 road #
 road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

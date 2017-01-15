@@ -64,7 +64,7 @@ for host in $(${LIBRESWANSRCDIR}/testing/utils/kvmhosts.sh); do
     # filter it out.
     if [ -f "${host}.console.txt" ]; then
 	#echo "re-sanitizing ${host}"
-	rm -f OUTPUT/${host}.console.tmp	
+	rm -f OUTPUT/${host}.console.tmp
 	touch OUTPUT/${host}.console.tmp
 	# sanitize last run
 	if [ ! -f OUTPUT/${host}.console.verbose.txt ]; then

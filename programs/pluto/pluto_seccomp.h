@@ -1,6 +1,6 @@
 /*
  * seccomp support for Linux kernel using seccomp
- * 
+ *
  * Copyright (c) 2016 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
