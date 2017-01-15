@@ -46,7 +46,7 @@ else
 
 	cp /testing/pluto/$TESTNAME/west.conf /tmp/$TESTNAME/ipsec.conf
 	cp /etc/ipsec.secrets                    /tmp/$TESTNAME
-	
+
 	# this differs from westlocal.sh right here, where we copy
 	# rather than append.
 	if [ -f /testing/pluto/$TESTNAME/west.secrets ]

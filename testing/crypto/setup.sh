@@ -6,7 +6,7 @@ if [ -z "${LIBRESWANSRCDIR}" ]; then
 	if [ -f ../../../kvmsetup.sh ]; then
 	    LIBRESWANSRCDIR=$(cd ../../.. && pwd)
 	fi
-    fi	
+    fi
 fi
 
 if [ ! -f ${LIBRESWANSRCDIR}/kvmsetup.sh ]; then

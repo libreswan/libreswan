@@ -1408,7 +1408,7 @@ int main(int argc, char **argv)
 		}
 #else
 		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
-		exit_pluto(PLUTO_EXIT_FORK_FAIL);		
+		exit_pluto(PLUTO_EXIT_FORK_FAIL);
 #endif
 		if (setsid() < 0) {
 			int e = errno;

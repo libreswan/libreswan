@@ -33,7 +33,7 @@ def main():
 	regress = "%s/%s"%(libreswansrcdir,"results")
 	ostype = ""
 	osmedia = ""
-	
+
 	if os.path.isfile(kvmsetup):
 		# Is there an easier way in python?
 		for line in open(kvmsetup,"r").readlines():
@@ -80,7 +80,7 @@ def main():
 		print >> sys.stderr, "Please set the OSTYPE= and OSMEDIA= in kvmsetup.sh or use --osmedia / --ostype"
 		if not os.path.isfile(kvmsetup):
 			sys.exit("No %s found. For help, see %s.sample"%(kvmsetup,kvmsetup))
-	
+
 	if not os.path.isdir(pool):
 		try:
 			os.mkdir(pool)
@@ -113,7 +113,7 @@ def main():
 		else:
 			cpu = ""
 		installcmd = "sudo virt-install --connect=qemu:///system --network=network:default,model=virtio --initrd-inject=%s/testing/libvirt/%sbase.ks --extra-args='ks=file:/%sbase.ks console=tty0 console=ttyS0,115200 ' --name=swan%sbase --disk %s/swan%sbase.img,size=8 --ram 1024 --vcpus=1 --check-cpu --accelerate --location=%s --nographics --autostart --noreboot %s"%(libreswansrcdir, ostype, ostype, ostype, pool, ostype, osmedia, cpu)
-	
+
 		print installcmd
 		qemup = subprocess.Popen(installcmd, shell=True, stdout=subprocess.PIPE)
 		for line in iter(qemup.stdout.readline, ''):

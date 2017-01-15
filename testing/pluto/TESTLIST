@@ -314,7 +314,7 @@ kvmplutotest	ikev2-asymmetric-13-rsacert-psk		good
 kvmplutotest	ikev2-asymmetric-15-rsaraw-rsaraw	good
 kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
 
-# test harnass needs to be able to install raw keys and certs 
+# test harnass needs to be able to install raw keys and certs
 kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	wip
 kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	wip
 

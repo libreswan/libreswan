@@ -539,7 +539,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) 
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
 

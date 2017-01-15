@@ -448,5 +448,5 @@ static const enum_names *pluto_enum_names_checklist[] = {
 };
 
 void init_pluto_constants(void) {
-	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));	
+	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));
 }

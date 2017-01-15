@@ -8,7 +8,7 @@ RFC-3948 encapsulation. In other cases, where IKE is NAT'ed but ESP
 packets can or should flow without encapsulation, it can be useful
 to ignore the NAT-Traversal auto-detection.
 <emphasis remap='B'>encapsulation=yes</emphasis> forces the NAT detection
-code to lie and tell the remote peer that RFC-3948 encapsulation (ESP in 
+code to lie and tell the remote peer that RFC-3948 encapsulation (ESP in
 port 4500 packets) is required.
 <emphasis remap='B'>encapsulation=no</emphasis> ignores the NAT detection
 causing ESP packets to send send without encapsulation.

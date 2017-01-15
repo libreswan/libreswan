@@ -60,7 +60,7 @@ proc insertVendorId {msg vendorid} {
 	# copy payload to new message
 	#pbs_append $newpb $outLoc $msg $inLoc $paylen
 	#set outLoc [expr $outLoc + $paylen]
-	
+
 	# copy payload to new message
 	set newpaypb [pbs_create [expr $paylen * 2]]
 	pbs_append $newpaypb 0 $msg $inLoc $paylen
@@ -73,7 +73,7 @@ proc insertVendorId {msg vendorid} {
 	set newpaylen [pbs_offset_get $newpaypb]
 	pbs_append $newpb $outLoc $newpaypb 0 $newpaylen
 	set outLoc [expr $outLoc + $paylen]
-	
+
 	# poke payload type in pointer to this payload.
 	# most of the time, a no-op.
 	#puts stderr "overwrriting previous np: newpb($thispayloc)=$thispay"
@@ -89,7 +89,7 @@ proc insertVendorId {msg vendorid} {
     #hexdump_pb "2: " $newpb
 
     # insert vendor ID as np.
-    global ISAKMP_NEXT_VID			
+    global ISAKMP_NEXT_VID
     pbs_poke $newpb $thispayloc $ISAKMP_NEXT_VID
 
     set preVidLoc $outLoc

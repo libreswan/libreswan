@@ -1,7 +1,7 @@
 # wait for east to initiate to us
 sleep 10
 ipsec whack --trafficstatus
-# sending delete/notify should cause east to re-initiate 
+# sending delete/notify should cause east to re-initiate
 ipsec auto --down west-east-auto
 # give Delete/Notify some time
 sleep 5

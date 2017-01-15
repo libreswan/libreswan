@@ -385,7 +385,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 
 			if level == max_path - 1:
 				endcert_name = prefix + chainca + "_endcert"
-				
+
 				signpair = ca_certs[lastca]
 				print " - creating %s" % endcert_name
 				ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",

@@ -2317,7 +2317,7 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * A host behind a NAT SHOULD NOT do this type of dynamic address
  * update if a validated packet has different port and/or address
  * values because it opens a possible DoS attack (such as allowing
- * an attacker to break the connection with a single packet). 
+ * an attacker to break the connection with a single packet).
  */
 void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
