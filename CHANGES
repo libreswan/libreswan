@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.19 (unreleased)
+v3.19 (January 15, 2017)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]
 * FIPS: Only pluto needs a .hmac file, reducing crypto boundary [Paul]
 * FIPS: do not allow DBG_PRIVATE to be set when running in FIPS mode [Paul]
