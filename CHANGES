@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.20 (unreleased)
+* barf: Ensure proper macros are used. Add certutil/crlutil output [Paul]
 
 v3.19 (January 15, 2017)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]
