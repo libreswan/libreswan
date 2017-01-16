@@ -1,11 +1,11 @@
-%global USE_FIPSCHECK true
-%global USE_LIBCAP_NG true
-%global USE_LABELED_IPSEC true
-%global USE_CRL_FETCHING true
-%global USE_DNSSEC true
-%global USE_NM true
-%global USE_LINUX_AUDIT true
-%global USE_SECCOMP false
+%global USE_FIPSCHECK 1
+%global USE_LIBCAP_NG 1
+%global USE_LABELED_IPSEC 1
+%global USE_CRL_FETCHING 1
+%global USE_DNSSEC 1
+%global USE_NM 1
+%global USE_LINUX_AUDIT 1
+%global USE_SECCOMP 0
 
 %global fipscheck_version 1.2.0-7
 %global buildefence 0
