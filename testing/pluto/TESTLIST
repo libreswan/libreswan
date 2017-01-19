@@ -3,20 +3,54 @@
 # Some tools other than /bin/sh process it.
 #
 
-# test-kind	directory-containing-test	expectation	[PR#]
+# test-kind	directory-containing-test	expectation	[PR#] # comment
 
-# test-kind:
-#  umlplutotest - not yet converted, will not be run with 'make check'
-#  kvmplutotest - coverted to use KVM, will be run with 'make check'
-#  skiptest - skip this test
-#  hwtest - connect to physical test machines, not KVM [FUTURE]
-#  umlXhost - ????
-
-# expectation:
-#  good - output matches known output
-#  bad  - output should NOT match [only for unit tests, not pluto test]
-#  wip  - this test still need work.
-#  skiptest - presumably never test
+# Test Kind:
+#
+#   kvmplutotest: uses KVM (and hopefully docker); will be run by
+#                 default
+#
+#   umlplutotest: not converted to KVM; not run by default.
+#
+#   umlXhost: not converted to KVM; not run by default; requires
+#             missing domains, such as japan
+#
+# Expectation:
+#
+#   good: since reference output for all in-use domains exists and
+#         matches the test consistently passes, hence the test is run
+#         by default
+#
+#   wip: since reference output is either missing (UNRESOLVED) or
+#        often different (FAILED) the the test does not consistently
+#        pass, hence the test is not run by default
+#
+#   skiptest: used for unit tests where a human is expected to examine
+#             the output; this test is not run by default
+#
+#
+# Invoking the testsuite:
+#
+#     make kvm-install
+#     make kvm-test
+#
+# For more info see the output from: make kvm-help
+#
+# To run an individual test that is normally skipped, either invoke
+# make as:
+#
+#     make kvm-test KVM_TESTS=path/to/test/directory
+#
+# or invoke kvmrunner.py directly as:
+#
+#    ./testing/utils/kvmrunner.py path/to/test/directory ...
+#
+# To add the WIP tests to a test run specify:
+#
+#      KVM_TEST_FLAGS=--test-result "good|wip"
+#
+# either as a parameter to make, or added to Makefile.inc.local.
+#
 
 # run the lib/libswan/ tests (make changes broke this)
 kvmplutotest	basic-pluto-00	wip
@@ -631,7 +665,7 @@ kvmplutotest	multinet-04		good
 # transport mode related tests
 umlplutotest	klips-transport-01	good
 umlplutotest	transport-02		good
-umlplutotest	transport-03		bad
+umlplutotest	transport-03		skiptest # bad
 kvmplutotest	nat-transport-02	good
 kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
@@ -789,7 +823,8 @@ kvmplutotest	fips-default-ikev2-02-nofips-west	good
 
 kvmplutotest	fips-03-ikev1-md5			good
 kvmplutotest	fips-04-ikev2-md5			good
-skiptest	fips-05-ikev1-gcm			wip
+# AES GCM and IKEv1 do not work
+kvmplutotest	fips-05-ikev1-gcm			skiptest
 kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
 kvmplutotest	fips-08-ikev2-x509			good
