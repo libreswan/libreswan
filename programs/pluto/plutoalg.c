@@ -6,7 +6,7 @@
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
- * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,6 +37,11 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 #include "ike_alg_dh.h"
+#include "ike_alg_aes.h"
+#include "ike_alg_3des.h"
+#include "ike_alg_sha1.h"
+#include "ike_alg_sha2.h"
+#include "ike_alg_md5.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -96,8 +101,9 @@ static int aalg_getbyname_ike(const char *str)
  * Raw add routine: only checks for no duplicates
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
-static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-				 unsigned ek_bits, int aalg_id,
+static void raw_alg_info_ike_add(struct alg_info_ike *alg_info,
+				 const struct encrypt_desc *ealg, unsigned ek_bits,
+				 const struct prf_desc *aalg,
 				 const struct oakley_group_desc *dh_group)
 {
 	/*
@@ -120,6 +126,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
 	*new_info = (struct ike_info) {
 		.ike_eklen = ek_bits,
+		.ike_encrypt = ealg,
+		.ike_prf = aalg,
+		.ike_dh_group = dh_group,
 	};
 
 	/*
@@ -133,82 +142,40 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 *
 	 * XXX: work-in-progress
 	 */
-
-	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
-	     algp != NULL; algp = next_encrypt_desc(algp)) {
-		const struct encrypt_desc *alg = *algp;
-		/*
-		 * keylen==0 implies use default or defaults.
-		 */
-		if (ike_alg_is_ike(&(alg)->common)
-		    && alg->common.ikev1_oakley_id == ealg_id) {
-			new_info->ike_encrypt = alg;
-			break;
-		}
-	}
-	if (new_info->ike_encrypt == NULL) {
-		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS,
-		       "ENCRYPT algorithm %s=%d is not supported",
-		       enum_showb(&oakley_enc_names, ealg_id, &buf),
-		       ealg_id);
-		return;
-	}
+	passert(new_info->ike_encrypt != NULL);
+	passert(ike_alg_is_ike(&(new_info->ike_encrypt->common)));
 	if (ek_bits != 0) {
 		if (!encrypt_has_key_bit_length(new_info->ike_encrypt,
 						ek_bits)) {
-			struct esb_buf buf;
 			loglog(RC_LOG_SERIOUS,
 			       "ENCRYPT algorithm %s with key length %u is not supported",
-			       enum_showb(&oakley_enc_names, ealg_id, &buf),
+			       new_info->ike_encrypt->common.name,
 			       ek_bits);
 			return;
 		}
 	}
 
-	for (const struct prf_desc **algp = next_prf_desc(NULL);
-	     algp != NULL; algp = next_prf_desc(algp)) {
-		const struct prf_desc *alg = *algp;
-		if (ike_alg_is_ike(&(alg)->common)
-		    && alg->common.ikev1_oakley_id == aalg_id) {
-			new_info->ike_prf = alg;
-			break;
-		}
-	}
-	if (new_info->ike_prf == NULL) {
-		struct esb_buf buf;
-		loglog(RC_LOG_SERIOUS,
-		       "PRF algorithm %s=%d is not supported",
-		       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
-		       aalg_id);
-		return;
-	}
+	passert(new_info->ike_prf != NULL);
 
 	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
 		for (const struct integ_desc **algp = next_integ_desc(NULL);
 		     algp != NULL; algp = next_integ_desc(algp)) {
 			const struct integ_desc *alg = *algp;
 			if (ike_alg_is_ike(&(alg)->common)
-			    && alg->common.ikev1_oakley_id == aalg_id) {
+			    && alg->prf == new_info->ike_prf) {
 				new_info->ike_integ = alg;
 				break;
 			}
 		}
 		if (new_info->ike_integ == NULL) {
-			struct esb_buf buf;
 			loglog(RC_LOG_SERIOUS,
-			       "INTEG algorithm %s=%d is not supported",
-			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
-			       aalg_id);
+			       "INTEG algorithm %s is not supported",
+			       new_info->ike_prf->common.name);
 			return;
 		}
 	}
 
-	new_info->ike_dh_group = dh_group;
-	if (new_info->ike_dh_group == NULL) {
-		PEXPECT_LOG("%s", "missing DH GROUP");
-		return;
-	}
+	passert(new_info->ike_dh_group != NULL);
 
 	/*
 	 * don't add duplicates
@@ -239,10 +206,12 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	 * All is good, add it.
 	 */
 	alg_info->ai.alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp=%s, cnt=%d",
-			       ealg_id, ek_bits, aalg_id,
-			       new_info->ike_dh_group->common.name,
-			       alg_info->ai.alg_info_cnt));
+	DBG(DBG_CRYPT,
+	    DBG_log("raw_alg_info_ike_add() ealg=%s ek_bits=%d aalg=%s modp=%s, cnt=%d",
+		    new_info->ike_encrypt->common.name, ek_bits,
+		    new_info->ike_prf->common.name,
+		    new_info->ike_dh_group->common.name,
+		    alg_info->ai.alg_info_cnt));
 }
 
 /*
@@ -263,17 +232,27 @@ static const struct ike_alg *default_ikev2_groups[] = {
 	NULL,
 };
 
-static const enum ikev1_encr_attribute default_ike_ealgs[] = {
-	OAKLEY_AES_CBC, OAKLEY_3DES_CBC,
+static const struct ike_alg *default_ike_ealgs[] = {
+	&ike_alg_encrypt_aes_cbc.common,
+	&ike_alg_encrypt_3des_cbc.common,
+	NULL,
 };
-static const enum ikev1_hash_attribute default_ike_aalgs[] = {
-	OAKLEY_SHA2_256, OAKLEY_SHA2_512, OAKLEY_SHA1, OAKLEY_MD5,
+
+static const struct ike_alg *default_ike_aalgs[] = {
+	&ike_alg_prf_sha2_256.common,
+	&ike_alg_prf_sha2_512.common,
+	&ike_alg_prf_sha1.common,
+	&ike_alg_prf_md5.common,
+	NULL,
 };
 
 /*
- * Strip out algorithms that aren't applicable.
+ * Allocate and return an array of algorithms at are valid.
+ *
+ * Or NULL if there are none.
  */
-static const struct ike_alg **clone_valid(const struct parser_policy *policy,
+static const struct ike_alg **clone_valid(enum ike_alg_type type,
+					  const struct parser_policy *policy,
 					  const struct ike_alg **ikev1_algs,
 					  const struct ike_alg **ikev2_algs)
 {
@@ -296,6 +275,7 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
 	int count = 1;
 	for (const struct ike_alg **default_alg = default_algs;
 	     *default_alg; default_alg++) {
+		passert((*default_alg)->algo_type == type);
 		count++;
 	}
 	const struct ike_alg **valid_algs = alloc_things(const struct ike_alg*, count,
@@ -317,14 +297,14 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
 		if (policy->ikev1 && alg->ikev1_oakley_id == 0) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s %s, missing ikev1 support",
-				    ike_alg_type_name(alg),
+				    ike_alg_type_name(type),
 				    alg->name));
 			continue;
 		}
 		if (policy->ikev2 && alg->ikev2_id == 0) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s %s, missing ikev2 support",
-				    ike_alg_type_name(alg),
+				    ike_alg_type_name(type),
 				    alg->name));
 			continue;
 		}
@@ -339,7 +319,7 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
 		if (!ike_alg_is_ike(alg)) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s %s, missing IKE implementation",
-				    ike_alg_type_name(alg),
+				    ike_alg_type_name(type),
 				    alg->name));
 			continue;
 		}
@@ -355,18 +335,33 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
 		if (!ike_alg_is_valid(alg)) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s %s, invalid",
-				    ike_alg_type_name(alg),
+				    ike_alg_type_name(type),
 				    alg->name));
 			continue;
 		}
 		DBG(DBG_CONTROL|DBG_CRYPT,
 		    DBG_log("adding default %s %s",
-			    ike_alg_type_name(alg),
+			    ike_alg_type_name(type),
 			    alg->name));
 		/* save it */
 		*valid_alg++ = alg;
 	}
 	*valid_alg = NULL;
+
+	/*
+	 * If, after filtering, nothing was added, return NULL rather
+	 * than an empty array.
+	 *
+	 * Will this this ever happen? I.e., passert()?
+	 */
+	if (valid_alg == valid_algs) {
+		pfree(valid_algs);
+		loglog(RC_LOG_SERIOUS,
+		       "no valid default %s algorithms",
+		       ike_alg_type_name(type));
+		return NULL;
+	}
+
 	return valid_algs;
 }
 
@@ -374,11 +369,11 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
  * _Recursively_ add IKE alg info _with_ logic (policy):
  */
 
-static void alg_info_ike_add(const struct parser_policy *const policy,
-			     struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     const struct oakley_group_desc *dh_group)
+static void ike_add(const struct parser_policy *const policy,
+		    struct alg_info *alg_info,
+		    const struct encrypt_desc *ealg, int ek_bits,
+		    const struct prf_desc *aalg,
+		    const struct oakley_group_desc *dh_group)
 {
 	/*
 	 * Note that the order in which things are recursively added -
@@ -392,65 +387,136 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		/*
 		 * Recursively add the valid default groups.
 		 */
-		const struct ike_alg **valid_groups = clone_valid(policy,
-								  default_ikev1_groups,
-								  default_ikev2_groups);
-		for (const struct ike_alg **group = valid_groups;
-		     *group; group++) {
-			alg_info_ike_add(policy, alg_info,
-					 ealg_id, ek_bits,
-					 aalg_id, oakley_group_desc(*group));
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_DH, policy,
+								default_ikev1_groups,
+								default_ikev2_groups);
+		if (valid_algs == NULL) {
+			return;
 		}
-		pfree(valid_groups);
-	} else if (ealg_id <= 0) {
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, alg_info,
+				ealg, ek_bits,
+				aalg, oakley_group_desc(*alg));
+		}
+		pfree(valid_algs);
+	} else if (ealg == NULL) {
 		/*
 		 * Recursively add the valid default enc algs
 		 */
-		for (int i = 0; i != elemsof(default_ike_ealgs); i++) {
-			enum ikev1_encr_attribute id = default_ike_ealgs[i];
-			bool valid = ikev1_get_ike_encrypt_desc(id) != NULL;
-
-			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
-				struct esb_buf buf;
-				DBG_log("%s default ENCRYPT algorithm %s=%d",
-
-					valid ? "adding" : "dropping invalid",
-					enum_showb(&oakley_enc_names, id, &buf), id);
-			}
-			if (valid) {
-				alg_info_ike_add(policy, alg_info,
-						 id, ek_bits,
-						 aalg_id, dh_group);
-			}
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_ENCRYPT, policy,
+								default_ike_ealgs,
+								default_ike_ealgs);
+		if (valid_algs == NULL) {
+			return;
 		}
-	} else if (aalg_id <= 0) {
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, alg_info,
+				encrypt_desc(*alg), ek_bits,
+				aalg, dh_group);
+		}
+		pfree(valid_algs);
+	} else if (aalg == NULL) {
 		/*
 		 * Recursively add the valid default PRF/HASH
 		 * algorithms.
 		 *
 		 * Even AEAD algorithms need a PRF.
 		 */
-		for (int j = 0; j != elemsof(default_ike_aalgs); j++) {
-			enum ikev1_hash_attribute id = default_ike_aalgs[j];
-			bool valid = ikev1_get_ike_prf_desc(id) != NULL;
-
-			if (DBGP(DBG_CONTROL|DBG_CRYPT)) {
-				struct esb_buf buf;
-				DBG_log("%s default PRF (HASH) algorithm %s=%d",
-					valid ? "adding" : "dropping invalid",
-					enum_showb(&oakley_hash_names, id, &buf), id);
-			}
-			if (valid) {
-				alg_info_ike_add(policy, alg_info,
-						 ealg_id, ek_bits,
-						 id, dh_group);
-			}
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_PRF, policy,
+								default_ike_aalgs,
+								default_ike_aalgs);
+		if (valid_algs == NULL) {
+			return;
 		}
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, alg_info,
+				ealg, ek_bits,
+				prf_desc(*alg), dh_group);
+		}
+		pfree(valid_algs);
 	} else {
 		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
-				     ealg_id, ek_bits,
-				     aalg_id, dh_group);
+				     ealg, ek_bits,
+				     aalg, dh_group);
 	}
+}
+
+static void alg_info_ike_add(const struct parser_policy *const policy,
+			     struct alg_info *alg_info,
+			     int ealg_id, int ek_bits,
+			     int aalg_id,
+			     const struct oakley_group_desc *dh_group)
+{
+	/*
+	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
+	 *
+	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
+	 * algorithms?
+	 *
+	 * For the case of alg=0 / "null", should this have a real
+	 * object?
+	 *
+	 * XXX: work-in-progress
+	 */
+	const struct encrypt_desc *ealg = NULL;
+	if (ealg_id > 0) {
+		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+		     algp != NULL; algp = next_encrypt_desc(algp)) {
+			const struct encrypt_desc *alg = *algp;
+			/*
+			 * keylen==0 implies use default or defaults.
+			 */
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->common.ikev1_oakley_id == ealg_id) {
+				ealg = alg;
+				break;
+			}
+		}
+		if (ealg == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "ENCRYPT algorithm %s=%d is not supported",
+			       enum_showb(&oakley_enc_names, ealg_id, &buf),
+			       ealg_id);
+			return;
+		}
+		if (ek_bits != 0) {
+			if (!encrypt_has_key_bit_length(ealg, ek_bits)) {
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "ENCRYPT algorithm %s with key length %u is not supported",
+				       enum_showb(&oakley_enc_names, ealg_id, &buf),
+				       ek_bits);
+				return;
+			}
+		}
+	}
+
+	const struct prf_desc *aalg = NULL;
+	if (aalg_id > 0) {
+		for (const struct prf_desc **algp = next_prf_desc(NULL);
+		     algp != NULL; algp = next_prf_desc(algp)) {
+			const struct prf_desc *alg = *algp;
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->common.ikev1_oakley_id == aalg_id) {
+				aalg = alg;
+				break;
+			}
+		}
+		if (aalg == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "PRF algorithm %s=%d is not supported",
+			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
+			       aalg_id);
+			return;
+		}
+	}
+
+	ike_add(policy, alg_info, ealg, ek_bits, aalg, dh_group);
 }
 
 static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,

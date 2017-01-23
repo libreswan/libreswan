@@ -19,6 +19,11 @@ enum ike_alg_type {
 #define	IKE_ALG_ROOF (IKE_ALG_DH+1)
 
 /*
+ * User frendly string representing the algorithm type (family).
+ */
+const char *ike_alg_type_name(enum ike_alg_type type);
+
+/*
  * Different lookup KEYs used by IKEv1/IKEv2
  */
 enum ike_alg_key {
@@ -464,12 +469,6 @@ bool ike_alg_is_ike(const struct ike_alg *alg);
  */
 
 bool ike_alg_is_valid(const struct ike_alg *alg);
-
-/*
- * User frendly string representing the algorithm type (family) that
- * ALG belongs to.
- */
-const char *ike_alg_type_name(const struct ike_alg *alg);
 
 /*
  * Is the key valid for the encryption algorithm?

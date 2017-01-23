@@ -199,9 +199,10 @@ bool ike_alg_is_ike(const struct ike_alg *alg)
 	return type_algorithms[alg->algo_type]->desc_is_ike(alg);
 }
 
-const char *ike_alg_type_name(const struct ike_alg *alg)
+const char *ike_alg_type_name(enum ike_alg_type type)
 {
-	return type_algorithms[alg->algo_type]->all.name;
+	passert(type < elemsof(type_algorithms));
+	return type_algorithms[type]->all.name;
 }
 
 bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
