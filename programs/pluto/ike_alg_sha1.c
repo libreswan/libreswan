@@ -41,6 +41,9 @@ struct hash_desc ike_alg_hash_sha1 = {
 		.officname = "sha1",
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_oakley_id = OAKLEY_SHA1,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
+		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1,
 	},
@@ -57,6 +60,10 @@ struct prf_desc ike_alg_prf_sha1 = {
 		.algo_type = IKE_ALG_PRF,
 		.ikev1_oakley_id = OAKLEY_SHA1,
 		.ikev2_id = IKEv2_PRF_HMAC_SHA1,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
+			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
+		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1_HMAC,
 	},
@@ -75,6 +82,11 @@ struct integ_desc ike_alg_integ_sha1 = {
 		.ikev1_oakley_id = OAKLEY_SHA1,
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_SHA1,
 		.ikev2_id = IKEv2_AUTH_HMAC_SHA1_96,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA1,
+			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA1_96,
+		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1_HMAC,
 	},

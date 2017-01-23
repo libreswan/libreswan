@@ -27,11 +27,17 @@ const char *ike_alg_type_name(enum ike_alg_type type);
  * Different lookup KEYs used by IKEv1/IKEv2
  */
 enum ike_alg_key {
-	IKE_ALG_IKEv1_OAKLEY_ID,
-	IKE_ALG_IKEv1_ESP_ID,
-	IKE_ALG_IKEv2_ID,
+	IKEv1_OAKLEY_ID,
+	IKEv1_ESP_ID,
+	IKEv2_ALG_ID,
 };
-#define IKE_ALG_KEY_ROOF (IKE_ALG_IKEv2_ID+1)
+#define IKE_ALG_KEY_FLOOR (IKEv1_OAKLEY_ID)
+#define IKE_ALG_KEY_ROOF (IKEv2_ALG_ID+1)
+
+/*
+ * User friendly string representing the key (protocol family).
+ */
+const char *ike_alg_key_name(enum ike_alg_key key);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
@@ -39,9 +45,12 @@ enum ike_alg_key {
  *
  * These tables use the following numeric indexes:
  *
- * USE       ENUM                       ENUM->STRING                  PREFIX
+ * TYPE      ENUM                       ENUM->STRING                  PREFIX
  *
- * ikev2_id / IKEv2 IKE / IKEv2 ESP / IKEv2 AH / IKEv2 DH:
+ *
+ * id[IKEv2_ALG_ID]:
+ *
+ * Used by: IKEv2 IKE, IKEv2 ESP, IKEv2 AH, IKEv2 DH
  *
  * Almost no confusion.  While IKEv2 DH uses the the IKEv1
  * OAKLEY_GROUP enum, there are no conflicts so things work.
@@ -51,7 +60,10 @@ enum ike_alg_key {
  * INTEG:    ikev2_trans_type_integ     ikev2_trans_type_integ_names  IKEv2_INTEG
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  *
- * ikev1_oakley_id:
+ *
+ * id[IKEv1_OAKLEY_ID]:
+ *
+ * Used by: IKEv1 IKE a.k.a. phase 1
  *
  * The only querk here is the use of the HASH (PRF) to select INTEG.
  * The suffix "oakley_id", rather than "ike_id" or "id", is used since
@@ -64,32 +76,38 @@ enum ike_alg_key {
  * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  *
- * ikev1_esp_id / struct esp_info.transid / struct esp_info.auth:
+ *
+ * id[IKEv1_ESP_ID]:
+ *
+ * Used by: ESP and AH; struct esp_info.transid; struct esp_info.auth:
  *
  * Here be trouble.  While the obvious problem is that struct esp_info
  * is using both IKEv1 (INTEG) and IPSEC (ENCRYPT) enum types, that is
  * of no real importance.  The real issue here is with INTEG where
  * things have badly convoluted IKEv1 and IKEv2 ESP numbers and names.
- * For instance, while the enum ipsec_cipher_algo contains
+ * For instance, while the enum ipsec_cipher_algo contained
  * ESP_CAMELLIA=23 (IKEv2), the name table esp_transformid_names
- * returns 22 (IKEv1) for the string "ESP_CAMELLIA".  See
- * ealg_getbyname_esp() and aalg_getbyname_esp().
+ * returns 22 (IKEv1) for the string "ESP_CAMELLIA" (the camellia case
+ * is fixed, others remain).  See ealg_getbyname_esp() and
+ * aalg_getbyname_esp().
  *
  * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
  * INTEG:    ikev1_auth_attribute       auth_alg_names                AUTH_ALGORITHM
+ *
  *
  * (not yet if ever) ikev[12]_ipsec_id:
  *
  * While these values started out being consistent with IKEv1 and (I
  * suspect) SADB/KLIPS, the've gone off the rails.  Over time they've
- * picked up IKEv2 values making for general confusion.  Worse, as noted above, For instance,
- * CAMELLIA has the IKEv2 value 23 (IKEv1 is 22) resulting in code
- * never being sure if which it is dealing with.
+ * picked up IKEv2 values making for general confusion.  Worse, as
+ * noted above, CAMELLIA had the IKEv2 value 23 (IKEv1 is 22)
+ * resulting in code never being sure if which it is dealing with.
  *
  * These values are not included in this table.
  *
  * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
  * INTEG:    ipsec_authentication_algo  ah_transformid_names          AH
+ *
  *
  * (not yet if ever) SADB / KLIPS:
  *
@@ -105,6 +123,8 @@ enum ike_alg_key {
  * (not yet if ever) XFRM names:
  *
  * The XFRM interface uses strings to identify algorithms.
+ *
+ * It might be useful to add these names to the table.
  *
  * Notes:
  *
@@ -133,13 +153,24 @@ struct ike_alg {
 	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
 	 */
 	const char *const officname;
+
 	/*
 	 * See above.
+	 *
+	 * Macros provide short term aliases for the slightly longer
+	 * index references (tacky, unixish, and delay churning the
+	 * code).
 	 */
 	const enum ike_alg_type algo_type;
+/* #define ikev1_oakley_id id[IKEv1_OAKLEY_ID] */
+/* #define ikev1_esp_id id[IKEv1_ESP_ID] */
+#define ikev2_alg_id id[IKEv2_ALG_ID]
+	int id[IKE_ALG_KEY_ROOF];
+
 	const u_int16_t ikev1_oakley_id;
 	const int ikev1_esp_id;
 	const int ikev2_id;
+
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?

@@ -41,6 +41,11 @@ struct encrypt_desc ike_alg_encrypt_cast_cbc =
 		.ikev1_oakley_id = OAKLEY_CAST_CBC,
 		.ikev1_esp_id = ESP_CAST,
 		.ikev2_id = IKEv2_ENCR_CAST,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_CAST_CBC,
+			[IKEv1_ESP_ID] = ESP_CAST,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_CAST,
+		},
 	},
 	.enc_blocksize = 8,
 	.pad_to_blocksize = TRUE,

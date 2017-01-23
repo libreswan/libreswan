@@ -83,6 +83,11 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
 		.ikev1_esp_id = ESP_TWOFISH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC,
+			[IKEv1_ESP_ID] = ESP_TWOFISH,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_TWOFISH_CBC,
+		},
 #ifdef NOT_YET
 		.nss_mechanism = CKM_TWOFISH_CBC
 #endif
@@ -104,6 +109,10 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
 		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC_SSH,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_TWOFISH_CBC_SSH,
+		},
 #ifdef NOT_YET
 		.nss_mechanism = CKM_TWOFISH_CBC
 #endif

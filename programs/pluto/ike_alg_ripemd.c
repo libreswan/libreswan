@@ -43,6 +43,9 @@ struct hash_desc ike_alg_hash_ripemd_160 = {
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
+		},
 		.nss_mechanism = CKM_RIPEMD160,
 	},
 	.hash_digest_len = BYTES_FOR_BITS(160),
@@ -57,6 +60,9 @@ struct prf_desc ike_alg_prf_hmac_ripemd_160 = {
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_PRF,
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
+		},
 		.nss_mechanism = CKM_RIPEMD160_HMAC,
 	},
 	.prf_key_size = RIPEMD_DIGEST_SIZE,
@@ -73,6 +79,9 @@ struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_INTEG,
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
+		},
 	},
 	.integ_key_size = BYTES_FOR_BITS(160),
 	.integ_output_size = BYTES_FOR_BITS(96),

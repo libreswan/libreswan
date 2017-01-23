@@ -126,6 +126,11 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.ikev1_oakley_id = OAKLEY_3DES_CBC,
 		.ikev1_esp_id = ESP_3DES,
 		.ikev2_id = IKEv2_ENCR_3DES,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_3DES_CBC,
+			[IKEv1_ESP_ID] = ESP_3DES,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
+		},
 		.fips =          TRUE,
 		.nss_mechanism = CKM_DES3_CBC,
 	},

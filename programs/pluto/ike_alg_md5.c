@@ -44,6 +44,9 @@ struct hash_desc ike_alg_hash_md5 = {
 		.officname = "md5",
 		.algo_type = IKE_ALG_HASH,
 		.ikev1_oakley_id = OAKLEY_MD5,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
+		},
 		.nss_mechanism = CKM_MD5,
 	},
 	.hash_digest_len = MD5_DIGEST_SIZE,
@@ -60,6 +63,10 @@ struct prf_desc ike_alg_prf_md5 = {
 		.algo_type = IKE_ALG_PRF,
 		.ikev1_oakley_id = OAKLEY_MD5,
 		.ikev2_id = IKEv2_PRF_HMAC_MD5,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
+			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_MD5,
+		},
 	},
 	.prf_key_size = MD5_DIGEST_SIZE,
 	.prf_output_size = MD5_DIGEST_SIZE,
@@ -76,6 +83,11 @@ struct integ_desc ike_alg_integ_md5 = {
 		.ikev1_oakley_id = OAKLEY_MD5,
 		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_MD5,
 		.ikev2_id = IKEv2_AUTH_HMAC_MD5_96,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_MD5,
+			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_MD5_96,
+		},
 	},
 	.integ_key_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
