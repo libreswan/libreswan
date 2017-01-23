@@ -222,6 +222,22 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 	passert(samesubnettype(ours, his));
 
+	/* Check if there's a matching entry in the bare_shunts list. If so,
+	 * don't add a duplicate. The shunts list cannot have duplicates.
+	 */
+	{
+		ip_address src, dst;
+
+		networkof(ours, &src);
+		networkof(his, &dst);
+
+		/* existing bare hold? */
+		if (has_bare_hold(&src, &dst, transport_proto)) {
+			DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): existing bare hold found; skip adding a duplicate bare shunt"));
+			return;
+		}
+	}
+
 	/* Add the kernel shunt to the pluto bare shunt list.
 	 * We need to do this because the %hold shunt was installed by kernel
 	 * and we want to keep track of it inside pluto.
