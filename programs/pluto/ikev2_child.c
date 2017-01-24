@@ -1271,6 +1271,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	ikev2_derive_child_keys(cst, role);
 
+	/* Check to see if we need to release an old instance */
+       ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
+
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
