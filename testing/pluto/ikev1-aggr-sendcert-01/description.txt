@@ -1,0 +1,4 @@
+
+Test for aggressive mode to confirm initiator sends their cert when directed
+
+This test failed for libreswan up to 3.19
