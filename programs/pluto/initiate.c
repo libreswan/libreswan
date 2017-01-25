@@ -929,73 +929,58 @@ void initiate_ondemand(const ip_address *our_client,
 bool uniqueIDs = FALSE; /* --uniqueids? */
 
 /*
- * Called by main_inI3_outR3_tail() and ikev2_child_sa_respond() which is called for
- * initiator and responder alike! So this function should not be in initiate.c.
- * It is also not called in IKEv1 Aggressive Mode!
+ * Called by IKEv1 and IKEv2 when the IKE SA is established.
+ * It checks if the freshly established connection needs is
+ * replacing an established version of itself.
+ *
+ * The use of uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections,
+ * which only act based on being a "server using PSK".
  */
 void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && !c->spd.this.xauth_server &&
-		(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
-		/*
-		 * for all connections: if the same Phase 1 IDs are used
-		 * for different IP addresses, unorient that connection.
-		 * We also check ports, since different Phase 1 ID's can
-		 * exist for the same IP when NAT is involved.
-		 */
-		struct connection *d;
+	/* NULL authentication can never replaced - it is all anonnymous */
+	if (LIN(POLICY_AUTH_NULL, c->policy) ||
+	   ( c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
 
-		for (d = connections; d != NULL; ) {
-			/* might move underneath us */
-			struct connection *next = d->ac_next;
+		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
+		return;
+	}
 
-			/*
-			 * We try to find duplicate instances of same
-			 * connection to clean up old ones when uniqueids=yes
-			 *
-			 * We are testing for all of:
-			 * 1: an appropriate kind to consider
-			 * 2: same ids, left and right
-			 * 3: same address family
-			 * 4: same connection name
-			 * 5: but different IP address or port
-			 * 6: differing dnsnames (sort of)
-			 *
-			 * DHR (2014-10-29):
-			 * Is the sense of the last clause inverted?
-			 * The logic kind of suggests that in fact the
-			 * same dnsnames should be the same, not different.
-			 *
-			 * Let's make 6 clearer:
-			 *   if BOTH have dnsnames, they must be unequal.
-			 *
-			 * I suspect that it should be:
-			 *   if BOTH have dnsnames, they must be equal.
-			 *
-			 * In other words the streq result should be negated.
-			 */
-			if ((d->kind == CK_PERMANENT ||
-				d->kind == CK_INSTANCE ||
-				d->kind == CK_GOING_AWAY) &&
-				(c->name == d->name) &&
-				same_id(&c->spd.this.id, &d->spd.this.id) &&
-				same_id(&c->spd.that.id, &d->spd.that.id) &&
-				addrtypeof(&c->spd.that.host_addr) ==
-				addrtypeof(&d->spd.that.host_addr) &&
-				(!sameaddr(&c->spd.that.host_addr,
-					&d->spd.that.host_addr) ||
-				c->spd.that.host_port !=
-					d->spd.that.host_port) &&
-				!(c->dnshostname != NULL &&
-					d->dnshostname != NULL &&
-					streq(c->dnshostname,
-						d->dnshostname))) {
-				release_connection(d, FALSE);
-			}
-			d = next;
+	/*
+	 * If we are a server and use PSK, all clients use the same group ID
+	 * Note that "xauth_server" also refers to IKEv2 CP
+	 */
+	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
+		return;
+	}
+
+	if (!uniqueIDs) {
+		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
+		return;
+	}
+
+	/*
+	 * for all existing connections: if the same Phase 1 IDs are used,
+	 * unorient that (old) connection - This is a replacement.
+	 */
+	struct connection *d;
+
+	for (d = connections; d != NULL; ) {
+		/* might move underneath us */
+		struct connection *next = d->ac_next;
+
+		if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+		    (same_id(&c->spd.this.id, &d->spd.this.id) &&
+		     same_id(&c->spd.that.id, &d->spd.that.id)))
+		{
+		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+		  release_connection(d, FALSE);
 		}
+		d = next;
 	}
 }
 
