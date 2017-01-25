@@ -608,6 +608,7 @@ kvmplutotest	basic-pluto-01-valgrind	skiptest
 
 kvmplutotest	ikev1-algo-ike-bogus-01	good
 kvmplutotest	ikev1-aggr-sendcert-01	good
+kvmplutotest	ikev1-aggr-replace-01	good
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		wip
