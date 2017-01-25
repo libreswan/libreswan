@@ -978,6 +978,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 		     same_id(&c->spd.that.id, &d->spd.that.id)))
 		{
 		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+		  suppress_delete(d); /* don't send a delete */
 		  release_connection(d, FALSE);
 		}
 		d = next;

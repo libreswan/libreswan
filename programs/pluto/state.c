@@ -880,8 +880,8 @@ void delete_state(struct state *st)
 	}
 
 	/* tell the other side of any IPSEC SAs that are going down */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-			IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	if (!st->st_ikev2_no_del && (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+			IS_ISAKMP_SA_ESTABLISHED(st->st_state))) {
 		if (st->st_ikev2 && IS_CHILD_SA(st) &&
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
