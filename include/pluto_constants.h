@@ -30,11 +30,26 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
-/* default proposal values and preferences */
-/* kept small because in IKEv1 it explodes in transforms of all possible combinations */
-#define DEFAULT_OAKLEY_GROUPS    OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024
-#define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
-#define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
+/*
+ * IETF has no recommendations
+ * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
+ * We say maximum for either is 1d
+ */
+#define IKE_SA_LIFETIME_DEFAULT secs_per_hour
+#define IKE_SA_LIFETIME_MAXIMUM secs_per_day
+#define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
+#define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
+#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
+
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
+#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
+
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
+#define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
+#define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
+
+#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
+
 
 enum kernel_interface {
 	NO_KERNEL = 1,
@@ -65,6 +80,15 @@ enum keyword_remotepeertype {
 	CISCO = 1,
 };
 
+/* keep in sync with ikev2_asym_auth_names */
+enum keyword_authby {
+	AUTH_UNSET	= 0,
+	AUTH_NEVER	= 1,
+	AUTH_PSK	= 2,
+	AUTH_RSASIG	= 3,
+	AUTH_NULL	= 4,
+};
+
 enum keyword_xauthby {
 	XAUTHBY_FILE = 0,
 	XAUTHBY_PAM = 1,
@@ -74,6 +98,17 @@ enum keyword_xauthby {
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,
+};
+
+/* OCSP related constants - defaults picked from NSS defaults */
+#define OCSP_DEFAULT_CACHE_SIZE 1000
+#define OCSP_DEFAULT_CACHE_MIN_AGE 3600
+#define OCSP_DEFAULT_CACHE_MAX_AGE 24 * 3600
+#define OCSP_DEFAULT_TIMEOUT 2
+
+enum keyword_ocsp_method {
+	OCSP_METHOD_GET = 0, /* really GET plus POST - see NSS code */
+	OCSP_METHOD_POST = 1, /* only POST */
 };
 
 /* corresponding name table is sd_action_names */
@@ -177,6 +212,17 @@ enum ddos_mode {
 	DDOS_AUTO,
 	DDOS_FORCE_BUSY,
 	DDOS_FORCE_UNLIMITED
+};
+
+/*
+ * seccomp mode
+ * on syscall violation, enabled kills pluto, tolerant ignores syscall
+ */
+enum seccomp_mode {
+	SECCOMP_undefined,
+	SECCOMP_ENABLED,
+	SECCOMP_TOLERANT,
+	SECCOMP_DISABLED
 };
 
 /* status for state-transition-function
@@ -444,7 +490,7 @@ enum state_kind {
  * The bit is used to identify which keying material to use when
  * encrypting and decrypting SK payloads.
  *
- * Separate to this is the IKEv2 "R (Response)" flag
+ * Separate from this is the IKEv2 "R (Response)" flag
  * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
  * that a message is a response to a previous request.  Since either
  * end can send requests, either end can also set the "R" flag.
@@ -466,9 +512,7 @@ enum original_role {
 				  LELEM(STATE_AGGR_I2) | \
 				  LELEM(STATE_XAUTH_I0) | \
 				  LELEM(STATE_XAUTH_I1) | \
-				  LELEM(STATE_MODE_CFG_I1) | \
-				  LELEM(STATE_PARENT_I1) | \
-				  LELEM(STATE_PARENT_I2))
+				  LELEM(STATE_MODE_CFG_I1))
 
 
 #define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
@@ -491,6 +535,9 @@ enum original_role {
 #define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
 				    && STATE_AGGR_R0 != (s) \
 				    && STATE_AGGR_I1 != (s))
+
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I1) |\
+					LELEM(STATE_PARENT_I2))
 
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
@@ -611,6 +658,13 @@ enum esn_options {
 	esn_yes = 2,
 	esn_either = 3,
 };
+
+enum encaps_options {
+	encaps_auto = 1, /* default */
+	encaps_no = 2,
+	encaps_yes = 3,
+};
+
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
@@ -771,6 +825,9 @@ enum sa_policy_bits {
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 
+/* Default policy for now is using RSA - this might change to ECC */
+#define POLICY_DEFAULT POLICY_RSASIG
+
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
 /* Any IPsec policy?  If not, a connection description
@@ -844,6 +901,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_KERNEL_FAIL = 5,
 	PLUTO_EXIT_NSS_FAIL = 6,
 	PLUTO_EXIT_AUDIT_FAIL = 7,
+	PLUTO_EXIT_SECCOMP_FAIL = 8,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 

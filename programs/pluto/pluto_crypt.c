@@ -70,6 +70,10 @@
 #include "crypt_dh.h"
 #include "ikev1_prf.h"
 
+#ifdef HAVE_SECCOMP
+# include "pluto_seccomp.h"
+#endif
+
 struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,
 	const char *name,
@@ -186,6 +190,7 @@ static const char *const pluto_cryptoop_strings[] = {
 static enum_names pluto_cryptoop_names = {
 	pcr_build_ke_and_nonce, pcr_compute_dh_v2,
 	ARRAY_REF(pluto_cryptoop_strings),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -286,7 +291,29 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	FILE *in = fdopen(helper_fd, "rb");
 	FILE *out = fdopen(helper_fd, "wb");
 	struct pluto_crypto_req req;
-
+#ifdef HAVE_SECCOMP
+	switch(pluto_seccomp_mode) {
+	case SECCOMP_ENABLED:
+		init_seccomp_cryptohelper(SCMP_ACT_KILL);
+		break;
+	case SECCOMP_TOLERANT:
+		init_seccomp_cryptohelper(SCMP_ACT_TRAP);
+		break;
+	case SECCOMP_DISABLED:
+		break;
+	default:
+		bad_case(pluto_seccomp_mode);
+	}
+#else
+        libreswan_log("seccomp security for crypto helper not supported");
+#endif
+#if 0
+	pid_t testpid = getsid(0);
+	if (testpid == -1)
+		loglog(RC_LOG_SERIOUS, "Success: seccomp security was tolerant and the rogue syscall was blocked");
+	else
+		loglog(RC_LOG_SERIOUS, "Failure: seccomp security was disabled or failed to block the rogue syscall");
+#endif
 	/* OS X does not have pthread_setschedprio */
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);

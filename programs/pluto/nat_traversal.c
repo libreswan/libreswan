@@ -65,9 +65,10 @@
 #include "timer.h"
 #include "ike_alg.h"
 #include "ikev2.h"
+#include "ike_alg_sha1.h"
+#include "crypt_hash.h"
 
 #include "cookie.h"
-#include "sha1.h"
 #include "crypto.h"
 #include "vendor.h"
 
@@ -119,8 +120,6 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		const ip_address *ip,
 		u_int16_t port /* host order */)
 {
-	union hash_ctx ctx;
-
 	if (is_zero_cookie(icookie))
 		DBG(DBG_NATT, DBG_log("natd_hash: Warning, icookie is zero !!"));
 	if (is_zero_cookie(rcookie))
@@ -133,27 +132,27 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	 *
 	 * All values in network order
 	 */
-	hasher->hash_init(&ctx);
-	hasher->hash_update(&ctx, icookie, COOKIE_SIZE);
-	hasher->hash_update(&ctx, rcookie, COOKIE_SIZE);
+	struct crypt_hash *ctx = crypt_hash_init(hasher, "NATD", DBG_CRYPT);
+	crypt_hash_digest_bytes(ctx, "ICOOKIE", icookie, COOKIE_SIZE);
+	crypt_hash_digest_bytes(ctx, "RCOOKIE", rcookie, COOKIE_SIZE);
 	switch (addrtypeof(ip)) {
 	case AF_INET:
-		hasher->hash_update(&ctx,
-				(const u_char *)&ip->u.v4.sin_addr.s_addr,
-				sizeof(ip->u.v4.sin_addr.s_addr));
+		crypt_hash_digest_bytes(ctx, "SIN_ADDR",
+					(const u_char *)&ip->u.v4.sin_addr.s_addr,
+					sizeof(ip->u.v4.sin_addr.s_addr));
 		break;
 	case AF_INET6:
-		hasher->hash_update(&ctx,
-				(const u_char *)&ip->u.v6.sin6_addr.s6_addr,
-				sizeof(ip->u.v6.sin6_addr.s6_addr));
+		crypt_hash_digest_bytes(ctx, "SIN6_ADDR",
+					(const u_char *)&ip->u.v6.sin6_addr.s6_addr,
+					sizeof(ip->u.v6.sin6_addr.s6_addr));
 		break;
 	}
 	{
 		u_int16_t netorder_port = htons(port);
-
-		hasher->hash_update(&ctx, (const u_char *)&netorder_port, sizeof(netorder_port));
+		crypt_hash_digest_bytes(ctx, "PORT",
+					&netorder_port, sizeof(netorder_port));
 	}
-	hasher->hash_final(hash, &ctx);
+	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_len);
 	DBG(DBG_NATT, {
 			DBG_log("natd_hash: hasher=%p(%d)", hasher,
 				(int)hasher->hash_digest_len);
@@ -189,10 +188,11 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First: one with local (source) IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ?
-			md->hdr.isa_rcookie : st->st_rcookie,
-		&st->st_localaddr, st->st_localport);
+	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
+		  (is_zero_cookie(st->st_rcookie)
+		   ? md->hdr.isa_rcookie
+		   : st->st_rcookie),
+		  &st->st_localaddr, st->st_localport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -202,9 +202,11 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second: one with remote (destination) IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
+	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
+		  (is_zero_cookie(st->st_rcookie)
+		   ? md->hdr.isa_rcookie
+		   : st->st_rcookie),
+		  &st->st_remoteaddr, st->st_remoteport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -307,33 +309,42 @@ static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
 	bool found_me, bool found_him)
 {
-	zero(&st->hidden_variables.st_natd);	/* ??? odd way to set an ip_address field */
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
-	if (!found_me) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL this end is behind NAT"));
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = *sender;
-	}
+	/* update NAT-T settings for local policy */
+	switch (st->st_connection->encaps) {
+	case encaps_auto:
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL encaps using auto-detect"));
+		if (!found_me) {
+			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is behind NAT"));
+			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
+			st->hidden_variables.st_natd = *sender;
+		}
 
-	if (!found_him) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
-				ipstr(sender, &b));
-		});
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
-		st->hidden_variables.st_natd = *sender;
-	}
+		if (!found_him) {
+			DBG(DBG_NATT, {
+				ipstr_buf b;
+				DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
+					ipstr(sender, &b));
+			});
+			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
+			st->hidden_variables.st_natd = *sender;
+		}
+		break;
 
-	if (st->st_connection->forceencaps) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
+	case encaps_no:
+		st->hidden_variables.st_nat_traversal |= LEMPTY;
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy prohibits encapsulation"));
+		break;
 
+	case encaps_yes:
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy enforces encapsulation"));
+
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 		st->hidden_variables.st_nat_traversal |=
 			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = *sender;
+		break;
 	}
 
 	if (st->st_connection->nat_keepalive) {
@@ -350,7 +361,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct state *st = md->st;
-	const struct hash_desc *const hasher = st->st_oakley.prf_hasher;
+	const struct hash_desc *const hasher = st->st_oakley.prf->hasher;
 	const size_t hl = hasher->hash_digest_len;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 	const struct payload_digest *p;
@@ -422,7 +433,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	const ip_address *first, *second;
 	unsigned short firstport, secondport;
 
-	passert(st->st_oakley.prf_hasher != NULL);
+	passert(st->st_oakley.prf != NULL);
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
@@ -450,7 +461,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		secondport = p;
 	}
 
-	if (st->st_connection->forceencaps) {
+	if (st->st_connection->encaps == encaps_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: forceencaps=yes, so mangling hash to force NAT-T detection"));
 		firstport = secondport = 0;
@@ -459,25 +470,25 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/*
 	 * First one with sender IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash, st->st_icookie,
-		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		st->st_rcookie, first, firstport);
+	natd_hash(st->st_oakley.prf->hasher, hash, st->st_icookie,
+		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
+		  st->st_rcookie, first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
-				st->st_oakley.prf_hasher->hash_digest_len,
-				"NAT-D"))
+				   st->st_oakley.prf->hasher->hash_digest_len,
+				   "NAT-D"))
 		return FALSE;
 
 	/*
 	 * Second one with my IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash,
-		st->st_icookie, is_zero_cookie(st->st_rcookie) ?
-		md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
+	natd_hash(st->st_oakley.prf->hasher, hash,
+		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
+		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
-	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs,
-			hash, st->st_oakley.prf_hasher->hash_digest_len,
-			"NAT-D");
+	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs, hash,
+				     st->st_oakley.prf->hasher->hash_digest_len,
+				     "NAT-D");
 }
 
 /*
@@ -693,7 +704,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->st->st_oakley.prf_hasher == NULL) {
+		if (md->st->st_oakley.prf == NULL) {
 			/*
 			 * This connection is doomed - no PRF for NATD hash
 			 * Probably in FIPS trying MD5 ?
@@ -722,63 +733,67 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 	int *fdp = (int *) &ifr.ifr_data;
 	const char *ifn;
 
-	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying new style NAT-T"));
-	zero(&ifr);
-	switch (kern_interface) {
-	case USE_MASTKLIPS:	/* using mast0 will break it! */
-	case USE_KLIPS:
-		ifn = "ipsec0";
-		break;
-	case USE_NETKEY:
-		/* Let's hope we have at least one ethernet device */
-		ifn = "eth0";
-		break;
-	case USE_BSDKAME:
-		/* Let's hope we have at least one ethernet device */
-		ifn = "en0";
-		break;
-	default:
-		/* ??? We have nothing, really prob just abort and return -1 */
-		ifn = "eth0";
-		break;
-	}
-	strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+#if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
+	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
+		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
+		const int type = ESPINUDP_WITH_NON_ESP; /* no longer supporting natt draft 00 or 01 */
+		const int os_opt = UDP_ESPINUDP;
 
-	fdp[0] = sk;
-	fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
-	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);
-	if (r == -1) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for new style NAT-T family %s (errno=%d)",
-				ESPINUDP_WITH_NON_ESP, fam, errno));
+#if defined(BSD_KAME)
+		if (USE_BSDKAME)
+			os_opt = UDP_ENCAP_ESPINUDP; /* defined as 2 */
+#endif
+		r = setsockopt(sk, SOL_UDP, os_opt, &type, sizeof(type));
+		if (r == -1) {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
+					ESPINUDP_WITH_NON_ESP, fam, errno));
+		} else {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
+					ESPINUDP_WITH_NON_ESP, fam));
+			return r;
+		}
 	} else {
 		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for new style NAT-T family %s",
-				ESPINUDP_WITH_NON_ESP, fam));
-		return r;
+			DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not available for this kernel"));
 	}
+#else
+	DBG(DBG_NATT,
+		DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not compiled in"));
+#endif
 
 #if defined(KLIPS)
-	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old style NAT-T"));
-	const int type = ESPINUDP_WITH_NON_ESP;
-	r = setsockopt(sk, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
-	if (r == -1) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old style NAT-T family %s (errno=%d)",
-				ESPINUDP_WITH_NON_ESP, fam, errno));
+	if (kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS) {
+		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
+		zero(&ifr);
+		ifn = "ipsec0"; /* mast must use ipsec0 too */
+		strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+		fdp[0] = sk;
+		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
+		r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
+		if (r == -1) {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old ioctl style NAT-T family %s (errno=%d)",
+					ESPINUDP_WITH_NON_ESP, fam, errno));
+		} else {
+			DBG(DBG_NATT,
+				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old ioctl style NAT-T family %s",
+					ESPINUDP_WITH_NON_ESP, fam));
+			return r;
+		}
 	} else {
 		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old style NAT-T family %s",
-				ESPINUDP_WITH_NON_ESP, fam));
-		return r;
+			DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not available for this kernel"));
 	}
-# else
+#else
 	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: ESPINUDP() setup for old style NAT-T family not available - KLIPS support not compiled in"));
-# endif
+		DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not compiled in"));
+#endif
 
+	/* all methods failed to detect NAT-T support */
 	loglog(RC_LOG_SERIOUS,
-		"NAT-Traversal: ESPINUDP(%d) not supported by kernel for family %s",
+		"NAT-Traversal: ESPINUDP(%d) for this kernel not supported or not found for family %s",
 		ESPINUDP_WITH_NON_ESP, fam);
 	libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
 	nat_traversal_enabled = FALSE;
@@ -1166,14 +1181,14 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hash_me, st->st_icookie, rcookie,
-		&md->iface->ip_addr, md->iface->port);
+	natd_hash(&ike_alg_hash_sha1, hash_me, st->st_icookie, rcookie,
+		  &md->iface->ip_addr, md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
-	natd_hash(&crypto_hasher_sha1, hash_him, st->st_icookie, rcookie,
-		&md->sender, md->sender_port);
+	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
+		  &md->sender, md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)

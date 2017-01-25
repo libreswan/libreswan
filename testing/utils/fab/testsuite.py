@@ -26,13 +26,12 @@ class Test:
 
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
-                 saved_testsuite_output_directory=None,
                  testsuite_output_directory=None,
-                 kind="kvmplutotest", expected_result="good"):
+                 kind="kvmplutotest", status="good"):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
-        self.expected_result = expected_result
+        self.status = status
 
         # The test's name is always identical to the test directory's
         # name (aka basename).  However, since TEST_DIRECTORY could be
@@ -57,6 +56,7 @@ class Test:
         # specified, use that.
         if testsuite_output_directory:
             self.output_directory = os.path.join(testsuite_output_directory, self.name)
+            print(self.output_directory)
         else:
             self.output_directory = os.path.join(self.directory, "OUTPUT")
 
@@ -72,26 +72,33 @@ class Test:
         # OUTPUT_DIRECTORY should be used.
         if saved_test_output_directory:
             self.saved_output_directory = saved_test_output_directory
-        elif saved_testsuite_output_directory:
-            self.saved_output_directory = os.path.join(saved_testsuite_output_directory, self.name)
         else:
             self.saved_output_directory = None
 
-        # An instance of the test directory within a tree that
-        # includes all the post-mortem sanitization scripts.  If the
-        # test results have been copied then this will be different to
-        # test.directory.
-        self.sanitize_directory = os.path.realpath(os.path.join(testing_directory, "pluto", self.name))
+        # The testing_directory to use when performing post.mortem
+        # tasks such as running the sanitizer.
+        #
+        # Since test.directory may be incomplete (sanitizers directory
+        # may be missing), use the testing directory belonging to this
+        # script.
+        if testing_directory:
+            # trust it
+            self._testing_directory = os.path.relpath(testing_directory)
+        else:
+            self._testing_directory = utilsdir.relpath("..")
 
         # Get an ordered list of (host,script) pairs of all the
         # scripts that need to be run.
         self.host_script_tuples = scripts.host_script_tuples(self.directory)
 
         # Just assume any host mentioned in scripts needs to run.
-        self.host_names = set()
+        host_names = set()
         for host, script in self.host_script_tuples:
-            self.host_names.add(host)
+            host_names.add(host)
+        self.host_names = sorted(host_names)
 
+    def testing_directory(self, *path):
+        return os.path.relpath(os.path.join(self._testing_directory, *path))
 
     def result_file(self, directory=None):
         """The result file in the given directory, or output_directory"""
@@ -110,40 +117,67 @@ class Testsuite:
 
     def __init__(self, logger, testlist, error_level,
                  testing_directory,
-                 testsuite_output_directory=None,
-                 saved_testsuite_output_directory=None):
+                 testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
+        line_nr = 0
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
+                line_nr += 1
+                # clean up the line, but save the original for logging
+                orig = line.strip("\r\n")
+                if "#" in line:
+                    line = line[:line.find("#")]
                 line = line.strip()
-                # these three log lines are ment to align
+                # the two log messages should align
                 if not line:
-                    logger.debug("%7s: ", "blank")
+                    logger.debug("empty: %s", orig)
                     continue
-                if line[0] == '#':
-                    logger.debug("%7s: %s", "comment", line)
-                    continue
-                logger.debug("%7s: %s", "input", line)
-                try:
-                    kind, name, expected_result = line.split()
-                except ValueError:
+                else:
+                    logger.debug("input: %s", orig)
+                # Extract the fields
+                fields = line.split()
+                if len(fields) < 3:
                     # This is serious
                     logger.log(error_level,
-                                    "****** malformed line: %s", line)
+                               "****** %s:%d: line has too few fields: %s",
+                               testlist, line_nr, orig)
                     continue
-                test = Test(kind=kind, expected_result=expected_result,
+                if len(fields) > 4:
+                    # This is serious
+                    logger.log(error_level,
+                               "****** %s:%d: line has too many fields: %s",
+                               testlist, line_nr, orig)
+                    continue
+                kind = fields[0]
+                name = fields[1]
+                status = fields[2]
+                # pr = fields[3]?
+                test = Test(kind=kind, status=status,
                             test_directory=os.path.join(self.directory, name),
-                            saved_testsuite_output_directory=saved_testsuite_output_directory,
                             testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
-                    # This is serious
+                    # This is serious.  However, stumble on.
                     logger.log(error_level,
-                                    "****** invalid test %s: directory not found: %s",
-                                    test.name, test.directory)
+                               "****** %s:%d: invalid test %s: test directory not found: %s",
+                               testlist, line_nr,
+                               test.name, test.directory)
                     continue
+                if test.name in self.testlist:
+                    # This is serious.
+                    #
+                    # However, after reporting continue and select the
+                    # second entry.  Preserves historic behaviour, as
+                    # selecting the first entry would invalidate
+                    # earlier test results.
+                    first = self.testlist[test.name]
+                    logger.log(error_level,
+                               "****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
+                               testlist, line_nr,
+                               test.kind, test.name, test.status,
+                               first.kind, first.name, first.status)
                 # an OrderedDict which saves insertion order
                 self.testlist[test.name] = test
 
@@ -198,8 +232,7 @@ TESTLIST = "TESTLIST"
 
 def load(logger, log_level, args,
          testsuite_directory=None,
-         testsuite_output_directory=None, # going away
-         saved_testsuite_output_directory=None,
+         testsuite_output_directory=None,
          error_level=logutil.ERROR):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
@@ -208,7 +241,6 @@ def load(logger, log_level, args,
 
     """
 
-    saved_testsuite_output_directory = saved_testsuite_output_directory or testsuite_output_directory
     # Is DIRECTORY a testsuite or a testlist file?  For instance:
     # testing/pluto or testing/pluto/TESTLIST.
     if os.path.isfile(testsuite_directory):
@@ -223,8 +255,7 @@ def load(logger, log_level, args,
         logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
     return Testsuite(logger, testlist, error_level,
                      testing_directory=args.testing_directory,
-                     testsuite_output_directory=args.testsuite_output,
-                     saved_testsuite_output_directory=saved_testsuite_output_directory)
+                     testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
 
 
 def append_test(tests, args, test_directory=None,

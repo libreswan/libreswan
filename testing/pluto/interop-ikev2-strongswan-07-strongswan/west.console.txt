@@ -57,7 +57,7 @@ west #
 west #
  if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):
-  uptime: XXX seconds, since YYY
+  uptime: XXX second, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
 Listening IP addresses:
   192.0.1.254
@@ -69,7 +69,7 @@ westnet-eastnet-ikev2:   local:  [west] uses pre-shared key authentication
 westnet-eastnet-ikev2:   remote: [east] uses pre-shared key authentication
 westnet-eastnet-ikev2:   child:  192.0.1.0/24 === 192.0.2.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours
 westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_MD5_96/PRF_HMAC_MD5/MODP_2048
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o

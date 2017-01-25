@@ -91,6 +91,12 @@ struct chunk {
 
 typedef struct chunk chunk_t;
 
+/* XXX: count can't have side effects. */
+#define alloc_chunk(COUNT, NAME) (struct chunk) {			\
+		.len = (COUNT),						\
+		.ptr = alloc_things(u_int8_t, (COUNT), NAME),		\
+	}
+
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
 
 /* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */

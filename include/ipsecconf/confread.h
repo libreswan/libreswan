@@ -47,9 +47,10 @@ struct starter_end {
 	enum keyword_host nexttype;
 	ip_address addr, nexthop, sourceip;
 	bool has_client;
-	ip_subnet subnet;
+	ip_subnet subnet, vti_ip;
 	char *iface;
 	char *id;
+	enum keyword_authby authby;
 
 	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;

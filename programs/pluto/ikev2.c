@@ -52,9 +52,7 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
@@ -68,7 +66,7 @@
 #include "vendor.h"
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
-#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+#include "alg_info.h" /* for ike_info / esp_info */
 
 #include "ietf_constants.h"
 
@@ -256,7 +254,7 @@ enum smf2_flags {
  */
 
 static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any packet */
-static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V);	/* if one can appear, many can appear */
+static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
 /* microcode to parent first initiator state: not associated with an input packet */
 const struct state_v2_microcode ikev2_parent_firststate_microcode =
@@ -842,7 +840,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		if ((ix != ISAKMP_v2_SA_INIT && ix != ISAKMP_v2_AUTH) &&
 		    !IS_IKE_SA_ESTABLISHED(st)) {
 			libreswan_log("Ignoring %s Exchange as IKE SA for %s has not yet been authenticated",
-				enum_show(&state_names, st->st_state), st->st_connection->name);
+				enum_name(&state_names, st->st_state), st->st_connection->name);
 			return;
 		}
 	} else if (!msg_r) {
@@ -961,7 +959,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	    if (st != NULL) {
 		    DBG_log("found state #%lu", st->st_serialno);
 	    }
-	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+	    DBG_log("from_state is %s", enum_name(&state_names, from_state)));
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
@@ -1045,7 +1043,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			SEND_V2_NOTIFICATION(v2N_INVALID_IKE_SPI);
 		}
 		return;
 	}
@@ -1083,7 +1081,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	struct connection *c = md->st->st_connection;
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
-	struct id peer;
+	struct id peer_id;
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1092,15 +1090,17 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 	id_pbs = &id_him->pbs;
 	v2id = &id_him->payload.v2id;
-	peer.kind = v2id->isai_type;
+	peer_id.kind = v2id->isai_type;
 
-	if (!extract_peer_id(&peer, id_pbs)) {
+	if (!extract_peer_id(&peer_id, id_pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
 	}
 
-	if (!ikev2_decode_cert(md))
+	if (!ikev2_decode_cert(md)) {
+		libreswan_log("ikev2_decode_cert(md) failed in ikev2_decode_peer_id_and_certs()");
 		return FALSE;
+	}
 
 	/* process any CERTREQ payloads */
 	ikev2_decode_cr(md);
@@ -1113,7 +1113,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		if (!same_id(&st->st_connection->spd.that.id, &peer_id) &&
 			id_kind(&st->st_connection->spd.that.id) !=
 			ID_FROMCERT) {
 
@@ -1122,48 +1122,54 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 			idtoa(&st->st_connection->spd.that.id, expect,
 				sizeof(expect));
-			idtoa(&peer, found, sizeof(found));
+			idtoa(&peer_id, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
 		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+			if (id_kind(&peer_id) != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 				return FALSE;
 			}
-			duplicate_id(&st->st_connection->spd.that.id, &peer);
+			duplicate_id(&st->st_connection->spd.that.id, &peer_id);
 		}
 	} else {
-		bool fromcert = FALSE;
+		/* why should refine_host_connection() update this? We pulled it from their packet */
+		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
-		lset_t auth_policy = LEMPTY;
+		enum keyword_authby authby = AUTH_NEVER;
 
 		switch (auth) {
 		case IKEv2_AUTH_RSA:
-			auth_policy = POLICY_RSASIG;
+			authby = AUTH_RSASIG;
 			break;
 		case IKEv2_AUTH_PSK:
-			auth_policy = POLICY_PSK;
+			authby = AUTH_PSK;
 			break;
 		case IKEv2_AUTH_NULL:
-			/* we cannot switch, parts of SKEYSEED are used as PSK */
+			authby = AUTH_NULL;
 			break;
 		case IKEv2_AUTH_NONE:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
 		}
 
-		if (auth_policy != LEMPTY) {
-			/* should really return c if no better match found */
-			struct connection *r = refine_host_connection(
-				md->st, &peer, FALSE /*initiator*/,
-				auth_policy, &fromcert);
+		if (authby != AUTH_NEVER) {
+			struct connection *r = NULL;
+
+			if (authby != AUTH_NULL) {
+				/* should never return NULL */
+				r = refine_host_connection(
+				md->st, &peer_id, FALSE /*initiator*/,
+				LEMPTY /* auth_policy */, authby, &fromcert);
+				pexpect(r != NULL);
+			}
 
 			if (r == NULL) {
 				char buf[IDTOA_BUF];
 
-				idtoa(&peer, buf, sizeof(buf));
+				idtoa(&peer_id, buf, sizeof(buf));
 				DBG(DBG_CONTROL, DBG_log(
 					"no refined connection for peer '%s'", buf));
 				r = c; /* ??? is this safe? */
@@ -1183,17 +1189,17 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 					/* instantiate it, filling in peer's ID */
 					r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer);
+						   NULL, &peer_id);
 				}
 
 				update_state_connection(md->st, r);
 				c = r;
 			} else if (c->spd.that.has_id_wildcards) {
-				duplicate_id(&c->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
 				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-				duplicate_id(&c->spd.that.id, &peer);
+				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}
 	}
@@ -1205,7 +1211,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		DBG_log("offered CA: '%s'", idbuf);
 	});
 
-	idtoa(&peer, idbuf, sizeof(idbuf));
+	idtoa(&peer_id, idbuf, sizeof(idbuf));
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
@@ -1227,20 +1233,19 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
  *
  * The peerlog will be perfect, the syslog will require that a cut
  * command is used to remove the initial text.
- *
  */
-/* ??? this is kind of odd: regular control flow only selecting DBG output */
 void ikev2_log_parentSA(struct state *st)
 {
-	if (DBGP(DBG_CRYPT)) {
+	DBG(DBG_PRIVATE,
+	{
 		const char *authalgo;
 		char encalgo[128];
 
-		if (st->st_oakley.integ_hasher == NULL ||
+		if (st->st_oakley.integ == NULL ||
 		    st->st_oakley.encrypter == NULL)
 			return;
 
-		authalgo = st->st_oakley.integ_hasher->common.officname;
+		authalgo = st->st_oakley.integ->common.officname;
 
 		if (st->st_oakley.enckeylen != 0) {
 			/* 3des will use '3des', while aes becomes 'aes128' */
@@ -1275,16 +1280,19 @@ void ikev2_log_parentSA(struct state *st)
 			authalgo,
 			encalgo);
 	}
+	);
 }
 
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("sending INVALID_KE back with %s(%d)",
-		    strip_prefix(enum_show(&oakley_group_names, group->group),
-				 "OAKLEY_GROUP_"),
-		    group->group));
+
+	DBG(DBG_CONTROL, {
+		struct esb_buf esb;
+		DBG_log("sending INVALID_KE back with %s(%d)",
+			enum_show_shortb(&oakley_group_names, group->group, &esb),
+			group->group);
+	});
 	/* convert group to a raw buffer */
 	const u_int16_t gr = htons(group->group);
 	chunk_t nd;
@@ -1332,6 +1340,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,
+		.st_reply_xchg = md->hdr.isa_xchg,
 	};
 
 	passert(md != NULL);
@@ -1454,6 +1463,25 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	return delay;
 }
 
+void log_ipsec_sa_established(const char *m, struct state *st)
+{
+	ipstr_buf bul, buh, bhl, bhh;
+
+	/* document IPsec SA details for admin's pleasure */
+	libreswan_log( "%s [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]", m,
+			ipstr(&st->st_ts_this.low, &bul),
+			ipstr(&st->st_ts_this.high, &buh),
+			st->st_ts_this.startport,
+			st->st_ts_this.endport,
+			st->st_ts_this.ipprotoid,
+			ipstr(&st->st_ts_that.low, &bhl),
+			ipstr(&st->st_ts_that.high, &bhh),
+			st->st_ts_that.startport,
+			st->st_ts_that.endport,
+			st->st_ts_that.ipprotoid);
+
+}
+
 static void success_v2_state_transition(struct msg_digest *md)
 {
 	const struct state_v2_microcode *svm = md->svm;
@@ -1482,21 +1510,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		sadetails[0] = '\0';
 
-		/* document IPsec SA details for admin's pleasure */
 		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			ipstr_buf bul, buh, bhl, bhh;
-
-			/* but if this is the parent st, this information is not set! you need to check the child sa! */
-			libreswan_log(
-				"negotiated connection [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]",
-				ipstr(&st->st_ts_this.low, &bul),
-				ipstr(&st->st_ts_this.high, &buh),
-				st->st_ts_this.startport, st->st_ts_this.endport, st->st_ts_this.ipprotoid,
-				ipstr(&st->st_ts_that.low, &bhl),
-				ipstr(&st->st_ts_that.high, &bhh),
-				st->st_ts_that.startport, st->st_ts_that.endport,
-				st->st_ts_that.ipprotoid);
-
+			log_ipsec_sa_established("negotiated connection", st);
 			fmt_ipsec_sa_established(st, sadetails,
 						 sizeof(sadetails));
 			/* log our success */
@@ -1568,7 +1583,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
 			if (DBGP(IMPAIR_RETRANSMITS)) {
-				libreswan_log("supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set.");
 				if (st->st_rel_whack_event != NULL) {
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;
@@ -1816,8 +1831,11 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 			} else {
 				/* We are the exchange initiator */
-				pexpect(st !=  NULL && st->st_event != NULL &&
+				/* temporarilly make it less noisy for endusers */
+				if (DBGP(DBG_CONTROL)) {
+					pexpect(st !=  NULL && st->st_event != NULL &&
 						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
+				}
 			}
 		}
 

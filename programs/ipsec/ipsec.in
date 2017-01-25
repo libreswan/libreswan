@@ -159,7 +159,7 @@ case "${1}" in
 	;;
 
     --stopnflog|stopnflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 		exit 0
 	fi
@@ -169,7 +169,7 @@ case "${1}" in
 	;;
 
     --checknflog|checknflog|nflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	    if [ -n "${OLDNFGROUP}" ]; then
@@ -203,7 +203,7 @@ case "${1}" in
 
     sniff|--sniff)
 	if [ -z "${2}" ]; then
-	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	    tcpdump -n -i nflog:${NFGROUP}
 	else
 	    echo "conn specific coming soon"
@@ -213,26 +213,32 @@ case "${1}" in
 
     import|--import)
 	if [ -n "${2}" ]; then
-	    # A lot of nss commands use -d or --configdir to specify
-	    # NSS db location. We use --ipsecdir so we are consistent
-	    # with pluto options
+	    # A lot of nss commands use -d to specify NSS db location.
+	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
-		"${2}" = "--configdir" -o \
-		"${2}" = "--ipsecdir" ]
+		"${2}" = "--nssdir" ]
 	    then
 		if [ -d "${3}" ]; then
 		    IPSEC_NSSDIR="${3}"
 		else
-		    echo "usage: ipsec import [--configdir|--ipsecdir /etc/ipsec.d] /path/to/pkcs.12" >&2
+		    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
 		    exit 1
 		fi
 		shift
 		shift
 	    fi
-	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+	    if [ -f "${IPSEC_NSSDIR}/key4.db" -a \
+		-f "${IPSEC_NSSDIR}/cert9.db" ]
+	    then
+		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+	    else
+		echo "ERROR: NSS database files are missing, import aborted." >&2
+		echo "Initialize database with command \"ipsec initnss\"." >&2
+		exit 1
+	    fi
 	fi
 	if [ -z "${2}" -o ! -f "${2}" ]; then
-	    echo "usage: ipsec import [--configdir|--ipsecdir /etc/ipsec.d] /path/to/pkcs.12" >&2
+	    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
 	    exit 1
 	fi
 	pk12util -i "${2}" -d "${IPSEC_NSSDIR_SQL}"
@@ -242,21 +248,21 @@ case "${1}" in
 	;;
     initnss|--initnss|checknss|--checknss)
 	if [ -n "${2}" ]; then
-	    # A lot of nss commands use -d or --configdir to specify
-	    # NSS db location. We use --ipsecdir so we are consistent
-	    # with pluto options
+	    # A lot of nss commands use -d to specify NSS db location.
+	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
-		"${2}" = "--configdir" -o \
-		"${2}" = "--ipsecdir" ]
+		"${2}" = "--nssdir" ]
 	    then
 		IPSEC_NSSDIR="${3}"
+		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	    else
-		IPSEC_NSSDIR="${2}"
+		echo "usage: ipsec initnss [--nssdir ${IPSEC_NSSDIR}]" >&2
+		exit 1
 	    fi
-	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	fi
 	if [ ! -d "${IPSEC_NSSDIR}" ]; then
-	    mkdir -p "${IPSEC_NSSDIR}"
+	    echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing" >&2
+	    exit 1
 	fi
 	# if we have old database
 	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
@@ -310,9 +316,10 @@ case "${1}" in
 
 		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		if [ $? -ne 0 ]; then
+		${rc}=$?
+		if [ ${rc} -ne 0 ]; then
 		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
-		    exit $?
+		    exit ${rc}
 		fi
 		# import cacerts and crls
 		if [ -d "${CACERTDIR}" ]; then
@@ -365,7 +372,15 @@ case "${1}" in
 	;;
     secrets)
 	"${IPSEC_EXECDIR}/whack" --rereadsecrets
-	exit 0
+	exit $?
+	;;
+    rereadcrls|--rereadcrls)
+	echo "ipsec auto: --rereadcrls and /etc/ipsec.d/crls/ are obsoleted. did you mean: ipsec crls"
+	exit 1
+	;;
+    crls|fetchcrls)
+	"${IPSEC_EXECDIR}/whack" --fetchcrls
+	exit $?
 	;;
     --*)
 	printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2

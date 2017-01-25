@@ -1,10 +1,10 @@
 /*
- * sanitize a string into a printable format.
+ * Panic, for libreswan.
  *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -23,43 +23,64 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-typedef void (*libreswan_passert_fail_t)(const char *pred_str,
-					 const char *file_str,
-					 unsigned long line_no) NEVER_RETURNS;
+extern void libreswan_passert_fail(const char *file_str,
+				   unsigned long line_no,
+				   const char *func_str,
+				   const char *fmt, ...)
+	NEVER_RETURNS
+	PRINTF_LIKE(4);
 
-extern libreswan_passert_fail_t libreswan_passert_fail;
+#define PASSERT_FAIL(FMT, ...)					\
+	libreswan_passert_fail(__FILE__, __LINE__,		\
+			       __func__, FMT, __VA_ARGS__)
 
-extern void pexpect_log(const char *pred_str,
-			const char *file_str, unsigned long line_no);
-
-#define impossible()  libreswan_passert_fail("impossible", __FILE__, __LINE__)
-
-extern void libreswan_switch_fail(int n,
-				  const char *file_str,
-				  unsigned long line_no) NEVER_RETURNS;
-
-#define bad_case(n) libreswan_switch_fail((int) (n), __FILE__, __LINE__)
+#define bad_case(N) {						\
+		long _n = (N);				\
+		PASSERT_FAIL("case %ld/%lu/%lx unexpected",	\
+			     _n, _n, _n);			\
+	}
 
 #define passert(pred) {							\
 		/* Shorter if(!(pred)) suppresses -Wparen */		\
 		if (pred) {} else {					\
-			libreswan_passert_fail(#pred, __FILE__,		\
-					       __LINE__);		\
+			PASSERT_FAIL("%s", #pred);			\
 		}							\
 	}
 
+/*
+ * Check/log a pexpect failure to the "panic" channel.
+ *
+ * Notes:
+ *
+ * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
+ * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
+ * workarounds.
+ *
+ * "pexpect()" does use the shorter statement "if(!(pred))" in the
+ * below as it will suppresses -Wparen (i.e., assignment in if
+ * statement).
+ */
+
+extern void pexpect_log(const char *file_str, unsigned long line_no,
+			const char *func_str, const char *fmt, ...)
+	PRINTF_LIKE(4);
+
+#define PEXPECT_LOG(FMT, ...) \
+	pexpect_log(__FILE__, __LINE__, __func__,		\
+		    FMT,  __VA_ARGS__)
+
 #define pexpect(pred) {							\
-		/* Shorter if(!(pred)) suppresses -Wparen */		\
 		if (pred) {} else {					\
-			pexpect_log(#pred, __FILE__, __LINE__);		\
+			PEXPECT_LOG("%s", #pred);			\
 		}							\
 	}
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
-#define happy(x) { \
-		err_t ugh = x; \
-		if (ugh != NULL) \
-			libreswan_passert_fail(ugh, __FILE__, __LINE__); \
+#define happy(x) {					\
+		err_t ugh = x;				\
+		if (ugh != NULL) {			\
+			PASSERT_FAIL("%s", ugh);	\
+		}					\
 	}
 
 #endif /* _LIBRESWAN_PASSERT_H */

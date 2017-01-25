@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep --x509 --x509name notyetvalid
+Preparing X.509 files
+east #
+ certutil -d sql:/etc/ipsec.d -D -n west
+east #
+ ipsec _stackmanager start
+east #
+ mkdir /var/run/pluto
+east #
+ # set a time in the future so notyetvalid and west certs are valid
+east #
+ faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # if faketime works, adding conn should not give a warning about cert
+east #
+ ipsec auto --add nss-cert
+002 added connection description "nss-cert"
+east #
+ echo "initdone"
+initdone
+east #
+ # only expected to show failure on west
+east #
+ grep "ERROR" /tmp/pluto.log
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

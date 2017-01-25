@@ -70,6 +70,7 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+#include "ike_alg.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
@@ -107,6 +108,9 @@ const struct pfkey_proto_info null_proto_info[2] = {
 
 static struct bare_shunt *bare_shunts = NULL;
 
+/* 16384 is the first reqid we will use when not specified manually */
+uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
+
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
@@ -117,24 +121,43 @@ static struct event *ev_pq = NULL;
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	DBG(DBG_KERNEL,
-	    {
-		    int ourport = ntohs(portof(&bs->ours.addr));
-		    int hisport = ntohs(portof(&bs->his.addr));
-		    char ourst[SUBNETTOT_BUF];
-		    char hist[SUBNETTOT_BUF];
-		    char sat[SATOT_BUF];
-		    char prio[POLICY_PRIO_BUF];
+	DBG(DBG_KERNEL, {
+		int ourport = ntohs(portof(&bs->ours.addr));
+		int hisport = ntohs(portof(&bs->his.addr));
+		char ourst[SUBNETTOT_BUF];
+		char hist[SUBNETTOT_BUF];
+		char sat[SATOT_BUF];
+		char prio[POLICY_PRIO_BUF];
 
-		    subnettot(&bs->ours, 0, ourst, sizeof(ourst));
-		    subnettot(&bs->his, 0, hist, sizeof(hist));
-		    satot(&bs->said, 0, sat, sizeof(sat));
-		    fmt_policy_prio(bs->policy_prio, prio);
-		    DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
-			    op, (const void *)bs, ourst, ourport,
-			    bs->transport_proto, hist, hisport,
-			    sat, prio, bs->why);
-	    });
+		subnettot(&bs->ours, 0, ourst, sizeof(ourst));
+		subnettot(&bs->his, 0, hist, sizeof(hist));
+		satot(&bs->said, 0, sat, sizeof(sat));
+		fmt_policy_prio(bs->policy_prio, prio);
+		DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
+			op, (const void *)bs, ourst, ourport,
+			bs->transport_proto, hist, hisport,
+			sat, prio, bs->why);
+	});
+}
+
+static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
+{
+	/* same as DBG_bare_shunt but goe to real log */
+	int ourport = ntohs(portof(&bs->ours.addr));
+	int hisport = ntohs(portof(&bs->his.addr));
+	char ourst[SUBNETTOT_BUF];
+	char hist[SUBNETTOT_BUF];
+	char sat[SATOT_BUF];
+	char prio[POLICY_PRIO_BUF];
+
+	subnettot(&bs->ours, 0, ourst, sizeof(ourst));
+	subnettot(&bs->his, 0, hist, sizeof(hist));
+	satot(&bs->said, 0, sat, sizeof(sat));
+	fmt_policy_prio(bs->policy_prio, prio);
+	libreswan_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
+		op, (const void *)bs, ourst, ourport,
+		bs->transport_proto, hist, hisport,
+		sat, prio, bs->why);
 }
 
 /*
@@ -146,6 +169,15 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	int transport_proto, ipsec_spi_t shunt_spi,
 	const char *why)
 {
+
+	/* report any duplication; this should NOT happen */
+	struct bare_shunt **bspp = bare_shunt_ptr(ours, his, transport_proto);
+
+	if (bspp != NULL) {
+		/* maybe: passert(bsp == NULL); */
+		log_bare_shunt("CONFLICTING existing", *bspp);
+	}
+
 	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
 					    "bare shunt");
 
@@ -165,6 +197,11 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	bs->next = bare_shunts;
 	bare_shunts = bs;
 	DBG_bare_shunt("add", bs);
+
+	/* report duplication; this should NOT happen */
+	if (bspp != NULL)
+		log_bare_shunt("CONFLICTING      new", bs);
+
 }
 
 
@@ -181,27 +218,37 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				       , const char *why)
 {
+	ip_address src, dst;
+
 	passert(samesubnettype(ours, his));
 
 	/* Add the kernel shunt to the pluto bare shunt list.
 	 * We need to do this because the %hold shunt was installed by kernel
 	 * and we want to keep track of it inside pluto.
+	 * WARNING: there is different behaviour between KLIPS and NETKEY, and
+	 *          it might be that netkey causes duplicate acquires when the
+	 *          proc value is different from our internal value?
 	 */
-	add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
+
+
+	networkof(ours, &src);
+	networkof(his, &dst);
+
+	/* This check should not be needed :( */
+	if (has_bare_hold(&src, &dst, transport_proto)) {
+		loglog(RC_LOG_SERIOUS, "existing bare shunt found - refusing to add a duplicate");
+		/* should we continue with initiate_ondemand() ? */
+	} else {
+		add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
+	}
 
 	/* actually initiate opportunism / ondemand */
-	{
-		ip_address src, dst;
-
-		networkof(ours, &src);
-		networkof(his, &dst);
-		initiate_ondemand(&src, &dst, transport_proto,
-				      TRUE, NULL_FD,
+	initiate_ondemand(&src, &dst, transport_proto,
+			      TRUE, NULL_FD,
 #ifdef HAVE_LABELED_IPSEC
-				      uctx,
+			      uctx,
 #endif
-				      "acquire");
-	}
+			      "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		/* remove from KLIPS's list */
@@ -367,6 +414,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		myclient_str[SUBNETTOT_BUF],
 		myclientnet_str[ADDRTOT_BUF],
 		myclientmask_str[ADDRTOT_BUF],
+		vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")],
 		peerid_str[IDTOA_BUF],
 		metric_str[sizeof("PLUTO_METRIC= ") + 4],
 		connmtu_str[sizeof("PLUTO_MTU= ") + 4],
@@ -401,11 +449,20 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
-	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclientnet_str));
+
+	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclient_str));
 	networkof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
 	maskof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
+
+	vticlient_str[0] = '\0';
+	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
+		char tmpvti[SUBNETTOT_BUF];
+		subnettot(&sr->this.host_vtiip, 0, tmpvti, sizeof(tmpvti));
+
+		snprintf(vticlient_str, sizeof(vticlient_str), "VTI_IP='%s' ", tmpvti);
+	}
 
 	idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
 	escape_metachar(peerid_str, secure_peerid_str,
@@ -502,27 +559,28 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"PLUTO_INTERFACE='%s' "
 		"%s" /* possible PLUTO_NEXT_HOP */
 		"PLUTO_ME='%s' "
-		"PLUTO_MY_ID='%s' "		/* 5 */
+		"PLUTO_MY_ID='%s' "
 		"PLUTO_MY_CLIENT='%s' "
 		"PLUTO_MY_CLIENT_NET='%s' "
 		"PLUTO_MY_CLIENT_MASK='%s' "
+		"%s" /* VTI_IP */
 		"PLUTO_MY_PORT='%u' "
-		"PLUTO_MY_PROTOCOL='%u' "	/* 10 */
+		"PLUTO_MY_PROTOCOL='%u' "
 		"PLUTO_SA_REQID='%u' "
 		"PLUTO_SA_TYPE='%s' "
 		"PLUTO_PEER='%s' "
 		"PLUTO_PEER_ID='%s' "
-		"PLUTO_PEER_CLIENT='%s' "	/* 15 */
+		"PLUTO_PEER_CLIENT='%s' "
 		"PLUTO_PEER_CLIENT_NET='%s' "
 		"PLUTO_PEER_CLIENT_MASK='%s' "
 		"PLUTO_PEER_PORT='%u' "
 		"PLUTO_PEER_PROTOCOL='%u' "
-		"PLUTO_PEER_CA='%s' "		/* 20 */
+		"PLUTO_PEER_CA='%s' "
 		"PLUTO_STACK='%s' "
 		"%s"		/* optional metric */
 		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
-		"PLUTO_CONN_POLICY='%s' "	/* 25 */
+		"PLUTO_CONN_POLICY='%s%s' "
 		"PLUTO_CONN_KIND='%s' "
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
@@ -551,6 +609,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		myclient_str,
 		myclientnet_str,
 		myclientmask_str,
+		vticlient_str,
 		sr->this.port,
 		sr->this.protocol,		/* 10 */
 		sr->reqid,
@@ -572,6 +631,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmtu_str,
 		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
+		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
 		enum_show(&connection_kind_names, c->kind),
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
@@ -1227,8 +1287,8 @@ bool has_bare_hold(const ip_address *src, const ip_address *dst,
 }
 
 /*
- * clear any bare shunt holds that overlap with the network we have just
- * routed
+ * Clear any bare shunt holds that overlap with the network we have just routed.
+ * We only consider "narrow" holds: ones for a single address to single address.
  */
 static void clear_narrow_holds(const ip_subnet *ours,
 			       const ip_subnet *his,
@@ -1237,39 +1297,41 @@ static void clear_narrow_holds(const ip_subnet *ours,
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
-		ip_subnet po, ph;
-
-		/* for now we only care about host-host narrow holds specifically */
-		if (p->ours.maskbits != 32 || p->his.maskbits != 32) {
-			pp = &p->next;
-			continue;
-		}
-
-		if (p->said.spi != htonl(SPI_HOLD)) {
-			pp = &p->next;
-			continue;
-		}
-
-		initsubnet(&p->ours.addr, ours->maskbits, '0', &po);
-		initsubnet(&p->his.addr, his->maskbits, '0', &ph);
-
-		if (samesubnet(ours, &po) && samesubnet(his, &ph) &&
+		if (subnetishost(&p->ours) &&
+		    subnetishost(&p->his) &&
+		    p->said.spi == htonl(SPI_HOLD) &&
+		    addrinsubnet(&p->ours.addr, ours) &&
+		    addrinsubnet(&p->his.addr, his) &&
 		    transport_proto == p->transport_proto &&
 		    portof(&ours->addr) == portof(&p->ours.addr) &&
-		    portof(&his->addr) == portof(&p->his.addr)) {
-
+		    portof(&his->addr) == portof(&p->his.addr))
+		{
 			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
 					transport_proto, SPI_HOLD,
 					"removing clashing narrow hold"))
 			{
-				libreswan_log("delete_bare_shunt() in clear_narrow_holds() failed removing clashing narrow hold");
+				/* ??? we could not delete a bare shunt */
+				log_bare_shunt("failed to delete", p);
+				break;	/* unlikely to succeed a second time */
+			} else if (*pp == p) {
+				/*
+				 * ??? We deleted the wrong bare shunt!
+				 * This happened because more than one entry
+				 * matched and we happened to delete a different
+				 * one.  Log it!  And keep deleting.
+				 */
+				log_bare_shunt("UNEXPECTEDLY SURVIVING", p);
+				pp = &bare_shunts;	/* just in case, start over */
 			}
-
-			/* restart from beginning as we just removed an entry */
-			pp = &bare_shunts;
-			continue;
+			/*
+			 * ??? if we were sure that there could only be one
+			 * matching entry, we could break out of the FOR.
+			 * For an unknown reason this is not always the case,
+			 * so we will continue the loop, with pp unchanged.
+			 */
+		} else {
+			pp = &p->next;
 		}
-		pp = &p->next;
 	}
 }
 
@@ -1294,88 +1356,93 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	happy(addrtosubnet(dst, &that_client));
 
 	/* ??? this comment might be obsolete.
-	 * if the transport protocol is not the wildcard (0), then we need
+	 * If the transport protocol is not the wildcard (0), then we need
 	 * to look for a host<->host shunt, and replace that with the
 	 * shunt spi, and then we add a %HOLD for what was there before.
 	 *
-	 * this is at odds with !repl, which should delete things.
+	 * This is at odds with !repl, which should delete things.
 	 *
 	 */
 
-	if (transport_proto != 0) {
-		DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
-	}
+	DBG(DBG_CONTROL,
+		if (transport_proto != 0)
+			DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
 
-	{
-		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
+	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
-		DBG(DBG_KERNEL,
-		    DBG_log("%s specific host-to-host bare shunt",
-			    repl ? "replacing" : "removing"));
-		if (raw_eroute(null_host, &this_client,
-				null_host, &that_client,
-			       htonl(cur_shunt_spi),
-			       htonl(new_shunt_spi),
-			       SA_INT, transport_proto,
-			       ET_INT, null_proto_info,
-			       deltatime(SHUNT_PATIENCE),
-			       DEFAULT_IPSEC_SA_PRIORITY,
-			       NULL, /* sa_marks */
-			       op, why
+	DBG(DBG_KERNEL,
+	    DBG_log("%s specific host-to-host bare shunt",
+		    repl ? "replacing" : "removing"));
+	if (raw_eroute(null_host, &this_client,
+			null_host, &that_client,
+		       htonl(cur_shunt_spi),
+		       htonl(new_shunt_spi),
+		       SA_INT, transport_proto,
+		       ET_INT, null_proto_info,
+		       deltatime(SHUNT_PATIENCE),
+		       DEFAULT_IPSEC_SA_PRIORITY,
+		       NULL, /* sa_marks */
+		       op, why
 #ifdef HAVE_LABELED_IPSEC
-			       , NULL
+		       , NULL
 #endif
-			       )) {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_client,
-				&that_client,
-				transport_proto);
+		       ))
+	{
+		struct bare_shunt **bs_pp = bare_shunt_ptr(
+			&this_client,
+			&that_client,
+			transport_proto);
 
-			DBG(DBG_CONTROL, DBG_log("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
+		DBG(DBG_CONTROL, DBG_log("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
+			repl ? "replace" : "delete",
+			transport_proto,
+			(bs_pp == NULL) ? "failed" : "succeeded"));
+
+		/* we can have proto mismatching acquires with netkey - this is a bad workaround */
+		/* ??? what is the nature of those mismatching acquires? */
+		/* passert(bs_pp != NULL); */
+		if (bs_pp == NULL) {
+			ipstr_buf srcb, dstb;
+
+			libreswan_log("can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
 				repl ? "replace" : "delete",
-				transport_proto,
-				(bs_pp == NULL) ? "failed" : "succeeded"));
-
-			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
-			/* passert(bs_pp != NULL); */
-			if (bs_pp == NULL) {
-				DBG(DBG_CONTROL, DBG_log("not deleting bare (port) shunt - letting kernel expire it"));
-				return TRUE;
-			}
-			if (repl) {
-				/* change over to new bare eroute
-				 * ours, his, transport_proto are the same.
-				 */
-				struct bare_shunt *bs = *bs_pp;
-
-				bs->why = why;
-				bs->policy_prio = policy_prio;
-				bs->said.spi = htonl(new_shunt_spi);
-				bs->said.proto = SA_INT;
-				bs->said.dst = *null_host;
-				bs->count = 0;
-				bs->last_activity = mononow();
-				DBG_bare_shunt("change", bs);
-			} else {
-				/* delete pluto bare shunt */
-				free_bare_shunt(bs_pp);
-			}
+				ipstr(src, &srcb), ipstr(dst, &dstb),
+				transport_proto);
 			return TRUE;
-		} else {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_client,
-				&that_client,
-				transport_proto);
-
-			free_bare_shunt(bs_pp);
-			libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
-				repl ? "replace" : "delete",
-				transport_proto);
-
-			return FALSE;
 		}
-	}
 
+		if (repl) {
+			/* change over to new bare eroute
+			 * ours, his, transport_proto are the same.
+			 */
+			struct bare_shunt *bs = *bs_pp;
+
+			bs->why = why;
+			bs->policy_prio = policy_prio;
+			bs->said.spi = htonl(new_shunt_spi);
+			bs->said.proto = SA_INT;
+			bs->said.dst = *null_host;
+			bs->count = 0;
+			bs->last_activity = mononow();
+			DBG_bare_shunt("change", bs);
+		} else {
+			/* delete pluto bare shunt */
+			free_bare_shunt(bs_pp);
+		}
+		return TRUE;
+	} else {
+		struct bare_shunt **bs_pp = bare_shunt_ptr(
+			&this_client,
+			&that_client,
+			transport_proto);
+
+		free_bare_shunt(bs_pp);
+		libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
+			repl ? "replace" : "delete",
+			transport_proto);
+
+		return FALSE;
+	}
 }
 
 bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
@@ -1868,55 +1935,54 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 		const struct esp_info *ei;
 
-		/* ??? table of non-registered algorithms? */
+		/*
+		 * ??? table of non-registered algorithms?
+		 *
+		 * Looks like a hardwired and limited map from ESP/AH
+		 * to SADB (KLIPS).
+		 *
+		 * Since the allowed combinations are fixed, limited
+		 * and old (anything recent is instead handled by
+		 * kernel_alg_esp_info()) it may well be possible to
+		 * delete this table.
+		 */
 		static const struct esp_info esp_info[] = {
-			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_MD5,
-			  0,
-			  SADB_EALG_NULL, SADB_AALG_MD5HMAC },
-			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
-			  0,
-			  SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
-#if 0
-			{ FALSE, ESP_DES, AUTH_ALGORITHM_NONE,
-			  DES_CBC_BLOCK_SIZE,
-			  SADB_EALG_DESCBC, SADB_AALG_NONE },
-			{ FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_MD5,
-			  DES_CBC_BLOCK_SIZE,
-			  SADB_EALG_DESCBC, SADB_AALG_MD5HMAC },
-			{ FALSE, ESP_DES, AUTH_ALGORITHM_HMAC_SHA1,
-			  DES_CBC_BLOCK_SIZE,
-			  SADB_EALG_DESCBC,
-			  SADB_AALG_SHA1HMAC },
-#endif
-			{ FALSE, ESP_3DES, AUTH_ALGORITHM_NONE,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_NONE },
-			{ FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_MD5,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_MD5HMAC },
-			{ FALSE, ESP_3DES, AUTH_ALGORITHM_HMAC_SHA1,
-			  DES_CBC_BLOCK_SIZE * 3,
-			  SADB_EALG_3DESCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_NULL, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = 0,
+			  .encryptalg = SADB_EALG_NULL, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_NULL, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = 0,
+			  .encryptalg = SADB_EALG_NULL, .authalg = SADB_AALG_SHA1HMAC, },
 
-			{ FALSE, ESP_AES, AUTH_ALGORITHM_NONE,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_NONE },
-			{ FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_MD5,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_MD5HMAC },
-			{ FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_SHA1,
-			  AES_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_AESCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_3DES, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = DES_CBC_BLOCK_SIZE * 3,
+			  .encryptalg = SADB_EALG_3DESCBC, .authalg = SADB_AALG_SHA1HMAC, },
 
-			{ FALSE, ESP_CAST, AUTH_ALGORITHM_NONE,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_NONE },
-			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_MD5,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_MD5HMAC },
-			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_SHA1,
-			  CAST_CBC_BLOCK_SIZE,
-			  SADB_X_EALG_CASTCBC, SADB_AALG_SHA1HMAC },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_AES, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = AES_CBC_BLOCK_SIZE,
+			  .encryptalg = SADB_X_EALG_AESCBC, .authalg = SADB_AALG_SHA1HMAC, },
+
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_NONE,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_NONE, },
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_MD5,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_MD5HMAC, },
+			{ .transid = ESP_CAST, .auth = AUTH_ALGORITHM_HMAC_SHA1,
+			  .enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+			  .encryptalg = SADB_X_EALG_CASTCBC, .authalg = SADB_AALG_SHA1HMAC, },
 		};
 
 		u_int8_t natt_type = 0;
@@ -2109,7 +2175,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #endif
 		said_next->text_said = text_esp;
 
-		DBG(DBG_CRYPT, {
+		DBG(DBG_PRIVATE, {
 			    DBG_dump("ESP enckey:",  said_next->enckey,
 				     said_next->enckeylen);
 			    DBG_dump("ESP authkey:", said_next->authkey,
@@ -2202,7 +2268,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->esn = TRUE;
 		}
 
-		DBG(DBG_CRYPT, {
+		DBG(DBG_PRIVATE, {
 			DBG_dump("AH authkey:", said_next->authkey,
 				said_next->authkeylen);
 		    });
@@ -3506,13 +3572,13 @@ void expire_bare_shunts(void)
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
-			DBG(DBG_OPPO, DBG_bare_shunt("expiring old", bsp));
+			DBG_bare_shunt("expiring old", bsp);
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
 				"expire_bare_shunt");
 			passert(bsp != *bspp);
 		} else {
-			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
+			DBG_bare_shunt("keeping recent", bsp);
 			bspp = &bsp->next;
 		}
 	}
@@ -3523,6 +3589,24 @@ void expire_bare_shunts(void)
 unsigned
 ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 {
+	/*
+	 * New way.
+	 *
+	 * In truth the lookup should not be needed.  Instead they should
+	 * just hang onto the kernel_integ object.
+	 */
+	const struct kernel_integ *ki =
+		kernel_integ_by_ikev1_auth_attribute(auth);
+	if (ki != NULL) {
+		if (alg != NULL) {
+			*alg = ki->sadb_aalg;
+		}
+		return ki->integ->integ_key_size; /* bytes */
+	}
+        /*
+         * Old way.  Callers should just hang onto the kernel_integ
+         * object.
+         */
 	int authalg;
 	unsigned key_len;
 

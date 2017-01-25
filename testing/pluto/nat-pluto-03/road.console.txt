@@ -12,6 +12,9 @@ road #
  ipsec auto --add road-eastnet-forceencaps
 002 added connection description "road-eastnet-forceencaps"
 road #
+ ipsec status |grep encaps:
+000 "road-eastnet-forceencaps":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both
+road #
  echo "initdone"
 initdone
 road #
@@ -37,9 +40,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "road-eastnet-forceencaps", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-000  
 road #
  echo done
 done

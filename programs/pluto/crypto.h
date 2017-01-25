@@ -21,34 +21,13 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#ifdef USE_MD5
-#include "md5.h"
-#endif
-#ifdef USE_SHA1
-#include "sha1.h"
-#endif
-#ifdef USE_SHA2
-#include "sha2.h"
-#endif
-#include "aes_xcbc.h"
-
 #include <nss.h>
 #include <pk11pub.h>
 
 extern void init_crypto(void);
 
-/* Oakley group descriptions */
+struct oakley_group_desc;
 
-struct oakley_group_desc {
-	u_int16_t group;
-	const char *gen;
-	const char *modp;
-	size_t bytes;
-};
-
-extern const struct oakley_group_desc unset_group;      /* magic signifier */
-extern const struct oakley_group_desc *lookup_group(u_int16_t group);
-const struct oakley_group_desc *next_oakley_group(const struct oakley_group_desc *);
 void get_oakley_group_param(const struct oakley_group_desc *,
 			    chunk_t *base, chunk_t *prime);
 
@@ -65,10 +44,9 @@ void get_oakley_group_param(const struct oakley_group_desc *,
 
 struct state;   /* forward declaration, dammit */
 
-struct encrypt_desc;	/* forward */
-struct hash_desc;	/* forward */
-const struct encrypt_desc *crypto_get_encrypter(int alg);
-const struct hash_desc *crypto_get_hasher(oakley_hash_t alg);
+struct encrypt_desc;	/* opaque */
+struct hash_desc;	/* opaque */
+struct prf_desc;        /* opaque */
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 			size_t size, struct state *st);
@@ -111,19 +89,6 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 	memcpy((st)->st_new_iv, (tmp), (tmp_len)); \
     }
 
-/* unification of cryptographic hashing mechanisms */
-
-union hash_ctx {
-	lsMD5_CTX ctx_md5;
-	SHA1_CTX ctx_sha1;
-#ifdef USE_SHA2
-	sha256_context ctx_sha256;
-	sha384_context ctx_sha384;
-	sha512_context ctx_sha512;
-#endif
-	aes_xcbc_context ctx_aes_xcbc;
-};
-
 /*
  * HMAC package (new code should use crypt_prf).
  */
@@ -136,7 +101,7 @@ struct hmac_ctx {
 };
 
 extern void hmac_init(struct hmac_ctx *ctx,
-		      const struct hash_desc *h,
+		      const struct prf_desc *prf_desc,
 		      /*const*/ PK11SymKey *symkey);
 
 extern void hmac_update(struct hmac_ctx *ctx,
@@ -147,23 +112,20 @@ extern void hmac_update(struct hmac_ctx *ctx,
 
 extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 
-#define hmac_final_chunk(ch, name, ctx) { \
-		pfreeany((ch).ptr); \
-		(ch).len = (ctx)->hmac_digest_len; \
-		(ch).ptr = alloc_bytes((ch).len, name); \
-		hmac_final((ch).ptr, (ctx)); \
-}
-
-extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
-
 enum crk_proto {
 	CRK_ESPorAH,
 	CRK_IKEv1,
-	CRK_IKEv2
 };
 
 extern int crypto_req_keysize(enum crk_proto ksproto, int algo);
 
-extern struct hash_desc crypto_hasher_sha1;	/* used by nat_traversal.c */
+struct connection;
+
+void ike_alg_show_connection(const struct connection *c, const char *instance);
+
+const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
+						 lset_t policy);
+
+void ike_alg_show_status(void);
 
 #endif /* _CRYPTO_H */

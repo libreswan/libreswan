@@ -39,15 +39,6 @@ east #
 |    length/value: 128 (0x80)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
@@ -78,9 +69,6 @@ east #
 |    length/value: 256 (0x100)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
@@ -88,12 +76,6 @@ east #
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
 --
 |    af+type: IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)

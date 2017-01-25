@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -79,22 +80,22 @@
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
 
 char usage[] =
-	"rsasigkey [--verbose] [--seeddev <device>] [--configdir <dir>] [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
+	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>]\n"
+	"        [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
 struct option opts[] = {
-	{ "rounds",    1,      NULL,   'p', }, /* obsoleted */
-	{ "noopt",     0,      NULL,   'n', }, /* obsoleted */
-
-	{ "verbose",   0,      NULL,   'v', },
-	{ "seeddev",   1,      NULL,   'S', },
-	{ "random",    1,      NULL,   'r', }, /* compat alias for seeddev */
-	{ "hostname",  1,      NULL,   'H', },
-	{ "help",              0,      NULL,   'h', },
-	{ "version",   0,      NULL,   'V', },
-	{ "configdir",        1,      NULL,   'c' },
-	{ "configdir2",        1,      NULL,   'd' }, /* nss tools use -d */
-	{ "password", 1,      NULL,   'P' },
-	{ "seedbits", 1,      NULL,   's' },
-	{ 0,           0,      NULL,   0, }
+	{ "rounds",     1,      NULL,   'p', },	/* obsoleted */
+	{ "noopt",      0,      NULL,   'n', }, /* obsoleted */
+	{ "configdir",  1,      NULL,   'c', }, /* obsoleted */
+	{ "verbose",    0,      NULL,   'v', },
+	{ "seeddev",    1,      NULL,   'S', },
+	{ "random",     1,      NULL,   'r', }, /* compat alias for seeddev */
+	{ "hostname",   1,      NULL,   'H', },
+	{ "help",       0,      NULL,   'h', },
+	{ "version",    0,      NULL,   'V', },
+	{ "nssdir",     1,      NULL,   'd', }, /* nss-tools use -d */
+	{ "password",   1,      NULL,   'P', },
+	{ "seedbits",   1,      NULL,   's', },
+	{ 0,            0,      NULL,   0, }
 };
 char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
@@ -116,7 +117,7 @@ static char *base64_bundle(int e, chunk_t modulus)
 	 * Pack the single-byte exponent into a byte array.
 	 */
 	assert(e <= 255);
-	u_char exponent_byte = 1;
+	u_char exponent_byte = e;
 	chunk_t exponent = {
 		.ptr = &exponent_byte,
 		.len = 1,
@@ -199,9 +200,9 @@ int main(int argc, char *argv[])
 			printf("%s %s\n", progname, ipsec_version_code());
 			exit(0);
 			break;
-		case 'c':       /* nss configuration directory */
-		case 'd':       /* -d is used for configdir with nss tools */
-			lsw_conf_confddir(optarg);
+		case 'c':       /* obsoleted by --nssdir|-d */
+		case 'd':       /* -d is used for nssdirdir with nss tools */
+			lsw_conf_nssdir(optarg);
 			break;
 		case 'P':       /* token authentication password */
 			lsw_conf_nsspassword(optarg);
@@ -287,7 +288,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	realtime_t now = realnow();
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->confddir, 0, lsw_nss_get_password, err)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, err)) {
 		fprintf(stderr, "%s: %s\n", progname, err);
 		exit(1);
 	}

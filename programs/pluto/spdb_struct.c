@@ -43,9 +43,7 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "alg_info.h"
 #include "kernel_alg.h"
@@ -88,14 +86,12 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				bool single_dh)
 {
 	struct db_sa *gsp = NULL;
-	struct ike_info *ike_info;
 
 	/* Next two are for multiple proposals in agressive mode... */
 	unsigned last_modp = 0;
 	bool warned_dropped_dhgr = FALSE;
 
 	int transcnt = 0;
-	int i;
 
 	/*
 	 * start by copying the proposal that would have been picked by
@@ -115,49 +111,39 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * when creating each item, we will use the first transform
 	 * from the base item as the template.
 	 */
-	ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
+	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
-		unsigned ealg = ike_info->ike_ealg;
-		unsigned halg = ike_info->ike_halg;
-		unsigned modp = ike_info->ike_modp;
+		unsigned ealg = ike_info->ike_encrypt->common.ikev1_oakley_id;
+		unsigned halg = ike_info->ike_prf->common.ikev1_oakley_id;
+		unsigned modp = ike_info->ike_dh_group->group;
 		unsigned eklen = ike_info->ike_eklen;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
 			    ealg, halg, modp, eklen));
 
-		const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
-
+		const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
 		if (enc_desc == NULL) {
-			DBG_log("oakley_alg_makedb() ike enc ealg=%d not present",
-				ealg);
+			PEXPECT_LOG("%s", "IKEv1 proposal with no ENCRYPT should have been dropped");
 			continue;
 		}
-		passert(enc_desc != NULL);
 
-		if (ike_alg_enc_requires_integ(enc_desc)) {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike hash halg=%d not present but required for integrity",
-					halg);
-				continue;
-			}
-		} else {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike PRF=%d not present but needed for AEAD",
-					halg);
-				continue;
-			}
+		if (ike_info->ike_prf == NULL) {
+			PEXPECT_LOG("%s", "IKEv1 proposal with no PRF/hash should have been dropped");
+			continue;
 		}
 
-		if (eklen != 0 &&
-		    (eklen < enc_desc->keyminlen ||
-		     eklen > enc_desc->keymaxlen)) {
-			DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
-				ealg,
-				eklen,
-				enc_desc->keyminlen,
-				enc_desc->keymaxlen);
+		if (ike_alg_enc_requires_integ(enc_desc) &&
+		    ike_info->ike_integ == NULL) {
+			PEXPECT_LOG("%s", "IKEv1 proposal with no INTEG/hash should have been dropped");
+			continue;
+		}
+
+		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
+			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
+				    enc_desc->common.name,
+				    eklen);
 			continue;
 		}
 
@@ -269,7 +255,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    ike_info->ike_modp != last_modp) {
+		    ike_info->ike_dh_group->group != last_modp) {
 			if (last_modp == OAKLEY_GROUP_MODP1024 ||
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
@@ -284,11 +270,13 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-					"transform (%s,%s,%s keylen %ld) ignored.",
-					enum_name(&oakley_enc_names, ike_info->ike_ealg),
-					enum_name(&oakley_hash_names, ike_info->ike_halg),
-					enum_name(&oakley_group_names, ike_info->ike_modp),
-					(long)ike_info->ike_eklen);
+				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       enum_name(&oakley_enc_names,
+						 ike_info->ike_encrypt->common.ikev1_oakley_id),
+				       enum_name(&oakley_hash_names,
+						 ike_info->ike_prf->common.ikev1_oakley_id),
+				       enum_name(&oakley_group_names, ike_info->ike_dh_group->group),
+				       (long)ike_info->ike_eklen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -315,11 +303,12 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			int def_ks = 0;
 
 			if (ike_info->ike_eklen == 0)
-				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
+				def_ks = crypto_req_keysize(CRK_IKEv1,
+							    ike_info->ike_encrypt->common.ikev1_oakley_id);
 
 			if (def_ks != 0) {
-				const struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
-				int max_ks = enc_desc->keymaxlen;
+				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+				int max_ks = encrypt_max_key_bit_length(enc_desc);
 				int ks;
 
 				passert(emp_sp->dynamic);
@@ -386,7 +375,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = ike_info->ike_modp;
+			last_modp = ike_info->ike_dh_group->group;
 		}
 
 		transcnt++;

@@ -51,7 +51,6 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_int(FILE *out,
 		   char   *side,
 		   unsigned int context,
-		   unsigned int keying_context,
 		   knf options,
 		   int_set options_set,
 		   ksf strings)
@@ -61,8 +60,6 @@ static void confwrite_int(FILE *out,
 	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
 
 		if ((k->validity & KV_CONTEXT_MASK) != context)
-			continue;
-		if (keying_context != 0 && (k->validity & keying_context) == 0)
 			continue;
 
 		/* do not output aliases */
@@ -178,7 +175,6 @@ static void confwrite_int(FILE *out,
 static void confwrite_str(FILE *out,
 		   char   *side,
 		   unsigned int context,
-		   unsigned int keying_context,
 		   ksf strings,
 		   str_set strings_set)
 {
@@ -187,8 +183,6 @@ static void confwrite_str(FILE *out,
 	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
 
 		if ((k->validity & KV_CONTEXT_MASK) != context)
-			continue;
-		if (keying_context != 0 && (k->validity & keying_context) == 0)
 			continue;
 
 		/* do not output aliases */
@@ -345,6 +339,13 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
+	if (!isanyaddr(&end->vti_ip.addr)) {
+			char as[ADDRTOT_BUF];
+
+			subnettot(&end->vti_ip, 0, as, sizeof(as));
+			fprintf(out, "\t%svti=%s\n", side, as);
+	}
+
 	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
@@ -376,9 +377,9 @@ static void confwrite_side(FILE *out,
 	}
 
 	confwrite_int(out, side,
-		      kv_conn | kv_leftright, kv_auto,
+		      kv_conn | kv_leftright,
 		      end->options, end->options_set, end->strings);
-	confwrite_str(out, side, kv_conn | kv_leftright, kv_auto,
+	confwrite_str(out, side, kv_conn | kv_leftright,
 		      end->strings, end->strings_set);
 
 }
@@ -422,10 +423,10 @@ static void confwrite_conn(FILE *out,
 	confwrite_side(out, &conn->left,  "left");
 	confwrite_side(out, &conn->right, "right");
 	/* fprintf(out, "# confwrite_int:\n"); */
-	confwrite_int(out, "", kv_conn, kv_auto,
+	confwrite_int(out, "", kv_conn,
 		      conn->options, conn->options_set, conn->strings);
 	/* fprintf(out, "# confwrite_str:\n"); */
-	confwrite_str(out, "", kv_conn, kv_auto,
+	confwrite_str(out, "", kv_conn,
 		      conn->strings, conn->strings_set);
 	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
@@ -507,7 +508,11 @@ static void confwrite_conn(FILE *out,
 					abs = "never";
 					break;
 				}
-				cwf("authby", abs);
+				if (conn->left.options[KNCF_AUTH] == k_unset ||
+						conn->right.options[KNCF_AUTH]
+						== k_unset) {
+					cwf("authby", abs);
+				}
 			}
 
 			{
@@ -629,11 +634,11 @@ void confwrite(struct starter_config *cfg, FILE *out)
 	/* output config setup section */
 	fprintf(out, "config setup\n");
 	confwrite_int(out, "",
-		      kv_config, 0,
+		      kv_config,
 		      cfg->setup.options, cfg->setup.options_set,
 		      cfg->setup.strings);
 	confwrite_str(out, "",
-		      kv_config, 0,
+		      kv_config,
 		      cfg->setup.strings, cfg->setup.strings_set);
 
 	fprintf(out, "\n\n");

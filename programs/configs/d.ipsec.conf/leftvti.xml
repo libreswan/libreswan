@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftvti</emphasis></term>
+  <listitem>
+<para>the address/mask to configure on the VTI interface when <emphasis remap='I'>vti-interface</emphasis> is set.
+It takes the form of <emphasis remap='I'>network</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmask</emphasis>
+(actually, any form acceptable to
+<citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>); Currently, IPv4 and IPv6 ranges are supported.
+This option is often used in combination with routed based VPNs.
+</para>
+  </listitem>
+  </varlistentry>

@@ -1,0 +1,6 @@
+
+East is unused. west confirms loading and not loading various conns
+
+Note the "+NEVER_NEGOTIATE" is a prettypolicy() artifact and can be ignored
+
+it seems a sanitizer is messing with the expected output

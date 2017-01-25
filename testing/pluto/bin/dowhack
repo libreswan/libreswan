@@ -25,7 +25,7 @@ esac
 
 # more boilerplate
 TO_RSA="$RSADNS $TO $RSADNS"
-	
+
 case "$i" in
 listen)	both --listen
 	;;

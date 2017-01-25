@@ -1,6 +1,6 @@
 ipsec look
 # should not show any hits
-grep "fos_" /tmp/pluto.log
+grep "initiate on demand" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

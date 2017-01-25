@@ -3,12 +3,12 @@
 # Collect test statistics
 #
 # Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -80,9 +80,9 @@ class Results(Counts):
     def count_result(self, result):
         Counts.add(self, result.test.name, "total")
         Counts.add(self, result.test.name, str(result))
-        for domain, errors in result.errors.items():
-            for error in errors:
-                Counts.add(self, result.test.name, str(result), error, domain=domain)
+        for domain, issues in result.issues.items():
+            for issue in issues:
+                Counts.add(self, result.test.name, str(result), issue, domain=domain)
 
     def add_skipped(self, result):
         Counts.add(self, result.test.name, "skipped", str(result))

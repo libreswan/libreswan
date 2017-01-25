@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="js/d3.v4.min.js"></script>
+
+    <script type="text/javascript" src="lsw-date2iso.js"></script>
+    <script type="text/javascript" src="lsw-load-jobs-table.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="status.css"> </link>
+    <script type="text/javascript" src="status.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            d3.json("directories.json", function(directories) {
+	        lsw_load_jobs_table("jobs", directories)
+            })
+        })
+    </script>
+
+  </head>
+  <body>
+    <center>
+      <div id="jobs"></div>
+    </center>
+  </body>
+</html>

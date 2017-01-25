@@ -110,7 +110,7 @@ The "ipsec newhostkey" and "ipsec rsasigkey" utilities are used for
 creating raw RSA keys. If a non-default NSS directory is used, this can
 be specified using the -d option.
 
-	ipsec newhostkey --configdir /etc/ipsec.d [--password password] \
+	ipsec newhostkey --nssdir /etc/ipsec.d [--password password] \
 		--output /etc/ipsec.secrets
 
 The password is only required if the NSS database is protected with a

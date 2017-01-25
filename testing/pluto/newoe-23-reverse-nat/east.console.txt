@@ -19,7 +19,6 @@ east #
  # No tunnels should have established but a shunt should exist
 east #
  ipsec whack --trafficstatus
-000  
 east #
  ipsec whack --shuntstatus
 000 Bare Shunt list:

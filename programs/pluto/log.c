@@ -62,10 +62,10 @@
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
+#include "crypto.h"
 
 #ifdef USE_LINUX_AUDIT
 # include <libaudit.h>
-# include "crypto.h" /* for oakley_group_desc */
 #endif
 
 #ifndef NO_DB_OPS_STATS
@@ -103,15 +103,6 @@ static int perpeer_count = 0;
 
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
-
-/*
- * used in some messages to distiguish
- * which pluto is which, when doing unit testing
- * gets set by "use_interface" in server.c, if it is going to be changed.
- * Is used by pluto_helpers in their process-title.
- * could be used by debug routines as well, but is not yet.
- */
-const char *pluto_ifn_inst = "";
 
 /* from sys/queue.h -> NOW private sysdep.h. */
 static CIRCLEQ_HEAD(, connection) perpeer_list;
@@ -619,34 +610,24 @@ void whack_log(int mess_no, const char *message, ...)
 	pthread_mutex_unlock(&log_mutex);
 }
 
-/* Debugging message support */
-
-void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
+void libreswan_passert_fail(const char *file_str,
+			    unsigned long line_no,
+			    const char *func_str,
+			    const char *fmt, ...)
 {
-	char buf[30];
+	va_list args;
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
-	snprintf(buf, sizeof(buf), "case %d unexpected", n);
-	passert_fail(buf, file_str, line_no);
-	/* NOTREACHED */
-}
+	va_start(args, fmt);
+	fmt_log(m, sizeof(m), fmt, args);
+	va_end(args);
 
-void passert_fail(const char *pred_str, const char *file_str,
-		  unsigned long line_no)
-{
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
-		file_str, line_no, pred_str);
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s at %s:%lu)",
+	       m, func_str, file_str, line_no);
 	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
-}
-
-void pexpect_log(const char *pred_str, const char *file_str,
-		 unsigned long line_no)
-{
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
 }
 
 lset_t
@@ -795,6 +776,13 @@ static void show_system_security(void)
 
 	whack_log(RC_COMMENT, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
+#ifdef HAVE_SECCOMP
+	whack_log(RC_COMMENT, "seccomp=%s",
+		pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
+			pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
+#else
+	whack_log(RC_COMMENT, "seccomp=unsupported");
+#endif
 	whack_log(RC_COMMENT, " ");     /* spacer */
 
 }
@@ -1180,7 +1168,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
 	char prfname[IDTOA_BUF];
-	struct esb_buf esb;
+	struct esb_buf esb, esb2;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
 
@@ -1198,16 +1186,16 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_serialno,
 			st->st_ikev2 ? "2.0" : "1",
 			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
-				strip_prefix(enum_show(&oakley_auth_names,
-					st->st_oakley.auth), "OAKLEY_"));
+				enum_show_shortb(&oakley_auth_names,
+					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			st->st_oakley.prf_hasher->common.officname);
+			 st->st_oakley.prf->common.officname);
 
-		if (st->st_oakley.integ_hasher != NULL) {
+		if (st->st_oakley.integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.integ_hasher->common.officname,
-				st->st_oakley.integ_hasher->hash_integ_len *
+				st->st_oakley.integ->common.officname,
+				st->st_oakley.integ->integ_output_size *
 				BITS_PER_BYTE);
 		} else {
 			if (!st->st_ikev2) {
@@ -1224,7 +1212,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
-			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
+			enum_short_name(&oakley_group_names, st->st_oakley.group->group));
 		break;
 
 	case LAK_CHILD_START:
@@ -1239,15 +1227,14 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s",
 			st->st_esp.present ?
-				strip_prefix(enum_showb(&esp_transformid_names,
-					st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_") :
+				enum_show_shortb(&esp_transformid_names,
+					st->st_esp.attrs.transattrs.encrypt, &esb) :
 				"none",
 			st->st_esp.present ?
 				st->st_esp.attrs.transattrs.enckeylen :
 				0,
-			strip_prefix(enum_show(&auth_alg_names,
-				st->st_esp.attrs.transattrs.integ_hash),
-				"AUTH_ALGORITHM_"));
+			enum_show_shortb(&auth_alg_names,
+				st->st_esp.attrs.transattrs.integ_hash, &esb2));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",

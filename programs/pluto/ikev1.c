@@ -137,9 +137,7 @@
 #include "state.h"
 #include "ikev1_msgid.h"
 #include "packet.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
@@ -764,16 +762,6 @@ static stf_status informational(struct msg_digest *md)
 						    DBG_log("Current interface_addr: %s",
 							    ipstr(&tmp_c->interface->ip_addr, &b)));
 					}
-
-					if (tmp_c->gw_info != NULL) {
-						DBG(DBG_CONTROLMORE, {
-							    DBG_log("Current gw_client_addr: %s",
-								    ipstr(&tmp_c->gw_info->client_id.ip_addr, &b));
-							    DBG_log("Current gw_gw_addr: %s",
-								    ipstr(&tmp_c->gw_info->gw_id.ip_addr, &b));
-						    });
-					}
-
 				}
 
 				/* storing old address for comparison purposes */
@@ -882,8 +870,8 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 
 	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
 	hdr.isa_np = np;
-	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
-		impossible(); /* surely must have room and be well-formed */
+	/* surely must have room and be well-formed */
+	passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody));
 }
 
 /* process an input packet, possibly generating a reply.
@@ -991,8 +979,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			set_cur_state(st);
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-			bool quiet = (st == NULL ||
-				     (st->st_connection->policy & POLICY_OPPORTUNISTIC));
+			bool quiet = (st == NULL);
 
 			if (st == NULL) {
 				DBG(DBG_CONTROL, DBG_log(
@@ -1046,9 +1033,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		} else {
 			if (st != NULL &&
 			    IS_ISAKMP_AUTHENTICATED(st->st_state)) {
-				if ((st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					loglog(RC_LOG_SERIOUS, "Informational Exchange message must be encrypted");
-				}
+				loglog(RC_LOG_SERIOUS, "Informational Exchange message must be encrypted");
 				/* XXX Could send notification back */
 				return;
 			}
@@ -1122,18 +1107,14 @@ void process_v1_packet(struct msg_digest **mdp)
 			set_cur_state(st);
 
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					loglog(RC_LOG_SERIOUS, "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
-				}
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 				return;
 			}
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					loglog(RC_LOG_SERIOUS, "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08lx (perhaps this is a duplicated packet)",
 						(unsigned long) md->hdr.isa_msgid);
-				}
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
@@ -1146,10 +1127,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			from_state = STATE_QUICK_R0;
 		} else {
 			if (st->st_oakley.doing_xauth) {
-				if (DBGP(DBG_OPPO) ||
-				    (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					libreswan_log("Cannot do Quick Mode until XAUTH done.");
-				}
+				libreswan_log("Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
 			set_cur_state(st);
@@ -1921,7 +1899,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (needed != 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
-			       enum_show(&state_names, from_state),
+			       enum_name(&state_names, from_state),
 			       bitnamesof(payload_name_ikev1, needed));
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
@@ -2030,8 +2008,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 				/* FALL THROUGH */
 			default:
-				if (st == NULL || (st != NULL &&
-						   (st->st_connection->policy & POLICY_OPPORTUNISTIC))) {
+				if (st == NULL) {
 					DBG(DBG_CONTROL, DBG_log(
 					       "ignoring informational payload %s, no corresponding state",
 					       enum_show(& ikev1_notify_names,
@@ -2690,10 +2667,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
 #endif
-		if (IS_PHASE1_INIT(st->st_state)) {
-			delete_event(st);
-			release_whack(st);
-		}
 		if (IS_QUICK(st->st_state)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
@@ -2830,7 +2803,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		struct connection *r = NULL;
 
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
+			r = refine_host_connection(st, &peer, initiator,
+				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
 			pexpect(r != NULL);
 		}
 

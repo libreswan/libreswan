@@ -8,6 +8,7 @@ d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
 d.ipsec.conf/leftsubnet.xml
 d.ipsec.conf/leftsubnets.xml
+d.ipsec.conf/leftvti.xml
 d.ipsec.conf/leftaddresspool.xml
 d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
@@ -36,6 +37,7 @@ d.ipsec.conf/leftrsasigkey.xml
 d.ipsec.conf/leftrsasigkey2.xml
 d.ipsec.conf/leftcert.xml
 d.ipsec.conf/leftckaid.xml
+d.ipsec.conf/leftauth.xml
 d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml
@@ -50,7 +52,7 @@ d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote-peer-type.xml
 d.ipsec.conf/nm-configured.xml
-d.ipsec.conf/forceencaps.xml
+d.ipsec.conf/encapsulation.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
@@ -137,6 +139,7 @@ d.ipsec.conf/perpeerlogdir.xml
 d.ipsec.conf/fragicmp.xml
 d.ipsec.conf/hidetos.xml
 d.ipsec.conf/overridemtu.xml
+d.ipsec.conf/seccomp.xml
 d.ipsec.conf/configsectionsend.xml
 d.ipsec.conf/implicitconns.xml
 d.ipsec.conf/obsolete.xml

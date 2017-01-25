@@ -12,6 +12,7 @@ extern enum_names dpd_action_names;
 extern enum_names sd_action_names;
 extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
+extern enum_names ikev2_asym_auth_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;
 extern enum_names state_stories;
@@ -120,12 +121,9 @@ extern const struct af_info
 
 extern const struct af_info *aftoinfo(int af);
 
-extern enum_names
-	rr_qtype_names,
-	rr_type_names,
-	rr_class_names;
-
 extern enum_names ppk_names;
+
+extern enum_names spi_names;
 
 /* natt traversal types */
 extern const char *const natt_type_bitnames[];

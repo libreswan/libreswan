@@ -1,6 +1,0 @@
-This test is identical to x509-pluto-02.
-
-However, the certificate authority that has signed north's key has expired.
-
-
-

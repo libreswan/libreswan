@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014,2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,5 +12,14 @@
  * for more details.
  */
 
-int test_camellia_cbc(const struct encrypt_desc *encrypt_desc);
-int test_aes_cbc(const struct encrypt_desc *encrypt_desc);
+struct cbc_test_vector {
+	const char *description;
+	/* mumble something about algorithm setting here. */
+	const char *key;
+	const char *iv;
+	const char *plaintext;
+	const char *ciphertext;
+};
+
+bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
+		      const struct cbc_test_vector *tests);

@@ -45,13 +45,6 @@ extern bool has_private_key(cert_t cert);
 extern void list_public_keys(bool utc, bool check_pub_keys);
 extern void list_psks(void);
 
-struct gw_info; /* forward declaration of tag (defined in dnskey.h) */
-extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
-#ifdef USE_KEYRR
-				    , struct pubkey_list **keys
-#endif /* USE_KEYRR */
-				    );
-
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
 extern void load_preshared_secrets(void);
@@ -70,11 +63,7 @@ struct packet_byte_stream;
 extern stf_status RSA_check_signature_gen(struct state *st,
 					  const u_char hash_val[MAX_DIGEST_LEN],
 					  size_t hash_len,
-					  const struct packet_byte_stream *sig_pbs
-#ifdef USE_KEYRR
-					  , const struct pubkey_list *keys_from_dns
-#endif /* USE_KEYRR */
-					  , const struct gw_info *gateways_from_dns,
+					  const struct packet_byte_stream *sig_pbs,
 					  err_t (*try_RSA_signature)(
 						  const u_char hash_val[MAX_DIGEST_LEN],
 						  size_t hash_len,

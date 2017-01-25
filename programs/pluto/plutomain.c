@@ -8,7 +8,7 @@
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2009-2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012-2016 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
@@ -67,7 +67,6 @@
 #include "log.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
-#include "dnskey.h"	/* needs keys.h and adns.h */
 #include "rnd.h"
 #include "state.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
@@ -75,9 +74,7 @@
 #include "timer.h"
 #include "ipsecconf/confread.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
 
@@ -122,19 +119,21 @@ static char *coredir;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
-extern bool strict_crl_policy;
-extern bool strict_ocsp_policy;
+extern bool crl_strict;
+extern bool ocsp_strict;
 extern bool ocsp_enable;
 extern char *curl_iface;
 extern long curl_timeout;
 extern bool pluto_drop_oppo_null;
 extern int bare_shunt_interval;
 
-static char *ocsp_default_uri = NULL;
+static char *ocsp_uri = NULL;
 static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
-
-libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
+static int ocsp_method = OCSP_METHOD_GET;
+static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
+static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
+static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 
 static void free_pluto_main(void)
 {
@@ -143,6 +142,11 @@ static void free_pluto_main(void)
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfree(pluto_vendorid);
+	pfreeany(ocsp_uri);
+	pfreeany(ocsp_trust_name);
+	pfreeany(base_perpeer_logdir);
+	pfreeany(curl_iface);
+	pfreeany(pluto_log_file);
 }
 
 /*
@@ -200,6 +204,9 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
+#endif
+#ifdef HAVE_SECCOMP
+	" SECCOMP"
 #endif
 #ifdef HAVE_LIBCAP_NG
 	" LIBCAP_NG"
@@ -336,7 +343,11 @@ static struct starter_config *read_cfg_file(char *configfile)
 	return cfg;
 }
 
-/* Helper function for config file mapper: set string option value */
+/*
+ * Helper function for config file mapper: set string option value.
+ * Values passed in are expected to have been allocated using our
+ * own functions.
+ */
 static void set_cfg_string(char **target, char *value)
 {
 	/* Do nothing if value is unset. */
@@ -344,7 +355,7 @@ static void set_cfg_string(char **target, char *value)
 		return;
 
 	/* Don't free previous target, it might be statically set. */
-	*target = strdup(value);
+	*target = clone_str(value, "(ignore) set_cfg_string item");
 }
 
 /*
@@ -390,15 +401,15 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 		nbytes));
 }
 
-static bool pluto_init_nss(char *nssdb)
+static bool pluto_init_nss(char *nssdir)
 {
 	SECStatus rv;
 
 	/* little lie, lsw_nss_setup doesn't have logging */
-	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdb);
+	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdir);
 
 	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(nssdb, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
+	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
 		loglog(RC_LOG_SERIOUS, "%s", err);
 		return FALSE;
 	}
@@ -448,14 +459,14 @@ u_int16_t secctx_attr_type = SECCTX;
 /*
  * Table of Pluto command-line options.
  *
- * For getopt_ling(3), but with twists.
+ * For getopt_long(3), but with twists.
  *
  * We never find that letting getopt set an option makes sense
  * so flag is always NULL.
  *
- * Trick: we split the "name" string with a '\0'.
- * Before it is the option name, as seen by getopt_long.
- * After it is meta-information:
+ * Trick: we split each "name" string with an explicit '\0'.
+ * Before the '\0' is the option name, as seen by getopt_long.
+ * After the '\0' is meta-information:
  * - _ means: obsolete due to _ in name: replace _ with -
  * - > means: obsolete spelling; use spelling from rest of string
  * - ! means: obsolete and ignored (no replacement)
@@ -464,16 +475,18 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  * The table should be ordered to maximize the clarity of --help.
  *
- * val values free due to removal of options: '1', '3', '4'
+ * free one letter options as of 2016-12-14
+ * '1' 'a' 'Q' 'R' 'W'
  */
 
 #define DBG_OFFSET 256
+
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
 	{ "help\0", no_argument, NULL, 'h' },
 	{ "version\0", no_argument, NULL, 'v' },
 	{ "config\0<filename>", required_argument, NULL, 'z' },
-	{ "nofork\0", no_argument, NULL, 'd' },
+	{ "nofork\0", no_argument, NULL, '0' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
@@ -493,6 +506,10 @@ static const struct option long_opts[] = {
 	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
 	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
 	{ "ocsp_trustname\0", required_argument, NULL, 'J' }, /* _ */
+	{ "ocsp-cache-size\0", required_argument, NULL, 'E' },
+	{ "ocsp-cache-min-age\0", required_argument, NULL, 'G' },
+	{ "ocsp-cache-max-age\0", required_argument, NULL, 'H' },
+	{ "ocsp-method\0", required_argument, NULL, 'B' },
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
@@ -525,6 +542,7 @@ static const struct option long_opts[] = {
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
+	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
 	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
@@ -540,6 +558,10 @@ static const struct option long_opts[] = {
 	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
 	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
 	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+#endif
+#ifdef HAVE_SECCOMP
+	{ "seccomp-enabled\0", no_argument, NULL, '3' },
+	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
@@ -650,30 +672,8 @@ static void usage(void)
 }
 
 
-#if 0
-/*
- * XXX: Can't use this call to get encrypt_desc struct encrypt_desc
- */
-extern struct encrypt_desc algo_aes_cbc;
-extern struct encrypt_desc algo_camellia_cbc;
-extern struct encrypt_desc algo_aes_ctr;
-#endif
-
 int main(int argc, char **argv)
 {
-#if 0
-	NSS_NoDB_Init(".");
-	if (!test_aes_cbc(&algo_aes_cbc)) {
-		printf("aes-cbc failed\n");
-	}
-	if (!test_camellia_cbc(&algo_camellia_cbc)) {
-		printf("camellia-cbc failed\n");
-	}
-	if (!test_aes_ctr(&algo_aes_ctr)) {
-		printf("aes-ctr failed\n");
-	}
-	exit(0);
-#endif
 
 	int lockfd;
 
@@ -706,8 +706,6 @@ int main(int argc, char **argv)
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
-
-	libreswan_passert_fail = passert_fail;
 
 	/* handle arguments */
 	for (;; ) {
@@ -830,7 +828,7 @@ int main(int argc, char **argv)
 			continue;
 #endif
 
-		case 'd':	/* --nofork*/
+		case '0':	/* --nofork*/
 			fork_desired = FALSE;
 			continue;
 
@@ -839,7 +837,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'g':	/* --logfile */
-			pluto_log_file = optarg;
+			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
 
@@ -912,8 +910,17 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
+#ifdef HAVE_SECCOMP
+		case '3':	/* --seccomp-enabled */
+			pluto_seccomp_mode = SECCOMP_ENABLED;
+			continue;
+		case '4':	/* --seccomp-tolerant */
+			pluto_seccomp_mode = SECCOMP_TOLERANT;
+			continue;
+#endif
+
 		case 'Z':	/* --curl-iface */
-			curl_iface = optarg;
+			curl_iface = clone_str(optarg, "curl_iface");
 			continue;
 
 		case 'I':	/* --curl-timeout */
@@ -928,11 +935,18 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'r':	/* --strictcrlpolicy */
-			strict_crl_policy = TRUE;
+			crl_strict = TRUE;
+			continue;
+
+		case 'x':	/* --crlcheckinterval <seconds> */
+			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
+			if (ugh != NULL)
+				break;
+			crl_check_interval = deltatime(u);
 			continue;
 
 		case 'o':
-			strict_ocsp_policy = TRUE;
+			ocsp_strict = TRUE;
 			continue;
 
 		case 'O':
@@ -940,11 +954,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'Y':
-			ocsp_default_uri = optarg;
+			ocsp_uri = clone_str(optarg, "ocsp_uri");
 			continue;
 
 		case 'J':
-			ocsp_trust_name = optarg;
+			ocsp_trust_name = clone_str(optarg, "ocsp_trust_name");
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
@@ -958,11 +972,38 @@ int main(int argc, char **argv)
 			ocsp_timeout = u;
 			continue;
 
-		case 'x':	/* --crlcheckinterval <seconds> */
-			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
+		case 'E':	/* --ocsp-cache-size <entries> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
-			crl_check_interval = deltatime(u);
+			ocsp_cache_size = u;
+			continue;
+
+		case 'G':	/* --ocsp-cache-min-age <seconds> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			ocsp_cache_min_age = u;
+			continue;
+
+		case 'H':	/* --ocsp-cache-max-age <seconds> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			ocsp_cache_max_age = u;
+			continue;
+
+		case 'B':	/* --ocsp-method get|post */
+			if (streq(optarg, "post")) {
+				ocsp_method = OCSP_METHOD_POST;
+			} else {
+				if (streq(optarg, "get")) {
+					ocsp_method = OCSP_METHOD_GET;
+				} else {
+					ugh = "ocsp-method is either 'post' or 'get'";
+					break;
+				}
+			}
 			continue;
 
 		case 'u':	/* --uniqueids */
@@ -1043,7 +1084,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'f':	/* --ipsecdir <ipsec-dir> */
-			lsw_init_ipsecdir(optarg);
+			lsw_conf_confddir(optarg);
+			continue;
+
+		case 'd':	/* --nssdir <path> */
+			lsw_conf_nssdir(optarg);
 			continue;
 
 		case 'N':	/* --debug-none */
@@ -1055,7 +1100,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			base_perpeer_logdir = optarg;
+			base_perpeer_logdir = clone_str(optarg, "base_perpeer_logdir");
 			continue;
 
 		case 'l':	/* --perpeerlog */
@@ -1069,11 +1114,11 @@ int main(int argc, char **argv)
 			keep_alive = u;
 			continue;
 
-		case '5':	/* --debug-nat-t */
+		case '5':	/* --debug-nat-t aliases */
 			base_debugging |= DBG_NATT;
 			continue;
 		case '6':	/* --virtual-private */
-			virtual_private = optarg;
+			virtual_private = clone_str(optarg, "virtual_private");
 			continue;
 
 		case 'z':	/* --config */
@@ -1096,6 +1141,9 @@ int main(int argc, char **argv)
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
+#ifdef HAVE_SECCOMP
+			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
+#endif
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
@@ -1104,26 +1152,25 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->setup.options[KBF_DDOS_IKE_THRESHOLD];
 			pluto_max_halfopen = cfg->setup.options[KBF_MAX_HALFOPEN_IKE];
 
-			strict_crl_policy =
-				cfg->setup.options[KBF_STRICTCRLPOLICY];
+			crl_strict = cfg->setup.options[KBF_CRL_STRICT];
 
 			pluto_shunt_lifetime = deltatime(cfg->setup.options[KBF_SHUNTLIFETIME]);
 
-			strict_ocsp_policy =
-				cfg->setup.options[KBF_STRICTOCSPPOLICY];
+			ocsp_enable = cfg->setup.options[KBF_OCSP_ENABLE];
+			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
+			ocsp_timeout = cfg->setup.options[KBF_OCSP_TIMEOUT];
+			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
+			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
+			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN];
+			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX];
 
-			ocsp_enable = cfg->setup.options[KBF_OCSPENABLE];
-
-			set_cfg_string(&ocsp_default_uri,
-				       cfg->setup.strings[KSF_OCSPURI]);
-
-			ocsp_timeout = cfg->setup.options[KBF_OCSPTIMEOUT];
-
+			set_cfg_string(&ocsp_uri,
+				       cfg->setup.strings[KSF_OCSP_URI]);
 			set_cfg_string(&ocsp_trust_name,
-				       cfg->setup.strings[KSF_OCSPTRUSTNAME]);
+				       cfg->setup.strings[KSF_OCSP_TRUSTNAME]);
 
 			crl_check_interval = deltatime(
-				cfg->setup.options[KBF_CRLCHECKINTERVAL]);
+				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 			/*
 			 * We don't check interfaces= here because that part
@@ -1152,7 +1199,13 @@ int main(int argc, char **argv)
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* --ipsecdir */
-				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);
+				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR]);
+			}
+
+			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
+				*cfg->setup.strings[KSF_NSSDIR] != 0) {
+				/* --nssdir <path> */
+				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR]);
 			}
 
 			/* --perpeerlog */
@@ -1189,8 +1242,6 @@ int main(int argc, char **argv)
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
 						"pluto_vendorid via --config");
 			}
-
-			/* no config option: pluto_adns_option */
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
 				if (access(cfg->setup.strings[KSF_STATSBINARY], X_OK) == 0) {
@@ -1357,7 +1408,7 @@ int main(int argc, char **argv)
 		}
 #else
 		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
-		exit_pluto(PLUTO_EXIT_FORK_FAIL);		
+		exit_pluto(PLUTO_EXIT_FORK_FAIL);
 #endif
 		if (setsid() < 0) {
 			int e = errno;
@@ -1405,71 +1456,62 @@ int main(int argc, char **argv)
 
 	pluto_init_log();
 
-	if (!pluto_init_nss(oco->nssdb)) {
+#ifdef FIPS_CHECK
+	/*
+	 * Probe FIPS support.  Part #1 of #2.
+	 *
+	 * This needs to occur very early, after pluto's log has been
+	 * initialized so that the result gets written to a file.
+	 *
+	 * This call is what triggers the FIPS Product: et.al. log
+	 * messages.
+	 */
+	enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
+	if (pluto_fips_mode == LSW_FIPS_ON) {
+		/*
+		 * clear out --debug-crypt if set
+		 *
+		 * impairs are also not allowed but cannot come in via
+		 * ipsec.conf, only whack
+		 */
+		if (base_debugging & DBG_PRIVATE) {
+			base_debugging &= ~DBG_PRIVATE;
+			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+		}
+	}
+	if (DBGP(IMPAIR_FORCE_FIPS)) {
+		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
+		lsw_set_fips_mode(LSW_FIPS_ON);
+	}
+#endif
+
+	if (!pluto_init_nss(oco->nssdir)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 	libreswan_log("NSS crypto library initialized");
 
 	if (ocsp_enable) {
-		if (!init_nss_ocsp(ocsp_default_uri, ocsp_trust_name,
-						     ocsp_timeout,
-						     strict_ocsp_policy)) {
+		if (!init_nss_ocsp(ocsp_uri, ocsp_trust_name,
+			ocsp_timeout, ocsp_strict, ocsp_cache_size,
+			ocsp_cache_min_age, ocsp_cache_min_age,
+			(ocsp_method == OCSP_METHOD_POST))) {
 			loglog(RC_LOG_SERIOUS, "Initializing NSS OCSP failed");
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		} else {
-			libreswan_log("NSS OCSP Enabled");
+			libreswan_log("NSS OCSP started");
 		}
 	}
 
-#ifdef HAVE_LIBCAP_NG
-	/*
-	 * Drop capabilities - this generates a false positive valgrind warning
-	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
-	 *
-	 * We drop these after creating the pluto socket or else we can't
-	 * create a socket if the parent dir is non-root (eg openstack)
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		/* for google authenticator pam */
-		CAP_SETGID, CAP_SETUID,
-		CAP_DAC_READ_SEARCH,
-		-1);
-	/*
-	 * We need to retain some capabilities for our children (updown):
-	 * CAP_NET_ADMIN to change routes
-	 * CAP_NET_RAW for iptables -t mangle
-	 * CAP_DAC_READ_SEARCH for pam / google authenticator
-	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
-			CAP_DAC_READ_SEARCH, -1);
-	capng_apply(CAPNG_SELECT_BOTH);
-	libreswan_log("libcap-ng support [enabled]");
-#else
-	libreswan_log("libcap-ng support [disabled]");
-#endif
-
 #ifdef FIPS_CHECK
-	libreswan_log("FIPS HMAC integrity support [enabled]");
 	/*
-	 * FIPS mode requires two conditions to be true:
-	 *  - FIPS Kernel mode: fips=1 kernel boot parameter
-	 *  - FIPS Product mode: See FIPSPRODUCTCHECK in Makefile.inc
-	 *     (in RHEL/Fedora, dracut-fips installs $FIPSPRODUCTCHECK)
+	 * Probe FIPS support.  Part #2 of #2.
 	 *
-	 * When FIPS mode, abort on self-check hmac failure. Otherwise, complain
+	 * Now that NSS is initialized, need to verify it matches the
+	 * mode pluto is in.
 	 */
+	libreswan_log("FIPS HMAC integrity support [enabled]");
 	{
-		if (DBGP(IMPAIR_FORCE_FIPS)) {
-			libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
-			lsw_set_fips_mode(LSW_FIPS_ON);
-		}
-
-		enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
 		bool nss_fips_mode = PK11_IsFIPS();
 
 		/*
@@ -1516,6 +1558,37 @@ int main(int argc, char **argv)
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
+#endif
+
+#ifdef HAVE_LIBCAP_NG
+	/*
+	 * Drop capabilities - this generates a false positive valgrind warning
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 *
+	 * We drop these after creating the pluto socket or else we can't
+	 * create a socket if the parent dir is non-root (eg openstack)
+	 */
+	capng_clear(CAPNG_SELECT_BOTH);
+
+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+		CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+		CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		/* for google authenticator pam */
+		CAP_SETGID, CAP_SETUID,
+		CAP_DAC_READ_SEARCH,
+		-1);
+	/*
+	 * We need to retain some capabilities for our children (updown):
+	 * CAP_NET_ADMIN to change routes
+	 * CAP_NET_RAW for iptables -t mangle
+	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
+			CAP_DAC_READ_SEARCH, -1);
+	capng_apply(CAPNG_SELECT_BOTH);
+	libreswan_log("libcap-ng support [enabled]");
+#else
+	libreswan_log("libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
@@ -1630,7 +1703,6 @@ int main(int argc, char **argv)
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
 #endif
-	load_crls();
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
@@ -1699,11 +1771,12 @@ void show_setup_plutomain(void)
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
 	whack_log(RC_COMMENT,
-		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
+		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		oco->secretsfile,
 		oco->confddir,
+		oco->nssdir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
@@ -1734,10 +1807,28 @@ void show_setup_plutomain(void)
 	whack_log(RC_COMMENT,
 		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s, nflog-all=%d",
 		pluto_port,
-		strict_crl_policy ? "yes" : "no",
+		crl_strict ? "yes" : "no",
 		deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
+		);
+
+	whack_log(RC_COMMENT,
+		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
+		ocsp_enable ? "yes" : "no",
+		ocsp_strict ? "yes" : "no",
+		ocsp_timeout,
+		ocsp_uri != NULL ? ocsp_uri : "<unset>"
+		);
+	whack_log(RC_COMMENT,
+		"ocsp-trust-name=%s",
+		ocsp_trust_name != NULL ? ocsp_trust_name : "<unset>"
+		);
+
+	whack_log(RC_COMMENT,
+		"ocsp-cache-size=%d, ocsp-cache-min-age=%d, ocsp-cache-max-age=%d, ocsp-method=%s",
+		ocsp_cache_size, ocsp_cache_min_age, ocsp_cache_max_age,
+		ocsp_method == OCSP_METHOD_GET ? "get" : "post"
 		);
 
 #ifdef HAVE_LABELED_IPSEC

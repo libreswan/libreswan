@@ -43,7 +43,7 @@ top_caname=""
 def reset_files():
 	for dir in ['keys/', 'cacerts/', 'certs/', 'pkcs12/',
 			    'pkcs12/curveca', 'pkcs12/mainca',
-				'pkcs12/otherca', 'crls/']:
+				'pkcs12/otherca', 'pkcs12/badca', 'crls/']:
 		if os.path.isdir(dir):
 			shutil.rmtree(dir)
 		os.mkdir(dir)
@@ -101,7 +101,10 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
 	if isCA:
 		ku_str = ku_str + ',keyCertSign,cRLSign'
-		bc = "CA:TRUE"
+		if "badca" in str(issuer.get_subject().commonName):
+			bc = "CA:FALSE"
+		else:
+			bc = "CA:TRUE"
 	else:
 		bc = "CA:FALSE"
 
@@ -163,8 +166,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 	else:
 		ocspuri = True
 
-	set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp,
-															   ocspuri=ocspuri)
+	set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
 	cert.sign(CAkey, sign_alg)
 
 	return cert, certkey
@@ -191,8 +193,7 @@ def create_root_ca(CN, START, END,
 	cacert.set_pubkey(careq.get_pubkey())
 	cacert.set_version(2)
 
-	set_cert_extensions(cacert, cacert,
-						isCA=True, isRoot=True, ocsp=True, ocspuri=True)
+	set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
 	cacert.sign(cakey, sign_alg)
 
 	return cacert, cakey
@@ -213,8 +214,10 @@ def gen_gmtime_dates():
 			time.strftime(gmtfmt, time.gmtime())) - (60*60*24)
 	two_days_ago_stamp = ok_stamp - (60*60*48)
 	two_days_ago_end_stamp = two_days_ago_stamp + (60*60*24)
+        # Make future certs only +300 days, so we have a time overlap
+        # between currently valid certs (1 year) and these futuristic certs
 	future_stamp = ok_stamp + (60*60*24*365*1)
-	future_end_stamp = future_stamp + (60*60*24*365*1)
+	future_end_stamp = future_stamp + (60*60*24*365*2)
 
 	return dict(OK_NOW=gmc(ok_stamp),
 				OLD=gmc(two_days_ago_stamp),
@@ -232,7 +235,7 @@ def store_cert_and_key(name, cert, key):
 	ext = cert.get_extension(0)
 	if ext.get_short_name() == 'basicConstraints':
 		# compare the bytes for CA:True
-		if '0\x03\x01\x01\xff' == ext.get_data():
+		if name == "badca" or '0\x03\x01\x01\xff' == ext.get_data():
 			ca_certs[name] = cert, key
 		else:
 			end_certs[name] = cert, key
@@ -253,7 +256,7 @@ def create_basic_pluto_cas(ca_names):
 		print " - creating %s" % name
 		ca, key = create_root_ca(CN="Libreswan test CA for " + name,
 								 START=dates['OK_NOW'],
-								 END=dates['FUTURE'])
+								 END=dates['FUTURE_END'])
 		writeout_cert_and_key("cacerts/", name, ca, key)
 		store_cert_and_key(name, ca, key)
 
@@ -294,10 +297,12 @@ def create_mainca_end_certs(mainca_end_certs):
 			enddate = dates['OLD_END']
 		else:
 			startdate = dates['OK_NOW']
-			enddate = dates['FUTURE']
+			enddate = dates['FUTURE_END']
 
 		if name == 'signedbyother':
 			signer = 'otherca'
+		elif name[:3] == 'bad':
+			signer = 'badca'
 		else:
 			signer = 'mainca'
 
@@ -380,7 +385,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 
 			if level == max_path - 1:
 				endcert_name = prefix + chainca + "_endcert"
-				
+
 				signpair = ca_certs[lastca]
 				print " - creating %s" % endcert_name
 				ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",
@@ -577,7 +582,7 @@ def run_dist_certs():
 	certificates, p12 files, keys, and CRLs
 	"""
 	# Add root CAs here
-	basic_pluto_cas =  ('mainca', 'otherca')
+	basic_pluto_cas =  ('mainca', 'otherca', 'badca')
 	# Add end certs here
 	mainca_end_certs = ('nic','east','west', 'road', 'sunset',
 						'sunrise','north','south',
@@ -589,7 +594,7 @@ def run_dist_certs():
 						'notyetvalid','notvalidanymore',
 						'signedbyother','wrongdnorg',
 						'unwisechar','spaceincn','hashsha2',
-						'cnofca','revoked')
+						'cnofca','revoked', 'badwest', 'badeast')
 	# Add chain roots here
 	chain_ca_roots =   ('east_chain', 'west_chain')
 

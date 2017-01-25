@@ -22,7 +22,7 @@ then
     . ./add-testparams.sh
 fi
 
-. ../setup.sh
+. ${LIBRESWANSRCDIR}/testing/pluto/setup.sh
 . ${LIBRESWANSRCDIR}/testing/utils/functions.sh
 
 if [ -f eastinit.sh ] ; then
@@ -77,9 +77,6 @@ else
 		con1=`echo "$conv" | sed -e "s/console.verbose/console/g"`
 		con=`echo "$con1" | sed -e "s/OUTPUT\///g"`
 		host=`echo "$con" | sed -e "s/.console.txt//g"`
-		if [ "$host" == "nic" ]; then
-			continue
-		fi
 
 		if [ ! -f $conv ]; then
 			echo "can't sanitize missing file $conv"

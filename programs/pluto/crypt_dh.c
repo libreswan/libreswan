@@ -117,7 +117,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 				  lsw_return_nss_password_file_info());
 
 	if (dhshared != NULL) {
-		unsigned int shortfall = group->bytes - PK11_GetKeyLength(dhshared);
+		unsigned int shortfall = group->bytes - sizeof_symkey(dhshared);
 
 		if (shortfall > 0) {
 			/*
@@ -175,7 +175,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	zero(skr);	/* ??? pointer fields might not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
 
 	SECKEYPrivateKey *ltsecret = dhq.secret;

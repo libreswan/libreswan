@@ -11,7 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -79,9 +79,33 @@ struct state;   /* forward declaration of tag */
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-	u_int16_t encrypt;		/* Encryption algorithm */
+	/*
+	 * Let me see, the ENCRYPT field, depending on which balls are
+	 * in the air at any one moment, is used for and contains one
+	 * of the following:
+	 *
+	 * IKEv1 IKE (aka IKEv1 Phase 1?): enum ikev1_encr_attribute;
+	 * this code should use ENCRYPTER.
+	 *
+	 * IKEv2 IKE: enum ikev2_trans_type_encr; this code should use
+	 * ENCRYPTER.
+	 *
+	 * IKEv1 and IKEv2 ESP/AH (aka IKEv1 Phase 2?): enum
+	 * ipsec_cipher_algo; strictly speaking, for IKEv2, it starts
+	 * out containing an enum ikev2_trans_type_encr, but is then
+	 * "fixed"; the more generic code should use ENCRYPTER.
+	 *
+	 * IKEv1 IPCOMP: enum ipsec_comp_algo; at least that is what
+	 * I've been told; this code, along with the rest of IKEv1
+	 * should go away.
+	 *
+	 * What could possibly go wrong :-)
+	 *
+	 * It is pretty safe to say that the field should minimally be
+	 * moved to more specific structs if not deleted.
+	 */
+	u_int16_t encrypt;
 	u_int16_t enckeylen;		/* encryption key len (bits) */
-	oakley_hash_t prf_hash;		/* Hash algorithm for PRF */
 	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
 
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
@@ -90,15 +114,13 @@ struct trans_attrs {
 
 	bool esn_enabled;               /* IKEv2 ESN (extended sequence numbers) */
 
-	oakley_group_t groupnum;		/* for IKEv2 */
-
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* used in phase1/PARENT SA */
 	const struct encrypt_desc *encrypter;	/* package of encryption routines */
-	const struct hash_desc *prf_hasher;	/* package of hashing routines */
-	const struct hash_desc *integ_hasher;	/* package of hashing routines */
+	const struct prf_desc *prf;		/* package of prf routines */
+	const struct integ_desc *integ;		/* package of integrity routines */
 	const struct oakley_group_desc *group;	/* Oakley group */
 
 	/* used in phase2/CHILD_SA */
@@ -254,6 +276,8 @@ struct state {
 
 	IPsecSAref_t st_ref;			/* our kernel name for our incoming SA */
 	IPsecSAref_t st_refhim;			/* our kernel name for our outgoing SA */
+	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
+
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
@@ -479,6 +503,7 @@ struct state {
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
+	u_int8_t st_reply_xchg;
 };
 
 /* global variables */
@@ -587,8 +612,9 @@ extern void clear_dh_from_state(struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
-extern void log_newest_sa_change(char *f, struct state *const st);
+extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
+extern void ikev2_expire_unused_parent(struct state *pst);
 
 #ifdef XAUTH_HAVE_PAM
 void ikev2_free_auth_pam(so_serial_t st_serialno);

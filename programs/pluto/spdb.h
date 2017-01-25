@@ -174,4 +174,15 @@ extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 /* in spdb_print.c - normally never used in pluto */
 extern void sa_log(struct db_sa *f);
 
+struct alg_info_ike;
+struct alg_info_esp;
+
+extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
+				       struct db_sa *basic,
+				       bool single_dh);
+
+extern struct db_sa *kernel_alg_makedb(lset_t policy,
+				       struct alg_info_esp *ei,
+				       bool logit);
+
 #endif /*  _SPDB_H_ */

@@ -19,6 +19,7 @@
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -66,7 +67,7 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
-#include "ike_alg.h"
+#include "ike_alg_aes.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -241,83 +242,15 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 }
 
 /*
- * XXX: This code is duplicated in ike_alg_aes.c.  When the latter is
- * enabled, this should be deleted.
+ * Wire-in Authenticated Encryption with Associated Data transforms
+ * (do both enc and auth in one transform); along with "aes(cmac)".
  */
 
-static struct encrypt_desc algo_aes_ccm_8 =
-{
-	.common = {
-		.name = "aes_ccm_8",
-		.officname = "aes_ccm_8",
-		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
-		.algo_next =    NULL,
-	},
-	.enc_blocksize =  AES_BLOCK_SIZE,
-	.wire_iv_size =  8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_ccm_12 =
-{
-	.common = {
-		.name = "aes_ccm_12",
-		.officname = "aes_ccm_12",
-		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
-		.algo_next =    NULL,
-	},
-	.enc_blocksize =  AES_BLOCK_SIZE,
-	.wire_iv_size =  8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_ccm_16 =
-{
-	.common = {
-		.name = "aes_ccm_16",
-		.officname = "aes_ccm_16",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/*
-	 * Only 128, 192 and 256 are supported
-	 * (24 bits KEYMAT for salt not included)
-	 */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-/*
- * wire-in Authenticated Encryption with Associated Data transforms
- * (do both enc and auth in one transform)
- */
-static void linux_pfkey_add_aead(void)
+static void linux_pfkey_add_hard_wired(void)
 {
 	struct sadb_alg alg;
 
 	alg.sadb_alg_reserved = 0;
-
 
 	/* IPsec algos (encryption and authentication combined) */
 	alg.sadb_alg_ivlen = 8;
@@ -357,19 +290,18 @@ static void linux_pfkey_add_aead(void)
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
 
-	/*
-	 * XXX: This code is duplicated in ike_alg_aes.c.  When the
-	 * latter is enabled, this should be deleted.
-	 */
-	if (!ike_alg_register_enc(&algo_aes_ccm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_ccm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
-
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
+
+	/*
+	 * IPSEC integrity algorithms.
+	 */
+	kernel_integ_add(SADB_X_AALG_AES_CMAC_96, &ike_alg_integ_aes_cmac,
+			 "cmac(aes)");
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Registered new AUTH algorithms"));
+
 }
 
 /*
@@ -418,8 +350,16 @@ static void init_netlink(void)
 	 */
 	init_pfkey();
 
-	/* ??? why do we have to wire these in? */
-	linux_pfkey_add_aead();
+	/*
+	 * The PFKEY interface is on life support.  Since it isn't
+	 * being extended to support new algorithms, they need to be
+	 * hard wired.
+	 *
+	 * Kind of lame since pluto should query the kernel for what
+	 * it supports.  OTOH, the query might happen before the
+	 * crypto module gets loaded.
+	 */
+	linux_pfkey_add_hard_wired();
 }
 
 /*
@@ -672,7 +612,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			/*
 			 * We don't know how to implement %hold, but it is okay
 			 * When we need a hold, the kernel XFRM acquire state
-			 * will do the job (by dropping, not holding the packet)
+			 * will do the job (by dropping or holding the packet)
 			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
@@ -1077,7 +1017,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
 				req.p.replay_window));
 		} else {
-			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window + 
+			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
 				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
@@ -1097,7 +1037,18 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->authkeylen != 0) {
-		const char *name = sparse_name(aalg_list, sa->authalg);
+		const char *name;
+		/*
+		 * SA should just contain a pointer to struct
+		 * kernel_integ
+		 */
+		const struct kernel_integ *ki =
+			kernel_integ_by_ikev1_auth_attribute(sa->authalg);
+		if (ki != NULL) {
+			name = ki->netlink_name;
+		} else {
+			name = sparse_name(aalg_list, sa->authalg);
+		}
 
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,

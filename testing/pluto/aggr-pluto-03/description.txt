@@ -1,2 +1,0 @@
-This test setup is identical to x509-pluto-02, but uses aggressive mode.
-It depends on west sending its cert via IKE to east.

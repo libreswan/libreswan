@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -16,7 +16,7 @@
 # for more details.
 
 # -D... goes in here
-USERLAND_CFLAGS=
+USERLAND_CFLAGS=-std=gnu99
 
 ifeq ($(origin GCCM),undefined)
 ifeq ($(ARCH),i686)
@@ -67,6 +67,10 @@ ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_CFLAGS+=-DHAVE_LABELED_IPSEC
 endif
 
+ifeq ($(USE_SECCOMP),true)
+USERLAND_CFLAGS+=-DHAVE_SECCOMP
+endif
+
 ifeq ($(USE_LIBCURL),true)
 USERLAND_CFLAGS+=-DLIBCURL
 endif
@@ -91,8 +95,27 @@ USERLAND_CFLAGS+=-DUSE_MD5
 USERLAND_CFLAGS+=-DUSE_SHA2
 USERLAND_CFLAGS+=-DUSE_SHA1
 USERLAND_CFLAGS+=-DUSE_AES
+ifeq ($(USE_3DES),true)
 USERLAND_CFLAGS+=-DUSE_3DES
+endif
+ifeq ($(USE_DH22),true)
+USERLAND_CFLAGS+=-DUSE_DH22
+endif
+ifeq ($(USE_CAMELLIA),true)
 USERLAND_CFLAGS+=-DUSE_CAMELLIA
+endif
+ifeq ($(USE_SERPENT),true)
+USERLAND_CFLAGS+=-DUSE_SERPENT
+endif
+ifeq ($(USE_TWOFISH),true)
+USERLAND_CFLAGS+=-DUSE_TWOFISH
+endif
+ifeq ($(USE_CAST),true)
+USERLAND_CFLAGS+=-DUSE_CAST
+endif
+ifeq ($(USE_RIPEMD),true)
+USERLAND_CFLAGS+=-DUSE_RIPEMD
+endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1

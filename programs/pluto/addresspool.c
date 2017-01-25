@@ -59,7 +59,8 @@ struct ip_pool {
  * A lease is an assignment of a single address from a particular pool.
  *
  * Leases are shared between appropriate connections.  Appropriate means
- * ones with the same thatid, as long as it isn't ID_NONE and uniqueIDs
+ * ones with the same thatid, as long as it isn't
+ * ID_NULL or (ID_NONE and uniqueIDs)
  * is in force.  could_share_lease captures this distinction.
  *
  * Because leases are shared, they are reference-counted.
@@ -84,7 +85,7 @@ struct ip_pool {
  *   ??? This constitutes a leak.
  */
 
-#define	could_share_lease(c) ((c)->spd.that.id.kind != ID_NONE && uniqueIDs)
+#define	could_share_lease(c) ((c)->spd.that.id.kind != ID_NULL || (ID_NONE && uniqueIDs))
 
 struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */

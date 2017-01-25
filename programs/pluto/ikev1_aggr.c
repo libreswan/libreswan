@@ -45,7 +45,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -58,9 +57,7 @@
 #include "fetch.h"
 #include "asn1.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -197,10 +194,9 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 			"aggr outR1 DH",
 			st, md);
 
-		e = start_dh_secretiv(dh, st,
-				      st->st_import,
+		e = start_dh_secretiv(dh, st, st->st_import,
 				      ORIGINAL_RESPONDER,
-				      st->st_oakley.group->group);
+				      st->st_oakley.group);
 
 		if (e != STF_SUSPEND) {
 			passert(dh->pcrc_md != NULL);
@@ -454,12 +450,6 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	    DBG_log(" I am %ssending a certificate request",
 		    send_cr ? "" : "not "));
 
-	/*
-	 * free collected certificate requests since as initiator
-	 * we don't heed them anyway
-	 */
-	free_generalNames(st->st_requested_ca, TRUE);
-
 	/* done parsing; initialize crypto  */
 
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -478,8 +468,10 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody))
+				&md->rbody)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* start of SA out */
@@ -491,14 +483,19 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
+		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody,
+				&r_sa_pbs)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		/* SA body in and out */
 		rn = parse_isakmp_sa_body(&sa_pd->pbs, &sa_pd->payload.sa,
 					  &r_sa_pbs, FALSE, st);
-		if (rn != NOTHING_WRONG)
+		if (rn != NOTHING_WRONG) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
+		}
 	}
 
 	/* don't know until after SA body has been parsed */
@@ -509,12 +506,17 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 	/* KE */
 	if (!ikev1_justship_KE(&st->st_gr,
-			 &md->rbody, ISAKMP_NEXT_NONCE))
+			 &md->rbody, ISAKMP_NEXT_NONCE)) {
+		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* Nr */
-	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID, "Nr"))
+	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID,
+				  "Nr")) {
+		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* IDir out */
 	{
@@ -527,8 +529,10 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&md->rbody, &r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity"))
+		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&r_id_pbs);
 	}
@@ -547,14 +551,19 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&md->rbody,
-				&cert_pbs))
+				&cert_pbs)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-								&cert_pbs, "CERT"))
+								&cert_pbs, "CERT")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&cert_pbs);
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* CR out */
@@ -647,8 +656,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  *           --> HDR*, [CERT,] SIG_I
  */
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
-				       struct key_continuation *kc); /* forward */
+static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
 
 stf_status aggr_inR1_outI2(struct msg_digest *md)
 {
@@ -709,10 +717,9 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 			"aggr outR1 DH",
 			st, md);
 
-		return start_dh_secretiv(dh, st,
-					 st->st_import,
+		return start_dh_secretiv(dh, st, st->st_import,
 					 ORIGINAL_INITIATOR,
-					 st->st_oakley.group->group);
+					 st->st_oakley.group);
 	}
 }
 
@@ -749,7 +756,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
-		e = aggr_inR1_outI2_tail(md, NULL);
+		e = aggr_inR1_outI2_tail(md);
 	}
 
 	passert(dh->pcrc_md != NULL);
@@ -758,13 +765,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 	reset_cur_state();
 }
 
-static void aggr_inR1_outI2_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, aggr_inR1_outI2_tail);
-}
-
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
-				       struct key_continuation *kc)
+static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
@@ -772,8 +773,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HASH_R or SIG_R in */
 	{
-		stf_status r = aggr_id_and_auth(md, TRUE,
-						aggr_inR1_outI2_continue, kc);
+		stf_status r = aggr_id_and_auth(md, TRUE);
 
 		if (r != STF_OK)
 			return r;
@@ -916,21 +916,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
  * SMF_PSK_AUTH: HDR*, HASH_I --> done
  * SMF_DS_AUTH:  HDR*, SIG_I  --> done
  */
-static stf_status aggr_inI2_tail(struct msg_digest *md,
-			  struct key_continuation *kc);         /* forward */
-
-static void aggr_inI2_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, aggr_inI2_tail);
-}
 
 stf_status aggr_inI2(struct msg_digest *md)
-{
-	return aggr_inI2_tail(md, NULL);
-}
-
-static stf_status aggr_inI2_tail(struct msg_digest *md,
-			  struct key_continuation *kc)
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
@@ -970,9 +957,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 
 	/* HASH_I or SIG_I in */
 	{
-		stf_status r = aggr_id_and_auth(md, FALSE,
-						aggr_inI2_continue, kc);
-
+		stf_status r = aggr_id_and_auth(md, FALSE);
 		if (r != STF_OK)
 			return r;
 	}
@@ -1105,13 +1090,6 @@ stf_status aggr_outI1(int whack_sock,
 {
 	struct state *st;
 	struct spd_route *sr;
-
-	if (drop_new_exchanges()) {
-		/* Only drop outgoing opportunistic connections */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			return STF_IGNORE;
-		}
-	}
 
 	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
 		loglog(RC_LOG_SERIOUS,

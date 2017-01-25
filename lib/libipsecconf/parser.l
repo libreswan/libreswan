@@ -23,6 +23,13 @@
  *
  */
 
+/*
+ * The generation of this code tends to always give us an unsigned vs signed
+ * warning on one of our many OS + compiler + flex + arch combinations.
+ * I'm just fed up with them... Paul
+ */
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
 #include <sys/queue.h>
 #include <string.h>
 #include <stdlib.h>
@@ -165,8 +172,9 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 		char ebuf[128];
 
 		snprintf(ebuf, sizeof(ebuf),
-			"cannot open include filename: '%s'",
-			iis->fileglob.gl_pathv[fcnt]);
+			"cannot open include filename: '%s': %s",
+			iis->fileglob.gl_pathv[fcnt],
+			strerror(errno));
 		yyerror(ebuf);
 		return -1;
 	}

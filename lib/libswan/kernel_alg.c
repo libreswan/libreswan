@@ -15,8 +15,6 @@
  * Fixes by:
  *	ML: Mathieu Lafon <mlafon@arkoon.net>
  *
- * Fixes:
- *	ML: kernel_alg_esp_ok_final() function (make F_STRICT consider enc,auth)
  */
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +35,8 @@
 #include "kernel_alg.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "ike_alg.h"
+#include "ietf_constants.h"
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
@@ -120,12 +120,34 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	struct sadb_alg *alg_p, tmp_alg;
 	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
-	DBG(DBG_KERNEL,
-		DBG_log("kernel_alg_add(): satype=%d, exttype=%d, alg_id=%d(%s)",
-			satype, exttype, alg_id,
-			enum_name(&esp_transformid_names, alg_id));
-		);
-
+	if (DBGP(DBG_KERNEL|DBG_CRYPT)) {
+		const char *exttype_name =
+			(exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
+			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
+			 : "SADB_EXT_SUPPORTED_???");
+		struct esb_buf alg_name_buf;
+		/*
+		 * XXX: The ALG_ID value found here comes from the
+		 * Linux kernel (see libreswan/pfkeyv2.h) so using
+		 * AH_TRANSFORMID_NAMES and ESP_TRANSFORMID_NAMES is
+		 * only an approximation.
+		 */
+		const char *alg_name =
+			(exttype == SADB_EXT_SUPPORTED_AUTH ? enum_showb(&ah_transformid_names, alg_id, &alg_name_buf)
+			 : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? alg_name = enum_showb(&esp_transformid_names, alg_id, &alg_name_buf)
+			 : "???");
+		const char *satype_name =
+			(satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
+			 : satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
+			 : "SADB_SATYPE_???");
+		DBG_log("kernel_alg_add(): satype=%d(%s), exttype=%d(%s), alg_id=%d(%s), alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+			satype, satype_name,
+			exttype, exttype_name,
+			alg_id, alg_name,
+			sadb_alg->sadb_alg_ivlen,
+			sadb_alg->sadb_alg_minbits,
+			sadb_alg->sadb_alg_maxbits);
+	}
 	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
 	if (alg_p == NULL) {
 		DBG(DBG_KERNEL,
@@ -186,6 +208,56 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	return 1;
 }
 
+static struct kernel_integ *kernel_integ;
+
+void kernel_integ_add(enum sadb_aalg sadb_aalg,
+		      const struct integ_desc *integ,
+		      const char *netlink_name)
+{
+	struct sadb_alg alg = {
+		.sadb_alg_minbits = integ->integ_key_size * BITS_PER_BYTE,
+		.sadb_alg_maxbits = integ->integ_key_size * BITS_PER_BYTE,
+		.sadb_alg_id = sadb_aalg,
+	};
+	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register %s for ESP",
+		       integ->common.name);
+		return;
+	}
+	struct kernel_integ *new = alloc_thing(struct kernel_integ, "kernel integ");
+	*new = (struct kernel_integ) {
+		.sadb_aalg = sadb_aalg,
+		.integ = integ,
+		.netlink_name = netlink_name,
+		.next = kernel_integ,
+	};
+	kernel_integ = new;
+}
+
+const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg sadb_aalg)
+{
+	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
+		if (k->sadb_aalg == sadb_aalg) {
+			return k;
+		}
+	}
+	return NULL;
+}
+
+const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute id)
+{
+	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
+		/*
+		 * For integ, the ESP_ID contains enum
+		 * ikev1_auth_attribute
+		 */
+		if ((enum ikev1_auth_attribute) k->integ->common.ikev1_esp_id == id) {
+			return k;
+		}
+	}
+	return NULL;
+}
+
 err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 {
 	err_t ugh = NULL;
@@ -193,10 +265,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 	/*
 	 * test #1: encrypt algo must be present
 	 */
-
-	/* fixup broken IANA registry */
-	if (alg_id == ESP_CAMELLIA)
-		alg_id = ESP_CAMELLIAv1;
 
 	if (!ESP_EALG_PRESENT(alg_id)) {
 		DBG(DBG_KERNEL,
@@ -216,7 +284,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 		case ESP_AES_CTR:
-		case ESP_CAMELLIA:
 		case ESP_CAMELLIAv1:
 			/* ??? does 0 make sense here? */
 			if (key_len != 0 && key_len != 128 &&
@@ -309,17 +376,8 @@ bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-
-				int ret = kernel_alg_add(satype, supp_exttype,
-						&sadb_alg);
-				DBG(DBG_CRYPT,
-					DBG_log("kernel_alg_proc_read() alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
-						sadb_alg.sadb_alg_id,
-						sadb_alg.sadb_alg_ivlen,
-						sadb_alg.sadb_alg_minbits,
-						sadb_alg.sadb_alg_maxbits,
-						ret);
-					);
+				kernel_alg_add(satype, supp_exttype,
+					       &sadb_alg);
 				break;
 			}
 			break;
@@ -340,7 +398,6 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 	const void *p;	/* cursor through message */
 	uint8_t satype;
 	size_t msg_left;
-	int i = 0;
 
 	satype = msg->sadb_msg_satype;
 	msg_left = msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN;
@@ -366,25 +423,10 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 		msg_left -= supp_len;
 		for (supp_len -= sizeof(struct sadb_supported);
 		     supp_len >= sizeof(struct sadb_alg);
-		     supp_len -= sizeof(struct sadb_alg), i++) {
+		     supp_len -= sizeof(struct sadb_alg)) {
 			const struct sadb_alg *alg = p;
-			int ret = kernel_alg_add(satype, supp_exttype, alg);
-
+			kernel_alg_add(satype, supp_exttype, alg);
 			p = alg + 1;	/* after alg */
-
-			DBG(DBG_KERNEL,
-				DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: alg[%d], exttype=%d, satype=%d, alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d, ret=%d",
-					satype == SADB_SATYPE_ESP ? "ESP" :
-						satype == SADB_SATYPE_AH ? "AH" :
-						"???",
-					i, supp_exttype, satype,
-					alg->sadb_alg_id,
-					alg->sadb_alg_ivlen,
-					alg->sadb_alg_minbits,
-					alg->sadb_alg_maxbits,
-					alg->sadb_alg_reserved,
-					ret);
-				);
 		}
 		passert(supp_len == 0);
 	}
@@ -479,10 +521,6 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 {
 	int sadb_aalg, sadb_ealg;
 	static struct esp_info ei_buf; /* static ??? fixme */
-
-	/* fixup broken IANA registry */
-	if (transid == ESP_CAMELLIA)
-		transid = ESP_CAMELLIAv1;
 
 	DBG(DBG_PARSING,
 		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",

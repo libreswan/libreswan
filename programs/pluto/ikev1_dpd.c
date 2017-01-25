@@ -45,7 +45,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -347,13 +346,14 @@ static void p2_dpd_outI1(struct state *p2st)
 	deltatime_t delay = p2st->st_connection->dpd_delay;
 	deltatime_t timeout = p2st->st_connection->dpd_timeout;
 
-	/* find the related Phase 1 state */
 	st = find_phase1_state(p2st->st_connection,
-			       ISAKMP_SA_ESTABLISHED_STATES);
+		ISAKMP_SA_ESTABLISHED_STATES);
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "DPD: could not find newest phase 1 state");
+		       "DPD: could not find newest phase 1 state - initiating a new one");
+		delete_event(p2st);
+		event_schedule( EVENT_SA_REPLACE, 0, p2st);
 		return;
 	}
 
@@ -492,7 +492,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
-		       "DPD: recevied R_U_THERE_ACK for unestablished ISKAMP SA");
+		       "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
 		return STF_FAIL;
 	}
 

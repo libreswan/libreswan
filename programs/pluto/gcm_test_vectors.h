@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,11 +12,20 @@
  * for more details.
  */
 
-bool test_aes_gcm(void);
+struct gcm_test_vector {
+	const char *key;
+	/*
+	 * NIST provides a simple IV, while we require a separate SALT
+	 * and wire-IV.  The value gets split before being passed to
+	 * the do_crypt_hash method.
+	 */
+	const char *salted_iv;
+	const char *aad;
+	const char *plaintext;
+	const char *ciphertext;
+	const char *tag;
+};
 
-bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
-		u_int8_t *wire_iv, size_t wire_iv_size,
-		u_int8_t *aad, size_t aad_size,
-		u_int8_t *text_and_tag,
-		size_t text_size, size_t tag_size,
-		PK11SymKey *key, bool enc);
+
+bool test_gcm_vectors(const struct encrypt_desc *encrypt_desc,
+		      const struct gcm_test_vector *tests);

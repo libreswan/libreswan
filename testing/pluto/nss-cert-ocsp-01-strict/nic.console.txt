@@ -1,0 +1,21 @@
+cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
+nic #
+ cp /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
+nic #
+ cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
+nic #
+ cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+nic #
+ openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+nic #
+ systemctl start ocspd.service
+nic #
+ echo "initdone"
+initdone
+nic #
+ journalctl --no-pager -b -xn -u ocspd.service | egrep "status|request" | sed "s/^.*: //"
+request for certificate serial 2
+status VALID for 2
+request for certificate serial 4
+status VALID for 4
+

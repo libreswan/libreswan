@@ -53,20 +53,37 @@ DEBUG = logging.DEBUG
 INFO = logging.INFO
 NONE = 100 # something large
 
-_STDOUT_HANDLER = None
-_LOG_LEVEL = "info"
+class StreamProxy:
+    def __init__(self):
+        self.stream = None
+    def write(self, record):
+        self.stream.write(record)
+    def flush(self):
+        self.stream.flush()
+    def delegate(self, stream):
+        if self.stream:
+            self.stream.flush()
+        self.stream = stream
+        return self
 
+_DEFAULT_STREAM = None
+_DEFAULT_HANDLER = None
+_LOG_LEVEL = "info"
 
 def __init__():
 
-    global _STDOUT_HANDLER
-    _STDOUT_HANDLER = logging.StreamHandler(sys.stdout)
-    _STDOUT_HANDLER.setFormatter(logging.Formatter("%(message)s"))
-    _STDOUT_HANDLER.setLevel(_LOG_LEVEL.upper())
+    # Start with things being sent to stderr, if it needs to switch do
+    # that after argument parsing.
+    global _DEFAULT_STREAM
+    global _DEFAULT_HANDLER
+    _DEFAULT_STREAM = StreamProxy().delegate(sys.stdout)
+    _DEFAULT_HANDLER = logging.StreamHandler(_DEFAULT_STREAM)
+    _DEFAULT_HANDLER.setFormatter(logging.Formatter("%(message)s"))
+    _DEFAULT_HANDLER.setLevel(_LOG_LEVEL.upper())
 
-    # Force the root-logger to pass everything on to STDOUT; and then
+    # Force the root-logger to pass everything on to STDERR; and then
     # let the handlers filter just their log-records.
-    logging.basicConfig(level=logging.NOTSET, handlers=[_STDOUT_HANDLER])
+    logging.basicConfig(level=logging.NOTSET, handlers=[_DEFAULT_HANDLER])
 
 
 def getLogger(prefix, name=None, *suffixes):
@@ -105,9 +122,8 @@ def getLogger(prefix, name=None, *suffixes):
 def add_arguments(parser):
     group = parser.add_argument_group("Logging arguments",
                                       "Options for directing logging level and output")
-    group.add_argument("--log-level", default=None,
-                       help=("console log level"
-                             " (default: " + _LOG_LEVEL + ")"))
+    group.add_argument("--log-level", default=_LOG_LEVEL,
+                       help=("console log level (default: %(default)s)"))
     group.add_argument("--debug", "-d", default=None, metavar="FILE",
                        type=argutil.stdout_or_open_file,
                        help=("write a debug-level log to %(metavar)s"
@@ -117,17 +133,17 @@ def add_arguments(parser):
 
 def log_arguments(logger, args):
     logger.info("Logging arguments:")
-    logger.info("  log-level: '%s'", args.log_level or _LOG_LEVEL)
+    logger.info("  log-level: '%s'", args.log_level)
     logger.info("  debug: '%s'", args.debug)
 
 
 _DEBUG_STREAM = None
 _DEBUG_FORMATTER = logging.Formatter("%(levelname)s %(message)s")
 
-def config(args):
-    # Update the log-level
-    if args.log_level:
-        _STDOUT_HANDLER.setLevel(args.log_level.upper())
+def config(args, stream):
+    # Update the default stream
+    _DEFAULT_STREAM.delegate(stream)
+    _DEFAULT_HANDLER.setLevel(args.log_level.upper())
     # Direct debugging to a stream if specified
     if args.debug:
         _DEBUG_STREAM = logging.StreamHandler(args.debug)
@@ -167,29 +183,62 @@ class DebugHandler(logging.Handler):
             stream_handler.flush()
 
 
-class DebugStack:
-    """Debug file open/close wrapper for use with 'with'"""
+class LogTime:
+    """Log/time a with statement"""
 
-    def __init__(self, logger, debug_handler, *path):
+    def __init__(self, logger_adapter, loglevel, action, timer):
         # XXX: Can logger argument be eliminated - log direct to
         # handler?
-        self.logger = logger
-        self.debug_handler = debug_handler
-        self.file_name = os.path.join(*path)
+        self.logger_adapter = logger_adapter
+        self.action = action
+        self.timer = timer
+        self.loglevel = loglevel
+
+    def __enter__(self):
+        timer = self.timer.__enter__()
+        self.logger_adapter.log(self.loglevel, "start %s at %s",
+                                self.action, timer.start)
+        return timer
+
+    def __exit__(self, type, value, traceback):
+        self.timer.__exit__(type, value, traceback)
+        self.logger_adapter.log(self.loglevel, "stop %s after %s",
+                                self.action, self.timer)
+
+
+class DebugTime(LogTime):
+    """Push a new timer onto the timer stack, possibly sending output to DEBUGFILE"""
+
+    def __init__(self, logger_adapter, logfile, loglevel, action, timer):
+        super().__init__(logger_adapter=logger_adapter,
+                         loglevel=loglevel, action=action,
+                         timer=timer)
+        self.logfile = logfile
         self.debug_stream = None
 
     def __enter__(self):
-        self.logger.debug("opening debug logfile '%s' at %s", self.file_name, datetime.now())
-        self.debug_stream = open(self.file_name, "a")
-        self.debug_handler.push(self.debug_stream)
-        self.logger.debug("starting debug log at %s", datetime.now())
+        if self.logfile:
+            self.logger_adapter.debug("opening debug logfile '%s' at %s",
+                                      self.logfile, datetime.now())
+            self.debug_stream = open(self.logfile, "a")
+            self.logger_adapter.pool.debug_handler.push(self.debug_stream)
+            self.logger_adapter.debug("starting debug log at %s",
+                                      datetime.now())
+        timer = super().__enter__()
+        self.logger_adapter.pool.runtimes.append(timer)
+        return timer
 
     def __exit__(self, type, value, traceback):
-        # Restore debug logging before closing the debugfile.
-        self.logger.debug("ending debug log at %s", datetime.now())
-        self.debug_handler.pop()
-        self.debug_stream.close()
-        self.logger.debug("closed debug logfile '%s' at %s", self.file_name, datetime.now())
+        self.logger_adapter.pool.runtimes.pop()
+        super().__exit__(type, value, traceback)
+        if self.logfile:
+            # Restore debug logging before closing the logfile.
+            self.logger_adapter.debug("ending debug log at %s",
+                                      datetime.now())
+            self.logger_adapter.pool.debug_handler.pop()
+            self.debug_stream.close()
+            self.logger_adapter.debug("closed debug logfile '%s' at %s",
+                                      self.logfile, datetime.now())
 
 
 _LOG_POOL = {}
@@ -197,7 +246,7 @@ _LOG_POOL = {}
 class LogPool:
     def __init__(self, prefix):
         self.name = prefix
-        self.timer_stack = timing.LapsedStack()
+        self.runtimes = [timing.Lapsed(timing.START_TIME)]
         self.debug_handler = DebugHandler()
 
 
@@ -211,14 +260,22 @@ class CustomMessageAdapter(logging.LoggerAdapter):
         self.logger.addHandler(self.pool.debug_handler)
 
     def process(self, msg, kwargs):
-        msg = "%s %s: %s" % (self.logger.name, self.pool.timer_stack, msg)
+        runtimes = ""
+        now = datetime.now()
+        for runtime in self.pool.runtimes:
+            if runtimes:
+                runtimes += "/"
+            runtimes += runtime.format(now)
+        msg = "%s %s: %s" % (self.logger.name, runtimes, msg)
         return msg, kwargs
 
-    def timer_stack(self):
-        return self.pool.timer_stack
+    def time(self, fmt, *args, loglevel=INFO, timer=None):
+        return LogTime(self, loglevel=loglevel, action=(fmt % args),
+                       timer=(timer or timing.Lapsed()))
 
-    def debug_stack(self, *path):
-        return DebugStack(self, self.pool.debug_handler, *path)
-
+    def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG, timer=None):
+        return DebugTime(logger_adapter=self, logfile=logfile,
+                         loglevel=loglevel, action=(fmt % args),
+                         timer=(timer or timing.Lapsed()))
 
 __init__()

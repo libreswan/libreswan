@@ -57,12 +57,12 @@
       <arg choice="opt">--natikeport <replaceable>portnumber</replaceable></arg>
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
       <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
-      <arg choice="opt">--adns <replaceable>pathname</replaceable></arg>
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
       <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
       <arg choice="opt">--perpeerlog</arg>
       <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
+      <arg choice="opt">--nssdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
       <arg choice="opt">--secctx-attr-type <replaceable>number</replaceable></arg>
@@ -626,7 +626,7 @@
       <arg choice="opt">--utc</arg>
 
       <arg choice="opt">--rereadsecrets</arg>
-      <arg choice="opt">--rereadcrls</arg>
+      <arg choice="opt">--fetchcrls</arg>
       <arg choice="opt">--rereadall</arg>
 
     </cmdsynopsis>
@@ -1065,7 +1065,7 @@
 
       <para>Pluto supports X.509 Certificates. All certificate handling is done using
       the NSS library and all certificate material is stored in an NSS database in
-      /etc/ipsec.d or another directory as specified by <option>--ipsecdir</option>.</para>
+      @IPSEC_NSSDIR@ or another directory as specified by <option>--ipsecdir</option>.</para>
 
       <para>Pluto may core dump. It will normally do so into the current
       working directory. You can specify the --coredir option for pluto, or
@@ -3106,22 +3106,6 @@
               </citerefentry>, so every file with a matching name is
             processed. Quoting is generally needed to prevent the shell from
             doing the globbing.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--adns</option> <replaceable>path to
-          adns</replaceable></term>
-
-          <listitem>
-            <para>specifies where to find <emphasis
-            remap="B">pluto</emphasis>'s helper program for asynchronous DNS
-            lookup. <emphasis remap="B">pluto</emphasis> can be built to use
-            <emphasis remap="B">_pluto_adns</emphasis>.
-            By default, <emphasis remap="B">pluto</emphasis> will
-            look for the program in <emphasis remap="B">$IPSEC_DIR</emphasis>
-            (if that environment variable is defined) or, failing that, in the
-            same directory as <emphasis remap="B">pluto</emphasis>.</para>
           </listitem>
         </varlistentry>
 

@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,15 +44,14 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "ikev1.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "db_ops.h"
+#include "lswfips.h" /* for libreswan_fipsmode */
 
 #include "nat_traversal.h"
 
@@ -786,6 +786,89 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	return policy;
 }
 
+static bool ike_alg_enc_ok(int ealg, unsigned key_len,
+			   struct alg_info_ike *alg_info_ike __attribute__((unused)),
+			   const char **errp, char *ugh_buf, size_t ugh_buf_len)
+{
+	int ret = TRUE;
+	const struct encrypt_desc *enc_desc = ikev1_get_ike_encrypt_desc(ealg);
+
+	passert(ugh_buf_len != 0);
+	if (enc_desc == NULL) {
+		/* failure: encrypt algo must be present */
+		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
+		ret = FALSE;
+	} else if (key_len != 0 && !encrypt_has_key_bit_length(enc_desc, key_len)) {
+		/* failure: if key_len specified, it must be in range */
+		snprintf(ugh_buf, ugh_buf_len,
+			 "key_len invalid: encalg=%d, key_len=%d",
+			 ealg, key_len);
+		libreswan_log("ike_alg_enc_ok(): %s", ugh_buf);
+		ret = FALSE;
+	}
+
+	DBG(DBG_KERNEL,
+	    if (ret) {
+		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keydeflen=%d, ret=%d",
+			    ealg, key_len,
+			    (int)enc_desc->enc_blocksize,
+			    enc_desc->keydeflen,
+			    ret);
+	    } else {
+		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): NO",
+			    ealg, key_len);
+	    }
+	    );
+	if (!ret && errp != NULL)
+		*errp = ugh_buf;
+	return ret;
+}
+
+static bool ike_alg_ok_final(int ealg, unsigned key_len,
+			     const struct prf_desc *prf,
+			     unsigned int group,
+			     struct alg_info_ike *alg_info_ike)
+{
+	/*
+	 * simple test to toss low key_len, will accept it only
+	 * if specified in "esp" string
+	 */
+	bool ealg_insecure = (key_len < 128);
+
+	if (ealg_insecure || alg_info_ike != NULL) {
+		if (alg_info_ike != NULL) {
+			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
+				if (ike_info->ike_encrypt->common.ikev1_oakley_id == ealg &&
+				    (ike_info->ike_eklen == 0 ||
+				     key_len == 0 ||
+				     ike_info->ike_eklen == key_len) &&
+				    ike_info->ike_prf == prf &&
+				    ike_info->ike_dh_group->group == group) {
+					if (ealg_insecure) {
+						loglog(RC_LOG_SERIOUS,
+						       "You should NOT use insecure/broken IKE algorithms (%s)!",
+						       enum_name(
+								&oakley_enc_names,
+								ealg));
+					}
+					return TRUE;
+				}
+			}
+		}
+		libreswan_log(
+			"Oakley Transform [%s (%d), %s, %s] refused%s",
+			enum_name(&oakley_enc_names, ealg), key_len,
+			enum_name(&oakley_hash_names,
+				  prf->common.ikev1_oakley_id),
+			enum_name(&oakley_group_names, group),
+			ealg_insecure ?
+				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+				"");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /**
  * Parse the body of an ISAKMP SA Payload (i.e. Phase 1 / Main Mode).
  * Various shortcuts are taken.  In particular, the policy, such as
@@ -946,7 +1029,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		zero(&ta);	/* ??? may not NULL pointer fields */
 
 		/* initialize only optional field in ta */
-		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
+		ta.life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
 
 		if (no_trans_left == 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -1038,14 +1121,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						   sizeof(ugh_buf))) {
 					/* if (ike_alg_enc_present(val)) { */
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
-					ta.encrypter =
-						crypto_get_encrypter(val);
+					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
 					break;
 
 				case OAKLEY_DES_CBC:
@@ -1059,16 +1140,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				break;
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				if (ike_alg_hash_present(val)) {
-					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
-				} else switch (val) {
-				case OAKLEY_MD5:
-				case OAKLEY_SHA1:
-					ta.prf_hash = val;
-					ta.prf_hasher = crypto_get_hasher(val);
-					break;
-				default:
+				ta.prf = ikev1_get_ike_prf_desc(val);
+				if (ta.prf == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_hash_names,
 								  val));
@@ -1254,13 +1327,11 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val >
-					    OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM)
+					if (val > IKE_SA_LIFETIME_MAXIMUM)
 					{
 						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
-								(long) val,
-								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
-						val = OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM;
+								(long) val, IKE_SA_LIFETIME_MAXIMUM);
+						val = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
 					break;
@@ -1331,7 +1402,7 @@ rsasig_common:
 		 */
 		if (ugh == NULL) {
 			if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen,
-					      ta.prf_hash,
+					      ta.prf,
 					      ta.group != NULL ?
 						ta.group->group : 65535,
 					      c->alg_info_ike))
@@ -1372,9 +1443,8 @@ rsasig_common:
 				pb_stream r_trans_pbs;
 
 				/* Situation */
-				if (!out_struct(&ipsecdoisit, &ipsec_sit_desc,
-						r_sa_pbs, NULL))
-					impossible();
+				passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
+						   r_sa_pbs, NULL));
 
 				/* Proposal */
 #ifdef EMIT_ISAKMP_SPI
@@ -1383,17 +1453,15 @@ rsasig_common:
 				r_proposal.isap_spisize = 0;
 #endif
 				r_proposal.isap_notrans = 1;
-				if (!out_struct(&r_proposal,
-						&isakmp_proposal_desc,
-						r_sa_pbs,
-						&r_proposal_pbs))
-					impossible();
+				passert(out_struct(&r_proposal,
+						   &isakmp_proposal_desc,
+						   r_sa_pbs,
+						   &r_proposal_pbs));
 
 				/* SPI */
 #ifdef EMIT_ISAKMP_SPI
-				if (!out_raw(my_cookie, COOKIE_SIZE,
-					     &r_proposal_pbs, "SPI"))
-					impossible();
+				passert(out_raw(my_cookie, COOKIE_SIZE,
+						&r_proposal_pbs, "SPI"));
 				r_proposal.isap_spisize = COOKIE_SIZE;
 #else
 				/* none (0) */
@@ -1401,15 +1469,13 @@ rsasig_common:
 
 				/* Transform */
 				r_trans.isat_np = ISAKMP_NEXT_NONE;
-				if (!out_struct(&r_trans,
-						&isakmp_isakmp_transform_desc,
-						&r_proposal_pbs,
-						&r_trans_pbs))
-					impossible();
+				passert(out_struct(&r_trans,
+						   &isakmp_isakmp_transform_desc,
+						   &r_proposal_pbs,
+						   &r_trans_pbs));
 
-				if (!out_raw(attr_start, attr_len,
-					     &r_trans_pbs, "attributes"))
-					impossible();
+				passert(out_raw(attr_start, attr_len,
+						&r_trans_pbs, "attributes"));
 				close_output_pbs(&r_trans_pbs);
 				close_output_pbs(&r_proposal_pbs);
 				close_output_pbs(r_sa_pbs);
@@ -1502,7 +1568,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = crypto_get_encrypter(ta.encrypt);
+	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1514,9 +1580,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-	ta.prf_hash = hash->val;           /* OAKLEY_HASH_ALGORITHM */
-	ta.prf_hasher = crypto_get_hasher(ta.prf_hash);
-	passert(ta.prf_hasher != NULL);
+	ta.prf = ikev1_get_ike_prf_desc(hash->val);
+	passert(ta.prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
@@ -1558,7 +1623,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = { SA_LIFE_DURATION_DEFAULT },		/* life_seconds */
+	.life_seconds = { IPSEC_SA_LIFETIME_DEFAULT },		/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -1581,6 +1646,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #endif
 	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
+	unsigned int valmax = IPSEC_SA_LIFETIME_MAXIMUM;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
 		return FALSE;
@@ -1728,9 +1794,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * that val does not exceed
 				 * SA_LIFE_DURATION_MAXIMUM.
 				 */
-				attrs->life_seconds =
-				    val > SA_LIFE_DURATION_MAXIMUM ?
-					deltatime(SA_LIFE_DURATION_MAXIMUM) :
+#ifdef FIPS_CHECK
+				if (libreswan_fipsmode())
+					valmax = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
+#endif
+				attrs->life_seconds = val > valmax ?
+					deltatime(valmax) :
 				    (time_t)val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 					st->st_connection->sa_ipsec_life_seconds :
 				    deltatime(val);
@@ -1769,14 +1838,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_DETECTED) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is not detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
@@ -1784,25 +1845,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (st->hidden_variables.st_nat_traversal &
-				    NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with old IETF drafts",
-					       enum_name(&enc_mode_names,
-							 val));
-					if (st->st_connection->remotepeertype
-					    != CISCO) {
-						return FALSE;
-					}
-					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					   NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
@@ -1810,20 +1852,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if (!(st->hidden_variables.st_nat_traversal &
-				     NAT_T_DETECTED)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if NAT-Traversal is detected",
-					       enum_name(&enc_mode_names, val));
-					return FALSE;
-				} else if (!(st->hidden_variables.st_nat_traversal &
-					    NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used with NAT-T RFC",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
-				}
 				break;
 
 			default:
@@ -1971,9 +1999,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	/* Proposal */
 	r_proposal.isap_np = np;
 	r_proposal.isap_notrans = 1;
-	if (!out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
-			&r_proposal_pbs))
-		impossible();
+	passert(out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
+			   &r_proposal_pbs));
 
 	/* allocate and emit our CPI/SPI */
 	if (r_proposal.isap_protoid == PROTO_IPCOMP) {
@@ -1983,11 +2010,10 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * but we'll ignore that.
 		 */
 		pi->our_spi = get_my_cpi(sr, tunnel_mode);
-		if (!out_raw((u_char *) &pi->our_spi +
-			     IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
-			     IPCOMP_CPI_SIZE,
-			     &r_proposal_pbs, "CPI"))
-			impossible();
+		passert(out_raw((u_char *) &pi->our_spi +
+				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
+				IPCOMP_CPI_SIZE,
+				&r_proposal_pbs, "CPI"));
 	} else {
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
@@ -1995,21 +2021,18 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */
-		if (!out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
-			     &r_proposal_pbs, "SPI"))
-			impossible();
+		passert(out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
+				&r_proposal_pbs, "SPI"));
 	}
 
 	/* Transform */
 	r_trans.isat_np = ISAKMP_NEXT_NONE;
-	if (!out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs))
-		impossible();
+	passert(out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs));
 
 	/* Transform Attributes: pure echo */
 	trans_pbs->cur = trans_pbs->start + sizeof(struct isakmp_transform);
-	if (!out_raw(trans_pbs->cur, pbs_left(trans_pbs),
-		     &r_trans_pbs, "attributes"))
-		impossible();
+	passert(out_raw(trans_pbs->cur, pbs_left(trans_pbs),
+			&r_trans_pbs, "attributes"));
 
 	close_output_pbs(&r_trans_pbs);
 	close_output_pbs(&r_proposal_pbs);
@@ -2464,7 +2487,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ugh != NULL) {
 					switch (esp_attrs.transattrs.encrypt) {
 					case ESP_AES:
-					case ESP_CAMELLIA:
 					case ESP_CAMELLIAv1:
 					case ESP_3DES:
 						break;
@@ -2696,9 +2718,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			/* emit what we've accepted */
 
 			/* Situation */
-			if (!out_struct(&ipsecdoisit, &ipsec_sit_desc,
-					r_sa_pbs, NULL))
-				impossible();
+			passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
+					   r_sa_pbs, NULL));
 
 			/* AH proposal */
 			if (ah_seen) {

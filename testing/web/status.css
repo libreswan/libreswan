@@ -1,0 +1,15 @@
+body {
+  font: 10px sans-serif;
+}
+
+table.jobs {
+    border-collapse: collapse;
+    border: 1px solid lightgray;
+    white-space: nowrap;
+}
+
+.jobs th,
+.jobs td {
+    border: 1px solid lightgrey;
+    padding: 5px 15px;
+}

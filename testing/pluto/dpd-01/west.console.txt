@@ -48,9 +48,7 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
-000  
 west #
  # Let R_U_THERE packets flow
 west #
@@ -73,8 +71,6 @@ west #
 Tunnel should be down
 west #
  ipsec whack --trafficstatus
-000  
-000  
 west #
  # Remove the Blockage
 west #
@@ -93,9 +89,7 @@ west #
 Tunnel should be up even without trigger traffic
 west #
  ipsec whack --trafficstatus
-000  
 006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-000  
 west #
  ping -q -c 8 -n 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
@@ -104,9 +98,7 @@ PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-000  
 006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
-000  
 west #
  echo done
 done

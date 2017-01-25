@@ -1,83 +1,110 @@
 #!/bin/sh
 
-set -eux
+if test $# -lt 2; then
+    cat >> /dev/stderr <<EOF
 
-base=results
-basedir=${HOME}/${base}
+Usage:
 
-testingdir=$(pwd)/testing
-utilsdir=$(pwd)/testing/utils
-webdir=$(pwd)/testing/web
+    $0 <repodir> <summarydir>
 
-timestamp=$(date -d @$(git log -n1 --format="%ct") +%Y-%m-%d-%H%M)
-gitstamp=$(make showversion)
-version=${timestamp}-${gitstamp}
-destdir=${basedir}/$(hostname)/${version}
+Build/run the testsuite in <repodir>.  Publish detailed results under
+<summarydir>/<version>, and a summary under <summarydir>.
 
-echo ${version} ${destdir}
+<version> is determined by "make showversion".
+
+For instance:
+
+    $0 . ~/results/master
+
+EOF
+    exit 1
+fi
+
+# exit if anything looks weird and be verbose.
+set -euxv
+
+repodir=$(cd $1 && pwd) ; shift
+summarydir=$(cd $1 && pwd) ; shift
+
+# where the scripts live
+webdir=$(cd $(dirname $0) && pwd)
+utilsdir=$(cd ${webdir}/../utils && pwd)
+
+# Get the make-version, and then go backwards from that to determine
+# the git:rev and git:date.
+#
+# Since later updates are going to use the same scripts, this helps to
+# confirm that everything is working.
+gitstamp=$(cd ${repodir} ; make showversion)
+gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
+
+destdir=${summarydir}/${gitstamp}
+echo ${destdir}
 
 mkdir -p ${destdir}
-log=${destdir}/log
+
+# The status file needs to match status.js; note the lack of quotes
+# qhen invoking ${script}.  This is matches the unqoted line that gets
+# invoked by the awk script further down.
+
+start=$(date -u -Iseconds)
+script="${webdir}/json-status.sh \
+  --json ${summarydir}/status.json \
+  --commit ${repodir} ${gitrev} \
+  --start ${start}"
+status() {
+    ${script} --date $(date -u -Iseconds) " ($*)"
+}
+
+status "started"
 
 
-# Rebuild/run; but only if previous attempt didn't crash badly.
-for target in distclean kvm-install kvm-test kvm-shutdown ; do
-    # because "make ... | tee bar" does not see make's exit code, use
-    # a file as a hack.
-    if test ! -r ${destdir}/${target}.ok ; then
-	make ${target}
-	touch ${destdir}/${target}.ok
-    fi 2>&1 | tee -a ${log}
-    # above created file?
-    test -r ${destdir}/${target}.ok
+# If not already done, set up for a test run.
+
+force=false
+for target in kvm-shutdown distclean kvm-install kvm-keys kvm-test kvm-shutdown; do
+    ok=${destdir}/${target}.ok
+    if test ! -r "${ok}" || ${force} ; then
+	force=true
+	status "run 'make ${target}'"
+	if test -r ${webdir}/${target}-status.awk ; then
+	    # Because this make is in a pipeline its status is missed,
+	    # get around it by testing for ok.  Need to avoid passing
+	    # anything that might contain a quote (like the subject)
+	    # to the awk script.
+	    (
+		make -C ${repodir} ${target}
+		touch ${ok}
+	    ) | awk -v script="${script}" -f ${webdir}/${target}-status.awk
+	else
+	    make -C ${repodir} ${target}
+	    touch ${ok}
+	fi
+	if test ! -r ${ok}; then
+	    status "run 'make ${target}' died"
+	    # Stumble on.  Presumably the compile failed, and the
+	    # result is everything untested.
+	    break
+	fi
+    fi
 done
 
+# XXX: Can't use "make kvm-publish" here - it probably doesn't exist
+# in the source code.
 
-# Always copy over the results
-(
-    (
-	cd testing/pluto && tar cf - */OUTPUT
-    ) | (
-	cd ${destdir} && tar xpvf - && touch ${destdir}/tar.ok
-    )
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/tar.ok
+# Copy over all the tests.
+status "copy test sources"
+${webdir}/rsync-tests.sh ${repodir} ${destdir}
 
 
-(
-    cd ${basedir}/$(hostname)/${version}
-    # XXX: rundir gets used by json-summary to determine the directory
-    # name :-(
-    ${utilsdir}/json-results.py --rundir /${base}/$(hostname)/${version} */OUTPUT > table.new
-    for json in table ; do
-	mv ${json}.new ${json}.json
-    done
-    # So that this directory is imune to later changes, just copy the
-    # index page, along with all dependencies.
-    cp ${webdir}/i3.html ${destdir}/index.html
-    cp -r ${basedir}/js ${destdir}
-    cp ${webdir}/*.js ${destdir}/js
-    touch ${destdir}/i3.ok
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/i3.ok
+# Copy over all the results.
+status "copy test results"
+${webdir}/rsync-results.sh ${repodir} ${destdir}
 
 
-: cd ${basedir}/$(hostname)
-# This directory contains no html so generating json isn't very
-# useful.
-: # ${utilsdir}/json-summary.py --rundir . */table.json > table.new
-: # ${utilsdir}/json-graph.py */table.json > graph.new
-: mv old to new
+# Generate the results page.
+status "create results web page"
+${webdir}/build-results.sh ${repodir} ${repodir}/testing/pluto ${destdir}
 
 
-(
-    cd ${basedir}
-    ${utilsdir}/json-graph.py */*/table.json > graph.new
-    for json in graph ; do
-	mv ${json}.new ${json}.json
-    done
-    cp ${webdir}/i1.html index.html
-    cp ${webdir}/*.js js/
-    touch ${destdir}/i1.ok
-) 2>&1 | tee -a ${log}
-test -r ${destdir}/i1.ok
+status "finished"

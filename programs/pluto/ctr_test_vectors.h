@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014,2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,4 +12,16 @@
  * for more details.
  */
 
-int test_aes_ctr(const struct encrypt_desc *encrypt_desc);
+struct ctr_test_vector {
+	/* CK_MECHANISM_TYPE cipher_mechanism; */
+	/* struct encrypt_desc *encrypt_desc; */
+	const char *description;
+	const char *key;
+	const char *cb;
+	const char *plaintext;
+	const char *ciphertext;
+	const char *output_cb;
+};
+
+bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
+		      const struct ctr_test_vector *tests);

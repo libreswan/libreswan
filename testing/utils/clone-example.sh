@@ -10,13 +10,22 @@ prefix=krb.
 # Please note that some of these commands take a very long time. Don't
 # abort them when they seem slow.
 
-# Rebuild the clone (deletes any test domains).
+# Create/update the clone and install some packages.
+#
+# Since this modifies the .cow2 file that the test domains depend on,
+# first remove the test domains.
+#
+# To force a scratch build of the clone domain, run:
+#
+#   make uninstall-kvm-clone-domain
+#
+# before running this script.
 
 make KVM_PREFIX=${prefix} \
-     uninstall-kvm-clone-domain \
-     install-kvm-clone-domain
+     uninstall-kvm-test-domains
 
-# Install extra packages.
+make KVM_PREFIX=${prefix} \
+     install-kvm-clone-domain
 
 ./testing/utils/kvmsh.py \
     ${prefix}clone dnf install -y \
@@ -35,23 +44,36 @@ make KVM_PREFIX=${prefix} \
     freeipa-client \
     freeipa-server
 
-# Pre-build and install libreswan on clone.  More typically
-# kvm-install would be used at the end.
+
+# Pre-install/update libreswan on clone.
+#
+# This hack avoids having to install libreswan on the individual
+# domains.
 
 make KVM_PREFIX=${prefix} \
      KVM_BUILD_DOMAIN=${prefix}clone \
      kvm-install-${prefix}clone
 
-# Create the test clones
+
+# Create the test domains from the clone.
 
 make KVM_PREFIX=${prefix} \
      install-kvm-test-domains
 
-# Before anything else, you'll need to get nic, east, and west to have
-# FQDNs (/etc/hosts and /etc/hostname).  The script
-# swan-transmogrify.sh does this.  It will also disables the python
-# swan-transmogrify, which is run from rc.local, as that whould undo
-# all the good work we've just done.
+
+# Transmogrify the domains using swan-transmogrify.sh.
+#
+# Transmogrifying involes things like fixing up the host name, hosts
+# file, and network interfaces, and adding some default configuration
+# files.
+#
+# Unlike the python swan-transmogrify script used to transmogrify
+# normal test hosts, this script:
+#
+#  - is run once; swan-transmogrify, which would be run from rc.local
+#    on every reboot, is disabled
+#
+#  - deals with FQDNs (/etc/hosts, /etc/hostname) needed by kerberos
 
 for host in nic east west ; do
     ./testing/utils/kvmsh.py \
@@ -60,7 +82,10 @@ for host in nic east west ; do
 	${host}.testing.libreswan.org
 done
 
-# Create the KDC on nic (should NIC be left running?):
+
+# Create the KDC on nic.
+#
+# This leaves NIC running, should it?
 
 ./testing/utils/kvmsh.py \
     ${prefix}nic \
@@ -68,7 +93,10 @@ done
     -r TESTING.LIBRESWAN.ORG \
     -n testing.libreswan.org \
     -p swanswan -P swanswan -a swanswan \
-    --no-ntp --no-sshd --unattended
+    --no-ntp \
+    --no-sshd \
+    --unattended
+
 
 # Add east and west to the kerberos domain:
 
@@ -90,7 +118,8 @@ for host in east west ; do \
 	--unattended
 done
 
-# Finally, install libreswan and run a test case.
+
+# Finally, run a test case to prove all is ok.
 
 make KVM_PREFIX=${prefix} \
      KVM_TESTS=testing/pluto/ikev2-gssapi-01 \

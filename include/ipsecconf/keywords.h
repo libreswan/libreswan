@@ -48,6 +48,7 @@ enum keyword_string_config_field {
 	KSF_DUMPDIR,
 	KSF_STATSBINARY,
 	KSF_IPSECDIR,
+	KSF_NSSDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
 	KSF_MYID,
@@ -55,8 +56,8 @@ enum keyword_string_config_field {
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
 	KSF_LISTEN,
-	KSF_OCSPURI,
-	KSF_OCSPTRUSTNAME,
+	KSF_OCSP_URI,
+	KSF_OCSP_TRUSTNAME,
 	KSF_MAX
 };
 
@@ -80,10 +81,15 @@ enum keyword_numeric_config_field {
 	KBF_TFCPAD,
 	KBF_REQID,
 	KBF_XFRMLIFETIME,
-	KBF_STRICTCRLPOLICY,
-	KBF_STRICTOCSPPOLICY,
-	KBF_OCSPENABLE,
-	KBF_OCSPTIMEOUT,
+	KBF_CRL_STRICT,
+	KBF_CRL_CHECKINTERVAL,
+	KBF_OCSP_STRICT,
+	KBF_OCSP_ENABLE,
+	KBF_OCSP_TIMEOUT,
+	KBF_OCSP_CACHE_SIZE,
+	KBF_OCSP_CACHE_MIN,
+	KBF_OCSP_CACHE_MAX,
+	KBF_OCSP_METHOD,
 	KBF_CURLTIMEOUT,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
@@ -91,7 +97,6 @@ enum keyword_numeric_config_field {
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
-	KBF_CRLCHECKINTERVAL,
 	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
@@ -118,7 +123,7 @@ enum keyword_numeric_config_field {
 	KBF_RETRANSMIT_INTERVAL,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
-	KBF_FORCEENCAP,
+	KBF_ENCAPS,
 	KBF_IKEv2,
 	KBF_ESN,
 	KBF_IKEv2_ALLOW_NARROWING,
@@ -148,6 +153,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
 	KBF_NFLOG_CONN,		/* Enable per-conn nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
+	KBF_SECCOMP,		/* set SECCOMP mode */
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_MAX
@@ -177,6 +183,7 @@ enum keyword_string_conn_field {
 	KSCF_CA,
 	KSCF_PROTOPORT,
 	KSCF_SOURCEIP,
+	KSCF_VTI_IP,
 	KSCF_USERNAME,
 	KSCF_SUBNETS,
 	KSCF_ADDRESSPOOL,
@@ -213,6 +220,7 @@ enum keyword_numeric_conn_field {
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,
+	KNCF_AUTH,
 	KNCF_MAX
 };
 
@@ -229,8 +237,6 @@ enum keyword_valid {
 	kv_config = LELEM(0),           /* may be present in config section */
 	kv_conn   = LELEM(1),           /* may be present in conn section */
 	kv_leftright = LELEM(2),        /* comes in leftFOO and rightFOO varients */
-	kv_auto   = LELEM(3),           /* valid when keyingtype=auto */
-	kv_manual = LELEM(4),           /* valid when keyingtype=manual */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
 	kv_policy = LELEM(6),           /* is a policy affecting verb, processed specially */
 	kv_processed = LELEM(7),        /* is processed, do not output literal string */

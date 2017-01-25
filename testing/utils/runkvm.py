@@ -155,7 +155,7 @@ def run_test(args, child):
         x509 = "--x509"
     else:
         x509 = ""
-	
+
     cmd = "./%sinit.sh" %  (args.hostname)
     read_exec_shell_cmd(child, cmd, timer)
 

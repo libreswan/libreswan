@@ -28,6 +28,7 @@
 #include <certdb.h>
 #include "log.h"
 #include "lswalloc.h"
+#include "nss_err.h"
 
 static const char crl_name[] = "_import_crl";
 
@@ -105,7 +106,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	 * The issuer name is needed to flush the cache */
 	if ((handle = CERT_GetDefaultCertDB()) == NULL) {
 		DBG(DBG_X509,
-		    DBG_log("could not get db handle %d", PORT_GetError()));
+		    DBG_log("NSS error getting DB handle: %s",
+			    nss_err_str(PORT_GetError())));
 		return -1;
 	}
 
@@ -114,15 +116,16 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	/* arena owned by crl */
 	if ((crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE)) == NULL) {
 		DBG(DBG_X509,
-		    DBG_log("could not decode crl %d", PORT_GetError()));
+		    DBG_log("NSS error decoding CRL: %s",
+			    nss_err_str(PORT_GetError())));
 		PORT_FreeArena(arena, FALSE);
 		goto end;
 	}
 
 	if ((cacert = CERT_FindCertByName(handle, &crl->crl.derName)) == NULL) {
 		DBG(DBG_X509,
-		    DBG_log("could not find cert by crl.derName %d",
-							       PORT_GetError()));
+		    DBG_log("NSS error finding cert by name: %s",
+			    nss_err_str(PORT_GetError())));
 		SEC_DestroyCrl(crl);
 		goto end;
 	}

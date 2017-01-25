@@ -53,7 +53,6 @@
 
 #include <libreswan.h>
 
-#include "sha1.h"
 #include "constants.h"
 #include "defs.h"
 #include "rnd.h"

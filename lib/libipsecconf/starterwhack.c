@@ -365,6 +365,9 @@ static void set_whack_end(char *lr,
 	if (!isanyaddr(&l->sourceip))
 		w->host_srcip = l->sourceip;
 
+	if (!isanyaddr(&l->vti_ip.addr))
+		w->host_vtiip = l->vti_ip;
+
 	w->has_client = l->has_client;
 	if (l->has_client)
 		w->client = l->subnet;
@@ -388,6 +391,9 @@ static void set_whack_end(char *lr,
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
 		w->sendcert = cert_alwayssend;
+
+	if (l->options_set[KNCF_AUTH])
+		w->authby = l->options[KNCF_AUTH];
 
 	w->updown = l->updown;
 	w->virt = NULL;
@@ -596,8 +602,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.send_ca = CA_SEND_NONE;
 
 
-	if (conn->options_set[KBF_FORCEENCAP])
-		msg.forceencaps = conn->options[KBF_FORCEENCAP];
+	if (conn->options_set[KBF_ENCAPS])
+               msg.encaps = conn->options[KBF_ENCAPS];
+	else
+               msg.encaps = encaps_auto;
+
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
@@ -697,6 +706,18 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);
 
+	if (conn->options_set[KBF_AUTHBY]) {
+		conn->policy &= ~POLICY_ID_AUTH_MASK;
+		conn->policy |= conn->options[KBF_AUTHBY];
+#ifdef STARTER_POLICY_DEBUG
+		starter_log(LOG_LEVEL_DEBUG,
+				"%s: setting conn->policy=%08x (%08x)",
+				conn->name,
+				(unsigned int)conn->policy,
+				conn->options[KBF_AUTHBY]);
+#endif
+	}
+
 	/* for bug #1004 */
 	update_ports(&msg);
 
@@ -705,15 +726,33 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 
 	r = send_whack_msg(&msg, cfg->ctlbase);
+	if (r != 0)
+		return r;
 
-	if (r == 0 && (conn->policy & POLICY_RSASIG)) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
-		if (r == 0)
-			r = starter_whack_add_pubkey(cfg, conn, &conn->right,
-						"right");
+	/* why does this not work?
+	 * if ((conn->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+	 */
+
+	if ((conn->policy & POLICY_RSASIG) == LEMPTY &&
+		(conn->policy & POLICY_PSK) == LEMPTY &&
+		(conn->policy & POLICY_AUTH_NULL) == LEMPTY) {
+			/* authby= was also not specified - fill in default */
+			conn->policy |= POLICY_RSASIG;
 	}
 
-	return r;
+	if ((conn->policy & POLICY_RSASIG) || conn->left.authby == AUTH_RSASIG) {
+		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
+		if (r != 0)
+			return r;
+	}
+
+	if ((conn->policy & POLICY_RSASIG) || conn->right.authby == AUTH_RSASIG) {
+		r = starter_whack_add_pubkey(cfg, conn, &conn->right, "right");
+		if (r != 0)
+			return r;
+	}
+
+	return 0;
 }
 
 static bool one_subnet_from_string(struct starter_conn *conn,

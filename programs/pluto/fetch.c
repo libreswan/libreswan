@@ -44,6 +44,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "secrets.h"
+#include "nss_err.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -88,8 +89,7 @@ extern long curl_timeout;
 static void lock_crl_fetch_list(const char *who)
 {
 	pthread_mutex_lock(&crl_fetch_list_mutex);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl fetch request list locked by '%s'", who));
+	DBG(DBG_X509, DBG_log("crl fetch request list locked by '%s'", who));
 }
 
 /*
@@ -97,23 +97,26 @@ static void lock_crl_fetch_list(const char *who)
  */
 static void unlock_crl_fetch_list(const char *who)
 {
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("crl fetch request list unlocked by '%s'", who));
 	pthread_mutex_unlock(&crl_fetch_list_mutex);
+	DBG(DBG_X509, DBG_log("crl fetch request list unlocked by '%s'", who));
 }
 
 /*
- * wakes up the sleeping fetch thread
+ * wake up the sleeping fetch thread
  */
 void wake_fetch_thread(const char *who)
 {
-	if (deltasecs(crl_check_interval) > 0) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("fetch thread wake call by '%s'", who));
-		pthread_mutex_lock(&fetch_wake_mutex);
-		pthread_cond_signal(&fetch_wake_cond);
-		pthread_mutex_unlock(&fetch_wake_mutex);
+	/* ignore wake up calls if we are not enabled */
+	if (deltasecs(crl_check_interval) == 0) {
+		loglog(RC_CRLERROR,
+			"CRL fetching not enabled - wake up call ignored");
+		return;
 	}
+
+	DBG(DBG_X509, DBG_log("fetch thread wake call by '%s'", who));
+	pthread_mutex_lock(&fetch_wake_mutex);
+	pthread_cond_signal(&fetch_wake_cond);
+	pthread_mutex_unlock(&fetch_wake_mutex);
 }
 
 /*
@@ -172,7 +175,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("Trying cURL '%s' with connect timeout of %ld",
 			uri, timeout));
 
@@ -276,7 +279,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 	snprintf(ldap_url, url.len + 1, "%.*s", (int)url.len, url.ptr);
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_X509,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url));
 
 	rc = ldap_url_parse(ldap_url, &lurl);
@@ -408,14 +411,14 @@ static void fetch_crls(void)
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
-				DBG(DBG_CONTROL,
+				DBG(DBG_X509,
 					DBG_log("fetch failed:  %s", ugh));
 			} else {
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
 					     gn->name.len, "crl uri");
 				if (insert_crl_nss(&blob, &crl_uri, NULL)) {
-					DBG(DBG_CONTROL,
+					DBG(DBG_X509,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
 					break;
@@ -443,7 +446,9 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	DBG(DBG_CONTROL,
+	deltatime_t interval = { 5 }; /* First fetch interval, then regular */
+
+	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));
 
 	pthread_mutex_lock(&fetch_wake_mutex);
@@ -452,23 +457,24 @@ static void *fetch_thread(void *arg UNUSED)
 		int status;
 
 		clock_gettime(CLOCK_REALTIME, &wakeup_time);
-		wakeup_time.tv_sec += deltasecs(crl_check_interval);
+		wakeup_time.tv_sec += deltasecs(interval);
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("next regular crl check in %ld seconds",
-			    (long)deltasecs(crl_check_interval)));
+			    (long)deltasecs(interval)));
 		status = pthread_cond_timedwait(&fetch_wake_cond,
 						&fetch_wake_mutex,
 						&wakeup_time);
 
 		if (status == ETIMEDOUT) {
-			DBG(DBG_CONTROL, {
+			DBG(DBG_X509, {
 				    DBG_log(" ");
 				    DBG_log("*time to check crls");
 			    });
 			check_crls();
+			interval = crl_check_interval;
 		} else {
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("fetch thread was woken up"));
 		}
 		fetch_crls();
@@ -562,11 +568,11 @@ void add_distribution_points(const generalName_t *newPoints,
  */
 void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 {
-	DBG(DBG_CONTROL, DBG_log("attempting to add a new CRL fetch request"));
+	DBG(DBG_X509, DBG_log("attempting to add a new CRL fetch request"));
 
 	if (issuer_dn == NULL || issuer_dn->data == NULL ||
 				 issuer_dn->len < 1) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_X509,
 		    DBG_log("no issuer dn to gather fetch information from"));
 		return;
 	}
@@ -574,8 +580,8 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 	CERTCertificate *ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
 						issuer_dn);
 	if (ca == NULL) {
-		DBG_log("no CA cert found to add fetch request: [%d]",
-							       PORT_GetError());
+		DBG_log("NSS error finding CA to add to fetch request: %s",
+			 nss_err_str(PORT_GetError()));
 		return;
 	}
 
@@ -594,11 +600,11 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 
 			if (new_dp == NULL) {
 				if (end_dp == NULL) {
-					DBG(DBG_CONTROL,
+					DBG(DBG_X509,
 						DBG_log("no distribution point available for new fetch request"));
 					break;
 				}
-				DBG(DBG_CONTROL,
+				DBG(DBG_X509,
 					DBG_log("no CA crl DP available; using provided DP"));
 				new_dp = end_dp;
 			}
@@ -621,13 +627,13 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 			nr->next = crl_fetch_reqs;
 			crl_fetch_reqs = nr;
 
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("crl fetch request added"));
 			break;
 		}
 		if (same_dn(idn, req->issuer)) {
 			/* there is already a fetch request */
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("crl fetch request already exists"));
 
 			/* there might be new distribution points */
@@ -635,17 +641,17 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 
 			if (new_dp == NULL) {
 				if (end_dp == NULL) {
-					DBG(DBG_CONTROL,
+					DBG(DBG_X509,
 						DBG_log("no CA crl DP available"));
 					break;
 				}
-				DBG(DBG_CONTROL,
+				DBG(DBG_X509,
 				    DBG_log("no CA crl DP available; using provided DP"));
 				new_dp = end_dp;
 			}
 
 			add_distribution_points(new_dp, &req->distributionPoints);
-			DBG(DBG_CONTROL,
+			DBG(DBG_X509,
 			    DBG_log("crl fetch request augmented"));
 			break;
 		}

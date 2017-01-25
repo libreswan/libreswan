@@ -25,11 +25,9 @@ west #
 003 "west-east": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 003 "west-east" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "west-east" #1: initiating Aggressive Mode
 003 "west-east" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "west-east" #1: STATE_AGGR_I1: initiate
 002 "west-east" #1: Aggressive mode peer ID is ID_FQDN: '@east'
 004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP1536}
@@ -51,9 +49,7 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-000  
 west #
  # Let R_U_THERE packets flow
 west #
@@ -76,8 +72,6 @@ west #
 Tunnel should be down
 west #
  ipsec whack --trafficstatus
-000  
-000  
 west #
  # Remove the Blockage
 west #
@@ -104,9 +98,7 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-000  
 006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-000  
 west #
  echo done
 done

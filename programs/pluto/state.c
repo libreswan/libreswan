@@ -66,10 +66,8 @@
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 
-#include "sha1.h"
-#include "md5.h"
 #include "cookie.h"
-#include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "crypt_symkey.h"
 #include "spdb.h"
 #include "ikev2.h"
@@ -330,10 +328,10 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 	}
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("%s state #%lu: %s(%s) > %s(%s)",
+	    DBG_log("%s state #%lu: %s(%s) => %s(%s)",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, old_state), old_category->description,
-		    enum_show(&state_names, new_state), new_category->description);
+		    enum_name(&state_names, old_state), old_category->description,
+		    enum_name(&state_names, new_state), new_category->description);
 	    struct state_category *state_category;
 	    int category_states = 0;
 	    for (state_category = (struct state_category *)&category;
@@ -483,9 +481,9 @@ struct state *new_state(void)
 				 st->st_serialno, (void *) st));
 	DBG(DBG_CONTROLMORE,
 	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: new > %s(%s)",
+	    DBG_log("%s state #%lu: new => %s(%s)",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, st->st_state), category->description));
+		    enum_name(&state_names, st->st_state), category->description));
 
 	return st;
 }
@@ -680,6 +678,55 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
+void ikev2_expire_unused_parent(struct state *pst)
+{
+	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
+		return; /* only deal with established parent SA */
+
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+			if (st->st_clonedfrom == pst->st_serialno)
+				return;
+			});
+
+	{
+		char cib[CONN_INST_BUF];
+		struct connection *c = pst->st_connection;
+
+		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
+				pst->st_serialno, c->name,
+				fmt_conn_instance(c, cib));
+		delete_event(pst);
+		event_schedule(EVENT_SA_EXPIRE, 0, pst);
+	}
+}
+
+static void flush_pending_quickmode (struct state *pst)
+{
+        struct state *st;
+
+	if (!IS_IKE_SA(pst))
+		return; /* we had better be a parent */
+	if(pst->st_ikev2)
+		return; /* quick mode is only for IKEv1 */
+
+        FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+                if (st->st_clonedfrom == pst->st_serialno) {
+			char cib[CONN_INST_BUF];
+			struct connection *c = st->st_connection;
+			if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
+				continue;
+
+			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
+					"connection\"%s\"%s state #%lu: - the parent is going away",
+					c->name, fmt_conn_instance(c, cib),
+					st->st_serialno);
+
+			delete_event(st);
+			event_schedule( EVENT_SA_REPLACE, 0, st);
+               }
+        });
+}
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -692,7 +739,7 @@ void delete_state(struct state *st)
 			char cib[CONN_INST_BUF];
 			DBG_log("deleting state #%lu (%s) \"%s\"%s",
 				st->st_serialno,
-				enum_show(&state_names, st->st_state),
+				enum_name(&state_names, st->st_state),
 				c->name,
 				fmt_conn_instance(c, cib));
 		});
@@ -702,21 +749,21 @@ void delete_state(struct state *st)
 		 * the message prefix.
 		 */
 		libreswan_log("deleting state (%s)",
-			enum_show(&state_names, st->st_state));
+			enum_name(&state_names, st->st_state));
 	} else {
 		char cib[CONN_INST_BUF];
 		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
 			st->st_serialno,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			c->name,
 			fmt_conn_instance(c, cib));
 	}
 
 	DBG(DBG_CONTROLMORE,
 	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: %s(%s) > delete",
+	    DBG_log("%s state #%lu: %s(%s) => delete",
 		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_show(&state_names, st->st_state), category->description));
+		    enum_name(&state_names, st->st_state), category->description));
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -733,12 +780,11 @@ void delete_state(struct state *st)
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
-		DBG(DBG_OPPO, DBG_log("OE: orphaning hold with failureshunt"));
-		DBG(DBG_OPPO, DBG_log("negotiationshunt=%s, failureshunt=%s",
-			nego_shunt == SPI_PASS ? "passthrough" : "hold",
-			failure_shunt == SPI_PASS ? "passthrough" : "hold"));
+		DBG(DBG_OPPO, DBG_log(
+			"OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
+			enum_short_name(&spi_names, failure_shunt),
+			enum_short_name(&spi_names, nego_shunt)));
 
-		DBG(DBG_OPPO, DBG_log("OE: delete_state needs to bare the shunt"));
 		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
 			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
 		}
@@ -861,6 +907,9 @@ void delete_state(struct state *st)
 	 * deleting our connection.
 	 */
 	flush_pending_by_state(st);
+
+	/* handle pending quick mode IKEv1 states */
+	flush_pending_quickmode(st);
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
@@ -1369,7 +1418,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 		    } else {
 			    DBG_log("v1 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1402,7 +1451,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1438,7 +1487,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie,
 				    st->st_serialno);
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state)));
+				    enum_name(&state_names, st->st_state)));
 			return st;
 		});
 
@@ -1472,7 +1521,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1522,7 +1571,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 child state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -1560,7 +1609,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 		    } else {
 			    DBG_log("p15 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
+				    enum_name(&state_names, st->st_state));
 		    }
 	    });
 
@@ -2091,7 +2140,6 @@ static struct state **sort_states(void)
 
 void show_traffic_status(void)
 {
-	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	struct state **array = sort_states();
 
@@ -2107,7 +2155,6 @@ void show_traffic_status(void)
 				whack_log(RC_INFORMATIONAL_TRAFFIC,
 					  "%s", state_buf);
 		}
-		whack_log(RC_COMMENT, " "); /* spacer */
 		pfree(array);
 	}
 }
@@ -2270,7 +2317,7 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * A host behind a NAT SHOULD NOT do this type of dynamic address
  * update if a validated packet has different port and/or address
  * values because it opens a possible DoS attack (such as allowing
- * an attacker to break the connection with a single packet). 
+ * an attacker to break the connection with a single packet).
  */
 void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
@@ -2411,21 +2458,28 @@ void show_globalstate_status(void)
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
 	{
 		whack_log(RC_COMMENT, "~states.enumerate.%s:%d",
-			enum_show(&state_names, s), state_count[s]);
+			enum_name(&state_names, s), state_count[s]);
 	}
 }
 
-
-void log_newest_sa_change(char *f, struct state *const st)
+static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
+			  struct state *const st)
 {
-
 	DBG(DBG_CONTROLMORE,
-			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",f,
-				st->st_connection->name,
+			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
+				f, st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
-				st->st_serialno,
-				st->st_connection->newest_ipsec_sa,
-				st->st_connection->spd.
-				eroute_owner, st->st_clonedfrom));
+				st->st_serialno, old_ipsec_sa,
+				st->st_connection->spd.eroute_owner,
+				st->st_clonedfrom));
+}
+
+void set_newest_ipsec_sa(const char *m, struct state *const st)
+{
+	so_serial_t old_ipsec_sa = st->st_connection->newest_ipsec_sa;
+
+	st->st_connection->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change(m, old_ipsec_sa, st);
+
 }

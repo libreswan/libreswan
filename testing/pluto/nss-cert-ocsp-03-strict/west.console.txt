@@ -15,6 +15,7 @@ west #
 000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-ocsp":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west
 000 "nss-cert-ocsp":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "nss-cert-ocsp":   our auth:rsasig, their auth:rsasig
 000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "nss-cert-ocsp":   labeled_ipsec:no;
 000 "nss-cert-ocsp":   policy_label:unset;
@@ -25,11 +26,13 @@ west #
 000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
  echo "initdone"
 initdone
+west #
+ ipsec whack --debug-all --impair-retransmits
 west #
  ipsec auto --up nss-cert-ocsp
 002 "nss-cert-ocsp" #1: initiating Main Mode
@@ -40,20 +43,9 @@ west #
 108 "nss-cert-ocsp" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 10000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 20000ms for response
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 40000ms for response
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-031 "nss-cert-ocsp" #1: max number of retransmissions (4) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "nss-cert-ocsp" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "nss-cert-ocsp" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
+031 "nss-cert-ocsp" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "nss-cert-ocsp" #1: deleting state (STATE_MAIN_I3)
 west #
  echo done
 done

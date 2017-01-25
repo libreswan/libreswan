@@ -238,9 +238,6 @@ struct raw_iface *find_raw_ifaces6(void)
  */
 bool use_interface(const char *rifn)
 {
-	if (pluto_ifn_inst[0] == '\0')
-		pluto_ifn_inst = clone_str(rifn, "genifn");
-
 	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
 		return FALSE;
 	} else {

@@ -1,3 +1,4 @@
+/^\[ 00.00\] audit.*$/d
 /tracing thread pid = \(.*\)/d
 s/spawn \(.*\) single/spawn PATH single/
 s/Program invoked with \(.*\)\/start.sh/Program invoked with PATH\/start.sh/
@@ -104,3 +105,4 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*bytes leftover after parsing attributes in process.*$/d
 s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
 /^.*CPU feature 'AVX registers' is not supported.*$/d
+/^.*hrtimer: interrupt took .*$/d

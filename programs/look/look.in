@@ -99,12 +99,12 @@ echo ROUTING TABLES
 ip -4 route
 ip -6 route
 
-if [ -f @IPSEC_CONFDDIR@/cert9.db ]; then
+if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
     certutil -L -d sql:@IPSEC_NSSDIR@ | \
 	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
-elif [ -f @IPSEC_CONFDDIR@/cert8.db ]; then
+elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d @IPSEC_NSSDIR@ | head -4
     certutil -L -d @IPSEC_NSSDIR@ | \

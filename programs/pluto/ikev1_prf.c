@@ -32,6 +32,7 @@
 #include "ike_alg.h"
 #include "packet.h"
 #include "pluto_crypt.h"
+#include "crypt_hash.h"
 #include "crypt_symkey.h"
 
 /*
@@ -39,142 +40,145 @@
  *
  * MUST BE THREAD-SAFE
  */
-PK11SymKey *ikev1_signature_skeyid(const struct hash_desc *hasher,
+PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   const chunk_t Ni,
 				   const chunk_t Nr,
 				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
 {
-	struct crypt_prf *prf = crypt_prf_init("SKEYID sig", hasher, dh_secret);
 	/* key = Ni|Nr */
-	crypt_prf_init_chunk("Ni", prf, Ni);
-	crypt_prf_init_chunk("Nr", prf, Nr);
+	chunk_t key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
+	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID sig", DBG_CRYPT,
+						     prf_desc,
+						     "Ni|Nr", key);
+	freeanychunk(key);
 	/* seed = g^xy */
-	crypt_prf_update(prf);
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
  * Compute: SKEYID = prf(pre-shared-key, Ni_b | Nr_b)
  */
-PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
+PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
-					chunk_t Ni, chunk_t Nr,
-					PK11SymKey *scratch)
+					chunk_t Ni, chunk_t Nr)
 {
-	struct crypt_prf *prf = crypt_prf_init("SKEYID psk", hasher, scratch);
 	/* key = pre-shared-key */
-	crypt_prf_init_chunk("psk", prf, pre_shared_key);
+	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID psk", DBG_CRYPT,
+						     prf_desc,
+						     "psk", pre_shared_key);
 	/* seed = Ni_b | Nr_b */
-	crypt_prf_update(prf);
 	crypt_prf_update_chunk("Ni", prf, Ni);
 	crypt_prf_update_chunk("Nr", prf, Nr);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
  * SKEYID_d = prf(SKEYID, g^xy | CKY-I | CKY-R | 0)
  */
-PK11SymKey *ikev1_skeyid_d(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r)
 {
-	struct crypt_prf *prf = crypt_prf_init("SKEYID_d", hasher, dh_secret);
 	/* key = SKEYID */
-	crypt_prf_init_symkey("SKEYID", prf, skeyid);
+	struct crypt_prf *prf = crypt_prf_init_symkey("SKEYID_d", DBG_CRYPT,
+						      prf_desc,
+						      "SKEYID", skeyid);
 	/* seed = g^xy | CKY-I | CKY-R | 0 */
-	crypt_prf_update(prf);
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
 	crypt_prf_update_chunk("CKI_i", prf, cky_i);
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("0", prf, 0);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
  * SKEYID_a = prf(SKEYID, SKEYID_d | g^xy | CKY-I | CKY-R | 1)
  */
-PK11SymKey *ikev1_skeyid_a(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r)
 {
-	struct crypt_prf *prf = crypt_prf_init("SKEYID_a", hasher, dh_secret);
 	/* key = SKEYID */
-	crypt_prf_init_symkey("SKEYID", prf, skeyid);
+	struct crypt_prf *prf = crypt_prf_init_symkey("SKEYID_a", DBG_CRYPT,
+						      prf_desc,
+						      "SKEYID", skeyid);
 	/* seed = SKEYID_d | g^xy | CKY-I | CKY-R | 1 */
-	crypt_prf_update(prf);
 	crypt_prf_update_symkey("SKEYID_d", prf, skeyid_d);
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
 	crypt_prf_update_chunk("CKI_i", prf, cky_i);
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("1", prf, 1);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
 /*
  * SKEYID_e = prf(SKEYID, SKEYID_a | g^xy | CKY-I | CKY-R | 2)
  */
-PK11SymKey *ikev1_skeyid_e(const struct hash_desc *hasher,
+PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r)
 {
-	struct crypt_prf *prf = crypt_prf_init("SKEYID_e", hasher, dh_secret);
 	/* key = SKEYID */
-	crypt_prf_init_symkey("SKEYID", prf, skeyid);
+	struct crypt_prf *prf = crypt_prf_init_symkey("SKEYID_e", DBG_CRYPT,
+						      prf_desc,
+						      "SKEYID", skeyid);
 	/* seed = SKEYID_a | g^xy | CKY-I | CKY-R | 2 */
-	crypt_prf_update(prf);
 	crypt_prf_update_symkey("SKEYID_a", prf, skeyid_a);
 	crypt_prf_update_symkey("g^xy", prf, dh_secret);
 	crypt_prf_update_chunk("CKI_i", prf, cky_i);
 	crypt_prf_update_chunk("CKI_r", prf, cky_r);
 	crypt_prf_update_byte("2", prf, 2);
 	/* generate */
-	return crypt_prf_final(prf);
+	return crypt_prf_final_symkey(&prf);
 }
 
-static PK11SymKey *appendix_b_keymat_e(const struct hash_desc *hasher,
+static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				       const struct encrypt_desc *encrypter,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat)
 {
-	if (PK11_GetKeyLength(skeyid_e) >= required_keymat) {
-		return encrypt_key_from_symkey_bytes(skeyid_e, encrypter, 0,
-						     required_keymat);
+	if (sizeof_symkey(skeyid_e) >= required_keymat) {
+		return symkey_from_symkey_bytes("keymat", DBG_CRYPT,
+						&encrypter->common,
+						0, required_keymat,
+						skeyid_e);
 	}
 	/* K1 = prf(skeyid_e, 0) */
 	PK11SymKey *keymat;
 	{
-		struct crypt_prf *prf = crypt_prf_init("appendix_b",
-						       hasher, skeyid_e);
-		crypt_prf_init_symkey("SKEYID_e", prf, skeyid_e);
-		crypt_prf_update(prf);
+		struct crypt_prf *prf = crypt_prf_init_symkey("appendix_b", DBG_CRYPT,
+							      prf_desc,
+							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_byte("0", prf, 0);
-		keymat = crypt_prf_final(prf);
+		keymat = crypt_prf_final_symkey(&prf);
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_k = key_from_symkey_bytes(keymat, 0, PK11_GetKeyLength(keymat));
-	while (PK11_GetKeyLength(keymat) < required_keymat) {
+	PK11SymKey *old_k = key_from_symkey_bytes(keymat, 0, sizeof_symkey(keymat));
+	while (sizeof_symkey(keymat) < required_keymat) {
 		/* Kn = prf(skeyid_e, Kn-1) */
-		struct crypt_prf *prf = crypt_prf_init("SKEYID_e", hasher, skeyid_e);
-		crypt_prf_init_symkey("SKEYID_e", prf, skeyid_e);
-		crypt_prf_update(prf);
+		struct crypt_prf *prf = crypt_prf_init_symkey("Kn", DBG_CRYPT,
+							      prf_desc,
+							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_symkey("old_k", prf, old_k);
-		PK11SymKey *new_k = crypt_prf_final(prf);
-		append_symkey_symkey(hasher, &keymat, new_k);
+		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
+		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
 		free_any_symkey("old_k#N", &old_k);
 		old_k = new_k;
 	}
 	free_any_symkey("old_k#final", &old_k);
-	PK11SymKey *cryptkey = encrypt_key_from_symkey_bytes(keymat, encrypter, 0,
-							     required_keymat);
+	PK11SymKey *cryptkey = symkey_from_symkey_bytes("cryptkey", DBG_CRYPT,
+							&encrypter->common,
+							0, required_keymat,
+							keymat);
 	free_any_symkey("keymat", &keymat);
 	return cryptkey;
 }
@@ -195,8 +199,8 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			    )
 {
 	oakley_auth_t auth = skq->auth;
-	oakley_hash_t hash = skq->prf_hash;
-	const struct hash_desc *hasher = crypto_get_hasher(hash);
+	const struct prf_desc *prf_desc = skq->prf;
+	const struct hash_desc *hasher = prf_desc ? prf_desc->hasher : NULL;
 	chunk_t ni;
 	chunk_t nr;
 	chunk_t gi;
@@ -221,13 +225,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			chunk_t pss;
 
 			setchunk_from_wire(pss, skq, &skq->pss);
-			skeyid = ikev1_pre_shared_key_skeyid(hasher, pss,
-							     ni, nr, shared);
+			skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
+							     ni, nr);
 		}
 		break;
 
 	case OAKLEY_RSA_SIG:
-		skeyid = ikev1_signature_skeyid(hasher, ni, nr, shared);
+		skeyid = ikev1_signature_skeyid(prf_desc, ni, nr, shared);
 		break;
 
 	/* Not implemented */
@@ -242,14 +246,14 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	}
 
 	/* generate SKEYID_* from SKEYID */
-	PK11SymKey *skeyid_d = ikev1_skeyid_d(hasher, skeyid, shared,
+	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf_desc, skeyid, shared,
 					      icookie, rcookie);
-	PK11SymKey *skeyid_a = ikev1_skeyid_a(hasher, skeyid, skeyid_d,
+	PK11SymKey *skeyid_a = ikev1_skeyid_a(prf_desc, skeyid, skeyid_d,
 					      shared, icookie, rcookie);
-	PK11SymKey *skeyid_e = ikev1_skeyid_e(hasher, skeyid, skeyid_a,
+	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf_desc, skeyid, skeyid_a,
 					      shared, icookie, rcookie);
 
-	PK11SymKey *enc_key = appendix_b_keymat_e(hasher, encrypter,
+	PK11SymKey *enc_key = appendix_b_keymat_e(prf_desc, encrypter,
 						  skeyid_e, keysize);
 
 	*skeyid_out = skeyid;
@@ -263,19 +267,17 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 	/* generate IV */
 	{
-		union hash_ctx hash_ctx;
-
-		new_iv->len = hasher->hash_digest_len;
-		new_iv->ptr = alloc_bytes(new_iv->len, "calculated new iv");
+		*new_iv = alloc_chunk(hasher->hash_digest_len,
+				      "calculated new iv");
 
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("DH_i:", gi);
 			    DBG_dump_chunk("DH_r:", gr);
 		    });
-		hasher->hash_init(&hash_ctx);
-		hasher->hash_update(&hash_ctx, gi.ptr, gi.len);
-		hasher->hash_update(&hash_ctx, gr.ptr, gr.len);
-		hasher->hash_final(new_iv->ptr, &hash_ctx);
+		struct crypt_hash *ctx = crypt_hash_init(hasher, "IV", DBG_CRYPT);
+		crypt_hash_digest_chunk(ctx, "GI", gi);
+		crypt_hash_digest_chunk(ctx, "GR", gr);
+		crypt_hash_final_chunk(&ctx, *new_iv);
 		DBG(DBG_CRYPT, DBG_log("end of IV generation"));
 	}
 }
@@ -292,7 +294,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	zero(skr);	/* ??? pointer fields may not be NULLed */
 	INIT_WIRE_ARENA(*skr);
 
-	const struct oakley_group_desc *group = lookup_group(dhq.oakley_group);
+	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
 
 	SECKEYPrivateKey *ltsecret = dhq.secret;

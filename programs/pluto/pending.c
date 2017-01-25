@@ -97,6 +97,7 @@ void add_pending(int whack_sock,
 					ipstr(&c->spd.that.host_addr, &b),
 					c->name, fmt_conn_instance(c, cib));
 			});
+			close_any(whack_sock);
 			return;
 		}
 	}

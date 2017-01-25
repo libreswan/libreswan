@@ -13,6 +13,7 @@ east #
 000 "nss-cert-chain": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-chain":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east_chain_endcert
 000 "nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "nss-cert-chain":   our auth:rsasig, their auth:rsasig
 000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "nss-cert-chain":   labeled_ipsec:no;
 000 "nss-cert-chain":   policy_label:unset;
@@ -23,7 +24,7 @@ east #
 000 "nss-cert-chain":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-chain":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
  echo "initdone"
@@ -37,6 +38,23 @@ nic                                                          P,,
 east_chain_endcert                                           u,u,u
 east_chain_int_2                                             ,,   
 east_chain_int_1                                             ,,   
+east #
+ # catch any cert chain specific leaks
+east #
+ ipsec whack --shutdown
+002 shutting down
+east #
+ grep leak /tmp/pluto.log
+leak-detective enabled
+leak: EVENT_NAT_T_KEEPALIVE, item size: 32
+leak: EVENT_SD_WATCHDOG, item size: 32
+leak: EVENT_LOG_DAILY, item size: 32
+leak: EVENT_SHUNT_SCAN, item size: 32
+leak: kernel integ, item size: 32
+leak: EVENT_PENDING_PHASE2, item size: 32
+leak: EVENT_PENDING_DDNS, item size: 32
+leak: EVENT_REINIT_SECRET, item size: 32
+leak detective found 8 leaks, total size 256
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

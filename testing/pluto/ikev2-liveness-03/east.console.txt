@@ -14,7 +14,6 @@ east #
  # east should have brought down but NOT re-established the tunnel
 east #
  ipsec whack --trafficstatus
-000  
 east #
  # can be seen on east logs
 east #

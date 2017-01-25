@@ -70,11 +70,14 @@ struct whack_end {
 	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;	/* access control groups (if any) -- parsed by pluto */
 
+	enum keyword_authby authby;
+
 	enum keyword_host host_type;
 	ip_address host_addr,
 		   host_nexthop,
 		   host_srcip;
-	ip_subnet client;
+	ip_subnet  client,
+		   host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
@@ -119,6 +122,7 @@ struct whack_message {
 	bool whack_traffic_status;
 	bool whack_shunt_status;
 	bool whack_fips_status;
+	bool whack_seccomp_crashtest;
 
 	bool whack_shutdown;
 
@@ -161,7 +165,7 @@ struct whack_message {
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
-	bool forceencaps;
+	enum encaps_options encaps;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;
@@ -190,6 +194,7 @@ struct whack_message {
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
+
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;
@@ -368,8 +373,9 @@ struct whack_message {
 
 #define REREAD_NONE	0x00		/* don't reread anything */
 #define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
-#define REREAD_CRLS	0x02		/* reread crls in /etc/ipsec.d/crls */
-#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)	/* all reread options */
+#define REREAD_CRLS	0x02		/* obsoleted - just gives a warning */
+#define REREAD_FETCH	0x04		/* update CRL from distribution point(s) */
+#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_FETCH)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;
@@ -386,6 +392,6 @@ extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
 extern bool lsw_alias_cmp(const char *needle, const char *haystack);
-extern void whack_process(int whackfd, const struct whack_message msg);
+extern void whack_process(int whackfd, const struct whack_message *const m);
 
 #endif /* _WHACK_H */

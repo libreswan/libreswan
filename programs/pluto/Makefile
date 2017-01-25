@@ -7,7 +7,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -56,12 +56,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-# -DOLD_RESOLVER.  At some point, the resolver interface changed.
-#    This macro enables Pluto support for the old interface.
-#    It is automatically defined, based on the value of the <resolver.h>
-#    macro __RES.  We don't know the correct threshold, so you may
-#    find that you must manually define this.  If so, please inform
-#    us so that we can refine the threshold.
 
 # The following are best left undefined -- each can be overridden at runtime
 # if need be.
@@ -174,6 +168,16 @@ LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
 LABELED_IPSEC_LIBS=-lselinux
 endif
 
+SECCOMP_DIST_OBJS=pluto_seccomp.o
+SECCOMP_DIST_SRCS=pluto_seccomp.c
+ifeq ($(USE_SECCOMP),true)
+SECCOMP_DEFS=-DHAVE_SECCOMP
+SECCOMP_OBJS=${SECCOMP_DIST_OBJS}
+SECCOMP_SRCS=${SECCOMP_DIST_SRCS}
+SECCOMP_LIBS=-lseccomp
+endif
+
+
 SYSTEMD_NOTIFY_DIST_OBJS=pluto_sd.o
 SYSTEMD_NOTIFY_DIST_SRCS=${SYSTEMD_NOTIFY_DIST_OBJS:.o=.c}
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
@@ -191,11 +195,49 @@ CURL_DEFS=-DLIBCURL
 CURL_LLIBS=-lcurl
 endif
 
-ifeq ($(USE_EXTRACRYPTO),true)
-EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT
-EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c
-EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o
-EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT)
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_hash_ops.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_hash_ops.o
+EXTRA_CRYPTO_SRCS+=ike_alg_hmac_prf_ops.c
+EXTRA_CRYPTO_OBJS+=ike_alg_hmac_prf_ops.o
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_prf_ops.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
+EXTRA_CRYPTO_SRCS+=ike_alg_nss_gcm.c
+EXTRA_CRYPTO_OBJS+=ike_alg_nss_gcm.o
+
+EXTRA_CRYPTO_SRCS+=ike_alg_null.c
+EXTRA_CRYPTO_OBJS+=ike_alg_null.o
+
+ifeq ($(USE_SERPENT),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
+EXTRA_CRYPTO_OBJS+=ike_alg_serpent.o
+EXTRA_CRYPTO_LIBS+=$(LIBSERPENT)
+endif
+
+ifeq ($(USE_TWOFISH),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_twofish.c
+EXTRA_CRYPTO_OBJS+=ike_alg_twofish.o
+EXTRA_CRYPTO_LIBS+=$(LIBTWOFISH)
+endif
+
+ifeq ($(USE_CAST),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_cast.c
+EXTRA_CRYPTO_OBJS+=ike_alg_cast.o
+endif
+
+ifeq ($(USE_RIPEMD),true)
+EXTRA_CRYPTO_SRCS+=ike_alg_ripemd.c
+EXTRA_CRYPTO_OBJS+=ike_alg_ripemd.o
+endif
+
+EXTRA_CRYPTO_SRCS += ike_alg_sha1.c
+EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
+
+EXTRA_CRYPTO_SRCS += ike_alg_md5.c
+EXTRA_CRYPTO_OBJS += ike_alg_md5.o
+
+ifeq ($(USE_3DES),true)
+EXTRA_CRYPTO_SRCS += ike_alg_3des.c
+EXTRA_CRYPTO_OBJS += ike_alg_3des.o
 endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
@@ -208,9 +250,9 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(BYTE_ORDER) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
-	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	${LABELED_IPSEC_DEFS} \
+	${SECCOMP_DEFS} \
 	${SYSTEMD_NOTIFY_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
@@ -221,11 +263,10 @@ DEFINES = $(EXTRA_DEFINES) \
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2) ${LIBAES_XCBC}
 LIBSPLUTO+=$(X509_LIBS)
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
-LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
+LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS} ${SECCOMP_LIBS}
 LIBSPLUTO+=${SYSTEMD_NOTIFY_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} $(NSS_LDFLAGS)
 PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
@@ -321,14 +362,16 @@ DISTSRC = \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
 	crypt_dbg.c \
 	crypt_symkey.c crypt_prf.c ikev1_prf.c ikev2_prf.c \
+	crypt_hash.c \
 	ikev2_spdb_struct.c \
 	ikev2_rsa.c ikev2_psk.c \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
 	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} \
 	kernel_noklips.c kernel_noklips.h \
-	ike_alg.c ike_alg_status.c ike_alg.h \
+	ike_alg.c ike_alg.h \
 	ike_alg_aes.c \
+	ike_alg_dh.c \
 	ike_alg_camellia.c \
 	rcv_whack.c rcv_whack.h \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
@@ -350,6 +393,7 @@ DISTSRC = \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
+	${SECCOMP_DIST_SRCS} \
 	${SYSTEMD_NOTIFY_DIST_SRCS} \
 	packet.c pluto_constants.c readwhackmsg.c \
 	nss_cert_load.c nss_cert_load.h pem.c \
@@ -377,6 +421,7 @@ OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
 OBJSPLUTO += crypt_dbg.o
 OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
+OBJSPLUTO += crypt_hash.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
@@ -385,12 +430,14 @@ OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o
+OBJSPLUTO += ike_alg_dh.o
 OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
-OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
+OBJSPLUTO += ike_alg.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
+OBJSPLUTO += ${SECCOMP_OBJS}
 OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
 OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
@@ -444,6 +491,9 @@ CAVPSRC += cavp_print.c
 CAVPSRC += cavp_stubs.c
 CAVPSRC += cavp_ikev1.c
 CAVPSRC += cavp_ikev2.c
+CAVPSRC += cavp_sha.c
+CAVPSRC += cavp_hmac.c
+CAVPSRC += cavp_gcm.c
 DISTSRC += $(CAVPSRC)
 OBJSCAVP = $(CAVPSRC:.c=.o) $(filter-out plutomain.o, $(OBJSPLUTO))
 cavp: $(OBJSCAVP)

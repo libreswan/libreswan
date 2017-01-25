@@ -39,16 +39,6 @@
 #include "oid.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef USE_MD5
-#include "md5.h"
-#endif
-#ifdef USE_SHA1
-#include "sha1.h"
-#endif
-#ifdef USE_SHA2
-#include "sha2.h"
-#endif
-#include "aes_xcbc.h"
 #include <prerror.h>
 #include <nss.h>
 #include <pk11pub.h>

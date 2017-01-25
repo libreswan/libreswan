@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -133,6 +134,7 @@ static enum_names version_names_1 = {
 	ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT | ISAKMP_MINOR_VERSION,
 	ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT | ISAKMP_MINOR_VERSION,
 	ARRAY_REF(version_name_1),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -140,6 +142,7 @@ enum_names version_names = {
 	IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT | IKEv2_MINOR_VERSION,
 	IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT | IKEv2_MINOR_VERSION,
 	ARRAY_REF(version_name_2),
+	NULL, /* prefix */
 	&version_names_1
 };
 
@@ -153,6 +156,7 @@ enum_names doi_names = {
 	ISAKMP_DOI_ISAKMP,
 	ISAKMP_DOI_IPSEC,
 	ARRAY_REF(doi_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -214,6 +218,7 @@ enum_names connection_kind_names = {
 	CK_GROUP,
 	CK_GOING_AWAY,
 	ARRAY_REF(connection_kind_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -257,6 +262,7 @@ static enum_names payload_names_ikev1_private_use = {
 	ISAKMP_NEXT_NATD_DRAFTS,
 	ISAKMP_NEXT_IKE_FRAGMENTATION,
 	ARRAY_REF(payload_name_ikev1_private_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -264,6 +270,7 @@ enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
 	ARRAY_REF(payload_name_ikev1)-1,	/* don't count NULL */
+	NULL, /* prefix */
 	&payload_names_ikev1_private_use
 };
 
@@ -310,6 +317,7 @@ static enum_names payload_names_ikev2_private_use = {
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION,
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION,
 	ARRAY_REF(payload_name_ikev2_private_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -317,6 +325,7 @@ static enum_names payload_names_ikev2_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
 	ARRAY_REF(payload_name_ikev2_main)-1,
+	NULL, /* prefix */
 	&payload_names_ikev2_private_use
 };
 
@@ -324,6 +333,7 @@ enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	ARRAY_REF(payload_name_ikev2),
+	NULL, /* prefix */
 	&payload_names_ikev2_main
 };
 
@@ -332,6 +342,7 @@ static enum_names payload_names_ikev2copy_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
 	ARRAY_REF(payload_name_ikev2_main)-1,
+	NULL, /* prefix */
 	&payload_names_ikev1_private_use
 };
 
@@ -339,6 +350,7 @@ enum_names payload_names_ikev1orv2 = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
 	ARRAY_REF(payload_name_ikev1)-1,
+	NULL, /* prefix */
 	&payload_names_ikev2copy_main
 };
 
@@ -353,6 +365,7 @@ enum_names ikev2_last_proposal_desc = {
 	v2_PROPOSAL_LAST,
 	v2_PROPOSAL_NON_LAST,
 	ARRAY_REF(ikev2_last_proposal_names),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -367,6 +380,7 @@ enum_names ikev2_last_transform_desc = {
 	v2_TRANSFORM_LAST,
 	v2_TRANSFORM_NON_LAST,
 	ARRAY_REF(ikev2_last_transform_names),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -412,6 +426,7 @@ static enum_names exchange_names_private_use = {
 	ISAKMP_XCHG_ECHOREQUEST_PRIVATE,
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE,
 	ARRAY_REF(exchange_name_private_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -419,6 +434,7 @@ static enum_names exchange_names_doi = {
 	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
 	ISAKMP_XCHG_NGRP,
 	ARRAY_REF(exchange_name_doi),
+	NULL, /* prefix */
 	&exchange_names_private_use
 };
 
@@ -426,6 +442,7 @@ enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	ARRAY_REF(exchange_name_ikev1),
+	NULL, /* prefix */
 	&exchange_names_doi
 };
 
@@ -433,6 +450,7 @@ enum_names ikev2_exchange_names = {
 	ISAKMP_v2_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	ARRAY_REF(exchange_name_ikev2),
+	NULL, /* prefix */
 	&exchange_names_private_use
 };
 
@@ -440,6 +458,7 @@ static enum_names exchange_names_doi_and_v2 = {
 	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
 	ISAKMP_XCHG_NGRP,
 	ARRAY_REF(exchange_name_doi),
+	NULL, /* prefix */
 	&ikev2_exchange_names
 };
 
@@ -447,6 +466,7 @@ enum_names exchange_names_ikev1orv2 = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	ARRAY_REF(exchange_name_ikev1),
+	NULL, /* prefix */
 	&exchange_names_doi_and_v2
 };
 
@@ -484,6 +504,7 @@ enum_names ikev1_protocol_names = {
 	PROTO_RESERVED,
 	PROTO_IPCOMP,
 	ARRAY_REF(ikev1_protocol_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -498,6 +519,7 @@ enum_names ikev2_protocol_names = {
 	PROTO_v2_RESERVED,
 	PROTO_v2_ESP,
 	ARRAY_REF(ikev2_protocol_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -506,6 +528,7 @@ enum_names ikev2_del_protocol_names = {
 	PROTO_ISAKMP,
 	PROTO_IPSEC_ESP,
 	&ikev2_protocol_name[PROTO_ISAKMP], elemsof(ikev2_protocol_name) - PROTO_ISAKMP,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -518,20 +541,23 @@ enum_names isakmp_transformid_names = {
 	KEY_IKE,
 	KEY_IKE,
 	ARRAY_REF(isakmp_transform_name),
+	NULL, /* prefix */
 	NULL
 };
 
 /* IPsec AH transform values */
 
 static const char *const ah_transform_name_private_use[] = {
+	"AH_AES_CMAC_96",
 	"AH_NULL",	/* verify with kame source? 251 */
 	"AH_SHA2_256_TRUNC",	/* our own to signal bad truncation to kernel */
 };
 
 static enum_names ah_transformid_names_private_use = {
-	AH_NULL,
+	AH_AES_CMAC_96,
 	AH_SHA2_256_TRUNC,
 	ARRAY_REF(ah_transform_name_private_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -556,6 +582,7 @@ static const char *const ah_transform_name[] = {
 enum_names ah_transformid_names = {
 	AH_MD5, AH_AES_256_GMAC,
 	ARRAY_REF(ah_transform_name),
+	NULL, /* prefix */
 	&ah_transformid_names_private_use
 };
 
@@ -580,6 +607,7 @@ static enum_names esp_transformid_names_private_use = {
 	ESP_MARS,
 	ESP_ID255,
 	ARRAY_REF(esp_transform_name_private_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -605,15 +633,25 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
 	/*
 	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
-	 * inconsistant. The linux PF_KEY API returns 22 in the IKEv1 registry
-	 * meaning (camellia), so we need to lie here.
+	 * inconsistant.
 	 */
-	/* "ESP_RESERVED_FOR_IEEE_P1619_XTS_AES" */
-	"ESP_CAMELLIA", /* IKEv1, but kernel tells us this */
-	"ESP_CAMELLIA", /* IKEv2, IKEv1 entry is ESP_NULL_AUTH_AES-GMAC */
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
+	/*
+	 * The linux PF_KEY API returns 22 in the IKEv1 registry
+	 * meaning (camellia).
+	 *
+	 * IKEv2 code internally maps its value onto this.
+	 */
+	"ESP_CAMELLIA",
+	/*
+	 * IKEv2 is ESP_CAMELLIA and IKEv1 is ESP_NULL_AUTH_AES-GMAC
+	 *
+	 * Either way, if this value is printed then there is a
+	 * problem.
+	 */
+	"IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC",
 	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
@@ -628,6 +666,7 @@ enum_names esp_transformid_names = {
 	ESP_DES_IV64,
 	ESP_CAMELLIA_CCM_16,
 	ARRAY_REF(esp_transform_name),
+	"ESP_", /* prefix */
 	&esp_transformid_names_private_use
 };
 
@@ -646,6 +685,7 @@ enum_names ipcomp_transformid_names = {
 	IPCOMP_OUI,
 	IPCOMP_LZJH,
 	ARRAY_REF(ipcomp_transform_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -676,24 +716,28 @@ static const char *const ike_idtype_name[] = {
 enum_names ike_idtype_names = {
 	ID_IPV4_ADDR, ID_FC_NAME,
 	&ike_idtype_name[ID_IPV4_ADDR], ID_FC_NAME-ID_IPV4_ADDR+1,
+	NULL, /* prefix */
 	NULL
 };
 
 static enum_names ikev2_idtype_names_3 = {
 	ID_DER_ASN1_DN, ID_NULL,
 	&ike_idtype_name[ID_DER_ASN1_DN], elemsof(ike_idtype_name)-ID_DER_ASN1_DN,
+	NULL, /* prefix */
 	NULL
 };
 
 static enum_names ikev2_idtype_names_2 = {
 	ID_IPV6_ADDR, ID_IPV6_ADDR,
 	&ike_idtype_name[ID_IPV6_ADDR], 1,
+	NULL, /* prefix */
 	&ikev2_idtype_names_3
 };
 
 enum_names ikev2_idtype_names = {
 	ID_IPV4_ADDR, ID_RFC822_ADDR,
 	&ike_idtype_name[ID_IPV4_ADDR], ID_RFC822_ADDR-ID_IPV4_ADDR+1,
+	NULL, /* prefix */
 	&ikev2_idtype_names_2
 };
 
@@ -725,6 +769,7 @@ enum_names ike_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_ATTRIBUTE,
 	/* only first part of ike_cert_type_name */
 	ike_cert_type_name, CERT_X509_ATTRIBUTE - CERT_PKCS7_WRAPPED_X509 + 1,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -733,6 +778,7 @@ static enum_names ikev2_cert_type_names_2 = {
 	CERT_KERBEROS_TOKENS, CERT_RAW_PUBLIC_KEY,
 	&ike_cert_type_name[CERT_KERBEROS_TOKENS-CERT_PKCS7_WRAPPED_X509],
 	CERT_RAW_PUBLIC_KEY-CERT_KERBEROS_TOKENS+1,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -740,6 +786,7 @@ enum_names ikev2_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_SIGNATURE,
 	ike_cert_type_name,
 	CERT_X509_SIGNATURE-CERT_PKCS7_WRAPPED_X509+1,
+	NULL, /* prefix */
 	&ikev2_cert_type_names_2
 };
 
@@ -756,6 +803,7 @@ enum_names certpolicy_type_names = {
 	cert_neversend,
 	cert_alwayssend,
 	ARRAY_REF(certpolicy_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -803,6 +851,7 @@ static enum_names oakley_attr_desc_tv = {
 	OAKLEY_ENCRYPTION_ALGORITHM + ISAKMP_ATTR_AF_TV,
 	OAKLEY_GROUP_ORDER + ISAKMP_ATTR_AF_TV,
 	ARRAY_REF(oakley_attr_bit_names)-1,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -810,6 +859,7 @@ enum_names oakley_attr_names = {
 	OAKLEY_GROUP_PRIME,
 	OAKLEY_GROUP_ORDER,
 	ARRAY_REF(oakley_var_attr_name),
+	NULL, /* prefix */
 	&oakley_attr_desc_tv
 };
 
@@ -883,6 +933,7 @@ static enum_names ipsec_private_attr_names_tv = {
 	SECCTX + ISAKMP_ATTR_AF_TV,
 	SECCTX + ISAKMP_ATTR_AF_TV,
 	ARRAY_REF(ipsec_private_attr_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -890,6 +941,7 @@ static enum_names ipsec_private_attr_names = {
 	SECCTX,
 	SECCTX,
 	ARRAY_REF(ipsec_private_attr_name),
+	NULL, /* prefix */
 	&ipsec_private_attr_names_tv
 };
 #endif
@@ -902,6 +954,7 @@ static enum_names ipsec_attr_desc_tv = {
 	COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
 #endif
 	ARRAY_REF(ipsec_attr_name),
+	NULL, /* prefix */
 #ifdef HAVE_LABELED_IPSEC
 	&ipsec_private_attr_names
 #else
@@ -917,6 +970,7 @@ enum_names ipsec_attr_names = {
 	COMPRESS_PRIVATE_ALG,
 #endif
 	ARRAY_REF(ipsec_var_attr_name),
+	NULL, /* prefix */
 	&ipsec_attr_desc_tv
 };
 
@@ -949,6 +1003,7 @@ enum_names sa_lifetime_names = {
 	SA_LIFE_TYPE_SECONDS,
 	SA_LIFE_TYPE_KBYTES,
 	ARRAY_REF(sa_lifetime_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -969,6 +1024,7 @@ static enum_names enc_rfc_mode_names = {
 	ENCAPSULATION_MODE_TUNNEL,
 	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC,
 	ARRAY_REF(enc_rfc_mode_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -976,12 +1032,14 @@ enum_names enc_mode_names = {
 	ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS,
 	ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS,
 	ARRAY_REF(enc_draft_mode_name),
+	NULL, /* prefix */
 	&enc_rfc_mode_names
 };
 
 /* Auth Algorithm attribute */
 
 static const char *const auth_alg_name_stolen_use[] = {
+	"AUTH_ALGORITHM_AES_CMAC_96",
 	"AUTH_ALGORITHM_NULL_KAME",	/*
 					 * according to our source code
 					 * comments from jjo, needs
@@ -990,9 +1048,10 @@ static const char *const auth_alg_name_stolen_use[] = {
 };
 
 static enum_names auth_alg_names_stolen_use = {
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_AES_CMAC_96,
 	AUTH_ALGORITHM_NULL_KAME,
 	ARRAY_REF(auth_alg_name_stolen_use),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1020,6 +1079,7 @@ enum_names auth_alg_names = {
 	AUTH_ALGORITHM_NONE,
 	AUTH_ALGORITHM_AES_256_GMAC,
 	ARRAY_REF(auth_alg_name),
+	"AUTH_ALGORITHM_", /* prefix */
 	&auth_alg_names_stolen_use
 };
 
@@ -1039,6 +1099,7 @@ enum_names xauth_type_names = {
 	XAUTH_TYPE_GENERIC,
 	XAUTH_TYPE_SKEY,
 	ARRAY_REF(xauth_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1094,6 +1155,7 @@ static enum_names modecfg_cisco_attr_names = {
 	MODECFG_BANNER,
 	CISCO_UNKNOWN_SEEN_ON_IPHONE,
 	ARRAY_REF(modecfg_cisco_attr_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1105,6 +1167,7 @@ static enum_names modecfg_microsoft_attr_names = {
 	INTERNAL_IP4_SERVER,
 	INTERNAL_IP6_SERVER,
 	ARRAY_REF(modecfg_microsoft_attr_name),
+	NULL, /* prefix */
 	&modecfg_cisco_attr_names
 };
 
@@ -1112,6 +1175,7 @@ enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
 	ARRAY_REF(modecfg_attr_name_draft),
+	NULL, /* prefix */
 	&xauth_attr_names
 };
 
@@ -1136,6 +1200,7 @@ enum_names xauth_attr_names = {
 	XAUTH_TYPE,
 	XAUTH_ANSWER,
 	ARRAY_REF(xauth_attr_name),
+	NULL, /* prefix */
 	&modecfg_microsoft_attr_names
 };
 
@@ -1149,6 +1214,7 @@ enum_names oakley_lifetime_names = {
 	OAKLEY_LIFE_SECONDS,
 	OAKLEY_LIFE_KILOBYTES,
 	ARRAY_REF(oakley_lifetime_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1157,6 +1223,7 @@ static enum_names oakley_prf_names = {
 	1,
 	0,
 	NULL, 0,
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1214,6 +1281,7 @@ static enum_names oakley_enc_names_private_use_ssh = {
 	OAKLEY_TWOFISH_CBC_SSH,
 	OAKLEY_TWOFISH_CBC_SSH,
 	ARRAY_REF(oakley_enc_name_private_use_ssh),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1221,6 +1289,7 @@ static enum_names oakley_enc_names_private_use = {
 	OAKLEY_MARS_CBC,
 	OAKLEY_TWOFISH_CBC,
 	ARRAY_REF(oakley_enc_name_private_use),
+	NULL, /* prefix */
 	&oakley_enc_names_private_use_ssh
 };
 
@@ -1228,6 +1297,7 @@ enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
 	OAKLEY_CAMELLIA_CCM_C,
 	ARRAY_REF(oakley_enc_name),
+	"OAKLEY_", /* prefix */
 	&oakley_enc_names_private_use
 };
 
@@ -1245,17 +1315,15 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
-	"UNUSED_7",
-	"UNUSED_8",
-	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_AES_XCBC, /* waiting on NSS support */
+	OAKLEY_SHA2_512,
 	ARRAY_REF(oakley_hash_name),
+	"OAKLEY_", /* prefix */
 	NULL
 };
 
@@ -1298,6 +1366,7 @@ static enum_names oakley_auth_names_private_use2 = {
 	HybridInitRSA,
 	HybridRespDSS,
 	ARRAY_REF(oakley_auth_name_private_use2),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1305,6 +1374,7 @@ static enum_names oakley_auth_names_private_use = {
 	XAUTHInitPreShared,
 	XAUTHRespRSARevisedEncryption,
 	ARRAY_REF(oakley_auth_name_private_use),
+	NULL, /* prefix */
 	&oakley_auth_names_private_use2
 };
 
@@ -1312,6 +1382,7 @@ enum_names oakley_auth_names = {
 	OAKLEY_PRESHARED_KEY,
 	OAKLEY_ECDSA_P521,
 	ARRAY_REF(oakley_auth_name),
+	"OAKLEY_", /* prefix */
 	&oakley_auth_names_private_use
 };
 
@@ -1351,6 +1422,7 @@ enum_names ikev2_cp_attribute_type_names = {
 	IKEv2_CP_ATTR_RESERVED,
 	IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
 	ARRAY_REF(ikev2_cp_attribute_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1365,6 +1437,7 @@ enum_names ikev2_cp_type_names = {
 	IKEv2_CP_CFG_REQUEST,
 	IKEv2_CP_CFG_ACK,
 	ARRAY_REF(ikev2_cp_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1389,6 +1462,7 @@ enum_names ikev2_auth_names = {
 	IKEv2_AUTH_RSA,
 	IKEv2_AUTH_NULL,
 	ARRAY_REF(ikev2_auth_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1426,18 +1500,21 @@ static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_DH24", /* RFC 5114 */
 	"OAKLEY_GROUP_ECP_192", /* RFC 5114 */
 	"OAKLEY_GROUP_ECP_224", /* RFC 5114 */
-	"OAKLEY_GROUP_NON_IKE_27", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_28", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_29", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_30", /* RFC 6932 - not for use with IKE/IPsec */
-	/* 31 - 32767 Unassigned */
+	"OAKLEY_GROUP_BRAINPOOL_P224R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P256R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P384R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P512R1", /* RFC 6932 */
+	"OAKLEY_GROUP_CURVE25519", /* RFC-ietf-ipsecme-safecurves-05 */
+	"OAKLEY_GROUP_CURVE448", /* RFC-ietf-ipsecme-safecurves-05 */
+	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
 
 enum_names oakley_group_names = {
 	OAKLEY_GROUP_MODP768,
-	OAKLEY_GROUP_NON_IKE_30,
+	OAKLEY_GROUP_CURVE448,
 	ARRAY_REF(oakley_group_name),
+	"OAKLEY_GROUP_", /* prefix */
 	NULL
 };
 
@@ -1452,6 +1529,7 @@ static enum_names oakley_group_type_names = {
 	OAKLEY_GROUP_TYPE_MODP,
 	OAKLEY_GROUP_TYPE_EC2N,
 	ARRAY_REF(oakley_group_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1530,6 +1608,7 @@ static enum_names ikev1_notify_cisco_more_names = {
 	ISAKMP_N_CISCO_LOAD_BALANCE,
 	ISAKMP_N_CISCO_PRESHARED_KEY_HASH,
 	ARRAY_REF(ikev1_notify_cisco_more_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1537,12 +1616,14 @@ static enum_names ikev1_notify_juniper_names = {
 	NETSCREEN_NHTB_INFORM,
 	NETSCREEN_NHTB_INFORM,
 	ARRAY_REF(ikev1_notify_juniper_name),
+	NULL, /* prefix */
 	&ikev1_notify_cisco_more_names
 };
 
 static enum_names ikev1_notify_dpd_names = {
 	R_U_THERE, R_U_THERE_ACK,
 	ARRAY_REF(ikev1_notify_dpd_name),
+	NULL, /* prefix */
 	&ikev1_notify_juniper_names
 };
 
@@ -1550,6 +1631,7 @@ static enum_names ikev1_notify_ios_alives_names = {
 	ISAKMP_N_IOS_KEEP_ALIVE_REQ,
 	ISAKMP_N_IOS_KEEP_ALIVE_ACK,
 	ARRAY_REF(ikev1_notify_ios_alives_name),
+	NULL, /* prefix */
 	&ikev1_notify_dpd_names
 };
 
@@ -1557,6 +1639,7 @@ static enum_names ikev1_notify_cisco_chatter_names = {
 	ISAKMP_N_CISCO_HELLO,
 	ISAKMP_N_CISCO_SHUT_UP,
 	ARRAY_REF(ikev1_notify_cisco_chatter_name),
+	NULL, /* prefix */
 	&ikev1_notify_ios_alives_names
 };
 
@@ -1564,6 +1647,7 @@ static enum_names ikev1_ipsec_notify_names = {
 	IPSEC_RESPONDER_LIFETIME,
 	IPSEC_INITIAL_CONTACT,
 	ARRAY_REF(ikev1_ipsec_notify_name),
+	NULL, /* prefix */
 	&ikev1_notify_cisco_chatter_names
 };
 
@@ -1571,6 +1655,7 @@ static enum_names ikev1_notify_status_names = {
 	CONNECTED,
 	CONNECTED,
 	ARRAY_REF(ikev1_notify_status_name),
+	NULL, /* prefix */
 	&ikev1_ipsec_notify_names
 };
 
@@ -1578,6 +1663,7 @@ enum_names ikev1_notify_names = {
 	INVALID_PAYLOAD_TYPE,
 	UNEQUAL_PAYLOAD_LENGTHS,
 	ARRAY_REF(ikev1_notify_name),
+	NULL, /* prefix */
 	&ikev1_notify_status_names
 };
 
@@ -1637,6 +1723,7 @@ static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
 	v2N_SIGNATURE_HASH_ALGORITHMS,
 	ARRAY_REF(ikev2_notify_name_16384),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1694,6 +1781,7 @@ enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
 	v2N_AUTHORIZATION_FAILED,
 	ARRAY_REF(ikev2_notify_name),
+	NULL, /* prefix */
 	&ikev2_notify_names_16384
 };
 
@@ -1708,6 +1796,7 @@ enum_names ikev2_ts_type_names = {
 	IKEv2_TS_IPV4_ADDR_RANGE,
 	IKEv2_TS_FC_ADDR_RANGE,
 	ARRAY_REF(ikev2_ts_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1727,6 +1816,7 @@ enum_names attr_msg_type_names = {
 	ISAKMP_CFG_REQUEST,
 	ISAKMP_CFG_ACK,
 	ARRAY_REF(attr_msg_type_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1762,6 +1852,7 @@ enum_names ikev2_sec_proto_id_names = {
 	IKEv2_SEC_PROTO_IKE,
 	IKEv2_SEC_FC_CT_AUTHENTICATION,
 	ARRAY_REF(ikev2_sec_proto_id_name),
+	"IKEv2_SEC_PROTO_", /* prefix */
 	NULL
 };
 
@@ -1811,6 +1902,7 @@ static enum_names ikev2_trans_type_encr_names_private_use2 = {
 	OAKLEY_TWOFISH_CBC_SSH,
 	OAKLEY_TWOFISH_CBC_SSH,
 	ARRAY_REF(ikev2_trans_type_encr_name_private_use2),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1818,6 +1910,7 @@ static enum_names ikev2_trans_type_encr_names_private_use1 = {
 	OAKLEY_SERPENT_CBC,
 	OAKLEY_TWOFISH_CBC,
 	ARRAY_REF(ikev2_trans_type_encr_name_private_use1),
+	NULL, /* prefix */
 	&ikev2_trans_type_encr_names_private_use2
 };
 
@@ -1825,6 +1918,7 @@ enum_names ikev2_trans_type_encr_names = {
 	IKEv2_ENCR_DES_IV64,
 	IKEv2_ENCR_CAMELLIA_CCM_C,
 	ARRAY_REF(ikev2_trans_type_encr_name),
+	NULL, /* prefix */
 	&ikev2_trans_type_encr_names_private_use1
 };
 
@@ -1835,15 +1929,16 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_TIGER",
 	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
-	"PRF_HMAC_SHA2-256",
-	"PRF_HMAC_SHA2-384",
-	"PRF_HMAC_SHA2-512",
+	"PRF_HMAC_SHA2_256",
+	"PRF_HMAC_SHA2_384",
+	"PRF_HMAC_SHA2_512",
 	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,
 	IKEv2_PRF_AES128_CMAC,
 	ARRAY_REF(ikev2_trans_type_prf_name),
+	"PRF_", /* prefix */
 	NULL
 };
 
@@ -1870,6 +1965,7 @@ enum_names ikev2_trans_type_integ_names = {
 	IKEv2_AUTH_NONE,
 	IKEv2_AUTH_HMAC_SHA2_512_256,
 	ARRAY_REF(ikev2_trans_type_integ_name),
+	"AUTH_", /* prefix */
 	NULL
 };
 
@@ -1883,6 +1979,7 @@ enum_names ikev2_trans_type_esn_names = {
 	IKEv2_ESN_DISABLED,
 	IKEv2_ESN_ENABLED,
 	ARRAY_REF(ikev2_trans_type_esn_name),
+	"ESN_", /* prefix */
 	NULL
 };
 
@@ -1899,6 +1996,7 @@ enum_names ikev2_trans_type_names = {
 	IKEv2_TRANS_TYPE_ENCR,
 	IKEv2_TRANS_TYPE_ESN,
 	ARRAY_REF(ikev2_trans_type_name),
+	"TRANS_TYPE_", /* prefix */
 	NULL
 };
 
@@ -1925,6 +2023,7 @@ enum_names ikev2_trans_attr_descs = {
 	IKEv2_KEY_LENGTH + ISAKMP_ATTR_AF_TV,
 	IKEv2_KEY_LENGTH + ISAKMP_ATTR_AF_TV,
 	ARRAY_REF(ikev2_trans_attr_name),
+	NULL, /* prefix */
 	NULL
 };
 
@@ -1974,83 +2073,6 @@ bool subnetisnone(const ip_subnet *sn)
 	return isanyaddr(&base) && subnetishost(sn);
 }
 
-/* BIND enumerated types */
-#include <arpa/nameser.h>
-
-static const char *const rr_type_name[] = {
-	"T_A",		/* 1 host address */
-	"T_NS",		/* 2 authoritative server */
-	"T_MD",		/* 3 mail destination */
-	"T_MF",		/* 4 mail forwarder */
-	"T_CNAME",	/* 5 canonical name */
-	"T_SOA",	/* 6 start of authority zone */
-	"T_MB",		/* 7 mailbox domain name */
-	"T_MG",		/* 8 mail group member */
-	"T_MR",		/* 9 mail rename name */
-	"T_NULL",	/* 10 null resource record */
-	"T_WKS",	/* 11 well known service */
-	"T_PTR",	/* 12 domain name pointer */
-	"T_HINFO",	/* 13 host information */
-	"T_MINFO",	/* 14 mailbox information */
-	"T_MX",		/* 15 mail routing information */
-	"T_TXT",	/* 16 text strings */
-	"T_RP",		/* 17 responsible person */
-	"T_AFSDB",	/* 18 AFS cell database */
-	"T_X25",	/* 19 X_25 calling address */
-	"T_ISDN",	/* 20 ISDN calling address */
-	"T_RT",		/* 21 router */
-	"T_NSAP",	/* 22 NSAP address */
-	"T_NSAP_PTR",	/* 23 reverse NSAP lookup (deprecated) */
-	"T_SIG",	/* 24 security signature */
-	"T_KEY",	/* 25 security key */
-	"T_PX",		/* 26 X.400 mail mapping */
-	"T_GPOS",	/* 27 geographical position (withdrawn) */
-	"T_AAAA",	/* 28 IP6 Address */
-	"T_LOC",	/* 29 Location Information */
-	"T_NXT",	/* 30 Next Valid Name in Zone */
-	"T_EID",	/* 31 Endpoint identifier */
-	"T_NIMLOC",	/* 32 Nimrod locator */
-	"T_SRV",	/* 33 Server selection */
-	"T_ATMA",	/* 34 ATM Address */
-	"T_NAPTR",	/* 35 Naming Authority PoinTeR */
-};
-
-enum_names rr_type_names = {
-	ns_t_a,
-	ns_t_naptr,
-	ARRAY_REF(rr_type_name),
-	NULL
-};
-
-/* Query type values which do not appear in resource records */
-static const char *const rr_qtype_name[] = {
-	"T_TKEY",	/* 249 transaction key */
-	"TSIG",		/* 250 transaction signature */
-	"T_IXFR",	/* 251 incremental zone transfer */
-	"T_AXFR",	/* 252 transfer zone of authority */
-	"T_MAILB",	/* 253 transfer mailbox records */
-	"T_MAILA",	/* 254 transfer mail agent records */
-	"T_ANY",	/* 255 wildcard match */
-};
-
-enum_names rr_qtype_names = {
-	ns_t_tkey,
-	ns_t_any,
-	ARRAY_REF(rr_qtype_name),
-	&rr_type_names
-};
-
-static const char *const rr_class_name[] = {
-	"C_IN",	/* 1 the arpa internet */
-};
-
-enum_names rr_class_names = {
-	ns_c_in,
-	ns_c_in,
-	ARRAY_REF(rr_class_name),
-	NULL
-};
-
 static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_RSA",
@@ -2062,6 +2084,23 @@ enum_names ppk_names = {
 	PPK_PSK,
 	PPK_NULL,
 	ARRAY_REF(ppk_name),
+	NULL, /* prefix */
+	NULL
+};
+
+/* magic SPI values (specific to Libreswan: see <libreswan.h>) */
+static const char *const spi_name[] = {
+	"%pass",
+	"%drop",
+	"%reject",
+	"%hold",
+	"%trap",
+	"%trapsubnet",
+};
+enum_names spi_names = {
+	SPI_PASS, SPI_TRAPSUBNET,
+	ARRAY_REF(spi_name),
+	"%",	/* prefix */
 	NULL
 };
 
@@ -2097,7 +2136,19 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return NULL;
 }
 
-/* find or construct a string to describe an enum value */
+const char *enum_short_name(enum_names *ed, unsigned long val)
+{
+	const char *p = enum_name(ed, val);
+
+	return p == NULL || ed->en_prefix == NULL ? p :
+		strip_prefix(p, ed->en_prefix);
+}
+
+/*
+ * find or construct a string to describe an enum value
+ *
+ * Note: result may or may not be in b.
+ */
 const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 {
 	const char *p = enum_name(ed, val);
@@ -2109,6 +2160,12 @@ const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 	return p;
 }
 
+const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *b)
+{
+	const char *p = enum_showb(ed, val, b);
+
+	return ed->en_prefix == NULL ? p : strip_prefix(p, ed->en_prefix);
+}
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -2130,7 +2187,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return (s != NULL && strneq(s, prefix, pl)) ? s + pl : s;
+	return strneq(s, prefix, pl) ? s + pl : s;
 }
 
 /*
@@ -2178,20 +2235,24 @@ enum_names *enum_enum_table(enum_enum_names *een,
 const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 			   unsigned long val)
 {
-	if (een == NULL) {
-		return NULL;
-	}
 	enum_names *en = enum_enum_table(een, table);
-	if (en == NULL) {
-		return NULL;
-	}
-	return enum_name(en, val);
+
+	return en == NULL ? NULL : enum_name(en, val);
+}
+
+const char *enum_enum_short_name(enum_enum_names *een, unsigned long table,
+			   unsigned long val)
+{
+	enum_names *en = enum_enum_table(een, table);
+
+	return en == NULL ? NULL : enum_short_name(en, val);
 }
 
 const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 			    unsigned long val, struct esb_buf *b)
 {
 	const char *name = enum_enum_name(een, table, val);
+
 	if (name != NULL) {
 		return name;
 	}
@@ -2218,7 +2279,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 	passert(blen != 0); /* need room for NUL */
 
 	/* if nothing gets filled in, default to "none" rather than "" */
-	(void) jam_str(p, (size_t)(roof - p), "none");
+	(void) jam_str(b, blen, "none");
 
 	for (tp = table, bit = 01; val != 0; bit <<= 1) {
 		if (val & bit) {
@@ -2261,6 +2322,36 @@ const char *bitnamesof(const char *const table[], lset_t val)
 	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
 
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
+}
+
+const char *show_set_short(enum_names *sd,
+			   lset_t val,
+			   char *b, size_t blen)
+{
+	char *const roof = b + blen;
+	char *p = b;
+	unsigned int e;
+
+	passert(blen != 0); /* need room for NUL */
+
+	/* if nothing gets filled in, default to "none" rather than "" */
+	(void) jam_str(b, blen, "none");
+
+	for (e = 0; val != 0; e++) {
+		lset_t bit = LELEM(e);
+
+		if (val & bit) {
+			if (p != b)
+				p = jam_str(p, (size_t)(roof - p), "+");
+
+			struct esb_buf esb;
+
+			p = jam_str(p, (size_t)(roof - p),
+				enum_show_shortb(sd, e, &esb));
+			val -= bit;
+		}
+	}
+	return b;
 }
 
 /* test a set by seeing if all bits have names */
@@ -2364,8 +2455,6 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&rr_qtype_names,
-	&rr_class_names,
 	&ppk_names,
 };
 

@@ -1,5 +1,6 @@
 Except for the DES library, MD5 code, and linux/net/ipsec/radij.c
-this software is under the GNU Public License, see the file COPYING.
+this software is under the GNU General Public License (GPL), see
+the file COPYING.
 See the file CREDITS for details on origins of more of the code.
 
 The linux/net/ipsec/radij.c code is derived from BSD 4.4lite code

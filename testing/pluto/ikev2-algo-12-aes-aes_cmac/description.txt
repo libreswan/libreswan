@@ -1,0 +1,7 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+This is to verify we can use aes_cbc for integ hash
+
+000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+
+

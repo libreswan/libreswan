@@ -40,24 +40,30 @@ import json
 from datetime import datetime
 
 class result:
+    directory = "directory"
     testname = "testname"
     expect = "expect"
     result = "result"
+    hosts = "hosts"
+    issues = "errors" # for historic reasons, "issues" are publically called "errors"
+    script_time = "script_time"
+    boot_time = "boot_time"
+    total_time = "total_time"
+    hosts = "hosts"
+    # keep things going
     time = "time"
     runtime = "runtime"
-    host_results = "host_results"
 
-class table:
-    rundir = "runDir"
-    suffix = "suffix"
+
+class results:
     summary = "summary"
-    columns = "columns"
-    rows = "rows"
+    table = "table"
 
 class summary:
     passed = "passed"
     failed = "failed"
     incomplete = "incomplete"
+    good = "good"
     total = "Total"
     # end-time: YYYY-MM-DD HH:MM see ftime/ptime.
     date = "date"
@@ -76,14 +82,37 @@ def loads(s):
     except ValueError:
         return None
 
+def default(obj):
+    if hasattr(obj, "json") and callable(getattr(obj, "json")):
+        return obj.json()
+    if hasattr(obj, "isoformat") and callable(getattr(obj, "isoformat")):
+        # date/time objects
+        return obj.isoformat()
+    elif hasattr(obj, "__str__") and callable(getattr(obj, "__str__")):
+        return str(obj)
+    else:
+        print("obj:", obj)
+        raise TypeError(obj)
+
 def dump(j, io):
-    json.dump(j, io, indent=2)
+    json.dump(j, io, indent=2, default=default)
 
 def dumps(s):
-    return json.dumps(s)
+    return json.dumps(s, default=default)
 
 def ftime(t):
+    """Format the time"""
     return t.strftime("%Y-%m-%d %H:%M")
 
 def ptime(s):
-    datetime.strptime(s, "%Y-%m-%d %H:%M")
+    """Tries to parse the time"""
+    # print(s)
+    for hms in ["%H:%M", "%H:%M:%S", "%H:%M:%S.%f"]:
+        for t in [" ", "T"]:
+            try:
+                t = datetime.strptime(s, "%Y-%m-%d" + t + hms)
+                # print(t)
+                return t
+            except:
+                None
+    return None

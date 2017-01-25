@@ -34,6 +34,7 @@ west #
 000 "westnet-eastnet-aggr": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-aggr":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-aggr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-aggr":   our auth:secret, their auth:secret
 000 "westnet-eastnet-aggr":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-aggr":   labeled_ipsec:no;
 000 "westnet-eastnet-aggr":   policy_label:unset;
@@ -43,7 +44,7 @@ west #
 000 "westnet-eastnet-aggr":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-aggr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-aggr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "westnet-eastnet-aggr":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-aggr":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aggr":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-aggr":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
 000 "westnet-eastnet-aggr":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)-MODP1536(5)
@@ -56,7 +57,7 @@ west #
 002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode
 112 "westnet-eastnet-aggr" #1: STATE_AGGR_I1: initiate
 002 "westnet-eastnet-aggr" #1: Aggressive mode peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aggr" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 integ=sha group=MODP1536}
+004 "westnet-eastnet-aggr" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
 002 "westnet-eastnet-aggr" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-aggr" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aggr" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
@@ -72,9 +73,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-000  
 006 #2: "westnet-eastnet-aggr", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-000  
 west #
  echo done
 done

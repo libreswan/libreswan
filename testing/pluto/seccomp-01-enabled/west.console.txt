@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ipsec _stackmanager start
+west #
+ service auditd stop
+Stopping logging: [  OK  ]
+west #
+ rm  -f /var/log/audit/audit.log
+west #
+ service auditd start
+Redirecting to /bin/systemctl start  auditd.service
+west #
+ mkdir /var/run/pluto
+west #
+ ipsec pluto --config /etc/ipsec.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add nss-cert
+002 added connection description "nss-cert"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up nss-cert
+002 "nss-cert" #1: initiating Main Mode
+104 "nss-cert" #1: STATE_MAIN_I1: initiate
+106 "nss-cert" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "nss-cert" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+004 "nss-cert" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
+002 "nss-cert" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+117 "nss-cert" #2: STATE_QUICK_I1: initiate
+004 "nss-cert" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down nss-cert
+002 "nss-cert": terminating SAs using this connection
+002 "nss-cert" #2: deleting state (STATE_QUICK_I2)
+005 "nss-cert" #2: ESP traffic information: in=0B out=0B
+002 "nss-cert" #1: deleting state (STATE_MAIN_I4)
+west #
+ # pluto should still be running
+west #
+ pidof pluto > /dev/null || echo not running?
+west #
+ # whack socket will hang because pluto is expected to die
+west #
+ ipsec whack --seccomp-crashtest &
+[x] PID
+west #
+ disown
+003 pluto is running with seccomp=enabled! pluto is expected to die!
+003 Performing seccomp security test using getsid() syscall
+west #
+ sleep 1
+west #
+ # pluto should not be running anymore
+west #
+ pidof pluto
+west #
+ # one entry of SECCOMP activating should show up in the log
+west #
+ grep SECCOMP /var/log/audit/audit.log
+type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 syscall=124 compat=0 ip=0x7f32fed09e27 code=0x0
+west #
+ echo done
+done
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

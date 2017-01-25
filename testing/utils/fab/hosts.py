@@ -18,8 +18,9 @@ from fab import utilsdir
 
 def _host_names():
     host_names = set()
-    status, output = subprocess.getstatusoutput(utilsdir.relpath("kvmhosts.sh"))
-    for host_name in output.splitlines():
+    # this failing is a disaster
+    output = subprocess.check_output([utilsdir.relpath("kvmhosts.sh")])
+    for host_name in output.decode("utf-8").splitlines():
         host_names.add(host_name)
     return host_names
 

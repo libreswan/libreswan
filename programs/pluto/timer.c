@@ -141,7 +141,7 @@ static void retransmit_v1_msg(struct state *st)
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
-			"supressing retransmit because IMPAIR_RETRANSMITS is set");
+			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay_ms = 0;
 		try = 0;
 	} else {
@@ -181,7 +181,7 @@ static void retransmit_v1_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
 			st->st_retransmit,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			details);
 		if (try != 0 && (try <= try_limit || try_limit == 0)) {
 			/*
@@ -265,7 +265,7 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
-			"supressing retransmit because IMPAIR_RETRANSMITS is set");
+			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay_ms = 0;
 		try = 0;
 	} else {
@@ -304,7 +304,7 @@ static void retransmit_v2_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
 			st->st_retransmit,
-			enum_show(&state_names, st->st_state),
+			enum_name(&state_names, st->st_state),
 			details);
 	}
 
@@ -504,25 +504,42 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
 }
 
+static void delete_pluto_event(struct pluto_event **evp)
+{
+        struct pluto_event *e = *evp;
+
+        if (e == NULL) {
+                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
+                return;
+        }
+        /* ??? when would e->ev be NULL? */
+        if (e->ev != NULL) {
+                event_free(e->ev);
+                e->ev = NULL;
+        }
+        pfree(e);
+        *evp = NULL;
+}
+
 static event_callback_routine timer_event_cb;
 static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
 	struct pluto_event *ev = arg;
 	enum event_type type;
 	struct state *st;
-	char statenum[64];
 
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	if (st != NULL) {
-		snprintf(statenum, sizeof(statenum), " for %s state #%lu",
-			(st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
-			st->st_serialno);
-	}
-	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
-				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
-
+	DBG(DBG_CONTROL,
+	    char statenum[64] = "";
+	    if (st != NULL) {
+		    snprintf(statenum, sizeof(statenum), " for %s state #%lu",
+			     (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
+			     st->st_serialno);
+	    }
+	    DBG_log("handling event %s%s",
+		    enum_show(&timer_event_names, type), statenum));
 
 	passert(GLOBALS_ARE_RESET());
 
@@ -790,8 +807,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			delete_my_family(st, FALSE);
 			/* note: no md->st to clear */
 		} else {
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
 			delete_state(st);
 			/* note: no md->st to clear */
+
+			ikev2_expire_unused_parent(pst);
 		}
 		break;
 
@@ -815,25 +835,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		bad_case(type);
 	}
 
-	pfree(ev);
+	delete_pluto_event(&ev);
 	reset_cur_state();
-}
-
-static void delete_pluto_event(struct pluto_event **evp)
-{
-	struct pluto_event *e = *evp;
-
-	if (e == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-		return;
-	}
-	/* ??? when would e->ev be NULL? */
-	if (e->ev != NULL) {
-		event_free(e->ev);
-		e->ev = NULL;
-	}
-	pfree(e);
-	*evp = NULL;
 }
 
 /*
@@ -844,12 +847,12 @@ void delete_event(struct state *st)
 	/* ??? isn't this a bug?  Should we not passert? */
 	if (st->st_event == NULL) {
 		DBG(DBG_CONTROLMORE,
-				DBG_log("state: #%lu requesting to delete non existing event",
+				DBG_log("state #%lu requesting to delete non existing event",
 					st->st_serialno));
 		return;
 	}
 	DBG(DBG_CONTROLMORE,
-			DBG_log("state: #%lu requesting %s to be deleted",
+			DBG_log("state #%lu requesting %s to be deleted",
 				st->st_serialno,
 				enum_show(&timer_event_names,
 					st->st_event->ev_type)));
@@ -862,7 +865,7 @@ void delete_event(struct state *st)
 void delete_liveness_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-			DBG_log("state: #%lu requesting event %s to be deleted",
+			DBG_log("state #%lu requesting event %s to be deleted",
 				st->st_serialno,
 				(st->st_liveness_event != NULL ?
 				 enum_show(&timer_event_names,
@@ -933,39 +936,6 @@ void timer_list(void)
 }
 
 /*
- * XXX --- hack alert, but I want to avoid adding new pluto-level
- *   command line arguments for now --- they need to all be whack
- * level items, and all command line arguments go away.
- */
-
-#if 0 /* ??? no longer in use */
-static unsigned long envnumber(const char *name,
-			     unsigned long lwb, unsigned long upb,
-			     unsigned long def)
-{
-	const char *s = getenv(name);
-	unsigned long res;
-	err_t ugh;
-
-	if (s == NULL)
-		return def;
-
-	ugh = ttoulb(s, 0, 10, upb, &res);
-	if (ugh == NULL && res < lwb)
-		ugh = "too small";
-	if (ugh != NULL) {
-		libreswan_log("environment variable %s is \"%s\", %s",
-			name, s, ugh);
-		return def;
-	}
-	DBG(DBG_CONTROL,
-		DBG_log("environment variable %s: '%lu",
-			name, res));
-	return res;
-}
-#endif
-
-/*
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
@@ -980,7 +950,6 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	/*
 	 * Scheduling a month into the future is most likely a bug.
 	 * pexpect() causes us to flag this in our test cases
-	 * But do allow (unwise) people to set insame > 1m lifetimes
 	 */
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 

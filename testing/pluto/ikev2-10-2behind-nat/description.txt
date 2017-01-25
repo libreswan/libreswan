@@ -1,8 +1,1 @@
 This emulates two clients behind the same NAT.
-
-road imports north's identity as well. It establishes road
-using certificates. then kills pluto hard and established
-north. This fails on east with:
-
-"road-eastnet-ikev2"[1] 192.1.2.254 #3: Signature check (on C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org) failed (wrong key?); tried *AwEAAdrh2
-

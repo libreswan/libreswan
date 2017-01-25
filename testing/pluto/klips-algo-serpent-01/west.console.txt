@@ -54,14 +54,18 @@ west #
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
+000 seccomp=OFF
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+000 ocsp-trust-name=<unset>
+000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -87,7 +91,6 @@ west #
 000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=20, v1name=OAKLEY_AES_GCM_C, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=19, v1name=OAKLEY_AES_GCM_B, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
@@ -102,7 +105,6 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
-000 algorithm IKE hash: id=9, name=DISABLED-OAKLEY_AES_XCBC, hashlen=16
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -110,7 +112,6 @@ west #
 000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
-000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
 000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
 000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
 000  
@@ -121,6 +122,7 @@ west #
 000 "westnet-eastnet-serpent": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-serpent":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-serpent":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-serpent":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-serpent":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-serpent":   labeled_ipsec:no;
 000 "westnet-eastnet-serpent":   policy_label:unset;
@@ -130,7 +132,7 @@ west #
 000 "westnet-eastnet-serpent":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-serpent":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-serpent":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-serpent":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-serpent":   ESP algorithms wanted: SERPENT(252)_000-SHA1(2)
 000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_000-SHA1(2)

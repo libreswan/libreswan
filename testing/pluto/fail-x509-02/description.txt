@@ -1,5 +1,0 @@
-This test is identical to x509-pluto-02.
-
-However, the certificate that north has been provided has expired, so
-it refused to load it.
-

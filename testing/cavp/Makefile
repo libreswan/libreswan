@@ -12,6 +12,7 @@ check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
 .PRECIOUS: %.out
 %.out: %.fax $(top_builddir)/programs/pluto/cavp | $(builddir)
 	$(top_builddir)/programs/pluto/cavp \
+		-fips \
 		$(builddir)/$*.fax \
 		> $(builddir)/$*.tmp
 	mv  $(builddir)/$*.tmp  $(builddir)/$*.out

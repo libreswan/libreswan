@@ -49,7 +49,6 @@
 #include "packet.h"
 #include "keys.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -63,9 +62,7 @@
 #include "fetch.h"
 #include "asn1.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "secrets.h"
 
 #include "ike_alg.h"
@@ -249,8 +246,9 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 		       )
 {
-	/* If there's already an ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
+	/*
+         * If there's already an IKEv1 ISAKMP SA established, use that and
+         * go directly to Quick Mode.  We are even willing to use one
 	 * that is still being negotiated, but only if we are the Initiator
 	 * (thus we can be sure that the IDs are not going to change;
 	 * other issues around intent might matter).
@@ -541,15 +539,15 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		struct esb_buf esb;
-
-		if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
-			c->forceencaps) {
-			DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'",
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
-			DBG(DBG_NATT, DBG_log("NAT-T: forceencaps is '%s'",
-				    c->forceencaps ? "enabled" : "disabled"));
-		}
+
+		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
+			    c->encaps == encaps_auto ? "auto" :
+				c->encaps == encaps_yes ? "yes" : "no"));
+
+		struct esb_buf esb_t, esb_a;
 
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
@@ -559,11 +557,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 c->sa_tfcpad != 0 && !st->st_seen_no_tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 strip_prefix(enum_showb(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_"),
+			 enum_show_shortb(&esp_transformid_names,
+				   st->st_esp.attrs.transattrs.encrypt, &esb_t),
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 strip_prefix(enum_show(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
+			 enum_show_shortb(&auth_alg_names,
+				   st->st_esp.attrs.transattrs.integ_hash, &esb_a));
 
 		/* advance b to end of string */
 		b = b + strlen(b);
@@ -633,31 +631,18 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
 	passert(st->st_oakley.encrypter != NULL);
-	passert(st->st_oakley.prf_hasher != NULL);
+	passert(st->st_oakley.prf != NULL);
 	passert(st->st_oakley.group != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
 	 * st->st_oakley.integ_hasher is NULL!
 	 */
 
-	const char *auth_name;
-	if (st->st_ikev2) {
-		auth_name = "IKEv2";
-	} else {
-		auth_name = enum_show(&oakley_auth_names, st->st_oakley.auth);
-		auth_name = strip_prefix(auth_name, "OAKLEY_");
-	}
+	struct esb_buf anb;
+	const char *auth_name = st->st_ikev2 ? "IKEv2" :
+		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
 
-	/*
-	 * [2015-01-10] Some PRFs get their common.name set to
-	 * "OAKLEY_..." and this leads to the below printing the full
-	 * uppercase name (e.x., prf=OAKLEY_SHA2_256).  This is an
-	 * historic "feature".  See ike_alg.c:ike_alg_register_hash
-	 * for where those names come from.
-	 */
-	const char *prf_common_name =
-		strip_prefix(st->st_oakley.prf_hasher->common.name,
-			     "oakley_");
+	const char *prf_common_name = st->st_oakley.prf->common.name;
 
 	char prf_name[30] = "";
 	if (st->st_ikev2) {
@@ -665,16 +650,18 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			 " prf=%s", prf_common_name);
 	}
 
-	char integ_name[30] = "";
+	const char *integ_name;
+	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ_hasher == NULL) {
-			jam_str(integ_name, sizeof(integ_name), " integ=n/a");
+		if (st->st_oakley.integ == NULL) {
+			integ_name = "n/a";
 		} else {
-			snprintf(integ_name, sizeof(integ_name),
-				 " integ=%s_%zu",
-				 st->st_oakley.integ_hasher->common.officname,
-				 (st->st_oakley.integ_hasher->hash_integ_len *
+			snprintf(integ_buf, sizeof(integ_buf),
+				 "%s_%zu",
+				 st->st_oakley.integ->common.officname,
+				 (st->st_oakley.integ->integ_output_size *
 				  BITS_PER_BYTE));
+			integ_name = integ_buf;
 		}
 	} else {
 		/*
@@ -682,19 +669,16 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 * (always?) NULL.  Display the PRF.  The choice and
 		 * behaviour are historic.
 		 */
-		snprintf(integ_name, sizeof(integ_name),
-			 " integ=%s", prf_common_name);
+		integ_name = prf_common_name;
 	}
 
-	const char *group_name = enum_name(&oakley_group_names,
-					   st->st_oakley.group->group);
-	group_name = strip_prefix(group_name, "OAKLEY_GROUP_");
-
 	snprintf(sa_details, sa_details_size,
-		 " {auth=%s cipher=%s_%d%s%s group=%s}",
+		 " {auth=%s cipher=%s_%d integ=%s%s group=%s}",
 		 auth_name,
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
-		 integ_name, prf_name, group_name);
+		 integ_name,
+		 prf_name,
+		 enum_short_name(&oakley_group_names, st->st_oakley.group->group));
 	st->hidden_variables.st_logged_p1algos = TRUE;
 }

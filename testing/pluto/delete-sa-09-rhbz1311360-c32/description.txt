@@ -1,0 +1,5 @@
+Test for https://bugzilla.redhat.com/show_bug.cgi?id=1311360 comment 32
+
+on a shared IKE SA, a delete for an IPsec SA should not delete the IKE SA
+
+This test showed a bug when adding and delete happened in a certain order

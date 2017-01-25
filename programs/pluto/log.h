@@ -40,12 +40,6 @@ extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-/* used in some messages to distiguish
- * which pluto is which, when doing
- * unit testing
- */
-extern const char *pluto_ifn_inst;
-
 /* maximum number of files to keep open for per-peer log files */
 #define MAX_PEERLOG_COUNT 16
 
@@ -68,10 +62,6 @@ extern bool whack_prompt_for(int whackfd,
 			     const char *prompt2,
 			     bool echo,
 			     char *ansbuf, size_t ansbuf_len);
-
-extern void passert_fail(const char *pred_str,
-			 const char *file_str,
-			 unsigned long line_no) NEVER_RETURNS;
 
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
