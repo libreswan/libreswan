@@ -383,6 +383,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
+extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,

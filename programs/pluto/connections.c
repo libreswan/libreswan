@@ -4334,3 +4334,27 @@ void liveness_clear_connection(struct connection *c, char *v)
 		unroute_connection(c); /* --unroute */
 	}
 }
+
+/*
+ * When replacing an old existing connection, suppress sending delete notify
+ */
+void suppress_delete(struct connection *c)
+{
+	struct state *pst = state_with_serialno(c->newest_isakmp_sa);
+	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+	if (pst != NULL) {
+		pst->st_ikev2_no_del = TRUE;
+		DBG(DBG_CONTROL, DBG_log("Marked IKE state #%lu to suppress sending delete notify",
+		c->newest_isakmp_sa));
+	} else {
+		libreswan_log("did not find old IKE state to mark for suppressing delete");
+	}
+
+	if (cst != NULL) {
+		cst->st_ikev2_no_del = TRUE;
+		DBG(DBG_CONTROL, DBG_log("Marked IPSEC state #%lu to suppress sending delete notify",
+		c->newest_ipsec_sa));
+	} else {
+		libreswan_log("did not find old IPsec state to mark for suppressing delete");
+	}
+}
