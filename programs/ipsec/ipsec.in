@@ -38,7 +38,7 @@ export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
 export PATH
 
-# supress ElectricFence banner changing our reference testing output
+# suppress ElectricFence banner changing our reference testing output
 export EF_DISABLE_BANNER=1
 
 # things not to be listed in --help command list

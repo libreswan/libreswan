@@ -95,7 +95,7 @@ char ** argv;
 	xlimit = 1;                     /* doubles as "exit flag" */
 	bc = 1;                         /* preload, assuming "dump" */
 	x = getpid() + 687319;
-/* if your library doesnt have srandom/random, use srand/rand. [from rnd.c] */
+/* if your library doesn't have srandom/random, use srand/rand. [from rnd.c] */
 #ifndef HAVE_RANDOM
 	srand(time(NULL) + x);
 #else

@@ -372,7 +372,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	/* kludge alert!!
 	 * verification may be performed twice: once with the
 	 * 'client' usage and once with 'server', which is an NSS
-	 * detail and not related to IKE. In the absense of a real
+	 * detail and not related to IKE. In the absence of a real
 	 * IKE profile being available for NSS, this covers more
 	 * KU/EKU combinations
 	 */

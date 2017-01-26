@@ -117,7 +117,7 @@ module_param(noauto, int, 0664);
 #else
 MODULE_PARM(noauto, "i");
 #endif
-MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
+MODULE_PARM_DESC(noauto, "Don't try all known algos, just setup enabled ones");
 
 static int des_ede3[] = { -1, -1 };
 static int aes[] = { -1, -1 };

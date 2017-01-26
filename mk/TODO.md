@@ -73,7 +73,7 @@ The following are quirks in the build system:
   switching to that directory first
 
 - eliminate Makefile.ver: this is really messy as scripts do all sorts
-  of wierd and wonderful stuff with it.
+  of weird and wonderful stuff with it.
 
 - make building individual programs configurable
 

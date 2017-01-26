@@ -35,7 +35,7 @@ USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
 ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
-# _FORTIFY_SOURCE (to what? who knows!); force it to our prefered
+# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
 # value.
 OPTIMIZE_CFLAGS=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
@@ -167,7 +167,7 @@ endif
 #
 # Some system's don't suport daemon() and some systems don't support
 # fork().  Since the daemon call can lead to a race it isn't the
-# prefered option.
+# preferred option.
 USE_DAEMON ?= false
 ifeq ($(USE_DAEMON),true)
 USERLAND_CFLAGS += -DUSE_DAEMON=1

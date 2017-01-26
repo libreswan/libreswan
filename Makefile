@@ -221,7 +221,7 @@ local-clean-base: moduleclean
 
 # Delete absolutely everything.
 #
-# Since "clean" is a recursive target and requires the existance of
+# Since "clean" is a recursive target and requires the existence of
 # $(OBJDIR), "distclean" does not depend on it.  If it did, "make
 # distclean" would have the quirky behaviour of first creating
 # $(OBJDIR) only to then delete it.
@@ -312,7 +312,7 @@ confcheck:
 kernel:
 	rm -f out.kbuild out.kinstall
 	# undocumented kernel folklore: clean BEFORE dep.
-	# we run make dep seperately, because there is no point in running ERRCHECK
+	# we run make dep separately, because there is no point in running ERRCHECK
 	# on the make dep output.
 	# see LKML thread "clean before or after dep?"
 	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) $(KERNCLEAN) $(KERNDEP) )

@@ -53,7 +53,7 @@ function lsw_compare_table(results_summaries) {
 	}
     })
 
-    // Convert the dictionary into a comparision table containing just
+    // Convert the dictionary into a comparison table containing just
     // the items that are different.
 
     var values = []

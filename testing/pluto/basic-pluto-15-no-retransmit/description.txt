@@ -1,2 +1,2 @@
-A varient of basic-pluto-01 to test retransmit=no. east has no connection loaded.
+A variant of basic-pluto-01 to test retransmit=no. east has no connection loaded.
 We test both IKEv1 and IKEv2

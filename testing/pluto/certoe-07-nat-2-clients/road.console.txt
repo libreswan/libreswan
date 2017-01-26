@@ -39,7 +39,7 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- # wait on OE IKE negotation
+ # wait on OE IKE negotiation
 road #
  sleep 1
 road #

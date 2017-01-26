@@ -151,7 +151,7 @@ typedef int bool;
  *
  * Like zero macro, but sets object to likely wrong value.
  * The intent is that memory that is supposed to not be used
- * without futher initialization will not accidentally have a
+ * without further initialization will not accidentally have a
  * plausible value (eg. zero, or the previous value, or some
  * secret that might be leaked).
  */

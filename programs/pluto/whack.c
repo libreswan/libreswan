@@ -179,7 +179,7 @@ static void help(void)
 		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
 #ifdef HAVE_SECCOMP
-		"status: whack --seccomp-crashtest (CAREFULL!)\n"
+		"status: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
 		"shutdown: whack --shutdown\n"

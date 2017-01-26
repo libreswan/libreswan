@@ -3,7 +3,7 @@ This is a variation of basic-pluto-01.
 The impairement "jacob-two-two" is used.
 
 This causes *TWO* things (which are not related, but at the moment, I
-don't think many people want to test things seperately).
+don't think many people want to test things separately).
 
 a)    it causes a sender to send every packet twice.
 	 ("Jacob Two Two is two, plus two, plus two. He has two older

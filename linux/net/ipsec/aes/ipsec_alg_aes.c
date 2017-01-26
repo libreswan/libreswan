@@ -101,7 +101,7 @@ module_param(auth_id, int, 0664);
 #endif
 #endif
 
-#define ESP_AES                 12      /* truely _constant_  :)  */
+#define ESP_AES                 12      /* truly _constant_  :)  */
 
 /* 128, 192 or 256 */
 #define ESP_AES_KEY_SZ_MIN      16      /* 128 bit secret key */

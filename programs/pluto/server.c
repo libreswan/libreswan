@@ -804,7 +804,7 @@ void call_server(void)
  * - ip(7) describes IP_RECVERR
  * - recvmsg(2) describes MSG_ERRQUEUE
  * - readv(2) describes iovec
- * - cmsg(3) describes how to process auxilliary messages
+ * - cmsg(3) describes how to process auxiliary messages
  *
  * ??? we should link this message with one we've sent
  * so that the diagnostic can refer to that negotiation.

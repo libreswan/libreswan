@@ -40,7 +40,7 @@ LDAP_VERSION=3
 endif
 
 # compile with PAM support will increase the size of the distribution
-# and thus it may not be the best solution for embeded systems. XAUTH
+# and thus it may not be the best solution for embedded systems. XAUTH
 # will use the crypt() lib and a password file by default.
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1

@@ -938,7 +938,7 @@ void ike_alg_init(void)
 	/*
 	 * If needed, completely strip out non-FIPS algorithms.
 	 * Prevents inconsistency where a non-FIPS algorithm is
-	 * refering to something that's been disabled.
+	 * referring to something that's been disabled.
 	 */
 	if (fips) {
 		for (enum ike_alg_type type = IKE_ALG_FLOOR;

@@ -224,7 +224,7 @@ static bool writewhackrecord(char *buf, size_t buflen)
 /*
  * we write out an empty record with the right WHACK magic.
  * this should permit a later mechanism to figure out the
- * endianess of the file, since we will get records from
+ * endianness of the file, since we will get records from
  * other systems for analysis eventually.
  */
 static bool openwhackrecordfile(char *file)

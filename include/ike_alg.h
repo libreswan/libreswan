@@ -301,7 +301,7 @@ struct hash_ops {
 struct prf_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	/*
-	 * Prefered key size of the PRF.
+	 * Preferred key size of the PRF.
 	 *
 	 * IKEv2 2.13: It is assumed that PRFs accept keys of any
 	 * length, but have a preferred key size.  The preferred key

@@ -78,13 +78,13 @@ before launching LSW as usual.
 >> <MyCompanysPSK> where the real PSK is 9 ASCII
 > characters long. However, I
 >> could find that in order to have LSW establishing
-> phase 1 succesfully I had to
+> phase 1 successfully I had to
 >> add the string "01234567890" as a trailer,
 > i.e. my ipsec.secrets looks like:
 >> !@#$% <MyCompanysGWipAddress> : PSK
 > "<MyCompanysPSK>01234567890"
 >>
->> what gives a PSK of lenght 20. Not sure on how they
+>> what gives a PSK of length 20. Not sure on how they
 > handle it but my guess is
 >> they just take the PSK the user configures, add the
 > string
@@ -138,7 +138,7 @@ before launching LSW as usual.
 > Unsupported attribute: INTERNAL_ADDRESS_EXPIRY
 >>> You can also ignore this. Libreswan does not
 > support INTERNAL_ADDRESS_EXPIRY,
->>> so it wont drop the IP address or ask for a new
+>>> so it won't drop the IP address or ask for a new
 > one.
 >> Same for "ignoring informational payload, type
 > IPSEC_RESPONDER_LIFETIME"

@@ -186,7 +186,7 @@ exit 0
 
 * Mon Oct 10 2005 Paul Wouters <paul@xelerance.com>
 - Updated for klips on xen
-- added ldconfig for post klips to obtain ipsec module dependancies
+- added ldconfig for post klips to obtain ipsec module dependencies
 - Run 'make include' since on FC4 kernel source does not have the links yet.
 
 * Wed Jan  5 2005 Paul Wouters <paul@xelerance.com>

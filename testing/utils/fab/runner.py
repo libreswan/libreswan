@@ -204,13 +204,13 @@ def _boot_test_domains(logger, test, domain_prefix, executor):
         logger.info("submitted %d jobs; currently %d jobs pending",
                     len(jobs), executor_qsize_hack(executor))
 
-        # Wait for the jobs to finish.  If one crashes, propogate the
+        # Wait for the jobs to finish.  If one crashes, propagate the
         # exception - will force things into the finally block.
 
         logger.debug("submitted jobs: %s", jobs)
         for job in futures.as_completed(jobs):
             logger.debug("job %s on %s completed", job, jobs[job])
-            # propogate any exception
+            # propagate any exception
             job.result()
 
         return test_domains

@@ -3217,7 +3217,7 @@ struct connection *refine_host_connection(const struct state *st,
 				const chunk_t *dpsk = get_preshared_secret(d);
 
 				/*
-				 * We can change PSK mid-way in IKEv2 or agressive mode.
+				 * We can change PSK mid-way in IKEv2 or aggressive mode.
 				 * If we initiated, the key we used and the key
 				 * we would have used with d must match.
 				 */

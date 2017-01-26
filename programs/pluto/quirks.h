@@ -25,7 +25,7 @@
  */
 
 /**
- * Where to store various quirks (ususally encountered during interop)
+ * Where to store various quirks (usually encountered during interop)
  *
  */
 struct isakmp_quirks {

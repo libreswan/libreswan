@@ -197,7 +197,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	case IKEv2_AUTH_RSA:
 	{
 		if (that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attemped RSA authentication but we want %s",
+			libreswan_log("Peer attempted RSA authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
@@ -218,7 +218,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_authby != AUTH_PSK) {
-			libreswan_log("Peer attemped PSK authentication but we want %s",
+			libreswan_log("Peer attempted PSK authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
@@ -237,7 +237,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	case IKEv2_AUTH_NULL:
 	{
 		if (that_authby != AUTH_NULL) {
-			libreswan_log("Peer attemped NULL authentication but we want %s",
+			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
@@ -3437,7 +3437,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		 * note:
 		 * st: parent state
 		 * cst: child, if any, else parent
-		 * There is probablly no good reason to use st from here on.
+		 * There is probably no good reason to use st from here on.
 		 */
 		struct state *const cst = md->st;	/* may actually be parent if no child */
 

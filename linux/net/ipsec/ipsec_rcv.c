@@ -2142,7 +2142,7 @@ int ipsec_rcv(struct sk_buff *skb
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
 	{
-		/* NET_26 NAT-T is handled by seperate function */
+		/* NET_26 NAT-T is handled by separate function */
 		struct sk_buff *nskb;
 		int udp_decap_ret = 0;
 

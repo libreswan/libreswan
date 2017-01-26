@@ -1,5 +1,5 @@
 First up, let me say I don't like writing in assembler.  It is not portable,
-dependant on the particular CPU architecture release and is generally a pig
+dependent on the particular CPU architecture release and is generally a pig
 to debug and get right.  Having said that, the x86 architecture is probably
 the most important for speed due to number of boxes and since
 it appears to be the worst architecture to to get
@@ -55,7 +55,7 @@ This was done to cut down the number of files in the distribution.
 
 Now the ugly part.  I acquired my copy of Intels
 "Optimization's For Intel's 32-Bit Processors" and found a few interesting
-things.  First, the aim of the exersize is to 'extract' one byte at a time
+things.  First, the aim of the exercise is to 'extract' one byte at a time
 from a word and do an array lookup.  This involves getting the byte from
 the 4 locations in the word and moving it to a new word and doing the lookup.
 The most obvious way to do this is

@@ -49,7 +49,7 @@
 #define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 43)
 
 /*
- * Where, if any, is the pubkey comming from.
+ * Where, if any, is the pubkey coming from.
  *
  * This goes across the wire so re-ordering this means bumping whack's
  * version number.

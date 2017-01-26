@@ -276,14 +276,14 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
 	}
 	ugh = init_rdn(dn, &rdn, &attribute, &next);
 
-	if (ugh != NULL)	/* a parsing error has occured */
+	if (ugh != NULL)	/* a parsing error has occurred */
 		return ugh;
 
 	while (next) {
 		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
 				   &next);
 
-		if (ugh != NULL)	/* a parsing error has occured */
+		if (ugh != NULL)	/* a parsing error has occurred */
 			return ugh;
 
 		if (first)	/* first OID/value pair */
@@ -316,14 +316,14 @@ int dn_count_wildcards(chunk_t dn)
 
 	err_t ugh = init_rdn(dn, &rdn, &attribute, &next);
 
-	if (ugh != NULL)	/* a parsing error has occured */
+	if (ugh != NULL)	/* a parsing error has occurred */
 		return -1;
 
 	while (next) {
 		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
 				   &next);
 
-		if (ugh != NULL)	/* a parsing error has occured */
+		if (ugh != NULL)	/* a parsing error has occurred */
 			return -1;
 
 		if (value.len == 1 && *value.ptr == '*')

@@ -11,7 +11,7 @@ Note: In this example setup, both machines are using NSS. If you want to use NSS
 
 1. Create a new (if not already) nss db on both machines as follows:
 
-certutil -N -d sql:<path-to-ipsec.d dir>/ipsec.d  (please note "sql:" in the begining of all the path).
+certutil -N -d sql:<path-to-ipsec.d dir>/ipsec.d  (please note "sql:" in the beginning of all the path).
 
 2. Creating CA certs at both machines:
 

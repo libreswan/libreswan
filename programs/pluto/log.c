@@ -1200,7 +1200,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		} else {
 			if (!st->st_ikev2) {
 				/* ikev1 takes integ from prf, ecept of cause gcm */
-				/* but we dont support gcm in ikev1 for now */
+				/* but we don't support gcm in ikev1 for now */
 				jam_str(integname, sizeof(integname), prfname);
 			} else {
 				snprintf(integname, sizeof(integname), "none");

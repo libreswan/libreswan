@@ -1,3 +1,3 @@
 /* nothing */
-#error "system dependant file should have come from ports directory"
+#error "system dependent file should have come from ports directory"
 
