@@ -1,3 +1,14 @@
+libreswan (3.19-1) unstable; urgency=medium
+
+  * drop patches already applied upstream, clean up remaining patches
+  * cleaner build without KLIPS
+  * fix spelling errors found by lintian
+  * convert to debhelper 10
+  * use wrap-and-sort -ast to canonicalize debian metadata files
+  * upload to unstable for wider testing
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Wed, 25 Jan 2017 20:14:04 -0500
+
 libreswan (3.18-1) experimental; urgency=low
 
   * Initial upload to debian experimental (Closes: #773459)
