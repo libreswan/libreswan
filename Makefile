@@ -651,7 +651,7 @@ release:
 install: install-programs
 install-programs: local-install recursive-install
 install-programs:
-	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
+	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
 		echo "SElinux is present on this system and the prefix path is not /usr." ; \

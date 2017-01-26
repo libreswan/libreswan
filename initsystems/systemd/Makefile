@@ -39,17 +39,18 @@ oldinitdcheck:
 		fi ; \
 	fi
 postcheck:
-	@if test $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+	@if test -z "$(DESTDIR)" -a $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+		echo "DESTDIR='$(DESTDIR)'" ; \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
 		echo " systemctl enable ipsec.service" ; \
 		echo "**********************************************************************" ; \
 	fi ; \
-	if test $(shell systemctl is-active ipsec.service) = "disabled" ; then \
+	if test -z "$(DESTDIR)" -a $(shell systemctl is-active ipsec.service) = "disabled" ; then \
 		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
 		echo " systemctl enable ipsec.service" ; \
 	fi ; \
-	if test $(shell systemctl is-active ipsec.service) = "active" ; then \
+	if test -z "$(DESTDIR)" -a $(shell systemctl is-active ipsec.service) = "active" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently running. You need to restart the service using:" ; \
 		echo " systemctl restart ipsec.service" ; \
