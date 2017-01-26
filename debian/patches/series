@@ -2,3 +2,4 @@
 0002-debian-pam.d-pluto.patch
 0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
 0004-avoid-gcc-unused-variable-warnings-when-USE_KLIPS-fa.patch
+0005-two-minor-spelling-errors.patch
