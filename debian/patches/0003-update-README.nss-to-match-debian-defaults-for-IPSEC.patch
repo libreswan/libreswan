@@ -7,7 +7,7 @@ Subject: update README.nss to match debian defaults for IPSEC_NSSDIR
  1 file changed, 8 insertions(+), 9 deletions(-)
 
 diff --git a/README.nss b/README.nss
-index d1cef45..b815f26 100644
+index 43798c446..b815f26d5 100644
 --- a/README.nss
 +++ b/README.nss
 @@ -62,7 +62,7 @@ using:
@@ -32,7 +32,7 @@ index d1cef45..b815f26 100644
  creating raw RSA keys. If a non-default NSS directory is used, this can
  be specified using the -d option.
  
--	ipsec newhostkey --configdir /etc/ipsec.d [--password password] \
+-	ipsec newhostkey --nssdir /etc/ipsec.d [--password password] \
 -		--output /etc/ipsec.secrets
 +	ipsec newhostkey [--password password]
  

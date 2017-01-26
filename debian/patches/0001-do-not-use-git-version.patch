@@ -8,7 +8,7 @@ avoid using git version when building debian package
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/packaging/utils/setlibreswanversion b/packaging/utils/setlibreswanversion
-index b2b489a..7a32ba6 100755
+index b2b489ac1..7a32ba683 100755
 --- a/packaging/utils/setlibreswanversion
 +++ b/packaging/utils/setlibreswanversion
 @@ -14,7 +14,7 @@ baseversion=$1
