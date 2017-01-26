@@ -9,7 +9,7 @@ Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Standards-Version: 3.9.8
 Build-Depends: bison,
                bzip2,
-               debhelper (>= 9),
+               debhelper (>= 10~),
                dh-systemd,
                flex,
                htmldoc,
