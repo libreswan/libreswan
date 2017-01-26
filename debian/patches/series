@@ -1,3 +1,4 @@
 0001-do-not-use-git-version.patch
 0002-debian-pam.d-pluto.patch
 0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
+0004-avoid-gcc-unused-variable-warnings-when-USE_KLIPS-fa.patch
