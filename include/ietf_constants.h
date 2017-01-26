@@ -368,7 +368,7 @@
  */
 
 /*
- * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
+ * TWOFISH-CBC is a 128-bit block cipher with variable-length key up to 256 bits
  * default is 128. 128,192 and 256 are the only commonly used ones
  */
 #define  TWOFISH_KEY_MIN_LEN 128
@@ -1575,7 +1575,7 @@ enum ipsec_authentication_algo {
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * IKEv1: https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9
  *
- * Upto id=20 this table matches IKEv1 and IKEv2. Entries higher up
+ * Up to id=20 this table matches IKEv1 and IKEv2. Entries higher up
  * no longer match. IKEv2 values are specified here for those.
  * Note: We basically don't do IKEv1 encryption algo > 20
  */

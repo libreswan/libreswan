@@ -488,7 +488,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
 
-				/* Within tranform: Attributes. */
+				/* Within transform: Attributes. */
 
 				/* For Phase 2 / Quick Mode, GROUP_DESCRIPTION is
 				 * automatically generated because it must be the same
@@ -777,7 +777,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	 * in a connection's policy.
 	 *
 	 * If both PSK and RSASIG are present now, that means that
-	 * either is acceptible.  The right way to express this is
+	 * either is acceptable.  The right way to express this is
 	 * to turn both off!
 	 */
 	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
@@ -878,7 +878,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
  * proposal is emitted.
  *
  * If "selection" is true, the SA is supposed to represent the
- * single tranform that the peer has accepted.
+ * single transform that the peer has accepted.
  * ??? We only check that it is acceptable, not that it is one that we offered!
  *
  * It also means that we are inR1, and this as implications when we are
@@ -892,7 +892,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
 				    const struct isakmp_sa *sa,	/* header of input SA Payload */
 				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-				    bool selection,		/* if this SA is a selection, only one tranform
+				    bool selection,		/* if this SA is a selection, only one transform
 								 * can appear. */
 				    struct state *const st)	/* current state object */
 {
@@ -1608,7 +1608,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
  * proposal is emitted into it.
  *
  * If "selection" is true, the SA is supposed to represent the
- * single tranform that the peer has accepted.
+ * single transform that the peer has accepted.
  * ??? We only check that it is acceptable, not that it is one that we offered!
  *
  * Only IPsec DOI is accepted (what is the ISAKMP DOI?).
@@ -1779,7 +1779,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 *
 				 * Note:
 				 *
-				 * GCC now complains about comparisions between
+				 * GCC now complains about comparisons between
 				 * signed and unsigned values.  This is good:
 				 * should the comparison be done as if the
 				 * unsigned representation were signed or as if

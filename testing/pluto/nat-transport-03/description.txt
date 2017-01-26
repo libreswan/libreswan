@@ -6,5 +6,5 @@ the NAT.
 A single transport mode SA is created between north and east, for port 3.
 
 On north, firewalling makes sure that one can only access port 3 via IPsec.
-Similiarly for the "road" machine.
+Similarly for the "road" machine.
 

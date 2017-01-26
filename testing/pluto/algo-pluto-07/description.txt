@@ -1,7 +1,7 @@
 Unsupported alg pluto test:
 
 east is unused. west will test various kind of illegal configurations
-to see they get properly rejected. Currenly lists one test:
+to see they get properly rejected. Currently lists one test:
 
 esp=aes256-sha2_256-4096
 

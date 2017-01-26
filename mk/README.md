@@ -120,7 +120,7 @@ domain, with:
     make kvm-keys
 
 Please note that they are not currently automatically re-generated
-(this is because of concern that critical keys may be accidently
+(this is because of concern that critical keys may be accidentally
 deleted).  To manually re-build the keys use:
 
     make clean-kvm-keys kvm-keys

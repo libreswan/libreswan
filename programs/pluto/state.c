@@ -271,7 +271,7 @@ static struct state_category *categorize_state(struct state *st,
 		return established_ike;
 
 		/*
-		 * Some internal state, will it ever occure?
+		 * Some internal state, will it ever occur?
 		 */
 	case OPPO_ACQUIRE:
 	case OPPO_GW_DISCOVERED:
@@ -279,7 +279,7 @@ static struct state_category *categorize_state(struct state *st,
 
 		/*
 		 * IKEv1: QUICK is for child connections children.
-		 * Probably won't occure as a parent?
+		 * Probably won't occur as a parent?
 		 */
 	case STATE_QUICK_I1:
 	case STATE_QUICK_I2:
@@ -557,7 +557,7 @@ struct state *state_with_serialno(so_serial_t sn)
 
 /*
  * Insert a state object in the hash table. The object is inserted
- * at the begining of list.
+ * at the beginning of list.
  * Needs cookies, connection, and msgid.
  */
 void insert_state(struct state *st)

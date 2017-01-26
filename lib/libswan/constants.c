@@ -635,7 +635,7 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_C",
 	/*
 	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
-	 * inconsistant.
+	 * inconsistent.
 	 */
 	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
 	/*

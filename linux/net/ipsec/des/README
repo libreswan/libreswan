@@ -47,7 +47,7 @@ gcc2 -O2) on the sparc 2 (1410 vs 1270) but is not so good on other machines
   ufc which gave much better test figures that reality ].
 
 It is worth noting that on sparc and Alpha CPUs, performance of the DES
-library can vary by upto %10 due to the positioning of files after application
+library can vary by up to %10 due to the positioning of files after application
 linkage.
 
 Eric Young (eay@cryptsoft.com)

@@ -23,7 +23,7 @@
 ## *Hobbit*, 941122 and previous.  VERSION: 1.3 951107
 ##
 ## edits: Use a consistent naming scheme, for easier identification and cleanup.
-## accomodate gcc's BOGUS assumptions based on input filename.
+## accommodate gcc's BOGUS assumptions based on input filename.
 ## added a few more include-names and try-predefines; some swiped from autoconf.
 ## added a couple of things commonly done as #defines so we can SEE 'em
 
@@ -208,7 +208,7 @@ NetBSD
 netbsd
 freebsd
 FreeBSD
-# cant do 386bsd, I dont think, but ...
+# can't do 386bsd, I don't think, but ...
 _386bsd
 bsd386
 bsdunix
@@ -336,7 +336,7 @@ asm
 libcpp
 athena
 athena_compat
-# some preprocessors cant deal with this
+# some preprocessors can't deal with this
 # c++
 cxx
 cplusplus
@@ -444,7 +444,7 @@ echo '/* Architecture:'
 ./st00pid.x
 echo '*/'
 
-### dont nuke if generating DOS batchfiles
+### don't nuke if generating DOS batchfiles
 rm -f st00pid.*
 sync
 exit 0

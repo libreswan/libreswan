@@ -1,4 +1,4 @@
-test similiar with basic-pluto-05.
+test similar with basic-pluto-05.
 
 It uses modp768 (DH1) instead of default.
 

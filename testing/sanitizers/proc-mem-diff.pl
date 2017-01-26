@@ -34,7 +34,7 @@ while(<>) {
 foreach $loaded ("no-", "")
 {
 
-  # base values are those that occured from proc_meminfo-.*ipsec-mod-.*1
+  # base values are those that occurred from proc_meminfo-.*ipsec-mod-.*1
   $base="/tmp/proc_meminfo-" . $loaded . "ipsec-mod-01";
 
   print "MEMINFO: " . $loaded . " ipsec module loaded (KLIPS) base is $base\n";

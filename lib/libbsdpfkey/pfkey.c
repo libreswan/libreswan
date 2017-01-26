@@ -389,7 +389,7 @@ u_int type;
  * sending SADB_GETSPI message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_getspi(
 		int so,
@@ -482,7 +482,7 @@ int pfkey_send_getspi(
 		return -1;
 	}
 
-	/* proccessing spi range */
+	/* processing spi range */
 	if (need_spirange) {
 		struct sadb_spirange spirange;
 
@@ -522,7 +522,7 @@ int pfkey_send_getspi(
  * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_update(
 	int so,
@@ -562,7 +562,7 @@ int pfkey_send_update(
  * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_add(
 		int so;
@@ -602,7 +602,7 @@ int pfkey_send_add(
  * sending SADB_DELETE message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_delete(so, satype, mode, src, dst, spi)
 int so;
@@ -625,7 +625,7 @@ u_int32_t spi;
  *
  * OUT:
  *	positive: success and return length sent
- *	-1	: error occured, and set errno
+ *	-1	: error occurred, and set errno
  */
 int pfkey_send_delete_all(so, satype, mode, src, dst)
 int so;
@@ -706,7 +706,7 @@ struct sockaddr *src, *dst;
  * sending SADB_GET message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_get(so, satype, mode, src, dst, spi)
 int so;
@@ -726,7 +726,7 @@ u_int32_t spi;
  * sending SADB_REGISTER message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_register(so, satype)
 int so;
@@ -767,7 +767,7 @@ u_int satype;
  * sadb_supported returned into ipsec_supported.
  * OUT:
  *	 0: success and return length sent.
- *	-1: error occured, and set errno.
+ *	-1: error occurred, and set errno.
  */
 int pfkey_recv_register(so)
 int so;
@@ -809,7 +809,7 @@ int so;
  *	tlen: msg length (for checking)
  * OUT:
  *	 0: success and return length sent.
- *	-1: error occured, and set errno.
+ *	-1: error occurred, and set errno.
  */
 int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 {
@@ -875,7 +875,7 @@ int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
  * sending SADB_FLUSH message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_flush(so, satype)
 int so;
@@ -893,7 +893,7 @@ u_int satype;
  * sending SADB_DUMP message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_dump(so, satype)
 int so;
@@ -914,8 +914,8 @@ u_int satype;
  *	flag:	set promisc off if zero, set promisc on if non-zero.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
- *	0     : error occured, and set errno.
+ *	-1	: error occurred, and set errno.
+ *	0     : error occurred, and set errno.
  *	others: a pointer to new allocated buffer in which supported
  *	        algorithms is.
  */
@@ -935,7 +935,7 @@ int flag;
  * sending SADB_X_SPDADD message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdadd(so, src, prefs, dst, prefd, proto, policy, policylen,
 		      seq)
@@ -961,7 +961,7 @@ u_int32_t seq;
  * sending SADB_X_SPDADD message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdadd2(so, src, prefs, dst, prefd, proto, ltime, vtime,
 		       policy, policylen, seq)
@@ -988,7 +988,7 @@ u_int32_t seq;
  * sending SADB_X_SPDUPDATE message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdupdate(so, src, prefs, dst, prefd, proto, policy, policylen,
 			 seq)
@@ -1014,7 +1014,7 @@ u_int32_t seq;
  * sending SADB_X_SPDUPDATE message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdupdate2(so, src, prefs, dst, prefd, proto, ltime, vtime,
 			  policy, policylen, seq)
@@ -1041,7 +1041,7 @@ u_int32_t seq;
  * sending SADB_X_SPDDELETE message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spddelete(so, src, prefs, dst, prefd, proto, policy, policylen,
 			 seq)
@@ -1072,7 +1072,7 @@ u_int32_t seq;
  * sending SADB_X_SPDDELETE message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spddelete2(so, spid)
 int so;
@@ -1090,7 +1090,7 @@ u_int32_t spid;
  * sending SADB_X_SPDGET message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdget(so, spid)
 int so;
@@ -1108,7 +1108,7 @@ u_int32_t spid;
  * sending SADB_X_SPDSETIDX message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdsetidx(so, src, prefs, dst, prefd, proto, policy, policylen,
 			 seq)
@@ -1139,7 +1139,7 @@ u_int32_t seq;
  * sending SADB_SPDFLUSH message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spdflush(so)
 int so;
@@ -1156,7 +1156,7 @@ int so;
  * sending SADB_SPDDUMP message to the kernel.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occured, and set errno.
+ *	-1	: error occurred, and set errno.
  */
 int pfkey_send_spddump(so)
 int so;
@@ -1693,7 +1693,7 @@ int so;
  * receive sadb_msg data, and return pointer to new buffer allocated.
  * Must free this buffer later.
  * OUT:
- *	NULL	: error occured.
+ *	NULL	: error occurred.
  *	others	: a pointer to sadb_msg structure.
  *
  * XXX should be rewritten to pass length explicitly

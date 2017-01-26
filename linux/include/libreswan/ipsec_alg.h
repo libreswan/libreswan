@@ -52,7 +52,7 @@ struct esp;
 	((v) >> 24), (((v) >> 16) & 0xff), (((v) >> 8) & 0xff), ((v) & 0xff)
 /*
  *	Main ipsec_alg objects: "OOPrograming wannabe"
- *	Hierachy (carefully handled with _minimal_ cast'ing):
+ *	Hierarchy (carefully handled with _minimal_ cast'ing):
  *
  *      ipsec_alg+
  *		 +->ipsec_alg_enc  (ixt_alg_type=SADB_EXT_SUPPORTED_ENCRYPT)
@@ -131,7 +131,7 @@ int register_ipsec_alg(struct ipsec_alg *);
 int unregister_ipsec_alg(struct ipsec_alg *);
 /*	-  optional (simple test) for algos     */
 int ipsec_alg_test(unsigned alg_type, unsigned alg_id, int testparm);
-/*	inline wrappers (usefull for type validation */
+/*	inline wrappers (useful for type validation */
 static inline int register_ipsec_alg_enc(struct ipsec_alg_enc *ixt)
 {
 	return register_ipsec_alg((struct ipsec_alg*)ixt);

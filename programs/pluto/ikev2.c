@@ -119,7 +119,7 @@ enum smf2_flags {
 	 * verified?
 	 *
 	 * The original responder, in R2 state isn't able to decrypt
-	 * incomming messages.
+	 * incoming messages.
 	 *
 	 * Some state transition processes do their own decryption.
 	 */
@@ -129,7 +129,7 @@ enum smf2_flags {
 /*
  * IKEv2 has slightly different states than IKEv1.
  *
- * IKEv2 puts all the responsability for retransmission on the end that
+ * IKEv2 puts all the responsibility for retransmission on the end that
  * wants to do something, usually, that the initiator. (But, not always
  * the original initiator, of the responder decides it needs to rekey first)
  *
@@ -704,7 +704,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md)
 	/*
 	 * Loop for two purposes:
 	 * - Add frag into ordered linked list
-	 * - set num_frags to lenght ot the list
+	 * - set num_frags to length ot the list
 	 */
 	num_frags = 0;
 	for (i = &st->ikev2_frags; ; i = &(*i)->next) {
@@ -1357,7 +1357,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 	struct state *ikesa;
 
 	if (st == NULL) {
-		/* current processer deleted the state, nothing to update */
+		/* current processor deleted the state, nothing to update */
 		return;
 	}
 

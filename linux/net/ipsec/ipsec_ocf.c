@@ -613,7 +613,7 @@ enum ipsec_rcv_value ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	case IPPROTO_ESP:
 		/*
 		 * we are decrypting,  from the setup in ipsec_ocf_sa_init above,  we
-		 * need to flip the order of hash/cipher for recieve so that it is
+		 * need to flip the order of hash/cipher for receive so that it is
 		 * hash first then decrypt.  Transmit is ok.
 		 */
 		if (crp->crp_desc && crp->crp_desc->crd_next) {

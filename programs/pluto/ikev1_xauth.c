@@ -513,7 +513,7 @@ static stf_status isakmp_add_attr (pb_stream *strattr,
  * @param use_modecfg_addr_as_client_addr bool
  *	True means force the IP assigned by Mode Config to be the
  *	spd.that.addr.  Useful when you know the client will change his IP
- *	to be what was assigned immediatly after authentication.
+ *	to be what was assigned immediately after authentication.
  * @param ap_id ISAMA Identifier
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
@@ -781,7 +781,7 @@ stf_status xauth_send_request(struct state *st)
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
 			return STF_INTERNAL_ERROR;
 
-		/* Empty name atribute */
+		/* Empty name attribute */
 		attr.isaat_af_type = XAUTH_USER_NAME;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
@@ -1081,7 +1081,7 @@ static bool do_file_authentication(void *varg)
 	libreswan_log("XAUTH: password file (%s) open.", pwdfile);
 
 	/** simple stuff read in a line then go through positioning
-	 * userid, passwd and conniectionname at the begining of each of the
+	 * userid, passwd and conniectionname at the beginning of each of the
 	 * memory locations of our real data and replace the ':' with '\0'
 	 */
 
@@ -1872,7 +1872,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 	return STF_OK;
 }
 
-/* Auxillary function for modecfg_inR1() */
+/* Auxiliary function for modecfg_inR1() */
 static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
@@ -2255,7 +2255,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
  * in order to prompt user for password
  *
  * @param st State
- * @param xauth_resp XAUTH Reponse
+ * @param xauth_resp XAUTH Response
  * @param rbody Reply Body
  * @param ap_id
  * @return stf_status

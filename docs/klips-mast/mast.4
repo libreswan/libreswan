@@ -76,7 +76,7 @@ The third way that a mast device may be used is with a virtual link layer. This 
 Packets that are sent upwards (in the direction of decapsulation) from the mast device will be marked by the tunnel on which the packet was received. The choice of which mast device to emerge from is also defined by the tunnel decapsulation mechanism. Typically, a unique device will be created per major policy category. This is done to simplify the firewall rules.
 
 .PP
-The PPP method is most appropriate for use on the client side of a road warrior configuration, or when there is a sufficiently small number of VPN tunnels that it is practical (or desireable) for each tunnel to have its own device associated with it. The simplification of firewall rules for output is the primary benefit of this mode.
+The PPP method is most appropriate for use on the client side of a road warrior configuration, or when there is a sufficiently small number of VPN tunnels that it is practical (or desirable) for each tunnel to have its own device associated with it. The simplification of firewall rules for output is the primary benefit of this mode.
 
 .PP
 The NFMARK mechanism is used by more traditional VPN topologies, and by Opportunistic Encryption. These two categories of use mandate a different output device per major policy. Both would use specific setting of policy bits (skb\->nfmark) for selection of outgoing policy.

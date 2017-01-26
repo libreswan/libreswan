@@ -417,7 +417,7 @@ def mortem(test, args, domain_prefix="", finished=None,
 
     # For "baseline", the general idea is that "kvmresults.py | grep
     # baseline" should print something when either a regression or
-    # progression has occured.  For instance:
+    # progression has occurred.  For instance:
     #
     #    - a test passing but the baseline failing
     #

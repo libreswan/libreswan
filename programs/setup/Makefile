@@ -1,4 +1,4 @@
-# Makefile for miscelaneous programs
+# Makefile for miscellaneous programs
 # Copyright (C) 2002  Michael Richardson	<mcr@freeswan.org>
 # Copyright (C) 2012  Paul Wouters <paul@libreswan.org>
 #

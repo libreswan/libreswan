@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 # This script is run by a VM host (eg "west") to prepare itself for testing
-# It should be passed a testname as its onyl argument
+# It should be passed a testname as its only argument
 
 import os
 import sys

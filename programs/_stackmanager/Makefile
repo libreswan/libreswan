@@ -1,4 +1,4 @@
-# Makefile for miscelaneous programs
+# Makefile for miscellaneous programs
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it

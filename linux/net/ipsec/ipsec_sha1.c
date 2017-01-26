@@ -1,7 +1,7 @@
 /*
  * The rest of the code is derived from sha1.c by Steve Reid, which is
  * public domain.
- * Minor cosmetic changes to accomodate it in the Linux kernel by ji.
+ * Minor cosmetic changes to accommodate it in the Linux kernel by ji.
  */
 
 #include <asm/byteorder.h>

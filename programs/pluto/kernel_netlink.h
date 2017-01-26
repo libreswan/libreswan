@@ -21,7 +21,7 @@ extern const struct kernel_ops netkey_kernel_ops;
  * receiver. The size of these buffers specifies the maximum size you will be
  * able to write() to a netlink socket, i.e. it will indirectly define the
  * maximum message size. The default is 32KiB. For now we picked a somewhat
- * arbitrary maximum of 8192 for the data portion to accomdate large selinux
+ * arbitrary maximum of 8192 for the data portion to accommodate large selinux
  * IPsec labels (see rhbz#1154784)
  */
 #define MAX_NETLINK_DATA_SIZE 8192

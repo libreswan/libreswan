@@ -180,7 +180,7 @@ enum event_type {
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
 /*
- * an arbitary milliseconds delay for responder. A workaround for iOS, iPhone.
+ * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.
  */
 #define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
@@ -719,7 +719,7 @@ enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
-	POLICY_DISABLEARRIVALCHECK_IX,	/* supress tunnel egress address checking */
+	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -796,7 +796,7 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* supress tunnel egress address checking */
+#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
 #define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)
