@@ -2160,7 +2160,7 @@ int main(int argc, char **argv)
 	 */
 	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
-		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
+		diag("rekeymargin or rekeyfuzz values are so large that they cause overflow");
 
 	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
 			"ikelifetime", &msg);
