@@ -2,50 +2,58 @@ Source: libreswan
 Section: net
 Priority: optional
 Maintainer: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
-Uploaders: Paul Wouters <paul@libreswan.org>,
-           Ondřej Surý <ondrej@debian.org>
+Uploaders:
+ Paul Wouters <paul@libreswan.org>,
+ Ondřej Surý <ondrej@debian.org>,
 Vcs-Browser: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Standards-Version: 3.9.8
-Build-Depends: bison,
-               bzip2,
-               debhelper (>= 10~),
-               dh-systemd,
-               flex,
-               htmldoc,
-               libcap-ng-dev,
-               libcurl4-nss-dev,
-               libevent-dev,
-               libkrb5-dev,
-               libldap2-dev,
-               libnspr4-dev,
-               libnss3-dev (>= 3.16),
-               libnss3-tools,
-               libpam0g-dev,
-               libsystemd-dev,
-               libunbound-dev,
-               man2html,
-               pkg-config,
-               po-debconf,
-               xmlto
+Build-Depends:
+ bison,
+ bzip2,
+ debhelper (>= 10~),
+ dh-systemd,
+ flex,
+ htmldoc,
+ libcap-ng-dev,
+ libcurl4-nss-dev,
+ libevent-dev,
+ libkrb5-dev,
+ libldap2-dev,
+ libnspr4-dev,
+ libnss3-dev (>= 3.16),
+ libnss3-tools,
+ libpam0g-dev,
+ libsystemd-dev,
+ libunbound-dev,
+ man2html,
+ pkg-config,
+ po-debconf,
+ xmlto,
 Homepage: https://libreswan.org/
 
 Package: libreswan
 Architecture: any
-Pre-Depends: debconf | debconf-2.0
-Depends: bsdmainutils,
-         host,
-         iproute2 | iproute (>= 20071016),
-         libnspr4,
-         libnss3 (>= 3.16),
-         libnss3-tools,
-         libunbound2,
-         ${misc:Depends},
-         ${shlibs:Depends}
-Recommends: python
-Provides: ike-server
-Conflicts: ike-server
-Replaces: ike-server
+Pre-Depends:
+ debconf | debconf-2.0,
+Depends:
+ bsdmainutils,
+ host,
+ iproute2 | iproute (>= 20071016),
+ libnspr4,
+ libnss3 (>= 3.16),
+ libnss3-tools,
+ libunbound2,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ python,
+Provides:
+ ike-server,
+Conflicts:
+ ike-server,
+Replaces:
+ ike-server,
 Description: Internet Key Exchange daemon
  Libreswan is an IPsec implementation for Linux. It has support for most
  of the extensions (RFC + IETF drafts) related to IPsec, including
