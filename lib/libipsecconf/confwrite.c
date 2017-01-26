@@ -470,7 +470,7 @@ static void confwrite_conn(FILE *out,
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/* short-cuts for writing out a field that is a policy bit.
-		 * cwpbf flips the sense of teh bit.
+		 * cwpbf flips the sense of the bit.
 		 */
 #		define cwpb(name, p)  { cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); }
 #		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }

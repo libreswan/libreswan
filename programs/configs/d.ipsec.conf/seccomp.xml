@@ -14,7 +14,7 @@ AppArmor or other OS security features.</para>
 
 <para>The current default is disabled, but it is expected that in
 the future this feature will be enabled on all supported operating
-systems. Similarly, it is expected that further priviledge separation
+systems. Similarly, it is expected that further privilege separation
 will reduce the allowed syscalls - for example for the crypto helpers
 or DNS helpers.</para>
 

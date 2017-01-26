@@ -1141,7 +1141,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 		if (match > 0) {
 			passert(match < local_proposals->roof);
-			/* mark what happend */
+			/* mark what happened */
 			if (matching_local_propnum == 0) {
 				/* first match */
 				print_string(remote_print_buf, "[first-match]");
@@ -1594,7 +1594,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 * - rumor has it IKEv2 algorithms don't exist in the "struct
          *   alg_info" database.  The "rationale" is that the database
          *   should only contain IKE algorithms.  The result is that
-         *   there are many many functions duplicating the knowlege
+         *   there are many many functions duplicating the knowledge
          *   the algorithm database already contains.
 	 */
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {

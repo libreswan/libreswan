@@ -178,7 +178,7 @@ struct oakley_group_desc;	/* so it isn't local to the function prototype */
  * support is required.
  *
  * Parsing with POLICY=IKEV1, but then proposing the result using
- * IKEv2 is a program error.  The IKEv2 sould complain loudly and
+ * IKEv2 is a program error.  The IKEv2 should complain loudly and
  * hopefully not crash.
  *
  * Parsing with POLICY='0' is allowed. It will accept the algorithms

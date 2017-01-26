@@ -540,7 +540,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 				       extr->ips->ips_encalg,
 				       extr->ips->ips_flags),
 			       extensions_reply) &&
-		/* The 3 lifetime extentions should only be sent if non-zero. */
+		/* The 3 lifetime extensions should only be sent if non-zero. */
 		(extensions[K_SADB_EXT_LIFETIME_HARD] == 0 ||
 		    pfkey_safe_build(error =
 			pfkey_lifetime_build(&extensions_reply[
@@ -853,7 +853,7 @@ DEBUG_NO_STATIC int pfkey_add_parse(struct sock *sk,
 							 extr->ips->ips_ref,
 							 extr->ips->ips_refhim),
 			       extensions_reply) &&
-	      /* The 3 lifetime extentions should only be sent if non-zero. */
+	      /* The 3 lifetime extensions should only be sent if non-zero. */
 	      (extensions[K_SADB_EXT_LIFETIME_HARD] == 0 ||
 		  pfkey_safe_build(error = pfkey_lifetime_build(&
 								extensions_reply
@@ -1258,7 +1258,7 @@ DEBUG_NO_STATIC int pfkey_get_parse(struct sock *sk,
 						      extr->ips->ips_encalg,
 						      extr->ips->ips_flags),
 			       extensions_reply) &&
-	      /* The 3 lifetime extentions should only be sent if non-zero. */
+	      /* The 3 lifetime extensions should only be sent if non-zero. */
 	      (!(ipsp->ips_life.ipl_allocations.ipl_count ||
 		 ipsp->ips_life.ipl_bytes.ipl_count ||
 		 ipsp->ips_life.ipl_addtime.ipl_count ||
@@ -3502,7 +3502,7 @@ int pfkey_build_reply(struct sadb_msg *pfkey_msg,
 
 /*
  * interpret a pfkey message for klips usage.
- * it used to be that we provided a reply in a seperate buffer,
+ * it used to be that we provided a reply in a separate buffer,
  * but now we overwrite the request buffer and return it.
  */
 int pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg)

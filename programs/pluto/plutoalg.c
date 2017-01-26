@@ -282,8 +282,8 @@ static const struct ike_alg **clone_valid(const struct parser_policy *policy,
 	 * larger set of defaults.
 	 *
 	 * This should increase the odds of both ends interoperating.
-	 * For instance, if IKEv2 defaults are prefered and one end
-	 * has ikev2=never then, in agressive mode, things don't work.
+	 * For instance, if IKEv2 defaults are preferred and one end
+	 * has ikev2=never then, in aggressive mode, things don't work.
 	 */
 	const struct ike_alg **default_algs = (policy->ikev1
 					       ? ikev1_algs

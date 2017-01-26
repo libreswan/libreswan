@@ -371,7 +371,7 @@ static void init_netlink(void)
  * @param description - String - user friendly description of what is
  *                      being attempted.  Used for diagnostics
  * @param text_said - String
- * @return bool True if the message was succesfully sent.
+ * @return bool True if the message was successfully sent.
  */
 static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 			size_t rbuf_len,
@@ -885,7 +885,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
  *
  * @param sa Kernel SA to add/modify
  * @param replace boolean - true if this replaces an existing SA
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 {
@@ -1264,7 +1264,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
  * netlink_del_sa - Delete an SA from the Kernel
  *
  * @param sa Kernel SA to be deleted
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool netlink_del_sa(const struct kernel_sa *sa)
 {

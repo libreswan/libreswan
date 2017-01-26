@@ -136,7 +136,7 @@ enum keyword_numeric_config_field {
 	KBF_REMOTEPEERTYPE,     /* Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /* Network Manager support */
 	KBF_LABELED_IPSEC,
-	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
+	KBF_SAREFTRACK,         /* saref tracking parameter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
 	KBF_SECCTX,             /* security context attribute value for labeled ipsec */
 	KBF_XAUTHBY,            /* method of xauth user auth - file, pam or alwaysok */

@@ -218,7 +218,7 @@ module_param(test_crypto, int, 0644);
 module_param(excl_crypto, int, 0644);
 module_param(noauto, int, 0644);
 
-MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
+MODULE_PARM_DESC(noauto, "Don't try all known algos, just setup enabled ones");
 
 static int cipher_null[] = { -1, -1 };
 static int des_ede3[] = { -1, -1 };

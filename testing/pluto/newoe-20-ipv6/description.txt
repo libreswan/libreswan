@@ -1,2 +1,2 @@
 basic OE test for IPv6, using road and east triggered by packet using NETKEY on road. 
-foodgroups and IPv6 may not work consistantly. IPv6 source address selection is complicated
+foodgroups and IPv6 may not work consistently. IPv6 source address selection is complicated

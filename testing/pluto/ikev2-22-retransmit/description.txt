@@ -2,5 +2,5 @@ Roadwarrior with IKEv2 using RSA  keyingtries=%forever
 if the other side crash the initiator keep trying.
 The connection will not established.
 
-NOTE: I don't understand this test case because east isnt crashing
+NOTE: I don't understand this test case because east isn't crashing
 or fake-crashing?

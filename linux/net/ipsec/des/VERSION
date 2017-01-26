@@ -47,7 +47,7 @@ Version 4.00
 Version 3.26
 	I've finally removed one of the shifts in D_ENCRYPT.  This
 	meant I've changed the des_SPtrans table (spr.h), the set_key()
-	function and some things in des_enc.c.  This has definitly
+	function and some things in des_enc.c.  This has definitely
 	made things faster :-).  I've known about this one for some
 	time but I've been too lazy to follow it up :-).
 	Noticed that in the D_ENCRYPT() macro, we can just do L^=(..)^(..)^..
@@ -62,7 +62,7 @@ Version 3.26
 	Thanks to Jens Kupferschmidt <bt1cu@hpboot.rz.uni-leipzig.de>. */
 
 	SIGWINCH case put in des_read_passwd() so the function does not
-	'exit' if this function is recieved.
+	'exit' if this function is received.
 
 Version 3.25 17/07/96
 	Modified read_pwd.c so that stdin can be read if not a tty.

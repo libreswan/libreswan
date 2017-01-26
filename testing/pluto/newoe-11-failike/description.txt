@@ -11,6 +11,6 @@ should happen.
 note1: the shunt status at the beginning should show a shunt but it does not?
        This needs to be explained/fixed?
 
-note2: Also because we dont replace identical failureshunt with negotiationshunt
+note2: Also because we don't replace identical failureshunt with negotiationshunt
        the "why" is listed as "oe-failing" instead of "oe-failed".
 

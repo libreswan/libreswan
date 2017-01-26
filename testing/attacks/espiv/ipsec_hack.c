@@ -260,7 +260,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 
 	memcpy(opt->last_iv, ((u8 *)ipH) + p_len - 20, 8);
 
-	/* Now we have packet -> crate an attemp packet */
+	/* Now we have packet -> create an attempt packet */
 
 	ipH = (struct iphdr *)buf;
 
@@ -277,7 +277,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 		opt->state = init;
 		ipH->protocol = 17;
 	} else {
-		printf("packet lenght %i\n", ntohs(ipH->tot_len));
+		printf("packet length %i\n", ntohs(ipH->tot_len));
 		printf("created a guess block  plaintext=");
 		for (i = 0; i < 8; i++)
 			printf("%02x", (int) opt->guess[i]);

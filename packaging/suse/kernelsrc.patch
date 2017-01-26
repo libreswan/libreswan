@@ -186,7 +186,7 @@ index 462bd77..1973524 100644
  confcheck:
  	@if test ! -f $(KCFILE) ; \
 @@ -309,11 +309,11 @@ kernel:
- 	# we run make dep seperately, because there is no point in running ERRCHECK
+ 	# we run make dep separately, because there is no point in running ERRCHECK
  	# on the make dep output.
  	# see LKML thread "clean before or after dep?"
 -	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) $(KERNCLEAN) $(KERNDEP) )

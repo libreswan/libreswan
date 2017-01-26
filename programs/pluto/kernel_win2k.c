@@ -89,7 +89,7 @@ static bool win2k_raw_eroute(const ip_address *this_host UNUSED,
  *
  * @param sa Kernel SA to add/modify
  * @param replace boolean - true if this replaces an existing SA
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool win2k_add_sa(const struct kernel_sa *sa, bool replace)
 {
@@ -99,7 +99,7 @@ static bool win2k_add_sa(const struct kernel_sa *sa, bool replace)
 /** netlink_del_sa - Delete an SA from the Kernel
  *
  * @param sa Kernel SA to be deleted
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool win2k_del_sa(const struct kernel_sa *sa)
 {

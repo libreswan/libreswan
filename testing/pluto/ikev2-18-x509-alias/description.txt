@@ -7,4 +7,4 @@ Though the rekey timers are short, automatic runs don't wait that long.
 If you want to rekey correctly run the test manually (with patience).
 
 NOTE: this test seems to suffer from flow control issues, so reference output
-not commited.
+not committed.

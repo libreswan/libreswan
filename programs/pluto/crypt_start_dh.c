@@ -256,7 +256,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	{
 		stf_status e = send_crypto_helper_request(&r, dh);
 
-		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
+		reset_globals(); /* XXX suspicious - why was this deemed necessary? */
 
 		return e;
 	}

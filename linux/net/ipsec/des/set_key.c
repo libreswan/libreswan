@@ -133,7 +133,7 @@ des_cblock(*key);
 	int i;
 
 	for (i = 0; i < NUM_WEAK_KEY; i++)
-		/* Added == 0 to comparision, I obviously don't run
+		/* Added == 0 to comparison, I obviously don't run
 		 * this section very often :-(, thanks to
 		 * engineering@MorningStar.Com for the fix
 		 * eay 93/06/29

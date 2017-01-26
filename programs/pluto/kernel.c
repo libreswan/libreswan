@@ -666,7 +666,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
-	 * eiter -1 or the output length  -- by Carsten Schlote
+	 * either -1 or the output length  -- by Carsten Schlote
 	 */
 	return (result >= blen || result < 0) ? -1 : result;
 }
@@ -1153,7 +1153,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	struct bare_shunt *p;
 
-	/* ??? the following 3 lines are embarassing */
+	/* ??? the following 3 lines are embarrassing */
 	pexpect(pp != NULL);
 	if (pp == NULL)
 		return;

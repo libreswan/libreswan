@@ -2701,7 +2701,7 @@ enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 		/* clear UDP & Non-IKE Markers (if any) */
 		memset(udp, 0, ixs->natt_head);
 
-		/* fill UDP with usefull informations ;-) */
+		/* fill UDP with useful informations ;-) */
 		udp->source = htons(ixs->natt_sport);
 		udp->dest = htons(ixs->natt_dport);
 		udp->len = htons(ntohs(ipp->tot_len) - ixs->iphlen);

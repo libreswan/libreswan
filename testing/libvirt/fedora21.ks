@@ -37,7 +37,7 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 # automatically.
 
 # Note: %post also installs debug-rpms.  Downloading and installing
-# them is what takes all the time and bandwith.
+# them is what takes all the time and bandwidth.
 
 # Note: To avoid an accidental kernel upgrade (KLIPS doesn't build
 # with some 4.x kernels), install everything kernel dependent here.

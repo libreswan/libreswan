@@ -87,7 +87,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 {
 	struct db_sa *gsp = NULL;
 
-	/* Next two are for multiple proposals in agressive mode... */
+	/* Next two are for multiple proposals in aggressive mode... */
 	unsigned last_modp = 0;
 	bool warned_dropped_dhgr = FALSE;
 

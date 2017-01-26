@@ -95,7 +95,7 @@ dirs.mk.dir := $(patsubst %/,%,$(dir $(dirs.mk.file)))
 top_srcdir := $(patsubst %/,%,$(dir $(dirs.mk.dir)))
 
 
-# Pull in sufficent stuff to get a definition of OBJDIR.  It might be
+# Pull in sufficient stuff to get a definition of OBJDIR.  It might be
 # set by local includes so pull that in first.
 include $(top_srcdir)/mk/local.mk
 include $(top_srcdir)/mk/objdir.mk

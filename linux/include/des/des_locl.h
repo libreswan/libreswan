@@ -83,7 +83,7 @@
 #endif
 
 /* This helps C compiler generate the correct code for multiple functional
- * units.  It reduces register dependancies at the expense of 2 more
+ * units.  It reduces register dependencies at the expense of 2 more
  * registers */
 #ifndef DES_RISC1
 #define DES_RISC1
@@ -98,7 +98,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED !!!!!
 #endif
 
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
- * Very mucy CPU dependant */
+ * Very mucy CPU dependent */
 #ifndef DES_UNROLL
 #define DES_UNROLL
 #endif
@@ -279,7 +279,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED !!!!!
  * bytes, probably an issue of accessing non-word aligned objects :-( */
 #ifdef DES_PTR
 
-/* It recently occured to me that 0^0^0^0^0^0^0 == 0, so there
+/* It recently occurred to me that 0^0^0^0^0^0^0 == 0, so there
  * is no reason to not xor all the sub items together.  This potentially
  * saves a register since things can be xored directly into L */
 

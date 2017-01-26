@@ -9,7 +9,7 @@ if test -z "${BASH_VERSION}" ; then
 fi
 
 #
-#  DHR says, alwasy eat your dogfood!:
+#  DHR says, always eat your dogfood!:
 # set -u -e
 set -e
 
@@ -521,7 +521,7 @@ do_unittest() {
 
     if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
 
-    echo "BUILDING DEPENDANCIES"
+    echo "BUILDING DEPENDENCIES"
     (cd ${ROOTDIR}/programs;
      for program in ${PROGRAMS}
      do

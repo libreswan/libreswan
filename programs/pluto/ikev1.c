@@ -1210,7 +1210,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			/*
 			 * okay, now we have to figure out if we are receiving a bogus
-			 * new message in an oustanding XAUTH server conversation
+			 * new message in an outstanding XAUTH server conversation
 			 * (i.e. a reply to our challenge)
 			 * (this occurs with some broken other implementations).
 			 *
