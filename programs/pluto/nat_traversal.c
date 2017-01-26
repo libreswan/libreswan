@@ -729,7 +729,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 int nat_traversal_espinudp_socket(int sk, const char *fam)
 {
 	int r;
-#if defined(KLIPS
+#if defined(KLIPS)
 	struct ifreq ifr;
 	int *fdp = (int *) &ifr.ifr_data;
 	const char *ifn;
