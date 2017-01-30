@@ -142,21 +142,24 @@
 		<tt> cd $BUILDDIR && make kvm-uninstall </tt>
 	      </li>
 	      <li>
-		delete result directories with missing output: <br/>
-		<tt> grep '"output-missing"' $WEBDIR/*/results.json | cut -d/  -f1 | sort -u | xargs rm -rf </tt>
+		update the build tree to latest: <br/>
+		<tt> cd $BUILDDIR && git pull --ff-only </tt>
 	      </li>
 	      <li>
-		delete the in-progress directory (and any others with
-		missing or incomplete results): </br>
-		<tt> ??? </tt>
+		delete result directories with missing output: <br/>
+		<tt> cd $WEBDIR && grep '"output-missing"' */results.json | cut -d/  -f1 | sort -u # | xargs rm -rf </tt>
+	      </li>
+	      <li>
+		delete result directories with incomplete output: </br>
+		<tt> cd $WEBDIR && ls -d */ | while read d ; do test -r $d/results.json || echo $d ; done # | xargs rm -rf </tt>
 	      </li>
 	      <li>
 		compress any log files: </br>
-		<tt> find $WEBDIR -name '*.log' -print | xargs bzip2 -9 </tt>
+		<tt> cd $WEBDIR && find * -name '*.log' -print | xargs bzip2 -9 </tt>
 	      </li>
 	      <li>
 		restart <tt>tester.sh</tt>: <br/>
-		<tt> cd $SCRIPTDIR/testing/web/tester.sh $BUILDDIR $WEBDIR </tt>
+		<tt> cd && nohup $SCRIPTDIR/testing/web/tester.sh $BUILDDIR $WEBDIR </tt>
 	      </li>
 	    </ul>
 	  </p>
