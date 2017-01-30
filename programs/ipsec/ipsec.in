@@ -222,7 +222,7 @@ case "${1}" in
 		if [ -d "${3}" ]; then
 		    IPSEC_NSSDIR="${3}"
 		    if [ "${2}" = "--configdir" ]; then
-			echo "Warning: --configdir option has been deprecated, use --nssdir instead" >&2
+			echo "ipsec import warning: --configdir is obsoleted, use --nssdir" >&2
 		    fi
 		else
 		    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
@@ -261,7 +261,7 @@ case "${1}" in
 		IPSEC_NSSDIR="${3}"
 		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 		if [ "${2}" = "--configdir" ]; then
-		    echo "Warning: --configdir option has been deprecated, use --nssdir instead" >&2
+		    echo "ipsec initnss warning: --configdir is obsoleted, use --nssdir" >&2
 		fi
 	    else
 		echo "usage: ipsec initnss [--nssdir ${IPSEC_NSSDIR}]" >&2
