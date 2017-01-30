@@ -216,10 +216,14 @@ case "${1}" in
 	    # A lot of nss commands use -d to specify NSS db location.
 	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
 		"${2}" = "--nssdir" ]
 	    then
 		if [ -d "${3}" ]; then
 		    IPSEC_NSSDIR="${3}"
+		    if [ "${2}" = "--configdir" ]; then
+			echo "Warning: --configdir option has been deprecated, use --nssdir instead" >&2
+		    fi
 		else
 		    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
 		    exit 1
@@ -251,10 +255,14 @@ case "${1}" in
 	    # A lot of nss commands use -d to specify NSS db location.
 	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
 		"${2}" = "--nssdir" ]
 	    then
 		IPSEC_NSSDIR="${3}"
 		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+		if [ "${2}" = "--configdir" ]; then
+		    echo "Warning: --configdir option has been deprecated, use --nssdir instead" >&2
+		fi
 	    else
 		echo "usage: ipsec initnss [--nssdir ${IPSEC_NSSDIR}]" >&2
 		exit 1
