@@ -99,24 +99,6 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
 	switch (ksproto) {
 
-	case CRK_IKEv1:
-		switch (algo) {
-		case OAKLEY_CAST_CBC:
-			return CAST_KEY_DEF_LEN;
-		case OAKLEY_AES_CBC:
-			return AES_KEY_DEF_LEN;
-		case OAKLEY_CAMELLIA_CBC:
-			return CAMELLIA_KEY_DEF_LEN;
-		/* private use */
-		case OAKLEY_SERPENT_CBC:
-			return SERPENT_KEY_DEF_LEN;
-		case OAKLEY_TWOFISH_CBC:
-		case OAKLEY_TWOFISH_CBC_SSH: /* ?? */
-			return TWOFISH_KEY_DEF_LEN;
-		default:
-			return 0;
-		}
-
 	case CRK_ESPorAH:
 		switch (algo) {
 		case ESP_CAST:
