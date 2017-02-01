@@ -469,6 +469,44 @@ static void ike_add(const struct parser_policy *const policy,
 	}
 }
 
+struct alg_info_ike *ikev1_default_ike_info(void)
+{
+	static const struct ike_alg *default_ikev1_groups[] = {
+		&oakley_group_modp2048.common,
+		&oakley_group_modp1536.common,
+		NULL,
+	};
+	static const struct ike_alg *default_ikev1_ealgs[] = {
+		&ike_alg_encrypt_aes_cbc.common,
+		&ike_alg_encrypt_3des_cbc.common,
+		NULL,
+	};
+	static const struct ike_alg *default_ikev1_aalgs[] = {
+		&ike_alg_prf_sha1.common,
+		NULL,
+	};
+	static const struct ike_defaults spdb_defaults = {
+		.groups = {
+			.ikev1 = default_ikev1_groups,
+		},
+		.ealgs = {
+			.ikev1 = default_ikev1_ealgs,
+		},
+		.aalgs = {
+			.ikev1 = default_ikev1_aalgs,
+		},
+	};
+
+	static const struct parser_policy policy = {
+		.ikev1 = TRUE,
+	};
+
+	struct alg_info_ike *default_info = alloc_thing(struct alg_info_ike, "ike_info");
+	ike_add(&policy, &spdb_defaults, &default_info->ai,
+		NULL, 0, NULL, NULL);
+	return default_info;
+}
+
 static void alg_info_ike_add(const struct parser_policy *const policy,
 			     struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,

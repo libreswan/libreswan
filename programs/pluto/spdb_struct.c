@@ -81,18 +81,15 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
  * single_dh is for Aggressive Mode where we must have exactly
  * one DH group.
  */
+
+static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
+					enum ikev1_auth_method auth_method,
+					bool single_dh);
+
 struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				enum ikev1_auth_method auth_method,
 				bool single_dh)
 {
-	struct db_sa *gsp = NULL;
-
-	/* Next two are for multiple proposals in aggressive mode... */
-	unsigned last_modp = 0;
-	bool warned_dropped_dhgr = FALSE;
-
-	int transcnt = 0;
-
 	/*
 	 * start by copying the proposal that would have been picked by
 	 * standard defaults.
@@ -101,8 +98,31 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	if (ai == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
 			    "no specific IKE algorithms specified - using defaults"));
-		return NULL;
+		struct alg_info_ike *default_info
+			= ikev1_default_ike_info();
+		struct db_sa *new_db = oakley_alg_mergedb(default_info,
+							  auth_method,
+							  single_dh);
+		pfree(default_info);
+		return new_db;
+	} else {
+		return oakley_alg_mergedb(ai, auth_method, single_dh);
 	}
+}
+
+struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
+				 enum ikev1_auth_method auth_method,
+				 bool single_dh)
+{
+	passert(ai != NULL);
+
+	struct db_sa *gsp = NULL;
+
+	/* Next two are for multiple proposals in aggressive mode... */
+	unsigned last_modp = 0;
+	bool warned_dropped_dhgr = FALSE;
+
+	int transcnt = 0;
 
 	/*
 	 * for each group, we will create a new proposal item, and then
