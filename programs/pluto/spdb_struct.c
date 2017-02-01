@@ -314,11 +314,11 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 				/*
 				 * This odd FOR loop executes its body for
-				 * exactly two values of ks (def_ks and max_ks)
+				 * exactly two values of ks (max_ks and def_ks)
 				 * unless def_ks == max_ks, in which case it is
 				 * executed once.
 				 */
-				for (ks = def_ks; ; ks = max_ks) {
+				for (ks = max_ks; ; ks = def_ks) {
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
 					if (gsp == NULL) {
@@ -329,7 +329,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 						free_sa(&gsp);
 						gsp = new;
 					}
-					if (ks == max_ks)
+					if (ks == def_ks)
 						break;
 				}
 				free_sa(&emp_sp);
