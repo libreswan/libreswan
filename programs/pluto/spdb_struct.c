@@ -277,14 +277,17 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		}
 
 		 if (emp_sp != NULL) {
-			int def_ks = 0;
 
-			if (ike_info->ike_eklen == 0)
-				def_ks = crypto_req_keysize(CRK_IKEv1,
-							    ike_info->ike_encrypt->common.ikev1_oakley_id);
+			 /*
+			  * Exclude 3des et.al. which do not include
+			  * default key lengths in the proposal.
+			  */
+			 if (ike_info->ike_eklen == 0
+			     && !ike_info->ike_encrypt->keylen_omitted) {
 
-			if (def_ks != 0) {
 				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+				int def_ks = enc_desc->keydeflen;
+				passert(def_ks); /* ike=null not supported */
 				int max_ks = encrypt_max_key_bit_length(enc_desc);
 				int ks;
 
