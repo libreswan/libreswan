@@ -638,9 +638,34 @@ bool ikev1_out_sa(pb_stream *outs,
 
 					if (oakley_mode) {
 						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
-							int defkeysize = crypto_req_keysize(CRK_IKEv1, a->val);
-
-							if (defkeysize != 0) {
+							const struct encrypt_desc *enc = ikev1_get_ike_encrypt_desc(a->val);
+							passert(enc); /* algorithm known */
+							/*
+							 * Since
+							 * spdb_struct.c
+							 * should have
+							 * added
+							 * default
+							 * keys when
+							 * needed, the
+							 * only way
+							 * this path
+							 * can be
+							 * executed is
+							 * when the
+							 * length
+							 * should be
+							 * omitted
+							 * (i.e.,
+							 * 3des).
+							 * i.e., this
+							 * code path
+							 * is dead.
+							 */
+							pexpect(enc->keylen_omitted);
+							if (!enc->keylen_omitted) {
+								int defkeysize = enc->keydeflen;
+								passert(defkeysize); /* never ike=NULL */
 								DBG(DBG_CONTROLMORE, DBG_log("inserting default oakley key length attribute payload of %d bits",
 									defkeysize));
 								if (!out_attr(OAKLEY_KEY_LENGTH,
