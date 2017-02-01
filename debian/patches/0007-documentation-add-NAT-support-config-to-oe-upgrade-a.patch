@@ -1,0 +1,24 @@
+From: Paul Wouters <pwouters@redhat.com>
+Date: Wed, 25 Jan 2017 23:39:05 -0500
+Subject: documentation: add NAT support config to oe-upgrade-authnull.conf
+
+(cherry picked from commit 12c98176a690bfc800087a39dc5db8be2bbdf3c7)
+---
+ docs/examples/oe-upgrade-authnull.conf | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/docs/examples/oe-upgrade-authnull.conf b/docs/examples/oe-upgrade-authnull.conf
+index 2a76cf47b..b210386c9 100644
+--- a/docs/examples/oe-upgrade-authnull.conf
++++ b/docs/examples/oe-upgrade-authnull.conf
+@@ -44,6 +44,10 @@ conn private-or-clear
+ 	auto=route
+ 	keyingtries=1
+ 	retransmit-timeout=2s
++	# To support being behind NAT
++	leftmodecfgclient=yes
++	leftcat=yes
++	narrowing=yes
+ 
+ conn private
+ 	type=tunnel

@@ -1,0 +1,72 @@
+From: Paul Wouters <pwouters@redhat.com>
+Date: Tue, 17 Jan 2017 00:31:53 -0500
+Subject: documentation: added oe-letsencrypt-* example configs
+
+(cherry picked from commit 22f2d2c652244f73b5530d0c9894f8b6ede803b1)
+---
+ docs/examples/oe-letsencrypt-client.conf | 27 +++++++++++++++++++++++++++
+ docs/examples/oe-letsencrypt-server.conf | 21 +++++++++++++++++++++
+ 2 files changed, 48 insertions(+)
+ create mode 100644 docs/examples/oe-letsencrypt-client.conf
+ create mode 100644 docs/examples/oe-letsencrypt-server.conf
+
+diff --git a/docs/examples/oe-letsencrypt-client.conf b/docs/examples/oe-letsencrypt-client.conf
+new file mode 100644
+index 000000000..f67f33445
+--- /dev/null
++++ b/docs/examples/oe-letsencrypt-client.conf
+@@ -0,0 +1,27 @@
++
++# See https://libreswan.org/wiki/HOWTO:_Opportunistic_IPsec_using_LetsEncrypt
++#
++conn private-or-clear
++	rightid=%fromcert
++	rightrsasigkey=%cert
++	rightauth=rsasig
++	right=%opportunisticgroup
++	rightmodecfgclient=yes
++	rightcat=yes
++	# Any CA will do because we only load the LetsEncrypt CA
++	rightca=%any
++	#
++	left=%defaultroute
++	leftid=%null
++	leftauth=null
++	leftmodecfgclient=yes
++	leftcat=yes
++	#
++	narrowing=yes
++	type=tunnel
++	ikev2=insist
++	negotiationshunt=drop
++	failureshunt=passthrough
++	keyingtries=1
++	retransmit-timeout=3s
++	auto=ondemand
+diff --git a/docs/examples/oe-letsencrypt-server.conf b/docs/examples/oe-letsencrypt-server.conf
+new file mode 100644
+index 000000000..ca0ae89b4
+--- /dev/null
++++ b/docs/examples/oe-letsencrypt-server.conf
+@@ -0,0 +1,21 @@
++
++conn clear-or-private
++	leftid=%fromcert
++	leftrsasigkey=%cert
++	# nickname of your letsencrypt certificate imported to NSS
++	leftcert=letsencrypt.libreswan.org
++	leftauth=rsasig
++	left=%defaultroute
++	leftaddresspool=100.64.0.1-100.64.255.254
++	leftmodecfgclient=yes
++	#
++	rightid=%null
++	rightauth=null
++	right=%opportunisticgroup
++	#
++	negotiationshunt=passthrough
++	failureshunt=passthrough
++	type=tunnel
++	ikev2=insist
++	sendca=issuer
++	auto=add

@@ -1,0 +1,53 @@
+From: Paul Wouters <pwouters@redhat.com>
+Date: Wed, 25 Jan 2017 22:18:09 -0500
+Subject: building: Don't check runtime for SElinux/systemd when DESTDIR is
+ used
+
+These tests are the warn the admin running a make install on a live
+system, but when using DESTDIR, it means the build is not for this system.
+
+(cherry picked from commit bd6e29a5bcd44cfd24e74132c61559e1b80ff969)
+---
+ Makefile                     | 2 +-
+ initsystems/systemd/Makefile | 7 ++++---
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 08caf288b..e9b45f0a1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -651,7 +651,7 @@ release:
+ install: install-programs
+ install-programs: local-install recursive-install
+ install-programs:
+-	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
++	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
+ 	if /usr/sbin/selinuxenabled ; then  \
+ 		echo -e "\n************************** WARNING ***********************************" ; \
+ 		echo "SElinux is present on this system and the prefix path is not /usr." ; \
+diff --git a/initsystems/systemd/Makefile b/initsystems/systemd/Makefile
+index c4f3b55b7..4bfdb24f0 100644
+--- a/initsystems/systemd/Makefile
++++ b/initsystems/systemd/Makefile
+@@ -39,17 +39,18 @@ oldinitdcheck:
+ 		fi ; \
+ 	fi
+ postcheck:
+-	@if test $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
++	@if test -z "$(DESTDIR)" -a $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
++		echo "DESTDIR='$(DESTDIR)'" ; \
+ 		echo "************************** WARNING ***********************************" ; \
+ 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
+ 		echo " systemctl enable ipsec.service" ; \
+ 		echo "**********************************************************************" ; \
+ 	fi ; \
+-	if test $(shell systemctl is-active ipsec.service) = "disabled" ; then \
++	if test -z "$(DESTDIR)" -a $(shell systemctl is-active ipsec.service) = "disabled" ; then \
+ 		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
+ 		echo " systemctl enable ipsec.service" ; \
+ 	fi ; \
+-	if test $(shell systemctl is-active ipsec.service) = "active" ; then \
++	if test -z "$(DESTDIR)" -a $(shell systemctl is-active ipsec.service) = "active" ; then \
+ 		echo "************************** WARNING ***********************************" ; \
+ 		echo "The ipsec service is currently running. You need to restart the service using:" ; \
+ 		echo " systemctl restart ipsec.service" ; \
