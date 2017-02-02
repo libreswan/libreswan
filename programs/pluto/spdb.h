@@ -178,7 +178,7 @@ struct alg_info_ike;
 struct alg_info_esp;
 
 extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
-				       struct db_sa *basic,
+				       enum ikev1_auth_method auth_method,
 				       bool single_dh);
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,

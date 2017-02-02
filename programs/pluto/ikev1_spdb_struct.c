@@ -222,11 +222,25 @@ bool ikev1_out_sa(pb_stream *outs,
 	struct db_sa *revised_sadb;
 
 	if (oakley_mode) {
-		/* Aggr-Mode - Max transforms == 2 - Multiple transforms, 1 DH group */
-		revised_sadb = oakley_alg_makedb(
-			st->st_connection->alg_info_ike,
-			sadb,
-			aggressive_mode);
+		/*
+		 * Construct the proposals by combining ALG_INFO_IKE
+		 * with the AUTH (proof of identity) extracted from
+		 * the (default?) SADB.  As if by magic, attrs[2] is
+		 * always the authentication method.
+		 *
+		 * XXX: Should replace SADB with a simple map to the
+		 * auth method.
+		 */
+		struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		enum ikev1_auth_method auth_method = auth->val;
+		/*
+		 * Aggr-Mode - Max transforms == 2 - Multiple
+		 * transforms, 1 DH group
+		 */
+		revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+						 auth_method,
+						 aggressive_mode);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->alg_info_esp,
@@ -1530,7 +1544,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_trans *trans;
 	struct db_prop  *prop;
 	struct db_prop_conj *cprop;
-	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
 
 	zero(&ta);	/* ??? may not NULL pointer fields */
@@ -1539,9 +1552,28 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.life_seconds = st->st_connection->sa_ike_life_seconds;
 	ta.life_kilobytes = 1000000;
 
-	/* Max transforms == 2 - Multiple transforms, 1 DH group */
-	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 IKEv1_oakley_am_sadb(policy, c), TRUE);
+	/*
+	 * Construct the proposals by combining ALG_INFO_IKE with the
+	 * AUTH (proof of identity) extracted from the aggressive mode
+	 * SADB.  As if by magic, attrs[2] is always the
+	 * authentication method.
+	 *
+	 * XXX: Should replace IKEv1_oakley_am_sadb() with a simple
+	 * map to the auth method.
+	 */
+	struct db_sa *revised_sadb;
+	{
+		struct db_sa *sadb = IKEv1_oakley_am_sadb(policy, c);
+		struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		enum ikev1_auth_method auth_method = auth->val;
+		/*
+		 * Max transforms == 2 - Multiple transforms, 1 DH
+		 * group
+		 */
+		revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+						 auth_method, TRUE);
+	}
 
 	if (revised_sadb == NULL)
 		return FALSE;

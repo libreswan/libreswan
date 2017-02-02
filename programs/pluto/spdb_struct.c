@@ -82,7 +82,7 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
  * one DH group.
  */
 struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
-				struct db_sa *base,
+				enum ikev1_auth_method auth_method,
 				bool single_dh)
 {
 	struct db_sa *gsp = NULL;
@@ -160,23 +160,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 		/*
 		 * auth type for IKE must be set.
-		 *
-		 * As if by magic, attrs[2] is always the
-		 * authentication method.  Extract it from base so it
-		 * can be added to all the proposals.
-		 *
-		 * XXX: should instead replace BASE with the
-		 * AUTH_METHOD parameter.
-		 *
-		 * ??? until we support AES-GCM in IKE
-		 *
-		 * IKEv1 AUTH is used to prove identity.  IKEv1 HASH
-		 * aka IKEv2 PRF and INTEG are unrelated.
 		 */
-		struct db_attr base_auth = base->prop_conjs[0].props[0].trans[0].attrs[2];
-		passert(base_auth.type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-		auth->val = base_auth.val;
+		auth->val = auth_method;
 
 		if (eklen > 0) {
 			struct db_attr *enc_keylen = &trans->attrs[4];
