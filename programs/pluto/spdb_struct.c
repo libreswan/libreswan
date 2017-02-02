@@ -139,50 +139,44 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		}
 
 		/*
-		 * copy the basic item, and modify it.
-		 *
-		 * ??? what are these two cases and why does
-		 * eklen select between them?
-		 *
-		 * [cagney] I suspect that this is to
-		 * compensate for logic further down that,
-		 * when eklen==0, truncates the attrs array to
-		 * 4 elements and sa_copy_sa_first() when
-		 * applied to that structure won't allocate
-		 * space for the 5th (eklen) element - oops.
-		 * To be honest, the attrs should be a list OR
-		 * the eklen>0 path should always be taken OR
-		 * ...
-		 *
-		 * The convoluted assignment is copying the
-		 * auth field (see "struct db_attr otempty"
-		 * above), from base to the new proposal.
+		 * copy the template
 		 */
-		if (eklen > 0) {
-			/* duplicate, but change auth to match template */
-			emp_sp = sa_copy_sa(&oakley_empty);
-			emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
-				base->prop_conjs[0].props[0].trans[0].attrs[2];
-		} else {
-			emp_sp = sa_copy_sa_first(base);
-		}
-
+		emp_sp = sa_copy_sa(&oakley_empty);
 		passert(emp_sp->dynamic);
 		passert(emp_sp->prop_conj_cnt == 1);
 		passert(emp_sp->prop_conjs[0].prop_cnt == 1);
 		passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
-
 		struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
+		passert(trans->attr_cnt == 5);
 
 		/*
-		 * See "struct db_attr otempty" above for
+		 * See "struct db_attr otempty" above, and spdb.c, for
 		 * where these magic values come from.
 		 */
-		passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
 		struct db_attr *enc  = &trans->attrs[0];
 		struct db_attr *hash = &trans->attrs[1];
 		struct db_attr *auth = &trans->attrs[2];
 		struct db_attr *grp  = &trans->attrs[3];
+
+		/*
+		 * auth type for IKE must be set.
+		 *
+		 * As if by magic, attrs[2] is always the
+		 * authentication method.  Extract it from base so it
+		 * can be added to all the proposals.
+		 *
+		 * XXX: should instead replace BASE with the
+		 * AUTH_METHOD parameter.
+		 *
+		 * ??? until we support AES-GCM in IKE
+		 *
+		 * IKEv1 AUTH is used to prove identity.  IKEv1 HASH
+		 * aka IKEv2 PRF and INTEG are unrelated.
+		 */
+		struct db_attr base_auth = base->prop_conjs[0].props[0].trans[0].attrs[2];
+		passert(base_auth.type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		auth->val = base_auth.val;
 
 		if (eklen > 0) {
 			struct db_attr *enc_keylen = &trans->attrs[4];
@@ -221,20 +215,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				hash->type.oakley = OAKLEY_PRF;
 			}
 		}
-
-		/*
-		 * auth type for IKE must be set.
-		 *
-		 * Logic above uses sa_copy_sa or brute force
-		 * to copy the field from BASE.
-		 *
-		 * ??? until we support AES-GCM in IKE
-		 *
-		 * [cagney] aes-gcm doesn't require HASH, just
-		 * the PRF, so auth is unrelated?
-		 */
-		passert(auth->type.oakley ==
-			OAKLEY_AUTHENTICATION_METHOD);
 
 		passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
 		if (modp > 0)
