@@ -2,7 +2,7 @@
  * Copyright (C) 1998-2001 D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -114,32 +114,23 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
+		passert(ike_info->ike_encrypt);
+		passert(ike_info->ike_prf);
+		passert(ike_info->ike_dh_group);
+
 		unsigned ealg = ike_info->ike_encrypt->common.ikev1_oakley_id;
 		unsigned halg = ike_info->ike_prf->common.ikev1_oakley_id;
 		unsigned modp = ike_info->ike_dh_group->group;
 		unsigned eklen = ike_info->ike_eklen;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
-			    ealg, halg, modp, eklen));
+		    DBG_log("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
+			    ike_info->ike_encrypt->common.name, ealg,
+			    ike_info->ike_prf->common.name, halg,
+			    ike_info->ike_dh_group->common.name, modp,
+			    eklen));
 
 		const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
-		if (enc_desc == NULL) {
-			PEXPECT_LOG("%s", "IKEv1 proposal with no ENCRYPT should have been dropped");
-			continue;
-		}
-
-		if (ike_info->ike_prf == NULL) {
-			PEXPECT_LOG("%s", "IKEv1 proposal with no PRF/hash should have been dropped");
-			continue;
-		}
-
-		if (ike_alg_enc_requires_integ(enc_desc) &&
-		    ike_info->ike_integ == NULL) {
-			PEXPECT_LOG("%s", "IKEv1 proposal with no INTEG/hash should have been dropped");
-			continue;
-		}
-
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
 			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
 				    enc_desc->common.name,
