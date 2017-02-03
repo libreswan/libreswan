@@ -8,3 +8,4 @@
 0008-barf-Ensure-proper-macros-are-used.-Add-certutil-crl.patch
 0009-documentation-added-oe-letsencrypt-example-configs.patch
 bugfix-853947/0010-Try-to-include-the-correct-headers-on-MIPS.patch
+bugfix-853507/0011-Try-to-address-some-of-the-build-failures-in-https-b.patch
