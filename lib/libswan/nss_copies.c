@@ -104,67 +104,6 @@ static SECComparison _NSSCPY_CERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
     return rv;
 }
 
-/*
- * copies of NSS functions that are not yet exported by the library
- */
-static SECStatus _NSSCPY_GetCrlTimes(CERTCrl *date, PRTime *notBefore,
-					     PRTime *notAfter)
-{
-	int rv;
-	/* convert DER not-before time */
-	rv = DER_DecodeTimeChoice(notBefore, &date->lastUpdate);
-	if (rv) {
-		return(SECFailure);
-	}
-
-	/* convert DER not-after time */
-	if (date->nextUpdate.data) {
-		rv = DER_DecodeTimeChoice(notAfter, &date->nextUpdate);
-		if (rv) {
-			return(SECFailure);
-		}
-	} else {
-		LL_I2L(*notAfter, 0L);
-	}
-
-	return(SECSuccess);
-}
-
-static SECCertTimeValidity _NSSCPY_CheckCrlTimes(CERTCrl *crl, PRTime t)
-{
-	PRTime notBefore, notAfter, llPendingSlop, tmp1;
-	SECStatus rv;
-	PRInt32 pSlop = CERT_GetSlopTime();
-
-	rv = _NSSCPY_GetCrlTimes(crl, &notBefore, &notAfter);
-	if (rv) {
-		return(secCertTimeExpired);
-	}
-	LL_I2L(llPendingSlop, pSlop);
-	/* convert to micro seconds */
-	LL_I2L(tmp1, PR_USEC_PER_SEC);
-	LL_MUL(llPendingSlop, llPendingSlop, tmp1);
-	LL_SUB(notBefore, notBefore, llPendingSlop);
-	if ( LL_CMP( t, <, notBefore ) ) {
-		return(secCertTimeNotValidYet);
-	}
-	/* If next update is omitted and the test for notBefore passes, then
-	 * we assume that the crl is up to date.
-	 */
-	if ( LL_IS_ZERO(notAfter) ) {
-		return(secCertTimeValid);
-	}
-	if ( LL_CMP( t, >, notAfter) ) {
-		return(secCertTimeExpired);
-	}
-	return(secCertTimeValid);
-}
-
-SECCertTimeValidity NSSCERT_CheckCrlTimes(CERTCrl *crl, PRTime t)
-{
-	return _NSSCPY_CheckCrlTimes(crl, t);
-}
-
 SECComparison NSSCERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
 {
 	return _NSSCPY_CERT_CompareAVA(a, b);

@@ -65,7 +65,7 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 
 static bool crl_is_current(CERTSignedCrl *crl)
 {
-	return NSSCERT_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
 static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
