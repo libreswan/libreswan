@@ -8,8 +8,9 @@
 #include "nss_copies.h"
 
 /*
- * The NSS functions CERT_CheckCrlTimes() and CERT_CompareAVA() are not yet
- * exported by the library, even though they exist in the public headers.
+ * The NSS function CERT_CompareAVA() has only been exported by the
+ *  library very recently (3.21 does not have it, 3.28 does) , even
+ *  though it exists in the public header.
  *
  * This file contains the copied code necessary to make use of them and
  * provides NSSCERT_CheckCrlTimes() and NSSCERT_CompareAVA() for pluto use.
