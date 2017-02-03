@@ -7,3 +7,4 @@
 0007-documentation-add-NAT-support-config-to-oe-upgrade-a.patch
 0008-barf-Ensure-proper-macros-are-used.-Add-certutil-crl.patch
 0009-documentation-added-oe-letsencrypt-example-configs.patch
+bugfix-853947/0010-Try-to-include-the-correct-headers-on-MIPS.patch
