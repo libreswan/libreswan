@@ -246,15 +246,41 @@ static const struct ike_alg *default_ike_aalgs[] = {
 	NULL,
 };
 
+struct alg_defaults {
+	const struct ike_alg **ikev1;
+	const struct ike_alg **ikev2;
+};
+
+struct ike_defaults {
+	struct alg_defaults groups;
+	struct alg_defaults ealgs;
+	struct alg_defaults aalgs;
+};
+
+static const struct ike_defaults ike_defaults = {
+	.groups = {
+		.ikev1 = default_ikev1_groups,
+		.ikev2 = default_ikev2_groups,
+	},
+	.ealgs = {
+		.ikev1 = default_ike_ealgs,
+		.ikev2 = default_ike_ealgs,
+	},
+	.aalgs = {
+		.ikev1 = default_ike_aalgs,
+		.ikev2 = default_ike_aalgs,
+	},
+};
+
 /*
- * Allocate and return an array of algorithms at are valid.
+ * Given a list of default IKEv1/IKEv2 algorithms, allocate and return
+ * the valid and selected subset of those algorithms.
  *
  * Or NULL if there are none.
  */
 static const struct ike_alg **clone_valid(enum ike_alg_type type,
 					  const struct parser_policy *policy,
-					  const struct ike_alg **ikev1_algs,
-					  const struct ike_alg **ikev2_algs)
+					  const struct alg_defaults *algs)
 {
 	/*
 	 * If there's a hint of IKEv1 being enabled then prefer its
@@ -265,8 +291,8 @@ static const struct ike_alg **clone_valid(enum ike_alg_type type,
 	 * has ikev2=never then, in aggressive mode, things don't work.
 	 */
 	const struct ike_alg **default_algs = (policy->ikev1
-					       ? ikev1_algs
-					       : ikev2_algs);
+					       ? algs->ikev1
+					       : algs->ikev2);
 
 	/*
 	 * Allocate the cloned array.  Keep things simple by assuming
@@ -366,10 +392,12 @@ static const struct ike_alg **clone_valid(enum ike_alg_type type,
 }
 
 /*
- * _Recursively_ add IKE alg info _with_ logic (policy):
+ * _Recursively_ add IKE alg info _with_ logic (policy) using
+ * IKE_DEFAULTS.
  */
 
 static void ike_add(const struct parser_policy *const policy,
+		    const struct ike_defaults *const defaults,
 		    struct alg_info *alg_info,
 		    const struct encrypt_desc *ealg, int ek_bits,
 		    const struct prf_desc *aalg,
@@ -388,14 +416,13 @@ static void ike_add(const struct parser_policy *const policy,
 		 * Recursively add the valid default groups.
 		 */
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_DH, policy,
-								default_ikev1_groups,
-								default_ikev2_groups);
+								&defaults->groups);
 		if (valid_algs == NULL) {
 			return;
 		}
 		for (const struct ike_alg **alg = valid_algs;
 		     *alg; alg++) {
-			ike_add(policy, alg_info,
+			ike_add(policy, defaults, alg_info,
 				ealg, ek_bits,
 				aalg, oakley_group_desc(*alg));
 		}
@@ -405,14 +432,13 @@ static void ike_add(const struct parser_policy *const policy,
 		 * Recursively add the valid default enc algs
 		 */
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_ENCRYPT, policy,
-								default_ike_ealgs,
-								default_ike_ealgs);
+								&defaults->ealgs);
 		if (valid_algs == NULL) {
 			return;
 		}
 		for (const struct ike_alg **alg = valid_algs;
 		     *alg; alg++) {
-			ike_add(policy, alg_info,
+			ike_add(policy, defaults, alg_info,
 				encrypt_desc(*alg), ek_bits,
 				aalg, dh_group);
 		}
@@ -425,14 +451,13 @@ static void ike_add(const struct parser_policy *const policy,
 		 * Even AEAD algorithms need a PRF.
 		 */
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_PRF, policy,
-								default_ike_aalgs,
-								default_ike_aalgs);
+								&defaults->aalgs);
 		if (valid_algs == NULL) {
 			return;
 		}
 		for (const struct ike_alg **alg = valid_algs;
 		     *alg; alg++) {
-			ike_add(policy, alg_info,
+			ike_add(policy, defaults, alg_info,
 				ealg, ek_bits,
 				prf_desc(*alg), dh_group);
 		}
@@ -516,7 +541,8 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		}
 	}
 
-	ike_add(policy, alg_info, ealg, ek_bits, aalg, dh_group);
+	ike_add(policy, &ike_defaults, alg_info,
+		ealg, ek_bits, aalg, dh_group);
 }
 
 static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,
