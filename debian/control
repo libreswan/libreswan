@@ -52,6 +52,7 @@ Provides:
  ike-server,
 Conflicts:
  ike-server,
+ strongswan-starter,
 Replaces:
  ike-server,
 Description: Internet Key Exchange daemon
