@@ -8,16 +8,17 @@
 #include "nss_copies.h"
 
 /*
- * The NSS function CERT_CompareAVA() has only been exported by the
- *  library very recently (3.21 does not have it, 3.28 does) , even
- *  though it exists in the public header.
+ * The NSS function CERT_CompareAVA() appears in the NSS header files,
+ * but the library does not actually export the function. This is a copy
+ * of that function until upstream NSS is fixed and the fix available in
+ * the common Linux distributions.
  *
- * This file contains the copied code necessary to make use of them and
- * provides NSSCERT_CheckCrlTimes() and NSSCERT_CompareAVA() for pluto use.
- * When these become available from NSS we will be able to #ifdef based on
- * NSS version.
+ * This file contains the copied code necessary to make use of this function
+ * and provides NSSCERT_CompareAVA() for pluto use.
  *
- * See: https://bugzilla.mozilla.org/show_bug.cgi?id=294538
+ * See also:
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=294538
  */
 
 static void _NSSCPY_canonicalize(SECItem * foo)
