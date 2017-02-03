@@ -66,7 +66,7 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		buf[i] = '\0';
 		if (i != 2) {
 			loglog(RC_INTERNALERR,
-			       "unexpected space or NUL character at offset %zu in hex buffer \"%s\" at \"%s\"\n",
+			       "unexpected space or NUL character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
 			       pos - string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
@@ -74,7 +74,7 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
 		if (end - buf != 2) {
 			loglog(RC_INTERNALERR,
-			       "invalid character at offset %zu in hex buffer \"%s\" at \"%s\"\n",
+			       "invalid character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
 			       pos-string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
