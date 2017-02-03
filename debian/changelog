@@ -1,3 +1,11 @@
+libreswan (3.19-2) unstable; urgency=medium
+
+  * more fixes from upstream
+  * Test proposal for mips and mipsel builds (trying to fix: #853947)
+  * conflict directly with strongswan-starter (Closes: #836862)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Fri, 03 Feb 2017 12:22:16 -0500
+
 libreswan (3.19-1) unstable; urgency=medium
 
   * drop patches already applied upstream, clean up remaining patches
