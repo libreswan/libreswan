@@ -1083,6 +1083,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	struct ikev2_id *v2id;
 	struct id peer_id;
 
+	memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
+
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
 		return FALSE;
