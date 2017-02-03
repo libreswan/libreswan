@@ -699,6 +699,7 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev1-strongswan-15-twofish		good
 kvmplutotest	interop-ikev1-strongswan-16-serpent		good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
+kvmplutotest	interop-ikev2-strongswan-32-ip-lease		good
 
 
 umlplutotest	protoport-01		good
