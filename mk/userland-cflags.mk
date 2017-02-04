@@ -18,15 +18,11 @@
 # -D... goes in here
 USERLAND_CFLAGS=-std=gnu99
 
-ifeq ($(origin GCCM),undefined)
-ifeq ($(ARCH),i686)
-GCCM=-m32
-endif
-ifeq ($(ARCH),x86_64)
-GCCM=-m64
-endif
-endif
-USERLAND_CFLAGS+=$(GCCM)
+# If you want or need to overright the default detected arch
+# GCCM=-m32
+# GCCM=-mx32
+# GCCM=-m64
+# USERLAND_CFLAGS+=$(GCCM)
 
 ifeq ($(origin DEBUG_CFLAGS),undefined)
 DEBUG_CFLAGS=-g
