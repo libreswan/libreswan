@@ -323,7 +323,11 @@ struct raw_iface *find_raw_ifaces6(void)
 			if ((scope & 0x00f0U) == 0x0020U)
 				continue;
 
-			if (dad_status & (IFA_F_TENTATIVE | IFA_F_DADFAILED))
+			if (dad_status & (IFA_F_TENTATIVE
+#ifdef IFA_F_DADFAILED
+						| IFA_F_DADFAILED
+#endif
+				))
 				continue;
 
 			snprintf(sb, sizeof(sb),
