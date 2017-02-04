@@ -6,7 +6,7 @@ road ikelifetime 90s. The initiator will replace IKE SA.
 2. Initiator keeps the tunnel up.
 3. Initiator replace up the tunnel (IKE & ESP) before the expiry of IKE SA.
 
-After the tunnel is up there is a continous ping in the background 
+After the tunnel is up there is a continuous ping in the background 
 to test packet leak.  
 There is 4 clear text pings and rest should be encrypted.
 

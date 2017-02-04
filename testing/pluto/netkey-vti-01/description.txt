@@ -6,6 +6,6 @@ Whatever west decides to route into the vti device, is what is getting
 encrypted. Note that east uses no marks and encrypts everything back.
 (this kind of mismatch is exactly why routed vpns are not recommended)
 
-This test case uses a single mark for input and output. Two seperate
-marks could be used to seperate incoming and outgoing traffic. In
+This test case uses a single mark for input and output. Two separate
+marks could be used to separate incoming and outgoing traffic. In
 that case, the ip tunnel command uses okey and ikey instead of key.

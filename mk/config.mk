@@ -407,8 +407,14 @@ USE_LIBCURL?=true
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities
 # of switching away from AES/3DES quickly.
-USE_EXTRACRYPTO?=true
-USE_3DES ?= true
+# DH22 is too weak - the others listed here are not broken, just not popular
+USE_SERPENT?=true
+USE_TWOFISH?=true
+USE_3DES?=true
+USE_DH22?=false
+USE_CAMELLIA?=true
+USE_CAST?=true
+USE_RIPEMD?=true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -457,16 +463,14 @@ LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
-LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
-LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-LIBAES_XCBC=${OBJDIRTOP}/lib/libcrypto/libaes_xcbc/libaes_xcbc.a
-CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2} ${LIBAES_XCBC}
 
-ifeq ($(USE_EXTRACRYPTO),true)
-CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
+ifeq ($(USE_TWOFISH),true)
+CRYPTOLIBS+= ${LIBTWOFISH}
+endif
+ifeq ($(USE_SERPENT),true)
+CRYPTOLIBS+= ${LIBSERPENT}
 endif
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
@@ -476,8 +480,8 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWLOGLIB
 export LIBDESSRCDIR
-export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
-export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export LIBTWOFISH LIBSERPENT
+export CRYPTOLIBS WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1
 

@@ -30,17 +30,4 @@
  */
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
-/*
- * Low-level routine to return a SYMKEY.
- *
- * It is used by CAVP testing.
- */
-PK11SymKey *chunk_to_symkey(chunk_t raw_key);
-
-/*
- * Return the contents of a symkey.  If the operation fails,
- * "empty_chunk" is returned.
- */
-chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey);
-
 #endif

@@ -61,7 +61,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			     struct state *st,
 			     enum crypto_importance importance,
 			     enum original_role role,
-			     oakley_group_t oakley_group2)
+			     const struct oakley_group_desc *oakley_group2)
 {
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
@@ -73,7 +73,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf_hash = st->st_oakley.prf_hash;
+	dhq->prf = st->st_oakley.prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
@@ -82,7 +82,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
 	    DBG_log("parent1 type: %d group: %d len: %d", r.pcr_type,
-		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
+		    r.pcr_d.dhq.oakley_group->group, (int)r.pcr_len));
 
 	if (pss != NULL)
 		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
@@ -139,7 +139,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   enum crypto_importance importance,
 			   enum original_role role,
-			   oakley_group_t oakley_group2)
+			   const struct oakley_group_desc *oakley_group2)
 {
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
@@ -151,7 +151,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf_hash = st->st_oakley.prf_hash;
+	dhq->prf = st->st_oakley.prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
@@ -213,7 +213,8 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    enum_name(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash),
+		    enum_name(&ikev2_trans_type_prf_names,
+			      st->st_oakley.prf->common.ikev2_id),
 		    enum_name(&ikev2_trans_type_integ_names,
 			      st->st_oakley.integ_hash),
 		    enum_name(&ikev2_trans_type_encr_names,
@@ -221,9 +222,9 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf_hash = st->st_oakley.prf_hash;
-	dhq->integ_hash = st->st_oakley.integ_hash;
-	dhq->oakley_group = st->st_oakley.groupnum;
+	dhq->prf = st->st_oakley.prf;
+	dhq->integ = st->st_oakley.integ;
+	dhq->oakley_group = st->st_oakley.group;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.encrypter->salt_size;
@@ -255,7 +256,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	{
 		stf_status e = send_crypto_helper_request(&r, dh);
 
-		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
+		reset_globals(); /* XXX suspicious - why was this deemed necessary? */
 
 		return e;
 	}

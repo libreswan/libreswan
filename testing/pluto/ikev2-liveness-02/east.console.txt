@@ -14,9 +14,7 @@ east #
  # east should have restarted and re-established the tunnel
 east #
  ipsec whack --trafficstatus
-000  
 006 #4: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
-000  
 east #
  # can be seen on east logs
 east #

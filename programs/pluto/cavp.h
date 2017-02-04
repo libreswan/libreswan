@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,11 +19,18 @@ struct hash_desc;
 struct cavp_entry {
 	const char *key;
 	void (*op)(struct cavp_entry *key, const char *value);
+	/* set by the below */
 	chunk_t *chunk;
 	PK11SymKey **symkey;
-	int *number;
-	struct hash_desc **hasher;
+	signed long *signed_long;
+	unsigned long *unsigned_long;
+	struct cavp_entry **pick;
+	/* constant values */
 	int value;
+	const struct encrypt_desc *encrypt;
+	const struct hash_desc *hash;
+	const struct prf_desc *prf;
+	const struct integ_desc *integ;
 };
 
 struct cavp {
@@ -33,13 +40,16 @@ struct cavp {
 	void (*run)(void);
 	struct cavp_entry *config;
 	struct cavp_entry *data;
+	const char *match[];
 };
 
-extern const struct hash_desc *hasher;
-extern char hasher_name[];
-void hash(struct cavp_entry *entry, const char *value);
-
-void ignore(struct cavp_entry *entry, const char *value);
-void chunk(struct cavp_entry *entry, const char *value);
-void symkey(struct cavp_entry *entry, const char *value);
-void number(struct cavp_entry *entry, const char *value);
+/*
+ * Select the given PRF.
+ */
+void op_pick(struct cavp_entry *entry, const char *value);
+void op_ignore(struct cavp_entry *entry, const char *value);
+void op_chunk(struct cavp_entry *entry, const char *value);
+void op_symkey(struct cavp_entry *entry, const char *value);
+void op_signed_long(struct cavp_entry *entry, const char *value);
+void op_unsigned_long(struct cavp_entry *entry, const char *value);
+void op_boolean(struct cavp_entry *entry, const char *value);

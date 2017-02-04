@@ -3,7 +3,7 @@
 set -eu
 
 if test $# -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
@@ -15,18 +15,15 @@ EOF
     exit 1
 fi
 
-repodir=$(cd $1 && pwd) ; shift
-destdir=$(cd $1 && pwd) ; shift
+repodir=$1 ; shift
+destdir=$1 ; shift
 
-# checksum: slower but avoids double copies when flipping between git
-# branches.
-#
+test -d ${repodir}/testing/pluto
+
 # relative: so that the transfer preserves the existing structure
 # (otherwise it would flatten it).
 #
 # -printf %P\n prints the relative path (below testing/pluto).
-
-test -d ${repodir}/testing/pluto
 
 find ${repodir}/testing/pluto \
      -maxdepth 3 \
@@ -37,7 +34,7 @@ find ${repodir}/testing/pluto \
      -path '*/pluto/*/OUTPUT/RESULT' \
      \) \
      -printf '%P\n' \
-    | rsync --checksum --relative --itemize-changes \
+    | rsync --relative --itemize-changes \
 	    --files-from=- \
 	    ${repodir}/testing/pluto \
 	    ${destdir}

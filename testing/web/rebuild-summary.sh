@@ -7,27 +7,26 @@ Usage:
 
     $0 <repodir> <summarydir>
 
-Rebuild <summarydir> from <summarydir>/*/results.json, using <repodir>
-as a reference.
+Rebuild <summarydir> from <summarydir>/*/, using <repodir> as a
+reference.
 
-Because this script modifies <repodir> (for instance, downloading the
-latest changes and updating the branch), it should be given a separate
-dedicated repository.
+This script does not modify <repodir>.
 
 EOF
     exit 1
 fi
 
+repodir=$1 ; shift
+summarydir=$1 ; shift
+
 webdir=$(cd $(dirname $0) ; pwd)
-repodir=$(cd $1 ; pwd) ; shift
-summarydir=$(cd $1 ; pwd) ; shift
 branch=$(${webdir}/gime-git-limb.sh ${repodir})
+start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
 
-# Make certain that the current branch of the repository has all the
-# latest changes.
-( cd ${repodir} && git checkout ${branch} )
-origin=$(${webdir}/gime-git-origin.sh ${repodir} ${branch})
-( cd ${repodir} && git fetch ${origin} )
-( cd ${repodir} && git rebase ${origin} )
+${webdir}/json-commit.sh \
+	 --json ${summarydir}/commits.json \
+	 ${repodir} \
+	 $(${webdir}/gime-git-revisions.sh ${repodir} ${start_hash}..${branch}) \
+	 ${start_hash}
 
-${webdir}/build-summary.sh ${repodir} ${summarydir} ${summarydir}/*/results.json
+${webdir}/build-summary.sh ${repodir} ${summarydir}

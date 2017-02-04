@@ -14,7 +14,8 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-md5
-002 added connection description "westnet-eastnet-md5"
+003 PRF algorithm MD5=1 is not supported
+003 got 0 transforms for ike="aes-md5"
 east #
  echo "initdone"
 initdone

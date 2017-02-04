@@ -28,7 +28,7 @@ road #
 road #
  # The ping should also get a reply, proving the IPsec SA was
 road #
- # prefered over the OE trap policy
+ # preferred over the OE trap policy
 road #
  ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
@@ -48,9 +48,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
-000  
 road #
  # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
 road #

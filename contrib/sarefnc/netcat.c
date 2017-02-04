@@ -696,7 +696,7 @@ newskt:
 			holler("nnetfd reuseaddr failed"); /* ??? */
 	}
 #endif
-#ifdef SO_REUSEPORT     /* doesnt exist everywhere... */
+#ifdef SO_REUSEPORT     /* doesn't exist everywhere... */
 	rr = setsockopt(nnetfd, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 	if (rr == -1)
 		holler("nnetfd reuseport failed"); /* ??? */
@@ -1116,7 +1116,7 @@ dol_noop:
    so I don't feel bad.
    The *real* question is why BFD sockets wasn't designed to allow listens for
    connections *from* specific hosts/ports, instead of requiring the caller to
-   accept the connection and then reject undesireable ones by closing.  In
+   accept the connection and then reject undesirable ones by closing.  In
    other words, we need a TCP MSG_PEEK. */
 	z = ntohs(remend->sin_port);
 	strcpy(bigbuf_net, inet_ntoa(remend->sin_addr));
@@ -1170,7 +1170,7 @@ IA * where;
    causes us to block for the time that SYN gets there and RST gets back.
    Not completely reliable, but it *does* mostly work. */
 		o_udpmode = 0;          /* so doconnect does TCP this time */
-/* Set a temporary connect timeout, so packet filtration doesnt cause
+/* Set a temporary connect timeout, so packet filtration doesn't cause
    us to hang forever, and hit it */
 		o_wait = 5;             /* enough that we'll notice?? */
 		rr = doconnect(where, SLEAZE_PORT, 0, 0);

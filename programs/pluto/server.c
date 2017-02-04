@@ -79,7 +79,6 @@
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "keys.h"
-#include "dnskey.h"             /* needs keys.h and adns.h */
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "udpfromto.h"
@@ -579,7 +578,11 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/* perform waitpid() for any children */
+/*
+ * Perform waitpid() for all children.
+ * We used to have more different kinds of children, but these
+ * days we only have one - add_conn
+ */
 static void reapchildren(void)
 {
 	pid_t child;
@@ -587,21 +590,18 @@ static void reapchildren(void)
 
 	errno = 0;
 
-	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
-		if (child == addconn_child_pid) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("reaped addconn helper child"));
-			addconn_child_pid = 0;
-			continue;
-		}
-		/* Threads are created instead of child processes when using LIBNSS */
-		libreswan_log("child pid=%d (status=%d) is not my child!",
-			      child, status);
-	}
-
-	if (child == -1) {
+	child = waitpid(addconn_child_pid, &status, WNOHANG);
+	if (child == addconn_child_pid) {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("reaped addconn helper child"));
+		addconn_child_pid = 0;
+	} else if (child == -1) {
 		libreswan_log("reapchild failed with errno=%d %s",
 			      errno, strerror(errno));
+	} else {
+		libreswan_log("child pid=%d (status=%d) is not my child!",
+				child, status);
+
 	}
 }
 
@@ -804,7 +804,7 @@ void call_server(void)
  * - ip(7) describes IP_RECVERR
  * - recvmsg(2) describes MSG_ERRQUEUE
  * - readv(2) describes iovec
- * - cmsg(3) describes how to process auxilliary messages
+ * - cmsg(3) describes how to process auxiliary messages
  *
  * ??? we should link this message with one we've sent
  * so that the diagnostic can refer to that negotiation.
@@ -1117,6 +1117,12 @@ static bool send_packet(struct state *st, const char *where,
 
 	if (st->st_interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	if(isanyaddr(&st->st_remoteaddr)) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("Will not send packet to bogus address 0.0.0.0");
 		return FALSE;
 	}
 

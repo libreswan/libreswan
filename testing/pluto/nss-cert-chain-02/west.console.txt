@@ -13,6 +13,7 @@ west #
 000 "nss-cert-chain": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-chain":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west_chain_endcert
 000 "nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "nss-cert-chain":   our auth:rsasig, their auth:rsasig
 000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "nss-cert-chain":   labeled_ipsec:no;
 000 "nss-cert-chain":   policy_label:unset;
@@ -23,11 +24,15 @@ west #
 000 "nss-cert-chain":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-chain":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
  echo "initdone"
 initdone
+west #
+ ipsec whack --debug-all --impair-retransmits
+west #
+ # expected to fail
 west #
  ipsec auto --up nss-cert-chain
 002 "nss-cert-chain" #1: initiating Main Mode
@@ -39,20 +44,10 @@ west #
 108 "nss-cert-chain" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-chain" #1: received and ignored informational message
-010 "nss-cert-chain" #1: STATE_MAIN_I3: retransmission; will wait 10000ms for response
 003 "nss-cert-chain" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-chain" #1: received and ignored informational message
-010 "nss-cert-chain" #1: STATE_MAIN_I3: retransmission; will wait 20000ms for response
-003 "nss-cert-chain" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-chain" #1: received and ignored informational message
-010 "nss-cert-chain" #1: STATE_MAIN_I3: retransmission; will wait 40000ms for response
-003 "nss-cert-chain" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-chain" #1: received and ignored informational message
-031 "nss-cert-chain" #1: max number of retransmissions (4) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "nss-cert-chain" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "nss-cert-chain" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
+031 "nss-cert-chain" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "nss-cert-chain" #1: deleting state (STATE_MAIN_I3)
 west #
  echo done
 done
@@ -65,6 +60,23 @@ nic                                                          P,,
 west_chain_endcert                                           u,u,u
 west_chain_int_2                                             ,,   
 west_chain_int_1                                             ,,   
+west #
+ # catch any cert chain specific leaks
+west #
+ ipsec whack --shutdown
+002 shutting down
+west #
+ grep leak /tmp/pluto.log
+leak-detective enabled
+leak: EVENT_NAT_T_KEEPALIVE, item size: 32
+leak: EVENT_SD_WATCHDOG, item size: 32
+leak: EVENT_LOG_DAILY, item size: 32
+leak: EVENT_SHUNT_SCAN, item size: 32
+leak: kernel integ, item size: 32
+leak: EVENT_PENDING_PHASE2, item size: 32
+leak: EVENT_PENDING_DDNS, item size: 32
+leak: EVENT_REINIT_SECRET, item size: 32
+leak detective found 8 leaks, total size 256
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

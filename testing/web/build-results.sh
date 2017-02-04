@@ -1,11 +1,11 @@
 #!/bin/sh
 
 if test "$#" -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
-   $0 <repodir> <destdir> [ <previousdir> ]
+   $0 <repodir> <resultsdir> <destdir>
 
 Use "kvmrunner.py> to create a results web page under <destdir>.
 
@@ -22,27 +22,21 @@ set -euxv
 cwd=$(pwd)
 webdir=$(cd $(dirname $0) && pwd)
 repodir=$(cd $1 && pwd) ; shift
+resultsdir=$(cd $1 && pwd) ; shift
 destdir=$(cd $1 && pwd) ; shift
-if test $# -gt 0; then
-    baseline=$(cd $1 && pwd) ; shift
-else
-    # Use "rank" to determine the previous to this directory name,
-    # need to convert it to an absolute path.
-    baseline=$(${webdir}/gime-git-elder.sh ${repodir} ${destdir})
-fi
+
+test -d ${repodir}/testing/pluto
 
 (
-    cd ${destdir}
-    ${webdir}/results.sh \
-	     $(test -n "${baseline}" && echo --baseline "${baseline}") \
+    # kvmresults needs to be in the current directory
+    cd ${resultsdir}
+    ${webdir}/json-results.sh \
+	     --json ${repodir}/results.json \
 	     --testing-directory ${repodir}/testing \
 	     .
-) > ${destdir}/results.tmp
-jq -s '.' ${destdir}/results.tmp > ${destdir}/results.new
-rm ${destdir}/results.tmp
+)
 
-cp ${webdir}/lsw*.{css,js} ${destdir}
-cp ${webdir}/results*.{html,css,js} ${destdir}
-ln -f -s results.html ${destdir}/index.html
-
-mv ${destdir}/results.new ${destdir}/results.json
+rsync ${repodir}/results.json ${destdir}
+rsync ${webdir}/lsw*.{css,js} ${destdir}
+rsync ${webdir}/results*.{html,css,js} ${destdir}
+rsync ${webdir}/results.html ${destdir}/index.html

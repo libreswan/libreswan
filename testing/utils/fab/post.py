@@ -227,16 +227,24 @@ class TestResult:
             self.logger.debug("output directory missing: %s", output_directory)
             return
 
+        # Did the test finish (resolved)?
+        #
+        # If a test is unfinished (for instance, aborted, or in
+        # progress) then it should be marked as UNRESOLVED.
+        #
+        # Something other than RESULT is needed as a way to detect a
+        # finished test.
+
+        if finished is None:
+            # For moment use the presence of the RESULT file as a
+            # proxy for a test being resolved.
+            finished = os.path.isfile(test.result_file(output_directory))
         if finished:
-            # Be optimistic; start out assuming things have passed.
-            self.resolution.passed()
-        elif finished is None and os.path.isfile(test.result_file(output_directory)):
-            # For moment use RESULT as a proxy for a test resolving.
-            # It isn't 100% reliable since an in-progress test looks
-            # list like an aborted test.
+            # Start out assuming that it passed and then prove
+            # otherwise.
             self.resolution.passed()
         else:
-            # test didn't finish
+            # Something is known to be wrong.  Start out with failed.
             self.resolution.unresolved()
 
         # crash or other unexpected behaviour.
@@ -261,9 +269,13 @@ class TestResult:
                               host_name, raw_output_filename)
             raw_output = _load_file(self.logger, raw_output_filename)
 
-            # All hosts must have console output so if the attempt to
-            # load the raw output failed, there is a really big
-            # problem - something a human should look at.
+            # Check that the host's raw output is present.
+            #
+            # If there is no output at all then the test crashed badly
+            # (for instance, while trying to boot domains).
+            #
+            # Since things really screwed up, mark the test as
+            # UNRESOLVED and give up.
 
             if raw_output is None:
                 self.issues.add("output-missing", host_name)
@@ -273,21 +285,7 @@ class TestResult:
                 # host.
                 continue
 
-            # Check that the raw console output includes the "=== end
-            # ===" marker.  If it doesn't then the test most likely
-            # crashed, truncating the output; or the test is a
-            # work-in-progress.
-            #
-            # Don't try to match the prompt ("#").  If this is the
-            # first command in the script, the prompt will not appear
-            # in the output.
-            ending = ": ==== end ===="
-            logger.debug("host %s checking if raw console output contains %s",
-                         host_name, ending)
-            if not ending in raw_output:
-                self.issues.add("output-truncated", host_name)
-                # self.resolution.unresolved()
-                # continue
+            # Check the host's raw output for signs of a crash.
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
@@ -297,6 +295,29 @@ class TestResult:
                 self.resolution.failed()
             if self.issues.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
                 self.resolution.failed()
+
+            # Check that the host's raw output is complete.
+            #
+            # The output can become truncated for several reasons: the
+            # test is a work-in-progress; it crashed due to a timeout;
+            # or it is still being run.
+            #
+            # Don't try to match the prompt ("#").  If this is the
+            # first command in the script, the prompt will not appear
+            # in the output.
+            #
+            # When this happens, mark it as a FAIL.  The
+            # test-in-progress case was hopefully handled further back
+            # with the RESULT hack forcing the test to UNRESOLVED.
+
+            ending = ": ==== end ===="
+            logger.debug("host %s checking if raw console output contains %s",
+                         host_name, ending)
+            if not ending in raw_output:
+                self.issues.add("output-truncated", host_name)
+                self.resolution.failed()
+                # Should this skip the remaining tests?  No.
+                # Sanitizing the output is still useful here.
 
             # Sanitize what ever output there is and save it.
 
@@ -396,7 +417,7 @@ def mortem(test, args, domain_prefix="", finished=None,
 
     # For "baseline", the general idea is that "kvmresults.py | grep
     # baseline" should print something when either a regression or
-    # progression has occured.  For instance:
+    # progression has occurred.  For instance:
     #
     #    - a test passing but the baseline failing
     #

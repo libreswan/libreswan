@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -359,9 +360,7 @@
  * ESP_CAST is the cast5 algorithm, not cast6
  * We avoid cast-128 padding by enforcing a minimum of 128
  */
-#define  CAST_KEY_MIN_LEN        128
 #define  CAST_KEY_DEF_LEN        128
-#define  CAST_KEY_MAX_LEN        128
 
 /*
  * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
@@ -369,7 +368,7 @@
  */
 
 /*
- * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
+ * TWOFISH-CBC is a 128-bit block cipher with variable-length key up to 256 bits
  * default is 128. 128,192 and 256 are the only commonly used ones
  */
 #define  TWOFISH_KEY_MIN_LEN 128
@@ -413,11 +412,10 @@
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define AES_BLOCK_SIZE BYTES_FOR_BITS(128)
-#define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
 
-/* TWOFISH_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
+#define TWOFISH_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 /* SERPENT_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
 
 /*
@@ -860,9 +858,6 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_INVALID = 65536,
 };
 
-#define IKEv2_ENCR_CAMELLIA_CBC_ikev1 IKEv2_RESERVED_IEEE_P1619_XTS_AES
-
-
 enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */
 	IKEv2_PRF_HMAC_SHA1 = 2, /* RFC2104 */
@@ -896,7 +891,6 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
-	IKEv2_AUTH_HMAC_SHA2_256_128_TRUNCBUG = 252, /* our own value */
 	IKEv2_AUTH_INVALID = 65536
 };
 
@@ -1025,6 +1019,7 @@ enum ikev1_auth_attribute {
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
+	AUTH_ALGORITHM_AES_CMAC_96 = 250,  /* IKEv2==8 */
 	AUTH_ALGORITHM_NULL_KAME = 251,	/* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
@@ -1119,10 +1114,8 @@ enum ikev1_hash_attribute  {
 	OAKLEY_SHA2_256 = 4,
 	OAKLEY_SHA2_384 = 5,
 	OAKLEY_SHA2_512 = 6,
-
-	OAKLEY_AES_XCBC = 9 /* stolen from ikev2 */
 };
-#define OAKLEY_HASH_MAX 10
+#define OAKLEY_HASH_MAX 9
 
 /*
  * Oakley Authentication Method attribute
@@ -1241,6 +1234,7 @@ typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
 /* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
 enum ike_trans_type_dh {
 	OAKLEY_GROUP_invalid = 0,	/* not in standard */
 	OAKLEY_GROUP_MODP768 = 1,
@@ -1269,11 +1263,14 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
 	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
 	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
-	OAKLEY_GROUP_NON_IKE_27 = 27, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_28 = 28, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_29 = 29, /* RFC 6932 - not for use with IKE/IPsec */
-	OAKLEY_GROUP_NON_IKE_30 = 30, /* RFC 6932 - not for use with IKE/IPsec */
-	/* 31 - 32767 Unassigned */
+	/* From here on, values are only valid for IKEv2 */
+	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
+	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
+	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
+	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
 /*
@@ -1571,6 +1568,7 @@ enum ipsec_authentication_algo {
 	/* IKEv1 249 - 255 Reserved for private use */
 	/* IKEv2 15-1023 Unassigned */
 	/* IKEv2 1024 - 65535 Reserved for private use */
+	AH_AES_CMAC_96 = 250,      /* IKEv2=8 */
 	AH_NULL = 251,		/* comes from kame? */
 	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };
@@ -1579,7 +1577,7 @@ enum ipsec_authentication_algo {
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * IKEv1: https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9
  *
- * Upto id=20 this table matches IKEv1 and IKEv2. Entries higher up
+ * Up to id=20 this table matches IKEv1 and IKEv2. Entries higher up
  * no longer match. IKEv2 values are specified here for those.
  * Note: We basically don't do IKEv1 encryption algo > 20
  */
@@ -1607,8 +1605,8 @@ enum ipsec_cipher_algo {
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
 	ESP_NULL_AUTH_AES_GMAC = 21, /* IKEv1 is ESP_SEED_CBC */
-	ESP_RESERVED_FOR_IEEE_P1619_XTS_AES = 22, /* IKEv1 is ESP_CAMELLIA */
-	ESP_CAMELLIA = 23, /* IKEv1 is ESP_NULL_AUTH_AES-GMAC */
+	ESP_CAMELLIAv1 = 22, /* IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
+	/* IKEv1: ESP_NULL_AUTH_AES-GMAC = 23, */
 	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
@@ -1625,7 +1623,6 @@ enum ipsec_cipher_algo {
 	ESP_ID254 = 254,
 	ESP_ID255 = 255,
 };
-#define ESP_CAMELLIAv1 22
 
 /* IPCOMP transform values
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5

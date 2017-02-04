@@ -24,10 +24,8 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
 #include "libserpent/serpent_cbc.h"
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)
@@ -35,7 +33,8 @@
 #define  SERPENT_KEY_DEF_LEN    128
 #define  SERPENT_KEY_MAX_LEN    256
 
-static void do_serpent(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
+static void do_serpent(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		       u_int8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
@@ -76,18 +75,17 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 {
 	.common = {
 		.name = "serpent",
+		.names = { "serpent", "serpent_cbc", },
 		.officname = "serpent",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.algo_id = OAKLEY_SERPENT_CBC,
-		.algo_v2id = IKEv2_ENCR_SERPENT_CBC,
-		.algo_next = NULL,
+		.ikev1_oakley_id = OAKLEY_SERPENT_CBC,
+		.ikev1_esp_id = ESP_SERPENT,
+		.ikev2_id = IKEv2_ENCR_SERPENT_CBC,
 	},
-	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,
-	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
-	.keymaxlen = SERPENT_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_serpent,
 };

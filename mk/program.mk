@@ -116,11 +116,7 @@ list-local-base:
 		echo $$destdir/$$file ; \
 	)
 
-# set values for implicit rules.
-LOADLIBS=${OBJS}
-
 LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
-
 
 %: %.o $(OBJS) ${LIBS}
 	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)

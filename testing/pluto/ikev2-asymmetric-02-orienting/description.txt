@@ -1,0 +1,3 @@
+asymmetric authentication. This tests an unoriented connection
+getting oriented later in the process. It does this by using
+192.1.2.46 for west instead of its usual 192.1.2.45.

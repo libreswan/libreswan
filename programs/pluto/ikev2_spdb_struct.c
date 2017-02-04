@@ -49,9 +49,7 @@
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "alg_info.h"
 #include "kernel_alg.h"
@@ -95,75 +93,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 		bad_case(type);
 	}
 	return TRUE;
-}
-
-/*
- * Convert an IKEv1 HASH algorithm to IKEv2 INTEG.
- *
- * Not to be confused with converting an IKEv1 HASH algorithm to an
- * IKEv2 PRF, which is handled by ike_alg.h.
- */
-static enum ikev2_trans_type_integ v1hash_to_v2integ(enum ikev1_hash_attribute hash)
-{
-	switch (hash) {
-	case OAKLEY_MD5:
-		return IKEv2_AUTH_HMAC_MD5_96;
-
-	case OAKLEY_SHA1:
-		return IKEv2_AUTH_HMAC_SHA1_96;
-
-	case OAKLEY_SHA2_256:
-		return IKEv2_AUTH_HMAC_SHA2_256_128;
-
-	case OAKLEY_SHA2_384:
-		return IKEv2_AUTH_HMAC_SHA2_384_192;
-
-	case OAKLEY_SHA2_512:
-		return IKEv2_AUTH_HMAC_SHA2_512_256;
-
-	case OAKLEY_AES_XCBC:
-		return IKEv2_AUTH_AES_XCBC_96;
-
-	default:
-		loglog(RC_LOG_SERIOUS, "IKEv1 HASH %d -> IKEv2 INTEG failed",
-		       hash);
-		return IKEv2_AUTH_INVALID;
-	}
-}
-
-/*
- * Convert an IKEv1 (ESP/AH/CHILD) payload AUTH attribute to IKEv2
- * INTEG.
- *
- * Not to be confused with converting the IKEv1 HASH algorithm to
- * IKEv2 INTEG as performed by the above.
- */
-static enum ikev2_trans_type_integ v1auth_to_v2integ(enum ikev1_auth_attribute auth)
-{
-	switch (auth) {
-	case AUTH_ALGORITHM_HMAC_MD5:
-		return IKEv2_AUTH_HMAC_MD5_96;
-
-	case AUTH_ALGORITHM_HMAC_SHA1:
-		return IKEv2_AUTH_HMAC_SHA1_96;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_256:
-		return IKEv2_AUTH_HMAC_SHA2_256_128;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_384:
-		return IKEv2_AUTH_HMAC_SHA2_384_192;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_512:
-		return IKEv2_AUTH_HMAC_SHA2_512_256;
-
-	case AUTH_ALGORITHM_AES_XCBC:
-		return IKEv2_AUTH_AES_XCBC_96;
-
-	default:
-		loglog(RC_LOG_SERIOUS, "IKEv1 AUTH %d -> IKEv2 INTEG failed",
-		       auth);
-		return IKEv2_AUTH_INVALID;
-	}
 }
 
 /*
@@ -1212,7 +1141,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 		if (match > 0) {
 			passert(match < local_proposals->roof);
-			/* mark what happend */
+			/* mark what happened */
 			if (matching_local_propnum == 0) {
 				/* first match */
 				print_string(remote_print_buf, "[first-match]");
@@ -1440,10 +1369,17 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal)
+bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
+				   struct trans_attrs *ta_out)
 {
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
+
+	/*
+	 * blank everything and only update TA_OUT on success.
+	 */
 	struct trans_attrs ta = { .encrypt = 0 };
+	*ta_out = ta;
+
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
@@ -1453,7 +1389,7 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
 				const struct encrypt_desc * encrypter =
-					ikev2_alg_get_encrypter(transform->id);
+					ikev2_get_encrypt_desc(transform->id);
 				if (encrypter == NULL) {
 					/*
 					 * For moment assume that this
@@ -1461,9 +1397,26 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * value is needed.
 					 */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_encrypter(%d) failed, assuming ESP/AH",
-						    ta.encrypt));
+					    DBG_log("ikev2_alg_get_encrypter(%s=%d) failed, assuming ESP/AH",
+						    enum_name(&ikev2_trans_type_encr_names,
+							      transform->id),
+						    transform->id));
+					/* return FALSE */
 				}
+				/*
+				 * For IKE, ENCRYPT contains an IKEv2
+				 * value, but for ESP/AH, it contains
+				 * an IKEv1 value!
+				 *
+				 * For moment, set it to the IKEv2
+				 * value, and let the caller patch
+				 * things up.
+				 *
+				 * XXX: Short of deleting it, ENCRYPT
+				 * should at least be moved to enum
+				 * ipsec_trans_attrs
+				 * .ipsec_cipher_alg.
+				 */
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
 				ta.enckeylen = transform->attr_keylen;
@@ -1472,27 +1425,32 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 				} else if (encrypter != NULL) {
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else {
-					ta.enckeylen = 0;
-					loglog(RC_LOG_SERIOUS, "unknown key size for ENCRYPT algorithm %d",
-					       ta.encrypt);
+					struct esb_buf buf;
+					loglog(RC_LOG_SERIOUS,
+					       "unknown key size for ENCRYPT algorithm %s=%d",
+					       enum_showb(&ikev2_trans_type_encr_names,
+							  transform->id, &buf),
+					       transform->id);
+					return FALSE;
 				}
 				break;
 			}
 			case IKEv2_TRANS_TYPE_PRF: {
-				const struct hash_desc *prf_hasher =
-					ikev2_alg_get_hasher(transform->id);
-				if (prf_hasher == NULL) {
+				const struct prf_desc *prf = ikev2_get_prf_desc(transform->id);
+				if (prf == NULL) {
 					/*
-					 * For moment assume that this
-					 * is ESP/AH and just the
-					 * value is needed.
+					 * Since we only propose
+					 * algorithms we know about so
+					 * the lookup should always
+					 * succeed.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_hasher(%d) failed, assuming ESP/AH",
-						    ta.prf_hash));
+					loglog(RC_LOG_SERIOUS, "IKEv2 PRF lookup %s=%d failed",
+					       enum_name(&ikev2_trans_type_prf_names,
+							 transform->id),
+					       transform->id);
+					return FALSE;
 				}
-				ta.prf_hash = transform->id;
-				ta.prf_hasher = prf_hasher;
+				ta.prf = prf;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_INTEG: {
@@ -1501,20 +1459,36 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
 					break;
 				}
-				const struct hash_desc *integ_hasher =
-					ikev2_alg_get_integ(transform->id);
-				if (integ_hasher == NULL) {
+				const struct integ_desc *integ = ikev2_get_integ_desc(transform->id);
+				if (integ == NULL) {
 					/*
-					 * For moment assume that this
-					 * is ESP/AH and just the
-					 * value is needed.
+					 * Since we only propse
+					 * algorithms we know about so
+					 * the lookup should always
+					 * succeed.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_integ(%d) failed, assuming ESP/AH",
-						    ta.integ_hash));
+					loglog(RC_LOG_SERIOUS, "IKEv2 INTEG lookup %s=%d failed",
+					       enum_name(&ikev2_trans_type_integ_names,
+							 transform->id),
+					       transform->id);
+					return FALSE;
 				}
-				ta.integ_hash = transform->id;
-				ta.integ_hasher = integ_hasher;
+				/*
+				 * For IKE, INTEG_HASH contains an
+				 * IKEv2, but for ESP/AH it contains
+				 * an IKEv1 value!
+				 *
+				 * For moment, set it to the IKEv2
+				 * value, and let the caller patch
+				 * things up.
+				 *
+				 * XXX: Short of deleting it,
+				 * INTEG_HASH should at least be moved
+				 * to enum ipsec_trans_attrs
+				 * .ipsec_authentication_algo.
+				 */
+				ta.integ_hash = integ ? transform->id : 0;
+				ta.integ = integ;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_DH: {
@@ -1527,17 +1501,14 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					 * DH calculation, then not
 					 * finding the DH group is
 					 * likely really bad.
-					 *
-					 * Leave everthing NULL so
-					 * that caller can detect
-					 * this.
 					 */
+					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
-					       "accepted proposal contains unknown DH group %d",
+					       "accepted proposal contains unknown DH group %s=%d",
+					       enum_showb(&oakley_group_names, transform->id, &buf),
 					       transform->id);
-					break;
+					return FALSE;
 				}
-				ta.groupnum = transform->id;
 				ta.group = group;
 				break;
 			}
@@ -1551,30 +1522,60 @@ struct trans_attrs ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal
 					break;
 				default:
 					ta.esn_enabled = FALSE;
-					loglog(RC_LOG_SERIOUS, "accepted proposal contains invalid ESN %d",
+					loglog(RC_LOG_SERIOUS,
+					       "accepted proposal contains an unknown ESN value %d",
 					       transform->id);
-					break;
+					return FALSE;
 				}
 				break;
 			default:
-				bad_case(type);
+				loglog(RC_LOG_SERIOUS,
+				       "accepted proposal contains an unknown trans type %d",
+				       type);
+				return FALSE;
 			}
 		}
 	}
-	return ta;
+	*ta_out = ta;
+	return TRUE;
 }
 
 bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info)
 {
 	/*
-	 * Quick hack to convert much of the stuff.
+	 * Start with ZERO for everything.
 	 */
-	struct trans_attrs ta = ikev2_proposal_to_trans_attrs(proposal);
-
 	pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size);
 	memcpy(&proto_info->attrs.spi, proposal->remote_spi.bytes,
 	       sizeof(proto_info->attrs.spi));
+
+	/*
+	 * Quick hack to convert much of the stuff.
+	 *
+	 * Fields, such as INTEG_HASH and ENCRYPT, which get set to
+	 * IKEv2 values, will need fixing.
+	 */
+	struct trans_attrs ta;
+	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
+		return FALSE;
+	}
+
+	/*
+	 * If there is integrity, fix INTEG_HASH by replacing the the
+	 * IKEv2 value, with an IKEv1 ESP/AH value expected by the
+	 * kernel backend.
+	 *
+	 * If there is no IKEv1 ESP/AH support then, presumably the
+	 * algorithm has a unique IKEv2 number, and that is expected.
+	 *
+	 * XXX: The real fix is to delete INTEG_HASH.
+	 */
+	ta.integ_hash = (ta.integ == NULL
+			 ? AUTH_ALGORITHM_NONE
+			 : ta.integ->common.ikev1_esp_id > 0
+			 ? ta.integ->common.ikev1_esp_id
+			 : ta.integ->common.ikev2_id);
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
@@ -1593,16 +1594,32 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 * - rumor has it IKEv2 algorithms don't exist in the "struct
          *   alg_info" database.  The "rationale" is that the database
          *   should only contain IKE algorithms.  The result is that
-         *   there are many many functions duplicating the knowlege
+         *   there are many many functions duplicating the knowledge
          *   the algorithm database already contains.
 	 */
-	DBG(DBG_CONTROLMORE,DBG_log("XXX: Hacking around rumoured lack of ESP/AH algorithms in the crypto database"));
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
 		if (ta.encrypter != NULL) {
+			/*
+			 * If there's no IKEv1 ESP/AH support then use
+			 * the IKEv2-only value.
+			 *
+			 * This is were screwups like CAMELLIA, where
+			 * IKEv1 and IKEv2 have different and
+			 * conflicting values get "fixed".
+			 *
+			 * XXX: the real fix is to delete ENCRYPT.
+			 */
+			ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
+				      ? ta.encrypter->common.ikev1_esp_id
+				      : ta.encrypter->common.ikev2_id);
 			err_t ugh;
 			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
 			if (ugh != NULL) {
-				libreswan_log("ESP algo %d with key_len %d is not valid (%s)", ta.encrypt, ta.enckeylen, ugh);
+				struct esb_buf buf;
+				libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
+					      enum_showb(&esp_transformid_names,
+							 ta.encrypt, &buf),
+					      ta.encrypt, ta.enckeylen, ugh);
 				/*
 				 * Only realising that the algorithm
 				 * is invalid now is pretty lame!
@@ -1629,7 +1646,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				/* FALL THROUGH */
 			case IKEv2_ENCR_AES_CBC:
 			case IKEv2_ENCR_CAMELLIA_CBC:
-			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
 				/* these all have mandatory key length attributes */
 				if (ta.enckeylen == 0) {
 					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
@@ -1637,9 +1653,15 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				}
 				break;
 			default:
-				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter for %d - refusing proposal", ta.encrypt);
+			{
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "Did not find valid ESP encrypter for %s=%d - refusing proposal",
+				       enum_showb(&ikev2_trans_type_encr_names, ta.encrypt, &buf),
+				       ta.encrypt);
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return FALSE;
+			}
 			}
 		}
 	}
@@ -1650,11 +1672,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 */
 	proto_info->attrs.transattrs = ta;
 
-	/*
-	 * here we obtain auth value for esp, but lose what is correct
-	 * to be sent in the proposal
-	 */
-	proto_info->attrs.transattrs.integ_hash = alg_info_esp_v2tov1aa(ta.integ_hash);
 	proto_info->present = TRUE;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
@@ -1709,6 +1726,119 @@ static void append_transform(struct ikev2_proposal *proposal,
 		.attr_keylen = attr_keylen,
 		.valid = TRUE,
 	};
+}
+
+/*
+ * Append one or more encrypt transforms depending on KEYLEN.
+ *
+ * If problems, return false.
+ */
+static bool append_encrypt_transform(struct ikev2_proposal *proposal,
+				     const struct encrypt_desc *encrypt,
+				     unsigned keylen)
+{
+	const char *protocol = enum_short_name(&ikev2_protocol_names, proposal->protoid);
+	if (proposal->protoid == 0 || protocol == NULL) {
+		PEXPECT_LOG("%s", "IKEv2 ENCRYPT transform protocol unknown");
+		return FALSE;
+	}
+	if (encrypt == NULL) {
+		PEXPECT_LOG("IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
+		return FALSE;
+	}
+	if (encrypt->common.ikev2_id == 0) {
+		loglog(RC_LOG_SERIOUS,
+		       "IKEv2 %s %s ENCRYPT transform is not supported",
+		       protocol, encrypt->common.name);
+		return FALSE;
+	}
+	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
+		PEXPECT_LOG("IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
+			    protocol, encrypt->common.name, keylen);
+		return FALSE;
+	}
+
+	if (keylen > 0) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.ikev2_id, keylen);
+	} else if (encrypt->keylen_omitted) {
+		/*
+		 * 3DES doesn't expect the key length
+		 * attribute.
+		 */
+		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
+					 protocol, encrypt->common.name));
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.ikev2_id, 0);
+	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
+		passert(encrypt->keydeflen > 0);
+		DBG(DBG_CONTROL,
+		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
+			    protocol, encrypt->common.name, encrypt->keydeflen));
+		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+				 encrypt->common.ikev2_id, encrypt->keydeflen);
+	} else {
+		/*
+		 * XXX:
+		 *
+		 * Should the parser, or something else have taken
+		 * care of this?  If a keylen of zero makes it all the
+		 * way through to here then, isn't that the intent?
+		 *
+		 * The problem is that, for some algorithms, keylen=0
+		 * is interpreted as propose two key-lengths.
+		 * Describing that in the parser could get tricky,
+		 * perhaps the info should contain an array of ENCRYPT
+		 * algorithms?
+		 *
+		 * XXX: There's a rumor that strongswan proposes
+		 * AES_000, this won't match that.
+		 *
+		 * Could this be better handled by searching the
+		 * algorithm database for anything matching the
+		 * encryption algorithm and marked as a default.
+		 *
+		 * Also muddying the waters is ESP which proposes a
+		 * smaller key in preference to a larger one.
+		 *
+		 * If one of these keys turns out to be 0 or a
+		 * duplicate then the worst that happens is a bogus or
+		 * redundant proposal is made.
+		 */
+		unsigned keymaxlen = encrypt_max_key_bit_length(encrypt);
+		passert(encrypt->keydeflen > 0);
+		passert(keymaxlen > 0);
+		/* equal handled above */
+		passert(keymaxlen > encrypt->keydeflen);
+		switch (proposal->protoid) {
+		case IKEv2_SEC_PROTO_IKE:
+			DBG(DBG_CONTROL,
+			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
+				    protocol, encrypt->common.name,
+				    keymaxlen, encrypt->keydeflen));
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.ikev2_id, keymaxlen);
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.ikev2_id, encrypt->keydeflen);
+			break;
+		case IKEv2_SEC_PROTO_ESP:
+			DBG(DBG_CONTROL,
+			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
+				    protocol, encrypt->common.name,
+				    encrypt->keydeflen, keymaxlen));
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.ikev2_id, encrypt->keydeflen);
+			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
+					 encrypt->common.ikev2_id, keymaxlen);
+			break;
+		default:
+			/* presumably AH */
+			libreswan_log("dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
+				      protocol, encrypt->common.name);
+			break;
+		}
+	}
+	return TRUE;
 }
 
 /*
@@ -1861,9 +1991,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
-	struct ike_info *ike_info;
-	int ixxxx;
-	ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, ixxxx) {
+	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
 		DBG(DBG_CONTROL,
 		    char buf[1024];
 		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
@@ -1881,98 +2009,70 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			.propnum = proposals->roof,
 		};
 
-		/* ike_ealg is IKEv1! */
-		const struct encrypt_desc *ealg = ikev1_alg_get_encrypter(ike_info->ike_ealg);
-		if (ealg == NULL) {
-			if (ike_info->ike_ealg != 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown encrypt algorithm %d", ike_info->ike_ealg);
-				continue;
-			}
-		} else {
-			if (ike_info->ike_eklen != 0) {
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-						 ealg->common.algo_v2id, ike_info->ike_eklen);
-			} else if (!crypto_req_keysize(CRK_IKEv2, ealg->common.algo_v2id)) {
-				/*
-				 * XXX: crypto_req_keysize(), seems to
-				 * be the easiest way to determine if
-				 * a zero keylen is valid in a
-				 * proposal.  If it is, just propose
-				 * that.
-				 */
-				DBG(DBG_CONTROL, DBG_log("allowing a zero key because crypto_req_keysize() says so"));
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-						 ealg->common.algo_v2id, 0);
-			} else {
-				/*
-				 * XXX: The parser, or something else,
-				 * should have taken care of this.  If
-				 * a keylen of zero makes it all the
-				 * way through to here then, isn't
-				 * that the intent?
-				 *
-				 * XXX: There's a rumor that
-				 * strongswan proposes AES_000, this
-				 * won't match that.
-				 *
-				 * Could this be better handled by
-				 * searching the algorithm database
-				 * for anything matching the
-				 * encryption algorithm and marked as
-				 * a default.
-				 */
-				if (ealg->keymaxlen != 0) {
-					DBG(DBG_CONTROL, DBG_log("forcing a max key of %u", ealg->keymaxlen));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keymaxlen);
-				}
-				if (ealg->keydeflen != 0 && ealg->keydeflen < ealg->keymaxlen) {
-					DBG(DBG_CONTROL, DBG_log("forcing a default key of %u",
-								 ealg->keydeflen));
-					append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-							 ealg->common.algo_v2id, ealg->keydeflen);
-				}
-			}
+		/*
+		 * Encryption
+		 */
+		const struct encrypt_desc *ealg = ike_info->ike_encrypt;
+		if (!append_encrypt_transform(proposal, ealg, ike_info->ike_eklen)) {
+			continue;
 		}
 
-		const struct hash_desc *halg = ikev1_alg_get_hasher(ike_info->ike_halg);
-		if (halg == NULL) {
-			if (ike_info->ike_halg != 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown hash algorithm %d", ike_info->ike_halg);
-				continue;
-			}
+		/*
+		 * PRF
+		 */
+		const struct prf_desc *prf = ike_info->ike_prf;
+		if (prf == NULL) {
+			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
+			continue;
+		} else if (prf->common.ikev2_id == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "IKEv2 proposal contains unsupported PRF algorithm %s",
+			       prf->common.name);
+			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
-					 halg->common.algo_v2id, 0);
-			if (ike_alg_enc_requires_integ(ealg)) {
-				/*
-				 * Use the IKEv1 HASH algorithm,
-				 * projected onto IKEv2 INTEG, as the
-				 * integrity.
-				 */
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 v1hash_to_v2integ(ike_info->ike_halg), 0);
-			} else {
-				/*
-				 * Include NULL integrity in the
-				 * proposal so that if it is proposed
-				 * there is something to match and
-				 * send back.
-				 */
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 0, 0);
-			}
+					 prf->common.ikev2_id, 0);
 		}
 
-		const struct oakley_group_desc *group = lookup_group(ike_info->ike_modp);
-		if (group == NULL) {
-			if (ike_info->ike_modp > 0) {
-				loglog(RC_LOG_SERIOUS, "dropping proposal containing unknown modp group %d", ike_info->ike_modp);
+		/*
+		 * INTEG
+		 */
+		if (ike_alg_enc_requires_integ(ealg)) {
+			const struct integ_desc *integ = ike_info->ike_integ;
+			if (integ == NULL) {
+				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
+			} else if (integ->common.ikev2_id == 0) {
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
+				       integ->common.name);
+				continue;
+			} else {
+				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+						 integ->common.ikev2_id, 0);
 			}
 		} else {
+			/*
+			 * Include NULL integrity in the proposal so
+			 * that if it is proposed there is something
+			 * to match and send back.
+			 *
+			 * Should this be suppresed when PRF=NULL?
+			 */
+			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+					 0, 0);
+		}
+
+		/*
+		 * DH GROUP
+		 */
+		const struct oakley_group_desc *group = ike_info->ike_dh_group;
+		if (group == NULL) {
+			PEXPECT_LOG("%s", "IKEv2 proposal with no DH_GROUP should have been dropped");
+			continue;
+		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 ike_info->ike_modp, 0);
+					 ike_info->ike_dh_group->group, 0);
 		}
 
 		DBG(DBG_CONTROL,
@@ -2137,9 +2237,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
-	const struct esp_info *esp_info;
-	int ixxxx;
-	ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, ixxxx) {
+	FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
 		DBG(DBG_CONTROL,
 		    char buf[1024];
 		    alg_info_snprint_esp_info(buf, sizeof(buf), esp_info);
@@ -2161,23 +2259,34 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		case POLICY_ENCRYPT:
 			proposal->protoid = IKEv2_SEC_PROTO_ESP;
 
-			unsigned ealg = esp_info->transid;
+			const unsigned ealg = esp_info->transid;
 			if (!ESP_EALG_PRESENT(ealg)) {
-				loglog(RC_LOG_SERIOUS, "requested kernel enc ealg_id=%u not present",
-				        ealg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "requested kernel enc ealg_id=%s=%u not present",
+				       enum_showb(&esp_transformid_names, ealg, &buf), ealg);
 				continue;
 			}
 			pexpect(ealg != 0);
 
 			/*
-			 * IANA ikev1 / ipsec-v3 fixup; presumably
-			 * everything else is both IKEv1 and IKEv2?
+			 * Encryption.
+			 *
+			 * XXX: Try to use the generic code, but avoid
+			 * it if things look suspect for now.
 			 */
-			if (ealg == IKEv2_ENCR_CAMELLIA_CBC_ikev1) {
-				ealg = IKEv2_ENCR_CAMELLIA_CBC;
-			}
-
-			if (esp_info->enckeylen > 0) {
+			const struct encrypt_desc *encrypt = esp_info->esp_encrypt;
+			if (encrypt != NULL && encrypt->common.ikev2_id != 0) {
+				if (!append_encrypt_transform(proposal, encrypt,
+							      esp_info->enckeylen)) {
+					continue;
+				}
+			} else if (esp_info->enckeylen > 0) {
+				DBG(DBG_CONTROL,
+				    struct esb_buf buf;
+				    DBG_log("No IKEv2 ESP IKE_ALG for %s using %u key-length",
+					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
+					    esp_info->enckeylen));
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, esp_info->enckeylen);
 			} else {
 				/*
@@ -2187,6 +2296,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				 */
 				unsigned ekeylen = crypto_req_keysize(CRK_ESPorAH,
 								      esp_info->transid);
+				DBG(DBG_CONTROL,
+				    struct esb_buf buf;
+				    DBG_log("No IKEv2 ESP IKE_ALG for %s defaulting to %u key-length",
+					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
+					    ekeylen));
 				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen);
 				if (ekeylen != 0) {
 					unsigned ekeylen2 = BITS_PER_BYTE * kernel_alg_esp_enc_max_keylen(esp_info->transid);
@@ -2200,12 +2314,25 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
 				if (!ESP_AALG_PRESENT(aalg)) {
-					loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
-					       aalg);
+					struct esb_buf buf;
+					/* XXX: correct enum??? */
+					loglog(RC_LOG_SERIOUS,
+					       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
+					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+					       esp_info->auth);
 					continue;
 				}
-				enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
+				const struct integ_desc *integ = esp_info->esp_integ;
+				if (integ == NULL) {
+					struct esb_buf buf;
+					loglog(RC_LOG_SERIOUS,
+					       "dropping local ESP proposal containing unsupported INTEG algorithm %s=%d",
+					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+					       esp_info->auth);
+					continue;
+				}
+				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+						 integ->common.ikev2_id, 0);
 			}
 			break;
 
@@ -2213,14 +2340,24 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			proposal->protoid = IKEv2_SEC_PROTO_AH;
 			int aalg = alg_info_esp_aa2sadb(esp_info->auth);
 			if (!ESP_AALG_PRESENT(aalg)) {
-				loglog(RC_LOG_SERIOUS, "kernel_alg_db_add() kernel auth aalg_id=%d not present",
-				       aalg);
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
+				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+				       esp_info->auth);
 				continue;
 			}
-			enum ikev2_trans_type_integ integ = v1auth_to_v2integ(esp_info->auth);
-			if (integ != 0) {
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG, integ, 0);
+			const struct integ_desc *integ = esp_info->esp_integ;
+			if (integ == NULL) {
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "dropping local AH proposal containing unsupported INTEG algorithm %s=%d",
+				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
+				       esp_info->auth);
+				continue;
 			}
+			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+					 integ->common.ikev2_id, 0);
 			break;
 
 		default:

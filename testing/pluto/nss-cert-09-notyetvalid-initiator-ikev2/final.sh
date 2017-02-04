@@ -1,4 +1,5 @@
-certutil -L -d sql:/etc/ipsec.d
+# will only show up on east - note "expired" is wrong and should be "not yet valid"
+grep "ERROR" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -28,7 +28,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
-#include "md5.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -40,6 +39,8 @@
 #include "vendor.h"
 #include "quirks.h"
 #include "kernel.h"
+#include "ike_alg_md5.h"
+#include "crypt_hash.h"
 
 #include "nat_traversal.h"
 
@@ -532,28 +533,28 @@ void init_vendorid(void)
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
 							 "VendorID MD5 (ignore)");
 			const unsigned char *d = (const unsigned char *)vid->data;
-			lsMD5_CTX ctx;
 
 			vid->vid = (char *)vidm;
 
-			lsMD5Init(&ctx);
-			lsMD5Update(&ctx, d, strlen(vid->data));
-			lsMD5Final(vidm, &ctx);
+			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
+								 "vendor id", DBG_CRYPT);
+			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));
+			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
 			vid->vid_len = MD5_DIGEST_SIZE;
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-			lsMD5_CTX ctx;
 			int i;
 
 			vid->vid = vidm;
 
-			lsMD5Init(&ctx);
-			lsMD5Update(&ctx, (const unsigned char *)vid->data,
-				strlen(vid->data));
-			lsMD5Final(hash, &ctx);
+			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
+								 "vendor id", DBG_CRYPT);
+			crypt_hash_digest_bytes(ctx, "data", vid->data, strlen(vid->data));
+			crypt_hash_final_bytes(&ctx, hash, MD5_DIGEST_SIZE);
+
 			vidm[0] = 'O';
 			vidm[1] = 'E';
 #if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE
@@ -651,7 +652,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
  * Handle IKEv1 Known VendorID's.  This function parses what the remote peer
  * sends us, and enables/disables features based on it.  As we go along,
  * we set vid_useful to TRUE if we did something based on this VendorID.  This
- * supresses the 'Ignored VendorID ...' log message.
+ * suppresses the 'Ignored VendorID ...' log message.
  *
  * @param md message_digest
  * @param vidstr VendorID String

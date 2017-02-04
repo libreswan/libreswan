@@ -53,7 +53,6 @@
 #include "keys.h"
 #include "packet.h"
 #include "demux.h" /* needs packet.h */
-#include "dnskey.h" /* needs keys.h and adns.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -67,9 +66,7 @@
 #include "asn1.h"
 #include "pending.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "secrets.h"
 
 #include "ike_alg.h"
@@ -108,13 +105,6 @@ stf_status main_outI1(int whack_sock,
 	struct msg_digest md; /* use reply/rbody found inside */
 
 	int numvidtosend = 1; /* we always send DPD VID */
-
-	if (drop_new_exchanges()) {
-		/* Only drop outgoing opportunistic connections */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			return STF_IGNORE;
-		}
-	}
 
 	st = new_state();
 
@@ -337,13 +327,10 @@ stf_status main_outI1(int whack_sock,
  */
 
 static void main_mode_hash_body(struct state *st,
-			bool hashi, /* Initiator? */
-			const pb_stream *idpl, /* ID payload, as PBS */
-			struct hmac_ctx *ctx,
-			hash_update_t hash_update_void UNUSED)
+				bool hashi, /* Initiator? */
+				const pb_stream *idpl, /* ID payload, as PBS */
+				struct hmac_ctx *ctx)
 {
-	hash_update_void = NULL;
-
 	if (hashi) {
 		hmac_update_chunk(ctx, st->st_gi);
 		hmac_update_chunk(ctx, st->st_gr);
@@ -387,8 +374,8 @@ main_mode_hash(struct state *st,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_nss);
-	main_mode_hash_body(st, hashi, idpl, &ctx, NULL);
+	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_nss);
+	main_mode_hash_body(st, hashi, idpl, &ctx);
 	hmac_final(hash_val, &ctx);
 	return ctx.hmac_digest_len;
 }
@@ -482,19 +469,10 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 static stf_status RSA_check_signature(struct state *st,
 				const u_char hash_val[MAX_DIGEST_LEN],
 				size_t hash_len,
-				const pb_stream *sig_pbs,
-#ifdef USE_KEYRR
-				const struct pubkey_list *keys_from_dns,
-#endif /* USE_KEYRR */
-				const struct gw_info *gateways_from_dns)
+				const pb_stream *sig_pbs)
 {
 	return RSA_check_signature_gen(st, hash_val, hash_len,
-				sig_pbs,
-#ifdef USE_KEYRR
-				keys_from_dns,
-#endif
-				gateways_from_dns,
-				try_RSA_signature_v1);
+				sig_pbs, try_RSA_signature_v1);
 }
 
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
@@ -641,8 +619,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
-					if (d->kind == CK_TEMPLATE &&
-						!(d->policy & POLICY_OPPORTUNISTIC)) {
+					if (d->kind == CK_TEMPLATE) {
 						/*
 						 * must be Road Warrior:
 						 * we have a winner
@@ -963,7 +940,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 	}
 
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+	if (libreswan_fipsmode() && st->st_oakley.prf == NULL) {
 		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
@@ -1235,7 +1212,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	struct state *st = md->st;
 
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+	if (libreswan_fipsmode() && st->st_oakley.prf == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
@@ -1364,10 +1341,9 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.group->group));
 
-		e = start_dh_secretiv(dh, st,
-				st->st_import,
-				ORIGINAL_RESPONDER,
-				st->st_oakley.group->group);
+		e = start_dh_secretiv(dh, st, st->st_import,
+				      ORIGINAL_RESPONDER,
+				      st->st_oakley.group);
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("started dh_secretiv, returned: stf=%s",
@@ -1468,13 +1444,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 			send_cr ? "" : "not "));
 
 	/*
-	 * free collected certificate requests
-	 * note: when we are able to ship based on the request
-	 * contents, we'll need them then.
-	 */
-	free_generalNames(st->st_requested_ca, TRUE);
-
-	/*
 	 * Determine if we need to send INITIAL_CONTACT payload
 	 *
 	 * We are INITIATOR in I2, this is not a Quick Mode rekey, so if
@@ -1519,8 +1488,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 				&isakmp_ipsec_identification_desc,
 				&md->rbody,
 				&id_pbs) ||
-		    !out_chunk(id_b, &id_pbs, "my identity"))
+		    !out_chunk(id_b, &id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&id_pbs);
 	}
@@ -1538,8 +1509,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 		if (!ikev1_ship_CERT(mycert.ty,
 				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   &md->rbody, np))
+				   &md->rbody, np)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (np == ISAKMP_NEXT_CERT) {
 			/* we've got CA certificates to send */
@@ -1549,9 +1522,12 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 					      &md->rbody,
 					      mycert.ty,
 					      send_cr ? ISAKMP_NEXT_CR :
-							ISAKMP_NEXT_SIG))
+							ISAKMP_NEXT_SIG)) {
+				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
+			}
 		}
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* CR out */
@@ -1697,42 +1673,17 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 
 	dh = new_pcrc(main_inR2_outI3_cryptotail, "aggr outR1 DH",
 		st, md);
-	return start_dh_secretiv(dh, st,
-				st->st_import,
-				ORIGINAL_INITIATOR,
-				st->st_oakley.group->group);
-}
-
-/*
- * Shared logic for asynchronous lookup of DNS KEY records.
- * Used for STATE_MAIN_R2 and STATE_MAIN_I3.
- */
-
-static void report_key_dns_failure(struct id *id, err_t ugh)
-{
-	char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
-
-	(void) idtoa(id, id_buf, sizeof(id_buf));
-	loglog(RC_LOG_SERIOUS,
-		"no RSA public key known for '%s'; DNS search for KEY failed (%s)",
-		id_buf, ugh);
+	return start_dh_secretiv(dh, st, st->st_import,
+				 ORIGINAL_INITIATOR,
+				 st->st_oakley.group);
 }
 
 /*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
- *
- * If a DNS query is still needed to get the other host's public key,
- * the query is initiated and STF_SUSPEND is returned.
- * Note: parameter kc is a continuation containing the results from
- * the previous DNS query, or NULL indicating no query has been issued.
  */
-stf_status oakley_id_and_auth(struct msg_digest *md,
-			bool initiator, /* are we the Initiator? */
-			bool aggrmode, /* aggressive mode? */
-			cont_fn_t cont_fn UNUSED, /* ADNS continuation function */
-			/* current state, can be NULL */
-			const struct key_continuation *kc)
+stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
+			bool aggrmode)
 {
 	struct state *st = md->st;
 	u_char hash_val[MAX_DIGEST_LEN];
@@ -1774,147 +1725,25 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
 		}
+		break;
 	}
-	break;
 
 	case OAKLEY_RSA_SIG:
+	{
 		r = RSA_check_signature(st, hash_val, hash_len,
-					&md->chain[ISAKMP_NEXT_SIG]->pbs,
-#ifdef USE_KEYRR
-					kc == NULL ? NULL :
-					kc->ac.keys_from_dns,
-#endif /* USE_KEYRR */
-					kc == NULL ? NULL :
-					kc->ac.gateways_from_dns);
-
-		if (r == STF_SUSPEND) {
-			/* initiate/resume asynchronous DNS lookup for key */
-			struct key_continuation *nkc =
-				alloc_thing(struct key_continuation,
-					"key continuation");
-			enum key_oppo_step step_done =
-				kc == NULL ? kos_null : kc->step;
-			err_t ugh = NULL;
-
-			/* Record that state is used by a suspended md */
-			passert(st->st_suspended_md == NULL);
-			set_suspended(st, md);
-
-			nkc->failure_ok = FALSE;
-			nkc->md = md;
-
-			switch (step_done) {
-			case kos_null:
-				/* first try: look for the TXT records */
-				nkc->step = kos_his_txt;
-#ifdef USE_KEYRR
-				nkc->failure_ok = TRUE;
-#endif
-				break;
-
-#ifdef USE_KEYRR
-			case kos_his_txt:
-				/* second try: look for the KEY records */
-				nkc->step = kos_his_key;
-				break;
-#endif /* USE_KEYRR */
-
-			default:
-				bad_case(step_done);
-			}
-
-			if (ugh != NULL) {
-				report_key_dns_failure(
-					&st->st_connection->spd.that.id, ugh);
-				unset_suspended(st);
-				r = STF_FAIL + INVALID_KEY_INFORMATION;
-			} else {
-				/*
-				 * since this state is waiting for a DNS query,
-				 * delete any events that might kill it.
-				 */
-				delete_event(st);
-			}
-		}
+					&md->chain[ISAKMP_NEXT_SIG]->pbs);
 		break;
-
+	}
+	/* These are the only IKEv1 AUTH methods we support */
 	default:
 		bad_case(st->st_oakley.auth);
 	}
+
 	if (r == STF_OK)
 		DBG(DBG_CRYPT, DBG_log("authentication succeeded"));
 	return r;
 }
 
-/*
- * This continuation is called as part of either
- * the main_inI3_outR3 state or main_inR3 state.
- *
- * The "tail" function is the corresponding tail
- * function main_inI3_outR3_tail | main_inR3_tail,
- * either directly when the state is started, or via
- * adns continuation.
- *
- * Basically, we go around in a circle:
- *   main_in?3* -> key_continue
- *                ^            \
- *               /              V
- *             adns            main_in?3*_tail
- *              ^               |
- *               \              V
- *                main_id_and_auth
- *
- * until such time as main_id_and_auth is able
- * to find authentication, or we run out of things
- * to try.
- */
-void key_continue(struct adns_continuation *cr,
-		err_t ugh,
-		key_tail_fn *tail)
-{
-	struct key_continuation *kc = (void *)cr;
-	struct msg_digest *md = kc->md;
-	struct state *st;
-
-	if (md == NULL)
-		return;
-
-	st = md->st;
-
-	passert(cur_state == NULL);
-
-	/* if st == NULL, our state has been deleted -- just clean up */
-	if (st != NULL && st->st_suspended_md != NULL) {
-		stf_status r;
-
-		passert(st->st_suspended_md == kc->md);
-		unset_suspended(st); /* no longer connected or suspended */
-		cur_state = st;
-
-		/* cancel any DNS event, since we got an anwer */
-		delete_event(st);
-
-		if (!kc->failure_ok && ugh != NULL) {
-			report_key_dns_failure(&st->st_connection->spd.that.id,
-					ugh);
-			r = STF_FAIL + INVALID_KEY_INFORMATION;
-		} else {
-
-#ifdef USE_KEYRR
-			passert(kc->step == kos_his_txt ||
-				kc->step == kos_his_key);
-#else
-			passert(kc->step == kos_his_txt);
-#endif
-			/* record previous error in case we need it */
-			kc->last_ugh = ugh;
-			r = (*tail)(kc->md, kc);
-		}
-		complete_v1_state_transition(&kc->md, r);
-	}
-	release_any_md(&kc->md);
-	cur_state = NULL;
-}
 
 /*
  * STATE_MAIN_R2:
@@ -1922,40 +1751,16 @@ void key_continue(struct adns_continuation *cr,
  * DS_AUTH: HDR*, IDi1, [ CERT, ] SIG_I --> HDR*, IDr1, [ CERT, ] SIG_R
  * PKE_AUTH, RPKE_AUTH: HDR*, HASH_I --> HDR*, HASH_R
  *
- * Broken into parts to allow asynchronous DNS lookup.
- *
- * - main_inI3_outR3 to start
- * - main_inI3_outR3_tail to finish or suspend for DNS lookup
- * - main_inI3_outR3_continue to start main_inI3_outR3_tail again
  */
-static key_tail_fn main_inI3_outR3_tail; /* forward */
-
-stf_status main_inI3_outR3(struct msg_digest *md)
-{
-	/* handle case where NSS balked at generating DH */
-	return md->st->st_shared_nss == NULL ?
-		STF_FAIL + INVALID_KEY_INFORMATION :
-		main_inI3_outR3_tail(md, NULL);
-}
 
 static inline stf_status main_id_and_auth(struct msg_digest *md,
 					/* are we the Initiator? */
-					bool initiator,
-					/* continuation function */
-					cont_fn_t cont_fn,
-					/* argument */
-					struct key_continuation *kc)
+					bool initiator)
 {
-	return oakley_id_and_auth(md, initiator, FALSE, cont_fn, kc);
+	return oakley_id_and_auth(md, initiator, FALSE);
 }
 
-static void main_inI3_outR3_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, main_inI3_outR3_tail);
-}
-
-static stf_status main_inI3_outR3_tail(struct msg_digest *md,
-				struct key_continuation *kc)
+stf_status main_inI3_outR3(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 	u_int8_t auth_payload;
@@ -1968,17 +1773,19 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	int chain_len = 0;
 	u_int8_t np;
 
+	/* handle case where NSS balked at generating DH */
+	if (st->st_shared_nss == NULL)
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+
 	/*
 	 * ID and HASH_I or SIG_I in
 	 * Note: this may switch the connection being used!
 	 */
 	{
-		stf_status r = main_id_and_auth(md, FALSE,
-						main_inI3_outR3_continue,
-						kc);
-
+		stf_status r = oakley_id_and_auth(md, FALSE, FALSE);
 		if (r != STF_OK)
 			return r;
+
 	}
 
 	/* send certificate if we have one and auth is RSA */
@@ -2047,8 +1854,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&md->rbody, &r_id_pbs) ||
-			!out_chunk(id_b, &r_id_pbs, "my identity"))
+			!out_chunk(id_b, &r_id_pbs, "my identity")) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&r_id_pbs);
 	}
@@ -2061,17 +1870,22 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
 				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   &md->rbody, npp))
+				   &md->rbody, npp)) {
+			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
 
 		if (npp == ISAKMP_NEXT_CERT) {
 			libreswan_log("I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain, chain_len,
 							  &md->rbody,
 							  mycert.ty,
-							  ISAKMP_NEXT_SIG))
+							  ISAKMP_NEXT_SIG)) {
+				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
+			}
 		}
+		free_auth_chain(auth_chain, chain_len);
 	}
 
 	/* IKEv2 NOTIFY payload */
@@ -2160,27 +1974,16 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
  * STATE_MAIN_I3:
  * Handle HDR*;IDir;HASH/SIG_R from responder.
  *
- * Broken into parts to allow asynchronous DNS for KEY records.
- *
- * - main_inR3 to start
- * - main_inR3_tail to finish or suspend for DNS lookup
- * - main_inR3_continue to start main_inR3_tail again
  */
 
-static key_tail_fn main_inR3_tail; /* forward */
+static stf_status main_inR3_tail(struct msg_digest *md);
 
 stf_status main_inR3(struct msg_digest *md)
 {
-	return main_inR3_tail(md, NULL);
+	return main_inR3_tail(md);
 }
 
-static void main_inR3_continue(struct adns_continuation *cr, err_t ugh)
-{
-	key_continue(cr, ugh, main_inR3_tail);
-}
-
-static stf_status main_inR3_tail(struct msg_digest *md,
-				struct key_continuation *kc)
+static stf_status main_inR3_tail(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
@@ -2189,9 +1992,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	 * Note: this may switch the connection being used!
 	 */
 	{
-		stf_status r = main_id_and_auth(md, TRUE, main_inR3_continue,
-						kc);
-
+		stf_status r = oakley_id_and_auth(md, TRUE, FALSE);
 		if (r != STF_OK)
 			return r;
 	}
@@ -2286,8 +2087,7 @@ stf_status send_isakmp_notification(struct state *st,
 		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody));
 	}
 	/* HASH -- create and note space to be filled later */
 	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_N);
@@ -2326,8 +2126,7 @@ stf_status send_isakmp_notification(struct state *st,
 		/* finish computing HASH */
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, st->st_oakley.prf_hasher,
-				st->st_skeyid_a_nss);
+		hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
 		hmac_update(&ctx, (const u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2389,8 +2188,6 @@ static void send_notification(struct state *sndst, notification_t type,
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
-	struct connection *c = sndst->st_connection;
-
 	r_hashval = NULL;
 	r_hash_start = NULL;
 
@@ -2413,18 +2210,9 @@ static void send_notification(struct state *sndst, notification_t type,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
-			/*
-			 * Log this if it is for a non-opportunistic connection
-			 * or if DBG_OPPO is on.  We don't want a DoS.
-			 * Using DBG_OPPO is kind of odd because this is not
-			 * controlling DBG_log.
-			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-			    DBGP(DBG_OPPO)) {
 				libreswan_log(
 					"too many (%d) malformed payloads. Deleting state",
 					sndst->hidden_variables.st_malformed_sent);
-			}
 			delete_state(sndst);
 			/* note: no md->st to clear */
 			return;
@@ -2457,14 +2245,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	/*
-	 * Log this if it is for a non-opportunistic connection
-	 * or if DBG_OPPO is on.  We don't want a DoS.
-	 * Using DBG_OPPO is kind of odd because this is not
-	 * controlling DBG_log.
-	 */
-	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-	    DBGP(DBG_OPPO)) {
+	{
 		ipstr_buf b;
 
 		libreswan_log("sending %snotification %s to %s:%u",
@@ -2488,20 +2269,17 @@ static void send_notification(struct state *sndst, notification_t type,
 			memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 		if (rcookie)
 			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
 	}
 
 	/* HASH -- value to be filled later */
 	if (encst) {
 		pb_stream hash_pbs;
-		if (!ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
-					&hash_pbs))
-			impossible();
+		passert(ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
+					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(encst->st_oakley.prf_hasher->hash_digest_len,
-				&hash_pbs, "HASH(1)"))
-			impossible();
+		passert(out_zero(encst->st_oakley.prf->prf_output_size,
+				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
 	}
@@ -2531,8 +2309,8 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst) {
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, encst->st_oakley.prf_hasher,
-				encst->st_skeyid_a_nss);
+		hmac_init(&ctx, encst->st_oakley.prf,
+			  encst->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2555,8 +2333,7 @@ static void send_notification(struct state *sndst, notification_t type,
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
-		if (!encrypt_message(&r_hdr_pbs, encst))
-			impossible();
+		passert(encrypt_message(&r_hdr_pbs, encst));
 
 		restore_iv(encst, old_iv, old_iv_len);
 	} else {
@@ -2624,8 +2401,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct connection fake_connection = {
 		.interface = md->iface,
 		.addr_family = addrtypeof(&md->sender),	/* for should_fragment_ike_msg() */
-		.policy = POLICY_IKE_FRAG_FORCE |	/* for should_fragment_ike_msg() */
-			POLICY_OPPORTUNISTIC,	/* for reducing logging various places */
+		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
 	};
 
 	struct state fake_state = {
@@ -2714,22 +2490,19 @@ bool ikev1_delete_out(struct state *st)
 		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
-					&r_hdr_pbs))
-			impossible();
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
+				   &r_hdr_pbs));
 	}
 
 	/* HASH -- value to be filled later */
 	{
 		pb_stream hash_pbs;
 
-		if (!ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
-					&hash_pbs))
-			impossible();
+		passert(ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
+					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(p1st->st_oakley.prf_hasher->hash_digest_len,
-				&hash_pbs, "HASH(1)"))
-			impossible();
+		passert(out_zero(p1st->st_oakley.prf->prf_output_size,
+				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
 	}
@@ -2749,11 +2522,10 @@ bool ikev1_delete_out(struct state *st)
 		memcpy(isakmp_spi, st->st_icookie, COOKIE_SIZE);
 		memcpy(isakmp_spi + COOKIE_SIZE, st->st_rcookie, COOKIE_SIZE);
 
-		if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
-					&del_pbs) ||
-			!out_raw(&isakmp_spi, (2 * COOKIE_SIZE), &del_pbs,
-				"delete payload"))
-			impossible();
+		passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
+				   &del_pbs));
+		passert(out_raw(&isakmp_spi, (2 * COOKIE_SIZE), &del_pbs,
+				"delete payload"));
 		close_output_pbs(&del_pbs);
 	} else {
 		while (ns != said) {
@@ -2769,12 +2541,11 @@ bool ikev1_delete_out(struct state *st)
 			isad.isad_protoid = ns->proto;
 
 			isad.isad_nospi = 1;
-			if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
-						&del_pbs) ||
-				!out_raw(&ns->spi, sizeof(ipsec_spi_t),
+			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
+					   &del_pbs));
+			passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
 					&del_pbs,
-					"delete payload"))
-				impossible();
+					"delete payload"));
 			close_output_pbs(&del_pbs);
 		}
 	}
@@ -2783,8 +2554,8 @@ bool ikev1_delete_out(struct state *st)
 	{
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, p1st->st_oakley.prf_hasher,
-				p1st->st_skeyid_a_nss);
+		hmac_init(&ctx, p1st->st_oakley.prf,
+			  p1st->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2810,8 +2581,7 @@ bool ikev1_delete_out(struct state *st)
 		save_iv(p1st, old_iv, old_iv_len);
 		init_phase2_iv(p1st, &msgid);
 
-		if (!encrypt_message(&r_hdr_pbs, p1st))
-			impossible();
+		passert(encrypt_message(&r_hdr_pbs, p1st));
 
 		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
 
@@ -3009,15 +2779,12 @@ bool accept_delete(struct msg_digest *md,
 								mononow())));
 					} else {
 						loglog(RC_LOG_SERIOUS,
-							"received Delete SA payload: replace IPSEC State #%lu in %d seconds",
-							dst->st_serialno,
-							DELETE_SA_DELAY);
-						dst->st_margin = deltatime(
-							DELETE_SA_DELAY);
+							"received Delete SA payload: replace IPSEC State #%lu now",
+							dst->st_serialno);
+						dst->st_margin = deltatime(0);
 						delete_event(dst);
-						event_schedule(
-							EVENT_SA_REPLACE,
-							DELETE_SA_DELAY, dst);
+						event_schedule(EVENT_SA_REPLACE,
+								0, dst);
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
@@ -3031,8 +2798,10 @@ bool accept_delete(struct msg_digest *md,
 
 				if (rc->newest_ipsec_sa == SOS_NOBODY) {
 					rc->policy &= ~POLICY_UP;
-					flush_pending_by_connection(rc);
-					delete_states_by_connection(rc, FALSE);
+					if (!shared_phase1_connection(rc)) {
+						flush_pending_by_connection(rc);
+						delete_states_by_connection(rc, FALSE);
+					}
 					reset_cur_connection();
 				}
 				/* reset connection */

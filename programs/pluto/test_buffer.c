@@ -26,6 +26,7 @@
 #include "crypt_dbg.h"
 #include "crypt_symkey.h"
 #include "test_buffer.h"
+#include "ike_alg.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
 {
@@ -65,14 +66,16 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		buf[i] = '\0';
 		if (i != 2) {
 			loglog(RC_INTERNALERR,
-			       "decode_hex_to_chunk: hex buffer \"%s\" contains unexpected space or NUL at \"%s\"\n", string, pos);
+			       "unexpected space or NUL character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
+			       pos - string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		char *end;
 		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
 		if (end - buf != 2) {
 			loglog(RC_INTERNALERR,
-			       "decode_hex_to_chunk: hex buffer \"%s\" invalid hex character at \"%s\"\n", string, pos);
+			       "invalid character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
+			       pos-string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		chunk.len++;
@@ -151,10 +154,9 @@ PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
-	PK11SymKey *tmp = chunk_to_symkey(raw_key);
-	PK11SymKey *symkey = encrypt_key_from_symkey_bytes(tmp, encrypt_desc,
-							   0, raw_key.len);
+	PK11SymKey *symkey = symkey_from_chunk("symkey", DBG_CRYPT,
+					       &encrypt_desc->common,
+					       raw_key);
 	freeanychunk(raw_key);
-	free_any_symkey("tmp", &tmp);
 	return symkey;
 }

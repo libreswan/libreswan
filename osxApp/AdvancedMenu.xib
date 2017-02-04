@@ -360,7 +360,7 @@
 															</object>
 															<object class="NSMenuItem" id="430954618">
 																<reference key="NSMenu" ref="616172649"/>
-																<string key="NSTitle">IKEv1 Agressive</string>
+																<string key="NSTitle">IKEv1 Aggressive</string>
 																<string key="NSKeyEquiv"/>
 																<int key="NSKeyEquivModMask">1048576</int>
 																<int key="NSMnemonicLoc">2147483647</int>

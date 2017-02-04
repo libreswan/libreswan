@@ -66,10 +66,8 @@
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 
-#include "sha1.h"
-#include "md5.h"
 #include "cookie.h"
-#include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "crypt_symkey.h"
 #include "spdb.h"
 #include "ikev2.h"
@@ -273,7 +271,7 @@ static struct state_category *categorize_state(struct state *st,
 		return established_ike;
 
 		/*
-		 * Some internal state, will it ever occure?
+		 * Some internal state, will it ever occur?
 		 */
 	case OPPO_ACQUIRE:
 	case OPPO_GW_DISCOVERED:
@@ -281,7 +279,7 @@ static struct state_category *categorize_state(struct state *st,
 
 		/*
 		 * IKEv1: QUICK is for child connections children.
-		 * Probably won't occure as a parent?
+		 * Probably won't occur as a parent?
 		 */
 	case STATE_QUICK_I1:
 	case STATE_QUICK_I2:
@@ -559,7 +557,7 @@ struct state *state_with_serialno(so_serial_t sn)
 
 /*
  * Insert a state object in the hash table. The object is inserted
- * at the begining of list.
+ * at the beginning of list.
  * Needs cookies, connection, and msgid.
  */
 void insert_state(struct state *st)
@@ -680,6 +678,55 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
+void ikev2_expire_unused_parent(struct state *pst)
+{
+	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
+		return; /* only deal with established parent SA */
+
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+			if (st->st_clonedfrom == pst->st_serialno)
+				return;
+			});
+
+	{
+		char cib[CONN_INST_BUF];
+		struct connection *c = pst->st_connection;
+
+		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
+				pst->st_serialno, c->name,
+				fmt_conn_instance(c, cib));
+		delete_event(pst);
+		event_schedule(EVENT_SA_EXPIRE, 0, pst);
+	}
+}
+
+static void flush_pending_quickmode (struct state *pst)
+{
+        struct state *st;
+
+	if (!IS_IKE_SA(pst))
+		return; /* we had better be a parent */
+	if(pst->st_ikev2)
+		return; /* quick mode is only for IKEv1 */
+
+        FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+                if (st->st_clonedfrom == pst->st_serialno) {
+			char cib[CONN_INST_BUF];
+			struct connection *c = st->st_connection;
+			if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
+				continue;
+
+			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
+					"connection\"%s\"%s state #%lu: - the parent is going away",
+					c->name, fmt_conn_instance(c, cib),
+					st->st_serialno);
+
+			delete_event(st);
+			event_schedule( EVENT_SA_REPLACE, 0, st);
+               }
+        });
+}
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -833,8 +880,8 @@ void delete_state(struct state *st)
 	}
 
 	/* tell the other side of any IPSEC SAs that are going down */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-			IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	if (!st->st_ikev2_no_del && (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+			IS_ISAKMP_SA_ESTABLISHED(st->st_state))) {
 		if (st->st_ikev2 && IS_CHILD_SA(st) &&
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
@@ -860,6 +907,9 @@ void delete_state(struct state *st)
 	 * deleting our connection.
 	 */
 	flush_pending_by_state(st);
+
+	/* handle pending quick mode IKEv1 states */
+	flush_pending_quickmode(st);
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
@@ -2090,7 +2140,6 @@ static struct state **sort_states(void)
 
 void show_traffic_status(void)
 {
-	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	struct state **array = sort_states();
 
@@ -2106,7 +2155,6 @@ void show_traffic_status(void)
 				whack_log(RC_INFORMATIONAL_TRAFFIC,
 					  "%s", state_buf);
 		}
-		whack_log(RC_COMMENT, " "); /* spacer */
 		pfree(array);
 	}
 }
@@ -2269,7 +2317,7 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * A host behind a NAT SHOULD NOT do this type of dynamic address
  * update if a validated packet has different port and/or address
  * values because it opens a possible DoS attack (such as allowing
- * an attacker to break the connection with a single packet). 
+ * an attacker to break the connection with a single packet).
  */
 void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
@@ -2414,17 +2462,24 @@ void show_globalstate_status(void)
 	}
 }
 
-
-void log_newest_sa_change(char *f, struct state *const st)
+static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
+			  struct state *const st)
 {
-
 	DBG(DBG_CONTROLMORE,
-			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",f,
-				st->st_connection->name,
+			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
+				f, st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
-				st->st_serialno,
-				st->st_connection->newest_ipsec_sa,
-				st->st_connection->spd.
-				eroute_owner, st->st_clonedfrom));
+				st->st_serialno, old_ipsec_sa,
+				st->st_connection->spd.eroute_owner,
+				st->st_clonedfrom));
+}
+
+void set_newest_ipsec_sa(const char *m, struct state *const st)
+{
+	so_serial_t old_ipsec_sa = st->st_connection->newest_ipsec_sa;
+
+	st->st_connection->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change(m, old_ipsec_sa, st);
+
 }

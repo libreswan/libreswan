@@ -6,7 +6,7 @@
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
- * (C)opyright 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,12 @@
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_dh.h"
+#include "ike_alg_aes.h"
+#include "ike_alg_3des.h"
+#include "ike_alg_sha1.h"
+#include "ike_alg_sha2.h"
+#include "ike_alg_md5.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -90,344 +96,513 @@ static int aalg_getbyname_ike(const char *str)
 
 	return -1;
 }
-/**
- *      Search oakley_group_names for a match, eg:
- *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
- * @param str String MODP Name (eg: MODP)
- * @return int Registered # of MODP Group, if supported.
- */
-static int modp_getbyname_ike(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-			       " (extension)", str);
-	return ret;
-}
 
 /*
  * Raw add routine: only checks for no duplicates
  */
 /* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
-static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
-			       unsigned ek_bits, int aalg_id,
-			       unsigned int modp_id)
+static void raw_alg_info_ike_add(struct alg_info_ike *alg_info,
+				 const struct encrypt_desc *ealg, unsigned ek_bits,
+				 const struct prf_desc *aalg,
+				 const struct oakley_group_desc *dh_group)
 {
-	struct ike_info *ike_info = alg_info->ike;
-	int cnt = alg_info->ai.alg_info_cnt;
-	int i;
+	/*
+	 * Check for overflows up front; could delay until after
+	 * filters, but that complicates things.
+	 */
+	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ike));
+	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ike)) {
+		loglog(RC_LOG_SERIOUS, "more than %zu IKE algorithms specified",
+		       elemsof(alg_info->ike));
+		/* drop it like a rock */
+		return;
+	}
 
-	/* don't add duplicates */
-	/* ??? why is 0 wildcard for ek_bits and ak_bits? */
-	for (i = 0; i < cnt; i++) {
-		if (ike_info[i].ike_ealg == ealg_id &&
-		    (ek_bits == 0 || ike_info[i].ike_eklen == ek_bits) &&
-		    ike_info[i].ike_halg == aalg_id &&
-		    ike_info[i].ike_modp == modp_id) {
+	/*
+	 * Initialize the new entry and use it as scratch.  If there's
+	 * a problem just return.  Only when everything checks out is
+	 * it added.
+	 */
+	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
+	*new_info = (struct ike_info) {
+		.ike_eklen = ek_bits,
+		.ike_encrypt = ealg,
+		.ike_prf = aalg,
+		.ike_dh_group = dh_group,
+	};
+
+	/*
+	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
+	 *
+	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
+	 * algorithms?
+	 *
+	 * For the case of alg=0 / "null", should this have a real
+	 * object?
+	 *
+	 * XXX: work-in-progress
+	 */
+	passert(new_info->ike_encrypt != NULL);
+	passert(ike_alg_is_ike(&(new_info->ike_encrypt->common)));
+	if (ek_bits != 0) {
+		if (!encrypt_has_key_bit_length(new_info->ike_encrypt,
+						ek_bits)) {
+			loglog(RC_LOG_SERIOUS,
+			       "ENCRYPT algorithm %s with key length %u is not supported",
+			       new_info->ike_encrypt->common.name,
+			       ek_bits);
 			return;
 		}
 	}
 
-	/* check for overflows */
-	/* ??? passert seems dangerous */
-	passert(cnt < (int)elemsof(alg_info->ike));
+	passert(new_info->ike_prf != NULL);
 
-	ike_info[cnt].ike_ealg = ealg_id;
-	ike_info[cnt].ike_eklen = ek_bits;
-	ike_info[cnt].ike_halg = aalg_id;
-	ike_info[cnt].ike_modp = modp_id;
-	alg_info->ai.alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() ealg_id=%d ek_bits=%d aalg_id=%d modp_id=%d, cnt=%d",
-			       ealg_id, ek_bits,
-			       aalg_id,
-			       modp_id, alg_info->ai.alg_info_cnt));
-}
-
-/*
- *      Proposals will be built by looping over default_ike_groups array and
- *      merging alg_info (ike_info) contents
- */
-static const enum ike_trans_type_dh default_ike_groups[] = {
-	DEFAULT_OAKLEY_GROUPS
-};
-static const enum ikev1_encr_attribute default_ike_ealgs[] = {
-	DEFAULT_OAKLEY_EALGS
-};
-static const enum ikev1_hash_attribute default_ike_aalgs[] = {
-	DEFAULT_OAKLEY_AALGS
-};
-
-/*
- *	Add IKE alg info _with_ logic (policy):
- */
-static void per_group_alg_info_ike_add(struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     int modp_id)
-{
-	if (ealg_id == 0) {
-		/* use all our default enc algs */
-		int i;
-
-		for (i=0; i != elemsof(default_ike_ealgs); i++) {
-			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
-				aalg_id, modp_id);
-		}
-	} else {
-		if (aalg_id > 0) {
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				aalg_id,
-				modp_id);
-		} else {
-			int j;
-
-			for (j=0; j != elemsof(default_ike_aalgs); j++) {
-				raw_alg_info_ike_add(
-					(struct alg_info_ike *)alg_info,
-					ealg_id, ek_bits,
-					default_ike_aalgs[j],
-					modp_id);
+	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			const struct integ_desc *alg = *algp;
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->prf == new_info->ike_prf) {
+				new_info->ike_integ = alg;
+				break;
 			}
 		}
+		if (new_info->ike_integ == NULL) {
+			loglog(RC_LOG_SERIOUS,
+			       "INTEG algorithm %s is not supported",
+			       new_info->ike_prf->common.name);
+			return;
+		}
 	}
+
+	passert(new_info->ike_dh_group != NULL);
+
+	/*
+	 * don't add duplicates
+	 *
+	 * ??? why is 0 wildcard for ek_bits and ak_bits?
+	 *
+	 * keylen==0 is magic implying all key lengths should be
+	 * included; so a zero key-length duplicates anything
+	 *
+	 * Perform the check after the algorithms have been found so
+	 * that duplicates can be identified by simply comparing
+	 * opaque pointers.
+	 *
+	 * XXX: work-in-progress
+	 */
+	FOR_EACH_IKE_INFO(alg_info, ike_info) {
+		if (ike_info->ike_encrypt == new_info->ike_encrypt &&
+		    (new_info->ike_eklen == 0 ||
+		     ike_info->ike_eklen == new_info->ike_eklen) &&
+		    ike_info->ike_prf == new_info->ike_prf &&
+		    ike_info->ike_integ == new_info->ike_integ &&
+		    ike_info->ike_dh_group == new_info->ike_dh_group) {
+			return;
+		}
+	}
+
+	/*
+	 * All is good, add it.
+	 */
+	alg_info->ai.alg_info_cnt++;
+	DBG(DBG_CRYPT,
+	    DBG_log("raw_alg_info_ike_add() ealg=%s ek_bits=%d aalg=%s modp=%s, cnt=%d",
+		    new_info->ike_encrypt->common.name, ek_bits,
+		    new_info->ike_prf->common.name,
+		    new_info->ike_dh_group->common.name,
+		    alg_info->ai.alg_info_cnt));
 }
 
-static void alg_info_ike_add(struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     int modp_id)
+/*
+ * "ike_info" proposals are built built by first parsing the ike=
+ * line, and second merging it with the below defaults when an
+ * algorithm wasn't specified.
+ *
+ * Do not assume that these hard wired algorithms are actually valid.
+ */
+
+static const struct ike_alg *default_ikev1_groups[] = {
+	&oakley_group_modp2048.common,
+	&oakley_group_modp1536.common,
+	NULL,
+};
+static const struct ike_alg *default_ikev2_groups[] = {
+	&oakley_group_modp2048.common,
+	NULL,
+};
+
+static const struct ike_alg *default_ike_ealgs[] = {
+	&ike_alg_encrypt_aes_cbc.common,
+	&ike_alg_encrypt_3des_cbc.common,
+	NULL,
+};
+
+static const struct ike_alg *default_ike_aalgs[] = {
+	&ike_alg_prf_sha2_256.common,
+	&ike_alg_prf_sha2_512.common,
+	&ike_alg_prf_sha1.common,
+	&ike_alg_prf_md5.common,
+	NULL,
+};
+
+struct alg_defaults {
+	const struct ike_alg **ikev1;
+	const struct ike_alg **ikev2;
+};
+
+struct ike_defaults {
+	struct alg_defaults groups;
+	struct alg_defaults ealgs;
+	struct alg_defaults aalgs;
+};
+
+static const struct ike_defaults ike_defaults = {
+	.groups = {
+		.ikev1 = default_ikev1_groups,
+		.ikev2 = default_ikev2_groups,
+	},
+	.ealgs = {
+		.ikev1 = default_ike_ealgs,
+		.ikev2 = default_ike_ealgs,
+	},
+	.aalgs = {
+		.ikev1 = default_ike_aalgs,
+		.ikev2 = default_ike_aalgs,
+	},
+};
+
+/*
+ * Given a list of default IKEv1/IKEv2 algorithms, allocate and return
+ * the valid and selected subset of those algorithms.
+ *
+ * Or NULL if there are none.
+ */
+static const struct ike_alg **clone_valid(enum ike_alg_type type,
+					  const struct parser_policy *policy,
+					  const struct alg_defaults *algs)
 {
 	/*
-	 * XXX: Require ak_bits==0?
+	 * If there's a hint of IKEv1 being enabled then prefer its
+	 * larger set of defaults.
+	 *
+	 * This should increase the odds of both ends interoperating.
+	 * For instance, if IKEv2 defaults are preferred and one end
+	 * has ikev2=never then, in aggressive mode, things don't work.
 	 */
-	if (modp_id == 0) {
-		/* try each default group */
-		int i;
+	const struct ike_alg **default_algs = (policy->ikev1
+					       ? algs->ikev1
+					       : algs->ikev2);
 
-		for (i=0; i != elemsof(default_ike_groups); i++)
-			per_group_alg_info_ike_add(alg_info,
-				     ealg_id, ek_bits,
-				     aalg_id,
-				     default_ike_groups[i]);
+	/*
+	 * Allocate the cloned array.  Keep things simple by assuming
+	 * it is the same size as the original.
+	 */
+	int count = 1;
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		passert((*default_alg)->algo_type == type);
+		count++;
+	}
+	const struct ike_alg **valid_algs = alloc_things(const struct ike_alg*, count,
+							 "valid algs");
+
+	/*
+	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
+	 */
+	const struct ike_alg **valid_alg = valid_algs;
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		const struct ike_alg *alg = *default_alg;
+		/*
+		 * Check that all the enabled protocols are
+		 * supported.
+		 *
+		 * Done first since it is quick and fast.
+		 */
+		if (policy->ikev1 && alg->ikev1_oakley_id == 0) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing ikev1 support",
+				    ike_alg_type_name(type),
+				    alg->name));
+			continue;
+		}
+		if (policy->ikev2 && alg->ikev2_id == 0) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing ikev2 support",
+				    ike_alg_type_name(type),
+				    alg->name));
+			continue;
+		}
+		/*
+		 * Check that the algorithm is backed by an IKE
+		 * (native) implementation.
+		 *
+		 * Having a valid ID (checked above) isn't sufficient.
+		 * For instance, an IKEv2 ESP only algorithm will have
+		 * a valid IKEv2 ID.
+		 */
+		if (!ike_alg_is_ike(alg)) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, missing IKE implementation",
+				    ike_alg_type_name(type),
+				    alg->name));
+			continue;
+		}
+		/*
+		 * Check that the algorithm is valid.
+		 *
+		 * FIPS, for instance, will invalidate some algorithms
+		 * during startup.
+		 *
+		 * Since it likely involves a lookup, it is left until
+		 * last.
+		 */
+		if (!ike_alg_is_valid(alg)) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s %s, invalid",
+				    ike_alg_type_name(type),
+				    alg->name));
+			continue;
+		}
+		DBG(DBG_CONTROL|DBG_CRYPT,
+		    DBG_log("adding default %s %s",
+			    ike_alg_type_name(type),
+			    alg->name));
+		/* save it */
+		*valid_alg++ = alg;
+	}
+	*valid_alg = NULL;
+
+	/*
+	 * If, after filtering, nothing was added, return NULL rather
+	 * than an empty array.
+	 *
+	 * Will this this ever happen? I.e., passert()?
+	 */
+	if (valid_alg == valid_algs) {
+		pfree(valid_algs);
+		loglog(RC_LOG_SERIOUS,
+		       "no valid default %s algorithms",
+		       ike_alg_type_name(type));
+		return NULL;
+	}
+
+	return valid_algs;
+}
+
+/*
+ * _Recursively_ add IKE alg info _with_ logic (policy) using
+ * IKE_DEFAULTS.
+ */
+
+static void ike_add(const struct parser_policy *const policy,
+		    const struct ike_defaults *const defaults,
+		    struct alg_info *alg_info,
+		    const struct encrypt_desc *ealg, int ek_bits,
+		    const struct prf_desc *aalg,
+		    const struct oakley_group_desc *dh_group)
+{
+	/*
+	 * Note that the order in which things are recursively added -
+	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
+	 * things like the order of proposals.
+	 *
+	 * See parser_alg_info_add().  It seems that modp_id=0,
+	 * ealg_id=-1, aalg_id=-1, so check for anything <= 0.
+	 */
+	if (dh_group == NULL) {
+		/*
+		 * Recursively add the valid default groups.
+		 */
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_DH, policy,
+								&defaults->groups);
+		if (valid_algs == NULL) {
+			return;
+		}
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, defaults, alg_info,
+				ealg, ek_bits,
+				aalg, oakley_group_desc(*alg));
+		}
+		pfree(valid_algs);
+	} else if (ealg == NULL) {
+		/*
+		 * Recursively add the valid default enc algs
+		 */
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_ENCRYPT, policy,
+								&defaults->ealgs);
+		if (valid_algs == NULL) {
+			return;
+		}
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, defaults, alg_info,
+				encrypt_desc(*alg), ek_bits,
+				aalg, dh_group);
+		}
+		pfree(valid_algs);
+	} else if (aalg == NULL) {
+		/*
+		 * Recursively add the valid default PRF/HASH
+		 * algorithms.
+		 *
+		 * Even AEAD algorithms need a PRF.
+		 */
+		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_PRF, policy,
+								&defaults->aalgs);
+		if (valid_algs == NULL) {
+			return;
+		}
+		for (const struct ike_alg **alg = valid_algs;
+		     *alg; alg++) {
+			ike_add(policy, defaults, alg_info,
+				ealg, ek_bits,
+				prf_desc(*alg), dh_group);
+		}
+		pfree(valid_algs);
 	} else {
-		/* group determined by caller */
-		per_group_alg_info_ike_add(alg_info,
-			     ealg_id, ek_bits,
-			     aalg_id,
-			     modp_id);
+		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
+				     ealg, ek_bits,
+				     aalg, dh_group);
 	}
 }
 
-static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
-			    const struct esp_info *esp_info)
+static void alg_info_ike_add(const struct parser_policy *const policy,
+			     struct alg_info *alg_info,
+			     int ealg_id, int ek_bits,
+			     int aalg_id,
+			     const struct oakley_group_desc *dh_group)
 {
-	unsigned eklen = esp_info->enckeylen;
-
-	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
-			sep,
-			enum_short_name(&esp_transformid_names,
-					       esp_info->transid),
-			esp_info->transid, eklen,
-			strip_prefix(enum_short_name(&auth_alg_names,
-						esp_info->auth),
-				"HMAC_"),
-			esp_info->auth);
-}
-
-void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct esp_info *esp_info)
-{
-	snprint_esp_info(buf, buflen, "", esp_info);
-}
-
-/*
- * print which ESP algorithm has actually been selected, based upon which
- * ones are actually loaded.
- */
-static void alg_info_snprint_esp(char *buf, size_t buflen,
-				 struct alg_info_esp *alg_info)
-{
-	char *ptr = buf;
-	struct esp_info *esp_info;
-	int cnt;
-	const char *sep = "";
-
-	passert(buflen >= sizeof("none"));
-
-	jam_str(buf, buflen, "none");
-
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		err_t ugh = check_kernel_encrypt_alg(esp_info->transid, 0);
-
-		if (ugh != NULL) {
-			DBG_log("esp algid=%d not available: %s",
-				esp_info->transid, ugh);
-			continue;
-		}
-
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
-			DBG_log("auth algid=%d not available",
-				esp_info->auth);
-			continue;
-		}
-
-		int ret = snprint_esp_info(ptr, buflen, sep, esp_info);
-
-		if (ret < 0 || (size_t)ret >= buflen) {
-			DBG_log("alg_info_snprint_esp: buffer too short for snprintf");
-			break;
-		}
-		ptr += ret;
-		buflen -= ret;
-		sep = ", ";
-	}
-}
-
-/*
- * print which AH algorithm has actually been selected, based upon which
- * ones are actually loaded.
- */
-static void alg_info_snprint_ah(char *buf, size_t buflen,
-				struct alg_info_esp *alg_info)
-{
-	char *ptr = buf;
-	struct esp_info *esp_info;
-	int cnt;
-	const char *sep = "";
-
-	passert(buflen >= sizeof("none"));
-	jam_str(buf, buflen, "none");
-
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
-			DBG_log("auth algid=%d not available",
-				esp_info->auth);
-			continue;
-		}
-
-		int ret = snprintf(ptr, buflen, "%s%s(%d)",
-			       sep,
-			       strip_prefix(enum_name(&auth_alg_names,
-							esp_info->auth),
-					"HMAC_"),
-			       esp_info->auth);
-
-		if (ret < 0 || (size_t)ret >= buflen) {
-			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
-			break;
-		}
-		ptr += ret;
-		buflen -= ret;
-		sep = ", ";
-	}
-}
-
-void alg_info_snprint_phase2(char *buf, size_t buflen,
-			     struct alg_info_esp *alg_info)
-{
-	switch (alg_info->ai.alg_info_protoid) {
-	case PROTO_IPSEC_ESP:
-		alg_info_snprint_esp(buf, buflen, alg_info);
-		break;
-
-	case PROTO_IPSEC_AH:
-		alg_info_snprint_ah(buf, buflen, alg_info);
-		break;
-
-	default:
-		bad_case(alg_info->ai.alg_info_protoid);
-	}
-}
-
-static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
-			    bool fix_zero)
-{
-	const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ike_info->ike_ealg);
-	passert(!fix_zero || enc_desc != NULL);
-	const struct hash_desc *hash_desc = ikev1_alg_get_hasher(ike_info->ike_halg);
-	passert(!fix_zero || hash_desc != NULL);
-
-	int eklen = ike_info->ike_eklen;
-	if (fix_zero && eklen == 0)
-		eklen = enc_desc->keydeflen;
-
-	struct esb_buf enc_buf, hash_buf, group_buf;
-	return snprintf(buf, buflen,
-		"%s(%d)_%03d-%s(%d)-%s(%d)",
-		enum_show_shortb(&oakley_enc_names,
-			ike_info->ike_ealg, &enc_buf),
-		ike_info->ike_ealg, eklen,
-		enum_show_shortb(&oakley_hash_names,
-			ike_info->ike_halg, &hash_buf),
-		ike_info->ike_halg,
-		enum_show_shortb(&oakley_group_names,
-			ike_info->ike_modp, &group_buf),
-		ike_info->ike_modp);
-}
-
-void alg_info_snprint_ike_info(char *buf, size_t buflen,
-			       struct ike_info *ike_info)
-{
-	snprint_ike_info(buf, buflen, ike_info, FALSE);
-}
-
-void alg_info_snprint_ike(char *buf, size_t buflen,
-			  struct alg_info_ike *alg_info)
-{
-	char *ptr = buf;
-	struct ike_info *ike_info;
-	int cnt;
-	const char *sep = "";
-
-	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
-		if (ike_alg_enc_present(ike_info->ike_ealg) &&
-		    ike_alg_hash_present(ike_info->ike_halg) &&
-		    lookup_group(ike_info->ike_modp) != NULL) {
-			if (strlen(sep) >= buflen) {
-				DBG_log("alg_info_snprint_ike: buffer too short for separator");
+	/*
+	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
+	 *
+	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
+	 * algorithms?
+	 *
+	 * For the case of alg=0 / "null", should this have a real
+	 * object?
+	 *
+	 * XXX: work-in-progress
+	 */
+	const struct encrypt_desc *ealg = NULL;
+	if (ealg_id > 0) {
+		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+		     algp != NULL; algp = next_encrypt_desc(algp)) {
+			const struct encrypt_desc *alg = *algp;
+			/*
+			 * keylen==0 implies use default or defaults.
+			 */
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->common.ikev1_oakley_id == ealg_id) {
+				ealg = alg;
 				break;
 			}
-			strcpy(ptr, sep);
-			ptr += strlen(sep);
-			buflen -= strlen(sep);
-			int ret = snprint_ike_info(ptr, buflen, ike_info, TRUE);
-			if (ret < 0 || (size_t)ret >= buflen) {
-				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
-				break;
+		}
+		if (ealg == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "ENCRYPT algorithm %s=%d is not supported",
+			       enum_showb(&oakley_enc_names, ealg_id, &buf),
+			       ealg_id);
+			return;
+		}
+		if (ek_bits != 0) {
+			if (!encrypt_has_key_bit_length(ealg, ek_bits)) {
+				struct esb_buf buf;
+				loglog(RC_LOG_SERIOUS,
+				       "ENCRYPT algorithm %s with key length %u is not supported",
+				       enum_showb(&oakley_enc_names, ealg_id, &buf),
+				       ek_bits);
+				return;
 			}
-			ptr += ret;
-			buflen -= ret;
-			sep = ", ";
 		}
 	}
+
+	const struct prf_desc *aalg = NULL;
+	if (aalg_id > 0) {
+		for (const struct prf_desc **algp = next_prf_desc(NULL);
+		     algp != NULL; algp = next_prf_desc(algp)) {
+			const struct prf_desc *alg = *algp;
+			if (ike_alg_is_ike(&(alg)->common)
+			    && alg->common.ikev1_oakley_id == aalg_id) {
+				aalg = alg;
+				break;
+			}
+		}
+		if (aalg == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "PRF algorithm %s=%d is not supported",
+			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
+			       aalg_id);
+			return;
+		}
+	}
+
+	ike_add(policy, &ike_defaults, alg_info,
+		ealg, ek_bits, aalg, dh_group);
 }
 
-/*
- *	Must be called for each "new" char, with new
- *	character in ctx.ch
- */
-static void parser_init_ike(struct parser_context *p_ctx)
+static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name)
 {
-	*p_ctx = empty_p_ctx;
-
-	p_ctx->protoid = PROTO_ISAKMP;
-
-	p_ctx->ealg_str = p_ctx->ealg_buf;
-	p_ctx->aalg_str = p_ctx->aalg_buf;
-	p_ctx->modp_str = p_ctx->modp_buf;
-	p_ctx->state = ST_INI;
-	p_ctx->ealg_getbyname = ealg_getbyname_ike;
-	p_ctx->aalg_getbyname = aalg_getbyname_ike;
-	p_ctx->modp_getbyname = modp_getbyname_ike;
-	p_ctx->ealg_permit = TRUE;
-	p_ctx->aalg_permit = TRUE;
+	const struct oakley_group_desc *group = group_desc_byname(name);
+	if (group == NULL) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not found",
+			 name);
+		return NULL;
+	}
+	/*
+	 * If the connection is IKEv1|IKEv2 then this code will
+	 * exclude anything not supported by both protocols.
+	 */
+	if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv2",
+			 name);
+		return NULL;
+	}
+	if (policy->ikev2 && group->common.ikev2_id == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not supported by IKEv1",
+			 name);
+		return NULL;
+	}
+	/*
+	 * XXX: surely this is dead?
+	 */
+	if (group->group == 22) {
+		snprintf(err_buf, err_buf_len,
+			 "DH22 from RFC-5114 is no longer supported - see RFC-4307bis");
+		return NULL;
+	}
+	/*
+	 * Since the D-H calculation is performed in-process, IKE is
+	 * always required.
+	 */
+	if (!ike_alg_is_ike(&group->common)) {
+		snprintf(err_buf, err_buf_len,
+			 "modp group '%s' not implemented",
+			 name);
+		return NULL;
+	}
+	return group;
 }
 
-struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
+const struct parser_param ike_parser_param = {
+	.protoid = PROTO_ISAKMP,
+	.alg_info_add = alg_info_ike_add,
+	.ealg_getbyname = ealg_getbyname_ike,
+	.aalg_getbyname = aalg_getbyname_ike,
+	.group_byname = group_byname,
+};
+
+struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
 	/*
@@ -438,14 +613,11 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
 	return (struct alg_info_ike *)
-		alg_info_parse_str(
-			PROTO_ISAKMP,
-			&alg_info_ike->ai,
-			alg_str,
-			err_buf, err_buf_len,
-			parser_init_ike,
-			alg_info_ike_add,
-			lookup_group);
+		alg_info_parse_str(policy,
+				   &alg_info_ike->ai,
+				   alg_str,
+				   err_buf, err_buf_len,
+				   &ike_parser_param);
 }
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
@@ -569,10 +741,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 	bool success = TRUE;
 	if (alg_info != NULL) {
-		const struct esp_info *esp_info;
-		int i;
-
-		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		FOR_EACH_ESP_INFO(alg_info, esp_info) {
 			if (!kernel_alg_db_add(ctx_new,
 					esp_info,
 					policy, logit))
@@ -630,16 +799,13 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 			const struct alg_info_esp *alg_info)
 {
-	const struct esp_info *esp_info;
-	int i;
-
 	if (alg_info == NULL)
 		return TRUE;
 
 	if (key_len == 0)
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
 		if (esp_info->transid == ealg &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
@@ -657,13 +823,10 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 
 bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 {
-	const struct esp_info *esp_info;	/* really AH */
-	int i;
-
 	if (alg_info == NULL)
 		return TRUE;
 
-	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
 		if (esp_info->auth == aalg)
 			return TRUE;
 	}
@@ -841,4 +1004,103 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	DBG(DBG_CONTROL,
 	    DBG_log("returning new proposal from esp_info"));
 	return n;
+}
+
+bool fill_in_esp_info_ike_algs(struct esp_info *esp_info,
+			       const char *flag,
+			       const char *value)
+{
+	/*
+	 * Check the encryption.
+	 *
+	 * For AH, where the is no encryption, the u_int8_t field
+	 * .TRANSID ends up with the initial value of ealg_id which is
+	 * -1 (hence, ESP_ID255) (see alg_info.c).  Just in case
+	 * someone decides this is silly and changes the AH value to
+	 * ESP_reserved, ignore that also.
+	 */
+	if (esp_info->transid == ESP_ID255
+	    || esp_info->transid == ESP_reserved) {
+		passert(esp_info->esp_encrypt == NULL);
+	} else {
+		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+		     algp != NULL; algp = next_encrypt_desc(algp)) {
+			if (esp_info->transid == (*algp)->common.ikev1_esp_id) {
+				esp_info->esp_encrypt = (*algp);
+			}
+		}
+		if (esp_info->esp_encrypt == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, ENCRYPT algorithm %s=%d not supported",
+			       flag, value,
+			       enum_showb(&esp_transformid_names,
+					  esp_info->transid, &buf),
+			       esp_info->transid);
+			return FALSE;
+		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("ESP encryption algorithm %s",
+			    esp_info->esp_encrypt->common.name));
+	}
+	/*
+	 * Is the key length valid for the given encryption algorithm.
+	 */
+	if (esp_info->esp_encrypt != NULL && esp_info->enckeylen != 0) {
+		if (!encrypt_has_key_bit_length(esp_info->esp_encrypt,
+						esp_info->enckeylen)) {
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, ENCRYPT algorithm %s with key length %u is not supported",
+			       flag, value, esp_info->esp_encrypt->common.name,
+			       (unsigned) esp_info->enckeylen);
+			return FALSE;
+		}
+	}
+	/*
+	 * Did ENCRYPT AEAD and INTEG get mixed up?
+	 *
+	 * With ESP, having separate integrity with an AEAD algorithm
+	 * makes no sense (must be ESP, since AH doesn't have
+	 * encryption).
+	 *
+	 * XXX: Unfortunately esp_info.c, given esp=aes_gcm, has been
+	 * known to add integrity.
+	 */
+	if (esp_info->esp_encrypt != NULL
+	    && ike_alg_is_aead(esp_info->esp_encrypt)) {
+		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, AEAD algorithm %s should have null integrity",
+			       flag, value,
+			       esp_info->esp_encrypt->common.name);
+			return FALSE;
+		}
+	}
+	/*
+	 * Verify the integrity, if not NONE.
+	 */
+	if (esp_info->auth == AUTH_ALGORITHM_NONE) {
+		passert(esp_info->esp_integ == NULL);
+	} else {
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			if (esp_info->auth == (*algp)->common.ikev1_esp_id) {
+				esp_info->esp_integ = (*algp);
+			}
+		}
+		if (esp_info->esp_integ == NULL) {
+			struct esb_buf buf;
+			loglog(RC_LOG_SERIOUS,
+			       "in %s=%s, INTEG algorithm %s=%d is not supported",
+			       flag, value,
+			       enum_showb(&auth_alg_names,
+					  esp_info->auth, &buf),
+			       esp_info->auth);
+			return FALSE;
+		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("ESP/AH integ algorithm %s",
+			    esp_info->esp_integ->common.name));
+	}
+	return TRUE;
 }

@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -547,12 +548,13 @@ enum_names isakmp_transformid_names = {
 /* IPsec AH transform values */
 
 static const char *const ah_transform_name_private_use[] = {
+	"AH_AES_CMAC_96",
 	"AH_NULL",	/* verify with kame source? 251 */
 	"AH_SHA2_256_TRUNC",	/* our own to signal bad truncation to kernel */
 };
 
 static enum_names ah_transformid_names_private_use = {
-	AH_NULL,
+	AH_AES_CMAC_96,
 	AH_SHA2_256_TRUNC,
 	ARRAY_REF(ah_transform_name_private_use),
 	NULL, /* prefix */
@@ -631,15 +633,25 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
 	/*
 	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
-	 * inconsistant. The linux PF_KEY API returns 22 in the IKEv1 registry
-	 * meaning (camellia), so we need to lie here.
+	 * inconsistent.
 	 */
-	/* "ESP_RESERVED_FOR_IEEE_P1619_XTS_AES" */
-	"ESP_CAMELLIA", /* IKEv1, but kernel tells us this */
-	"ESP_CAMELLIA", /* IKEv2, IKEv1 entry is ESP_NULL_AUTH_AES-GMAC */
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
+	/*
+	 * The linux PF_KEY API returns 22 in the IKEv1 registry
+	 * meaning (camellia).
+	 *
+	 * IKEv2 code internally maps its value onto this.
+	 */
+	"ESP_CAMELLIA",
+	/*
+	 * IKEv2 is ESP_CAMELLIA and IKEv1 is ESP_NULL_AUTH_AES-GMAC
+	 *
+	 * Either way, if this value is printed then there is a
+	 * problem.
+	 */
+	"IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC",
 	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
@@ -1027,6 +1039,7 @@ enum_names enc_mode_names = {
 /* Auth Algorithm attribute */
 
 static const char *const auth_alg_name_stolen_use[] = {
+	"AUTH_ALGORITHM_AES_CMAC_96",
 	"AUTH_ALGORITHM_NULL_KAME",	/*
 					 * according to our source code
 					 * comments from jjo, needs
@@ -1035,7 +1048,7 @@ static const char *const auth_alg_name_stolen_use[] = {
 };
 
 static enum_names auth_alg_names_stolen_use = {
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_AES_CMAC_96,
 	AUTH_ALGORITHM_NULL_KAME,
 	ARRAY_REF(auth_alg_name_stolen_use),
 	NULL, /* prefix */
@@ -1302,16 +1315,13 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
-	"UNUSED_7",
-	"UNUSED_8",
-	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_AES_XCBC, /* waiting on NSS support */
+	OAKLEY_SHA2_512,
 	ARRAY_REF(oakley_hash_name),
 	"OAKLEY_", /* prefix */
 	NULL
@@ -1492,17 +1502,19 @@ static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_DH24", /* RFC 5114 */
 	"OAKLEY_GROUP_ECP_192", /* RFC 5114 */
 	"OAKLEY_GROUP_ECP_224", /* RFC 5114 */
-	"OAKLEY_GROUP_NON_IKE_27", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_28", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_29", /* RFC 6932 - not for use with IKE/IPsec */
-	"OAKLEY_GROUP_NON_IKE_30", /* RFC 6932 - not for use with IKE/IPsec */
-	/* 31 - 32767 Unassigned */
+	"OAKLEY_GROUP_BRAINPOOL_P224R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P256R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P384R1", /* RFC 6932 */
+	"OAKLEY_GROUP_BRAINPOOL_P512R1", /* RFC 6932 */
+	"OAKLEY_GROUP_CURVE25519", /* RFC-ietf-ipsecme-safecurves-05 */
+	"OAKLEY_GROUP_CURVE448", /* RFC-ietf-ipsecme-safecurves-05 */
+	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
 
 enum_names oakley_group_names = {
 	OAKLEY_GROUP_MODP768,
-	OAKLEY_GROUP_NON_IKE_30,
+	OAKLEY_GROUP_CURVE448,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */
 	NULL
@@ -1919,9 +1931,9 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_TIGER",
 	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
-	"PRF_HMAC_SHA2-256",
-	"PRF_HMAC_SHA2-384",
-	"PRF_HMAC_SHA2-512",
+	"PRF_HMAC_SHA2_256",
+	"PRF_HMAC_SHA2_384",
+	"PRF_HMAC_SHA2_512",
 	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
@@ -2062,86 +2074,6 @@ bool subnetisnone(const ip_subnet *sn)
 	networkof(sn, &base);
 	return isanyaddr(&base) && subnetishost(sn);
 }
-
-/* BIND enumerated types */
-#include <arpa/nameser.h>
-
-static const char *const rr_type_name[] = {
-	"T_A",		/* 1 host address */
-	"T_NS",		/* 2 authoritative server */
-	"T_MD",		/* 3 mail destination */
-	"T_MF",		/* 4 mail forwarder */
-	"T_CNAME",	/* 5 canonical name */
-	"T_SOA",	/* 6 start of authority zone */
-	"T_MB",		/* 7 mailbox domain name */
-	"T_MG",		/* 8 mail group member */
-	"T_MR",		/* 9 mail rename name */
-	"T_NULL",	/* 10 null resource record */
-	"T_WKS",	/* 11 well known service */
-	"T_PTR",	/* 12 domain name pointer */
-	"T_HINFO",	/* 13 host information */
-	"T_MINFO",	/* 14 mailbox information */
-	"T_MX",		/* 15 mail routing information */
-	"T_TXT",	/* 16 text strings */
-	"T_RP",		/* 17 responsible person */
-	"T_AFSDB",	/* 18 AFS cell database */
-	"T_X25",	/* 19 X_25 calling address */
-	"T_ISDN",	/* 20 ISDN calling address */
-	"T_RT",		/* 21 router */
-	"T_NSAP",	/* 22 NSAP address */
-	"T_NSAP_PTR",	/* 23 reverse NSAP lookup (deprecated) */
-	"T_SIG",	/* 24 security signature */
-	"T_KEY",	/* 25 security key */
-	"T_PX",		/* 26 X.400 mail mapping */
-	"T_GPOS",	/* 27 geographical position (withdrawn) */
-	"T_AAAA",	/* 28 IP6 Address */
-	"T_LOC",	/* 29 Location Information */
-	"T_NXT",	/* 30 Next Valid Name in Zone */
-	"T_EID",	/* 31 Endpoint identifier */
-	"T_NIMLOC",	/* 32 Nimrod locator */
-	"T_SRV",	/* 33 Server selection */
-	"T_ATMA",	/* 34 ATM Address */
-	"T_NAPTR",	/* 35 Naming Authority PoinTeR */
-};
-
-enum_names rr_type_names = {
-	ns_t_a,
-	ns_t_naptr,
-	ARRAY_REF(rr_type_name),
-	NULL, /* prefix */
-	NULL
-};
-
-/* Query type values which do not appear in resource records */
-static const char *const rr_qtype_name[] = {
-	"T_TKEY",	/* 249 transaction key */
-	"TSIG",		/* 250 transaction signature */
-	"T_IXFR",	/* 251 incremental zone transfer */
-	"T_AXFR",	/* 252 transfer zone of authority */
-	"T_MAILB",	/* 253 transfer mailbox records */
-	"T_MAILA",	/* 254 transfer mail agent records */
-	"T_ANY",	/* 255 wildcard match */
-};
-
-enum_names rr_qtype_names = {
-	ns_t_tkey,
-	ns_t_any,
-	ARRAY_REF(rr_qtype_name),
-	NULL, /* prefix */
-	&rr_type_names
-};
-
-static const char *const rr_class_name[] = {
-	"C_IN",	/* 1 the arpa internet */
-};
-
-enum_names rr_class_names = {
-	ns_c_in,
-	ns_c_in,
-	ARRAY_REF(rr_class_name),
-	NULL, /* prefix */
-	NULL
-};
 
 static const char *const ppk_name[] = {
 	"PPK_PSK",
@@ -2525,8 +2457,6 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&rr_qtype_names,
-	&rr_class_names,
 	&ppk_names,
 };
 

@@ -49,7 +49,6 @@
 #include "packet.h"
 #include "keys.h"
 #include "demux.h"      /* needs packet.h */
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
@@ -63,9 +62,7 @@
 #include "fetch.h"
 #include "asn1.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "secrets.h"
 
 #include "ike_alg.h"
@@ -249,8 +246,9 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 		       )
 {
-	/* If there's already an ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
+	/*
+         * If there's already an IKEv1 ISAKMP SA established, use that and
+         * go directly to Quick Mode.  We are even willing to use one
 	 * that is still being negotiated, but only if we are the Initiator
 	 * (thus we can be sure that the IDs are not going to change;
 	 * other issues around intent might matter).
@@ -541,7 +539,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) 
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
 
@@ -633,7 +631,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
 	passert(st->st_oakley.encrypter != NULL);
-	passert(st->st_oakley.prf_hasher != NULL);
+	passert(st->st_oakley.prf != NULL);
 	passert(st->st_oakley.group != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
@@ -644,16 +642,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *auth_name = st->st_ikev2 ? "IKEv2" :
 		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
 
-	/*
-	 * [2015-01-10] Some PRFs get their common.name set to
-	 * "OAKLEY_..." and this leads to the below printing the full
-	 * uppercase name (e.x., prf=OAKLEY_SHA2_256).  This is an
-	 * historic "feature".  See ike_alg.c:ike_alg_register_hash
-	 * for where those names come from.
-	 */
-	const char *prf_common_name =
-		strip_prefix(st->st_oakley.prf_hasher->common.name,
-			     "oakley_");
+	const char *prf_common_name = st->st_oakley.prf->common.name;
 
 	char prf_name[30] = "";
 	if (st->st_ikev2) {
@@ -664,13 +653,13 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *integ_name;
 	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ_hasher == NULL) {
+		if (st->st_oakley.integ == NULL) {
 			integ_name = "n/a";
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),
 				 "%s_%zu",
-				 st->st_oakley.integ_hasher->common.officname,
-				 (st->st_oakley.integ_hasher->hash_integ_len *
+				 st->st_oakley.integ->common.officname,
+				 (st->st_oakley.integ->integ_output_size *
 				  BITS_PER_BYTE));
 			integ_name = integ_buf;
 		}

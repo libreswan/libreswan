@@ -1,6 +1,0 @@
-ocsp: west sends REVOKED cert
-      east sends OK cert
-
-	successful ocsp response - revoked
-strict mode
-	fail

@@ -43,7 +43,7 @@
 #include "id.h"
 #include "connections.h"
 
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "ike_alg.h"
@@ -64,9 +64,11 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 #include "pam_conv.h"
-#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+#include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
+#include "ike_alg_sha2.h"
+#include "crypt_hash.h"
 
 #include "ietf_constants.h"
 
@@ -180,6 +182,89 @@ static stf_status crypto_helper_build_ke(struct state *st)
 }
 
 /*
+ * Called by ikev2_parent_inI2outR2_tail() and ikev2parent_inR2()
+ * Do the actual AUTH payload verification
+ */
+static bool v2_check_auth(enum ikev2_auth_method atype,
+		   struct state *st,
+		   const enum original_role role,
+		   unsigned char idhash_in[MAX_DIGEST_LEN],
+		   pb_stream *pbs,
+		   const enum keyword_authby that_authby)
+{
+
+	switch (atype) {
+	case IKEv2_AUTH_RSA:
+	{
+		if (that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attempted RSA authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+		stf_status authstat = ikev2_verify_rsa_sha1(
+				st,
+				role,
+				idhash_in,
+				pbs);
+
+		if (authstat != STF_OK) {
+			libreswan_log("RSA authentication failed");
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	case IKEv2_AUTH_PSK:
+	{
+		if (that_authby != AUTH_PSK) {
+			libreswan_log("Peer attempted PSK authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+               stf_status authstat = ikev2_verify_psk_auth(
+                               that_authby, st, idhash_in,
+                               pbs);
+
+               if (authstat != STF_OK) {
+                       libreswan_log("PSK Authentication failed: AUTH mismatch!");
+                       return FALSE;
+               }
+               return TRUE;
+	}
+
+	case IKEv2_AUTH_NULL:
+	{
+		if (that_authby != AUTH_NULL) {
+			libreswan_log("Peer attempted NULL authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
+		}
+
+		stf_status authstat = ikev2_verify_psk_auth(
+				that_authby, st, idhash_in,
+				pbs);
+
+		if (authstat != STF_OK) {
+			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	default:
+	{
+		libreswan_log("authentication method: %s not supported",
+			      enum_name(&ikev2_auth_names, atype));
+		return FALSE;
+	}
+
+	}
+}
+
+
+/*
  *
  ***************************************************************
  *****                   PARENT_OUTI1                      *****
@@ -271,7 +356,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 		passert(c->ike_proposals != NULL);
 		st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
 		passert(st->st_oakley.group != NULL); /* known! */
-		st->st_oakley.groupnum = st->st_oakley.group->group; /* circular */
 
 		/*
 		 * Calculate KE and Nonce.
@@ -513,8 +597,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
-	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.groupnum, &md->rbody,
-			   ISAKMP_NEXT_v2Ni))
+	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.group->group,
+			   &md->rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
 	/* send NONCE */
@@ -788,9 +872,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
-	DBG(DBG_CONTROL,
-		DBG_log("found connection: %s with policy %s",
-			c->name, bitnamesof(sa_policy_bit_names, policy)));
+	DBG(DBG_CONTROL, {
+			char ci[CONN_INST_BUF];
+		DBG_log("found connection: %s%s with policy %s",
+			c->name, fmt_conn_instance(c, ci),
+			bitnamesof(sa_policy_bit_names, policy));});
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
@@ -889,12 +975,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	/*
 	 * Convert what was accepted to internal form and apply some
-	 * basic validation.  ACCEPTED_OAKLEY does not contain
-	 * allocated data.
+	 * basic validation.  If this somehow fails (it shouldn't but
+	 * ...), drop everything.
 	 */
-	struct trans_attrs accepted_oakley = ikev2_proposal_to_trans_attrs(accepted_ike_proposal);
-	if (accepted_oakley.group == NULL) {
-		loglog(RC_LOG_SERIOUS, "discarding accepted proposal with no DH");
+	struct trans_attrs accepted_oakley;
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal, &accepted_oakley)) {
+		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&accepted_ike_proposal);
 		return STF_IGNORE;
@@ -1171,9 +1257,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
 	send_certreq = (((c->policy & POLICY_RSASIG) &&
 		!has_preloaded_public_key(st))
-#ifdef USE_GSSAPI
-	 || (c->policy & POLICY_GSSAPI)
-#endif
 		);
 
 	/* Send fragmentation support notification */
@@ -1357,7 +1440,6 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
 
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
-				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
 				DBG(DBG_CONTROLMORE, {
 					struct esb_buf esb;
@@ -1501,14 +1583,22 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 							  c->policy & POLICY_OPPORTUNISTIC,
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
-		if (ret == STF_OK) {
-			passert(st->st_accepted_ike_proposal != NULL);
-			st->st_oakley = ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal);
-		}
-
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return ret;
+		}
+		passert(st->st_accepted_ike_proposal != NULL);
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
+						   &st->st_oakley)) {
+			loglog(RC_LOG_SERIOUS, "IKE initiator proposed an unsupported algorithm");
+			free_ikev2_proposal(&st->st_accepted_ike_proposal);
+			passert(st->st_accepted_ike_proposal == NULL);
+			/*
+			 * Assume caller et.al. will clean up the
+			 * reset of the mess?
+			 */
+			return STF_FAIL;
 		}
 	}
 
@@ -1668,7 +1758,7 @@ static unsigned char *ikev2_authloc(struct state *st,
 
 	b12 = e_pbs->cur;
 	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
-			    ? pst->st_oakley.integ_hasher->hash_integ_len
+			    ? pst->st_oakley.integ->integ_output_size
 			    : pst->st_oakley.encrypter->aead_tag_size);
 	if (integ_size == 0) {
 		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
@@ -1722,7 +1812,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 		    DBG_dump("data before encryption:", enc_start, enc_size));
 
 		/* now, encrypt */
-		(st->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
+		(st->st_oakley.encrypter->do_crypt)(st->st_oakley.encrypter,
+						    enc_start, enc_size,
 						    cipherkey,
 						    enc_iv, TRUE);
 
@@ -1732,7 +1823,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* okay, authenticate from beginning of IV */
 		struct hmac_ctx ctx;
-		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
+		hmac_init(&ctx, pst->st_oakley.integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(integ_start, &ctx);
 
@@ -1740,8 +1831,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			    DBG_dump("data being hmac:", auth_start,
 				     integ_start - auth_start);
 			    DBG_dump("out calculated auth:", integ_start,
-				     pst->st_oakley.integ_hasher->
-					hash_integ_len);
+				     pst->st_oakley.integ->integ_output_size);
 		    });
 	} else {
 		size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
@@ -1765,12 +1855,13 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->
-			do_aead_crypt_auth(salt.ptr, salt.len,
-					   wire_iv_start, wire_iv_size,
-					   aad_start, aad_size,
-					   enc_start, enc_size, integ_size,
-					   cipherkey, TRUE)) {
+		if (!st->st_oakley.encrypter->do_aead_crypt_auth(
+			    st->st_oakley.encrypter,
+			    salt.ptr, salt.len,
+			    wire_iv_start, wire_iv_size,
+			    aad_start, aad_size,
+			    enc_start, enc_size, integ_size,
+			    cipherkey, TRUE)) {
 			return STF_FAIL;
 		}
 		DBG(DBG_CRYPT,
@@ -1822,7 +1913,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	u_char *wire_iv_start = chunk->ptr + iv;
 	size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
 	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
-			     ? pst->st_oakley.integ_hasher->hash_integ_len
+			     ? pst->st_oakley.integ->integ_output_size
 			     : pst->st_oakley.encrypter->aead_tag_size);
 
 	/*
@@ -1887,7 +1978,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
+		hmac_init(&ctx, pst->st_oakley.integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(td, &ctx);
 
@@ -1917,7 +2008,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload before decryption:", enc_start, enc_size));
-		(pst->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
+		(pst->st_oakley.encrypter->do_crypt)(pst->st_oakley.encrypter,
+						     enc_start, enc_size,
 						     cipherkey,
 						     enc_iv, FALSE);
 		DBG(DBG_CRYPT,
@@ -1944,11 +2036,12 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
 		if (!st->st_oakley.encrypter->
-			do_aead_crypt_auth(salt.ptr, salt.len,
-					   wire_iv_start, wire_iv_size,
-					   aad_start, aad_size,
-					   enc_start, enc_size, integ_size,
-					   cipherkey, FALSE)) {
+		    do_aead_crypt_auth(st->st_oakley.encrypter,
+				       salt.ptr, salt.len,
+				       wire_iv_start, wire_iv_size,
+				       aad_start, aad_size,
+				       enc_start, enc_size, integ_size,
+				       cipherkey, FALSE)) {
 			return STF_FAIL; /* sub-code? */
 		}
 		DBG(DBG_CRYPT,
@@ -2201,19 +2294,21 @@ static stf_status ikev2_send_auth(struct connection *c,
 	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
-	lset_t authpolicy = c->policy & POLICY_ID_AUTH_MASK;
+	enum keyword_authby authby = c->spd.this.authby;
+
+	if (authby == AUTH_UNSET) {
+		/* asymmetric policy unset, pick up from symmetric policy */
+		if (c->policy & POLICY_PSK) {
+			authby = AUTH_PSK;
+		} else if (c->policy & POLICY_RSASIG) {
+			authby = AUTH_RSASIG;
+		} else if (c->policy & POLICY_AUTH_NULL) {
+			authby = AUTH_NULL;
+		}
+	}
 
 	/* ??? isn't c redundant? */
 	pexpect(c == st->st_connection)
-
-	/*
-	 * ??? it isn't obvious that a connection's auth policy
-	 * would allow only one auth method.
-	 * Since this code assumes so, let's check.
-	 */
-	pexpect(LSINGLETON(authpolicy));
-
-	/* ??? authpolicy often different from (st->st_policy & POLICY_ID_AUTH_MASK) */
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -2224,16 +2319,19 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	if (authpolicy & POLICY_RSASIG) {
+	switch(authby) {
+	case AUTH_RSASIG:
 		a.isaa_type = IKEv2_AUTH_RSA;
-	} else if (authpolicy & POLICY_PSK) {
+		break;
+	case AUTH_PSK:
 		a.isaa_type = IKEv2_AUTH_PSK;
-	} else if (authpolicy & POLICY_AUTH_NULL) {
+		break;
+	case AUTH_NULL:
 		a.isaa_type = IKEv2_AUTH_NULL;
-	} else {
-		/* what else is there?... DSS not implemented. */
-		loglog(RC_LOG_SERIOUS, "Unknown or not implemented IKEv2 AUTH policy");
-		return STF_FATAL;
+		break;
+	case AUTH_NEVER:
+	default:
+		bad_case(authby);
 	}
 
 	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs))
@@ -2249,7 +2347,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
-		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
+		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs)) {
 				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
 		}
@@ -2381,7 +2479,7 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
 	len -= ike_alg_enc_requires_integ(st->st_oakley.encrypter) ?
-	       st->st_oakley.integ_hasher->hash_integ_len :
+	       st->st_oakley.integ->integ_output_size :
 	       st->st_oakley.encrypter->aead_tag_size;
 
 	if (st->st_oakley.encrypter->pad_to_blocksize)
@@ -2449,9 +2547,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	if (!finish_dh_v2(pst, r))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG output */
-	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(pst);
+	ikev2_log_parentSA(pst);
 
 	/* XXX This is too early and many failures could lead to not needing a child state */
 	struct state *cst = duplicate_state(pst);	/* child state */
@@ -2559,8 +2655,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 
-		hmac_init(&id_ctx, pst->st_oakley.prf_hasher,
-				pst->st_skey_pi_nss);
+		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
 				 &pc->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -3092,9 +3187,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (!finish_dh_v2(st, r))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG output */
-	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(st);
+	ikev2_log_parentSA(st);
 
 	/* decrypt things. */
 	{
@@ -3104,6 +3197,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
+	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
@@ -3113,8 +3207,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, st->st_oakley.prf_hasher,
-				st->st_skey_pi_nss);
+		hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pi_nss);
 
 		/* calculate hash of IDi for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
@@ -3137,66 +3230,22 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		}
 	}
 
-	/* process AUTH payload now */
-	/* now check signature from RSA key */
-	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case IKEv2_AUTH_RSA:
-	{
-		stf_status authstat = ikev2_verify_rsa_sha1(
-				st,
-				ORIGINAL_RESPONDER,
-				idhash_in,
-#ifdef USE_KEYRR
-				NULL,	/* keys from DNS */
-#endif
-				NULL,	/* gateways from DNS */
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+	/* process AUTH payload */
 
-		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication failed");
-			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FATAL;
-		}
-		break;
-	}
-	case IKEv2_AUTH_PSK:
-	case IKEv2_AUTH_NULL:
-	{
-		stf_status authstat = ikev2_verify_psk_auth(
-				st,
-				ORIGINAL_RESPONDER,
-				idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+	enum keyword_authby that_authby = st->st_connection->spd.that.authby;
 
-		if (authstat != STF_OK) {
-			libreswan_log(
-				"Authentication failed AUTH mismatch!");
-			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FATAL;
-		}
-		break;
-	}
-	default:
-		libreswan_log("authentication method: %s not supported",
-			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
-					v2a.isaa_type));
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+		st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+		st->st_connection->spd.that.authby))
+	{
+		/* TODO: This should really be an encrypted message! */
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 		return STF_FATAL;
 	}
+
+	/* AUTH succeeded */
 
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
@@ -3333,8 +3382,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			unsigned char *id_start;
 			unsigned int id_len;
 
-			hmac_init(&id_ctx, st->st_oakley.prf_hasher,
-					st->st_skey_pr_nss);
+			hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pr_nss);
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 					 &id_b,
 					 &c->spd.this);
@@ -3439,7 +3487,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		 * note:
 		 * st: parent state
 		 * cst: child, if any, else parent
-		 * There is probablly no good reason to use st from here on.
+		 * There is probably no good reason to use st from here on.
 		 */
 		struct state *const cst = md->st;	/* may actually be parent if no child */
 
@@ -3508,7 +3556,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 stf_status ikev2parent_inR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
@@ -3554,8 +3601,14 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 	}
 
+	/* XXX this call might change connection in md->st! */
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+
+	struct connection *c = st->st_connection;
+	enum keyword_authby that_authby = c->spd.that.authby;
+
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
 	{
 		struct hmac_ctx id_ctx;
@@ -3563,8 +3616,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, pst->st_oakley.prf_hasher,
-				pst->st_skey_pr_nss);
+		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pr_nss);
 
 		/* calculate hash of IDr for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
@@ -3574,70 +3626,20 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* process AUTH payload */
 
-	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case IKEv2_AUTH_RSA:
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+		pst, ORIGINAL_INITIATOR, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+		that_authby))
 	{
-		stf_status authstat = ikev2_verify_rsa_sha1(
-				pst,
-				ORIGINAL_INITIATOR,
-				idhash_in,
-#ifdef USE_KEYRR
-				NULL,	/* keys from DNS */
-#endif
-				NULL,	/* gateways from DNS */
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication failed");
-			/*
-			 * ??? this could be
-			 * return STF_FAIL + v2N_AUTHENTICATION_FAILED
-			 * but that would be ignored by the logic in
-			 * complete_v2_state_transition()
-			 * that says "only send a notify is this packet was a question, not if it was an answer"
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FAIL;
-		}
-		break;
-	}
-	case IKEv2_AUTH_PSK:
-	case IKEv2_AUTH_NULL:
-	{
-		stf_status authstat = ikev2_verify_psk_auth(
-				pst,
-				ORIGINAL_INITIATOR,
-				idhash_in,
-				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
-
-		if (authstat != STF_OK) {
-			libreswan_log("Authentication failed");
-			/*
-			 * cannot use STF_FAIL + v2N_AUTHENTICATION_FAILED because IKE_AUTH
-			 * reply cannot receive an IKE_AUTH reply.
-			 *
-			 * The RFC states:
-			 * "If the error occurs on the initiator, the notification MAY be
-			 *  returned in a separate INFORMATIONAL exchange, usually with no other
-			 *  payloads.  This is an exception for the general rule of not starting
-			 *  new exchanges based on errors in responses."
-			 */
-			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
-			return STF_FAIL;
-		}
-		break;
+		/*
+		 * We cannot send a response as we are processing IKE_AUTH reply
+		 * the RFC states we should pretend IKE_AUTH was okay, and then
+		 * send an INFORMATIONAL DELETE IKE SA but we have not implemented
+		 * that yet.
+		 */
+		return STF_FATAL;
 	}
 
-	default:
-		libreswan_log("authentication method: %s not supported",
-			      enum_name(&ikev2_auth_names,
-					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
-					v2a.isaa_type));
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED); /* see above comment */
-		return STF_FAIL;
-	}
-
-	/* authentication good */
+	/* AUTH succeeded */
 
 	/*
 	 * update the parent state to make sure that it knows we have
@@ -3711,10 +3713,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log(" check narrowing - we are responding to I2"));
 
-		struct payload_digest *const tsi_pd =
-			md->chain[ISAKMP_NEXT_v2TSi];
-		struct payload_digest *const tsr_pd =
-			md->chain[ISAKMP_NEXT_v2TSr];
+		struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
+		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
 		struct traffic_selector tsi[16], tsr[16];
 #if 0
 		bool instantiate = FALSE;
@@ -3913,8 +3913,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	if (!install_ipsec_sa(st, TRUE))
 		return STF_FATAL;
 
-	c->newest_ipsec_sa = st->st_serialno;
-	log_newest_sa_change("inR2", st);
+	set_newest_ipsec_sa("inR2", st);
 
 	/*
 	 * Delete previous retransmission event.
@@ -3936,20 +3935,21 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
 			      ip_address *addr, chunk_t spiI)
 {
 	size_t addr_length;
-	sha256_context ctx_sha256;
 	unsigned char addr_buff[
 		sizeof(union { struct in_addr A;
 			       struct in6_addr B;
 		       })];
 
 	addr_length = addrbytesof(addr, addr_buff, sizeof(addr_buff));
-	sha256_init(&ctx_sha256);
-	sha256_write(&ctx_sha256, ni.ptr, ni.len);
-	sha256_write(&ctx_sha256, addr_buff, addr_length);
-	sha256_write(&ctx_sha256, spiI.ptr, spiI.len);
-	sha256_write(&ctx_sha256, ikev2_secret_of_the_day,
-		   SHA2_256_DIGEST_SIZE);
-	sha256_final(dcookie, &ctx_sha256);
+
+	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
+						 "dcookie", DBG_CRYPT);
+	crypt_hash_digest_chunk(ctx, "ni", ni);
+	crypt_hash_digest_bytes(ctx, "addr", addr_buff, addr_length);
+	crypt_hash_digest_chunk(ctx, "spiI", spiI);
+	crypt_hash_digest_bytes(ctx, "sod", ikev2_secret_of_the_day,
+				SHA2_256_DIGEST_SIZE);
+	crypt_hash_final_bytes(&ctx, dcookie, SHA2_256_DIGEST_SIZE);
 	DBG(DBG_PRIVATE,
 	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
 		    ikev2_secret_of_the_day,
@@ -4350,7 +4350,47 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 
 	record_outbound_ike_msg(cst, &reply_stream, "reply packet for ikev2_child_inIoutR_tail");
 
+	log_ipsec_sa_established("negotiated new IPSec SA", cst);
+
 	return STF_OK;
+}
+
+static void delete_or_replace_state(struct state *st) {
+	struct connection *c = st->st_connection;
+
+	if (st->st_event == NULL) { /* this could be an assert/except? */
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu. st_event == NULL",
+				st->st_serialno);
+		delete_state(st);
+		return;
+	}
+
+	if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
+		/* this state  was going to  EXPIRE just let it now*/
+		delete_event(st);
+		event_schedule(EVENT_SA_EXPIRE, 0, st);
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
+				st->st_serialno);
+		return;
+	}
+
+	if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
+		&& ((st->st_event->ev_type == EVENT_SA_REPLACE) ||
+		    (st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED))) {
+		/*
+		 * Last IPsec SA for a permanent  connection that we have initiated.
+		 * Replace it now.  Useful if the other peer is rebooting.
+		 */
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPSEC State #%lu now",
+				st->st_serialno);
+		delete_event(st);
+		st->st_margin = deltatime(0);
+		event_schedule(EVENT_SA_REPLACE, 0, st);
+	} else {
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
+				st->st_serialno);
+		delete_state(st);
+	}
 }
 
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
@@ -4594,7 +4634,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
-				impossible();
+				PASSERT_FAIL("%s", "unexpected IKE delete");
 
 			case PROTO_IPSEC_AH: /* Child SAs */
 			case PROTO_IPSEC_ESP: /* Child SAs */
@@ -4652,10 +4692,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 									ntohl(spi));
 							}
 						}
-						/* now delete the state */
-						change_state(dst,
-							STATE_CHILDSA_DEL);
-						delete_state(dst);
+						delete_or_replace_state(dst);
 						/* note: md->st != dst */
 					}
 				} /* for each spi */

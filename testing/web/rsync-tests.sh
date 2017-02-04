@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if test $# -lt 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
 
 Usage:
 
@@ -15,12 +15,9 @@ fi
 
 set -eu
 
-repodir=$(cd $1 && pwd) ; shift
-destdir=$(cd $1 && pwd) ; shift
+repodir=$1 ; shift
+destdir=$1 ; shift
 
-webdir=$(cd $(dirname $0) && pwd)
-
-cd ${repodir}
 test -d ${repodir}/testing/pluto
 
 # Notes:

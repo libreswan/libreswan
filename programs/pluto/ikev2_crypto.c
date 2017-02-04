@@ -44,9 +44,7 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "demux.h"
 #include "ikev2.h"
 #include "ikev2_prf.h"
@@ -145,17 +143,17 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
 	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher,
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf,
 						   st->st_skey_d_nss,
 						   NULL/*dh*/, ni, nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
-	ikeymat = chunk_from_symkey("initiator keys", ikey);
+	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
 	free_any_symkey("ikey:", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
-	rkeymat = chunk_from_symkey("responder keys:", rkey);
+	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
 	free_any_symkey("rkey:", &rkey);
 
 	free_any_symkey("keymat", &keymat);

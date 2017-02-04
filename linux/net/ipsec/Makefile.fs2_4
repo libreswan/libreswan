@@ -172,7 +172,7 @@ obj-m += $(O_TARGET)
 # MOST of these flags are in KERNEL_CFLAGS already!
 
 # cannot use both -Wpointer-arith and -Werror with CONFIG_HIGHMEM
-# include/linux/highmem.h has an inline function definition that uses void* arithmentic.
+# include/linux/highmem.h has an inline function definition that uses void* arithmetic.
 ifeq ($(CONFIG_NOHIGHMEM),y)
 #EXTRA_CFLAGS += -Wpointer-arith
 endif

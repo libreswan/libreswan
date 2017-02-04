@@ -93,7 +93,7 @@ typedef struct {
 } dummy;
 
 /* The field where the saref will be hosted in the skb must be wide enough to
-   accomodate the information it needs to store. */
+   accommodate the information it needs to store. */
 typedef struct {
 	/* kind of compile-time, but not preprocessor time, assertion */
 	int testSizeOf_refField :

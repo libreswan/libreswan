@@ -1,2 +1,5 @@
 an expired crl is loaded by pluto, and this triggers a fetch.
 strict mode, so the connection fails until the CRL is updated. The next retransmit succeeds.
+
+NOTE: as of 3.19 an additional on-boot fetch happens, so the initial connection
+failure no longer happens.

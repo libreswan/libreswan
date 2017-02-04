@@ -27,11 +27,11 @@ class Test:
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
                  testsuite_output_directory=None,
-                 kind="kvmplutotest", expected_result="good"):
+                 kind="kvmplutotest", status="good"):
         self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
-        self.expected_result = expected_result
+        self.status = status
 
         # The test's name is always identical to the test directory's
         # name (aka basename).  However, since TEST_DIRECTORY could be
@@ -120,35 +120,64 @@ class Testsuite:
                  testsuite_output_directory=None):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
+        line_nr = 0
         with open(testlist, 'r') as testlist_file:
             for line in testlist_file:
+                line_nr += 1
+                # clean up the line, but save the original for logging
+                orig = line.strip("\r\n")
+                if "#" in line:
+                    line = line[:line.find("#")]
                 line = line.strip()
-                # these three log lines are ment to align
+                # the two log messages should align
                 if not line:
-                    logger.debug("%7s: ", "blank")
+                    logger.debug("empty: %s", orig)
                     continue
-                if line[0] == '#':
-                    logger.debug("%7s: %s", "comment", line)
-                    continue
-                logger.debug("%7s: %s", "input", line)
-                try:
-                    kind, name, expected_result = line.split()
-                except ValueError:
+                else:
+                    logger.debug("input: %s", orig)
+                # Extract the fields
+                fields = line.split()
+                if len(fields) < 3:
                     # This is serious
                     logger.log(error_level,
-                                    "****** malformed line: %s", line)
+                               "****** %s:%d: line has too few fields: %s",
+                               testlist, line_nr, orig)
                     continue
-                test = Test(kind=kind, expected_result=expected_result,
+                if len(fields) > 4:
+                    # This is serious
+                    logger.log(error_level,
+                               "****** %s:%d: line has too many fields: %s",
+                               testlist, line_nr, orig)
+                    continue
+                kind = fields[0]
+                name = fields[1]
+                status = fields[2]
+                # pr = fields[3]?
+                test = Test(kind=kind, status=status,
                             test_directory=os.path.join(self.directory, name),
                             testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
-                    # This is serious
+                    # This is serious.  However, stumble on.
                     logger.log(error_level,
-                                    "****** invalid test %s: directory not found: %s",
-                                    test.name, test.directory)
+                               "****** %s:%d: invalid test %s: test directory not found: %s",
+                               testlist, line_nr,
+                               test.name, test.directory)
                     continue
+                if test.name in self.testlist:
+                    # This is serious.
+                    #
+                    # However, after reporting continue and select the
+                    # second entry.  Preserves historic behaviour, as
+                    # selecting the first entry would invalidate
+                    # earlier test results.
+                    first = self.testlist[test.name]
+                    logger.log(error_level,
+                               "****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
+                               testlist, line_nr,
+                               test.kind, test.name, test.status,
+                               first.kind, first.name, first.status)
                 # an OrderedDict which saves insertion order
                 self.testlist[test.name] = test
 

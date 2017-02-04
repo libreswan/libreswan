@@ -41,7 +41,6 @@
  * NO_EXTRA_IKE
  * NOTYET
  * NOT_YET
- * OLD_RESOLVER
  * PFKEY
  * PLUTO_SENDS_VENDORID
  * PLUTO_GROUP_CTL
@@ -381,6 +380,21 @@ const char *const sa_policy_bit_names[] = {
 	NULL	/* end for bitnamesof() */
 };
 
+static const char *const ikev2_asym_auth_names[] = {
+	"unset",
+	"never",
+	"secret",
+	"rsasig",
+	"null",
+};
+
+enum_names ikev2_asym_auth_name = {
+	AUTH_UNSET, AUTH_NULL,
+	ARRAY_REF(ikev2_asym_auth_names),
+	NULL, /* prefix */
+	NULL
+};
+
 static const char *const policy_shunt_names[4] = {
 	"TRAP",
 	"PASS",
@@ -411,13 +425,12 @@ const char *prettypolicy(lset_t policy)
 
 	if (bn != pbitnamesbuf)
 		pbitnamesbuf[0] = '\0';
-	snprintf(buf, sizeof(buf), "%s%s%s%s%s%s",
+	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		 pbitnamesbuf,
 		 shunt != 0 ? "+" : "",
 		 shunt != 0 ? policy_shunt_names[shunt] : "",
 		 fail != 0 ? "+failure" : "",
-		 fail != 0 ? policy_fail_names[fail] : "",
-		 NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
+		 fail != 0 ? policy_fail_names[fail] : "");
 	return buf;
 }
 
@@ -435,5 +448,5 @@ static const enum_names *pluto_enum_names_checklist[] = {
 };
 
 void init_pluto_constants(void) {
-	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));	
+	check_enum_names(ARRAY_REF(pluto_enum_names_checklist));
 }

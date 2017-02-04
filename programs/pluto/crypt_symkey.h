@@ -21,6 +21,7 @@
 #include <pk11pub.h>
 #include "lswalloc.h"
 
+struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
 
@@ -44,16 +45,6 @@ void free_any_symkey(const char *prefix, PK11SymKey **key);
 size_t sizeof_symkey(PK11SymKey *key);
 
 /*
- * Use SCRATCH key as a secure starting point for creating the key
- * from the raw bytes, or chunk.
- */
-
-PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
-			      size_t sizeof_bytes);
-
-PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
-
-/*
  * Concatenate two pieces of keying material creating a
  * new SYMKEY object.
  */
@@ -66,6 +57,7 @@ PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
 			       PK11SymKey *lhs, uint8_t rhs);
+chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
 
 /*
  * Append new keying material to an existing key; replace the existing
@@ -82,39 +74,53 @@ void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs);
 void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs);
+void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
 
 /*
- * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
- * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
+ * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
+ * can be used to implement ALG).
+ *
+ * For instance, an encryption key needs to have a type matching the
+ * NSS encryption algorithm.
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
-					  const struct encrypt_desc *encrypter,
-					  size_t next_byte, size_t sizeof_symkey);
+PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
+				     const struct ike_alg *symkey_alg,
+				     size_t symkey_start_byte, size_t sizeof_symkey,
+				     PK11SymKey *source_key);
 
 /*
- * Extract SIZEOF_KEY bytes of keying material as a KEY.  It inherits
- * the BASE_KEYs type.  Good for hash keys.
+ * Extract wire material from a symkey.
+ *
+ * Used to avoid interface issues with NSS.  If ALG is null then the
+ * key has a generic mechanism type.
+ */
+chunk_t chunk_from_symkey(const char *prefix, lset_t debug,
+			  PK11SymKey *symkey);
+
+/*
+ * Create a key suitable for ALG.
+ *
+ * Used to avoid interface issues with NSS.
+ */
+PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      const u_int8_t *bytes, size_t sizeof_bytes);
+PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
+			      const struct ike_alg *alg,
+			      chunk_t chunk);
+
+/*
+ * Extract SIZEOF_KEY bytes of keying material as a KEY.
+ *
+ * Good for extracting hash or other keys that don't yet have an NSS
+ * type.
  *
  * Offset into the SYMKEY is in BYTES.
  */
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key);
-
-/*
- * Hash a symkey using HASHER to either bytes or a SYMKEY.
- *
- * This gets used by the PRF code.
- */
-PK11SymKey *hash_symkey_to_symkey(const char *prefix,
-				  const struct hash_desc *hasher,
-				  PK11SymKey *base_key);
-
-void *hash_symkey_to_bytes(const char *prefix,
-			   const struct hash_desc *hasher,
-			   PK11SymKey *base_key,
-			   void *bytes, size_t sizeof_bytes);
 
 /*
  * XOR a symkey with a chunk.

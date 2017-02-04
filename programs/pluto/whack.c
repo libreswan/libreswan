@@ -69,10 +69,11 @@ static void help(void)
 		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
-		"	[--client <subnet> | --clientwithin <address range>] \\\n"
+		"	[--client <subnet>] \\\n"
 		"	[--ikeport <port-number>] [--srcip <ip-address>] [--vtiip <ip-address>/mask]\\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
 		"	[--updown <updown>] \\\n"
+		"	[--authby <psk | rsasig | null>] \\\n"
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
@@ -175,12 +176,12 @@ static void help(void)
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--rereadcrls] [--rereadall] \\\n"
+		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall] \\\n"
 		"\n"
 		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
 		"\n"
 #ifdef HAVE_SECCOMP
-		"status: whack --seccomp-crashtest (CAREFULL!)\n"
+		"status: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
 		"shutdown: whack --shutdown\n"
@@ -281,6 +282,7 @@ enum option_enums {
 
 	OPT_REREADSECRETS,
 	OPT_REREADCRLS,
+	OPT_FETCHCRLS,
 	OPT_REREADALL,
 
 	OPT_PURGEOCSP,
@@ -355,6 +357,7 @@ enum option_enums {
 	END_SENDCERT,
 	END_SRCIP,
 	END_VTIIP,
+	END_AUTHBY,
 	END_UPDOWN,
 	END_TUNDEV,
 
@@ -505,7 +508,8 @@ static const struct option long_opts[] = {
 	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
 
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
-	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
+	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO }, /* obsolete */
+	{ "fetchcrls", no_argument, NULL, OPT_FETCHCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 
 	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
@@ -557,6 +561,7 @@ static const struct option long_opts[] = {
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
+	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
 	{ "tundev", required_argument, NULL, END_TUNDEV + OO + NUMERIC_ARG },
 
@@ -1223,6 +1228,7 @@ int main(int argc, char **argv)
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
 		case OPT_REREADCRLS:    /* --rereadcrls */
+		case OPT_FETCHCRLS:    /* --fetchcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
 			continue;
 
@@ -1473,6 +1479,16 @@ int main(int argc, char **argv)
 					&msg.right.host_vtiip), optarg);
 			/* ttosubnet() sets to lowest subnet address, fixup needed */
 			diagq(tnatoaddr(optarg, strchr(optarg, '/') - optarg, AF_UNSPEC, &msg.right.host_vtiip.addr), optarg);
+			continue;
+
+		case END_AUTHBY: /* --authby secret | rsasig | null */
+			if (streq(optarg, "psk"))
+				msg.right.authby = AUTH_PSK;
+			else if (streq(optarg, "null"))
+				msg.right.authby = AUTH_NULL;
+			else if (streq(optarg, "rsasig"))
+				msg.right.authby = AUTH_RSASIG;
+			else diag("authby option is not one of psk, rsasig or null");
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
@@ -2090,11 +2106,12 @@ int main(int argc, char **argv)
 				diag("non-shunt connection must have --psk or --rsasig or both");
 		} else {
 			/* not just a shunt: a real ipsec connection */
-			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
+			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
+				msg.left.authby == AUTH_NEVER && msg.right.authby == AUTH_NEVER)
 				diag("must specify --rsasig or --psk for a connection");
 
 			/*
-			 * If neither v1 not v2, default to v1
+			 * If neither v1 nor v2, default to v1
 			 * (backward compatibility)
 			 */
 			if (!(msg.policy & POLICY_IKEV2_MASK))
@@ -2161,7 +2178,7 @@ int main(int argc, char **argv)
 	 */
 	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
-		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
+		diag("rekeymargin or rekeyfuzz values are so large that they cause overflow");
 
 	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
 			"ikelifetime", &msg);

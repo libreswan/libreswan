@@ -1,10 +1,11 @@
-%global USE_FIPSCHECK true
-%global USE_LIBCAP_NG true
-%global USE_LABELED_IPSEC true
-%global USE_CRL_FETCHING true
-%global USE_DNSSEC true
-%global USE_NM true
-%global USE_LINUX_AUDIT true
+%global USE_FIPSCHECK 1
+%global USE_LIBCAP_NG 1
+%global USE_LABELED_IPSEC 1
+%global USE_CRL_FETCHING 1
+%global USE_DNSSEC 1
+%global USE_NM 1
+%global USE_LINUX_AUDIT 1
+%global USE_SECCOMP 0
 
 %global fipscheck_version 1.2.0-7
 %global buildefence 0
@@ -15,7 +16,7 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.17
+Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -44,6 +45,9 @@ BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
+%endif
+%if %{USE_SECCOMP}
+BuildRequires: libseccomp-devel
 %endif
 %if %{USE_LABELED_IPSEC}
 BuildRequires: libselinux-devel
@@ -113,6 +117,7 @@ make %{?_smp_mflags} \
     USE_LDAP=%{USE_CRL_FETCHING} \
     USE_LIBCURL=%{USE_CRL_FETCHING} \
     USE_DNSSEC=%{USE_DNSSEC} \
+    USE_SECCOMP="%{USE_SECCOMP}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     MANTREE=%{_mandir} \

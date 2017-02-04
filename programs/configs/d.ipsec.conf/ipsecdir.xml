@@ -44,7 +44,7 @@
         <listitem><para>
           DEPRECATED: a directory to store certificate revocation
           lists. The preferred (and default) approach is to store CRLs
-          in the NSS database instead. See README.nss for more information. 
+          in the NSS database instead. See README.nss for more information.
         </para></listitem>
       </varlistentry>
     </variablelist>

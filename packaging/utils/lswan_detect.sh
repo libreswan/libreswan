@@ -46,7 +46,7 @@ return_initsystem() {
     fi
 
 
-    # really, most have this, it is probably a backwards compatiblity or
+    # really, most have this, it is probably a backwards compatibility or
     # really sysvinit - we have no other known targets at this point anyway
     if [ -d /etc/init.d -o -d /etc/rc.d ]; then
 	echo "sysvinit"

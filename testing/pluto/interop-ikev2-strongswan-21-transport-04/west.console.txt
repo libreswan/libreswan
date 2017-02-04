@@ -8,8 +8,6 @@ west #
  strongswan start
 Starting strongSwan X.X.X IPsec [starter]...
 west #
- /testing/pluto/bin/wait-until-pluto-started
-west #
  echo "initdone"
 initdone
 west #
@@ -77,7 +75,7 @@ west #
  if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
 west #
 Status of IKE charon daemon (strongSwan VERSION):
-  uptime: 2 minutes, since Jul 13 05:33:14 2016
+  uptime: XXX minutes, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
 Listening IP addresses:
   192.0.1.254

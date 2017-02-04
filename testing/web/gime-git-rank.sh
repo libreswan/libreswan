@@ -23,4 +23,4 @@ repodir=$1 ; shift
 rev=$1 ; shift
 
 cd ${repodir}
-git rev-list --count --first-parent ${rev}
+git rev-list --count ${rev}

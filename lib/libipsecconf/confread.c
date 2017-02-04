@@ -100,6 +100,12 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 	cfg->setup.options[KBF_DDOS_MODE] = DDOS_AUTO;
 
+	cfg->setup.options[KBF_OCSP_CACHE_SIZE] = OCSP_DEFAULT_CACHE_SIZE;
+	cfg->setup.options[KBF_OCSP_CACHE_MIN] = OCSP_DEFAULT_CACHE_MIN_AGE;
+	cfg->setup.options[KBF_OCSP_CACHE_MAX] = OCSP_DEFAULT_CACHE_MAX_AGE;
+	cfg->setup.options[KBF_OCSP_METHOD] = OCSP_METHOD_GET;
+	cfg->setup.options[KBF_OCSP_TIMEOUT] = OCSP_DEFAULT_TIMEOUT;
+
 	cfg->setup.options[KBF_SECCOMP] = SECCOMP_DISABLED; /* will be enabled in the future */
 
 	/* conn %default */
@@ -134,7 +140,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
 
 	cfg->conn_default.policy =
-		POLICY_RSASIG |
 		POLICY_TUNNEL |
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |	/* ikev2=permit */
@@ -175,6 +180,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.state = STATE_LOADED;
 
 	cfg->ctlbase = clone_str(CTL_FILE, "default base");
+
+	cfg->conn_default.left.authby = AUTH_UNSET;
+	cfg->conn_default.right.authby = AUTH_UNSET;
 }
 
 /*
@@ -1201,6 +1209,7 @@ static bool load_conn(
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
+
 #ifdef STARTER_POLICY_DEBUG
 		starter_log(LOG_LEVEL_DEBUG,
 			    "%s: setting conn->policy=%08x (%08x)",

@@ -32,18 +32,14 @@ north #
  echo test | nc 192.1.2.23 2
 north #
  ipsec whack --trafficstatus
-000  
 006 #2: "north-east-port3", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-000  
 north #
  # port 3 goes over ipsec, traffic counters should be non-zero
 north #
  echo test | nc 192.1.2.23 3
 north #
  ipsec whack --trafficstatus
-000  
 006 #2: "north-east-port3", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
-000  
 north #
  echo done
 done

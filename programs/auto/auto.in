@@ -148,8 +148,8 @@ case "${op}" in
 	exit
 	;;
     --rereadcrls)
-	${showonly} ipsec whack --rereadcrls
-	exit
+	echo "ipsec whack --rereadcrls has been obsoleted - please see: ipsec crls"
+	exit 1
 	;;
     --rereadall)
 	${showonly} ipsec whack --rereadall

@@ -4,9 +4,14 @@ nic #
 nic #
  cd /testing/pluto/nss-cert-crl-03
 nic #
+ # in case httpd runs for freeipa tests, shut down httpd
+nic #
+ service httpd stop > /dev/null 2> /dev/null
+nic #
  PATH/bin/python -m SimpleHTTPServer 80 &
 [x] PID
 nic #
  echo "done."
+Serving HTTP on 0.0.0.0 port 80 ...
 done.
 

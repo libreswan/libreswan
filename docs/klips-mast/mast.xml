@@ -185,7 +185,7 @@ firewall rules.
 <para>
 The PPP method is most appropriate for use on the client side of a road
 warrior configuration, or when there is a sufficiently small number of VPN tunnels
-that it is practical (or desireable) for each tunnel to have its own device
+that it is practical (or desirable) for each tunnel to have its own device
 associated with it. The simplification of firewall rules for output is the
 primary benefit of this mode.
 </para>

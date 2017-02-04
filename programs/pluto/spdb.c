@@ -48,9 +48,7 @@
 #include "spdb.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "alg_info.h"
 #include "kernel_alg.h"
@@ -908,7 +906,7 @@ static struct db_sa IKEv1_oakley_sadb_table[] = {
 
 /**************** Oakley (aggressive mode) SA database ****************/
 /*
- * the Aggressive mode attributes must be seperate, because there
+ * the Aggressive mode attributes must be separate, because there
  * can be no choices --- since we must computer keying material,
  * we must actually just agree on what we are going to use.
  */
@@ -1001,7 +999,7 @@ static struct db_sa IKEv1_oakley_am_sadb_table[] = {
  * The oakley sadb is subscripted by a bitset computed by
  * IKEv1_sadb_index().
  *
- * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (ideosyncratic).
+ * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (idiosyncratic).
  */
 static int IKEv1_sadb_index(lset_t x, struct connection *c)
 {

@@ -2,7 +2,7 @@
  * Copyright (C) 1998-2001 D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,9 +43,7 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
 
-#include "sha1.h"
-#include "md5.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 
 #include "alg_info.h"
 #include "kernel_alg.h"
@@ -84,18 +82,16 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
  * one DH group.
  */
 struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
-				struct db_sa *base,
+				enum ikev1_auth_method auth_method,
 				bool single_dh)
 {
 	struct db_sa *gsp = NULL;
-	struct ike_info *ike_info;
 
-	/* Next two are for multiple proposals in agressive mode... */
+	/* Next two are for multiple proposals in aggressive mode... */
 	unsigned last_modp = 0;
 	bool warned_dropped_dhgr = FALSE;
 
 	int transcnt = 0;
-	int i;
 
 	/*
 	 * start by copying the proposal that would have been picked by
@@ -115,97 +111,58 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * when creating each item, we will use the first transform
 	 * from the base item as the template.
 	 */
-	ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
+	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
-		unsigned ealg = ike_info->ike_ealg;
-		unsigned halg = ike_info->ike_halg;
-		unsigned modp = ike_info->ike_modp;
+		passert(ike_info->ike_encrypt);
+		passert(ike_info->ike_prf);
+		passert(ike_info->ike_dh_group);
+
+		unsigned ealg = ike_info->ike_encrypt->common.ikev1_oakley_id;
+		unsigned halg = ike_info->ike_prf->common.ikev1_oakley_id;
+		unsigned modp = ike_info->ike_dh_group->group;
 		unsigned eklen = ike_info->ike_eklen;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("oakley_alg_makedb() processing ealg=%u halg=%u modp=%u eklen=%u",
-			    ealg, halg, modp, eklen));
+		    DBG_log("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
+			    ike_info->ike_encrypt->common.name, ealg,
+			    ike_info->ike_prf->common.name, halg,
+			    ike_info->ike_dh_group->common.name, modp,
+			    eklen));
 
-		const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ealg);
-
-		if (enc_desc == NULL) {
-			DBG_log("oakley_alg_makedb() ike enc ealg=%d not present",
-				ealg);
-			continue;
-		}
-		passert(enc_desc != NULL);
-
-		if (ike_alg_enc_requires_integ(enc_desc)) {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike hash halg=%d not present but required for integrity",
-					halg);
-				continue;
-			}
-		} else {
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() ike PRF=%d not present but needed for AEAD",
-					halg);
-				continue;
-			}
-		}
-
-		if (eklen != 0 &&
-		    (eklen < enc_desc->keyminlen ||
-		     eklen > enc_desc->keymaxlen)) {
-			DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
-				ealg,
-				eklen,
-				enc_desc->keyminlen,
-				enc_desc->keymaxlen);
+		const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
+			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
+				    enc_desc->common.name,
+				    eklen);
 			continue;
 		}
 
 		/*
-		 * copy the basic item, and modify it.
-		 *
-		 * ??? what are these two cases and why does
-		 * eklen select between them?
-		 *
-		 * [cagney] I suspect that this is to
-		 * compensate for logic further down that,
-		 * when eklen==0, truncates the attrs array to
-		 * 4 elements and sa_copy_sa_first() when
-		 * applied to that structure won't allocate
-		 * space for the 5th (eklen) element - oops.
-		 * To be honest, the attrs should be a list OR
-		 * the eklen>0 path should always be taken OR
-		 * ...
-		 *
-		 * The convoluted assignment is copying the
-		 * auth field (see "struct db_attr otempty"
-		 * above), from base to the new proposal.
+		 * copy the template
 		 */
-		if (eklen > 0) {
-			/* duplicate, but change auth to match template */
-			emp_sp = sa_copy_sa(&oakley_empty);
-			emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
-				base->prop_conjs[0].props[0].trans[0].attrs[2];
-		} else {
-			emp_sp = sa_copy_sa_first(base);
-		}
-
+		emp_sp = sa_copy_sa(&oakley_empty);
 		passert(emp_sp->dynamic);
 		passert(emp_sp->prop_conj_cnt == 1);
 		passert(emp_sp->prop_conjs[0].prop_cnt == 1);
 		passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
-
 		struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
+		passert(trans->attr_cnt == 5);
 
 		/*
-		 * See "struct db_attr otempty" above for
+		 * See "struct db_attr otempty" above, and spdb.c, for
 		 * where these magic values come from.
 		 */
-		passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
 		struct db_attr *enc  = &trans->attrs[0];
 		struct db_attr *hash = &trans->attrs[1];
 		struct db_attr *auth = &trans->attrs[2];
 		struct db_attr *grp  = &trans->attrs[3];
+
+		/*
+		 * auth type for IKE must be set.
+		 */
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		auth->val = auth_method;
 
 		if (eklen > 0) {
 			struct db_attr *enc_keylen = &trans->attrs[4];
@@ -245,20 +202,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			}
 		}
 
-		/*
-		 * auth type for IKE must be set.
-		 *
-		 * Logic above uses sa_copy_sa or brute force
-		 * to copy the field from BASE.
-		 *
-		 * ??? until we support AES-GCM in IKE
-		 *
-		 * [cagney] aes-gcm doesn't require HASH, just
-		 * the PRF, so auth is unrelated?
-		 */
-		passert(auth->type.oakley ==
-			OAKLEY_AUTHENTICATION_METHOD);
-
 		passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
 		if (modp > 0)
 			grp->val = modp;
@@ -269,7 +212,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    ike_info->ike_modp != last_modp) {
+		    ike_info->ike_dh_group->group != last_modp) {
 			if (last_modp == OAKLEY_GROUP_MODP1024 ||
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
@@ -284,11 +227,13 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-					"transform (%s,%s,%s keylen %ld) ignored.",
-					enum_name(&oakley_enc_names, ike_info->ike_ealg),
-					enum_name(&oakley_hash_names, ike_info->ike_halg),
-					enum_name(&oakley_group_names, ike_info->ike_modp),
-					(long)ike_info->ike_eklen);
+				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       enum_name(&oakley_enc_names,
+						 ike_info->ike_encrypt->common.ikev1_oakley_id),
+				       enum_name(&oakley_hash_names,
+						 ike_info->ike_prf->common.ikev1_oakley_id),
+				       enum_name(&oakley_group_names, ike_info->ike_dh_group->group),
+				       (long)ike_info->ike_eklen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -315,11 +260,12 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			int def_ks = 0;
 
 			if (ike_info->ike_eklen == 0)
-				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
+				def_ks = crypto_req_keysize(CRK_IKEv1,
+							    ike_info->ike_encrypt->common.ikev1_oakley_id);
 
 			if (def_ks != 0) {
-				const struct encrypt_desc *enc_desc = ikev1_alg_get_encrypter(ike_info->ike_ealg);
-				int max_ks = enc_desc->keymaxlen;
+				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+				int max_ks = encrypt_max_key_bit_length(enc_desc);
 				int ks;
 
 				passert(emp_sp->dynamic);
@@ -354,11 +300,11 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 				/*
 				 * This odd FOR loop executes its body for
-				 * exactly two values of ks (def_ks and max_ks)
+				 * exactly two values of ks (max_ks and def_ks)
 				 * unless def_ks == max_ks, in which case it is
 				 * executed once.
 				 */
-				for (ks = def_ks; ; ks = max_ks) {
+				for (ks = max_ks; ; ks = def_ks) {
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
 					if (gsp == NULL) {
@@ -369,7 +315,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 						free_sa(&gsp);
 						gsp = new;
 					}
-					if (ks == max_ks)
+					if (ks == def_ks)
 						break;
 				}
 				free_sa(&emp_sp);
@@ -386,7 +332,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = ike_info->ike_modp;
+			last_modp = ike_info->ike_dh_group->group;
 		}
 
 		transcnt++;

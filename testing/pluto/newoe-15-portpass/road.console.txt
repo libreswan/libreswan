@@ -53,9 +53,7 @@ road #
  sleep 5
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
-000  
 road #
  # echo should go through passthrough, not increase traffic counter of tunnel
 road #
@@ -66,9 +64,7 @@ road #
  sleep 5
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
-000  
 road #
  echo done
 done

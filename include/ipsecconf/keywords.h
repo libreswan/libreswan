@@ -48,6 +48,7 @@ enum keyword_string_config_field {
 	KSF_DUMPDIR,
 	KSF_STATSBINARY,
 	KSF_IPSECDIR,
+	KSF_NSSDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
 	KSF_MYID,
@@ -55,8 +56,8 @@ enum keyword_string_config_field {
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
 	KSF_LISTEN,
-	KSF_OCSPURI,
-	KSF_OCSPTRUSTNAME,
+	KSF_OCSP_URI,
+	KSF_OCSP_TRUSTNAME,
 	KSF_MAX
 };
 
@@ -80,10 +81,15 @@ enum keyword_numeric_config_field {
 	KBF_TFCPAD,
 	KBF_REQID,
 	KBF_XFRMLIFETIME,
-	KBF_STRICTCRLPOLICY,
-	KBF_STRICTOCSPPOLICY,
-	KBF_OCSPENABLE,
-	KBF_OCSPTIMEOUT,
+	KBF_CRL_STRICT,
+	KBF_CRL_CHECKINTERVAL,
+	KBF_OCSP_STRICT,
+	KBF_OCSP_ENABLE,
+	KBF_OCSP_TIMEOUT,
+	KBF_OCSP_CACHE_SIZE,
+	KBF_OCSP_CACHE_MIN,
+	KBF_OCSP_CACHE_MAX,
+	KBF_OCSP_METHOD,
 	KBF_CURLTIMEOUT,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
@@ -91,7 +97,6 @@ enum keyword_numeric_config_field {
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
-	KBF_CRLCHECKINTERVAL,
 	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
@@ -131,7 +136,7 @@ enum keyword_numeric_config_field {
 	KBF_REMOTEPEERTYPE,     /* Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /* Network Manager support */
 	KBF_LABELED_IPSEC,
-	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
+	KBF_SAREFTRACK,         /* saref tracking parameter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
 	KBF_SECCTX,             /* security context attribute value for labeled ipsec */
 	KBF_XAUTHBY,            /* method of xauth user auth - file, pam or alwaysok */
@@ -217,6 +222,7 @@ enum keyword_numeric_conn_field {
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,
+	KNCF_AUTH,
 	KNCF_MAX
 };
 

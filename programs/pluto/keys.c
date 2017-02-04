@@ -54,7 +54,6 @@
 #include "state.h"
 #include "lex.h"
 #include "keys.h"
-#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "timer.h"
@@ -386,11 +385,7 @@ static bool take_a_crack(struct tac_state *s,
 stf_status RSA_check_signature_gen(struct state *st,
 				   const u_char hash_val[MAX_DIGEST_LEN],
 				   size_t hash_len,
-				   const pb_stream *sig_pbs
-#ifdef USE_KEYRR
-				   , const struct pubkey_list *keys_from_dns
-#endif /* USE_KEYRR */
-				   , const struct gw_info *gateways_from_dns,
+				   const pb_stream *sig_pbs,
 				   err_t (*try_RSA_signature)(
 					   const u_char hash_val[MAX_DIGEST_LEN],
 					   size_t hash_len,
@@ -400,7 +395,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 {
 	const struct connection *c = st->st_connection;
 	struct tac_state s;
-	err_t dns_ugh = NULL;
 
 	s.st = st;
 	s.hash_val = hash_val;
@@ -411,20 +405,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 	s.best_ugh = NULL;
 	s.tried_cnt = 0;
 	s.tn = s.tried;
-
-	/* try all gateway records hung off c */
-	if ((c->policy & POLICY_OPPORTUNISTIC)) {
-		struct gw_info *gw;
-
-		for (gw = c->gw_info; gw != NULL; gw = gw->next) {
-			/* only consider entries that have a key and are for our peer */
-			if (gw->gw_key_present &&
-			    same_id(&gw->gw_id, &c->spd.that.id) &&
-			    take_a_crack(&s, gw->key,
-					 "key saved from DNS TXT"))
-				return STF_OK;
-		}
-	}
 
 	/* try all appropriate Public keys */
 	{
@@ -443,7 +423,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    DBG_log("required CA is '%s'", buf);
 			    });
 		}
-
 		for (p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
 
@@ -480,33 +459,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	 * and that side of connection is key_from_DNS_on_demand
 	 * then go search DNS for keys for peer.
 	 */
-	if (s.best_ugh == NULL && c->spd.that.key_from_DNS_on_demand) {
-		if (gateways_from_dns != NULL) {
-			/* TXT keys */
-			const struct gw_info *gwp;
-
-			for (gwp = gateways_from_dns; gwp != NULL;
-			     gwp = gwp->next)
-				if (gwp->gw_key_present &&
-				    take_a_crack(&s, gwp->key,
-						 "key from DNS TXT"))
-					return STF_OK;
-#ifdef USE_KEYRR
-		} else if (keys_from_dns != NULL) {
-			/* KEY keys */
-			const struct pubkey_list *kr;
-
-			for (kr = keys_from_dns; kr != NULL; kr = kr->next)
-				if (kr->key->alg == PUBKEY_ALG_RSA &&
-				    take_a_crack(&s, kr->key,
-						 "key from DNS KEY"))
-					return STF_OK;
-#endif          /* USE_KEYRR */
-		} else {
-			/* nothing yet: ask for asynch DNS lookup */
-			return STF_SUSPEND;
-		}
-	}
+	/* To be re-implemented */
 
 	/* no acceptable key was found: diagnose */
 	{
@@ -516,15 +469,9 @@ stf_status RSA_check_signature_gen(struct state *st,
 			     sizeof(id_buf));
 
 		if (s.best_ugh == NULL) {
-			if (dns_ugh == NULL) {
 				loglog(RC_LOG_SERIOUS,
 				       "no RSA public key known for '%s'",
 				       id_buf);
-			} else {
-				loglog(RC_LOG_SERIOUS, "no RSA public key known for '%s'; DNS search for KEY failed (%s)",
-				       id_buf,
-				       dns_ugh);
-			}
 
 			/* ??? is this the best code there is? */
 			return STF_FAIL + INVALID_KEY_INFORMATION;
@@ -703,6 +650,7 @@ static bool has_private_rawkey(struct pubkey *pk)
 /* find the appropriate preshared key (see get_secret).
  * Failure is indicated by a NULL pointer.
  * Note: the result is not to be freed by the caller.
+ * Note2: this seems to be called for connections using RSA too?
  */
 const chunk_t *get_preshared_secret(const struct connection *c)
 {
@@ -713,7 +661,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		DBG(DBG_CRYPT, DBG_log("AUTH_NULl secret - returning empty_chunk"));
+		DBG(DBG_CRYPT, DBG_log("Mutual AUTH_NULl secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
@@ -724,7 +672,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 				       pks->u.preshared_secret);
 		});
 	} else {
-		DBG_log("no Preshared Key Found");
+		DBG(DBG_CONTROL, DBG_log("no Preshared Key Found"));
 	}
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
@@ -786,40 +734,6 @@ void free_remembered_public_keys(void)
 	free_public_keys(&pluto_pubkeys);
 }
 
-/* transfer public keys from *keys list to front of pubkeys list */
-void transfer_to_public_keys(struct gw_info *gateways_from_dns
-#ifdef USE_KEYRR
-			     , struct pubkey_list **keys
-#endif /* USE_KEYRR */
-			     )
-{
-	{
-		struct gw_info *gwp;
-
-		for (gwp = gateways_from_dns; gwp != NULL; gwp = gwp->next) {
-			struct pubkey_list *pl = alloc_thing(
-				struct pubkey_list, "from TXT");
-
-			pl->key = gwp->key;     /* note: this is a transfer */
-			gwp->key = NULL;        /* really, it is! */
-			pl->next = pluto_pubkeys;
-			pluto_pubkeys = pl;
-		}
-	}
-
-#ifdef USE_KEYRR
-	{
-		struct pubkey_list **pp = keys;
-
-		while (*pp != NULL)
-			pp = &(*pp)->next;
-		*pp = pluto_pubkeys;
-		pluto_pubkeys = *keys;
-		*keys = NULL;
-	}
-#endif  /* USE_KEYRR */
-}
-
 err_t add_public_key(const struct id *id,
 		     enum dns_auth_level dns_auth_level,
 		     enum pubkey_alg alg,
@@ -853,6 +767,8 @@ err_t add_public_key(const struct id *id,
 	install_public_key(pk, head);
 	return NULL;
 }
+
+
 
 /*
  *  list all public keys in the chained list

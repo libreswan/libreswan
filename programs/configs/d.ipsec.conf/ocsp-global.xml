@@ -30,6 +30,21 @@ ocspMode_FailureIsNotAVerificationFailure mode.
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>ocsp-method</emphasis></term>
+  <listitem>
+<para>
+The HTTP methods used for fetching OCSP data. Valid options are
+<emphasis remap='B'>get</emphasis> (the default) and
+<emphasis remap='B'>post</emphasis>. Note that this behaviour
+depends on the NSS crypto library that is actually performing
+the fetching. When set to the get method, post is attempted
+only as fallback in case of failure. When set to post, only
+the post method is ever used.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><emphasis remap='B'>ocsp-timeout</emphasis></term>
   <listitem>
 <para>
@@ -60,6 +75,37 @@ The nickname of the certificate that has been imported into the NSS
 database of the server handling the OCSP requests. This requires the
 ocsp-uri option to be set as well. This option and the previous options
 sets the OCSP <emphasis remap='I'>default responder</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-cache-size</emphasis></term>
+  <listitem>
+<para>
+The maximum size (in number of certificates) of OCSP responses that
+will be kept in the cache. The default is 1000. Setting this value
+to 0 means the cache is disabled.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-cache-min-age</emphasis></term>
+  <listitem>
+<para>
+The minimum age (in seconds) before a new fetch will be attempted. The
+default is 1 hour.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-cache-max-age</emphasis></term>
+  <listitem>
+<para>
+The maximum age (in seconds) before a new fetch will be attempted. The
+default is 1 day.
 </para>
   </listitem>
   </varlistentry>

@@ -15,7 +15,7 @@ v2.6.38 (March 23, 2012)
   R_U_THERE's
 * barf: iptables-save on suse is in /usr/sbin, not /sbin [Paul/Shinichi]
 * SUSE: Package compliant with Kernel Module Package Manual [Shinichi Furuso]
-* verify: fix false positive on IP forwarding (perl dependant) [Steve Delaney]
+* verify: fix false positive on IP forwarding (perl dependent) [Steve Delaney]
 * IKEv2: Introduced new keyword narrowing=yes|no [Paul]
 * IKEv2: Send TS_UNACCEPTABLE when narrowing would violate local policy [Paul]
 * IKEv2: Fix for multiple SAs to the same peer with different ports [Avesh]
@@ -215,7 +215,7 @@ v2.6.32 (December 17, 2010)
 * KLIPS: Better interface handling in _startklips [Paul]
 * fix interface parsing in getinterfaceinfo() [Bart/Roel]
 * KLIPS: Support more then 9 ipsec/mast interfaces in parser [Simon]
-* OCF: Change some hardcoded variables to module paramters [David]
+* OCF: Change some hardcoded variables to module parameters [David]
   -ipsec_ocf_batch(1): Make OCF queue packets rather than process immediately
   -ipsec_ocf_cbimm(1): Does OCF immediately (ie., at irq time) run callbacks
                    or queue and call later"
@@ -284,10 +284,10 @@ v2.6.29 (September 27, 2010)
 ! This release is made for CVE-2010-3302 and CVE-2010-3308
 ! Duplicate CVE's issues for these are CVE-2010-3752 and CVE-2010-3753
 * XAUTH: Avoid buffer overflow in CISCO DNS info [dhr/paul]
-         Avoid shell problems with single quotes CISCO DNS paramters [dhr/paul]
+         Avoid shell problems with single quotes CISCO DNS parameters [dhr/paul]
   http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3302
 * XAUTH: Avoid buffer overflow in CISCO BANNER [dhr/paul]
-         Avoid shell problems with single quotes in CISCO paramters [dhr/paul]
+         Avoid shell problems with single quotes in CISCO parameters [dhr/paul]
   http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3308
 * NETKEY: Fix for spurious %hold netlink-acquires [Paul/dhr]
 * KLIPS: Fix compiling on 2.6.18 based RHEL5 kernels [Paul]
@@ -494,7 +494,7 @@ v2.6.24 (Jan 8, 2010)
 * Update ipsec_setup man page to match setup changes [Tuomo]
 * Zeroize ISAKMP and IPsec SA's when in FIPS mode [Avesh]
 * Initial contact from Windows/l2tp would fail once before succeeding [David]
-* KLIPS compiles on all recent (upto 2.6.31) kernels [mcr]
+* KLIPS compiles on all recent (up to 2.6.31) kernels [mcr]
 * KLIPS fixes for 2.6.32 [david/paul]
 * Fix for mixed IPv6 in IPv4 and vice versa tunnels [Heiko Hund]
 * Fix for NETKEY on kernels 2.6.26+ [Andreas Steffan]
@@ -655,7 +655,7 @@ v2.6.19 (Nov 24, 2008)
 * build support for all WINS/DNS options as mentioned in the man pages [david]
 * Removed obsolete keywords: firewall (linux 2.0), spibase, spi,espenckey,
   espauthkey and espreplay_window (manual keying) [paul]
-* Fix unneccesary and bogus connection switching with NAT [Shingo Yamawaki]
+* Fix unnecessary and bogus connection switching with NAT [Shingo Yamawaki]
   (this might relate to several reported bugs in the tracker)
 * Added cisco-decrypt utility for PCF obfuscation in contrib/ [paul]
 * Fix for crasher when the leftcert= filename was not found [paul]
@@ -1168,7 +1168,7 @@ v2.4.8 (May 24, 2007)
   #719: Fix to authenticate with a smartcard (USB Aladdin eToken) ["pm"]
 
 v2.4.7 (Nov 14, 2006)
-* Remove direct use of /dev/hw* for random on Linux. It is not guranteed
+* Remove direct use of /dev/hw* for random on Linux. It is not guaranteed
   to be secure (FIPS compliant) random [paul]
 * Fix bugs introduced in 2.4.6 using KLIPS and CryptoAPI on 2.6.17.6+
 * fixes for displaying proper NAT-T draft/rfc used [jacco]
@@ -1207,7 +1207,7 @@ v2.4.6 (Aug 4, 2006)
   remove IP addresses from IP aliases bound to ipsecX devices.
 * Fixed typo in ipsec.conf's virtual_private example
 * Improved protocol detection in ipsec_print_ip() [bart]
-* Fixed minimum skb lenght requried for ipsec decompression [bart]
+* Fixed minimum skb length requried for ipsec decompression [bart]
   (This is probably bug #609)
 * Fix a 64bit bug in compression code [bart]
 * Removing a left over '#else' that split another '#if/#endif' block in two
@@ -1225,7 +1225,7 @@ v2.4.6 (Aug 4, 2006)
         (This is a generic NATT+ESP bug, not just an ipcomp bug)
 
 v2.4.5 (Apr 6, 2006)
-* Fix for prefering RFC3947 over OSX-workaround by Jacco de Leeuw
+* Fix for preferring RFC3947 over OSX-workaround by Jacco de Leeuw
 * Fix for openswan as l2tp server behind NAT by Bernd Galonska
 * Fix for compiling + working on SMP (including HyperThreaded) machines
 * Fix for arp_broken_ops relocation in 2.6.16
@@ -1238,7 +1238,7 @@ v2.4.5 (Apr 6, 2006)
 * Fix for AH hash by Ronen Shitrit <rshitrit@marvell.com>
 * Additions to barf and verify commands for various kernel internals
 * load hw_random and padlock modules before aes module so hardware routines
-  are prefered over software routines.
+  are preferred over software routines.
 * allow rightsubnet= with type=transport for L2TP behind NAT.
 * Refactored natd_lookup / hash code, probably fixes lot of NAT related bugs
 * Fix for interop with Cisco devices which propose port 0 (eg: VPN3000)
@@ -1293,7 +1293,7 @@ v2.4.3 (-)
 
 v2.4.2 (Nov 13, 2005)
 * Fixes for compiling on 2.6.14 by David McCullough
-* Minor fixes to accomodate FC4 2.6.11 kernels.
+* Minor fixes to accommodate FC4 2.6.11 kernels.
 * Fix for compilation of KLIPS on 2.4.x kernels.
 * Fix for NAT-T on 2.4.31
 * Fix for 'short' packets with KLIPS on 2.4.x
@@ -1306,7 +1306,7 @@ v2.4.2 (Nov 13, 2005)
   (see http://www.openswan.org/niscc2/)
 
 v2.4.1
-* Not publically released
+* Not publicly released
 
 v2.4.0 (Sep 12, 2005)
 * NAT-T support for KLIPS on 2.6 (Sponsored by Astaro)
@@ -1355,7 +1355,7 @@ v2.4.0 (Sep 12, 2005)
 
 v2.3.1
 * NAT-T RFC support (mlafon/mcr)
-* NAT-T Server Side rewrite - handles rekeying alot better
+* NAT-T Server Side rewrite - handles rekeying a lot better
 * NAT-T Client Side rekey bug fixed
 * Removed HowTo (obselete)
 * IPKG packaging updates
@@ -1392,7 +1392,7 @@ v2.1.0
 * X.509 fixes (Andreas Steffan)
 * New configuration file directive, {left|right}sourceip=#.#.#.#
   This will set the source address when talking to a particular
-  connection.  This is very usefull to assign a static IP to your laptop
+  connection.  This is very useful to assign a static IP to your laptop
   while travelling.  This is based on Tuomo Soini's Advanced Routing
   patch.
 

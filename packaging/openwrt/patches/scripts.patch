@@ -3,7 +3,7 @@ diff -uNr libreswan-2.3.0.orig/programs/loggerfix libreswan-2.3.0/programs/logge
 +++ libreswan-2.3.0/programs/loggerfix	2005-02-02 20:34:54.000000000 +0000
 @@ -0,0 +1,5 @@
 +#!/bin/sh
-+# use filename instead of /dev/null to log, but dont log to flash or ram
++# use filename instead of /dev/null to log, but don't log to flash or ram
 +# pref. log to nfs mount
 +echo "$*" >> /dev/null
 +exit 0

@@ -21,7 +21,6 @@
 
 #include <libreswan.h>
 
-#include "defs.h"
 #include "lswlog.h"
 #include "prmem.h"
 #include "prerror.h"
@@ -30,40 +29,37 @@
 #include "ike_alg.h"
 #include "ike_alg_nss_cbc.h"
 
-void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *alg,
-		u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-		u_int8_t *iv, bool enc)
+void ike_alg_nss_cbc(const struct encrypt_desc *alg,
+		     u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
+		     u_int8_t *iv, bool enc)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
 
+	passert(alg->common.nss_mechanism != CKM_VENDOR_DEFINED);
+	passert(alg->common.nss_mechanism != 0);
+
 	if (symkey == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - NSS derived enc key in NULL",
-		       alg->common.name);
-		exit_pluto(10);
+		PASSERT_FAIL("%s - NSS derived enc key in NULL",
+			     alg->common.name);
 	}
 
 	SECItem ivitem;
 	ivitem.type = siBuffer;
 	ivitem.data = iv;
 	ivitem.len = alg->enc_blocksize;
-	SECItem *secparam = PK11_ParamFromIV(ciphermech, &ivitem);
+	SECItem *secparam = PK11_ParamFromIV(alg->common.nss_mechanism, &ivitem);
 	if (secparam == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - Failure to set up PKCS11 param (err %d)",
-		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		PASSERT_FAIL("%s - Failure to set up PKCS11 param (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 	PK11Context *enccontext;
-	enccontext = PK11_CreateContextBySymKey(ciphermech,
+	enccontext = PK11_CreateContextBySymKey(alg->common.nss_mechanism,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - PKCS11 context creation failure (err %d)",
-		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		PASSERT_FAIL("%s - PKCS11 context creation failure (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 
@@ -74,10 +70,8 @@ void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *al
 	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
 				     in_buf, in_buf_len);
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS,
-		       "ike_alg_nss_cbc: %s - PKCS11 operation failure (err %d)",
-		       alg->common.name, PR_GetError());
-		exit_pluto(10);
+		PASSERT_FAIL("%s - PKCS11 operation failure (err %d)",
+			     alg->common.name, PR_GetError());
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);

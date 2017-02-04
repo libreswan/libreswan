@@ -25,38 +25,20 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
-#include "crypto.h"
 #include "klips-crypto/aes_cbc.h"
-#include "alg_info.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "lswfips.h"
-#include "lswlog.h"
+
 #include "ike_alg_nss_cbc.h"
+#include "ike_alg_nss_gcm.h"
 #include "ctr_test_vectors.h"
 #include "cbc_test_vectors.h"
 #include "gcm_test_vectors.h"
 #include "ike_alg_aes.h"
-
-static void aes_xcbc_init_thunk(union hash_ctx *ctx)
-{
-	aes_xcbc_init(&ctx->ctx_aes_xcbc);
-}
-
-static void aes_xcbc_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
-{
-	aes_xcbc_write(&ctx->ctx_aes_xcbc, datap, length);
-}
-
-static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
-{
-	aes_xcbc_final(hash, &ctx->ctx_aes_xcbc);
-}
 
 /*
  * Ref: http://tools.ietf.org/html/rfc3602: Test Vectors
@@ -109,39 +91,26 @@ static const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		.description = NULL,
 	}
 };
-
-static bool test_aes_cbc(const struct ike_alg *alg)
-{
-	return test_cbc_vectors((const struct encrypt_desc*)alg,
-				 aes_cbc_test_vectors);
-}
-
-static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
-		       u_int8_t *iv, bool enc)
-{
-	ike_alg_nss_cbc(CKM_AES_CBC, &ike_alg_encrypt_aes_cbc,
-			buf, buf_len, symkey, iv, enc);
-}
+const struct cbc_test_vector *const aes_cbc_tests = aes_cbc_test_vectors;
 
 struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
 		.name = "aes",
+		.names = { "aes", "aes_cbc", },
 		.officname = "aes",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_CBC,
-		.algo_v2id =   IKEv2_ENCR_AES_CBC,
-		.algo_next =   NULL,
+		.ikev1_oakley_id = OAKLEY_AES_CBC,
+		.ikev1_esp_id = ESP_AES,
+		.ikev2_id = IKEv2_ENCR_AES_CBC,
 		.fips =        TRUE,
-		.do_test =     test_aes_cbc,
+		.nss_mechanism = CKM_AES_CBC,
 	},
-	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
-	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
-	.keymaxlen =    AES_KEY_MAX_LEN,
-	.do_crypt =     do_aes_cbc,
+	.key_bit_lengths = { 256, 192, 128, },
+	.do_crypt = ike_alg_nss_cbc,
 };
 
 /*
@@ -266,21 +235,17 @@ static const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.description = NULL,
 	}
 };
+const struct ctr_test_vector *const aes_ctr_tests = aes_ctr_test_vectors;
 
-static bool test_aes_ctr(const struct ike_alg *alg)
-{
-	return test_ctr_vectors((const struct encrypt_desc*)alg,
-				aes_ctr_test_vectors);
-}
-
-static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
+static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 		       u_int8_t *counter_block, bool encrypt)
 {
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
 
+	passert(sym_key);
 	if (sym_key == NULL) {
-		loglog(RC_LOG_SERIOUS, "do_aes_ctr: NSS derived enc key in NULL");
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		PASSERT_FAIL("%s", "NSS derived enc key in NULL");
 	}
 
 	CK_AES_CTR_PARAMS counter_param;
@@ -300,18 +265,14 @@ static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_ctr: PK11_Encrypt failure (err %d)", PR_GetError());
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			PASSERT_FAIL("PK11_Encrypt failure (err %d)", PR_GetError());
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_ctr: PK11_Decrypt failure (err %d)", PR_GetError());
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			PASSERT_FAIL("PK11_Decrypt failure (err %d)", PR_GetError());
 		}
 	}
 
@@ -348,115 +309,22 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
 		.name = "aes_ctr",
+		.names = { "aesctr", "aes_ctr", },
 		.officname = "aes_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_CTR,
-		.algo_v2id =   IKEv2_ENCR_AES_CTR,
-		.algo_next =   NULL,
+		.ikev1_oakley_id = OAKLEY_AES_CTR,
+		.ikev1_esp_id = ESP_AES_CTR,
+		.ikev2_id = IKEv2_ENCR_AES_CTR,
 		.fips =        TRUE,
-		.do_test =     test_aes_ctr,
+		.nss_mechanism = CKM_AES_CTR,
 	},
-	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
 	.wire_iv_size =	8,
 	.salt_size = 4,
-	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
-	.keymaxlen =    AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt =     do_aes_ctr,
-};
-
-static bool do_aes_gcm(u_int8_t *salt, size_t salt_size,
-		       u_int8_t *wire_iv, size_t wire_iv_size,
-		       u_int8_t *aad, size_t aad_size,
-		       u_int8_t *text_and_tag,
-		       size_t text_size, size_t tag_size,
-		       PK11SymKey *sym_key, bool enc)
-{
-	/* See pk11gcmtest.c */
-	bool ok = TRUE;
-
-	u_int8_t iv[AES_BLOCK_SIZE];
-	passert(sizeof iv >= wire_iv_size + salt_size);
-	memcpy(iv, salt, salt_size);
-	memcpy(iv + salt_size, wire_iv, wire_iv_size);
-
-	CK_GCM_PARAMS gcm_params;
-	gcm_params.pIv = iv;
-	gcm_params.ulIvLen = salt_size + wire_iv_size;
-	gcm_params.pAAD = aad;
-	gcm_params.ulAADLen = aad_size;
-	gcm_params.ulTagBits = tag_size * 8;
-
-	SECItem param;
-	param.type = siBuffer;
-	param.data = (void*)&gcm_params;
-	param.len = sizeof gcm_params;
-
-	/* Output buffer for transformed data.  */
-	size_t text_and_tag_size = text_size + tag_size;
-	u_int8_t *out_buf = PR_Malloc(text_and_tag_size);
-	unsigned int out_len = 0;
-
-	if (enc) {
-		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_GCM, &param,
-					    out_buf, &out_len, text_and_tag_size,
-					    text_and_tag, text_size);
-		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Encrypt failure (err %d)", PR_GetError());
-			ok = FALSE;
-		} else if (out_len != text_and_tag_size) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Encrypt output length of %u not the expected %zd",
-			       out_len, text_and_tag_size);
-			ok = FALSE;
-		}
-	} else {
-		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_GCM, &param,
-					    out_buf, &out_len, text_and_tag_size,
-					    text_and_tag, text_and_tag_size);
-		if (rv != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Decrypt failure (err %d)", PR_GetError());
-			ok = FALSE;
-		} else if (out_len != text_size) {
-			loglog(RC_LOG_SERIOUS,
-			       "do_aes_gcm: PK11_Decrypt output length of %u not the expected %zd",
-			       out_len, text_size);
-			ok = FALSE;
-		}
-	}
-
-	memcpy(text_and_tag, out_buf, out_len);
-	PR_Free(out_buf);
-
-	return ok;
-}
-
-struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
-{
-	.common = {
-		.name = "aes_gcm",
-		.officname = "aes_gcm",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_GCM_8,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
-		.algo_next =   NULL,
-		.fips =        TRUE,
-		/* XXX: .do_test =     test_aes_gcm, */
-	},
-	.enc_ctxsize =   sizeof(aes_context),
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
-	.wire_iv_size =	8,
-	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =    AES_GCM_KEY_MIN_LEN,
-	.keydeflen =    AES_GCM_KEY_DEF_LEN,
-	.keymaxlen =    AES_GCM_KEY_MAX_LEN,
-	.aead_tag_size = 8,
-	.do_aead_crypt_auth =     do_aes_gcm,
 };
 
 /*
@@ -501,163 +369,195 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.key = NULL,
 	}
 };
+const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 
-static bool test_aes_gcm(const struct ike_alg *alg)
+struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
-	return test_gcm_vectors((const struct encrypt_desc*)alg,
-				aes_gcm_test_vectors);
-}
+	.common = {
+		.name = "aes_gcm_8",
+		.names = { "aes_gcm_8", "aes_gcm_a" },
+		/* XXX: aes_gcm_16 has aes_gcm as alias */
+		.officname = "aes_gcm",
+		.algo_type =   IKE_ALG_ENCRYPT,
+		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
+		.ikev1_esp_id = ESP_AES_GCM_8,
+		.ikev2_id = IKEv2_ENCR_AES_GCM_8,
+		.fips =        TRUE,
+		.nss_mechanism = CKM_AES_GCM,
+	},
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.pad_to_blocksize = FALSE,
+	.wire_iv_size =	8,
+	.salt_size = AES_GCM_SALT_BYTES,
+	.keydeflen =    AES_GCM_KEY_DEF_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 8,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
+};
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
+		.names = { "aes_gcm_12", "aes_gcm_b" },
 		.officname = "aes_gcm_12",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_GCM_12,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
-		.algo_next =   NULL,
+		.ikev1_oakley_id = OAKLEY_AES_GCM_12,
+		.ikev1_esp_id = ESP_AES_GCM_12,
+		.ikev2_id = IKEv2_ENCR_AES_GCM_12,
 		.fips =        TRUE,
-		/* XXX: .do_test =     test_aes_gcm, */
+		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
-	.do_aead_crypt_auth =     do_aes_gcm,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",
+		/* aes_gcm_8 has aes_gcm as officname */
+		.names = { "aes_gcm", "aes_gcm_16", "aes_gcm_c" },
 		.officname = "aes_gcm_16",
 		.algo_type =  IKE_ALG_ENCRYPT,
-		.algo_id =     OAKLEY_AES_GCM_16,
-		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
-		.algo_next =  NULL,
+		.ikev1_oakley_id = OAKLEY_AES_GCM_16,
+		.ikev1_esp_id = ESP_AES_GCM_16,
+		.ikev2_id = IKEv2_ENCR_AES_GCM_16,
 		.fips =        TRUE,
-		.do_test =     test_aes_gcm,
+		.nss_mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	.salt_size = AES_GCM_SALT_BYTES,
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
-	.do_aead_crypt_auth =     do_aes_gcm,
+	.do_aead_crypt_auth = ike_alg_nss_gcm,
 };
 
 /*
- * XXX: This code is duplicated in kernel_netlink.c.  Once this is
- * enabled, the latter can be deleted.
+ * References for AES_CCM.
+ *
+ * https://en.wikipedia.org/wiki/CCM_mode
+ * https://tools.ietf.org/html/rfc4309#section-7.1
  */
+
 struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
+		.names = { "aes_ccm_8", "aes_ccm_a" },
 		.officname = "aes_ccm_8",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_id =      0 /* OAKLEY_AES_CCM_8*/,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
+		.ikev1_oakley_id = OAKLEY_AES_CCM_8,
+		.ikev1_esp_id = ESP_AES_CCM_8,
+		.ikev2_id = IKEv2_ENCR_AES_CCM_8,
 		.fips =         TRUE,
-		.algo_next =    NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 8,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
+		.names = { "aes_ccm_12", "aes_ccm_b" },
 		.officname = "aes_ccm_12",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.algo_id =      0 /*OAKLEY_AES_CCM_12*/,
-		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
+		.ikev1_oakley_id = OAKLEY_AES_CCM_12,
+		.ikev1_esp_id = ESP_AES_CCM_12,
+		.ikev2_id = IKEv2_ENCR_AES_CCM_12,
 		.fips =         TRUE,
-		.algo_next =    NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 12,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
+		.names = { "aes_ccm", "aes_ccm_16", "aes_ccm_c" },
 		.officname = "aes_ccm_16",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_id =     0 /*OAKLEY_AES_CCM_16*/,
-		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
+		.ikev1_oakley_id = OAKLEY_AES_CCM_16,
+		.ikev1_esp_id = ESP_AES_CCM_16,
+		.ikev2_id = IKEv2_ENCR_AES_CCM_16,
 		.fips =         TRUE,
-		.algo_next =   NULL,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_AES_CCM,
+#endif
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
+	.aead_tag_size = 16,
 };
 
-static struct hash_desc hash_desc_aes_xcbc = {
-	.common = { .officname =  "aes_xcbc",
-		    .algo_type = IKE_ALG_HASH,
-		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		    .algo_v2id = IKEv2_PRF_AES128_XCBC,
-		    .algo_next = NULL, },
+struct integ_desc ike_alg_integ_aes_xcbc = {
+	.common = {
+		.name = "aes_xcbc",
+		.names = { "aes_xcbc", "aes_xcbc_96", },
+		.officname =  "aes_xcbc",
+		.algo_type = IKE_ALG_INTEG,
+		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
+		.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
+		.fips = TRUE,
+	},
+#ifdef NOT_IMPLMENTED
 	.hash_ctx_size = sizeof(aes_xcbc_context),
 	.hash_key_size = AES_XCBC_DIGEST_SIZE,
 	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = AES_CBC_BLOCK_SIZE,
 	.hash_init = aes_xcbc_init_thunk,
 	.hash_update = aes_xcbc_write_thunk,
 	.hash_final = aes_xcbc_final_thunk,
+#endif
+	.integ_key_size = AES_XCBC_DIGEST_SIZE,
+	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
 
-#ifdef NOT_YET
-static struct hash_desc integ_desc_aes_xcbc = {
-	.common = { .officname =  "aes_xcbc",
-		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-		    .algo_v2id = IKEv2_AUTH_AES_XCBC_96,
-		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(aes_xcbc_context),
-	.hash_key_size = AES_XCBC_DIGEST_SIZE,
-	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
-	.hash_block_size = AES_CBC_BLOCK_SIZE,
-	.hash_init = aes_xcbc_init_thunk,
-	.hash_update = aes_xcbc_write_thunk,
-	.hash_final = aes_xcbc_final_thunk,
+struct integ_desc ike_alg_integ_aes_cmac = {
+	.common = {
+		.name = "aes_cmac",
+		.names = { "aes_cmac", "aes_cmac_96", },
+		.officname =  "aes_cmac",
+		.algo_type = IKE_ALG_INTEG,
+#ifdef NOT_IMPLMENTED
+		/* not supported */
+		.ikev1_oakley_id = AUTH_ALGORITHM_AES_CMAC_96,
+#endif
+		.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
+		.ikev2_id = IKEv2_AUTH_AES_CMAC_96,
+		.fips = TRUE,
+	},
+	.integ_key_size = BYTES_FOR_BITS(128),
+	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
 };
-#endif
-
-void ike_alg_aes_init(void)
-{
-	/* Waiting on NSS support - but we need registration so ESP will work */
-	if (ike_alg_register_hash(&hash_desc_aes_xcbc) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register hash algo_aes_xcbc for IKE");
-#if 0
-	ike_alg_add(&integ_desc_aes_xcbc.common);
-#endif
-}

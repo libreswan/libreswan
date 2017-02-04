@@ -1,0 +1,7 @@
+To test clean up of pending phase 2 attempts on the initiator, west.
+
+West has a dpd delay and timeout set. (dpdtimeout * 3 ) < EVENT_PENDING_PHASE2 timer.
+east has no pluto running.
+
+West has a high, 240 sec, retransmit interval.
+After 120 sec PENDING_PHASE2 will kick in and clean the connection state and restart.

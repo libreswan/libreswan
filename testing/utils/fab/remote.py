@@ -226,7 +226,7 @@ def _reboot_to_login_prompt(domain, console):
 
 
     #
-    # The reboot pattern needs to match all the output upto the point
+    # The reboot pattern needs to match all the output up to the point
     # where the machine is reset.  That way, the next pattern below
     # can detect that the reset did something and the machine is
     # probably rebooting.

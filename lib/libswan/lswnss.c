@@ -43,24 +43,24 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	libreswan_log("Initializing NSS");
 	if (configdir) {
 		const char sql[] = "sql:";
-		char *nssdb;
+		char *nssdir;
 		if (strncmp(sql, configdir, strlen(sql)) == 0) {
-			nssdb = strdup(configdir);
+			nssdir = strdup(configdir);
 		} else {
-			nssdb = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdb");
-			strcpy(nssdb, sql);
-			strcat(nssdb, configdir);
+			nssdir = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdir");
+			strcpy(nssdir, sql);
+			strcat(nssdir, configdir);
 		}
-		libreswan_log("Opening NSS database \"%s\" %s", nssdb,
+		libreswan_log("Opening NSS database \"%s\" %s", nssdir,
 			      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
-		SECStatus rv = NSS_Initialize(nssdb, "", "", SECMOD_DB,
+		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
 			snprintf(err, sizeof(lsw_nss_buf_t),
 				 "Initialization of NSS with %s database \"%s\" failed (%d)",
 				 (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-				 nssdb, PR_GetError());
-			pfree(nssdb);
+				 nssdir, PR_GetError());
+			pfree(nssdir);
 			return FALSE;
 		}
 	} else {
@@ -346,4 +346,58 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 		      oco->nsspassword_file, token);
 	PORT_Free(passwords);
 	return NULL;
+}
+
+/*
+ * XXX: Is there an NSS version of this?
+ */
+
+const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism)
+{
+	const char *t;
+#define CASE(T) case T: t = #T; eat(t, "CKM_"); return t
+	switch (mechanism) {
+
+		CASE(CKM_CONCATENATE_BASE_AND_DATA);
+		CASE(CKM_CONCATENATE_BASE_AND_KEY);
+		CASE(CKM_CONCATENATE_DATA_AND_BASE);
+
+		CASE(CKM_XOR_BASE_AND_DATA);
+
+		CASE(CKM_EXTRACT_KEY_FROM_KEY);
+
+		CASE(CKM_AES_CBC);
+		CASE(CKM_DES3_CBC);
+		CASE(CKM_CAMELLIA_CBC);
+		CASE(CKM_AES_CTR);
+		CASE(CKM_AES_GCM);
+
+		CASE(CKM_AES_KEY_GEN);
+
+		CASE(CKM_MD5);
+		CASE(CKM_SHA_1);
+		CASE(CKM_SHA256);
+		CASE(CKM_SHA384);
+		CASE(CKM_SHA512);
+
+		CASE(CKM_MD5_KEY_DERIVATION);
+		CASE(CKM_SHA1_KEY_DERIVATION);
+		CASE(CKM_SHA256_KEY_DERIVATION);
+		CASE(CKM_SHA384_KEY_DERIVATION);
+		CASE(CKM_SHA512_KEY_DERIVATION);
+
+		CASE(CKM_MD5_HMAC);
+		CASE(CKM_SHA_1_HMAC);
+		CASE(CKM_SHA256_HMAC);
+		CASE(CKM_SHA384_HMAC);
+		CASE(CKM_SHA512_HMAC);
+
+		CASE(CKM_DH_PKCS_DERIVE);
+
+		CASE(CKM_VENDOR_DEFINED);
+
+	default:
+		return "unknown-mechanism";
+	}
+#undef CASE
 }

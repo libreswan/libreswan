@@ -25,7 +25,7 @@ and then you can use the 'DES_PTR' option.
 
 The file options.txt has the options listed for best speed on quite a
 few systems.  Look and the options (UNROLL, PTR, RISC2 etc) and then
-turn on the relevent option in the Makefile
+turn on the relevant option in the Makefile
 
 There are some special Makefile targets that make life easier.
 make cc		- standard cc build
@@ -33,7 +33,7 @@ make gcc	- standard gcc build
 make x86-elf	- x86 assembler (elf), linux-elf.
 make x86-out	- x86 assembler (a.out), FreeBSD
 make x86-solaris- x86 assembler
-make x86-bsdi	- x86 assembler (a.out with primative assembler).
+make x86-bsdi	- x86 assembler (a.out with primitive assembler).
 
 If at all possible use the assembler (for Windows NT/95, use
 asm/win32.obj to link with).  The x86 assembler is very very fast.

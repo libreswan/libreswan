@@ -22,7 +22,7 @@ maxlines=100
 
 # kludge to produce no barf output mentioning policygroups if none are present.
 # This will not catch ".file" policygroups.
-PREPOLICIES=/etc/ipsec.d/policies
+PREPOLICIES=@IPSEC_CONFDDIR@/policies
 if [ `ls $PREPOLICIES 2> /dev/null | wc -l` -ne 0 ]
 then
 	POLICIES=$PREPOLICIES
@@ -248,11 +248,15 @@ _________________________ ps
 # -i ppid picks up the header
 ps alxwf | egrep -i 'ppid|pluto|ipsec|klips'
 _________________________ ipsec/conf
-ipsec readwriteconf --config /etc/ipsec.conf | ipsec _keycensor
+ipsec readwriteconf --config @IPSEC_CONF@ | ipsec _keycensor
 _________________________ ipsec/secrets
-cat /etc/ipsec.secrets | ipsec _secretcensor
+cat @IPSEC_SECRETS_FILE@ | ipsec _secretcensor
 _________________________ ipsec/listall
 ipsec whack --listall
+_________________________ nss/contents
+certutil -L -d sql:@IPSEC_NSSDIR@
+_________________________ nss/crls
+crlutil -L -d sql:@IPSEC_NSSDIR@
 if [ $POLICIES ]
 then
 	for policy in $POLICIES/*; do base=`basename $policy`;
@@ -261,7 +265,7 @@ then
 	done
 fi
 _________________________ ipsec/ls-execdir
-ls -l ${IPSEC_EXECDIR-/usr/local/libexec/ipsec}
+ls -l $IPSEC_EXECDIR
 _________________________ /proc/net/dev
 cat /proc/net/dev
 _________________________ /proc/net/route

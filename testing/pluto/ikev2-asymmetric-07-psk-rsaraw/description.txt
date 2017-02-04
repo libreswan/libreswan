@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 on the initiator (west) using PSK , and on the responder,
+using RAW RSA keys for authentication.
+
+note east.secrets handling is special to pick up proper raw rsa (private) key 

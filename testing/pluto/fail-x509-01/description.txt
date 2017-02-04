@@ -1,4 +1,0 @@
-This test is identical to x509-pluto-02.
-
-However, the certificate that north provides has been revoked in a CRL.
-

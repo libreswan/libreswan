@@ -20,9 +20,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-000  
 006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@road'
-000  
 east #
  # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
 east #

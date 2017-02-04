@@ -109,7 +109,7 @@ class guest (threading.Thread):
         self.hostname = hostname
         self.dname = hostname
         if args.instance:
-            self.dname = hostname + str(args.instance)
+            self.dname = str(args.instance) + hostname
         self.role = role
         self.testname = testname
         self.status = "NEW"
@@ -1159,7 +1159,7 @@ def shut_down_hosts(args, test_hosts):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logging.info(
-            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -1549,7 +1549,7 @@ def cmdline():
 
     parser.add_argument(
         "--instance", default=DEFAULTCONFIG['instance'],
-        type=int, help="instance prefix %s" % DEFAULTCONFIG['instance'])
+        help="instance prefix %s" % DEFAULTCONFIG['instance'])
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -2469,7 +2469,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logging.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
+        logging.debug("IPSECVERSION %s was set in environment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion

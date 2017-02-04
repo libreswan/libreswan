@@ -47,16 +47,16 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 	*slot = PK11_GetInternalKeySlot();
 	if (*slot == NULL) {
 		    DBG(DBG_X509,
-			DBG_log("PK11_GetInternalKeySlot error [%d]",
-				PORT_GetError()));
+			DBG_log("NSS PK11_GetInternalKeySlot error: %s",
+				nss_err_str(PORT_GetError())));
 		return FALSE;
 	}
 
 	*handle = CERT_GetDefaultCertDB();
 	if (*handle == NULL) {
 		    DBG(DBG_X509,
-			DBG_log("error getting db handle [%d]",
-				PORT_GetError()));
+			DBG_log("NSS error getting DB handle: %s",
+				nss_err_str(PORT_GetError())));
 		return FALSE;
 	}
 
@@ -65,7 +65,7 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 
 static bool crl_is_current(CERTSignedCrl *crl)
 {
-	return NSSCERT_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
 static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
@@ -195,7 +195,8 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
 						chain, PR_FALSE, PR_FALSE, NULL);
 		if (rv != SECSuccess || *chain == NULL) {
-			DBG(DBG_X509, DBG_log("could not decode any certs: SECStatus: %d", PORT_GetError()));
+			DBG(DBG_X509, DBG_log("NSS error decoding certs: %s",
+					       nss_err_str(PORT_GetError())));
 		} else {
 			CERTCertificate **cc;
 
@@ -371,7 +372,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	/* kludge alert!!
 	 * verification may be performed twice: once with the
 	 * 'client' usage and once with 'server', which is an NSS
-	 * detail and not related to IKE. In the absense of a real
+	 * detail and not related to IKE. In the absence of a real
 	 * IKE profile being available for NSS, this covers more
 	 * KU/EKU combinations
 	 */

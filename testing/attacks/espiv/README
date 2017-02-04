@@ -13,7 +13,7 @@ packets to the tunnel. By doing this the software is able to verify
 guess about any chipper text block seen between the IPsec gateways.
 
 Example of the program usage:
-First remember to set the listening interface to promiscous mode! This
+First remember to set the listening interface to promiscuous mode! This
 can be done with ifconfig (ifconfig eth0 promisc).
 
 Network topology
@@ -21,7 +21,7 @@ Network topology
 192.168.200.0/24 +-----+ 10.0.0.0/24     +-----+ 192.168.137.0/24
 -----------------| GW2 |--+--------------| GW1 +--+
 		 +-----+  |              +-----+  |
-			  |	                  |	
+			  |	                  |
 			  |   +---+               |
 			  +---+ A |---------------+
 			      +---+

@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,19 +25,14 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "defs.h"
-#include "log.h"
+#include "lswlog.h"
 #include "libtwofish/twofish_cbc.h"
-#include "alg_info.h"
 #include "ike_alg.h"
 #include "ike_alg_twofish.h"
+#include "ietf_constants.h"
 
-#define  TWOFISH_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)
-#define  TWOFISH_KEY_MIN_LEN    128
-#define  TWOFISH_KEY_DEF_LEN    128
-#define  TWOFISH_KEY_MAX_LEN    256
-
-static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
+static void do_twofish(const struct encrypt_desc *alg UNUSED,
+		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		       u_int8_t *iv, bool enc)
 {
 	twofish_context twofish_ctx;
@@ -81,19 +77,21 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 {
 	.common = {
 		.name = "twofish",
+		.names = { "twofish", "twofish_cbc", },
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.algo_id = OAKLEY_TWOFISH_CBC,
-		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC,
-		.algo_next = NULL,
+		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
+		.ikev1_esp_id = ESP_TWOFISH,
+		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_TWOFISH_CBC
+#endif
 	},
-	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
-	.keydeflen = TWOFISH_KEY_MIN_LEN,
-	.keyminlen = TWOFISH_KEY_DEF_LEN,
-	.keymaxlen = TWOFISH_KEY_MAX_LEN,
+	.keydeflen = TWOFISH_KEY_DEF_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_twofish,
 };
 
@@ -101,18 +99,19 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 {
 	.common = {
 		.name = "twofish_ssh", /* We don't know if this is right */
+		.names = { "twofish_ssh", "twofish_cbc_ssh", },
 		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
-		.algo_id = OAKLEY_TWOFISH_CBC_SSH,
-		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC_SSH,
-		.algo_next = NULL,
+		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
+		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
+#ifdef NOT_YET
+		.nss_mechanism = CKM_TWOFISH_CBC
+#endif
 	},
-	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
-	.keydeflen = TWOFISH_KEY_MIN_LEN,
-	.keyminlen = TWOFISH_KEY_DEF_LEN,
-	.keymaxlen = TWOFISH_KEY_MAX_LEN,
+	.keydeflen = TWOFISH_KEY_DEF_LEN,
+	.key_bit_lengths = { 256, 192, 128, },
 	.do_crypt = do_twofish,
 };

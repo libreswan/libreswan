@@ -62,10 +62,10 @@
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
+#include "crypto.h"
 
 #ifdef USE_LINUX_AUDIT
 # include <libaudit.h>
-# include "crypto.h" /* for oakley_group_desc */
 #endif
 
 #ifndef NO_DB_OPS_STATS
@@ -610,34 +610,24 @@ void whack_log(int mess_no, const char *message, ...)
 	pthread_mutex_unlock(&log_mutex);
 }
 
-/* Debugging message support */
-
-void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
+void libreswan_passert_fail(const char *file_str,
+			    unsigned long line_no,
+			    const char *func_str,
+			    const char *fmt, ...)
 {
-	char buf[30];
+	va_list args;
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
-	snprintf(buf, sizeof(buf), "case %d unexpected", n);
-	passert_fail(buf, file_str, line_no);
-	/* NOTREACHED */
-}
+	va_start(args, fmt);
+	fmt_log(m, sizeof(m), fmt, args);
+	va_end(args);
 
-void passert_fail(const char *pred_str, const char *file_str,
-		  unsigned long line_no)
-{
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
-		file_str, line_no, pred_str);
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s at %s:%lu)",
+	       m, func_str, file_str, line_no);
 	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
-}
-
-void pexpect_log(const char *pred_str, const char *file_str,
-		 unsigned long line_no)
-{
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
 }
 
 lset_t
@@ -1200,17 +1190,17 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			st->st_oakley.prf_hasher->common.officname);
+			 st->st_oakley.prf->common.officname);
 
-		if (st->st_oakley.integ_hasher != NULL) {
+		if (st->st_oakley.integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.integ_hasher->common.officname,
-				st->st_oakley.integ_hasher->hash_integ_len *
+				st->st_oakley.integ->common.officname,
+				st->st_oakley.integ->integ_output_size *
 				BITS_PER_BYTE);
 		} else {
 			if (!st->st_ikev2) {
 				/* ikev1 takes integ from prf, ecept of cause gcm */
-				/* but we dont support gcm in ikev1 for now */
+				/* but we don't support gcm in ikev1 for now */
 				jam_str(integname, sizeof(integname), prfname);
 			} else {
 				snprintf(integname, sizeof(integname), "none");

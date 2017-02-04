@@ -204,13 +204,13 @@ def _boot_test_domains(logger, test, domain_prefix, executor):
         logger.info("submitted %d jobs; currently %d jobs pending",
                     len(jobs), executor_qsize_hack(executor))
 
-        # Wait for the jobs to finish.  If one crashes, propogate the
+        # Wait for the jobs to finish.  If one crashes, propagate the
         # exception - will force things into the finally block.
 
         logger.debug("submitted jobs: %s", jobs)
         for job in futures.as_completed(jobs):
             logger.debug("job %s on %s completed", job, jobs[job])
-            # propogate any exception
+            # propagate any exception
             job.result()
 
         return test_domains
@@ -279,7 +279,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         # Be lazy when gathering the results, don't run the sanitizer
         # or diff.  Let post.mortem figure out if the test finished.
 
-        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix,
+                                 quick=True, finished=None)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
@@ -296,10 +297,13 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             logger.info("%s %s started ....", prefix, test_prefix)
         test_stats.add(test, "tests")
 
-        # Create the OUTPUT/ directory; if it already exists, move any
-        # contents to BACKUP/.  Do it file-by-file so that, at no
-        # point, the OUTPUT/ directory missing (presence of OUTPUT/
-        # implies the test was started).
+        # Create just the OUTPUT/ directory; if it already exists,
+        # move any contents to BACKUP/.  Do it file-by-file so that,
+        # at no point, the OUTPUT/ directory is missing (having an
+        # OUTPUT/ directory implies the test was started).
+        #
+        # Don't create the path.  If the parent directory is missing,
+        # this will fail.
         #
         # By backing up each test just before it is started, a trail
         # of what tests were attempted during each run is created.
@@ -317,6 +321,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
         try:
             os.mkdir(test.output_directory)
+        except FileNotFoundError:
+            # Bail, something is messed up (for instance the parent directory doesn't exist).
+            return
         except FileExistsError:
             backup_directory = os.path.join(args.backup_directory, test.name)
             logger.info("moving contents of '%s' to '%s'",
@@ -343,9 +350,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 except pexpect.TIMEOUT:
                     logger.exception("timeout while booting domains")
                     # Bail before RESULT is written - being unable to
-                    # boot the domains is a disaster.
+                    # boot the domains is a disaster.  The test is
+                    # UNRESOLVED.
                     return
-
 
             # Run the scripts directly
             with logger.time("running scripts %s",
@@ -363,23 +370,18 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                                   test_domain.domain.host_name + ".console.verbose.txt")
                             test_domain.console.output(open(output, "w"))
 
-                        for host, script in test.host_script_tuples:
-                            if args.stop_at == script:
-                                logger.error("stopping test run at (before executing) script %s", script)
-                                break
-                            test_domain = test_domains[host]
-                            test_domain.read_file_run(script)
-                        result = post.mortem(test, args,
-                                             domain_prefix=domain_prefix,
-                                             finished=True, update=True)
-
-                    except pexpect.TIMEOUT as e:
-                        logger.exception("**** timeout out while running script %s ****", script)
-                        # Still peform post-mortem so that errors are
-                        # captured, but force the result to
-                        # incomplete.
-                        result = post.mortem(test, args, domain_prefix=domain_prefix,
-                                             finished=False, update=True)
+                        try:
+                            for host, script in test.host_script_tuples:
+                                if args.stop_at == script:
+                                    logger.error("stopping test run at (before executing) script %s", script)
+                                    break
+                                test_domain = test_domains[host]
+                                test_domain.read_file_run(script)
+                        except pexpect.TIMEOUT as e:
+                            # A test ending with a timeout is still a
+                            # finished test.  Analysis of the results
+                            # will detect this and flag it as a fail.
+                            logger.error("**** timeout out while running script %s ****", script)
 
                     finally:
 
@@ -396,14 +398,17 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 logfile.close()
                             test_domain.close()
 
-    # Above will have set RESULT.  Exceptions such as control-c or
-    # a crash bypass this code.
+    # The test finished.  Aborts such as a failed boot, or a timeout,
+    # will skip all the below.
+
+    result = post.mortem(test, args, domain_prefix=domain_prefix,
+                         finished=True, update=True)
 
     logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                 result.issues and " ", result.issues, suffix)
 
-    # If the test finished (resolved in POSIX terminology)", emit
-    # enough JSON to fool scripts like pluto-testlist-scan.sh.
+    # Since the the test finished (resolved in POSIX terminology)",
+    # emit enough JSON to fool scripts like pluto-testlist-scan.sh.
     #
     # A test that timed-out or crashed, isn't considered resolved.
     #
@@ -411,24 +416,24 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     # console logs as complete as it is closed.
     #
     # More detailed information can be extracted from the debug.log.
-    if result.resolution in [result.resolution.PASSED, result.resolution.FAILED]:
-        RESULT = {
-            jsonutil.result.testname: test.name,
-            jsonutil.result.expect: test.expected_result,
-            jsonutil.result.result: result,
-            jsonutil.result.issues: result.issues,
-            jsonutil.result.hosts: test.host_names,
-            jsonutil.result.time: jsonutil.ftime(test_total_time.start),
-            jsonutil.result.runtime: round(test_runtime.seconds(), 1),
-            jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
-            jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-            jsonutil.result.total_time: round(test_total_time.seconds(), 1),
-        }
-        j = jsonutil.dumps(RESULT)
-        logger.info("filling '%s' with json: %s", test.result_file(), j)
-        with open(test.result_file(), "w") as f:
-            f.write(j)
-            f.write("\n")
+
+    RESULT = {
+        jsonutil.result.testname: test.name,
+        jsonutil.result.expect: test.status,
+        jsonutil.result.result: result,
+        jsonutil.result.issues: result.issues,
+        jsonutil.result.hosts: test.host_names,
+        jsonutil.result.time: jsonutil.ftime(test_total_time.start),
+        jsonutil.result.runtime: round(test_runtime.seconds(), 1),
+        jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
+        jsonutil.result.script_time: round(test_script_time.seconds(), 1),
+        jsonutil.result.total_time: round(test_total_time.seconds(), 1),
+    }
+    j = jsonutil.dumps(RESULT)
+    logger.info("filling '%s' with json: %s", test.result_file(), j)
+    with open(test.result_file(), "w") as f:
+        f.write(j)
+        f.write("\n")
 
     test_stats.add(test, "tests", str(result))
     result_stats.add_result(result, old_result)

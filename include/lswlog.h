@@ -122,7 +122,7 @@ enum rc_type {
 	RC_NOPEERIP,		/* cannot initiate when peer IP is unknown */
 	RC_INITSHUNT,		/* cannot initiate a shunt-oly connection */
 	RC_WILDCARD,		/* cannot initiate when ID has wildcards */
-	RC_NOVALIDPIN,		/* cannot initiate without valid PIN */
+	RC_CRLERROR,		/* CRL fetching disabled or obsolete reread cmd */
 
 	/* permanent failure */
 

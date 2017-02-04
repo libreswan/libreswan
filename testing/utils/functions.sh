@@ -9,7 +9,7 @@ if test -z "${BASH_VERSION}" ; then
 fi
 
 #
-#  DHR says, alwasy eat your dogfood!:
+#  DHR says, always eat your dogfood!:
 # set -u -e
 set -e
 
@@ -31,11 +31,11 @@ consolediff() {
 		      ${FIXUPDIR} ${FIXUPDIR2:-} \
 		      > ${fixedoutput}
 
-    if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
+    if diff -N -u $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
 	echo "${prefix} Consoleoutput matched"
     else
-	diffstat=`diff -N -u -w -b -B $ref $fixedoutput | diffstat -f 0`
+	diffstat=`diff -N -u $ref $fixedoutput | diffstat -f 0`
 	echo "${prefix} Consoleoutput differed '$diffstat'"
 
 	case "$success" in
@@ -137,7 +137,7 @@ complibtest() {
         ${ECHO} "   "Sourcing ${SRCDIR}FLAGS
 	. ${SRCDIR}FLAGS
     fi
-     	
+
     if [ -f ${SRCDIR}FLAGS.$testobj ]
     then
         ${ECHO} "   "Sourcing ${SRCDIR}FLAGS.$testobj
@@ -185,7 +185,7 @@ libtest() {
 	    else
 		if [ -r OUTPUT.$testobj.txt ]
 		then
-		    if diff -N -u -w -b -B lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt OUTPUT.$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
+		    if diff -N -u lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt OUTPUT.$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
 		    then
 			${ECHO} "   ""output matched"
 			stat="0"
@@ -230,7 +230,7 @@ multilibtest() {
 	    else
 		if [ -r OUTPUT.$testobj.txt ]
 		then
-		    if diff -N -u -w -b -B OUTPUT.$testobj.txt lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
+		    if diff -N -u OUTPUT.$testobj.txt lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
 		    then
 			${ECHO} "output matched"
 			stat="0"
@@ -521,7 +521,7 @@ do_unittest() {
 
     if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
 
-    echo "BUILDING DEPENDANCIES"
+    echo "BUILDING DEPENDENCIES"
     (cd ${ROOTDIR}/programs;
      for program in ${PROGRAMS}
      do

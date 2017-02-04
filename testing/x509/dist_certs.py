@@ -214,8 +214,10 @@ def gen_gmtime_dates():
 			time.strftime(gmtfmt, time.gmtime())) - (60*60*24)
 	two_days_ago_stamp = ok_stamp - (60*60*48)
 	two_days_ago_end_stamp = two_days_ago_stamp + (60*60*24)
+        # Make future certs only +300 days, so we have a time overlap
+        # between currently valid certs (1 year) and these futuristic certs
 	future_stamp = ok_stamp + (60*60*24*365*1)
-	future_end_stamp = future_stamp + (60*60*24*365*1)
+	future_end_stamp = future_stamp + (60*60*24*365*2)
 
 	return dict(OK_NOW=gmc(ok_stamp),
 				OLD=gmc(two_days_ago_stamp),
@@ -254,7 +256,7 @@ def create_basic_pluto_cas(ca_names):
 		print " - creating %s" % name
 		ca, key = create_root_ca(CN="Libreswan test CA for " + name,
 								 START=dates['OK_NOW'],
-								 END=dates['FUTURE'])
+								 END=dates['FUTURE_END'])
 		writeout_cert_and_key("cacerts/", name, ca, key)
 		store_cert_and_key(name, ca, key)
 
@@ -295,7 +297,7 @@ def create_mainca_end_certs(mainca_end_certs):
 			enddate = dates['OLD_END']
 		else:
 			startdate = dates['OK_NOW']
-			enddate = dates['FUTURE']
+			enddate = dates['FUTURE_END']
 
 		if name == 'signedbyother':
 			signer = 'otherca'
@@ -383,7 +385,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 
 			if level == max_path - 1:
 				endcert_name = prefix + chainca + "_endcert"
-				
+
 				signpair = ca_certs[lastca]
 				print " - creating %s" % endcert_name
 				ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",

@@ -20,6 +20,3 @@
 #include "certs.h"
 
 extern err_t pemtobin(chunk_t *blob);
-
-extern void do_3des_nss(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
-			u_int8_t *iv, bool enc);

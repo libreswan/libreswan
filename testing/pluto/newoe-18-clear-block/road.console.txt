@@ -33,7 +33,6 @@ road #
  sleep 5
 road #
  ipsec whack --trafficstatus
-000  
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -178,7 +177,7 @@ Certificate Nickname                                         Trust Attributes
 road #
  # should not show any hits
 road #
- grep "fos_" /tmp/pluto.log
+ grep "initiate on demand" /tmp/pluto.log
 road #
 road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

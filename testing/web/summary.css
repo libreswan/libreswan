@@ -1,3 +1,11 @@
 body {
   font: 10px sans-serif;
 }
+
+table.summary {
+    width: 100%;
+}
+table.summary td:nth-child(1) {
+    width: 35%;
+    text-align: left;
+}

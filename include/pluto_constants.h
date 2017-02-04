@@ -30,12 +30,6 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
-/* default proposal values and preferences */
-/* kept small because in IKEv1 it explodes in transforms of all possible combinations */
-#define DEFAULT_OAKLEY_GROUPS    OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024
-#define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
-#define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
-
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
@@ -86,6 +80,15 @@ enum keyword_remotepeertype {
 	CISCO = 1,
 };
 
+/* keep in sync with ikev2_asym_auth_names */
+enum keyword_authby {
+	AUTH_UNSET	= 0,
+	AUTH_NEVER	= 1,
+	AUTH_PSK	= 2,
+	AUTH_RSASIG	= 3,
+	AUTH_NULL	= 4,
+};
+
 enum keyword_xauthby {
 	XAUTHBY_FILE = 0,
 	XAUTHBY_PAM = 1,
@@ -95,6 +98,17 @@ enum keyword_xauthby {
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,
+};
+
+/* OCSP related constants - defaults picked from NSS defaults */
+#define OCSP_DEFAULT_CACHE_SIZE 1000
+#define OCSP_DEFAULT_CACHE_MIN_AGE 3600
+#define OCSP_DEFAULT_CACHE_MAX_AGE 24 * 3600
+#define OCSP_DEFAULT_TIMEOUT 2
+
+enum keyword_ocsp_method {
+	OCSP_METHOD_GET = 0, /* really GET plus POST - see NSS code */
+	OCSP_METHOD_POST = 1, /* only POST */
 };
 
 /* corresponding name table is sd_action_names */
@@ -166,7 +180,7 @@ enum event_type {
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
 /*
- * an arbitary milliseconds delay for responder. A workaround for iOS, iPhone.
+ * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.
  */
 #define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
@@ -498,9 +512,7 @@ enum original_role {
 				  LELEM(STATE_AGGR_I2) | \
 				  LELEM(STATE_XAUTH_I0) | \
 				  LELEM(STATE_XAUTH_I1) | \
-				  LELEM(STATE_MODE_CFG_I1) | \
-				  LELEM(STATE_PARENT_I1) | \
-				  LELEM(STATE_PARENT_I2))
+				  LELEM(STATE_MODE_CFG_I1))
 
 
 #define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
@@ -523,6 +535,9 @@ enum original_role {
 #define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
 				    && STATE_AGGR_R0 != (s) \
 				    && STATE_AGGR_I1 != (s))
+
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I1) |\
+					LELEM(STATE_PARENT_I2))
 
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
@@ -704,7 +719,7 @@ enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
-	POLICY_DISABLEARRIVALCHECK_IX,	/* supress tunnel egress address checking */
+	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -781,7 +796,7 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* supress tunnel egress address checking */
+#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
 #define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)
@@ -809,6 +824,9 @@ enum sa_policy_bits {
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+
+/* Default policy for now is using RSA - this might change to ECC */
+#define POLICY_DEFAULT POLICY_RSASIG
 
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 

@@ -49,7 +49,7 @@
 #define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 43)
 
 /*
- * Where, if any, is the pubkey comming from.
+ * Where, if any, is the pubkey coming from.
  *
  * This goes across the wire so re-ordering this means bumping whack's
  * version number.
@@ -69,6 +69,8 @@ struct whack_end {
 	char *pubkey;	/* PUBKEY_TYPE string (if any) -- decoded by pluto  */
 	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;	/* access control groups (if any) -- parsed by pluto */
+
+	enum keyword_authby authby;
 
 	enum keyword_host host_type;
 	ip_address host_addr,
@@ -192,6 +194,7 @@ struct whack_message {
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
+
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;
@@ -372,8 +375,9 @@ struct whack_message {
 
 #define REREAD_NONE	0x00		/* don't reread anything */
 #define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
-#define REREAD_CRLS	0x02		/* reread crls in /etc/ipsec.d/crls */
-#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)	/* all reread options */
+#define REREAD_CRLS	0x02		/* obsoleted - just gives a warning */
+#define REREAD_FETCH	0x04		/* update CRL from distribution point(s) */
+#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_FETCH)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;
@@ -390,6 +394,6 @@ extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
 extern bool lsw_alias_cmp(const char *needle, const char *haystack);
-extern void whack_process(int whackfd, const struct whack_message msg);
+extern void whack_process(int whackfd, const struct whack_message *const m);
 
 #endif /* _WHACK_H */

@@ -130,18 +130,24 @@ static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_
 #endif
 
 /*
- * Values for authby={rsasig, secret, null}
+ * Values for authby={never, rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
-	/* note: these POLICY bits happen to fit in an unsigned int */
-	{ "never",     LEMPTY },
-	{ "null",      POLICY_AUTH_NULL},
-	{ "secret",    POLICY_PSK },
-	{ "rsasig",    POLICY_RSASIG },
-	{ "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
+        { "never",     LEMPTY },
+        { "null",      POLICY_AUTH_NULL},
+        { "secret",    POLICY_PSK },
+        { "rsasig",    POLICY_RSASIG },
+        { "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
 };
-
 static const struct keyword_enum_values kw_authby_list = VALUES_INITIALIZER(kw_authby_values);
+
+static const struct keyword_enum_value kw_auth_lr_values[] = {
+       { "never",     AUTH_NEVER },
+       { "secret",    AUTH_PSK },
+       { "rsasig",    AUTH_RSASIG },
+       { "null",      AUTH_NULL },
+ };
+static const struct keyword_enum_values kw_auth_lr_list = VALUES_INITIALIZER(kw_auth_lr_values);
 
 /*
  * Values for dpdaction={hold,clear,restart}
@@ -361,6 +367,22 @@ static const struct keyword_enum_value kw_ikev1natt_values[] = {
 
 static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(kw_ikev1natt_values);
 
+/*
+ * Values for ocsp-method={get|post}
+ *
+ * This sets the NSS forcePost option for the OCSP request.
+ * If forcePost is set, OCSP requests will only be sent using the HTTP POST
+ * method. When forcePost is not set, OCSP requests will be sent using the
+ * HTTP GET method, with a fallback to POST when we fail to receive a response
+ * and/or when we receive an uncacheable response like "Unknown".
+ */
+static const struct keyword_enum_value kw_ocsp_method_values[] = {
+	{ "get",      OCSP_METHOD_GET },
+	{ "post",     OCSP_METHOD_POST },
+};
+static const struct keyword_enum_values kw_ocsp_method_list = VALUES_INITIALIZER(kw_ocsp_method_values);
+
+
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
@@ -391,35 +413,37 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "plutorestartoncrash",  kv_config,  kt_bool,  KBF_PLUTORESTARTONCRASH,  NOT_ENUM },
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR,  NOT_ENUM },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR,  NOT_ENUM },
+  { "nssdir", kv_config, kt_dirname, KSF_NSSDIR, NOT_ENUM },
   { "secretsfile",  kv_config,  kt_dirname,  KSF_SECRETSFILE,  NOT_ENUM },
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY,  NOT_ENUM },
   { "perpeerlog",  kv_config,  kt_bool,  KBF_PERPEERLOG,  NOT_ENUM },
   { "perpeerlogdir",  kv_config,  kt_dirname,  KSF_PERPEERDIR,  NOT_ENUM },
-  { "oe",  kv_config,  kt_obsolete_quiet,  KBF_WARNIGNORE,  NOT_ENUM },
   { "fragicmp",  kv_config,  kt_bool,  KBF_FRAGICMP,  NOT_ENUM },
   { "hidetos",  kv_config,  kt_bool,  KBF_HIDETOS,  NOT_ENUM },
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS,  NOT_ENUM },
   { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME,  NOT_ENUM },
   { "overridemtu",  kv_config,  kt_number,  KBF_OVERRIDEMTU,  NOT_ENUM },
 
-  { "crl-strict",  kv_config,  kt_bool,  KBF_STRICTCRLPOLICY,  NOT_ENUM },
-  { "ocsp-strict",  kv_config,  kt_bool,  KBF_STRICTOCSPPOLICY,  NOT_ENUM },
-  { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSPENABLE,  NOT_ENUM },
-  { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSPURI,  NOT_ENUM },
-  { "ocsp-timeout",  kv_config,  kt_number,  KBF_OCSPTIMEOUT,  NOT_ENUM },
-  { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSPTRUSTNAME,  NOT_ENUM },
-  { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRLCHECKINTERVAL,  NOT_ENUM },
-  { "crl_strict",  kv_config | kv_alias,  kt_bool,  KBF_STRICTCRLPOLICY,  NOT_ENUM },  /* obsolete _ */
-  { "strictcrlpolicy",  kv_config | kv_alias,  kt_bool,  KBF_STRICTCRLPOLICY,  NOT_ENUM },  /* obsolete used on openswan */
-  { "ocsp_strict",  kv_config | kv_alias,  kt_bool,  KBF_STRICTOCSPPOLICY,  NOT_ENUM },  /* obsolete _ */
-  { "ocsp_enable",  kv_config | kv_alias,  kt_bool,  KBF_OCSPENABLE,  NOT_ENUM },  /* obsolete _ */
-  { "ocsp_uri",  kv_config | kv_alias,  kt_string,  KSF_OCSPURI,  NOT_ENUM },  /* obsolete _ */
-  { "ocsp_timeout",  kv_config | kv_alias,  kt_number,  KBF_OCSPTIMEOUT,  NOT_ENUM },  /* obsolete _ */
-  { "ocsp_trust_name",  kv_config | kv_alias,  kt_string,  KSF_OCSPTRUSTNAME,  NOT_ENUM },  /* obsolete _ */
+  { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT,  NOT_ENUM },
+  { "crl_strict",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT,  NOT_ENUM },  /* obsolete _ */
+  { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRL_CHECKINTERVAL,  NOT_ENUM },
+  { "strictcrlpolicy",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT,  NOT_ENUM },  /* obsolete used on openswan */
 
-  { "plutofork",  kv_config | kv_alias,  kt_bool,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsolete */
-  { "force_busy",  kv_config | kv_alias,  kt_bool,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsolete _ */
-  { "force-busy",  kv_config,  kt_bool,  KBF_FORCEBUSY,  NOT_ENUM },  /* obsoleted for ddos-mode=busy */
+  { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT,  NOT_ENUM },
+  { "ocsp_strict",  kv_config | kv_alias,  kt_bool,  KBF_OCSP_STRICT,  NOT_ENUM },  /* obsolete _ */
+  { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE,  NOT_ENUM },
+  { "ocsp_enable",  kv_config | kv_alias,  kt_bool,  KBF_OCSP_ENABLE,  NOT_ENUM },  /* obsolete _ */
+  { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI,  NOT_ENUM },
+  { "ocsp_uri",  kv_config | kv_alias,  kt_string,  KSF_OCSP_URI,  NOT_ENUM },  /* obsolete _ */
+  { "ocsp-timeout",  kv_config,  kt_number,  KBF_OCSP_TIMEOUT,  NOT_ENUM },
+  { "ocsp_timeout",  kv_config | kv_alias,  kt_number,  KBF_OCSP_TIMEOUT,  NOT_ENUM },  /* obsolete _ */
+  { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME,  NOT_ENUM },
+  { "ocsp_trust_name",  kv_config | kv_alias,  kt_string,  KSF_OCSP_TRUSTNAME,  NOT_ENUM },  /* obsolete _ */
+  { "ocsp-cache-size",  kv_config,  kt_number,  KBF_OCSP_CACHE_SIZE,  NOT_ENUM },
+  { "ocsp-cache-min-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MIN,  NOT_ENUM },
+  { "ocsp-cache-max-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MAX,  NOT_ENUM },
+  { "ocsp-method",  kv_config | kv_processed,  kt_enum,  KBF_OCSP_METHOD,  &kw_ocsp_method_list },
+
   { "ddos-mode",  kv_config | kv_processed ,  kt_enum,  KBF_DDOS_MODE,  &kw_ddos_list },
 #ifdef HAVE_SECCOMP
   { "seccomp",  kv_config | kv_processed ,  kt_enum,  KBF_SECCOMP,  &kw_seccomp_list },
@@ -436,9 +460,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "seedbits",  kv_config,  kt_number,  KBF_SEEDBITS,  NOT_ENUM },
   { "keep_alive",  kv_config | kv_alias,  kt_number,  KBF_KEEPALIVE,  NOT_ENUM },  /* obsolete _ */
   { "keep-alive",  kv_config,  kt_number,  KBF_KEEPALIVE,  NOT_ENUM },
-  { "nat_traversal",  kv_config,  kt_obsolete_quiet,  KBF_WARNIGNORE,  NOT_ENUM },
-  { "disable_port_floating",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
-  { "force_keepalive",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN,  NOT_ENUM },
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  &kw_proto_stack },
@@ -450,7 +471,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "secctx-attr-value",  kv_config,  kt_number,  KBF_SECCTX,  NOT_ENUM },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config,  kt_number,  KBF_SECCTX,  NOT_ENUM },
 #endif
-  /* these options are obsoleted. Don't die on them */
+
+  /* these options are obsoleted (and not old aliases) */
   { "forwardcontrol",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "rp_filter",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "pluto",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
@@ -459,6 +481,13 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "plutoopts",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "plutowait",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "nocrsend",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "nat_traversal",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "disable_port_floating",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "force_keepalive",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
+  { "plutofork",  kv_config | kv_alias,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsolete */
+  { "force-busy",  kv_config,  kt_obsolete, KBF_WARNIGNORE,  NOT_ENUM },  /* obsoleted for ddos-mode=busy */
+  { "force-busy",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },  /* obsoleted for ddos-mode=busy */
+  { "oe",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
   /*
    * This is "left=" and "right="
@@ -488,6 +517,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
   { "xauthname",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME,  NOT_ENUM },  /* obsolete name */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL,  NOT_ENUM },
+  { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  &kw_auth_lr_list },
 
   /* these are conn statements which are not left/right */
   { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KBF_AUTO,  &kw_auto_list },
@@ -595,7 +625,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT,  NOT_ENUM },
 
   { "phase2",  kv_conn | kv_policy,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
-  { "auth",  kv_conn | kv_policy | kv_alias,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list },
 
   { "compress",  kv_conn,  kt_bool,  KBF_COMPRESS,  NOT_ENUM },
 

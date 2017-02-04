@@ -20,11 +20,11 @@ endif
 
 include $(top_srcdir)/Makefile.inc
 
-# needs ifdefs for USE_MD5, etc
-SUBDIRS=libmd5 libsha1 libsha2 libaes_xcbc
-
-ifeq ($(USE_EXTRACRYPTO),true)
-SUBDIRS+=libtwofish libserpent
+ifeq ($(USE_SERPENT),true)
+SUBDIRS+=libserpent
+endif
+ifeq ($(USE_TWOFISH),true)
+SUBDIRS+=libtwofish
 endif
 
 include $(top_srcdir)/mk/subdirs.mk

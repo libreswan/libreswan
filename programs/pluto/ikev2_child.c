@@ -48,9 +48,7 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
-#include "md5.h"
-#include "sha1.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
@@ -958,6 +956,107 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	return STF_OK;
 }
 
+static struct state *find_state_to_rekey(struct payload_digest *p,
+		struct state *pst)
+{
+	struct state *st;
+	ipsec_spi_t spi;
+	struct ikev2_notify ntfy = p->payload.v2n;
+
+	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
+			ntfy.isan_protoid == PROTO_IPSEC_AH) {
+		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPSec SA rekey "
+					"Protocol %s",
+					enum_show(&ikev2_protocol_names,
+						ntfy.isan_protoid)));
+
+	} else {
+		libreswan_log("CREATE_CHILD_SA IPSec SA rekey invalid Protocol ID %s",
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid));
+		return NULL;
+	}
+	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
+		libreswan_log("CREATE_CHILD_SA IPSec SA rekey invalid spi "
+				"size %u", ntfy.isan_spisize);
+		return NULL;
+	}
+
+	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+		return NULL;      /* cannot happen */
+
+	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPSec SA(0x%08"
+				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid)));
+
+	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
+			ntfy.isan_protoid, spi);
+	if (st == NULL) {
+		libreswan_log("CREATE_CHILD_SA no such IPSec SA to rekey SA(0x%08"
+				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid));
+	}
+
+	return st;
+}
+
+static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
+{
+
+	struct state *st = md->st;  /* new child state */
+	struct state *rst = NULL; /* old child state being rekeyed */
+	struct payload_digest *ntfy;
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_REKEY_SA:
+			DBG(DBG_CONTROL, DBG_log("received v2N REKEY_SA "));
+			/*
+			 * incase of a failure the response is
+			 * a v2N_CHILD_SA_NOT_FOUND with
+			 * with SPI and type {AH|ESP} in the notify
+			 * do we support that yet? RFC 7296 3.10
+			 * return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
+			 */
+			rst = find_state_to_rekey(ntfy, pst);
+			if(rst == NULL) {
+				libreswan_log("no valid IPSec SA SPI to rekey");
+				return FALSE;
+			}
+			break;
+		default:
+			/*
+			 * there is another pass of notify payloads after this
+			 * that will handle all other but REKEY
+			 */
+			break;
+		}
+	}
+
+	if (rst != NULL) {
+		/*
+		 * RFC 7296 #2.9.2 the exact or the superset.
+		 * exact is a should. Here we only allow the exact.
+		 * Inherit the TSi TSr from old state, IPSec SA.
+		 */
+
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit spd, TSi TSr, from "
+					"#%lu", st->st_serialno,
+					rst->st_serialno));
+		struct spd_route *spd = &rst->st_connection->spd;
+		st->st_ts_this = ikev2_end_to_ts(&spd->this);
+		st->st_ts_that = ikev2_end_to_ts(&spd->that);
+		ikev2_print_ts(&st->st_ts_this);
+		ikev2_print_ts(&st->st_ts_that);
+	}
+
+	return (rst == NULL ? FALSE : TRUE );
+}
+
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum original_role role,
 				  pb_stream *outpbs,
@@ -968,9 +1067,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	bool send_use_transport;
-	stf_status ret;
+	stf_status ret = STF_FAIL;
 
-	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
+			ikev2_rekey_child_copy_ts(md)) {
+		cst = md->st;
+	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
 		if (ret != STF_OK)
 			return ret;
@@ -978,6 +1080,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		ret = ikev2_create_responder_child_state(md, &cst, role,
 				isa_xchg);
 	}
+
 	if (cst == NULL)
 		return ret;	/* things went badly */
 
@@ -1085,6 +1188,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
 				cst->st_seen_no_tfc = TRUE;
 				break;
+			case v2N_REKEY_SA:
+				DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
+				break;
 			default:
 				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
 					enum_name(&ikev2_notify_names,
@@ -1165,15 +1271,15 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	ikev2_derive_child_keys(cst, role);
 
-	ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
+	/* Check to see if we need to release an old instance */
+       ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
 
 	/* mark the connection as now having an IPsec SA associated with it. */
-	cst->st_connection->newest_ipsec_sa = cst->st_serialno;
-	log_newest_sa_change("inR2", cst);
+	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, isa_xchg), cst);
 
 	return STF_OK;
 }

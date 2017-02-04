@@ -1,0 +1,6 @@
+
+IKEv2 with missing ID. In older versions this used a struct id that
+contained garbage, resulting in a bad alloc_bytes and a crash.
+
+The crash required ID using IP, being behind NAT and getting a lease IP
+

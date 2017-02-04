@@ -37,6 +37,7 @@ d.ipsec.conf/leftrsasigkey.xml
 d.ipsec.conf/leftrsasigkey2.xml
 d.ipsec.conf/leftcert.xml
 d.ipsec.conf/leftckaid.xml
+d.ipsec.conf/leftauth.xml
 d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml
@@ -51,7 +52,7 @@ d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote-peer-type.xml
 d.ipsec.conf/nm-configured.xml
-d.ipsec.conf/encaps.xml
+d.ipsec.conf/encapsulation.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml

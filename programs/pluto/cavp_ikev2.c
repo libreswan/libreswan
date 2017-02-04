@@ -1,7 +1,7 @@
 /*
  * Parse IKEv1 CAVP test functions, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +18,8 @@
 
 #include "lswalloc.h"
 #include "ike_alg.h"
+#include "ike_alg_sha1.h"
+#include "ike_alg_sha2.h"
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
@@ -26,37 +28,38 @@
 #include "cavp_print.h"
 #include "cavp_ikev2.h"
 
-static int g_ir_length;
-static int ni_length;
-static int nr_length;
-static int dkm_length;
-static int child_sa_dkm_length;
+static long int g_ir_length;
+static long int ni_length;
+static long int nr_length;
+static long int dkm_length;
+static long int child_sa_dkm_length;
+static struct cavp_entry *prf;
 
 static struct cavp_entry config_entries[] = {
-	{ .key = "g^ir length", .op = number, .number = &g_ir_length },
-	{ .key = "SHA-1", .op = hash, .value = OAKLEY_SHA1, },
-	{ .key = "SHA-224", .op = hash, .value = 0, },
-	{ .key = "SHA-256", .op = hash, .value = OAKLEY_SHA2_256, },
-	{ .key = "SHA-384", .op = hash, .value = OAKLEY_SHA2_384, },
-	{ .key = "SHA-512", .op = hash, .value = OAKLEY_SHA2_512, },
-	{ .key = "Ni length", .op = number, .number = &ni_length },
-	{ .key = "Nr length", .op = number, .number = &nr_length },
-	{ .key = "DKM length", .op = number, .number = &dkm_length },
-	{ .key = "Child SA DKM length", .op = number, .number = &child_sa_dkm_length },
+	{ .key = "g^ir length", .op = op_signed_long, .signed_long = &g_ir_length },
+	{ .key = "SHA-1", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha1, },
+	{ .key = "SHA-224", .op = op_pick, .pick = &prf, },
+	{ .key = "SHA-256", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_256, },
+	{ .key = "SHA-384", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_384, },
+	{ .key = "SHA-512", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_512, },
+	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length },
+	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length },
+	{ .key = "DKM length", .op = op_signed_long, .signed_long = &dkm_length },
+	{ .key = "Child SA DKM length", .op = op_signed_long, .signed_long = &child_sa_dkm_length },
 	{ .key = NULL }
 };
 
 static void ikev2_config(void)
 {
 	config_number("g^ir length", g_ir_length);
-	config_key(hasher_name);
+	config_key(prf->key);
 	config_number("Ni length",ni_length);
 	config_number("Nr length",nr_length);
 	config_number("DKM length",dkm_length);
 	config_number("Child SA DKM length",child_sa_dkm_length);
 }
 
-static int count;
+static long int count;
 static chunk_t ni;
 static chunk_t nr;
 static PK11SymKey *g_ir;
@@ -65,18 +68,18 @@ static chunk_t spi_i;
 static chunk_t spi_r;
 
 static struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = number, .number = &count },
-	{ .key = "g^ir", .op = symkey, .symkey = &g_ir },
-	{ .key = "g^ir (new)", .op = symkey, .symkey = &g_ir_new },
-	{ .key = "Ni", .op = chunk, .chunk = &ni },
-	{ .key = "Nr", .op = chunk, .chunk = &nr },
-	{ .key = "SPIi", .op = chunk, .chunk = &spi_i },
-	{ .key = "SPIr", .op = chunk, .chunk = &spi_r },
-	{ .key = "SKEYSEED", .op = ignore },
-	{ .key = "DKM", .op = ignore },
-	{ .key = "DKM(Child SA)", .op = ignore },
-	{ .key = "DKM(Child SA D-H)", .op = ignore },
-	{ .key = "SKEYSEED(Rekey)", .op = ignore },
+	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
+	{ .key = "g^ir", .op = op_symkey, .symkey = &g_ir },
+	{ .key = "g^ir (new)", .op = op_symkey, .symkey = &g_ir_new },
+	{ .key = "Ni", .op = op_chunk, .chunk = &ni },
+	{ .key = "Nr", .op = op_chunk, .chunk = &nr },
+	{ .key = "SPIi", .op = op_chunk, .chunk = &spi_i },
+	{ .key = "SPIr", .op = op_chunk, .chunk = &spi_r },
+	{ .key = "SKEYSEED", .op = op_ignore },
+	{ .key = "DKM", .op = op_ignore },
+	{ .key = "DKM(Child SA)", .op = op_ignore },
+	{ .key = "DKM(Child SA D-H)", .op = op_ignore },
+	{ .key = "SKEYSEED(Rekey)", .op = op_ignore },
 	{ .op = NULL }
 };
 
@@ -90,37 +93,38 @@ static void run_ikev2(void)
 	print_chunk("SPIi", spi_i, 0);
 	print_chunk("SPIr", spi_r, 0);
 
-	if (hasher == NULL) {
-		print_line(hasher_name);
+	if (prf == NULL) {
+		print_line(prf->key);
 		return;
 	}
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed =
-		ikev2_ike_sa_skeyseed(hasher, ni, nr, g_ir);
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf->prf,
+						     ni, nr,
+						     g_ir);
 	print_symkey("SKEYSEED", skeyseed, 0);
 
 	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *dkm =
-		ikev2_ike_sa_keymat(hasher, skeyseed,
+		ikev2_ike_sa_keymat(prf->prf, skeyseed,
 				    ni, nr, spi_i, spi_r, dkm_length / 8);
 	print_symkey("DKM", dkm, dkm_length / 8);
 
 	/* prf+(SK_d, Ni | Nr) */
-	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, hasher->hash_digest_len);
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf->prf_key_size);
 	PK11SymKey *child_sa_dkm =
-		ikev2_child_sa_keymat(hasher, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
+		ikev2_child_sa_keymat(prf->prf, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);
 
 	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
 	PK11SymKey *child_sa_dkm_dh =
-		ikev2_child_sa_keymat(hasher, SK_d, g_ir_new, ni, nr,
+		ikev2_child_sa_keymat(prf->prf, SK_d, g_ir_new, ni, nr,
 				      child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
 
 	/* prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *skeyseed_rekey =
-		ikev2_ike_sa_rekey_skeyseed(hasher, SK_d, g_ir_new, ni, nr);
+		ikev2_ike_sa_rekey_skeyseed(prf->prf, SK_d, g_ir_new, ni, nr);
 	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
 
 	free_any_symkey("skeyseed", &skeyseed);
@@ -138,4 +142,8 @@ struct cavp cavp_ikev2 = {
 	.run = run_ikev2,
 	.config = config_entries,
 	.data = data_entries,
+	.match = {
+		"IKE v2",
+		NULL,
+	},
 };

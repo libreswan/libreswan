@@ -35,7 +35,7 @@ USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
 ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
-# _FORTIFY_SOURCE (to what? who knows!); force it to our prefered
+# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
 # value.
 OPTIMIZE_CFLAGS=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
@@ -95,12 +95,27 @@ USERLAND_CFLAGS+=-DUSE_MD5
 USERLAND_CFLAGS+=-DUSE_SHA2
 USERLAND_CFLAGS+=-DUSE_SHA1
 USERLAND_CFLAGS+=-DUSE_AES
-
 ifeq ($(USE_3DES),true)
 USERLAND_CFLAGS+=-DUSE_3DES
 endif
-
+ifeq ($(USE_DH22),true)
+USERLAND_CFLAGS+=-DUSE_DH22
+endif
+ifeq ($(USE_CAMELLIA),true)
 USERLAND_CFLAGS+=-DUSE_CAMELLIA
+endif
+ifeq ($(USE_SERPENT),true)
+USERLAND_CFLAGS+=-DUSE_SERPENT
+endif
+ifeq ($(USE_TWOFISH),true)
+USERLAND_CFLAGS+=-DUSE_TWOFISH
+endif
+ifeq ($(USE_CAST),true)
+USERLAND_CFLAGS+=-DUSE_CAST
+endif
+ifeq ($(USE_RIPEMD),true)
+USERLAND_CFLAGS+=-DUSE_RIPEMD
+endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1
@@ -152,7 +167,7 @@ endif
 #
 # Some system's don't suport daemon() and some systems don't support
 # fork().  Since the daemon call can lead to a race it isn't the
-# prefered option.
+# preferred option.
 USE_DAEMON ?= false
 ifeq ($(USE_DAEMON),true)
 USERLAND_CFLAGS += -DUSE_DAEMON=1

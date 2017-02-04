@@ -1,0 +1,40 @@
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+#dataTable.classy {
+	color: red;
+}
+
+.passed {
+    fill: green
+}
+
+.failed {
+    fill: orange
+}
+
+.unresolved {
+    fill: red
+}
+
+.untested {
+    fill: blue
+}
+
+.pending {
+    fill: white;
+    stroke: brown;
+}
+
+.current {
+    fill: brown;
+}

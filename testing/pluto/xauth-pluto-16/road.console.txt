@@ -21,7 +21,7 @@ road #
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "modecfg-road-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
-004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 integ=sha group=MODP2048}
+004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=3des_cbc_192 integ=sha group=MODP2048}
 041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
 040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
 002 "modecfg-road-east" #1: XAUTH: Answering XAUTH challenge with user='use3'
@@ -48,9 +48,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-000  
 006 #2: "modecfg-road-east", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
-000  
 road #
  echo done
 done

@@ -42,7 +42,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb);
 
 	/* do_crypt modifies the data and IV in place.  */
-	encrypt_desc->do_crypt(tmp.ptr, tmp.len,
+	encrypt_desc->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 			       sym_key, cb.ptr, encrypt);
 	if (!compare_chunks(op, expected_output, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: output does not match", description, op));

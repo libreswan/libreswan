@@ -109,7 +109,7 @@ struct db_sa {
 /*
  * IKE policies.
  *
- * am == agressive mode
+ * am == aggressive mode
  */
 extern struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
 extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
@@ -153,7 +153,7 @@ extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */
 					   const struct isakmp_sa *sa,  /* header of input SA Payload */
 					   pb_stream *r_sa_pbs,         /* if non-NULL, where to emit winning SA */
-					   bool selection,              /* if this SA is a selection, only one tranform can appear */
+					   bool selection,              /* if this SA is a selection, only one transform can appear */
 					   struct state *st);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
@@ -162,7 +162,7 @@ extern int init_aggr_st_oakley(struct state *st, lset_t policy);
 extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body of input SA Payload */
 					  const struct isakmp_sa *sa,   /* header of input SA Payload */
 					  pb_stream *r_sa_pbs,          /* if non-NULL, where to emit winning SA */
-					  bool selection,               /* if this SA is a selection, only one tranform can appear */
+					  bool selection,               /* if this SA is a selection, only one transform can appear */
 					  struct state *st);            /* current state object */
 
 extern void free_sa_attr(struct db_attr *attr);
@@ -173,5 +173,16 @@ extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */
 extern void sa_log(struct db_sa *f);
+
+struct alg_info_ike;
+struct alg_info_esp;
+
+extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
+				       enum ikev1_auth_method auth_method,
+				       bool single_dh);
+
+extern struct db_sa *kernel_alg_makedb(lset_t policy,
+				       struct alg_info_esp *ei,
+				       bool logit);
 
 #endif /*  _SPDB_H_ */

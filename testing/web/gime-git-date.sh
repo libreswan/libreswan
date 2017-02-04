@@ -1,7 +1,8 @@
 #!/bin/sh
 
 if test $# -ne 2; then
-    cat <<EOF > /dev/stderr
+    cat >> /dev/stderr <<EOF
+
 Usage:
 
    $0 <repodir> <gitrev>

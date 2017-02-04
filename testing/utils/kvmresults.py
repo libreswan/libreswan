@@ -31,23 +31,29 @@ from fab import jsonutil
 
 
 class Print(argutil.List):
+    # tests
+    test_directory = "test-directory"
+    test_host_names = "test-host-names"
+    test_kind = "test-kind"
+    test_name = "test-name"
+    test_scripts = "test-scripts"
+    test_status = "test-status"
+    # results
     boot_time = "boot-time"
     diffs = "diffs"
     end_time = "end-time"
-    issues = "errors" # for historic reasons, "issues" are publically called "errors".
-    expected_result = "expected-result"
-    host_names = "host-names"
-    kind = "kind"
+    issues = "errors"                      # for historic reasons
+    expected_result = "expected-result"    # test_status
+    host_names = "host-names"              # test_host_names
+    kind = "kind"                          # test_kind
     output_directory = "output-directory"
     path = "path"
     result = "result"
     runtime = "runtime"
     saved_output_directory = "saved-output-directory"
     script_time = "script-time"
-    scripts = "scripts"
+    scripts = "scripts"                    # test_scripts
     start_time = "start-time"
-    test_directory = "test-directory"
-    test_name = "test-name"
     testing_directory = "testing-directory"
     total_time = "total-time"
     baseline_directory = "baseline-directory"
@@ -104,12 +110,12 @@ def main():
 
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
-    skip.add_arguments(parser)
+    skip.add_arguments(parser, skip.skip.untested)
     ignore.add_arguments(parser)
 
+    # These three calls go together
     args = parser.parse_args()
-
-    logutil.config(args)
+    logutil.config(args, sys.stderr)
     logger = logutil.getLogger("kvmresults")
 
     # The option -vvvvvvv is a short circuit for these; make
@@ -207,6 +213,7 @@ class JsonOutput:
         sys.stdout.write("\n")
         sys.stdout.flush()
 
+
 class PrintOutput:
     def __init__(self):
         self.sep = ""
@@ -243,7 +250,8 @@ class ResultCache:
         self.cached_result = post.mortem(self.test, self.args,
                                          baseline=self.baseline,
                                          output_directory=self.test.saved_output_directory,
-                                         quick=self.args.quick, update=self.args.update)
+                                         quick=self.args.quick, update=self.args.update,
+                                         finished=None)
         self.result_stats.add_result(self.cached_result)
         return self.cached_result
 
@@ -302,12 +310,12 @@ def results(logger, tests, baseline, args, result_stats):
                     continue
                 elif p is Print.test_directory:
                     b.add(p, test.directory)
-                elif p is Print.expected_result:
-                    b.add(p, test.expected_result)
-                elif p is Print.host_names:
+                elif p is Print.test_status or p is Print.expected_result:
+                    b.add(p, test.status)
+                elif p is Print.test_host_names or p is Print.host_names:
                     b.add(p, test.host_names,
                           string=lambda host_names, sep: sep + ",".join(host_names))
-                elif p is Print.kind:
+                elif p is Print.test_kind or p is Print.kind:
                     b.add(p, test.kind)
                 elif p is Print.test_name:
                     b.add(p, test.name)
@@ -321,7 +329,7 @@ def results(logger, tests, baseline, args, result_stats):
                     b.add(p, test.testing_directory())
                 elif p is Print.saved_output_directory:
                     b.add(p, test.saved_output_directory)
-                elif p is Print.scripts:
+                elif p is Print.test_scripts or p is Print.scripts:
                     b.add(p, [{ "host": h, "script": s} for h, s in test.host_script_tuples],
                           string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
                 elif p is Print.baseline_directory:
@@ -329,17 +337,23 @@ def results(logger, tests, baseline, args, result_stats):
                 elif p is Print.baseline_output_directory:
                     b.add(p, baseline and test.name in baseline and baseline[test.name].output_directory or None)
                 elif p is Print.start_time:
-                    b.add(p, result_cache.grub(r"starting debug log at (.*)$"))
+                    b.add(p, result_cache.grub(r"starting debug log at (.*)$",
+                                               cast=jsonutil.ptime))
                 elif p is Print.end_time:
-                    b.add(p, result_cache.grub(r"ending debug log at (.*)$"))
+                    b.add(p, result_cache.grub(r"ending debug log at (.*)$",
+                                               cast=jsonutil.ptime))
                 elif p is Print.runtime:
-                    b.add(p, result_cache.grub(r": stop testing .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop testing .* after (.*) second",
+                                               cast=float))
                 elif p is Print.boot_time:
-                    b.add(p, result_cache.grub(r": stop booting domains after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop booting domains after (.*) second",
+                                               cast=float))
                 elif p is Print.script_time:
-                    b.add(p, result_cache.grub(r": stop running scripts .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop running scripts .* after (.*) second",
+                                               cast=float))
                 elif p is Print.total_time:
-                    b.add(p, result_cache.grub(r": stop processing test .* after (.*) second", float))
+                    b.add(p, result_cache.grub(r": stop processing test .* after (.*) second",
+                                               cast=float))
                 else:
                     raise Exception("unhandled print option %s" % p)
 

@@ -18,6 +18,16 @@ repodir=$(cd $1 && pwd) ; shift
 
 cd ${repodir}
 
+# Easy way, see what branch HEAD is on.
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+if test ${branch} != HEAD ; then
+    echo ${branch}
+    exit 0
+fi
+
+# Hard way, follow checkouts until one hits a branch.
+
 git reflog | awk '
 BEGIN {
   found = ""

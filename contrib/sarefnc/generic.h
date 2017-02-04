@@ -363,7 +363,7 @@
 /* Make some "generic" assumptions if all else fails */
 #ifdef GENERIC
 #undef HAVE_FLOCK
-#if defined(SYSV) && (SYSV < 4)  /* TW leftover: old SV doesnt have symlinks */
+#if defined(SYSV) && (SYSV < 4)  /* TW leftover: old SV doesn't have symlinks */
 #undef HAVE_LSTAT
 #endif /* old SYSV */
 #undef HAVE_TERMIOS

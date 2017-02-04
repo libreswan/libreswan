@@ -23,6 +23,7 @@ webdir=$(cd $(dirname $0) && pwd)
 
 details=
 json=
+hash=
 while test $# -gt 0; do
     case $1 in
 	--json ) shift ; json=$1 ; shift ;;
@@ -30,11 +31,11 @@ while test $# -gt 0; do
 	--start ) shift ; start=$1 ; shift ;;
 	--date ) shift ; date=$1 ; shift ;;
 	--commit )
-	    shift ; repodir=$1 ; shift ; gitrev=$1 ; shift
-	    details=$(cd ${repodir} && git show --no-patch --format='%s' ${gitrev})
-	    git_date=$(${webdir}/gime-git-date.sh ${repodir} ${gitrev} \
+	    shift ; repodir=$1 ; shift ; hash=$1 ; shift
+	    details=$(cd ${repodir} && git show --no-patch --format='%s' ${hash})
+	    git_date=$(${webdir}/gime-git-date.sh ${repodir} ${hash} \
 			   | sed -e 's/T\([0-9]*:[0-9]*\):.*/ \1/')
-	    job="${git_date} - ${gitrev}"
+	    job="${git_date} - ${hash}"
 	    ;;
 	-* )
 	    echo "Unrecognized option: $*" >/dev/stderr
@@ -58,7 +59,8 @@ echo {} | \
        --arg start "${start}" \
        --arg date "${date}" \
        --arg details "${details}" \
-       '{ job: $job, start: $start, date: $date, details: $details }' | \
+       --arg hash "${hash}" \
+       '{ job: $job, start: $start, date: $date, details: $details, hash: $hash }' | \
     if test -n "${json}" ; then
 	cat > ${json}.tmp
 	mv ${json}.tmp ${json}
