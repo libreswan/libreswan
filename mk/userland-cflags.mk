@@ -18,7 +18,7 @@
 # -D... goes in here
 USERLAND_CFLAGS=-std=gnu99
 
-# If you want or need to overright the default detected arch
+# If you want or need to override the default detected arch
 # GCCM=-m32
 # GCCM=-mx32
 # GCCM=-m64
