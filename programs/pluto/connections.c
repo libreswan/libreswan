@@ -13,7 +13,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>

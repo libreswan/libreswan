@@ -15,7 +15,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
- * Copyright (C) 2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2015,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
