@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -800,44 +800,6 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	return policy;
 }
 
-static bool ike_alg_enc_ok(int ealg, unsigned key_len,
-			   struct alg_info_ike *alg_info_ike __attribute__((unused)),
-			   const char **errp, char *ugh_buf, size_t ugh_buf_len)
-{
-	int ret = TRUE;
-	const struct encrypt_desc *enc_desc = ikev1_get_ike_encrypt_desc(ealg);
-
-	passert(ugh_buf_len != 0);
-	if (enc_desc == NULL) {
-		/* failure: encrypt algo must be present */
-		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
-		ret = FALSE;
-	} else if (key_len != 0 && !encrypt_has_key_bit_length(enc_desc, key_len)) {
-		/* failure: if key_len specified, it must be in range */
-		snprintf(ugh_buf, ugh_buf_len,
-			 "key_len invalid: encalg=%d, key_len=%d",
-			 ealg, key_len);
-		libreswan_log("ike_alg_enc_ok(): %s", ugh_buf);
-		ret = FALSE;
-	}
-
-	DBG(DBG_KERNEL,
-	    if (ret) {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keydeflen=%d, ret=%d",
-			    ealg, key_len,
-			    (int)enc_desc->enc_blocksize,
-			    enc_desc->keydeflen,
-			    ret);
-	    } else {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): NO",
-			    ealg, key_len);
-	    }
-	    );
-	if (!ret && errp != NULL)
-		*errp = ugh_buf;
-	return ret;
-}
-
 static bool ike_alg_ok_final(int ealg, unsigned key_len,
 			     const struct prf_desc *prf,
 			     unsigned int group,
@@ -1038,7 +1000,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		u_int16_t life_type = 0;	/* initialized to silence GCC */
 		struct trans_attrs ta;
 		err_t ugh = NULL;       /* set to diagnostic when problem detected */
-		char ugh_buf[256];      /* room for building a diagnostic */
 
 		zero(&ta);	/* ??? may not NULL pointer fields */
 
@@ -1130,23 +1091,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				if (ike_alg_enc_ok(val, 0, c->alg_info_ike,
-						   &ugh, ugh_buf,
-						   sizeof(ugh_buf))) {
-					/* if (ike_alg_enc_present(val)) { */
+				ta.encrypter = ikev1_get_ike_encrypt_desc(val);
+				if (ta.encrypter != NULL) {
 					ta.encrypt = val;
-					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
-				} else switch (val) {
-				case OAKLEY_3DES_CBC:
-					ta.encrypt = val;
-					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
-					break;
-
-				case OAKLEY_DES_CBC:
-					libreswan_log("1DES is not encryption");
-				/* FALL THROUGH */
-				default:
+				} else {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_enc_names,
 								  val));
@@ -1160,7 +1109,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 							enum_show(&oakley_hash_names,
 								  val));
 				}
-/* #endif */
 				break;
 
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
@@ -1368,14 +1316,19 @@ rsasig_common:
 					break;
 				}
 				/*
-				 * check if this keylen is compatible with
-				 * specified alg_info_ike
+				 * check if this keylen is compatible
+				 * with specified alg_info_ike.
+				 *
+				 * XXX: The val!=0 guard comes from
+				 * the old ike_alg_enc_ok() function
+				 * which only checked the key bit
+				 * length, when val was non-zero.
+				 * Should val==0 check be added?
 				 */
-				if (!ike_alg_enc_ok(ta.encrypt, val,
-						    c->alg_info_ike, NULL,
-						    ugh_buf,
-						    sizeof(ugh_buf)))
+				if (val != 0 && !encrypt_has_key_bit_length(ta.encrypter, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
+					break;
+				}
 
 				ta.enckeylen = val;
 				break;
