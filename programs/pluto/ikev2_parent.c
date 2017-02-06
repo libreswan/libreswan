@@ -520,7 +520,6 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	}
 }
 
-
 /*
  *
  ***************************************************************
@@ -794,7 +793,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 				     "SA in ikev2_parent_outI1_common");
 		}
 	}
-
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
@@ -1127,7 +1125,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	} else {
 		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
 	}
-
 
 	/* Vendor ID processing */
 	{
@@ -2076,10 +2073,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     integ_start, integ_size));
 	}
 
-
 	return STF_OK;
 }
-
 
 /*
  * ikev2_decrypt_msg: decode the v2E payload.
@@ -2872,7 +2867,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-
 		r_id.isai_np = send_cert ?
 			ISAKMP_NEXT_v2CERT : ic ? ISAKMP_NEXT_v2N :
 			ISAKMP_NEXT_v2AUTH;
@@ -2887,7 +2881,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 				&r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
-
 
 		close_output_pbs(&r_id_pbs);
 
@@ -3176,7 +3169,6 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 				(unsigned long)(done_delta.tv_usec * 1000000),
 				p->pam.name));
 
-
 	md = st->st_suspended_md;
 	unset_suspended(md->st);
 	st->has_pam_thread = FALSE;
@@ -3305,7 +3297,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
 
-
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -3316,7 +3307,6 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
-
 
 	nat_traversal_change_port_lookup(md, st);
 
@@ -3743,7 +3733,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		}
 	}
 
-
 	/* if the child failed, delete its state here - we sent the packet */
 	/* PAUL */
 	/* ??? what does that mean?  We cannot even reach here. */
@@ -4036,7 +4025,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("ikev2 parent inR2: calculating g^{xy} in order to decrypt I2"));
-
 
 	/* decrypt things. */
 	{
@@ -4367,8 +4355,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		ISAKMP_v2_CREATE_CHILD_SA ? ISAKMP_NEXT_v2Ni :
 		ISAKMP_NEXT_v2TSi;
 
-
-
 	send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
 
 	/* ??? this code won't support AH + ESP */
@@ -4384,7 +4370,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			cc->policy,
 			&cc->esp_or_ah_proposals);
 	passert(cc->esp_or_ah_proposals != NULL);
-
 
 	ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
 			&local_spi, np);
@@ -4502,7 +4487,6 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	if (!justship_v2KE(st, local_g, st->st_oakley.group->group, outpbs,
 				ISAKMP_NEXT_v2NONE))
 		return STF_INTERNAL_ERROR;
-
 
 	return STF_OK;
 }
@@ -5547,7 +5531,6 @@ bool ikev2_delete_out(struct state *st)
 
 	return res;
 }
-
 
 /*
  * Determine the IKE version we will use for the IKE packet

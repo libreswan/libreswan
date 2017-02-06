@@ -163,7 +163,6 @@ enum smf2_flags {
  *
  */
 
-
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -1250,10 +1249,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 
-
-
-
-
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
@@ -1746,8 +1741,6 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	ikev2_isakamp_established(st, md->svm, md->svm->next_state,
 			st->st_original_role);
 }
-
-
 
 static void success_v2_state_transition(struct msg_digest *md)
 {

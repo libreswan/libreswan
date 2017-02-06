@@ -1653,7 +1653,6 @@ void add_connection(const struct whack_message *wm)
 		 *  if nothing is provided mark and mask are set to 0;
 		 */
 
-
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
 			mark_parse(wm->conn_mark_both, &c->sa_marks.in);
@@ -1719,7 +1718,6 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
 
@@ -1767,7 +1765,6 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->spd.spd_next = NULL;
-
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -2057,7 +2054,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-
 	if (c->sa_marks.in.val == UINT_MAX) {
 		/* -1 means unique marks */
 		d->sa_marks.in.val = global_marks;
@@ -2073,7 +2069,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 
 	return d;
 }
-
 
 struct connection *rw_instantiate(struct connection *c,
 				const ip_address *him,
@@ -3017,7 +3012,6 @@ struct connection *refine_host_connection(const struct state *st,
 			ikev1 ? "IKEv1" : "IKEv2",
 			c->name, fmt_conn_instance(c, cib));
 		});
-
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 

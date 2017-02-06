@@ -411,7 +411,6 @@ static char *humanize_number(unsigned long num,
 	return buf + ret;
 }
 
-
 /*
  * Hash table indexed by just the ICOOKIE.
  *
