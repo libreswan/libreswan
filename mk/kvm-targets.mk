@@ -626,9 +626,10 @@ kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$
 #
 # Get rid of (almost) everything
 #
+# XXX: don't depend on targets that trigger a KVM build.
 
 .PHONY: kvm-purge
-kvm-purge: kvm-clean kvm-test-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
+kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge kvm-uninstall-default-network
