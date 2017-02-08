@@ -45,11 +45,11 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
  */
 chunk_t decode_hex_to_chunk(const char *original, const char *string)
 {
-	/* The decoded buffer can't be bigger than the encoded string.  */
-	chunk_t chunk = zalloc_chunk(strlen(string), original);
+	/* The decoded buffer can't be bigger than half the encoded string.  */
+	chunk_t chunk = zalloc_chunk((strlen(string)+1)/2, original);
 	chunk.len = 0;
 	const char *pos = string;
-	while (*pos != '\0') {
+	for (;;) {
 		/* skip leading/trailing space */
 		while (*pos == ' ') {
 			pos++;
@@ -57,27 +57,25 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 		if (*pos == '\0') {
 			break;
 		}
-		/* Expecting <HEX><HEX>, at least *pos is valid.  */
+		/* Expecting <HEX><HEX> */
 		char buf[3];
-		int i = 0;
-		do {
-			buf[i++] = *pos++;
-		} while (*pos != ' ' && *pos != '\0' && i < 2);
-		buf[i] = '\0';
-		if (i != 2) {
+		memset(buf, '\0', sizeof(buf));
+		if (isxdigit(*pos)) {
+			buf[0] = *pos++;
+			if (isxdigit(*pos)) {
+				buf[1] = *pos++;
+			}
+		}
+		if (buf[1] == '\0') {
 			loglog(RC_INTERNALERR,
-			       "unexpected space or NUL character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
+			       "expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
 			       pos - string, string, pos);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
+
 		char *end;
 		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
-		if (end - buf != 2) {
-			loglog(RC_INTERNALERR,
-			       "invalid character at offset %tu in hex buffer \"%s\" at \"%s\"\n",
-			       pos-string, string, pos);
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
-		}
+		passert(*end == '\0');
 		chunk.len++;
 	}
 	return chunk;
