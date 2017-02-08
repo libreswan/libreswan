@@ -2395,11 +2395,10 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		/* only one!  I hope that it is big enough */
-		static char buf[12];
+		static struct esb_buf b;	/* STATIC!! */
 
-		snprintf(buf, sizeof(buf), "%lu??", val);
-		p = buf;
+		snprintf(b.buf, sizeof(b.buf), "%lu??", val);
+		p = b.buf;
 	}
 	return p;
 }

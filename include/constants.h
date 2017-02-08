@@ -216,8 +216,14 @@ extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
-	/* enough space for any unsigned 32-bit + "??" */
-	char buf[14];
+	/* enough space for decimal rep of any unsigned long + "??"
+	 * sizeof yields log-base-256 of maximum value.
+	 * Multiplying by 241/100 converts this to the number of decimal digits
+	 * (the common log), rounded up a little (instead of 2.40654...).
+	 * The addition of 99 ensures that the division rounds up to an integer
+	 * rather than truncates.
+	 */
+	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 };
 extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
 extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
