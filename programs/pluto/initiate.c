@@ -120,62 +120,49 @@ static void swap_ends(struct connection *c)
 bool orient(struct connection *c)
 {
 	if (!oriented(*c)) {
-		struct spd_route *sr;
-
-		for (sr = &c->spd; sr; sr = sr->spd_next) {
-			/* There can be more then 1 spd policy associated - required
-			 * for cisco split networking when remote_peer_type=cisco
-			 */
-			if (c->remotepeertype == CISCO && sr != &c->spd )
+		const struct iface_port *p;
+		struct spd_route *sr = &c->spd;
+		for (p = interfaces; p != NULL; p = p->next) {
+			if (p->ike_float)
 				continue;
 
-			/* Note: this loop does not stop when it finds a match:
-			 * it continues checking to catch any ambiguity.
-			 */
-			const struct iface_port *p;
-
-			for (p = interfaces; p != NULL; p = p->next) {
-				if (p->ike_float)
-					continue;
-
-				for (;;) {
-					/* check if this interface matches this end */
-					if (sameaddr(&sr->this.host_addr,
-						     &p->ip_addr) &&
-					    (kern_interface != NO_KERNEL ||
-					     sr->this.host_port ==
-					     pluto_port)) {
-						if (oriented(*c)) {
-							if (c->interface->ip_dev == p->ip_dev) {
-								char cib[CONN_INST_BUF];
-								loglog(RC_LOG_SERIOUS,
-									"both sides of \"%s\"%s are our interface %s!",
-									c->name, fmt_conn_instance(c, cib),
-									p->ip_dev->id_rname);
-							} else {
-								char cib[CONN_INST_BUF];
-								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
-									c->name, fmt_conn_instance(c, cib),
-									c->interface->ip_dev->id_rname,
-									p->ip_dev->id_rname);
+			for (;;) {
+				/* check if this interface matches this end */
+				if (sameaddr(&sr->this.host_addr,
+					     &p->ip_addr) &&
+				    (kern_interface != NO_KERNEL ||
+				     sr->this.host_port ==
+				     pluto_port)) {
+					if (oriented(*c)) {
+						if (c->interface->ip_dev == p->ip_dev) {
+							char cib[CONN_INST_BUF];
+							loglog(RC_LOG_SERIOUS,
+								"both sides of \"%s\"%s are our interface %s!",
+								c->name, fmt_conn_instance(c, cib),
+								p->ip_dev->id_rname);
+						} else {
+							char cib[CONN_INST_BUF];
+							loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
+								c->name, fmt_conn_instance(c, cib),
+								c->interface->ip_dev->id_rname,
+								p->ip_dev->id_rname);
 							}
-							terminate_connection(c->name);
-							c->interface = NULL; /* withdraw orientation */
-							return FALSE;
-						}
-						c->interface = p;
+						terminate_connection(c->name);
+						c->interface = NULL; /* withdraw orientation */
+						return FALSE;
 					}
-
-					/* done with this interface if it doesn't match that end */
-					if (!(sameaddr(&sr->that.host_addr,
-						       &p->ip_addr) &&
-					      (kern_interface != NO_KERNEL ||
-					       sr->that.host_port ==
-					       pluto_port)))
-						break;
-
-					swap_ends(c);
+					c->interface = p;
 				}
+
+				/* done with this interface if it doesn't match that end */
+				if (!(sameaddr(&sr->that.host_addr,
+					       &p->ip_addr) &&
+				      (kern_interface != NO_KERNEL ||
+				       sr->that.host_port ==
+				       pluto_port)))
+					break;
+
+				swap_ends(c);
 			}
 		}
 	}
