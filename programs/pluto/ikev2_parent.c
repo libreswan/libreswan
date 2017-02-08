@@ -375,6 +375,12 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	switch (st->st_state) {
 
 	case STATE_PARENT_I1:
+		/* if we received INVALID_KE, msgid was incremented */
+		st->st_msgid_lastack = v2_INVALID_MSGID;
+		st->st_msgid_lastrecv = v2_INVALID_MSGID;
+		st->st_msgid_nextuse = 0;
+		st->st_msgid = 0;
+		/* fall through */
 	case STATE_V2_REKEY_IKE_R:
 		e = build_ke_and_nonce(ke, st->st_oakley.group, ci);
 		break;
