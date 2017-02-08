@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -40,7 +40,7 @@ USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
 ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
+USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
@@ -127,6 +127,10 @@ USERLAND_CFLAGS+=-DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
 USERLAND_CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS+=-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\"
 USERLAND_CFLAGS+=-DIPSEC_SECRETS_FILE=\"$(IPSEC_SECRETS_FILE)\"
+# Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
+# calls should have been eliminated (replaced by passert()), keep this
+# definition just in case.
+USERLAND_CFLAGS+=-DFORCE_PR_ASSERT
 
 ifeq ($(origin RETRANSMIT_INTERVAL_DEFAULT),undefined)
 USERLAND_CFLAGS+=-DRETRANSMIT_INTERVAL_DEFAULT="500"
