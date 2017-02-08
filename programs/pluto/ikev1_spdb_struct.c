@@ -1116,16 +1116,25 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				ta.encrypter = ikev1_get_ike_encrypt_desc(val);
-				if (ta.encrypter != NULL) {
-					ta.encrypt = val;
-					ta.enckeylen = ta.encrypter->keydeflen;
-				} else {
+			{
+				const struct encrypt_desc *encrypter = ikev1_get_ike_encrypt_desc(val);
+				if (encrypter == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_enc_names,
 								  val));
+					break;
 				}
+				if (ike_alg_is_aead(encrypter)) {
+					ugh = builddiag("AEAD algorithm %s is not supported",
+							enum_show(&oakley_enc_names,
+								  val));
+					break;
+				}
+				ta.encrypter = encrypter;
+				ta.encrypt = val;
+				ta.enckeylen = ta.encrypter->keydeflen;
 				break;
+			}
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				ta.prf = ikev1_get_ike_prf_desc(val);
