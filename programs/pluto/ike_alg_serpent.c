@@ -78,7 +78,6 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 		.names = { "serpent", "serpent_cbc", },
 		.officname = "serpent",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.ikev2_id = IKEv2_ENCR_SERPENT_CBC,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SERPENT_CBC,
 			[IKEv1_ESP_ID] = ESP_SERPENT,

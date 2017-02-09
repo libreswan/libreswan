@@ -129,8 +129,9 @@ const char *ike_alg_key_name(enum ike_alg_key key);
  * Notes:
  *
  * For ESP/AH, since the PRF is not negotiated (the IKE SA's PRF is
- * used) the field "PRF.ikev1_esp_id" should be left blank.  Since,
- * for IKEv2, "PRF.ikev2_id" is used by IKE, it should be defined.
+ * used) the field "PRF.id[IKEv1_ESP_ID]" should be left blank.
+ * Since, for IKEv2, "PRF.id[IKEv2_ALG_ID]" is used by IKE, it should
+ * be defined.
  *
  * XXX: Still missing is a name/alias lookup letting some of alg_info
  * be eliminated.
@@ -166,8 +167,6 @@ struct ike_alg {
 #define ikev1_esp_id id[IKEv1_ESP_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
-
-	const int ikev2_id;
 
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in

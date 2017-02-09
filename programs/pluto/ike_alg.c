@@ -787,16 +787,6 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		passert(alg->algo_type == algorithms->type);
 
 		/*
-		 * Individual id fields are slowly being replaced with
-		 * an array (more room for expansion and easier to
-		 * iterate over).
-		 *
-		 * Initially just cross check that the values are
-		 * consistent.
-		 */
-		passert(alg->id[IKEv2_ALG_ID] == alg->ikev2_id); /* old name */
-
-		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
 		 * entries.
 		 *
