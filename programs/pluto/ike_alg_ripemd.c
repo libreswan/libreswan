@@ -42,7 +42,6 @@ struct hash_desc ike_alg_hash_ripemd_160 = {
 		.names = { "ripemd", "ripemd160", },
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_HASH,
-		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
 		.id = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
 		},
@@ -59,7 +58,6 @@ struct prf_desc ike_alg_prf_hmac_ripemd_160 = {
 		.names = { "ripemd", "hmac_ripemd", "ripemd160", "hmac_ripemd160", },
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_PRF,
-		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
 		.id = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
 		},
@@ -78,7 +76,6 @@ struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 		.names = { "ripemd", "hmac_ripemd", "hmac_ripemd_160_96", },
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_INTEG,
-		.ikev1_esp_id = AUTH_ALGORITHM_HMAC_RIPEMD,
 		.id = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
 		},

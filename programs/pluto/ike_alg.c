@@ -794,8 +794,6 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		 * Initially just cross check that the values are
 		 * consistent.
 		 */
-		passert(alg->id[IKEv1_OAKLEY_ID] == alg->ikev1_oakley_id);
-		passert(alg->id[IKEv1_ESP_ID] == alg->ikev1_esp_id);
 		passert(alg->id[IKEv2_ALG_ID] == alg->ikev2_id); /* old name */
 
 		/*

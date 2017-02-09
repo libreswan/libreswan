@@ -35,7 +35,6 @@ struct encrypt_desc ike_alg_encrypt_null =
 		.names = { "null", },
 		.officname = "null",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.ikev1_esp_id = ESP_NULL,
 		.ikev2_id = IKEv2_ENCR_NULL,
 		.id = {
 			[IKEv1_ESP_ID] = ESP_NULL,

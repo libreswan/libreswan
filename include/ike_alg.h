@@ -162,13 +162,11 @@ struct ike_alg {
 	 * code).
 	 */
 	const enum ike_alg_type algo_type;
-/* #define ikev1_oakley_id id[IKEv1_OAKLEY_ID] */
-/* #define ikev1_esp_id id[IKEv1_ESP_ID] */
+#define ikev1_oakley_id id[IKEv1_OAKLEY_ID]
+#define ikev1_esp_id id[IKEv1_ESP_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
 
-	const u_int16_t ikev1_oakley_id;
-	const int ikev1_esp_id;
 	const int ikev2_id;
 
 	/*
