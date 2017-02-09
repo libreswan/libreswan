@@ -851,75 +851,160 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 	}
 
         /*
-	 * Go through ALL algorithms identifying any suitable for IKE.
-	 *
-	 * Log the result as a pretty table.
+	 * Log the final list as a pretty table.
 	 */
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
+		char buf[IKE_ALG_SNPRINT_BUFSIZ] = "";
+		ike_alg_snprint(buf, sizeof(buf), alg);
+		libreswan_log("%s", buf);
+	}
+}
 
-		/*
-		 * Need to fix things like not even mentioning ESP/AH
-		 * on the PRF line.
-		 */
-		bool v1_ike;
-		bool v2_ike;
-		passert(algorithms->desc_is_ike);
-		if (algorithms->desc_is_ike(alg)) {
-			v1_ike = alg->ikev1_oakley_id > 0;
-			v2_ike = alg->ikev2_id > 0;
+/*
+ * Yet more code dealing with appending a string to a string buffer.
+ */
+static void append(char **bufp, const char *end, const char *str)
+{
+	passert(*bufp + strlen(str) < end);
+	strcpy(*bufp, str);
+	*bufp += strlen(str);
+	passert(*bufp < end);
+}
+
+void ike_alg_snprint(char *buf, size_t sizeof_buf,
+		     const struct ike_alg *alg)
+{
+	pexpect(sizeof_buf >= IKE_ALG_SNPRINT_BUFSIZ);
+	char *const end = buf + sizeof_buf;
+	/*
+	 * TYPE NAME:
+	 */
+	{
+		char *start = buf;
+		append(&buf, end, ike_alg_type_name(alg->algo_type));
+		append(&buf, end, " ");
+		append(&buf, end, alg->name);
+		append(&buf, end, ":");
+		/* magic number from eyeballing the output */
+		ssize_t pad = 21 - (buf - start);
+		passert(pad >= 0);
+		for (ssize_t i = 0; i < pad; i++) {
+			append(&buf, end, " ");
+		}
+	}
+	/*
+	 * IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
+	 */
+	bool v1_ike;
+	bool v2_ike;
+	if (ike_alg_is_ike(alg)) {
+		v1_ike = alg->ikev1_oakley_id > 0;
+		v2_ike = alg->ikev2_alg_id > 0;
+	} else {
+		v1_ike = FALSE;
+		v2_ike = FALSE;
+	}
+	bool v1_esp;
+	bool v2_esp;
+	bool v1_ah;
+	bool v2_ah;
+	switch (alg->algo_type) {
+	case IKE_ALG_PRF:
+	case IKE_ALG_DH:
+	case IKE_ALG_HASH:
+		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
+		break;
+	case IKE_ALG_ENCRYPT:
+		v1_esp = alg->ikev1_esp_id > 0;
+		v2_esp = alg->ikev2_alg_id > 0;
+		v1_ah = FALSE;
+		v2_ah = FALSE;
+		break;
+	case IKE_ALG_INTEG:
+		v1_esp = v1_ah = alg->ikev1_esp_id > 0;
+		v2_esp = v2_ah = alg->ikev2_alg_id > 0;
+		break;
+	default:
+		bad_case(alg->algo_type);
+	}
+	append(&buf, end, "  IKEv1:");
+	append(&buf, end, (v1_ike
+			   ? " IKE"
+			   : "    "));
+	append(&buf, end, (v1_esp
+			   ? " ESP"
+			   : "    "));
+	append(&buf, end, (v1_ah
+			   ? " AH"
+			   : "   "));
+	append(&buf, end, "  IKEv2:");
+	append(&buf, end, (v2_ike
+			   ? " IKE"
+			   : "    "));
+	append(&buf, end, (v2_esp
+			   ? " ESP"
+			   : "    "));
+	append(&buf, end, (v2_ah
+			   ? " AH"
+			   : "   "));
+
+	/*
+	 * FIPS?
+	 */
+	{
+		append(&buf, end, "  ");
+		if (alg->fips) {
+			append(&buf, end, "FIPS");
 		} else {
-			v1_ike = FALSE;
-			v2_ike = FALSE;
+			append(&buf, end, "    ");
 		}
-		bool v1_esp;
-		bool v2_esp;
-		bool v1_ah;
-		bool v2_ah;
-		switch (alg->algo_type) {
-		case IKE_ALG_PRF:
-		case IKE_ALG_DH:
-		case IKE_ALG_HASH:
-			v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
-			break;
-		case IKE_ALG_ENCRYPT:
-			v1_esp = alg->ikev1_esp_id > 0;
-			v2_esp = alg->ikev2_id > 0;
-			v1_ah = FALSE;
-			v2_ah = FALSE;
-			break;
-		case IKE_ALG_INTEG:
-			v1_esp = v1_ah = alg->ikev1_esp_id > 0;
-			v2_esp = v2_ah = alg->ikev2_id > 0;
-			break;
-		default:
-			bad_case(alg->algo_type);
-		}
-		char names[60] = "";
+	}
+	passert(buf < end);
+
+	/*
+	 * Concatenate [key,...] or {key,...} with default
+	 * marked with '*'.
+	 */
+	if (alg->algo_type == IKE_ALG_ENCRYPT) {
+		const struct encrypt_desc *encr = encrypt_desc(alg);
+		append(&buf, end, encr->keylen_omitted ? "  [" : "  {");
 		const char *sep = "";
+		for (const unsigned *keyp = encr->key_bit_lengths; *keyp; keyp++) {
+			append(&buf, end, sep);
+			if (*keyp == encr->keydeflen) {
+				append(&buf, end, "*");
+			}
+			/* no large keys */
+			passert(*keyp < 1000 && buf + 3 < end);
+			snprintf(buf, end - buf, "%d", *keyp);
+			buf += strlen(buf);
+			sep = ",";
+		}
+		append(&buf, end, encr->keylen_omitted ? "]" : "}");
+		/* did fit */
+	}
+	passert(buf < end);
+
+	/*
+	 * Concatenate (alias ...)
+	 */
+	{
+		const char *start = buf;
+		const char *sep = "  (";
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
 			if (!strcaseeq(*name, alg->name)) {
-				passert(strlen(names) + strlen(sep) + strlen(*name) < sizeof(names));
-				strcat(names, sep);
-				strcat(names, *name);
-				passert(strlen(names) < sizeof(names));
+				append(&buf, end, sep);
+				append(&buf, end, *name);
 				sep = " ";
 			}
 		}
-		/* 19 is eyeballed */
-		libreswan_log("%s %s:%*s  IKEv1: %3s %3s %2s  IKEv2: %3s %3s %2s  %4s%s%s%s",
-			      algorithms->all.name, alg->name,
-			      (int)(19 - strlen(algorithms->all.name) - strlen(alg->name)), "",
-			      v1_ike ? "IKE" : "",
-			      v1_esp ? "ESP" : "",
-			      v1_ah ? "AH" : "",
-			      v2_ike ? "IKE" : "",
-			      v2_esp ? "ESP" : "",
-			      v2_ah ? "AH" : "",
-			      alg->fips ? "FIPS" : "",
-			      *names ? "  (" : "", names, *names ? ")" : "");
+		if (*start) {
+			append(&buf, end, ")");
+		}
 	}
+	passert(buf < end);
 }
 
 /*

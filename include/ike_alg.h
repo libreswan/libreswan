@@ -537,4 +537,15 @@ const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
 const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg);
 
+/*
+ * Pretty print the algorithm into a buffer as a string.  The string
+ * format is formatted suitable for listing the algorithms in a wide
+ * table.
+ *
+ * IKE_ALG_SNPRINT_BUFSIZE is a strong suggestion; internal code uses
+ * a buffer that size when dumping all the algorithms during start up.
+ */
+#define IKE_ALG_SNPRINT_BUFSIZ 120
+void ike_alg_snprint(char *buf, size_t sizeof_buf, const struct ike_alg *alg);
+
 #endif /* _IKE_ALG_H */
