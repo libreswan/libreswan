@@ -15,10 +15,10 @@
 
 chunk_t decode_hex_to_chunk(const char *original, const char *string);
 chunk_t decode_to_chunk(const char *prefix, const char *string);
-int compare_chunks(const char *prefix,
+bool verify_chunk(const char *desc,
 		   chunk_t expected,
 		   chunk_t actual);
-int compare_chunk(const char *prefix,
+bool verify_chunk_data(const char *desc,
 		  chunk_t expected,
 		  u_char *actual);
 chunk_t extract_chunk(const char *prefix, chunk_t input,

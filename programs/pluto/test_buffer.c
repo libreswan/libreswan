@@ -102,7 +102,11 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 	return chunk;
 }
 
-int compare_chunk(const char *prefix,
+/*
+ * Verify that the chunk's data is the same as actual.
+ * Note that it is assumed that there is enough data in actual.
+ */
+bool verify_chunk_data(const char *desc,
 		  chunk_t expected,
 		  u_char *actual)
 {
@@ -112,26 +116,27 @@ int compare_chunk(const char *prefix,
 		u_char r = actual[i];
 		if (l != r) {
 			/* Caller should issue the real log message.  */
-			DBG(DBG_CRYPT, DBG_log("compare_chunk: %s: bytes at %zd differ, expected %02x found %02x",
-					       prefix, i, l, r));
-			return 0;
+			DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
+					       desc, i, l, r));
+			return FALSE;
 		}
 	}
-	DBG(DBG_CRYPT, DBG_log("compare_chunk: %s: ok", prefix));
-	return 1;
+	DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: ok", desc));
+	return TRUE;
 }
 
-int compare_chunks(const char *prefix,
+/* verify that expected is the same as actual */
+bool verify_chunk(const char *desc,
 		   chunk_t expected,
 		   chunk_t actual)
 {
 	if (expected.len != actual.len) {
 		DBG(DBG_CRYPT,
-		    DBG_log("compare_chunks: %s: expected length %zd but got %zd",
-			    prefix, expected.len, actual.len));
-		return 0;
+		    DBG_log("verify_chunk: %s: expected length %zd but got %zd",
+			    desc, expected.len, actual.len));
+		return FALSE;
 	}
-	return compare_chunk(prefix, expected, actual.ptr);
+	return verify_chunk_data(desc, expected, actual.ptr);
 }
 
 chunk_t extract_chunk(const char *prefix, const chunk_t input, size_t offset, size_t length)

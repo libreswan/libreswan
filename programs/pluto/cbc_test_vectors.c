@@ -51,11 +51,11 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	encrypt_desc->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 			       sym_key, iv.ptr, encrypt);
 
-	if (!compare_chunks(op, expected, tmp)) {
+	if (!verify_chunk(op, expected, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: output does not match", description, op));
 		ok = FALSE;
 	}
-	if (!compare_chunk("updated CBC IV", iv,
+	if (!verify_chunk_data("updated CBC IV", iv,
 			   expected_iv.ptr + expected_iv.len - iv.len)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: IV does not match", description, op));
 		ok = FALSE;

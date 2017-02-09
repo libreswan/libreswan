@@ -83,19 +83,19 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 		size_t offset = 0;
 		if (enc) {
-			if (!compare_chunk("output ciphertext",
+			if (!verify_chunk_data("output ciphertext",
 					   ciphertext, text_and_tag.ptr + offset)) {
 				ok = FALSE;
 			}
 			offset += ciphertext.len;
 		} else {
-			if (!compare_chunk("output plaintext",
+			if (!verify_chunk_data("output plaintext",
 					   plaintext,  text_and_tag.ptr + offset)) {
 				ok = FALSE;
 			}
 			offset += plaintext.len;
 		}
-		if (!compare_chunk("TAG", tag, text_and_tag.ptr + offset)) {
+		if (!verify_chunk_data("TAG", tag, text_and_tag.ptr + offset)) {
 			ok = FALSE;
 		}
 		offset += tag.len;
