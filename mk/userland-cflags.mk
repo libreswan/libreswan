@@ -65,6 +65,7 @@ endif
 
 ifeq ($(USE_SECCOMP),true)
 USERLAND_CFLAGS+=-DHAVE_SECCOMP
+SECCOMP_LDFLAGS=-lseccomp
 endif
 
 ifeq ($(USE_LIBCURL),true)
