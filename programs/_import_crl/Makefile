@@ -11,13 +11,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGLIBS=${NSSFLAGS}
-
 PROGRAM=_import_crl
-LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB} $(NSS_LDFLAGS)
+LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB}
 
 #INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir} -I${LIBRESWANSRCDIR}/include
+INCLUDES += -I${srcdir} -I${LIBRESWANSRCDIR}/include
+
+LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
