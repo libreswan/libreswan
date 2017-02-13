@@ -13,22 +13,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
-
 PROGRAM=addconn
 
+PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
 # reach into pluto for now.
-INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${SRCDIR}
+CFLAGS += -I$(top_srcdir)/programs/pluto
+LDFLAGS += $(UNBOUND_LDFLAGS) $(SECCOMP_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../mk/program.mk
 endif
-
-LDFLAGS += $(UNBOUND_LDFLAGS) $(SECCOMP_LDFLAGS)
-
-TAGS:	$(DISTSRC)
-	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]
-

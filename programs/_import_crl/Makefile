@@ -13,10 +13,6 @@
 
 PROGRAM=_import_crl
 LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB}
-
-#INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES += -I${srcdir} -I${LIBRESWANSRCDIR}/include
-
 LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir

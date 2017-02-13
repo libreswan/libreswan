@@ -14,11 +14,10 @@
 
 PROGRAM=showhostkey
 
+LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../mk/program.mk
 endif
-
-LDLIBS+=$(NSS_LDFLAGS)
