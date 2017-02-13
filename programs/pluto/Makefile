@@ -7,7 +7,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -32,6 +32,16 @@ MANPAGES += ipsec_pluto.8
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
+
+# XXX: Old code would define custom make variables and then append
+# those variables to either OBJSPLUTO or DISTSRC.  New code should
+# just append needed values directly.
+
+# Object files required by this pluto build.
+OBJSPLUTO =
+
+# Sources possibly used by this pluto build; fed to dependency code.
+DISTSRC =
 
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
@@ -339,7 +349,7 @@ RMFLAGS = -f
 DISTMISC = CHANGES PLUTO-CONVENTIONS TODO Makefile routing.txt \
 	 pluto.8 ipsec_whack.8 .cvsignore
 
-DISTSRC = \
+DISTSRC += \
 	ike_alg_nss_cbc.h ike_alg_nss_cbc.c \
 	cbc_test_vectors.h cbc_test_vectors.c \
 	ctr_test_vectors.h ctr_test_vectors.c \
@@ -405,7 +415,7 @@ DISTSRC = \
 
 DIST = $(DISTMISC) $(DISTSRC)
 
-OBJSPLUTO  = connections.o initiate.o terminate.o
+OBJSPLUTO += connections.o initiate.o terminate.o
 OBJSPLUTO += ike_alg_nss_cbc.o
 OBJSPLUTO += cbc_test_vectors.o
 OBJSPLUTO += ctr_test_vectors.o
