@@ -119,8 +119,10 @@ list-local-base:
 
 LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 
+# To avoid any problems with implicit make rules creating and then
+# deleting $(PROGRAM).o, $(OBJS) must include that object file.
 %: %.o $(OBJS) ${LIBS}
-	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
+	$(CC) $(CFLAGS) -o $@ ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
 
 # cancel direct version
 %: %.c

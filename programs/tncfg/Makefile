@@ -13,6 +13,7 @@
 # for more details.
 
 PROGRAM=tncfg
+OBJS += $(PROGRAM).o
 MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir

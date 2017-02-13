@@ -13,7 +13,7 @@
 #
 
 PROGRAM=showhostkey
-
+OBJS += $(PROGRAM).o
 LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir

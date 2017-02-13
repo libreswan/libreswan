@@ -14,6 +14,7 @@
 # for more details.
 
 PROGRAM=spigrp
+OBJS += $(PROGRAM).o
 MANPAGES += ipsec_$(PROGRAM).5
 
 LIBS=${LIBRESWANLIB}

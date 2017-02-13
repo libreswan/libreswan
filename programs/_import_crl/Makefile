@@ -12,6 +12,7 @@
 # for more details.
 
 PROGRAM=_import_crl
+OBJS += $(PROGRAM).o
 LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB}
 LDFLAGS += $(NSS_LDFLAGS)
 

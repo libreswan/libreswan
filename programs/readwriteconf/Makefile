@@ -12,7 +12,7 @@
 # for more details.
 
 PROGRAM=readwriteconf
-
+OBJS += $(PROGRAM).o
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
 
 # reach into pluto for now.

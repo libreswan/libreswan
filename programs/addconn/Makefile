@@ -14,8 +14,9 @@
 # for more details.
 
 PROGRAM=addconn
-
+OBJS += $(PROGRAM).o
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
+
 # reach into pluto for now.
 CFLAGS += -I$(top_srcdir)/programs/pluto
 LDFLAGS += $(UNBOUND_LDFLAGS) $(SECCOMP_LDFLAGS)

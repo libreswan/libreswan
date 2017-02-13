@@ -13,6 +13,7 @@
 # for more details.
 
 PROGRAM=klipsdebug
+OBJS += $(PROGRAM).o
 MANPAGES=ipsec_$(PROGRAM).5
 
 LIBS=${LIBRESWANLIB}
