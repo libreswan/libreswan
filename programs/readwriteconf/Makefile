@@ -12,7 +12,6 @@
 # for more details.
 
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
-#EXTRALIBS=-lefence
 
 LDFLAGS+=-lnspr4 -lnss3
 PROGRAM=readwriteconf
