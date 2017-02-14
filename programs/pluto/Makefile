@@ -213,7 +213,6 @@ LIBSPLUTO+= -lcap-ng
 endif
 
 BINNAMEPLUTO = pluto
-BINNAMEWHACK = whack
 
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 SYSDEP_OBJ=sysdep_${OSDEP}.o
@@ -251,10 +250,6 @@ ifeq ($(USE_BSDKAME),true)
 UDPFROMTO_SRCS=udpfromto.c
 endif
 OBJSPLUTO += $(UDPFROMTO_SRCS:.c=.o)
-
-# Solaris needs -lsocket -lnsl
-LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
-
 
 RM = /bin/rm
 RMFLAGS = -f
@@ -302,8 +297,6 @@ OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
 OBJSPLUTO += nss_ocsp.o nss_crl_import.o
 OBJSPLUTO += nss_err.o
 
-OBJSWHACK = whack.o
-
 CAVP += cavp
 
 local-base: $(builddir)/Makefile
@@ -311,27 +304,23 @@ local-base: $(builddir)/Makefile
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP)
+buildall: $(BINNAMEPLUTO) $(CAVP)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 755 $(VARDIR)/run/pluto
-	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
+	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(LIBEXECDIR)
 
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO)
-
-$(BINNAMEWHACK): $(OBJSWHACK)
-	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK)
 
 check:
 	echo no checks in lib right now.
@@ -356,6 +345,6 @@ cavp: $(OBJSCAVP)
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
-MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJSPLUTO) $(OBJSWHACK))
+MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJSPLUTO))
 MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk

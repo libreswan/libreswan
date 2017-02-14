@@ -4,6 +4,13 @@ ifndef top_srcdir
 include $(dir $(lastword $(MAKEFILE_LIST)))dirs.mk
 endif
 
+# Unless PROGRAM_MANPAGE has been pre-defined (only done by whack and
+# only to suppress its man page), force MANPAGES to include a MANPAGE
+# for this program.
+
+PROGRAM_MANPAGE ?= $(addsuffix .8, $(PROGRAM))
+MANPAGES += $(PROGRAM_MANPAGE)
+
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk

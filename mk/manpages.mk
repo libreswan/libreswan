@@ -23,10 +23,6 @@ MANDIR.3 ?= $(MANTREE)/man3
 MANDIR.5 ?= $(MANTREE)/man5
 MANDIR.8 ?= $(MANTREE)/man8
 
-# If PROGRAM is empty, PROGRAM_MANPAGE also ends up empty.  On the
-# other hand, if there's a program then there must also be a man page.
-MANPAGES += $(addsuffix .8, $(PROGRAM))
-
 # List of the intermediate (transformed) man pages.  Don't let GNU
 # make delete these.
 TRANSFORMED_MANPAGES = $(addprefix $(builddir)/,$(addsuffix .tmp,$(MANPAGES)))

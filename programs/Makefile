@@ -22,7 +22,9 @@ include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=
 
-SUBDIRS+=proc pluto addconn
+SUBDIRS+=pluto
+SUBDIRS+=whack
+SUBDIRS+=proc addconn
 SUBDIRS+=configs _keycensor _plutorun _stackmanager
 SUBDIRS+=_secretcensor _updown
 SUBDIRS+=auto barf verify ipsec look newhostkey
