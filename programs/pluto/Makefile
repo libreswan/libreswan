@@ -216,7 +216,6 @@ endif
 
 BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
-BINNAMEIMPORTCRL = _import_crl
 
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 SYSDEP_OBJ=sysdep_${OSDEP}.o
@@ -314,7 +313,7 @@ local-base: $(builddir)/Makefile
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
