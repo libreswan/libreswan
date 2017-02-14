@@ -22,7 +22,7 @@ CFLAGS += -I$(top_srcdir)/include
 CFLAGS += $(NSSFLAGS)
 CFLAGS += $(CROSSFLAGS)
 
-LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${CRYPTOLIBS}
+LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB}
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
@@ -117,7 +117,7 @@ list-local-base:
 		echo $$destdir/$$file ; \
 	)
 
-LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
+LDLIBS=${LIBS} ${USERLINK} ${LIBS}
 
 # To avoid any problems with implicit make rules creating and then
 # deleting $(PROGRAM).o, $(OBJS) must include that object file.
