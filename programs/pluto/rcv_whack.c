@@ -417,7 +417,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	if (m->whack_reread & REREAD_CRLS)
 		loglog(RC_LOG_SERIOUS, "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_reread & REREAD_FETCH)
 			wake_fetch_thread("whack command");
 #endif
@@ -433,7 +433,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 	if (m->whack_list & LIST_CRLS) {
 		list_crls();
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 		list_crl_fetch_requests(m->whack_utc);
 #endif
 	}

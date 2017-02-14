@@ -226,7 +226,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef LIBCURL
 	" CURL(non-NSS)"
 #endif
-#ifdef LDAP_VER
+#ifdef LIBLDAP
 	" LDAP(non-NSS)"
 #endif
 ;
@@ -1700,7 +1700,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_id();
 	init_vendorid();
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	init_fetch();
 #endif
 #ifdef HAVE_LABELED_IPSEC
@@ -1740,7 +1740,7 @@ void exit_pluto(int status)
 	 * forget to do this.
 	 */
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	free_crl_fetch();	/* free chain of crl fetch requests */
 #endif
 

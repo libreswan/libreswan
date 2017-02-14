@@ -706,7 +706,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 	return j;
 }
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 /*
  * Do our best to find the CA for the fetch request
  * However, this might be overkill, and only spd.this.ca should be used
@@ -751,7 +751,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 						  int num_certs)
 {
 	struct connection *c = st->st_connection;
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	SECItem fdn = { siBuffer, NULL, 0 };
 #endif
 	bool cont = TRUE;
@@ -780,7 +780,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		libreswan_log("certificate revoked!");
 		cont = FALSE;
 	}
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	if ((ret & VERIFY_RET_CRL_NEED) && deltasecs(crl_check_interval) > 0) {
 		generalName_t *end_cert_dp = NULL;
 
@@ -1665,7 +1665,7 @@ static void cert_detail_list(show_cert_t type)
 	CERT_DestroyCertList(certs);
 }
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 void check_crls(void)
 {
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
