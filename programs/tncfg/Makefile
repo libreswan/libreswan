@@ -1,6 +1,7 @@
 # Makefile for the KLIPS interface utilities
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,6 +15,8 @@
 
 PROGRAM=tncfg
 OBJS += $(PROGRAM).o
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir

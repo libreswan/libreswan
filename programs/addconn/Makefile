@@ -15,7 +15,10 @@
 
 PROGRAM=addconn
 OBJS += $(PROGRAM).o
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
+OBJS += $(IPSECCONFLIB)
+OBJS += $(WHACKLIB)
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 
 # reach into pluto for now.
 CFLAGS += -I$(top_srcdir)/programs/pluto

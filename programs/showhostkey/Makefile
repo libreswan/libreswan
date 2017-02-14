@@ -1,5 +1,6 @@
 # Makefile for miscellaneous programs
 # Copyright (C) 2002  Michael Richardson	<mcr@freeswan.org>
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,6 +15,8 @@
 
 PROGRAM=showhostkey
 OBJS += $(PROGRAM).o
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir

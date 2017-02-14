@@ -22,8 +22,6 @@ CFLAGS += -I$(top_srcdir)/include
 CFLAGS += $(NSSFLAGS)
 CFLAGS += $(CROSSFLAGS)
 
-LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB}
-
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
@@ -117,15 +115,13 @@ list-local-base:
 		echo $$destdir/$$file ; \
 	)
 
-LDLIBS=${LIBS} ${USERLINK} ${LIBS}
-
 # To avoid any problems with implicit make rules creating and then
 # deleting $(PROGRAM).o, $(OBJS) must include that object file.
-%: %.o $(OBJS) ${LIBS}
-	$(CC) $(CFLAGS) -o $@ ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
-
-# cancel direct version
-%: %.c
+# $(OBJS) also includes libraries, there is no difference in how
+# archives and objects are handled and having a duplicate archive does
+# no harm.
+%: %.o $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
 # cancel direct version
 %: %.c

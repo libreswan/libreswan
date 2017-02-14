@@ -461,6 +461,8 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
+# XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
+LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a

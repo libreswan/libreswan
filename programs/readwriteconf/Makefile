@@ -1,5 +1,6 @@
 # ipsec starter Makefile
 # Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,7 +14,10 @@
 
 PROGRAM=readwriteconf
 OBJS += $(PROGRAM).o
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
+OBJS += $(IPSECCONFLIB)
+OBJS += $(WHACKLIB)
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 
 # reach into pluto for now.
 CFLAGS += -I${top_srcdir}/programs/pluto
