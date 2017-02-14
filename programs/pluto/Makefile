@@ -43,12 +43,6 @@ OBJSPLUTO =
 # Sources possibly used by this pluto build; fed to dependency code.
 DISTSRC =
 
-ifeq ($(USE_LDAP),true)
-# Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
-# if you require LDAPv2
-LDAP_VERSION=3
-endif
-
 # compile with PAM support will increase the size of the distribution
 # and thus it may not be the best solution for embedded systems. XAUTH
 # will use the crypt() lib and a password file by default.
@@ -132,15 +126,6 @@ THREADS_DIST_OBJS=fetch.o
 THREADS_DIST_SRCS=${THREADS_DIST_OBJS:.o=.c}
 X509_OBJS=${X509_DIST_OBJS}
 X509_SRCS=${X509_DIST_SRCS}
-
-# dynamic LDAP CRL fetching requires OpenLDAP library
-ifeq ($(USE_LDAP),true)
-X509_LLIBS+= -lldap -llber
-PLUTOMINUSL+= -llber
-ifdef LDAP_VERSION
-X509_DEFS+= -DLDAP_VER=$(LDAP_VERSION)
-endif
-endif
 
 THREADS_OBJS=${THREADS_DIST_OBJS}
 THREADS_SRCS=${THREADS_DIST_SRCS}
@@ -254,7 +239,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
 	$(NETKEY_DEFS) \
-	$(X509_DEFS) \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${SYSTEMD_NOTIFY_DEFS} \
@@ -267,13 +251,12 @@ DEFINES = $(EXTRA_DEFINES) \
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=$(X509_LIBS)
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
 LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS} $(SECCOMP_LDFLAGS)
 LIBSPLUTO+=${SYSTEMD_NOTIFY_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} $(NSS_LDFLAGS)
-PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
+PLUTOMINUSL+= $(LDAP_LDFLAGS) ${CURL_LLIBS} ${THREADS_LLIBS}
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} $(NSS_LDFLAGS)
 PLUTOMINUSL+= ${LIBCRYPT}
 
