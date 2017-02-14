@@ -280,9 +280,7 @@ PLUTOMINUSL+= ${LIBCRYPT}
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
 
-ifeq ($(USE_FIPSCHECK),true)
-LIBSPLUTO+= -lfipscheck
-endif
+LIBSPLUTO += $(FIPSCHECK_LDFLAGS)
 
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
