@@ -70,6 +70,7 @@ endif
 
 ifeq ($(USE_LIBCURL),true)
 USERLAND_CFLAGS+=-DLIBCURL
+CURL_LDFLAGS ?= -lcurl
 endif
 
 ifeq ($(USE_LINUX_AUDIT),true)

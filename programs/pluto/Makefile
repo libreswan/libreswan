@@ -117,13 +117,7 @@ OBJS += pluto_sd.o
 SYSTEMD_NOTIFY_LIBS=-lsystemd
 endif
 
-
-ifeq ($(USE_LIBCURL),true)
-# This compile option activates dynamic URL fetching
-# with libcurl in the source code
-CURL_DEFS=-DLIBCURL
-CURL_LLIBS=-lcurl
-endif
+LDFLAGS += $(CURL_LDFLAGS)
 
 OBJS += ike_alg_nss_cbc.o
 OBJS += ike_alg_nss_hash_ops.o
