@@ -115,22 +115,21 @@ list-local-base:
 		echo $$destdir/$$file ; \
 	)
 
-# To avoid any problems with implicit make rules creating and then
-# deleting $(PROGRAM).o, $(OBJS) must include that object file.
-# $(OBJS) also includes libraries, there is no difference in how
-# archives and objects are handled and having a duplicate archive does
-# no harm.
-%: %.o $(OBJS)
+ifdef OBJS
+
+# To avoid problems with implicit make rules creating and then
+# deleting $(PROGRAM).o, $(OBJS) must include the main object
+# (typically $(PROGRAM).o).  Since there is no difference between how
+# objects and archives are handled, $(OBJS) includes both.  Duplicate
+# archives do no halm.
+$(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
-# cancel direct version
-%: %.c
+MK_DEPEND_FILES = $(OBJS)
+MK_DEPEND_CFLAGS = $(CFLAGS)
+include $(top_srcdir)/mk/depend.mk
 
-%.o: ${SRCDIR}%.c
-	${CC} -c ${CFLAGS} $<
-
-%.i: %.c
-	$(CC) $(CFLAGS) -E -o $@ $<
+else
 
 %: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
@@ -143,3 +142,5 @@ list-local-base:
 	@${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
+
+endif
