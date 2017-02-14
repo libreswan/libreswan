@@ -33,12 +33,9 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
-# XXX: Old code would define custom make variables and then append
-# those variables to OBJSPLUTO.  New code should just append needed
-# values directly.
-
 # Object files required by this pluto build.
-OBJSPLUTO =
+
+OBJS =
 
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
@@ -59,45 +56,38 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 #    Double quoting may be needed.
 
 ifeq ($(USE_PFKEYv2),true)
-PFKEYv2_OBJS=kernel_pfkey.o
-else
-PFKEYv2_OBJS=
+OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
 NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
-NETKEY_OBJS=kernel_netlink.o
+OBJS += kernel_netlink.o
 endif
 
 ifeq ($(USE_KLIPS),true)
 KLIPS_DEFS=-DKLIPS -DPFKEY
-KLIPS_OBJS=kernel_klips.o
+OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_MAST),true)
 MAST_DEFS=-DKLIPS_MAST
-MAST_OBJS=kernel_mast.o
+OBJS += kernel_mast.o
 endif
 
 ifeq ($(USE_WIN2K_NATIVE),true)
 WIN2K_DEFS=-DWIN2K_NATIVE_IPSEC
-WIN2K_OBJS=kernel_win2k.o
+OBJS += kernel_win2k.o
 endif
 
 ifeq ($(USE_BSDKAME),true)
 BSDKAME_DEFS=-DBSD_KAME
-BSDKAME_OBJS=kernel_bsdkame.o
+OBJS += kernel_bsdkame.o
 BSDKAME_LIBS=${LIBBSDPFKEY}
 endif
 
+OBJS += x509.o
+OBJS += fetch.o
 
-# the files are defined here so that TAGS: can catch them.
-#
-X509_DIST_OBJS=x509.o
-THREADS_DIST_OBJS=fetch.o
-X509_OBJS=${X509_DIST_OBJS}
-
-THREADS_OBJS=${THREADS_DIST_OBJS}
 THREADS_LLIBS=-lpthread
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
@@ -105,29 +95,27 @@ IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
-OBJSPLUTO += ikev1_xauth.o addresspool.o pam_conv.o
+OBJS += ikev1_xauth.o addresspool.o pam_conv.o
 LIBSPLUTO += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
 LIBSPLUTO += -lcrypt
 endif
 
-AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
-AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
+OBJS += ikev1_aggr.o
 
 # LABELED IPSEC support - requires SElinux
 ifeq ($(USE_LABELED_IPSEC),true)
-OBJSPLUTO += security_selinux.o
+OBJS += security_selinux.o
 LIBSPLUTO += -lselinux
 endif
 
 ifeq ($(USE_SECCOMP),true)
-OBJSPLUTO += pluto_seccomp.o
+OBJS += pluto_seccomp.o
 endif
 
-SYSTEMD_NOTIFY_DIST_OBJS=pluto_sd.o
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SYSTEMD_NOTIFY_DEFS=-DUSE_SYSTEMD_WATCHDOG
-SYSTEMD_NOTIFY_OBJS=${SYSTEMD_NOTIFY_DIST_OBJS}
+OBJS += pluto_sd.o
 SYSTEMD_NOTIFY_LIBS=-lsystemd
 endif
 
@@ -139,38 +127,43 @@ CURL_DEFS=-DLIBCURL
 CURL_LLIBS=-lcurl
 endif
 
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_hash_ops.o
-EXTRA_CRYPTO_OBJS+=ike_alg_hmac_prf_ops.o
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_gcm.o
-
-EXTRA_CRYPTO_OBJS+=ike_alg_null.o
+OBJS += ike_alg_nss_cbc.o
+OBJS += ike_alg_nss_hash_ops.o
+OBJS += ike_alg_hmac_prf_ops.o
+OBJS += ike_alg_nss_prf_ops.o
+OBJS += ike_alg_nss_gcm.o
+OBJS += ike_alg_null.o
 
 ifeq ($(USE_SERPENT),true)
-EXTRA_CRYPTO_OBJS+=ike_alg_serpent.o
+OBJS += ike_alg_serpent.o
 EXTRA_CRYPTO_LIBS+=$(LIBSERPENT)
 endif
 
 ifeq ($(USE_TWOFISH),true)
-EXTRA_CRYPTO_OBJS+=ike_alg_twofish.o
+OBJS += ike_alg_twofish.o
 EXTRA_CRYPTO_LIBS+=$(LIBTWOFISH)
 endif
 
 ifeq ($(USE_CAST),true)
-EXTRA_CRYPTO_OBJS+=ike_alg_cast.o
+OBJS += ike_alg_cast.o
 endif
 
 ifeq ($(USE_RIPEMD),true)
-EXTRA_CRYPTO_OBJS+=ike_alg_ripemd.o
+OBJS += ike_alg_ripemd.o
 endif
 
-EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
-
-EXTRA_CRYPTO_OBJS += ike_alg_md5.o
+OBJS += ike_alg_sha1.o
+OBJS += ike_alg_md5.o
 
 ifeq ($(USE_3DES),true)
-EXTRA_CRYPTO_OBJS += ike_alg_3des.o
+OBJS += ike_alg_3des.o
 endif
+
+OBJS += ike_alg_aes.o
+OBJS += ike_alg_dh.o
+OBJS += ike_alg_camellia.o
+OBJS += ike_alg_sha2.o
+OBJS += ike_alg.o db_ops.o
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
@@ -210,8 +203,9 @@ endif
 
 BINNAMEPLUTO = pluto
 
+# OSDEP already set in objdir.mk?
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-SYSDEP_OBJ=sysdep_${OSDEP}.o
+OBJS += sysdep_${OSDEP}.o
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
@@ -242,7 +236,7 @@ ifeq ($(USE_BSDKAME),true)
 # BSD always supports udpfromto
 UDPFROMTO_SRCS=udpfromto.c
 endif
-OBJSPLUTO += $(UDPFROMTO_SRCS:.c=.o)
+OBJS += $(UDPFROMTO_SRCS:.c=.o)
 
 RM = /bin/rm
 RMFLAGS = -f
@@ -250,45 +244,32 @@ RMFLAGS = -f
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-OBJSPLUTO += connections.o initiate.o terminate.o
-OBJSPLUTO += ike_alg_nss_cbc.o
-OBJSPLUTO += cbc_test_vectors.o
-OBJSPLUTO += ctr_test_vectors.o
-OBJSPLUTO += gcm_test_vectors.o
-OBJSPLUTO += test_buffer.o
-OBJSPLUTO += pending.o cookie.o crypto.o defs.o
-OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
-OBJSPLUTO += state_entry.o
-OBJSPLUTO += timer.o hmac.o hostpair.o
-OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
-OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
-OBJSPLUTO += crypt_dbg.o
-OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
-OBJSPLUTO += crypt_hash.o
-OBJSPLUTO += kernel.o
-OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
-OBJSPLUTO += kernel_noklips.o rcv_whack.o
-OBJSPLUTO += demux.o msgdigest.o keys.o
-OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
-OBJSPLUTO += rnd.o spdb.o spdb_struct.o
-OBJSPLUTO += vendor.o nat_traversal.o virtual.o
-OBJSPLUTO += ike_alg_aes.o
-OBJSPLUTO += ike_alg_dh.o
-OBJSPLUTO += ike_alg_camellia.o
-OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
-OBJSPLUTO += ike_alg.o db_ops.o
-OBJSPLUTO += ${AGGRESSIVE_OBJS}
-OBJSPLUTO += ${LABELED_IPSEC_OBJS}
-OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
-OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
-OBJSPLUTO += ${OBJSLIBPLUTO}
-OBJSPLUTO += ${SYSDEP_OBJ}
-OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
-OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
-OBJSPLUTO += nss_ocsp.o nss_crl_import.o
-OBJSPLUTO += nss_err.o
+OBJS += connections.o initiate.o terminate.o
+OBJS += cbc_test_vectors.o
+OBJS += ctr_test_vectors.o
+OBJS += gcm_test_vectors.o
+OBJS += test_buffer.o
+OBJS += pending.o cookie.o crypto.o defs.o
+OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJS += state_entry.o
+OBJS += timer.o hmac.o hostpair.o
+OBJS += myid.o ipsec_doi.o
+OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
+OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
+OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJS += crypt_dbg.o
+OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
+OBJS += crypt_hash.o
+OBJS += kernel.o
+OBJS += kernel_noklips.o rcv_whack.o
+OBJS += demux.o msgdigest.o keys.o
+OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
+OBJS += rnd.o spdb.o spdb_struct.o
+OBJS += vendor.o nat_traversal.o virtual.o
+OBJS += packet.o pluto_constants.o readwhackmsg.o
+OBJS += nss_cert_load.o pem.o nss_cert_vfy.o
+OBJS += nss_ocsp.o nss_crl_import.o
+OBJS += nss_err.o
 
 CAVP += cavp
 
@@ -297,7 +278,7 @@ local-base: $(builddir)/Makefile
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJS) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
@@ -312,8 +293,8 @@ doinstall:
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
 
-$(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO)
+$(BINNAMEPLUTO): $(OBJS) $(ALG_LIBS) $(LIBRESWANLIB)
+	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJS) $(LIBSPLUTO)
 
 check:
 	echo no checks in lib right now.
@@ -330,7 +311,7 @@ OBJSCAVP += cavp_ikev2.o
 OBJSCAVP += cavp_sha.o
 OBJSCAVP += cavp_hmac.o
 OBJSCAVP += cavp_gcm.o
-OBJSCAVP += $(filter-out plutomain.o, $(OBJSPLUTO))
+OBJSCAVP += $(filter-out plutomain.o, $(OBJS))
 cavp: $(OBJSCAVP)
 	$(CC) -o $@ $(OBJSCAVP) \
 		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO)
@@ -338,6 +319,6 @@ cavp: $(OBJSCAVP)
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
-MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJSPLUTO))
+MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJS))
 MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk
