@@ -82,7 +82,8 @@ endif
 ifeq ($(USE_BSDKAME),true)
 BSDKAME_DEFS=-DBSD_KAME
 OBJS += kernel_bsdkame.o
-BSDKAME_LIBS=${LIBBSDPFKEY}
+# LIBBSDPFKEY is presumably passed in.
+LDFLAGS += ${LIBBSDPFKEY}
 endif
 
 OBJS += x509.o
@@ -94,9 +95,9 @@ endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
 OBJS += ikev1_xauth.o addresspool.o pam_conv.o
-LIBSPLUTO += $(XAUTHPAM_LDFLAGS)
+LDFLAGS += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
-LIBSPLUTO += -lcrypt
+LDFLAGS += -lcrypt
 endif
 
 OBJS += ikev1_aggr.o
@@ -104,7 +105,7 @@ OBJS += ikev1_aggr.o
 # LABELED IPSEC support - requires SElinux
 ifeq ($(USE_LABELED_IPSEC),true)
 OBJS += security_selinux.o
-LIBSPLUTO += -lselinux
+LDFLAGS += -lselinux
 endif
 
 ifeq ($(USE_SECCOMP),true)
@@ -114,7 +115,7 @@ endif
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SYSTEMD_NOTIFY_DEFS=-DUSE_SYSTEMD_WATCHDOG
 OBJS += pluto_sd.o
-SYSTEMD_NOTIFY_LIBS=-lsystemd
+LDFLAGS += -lsystemd
 endif
 
 LDFLAGS += $(CURL_LDFLAGS)
@@ -128,12 +129,14 @@ OBJS += ike_alg_null.o
 
 ifeq ($(USE_SERPENT),true)
 OBJS += ike_alg_serpent.o
-EXTRA_CRYPTO_LIBS+=$(LIBSERPENT)
+# an archive
+OBJS += $(LIBSERPENT)
 endif
 
 ifeq ($(USE_TWOFISH),true)
 OBJS += ike_alg_twofish.o
-EXTRA_CRYPTO_LIBS+=$(LIBTWOFISH)
+# an archive
+OBJS += $(LIBTWOFISH)
 endif
 
 ifeq ($(USE_CAST),true)
@@ -172,25 +175,19 @@ DEFINES = $(EXTRA_DEFINES) \
 	${SINGLE_CONF_DIR} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
 
-
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=$(THREADS_LIBS)
-LIBSPLUTO+=${CURL_LIBS}
-LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS} $(SECCOMP_LDFLAGS)
-LIBSPLUTO+=${SYSTEMD_NOTIFY_LIBS}
-LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS}
-LIBSPLUTO+=$(NSS_LDFLAGS)
+LDFLAGS += $(SECCOMP_LDFLAGS)
+LDFLAGS += $(NSS_LDFLAGS)
 
 # For avoiding implicit DSO linking
-LIBSPLUTO+= -lpthread
+LDFLAGS += -lpthread
 
-LIBSPLUTO += $(FIPSCHECK_LDFLAGS)
+LDFLAGS += $(FIPSCHECK_LDFLAGS)
 
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
-LIBSPLUTO+= -lcap-ng
+LDFLAGS += -lcap-ng
 endif
 
 BINNAMEPLUTO = pluto
@@ -203,18 +200,17 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
-LIBSPLUTO += $(UNBOUND_LDFLAGS)
+LDFLAGS += -lrt
+LDFLAGS += $(UNBOUND_LDFLAGS)
 
 ifeq ($(USE_LINUX_AUDIT),true)
-LIBSPLUTO += -laudit
+LDFLAGS += -laudit
 endif
 
-LIBSPLUTO += -levent
-LIBSPLUTO += -levent_pthreads
+LDFLAGS += -levent
+LDFLAGS += -levent_pthreads
 
-LIBSPLUTO += $(LDAP_LDFLAGS) $(CURL_LLIBS)
-LIBSPLUTO += $(LIBCRYPT)
+LDFLAGS += $(LDAP_LDFLAGS)
 
 ifeq ($(USE_KLIPS),true)
 # Linux always supports udpfromto
@@ -263,6 +259,12 @@ OBJS += nss_cert_load.o pem.o nss_cert_vfy.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
 
+# Archives
+OBJS += $(LIBRESWANLIB)
+OBJS += $(WHACKLIB)
+OBJS += $(IPSECCONFLIB)
+OBJS += $(LIBRESWANLIB)
+
 CAVP += cavp
 
 local-base: $(builddir)/Makefile
@@ -285,8 +287,8 @@ doinstall:
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
 
-$(BINNAMEPLUTO): $(OBJS) $(ALG_LIBS) $(LIBRESWANLIB)
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJS) $(LIBSPLUTO)
+$(BINNAMEPLUTO): $(OBJS)
+	$(CC) -o $(BINNAMEPLUTO) $(OBJS) $(LDFLAGS) $(USERLINK)
 
 check:
 	echo no checks in lib right now.
@@ -305,8 +307,7 @@ OBJSCAVP += cavp_hmac.o
 OBJSCAVP += cavp_gcm.o
 OBJSCAVP += $(filter-out plutomain.o, $(OBJS))
 cavp: $(OBJSCAVP)
-	$(CC) -o $@ $(OBJSCAVP) \
-		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO)
+	$(CC) -o $@ $(OBJSCAVP) $(LDFLAGS) $(USERLINK)
 
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
