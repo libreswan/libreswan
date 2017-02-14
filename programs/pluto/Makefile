@@ -43,13 +43,6 @@ OBJSPLUTO =
 # Sources possibly used by this pluto build; fed to dependency code.
 DISTSRC =
 
-# compile with PAM support will increase the size of the distribution
-# and thus it may not be the best solution for embedded systems. XAUTH
-# will use the crypt() lib and a password file by default.
-ifeq ($(USE_XAUTHPAM),true)
-XAUTH_HAVE_PAM=1
-endif
-
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
 HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
@@ -135,17 +128,12 @@ ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-XAUTH_DIST_SRCS=ikev1_xauth.c ikev1_xauth.h addresspool.c addresspool.h pam_conv.c pam_conv.h
-XAUTH_DIST_OBJS=ikev1_xauth.o addresspool.o pam_conv.o
-XAUTH_OBJS=${XAUTH_DIST_OBJS}
-XAUTH_SRCS=${XAUTH_DIST_SRCS}
+# pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
+DISTSRC += ikev1_xauth.c ikev1_xauth.h addresspool.c addresspool.h pam_conv.c pam_conv.h
+OBJSPLUTO += ikev1_xauth.o addresspool.o pam_conv.o
+LIBSPLUTO += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
-XAUTH_LLIBS=-lcrypt
-endif
-# if we use pam for password checking then add it too
-ifeq ($(USE_XAUTHPAM),true)
-XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
-XAUTHPAM_LIBS=-lpam
+LIBSPLUTO += -lcrypt
 endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
@@ -242,7 +230,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${SYSTEMD_NOTIFY_DEFS} \
-	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
@@ -292,7 +279,7 @@ LIBSPLUTO += -levent
 LIBSPLUTO += -levent_pthreads
 
 LIBSPLUTO += $(LDAP_LDFLAGS) $(CURL_LLIBS) $(THREADS_LLIBS)
-LIBSPLUTO += $(XAUTH_LLIBS) $(XAUTHPAM_LIBS) $(NSS_LDFLAGS)
+LIBSPLUTO += $(NSS_LDFLAGS)
 LIBSPLUTO += $(LIBCRYPT)
 
 ifeq ($(USE_KLIPS),true)
@@ -374,7 +361,6 @@ DISTSRC += \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
 	whack.c \
-	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
 	${SYSTEMD_NOTIFY_DIST_SRCS} \
@@ -417,7 +403,6 @@ OBJSPLUTO += ike_alg_dh.o
 OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
 OBJSPLUTO += ike_alg.o db_ops.o
-OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
 OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
