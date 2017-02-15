@@ -667,16 +667,6 @@ static bool justship_v2KE(struct state *st UNUSED,
 	return TRUE;
 }
 
-static bool ship_v2KE(struct state *st,
-		      struct pluto_crypto_req *r,
-		      chunk_t *g,
-		      pb_stream *outs, u_int8_t np)
-{
-	enum ike_trans_type_dh oakley_group = unpack_v2KE_from_helper(st, r, g);
-
-	return justship_v2KE(st, g, oakley_group, outs, np);
-}
-
 stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 					  struct pluto_crypto_req *r)
 {
@@ -1433,8 +1423,18 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
 
 	/* send KE */
-	if (!ship_v2KE(st, r, &st->st_gr, &md->rbody, ISAKMP_NEXT_v2Nr))
+	unpack_KE_from_helper(st, r, &st->st_gr);
+	/*
+	 * XXX: Pass oakley group found in the helper since that is
+	 * what old code was doing.  Presumably its value is identical
+	 * to st->st_oakley.group->group.
+	 */
+	pexpect(st->st_oakley.group->group == r->pcr_d.kn.oakley_group);
+	if (!justship_v2KE(st, &st->st_gr,
+			   r->pcr_d.kn.oakley_group,
+			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
