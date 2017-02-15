@@ -627,15 +627,19 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	/*
 	 * Only implemented one way, if at all.
 	 */
-	passert((encrypt->do_crypt == NULL && encrypt->do_aead_crypt_auth == NULL)
-		|| ((encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL)));
+	if (encrypt->encrypt_ops != NULL) {
+		passert((encrypt->encrypt_ops->do_crypt == NULL)
+			!= (encrypt->encrypt_ops->do_aead == NULL));
+	}
 
 	/*
 	 * AEAD implementation implies a valid AEAD tag size.
 	 * Converse for non-AEAD implementation.
 	 */
-	passert(encrypt->do_aead_crypt_auth == NULL || encrypt->aead_tag_size > 0);
-	passert(encrypt->do_crypt == NULL || encrypt->aead_tag_size == 0);
+	if (encrypt->encrypt_ops != NULL) {
+		passert(encrypt->encrypt_ops->do_aead == NULL || encrypt->aead_tag_size > 0);
+		passert(encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
+	}
 
 	if (encrypt->keydeflen) {
 		/*
@@ -674,7 +678,7 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	return (encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL);
+	return encrypt->encrypt_ops != NULL;
 }
 
 static struct type_algorithms encrypt_algorithms = {

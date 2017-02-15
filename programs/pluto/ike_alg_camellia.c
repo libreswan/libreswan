@@ -110,7 +110,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.wire_iv_size =       CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = ike_alg_nss_cbc,
+	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_camellia_ctr =

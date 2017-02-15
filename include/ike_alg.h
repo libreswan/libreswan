@@ -250,6 +250,17 @@ struct encrypt_desc {
 	const unsigned keydeflen;
 
 	/*
+	 * For Authenticated Encryption with Associated Data (AEAD),
+	 * the size (in 8-bit bytes) of the authentication tag
+	 * appended to the end of the encrypted data.
+	*/
+	const size_t aead_tag_size;
+
+	const struct encrypt_ops *encrypt_ops;
+};
+
+struct encrypt_ops {
+	/*
 	 * Perform simple encryption.
 	 *
 	 * Presumably something else is implementing the integrity.
@@ -281,13 +292,13 @@ struct encrypt_desc {
 	 *
 	 * All sizes are in 8-bit bytes.
 	 */
-	bool (*const do_aead_crypt_auth)(const struct encrypt_desc *alg,
-					 u_int8_t *salt, size_t salt_size,
-					 u_int8_t *wire_iv, size_t wire_iv_size,
-					 u_int8_t *aad, size_t aad_size,
-					 u_int8_t *text_and_tag,
-					 size_t text_size, size_t tag_size,
-					 PK11SymKey *key, bool enc);
+	bool (*const do_aead)(const struct encrypt_desc *alg,
+			      u_int8_t *salt, size_t salt_size,
+			      u_int8_t *wire_iv, size_t wire_iv_size,
+			      u_int8_t *aad, size_t aad_size,
+			      u_int8_t *text_and_tag,
+			      size_t text_size, size_t tag_size,
+			      PK11SymKey *key, bool enc);
 };
 
 /*

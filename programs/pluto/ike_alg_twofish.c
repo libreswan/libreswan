@@ -73,6 +73,10 @@ static void do_twofish(const struct encrypt_desc *alg UNUSED,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
+static const struct encrypt_ops twofish_encrypt_ops = {
+	.do_crypt = do_twofish,
+};
+
 struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 {
 	.common = {
@@ -94,7 +98,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = do_twofish,
+	.encrypt_ops = &twofish_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_twofish_ssh =
@@ -117,5 +121,5 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = do_twofish,
+	.encrypt_ops = &twofish_encrypt_ops,
 };

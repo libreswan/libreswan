@@ -67,13 +67,13 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    desc, aad.len, salt.len, wire_iv.len, len, tag.len);  \
 		    DBG_dump_chunk("test_gcm_vector: text+tag on call",  \
 				   text_and_tag));  \
-		if (!encrypt_desc->do_aead_crypt_auth(encrypt_desc,  \
-						      salt.ptr, salt.len,  \
-						      wire_iv.ptr, wire_iv.len,  \
-						      aad.ptr, aad.len,  \
-						      text_and_tag.ptr,  \
-						      len, tag.len,  \
-						      sym_key, enc) ||  \
+		if (!encrypt_desc->encrypt_ops->do_aead(encrypt_desc,  \
+							salt.ptr, salt.len, \
+							wire_iv.ptr, wire_iv.len, \
+							aad.ptr, aad.len, \
+							text_and_tag.ptr, \
+							len, tag.len,	\
+							sym_key, enc) || \
 		    !verify_chunk_data("output ciphertext",  \
 				   to, text_and_tag.ptr) ||  \
 		    !verify_chunk_data("TAG", tag, text_and_tag.ptr + len))  \

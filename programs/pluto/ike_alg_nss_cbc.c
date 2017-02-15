@@ -29,9 +29,9 @@
 #include "ike_alg.h"
 #include "ike_alg_nss_cbc.h"
 
-void ike_alg_nss_cbc(const struct encrypt_desc *alg,
-		     u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-		     u_int8_t *iv, bool enc)
+static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
+			    u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
+			    u_int8_t *iv, bool enc)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
 
@@ -106,3 +106,7 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 		SECITEM_FreeItem(secparam, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - exit", alg->common.name));
 }
+
+const struct encrypt_ops ike_alg_nss_cbc_encrypt_ops = {
+	.do_crypt = ike_alg_nss_cbc,
+};

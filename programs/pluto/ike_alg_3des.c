@@ -116,6 +116,10 @@ static void do_3des_nss(const struct encrypt_desc *alg UNUSED,
 		DBG_log("NSS: do_3des init end"));
 }
 
+static const struct encrypt_ops nss_3des_encrypt_ops = {
+	.do_crypt = do_3des_nss,
+};
+
 struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
 	.common = {
@@ -137,5 +141,5 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keylen_omitted = TRUE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.key_bit_lengths = { DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE, },
-	.do_crypt = do_3des_nss,
+	.encrypt_ops = &nss_3des_encrypt_ops,
 };

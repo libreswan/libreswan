@@ -112,7 +112,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = ike_alg_nss_cbc,
+	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
 };
 
 /*
@@ -307,6 +307,10 @@ static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
+static const struct encrypt_ops aes_ctr_encrypt_ops = {
+	.do_crypt = do_aes_ctr,
+};
+
 struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
@@ -328,7 +332,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.salt_size = 4,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt =     do_aes_ctr,
+	.encrypt_ops = &aes_ctr_encrypt_ops,
 };
 
 /*
@@ -398,7 +402,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -423,7 +427,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -449,7 +453,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 /*
