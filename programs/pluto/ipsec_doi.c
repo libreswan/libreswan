@@ -10,7 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -97,12 +97,40 @@
 /*
  * Process KE values.
  */
-void unpack_KE_from_helper(
-	struct state *st,
-	const struct pluto_crypto_req *r,
-	chunk_t *g)
+void unpack_KE_from_helper(struct state *st,
+			   const struct pluto_crypto_req *r,
+			   chunk_t *g)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
+
+	/*
+	 * Should the crypto helper group and the state group be in
+	 * sync?
+	 *
+	 * Probably not, yet seemingly (IKEv2) code is assuming this.
+	 *
+	 * For instance, with IKEv2, the initial initiator is setting
+	 * st_oakley.group to the draft KE group (and well before
+	 * initial responder has had a chance to agree to any thing).
+	 * Should the initial responder comes back with INVALID_KE
+	 * then st_oakley.group gets changed to match the suggestion
+	 * and things restart; should the initial responder come back
+	 * with an accepted proposal and KE, then the st_oakley.group
+	 * is set based on the accepted proposal (the two are
+	 * checked).
+	 *
+	 * Surely, instead, st_oakley.group should be left alone.  The
+	 * the initial initiator would maintain a list of KE values
+	 * proposed (INVALID_KE flip-flopping can lead to more than
+	 * one) and only set st_oakley.group when the initial
+	 * responder comes back with a vald accepted propsal and KE.
+	 */
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("wire (crypto helper) group %s and state group %s %s",
+			kn->group ? kn->group->common.name : "NULL",
+			st->st_oakley.group ? st->st_oakley.group->common.name : "NULL",
+			kn->group == st->st_oakley.group ? "match" : "differ");
+	}
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
 	passert(!st->st_sec_in_use);

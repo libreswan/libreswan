@@ -1402,14 +1402,20 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
 
-	/* send KE */
-	unpack_KE_from_helper(st, r, &st->st_gr);
 	/*
-	 * XXX: Pass oakley group found in the helper since that is
-	 * what old code was doing.  Presumably its value is identical
-	 * to st->st_oakley.group->group.
+	 * Unpack and send KE
+	 *
+	 * Pass the crypto helper's oakley group so that it is
+	 * consistent with what was unpacked.
+	 *
+	 * IKEv2 code (arguably, incorrectly) uses st_oakley.group to
+	 * track the most recent KE sent out.  It should instead be
+	 * maintaing a list of KEs sent out (so that they can be
+	 * reused should the initial responder flip-flop) and only set
+	 * st_oakley.group once the proposal has been accepted.
 	 */
 	pexpect(st->st_oakley.group == r->pcr_d.kn.group);
+	unpack_KE_from_helper(st, r, &st->st_gr);
 	if (!justship_v2KE(&st->st_gr,
 			   r->pcr_d.kn.group,
 			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
