@@ -148,24 +148,6 @@ static bool emit_wire_iv(const struct state *st, pb_stream *pbs)
 	return out_raw(ivbuf, wire_iv_size, pbs, "IV");
 }
 
-/*
- * unpack the calculated KE value, store it in state.
- * used by IKEv2: parent, child (PFS)
- */
-static enum ike_trans_type_dh unpack_v2KE_from_helper(struct state *st,
-			const struct pluto_crypto_req *r,
-			chunk_t *g)
-{
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-	unpack_KE_from_helper(st, r, g);
-	/*
-	 * clang 3.4: warning: Access to field 'oakley_group' results in a dereference of a null pointer (loaded from variable 'kn')
-	 * This should not be accurate.
-	 */
-	return kn->oakley_group;
-}
-
 static stf_status add_st_send_list(struct state *st, struct state *pst)
 {
 	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
@@ -284,7 +266,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	case STATE_V2_REKEY_IKE_I0:
 		unpack_nonce(&st->st_ni, r);
-		unpack_v2KE_from_helper(st, r, &st->st_gi);
+		unpack_KE_from_helper(st, r, &st->st_gi);
 		break;
 
 	case STATE_V2_CREATE_R:
@@ -296,7 +278,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 			unpack_nonce(&st->st_nr, r);
 			if (md->chain[ISAKMP_NEXT_v2KE] != NULL &&
 					r->pcr_type == pcr_build_ke_and_nonce){
-				unpack_v2KE_from_helper(st, r, &st->st_gr);
+				unpack_KE_from_helper(st, r, &st->st_gr);
 			}
 			e = ikev2_rekey_dh_start(r,md); /* e == STF_SUSPEND */
 		}
@@ -679,7 +661,7 @@ stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	unpack_v2KE_from_helper(st, r, &st->st_gi);
+	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
 	return ikev2_parent_outI1_common(md, st);
 }
