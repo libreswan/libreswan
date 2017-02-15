@@ -620,18 +620,16 @@ stf_status ikev2parent_outI1(int whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-static bool justship_v2KE(struct state *st UNUSED,
-			  chunk_t *g,
-			  enum ike_trans_type_dh oakley_group,
-			  pb_stream *outs,
-			  u_int8_t np)
+static bool justship_v2KE(chunk_t *g,
+			  const struct oakley_group_desc *group,
+			  pb_stream *outs, u_int8_t np)
 {
 	struct ikev2_ke v2ke;
 	pb_stream kepbs;
 
 	zero(&v2ke);	/* OK: no pointer fields */
 	v2ke.isak_np = np;
-	v2ke.isak_group = oakley_group;
+	v2ke.isak_group = group->common.id[IKEv2_ALG_ID];
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
@@ -775,7 +773,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
-	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.group->group,
+	if (!justship_v2KE(&st->st_gi, st->st_oakley.group,
 			   &md->rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
@@ -1412,8 +1410,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	 * to st->st_oakley.group->group.
 	 */
 	pexpect(st->st_oakley.group == r->pcr_d.kn.group);
-	if (!justship_v2KE(st, &st->st_gr,
-			   r->pcr_d.kn.group->group,
+	if (!justship_v2KE(&st->st_gr,
+			   r->pcr_d.kn.group,
 			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -4472,8 +4470,8 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		close_output_pbs(&nr_pbs);
 
 	}
-	if (!justship_v2KE(st, local_g, st->st_oakley.group->group, outpbs,
-				ISAKMP_NEXT_v2NONE))
+	if (!justship_v2KE(local_g, st->st_oakley.group, outpbs,
+			   ISAKMP_NEXT_v2NONE))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
