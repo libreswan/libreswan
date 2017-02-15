@@ -196,14 +196,12 @@ struct initiate_stuff {
 	enum crypto_importance importance;
 };
 
-static int initiate_a_connection(struct connection *c,
-				 void *arg)
+static int initiate_a_connection(struct connection *c, void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	int whackfd = is->whackfd;
 	lset_t moredebug = is->moredebug;
 	enum crypto_importance importance = is->importance;
-	int success = 0;
 
 	set_cur_connection(c);
 
@@ -214,100 +212,110 @@ static int initiate_a_connection(struct connection *c,
 		ipstr_buf a;
 		ipstr_buf b;
 		loglog(RC_ORIENT,
-		       "We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-		       ipstr(&c->spd.this.host_addr, &a),
-		       ipstr(&c->spd.that.host_addr, &b));
-	} else if (NEVER_NEGOTIATE(c->policy)) {
+			"We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
+			ipstr(&c->spd.this.host_addr, &a),
+			ipstr(&c->spd.that.host_addr, &b));
+		reset_cur_connection();
+		return 0;
+	}
+
+	if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
-		       "cannot initiate an authby=never connection");
-	} else if ((c->kind != CK_PERMANENT) &&
-		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+			"cannot initiate an authby=never connection");
+		reset_cur_connection();
+		return 0;
+	}
+
+	if ((c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				       enum_show(&connection_kind_names,
-						 c->kind));
-				success = 1;
-				c->policy |= POLICY_UP;
-			} else {
-				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without knowing peer IP address (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-			}
-		} else if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			loglog(RC_WILDCARD,
-			       "cannot initiate connection with narrowing=no and (kind=%s)",
-			       enum_show(&connection_kind_names, c->kind));
-		} else {
-			loglog(RC_WILDCARD,
-			       "cannot initiate connection with ID wildcards (kind=%s)",
-			       enum_show(&connection_kind_names, c->kind));
-		}
-	} else {
-		if (isanyaddr(&c->spd.that.host_addr) &&
-		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
-			if (c->dnshostname != NULL) {
-				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				       enum_show(&connection_kind_names,
-						 c->kind),
-				       (c->policy &
-					POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
-				success = 1;
-				c->policy |= POLICY_UP;
-			} else {
-				loglog(RC_NOPEERIP,
-					"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 					enum_show(&connection_kind_names,
-						c->kind),
-			       (c->policy &
-				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+						 c->kind));
+				c->policy |= POLICY_UP;
+				reset_cur_connection();
+				return 1;
+			} else {
+				loglog(RC_NOPEERIP,
+					"cannot initiate connection without knowing peer IP address (kind=%s)",
+					enum_show(&connection_kind_names, c->kind));
 			}
+			reset_cur_connection();
+			return 0;
+		}
+
+		if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+			loglog(RC_WILDCARD,
+				"cannot initiate connection with narrowing=no and (kind=%s)",
+				enum_show(&connection_kind_names, c->kind));
 		} else {
-			if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
-				c->kind == CK_TEMPLATE) {
-					c = instantiate(c, NULL, NULL);
-			}
+			loglog(RC_WILDCARD,
+				"cannot initiate connection with ID wildcards (kind=%s)",
+				enum_show(&connection_kind_names, c->kind));
+		}
+		reset_cur_connection();
+		return 0;
+	}
 
-			/* We will only request an IPsec SA if policy isn't empty
-			 * (ignoring Main Mode items).
-			 * This is a fudge, but not yet important.
-			 * If we are to proceed asynchronously, whackfd will be NULL_FD.
-			 */
+	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
+		if (c->dnshostname != NULL) {
+			loglog(RC_NOPEERIP,
+				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
+				enum_show(&connection_kind_names, c->kind),
+					(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
 			c->policy |= POLICY_UP;
-
-			if (c->policy &
-			    (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-				struct alg_info_esp *alg = c->alg_info_esp;
-				struct db_sa *phase2_sa = kernel_alg_makedb(
-					c->policy, alg, TRUE);
-
-				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_LOG_SERIOUS,
-						  "cannot initiate: no acceptable kernel algorithms loaded");
-					reset_cur_connection();
-					close_any(is->whackfd);
-					return 0;
-				}
-				free_sa(&phase2_sa);
-			}
-
-			{
-				whackfd = dup(whackfd);
-				ipsecdoi_initiate(whackfd, c, c->policy, 1,
-						  SOS_NOBODY, importance
-#ifdef HAVE_LABELED_IPSEC
-						  , NULL
-#endif
-						  );
-				success = 1;
-			}
+			reset_cur_connection();
+			return 1;
+		} else {
+			loglog(RC_NOPEERIP,
+				"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+				enum_show(&connection_kind_names,
+					c->kind),
+				(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+			reset_cur_connection();
+			return 0;
 		}
 	}
-	reset_cur_connection();
 
-	return success;
+	if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+		c->kind == CK_TEMPLATE) {
+			c = instantiate(c, NULL, NULL);
+	}
+
+	/* We will only request an IPsec SA if policy isn't empty
+	 * (ignoring Main Mode items).
+	 * This is a fudge, but not yet important.
+	 * If we are to proceed asynchronously, whackfd will be NULL_FD.
+	 */
+
+	if (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+
+		struct alg_info_esp *alg = c->alg_info_esp;
+		struct db_sa *phase2_sa = kernel_alg_makedb(
+			c->policy, alg, TRUE);
+
+		if (alg != NULL && phase2_sa == NULL) {
+			whack_log(RC_LOG_SERIOUS,
+				  "cannot initiate: no acceptable kernel algorithms loaded");
+			reset_cur_connection();
+			close_any(is->whackfd);
+			return 0;
+		}
+		free_sa(&phase2_sa);
+	}
+
+	c->policy |= POLICY_UP;
+	whackfd = dup(whackfd);
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, importance
+#ifdef HAVE_LABELED_IPSEC
+		  , NULL
+#endif
+		  );
+
+	reset_cur_connection();
+	return 1;
 }
 
 void initiate_connection(const char *name, int whackfd,
