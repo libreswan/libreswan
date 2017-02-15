@@ -160,10 +160,6 @@ OBJS += ike_alg_camellia.o
 OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
 
-ifeq ($(USE_SINGLE_CONF_DIR),true)
-SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
-endif
-
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
 	$(KEYRR_DEFINES) \
