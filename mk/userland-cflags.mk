@@ -75,6 +75,7 @@ endif
 
 ifeq ($(USE_LINUX_AUDIT),true)
 USERLAND_CFLAGS+=-DUSE_LINUX_AUDIT
+LINUX_AUDIT_LDFLAGS ?= -laudit
 endif
 
 ifeq ($(USE_LDAP),true)

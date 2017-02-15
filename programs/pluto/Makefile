@@ -198,10 +198,7 @@ endif
 
 LDFLAGS += -lrt
 LDFLAGS += $(UNBOUND_LDFLAGS)
-
-ifeq ($(USE_LINUX_AUDIT),true)
-LDFLAGS += -laudit
-endif
+LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 
 LDFLAGS += -levent
 LDFLAGS += -levent_pthreads
