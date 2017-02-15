@@ -19,7 +19,20 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
+# XXX: Pluto currently doesn't include include program.mk:
+#
+# - program.mk (reasonably) expects only one program per directory but
+#   this directory creates two programs (pluto and cavp).
+#
+#   Either cavp gets merged into pluto, or cavp gets moved to its own
+#   directory.
+#
+# - this make file tests USE_ variables defined in config.mk using
+#   GNU-make's 'ifeq' statement and that only works if config.mk is
+#   included before the tests.
+#
+#   That code is slowly being replaced by '$(call if-enabled)'.
+#
 
 ifndef top_srcdir
 include ../../mk/dirs.mk
@@ -28,7 +41,6 @@ endif
 # XXX: Pluto doesn't include mk/program.mk and define PROGRAM
 MANPAGES += ipsec_pluto.8
 
-# XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
@@ -112,11 +124,8 @@ ifeq ($(USE_SECCOMP),true)
 OBJS += pluto_seccomp.o
 endif
 
-ifeq ($(USE_SYSTEMD_WATCHDOG),true)
-SYSTEMD_NOTIFY_DEFS=-DUSE_SYSTEMD_WATCHDOG
-OBJS += pluto_sd.o
-LDFLAGS += -lsystemd
-endif
+OBJS += $(call if-enabled, USE_SYSTEMD_WATCHDOG, pluto_sd.o)
+LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 

@@ -15,6 +15,17 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+# A Makefile wanting to test variables defined below has two choides:
+#
+# - include config.mk early and use GNU-make's 'ifeq' statement
+#
+# - include config.mk late, and use $(call if-enabled,VARIABLE,result)
+#
+
+if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
+
+
 #
 #
 # TODO: Some creative ifeq ($(BUILDENV,xxx) to automatically determine
