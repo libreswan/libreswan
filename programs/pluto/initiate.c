@@ -354,7 +354,8 @@ void initiate_connection(const char *name, int whackfd,
 	is.remote_host = remote_host;
 
 	if (c != NULL) {
-		initiate_a_connection(c, &is);
+		if (!initiate_a_connection(c, &is))
+			whack_log(RC_FATAL, "failed to initiate %s", c->name);
 		close_any(is.whackfd);
 		return;
 	}
