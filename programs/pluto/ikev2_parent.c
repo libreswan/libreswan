@@ -1411,9 +1411,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	 * what old code was doing.  Presumably its value is identical
 	 * to st->st_oakley.group->group.
 	 */
-	pexpect(st->st_oakley.group->group == r->pcr_d.kn.oakley_group);
+	pexpect(st->st_oakley.group == r->pcr_d.kn.group);
 	if (!justship_v2KE(st, &st->st_gr,
-			   r->pcr_d.kn.oakley_group,
+			   r->pcr_d.kn.group->group,
 			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
 		return STF_INTERNAL_ERROR;
 	}
