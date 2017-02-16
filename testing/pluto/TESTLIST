@@ -340,6 +340,8 @@ kvmplutotest	certoe-08-nat-packet-cop-restart	good
 kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
 
+kvmplutotest	ikev2-initiate-template-01		good
+
 kvmplutotest	ikev2-asymmetric-01-parsing		good
 kvmplutotest	ikev2-asymmetric-02-orienting		good
 kvmplutotest	ikev2-asymmetric-03-null-rsacert	good

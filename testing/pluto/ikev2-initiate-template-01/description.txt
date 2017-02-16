@@ -1,0 +1,6 @@
+
+This tests specifying --remote-host ipaddr with ipsec whack (or ipsec auto)
+to instantiate a template and initiate it.
+
+This is the non-OE case.
+
