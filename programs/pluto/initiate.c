@@ -194,6 +194,7 @@ struct initiate_stuff {
 	int whackfd;
 	lset_t moredebug;
 	enum crypto_importance importance;
+	char *remote_host;
 };
 
 static int initiate_a_connection(struct connection *c, void *arg)
@@ -207,6 +208,25 @@ static int initiate_a_connection(struct connection *c, void *arg)
 
 	/* turn on any extra debugging asked for */
 	c->extra_debugging |= moredebug;
+
+	/* If whack supplied a remote IP, fill it in if we can */
+	if (is->remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
+		ip_address remote_ip;
+
+		ttoaddr_num(is->remote_host, 0, AF_UNSPEC, &remote_ip);
+
+		if (c->kind != CK_TEMPLATE) {
+			loglog(RC_NOPEERIP,
+				"Cannot instantiate non-template connection to a supplied remote IP address");
+			reset_cur_connection();
+			return 0;
+		}
+
+		c = instantiate(c, &remote_ip, NULL);
+		whack_log(RC_LOG, "Instantiated connection '%s' with remote IP set to %s",
+			c->name, is->remote_host);
+		/* now proceed as normal */
+	}
 
 	if (!oriented(*c)) {
 		ipstr_buf a;
@@ -226,7 +246,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		return 0;
 	}
 
-	if ((c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+	if ((is->remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
@@ -320,7 +340,8 @@ static int initiate_a_connection(struct connection *c, void *arg)
 
 void initiate_connection(const char *name, int whackfd,
 			 lset_t moredebug,
-			 enum crypto_importance importance)
+			 enum crypto_importance importance,
+			 char *remote_host)
 {
 	struct initiate_stuff is;
 	struct connection *c = con_by_name(name, FALSE);
@@ -330,6 +351,7 @@ void initiate_connection(const char *name, int whackfd,
 	is.whackfd   = whackfd;
 	is.moredebug = moredebug;
 	is.importance = importance;
+	is.remote_host = remote_host;
 
 	if (c != NULL) {
 		initiate_a_connection(c, &is);
@@ -411,7 +433,7 @@ void restart_connections_by_peer(struct connection *const c)
 		if (same_host(dnshostname, &host_addr,
 				d->dnshostname, &d->spd.that.host_addr))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
-					pcim_demand_crypto);
+					pcim_demand_crypto, NULL);
 	}
 	pfreeany(dnshostname);
 }
@@ -1083,7 +1105,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto);
+	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto, NULL);
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1093,7 +1115,7 @@ static void connection_check_ddns1(struct connection *c)
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
-					    pcim_demand_crypto);
+					    pcim_demand_crypto, NULL);
 	}
 }
 

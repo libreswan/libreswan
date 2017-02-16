@@ -133,7 +133,7 @@ static void help(void)
 		"\n"
 		"routing: whack (--route | --unroute) --name <connection_name>\n"
 		"\n"
-		"initiation: whack (--initiate | --terminate) \\\n"
+		"initiation: whack (--initiate [--remote-host <ip>] | --terminate) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
@@ -194,6 +194,8 @@ static const char *label = NULL;
 /* --name operand, saved for diagnostics */
 static const char *name = NULL;
 
+static const char *remote_host = NULL;
+
 /*
  * Print a string as a diagnostic, then exit whack unhappily
  *
@@ -252,6 +254,7 @@ enum option_enums {
 #   define OPT_FIRST1    OPT_CTLBASE	/* first normal option, range 1 */
 	OPT_CTLBASE,
 	OPT_NAME,
+	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
 	OPT_CD,
@@ -476,6 +479,7 @@ static const struct option long_opts[] = {
 
 	{ "ctlbase", required_argument, NULL, OPT_CTLBASE + OO },
 	{ "name", required_argument, NULL, OPT_NAME + OO },
+	{ "remote-host", required_argument, NULL, OPT_REMOTE_HOST + OO },
 	{ "connalias", required_argument, NULL, OPT_CONNALIAS + OO },
 
 	{ "keyid", required_argument, NULL, OPT_KEYID + OO },
@@ -906,6 +910,7 @@ int main(int argc, char **argv)
 
 	/* msg was zero'd - setting to NULL is not needed */
 	msg.name = NULL;
+	msg.remote_host = NULL;
 	msg.dnshostname = NULL;
 
 	msg.keyid = NULL;
@@ -1111,6 +1116,11 @@ int main(int argc, char **argv)
 		case OPT_NAME:	/* --name <connection-name> */
 			name = optarg;
 			msg.name = optarg;
+			continue;
+
+		case OPT_REMOTE_HOST:	/* --remote-host <ip> */
+			remote_host = optarg;
+			msg.remote_host = optarg;
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
@@ -2123,6 +2133,11 @@ int main(int argc, char **argv)
 	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts1_seen, OPT_NAME))
 			diag("no reason for --name");
+	}
+
+	if (!LDISJOINT(opts1_seen, LELEM(OPT_REMOTE_HOST))) {
+		if (!LHAS(opts1_seen, OPT_INITIATE))
+			diag("--remote-host can only be used with --initiate");
 	}
 
 	if (!LDISJOINT(opts1_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {

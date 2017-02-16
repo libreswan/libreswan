@@ -237,6 +237,9 @@ struct whack_message {
 	bool whack_myid;
 	char *myid;	/* string 7 */
 
+	/* for REMOTE_HOST */
+	char *remote_host;
+
 	/* for WHACK_ROUTE: */
 	bool whack_route;
 
@@ -349,6 +352,7 @@ struct whack_message {
 	 * 25 genstring3
 	 * 26 dnshostname
 	 * 27 policy_label if compiled with with LABELED_IPSEC
+	 * 28 remote_host
 	 * plus keyval (limit: 8K bits + overhead), a chunk.
 	 */
 	size_t str_size;

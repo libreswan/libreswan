@@ -497,12 +497,29 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --initiate");
 		} else {
+			ip_address testip;
+			const char *oops;
+			bool pass_remote = FALSE;
+
+			if (m->remote_host != NULL) {
+				/* XXX: add DNS lookup to support specifying names too */
+				oops = ttoaddr_num(m->remote_host, 0, AF_UNSPEC, &testip);
+
+				if (oops != NULL) {
+					whack_log(RC_NOPEERIP, "remote host IP address '%s' is invalid: %s",
+						m->remote_host, oops);
+				} else {
+					pass_remote = TRUE;
+				}
+			}
 			initiate_connection(m->name,
-					    m->whack_async ?
-					      NULL_FD :
-					      dup_any(whackfd),
-					    m->debugging,
-					    pcim_demand_crypto);
+			    m->whack_async ?
+			      NULL_FD :
+			      dup_any(whackfd),
+			    m->debugging,
+			    pcim_demand_crypto,
+			    pass_remote ? m->remote_host : NULL
+				);
 		}
 	}
 

@@ -454,6 +454,7 @@
 
       <group choice="plain">
         <arg choice="plain">--initiate</arg>
+          <arg choice="opt">--remote-host <replaceable>ip-address</replaceable></arg>
 
         <arg choice="plain">--terminate</arg>
       </group>
