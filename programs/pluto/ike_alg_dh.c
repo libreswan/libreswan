@@ -26,6 +26,7 @@
 
 #include "ike_alg_dh.h"
 #include "ike_alg_nss_modp.h"
+#include "ike_alg_nss_ecp.h"
 
 /*
  * Oakley group description
@@ -169,6 +170,60 @@ struct oakley_group_desc oakley_group_modp8192 = {
 	.modp = MODP8192_MODULUS,
 	.bytes = BYTES_FOR_BITS(8192),
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
+};
+
+struct oakley_group_desc oakley_group_dh19 = {
+	.common = {
+		.algo_type = IKE_ALG_DH,
+		.name = "dh19",
+		.names = { "dh19", "ecp_256", },
+		.officname = "dh19",
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_256,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_256,
+		},
+		.fips = TRUE,
+	},
+	.group = OAKLEY_GROUP_ECP_256,
+	.bytes = BYTES_FOR_BITS(256) * 2,
+	.nss_oid = SEC_OID_SECG_EC_SECP256R1,
+	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
+};
+
+struct oakley_group_desc oakley_group_dh20 = {
+	.common = {
+		.algo_type = IKE_ALG_DH,
+		.name = "dh20",
+		.names = { "dh20", "ecp_384", },
+		.officname = "dh20",
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_384,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_384,
+		},
+		.fips = TRUE,
+	},
+	.group = OAKLEY_GROUP_ECP_384,
+	.bytes = BYTES_FOR_BITS(384) * 2,
+	.nss_oid = SEC_OID_SECG_EC_SECP384R1,
+	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
+};
+
+struct oakley_group_desc oakley_group_dh21 = {
+	.common = {
+		.algo_type = IKE_ALG_DH,
+		.name = "dh21",
+		.names = { "dh21", "ecp_521", },
+		.officname = "dh21",
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_521,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_521,
+		},
+		.fips = TRUE,
+	},
+	.group = OAKLEY_GROUP_ECP_521,
+	.bytes = BYTES_FOR_BITS(521) * 2,
+	.nss_oid = SEC_OID_SECG_EC_SECP521R1,
+	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
 };
 
 #ifdef USE_DH22

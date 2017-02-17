@@ -527,6 +527,11 @@ struct oakley_group_desc {
 	const char *gen;
 	const char *modp;
 
+	/*
+	 * For ECP groups, the NSS ASN.1 OID that identifies the ECP.
+	 */
+	SECOidTag nss_oid;
+
 	const struct dhmke_ops *dhmke_ops;
 };
 

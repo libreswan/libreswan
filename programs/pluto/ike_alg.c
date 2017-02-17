@@ -701,6 +701,9 @@ static struct oakley_group_desc *dh_descriptors[] = {
 	&oakley_group_modp4096,
 	&oakley_group_modp6144,
 	&oakley_group_modp8192,
+	&oakley_group_dh19,
+	&oakley_group_dh20,
+	&oakley_group_dh21,
 #ifdef USE_DH22
 	&oakley_group_dh22,
 #endif
