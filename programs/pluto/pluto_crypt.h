@@ -152,7 +152,7 @@ struct pcr_kenonce {
 	DECLARE_WIRE_ARENA(KENONCE_SIZE);
 
 	/* inputs */
-	u_int16_t oakley_group;
+	const struct oakley_group_desc *group;
 
 	/* outputs */
 	SECKEYPrivateKey *secret;

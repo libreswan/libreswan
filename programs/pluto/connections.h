@@ -365,7 +365,8 @@ extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
 				int whackfd,
 				lset_t moredebug,
-				enum crypto_importance importance);
+				enum crypto_importance importance,
+				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
 
 #ifdef HAVE_LABELED_IPSEC

@@ -148,24 +148,6 @@ static bool emit_wire_iv(const struct state *st, pb_stream *pbs)
 	return out_raw(ivbuf, wire_iv_size, pbs, "IV");
 }
 
-/*
- * unpack the calculated KE value, store it in state.
- * used by IKEv2: parent, child (PFS)
- */
-static enum ike_trans_type_dh unpack_v2KE_from_helper(struct state *st,
-			const struct pluto_crypto_req *r,
-			chunk_t *g)
-{
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-	unpack_KE_from_helper(st, r, g);
-	/*
-	 * clang 3.4: warning: Access to field 'oakley_group' results in a dereference of a null pointer (loaded from variable 'kn')
-	 * This should not be accurate.
-	 */
-	return kn->oakley_group;
-}
-
 static stf_status add_st_send_list(struct state *st, struct state *pst)
 {
 	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
@@ -284,7 +266,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	case STATE_V2_REKEY_IKE_I0:
 		unpack_nonce(&st->st_ni, r);
-		unpack_v2KE_from_helper(st, r, &st->st_gi);
+		unpack_KE_from_helper(st, r, &st->st_gi);
 		break;
 
 	case STATE_V2_CREATE_R:
@@ -296,7 +278,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 			unpack_nonce(&st->st_nr, r);
 			if (md->chain[ISAKMP_NEXT_v2KE] != NULL &&
 					r->pcr_type == pcr_build_ke_and_nonce){
-				unpack_v2KE_from_helper(st, r, &st->st_gr);
+				unpack_KE_from_helper(st, r, &st->st_gr);
 			}
 			e = ikev2_rekey_dh_start(r,md); /* e == STF_SUSPEND */
 		}
@@ -638,18 +620,16 @@ stf_status ikev2parent_outI1(int whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-static bool justship_v2KE(struct state *st UNUSED,
-			  chunk_t *g,
-			  enum ike_trans_type_dh oakley_group,
-			  pb_stream *outs,
-			  u_int8_t np)
+static bool justship_v2KE(chunk_t *g,
+			  const struct oakley_group_desc *group,
+			  pb_stream *outs, u_int8_t np)
 {
 	struct ikev2_ke v2ke;
 	pb_stream kepbs;
 
 	zero(&v2ke);	/* OK: no pointer fields */
 	v2ke.isak_np = np;
-	v2ke.isak_group = oakley_group;
+	v2ke.isak_group = group->common.id[IKEv2_ALG_ID];
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
@@ -667,16 +647,6 @@ static bool justship_v2KE(struct state *st UNUSED,
 	return TRUE;
 }
 
-static bool ship_v2KE(struct state *st,
-		      struct pluto_crypto_req *r,
-		      chunk_t *g,
-		      pb_stream *outs, u_int8_t np)
-{
-	enum ike_trans_type_dh oakley_group = unpack_v2KE_from_helper(st, r, g);
-
-	return justship_v2KE(st, g, oakley_group, outs, np);
-}
-
 stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 					  struct pluto_crypto_req *r)
 {
@@ -689,7 +659,7 @@ stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	unpack_v2KE_from_helper(st, r, &st->st_gi);
+	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
 	return ikev2_parent_outI1_common(md, st);
 }
@@ -803,7 +773,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
-	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.group->group,
+	if (!justship_v2KE(&st->st_gi, st->st_oakley.group,
 			   &md->rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
@@ -1433,8 +1403,18 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
 
 	/* send KE */
-	if (!ship_v2KE(st, r, &st->st_gr, &md->rbody, ISAKMP_NEXT_v2Nr))
+	unpack_KE_from_helper(st, r, &st->st_gr);
+	/*
+	 * XXX: Pass oakley group found in the helper since that is
+	 * what old code was doing.  Presumably its value is identical
+	 * to st->st_oakley.group->group.
+	 */
+	pexpect(st->st_oakley.group == r->pcr_d.kn.group);
+	if (!justship_v2KE(&st->st_gr,
+			   r->pcr_d.kn.group,
+			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
 		return STF_INTERNAL_ERROR;
+	}
 
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
@@ -4490,8 +4470,8 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		close_output_pbs(&nr_pbs);
 
 	}
-	if (!justship_v2KE(st, local_g, st->st_oakley.group->group, outpbs,
-				ISAKMP_NEXT_v2NONE))
+	if (!justship_v2KE(local_g, st->st_oakley.group, outpbs,
+			   ISAKMP_NEXT_v2NONE))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;

@@ -63,7 +63,7 @@ void calc_ke(struct pluto_crypto_req *r)
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
-	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
+	const struct oakley_group_desc *group = kn->group;
 	chunk_t base;
 	chunk_t prime;
 	get_oakley_group_param(group, &base, &prime);
@@ -170,7 +170,7 @@ stf_status build_ke_and_nonce(
 	 */
 	passert(cur_state->st_serialno == cn->pcrc_serialno && !cur_state->st_sec_in_use);
 	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
-	rd.pcr_d.kn.oakley_group = group->group;
+	rd.pcr_d.kn.group = group;
 
 	return send_crypto_helper_request(&rd, cn);
 }

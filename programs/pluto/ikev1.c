@@ -823,7 +823,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    LEMPTY, pcim_demand_crypto);
+						    LEMPTY, pcim_demand_crypto, NULL);
 				return STF_IGNORE;
 			}
 			loglog(RC_LOG_SERIOUS,
