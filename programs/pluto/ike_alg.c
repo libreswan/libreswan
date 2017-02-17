@@ -715,13 +715,17 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert(group->bytes > 0);
 	passert(group->common.id[IKEv2_ALG_ID] == group->group);
 	passert(group->common.id[IKEv1_OAKLEY_ID] == group->group);
+	/* always implemented */
+	passert(group->dhmke_ops != NULL);
+	passert(group->dhmke_ops->calc_ke != NULL);
+	passert(group->dhmke_ops->calc_g_ir != NULL);
 	/* more? */
 }
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_DH);
-	return TRUE;
+	const struct oakley_group_desc *group = oakley_group_desc(alg);
+	return group->dhmke_ops != NULL;
 }
 
 static struct type_algorithms dh_algorithms = {

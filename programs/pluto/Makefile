@@ -129,6 +129,7 @@ LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 
+OBJS += ike_alg_nss_modp.o
 OBJS += ike_alg_nss_cbc.o
 OBJS += ike_alg_nss_hash_ops.o
 OBJS += ike_alg_hmac_prf_ops.o

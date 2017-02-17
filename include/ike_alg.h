@@ -508,14 +508,48 @@ bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigne
  */
 unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
 
-/* Oakley group descriptions */
+/*
+ * DHMKE: Diffie–Hellman–Merkle key exchange.
+ *
+ * The naming follows Hellman's suggestion; besides "dh" is too short
+ * and "oakley_group" is too long.
+ */
 
 struct oakley_group_desc {
 	struct ike_alg common;		/* must be first */
 	u_int16_t group;
+	size_t bytes;
+
+	/*
+	 * For MODP groups, the base and prime used when generating
+	 * the KE.
+	 */
 	const char *gen;
 	const char *modp;
-	size_t bytes;
+
+	const struct dhmke_ops *dhmke_ops;
+};
+
+struct dhmke_ops {
+	/*
+	 * Create KE.
+	 *
+	 * The LOCAL_PUBK parameter is arguably redundant - just the
+	 * KE bytes and private key are needed - however MODP's
+	 * CALC_G_IR() uses LOCAL_PUBK to fudge up the remote's public
+	 * key.
+	 *
+	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
+	 * can perform a sanity check.
+	 */
+	void (*calc_ke)(const struct oakley_group_desc *group,
+			SECKEYPrivateKey **local_privk,
+			SECKEYPublicKey **locak_pubk,
+			uint8_t *ke, size_t sizeof_ke);
+	PK11SymKey *(*calc_g_ir)(const struct oakley_group_desc *group,
+				 SECKEYPrivateKey *local_privk,
+				 const SECKEYPublicKey *local_pubk,
+				 uint8_t *remote_ke, size_t sizeof_remote_ke);
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */

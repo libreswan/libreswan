@@ -1,7 +1,7 @@
 /*
  * IKE modular algorithm handling interface, for libreswan
  *
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,6 +25,7 @@
 #include "ike_alg.h"
 
 #include "ike_alg_dh.h"
+#include "ike_alg_nss_modp.h"
 
 /*
  * Oakley group description
@@ -54,6 +55,7 @@ struct oakley_group_desc oakley_group_modp1024 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP1024_MODULUS,
 	.bytes = BYTES_FOR_BITS(1024),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp1536 = {
@@ -71,6 +73,7 @@ struct oakley_group_desc oakley_group_modp1536 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP1536_MODULUS,
 	.bytes = BYTES_FOR_BITS(1536),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp2048 = {
@@ -89,6 +92,7 @@ struct oakley_group_desc oakley_group_modp2048 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP2048_MODULUS,
 	.bytes = BYTES_FOR_BITS(2048),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp3072 = {
@@ -107,6 +111,7 @@ struct oakley_group_desc oakley_group_modp3072 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP3072_MODULUS,
 	.bytes = BYTES_FOR_BITS(3072),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp4096 = {
@@ -125,6 +130,7 @@ struct oakley_group_desc oakley_group_modp4096 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP4096_MODULUS,
 	.bytes = BYTES_FOR_BITS(4096),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp6144 = {
@@ -143,6 +149,7 @@ struct oakley_group_desc oakley_group_modp6144 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP6144_MODULUS,
 	.bytes = BYTES_FOR_BITS(6144),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_modp8192 = {
@@ -161,6 +168,7 @@ struct oakley_group_desc oakley_group_modp8192 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP8192_MODULUS,
 	.bytes = BYTES_FOR_BITS(8192),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 #ifdef USE_DH22
@@ -179,6 +187,7 @@ struct oakley_group_desc oakley_group_dh22 = {
 	.gen = MODP_GENERATOR_DH22,
 	.modp = MODP1024_MODULUS_DH22,
 	.bytes = BYTES_FOR_BITS(1024),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 #endif
 
@@ -198,6 +207,7 @@ struct oakley_group_desc oakley_group_dh23 = {
 	.gen = MODP_GENERATOR_DH23,
 	.modp = MODP2048_MODULUS_DH23,
 	.bytes = BYTES_FOR_BITS(2048),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
 struct oakley_group_desc oakley_group_dh24 = {
@@ -216,4 +226,5 @@ struct oakley_group_desc oakley_group_dh24 = {
 	.gen = MODP_GENERATOR_DH24,
 	.modp = MODP2048_MODULUS_DH24,
 	.bytes = BYTES_FOR_BITS(2048),
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
