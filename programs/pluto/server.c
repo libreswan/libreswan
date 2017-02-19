@@ -1461,6 +1461,7 @@ bool ev_before(struct pluto_event *pev, deltatime_t delay) {
 	return (event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT) &&
 		deltaless_tv_dt(timeout, delay);
 }
+
 void set_whack_pluto_ddos(enum ddos_mode mode)
 {
 	if (mode == pluto_ddos_mode) {
