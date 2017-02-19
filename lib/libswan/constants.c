@@ -1867,23 +1867,23 @@ static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
-	"DES-IV64(obsoleted)",	/* 1 */
-	"DES(obsoleted)",
+	"DES-IV64(UNUSED)",	/* 1 */
+	"DES(UNUSED)",
 	"3DES",
-	"RC5",
-	"IDEA",
+	"RC5(UNUSED)",
+	"IDEA(UNUSED)",
 	"CAST",
-	"BLOWFISH(obsoleted)",
-	"3IDEA",
-	"DES-IV32(obsoleted)",
-	"RES10",
+	"BLOWFISH(UNUSED)",
+	"3IDEA(UNUSED)",
+	"DES-IV32(UNUSED)",
+	"RES10(UNUSED)",
 	"NULL",
 	"AES_CBC",
 	"AES_CTR",
 	"AES_CCM_A",	/* AES-CCM_8 RFC 4309 */
 	"AES_CCM_B",	/* AES-CCM_12 */
 	"AES_CCM_C",	/* AES-CCM_16 */
-	"UNASSIGNED",
+	"UNASSIGNED(UNUSED)",
 	"AES_GCM_A",	/* AES-GCM_8 RFC 4106 */
 	"AES_GCM_B",	/* AES-GCM_12 */
 	"AES_GCM_C",	/* AES-GCM_16 */
