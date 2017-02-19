@@ -1894,7 +1894,8 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	"CAMELLIA_CCM_A",	/* CAMELLIA_CCM_8 RFC 5529 */
 	"CAMELLIA_CCM_B",	/* CAMELLIA_CCM_12 RFC 5529 */
 	"CAMELLIA_CCM_C",	/* CAMELLIA_CCM_16 RFC 5529 */
-	/* 28 - 1023 Unassigned */
+	"CHACHA20_POLY1305", /* RFC 7634 */
+	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
 };
 
@@ -1916,7 +1917,7 @@ static enum_names ikev2_trans_type_encr_names_private_use1 = {
 
 enum_names ikev2_trans_type_encr_names = {
 	IKEv2_ENCR_DES_IV64,
-	IKEv2_ENCR_CAMELLIA_CCM_C,
+	IKEv2_ENCR_CHACHA20_POLY1305,
 	ARRAY_REF(ikev2_trans_type_encr_name),
 	NULL, /* prefix */
 	&ikev2_trans_type_encr_names_private_use1
