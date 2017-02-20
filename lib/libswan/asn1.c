@@ -181,7 +181,7 @@ u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen)
 	*pos++ = type;
 
 	/* copy the asn.1 length field and advance the pointer */
-	chunkcpy(pos, length);
+	catchunk(pos, length);
 
 	return pos;
 }
@@ -208,7 +208,7 @@ u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 	*pos++ = inner_type;
 
 	/* copy the inner asn.1 length field and advance the pointer */
-	chunkcpy(pos, length);
+	catchunk(pos, length);
 
 	return pos;
 }

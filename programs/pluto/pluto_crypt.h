@@ -173,7 +173,7 @@ struct pcr_skeyid_q {
 	const struct prf_desc *prf;
 	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
-	size_t salt_size; /* ov IV salt, in bytes */
+	size_t salt_size; /* of IV salt, in bytes */
 	wire_chunk_t gi;
 	wire_chunk_t gr;
 	wire_chunk_t pss;

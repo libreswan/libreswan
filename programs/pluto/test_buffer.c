@@ -38,10 +38,11 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
 }
 
 /*
- * Given a hex encode string, decode it into a chunk.
+ * Given a hex encoded string, decode it into a chunk.
  *
- * If this function fails, crash and burn.  Its been fed static data
+ * If this function fails, crash and burn.  It is fed static data
  * so should never ever have a problem.
+ * The caller must free the chunk.
  */
 chunk_t decode_hex_to_chunk(const char *original, const char *string)
 {
@@ -58,8 +59,7 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 			break;
 		}
 		/* Expecting <HEX><HEX> */
-		char buf[3];
-		memset(buf, '\0', sizeof(buf));
+		char buf[3] = { '\0', '\0', '\0' };
 		if (isxdigit(*pos)) {
 			buf[0] = *pos++;
 			if (isxdigit(*pos)) {
@@ -82,10 +82,11 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 }
 
 /*
- * Given an ASCII string, convert it onto a buffer of bytes.  If the
- * buffer is prefixed by 0x assume the contents are hex (with spaces)
- * and decode it; otherwise it is assumed that the ascii (minus the
+ * Given an ASCII string, convert it into a chunk of bytes.  If the
+ * string is prefixed by 0x assume the contents are hex (with spaces)
+ * and decode it; otherwise it is assumed that the ASCII (minus the
  * NUL) should be copied.
+ * The caller must free the chunk.
  */
 chunk_t decode_to_chunk(const char *prefix, const char *original)
 {
@@ -137,17 +138,6 @@ bool verify_chunk(const char *desc,
 		return FALSE;
 	}
 	return verify_chunk_data(desc, expected, actual.ptr);
-}
-
-chunk_t extract_chunk(const char *prefix, const chunk_t input, size_t offset, size_t length)
-{
-	chunk_t output;
-	DBG(DBG_CRYPT, DBG_log("extract_chunk: %s: offset %zd length %zd",
-			       prefix, offset, length));
-	passert(offset + length <= input.len);
-	clonetochunk(output, input.ptr + offset, length, prefix);
-	DBG(DBG_CRYPT, DBG_dump_chunk(prefix, output));
-	return output;
 }
 
 /*

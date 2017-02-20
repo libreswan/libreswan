@@ -564,12 +564,12 @@ err_t atodn(char *src, chunk_t *dn)
 					 */
 				} else {
 					*dn_ptr++ = ASN1_SET;
-					chunkcpy(dn_ptr, asn1_rdn_set_len);
+					catchunk(dn_ptr, asn1_rdn_set_len);
 					*dn_ptr++ = ASN1_SEQUENCE;
-					chunkcpy(dn_ptr, asn1_rdn_seq_len);
+					catchunk(dn_ptr, asn1_rdn_seq_len);
 					*dn_ptr++ = ASN1_OID;
-					chunkcpy(dn_ptr, asn1_oid_len);
-					chunkcpy(dn_ptr, x501rdns[pos].oid);
+					catchunk(dn_ptr, asn1_oid_len);
+					catchunk(dn_ptr, x501rdns[pos].oid);
 					/*
 					 * encode the ASN.1 character string
 					 * type of the name
@@ -581,8 +581,8 @@ err_t atodn(char *src, chunk_t *dn)
 								name)) ?
 						ASN1_T61STRING :
 						x501rdns[pos].type;
-					chunkcpy(dn_ptr, asn1_name_len);
-					chunkcpy(dn_ptr, name);
+					catchunk(dn_ptr, asn1_name_len);
+					catchunk(dn_ptr, name);
 
 					/*
 					 * accumulate the length of the
@@ -612,7 +612,7 @@ err_t atodn(char *src, chunk_t *dn)
 	dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
 	dn_ptr = dn->ptr;
 	*dn_ptr++ = ASN1_SEQUENCE;
-	chunkcpy(dn_ptr, asn1_dn_seq_len);
+	catchunk(dn_ptr, asn1_dn_seq_len);
 	return ugh;
 }
 

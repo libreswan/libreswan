@@ -21,8 +21,6 @@ bool verify_chunk(const char *desc,
 bool verify_chunk_data(const char *desc,
 		  chunk_t expected,
 		  u_char *actual);
-chunk_t extract_chunk(const char *prefix, chunk_t input,
-		      size_t offset, size_t length);
 
 struct encrypt_desc;
 
