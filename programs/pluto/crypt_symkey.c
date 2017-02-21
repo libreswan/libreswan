@@ -417,6 +417,17 @@ PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
 				  mechanism);
 }
 
+PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
+				PK11SymKey *rhs)
+{
+	/* copy the existing KEY's type (mechanism).  */
+	CK_MECHANISM_TYPE target = PK11_GetMechanism(rhs);
+	return merge_symkey_bytes("concat_symkey_bytes",
+				  rhs, lhs, sizeof_lhs,
+				  CKM_CONCATENATE_DATA_AND_BASE,
+				  target);
+}
+
 PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs)
 {
@@ -464,6 +475,15 @@ void append_symkey_bytes(const struct hash_desc *hasher,
 						 rhs, sizeof_rhs);
 	free_any_symkey(__func__, lhs);
 	*lhs = newkey;
+}
+
+void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
+			 PK11SymKey **rhs)
+{
+	PK11SymKey *newkey = concat_bytes_symkey(lhs, sizeof_lhs,
+						 *rhs);
+	free_any_symkey(__func__, rhs);
+	*rhs = newkey;
 }
 
 void append_symkey_chunk(const struct hash_desc *hasher,
