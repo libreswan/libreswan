@@ -12,7 +12,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,7 +74,7 @@
 PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
 			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk, const char **story)
+			   const SECKEYPublicKey *local_pubk)
 {
 	SECStatus status;
 
@@ -156,8 +156,6 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 		}
 	}
 
-	*story = enum_name(&oakley_group_names, group->group);
-
 	SECKEY_DestroyPublicKey(remote_pubk);
 	return dhshared;
 }
@@ -189,7 +187,5 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	const char *story;	/* we ignore the value */
-
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 }

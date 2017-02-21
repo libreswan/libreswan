@@ -311,8 +311,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	const char *story;	/* we don't use the value set in calc_dh_shared */
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
 	if (skr->shared != NULL) {
 		chunk_t new_iv = empty_chunk;

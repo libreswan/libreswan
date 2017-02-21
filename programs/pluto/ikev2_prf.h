@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,6 +53,6 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 
 struct pluto_crypto_req;
 
-void calc_dh_v2(struct pluto_crypto_req *r, const char **story);
+void calc_dh_v2(struct pluto_crypto_req *r);
 
 #endif

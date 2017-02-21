@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -230,7 +230,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
+void calc_dh_v2(struct pluto_crypto_req *r)
 {
 	struct pcr_skeycalc_v2_r *const skr = &r->pcr_d.dhv2;
 
@@ -256,7 +256,7 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
 	if (skr->shared != NULL) {
 	/* okay, so now all the shared key material */
