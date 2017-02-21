@@ -712,6 +712,7 @@ static void dh_desc_check(const struct ike_alg *alg)
 {
 	const struct oakley_group_desc *group = oakley_group_desc(alg);
 	passert(group->group > 0);
+	passert(group->bytes > 0);
 	passert(group->common.id[IKEv2_ALG_ID] == group->group);
 	passert(group->common.id[IKEv1_OAKLEY_ID] == group->group);
 	/* more? */
