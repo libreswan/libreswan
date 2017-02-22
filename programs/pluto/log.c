@@ -563,11 +563,7 @@ void whack_log(int mess_no, const char *message, ...)
 	if (wfd != NULL_FD || dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		int prelen = 0;
-
-		/* support to suppress numeral prefix using ~ */
-		if (message[0] != '~')
-			prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
+		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
 
 		passert(prelen >= 0);
 
