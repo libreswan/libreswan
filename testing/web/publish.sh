@@ -10,7 +10,7 @@ Usage:
 Build/run the testsuite in <repodir>.  Publish detailed results under
 <summarydir>/<version>, and a summary under <summarydir>.
 
-<version> is determined by "make showversion".
+<version> is determined by "git describe" with some twists.
 
 For instance:
 
@@ -35,7 +35,23 @@ utilsdir=$(cd ${webdir}/../utils && pwd)
 #
 # Since later updates are going to use the same scripts, this helps to
 # confirm that everything is working.
+#
+# The format is: VERSION[-OFFSET-gHASH][-dirty]-BRANCH
+#
+# When on a tag, "git describe" (which "make showversion" uses) leaves
+# out OFFSET-gHASH) so, if missing, patch that up.
+
 gitstamp=$(cd ${repodir} ; make showversion)
+case ${gitstamp} in
+    *-g*-* )
+	echo 'VERSION-OFFSET-gHASH[-dirty]-BRANCH'
+	;;
+    * )
+	echo 'VERSION[-dirty]-BRANCH'
+	gitrev=$(cd ${repodir} ; git show --no-patch --format=%h)
+	gitstamp=$(echo ${gitstamp} | sed -e "s/-/-0-g${gitrev}-/")
+	;;
+esac
 gitrev=$(${webdir}/gime-git-rev.sh ${gitstamp})
 
 destdir=${summarydir}/${gitstamp}
