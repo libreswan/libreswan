@@ -202,7 +202,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  st->st_oakley.enckeylen,
 			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
 			  enum_showb(&ikev2_trans_type_prf_names,
-				     st->st_oakley.prf->common.ikev2_id,
+				     st->st_oakley.prf->common.id[IKEv2_ALG_ID],
 				     &prfbuf),
 			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
 		}
@@ -222,16 +222,16 @@ void ike_alg_show_status(void)
 		const struct encrypt_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
 			struct esb_buf v1namebuf, v2namebuf;
-			passert(alg->common.ikev1_oakley_id != 0 || alg->common.ikev2_id != 0);
+			passert(alg->common.ikev1_oakley_id != 0 || alg->common.id[IKEv2_ALG_ID] != 0);
 			whack_log(RC_COMMENT,
 				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 				  alg->common.ikev1_oakley_id,
 				  enum_showb(&oakley_enc_names,
 					     alg->common.ikev1_oakley_id,
 					     &v1namebuf),
-				  alg->common.ikev2_id,
+				  alg->common.id[IKEv2_ALG_ID],
 				  enum_showb(&ikev2_trans_type_encr_names,
-					     alg->common.ikev2_id,
+					     alg->common.id[IKEv2_ALG_ID],
 					     &v2namebuf),
 				  alg->enc_blocksize,
 				  alg->keydeflen);

@@ -327,7 +327,7 @@ static const struct ike_alg **clone_valid(enum ike_alg_type type,
 				    alg->name));
 			continue;
 		}
-		if (policy->ikev2 && alg->ikev2_id == 0) {
+		if (policy->ikev2 && alg->id[IKEv2_ALG_ID] == 0) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s %s, missing ikev2 support",
 				    ike_alg_type_name(type),
@@ -604,7 +604,7 @@ static const struct oakley_group_desc *group_byname(const struct parser_policy *
 			 name);
 		return NULL;
 	}
-	if (policy->ikev2 && group->common.ikev2_id == 0) {
+	if (policy->ikev2 && group->common.id[IKEv2_ALG_ID] == 0) {
 		snprintf(err_buf, err_buf_len,
 			 "modp group '%s' not supported by IKEv1",
 			 name);

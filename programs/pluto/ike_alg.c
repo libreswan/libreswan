@@ -898,8 +898,8 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	bool v1_ike;
 	bool v2_ike;
 	if (ike_alg_is_ike(alg)) {
-		v1_ike = alg->ikev1_oakley_id > 0;
-		v2_ike = alg->ikev2_alg_id > 0;
+		v1_ike = alg->id[IKEv1_OAKLEY_ID] > 0;
+		v2_ike = (alg->id[IKEv2_ALG_ID] > 0);
 	} else {
 		v1_ike = FALSE;
 		v2_ike = FALSE;
@@ -915,14 +915,14 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
 		break;
 	case IKE_ALG_ENCRYPT:
-		v1_esp = alg->ikev1_esp_id > 0;
-		v2_esp = alg->ikev2_alg_id > 0;
+		v1_esp = alg->id[IKEv1_ESP_ID] > 0;
+		v2_esp = alg->id[IKEv2_ALG_ID] > 0;
 		v1_ah = FALSE;
 		v2_ah = FALSE;
 		break;
 	case IKE_ALG_INTEG:
-		v1_esp = v1_ah = alg->ikev1_esp_id > 0;
-		v2_esp = v2_ah = alg->ikev2_alg_id > 0;
+		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
+		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
 		break;
 	default:
 		bad_case(alg->algo_type);

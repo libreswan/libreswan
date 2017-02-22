@@ -1576,7 +1576,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 			 ? AUTH_ALGORITHM_NONE
 			 : ta.integ->common.ikev1_esp_id > 0
 			 ? ta.integ->common.ikev1_esp_id
-			 : ta.integ->common.ikev2_id);
+			 : ta.integ->common.id[IKEv2_ALG_ID]);
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
@@ -1612,7 +1612,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 			 */
 			ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
 				      ? ta.encrypter->common.ikev1_esp_id
-				      : ta.encrypter->common.ikev2_id);
+				      : ta.encrypter->common.id[IKEv2_ALG_ID]);
 			err_t ugh;
 			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
 			if (ugh != NULL) {
@@ -1747,7 +1747,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		PEXPECT_LOG("IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
 		return FALSE;
 	}
-	if (encrypt->common.ikev2_id == 0) {
+	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "IKEv2 %s %s ENCRYPT transform is not supported",
 		       protocol, encrypt->common.name);
@@ -1761,7 +1761,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 
 	if (keylen > 0) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.ikev2_id, keylen);
+				 encrypt->common.id[IKEv2_ALG_ID], keylen);
 	} else if (encrypt->keylen_omitted) {
 		/*
 		 * 3DES doesn't expect the key length
@@ -1770,14 +1770,14 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
 					 protocol, encrypt->common.name));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.ikev2_id, 0);
+				 encrypt->common.id[IKEv2_ALG_ID], 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
 		passert(encrypt->keydeflen > 0);
 		DBG(DBG_CONTROL,
 		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
 			    protocol, encrypt->common.name, encrypt->keydeflen));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.ikev2_id, encrypt->keydeflen);
+				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 	} else {
 		/*
 		 * XXX:
@@ -1818,9 +1818,9 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				    protocol, encrypt->common.name,
 				    keymaxlen, encrypt->keydeflen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, keymaxlen);
+					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, encrypt->keydeflen);
+					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
 			DBG(DBG_CONTROL,
@@ -1828,9 +1828,9 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				    protocol, encrypt->common.name,
 				    encrypt->keydeflen, keymaxlen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, encrypt->keydeflen);
+					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.ikev2_id, keymaxlen);
+					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
 			break;
 		default:
 			/* presumably AH */
@@ -2025,14 +2025,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		if (prf == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
 			continue;
-		} else if (prf->common.ikev2_id == 0) {
+		} else if (prf->common.id[IKEv2_ALG_ID] == 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "IKEv2 proposal contains unsupported PRF algorithm %s",
 			       prf->common.name);
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
-					 prf->common.ikev2_id, 0);
+					 prf->common.id[IKEv2_ALG_ID], 0);
 		}
 
 		/*
@@ -2043,14 +2043,14 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			if (integ == NULL) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
-			} else if (integ->common.ikev2_id == 0) {
+			} else if (integ->common.id[IKEv2_ALG_ID] == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
 				       integ->common.name);
 				continue;
 			} else {
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->common.ikev2_id, 0);
+						 integ->common.id[IKEv2_ALG_ID], 0);
 			}
 		} else {
 			/*
@@ -2277,7 +2277,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			 * it if things look suspect for now.
 			 */
 			const struct encrypt_desc *encrypt = esp_info->esp_encrypt;
-			if (encrypt != NULL && encrypt->common.ikev2_id != 0) {
+			if (encrypt != NULL && encrypt->common.id[IKEv2_ALG_ID] != 0) {
 				if (!append_encrypt_transform(proposal, encrypt,
 							      esp_info->enckeylen)) {
 					continue;
@@ -2333,7 +2333,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					continue;
 				}
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->common.ikev2_id, 0);
+						 integ->common.id[IKEv2_ALG_ID], 0);
 			}
 			break;
 
@@ -2358,7 +2358,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				continue;
 			}
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 integ->common.ikev2_id, 0);
+					 integ->common.id[IKEv2_ALG_ID], 0);
 			break;
 
 		default:
