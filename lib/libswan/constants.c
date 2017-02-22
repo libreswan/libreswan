@@ -565,13 +565,13 @@ static const char *const ah_transform_name[] = {
 	/* 0-1 RESERVED */
 	"AH_MD5",
 	"AH_SHA",
-	"AH_DES",
+	"AH_DES(UNUSED)",
 	"AH_SHA2_256",
 	"AH_SHA2_384",
 	"AH_SHA2_512",
 	"AH_RIPEMD",
 	"AH_AES_XCBC_MAC",
-	"AH_RSA",
+	"AH_RSA(UNUSED)",
 	"AH_AES_128_GMAC",	/* RFC4543 Errata1821  */
 	"AH_AES_192_GMAC",	/* RFC4543 Errata1821  */
 	"AH_AES_256_GMAC",	/* RFC4543 Errata1821  */
@@ -595,12 +595,12 @@ enum_names ah_transformid_names = {
 static const char *const esp_transform_name_private_use[] = {
 	/* id=249 */
 	"ESP_MARS",
-	"ESP_RC6",
+	"ESP_RC6(UNUSED)",
 	"ESP_KAME_NULL",
 	"ESP_SERPENT",
 	"ESP_TWOFISH",
-	"ESP_ID254",
-	"ESP_ID255",
+	"ESP_ID254(UNUSED)",
+	"ESP_ID255(UNUSED)",
 };
 
 static enum_names esp_transformid_names_private_use = {
@@ -613,23 +613,23 @@ static enum_names esp_transformid_names_private_use = {
 
 /* This tracks the IKEv2 registry now! see ietf_constants.h */
 static const char *const esp_transform_name[] = {
-	"ESP_DES_IV64",	/* 1 - old DES */
-	"ESP_DES",	/* obsoleted */
+	"ESP_DES_IV64(UNUSED)",	/* 1 - old DES */
+	"ESP_DES(UNUSED)",	/* obsoleted */
 	"ESP_3DES",
-	"ESP_RC5",
-	"ESP_IDEA",
+	"ESP_RC5(UNUSED)",
+	"ESP_IDEA(UNUSED)",
 	"ESP_CAST",
-	"ESP_BLOWFISH",	/* obsoleted */
-	"ESP_3IDEA",
-	"ESP_DES_IV32",
-	"ESP_RC4",
+	"ESP_BLOWFISH(UNUSED)",	/* obsoleted */
+	"ESP_3IDEA(UNUSED)",
+	"ESP_DES_IV32(UNUSED)",
+	"ESP_RC4(UNUSED)",
 	"ESP_NULL",
 	"ESP_AES",
 	"ESP_AES_CTR",
 	"ESP_AES_CCM_A",
 	"ESP_AES_CCM_B",
 	"ESP_AES_CCM_C",
-	"ESP_UNASSIGNED_ID17",
+	"ESP_UNUSED_ID17",
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
@@ -1060,14 +1060,14 @@ static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_NONE",	/* our own value, not standard */
 	"AUTH_ALGORITHM_HMAC_MD5",
 	"AUTH_ALGORITHM_HMAC_SHA1",
-	"AUTH_ALGORITHM_DES_MAC",
-	"AUTH_ALGORITHM_KPDK",
+	"AUTH_ALGORITHM_DES_MAC(UNUSED)",
+	"AUTH_ALGORITHM_KPDK(UNUSED)",
 	"AUTH_ALGORITHM_HMAC_SHA2_256",
 	"AUTH_ALGORITHM_HMAC_SHA2_384",
 	"AUTH_ALGORITHM_HMAC_SHA2_512",
 	"AUTH_ALGORITHM_HMAC_RIPEMD",
 	"AUTH_ALGORITHM_AES_XCBC",
-	"AUTH_ALGORITHM_SIG_RSA",	/* RFC4359 */
+	"AUTH_ALGORITHM_SIG_RSA(UNUSED)",	/* RFC4359 */
 	"AUTH_ALGORITHM_AES_128_GMAC",	/* RFC4543 [Errata1821] */
 	"AUTH_ALGORITHM_AES_192_GMAC",	/* RFC4543 [Errata1821] */
 	"AUTH_ALGORITHM_AES_256_GMAC",	/* RFC4543 [Errata1821] */
@@ -1233,10 +1233,10 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC", /* obsoleted */
-	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
-	"OAKLEY_RC5_R16_B64_CBC",
+	"OAKLEY_DES_CBC(UNUSED)", /* obsoleted */
+	"OAKLEY_IDEA_CBC(UNUSED)",
+	"OAKLEY_BLOWFISH_CBC(UNUSED)", /* obsoleted */
+	"OAKLEY_RC5_R16_B64_CBC(UNUSED)",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
@@ -1311,7 +1311,7 @@ static const char *const oakley_hash_name[] = {
 	/* 0 - RESERVED */
 	"OAKLEY_MD5",
 	"OAKLEY_SHA1",
-	"OAKLEY_TIGER",
+	"OAKLEY_TIGER(UNUSED)",
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
@@ -1445,12 +1445,12 @@ enum_names ikev2_cp_type_names = {
 static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
-	"IKEv2_AUTH_DSA",
-	"IKEv2_AUTH_UNASSIGNED_4",
-	"IKEv2_AUTH_UNASSIGNED_5",
-	"IKEv2_AUTH_UNASSIGNED_6",
-	"IKEv2_AUTH_UNASSIGNED_7",
-	"IKEv2_AUTH_UNASSIGNED_8",
+	"IKEv2_AUTH_DSA(UNUSED)",
+	"IKEv2_AUTH_UNUSED_4",
+	"IKEv2_AUTH_UNUSED_5",
+	"IKEv2_AUTH_UNUSED_6",
+	"IKEv2_AUTH_UNUSED_7",
+	"IKEv2_AUTH_UNUSED_8",
 	"IKEv2_AUTH_ECDSA_P256",
 	"IKEv2_AUTH_ECDSA_P384",
 	"IKEv2_AUTH_ECDSA_P521",
@@ -1479,14 +1479,14 @@ static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_GP155",
 	"OAKLEY_GROUP_GP185",
 	"OAKLEY_GROUP_MODP1536", /* RFC 3526 */
-	"OAKLEY_GROUP_EC2N_2_1", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_2", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_3", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_4", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_5", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_6", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_7", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_8", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_1(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_2(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_3(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_4(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_5(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_6(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_7(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_8(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
 	"OAKLEY_GROUP_MODP2048", /* RFC 3526 */
 	"OAKLEY_GROUP_MODP3072", /* RFC 3526 */
 	"OAKLEY_GROUP_MODP4096", /* RFC 3526 */
@@ -1867,7 +1867,7 @@ static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
-	"DES-IV64(UNUSED)",	/* 1 */
+	"DES_IV64(UNUSED)",	/* 1 */
 	"DES(UNUSED)",
 	"3DES",
 	"RC5(UNUSED)",
@@ -1875,7 +1875,7 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	"CAST",
 	"BLOWFISH(UNUSED)",
 	"3IDEA(UNUSED)",
-	"DES-IV32(UNUSED)",
+	"DES_IV32(UNUSED)",
 	"RES10(UNUSED)",
 	"NULL",
 	"AES_CBC",
@@ -1888,7 +1888,7 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	"AES_GCM_B",	/* AES-GCM_12 */
 	"AES_GCM_C",	/* AES-GCM_16 */
 	"NULL_AUTH_AES_GMAC",	/* RFC 4543 */
-	"RESERVED_FOR_IEEE_P1619_XTS_AES",
+	"RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED)",
 	"CAMELLIA_CBC",	/* RFC 5529 */
 	"CAMELLIA_CTR",	/* RFC 5529 */
 	"CAMELLIA_CCM_A",	/* CAMELLIA_CCM_8 RFC 5529 */
@@ -1928,7 +1928,7 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_MD5",
 	"PRF_HMAC_SHA1",
 	"PRF_HMAC_TIGER",
-	"PRF_AES128-XCBC",
+	"PRF_AES128_XCBC",
 	/* RFC 4868 Section 4 */
 	"PRF_HMAC_SHA2_256",
 	"PRF_HMAC_SHA2_384",
@@ -1948,8 +1948,8 @@ static const char *const ikev2_trans_type_integ_name[] = {
 	"AUTH_NONE",
 	"AUTH_HMAC_MD5_96",
 	"AUTH_HMAC_SHA1_96",
-	"AUTH_DES_MAC",
-	"AUTH_KPDK_MD5",
+	"AUTH_DES_MAC(UNUSED)",
+	"AUTH_KPDK_MD5(UNUSED)",
 	"AUTH_AES_XCBC_96",
 	"AUTH_HMAC_MD5_128",
 	"AUTH_HMAC_SHA1_160",
