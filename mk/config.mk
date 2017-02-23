@@ -237,6 +237,10 @@ NSSFLAGS?=$(shell pkg-config --cflags nss)
 # returns
 NSS_LDFLAGS ?= -lnss3 -lnspr4
 
+# Use nss copy for CERT_CompareAVA
+# See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
+NSS_REQ_AVA_COPY?=true
+
 # To build with clang, use: scan-build make programs
 #GCC=clang
 GCC?=gcc

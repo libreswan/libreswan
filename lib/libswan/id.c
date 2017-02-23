@@ -36,7 +36,6 @@
 #include "lswlog.h"
 #include "id.h"
 #include "x509.h"
-#include "nss_copies.h"
 #include <cert.h>
 #include "certs.h"
 
@@ -578,7 +577,7 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 					}
 					SECITEM_FreeItem(val_b, PR_TRUE);
 				}
-				if (NSSCERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+				if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
 					matched++;
 					break;
 				}
