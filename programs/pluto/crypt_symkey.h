@@ -27,8 +27,10 @@ struct encrypt_desc;
 
 /*
  * Log some information on a SYMKEY.
+ *
+ * The format is <PREFIX>: <NAME>-key@...
  */
-void DBG_symkey(const char *prefix, PK11SymKey *key);
+void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
 /*
  * Free any symkey and then stomp on the pointer.

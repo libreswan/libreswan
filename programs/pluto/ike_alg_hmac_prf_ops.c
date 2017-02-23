@@ -194,7 +194,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 						     "prf outer hash", DBG_CRYPT,
 						     "outer", outer);
 	free_any_symkey("prf outer", &outer);
-	DBG(DBG_CRYPT, DBG_symkey("prf final result", hashed_outer));
+	DBG(DBG_CRYPT, DBG_symkey((*prfp)->name, "hashed-outer", hashed_outer));
 	pfree(*prfp);
 	*prfp = NULL;
 	return hashed_outer;

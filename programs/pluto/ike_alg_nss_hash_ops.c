@@ -146,12 +146,12 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 			name, hash_desc->common.name,
 			symkey_name, symkey,
 			lsw_nss_ckm_to_string(derive));
-		DBG_symkey(symkey_name, symkey);
+		DBG_symkey(name, symkey_name, symkey);
 	}
 	PK11SymKey *result = PK11_Derive(symkey, derive, param, target,
 					 operation, key_size);
 	if (DBGP(debug)) {
-		DBG_symkey(name, result);
+	  DBG_symkey(name, "result", result);
 	}
 	return result;
 }

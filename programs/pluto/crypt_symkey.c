@@ -144,7 +144,7 @@ static PK11SymKey *ephemeral_symkey(int debug)
 					    NULL, 128/8, NULL);
 		PK11_FreeSlot(slot); /* reference counted */
 	}
-	DBG(debug, DBG_symkey("ephemeral_key", ephemeral_key));
+	DBG(debug, DBG_symkey("internal", "ephemeral", ephemeral_key));
 	return ephemeral_key;
 }
 
@@ -168,17 +168,17 @@ size_t sizeof_symkey(PK11SymKey *key)
 	}
 }
 
-void DBG_symkey(const char *prefix, PK11SymKey *key)
+void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key)
 {
 	if (key == NULL) {
 		/*
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s: key=NULL", prefix);
+		DBG_log("%s: %s-key=NULL", prefix, name);
 	} else {
-		DBG_log("%s: key@%p, size: %zd bytes, type/mechanism: %s (0x%08x)",
-			prefix, key, sizeof_symkey(key),
+		DBG_log("%s: %s-key@%p, size: %zd bytes, type/mechanism: %s (0x%08x)",
+			prefix, name, key, sizeof_symkey(key),
 			lsw_nss_ckm_to_string(PK11_GetMechanism(key)),
 			(int)PK11_GetMechanism(key));
 #if 0
@@ -202,16 +202,16 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
  * derive: the operation that is to be performed; target: the
  * mechanism/type of the resulting symkey.
  */
-static PK11SymKey *merge_symkey_bytes(const char *prefix,
-				      PK11SymKey *base_key,
-				      const void *bytes, size_t sizeof_bytes,
+static PK11SymKey *merge_symkey_bytes(lset_t debug, PK11SymKey *base_key,
+				      const void *data, size_t sizeof_data,
 				      CK_MECHANISM_TYPE derive,
 				      CK_MECHANISM_TYPE target)
 {
-	passert(sizeof_bytes > 0);
+	const char *prefix = lsw_nss_ckm_to_string(derive);
+	passert(sizeof_data > 0);
 	CK_KEY_DERIVATION_STRING_DATA string = {
-		.pData = (void *)bytes,
-		.ulLen = sizeof_bytes,
+		.pData = (void *)data,
+		.ulLen = sizeof_data,
 	};
 	SECItem data_param = {
 		.data = (unsigned char*)&string,
@@ -220,17 +220,27 @@ static PK11SymKey *merge_symkey_bytes(const char *prefix,
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
 
-	DBG(DBG_CRYPT,
-	    DBG_log("%s merge symkey(%p) bytes(%p/%zd) - derive(%s) target(%s)",
-		    prefix,
-		    base_key, bytes, sizeof_bytes,
-		    lsw_nss_ckm_to_string(derive),
+	DBG(debug,
+	    DBG_log("%s: base key@%p, data@%p (%zd bytes) -> target: %s",
+		    prefix, base_key, data, sizeof_data,
 		    lsw_nss_ckm_to_string(target));
-	    DBG_symkey("symkey", base_key);
-	    DBG_dump("bytes:", bytes, sizeof_bytes));
+	    DBG_symkey(prefix, "base", base_key);
+	    DBG_log("%s: data", prefix);
+	    /* NULL suppresses the prefix */
+	    DBG_dump(NULL, data, sizeof_data));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &data_param, target,
 					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_symkey(prefix, result))
+	/*
+	 * Should this abort?
+	 *
+	 * PORT_GetError() typically returns 0 - NSS forgets to save
+	 * the error when things fail.
+	 */
+	if (result == NULL) {
+		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
+			    prefix, PORT_GetError(), PORT_GetError());
+	}
+	DBG(debug, DBG_symkey(prefix, "result", result))
 	return result;
 }
 
@@ -241,11 +251,12 @@ static PK11SymKey *merge_symkey_bytes(const char *prefix,
  * of the resulting symkey.
  */
 
-static PK11SymKey *merge_symkey_symkey(const char *prefix,
-				       PK11SymKey *base_key, PK11SymKey *key,
+static PK11SymKey *merge_symkey_symkey(lset_t debug, PK11SymKey *base_key,
+				       PK11SymKey *key,
 				       CK_MECHANISM_TYPE derive,
 				       CK_MECHANISM_TYPE target)
 {
+	const char *prefix = lsw_nss_ckm_to_string(derive);
 	CK_OBJECT_HANDLE key_handle = PK11_GetSymKeyHandle(key);
 	SECItem key_param = {
 		.data = (unsigned char*)&key_handle,
@@ -253,46 +264,68 @@ static PK11SymKey *merge_symkey_symkey(const char *prefix,
 	};
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
-	DBG(DBG_CRYPT,
-	    DBG_log("%s merge symkey(1: %p) symkey(2: %p) - derive(%s) target(%s)",
+	DBG(debug,
+	    DBG_log("%s: base key@%p, key@%p -> target: %s",
 		    prefix, base_key, key,
-		    lsw_nss_ckm_to_string(derive),
 		    lsw_nss_ckm_to_string(target));
-	    DBG_symkey("symkey 1", base_key);
-	    DBG_symkey("symkey 2", key));
+	    DBG_symkey(prefix, "base", base_key);
+	    DBG_symkey(prefix, "key", key));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &key_param, target,
 					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
+	/*
+	 * Should this abort?
+	 *
+	 * PORT_GetError() typically returns 0 - NSS forgets to save
+	 * the error when things fail.
+	 */
+	if (result == NULL) {
+		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
+			    prefix, PORT_GetError(), PORT_GetError());
+	}
+	DBG(debug, DBG_symkey(prefix, "result", result));
 	return result;
 }
 
 /*
  * Extract a SYMKEY from an existing SYMKEY.
  */
-static PK11SymKey *symkey_from_symkey(const char *prefix,
+static PK11SymKey *symkey_from_symkey(lset_t debug,
 				      PK11SymKey *base_key,
 				      CK_MECHANISM_TYPE target,
 				      CK_FLAGS flags,
-				      size_t next_byte, size_t key_size)
+				      size_t key_offset, size_t key_size)
 {
 	/* spell out all the parameters */
-	CK_EXTRACT_PARAMS bs = next_byte * BITS_PER_BYTE;
+	CK_EXTRACT_PARAMS bs = key_offset * BITS_PER_BYTE;
 	SECItem param = {
 		.data = (unsigned char*)&bs,
 		.len = sizeof(bs),
 	};
 	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
+	const char *prefix = lsw_nss_ckm_to_string(derive);
 	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
 
-	DBG(DBG_CRYPT,
-	    DBG_log("%s symkey from symkey(%p) - next-byte(%zd) key-size(%zd) flags(0x%lx) derive(%s) target(%s)",
-		    prefix, base_key, next_byte, key_size, (long)flags,
-		    lsw_nss_ckm_to_string(derive), lsw_nss_ckm_to_string(target));
-	    DBG_symkey("symkey", base_key));
+	DBG(debug,
+	    DBG_log("%s: key@%p, key-offset: %zd, key-size: %zd, flags: 0x%lx -> target: %s",
+		    prefix, base_key, key_offset, key_size, (long)flags,
+		    lsw_nss_ckm_to_string(target));
+	    DBG_symkey(prefix, "key", base_key));
 	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
 						  target, operation,
 						  key_size, flags);
-	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
+	/*
+	 * Should this abort?
+	 *
+	 * PORT_GetError() typically returns 0 - NSS forgets to save
+	 * the error when things fail.
+	 *
+	 * NSS returns NULL when key_size is 0.
+	 */
+	if (result == NULL && key_size > 0) {
+		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
+			    prefix, PORT_GetError(), PORT_GetError());
+	}
+	DBG(debug, DBG_symkey(prefix, "result", result));
 	return result;
 }
 
@@ -312,7 +345,7 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 	size_t sizeof_bytes = sizeof_symkey(symkey);
 	DBG(debug, DBG_log("%s extracting all %zd bytes of symkey %p",
 			     name, sizeof_bytes, symkey));
-	DBG(debug, DBG_symkey("symkey", symkey));
+	DBG(debug, DBG_symkey(name, "symkey", symkey));
 
 	/* get a secret key */
 	PK11SymKey *ephemeral_key = ephemeral_symkey(debug);
@@ -332,7 +365,7 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 			return empty_chunk;
 		}
 	}
-	DBG(debug, DBG_symkey("slot_key", slot_key));
+	DBG(debug, DBG_symkey(name, "slot_key", slot_key));
 
 	SECItem wrapped_key;
 	/* Round up the wrapped key length to a 16-byte boundary.  */
@@ -382,8 +415,7 @@ PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
 			      const u_int8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey(debug);
-	PK11SymKey *tmp = merge_symkey_bytes("symkey_from_bytes",
-					     scratch, bytes, sizeof_bytes,
+	PK11SymKey *tmp = merge_symkey_bytes(debug, scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
@@ -410,7 +442,7 @@ PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
 PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 				 PK11SymKey *lhs, PK11SymKey *rhs)
 {
-	return merge_symkey_symkey("concat:", lhs, rhs,
+	return merge_symkey_symkey(DBG_CRYPT, lhs, rhs,
 				   CKM_CONCATENATE_BASE_AND_KEY,
 				   nss_key_derivation_mech(hasher));
 }
@@ -420,8 +452,7 @@ PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
 				size_t sizeof_rhs)
 {
 	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
-	return merge_symkey_bytes("concat_symkey_bytes",
-				  lhs, rhs, sizeof_rhs,
+	return merge_symkey_bytes(DBG_CRYPT, lhs, rhs, sizeof_rhs,
 				  CKM_CONCATENATE_BASE_AND_DATA,
 				  mechanism);
 }
@@ -431,8 +462,7 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 {
 	/* copy the existing KEY's type (mechanism).  */
 	CK_MECHANISM_TYPE target = PK11_GetMechanism(rhs);
-	return merge_symkey_bytes("concat_symkey_bytes",
-				  rhs, lhs, sizeof_lhs,
+	return merge_symkey_bytes(DBG_CRYPT, rhs, lhs, sizeof_lhs,
 				  CKM_CONCATENATE_DATA_AND_BASE,
 				  target);
 }
@@ -536,15 +566,14 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
 	 * those specify CKM_VENDOR_DEFINED.
 	 */
 	struct nss_alg nss = nss_alg("extract symkey", name, debug, symkey_alg);
-	return symkey_from_symkey(name, source_key,
-				  nss.mechanism, nss.flags,
+	return symkey_from_symkey(debug, source_key, nss.mechanism, nss.flags,
 				  symkey_start_byte, sizeof_symkey);
 }
 
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key)
 {
-	return symkey_from_symkey("key:", source_key, CKM_EXTRACT_KEY_FROM_KEY,
+	return symkey_from_symkey(DBG_CRYPT, source_key, CKM_EXTRACT_KEY_FROM_KEY,
 				  0, next_byte, sizeof_key);
 }
 
@@ -562,7 +591,7 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
 {
-	return merge_symkey_bytes("xor_symkey_chunk", lhs, rhs.ptr, rhs.len,
+	return merge_symkey_bytes(DBG_CRYPT, lhs, rhs.ptr, rhs.len,
 				  CKM_XOR_BASE_AND_DATA,
 				  CKM_CONCATENATE_BASE_AND_DATA);
 }
