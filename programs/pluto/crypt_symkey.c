@@ -1,7 +1,7 @@
 /*
  * SYMKEY manipulation functions, for libreswan
  *
- * Copyright (C) 2015, 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,9 +19,6 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "crypt_symkey.h"
-#ifndef FIPS_CHECK
-#include "crypt_dbg.h"
-#endif
 #include "crypto.h"
 #include "lswfips.h"
 #include "lswnss.h"
@@ -154,10 +151,10 @@ static PK11SymKey *ephemeral_symkey(int debug)
 void free_any_symkey(const char *prefix, PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBG(DBG_CRYPT, DBG_log("%s: free key %p", prefix, *key));
+		DBG(DBG_CRYPT, DBG_log("%s: free key@%p", prefix, *key));
 		PK11_FreeSymKey(*key);
 	} else {
-		DBG(DBG_CRYPT, DBG_log("%s: free key NULL", prefix));
+		DBG(DBG_CRYPT, DBG_log("%s: free key@0x0", prefix));
 	}
 	*key = NULL;
 }
@@ -184,6 +181,18 @@ void DBG_symkey(const char *prefix, PK11SymKey *key)
 			prefix, key, sizeof_symkey(key),
 			lsw_nss_ckm_to_string(PK11_GetMechanism(key)),
 			(int)PK11_GetMechanism(key));
+#if 0
+		if (DBGP(DBG_PRIVATE)) {
+			if (libreswan_fipsmode()) {
+				DBG_log("%s secured by FIPS", prefix);
+			} else {
+				chunk_t bytes = chunk_from_symkey(prefix, 0, key);
+				/* NULL suppresses the dump header */
+				DBG_dump_chunk(NULL, bytes);
+				freeanychunk(bytes);
+			}
+		}
+#endif
 	}
 }
 

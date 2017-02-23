@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,7 +54,6 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "crypt_symkey.h"
-#include "crypt_dbg.h"
 #include "ikev2_prf.h"
 #include "kernel.h"
 

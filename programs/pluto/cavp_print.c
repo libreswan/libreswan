@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +20,6 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "crypt_symkey.h"
-#include "crypt_dbg.h"
 #include "cavp_print.h"
 
 /*
