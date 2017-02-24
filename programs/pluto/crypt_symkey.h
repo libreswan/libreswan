@@ -33,9 +33,10 @@ struct encrypt_desc;
 void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
 /*
- * Free any symkey and then stomp on the pointer.
+ * Add/delete references to a reference-countered PK11SymKey.
  */
-void free_any_symkey(const char *prefix, PK11SymKey **key);
+void release_symkey(const char *prefix, const char *name, PK11SymKey **key);
+PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
 /*
  * Length of a symkey in bytes.

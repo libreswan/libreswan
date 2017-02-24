@@ -89,9 +89,9 @@ static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_e", skeyid_e, 0);
 
-	free_any_symkey("skeyid_d", &skeyid_d);
-	free_any_symkey("skeyid_e", &skeyid_e);
-	free_any_symkey("skeyid_a", &skeyid_a);
+	release_symkey(__func__, "skeyid_d", &skeyid_d);
+	release_symkey(__func__, "skeyid_e", &skeyid_e);
+	release_symkey(__func__, "skeyid_a", &skeyid_a);
 }
 
 static void print_sig_config(void)
@@ -121,7 +121,7 @@ static void run_sig(void)
 						    g_xy);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);
-	free_any_symkey("skeyid", &skeyid);
+	release_symkey(__func__, "skeyid", &skeyid);
 }
 
 struct cavp cavp_ikev1_sig = {
@@ -165,7 +165,7 @@ static void run_psk(void)
 							 ni, nr);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);
-	free_any_symkey("skeyid", &skeyid);
+	release_symkey(__func__, "skeyid", &skeyid);
 }
 
 struct cavp cavp_ikev1_psk = {

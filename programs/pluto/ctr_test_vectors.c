@@ -82,7 +82,7 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	}
 
 	/* Clean up.  */
-	free_any_symkey("sym_key", &sym_key);
+	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s %s",
 			       test->description, ok ? "passed" : "failed"));

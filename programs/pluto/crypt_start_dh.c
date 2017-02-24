@@ -235,10 +235,9 @@ stf_status start_dh_v2(struct msg_digest *md,
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 
 	dhq->old_prf = old_prf;
-	dhq->skey_d_old = skey_d_old;
+	dhq->skey_d_old = reference_symkey(__func__, "skey_d_old", skey_d_old);
 	if (skey_d_old != NULL) {
 		passert(old_prf != NULL);
-		PK11_ReferenceSymKey(skey_d_old);
 	}
 
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);

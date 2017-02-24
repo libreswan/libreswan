@@ -95,7 +95,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	freeanychunk(text_and_tag);
 
 	/* Clean up.  */
-	free_any_symkey("sym_key", &sym_key);
+	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBG(DBG_CRYPT, DBG_log("test_gcm_vector: %s", ok ? "passed" : "failed"));
 	return ok;

@@ -105,7 +105,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 						     key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
-	free_any_symkey("clone", &clone);
+	release_symkey(name, "clone", &clone);
 	return prf;
 }
 
@@ -124,7 +124,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 					      key, sizeof_key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
-	free_any_symkey("clone", &clone);
+	release_symkey(name, "clone", &clone);
 	return prf ;
 }
 

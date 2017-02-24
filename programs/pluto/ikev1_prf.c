@@ -171,15 +171,15 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey("old_k", prf, old_k);
 		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
 		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
-		free_any_symkey("old_k#N", &old_k);
+		release_symkey(__func__, "old_k#N", &old_k);
 		old_k = new_k;
 	}
-	free_any_symkey("old_k#final", &old_k);
+	release_symkey(__func__, "old_k#final", &old_k);
 	PK11SymKey *cryptkey = symkey_from_symkey_bytes("cryptkey", DBG_CRYPT,
 							&encrypter->common,
 							0, required_keymat,
 							keymat);
-	free_any_symkey("keymat", &keymat);
+	release_symkey(__func__, "keymat", &keymat);
 	return cryptkey;
 }
 

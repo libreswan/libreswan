@@ -1039,7 +1039,7 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_nr);
 	freeanychunk(st->st_dcookie);
 
-#    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
+#    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
 	free_any_nss_symkey(st->st_shared_nss);
 
 	/* same as st_skeyid_nss */
@@ -1394,10 +1394,8 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_event = NULL;
 
-#   define clone_nss_symkey_field(field) { \
-		nst->field = st->field; \
-		if (nst->field != NULL) \
-			PK11_ReferenceSymKey(nst->field); \
+#   define clone_nss_symkey_field(field) {				\
+		nst->field = reference_symkey(__func__, #field, st->field); \
 	}
 	if (sa_type == IPSEC_SA) {
 		/* same as st_skeyid_nss */

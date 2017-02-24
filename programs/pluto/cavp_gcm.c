@@ -207,7 +207,7 @@ static void decrypt(void)
 	} else {
 		print_line("FAIL");
 	}
-	free_any_symkey("GCM key", &gcm_key);
+	release_symkey(__func__, "GCM-key", &gcm_key);
 	freeanychunk(text_and_tag);
 }
 

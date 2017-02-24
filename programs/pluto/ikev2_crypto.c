@@ -150,14 +150,14 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
 	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
-	free_any_symkey("ikey:", &ikey);
+	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
 	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
-	free_any_symkey("rkey:", &rkey);
+	release_symkey(__func__, "rkey", &rkey);
 
-	free_any_symkey("keymat", &keymat);
+	release_symkey(__func__, "keymat", &keymat);
 
 	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_PRIVATE, {

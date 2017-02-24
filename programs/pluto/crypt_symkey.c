@@ -148,15 +148,32 @@ static PK11SymKey *ephemeral_symkey(int debug)
 	return ephemeral_key;
 }
 
-void free_any_symkey(const char *prefix, PK11SymKey **key)
+void release_symkey(const char *prefix, const char *name,
+		    PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBG(DBG_CRYPT, DBG_log("%s: free key@%p", prefix, *key));
+		DBG(DBG_CRYPT, DBG_log("%s: release %s-key@%p",
+				       prefix, name, *key));
 		PK11_FreeSymKey(*key);
 	} else {
-		DBG(DBG_CRYPT, DBG_log("%s: free key@NULL", prefix));
+		DBG(DBG_CRYPT, DBG_log("%s: release %s-key@NULL",
+				       prefix, name));
 	}
 	*key = NULL;
+}
+
+PK11SymKey *reference_symkey(const char *prefix, const char *name,
+			     PK11SymKey *key)
+{
+	if (key != NULL) {
+		DBG(DBG_CRYPT, DBG_log("%s: reference %s-key@%p",
+				       prefix, name, key));
+		PK11_ReferenceSymKey(key);
+	} else {
+		DBG(DBG_CRYPT, DBG_log("%s: reference %s-key@NULL",
+				       prefix, name));
+	}
+	return key;
 }
 
 size_t sizeof_symkey(PK11SymKey *key)
@@ -354,7 +371,12 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 		return empty_chunk;
 	}
 
-	/* copy the source key to the secret slot */
+	/*
+	 * Ensure that the source key shares a slot with the
+	 * ephemeral_key.  The "move" always returns something that
+	 * needs to be released (if no move is needed, the reference
+	 * count is incremented).
+	 */
 	PK11SymKey *slot_key;
 	{
 		PK11SlotInfo *slot = PK11_GetSlotFromKey(ephemeral_key);
@@ -365,7 +387,14 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 			return empty_chunk;
 		}
 	}
-	DBG(debug, DBG_symkey(name, "slot_key", slot_key));
+	if (DBGP(debug)) {
+	    if (slot_key == symkey) {
+		    DBG_log("%s: slot-key@%p references sym-key@%p",
+			    name, slot_key, symkey);
+	    } else {
+		    DBG_symkey(name, "slot-key", slot_key);
+	    }
+	}
 
 	SECItem wrapped_key;
 	/* Round up the wrapped key length to a 16-byte boundary.  */
@@ -378,7 +407,7 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 		loglog(RC_LOG_SERIOUS, "%s NSS: containment error (%d)",
 		       name, status);
 		pfreeany(wrapped_key.data);
-		free_any_symkey("slot_key:", &slot_key);
+		release_symkey(name, "slot-key", &slot_key);
 		return empty_chunk;
 	}
 	DBG(debug, DBG_dump("wrapper:", wrapped_key.data, wrapped_key.len));
@@ -389,7 +418,7 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 			      bytes, &out_len, wrapped_key.len,
 			      wrapped_key.data, wrapped_key.len);
 	pfreeany(wrapped_key.data);
-	free_any_symkey("slot_key:", &slot_key);
+	release_symkey(name, "slot-key", &slot_key);
 	if (status != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "%s NSS: error calculating contents (%d)",
 		       name, status);
@@ -422,7 +451,7 @@ PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
 	PK11SymKey *key = symkey_from_symkey_bytes(name, debug, alg,
 						   0, sizeof_bytes, tmp);
 	passert(key != NULL);
-	free_any_symkey(__func__, &tmp);
+	release_symkey(name, "tmp", &tmp);
 	return key;
 }
 
@@ -502,7 +531,7 @@ void append_symkey_symkey(const struct hash_desc *hasher,
 			  PK11SymKey **lhs, PK11SymKey *rhs)
 {
 	PK11SymKey *newkey = concat_symkey_symkey(hasher, *lhs, rhs);
-	free_any_symkey(__func__, lhs);
+	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
 
@@ -512,7 +541,7 @@ void append_symkey_bytes(const struct hash_desc *hasher,
 {
 	PK11SymKey *newkey = concat_symkey_bytes(hasher, *lhs,
 						 rhs, sizeof_rhs);
-	free_any_symkey(__func__, lhs);
+	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
 
@@ -521,7 +550,7 @@ void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 {
 	PK11SymKey *newkey = concat_bytes_symkey(lhs, sizeof_lhs,
 						 *rhs);
-	free_any_symkey(__func__, rhs);
+	release_symkey(__func__, "rhs", rhs);
 	*rhs = newkey;
 }
 

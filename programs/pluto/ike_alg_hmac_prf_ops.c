@@ -41,7 +41,7 @@ static void prf_update(struct prf_context *prf);
 static void update_key(struct prf_context *prf, PK11SymKey *key)
 {
 	if (prf->we_own_key) {
-		free_any_symkey(__func__, &prf->key);
+		release_symkey(prf->name, "(we-own)key", &prf->key);
 	}
 	prf->we_own_key = TRUE;
 	prf->key = key;
@@ -168,7 +168,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	PK11SymKey *hashed_inner = crypt_hash_symkey(prf->desc->hasher,
 						     "prf inner hash:", DBG_CRYPT,
 						     "inner", prf->inner);
-	free_any_symkey("prf inner:", &prf->inner);
+	release_symkey(prf->name, "inner", &prf->inner);
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
 	passert(prf->desc->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
@@ -177,9 +177,9 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	chunk_t hmac_opad = { op, prf->desc->hasher->hash_block_size };
 	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad);
 	append_symkey_symkey(prf->desc->hasher, &outer, hashed_inner);
-	free_any_symkey("prf hashed inner:", &hashed_inner);
+	release_symkey(prf->name, "hashed-inner", &hashed_inner);
 	if (prf->we_own_key) {
-		free_any_symkey("prf key", &prf->key);
+		release_symkey(prf->name, "(we-own)key", &prf->key);
 	}
 
 	return outer;
@@ -193,7 +193,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 	PK11SymKey *hashed_outer = crypt_hash_symkey((*prfp)->desc->hasher,
 						     "prf outer hash", DBG_CRYPT,
 						     "outer", outer);
-	free_any_symkey("prf outer", &outer);
+	release_symkey((*prfp)->name, "outer", &outer);
 	DBG(DBG_CRYPT, DBG_symkey((*prfp)->name, "hashed-outer", hashed_outer));
 	pfree(*prfp);
 	*prfp = NULL;
@@ -211,7 +211,7 @@ static void final_bytes(struct prf_context **prfp,
 						  (*prfp)->debug);
 	crypt_hash_digest_symkey(hash, "outer", outer);
 	crypt_hash_final_bytes(&hash, bytes, sizeof_bytes);
-	free_any_symkey("prf outer", &outer);
+	release_symkey((*prfp)->name, "outer", &outer);
 	DBG(DBG_CRYPT, DBG_dump("prf final bytes", bytes, sizeof_bytes));
 	pfree(*prfp);
 	*prfp = NULL;
