@@ -154,7 +154,7 @@ void free_any_symkey(const char *prefix, PK11SymKey **key)
 		DBG(DBG_CRYPT, DBG_log("%s: free key@%p", prefix, *key));
 		PK11_FreeSymKey(*key);
 	} else {
-		DBG(DBG_CRYPT, DBG_log("%s: free key@0x0", prefix));
+		DBG(DBG_CRYPT, DBG_log("%s: free key@NULL", prefix));
 	}
 	*key = NULL;
 }
@@ -175,7 +175,7 @@ void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key)
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s: %s-key=NULL", prefix, name);
+		DBG_log("%s: %s-key@NULL", prefix, name);
 	} else {
 		DBG_log("%s: %s-key@%p, size: %zd bytes, type/mechanism: %s (0x%08x)",
 			prefix, name, key, sizeof_symkey(key),
@@ -221,7 +221,7 @@ static PK11SymKey *merge_symkey_bytes(lset_t debug, PK11SymKey *base_key,
 	int key_size = 0;
 
 	DBG(debug,
-	    DBG_log("%s: base key@%p, data@%p (%zd bytes) -> target: %s",
+	    DBG_log("%s: base-key@%p, data-bytes@%p (%zd bytes) -> target: %s",
 		    prefix, base_key, data, sizeof_data,
 		    lsw_nss_ckm_to_string(target));
 	    DBG_symkey(prefix, "base", base_key);
@@ -265,7 +265,7 @@ static PK11SymKey *merge_symkey_symkey(lset_t debug, PK11SymKey *base_key,
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
 	DBG(debug,
-	    DBG_log("%s: base key@%p, key@%p -> target: %s",
+	    DBG_log("%s: base-key@%p, key@%p -> target: %s",
 		    prefix, base_key, key,
 		    lsw_nss_ckm_to_string(target));
 	    DBG_symkey(prefix, "base", base_key);
@@ -343,7 +343,7 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 	}
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
-	DBG(debug, DBG_log("%s extracting all %zd bytes of symkey %p",
+	DBG(debug, DBG_log("%s extracting all %zd bytes of key@%p",
 			     name, sizeof_bytes, symkey));
 	DBG(debug, DBG_symkey(name, "symkey", symkey));
 

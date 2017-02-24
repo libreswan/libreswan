@@ -60,7 +60,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	if (DBGP(debug)) {
-		DBG_log("%s prf: created %s context %p from key %s(%p)",
+		DBG_log("%s prf: created %s context %p from %s-key@%p",
 			name, prf_desc->common.name,
 			context, key_name, key);
 	}
@@ -73,10 +73,9 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	if (DBGP(debug)) {
-		DBG_log("%s prf: begin %s with context %p from key %s(%p)",
+		DBG_log("%s prf: begin %s with context %p from %s-key@%p",
 			name, prf_desc->common.name,
-			context,
-			key_name, key);
+			context, key_name, key);
 	}
 
 	struct prf_context *prf = alloc_thing(struct prf_context, name);
@@ -137,7 +136,7 @@ static void digest_symkey(struct prf_context *prf,
 			  const char *symkey_name, PK11SymKey *symkey)
 {
 	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: update symkey %s %p (size %zd)",
+		DBG_log("%s prf: update %s-key@%p (size %zd)",
 			prf->name, symkey_name, symkey,
 			sizeof_symkey(symkey));
 	}

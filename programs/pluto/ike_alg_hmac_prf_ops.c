@@ -71,7 +71,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 				      const u_int8_t *key, size_t sizeof_key)
 {
 	struct prf_context *prf = prf_init(prf_desc, name, debug);
-	DBG(debug, DBG_log("%s prf: init chunk %s %p (length %zd)",
+	DBG(debug, DBG_log("%s prf: init %s-bytes@%p (length %zd)",
 			   name, key_name, key, sizeof_key));
 	/* XXX: use an untyped key */
 	prf->key = symkey_from_bytes(name, debug, NULL, key, sizeof_key);
@@ -86,7 +86,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 				       const char *key_name, PK11SymKey *key)
 {
 	struct prf_context *prf = prf_init(prf_desc, name, debug);
-	DBG(debug, DBG_log("%s prf: init symkey %s %p (size %zd)",
+	DBG(debug, DBG_log("%s prf: init %s-key@%p (size %zd)",
 			   prf->name, key_name, key, sizeof_symkey(key)));
 	prf->we_own_key = FALSE;
 	prf->key = key;
@@ -140,7 +140,7 @@ static void digest_symkey(struct prf_context *prf,
 			  const char *name, PK11SymKey *update)
 {
 	passert(digest_symkey == prf->desc->prf_ops->digest_symkey);
-	DBG(DBG_CRYPT, DBG_log("%s prf: update symkey %s %p (size %zd)",
+	DBG(DBG_CRYPT, DBG_log("%s prf: update %s-key@%p (size %zd)",
 			       prf->name, name, update,
 			       sizeof_symkey(update)));
 	append_symkey_symkey(prf->desc->hasher, &(prf->inner), update);
@@ -150,7 +150,7 @@ static void digest_bytes(struct prf_context *prf, const char *name,
 			 const u_int8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == prf->desc->prf_ops->digest_bytes);
-	DBG(DBG_CRYPT, DBG_log("%s prf: update bytes %s %p (length %zd)",
+	DBG(DBG_CRYPT, DBG_log("%s prf: update %s-bytes@%p (length %zd)",
 			       prf->name, name, bytes, sizeof_bytes));
 	append_symkey_bytes(prf->desc->hasher, &(prf->inner), bytes, sizeof_bytes);
 }

@@ -79,6 +79,10 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	PK11SymKey *dhshared = group->dhmke_ops->calc_g_ir(group, privk,
 							   local_pubk,
 							   g.ptr, g.len);
+	/*
+	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
+	 */
+	DBG(DBG_CRYPT, DBG_symkey(__func__, "g^ir", dhshared));
 	return dhshared;
 }
 
