@@ -160,7 +160,6 @@ kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
 kvmplutotest	ikev2-algo-10-aes-gcm128		good
 kvmplutotest	ikev2-algo-11-gcm-prop2			good
-kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
@@ -175,6 +174,9 @@ kvmplutotest	ikev2-algo-sha2-05			good
 kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-08			good
+
+# dh tests
+kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
 
 kvmplutotest	klips-ikev2-algo-sha2-07		wip
 # interop tests for KLIPS-NETKEY with SHA2
