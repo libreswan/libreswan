@@ -53,7 +53,12 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	text_and_tag.len = len + tag.len;
 	text_and_tag.ptr = alloc_bytes(text_and_tag.len, "GCM data");
 
-	/* macro to test encryption or decryption */
+	/* macro to test encryption or decryption
+	 *
+	 * This would be better as a function but it uses too many locals
+	 * from test_gcm_vector to be pleasant:
+	 *	text_and_tag, len, tag, aad, salt, wire_iv, sym_key
+	 */
 #	define try(enc, desc, from, to) {  \
 		memcpy(text_and_tag.ptr, from.ptr, from.len);  \
 		text_and_tag.len = len + tag.len;  \
@@ -85,7 +90,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	memset(text_and_tag.ptr + len, '\0', tag.len);
 	try(TRUE, "encrypt", plaintext, ciphertext);
 
-#	undef x
+#	undef try
 
 	freeanychunk(salted_iv);
 	freeanychunk(aad);
