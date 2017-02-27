@@ -26,8 +26,6 @@ struct prf_context {
 	const char *name;
 	lset_t debug;
 	const struct prf_desc *desc;
-	/* Did we allocate KEY? */
-	bool we_own_key;
 	/* intermediate values */
 	PK11SymKey *key;
 	PK11SymKey *inner;
@@ -36,14 +34,11 @@ struct prf_context {
 static void prf_update(struct prf_context *prf);
 
 /*
- * Update KEY marking it as ours.  Only call with a KEY we created.
+ * Update (replace) KEY.  PK11SymKey is reference counted.
  */
-static void update_key(struct prf_context *prf, PK11SymKey *key)
+static void replace_key(struct prf_context *prf, PK11SymKey *key)
 {
-	if (prf->we_own_key) {
-		release_symkey(prf->name, "(we-own)key", &prf->key);
-	}
-	prf->we_own_key = TRUE;
+	release_symkey(prf->name, "key", &prf->key);
 	prf->key = key;
 }
 
@@ -75,7 +70,6 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 			   name, key_name, key, sizeof_key));
 	/* XXX: use an untyped key */
 	prf->key = symkey_from_bytes(name, debug, NULL, key, sizeof_key);
-	prf->we_own_key = TRUE;
 	prf_update(prf);
 	return prf;
 }
@@ -88,8 +82,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	struct prf_context *prf = prf_init(prf_desc, name, debug);
 	DBG(debug, DBG_log("%s prf: init %s-key@%p (size %zd)",
 			   prf->name, key_name, key, sizeof_symkey(key)));
-	prf->we_own_key = FALSE;
-	prf->key = key;
+	prf->key = reference_symkey(name, "key", key);
 	prf_update(prf);
 	return prf;
 }
@@ -107,9 +100,9 @@ static void prf_update(struct prf_context *prf)
 
 	/* If the key is too big, re-hash it down to size. */
 	if (sizeof_symkey(prf->key) > prf->desc->hasher->hash_block_size) {
-		update_key(prf, crypt_hash_symkey(prf->desc->hasher,
-						  "prf hash to size:", DBG_CRYPT,
-						  "raw key", prf->key));
+		replace_key(prf, crypt_hash_symkey(prf->desc->hasher,
+						   "prf hash to size:", DBG_CRYPT,
+						   "raw key", prf->key));
 	}
 
 	/* If the key is too small, pad it. */
@@ -119,8 +112,8 @@ static void prf_update(struct prf_context *prf)
 		chunk_t hmac_pad_prf = { z,
 					 prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key) };
 
-		update_key(prf, concat_symkey_chunk(prf->desc->hasher, prf->key,
-						    hmac_pad_prf));
+		replace_key(prf, concat_symkey_chunk(prf->desc->hasher, prf->key,
+						     hmac_pad_prf));
 	}
 	passert(prf->key != NULL);
 
@@ -178,9 +171,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad);
 	append_symkey_symkey(prf->desc->hasher, &outer, hashed_inner);
 	release_symkey(prf->name, "hashed-inner", &hashed_inner);
-	if (prf->we_own_key) {
-		release_symkey(prf->name, "(we-own)key", &prf->key);
-	}
+	release_symkey(prf->name, "key", &prf->key);
 
 	return outer;
 }
