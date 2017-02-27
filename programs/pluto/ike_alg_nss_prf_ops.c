@@ -85,8 +85,6 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		.desc = prf_desc,
 		.context = context,
 	};
-	DBG(DBG_CRYPT, DBG_log("%s prf %s: init %p",
-			       name, prf_desc->common.name, prf));
 	return prf;
 }
 
@@ -133,13 +131,8 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
  */
 
 static void digest_symkey(struct prf_context *prf,
-			  const char *symkey_name, PK11SymKey *symkey)
+			  const char *symkey_name UNUSED, PK11SymKey *symkey)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: update %s-key@%p (size %zd)",
-			prf->name, symkey_name, symkey,
-			sizeof_symkey(symkey));
-	}
 	/*
 	 * Feed the key's raw bytes to the digest function.  NSS's
 	 * PK11_DigestKey() doesn't work with HMAC (only simple MAC),
@@ -156,23 +149,15 @@ static void digest_symkey(struct prf_context *prf,
 	passert(rc == SECSuccess);
 }
 
-static void digest_bytes(struct prf_context *prf,
-			 const char *name, const u_int8_t *bytes, size_t sizeof_bytes)
+static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
+			 const u_int8_t *bytes, size_t sizeof_bytes)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: update bytes %s %p (length %zd)",
-			prf->name, name, bytes, sizeof_bytes);
-	}
 	SECStatus rc = PK11_DigestOp(prf->context, bytes, sizeof_bytes);
 	passert(rc == SECSuccess);
 }
 
 static void final(struct prf_context *prf, void *bytes, size_t sizeof_bytes)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: final %p (length %zd)",
-			prf->name, bytes, sizeof_bytes);
-	}
 	unsigned bytes_out;
 	SECStatus rc = PK11_DigestFinal(prf->context, bytes,
 					&bytes_out, sizeof_bytes);
