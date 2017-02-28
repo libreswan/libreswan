@@ -1192,8 +1192,18 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("no useful state microcode entry found"));
 		/* no useful state microcode entry */
 		if (clear_payload_status.status != STF_OK) {
+			struct payload_digest *ntfy;
+
 			ikev2_log_payload_errors(clear_payload_status, st);
+
+			/* we want to print and log the first notify payload */
+			ntfy = md->chain[ISAKMP_NEXT_v2N];
+			loglog(RC_LOG_SERIOUS, "Received %s notify",
+				enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+
+
 			complete_v2_state_transition(mdp, clear_payload_status.status);
+
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
