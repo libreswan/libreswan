@@ -4,8 +4,10 @@ See also https://libreswan.org/
 v3.20 (unreleased)
 * barf: Ensure proper macros are used. Add certutil/crlutil output [Paul]
 * packaging: spec files should use 0 and 1, not true and false [David Arnold]
-* IKEv1: for IKE (phase 1), prefer 256-bit bit encryption [Andrew]
-* pluto: add dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
+* IKEv1: For IKE (phase 1), prefer 256-bit bit encryption [Andrew]
+* pluto: Add dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
+* pluto: Add statistics support to ipsec whack --globalstatus [Paul]
+* pluto: Add statistics clearing support using ipsec whack --clearstats [Paul]
 
 v3.19 (January 15, 2017)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]
