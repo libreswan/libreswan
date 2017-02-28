@@ -9,11 +9,11 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010,2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -176,7 +176,7 @@ static void help(void)
 		"\n"
 		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall] \\\n"
 		"\n"
-		"status: whack --status --trafficstatus --globalstatus --shuntstatus --fipsstatus\n"
+		"status: whack --status --trafficstatus --globalstatus --clearstats --shuntstatus --fipsstatus\n"
 		"\n"
 #ifdef HAVE_SECCOMP
 		"status: whack --seccomp-crashtest (CAREFUL!)\n"
@@ -290,6 +290,7 @@ enum option_enums {
 
 	OPT_STATUS,
 	OPT_GLOBAL_STATUS,
+	OPT_CLEAR_STATS,
 	OPT_SHUTDOWN,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
@@ -516,6 +517,7 @@ static const struct option long_opts[] = {
 
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
+	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
@@ -1248,6 +1250,10 @@ int main(int argc, char **argv)
 
 		case OPT_GLOBAL_STATUS:	/* --global-status */
 			msg.whack_global_status = TRUE;
+			continue;
+
+		case OPT_CLEAR_STATS:	/* --clearstats */
+			msg.whack_clear_stats = TRUE;
 			continue;
 
 		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
@@ -2155,8 +2161,8 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
-	      msg.whack_fips_status || msg.whack_options || msg.whack_shutdown ||
-	      msg.whack_purgeocsp || msg.whack_seccomp_crashtest))
+	      msg.whack_fips_status || msg.whack_clear_stats || msg.whack_options ||
+	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

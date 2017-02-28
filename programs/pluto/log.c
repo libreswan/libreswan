@@ -73,6 +73,8 @@
 #include "db_ops.h"
 #endif
 
+#include "pluto_stats.h"
+
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* close one per-peer log */
@@ -795,6 +797,7 @@ static void show_system_security(void)
 void show_global_status(void)
 {
 	show_globalstate_status();
+	show_pluto_stats();
 }
 
 void show_status(void)

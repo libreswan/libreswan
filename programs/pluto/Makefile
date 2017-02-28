@@ -8,6 +8,7 @@
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -252,7 +253,7 @@ OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
 OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJS += crypt_hash.o
 OBJS += kernel.o
-OBJS += kernel_noklips.o rcv_whack.o
+OBJS += kernel_noklips.o rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJS += rnd.o spdb.o spdb_struct.o

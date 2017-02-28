@@ -2,7 +2,7 @@
  * routines for state objects
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001, 2013-2015 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2001, 2013-2017 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -14,9 +14,9 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
- * Copyright (C) 2015,2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -77,6 +77,8 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include <keyhi.h>
+
+#include "pluto_stats.h"
 
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			       enum state_kind new_state);
@@ -790,6 +792,19 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
+	/*
+	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
+	 * because those failures could happen before we cloned a state
+	 */
+	if (st->st_clonedfrom == SOS_NOBODY) {
+		if (!IS_IKE_SA_ESTABLISHED(st)) {
+			if (st->st_ikev2)
+				pstats_ikev2_fail++;
+			else
+				pstats_ikev1_fail++;
+		}
+	}
+
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
 		/* reduced logging of OE failures */
 		DBG(DBG_LIFECYCLE, {
@@ -867,6 +882,8 @@ void delete_state(struct state *st)
 				statebuf,
 				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
 				st->st_username);
+			pstats_ipsec_in_bytes += st->st_esp.peer_bytes;
+			pstats_ipsec_out_bytes += st->st_esp.our_bytes;
 		}
 
 		if (st->st_ah.present) {
@@ -884,6 +901,8 @@ void delete_state(struct state *st)
 				statebuf,
 				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
 				st->st_username);
+			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
+			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
 		}
 
 		if (st->st_ipcomp.present) {
@@ -901,6 +920,8 @@ void delete_state(struct state *st)
 				statebuf,
 				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
 				st->st_username);
+			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
+			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
 	}
 
@@ -2555,25 +2576,27 @@ bool drop_new_exchanges(void)
 void show_globalstate_status(void)
 {
 	enum state_kind s;
+	int shunts = show_shunt_count();
 
-	whack_log(RC_COMMENT, "~shunts.total %d", show_shunt_count());
+	whack_log(RC_COMMENT, "#config.setup.ike.ddos_threshold=%d",pluto_ddos_threshold);
+	whack_log(RC_COMMENT, "#config.setup.ike.max_halfopen=%d",pluto_max_halfopen);
 
-	whack_log(RC_COMMENT, "~states.total %d", total());
-	whack_log(RC_COMMENT, "~states.child %d", total_ipsec());
-	whack_log(RC_COMMENT, "~states.ike %d", total_ike());
-	whack_log(RC_COMMENT, "~states.ike.anonymous %d",
+	/* technically shunts are not a struct state's - but makes it easier to group */
+	whack_log(RC_COMMENT, "#current.states.all=%d", shunts + total());
+	whack_log(RC_COMMENT, "#current.states.ipsec=%d", total_ipsec());
+	whack_log(RC_COMMENT, "#current.states.ike=%d", total_ike());
+	whack_log(RC_COMMENT, "#current.states.shunts=%d", shunts);
+	whack_log(RC_COMMENT, "#current.states.iketype.anonymous=%d",
 		  category.anonymous_ike.count);
-	whack_log(RC_COMMENT, "~states.ike.authenticated %d",
+	whack_log(RC_COMMENT, "#current.states.iketype.authenticated=%d",
 		  category.authenticated_ike.count);
-	whack_log(RC_COMMENT, "~states.ike.halfopen %d",
+	whack_log(RC_COMMENT, "#current.states.iketype.halfopen=%d",
 		  category.half_open_ike.count);
-	whack_log(RC_COMMENT, "~states.ike.open %d",
+	whack_log(RC_COMMENT, "#current.states.iketype.open=%d",
 		  category.open_ike.count);
-	whack_log(RC_COMMENT, "~states.ike.ddos_threshold %d",pluto_ddos_threshold);
-	whack_log(RC_COMMENT, "~states.ike.max.all %d",pluto_max_halfopen);
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
 	{
-		whack_log(RC_COMMENT, "~states.enumerate.%s:%d",
+		whack_log(RC_COMMENT, "#current.states.enumerate.%s=%d",
 			enum_name(&state_names, s), state_count[s]);
 	}
 }

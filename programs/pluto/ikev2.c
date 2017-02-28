@@ -1,7 +1,7 @@
 /* demultiplex incoming IKE messages
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2010,2013-2017 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
@@ -9,9 +9,9 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
  * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@
 #include "ietf_constants.h"
 
 #include "plutoalg.h" /* for default_ike_groups */
+
+#include "pluto_stats.h"
 
 enum smf2_flags {
 	/*
@@ -1201,6 +1203,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			loglog(RC_LOG_SERIOUS, "Received %s notify",
 				enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 
+			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
 
 			complete_v2_state_transition(mdp, clear_payload_status.status);
 
@@ -1498,15 +1501,15 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 }
 
 void send_v2_notification_from_state(struct state *st,
-				     v2_notification_t type,
+				     v2_notification_t ntype,
 				     chunk_t *data)
 {
-	send_v2_notification(st, type, NULL, st->st_icookie, st->st_rcookie,
+	send_v2_notification(st, ntype, NULL, st->st_icookie, st->st_rcookie,
 			     data);
 }
 
 void send_v2_notification_from_md(struct msg_digest *md,
-				  v2_notification_t type,
+				  v2_notification_t ntype,
 				  chunk_t *data)
 {
 	/*
@@ -1543,8 +1546,10 @@ void send_v2_notification_from_md(struct msg_digest *md,
 
 	update_ike_endpoints(&fake_state, md);
 
-	send_v2_notification(&fake_state, type, NULL,
+	send_v2_notification(&fake_state, ntype, NULL,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
+
+	pstats_ikev2_sent_notifies_e[ntype]++;
 }
 
 static void sechdule_next_send(struct state *st)
@@ -1731,6 +1736,7 @@ void log_ipsec_sa_established(const char *m, struct state *st)
 			st->st_ts_that.endport,
 			st->st_ts_that.ipprotoid);
 
+	pstats_ipsec_sa++;
 }
 
 static void ikev2_child_emancipate(struct msg_digest *md)
@@ -1966,6 +1972,13 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	struct state *st;
 	const char *from_state_name;
 
+	/* statistics */
+	if (result > STF_FAIL) {
+		pstats_ike_stf[STF_FAIL]++;
+	} else {
+		pstats_ike_stf[(unsigned long)result]++;
+	}
+
 	/* handle oddball/meta results now */
 
 	switch (result) {
@@ -2135,6 +2148,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				enum_name(&ikev2_notify_names, md->note)));
 		break;
 	}
+
 }
 
 v2_notification_t accept_v2_nonce(struct msg_digest *md,

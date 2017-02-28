@@ -1,13 +1,13 @@
-/* IPsec DOI and Oakley resolution routines
+/*
+ * IPsec DOI and Oakley resolution routines
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2010-2017 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
@@ -80,6 +80,8 @@
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
+
+#include "pluto_stats.h"
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
@@ -562,6 +564,18 @@ bool send_delete(struct state *st)
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
+static void pstats_sa(bool nat, bool tfc, bool esn)
+{
+	if (nat)
+		pstats_ipsec_encap_yes++;
+	else
+		pstats_ipsec_encap_no++;
+	if (esn)
+		pstats_ipsec_esn++;
+	if (tfc)
+		pstats_ipsec_tfc++;
+}
+
 void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
 	struct connection *const c = st->st_connection;
@@ -573,8 +587,17 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	       c->policy & POLICY_TUNNEL ?
 		" tunnel mode" : " transport mode");
 
+	/* don't count IKEv1 half ipsec sa */
+	if (st->st_state == STATE_QUICK_R1) {
+		pstats_ipsec_sa++;
+	}
+
 	if (st->st_esp.present) {
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+		bool nat = st->hidden_variables.st_nat_traversal & NAT_T_DETECTED;
+		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+
+		if (nat)
 			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
 
@@ -587,9 +610,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
-			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
-			 st->st_esp.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			 c->sa_tfcpad != 0 && !st->st_seen_no_tfc ? "/TFC" : "",
+			 nat ? "/NAT" : "",
+			 esn ? "/ESN" : "",
+			 tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 enum_show_shortb(&esp_transformid_names,
@@ -602,6 +625,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_esp++;
+		pstats_ipsec_encr[st->st_esp.attrs.transattrs.encrypt]++;
+		pstats_ipsec_integ[st->st_esp.attrs.transattrs.integ_hash]++;
+		pstats_sa(nat, tfc, esn);
 	}
 
 	if (st->st_ah.present) {
@@ -621,6 +649,10 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_ah++;
+		pstats_ipsec_integ[st->st_ah.attrs.transattrs.integ_hash]++;
+		pstats_sa(FALSE, FALSE, esn);
 	}
 
 	if (st->st_ipcomp.present) {
@@ -634,6 +666,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_ipcomp++;
 	}
 
 	b = add_str(sadetails, sad_len, b, ini);
@@ -720,5 +754,18 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 integ_name,
 		 prf_name,
 		 enum_short_name(&oakley_group_names, st->st_oakley.group->group));
-	st->hidden_variables.st_logged_p1algos = TRUE;
+
+	/* keep IKE SA statistics */
+	if (st->st_ikev2) {
+		pstats_ikev2_sa++;
+		pstats_ikev2_encr[st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]]++;
+		if (st->st_oakley.integ != NULL)
+			pstats_ikev2_integ[st->st_oakley.integ->common.id[IKEv2_ALG_ID]]++;
+		pstats_ikev2_groups[st->st_oakley.group->group]++;
+	} else {
+		pstats_ikev1_sa++;
+		pstats_ikev1_encr[st->st_oakley.encrypter->common.ikev1_oakley_id]++;
+		pstats_ikev1_integ[st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]]++;
+		pstats_ikev1_groups[st->st_oakley.group->group]++;
+	}
 }

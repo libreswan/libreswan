@@ -1,13 +1,14 @@
-/* get-next-event loop
+/*
+ * get-next-event loop
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002, 2013,2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
@@ -95,6 +96,8 @@
 #ifdef HAVE_SECCOMP
 # include "pluto_seccomp.h"
 #endif
+
+#include "pluto_stats.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -1193,6 +1196,8 @@ static bool send_packet(struct state *st, const char *where,
 		}
 		return FALSE;
 	}
+
+	pstats_ike_out_bytes += len;
 
 	/* Send a duplicate packet when this impair is enabled - used for testing */
 	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {

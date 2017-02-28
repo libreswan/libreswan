@@ -7,9 +7,9 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012,2014,2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
@@ -73,6 +73,8 @@
 #include "ietf_constants.h"
 
 #include "hostpair.h"
+
+#include "pluto_stats.h"
 
 extern bool pluto_drop_oppo_null;
 
@@ -416,7 +418,11 @@ static stf_status ike2_verify_accepted_modp_prop (struct msg_digest *md,
 					enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
+			if (ke_group <= OAKLEY_GROUP_ROOF)
+				pstats_invalidke_sent_u[ke_group]++;
+			pstats_invalidke_sent_s[accepted_oakley.group->group]++;
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
+
 			pexpect(md->st == NULL);
 			/* caller free early return items */
 			return STF_FAIL;
@@ -1181,6 +1187,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				      enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
+			if (ke_group <= OAKLEY_GROUP_ROOF)
+				pstats_invalidke_sent_u[ke_group]++;
+			pstats_invalidke_sent_s[accepted_oakley.group->group]++;
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
 			/* free early return items */
@@ -1558,6 +1567,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			));
 			return STF_IGNORE;
 		}
+
+		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
+		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
+			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
+		}
+
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
 		{
@@ -1625,6 +1640,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			if (!in_struct(&sg, &suggested_group_desc,
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
+
+			if (sg.sg_group <= OAKLEY_GROUP_ROOF)
+				pstats_invalidke_recv_s[sg.sg_group]++;
+			pstats_invalidke_recv_u[st->st_oakley.group->group]++;
 
 			ikev2_proposals_from_alg_info_ike(c->name,
 							  "initial initiator (validating suggested KE)",
@@ -1712,7 +1731,14 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
+
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+
+		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
+		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
+			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
+		}
+
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
 		case v2N_INVALID_KE_PAYLOAD:
@@ -4177,7 +4203,7 @@ static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
  */
 
 void send_v2_notification(struct state *p1st,
-			  v2_notification_t type,
+			  v2_notification_t ntype,
 			  struct state *encst,
 			  u_char *icookie,
 			  u_char *rcookie,
@@ -4212,7 +4238,7 @@ void send_v2_notification(struct state *p1st,
 
 		libreswan_log("sending %sencrypted notification %s to %s:%u",
 			encst ? "" : "un",
-			enum_name(&ikev2_notify_names, type),
+			enum_name(&ikev2_notify_names, ntype),
 			ipstr(&p1st->st_remoteaddr, &b),
 			p1st->st_remoteport);
 	}
@@ -4266,7 +4292,7 @@ void send_v2_notification(struct state *p1st,
 		   ISAKMP_PAYLOAD_NONCRITICAL,
 		 PROTO_v2_RESERVED,
 		 &empty_chunk,
-		 type, n_data, &rbody))
+		 ntype, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
 	if (!close_message(&rbody, p1st))
@@ -4281,6 +4307,8 @@ void send_v2_notification(struct state *p1st,
 	 * are sending.
 	 */
 	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
+
+	pstats_ikev2_sent_notifies_e[ntype]++;
 }
 
 /* add notify payload to the rbody */
@@ -5233,6 +5261,14 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		}
 	}
 
+	/* count as DPD/liveness only if there was no Delete (or MOBIKE Notify) */
+	if (!del_ike && ndp == 0) {
+		if (responding)
+			pstats_ike_dpd_replied++;
+		else
+			pstats_ike_dpd_recv++;
+	}
+
 	ikev2_update_msgid_counters(md);
 	return STF_OK;
 }
@@ -5346,6 +5382,8 @@ stf_status ikev2_send_informational(struct state *st)
 		record_and_send_ike_msg(st, &reply_stream,
 			"packet for ikev2_send_informational");
 	}
+
+	pstats_ike_dpd_sent++;
 
 	return STF_OK;
 }
