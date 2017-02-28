@@ -1,6 +1,6 @@
 /*
  * tables of names for values defined in constants.h
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
@@ -1476,8 +1476,8 @@ enum_names ikev2_auth_names = {
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768", /* 1 */
 	"OAKLEY_GROUP_MODP1024",
-	"OAKLEY_GROUP_GP155",
-	"OAKLEY_GROUP_GP185",
+	"OAKLEY_GROUP_GP155(UNUSED)",
+	"OAKLEY_GROUP_GP185(UNUSED)",
 	"OAKLEY_GROUP_MODP1536", /* RFC 3526 */
 	"OAKLEY_GROUP_EC2N_2_1(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
 	"OAKLEY_GROUP_EC2N_2_2(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
