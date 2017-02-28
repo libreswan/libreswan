@@ -1637,7 +1637,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				st->st_oakley.group = lookup_group(sg.sg_group);
 				DBG(DBG_CONTROLMORE, {
 					struct esb_buf esb;
-					DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+					struct esb_buf esb2;
+					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
+						enum_show_shortb(&oakley_group_names,
+							st->st_oakley.group->group, &esb2),
 						enum_show_shortb(&oakley_group_names,
 							sg.sg_group, &esb));
 				});
