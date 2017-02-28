@@ -305,7 +305,7 @@ static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey("seed", prf, seed);
 		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(prf_desc->hasher, &prfplus, new_t);
+		append_symkey_symkey(&prfplus, new_t);
 		release_symkey(__func__, "old_t[N]", &old_t);
 		old_t = new_t;
 	}
@@ -363,9 +363,9 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes)
 {
 	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
-	append_symkey_chunk(prf_desc->hasher, &data, Nr);
-	append_symkey_chunk(prf_desc->hasher, &data, SPIi);
-	append_symkey_chunk(prf_desc->hasher, &data, SPIr);
+	append_symkey_chunk(&data, Nr);
+	append_symkey_chunk(&data, SPIi);
+	append_symkey_chunk(&data, SPIr);
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    skeyseed, data,
 					    required_bytes);
@@ -385,13 +385,10 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
 		data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
-		append_symkey_chunk(prf_desc->hasher,
-				    &data, Nr);
+		append_symkey_chunk(&data, Nr);
 	} else {
-		data = concat_symkey_chunk(prf_desc->hasher,
-					   new_dh_secret, Ni);
-		append_symkey_chunk(prf_desc->hasher,
-				    &data, Nr);
+		data = concat_symkey_chunk(new_dh_secret, Ni);
+		append_symkey_chunk(&data, Nr);
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    SK_d, data,

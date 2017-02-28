@@ -104,8 +104,7 @@ static void prf_update(struct prf_context *prf)
 		chunk_t hmac_pad_prf = { z,
 					 prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key) };
 
-		replace_key(prf, concat_symkey_chunk(prf->desc->hasher, prf->key,
-						     hmac_pad_prf));
+		replace_key(prf, concat_symkey_chunk(prf->key, hmac_pad_prf));
 	}
 	passert(prf->key != NULL);
 
@@ -125,14 +124,14 @@ static void digest_symkey(struct prf_context *prf, const char *name UNUSED,
 			  PK11SymKey *update)
 {
 	passert(digest_symkey == prf->desc->prf_ops->digest_symkey);
-	append_symkey_symkey(prf->desc->hasher, &(prf->inner), update);
+	append_symkey_symkey(&(prf->inner), update);
 }
 
 static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
 			 const u_int8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == prf->desc->prf_ops->digest_bytes);
-	append_symkey_bytes(prf->desc->hasher, &(prf->inner), bytes, sizeof_bytes);
+	append_symkey_bytes(&(prf->inner), bytes, sizeof_bytes);
 }
 
 /*
@@ -154,7 +153,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	memset(op, HMAC_OPAD, prf->desc->hasher->hash_block_size);
 	chunk_t hmac_opad = { op, prf->desc->hasher->hash_block_size };
 	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad);
-	append_symkey_symkey(prf->desc->hasher, &outer, hashed_inner);
+	append_symkey_symkey(&outer, hashed_inner);
 	release_symkey(prf->name, "hashed-inner", &hashed_inner);
 	release_symkey(prf->name, "key", &prf->key);
 

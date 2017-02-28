@@ -24,34 +24,6 @@
 #include "lswnss.h"
 
 
-static CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
-{
-	CK_MECHANISM_TYPE mechanism = 0x80000000;
-
-	switch (hasher->common.ikev1_oakley_id) {
-	case OAKLEY_MD5:
-		mechanism = CKM_MD5_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA1:
-		mechanism = CKM_SHA1_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_256:
-		mechanism = CKM_SHA256_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_384:
-		mechanism = CKM_SHA384_KEY_DERIVATION;
-		break;
-	case OAKLEY_SHA2_512:
-		mechanism = CKM_SHA512_KEY_DERIVATION;
-		break;
-	default:
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: key derivation mechanism not supported"));
-		break;
-	}
-	return mechanism;
-}
-
 struct nss_alg {
 	CK_FLAGS flags;
 	CK_MECHANISM_TYPE mechanism;
@@ -468,22 +440,19 @@ PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
  * new SYMKEY object.
  */
 
-PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
-				 PK11SymKey *lhs, PK11SymKey *rhs)
+PK11SymKey *concat_symkey_symkey(PK11SymKey *lhs, PK11SymKey *rhs)
 {
 	return merge_symkey_symkey(DBG_CRYPT, lhs, rhs,
 				   CKM_CONCATENATE_BASE_AND_KEY,
-				   nss_key_derivation_mech(hasher));
+				   PK11_GetMechanism(lhs));
 }
 
-PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
-				PK11SymKey *lhs, const void *rhs,
+PK11SymKey *concat_symkey_bytes(PK11SymKey *lhs, const void *rhs,
 				size_t sizeof_rhs)
 {
-	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
 	return merge_symkey_bytes(DBG_CRYPT, lhs, rhs, sizeof_rhs,
 				  CKM_CONCATENATE_BASE_AND_DATA,
-				  mechanism);
+				  PK11_GetMechanism(lhs));
 }
 
 PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
@@ -496,16 +465,14 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 				  target);
 }
 
-PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
-				PK11SymKey *lhs, chunk_t rhs)
+PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
 {
-	return concat_symkey_bytes(hasher, lhs, rhs.ptr, rhs.len);
+	return concat_symkey_bytes(lhs, rhs.ptr, rhs.len);
 }
 
-PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
-			       PK11SymKey *lhs, uint8_t rhs)
+PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs)
 {
-	return concat_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
+	return concat_symkey_bytes(lhs, &rhs, sizeof(rhs));
 }
 
 chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs)
@@ -527,20 +494,17 @@ chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs)
  * Use this to chain a series of concat operations.
  */
 
-void append_symkey_symkey(const struct hash_desc *hasher,
-			  PK11SymKey **lhs, PK11SymKey *rhs)
+void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs)
 {
-	PK11SymKey *newkey = concat_symkey_symkey(hasher, *lhs, rhs);
+	PK11SymKey *newkey = concat_symkey_symkey(*lhs, rhs);
 	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
 
-void append_symkey_bytes(const struct hash_desc *hasher,
-			 PK11SymKey **lhs, const void *rhs,
+void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
 			 size_t sizeof_rhs)
 {
-	PK11SymKey *newkey = concat_symkey_bytes(hasher, *lhs,
-						 rhs, sizeof_rhs);
+	PK11SymKey *newkey = concat_symkey_bytes(*lhs, rhs, sizeof_rhs);
 	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
@@ -548,22 +512,19 @@ void append_symkey_bytes(const struct hash_desc *hasher,
 void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 			 PK11SymKey **rhs)
 {
-	PK11SymKey *newkey = concat_bytes_symkey(lhs, sizeof_lhs,
-						 *rhs);
+	PK11SymKey *newkey = concat_bytes_symkey(lhs, sizeof_lhs, *rhs);
 	release_symkey(__func__, "rhs", rhs);
 	*rhs = newkey;
 }
 
-void append_symkey_chunk(const struct hash_desc *hasher,
-			 PK11SymKey **lhs, chunk_t rhs)
+void append_symkey_chunk(PK11SymKey **lhs, chunk_t rhs)
 {
-	append_symkey_bytes(hasher, lhs, rhs.ptr, rhs.len);
+	append_symkey_bytes(lhs, rhs.ptr, rhs.len);
 }
 
-void append_symkey_byte(const struct hash_desc *hasher,
-			PK11SymKey **lhs, uint8_t rhs)
+void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs)
 {
-	append_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
+	append_symkey_bytes(lhs, &rhs, sizeof(rhs));
 }
 
 void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)

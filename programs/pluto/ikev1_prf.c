@@ -170,7 +170,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_symkey("old_k", prf, old_k);
 		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
+		append_symkey_symkey(&keymat, new_k);
 		release_symkey(__func__, "old_k#N", &old_k);
 		old_k = new_k;
 	}
