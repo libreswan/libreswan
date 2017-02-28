@@ -605,12 +605,17 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	}
 
 	if (st->st_ah.present) {
+		struct esb_buf ah_t;
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH%s=>0x%08lx <0x%08lx",
+			 "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
 			 ini,
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
-			 (unsigned long)ntohl(st->st_ah.our_spi));
+			 (unsigned long)ntohl(st->st_ah.our_spi),
+			 enum_show_shortb(&ah_transformid_names,
+                                   st->st_ah.attrs.transattrs.integ_hash, &ah_t));
 
 		/* advance b to end of string */
 		b = b + strlen(b);
