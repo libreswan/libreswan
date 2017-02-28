@@ -155,7 +155,8 @@ void pluto_init_log(void)
  */
 static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 {
-	bool reproc = *fmt == '~';
+	bool reproc = (*fmt == '~') || (*fmt == '#');
+
 	size_t ps;
 	struct connection *c = cur_state != NULL ? cur_state->st_connection :
 			       cur_connection;
@@ -563,7 +564,11 @@ void whack_log(int mess_no, const char *message, ...)
 	if (wfd != NULL_FD || dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
+		int prelen = 0;
+
+		/* support to suppress numeral prefix using # */
+		if (message[0] != '#')
+			prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
 
 		passert(prelen >= 0);
 
