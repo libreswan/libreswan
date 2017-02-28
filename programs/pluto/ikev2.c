@@ -406,7 +406,19 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
 
-	{ .story      = "Proces CREATE_CHILD_SA IPsec SA Response",
+	{ .story      = "Proces CREATE_CHILD_SA IPsec SA Response -- IKE I",
+	  .state      = STATE_V2_CREATE_I,
+	  .next_state = STATE_V2_IPSEC_I,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_SET,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
+	  .processor  = ikev2_child_ipsec_inR,
+	  .crypto_end = NULL,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Proces CREATE_CHILD_SA IPsec SA Response -- IKE R",
 	  .state      = STATE_V2_CREATE_I,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
@@ -418,7 +430,20 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
+	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request -- IKE R",
+	  .state      = STATE_V2_CREATE_R,
+	  .next_state = STATE_V2_IPSEC_R,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
+	  .processor  = ikev2_child_ipsec_inIoutR,
+	  .crypto_end = ikev2_child_out_cont,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+
+	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request -- IKE I",
 	  .state      = STATE_V2_CREATE_R,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
@@ -823,7 +848,6 @@ static struct state *process_v2_child_ix (struct msg_digest *md,
 			what = "IKE Rekey Request";
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
-		st->st_original_role = ORIGINAL_RESPONDER;
 	} else  {
 		what = "Child SA Response";
 		st = state_with_parent_msgid_expect(pst->st_serialno,

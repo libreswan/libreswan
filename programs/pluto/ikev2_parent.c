@@ -4694,7 +4694,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
 		if(IS_CHILD_SA_REQUEST(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
-			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
+			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
 			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 			/* store it to match response */
@@ -5645,7 +5645,6 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 #endif
 	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
 	change_state(st, STATE_V2_CREATE_I0);
-	st->st_original_role = ORIGINAL_INITIATOR;
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 
