@@ -274,35 +274,6 @@ static PK11SymKey *merge_symkey_symkey(lset_t debug, PK11SymKey *base_key,
 				       CK_MECHANISM_TYPE target)
 {
 	const char *prefix = lsw_nss_ckm_to_string(derive);
-
-	/*
-	 * Some keys don't play well with PK11_Derive() - softokn
-	 * fails to extract their value - work around it by converting
-	 * it to a different key type.
-	 *
-	 * XXX: Using CKM_ECHD1_DERIVE as the marker is a hack.
-	 */
-	if (PK11_GetMechanism(base_key) == CKM_ECDH1_DERIVE) {
-		DBG(debug, DBG_log("%s: base-key@%p needs hack",
-				   prefix, base_key));
-		PK11SymKey *tmp = key_from_symkey_bytes(base_key, 0,
-							sizeof_symkey(base_key));
-		PK11SymKey *result = merge_symkey_symkey(debug, tmp, key,
-							 derive, target);
-		release_symkey(prefix, "tmp", &tmp);
-		return result;
-	}
-	if (PK11_GetMechanism(key) == CKM_ECDH1_DERIVE) {
-		DBG(debug, DBG_log("%s: key@%p needs hack",
-				   prefix, key));
-		PK11SymKey *tmp = key_from_symkey_bytes(key, 0,
-							sizeof_symkey(key));
-		PK11SymKey *result = merge_symkey_symkey(debug, base_key, tmp,
-							 derive, target);
-		release_symkey(prefix, "tmp", &tmp);
-		return result;
-	}
-
 	CK_OBJECT_HANDLE key_handle = PK11_GetSymKeyHandle(key);
 	SECItem key_param = {
 		.data = (unsigned char*)&key_handle,

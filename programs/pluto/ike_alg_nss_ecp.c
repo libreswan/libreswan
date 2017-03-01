@@ -36,8 +36,8 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
-
 #include "ike_alg_nss_ecp.h"
+#include "crypt_symkey.h"
 
 static void nss_ecp_calc_ke(const struct oakley_group_desc *group,
 			    SECKEYPrivateKey **privk,
@@ -108,6 +108,12 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 		.u.ec = {
 			.DEREncodedParams = local_pubk->u.ec.DEREncodedParams,
 #if 0
+			/*
+			 * NSS, at one point, added the field
+			 * .encoding and then removed it.  Building
+			 * against one version and executing against
+			 * the next will be 'bad'.
+			 */
 			.encoding = local_pubk->u.ec.encoding,
 #endif
 		},
@@ -121,16 +127,12 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 	/*
 	 * XXX: The "result type" can be nearly everything.  Use
 	 * CKM_ECDH1_DERIVE as a marker so it is easy to spot this key
-	 * type.  This might be needed as a way to detect and
-	 * work-around an NSS querk where ECP keys don't work with the
-	 * primitive CKM_CONCATENATE_BASE_AND_KEY which is used by the
-	 * low-level HMAC implementation (something about not being
-	 * able to get the value).
+	 * type.
 	 *
-	 * Like all calls in the NSS source code, leave the
-	 * KDF=CKD_NULL.  The raw key is also what CAVP tests expect.
+	 * Like all calls in the NSS source code, leave KDF=CKD_NULL.
+	 * The raw key is also what CAVP tests expect.
 	 */
-	PK11SymKey *g_ir = PK11_PubDeriveWithKDF(local_privk, &remote_pubk,
+	PK11SymKey *temp = PK11_PubDeriveWithKDF(local_privk, &remote_pubk,
 						 /* is sender */ PR_FALSE,
 						 /* secrets */ NULL, NULL,
 						 /* Operation */ CKM_ECDH1_DERIVE,
@@ -140,8 +142,20 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_return_nss_password_file_info());
+	/*
+	 * The key returned above doesn't play well with PK11_Derive()
+	 * - "softokn" fails to extract its value when trying to
+	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
+	 * returning a copy of the key.
+	 */
+	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp));
+	DBG(DBG_CRYPT,
+	    DBG_log("NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
+		    g_ir, temp));
 
+	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);
+
 	return g_ir;
 }
 
