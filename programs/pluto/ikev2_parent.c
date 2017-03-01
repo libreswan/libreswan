@@ -4310,7 +4310,8 @@ void send_v2_notification(struct state *p1st,
 	 */
 	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
 
-	pstats_ikev2_sent_notifies_e[ntype]++;
+	if (ntype <= v2N_ERROR_ROOF)
+		pstats_ikev2_sent_notifies_e[ntype]++;
 }
 
 /* add notify payload to the rbody */
