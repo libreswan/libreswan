@@ -296,7 +296,7 @@ static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, sizeof_symkey(prfplus));
+	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", prfplus);
 	while (sizeof_symkey(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", DBG_CRYPT,
