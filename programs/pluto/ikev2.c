@@ -1549,7 +1549,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	send_v2_notification(&fake_state, ntype, NULL,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 
-	pstats_ikev2_sent_notifies_e[ntype]++;
+	pstats(ikev2_sent_notifies_e, ntype);
 }
 
 static void sechdule_next_send(struct state *st)

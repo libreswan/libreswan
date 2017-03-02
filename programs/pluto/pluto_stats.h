@@ -54,7 +54,24 @@ extern unsigned long pstats_ipsec_tfc;
 extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
+
 extern void show_pluto_stats();
 extern void clear_pluto_stats();
+
+/*
+ * This (assuming it works) is less evil then an array index
+ * out-of-bound; which isn't saying much.
+ *
+ * "unsigned" forces negative values to large positive ones,
+ * presumably INDEX fits in "unsigned".  Is size_t better?
+ */
+#define pstats(TYPE,INDEX) {						\
+		const unsigned __pstat = (INDEX);			\
+		if (__pstat < elemsof(pstats_##TYPE)) {			\
+			pstats_##TYPE[__pstat]++;			\
+		} else if (DBGP(DBG_CONTROLMORE)) {			\
+			DBG_log("pstats %s %d", #TYPE, __pstat);	\
+		}							\
+	}
 
 #endif /* _PLUTO_STATS_H */
