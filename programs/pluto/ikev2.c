@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
  * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1200,10 +1200,11 @@ void process_v2_packet(struct msg_digest **mdp)
 
 			/* we want to print and log the first notify payload */
 			ntfy = md->chain[ISAKMP_NEXT_v2N];
-			loglog(RC_LOG_SERIOUS, "Received %s notify",
-				enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-
-			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
+			if (ntfy != NULL) {
+				loglog(RC_LOG_SERIOUS, "Received %s notify",
+				       enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+				pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+			}
 
 			complete_v2_state_transition(mdp, clear_payload_status.status);
 

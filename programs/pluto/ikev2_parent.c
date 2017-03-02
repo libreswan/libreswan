@@ -1570,7 +1570,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 
 		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
 		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
-			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
+			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
@@ -1736,7 +1736,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
 		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
-			pstats_ikev2_recv_notifies_e[ntfy->payload.v2n.isan_type]++;
+			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
