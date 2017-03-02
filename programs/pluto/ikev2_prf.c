@@ -64,7 +64,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     PK11SymKey *shared,
 			     const size_t key_size,
 			     const size_t salt_size,
-			     PK11SymKey **skeyseed_out,
 			     PK11SymKey **SK_d_out,
 			     PK11SymKey **SK_ai_out,
 			     PK11SymKey **SK_ar_out,
@@ -143,6 +142,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
 						   ni, nr, spii, spir,
 						   total_keysize);
+	release_symkey(__func__, "skeyseed_k", &skeyseed_k);
 
 	size_t next_byte = 0;
 
@@ -196,8 +196,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
 	release_symkey(__func__, "finalkey", &finalkey);
 
-	passert(*skeyseed_out == NULL);
-	*skeyseed_out = skeyseed_k;
 	passert(*SK_d_out == NULL);
 	*SK_d_out = SK_d_k;
 	passert(*SK_ai_out == NULL);
@@ -219,8 +217,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	*chunk_SK_pr_out = chunk_SK_pr;
 
 	DBG(DBG_CRYPT,
-	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
-		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
+	    DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
+		    shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
 	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
 	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
 	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
@@ -264,7 +262,6 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 		dhq.key_size,  /* input */
 		dhq.salt_size, /* input */
 
-		&skr->skeyseed,        /* output */
 		&skr->skeyid_d,        /* output */
 		&skr->skeyid_ai,       /* output */
 		&skr->skeyid_ar,       /* output */
