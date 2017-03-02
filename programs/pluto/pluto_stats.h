@@ -35,8 +35,8 @@ extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF+1];
 extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF+1];
 extern unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF+1];	/* pretends everything maps 1 to 1 */
 extern unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF+1];	/* pretends everything maps 1 to 1 */
-extern unsigned long pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
-extern unsigned long pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
+extern uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
+extern uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 extern unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 extern unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
 extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */

@@ -151,8 +151,8 @@ struct ipsec_proto_info {
 	u_int16_t keymat_len;           /* same for both */
 	u_char *our_keymat;
 	u_char *peer_keymat;
-	u_int our_bytes;
-	u_int peer_bytes;
+	uint64_t our_bytes;
+	uint64_t peer_bytes;
 	monotime_t our_lastused;
 	monotime_t peer_lastused;
 	uint64_t add_time;

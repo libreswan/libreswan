@@ -380,13 +380,13 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
  * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
  * risk of overflow.  The ! is not printed.
  */
-static char *humanize_number(unsigned long num,
+static char *humanize_number(uint64_t num,
 			     char *buf,
 			     const char *buf_roof,
 			     const char *prefix)
 {
 	size_t buf_len = buf_roof - buf;
-	unsigned long to_print = num;
+	uint64_t to_print = num;
 	const char *suffix;
 	int ret;
 	bool kilos = prefix[0] == '!';
@@ -405,7 +405,7 @@ static char *humanize_number(unsigned long num,
 		}
 	}
 
-	ret = snprintf(buf, buf_len, "%s%lu%s", prefix, to_print,
+	ret = snprintf(buf, buf_len, "%s%" PRIu64 "%s", prefix, to_print,
 		       suffix + kilos);
 	if (ret < 0 || (size_t) ret >= buf_len)
 		return buf;

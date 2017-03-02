@@ -54,8 +54,8 @@ unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF+1];
 unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF+1];
 unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF+1];	/* pretends everything maps 1 to 1 */
 unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF+1];	/* pretends everything maps 1 to 1 */
-unsigned long pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
-unsigned long pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
+uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
+uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
@@ -88,8 +88,8 @@ void show_pluto_stats()
 	 * Total counts only total of traffic by terminated IPsec Sa's.
 	 * Should we call get_sa_info() for bytes of active IPsec SA's?
 	 */
-	whack_log(RC_COMMENT, "#total.ipsec.traffic.in=%lu", pstats_ipsec_in_bytes);
-	whack_log(RC_COMMENT, "#total.ipsec.traffic.out=%lu", pstats_ipsec_out_bytes);
+	whack_log(RC_COMMENT, "#total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
+	whack_log(RC_COMMENT, "#total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
 
 	whack_log(RC_COMMENT, "#total.ike.ikev2.established=%lu", pstats_ikev2_sa);
 	whack_log(RC_COMMENT, "#total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
