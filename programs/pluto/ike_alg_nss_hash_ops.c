@@ -151,7 +151,7 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	PK11SymKey *result = PK11_Derive(symkey, derive, param, target,
 					 operation, key_size);
 	if (DBGP(debug)) {
-	  DBG_symkey(name, "result", result);
+		DBG_symkey(name, "new result", result);
 	}
 	return result;
 }

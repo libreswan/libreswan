@@ -27,8 +27,8 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
-
 #include "ike_alg_nss_modp.h"
+#include "crypt_symkey.h"
 
 static void nss_modp_calc_ke(const struct oakley_group_desc *group,
 			     SECKEYPrivateKey **privk,
@@ -116,6 +116,7 @@ static PK11SymKey *nss_modp_calc_g_ir(const struct oakley_group_desc *group,
 					  CKM_CONCATENATE_DATA_AND_BASE,
 					  CKA_DERIVE, group->bytes,
 					  lsw_return_nss_password_file_info());
+	DBG(DBG_CRYPT, DBG_symkey(__func__, "new g_ir", g_ir));
 
 	return g_ir;
 }

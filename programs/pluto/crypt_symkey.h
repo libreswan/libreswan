@@ -97,6 +97,9 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
  */
 chunk_t chunk_from_symkey(const char *prefix, lset_t debug,
 			  PK11SymKey *symkey);
+chunk_t chunk_from_symkey_bytes(const char *prefix, lset_t debug,
+				PK11SymKey *symkey,
+				size_t chunk_start, size_t sizeof_chunk);
 
 /*
  * Create a key suitable for ALG.

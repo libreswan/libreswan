@@ -229,7 +229,7 @@ static PK11SymKey *merge_symkey_bytes(lset_t debug, PK11SymKey *base_key,
 		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
 			    prefix, PORT_GetError(), PORT_GetError());
 	}
-	DBG(debug, DBG_symkey(prefix, "result", result))
+	DBG(debug, DBG_symkey(prefix, "new result", result))
 	return result;
 }
 
@@ -271,7 +271,7 @@ static PK11SymKey *merge_symkey_symkey(lset_t debug, PK11SymKey *base_key,
 		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
 			    prefix, PORT_GetError(), PORT_GetError());
 	}
-	DBG(debug, DBG_symkey(prefix, "result", result));
+	DBG(debug, DBG_symkey(prefix, "new result", result));
 	return result;
 }
 
@@ -314,7 +314,7 @@ static PK11SymKey *symkey_from_symkey(lset_t debug,
 		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
 			    prefix, PORT_GetError(), PORT_GetError());
 	}
-	DBG(debug, DBG_symkey(prefix, "result", result));
+	DBG(debug, DBG_symkey(prefix, "new result", result));
 	return result;
 }
 
@@ -361,10 +361,11 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 	}
 	if (DBGP(debug)) {
 	    if (slot_key == symkey) {
-		    DBG_log("%s: slot-key@%p references sym-key@%p",
+		    /* output should mimic reference_symkey() */
+		    DBG_log("%s: slot-key@%p: reference sym-key@%p",
 			    name, slot_key, symkey);
 	    } else {
-		    DBG_symkey(name, "slot-key", slot_key);
+		    DBG_symkey(name, "new slot", slot_key);
 	    }
 	}
 
