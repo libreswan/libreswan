@@ -11,7 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -448,9 +448,10 @@ struct state {
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
+	/* IKEv1 only */
+	PK11SymKey *st_skeyid_nss;	/* Key material */
+
 	/* v1 names are aliases for subset of v2 fields (#define) */
-#define st_skeyid_nss   st_skeyseed_nss
-	PK11SymKey *st_skeyseed_nss;	/* Key material */
 #define st_skeyid_d_nss st_skey_d_nss
 	PK11SymKey *st_skey_d_nss;	/* KM for non-ISAKMP key derivation */
 #define st_skeyid_a_nss st_skey_ai_nss

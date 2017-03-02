@@ -1062,20 +1062,17 @@ void delete_state(struct state *st)
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
 	free_any_nss_symkey(st->st_shared_nss);
-
-	/* same as st_skeyid_nss */
-	free_any_nss_symkey(st->st_skeyseed_nss);
-	free_any_nss_symkey(st->st_skey_d_nss);	/* same as st_skeyid_d_nss */
-	/* same as st_skeyid_a_nss */
-	free_any_nss_symkey(st->st_skey_ai_nss);
+	free_any_nss_symkey(st->st_skeyid_nss);
+	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */
+	free_any_nss_symkey(st->st_skey_ai_nss); /* aka st_skeyid_a_nss */
 	free_any_nss_symkey(st->st_skey_ar_nss);
-	/* same as st_skeyid_e_nss */
-	free_any_nss_symkey(st->st_skey_ei_nss);
+	free_any_nss_symkey(st->st_skey_ei_nss); /* aka st_skeyid_e_nss */
 	free_any_nss_symkey(st->st_skey_er_nss);
 	free_any_nss_symkey(st->st_skey_pi_nss);
 	free_any_nss_symkey(st->st_skey_pr_nss);
 	free_any_nss_symkey(st->st_enc_key_nss);
 #   undef free_any_nss_symkey
+
 	freeanychunk(st->st_skey_initiator_salt);
 	freeanychunk(st->st_skey_responder_salt);
 	freeanychunk(st->st_skey_chunk_SK_pi);
@@ -1415,24 +1412,21 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_event = NULL;
 
-#   define clone_nss_symkey_field(field) {				\
-		nst->field = reference_symkey(__func__, #field, st->field); \
-	}
+
 	if (sa_type == IPSEC_SA) {
-		/* same as st_skeyid_nss */
-		clone_nss_symkey_field(st_skeyseed_nss);
-		/* same as st_skeyid_d_nss */
-		clone_nss_symkey_field(st_skey_d_nss);
-		/* same as st_skeyid_a_nss */
-		clone_nss_symkey_field(st_skey_ai_nss);
+
+#   define clone_nss_symkey_field(field) nst->field = reference_symkey(__func__, #field, st->field)
+		clone_nss_symkey_field(st_skeyid_nss);
+		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
+		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
 		clone_nss_symkey_field(st_skey_ar_nss);
-		/* same as st_skeyid_e_nss */
-		clone_nss_symkey_field(st_skey_ei_nss);
+		clone_nss_symkey_field(st_skey_ei_nss); /* aka st_skeyid_e_nss */
 		clone_nss_symkey_field(st_skey_er_nss);
 		clone_nss_symkey_field(st_skey_pi_nss);
 		clone_nss_symkey_field(st_skey_pr_nss);
 		clone_nss_symkey_field(st_enc_key_nss);
 #   undef clone_nss_symkey_field
+
 #   define clone_any_chunk(field) { \
 		if (st->field.ptr == NULL) { \
 			nst->field.ptr = NULL; \
