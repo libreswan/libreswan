@@ -1975,9 +1975,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	/* statistics */
 	if (result > STF_FAIL) {
-		pstats_ike_stf[STF_FAIL]++;
+		pstats(ike_stf, STF_FAIL);
 	} else {
-		pstats_ike_stf[(unsigned long)result]++;
+		pstats(ike_stf, (unsigned long)result);
 	}
 
 	/* handle oddball/meta results now */

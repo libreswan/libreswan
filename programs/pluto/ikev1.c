@@ -640,7 +640,7 @@ static stf_status informational(struct msg_digest *md)
 					 n->isan_type));
 
 		if (n->isan_type <= v1N_ERROR_ROOF) /* known NOTIFY type ERROR */
-			pstats_ikev1_recv_notifies_e[n->isan_type]++;
+			pstats(ikev1_recv_notifies_e, n->isan_type);
 
 		switch (n->isan_type) {
 		case R_U_THERE:
@@ -900,7 +900,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 #define SEND_NOTIFICATION(t) { \
-		pstats_ikev1_sent_notifies_e[t]++; \
+		pstats(ikev1_sent_notifies_e, t); \
 		if (st != NULL) \
 			send_notification_from_state(st, from_state, t); \
 		else \
@@ -2156,9 +2156,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	/* stats fixup for STF_FAIL */
 	if (result > STF_FAIL) {
-		pstats_ike_stf[STF_FAIL]++;
+		pstats(ike_stf, STF_FAIL);
 	} else {
-		pstats_ike_stf[result]++;
+		pstats(ike_stf, result);
 	}
 
 	switch (result) {

@@ -627,8 +627,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		ini = " ";
 
 		pstats_ipsec_esp++;
-		pstats_ipsec_encr[st->st_esp.attrs.transattrs.encrypt]++;
-		pstats_ipsec_integ[st->st_esp.attrs.transattrs.integ_hash]++;
+		pstats(ipsec_encr, st->st_esp.attrs.transattrs.encrypt);
+		pstats(ipsec_integ, st->st_esp.attrs.transattrs.integ_hash);
 		pstats_sa(nat, tfc, esn);
 	}
 
@@ -651,7 +651,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		ini = " ";
 
 		pstats_ipsec_ah++;
-		pstats_ipsec_integ[st->st_ah.attrs.transattrs.integ_hash]++;
+		pstats(ipsec_integ, st->st_ah.attrs.transattrs.integ_hash);
 		pstats_sa(FALSE, FALSE, esn);
 	}
 
@@ -758,14 +758,14 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
 		pstats_ikev2_sa++;
-		pstats_ikev2_encr[st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]]++;
+		pstats(ikev2_encr, st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]);
 		if (st->st_oakley.integ != NULL)
-			pstats_ikev2_integ[st->st_oakley.integ->common.id[IKEv2_ALG_ID]]++;
-		pstats_ikev2_groups[st->st_oakley.group->group]++;
+			pstats(ikev2_integ, st->st_oakley.integ->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_groups, st->st_oakley.group->group);
 	} else {
 		pstats_ikev1_sa++;
-		pstats_ikev1_encr[st->st_oakley.encrypter->common.ikev1_oakley_id]++;
-		pstats_ikev1_integ[st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]]++;
-		pstats_ikev1_groups[st->st_oakley.group->group]++;
+		pstats(ikev1_encr, st->st_oakley.encrypter->common.ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_groups, st->st_oakley.group->group);
 	}
 }
