@@ -9,6 +9,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -504,14 +505,35 @@ static void delete_pluto_event(struct pluto_event **evp)
                 event_free(e->ev);
                 e->ev = NULL;
         }
+
+	DBG(DBG_LIFECYCLE,
+	    const char *en = enum_name(&timer_event_names, e->ev_type);
+	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
         pfree(e);
         *evp = NULL;
+}
+
+/*
+ * Delete a state backlinked event.
+ */
+void delete_state_event(struct state *st, struct pluto_event **evp)
+{
+        struct pluto_event *ev = *evp;
+	DBG(DBG_DPD | DBG_CONTROL,
+	    const char *en = ev ? enum_name(&timer_event_names, ev->ev_type) : "N/A";
+	    DBG_log("state #%lu requesting %s-pe@%p be deleted",
+		    st->st_serialno, en, ev));
+	pexpect(*evp == NULL || st == (*evp)->ev_state);
+	delete_pluto_event(evp);
 }
 
 static event_callback_routine timer_event_cb;
 static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
 	struct pluto_event *ev = arg;
+	DBG(DBG_LIFECYCLE,
+	    DBG_log("%s: processing event@%p", __func__, ev));
+
 	enum event_type type;
 	struct state *st;
 
@@ -863,35 +885,6 @@ void delete_event(struct state *st)
 	delete_pluto_event(&st->st_event);
 }
 
-void delete_liveness_event(struct state *st)
-{
-	DBG(DBG_DPD | DBG_CONTROL,
-			DBG_log("state #%lu requesting event %s to be deleted",
-				st->st_serialno,
-				(st->st_liveness_event != NULL ?
-				 enum_show(&timer_event_names,
-					 st->st_liveness_event->ev_type) :
-				 "none")));
-
-	if (st->st_liveness_event != NULL)
-		delete_pluto_event(&st->st_liveness_event);
-}
-
-/*
- * Delete a DPD event.
- */
-void delete_dpd_event(struct state *st)
-{
-	DBG(DBG_DPD | DBG_CONTROL,
-		DBG_log("state: %lu requesting DPD event %s to be deleted",
-			st->st_serialno,
-			(st->st_dpd_event != NULL ?
-				enum_show(&timer_event_names,
-					st->st_dpd_event->ev_type) :
-				"none")));
-	delete_pluto_event(&st->st_dpd_event);
-}
-
 /*
  * dump list of events to whacklog
  */
@@ -944,6 +937,7 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 {
 	const char *en = enum_name(&timer_event_names, type);
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
+	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
 
 	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
 		delay.tv_sec));

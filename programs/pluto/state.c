@@ -938,16 +938,8 @@ void delete_state(struct state *st)
 	if (st->st_ikev2)
 		delete_liveness_event(st);
 
-	if (st->st_rel_whack_event != NULL) {
-		pfreeany(st->st_rel_whack_event);
-		st->st_rel_whack_event = NULL;
-	}
-
-	if (st->st_send_xauth_event != NULL) {
-		event_free(st->st_send_xauth_event->ev);
-		pfreeany(st->st_send_xauth_event);
-		st->st_send_xauth_event = NULL;
-	}
+	delete_state_event(st, &st->st_rel_whack_event);
+	delete_state_event(st, &st->st_send_xauth_event);
 
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
