@@ -8,6 +8,9 @@ v3.20 (unreleased)
 * pluto: Add dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
 * pluto: Add statistics support to ipsec whack --globalstatus [Paul]
 * pluto: Add statistics clearing support using ipsec whack --clearstats [Paul]
+* pluto: Fix use-after-free in whack event handler (since v3.19) [Andrew]
+* IKEv2: Fix memory leak in DH secret calculation (since v3.9) [Andrew]
+  (reported by Eric Andresson)
 
 v3.19 (January 15, 2017)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]
