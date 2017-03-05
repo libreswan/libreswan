@@ -44,13 +44,15 @@ encryption is available, and should only be used for testing or benchmarking pur
 insecure algorithms to be re-added to libreswan.
 </para>
 <para>Diffie-Hellman groups 19,20 and 21 from RFC- 5903 and 22, 23 and 24 from RFC-5114 are also supported.
-Instead of the modp key syntax, use the "dh" keyword, for example <emphasis>ike=3des-sha1;dh19</emphasis>.
+For all groups, the "dh" keyword can be used. For the MODP based groups, the modp= keyword can be used. for
+example <emphasis>ike=3des-sha1;dh19</emphasis>.
 The RFC-5114 DH groups are extremely controversial and MUST NOT be used unless forced (administratively) by
 the other party. Support for these groups will most likely be removed in 2017, as it cannot be proven these
 DH groups do not have a cryptographic trapdoor embedded in them (a backdoor by the USG who provided these
-primes without revealing the seeds and generation process used)
+primes without revealing the seeds and generation process used). Due the the weakness od DH22, support for
+this group is not compiled in by default and can be re-enabled using USE_DH22=true.
 </para>
-<para>The modp syntax will be removed in favour of the dh syntax.</para>
+<para>The modp syntax will be removed in favour of the dh syntax in the future</para>
   </listitem>
   </varlistentry>
 
