@@ -105,7 +105,7 @@ char *progname = "ipsec rsasigkey";  /* for messages */
 
 /* forwards */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco);
-void getrandom(size_t nbytes, unsigned char *buf);
+void lsw_random(size_t nbytes, unsigned char *buf);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 /*
@@ -144,7 +144,7 @@ static void UpdateNSS_RNG(int seedbits)
 	int seedbytes = BYTES_FOR_BITS(seedbits);
 	unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
 
-	getrandom(seedbytes, buf);
+	lsw_random(seedbytes, buf);
 	rv = PK11_RandomUpdate(buf, seedbytes);
 	assert(rv == SECSuccess);
 	messupn(buf, seedbytes);
@@ -380,10 +380,10 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 }
 
 /*
- * getrandom - get some random bytes from /dev/random (or wherever)
+ * lsw_random - get some random bytes from /dev/random (or wherever)
  * NOTE: This is only used for additional seeding of the NSS RNG
  */
-void getrandom(size_t nbytes, unsigned char *buf)
+void lsw_random(size_t nbytes, unsigned char *buf)
 {
 	size_t ndone;
 	int dev;
