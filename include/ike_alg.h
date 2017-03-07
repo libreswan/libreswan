@@ -273,13 +273,6 @@ struct encrypt_ops {
 			       bool enc);
 
 	/*
-	 * For Authenticated Encryption with Associated Data (AEAD),
-	 * the size (in 8-bit bytes) of the authentication tag
-	 * appended to the end of the encrypted data.
-	 */
-	const size_t aead_tag_size;
-
-	/*
 	 * Perform Authenticated Encryption with Associated Data
 	 * (AEAD).
 	 *
