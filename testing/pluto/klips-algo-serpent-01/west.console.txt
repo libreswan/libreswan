@@ -105,18 +105,18 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
-000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
-000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
-000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
-000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
-000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
-000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
-000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
-000 algorithm IKE dh group: id=19, name=OAKLEY_GROUP_ECP_256, bits=512
-000 algorithm IKE dh group: id=20, name=OAKLEY_GROUP_ECP_384, bits=768
-000 algorithm IKE dh group: id=21, name=OAKLEY_GROUP_ECP_521, bits=1056
-000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
-000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
+000 algorithm IKE DH Key Exchange: name=MODP1024, bits=1024
+000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
+000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
+000 algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
+000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
+000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
+000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+000 algorithm IKE DH Key Exchange: name=DH19, bits=512
+000 algorithm IKE DH Key Exchange: name=DH20, bits=768
+000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
+000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
+000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  

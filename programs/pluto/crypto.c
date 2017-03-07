@@ -254,9 +254,8 @@ void ike_alg_show_status(void)
 	     gdescp != NULL; gdescp = next_oakley_group(gdescp)) {
 		const struct oakley_group_desc *gdesc = *gdescp;
 		whack_log(RC_COMMENT,
-			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
-			  gdesc->group,
-			  enum_name(&oakley_group_names, gdesc->group),
+			  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
+			  gdesc->common.name,
 			  (int)gdesc->bytes * BITS_PER_BYTE);
 	}
 
