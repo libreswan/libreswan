@@ -41,6 +41,8 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA256,
 	},
+	.nss_oid_tag = SEC_OID_SHA256,
+	.nss_derive_mechanism = CKM_SHA256_KEY_DERIVATION,
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,
@@ -95,6 +97,8 @@ struct hash_desc ike_alg_hash_sha2_384 = {
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA384,
 	},
+	.nss_oid_tag = SEC_OID_SHA384,
+	.nss_derive_mechanism = CKM_SHA384_KEY_DERIVATION,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,
@@ -150,6 +154,8 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA512,
 	},
+	.nss_oid_tag = SEC_OID_SHA512,
+	.nss_derive_mechanism = CKM_SHA512_KEY_DERIVATION,
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,

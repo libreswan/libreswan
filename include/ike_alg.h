@@ -5,6 +5,17 @@
 #include <pk11pub.h>
 
 /*
+ * More meaningful passert.
+ */
+#define passert_ike_alg(ALG, ASSERTION) {				\
+		bool __assertion = (ASSERTION);				\
+		if (!__assertion) {					\
+			PASSERT_FAIL("algorithm '%s' fails: %s",	\
+				     (ALG)->name, #ASSERTION);	\
+		}							\
+	}
+
+/*
  * Different algorithms used by IKEv1/IKEv2.
  */
 enum ike_alg_type {
@@ -303,6 +314,21 @@ struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	const size_t hash_digest_len;
 	const size_t hash_block_size;
+
+	/*
+	 * For NSS.
+	 *
+	 * The NSS_OID_TAG identifies the the PK11 digest (hash)
+	 * context that should be passed to PK11_Digest*() while
+	 * NSS_DERIVE_MECHANISM specifies the equivalent derivation
+	 * used by CKA_DERIVE.
+	 *
+	 * Need to specify both as NSS doesn't have a way to go from
+	 * one to the other.
+	 */
+	SECOidTag nss_oid_tag;
+	CK_MECHANISM_TYPE nss_derive_mechanism;
+
 	const struct hash_ops *hash_ops;
 };
 
@@ -312,6 +338,11 @@ struct hash_desc {
 struct hash_context;
 
 struct hash_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct hash_desc *alg);
+
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
 				     const char *name, lset_t debug);
 	void (*digest_symkey)(struct hash_context *hash,

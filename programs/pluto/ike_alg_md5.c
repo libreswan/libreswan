@@ -48,6 +48,8 @@ struct hash_desc ike_alg_hash_md5 = {
 		},
 		.nss_mechanism = CKM_MD5,
 	},
+	.nss_oid_tag = SEC_OID_MD5,
+	.nss_derive_mechanism = CKM_MD5_KEY_DERIVATION,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_nss_hash_ops,

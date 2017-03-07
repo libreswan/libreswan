@@ -401,17 +401,16 @@ static struct hash_desc *hash_descriptors[] = {
 static void hash_desc_check(const struct ike_alg *alg)
 {
 	const struct hash_desc *hash = hash_desc(alg);
-	passert(hash->hash_digest_len > 0);
-	passert(hash->hash_block_size > 0);
+	passert_ike_alg(alg, hash->hash_digest_len > 0);
+	passert_ike_alg(alg, hash->hash_block_size > 0);
 	check_name_in_names("hash", hash->common.name, &hash->common);
 	if (hash->hash_ops) {
-		passert(hash->hash_ops->digest_symkey != NULL &&
-			hash->hash_ops->digest_bytes != NULL &&
-			hash->hash_ops->final_bytes != NULL &&
-			hash->hash_ops->symkey_to_symkey != NULL);
-	}
-	if (hash->hash_ops == &ike_alg_nss_hash_ops) {
-		passert(hash->common.nss_mechanism > 0);
+		passert_ike_alg(alg, hash->hash_ops->check != NULL);
+		passert_ike_alg(alg, hash->hash_ops->digest_symkey != NULL);
+		passert_ike_alg(alg, hash->hash_ops->digest_bytes != NULL);
+		passert_ike_alg(alg, hash->hash_ops->final_bytes != NULL);
+		passert_ike_alg(alg, hash->hash_ops->symkey_to_symkey != NULL);
+		hash->hash_ops->check(hash);
 	}
 }
 
