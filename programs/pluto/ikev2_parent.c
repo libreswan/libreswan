@@ -2749,7 +2749,7 @@ static int ikev2_np_cp_or_sa(struct connection *const pc, int np, const lset_t
 
 	if (pc->spd.this.modecfg_client) {
 		if (pc->spd.this.cat) {
-			if (st_nat_traversal & NAT_T_DETECTED) {
+			if (LHAS(st_nat_traversal, NATED_HOST)) {
 				rnp = ISAKMP_NEXT_v2CP;
 			}
 		} else {
