@@ -476,9 +476,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_8,
 		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -502,9 +499,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_12,
 		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -528,9 +522,6 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_16,
 		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -553,15 +544,6 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 		},
 		.fips = TRUE,
 	},
-#ifdef NOT_IMPLMENTED
-	.hash_ctx_size = sizeof(aes_xcbc_context),
-	.hash_key_size = AES_XCBC_DIGEST_SIZE,
-	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_block_size = AES_CBC_BLOCK_SIZE,
-	.hash_init = aes_xcbc_init_thunk,
-	.hash_update = aes_xcbc_write_thunk,
-	.hash_final = aes_xcbc_final_thunk,
-#endif
 	.integ_key_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
@@ -573,9 +555,6 @@ struct integ_desc ike_alg_integ_aes_cmac = {
 		.officname =  "aes_cmac",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
-#ifdef NOT_IMPLEMENTED
-			[IKEv1_OAKLEY_ID] = AUTH_ALGORITHM_AES_CMAC_96,
-#endif
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_CMAC_96,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_CMAC_96,
 		},

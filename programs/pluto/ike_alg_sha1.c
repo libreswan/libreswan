@@ -84,15 +84,6 @@ struct integ_desc ike_alg_integ_sha1 = {
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1_HMAC,
 	},
-#if 0
-	.hash_ctx_size = sizeof(SHA1_CTX),
-	.hash_key_size =   SHA1_DIGEST_SIZE,
-	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_init = SHA1Init_thunk,
-	.hash_update = SHA1Update_thunk,
-	.hash_final = SHA1Final_thunk,
-#endif
 	.integ_key_size = SHA1_DIGEST_SIZE,
 	.integ_output_size = SHA1_DIGEST_SIZE_96,
 	.prf = &ike_alg_prf_sha1,
