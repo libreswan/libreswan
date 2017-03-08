@@ -582,7 +582,7 @@ static const char *const ah_transform_name[] = {
 enum_names ah_transformid_names = {
 	AH_MD5, AH_AES_256_GMAC,
 	ARRAY_REF(ah_transform_name),
-	NULL, /* prefix */
+	"AH_", /* prefix */
 	&ah_transformid_names_private_use
 };
 
