@@ -43,6 +43,7 @@ struct encrypt_desc ike_alg_encrypt_null =
 	.enc_blocksize =  1,
 	.wire_iv_size =  0,
 	.pad_to_blocksize = FALSE,
+	.keylen_omitted = TRUE,
 	.keydeflen = 0,
 	.key_bit_lengths = { 0, },
 };
