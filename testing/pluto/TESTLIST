@@ -607,6 +607,10 @@ kvmplutotest	xauth-pluto-19		good
 kvmplutotest	xauth-pluto-20-pam	good
 
 
+# esp=null-*
+kvmplutotest	ikev1-algo-esp-null-01	good
+kvmplutotest	ikev2-algo-esp-null-01	good
+kvmplutotest	interop-ikev2-strongswan-34-esp-null-responder	good
 
 
 #
@@ -618,7 +622,6 @@ kvmplutotest	aggr-pluto-04		wip
 
 # Various algo tests
 kvmplutotest	ikev1-algo-ike-pfs-01	good
-kvmplutotest	ikev1-algo-esp-null-01	good
 
 kvmplutotest	basic-pluto-01-valgrind	skiptest
 
