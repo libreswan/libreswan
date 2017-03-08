@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1397,12 +1397,11 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					 * is ESP/AH and just the
 					 * value is needed.
 					 */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_alg_get_encrypter(%s=%d) failed, assuming ESP/AH",
-						    enum_name(&ikev2_trans_type_encr_names,
-							      transform->id),
-						    transform->id));
-					/* return FALSE */
+					struct esb_buf buf;
+					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected ENCRYPT %s",
+						    enum_showb(&ikev2_trans_type_encr_names,
+							       transform->id, &buf));
+					return FALSE;
 				}
 				/*
 				 * For IKE, ENCRYPT contains an IKEv2
@@ -1417,23 +1416,16 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * should at least be moved to enum
 				 * ipsec_trans_attrs
 				 * .ipsec_cipher_alg.
+				 *
+				 * XXX: Should this check that the key
+				 * length is present when required, or
+				 * assume matching did its job.
 				 */
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
-				ta.enckeylen = transform->attr_keylen;
-				if (transform->attr_keylen > 0) {
-					ta.enckeylen = transform->attr_keylen;
-				} else if (encrypter != NULL) {
-					ta.enckeylen = ta.encrypter->keydeflen;
-				} else {
-					struct esb_buf buf;
-					loglog(RC_LOG_SERIOUS,
-					       "unknown key size for ENCRYPT algorithm %s=%d",
-					       enum_showb(&ikev2_trans_type_encr_names,
-							  transform->id, &buf),
-					       transform->id);
-					return FALSE;
-				}
+				ta.enckeylen = (transform->attr_keylen > 0
+						? (unsigned)transform->attr_keylen
+						: ta.encrypter->keydeflen);
 				break;
 			}
 			case IKEv2_TRANS_TYPE_PRF: {
@@ -1445,10 +1437,10 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					loglog(RC_LOG_SERIOUS, "IKEv2 PRF lookup %s=%d failed",
-					       enum_name(&ikev2_trans_type_prf_names,
-							 transform->id),
-					       transform->id);
+					struct esb_buf buf;
+					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected PRF %s",
+						    enum_showb(&ikev2_trans_type_prf_names,
+							       transform->id, &buf));
 					return FALSE;
 				}
 				ta.prf = prf;
@@ -1468,10 +1460,10 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					loglog(RC_LOG_SERIOUS, "IKEv2 INTEG lookup %s=%d failed",
-					       enum_name(&ikev2_trans_type_integ_names,
-							 transform->id),
-					       transform->id);
+					struct esb_buf buf;
+					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected INTEG %s",
+						    enum_showb(&ikev2_trans_type_integ_names,
+							       transform->id, &buf));
 					return FALSE;
 				}
 				/*
@@ -1504,10 +1496,9 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					 * likely really bad.
 					 */
 					struct esb_buf buf;
-					loglog(RC_LOG_SERIOUS,
-					       "accepted proposal contains unknown DH group %s=%d",
-					       enum_showb(&oakley_group_names, transform->id, &buf),
-					       transform->id);
+					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected DH %s",
+						    enum_showb(&oakley_group_names,
+							       transform->id, &buf));
 					return FALSE;
 				}
 				ta.group = group;
@@ -1523,16 +1514,14 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					break;
 				default:
 					ta.esn_enabled = FALSE;
-					loglog(RC_LOG_SERIOUS,
-					       "accepted proposal contains an unknown ESN value %d",
-					       transform->id);
+					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected ESN %d",
+						    transform->id);
 					return FALSE;
 				}
 				break;
 			default:
-				loglog(RC_LOG_SERIOUS,
-				       "accepted proposal contains an unknown trans type %d",
-				       type);
+				PEXPECT_LOG("accepted IKEv2 proposal contains unexpected trans type %d",
+					     type);
 				return FALSE;
 			}
 		}
@@ -1599,71 +1588,33 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
          *   the algorithm database already contains.
 	 */
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
-		if (ta.encrypter != NULL) {
+		passert(ta.encrypter);
+		/*
+		 * If there's no IKEv1 ESP/AH support then use the
+		 * IKEv2-only value.
+		 *
+		 * This is were screwups like CAMELLIA, where IKEv1
+		 * and IKEv2 have different and conflicting values get
+		 * "fixed".
+		 *
+		 * XXX: the real fix is to delete ENCRYPT.
+		 */
+		ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
+			      ? ta.encrypter->common.ikev1_esp_id
+			      : ta.encrypter->common.id[IKEv2_ALG_ID]);
+		err_t ugh;
+		ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
+		if (ugh != NULL) {
+			struct esb_buf buf;
+			libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
+				      enum_showb(&esp_transformid_names,
+						 ta.encrypt, &buf),
+				      ta.encrypt, ta.enckeylen, ugh);
 			/*
-			 * If there's no IKEv1 ESP/AH support then use
-			 * the IKEv2-only value.
-			 *
-			 * This is were screwups like CAMELLIA, where
-			 * IKEv1 and IKEv2 have different and
-			 * conflicting values get "fixed".
-			 *
-			 * XXX: the real fix is to delete ENCRYPT.
+			 * Only realising that the algorithm is
+			 * invalid now is pretty lame!
 			 */
-			ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
-				      ? ta.encrypter->common.ikev1_esp_id
-				      : ta.encrypter->common.id[IKEv2_ALG_ID]);
-			err_t ugh;
-			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
-			if (ugh != NULL) {
-				struct esb_buf buf;
-				libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
-					      enum_showb(&esp_transformid_names,
-							 ta.encrypt, &buf),
-					      ta.encrypt, ta.enckeylen, ugh);
-				/*
-				 * Only realising that the algorithm
-				 * is invalid now is pretty lame!
-				 */
-				return FALSE;
-			}
-		} else {
-			/*
-			 * We did not find a userspace encrypter, so
-			 * we should be esp=null or a kernel-only
-			 * algorithm without userland struct.
-			 */
-			switch (ta.encrypt) {
-			case IKEv2_ENCR_NULL:
-				break; /* ok */
-			case IKEv2_ENCR_CAST:
-				break; /* CAST is ESP only, not IKE */
-			case IKEv2_ENCR_AES_CTR:
-			case IKEv2_ENCR_CAMELLIA_CTR:
-			case IKEv2_ENCR_CAMELLIA_CCM_A:
-			case IKEv2_ENCR_CAMELLIA_CCM_B:
-			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				/* no IKE struct encrypt_desc yet */
-				/* FALL THROUGH */
-			case IKEv2_ENCR_AES_CBC:
-			case IKEv2_ENCR_CAMELLIA_CBC:
-				/* these all have mandatory key length attributes */
-				if (ta.enckeylen == 0) {
-					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
-					return FALSE;
-				}
-				break;
-			default:
-			{
-				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "Did not find valid ESP encrypter for %s=%d - refusing proposal",
-				       enum_showb(&ikev2_trans_type_encr_names, ta.encrypt, &buf),
-				       ta.encrypt);
-				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
-				return FALSE;
-			}
-			}
+			return FALSE;
 		}
 	}
 
@@ -1764,8 +1715,9 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				 encrypt->common.id[IKEv2_ALG_ID], keylen);
 	} else if (encrypt->keylen_omitted) {
 		/*
-		 * 3DES doesn't expect the key length
-		 * attribute.
+		 * 3DES and NULL do not expect the key length
+		 * attribute - its redundant as there is only one
+		 * valid key length.
 		 */
 		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
 					 protocol, encrypt->common.name));
@@ -2272,43 +2224,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 			/*
 			 * Encryption.
-			 *
-			 * XXX: Try to use the generic code, but avoid
-			 * it if things look suspect for now.
 			 */
 			const struct encrypt_desc *encrypt = esp_info->esp_encrypt;
-			if (encrypt != NULL && encrypt->common.id[IKEv2_ALG_ID] != 0) {
-				if (!append_encrypt_transform(proposal, encrypt,
-							      esp_info->enckeylen)) {
-					continue;
-				}
-			} else if (esp_info->enckeylen > 0) {
-				DBG(DBG_CONTROL,
-				    struct esb_buf buf;
-				    DBG_log("No IKEv2 ESP IKE_ALG for %s using %u key-length",
-					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
-					    esp_info->enckeylen));
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, esp_info->enckeylen);
-			} else {
-				/*
-				 * no key length - if required add
-				 * default here and add another max
-				 * entry
-				 */
-				unsigned ekeylen = crypto_req_keysize(CRK_ESPorAH,
-								      esp_info->transid);
-				DBG(DBG_CONTROL,
-				    struct esb_buf buf;
-				    DBG_log("No IKEv2 ESP IKE_ALG for %s defaulting to %u key-length",
-					    enum_showb(&esp_transformid_names, esp_info->transid, &buf),
-					    ekeylen));
-				append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen);
-				if (ekeylen != 0) {
-					unsigned ekeylen2 = BITS_PER_BYTE * kernel_alg_esp_enc_max_keylen(esp_info->transid);
-					if (ekeylen2 != ekeylen) {
-						append_transform(proposal, IKEv2_TRANS_TYPE_ENCR, ealg, ekeylen2);
-					}
-				}
+			if (!append_encrypt_transform(proposal, encrypt,
+						      esp_info->enckeylen)) {
+				continue;
 			}
 
 			/* add ESP auth attr (if present) */
