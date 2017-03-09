@@ -39,7 +39,9 @@ while read kind test expectation junk ; do
 	good ) ;;
 	* ) continue ;;
     esac
-    passed=
+    passed=0
+    failed=0
+    total=0
     for run in ${runs} ; do
 	result=${run}/${test}/OUTPUT/RESULT
 	if test ! -r ${result} ; then
@@ -47,12 +49,14 @@ while read kind test expectation junk ; do
 	    # was added.
 	    continue
 	fi
+	total=$((${total} + 1))
 	if grep -e '"result" *: *"passed"' < ${result} > /dev/null ; then
-	    passed=${run}
-	    break
+	    passed=$((${passed} + 1))
+	else
+	    failed=$((${failed} + 1))
 	fi
     done
-    if test -z "${passed}" ; then
-	echo ${test}
-    fi
+    # ouput in a format that is friendly to commands like 'sort -n -r'
+    # and 'sort -k 1n -k 3nr'
+    echo ${passed} ${failed} ${total} ${test}
 done < ${TESTLIST}
