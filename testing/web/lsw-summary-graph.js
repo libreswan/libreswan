@@ -233,43 +233,8 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     }
 
     //
-    // The job queue
+    // Overlay the current commit dot.
     //
-    // Plot all the 'interesting' commits (something significant was
-    // apparently changed) that have no test_run.
-
-    var untested_interesting_commits = summary.commits.filter(function(commit) {
-	if (!commit.interesting) {
-	    return false
-	}
-	if (commit.test_run) {
-	    return false
-	}
-	if (summary.current.commit == commit) {
-	    return false
-	}
-	return true
-    })
-
-    // Overlay untested scatter plot
-    svg.append("g")
-	.selectAll(".dot")
-	.data(untested_interesting_commits)
-	.enter()
-	.append("circle")
-	.attr("class", "pending")
-	.attr("r", radius)
-    	.attr("cx", function(commit) {
-	    return x(commit.committer.date)
-	})
-	.attr("cy", function(commit) {
-	    return height-radius
-	})
-	.append("title")
-	.text(function(commit) {
-	    return lsw_commit_texts([commit])
-	})
-    // Overlay the current commit scatter dot.
     if (summary.current.commits.length) {
 	svg.append("g")
 	    .selectAll(".dot")
@@ -293,13 +258,13 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 
 		       )
 	    })
+	keys.push({
+	    klass: "current",
+	    x: x(summary.current.commit.committer.date) + radius,
+	    y: height - radius,
+	    text: "Current",
+	})
     }
-    keys.push({
-	klass: "current",
-	x: x(now) + radius,
-	y: height - radius,
-	text: "Current",
-    })
 
     //
     // Titles for the mess
