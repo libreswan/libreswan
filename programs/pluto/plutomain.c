@@ -867,7 +867,7 @@ int main(int argc, char **argv)
 		case 'L':	/* --listen ip_addr */
 		{
 			ip_address lip;
-			err_t e = ttoaddr(optarg, 0, AF_UNSPEC, &lip);
+			err_t e = ttoaddr_num(optarg, 0, AF_UNSPEC, &lip);
 
 			if (e != NULL) {
 				/*

@@ -335,7 +335,7 @@ struct raw_iface *find_raw_ifaces6(void)
 				 xb[0], xb[1], xb[2], xb[3], xb[4], xb[5],
 				 xb[6], xb[7]);
 
-			happy(ttoaddr(sb, 0, AF_INET6, &ri.addr));
+			happy(ttoaddr_num(sb, 0, AF_INET6, &ri.addr));
 
 			if (!isunspecaddr(&ri.addr)) {
 				DBG(DBG_CONTROL,

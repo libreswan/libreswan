@@ -49,7 +49,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 
 	high = dash + 1;
 	hlen = srclen - (high - src);
-	oops = ttoaddr(src, dash - src, af, &addr_start_tmp);
+	oops = ttoaddr_num(src, dash - src, af, &addr_start_tmp);
 	if (oops != NULL)
 		return oops;
 
@@ -59,7 +59,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 	 */
 
 	/* extract end ip address */
-	oops = ttoaddr(high, hlen, af, &addr_end_tmp);
+	oops = ttoaddr_num(high, hlen, af, &addr_end_tmp);
 	if (oops != NULL)
 		return oops;
 

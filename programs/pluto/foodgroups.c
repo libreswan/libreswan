@@ -122,9 +122,6 @@ static void read_foodgroup(struct fg_groups *g)
 			switch (flp->bdry) {
 			case B_none:
 			{
-				/* !!! this test is not sufficient for distinguishing address families.
-				 * We need a notation to specify that a FQDN is to be resolved to IPv6.
-				 */
 				const struct af_info *afi =
 					strchr(flp->tok, ':') == NULL ?
 					&af_inet4_info : &af_inet6_info;
@@ -135,7 +132,7 @@ static void read_foodgroup(struct fg_groups *g)
 					/* no /, so treat as /32 or V6 equivalent */
 					ip_address t;
 
-					ugh = ttoaddr(flp->tok, 0, afi->af,
+					ugh = ttoaddr_num(flp->tok, 0, afi->af,
 						      &t);
 					if (ugh == NULL)
 						ugh = addrtosubnet(&t, &sn);

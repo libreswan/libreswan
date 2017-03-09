@@ -117,7 +117,7 @@ ip_subnet *dst;
 		/* ttoul succeeded, it's a bit-count mask */
 		i = bc;
 	} else if (af == AF_INET) {
-		oops = ttoaddr(mask, mlen, af, &masktmp);
+		oops = ttoaddr_num(mask, mlen, af, &masktmp);
 		if (oops != NULL)
 			return oops;
 
