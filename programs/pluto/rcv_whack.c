@@ -508,8 +508,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			bool pass_remote = FALSE;
 
 			if (m->remote_host != NULL) {
-				/* XXX: add DNS lookup to support specifying names too */
-				oops = ttoaddr_num(m->remote_host, 0, AF_UNSPEC, &testip);
+				oops = ttoaddr(m->remote_host, 0, AF_UNSPEC, &testip);
 
 				if (oops != NULL) {
 					whack_log(RC_NOPEERIP, "remote host IP address '%s' is invalid: %s",

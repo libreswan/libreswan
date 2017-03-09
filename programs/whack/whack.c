@@ -133,7 +133,7 @@ static void help(void)
 		"\n"
 		"routing: whack (--route | --unroute) --name <connection_name>\n"
 		"\n"
-		"initiation: whack (--initiate [--remote-host <ip>] | --terminate) \\\n"
+		"initiation: whack (--initiate [--remote-host <ip or hostname>] | --terminate) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
@@ -1120,7 +1120,7 @@ int main(int argc, char **argv)
 			msg.name = optarg;
 			continue;
 
-		case OPT_REMOTE_HOST:	/* --remote-host <ip> */
+		case OPT_REMOTE_HOST:	/* --remote-host <ip or hostname> */
 			remote_host = optarg;
 			msg.remote_host = optarg;
 			continue;
