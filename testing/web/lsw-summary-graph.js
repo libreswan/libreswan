@@ -73,14 +73,33 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	})
     })
 
-    var x = d3.scaleTime()
-	.domain([
-	    d3.min(summary.commits, function(d) {
-		return d.committer.date
-	    }),
-	    now,
-	])
-	.range([radius, width])
+    var start = d3.min(summary.commits, function(d) {
+	return d.committer.date
+    })
+    var extent = d3.extent(summary.commits, function(d) {
+	return d.committer.date
+    })
+
+    var xt = d3.scaleUtc()
+	.domain([start, now])
+	.range([1, width])
+    var xp = d3.scalePow()
+	.exponent(2)
+	.domain([1, width])
+	.range([0, width])
+
+    // Fool d3js into thinking that it is looking at a scale object.
+    function x_copy() {
+	var x = function(t) { return xp(xt(t)) }
+	x.domain = xt.domain
+	x.range = xp.range
+	x.copy = x_copy
+	x.tickFormat = xt.tickFormat
+	x.ticks = xt.ticks
+	return x
+    }
+    x = x_copy()
+
     var y = d3.scaleLinear()
 	.domain([
 	    d3.min(test_runs, function(d) {
