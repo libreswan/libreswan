@@ -119,4 +119,9 @@ status "create results web page"
 ${webdir}/build-results.sh ${repodir} ${repodir}/testing/pluto ${destdir}
 
 
+# Always compress the log files; but not the output from make.
+status "compressing log files"
+find ${destdir} -path '*/OUTPUT/*.log' -type f -print0 | xargs -0 -r bzip2 -9 -v
+
+
 status "finished"
