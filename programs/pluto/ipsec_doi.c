@@ -642,8 +642,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 enum_show_shortb(&ah_transformid_names,
-                                   st->st_ah.attrs.transattrs.integ_hash, &ah_t));
+			 enum_show_shortb(&auth_alg_names,
+					  st->st_ah.attrs.transattrs.integ_hash, &ah_t));
 
 		/* advance b to end of string */
 		b = b + strlen(b);
