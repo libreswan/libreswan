@@ -1232,11 +1232,8 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gr,
-			&md->rbody, ISAKMP_NEXT_NONCE)) {
-		lsw_abort();
-		return STF_INTERNAL_ERROR;
-	}
+	passert(ikev1_ship_KE(st, r, &st->st_gr,
+			      &md->rbody, ISAKMP_NEXT_NONCE));
 
 	{
 		/* Nr out */

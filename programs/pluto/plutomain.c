@@ -1442,13 +1442,9 @@ int main(int argc, char **argv)
 				close(i);
 
 		/* make sure that stdin, stdout, stderr are reserved */
-		if (open("/dev/null", O_RDONLY) != 0)
-			lsw_abort();
-		if (dup2(0, 1) != 1)
-			lsw_abort();
-		if (!log_to_stderr && dup2(0, 2) != 2)
-
-			lsw_abort();
+		passert(open("/dev/null", O_RDONLY) == 0);
+		passert(dup2(0, 1) == 1);
+		passert(log_to_stderr || dup2(0, 2) == 2);
 	}
 
 	init_constants();
