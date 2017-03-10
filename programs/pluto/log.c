@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -630,7 +631,7 @@ void libreswan_passert_fail(const char *file_str,
 	va_end(args);
 
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s at %s:%lu)",
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s() at %s:%lu)",
 	       m, func_str, file_str, line_no);
 	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
