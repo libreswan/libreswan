@@ -118,7 +118,7 @@ kvmplutotest	ikev2-30-rw-no-rekey			good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev2-45-impair-gx-01			good
-kvmplutotest	ikev2-45-impair-gx-02			wip
+kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
@@ -215,7 +215,7 @@ kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
 kvmplutotest	ikev2-payload-reserved-flags-01		good
 kvmplutotest	ikev2-allow-narrow-01			good
-kvmplutotest	ikev2-allow-narrow-02			wip
+kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
 kvmplutotest	ikev2-allow-narrow-04			good
 kvmplutotest	ikev2-allow-narrow-05			good
@@ -689,7 +689,7 @@ umlplutotest	klips-transport-01	good
 umlplutotest	transport-02		good
 umlplutotest	transport-03		skiptest # bad
 kvmplutotest	nat-transport-02	good
-kvmplutotest	ikev2-21-mode-mismatch-01	wip
+kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
 
 kvmplutotest	ah-pluto-01		good
@@ -807,7 +807,7 @@ kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-02	wip
+kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
@@ -884,7 +884,7 @@ kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
 kvmplutotest	nss-cert-07			good
-kvmplutotest	nss-cert-08-mismatch		wip
+kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
