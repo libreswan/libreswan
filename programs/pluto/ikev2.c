@@ -2155,13 +2155,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
 					}
 				}
-			} else {
-				/* We are the exchange initiator */
-				/* temporarilly make it less noisy for endusers */
-				if (DBGP(DBG_CONTROL)) {
-					pexpect(st !=  NULL && st->st_event != NULL &&
-						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
-				}
 			}
 		}
 
