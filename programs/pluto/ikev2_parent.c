@@ -418,7 +418,7 @@ static stf_status ike2_verify_accepted_modp_prop (struct msg_digest *md,
 					enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
-			if (ke_group <= OAKLEY_GROUP_ROOF)
+			if (ke_group < OAKLEY_GROUP_ROOF)
 				pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
@@ -1187,7 +1187,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				      enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
-			if (ke_group <= OAKLEY_GROUP_ROOF)
+			if (ke_group < OAKLEY_GROUP_ROOF)
 				pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
@@ -1568,7 +1568,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			return STF_IGNORE;
 		}
 
-		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
+		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
 		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
 			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
@@ -1641,7 +1641,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			if (sg.sg_group <= OAKLEY_GROUP_ROOF)
+			if (sg.sg_group < OAKLEY_GROUP_ROOF)
 				pstats(invalidke_recv_s, sg.sg_group);
 			pstats(invalidke_recv_u, st->st_oakley.group->group);
 
@@ -1734,7 +1734,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 
-		if ((ntfy->payload.v2n.isan_type <= v2N_ERROR_ROOF) &&
+		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
 		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
 			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
@@ -4310,7 +4310,7 @@ void send_v2_notification(struct state *p1st,
 	 */
 	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
 
-	if (ntype <= v2N_ERROR_ROOF)
+	if (ntype < v2N_ERROR_ROOF)
 		pstats(ikev2_sent_notifies_e, ntype);
 }
 

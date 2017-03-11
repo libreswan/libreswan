@@ -639,7 +639,7 @@ static stf_status informational(struct msg_digest *md)
 						   n->isan_type),
 					 n->isan_type));
 
-		if (n->isan_type <= v1N_ERROR_ROOF) /* known NOTIFY type ERROR */
+		if (n->isan_type < v1N_ERROR_ROOF) /* known NOTIFY type ERROR */
 			pstats(ikev1_recv_notifies_e, n->isan_type);
 
 		switch (n->isan_type) {

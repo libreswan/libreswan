@@ -851,7 +851,7 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* CAMELLIA_CCM_12 RFC 5529 */
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* CAMELLIA_CCM_16 RFC 5529 */
 	IKEv2_ENCR_CHACHA20_POLY1305 = 28, /* RFC7634 */
-	IKEv2_ENCR_ROOF = IKEv2_ENCR_CHACHA20_POLY1305,
+	IKEv2_ENCR_ROOF,
 	/* 29 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
 	IKEv2_ENCR_SERPENT_CBC = 65004,
@@ -1019,7 +1019,7 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
-	AUTH_ALGORITHM_ROOF = AUTH_ALGORITHM_AES_256_GMAC,
+	AUTH_ALGORITHM_ROOF,
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
@@ -1272,7 +1272,7 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
-	OAKLEY_GROUP_ROOF = OAKLEY_GROUP_CURVE448,
+	OAKLEY_GROUP_ROOF,
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
@@ -1326,7 +1326,7 @@ typedef enum {
 	CERTIFICATE_UNAVAILABLE = 28,
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
 	UNEQUAL_PAYLOAD_LENGTHS = 30,
-	v1N_ERROR_ROOF = UNEQUAL_PAYLOAD_LENGTHS, /* used to cap statistics array */
+	v1N_ERROR_ROOF, /* used to cap statistics array */
 	/* 31-8191 RESERVED (Future Use) */
 
 	/*
@@ -1407,7 +1407,7 @@ typedef enum {
 	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
-	v2N_ERROR_ROOF = v2N_AUTHORIZATION_FAILED, /* used to cap statistics array */
+	v2N_ERROR_ROOF, /* used to cap statistics array */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,

@@ -43,25 +43,25 @@ unsigned long pstats_ikev2_sa;
 unsigned long pstats_ikev1_fail;
 unsigned long pstats_ikev2_fail;
 unsigned long pstats_ikev1_encr[OAKLEY_CAMELLIA_CCM_C+1];
-unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF+1];
+unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_SHA2_512+1];
-unsigned long pstats_ikev2_integ[AUTH_ALGORITHM_ROOF+1];
-unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF+1];
-unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF+1];	/* pretends everything maps 1 to 1 */
-unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF+1];	/* pretends everything maps 1 to 1 */
+unsigned long pstats_ikev2_integ[AUTH_ALGORITHM_ROOF];
+unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF];
+unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF];
+unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF];
+unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_ROOF];
+unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF];
+unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF];
+unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF];	/* pretends everything maps 1 to 1 */
+unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF];	/* pretends everything maps 1 to 1 */
 uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
-unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ike_stf[10];	/* count state transitions */
 unsigned long pstats_ipsec_esp;
 unsigned long pstats_ipsec_ah;
@@ -117,7 +117,7 @@ void show_pluto_stats()
 				strip_prefix(enum_name(&oakley_hash_names, e), "OAKLEY_"),
 				pstats_ikev1_integ[e]);
 	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev1.group.%s=%lu",
@@ -141,7 +141,7 @@ void show_pluto_stats()
 				pstats_ikev2_integ[e]);
 	}
 
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.group.%s=%lu",
@@ -150,28 +150,28 @@ void show_pluto_stats()
 	}
 
 	/* we log the received invalid groups and the suggested valid groups */
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.using.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
 			pstats_invalidke_recv_u[e]);
 	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.suggesting.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
 			pstats_invalidke_recv_s[e]);
 	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.using.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
 			pstats_invalidke_sent_u[e]);
 	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e <= OAKLEY_GROUP_ROOF; e++)
+	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.suggesting.%s=%lu",
@@ -186,7 +186,7 @@ void show_pluto_stats()
 	}
 
 	/* IPsec ENCR maps to IKEv2 ENCR */
-	for (unsigned long e = IKEv2_ENCR_3DES; e <= IKEv2_ENCR_ROOF; e++)
+	for (unsigned long e = IKEv2_ENCR_3DES; e < IKEv2_ENCR_ROOF; e++)
 	{
 		/* not logging private use (serpent/twofish) or UNUSED */
 		if (strstr(enum_name(&ikev2_trans_type_encr_names, e), "UNUSED") == NULL)
@@ -194,7 +194,7 @@ void show_pluto_stats()
 				enum_name(&ikev2_trans_type_encr_names, e),
 				pstats_ipsec_encr[e]);
 	}
-	for (unsigned long e = AUTH_ALGORITHM_HMAC_MD5; e <= AUTH_ALGORITHM_ROOF; e++)
+	for (unsigned long e = AUTH_ALGORITHM_HMAC_MD5; e < AUTH_ALGORITHM_ROOF; e++)
 	{
 		if (strstr(enum_name(&auth_alg_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ipsec.integ.%s=%lu",
@@ -203,27 +203,27 @@ void show_pluto_stats()
 				pstats_ipsec_integ[e]);
 	}
 
-	for (unsigned long e = 1; e <= v1N_ERROR_ROOF; e++)
+	for (unsigned long e = 1; e < v1N_ERROR_ROOF; e++)
 	{
 		whack_log(RC_COMMENT, "#total.ikev1.sent.notifies.error.%s=%lu",
 			enum_name(&ikev1_notify_names, e),
 			pstats_ikev1_sent_notifies_e[e]);
 	}
-	for (unsigned long e = 1; e <= v1N_ERROR_ROOF; e++)
+	for (unsigned long e = 1; e < v1N_ERROR_ROOF; e++)
 	{
 		whack_log(RC_COMMENT, "#total.ikev1.recv.notifies.error.%s=%lu",
 			enum_name(&ikev1_notify_names, e),
 			pstats_ikev1_recv_notifies_e[e]);
 	}
 
-	for (unsigned long e = 1; e <= v2N_ERROR_ROOF; e++)
+	for (unsigned long e = 1; e < v2N_ERROR_ROOF; e++)
 	{
 		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.notifies.error.%s=%lu",
 				strip_prefix(enum_name(&ikev2_notify_names, e), "v2N_"),
 			pstats_ikev2_sent_notifies_e[e]);
 	}
-	for (unsigned long e = 1; e <= v2N_ERROR_ROOF; e++)
+	for (unsigned long e = 1; e < v2N_ERROR_ROOF; e++)
 	{
 		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.notifies.error.%s=%lu",

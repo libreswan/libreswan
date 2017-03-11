@@ -24,25 +24,25 @@ extern unsigned long pstats_ikev2_sa;
 extern unsigned long pstats_ikev1_fail;
 extern unsigned long pstats_ikev2_fail;
 extern unsigned long pstats_ikev1_encr[OAKLEY_CAMELLIA_CCM_C+1];
-extern unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF+1];
+extern unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF];
 extern unsigned long pstats_ikev1_integ[OAKLEY_SHA2_512+1];
-extern unsigned long pstats_ikev2_integ[AUTH_ALGORITHM_ROOF+1];
-extern unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF+1];
-extern unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF+1];	/* pretends everything maps 1 to 1 */
-extern unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF+1];	/* pretends everything maps 1 to 1 */
+extern unsigned long pstats_ikev2_integ[AUTH_ALGORITHM_ROOF];
+extern unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF];
+extern unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF];	/* pretends everything maps 1 to 1 */
+extern unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF];	/* pretends everything maps 1 to 1 */
 extern uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 extern uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 extern unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 extern unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
-extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-extern unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-extern unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
-extern unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF+1]; /* types of NOTIFY ERRORS */
+extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+extern unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+extern unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+extern unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 extern unsigned long pstats_ike_stf[10];	/* count state transitions */
 extern unsigned long pstats_ipsec_esp;
 extern unsigned long pstats_ipsec_ah;
