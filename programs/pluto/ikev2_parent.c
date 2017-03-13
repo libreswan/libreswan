@@ -418,8 +418,7 @@ static stf_status ike2_verify_accepted_modp_prop (struct msg_digest *md,
 					enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
-			if (ke_group < OAKLEY_GROUP_ROOF)
-				pstats(invalidke_sent_u, ke_group);
+			pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 
@@ -1187,8 +1186,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				      enum_show_shortb(&oakley_group_names,
 						accepted_oakley.group->group,
 						&proposal_esb));
-			if (ke_group < OAKLEY_GROUP_ROOF)
-				pstats(invalidke_sent_u, ke_group);
+			pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
 			pexpect(md->st == NULL);
@@ -1641,8 +1639,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
 
-			if (sg.sg_group < OAKLEY_GROUP_ROOF)
-				pstats(invalidke_recv_s, sg.sg_group);
+			pstats(invalidke_recv_s, sg.sg_group);
 			pstats(invalidke_recv_u, st->st_oakley.group->group);
 
 			ikev2_proposals_from_alg_info_ike(c->name,
