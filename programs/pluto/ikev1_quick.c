@@ -968,8 +968,7 @@ stf_status quick_outI1(int whack_sock,
 		char replacestr[32];
 
 		if ((policy & POLICY_PFS) != LEMPTY)
-			pfsgroupname = enum_name(&oakley_group_names,
-						 st->st_pfs_group->group);
+			pfsgroupname = st->st_pfs_group->common.name;
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)

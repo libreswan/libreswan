@@ -252,7 +252,7 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 						 ike_info->ike_encrypt->common.ikev1_oakley_id),
 				       enum_name(&oakley_hash_names,
 						 ike_info->ike_prf->common.ikev1_oakley_id),
-				       enum_name(&oakley_group_names, ike_info->ike_dh_group->group),
+				       ike_info->ike_dh_group->common.name,
 				       (long)ike_info->ike_eklen);
 				free_sa(&emp_sp);
 			} else {

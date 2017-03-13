@@ -176,7 +176,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {
-		struct esb_buf encbuf, prfbuf, integbuf, groupbuf;
+		struct esb_buf encbuf, prfbuf, integbuf;
 
 		if (!st->st_ikev2) {
 			/* IKEv1 */
@@ -190,7 +190,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  enum_show_shortb(&oakley_hash_names,
 					   st->st_oakley.prf->common.ikev1_oakley_id,
 					   &prfbuf),
-			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
+				  st->st_oakley.group->common.name);
 		} else {
 			/* IKEv2 */
 			whack_log(RC_COMMENT,
@@ -204,7 +204,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  enum_showb(&ikev2_trans_type_prf_names,
 				     st->st_oakley.prf->common.id[IKEv2_ALG_ID],
 				     &prfbuf),
-			  enum_show_shortb(&oakley_group_names, st->st_oakley.group->group, &groupbuf));
+				  st->st_oakley.group->common.name);
 		}
 	}
 }

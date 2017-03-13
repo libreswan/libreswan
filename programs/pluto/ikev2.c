@@ -1512,10 +1512,8 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 {
 
 	DBG(DBG_CONTROL, {
-		struct esb_buf esb;
 		DBG_log("sending INVALID_KE back with %s(%d)",
-			enum_show_shortb(&oakley_group_names, group->group, &esb),
-			group->group);
+			group->common.name, group->group);
 	});
 	/* convert group to a raw buffer */
 	const u_int16_t gr = htons(group->group);

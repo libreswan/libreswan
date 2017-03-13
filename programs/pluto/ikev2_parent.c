@@ -410,14 +410,10 @@ static stf_status ike2_verify_accepted_modp_prop (struct msg_digest *md,
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
 			struct esb_buf ke_esb;
-			struct esb_buf proposal_esb;
-
 			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-					enum_show_shortb(&oakley_group_names,
-						ke_group, &ke_esb),
-					enum_show_shortb(&oakley_group_names,
-						accepted_oakley.group->group,
-						&proposal_esb));
+				      enum_show_shortb(&oakley_group_names,
+						       ke_group, &ke_esb),
+				      accepted_oakley.group->common.name);
 			pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
@@ -1178,14 +1174,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 		if (accepted_oakley.group->group != ke_group) {
 			struct esb_buf ke_esb;
-			struct esb_buf proposal_esb;
-
 			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 				      enum_show_shortb(&oakley_group_names,
-						ke_group, &ke_esb),
-				      enum_show_shortb(&oakley_group_names,
-						accepted_oakley.group->group,
-						&proposal_esb));
+						       ke_group, &ke_esb),
+				      accepted_oakley.group->common.name);
 			pstats(invalidke_sent_u, ke_group);
 			pstats(invalidke_sent_s, accepted_oakley.group->group);
 			send_v2_notification_invalid_ke(md, accepted_oakley.group);
@@ -1676,7 +1668,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					struct esb_buf esb;
 					DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
 						enum_show_shortb(&oakley_group_names,
-							sg.sg_group, &esb));
+								 sg.sg_group, &esb));
 				});
 				return STF_IGNORE;
 			}

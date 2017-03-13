@@ -753,7 +753,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 st->st_oakley.enckeylen,
 		 integ_name,
 		 prf_name,
-		 enum_short_name(&oakley_group_names, st->st_oakley.group->group));
+		 st->st_oakley.group->common.name);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
