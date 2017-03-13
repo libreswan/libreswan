@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1651,18 +1651,22 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
 			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
-
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
-				st->st_oakley.group = lookup_group(sg.sg_group);
+				/*
+				 * Since there must be a group object
+				 * for every local proposal, and
+				 * sg.sg_group matches one of the
+				 * local proposal groups, a lookup of
+				 * sg.sg_group must succeed.
+				 */
+				const struct oakley_group_desc *new_group = lookup_group(sg.sg_group);
+				passert(new_group);
 				DBG(DBG_CONTROLMORE, {
-					struct esb_buf esb;
-					struct esb_buf esb2;
 					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
-						enum_show_shortb(&oakley_group_names,
-							st->st_oakley.group->group, &esb2),
-						enum_show_shortb(&oakley_group_names,
-							sg.sg_group, &esb));
+						st->st_oakley.group->common.name,
+						new_group->common.name);
 				});
+				st->st_oakley.group = new_group;
 				/* wipe our mismatched KE */
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
