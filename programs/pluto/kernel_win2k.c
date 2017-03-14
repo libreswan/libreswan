@@ -12,8 +12,6 @@
  * for more details.
  */
 
-#if defined(WIN32) && defined(WIN32_NATIVE_IPSEC)
-
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -161,4 +159,3 @@ const struct kernel_ops win2k_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
 };
-#endif /* WIN32_NATIVE */

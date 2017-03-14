@@ -32,8 +32,6 @@
  * for more details.
  */
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
-
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -2330,4 +2328,3 @@ const struct kernel_ops netkey_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };
-#endif	/* linux && NETKEY_SUPPORT */
