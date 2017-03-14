@@ -3,7 +3,7 @@ See also https://libreswan.org/
 
 v3.20 (March 14, 2017)
 * pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
-* pluto: Add dh= aliases for all modp= groups (eg "dh2" for "modp1025") [Paul]
+* pluto: Add dh= aliases for all modp= groups (eg "dh2" for "modp1024") [Paul]
 * pluto: Add statistics support to ipsec whack --globalstatus [Paul]
 * pluto: Add statistics clearing support using ipsec whack --clearstats [Paul]
 * pluto: Fix use-after-free in whack event handler (since v3.19) [Andrew]
