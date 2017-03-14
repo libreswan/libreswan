@@ -1,8 +1,0 @@
-Package: libreswan-module
-Priority: optional
-Section: Communications
-Version: VERSION
-Architecture: ARCH
-Maintainer: Libreswan <users@lists.libreswan.org>
-Depends: libreswan
-Description: Libreswan ipsec.[k]o binary IPsec Kernel module
