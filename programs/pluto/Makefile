@@ -130,6 +130,9 @@ LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 
+# XXX: hack until ike_alg gets a library
+OBJS += ike_info.o
+
 OBJS += ike_alg_nss_modp.o
 OBJS += ike_alg_nss_ecp.o
 OBJS += ike_alg_nss_cbc.o
