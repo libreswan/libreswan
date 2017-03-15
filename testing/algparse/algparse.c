@@ -1,60 +1,53 @@
-#define AGGRESSIVE 1
-#define PRINT_SA_DEBUG 1
-#include "../../../lib/libswan/alg_info.c"
+#include <stddef.h>
+#include <stdlib.h>
 
-#if 0
-/* work in progress */
-#include "../../../programs/pluto/plutoalg.c"
-#include "../../../programs/pluto/ike_alg.c"
-#endif
+#include "lswlog.h"
+#include "lswalloc.h"
+#include "ike_alg.h"
+#include "alg_info.h"
 
-char *progname;
-
-void exit_tool(int stat)
+static void do_test(const char *algstr, int ttype)
 {
-	exit(stat);
-}
-
-void do_test(const char *algstr, int ttype) {
-	struct alg_info *aie;
 	char err_buf[256];	/* ??? big enough? */
 	char algbuf[256];
 
 	printf("[%*s] ", 20, algstr);
+	algbuf[0] = '\0';
+
 	switch (ttype) {
+#define CHECK(TYPE,PARSE) {						\
+			struct alg_info_##TYPE *e =			\
+				alg_info_##PARSE##_create_from_str(0, algstr, \
+								  err_buf, \
+								  sizeof(err_buf)); \
+			if (err_buf[0] != '\0') {			\
+				printf("ERROR: alg=%s  error=%s\n",	\
+				       algbuf, err_buf);		\
+			} else {					\
+				passert(e);				\
+				alg_info_##TYPE##_snprint(algbuf, sizeof(algbuf), e); \
+				printf("   OK: alg=%s\n", algbuf);	\
+			}						\
+			if (e != NULL) {				\
+				alg_info_free(&e->ai);			\
+			}						\
+		}
 	case PROTO_IPSEC_ESP:
-		aie = (struct alg_info *)alg_info_esp_create_from_str(
-			algstr, err_buf, sizeof(err_buf));
+		CHECK(esp,esp);
 		break;
 	case PROTO_IPSEC_AH:
-		aie = (struct alg_info *)alg_info_ah_create_from_str(
-			algstr, err_buf, sizeof(err_buf));
+		CHECK(esp,ah);
 		break;
-#ifdef WORK_IN_PROGRESS
 	case PROTO_ISAKMP:
-		aie = (struct alg_info *)alg_info_ike_create_from_str(
-			algstr, err_buf, sizeof(err_buf));
+		CHECK(ike,ike);
 		break;
-#endif
 	}
-	algbuf[0] = '\0';
-	if (aie != NULL)
-		alg_info_snprint(algbuf, sizeof(algbuf), aie);
-	if (err_buf[0] != '\0') {
-		printf("ERROR: alg=%s  error=%s\n", algbuf, err_buf);
-	} else {
-		passert(aie != NULL);
-		printf("   OK: alg=%s\n", algbuf);
-	}
-	if (aie != NULL)
-		alg_info_free(aie);
 }
 
-int main(int argc, char *argv[]) {
-
-	progname = argv[0];
-
-	tool_init_log();
+int main(int argc UNUSED, char *argv[])
+{
+	tool_init_log(argv[0]);
+	ike_alg_init();
 
 	/* esp= */
 	fprintf(stdout, "\n---- ESP tests that should succeed ----\n");
@@ -194,11 +187,10 @@ int main(int argc, char *argv[]) {
 	do_test("aes_gcm", PROTO_IPSEC_AH);
 	do_test("aes_ccm", PROTO_IPSEC_AH);
 
-#ifdef WORK_IN_PROGRESS
 	/* ike= */
 	fprintf(stdout, "\n---- IKE tests ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
-#endif
+
 	fflush(NULL);
 	report_leaks();
 	tool_close_log();
