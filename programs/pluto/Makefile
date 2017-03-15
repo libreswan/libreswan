@@ -304,6 +304,17 @@ checkprograms:
 
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
+
+OBJSCAVP += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
+OBJSCAVP += crypt_symkey.o
+OBJSCAVP += crypt_prf.o
+OBJSCAVP += crypt_hash.o
+OBJSCAVP += test_buffer.o
+OBJSCAVP += ikev1_prf.o
+OBJSCAVP += ikev2_prf.o
+OBJSCAVP += crypt_dh.o
+OBJSCAVP += crypt_utils.o
+
 OBJSCAVP += cavp.o
 OBJSCAVP += cavp_print.o
 OBJSCAVP += cavp_stubs.o
@@ -312,7 +323,13 @@ OBJSCAVP += cavp_ikev2.o
 OBJSCAVP += cavp_sha.o
 OBJSCAVP += cavp_hmac.o
 OBJSCAVP += cavp_gcm.o
-OBJSCAVP += $(filter-out plutomain.o, $(OBJS))
+
+OBJSCAVP += $(LIBRESWANLIB)
+OBJSCAVP += $(LSWLOGLIBS)
+
+OBJSCAVP += $(LIBSERPENT)
+OBJSCAVP += $(LIBTWOFISH)
+
 cavp: $(OBJSCAVP)
 	$(CC) -o $@ $(OBJSCAVP) $(LDFLAGS) $(USERLINK)
 
