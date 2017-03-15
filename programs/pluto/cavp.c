@@ -26,7 +26,6 @@
 #include "lswnss.h"
 #include "lswfips.h"
 #include "ike_alg.h"
-#include "crypto.h"
 #include "crypt_symkey.h"
 #include "test_buffer.h"
 
@@ -411,7 +410,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	init_crypto();
+	ike_alg_init();
 
 	cavp_parser();
 
