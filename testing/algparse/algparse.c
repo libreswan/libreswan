@@ -3,6 +3,8 @@
 
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswnss.h"
+
 #include "ike_alg.h"
 #include "alg_info.h"
 
@@ -47,6 +49,17 @@ static void do_test(const char *algstr, int ttype)
 int main(int argc UNUSED, char *argv[])
 {
 	tool_init_log(argv[0]);
+
+	/*
+	 * Need to ensure that NSS is initialized before calling
+	 * ike_alg_init().  Some sanity checks require a working NSS.
+	 */
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
+		fprintf(stderr, "unexpected %s\n", err);
+		exit(1);
+	}
+
 	ike_alg_init();
 
 	/* esp= */
@@ -193,6 +206,8 @@ int main(int argc UNUSED, char *argv[])
 
 	fflush(NULL);
 	report_leaks();
+
+	lsw_nss_shutdown();
 	tool_close_log();
 	exit(0);
 }
