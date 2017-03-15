@@ -1,18 +1,16 @@
-#define PRINT_SA_DEBUG 1
-#include "../../../lib/libswan/alg_info.c"
+#include <stddef.h>
+#include <stdlib.h>
+
+#include "constants.h"
+#include "lswlog.h"
+#include "lswalloc.h"
 
 char *progname;
 
-void exit_tool(int stat)
+static void do_test(char *enumname, enum_names *enum_test, int max)
 {
-	exit(stat);
-}
-
-void do_test(char *enumname, enum_names *enum_test, int max) {
-	int i = 0;
-
 	fprintf(stdout, "%s:\n", enumname);
-	for (i; i < max; i++) {
+	for (int i = 0; i < max; i++) {
 		int found;
 		const char *name = enum_name(enum_test, i);
 		if (name != NULL) {
@@ -26,7 +24,8 @@ void do_test(char *enumname, enum_names *enum_test, int max) {
 	fflush(stdout);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc UNUSED, char *argv[])
+{
 
 	progname = argv[0];
 
