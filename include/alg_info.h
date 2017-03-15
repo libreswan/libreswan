@@ -122,6 +122,10 @@ extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
 
+extern struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+							 const char *alg_str,
+							 char *err_buf, size_t err_buf_len);
+
 extern struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 							 const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
