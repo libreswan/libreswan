@@ -344,6 +344,8 @@ static void usage(void)
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+
 	if (argc <= 1) {
 		usage();
 		exit(1);
@@ -415,5 +417,7 @@ int main(int argc, char *argv[])
 	cavp_parser();
 
 	lsw_nss_shutdown();
-	return 0;
+	tool_close_log();
+
+	exit(0);
 }

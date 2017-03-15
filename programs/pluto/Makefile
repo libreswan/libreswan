@@ -317,7 +317,6 @@ OBJSCAVP += crypt_utils.o
 
 OBJSCAVP += cavp.o
 OBJSCAVP += cavp_print.o
-OBJSCAVP += cavp_stubs.o
 OBJSCAVP += cavp_ikev1.o
 OBJSCAVP += cavp_ikev2.o
 OBJSCAVP += cavp_sha.o
