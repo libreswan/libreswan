@@ -45,9 +45,12 @@ bool
 					 * should we complain about finding
 					 * KEY?
 					 */
+char *progname = NULL;
 
-void tool_init_log(void)
+void tool_init_log(char *name)
 {
+	progname = name;
+
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 	if (log_to_syslog)

@@ -62,9 +62,6 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
 #define DBG_dump_chunk(label, ch) DBG_dump(label, (ch).ptr, (ch).len)
 
-extern void tool_init_log(void);
-extern void tool_close_log(void);
-
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \
 								      ch))
@@ -83,9 +80,17 @@ extern void tool_close_log(void);
 
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
-extern char *progname;
 extern bool log_to_stderr;          /* should log go to stderr? */
 extern bool log_to_syslog;          /* should log go to syslog? */
+
+/*
+ * For stand-alone tools.
+ *
+ * XXX: can "progname" be made private to lswlog.c?
+ */
+extern char *progname;
+extern void tool_init_log(char *progname);
+extern void tool_close_log(void);
 
 /* Codes for status messages returned to whack.
  * These are 3 digit decimal numerals.  The structure

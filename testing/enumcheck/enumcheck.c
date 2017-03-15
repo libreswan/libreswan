@@ -5,8 +5,6 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 
-char *progname;
-
 static void do_test(char *enumname, enum_names *enum_test, int max)
 {
 	fprintf(stdout, "%s:\n", enumname);
@@ -26,10 +24,7 @@ static void do_test(char *enumname, enum_names *enum_test, int max)
 
 int main(int argc UNUSED, char *argv[])
 {
-
-	progname = argv[0];
-
-	tool_init_log();
+	tool_init_log(argv[0]);
 
 	fprintf(stdout, "pluto enum_names:\n");
 	do_test("connection_kind_names", &connection_kind_names, 256);

@@ -101,8 +101,6 @@ char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 char outputhostname[NS_MAXDNAME];  /* hostname for output */
 
-char *progname = "ipsec rsasigkey";  /* for messages */
-
 /* forwards */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco);
 void lsw_random(size_t nbytes, unsigned char *buf);
@@ -168,12 +166,12 @@ static void UpdateNSS_RNG(int seedbits)
  */
 int main(int argc, char *argv[])
 {
+	log_to_stderr = FALSE;
+	tool_init_log("ipsec rsasigkey");
+
 	int opt;
 	int nbits = 0;
 	int seedbits = DEFAULT_SEED_BITS;
-
-	log_to_stderr = FALSE;
-	tool_init_log();
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {

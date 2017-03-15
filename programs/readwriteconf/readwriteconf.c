@@ -54,7 +54,6 @@
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/parser-controls.h"
 
-char *progname;
 static int verbose = 0;
 
 static void usage(void)
@@ -79,6 +78,8 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+
 	int opt = 0;
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
@@ -86,11 +87,8 @@ int main(int argc, char *argv[])
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 
-	progname = argv[0];
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
-
-	tool_init_log();
 
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {
