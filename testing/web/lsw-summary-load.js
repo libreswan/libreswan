@@ -134,6 +134,25 @@ function lsw_summary_commits(commit) {
     return commits
 }
 
+// see http://stackoverflow.com/questions/24816/escaping-html-strings-with-jquery#12034334
+
+var lsw_html_entity_map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+    '`': '&#x60;',
+    '=': '&#x3D;'
+}
+
+function lsw_html_escape(string) {
+    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+	return lsw_html_entity_map[s];
+    })
+}
+
 // Convert commits to html
 
 function lsw_commits_html(commits) {
@@ -148,7 +167,7 @@ function lsw_commits_html(commits) {
 	html += commit.abbreviated_commit_hash
 	html += "</a>"
 	html += " "
-	html += commit.subject
+	html += lsw_html_escape(commit.subject)
 	html += "<br/>"
     })
     return html
