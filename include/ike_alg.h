@@ -572,6 +572,11 @@ struct oakley_group_desc {
 
 struct dhmke_ops {
 	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct oakley_group_desc *alg);
+
+	/*
 	 * Create KE.
 	 *
 	 * The LOCAL_PUBK parameter is arguably redundant - just the

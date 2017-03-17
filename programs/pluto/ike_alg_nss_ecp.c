@@ -161,7 +161,14 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 	return g_ir;
 }
 
+static void nss_ecp_check(const struct oakley_group_desc *dhmke)
+{
+	const struct ike_alg *alg = &dhmke->common;
+	passert_ike_alg(alg, dhmke->nss_oid > 0);
+}
+
 struct dhmke_ops ike_alg_nss_ecp_dhmke_ops = {
+	.check = nss_ecp_check,
 	.calc_ke = nss_ecp_calc_ke,
 	.calc_g_ir = nss_ecp_calc_g_ir,
 };

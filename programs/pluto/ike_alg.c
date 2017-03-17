@@ -115,7 +115,7 @@ static struct type_algorithms encrypt_algorithms;
 static struct type_algorithms hash_algorithms;
 static struct type_algorithms prf_algorithms;
 static struct type_algorithms integ_algorithms;
-static struct type_algorithms dh_algorithms;
+static struct type_algorithms dhmke_algorithms;
 
 static struct type_algorithms *const type_algorithms[] = {
 	/*INVALID*/ NULL,
@@ -123,7 +123,7 @@ static struct type_algorithms *const type_algorithms[] = {
 	&hash_algorithms,
 	&prf_algorithms,
 	&integ_algorithms,
-	&dh_algorithms,
+	&dhmke_algorithms,
 };
 
 const char *ike_alg_key_name(enum ike_alg_key key)
@@ -172,7 +172,7 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 
 const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **last)
 {
-	return (const struct oakley_group_desc**)next_alg(&dh_algorithms.all,
+	return (const struct oakley_group_desc**)next_alg(&dhmke_algorithms.all,
 							  (const struct ike_alg**)last);
 }
 
@@ -192,7 +192,7 @@ static const struct ike_alg *alg_byname(const struct algorithm_table *algorithms
 
 const struct oakley_group_desc *group_desc_byname(const char *name)
 {
-	return oakley_group_desc(alg_byname(&dh_algorithms.all, name));
+	return oakley_group_desc(alg_byname(&dhmke_algorithms.all, name));
 }
 
 bool ike_alg_is_valid(const struct ike_alg *alg)
@@ -696,7 +696,7 @@ static struct type_algorithms encrypt_algorithms = {
  * DH group
  */
 
-static struct oakley_group_desc *dh_descriptors[] = {
+static struct oakley_group_desc *dhmke_descriptors[] = {
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -714,36 +714,38 @@ static struct oakley_group_desc *dh_descriptors[] = {
 	&oakley_group_dh24,
 };
 
-static void dh_desc_check(const struct ike_alg *alg)
+static void dhmke_desc_check(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *group = oakley_group_desc(alg);
-	passert(group->group > 0);
-	passert(group->bytes > 0);
-	passert(group->common.id[IKEv2_ALG_ID] == group->group);
-	passert(group->common.id[IKEv1_OAKLEY_ID] == group->group);
+	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
+	passert_ike_alg(alg, dhmke->group > 0);
+	passert_ike_alg(alg, dhmke->bytes > 0);
+	passert_ike_alg(alg, dhmke->common.id[IKEv2_ALG_ID] == dhmke->group);
+	passert_ike_alg(alg, dhmke->common.id[IKEv1_OAKLEY_ID] == dhmke->group);
 	/* always implemented */
-	passert(group->dhmke_ops != NULL);
-	passert(group->dhmke_ops->calc_ke != NULL);
-	passert(group->dhmke_ops->calc_g_ir != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->check != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->calc_ke != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->calc_g_ir != NULL);
 	/* more? */
+	dhmke->dhmke_ops->check(dhmke);
 }
 
-static bool dh_desc_is_ike(const struct ike_alg *alg)
+static bool dhmke_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *group = oakley_group_desc(alg);
-	return group->dhmke_ops != NULL;
+	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
+	return dhmke->dhmke_ops != NULL;
 }
 
-static struct type_algorithms dh_algorithms = {
-	.all = ALGORITHM_TABLE("DH", dh_descriptors),
+static struct type_algorithms dhmke_algorithms = {
+	.all = ALGORITHM_TABLE("DH", dhmke_descriptors),
 	.type = IKE_ALG_DH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_ESP_ID] = NULL,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
-	.desc_check = dh_desc_check,
-	.desc_is_ike = dh_desc_is_ike,
+	.desc_check = dhmke_desc_check,
+	.desc_is_ike = dhmke_desc_is_ike,
 };
 
 /*

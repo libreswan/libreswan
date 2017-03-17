@@ -121,7 +121,15 @@ static PK11SymKey *nss_modp_calc_g_ir(const struct oakley_group_desc *group,
 	return g_ir;
 }
 
+static void nss_modp_check(const struct oakley_group_desc *dhmke)
+{
+	const struct ike_alg *alg = &dhmke->common;
+	passert_ike_alg(alg, dhmke->gen != NULL);
+	passert_ike_alg(alg, dhmke->modp != NULL);
+}
+
 struct dhmke_ops ike_alg_nss_modp_dhmke_ops = {
+	.check = nss_modp_check,
 	.calc_ke = nss_modp_calc_ke,
 	.calc_g_ir = nss_modp_calc_g_ir,
 };
