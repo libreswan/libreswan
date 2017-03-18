@@ -656,7 +656,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 		case ST_END:
 		case ST_EOF:
 			{
-				char error[100]; /* arbitrary */
+				char error[100] = ""; /* arbitrary */
 				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
 								alg_info);
 				if (ugh != NULL) {
