@@ -210,7 +210,7 @@ bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
  * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
  * clients are discovered in the wild, we will revisit this - please contact
  * the libreswan developers if you find such an implementation.
- * Therefor, the ikepad= option has no effect on IKEv2 connections.
+ * Therefore the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */

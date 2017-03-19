@@ -143,7 +143,7 @@ static char *base64_bundle(int e, chunk_t modulus)
  * bits from /dev/random and feed these into the NSS RNG before drawing random
  * from the NSS library, despite the NSS library itself already seeding its
  * internal state. This process can block pluto or rsasigkey for an extended
- * time during startup, depending on the entropy of the system. Therefor,
+ * time during startup, depending on the entropy of the system. Therefore
  * the default is to not perform this redundant seeding. If specifying a
  * value, it is recommended to specify at least 460 bits (for FIPS) or 440
  * bits (for BSI).
