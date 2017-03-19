@@ -19,10 +19,10 @@
 
 #include "lswlog.h"
 
-void pexpect_log(const char *file_str,
-		 unsigned long line_no,
-		 const char *func_str,
-		 const char *fmt, ...)
+void lsw_pexpect_log(const char *file_str,
+		     unsigned long line_no,
+		     const char *func_str,
+		     const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);

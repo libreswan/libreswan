@@ -71,13 +71,13 @@ extern void libreswan_passert_fail(const char *file_str,
  * statement).
  */
 
-extern void pexpect_log(const char *file_str, unsigned long line_no,
-			const char *func_str, const char *fmt, ...)
+extern void lsw_pexpect_log(const char *file_str, unsigned long line_no,
+			    const char *func_str, const char *fmt, ...)
 	PRINTF_LIKE(4);
 
 #define PEXPECT_LOG(FMT, ...)					\
-	pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
-		    FMT,  __VA_ARGS__)
+	lsw_pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
+			FMT,  __VA_ARGS__)
 
 #define pexpect(pred) {							\
 		if (pred) {} else {					\
