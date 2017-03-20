@@ -1,11 +1,4 @@
 0001-do-not-use-git-version.patch
 0002-debian-pam.d-pluto.patch
 0003-update-README.nss-to-match-debian-defaults-for-IPSEC.patch
-0004-avoid-gcc-unused-variable-warnings-when-USE_KLIPS-fa.patch
-0005-two-minor-spelling-errors.patch
-0006-building-Don-t-check-runtime-for-SElinux-systemd-whe.patch
-0007-documentation-add-NAT-support-config-to-oe-upgrade-a.patch
-0008-barf-Ensure-proper-macros-are-used.-Add-certutil-crl.patch
-0009-documentation-added-oe-letsencrypt-example-configs.patch
 bugfix-853947/0010-Try-to-include-the-correct-headers-on-MIPS.patch
-bugfix-853507/0011-Try-to-address-some-of-the-build-failures-in-https-b.patch

@@ -9,7 +9,7 @@ alpine.LRH.2.20.1702022022300.25477@bofh.nohats.ca
  1 file changed, 4 insertions(+)
 
 diff --git a/lib/libswan/nss_copies.c b/lib/libswan/nss_copies.c
-index b90bbf052..16976db97 100644
+index fe19e32..5a20918 100644
 --- a/lib/libswan/nss_copies.c
 +++ b/lib/libswan/nss_copies.c
 @@ -3,6 +3,10 @@
@@ -22,4 +22,4 @@ index b90bbf052..16976db97 100644
 +
  #include <cert.h>
  #include <secder.h>
- #include "nss_copies.h"
+ 

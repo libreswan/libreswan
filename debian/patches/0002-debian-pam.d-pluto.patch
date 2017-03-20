@@ -10,7 +10,7 @@ Signed-off-by: Tuomo Soini <tis@foobar.fi>
  1 file changed, 11 insertions(+), 16 deletions(-)
 
 diff --git a/pam.d/pluto b/pam.d/pluto
-index 3855385f7..bb9b22cad 100644
+index 3855385..bb9b22c 100644
 --- a/pam.d/pluto
 +++ b/pam.d/pluto
 @@ -1,16 +1,11 @@
