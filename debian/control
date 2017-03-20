@@ -12,7 +12,6 @@ Build-Depends:
  bison,
  bzip2,
  debhelper (>= 10~),
- dh-systemd,
  flex,
  htmldoc,
  libcap-ng-dev,
