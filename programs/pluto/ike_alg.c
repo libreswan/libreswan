@@ -454,40 +454,31 @@ static struct prf_desc *prf_descriptors[] = {
 static void prf_desc_check(const struct ike_alg *alg)
 {
 	const struct prf_desc *prf = prf_desc(alg);
-	passert(prf->prf_key_size > 0);
-	passert(prf->prf_output_size > 0);
+	passert_ike_alg(alg, prf->prf_key_size > 0);
+	passert_ike_alg(alg, prf->prf_output_size > 0);
 	if (prf->prf_ops != NULL) {
-		passert(prf->prf_ops->init_symkey != NULL &&
-			prf->prf_ops->init_bytes != NULL &&
-			prf->prf_ops->digest_symkey != NULL &&
-			prf->prf_ops->digest_bytes != NULL &&
-			prf->prf_ops->final_symkey != NULL &&
-			prf->prf_ops->final_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->check != NULL);
+		passert_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->init_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->digest_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->digest_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->final_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->final_bytes != NULL);
 		/*
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
-		passert(prf->common.id[IKEv1_OAKLEY_ID] == 0
-			|| prf->hasher != NULL);
-	}
-	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
-		passert(prf->hasher != NULL);
-		/* i.e., implemented */
-		passert(hash_desc_is_ike(&prf->hasher->common));
+		passert_ike_alg(alg, prf->common.id[IKEv1_OAKLEY_ID] == 0
+				     || prf->hasher != NULL);
+		prf->prf_ops->check(prf);
 	}
 	if (prf->hasher) {
 		/*
 		 * Check for dangling pointer.
 		 */
 		check_alg_in_table(&prf->hasher->common, &hash_algorithms.all);
-		passert(prf->prf_output_size == prf->hasher->hash_digest_len);
+		passert_ike_alg(alg, prf->prf_output_size == prf->hasher->hash_digest_len);
 		check_names_in_names("prf hasher", &prf->hasher->common, alg);
-	}
-	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
-		passert(prf->hasher != NULL);
-	}
-	if (prf->prf_ops == &ike_alg_nss_prf_ops) {
-		passert(prf->common.nss_mechanism > 0);
 	}
 }
 
@@ -537,12 +528,12 @@ static struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	passert(integ->integ_key_size > 0);
-	passert(integ->integ_output_size > 0);
+	passert_ike_alg(alg, integ->integ_key_size > 0);
+	passert_ike_alg(alg, integ->integ_output_size > 0);
 	if (integ->prf) {
-		passert(integ->integ_key_size == integ->prf->prf_key_size);
-		passert(integ->integ_output_size <= integ->prf->prf_output_size);
-		passert(prf_desc_is_ike(&integ->prf->common));
+		passert_ike_alg(alg, integ->integ_key_size == integ->prf->prf_key_size);
+		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
+		passert_ike_alg(alg, prf_desc_is_ike(&integ->prf->common));
 		check_names_in_names("integ prf", &integ->prf->common, alg);
 	}
 }
@@ -627,8 +618,9 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 * Only implemented one way, if at all.
 	 */
 	if (encrypt->encrypt_ops != NULL) {
-		passert((encrypt->encrypt_ops->do_crypt == NULL)
-			!= (encrypt->encrypt_ops->do_aead == NULL));
+		passert_ike_alg(alg, encrypt->encrypt_ops->check != NULL);
+		passert_ike_alg(alg, ((encrypt->encrypt_ops->do_crypt == NULL)
+				      != (encrypt->encrypt_ops->do_aead == NULL)));
 	}
 
 	/*
@@ -636,8 +628,8 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 * Converse for non-AEAD implementation.
 	 */
 	if (encrypt->encrypt_ops != NULL) {
-		passert(encrypt->encrypt_ops->do_aead == NULL || encrypt->aead_tag_size > 0);
-		passert(encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
+		passert_ike_alg(alg, encrypt->encrypt_ops->do_aead == NULL || encrypt->aead_tag_size > 0);
+		passert_ike_alg(alg, encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
 	}
 
 	if (encrypt->keydeflen) {
@@ -652,25 +644,25 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		 * - provided there is a KEYDEFLEN (i.e., not the NULL
 		 *   algorithm), there is at least one key length.
 		 */
-		passert(encrypt->key_bit_lengths[0] > 0);
-		passert(encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[0] > 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
 		for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
 			/* at end, keyp[1] will be 0 */
-			passert(keyp[0] > keyp[1]);
+			passert_ike_alg(alg, keyp[0] > keyp[1]);
 		}
 		/*
 		 * the default appears in the list
 		 */
-		passert(encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
+		passert_ike_alg(alg, encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
 	} else {
 		/*
 		 * Interpret a zero default key as implying NULL encryption.
 		 */
-		passert(encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL
+		passert_ike_alg(alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL
 			|| encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
-		passert(encrypt->enc_blocksize == 1);
-		passert(encrypt->wire_iv_size == 0);
-		passert(encrypt->key_bit_lengths[0] == 0);
+		passert_ike_alg(alg, encrypt->enc_blocksize == 1);
+		passert_ike_alg(alg, encrypt->wire_iv_size == 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[0] == 0);
 	}
 }
 
@@ -765,8 +757,7 @@ static void check_enum_name(const char *what,
 		DBG(DBG_CRYPT,
 		    DBG_log("%s id: %d enum name: %s",
 			    what, id, enum_name));
-		passert(enum_name != NULL);
-		passert(enum_name);
+		passert_ike_alg(alg, enum_name != NULL);
 		check_name_in_names("enum", enum_name, alg);
 	} else {
 		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
@@ -794,9 +785,9 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 				       alg->id[IKEv1_OAKLEY_ID],
 				       alg->id[IKEv1_ESP_ID],
 				       alg->id[IKEv2_ALG_ID]));
-		passert(alg->name);
-		passert(alg->officname);
-		passert(alg->algo_type == algorithms->type);
+		passert_ike_alg(alg, alg->name != NULL);
+		passert_ike_alg(alg, alg->officname != NULL);
+		passert_ike_alg(alg, alg->algo_type == algorithms->type);
 
 		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
@@ -817,7 +808,7 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 						algorithms->enum_names[key]);
 			}
 		}
-		passert(at_least_one_valid_id);
+		passert_ike_alg(alg, at_least_one_valid_id);
 
 		/*
 		 * Check that name appears in the names list.
@@ -839,7 +830,7 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
-			passert(id == 0
+			passert_ike_alg(alg, id == 0
 				|| (lookup_by_id(&scratch, key, id, LEMPTY)
 				    == NULL));
 		}
@@ -847,7 +838,7 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		/*
 		 * Extra algorithm specific checks.
 		 */
-		passert(algorithms->desc_check);
+		passert_ike_alg(alg, algorithms->desc_check != NULL);
 		algorithms->desc_check(alg);
 	}
 
@@ -889,7 +880,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		append(&buf, end, ":");
 		/* magic number from eyeballing the output */
 		ssize_t pad = 21 - (buf - start);
-		passert(pad >= 0);
+		passert_ike_alg(alg, pad >= 0);
 		for (ssize_t i = 0; i < pad; i++) {
 			append(&buf, end, " ");
 		}
@@ -961,7 +952,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 			append(&buf, end, "    ");
 		}
 	}
-	passert(buf < end);
+	passert_ike_alg(alg, buf < end);
 
 	/*
 	 * Concatenate [key,...] or {key,...} with default
@@ -977,7 +968,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 				append(&buf, end, "*");
 			}
 			/* no large keys */
-			passert(*keyp < 1000 && buf + 3 < end);
+			passert_ike_alg(alg, *keyp < 1000 && buf + 3 < end);
 			snprintf(buf, end - buf, "%d", *keyp);
 			buf += strlen(buf);
 			sep = ",";
@@ -985,7 +976,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		append(&buf, end, encr->keylen_omitted ? "]" : "}");
 		/* did fit */
 	}
-	passert(buf < end);
+	passert_ike_alg(alg, buf < end);
 
 	/*
 	 * Concatenate (alias ...)
@@ -1005,7 +996,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 			append(&buf, end, ")");
 		}
 	}
-	passert(buf < end);
+	passert_ike_alg(alg, buf < end);
 }
 
 /*

@@ -185,7 +185,14 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	return final;
 }
 
+static void nss_prf_check(const struct prf_desc *prf)
+{
+	const struct ike_alg *alg = &prf->common;
+	passert_ike_alg(alg, prf->common.nss_mechanism > 0);
+}
+
 const struct prf_ops ike_alg_nss_prf_ops = {
+	nss_prf_check,
 	init_symkey,
 	init_bytes,
 	digest_symkey,

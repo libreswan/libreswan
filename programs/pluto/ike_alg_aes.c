@@ -307,7 +307,12 @@ static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
+static void ctr_check(const struct encrypt_desc *alg UNUSED)
+{
+}
+
 static const struct encrypt_ops aes_ctr_encrypt_ops = {
+	.check = ctr_check,
 	.do_crypt = do_aes_ctr,
 };
 

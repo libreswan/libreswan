@@ -71,7 +71,12 @@ static void do_serpent(const struct encrypt_desc *alg UNUSED,
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
 
+static void serpent_check(const struct encrypt_desc *encrypt UNUSED)
+{
+}
+
 static const struct encrypt_ops serpent_encrypt_ops = {
+	.check = serpent_check,
 	.do_crypt = do_serpent,
 };
 

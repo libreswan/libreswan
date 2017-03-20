@@ -73,7 +73,12 @@ static void do_twofish(const struct encrypt_desc *alg UNUSED,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
+static void twofish_check(const struct encrypt_desc *alg UNUSED)
+{
+}
+
 static const struct encrypt_ops twofish_encrypt_ops = {
+	.check = twofish_check,
 	.do_crypt = do_twofish,
 };
 

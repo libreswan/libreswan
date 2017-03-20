@@ -272,6 +272,11 @@ struct encrypt_desc {
 
 struct encrypt_ops {
 	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct encrypt_desc *alg);
+
+	/*
 	 * Perform simple encryption.
 	 *
 	 * Presumably something else is implementing the integrity.
@@ -407,6 +412,11 @@ struct prf_desc {
 };
 
 struct prf_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct prf_desc *alg);
+
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
 					   const char *name, lset_t debug,
 					   const char *key_name, PK11SymKey *key);
