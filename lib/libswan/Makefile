@@ -44,6 +44,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c anyaddr.c \
 	base64_rsa_pubkey.c \
 	lswnss.c \
 	lsw_pexpect_log.c \
+	lsw_passert_fail.c \
 	$(X509LIB)
 
 # NOT-YET: SRCS += ike_info.c

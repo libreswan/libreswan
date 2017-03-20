@@ -157,31 +157,6 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	exit(1);
 }
 
-void libreswan_log_abort(const char *file_str, int line_no)
-{
-	libreswan_loglog(RC_LOG_SERIOUS, "ABORT at %s:%d", file_str, line_no);
-	abort();
-}
-
-void libreswan_passert_fail(const char *file_str,
-			    unsigned long line_no,
-			    const char *func_str,
-			    const char *fmt, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, fmt);
-	fmt_log(m, sizeof(m), fmt, args);
-	va_end(args);
-
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	libreswan_loglog(RC_LOG_SERIOUS,
-			 "ASSERTION FAILED: %s (in %s at %s:%lu)",
-			 m, func_str, file_str, line_no);
-	abort();	/* exiting correctly doesn't always work */
-}
-
 lset_t
 	base_debugging = DBG_NONE,	/* default to reporting nothing */
 	cur_debugging =  DBG_NONE;
