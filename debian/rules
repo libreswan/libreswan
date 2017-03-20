@@ -1,7 +1,15 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/default.mk
+
 %:
 	dh $@ --with systemd
+
+# this should track the definition of USERCOMPILE in mk/userland-cflags.mk:43
+# but without -fstack-protector-all for arches like hppa that lack stack-protector
+ifeq ($(DEB_HOST_ARCH), hppa)
+	USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
+endif
 
 override_dh_auto_build:
 	$(MAKE) programs \
