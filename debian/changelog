@@ -1,3 +1,10 @@
+libreswan (3.20-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #853507)
+  * drop build-dep on dh-systemd, since it is now in debhelper itself
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Mon, 20 Mar 2017 14:58:40 -0400
+
 libreswan (3.19-2) unstable; urgency=medium
 
   * more fixes from upstream
