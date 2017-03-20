@@ -643,6 +643,7 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 
 static const char *alg_info_ike_add(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
+				    const struct encrypt_desc *encrypt,
 				    int ealg_id, int ek_bits,
 				    int aalg_id,
 				    const struct prf_desc *prf,
@@ -651,49 +652,10 @@ static const char *alg_info_ike_add(const struct parser_policy *const policy,
 				    char *err_buf, size_t err_buf_len)
 {
 	/*
-	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
-	 *
-	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
-	 * algorithms?
-	 *
-	 * For the case of alg=0 / "null", should this have a real
-	 * object?
-	 *
-	 * XXX: work-in-progress
+	 * XXX: Cross check encryption lookups for now.
 	 */
-	const struct encrypt_desc *ealg = NULL;
-	if (ealg_id > 0) {
-		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
-		     algp != NULL; algp = next_encrypt_desc(algp)) {
-			const struct encrypt_desc *alg = *algp;
-			/*
-			 * keylen==0 implies use default or defaults.
-			 */
-			if (ike_alg_is_ike(&(alg)->common)
-			    && alg->common.ikev1_oakley_id == ealg_id) {
-				ealg = alg;
-				break;
-			}
-		}
-		if (ealg == NULL) {
-			struct esb_buf buf;
-			snprintf(err_buf, err_buf_len,
-				 "ENCRYPT algorithm %s=%d is not supported",
-				 enum_showb(&oakley_enc_names, ealg_id, &buf),
-				 ealg_id);
-			return err_buf;
-		}
-		if (ek_bits != 0) {
-			if (!encrypt_has_key_bit_length(ealg, ek_bits)) {
-				struct esb_buf buf;
-				snprintf(err_buf, err_buf_len,
-					 "ENCRYPT algorithm %s with key length %u is not supported",
-					 enum_showb(&oakley_enc_names, ealg_id, &buf),
-					 ek_bits);
-				return err_buf;
-			}
-		}
-	}
+	pexpect((ealg_id == 0) == (encrypt == NULL));
+	pexpect(encrypt == NULL || ealg_id == encrypt->common.id[IKEv1_OAKLEY_ID]);
 
 	/*
 	 * XXX: Cross check PRF/integrity lookups for now.
@@ -703,7 +665,7 @@ static const char *alg_info_ike_add(const struct parser_policy *const policy,
 	pexpect(prf == NULL || aalg_id == prf->common.id[IKEv1_OAKLEY_ID]);
 
 	return ike_add(policy, &ike_defaults, alg_info,
-		       ealg, ek_bits, prf, integ, dh_group,
+		       encrypt, ek_bits, prf, integ, dh_group,
 		       err_buf, err_buf_len);
 }
 
@@ -714,6 +676,7 @@ const struct parser_param ike_parser_param = {
 	.alg_info_add = alg_info_ike_add,
 	.ealg_getbyname = ealg_getbyname_ike,
 	.aalg_getbyname = aalg_getbyname_ike,
+	.encrypt_alg_byname = encrypt_alg_byname,
 	.prf_alg_byname = prf_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };

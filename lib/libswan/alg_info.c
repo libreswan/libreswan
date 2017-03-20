@@ -209,7 +209,7 @@ static void parser_init(struct parser_context *ctx,
 			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
 				  && (policy & POLICY_IKEV2_ALLOW)),
 		 },
-		.state = (param->ealg_getbyname
+		.state = (param->ealg_getbyname || param->encrypt_alg_byname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
 		/*
@@ -423,6 +423,15 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		    p_ctx->ealg_buf,
 		    p_ctx->aalg_buf,
 		    p_ctx->modp_buf));
+
+	const struct encrypt_desc *encrypt =
+		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+					   p_ctx->param->encrypt_alg_byname,
+					   p_ctx->ealg_buf, p_ctx->eklen,
+					   "encryption"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
 
 #	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
 
@@ -682,6 +691,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 
 	return p_ctx->param->alg_info_add(&p_ctx->policy,
 					  alg_info,
+					  encrypt,
 					  ealg_id, p_ctx->eklen,
 					  aalg_id,
 					  prf, integ,
@@ -716,7 +726,9 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 	/* use default if null string */
 	if (*alg_str == '\0')
 		param->alg_info_add(&ctx.policy, alg_info,
-				    0, 0, 0, NULL, NULL, NULL,
+				    NULL,
+				    0, 0, 0,
+				    NULL, NULL, NULL,
 				    err_buf, err_buf_len);
 
 	ptr = alg_str;

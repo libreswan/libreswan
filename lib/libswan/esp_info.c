@@ -240,6 +240,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
  */
 static const char *alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 				    struct alg_info *alg_info,
+				    const struct encrypt_desc *encrypt UNUSED,
 				    int ealg_id, int ek_bits,
 				    int aalg_id,
 				    const struct prf_desc *prf UNUSED,
@@ -289,6 +290,7 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
  */
 static const char *alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 				   struct alg_info *alg_info,
+				   const struct encrypt_desc *encrypt UNUSED,
 				   int ealg_id, int ek_bits,
 				   int aalg_id,
 				   const struct prf_desc *prf UNUSED,
