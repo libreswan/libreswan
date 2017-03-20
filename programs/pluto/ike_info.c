@@ -22,7 +22,6 @@
 #include "lswalloc.h"
 #include "alg_byname.h"
 
-#include "alg_info.h"
 #include "ike_alg.h"
 #include "ike_alg_dh.h"
 #include "ike_alg_aes.h"
@@ -30,6 +29,7 @@
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
 #include "ike_alg_md5.h"
+#include "alg_info.h"
 
 #include "plutoalg.h" /* XXX: for ikev1_default_ike_info() */
 
@@ -171,82 +171,29 @@ static int aalg_getbyname_ike(const char *str)
 /*
  * Raw add routine: only checks for no duplicates
  */
-/* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
-static void raw_alg_info_ike_add(struct alg_info_ike *alg_info,
-				 const struct encrypt_desc *ealg, unsigned ek_bits,
-				 const struct prf_desc *aalg,
-				 const struct oakley_group_desc *dh_group)
+
+static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
+					const struct encrypt_desc *encrypt, unsigned ek_bits,
+					const struct prf_desc *prf,
+					const struct integ_desc *integ,
+					const struct oakley_group_desc *dh_group,
+					char *err_buf, size_t err_buf_len)
 {
 	/*
-	 * Check for overflows up front; could delay until after
-	 * filters, but that complicates things.
+	 * Check that the ALG_INFO spec is implemented.
 	 */
-	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ike));
-	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ike)) {
-		loglog(RC_LOG_SERIOUS, "more than %zu IKE algorithms specified",
-		       elemsof(alg_info->ike));
-		/* drop it like a rock */
-		return;
-	}
+
+	passert(ike_alg_is_ike(&(encrypt->common)));
+	passert(ek_bits == 0 || encrypt_has_key_bit_length(encrypt, ek_bits));
+	passert(ike_alg_is_ike(&(prf->common)));
 
 	/*
-	 * Initialize the new entry and use it as scratch.  If there's
-	 * a problem just return.  Only when everything checks out is
-	 * it added.
+	 * This is a little loose.
 	 */
-	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
-	*new_info = (struct ike_info) {
-		.ike_eklen = ek_bits,
-		.ike_encrypt = ealg,
-		.ike_prf = aalg,
-		.ike_dh_group = dh_group,
-	};
+	passert(integ != &alg_info_integ_null || ike_alg_is_aead(encrypt));
+	passert(integ == &alg_info_integ_null || ike_alg_is_ike(&integ->common));
 
-	/*
-	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
-	 *
-	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
-	 * algorithms?
-	 *
-	 * For the case of alg=0 / "null", should this have a real
-	 * object?
-	 *
-	 * XXX: work-in-progress
-	 */
-	passert(new_info->ike_encrypt != NULL);
-	passert(ike_alg_is_ike(&(new_info->ike_encrypt->common)));
-	if (ek_bits != 0) {
-		if (!encrypt_has_key_bit_length(new_info->ike_encrypt,
-						ek_bits)) {
-			loglog(RC_LOG_SERIOUS,
-			       "ENCRYPT algorithm %s with key length %u is not supported",
-			       new_info->ike_encrypt->common.name,
-			       ek_bits);
-			return;
-		}
-	}
-
-	passert(new_info->ike_prf != NULL);
-
-	if (ike_alg_enc_requires_integ(new_info->ike_encrypt)) {
-		for (const struct integ_desc **algp = next_integ_desc(NULL);
-		     algp != NULL; algp = next_integ_desc(algp)) {
-			const struct integ_desc *alg = *algp;
-			if (ike_alg_is_ike(&(alg)->common)
-			    && alg->prf == new_info->ike_prf) {
-				new_info->ike_integ = alg;
-				break;
-			}
-		}
-		if (new_info->ike_integ == NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "INTEG algorithm %s is not supported",
-			       new_info->ike_prf->common.name);
-			return;
-		}
-	}
-
-	passert(new_info->ike_dh_group != NULL);
+	passert(ike_alg_is_ike(&(dh_group->common)));
 
 	/*
 	 * don't add duplicates
@@ -263,26 +210,53 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	 * XXX: work-in-progress
 	 */
 	FOR_EACH_IKE_INFO(alg_info, ike_info) {
-		if (ike_info->ike_encrypt == new_info->ike_encrypt &&
-		    (new_info->ike_eklen == 0 ||
-		     ike_info->ike_eklen == new_info->ike_eklen) &&
-		    ike_info->ike_prf == new_info->ike_prf &&
-		    ike_info->ike_integ == new_info->ike_integ &&
-		    ike_info->ike_dh_group == new_info->ike_dh_group) {
-			return;
+		if (ike_info->ike_encrypt == encrypt &&
+		    (ek_bits == 0 ||
+		     ike_info->ike_eklen == ek_bits) &&
+		    ike_info->ike_prf == prf &&
+		    ike_info->ike_integ == integ &&
+		    ike_info->ike_dh_group == dh_group) {
+			DBG(DBG_CRYPT,
+			    DBG_log("discarding duplicate ealg=%s ek_bits=%d aalg=%s modp=%s",
+				    encrypt->common.name, ek_bits,
+				    prf->common.name,
+				    dh_group->common.name));
+			return NULL;
 		}
+	}
+
+	/*
+	 * Finally, check for overflow.
+	 */
+	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ike));
+	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ike)) {
+		snprintf(err_buf, err_buf_len,
+			 "more than %zu IKE algorithms specified",
+			 elemsof(alg_info->ike));
+		/* drop it like a rock */
+		return err_buf;
 	}
 
 	/*
 	 * All is good, add it.
 	 */
+	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
+	*new_info = (struct ike_info) {
+		.ike_eklen = ek_bits,
+		.ike_encrypt = encrypt,
+		.ike_prf = prf,
+		.ike_integ = (ike_alg_is_aead(encrypt) ? NULL : integ),
+		.ike_dh_group = dh_group,
+	};
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT,
-	    DBG_log("raw_alg_info_ike_add() ealg=%s ek_bits=%d aalg=%s modp=%s, cnt=%d",
+	    DBG_log("adding ealg=%s ek_bits=%d aalg=%s modp=%s, cnt=%d",
 		    new_info->ike_encrypt->common.name, ek_bits,
 		    new_info->ike_prf->common.name,
 		    new_info->ike_dh_group->common.name,
 		    alg_info->ai.alg_info_cnt));
+
+	return NULL;
 }
 
 /*
@@ -453,9 +427,9 @@ static const struct ike_alg **clone_valid(enum ike_alg_type type,
 	 */
 	if (valid_alg == valid_algs) {
 		pfree(valid_algs);
-		loglog(RC_LOG_SERIOUS,
-		       "no valid default %s algorithms",
-		       ike_alg_type_name(type));
+		DBG(DBG_CONTROL,
+		    DBG_log("no valid default %s algorithms",
+			    ike_alg_type_name(type)));
 		return NULL;
 	}
 
@@ -467,20 +441,19 @@ static const struct ike_alg **clone_valid(enum ike_alg_type type,
  * IKE_DEFAULTS.
  */
 
-static void ike_add(const struct parser_policy *const policy,
-		    const struct ike_defaults *const defaults,
-		    struct alg_info *alg_info,
-		    const struct encrypt_desc *ealg, int ek_bits,
-		    const struct prf_desc *aalg,
-		    const struct oakley_group_desc *dh_group)
+static const char *ike_add(const struct parser_policy *const policy,
+			   const struct ike_defaults *const defaults,
+			   struct alg_info *alg_info,
+			   const struct encrypt_desc *encrypt, int ek_bits,
+			   const struct prf_desc *prf,
+			   const struct integ_desc *integ,
+			   const struct oakley_group_desc *dh_group,
+			   char *err_buf, size_t err_buf_len)
 {
 	/*
 	 * Note that the order in which things are recursively added -
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
-	 *
-	 * See parser_alg_info_add().  It seems that modp_id=0,
-	 * ealg_id=-1, aalg_id=-1, so check for anything <= 0.
 	 */
 	if (dh_group == NULL) {
 		/*
@@ -489,32 +462,41 @@ static void ike_add(const struct parser_policy *const policy,
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_DH, policy,
 								&defaults->groups);
 		if (valid_algs == NULL) {
-			return;
+			return "no valid DH algorithms";
 		}
+		const char *error = NULL;
 		for (const struct ike_alg **alg = valid_algs;
-		     *alg; alg++) {
-			ike_add(policy, defaults, alg_info,
-				ealg, ek_bits,
-				aalg, oakley_group_desc(*alg));
+		     *alg && error == NULL; alg++) {
+			error = ike_add(policy, defaults, alg_info,
+					encrypt, ek_bits,
+					prf, integ, oakley_group_desc(*alg),
+					err_buf, err_buf_len);
 		}
 		pfree(valid_algs);
-	} else if (ealg == NULL) {
+		return error;
+	} else if (encrypt == NULL) {
 		/*
 		 * Recursively add the valid default enc algs
+		 *
+		 * If no encryption was specified, ek_bits must be 0.
 		 */
+		passert(ek_bits == 0);
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_ENCRYPT, policy,
 								&defaults->ealgs);
 		if (valid_algs == NULL) {
-			return;
+			return "no valid ENCRYPT algorithms";
 		}
+		const char *error = NULL;
 		for (const struct ike_alg **alg = valid_algs;
-		     *alg; alg++) {
-			ike_add(policy, defaults, alg_info,
-				encrypt_desc(*alg), ek_bits,
-				aalg, dh_group);
+		     *alg && error == NULL; alg++) {
+			error = ike_add(policy, defaults, alg_info,
+					encrypt_desc(*alg), ek_bits,
+					prf, integ, dh_group,
+					err_buf, err_buf_len);
 		}
 		pfree(valid_algs);
-	} else if (aalg == NULL) {
+		return error;
+	} else if (prf == NULL) {
 		/*
 		 * Recursively add the valid default PRF/HASH
 		 * algorithms.
@@ -524,19 +506,78 @@ static void ike_add(const struct parser_policy *const policy,
 		const struct ike_alg **valid_algs = clone_valid(IKE_ALG_PRF, policy,
 								&defaults->aalgs);
 		if (valid_algs == NULL) {
-			return;
+			return "no valid PRF algorithms";
 		}
+		const char *error = NULL;
 		for (const struct ike_alg **alg = valid_algs;
-		     *alg; alg++) {
-			ike_add(policy, defaults, alg_info,
-				ealg, ek_bits,
-				prf_desc(*alg), dh_group);
+		     *alg && error == NULL; alg++) {
+			error = ike_add(policy, defaults, alg_info,
+					encrypt, ek_bits,
+					prf_desc(*alg), integ, dh_group,
+					err_buf, err_buf_len);
 		}
 		pfree(valid_algs);
+		return error;
+	} else if (integ == NULL) {
+		/*
+		 * The integrity is missing.
+		 *
+		 * For instance when parsing "aes" and defaults are
+		 * being added for the PRF and integrity.
+		 *
+		 * Since .integ_byname isn't set in parser_params
+		 * (NULL is always passed in), the odds of this
+		 * happening are very good.
+		 *
+		 * Derive the 'default' using the PRF.
+		 */
+		if (ike_alg_is_aead(encrypt)) {
+			integ = &alg_info_integ_null;
+		} else {
+			passert(prf != NULL);
+			passert(ike_alg_is_ike(&prf->common));
+			for (const struct integ_desc **algp = next_integ_desc(NULL);
+			     algp != NULL; algp = next_integ_desc(algp)) {
+				const struct integ_desc *alg = *algp;
+				if (alg->prf == prf) {
+					integ = alg;
+					break;
+				}
+			}
+			if (integ == NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "IKE integrity derived from PRF '%s' is not supported",
+					 prf->common.name);
+				return NULL;
+			}
+		}
+		return ike_add(policy, defaults, alg_info,
+			       encrypt, ek_bits,
+			       prf, integ, dh_group,
+			       err_buf, err_buf_len);
+	} else if (integ == &alg_info_integ_null
+		   && !ike_alg_is_aead(encrypt)) {
+		/*
+		 * For instance, "aes-sha1-null-dh22" is invalid,
+		 * while "aes_gcm-sha1-null-dh22" is valid.
+		 *
+		 * Since .integ_byname isn't set in parser_params
+		 * (NULL is always passed in), the odds of this
+		 * happening are very small.
+		 */
+		snprintf(err_buf, err_buf_len,
+			 "non-AEAD IKE encryption algorithm '%s' cannot have a 'null' integrity algorithm",
+			 encrypt->common.name);
+		return NULL;
 	} else {
-		raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
-				     ealg, ek_bits,
-				     aalg, dh_group);
+		passert(encrypt != NULL);
+		passert(prf != NULL);
+		passert(integ != NULL);
+		passert(dh_group != NULL);
+		return raw_alg_info_ike_add((struct alg_info_ike *)alg_info,
+					    encrypt, ek_bits,
+					    prf, integ, dh_group,
+					    err_buf, err_buf_len);
 	}
 }
 
@@ -573,16 +614,23 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 	};
 
 	struct alg_info_ike *default_info = alloc_thing(struct alg_info_ike, "ike_info");
-	ike_add(&policy, &spdb_defaults, &default_info->ai,
-		NULL, 0, NULL, NULL);
+
+	char err_buf[100] = "";
+	if (ike_add(&policy, &spdb_defaults, &default_info->ai,
+		    NULL, 0, NULL, NULL, NULL,
+		    err_buf, sizeof(err_buf)) != NULL) {
+		PEXPECT_LOG("invalid IKEv1 default algorithms: %s", err_buf);
+	}
+
 	return default_info;
 }
 
-static void alg_info_ike_add(const struct parser_policy *const policy,
-			     struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     const struct oakley_group_desc *dh_group)
+static const char *alg_info_ike_add(const struct parser_policy *const policy,
+				    struct alg_info *alg_info,
+				    int ealg_id, int ek_bits,
+				    int aalg_id,
+				    const struct oakley_group_desc *dh_group,
+				    char *err_buf, size_t err_buf_len)
 {
 	/*
 	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
@@ -611,20 +659,20 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		}
 		if (ealg == NULL) {
 			struct esb_buf buf;
-			loglog(RC_LOG_SERIOUS,
-			       "ENCRYPT algorithm %s=%d is not supported",
-			       enum_showb(&oakley_enc_names, ealg_id, &buf),
-			       ealg_id);
-			return;
+			snprintf(err_buf, err_buf_len,
+				 "ENCRYPT algorithm %s=%d is not supported",
+				 enum_showb(&oakley_enc_names, ealg_id, &buf),
+				 ealg_id);
+			return err_buf;
 		}
 		if (ek_bits != 0) {
 			if (!encrypt_has_key_bit_length(ealg, ek_bits)) {
 				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "ENCRYPT algorithm %s with key length %u is not supported",
-				       enum_showb(&oakley_enc_names, ealg_id, &buf),
-				       ek_bits);
-				return;
+				snprintf(err_buf, err_buf_len,
+					 "ENCRYPT algorithm %s with key length %u is not supported",
+					 enum_showb(&oakley_enc_names, ealg_id, &buf),
+					 ek_bits);
+				return err_buf;
 			}
 		}
 	}
@@ -642,16 +690,17 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		}
 		if (aalg == NULL) {
 			struct esb_buf buf;
-			loglog(RC_LOG_SERIOUS,
-			       "PRF algorithm %s=%d is not supported",
-			       enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
-			       aalg_id);
-			return;
+			snprintf(err_buf, err_buf_len,
+				 "PRF algorithm %s=%d is not supported",
+				 enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
+				 aalg_id);
+			return err_buf;
 		}
 	}
 
-	ike_add(policy, &ike_defaults, alg_info,
-		ealg, ek_bits, aalg, dh_group);
+	return ike_add(policy, &ike_defaults, alg_info,
+		       ealg, ek_bits, aalg, NULL, dh_group,
+		       err_buf, err_buf_len);
 }
 
 const struct parser_param ike_parser_param = {

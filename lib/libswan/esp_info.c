@@ -238,11 +238,12 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 /*
  * Add ESP alg info _with_ logic (policy):
  */
-static void alg_info_esp_add(const struct parser_policy *const policy UNUSED,
-			     struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     const struct oakley_group_desc *dh_group UNUSED)
+static const char *alg_info_esp_add(const struct parser_policy *const policy UNUSED,
+				    struct alg_info *alg_info,
+				    int ealg_id, int ek_bits,
+				    int aalg_id,
+				    const struct oakley_group_desc *dh_group UNUSED,
+				    char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
 	/* Policy: default to AES */
 	if (ealg_id == 0)
@@ -278,16 +279,18 @@ static void alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 					AUTH_ALGORITHM_HMAC_SHA1);
 		}
 	}
+	return NULL;
 }
 
 /*
  * Add AH alg info _with_ logic (policy):
  */
-static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
-			    struct alg_info *alg_info,
-			    int ealg_id, int ek_bits,
-			    int aalg_id,
-			    const struct oakley_group_desc *dh_group UNUSED)
+static const char *alg_info_ah_add(const struct parser_policy *const policy UNUSED,
+				   struct alg_info *alg_info,
+				   int ealg_id, int ek_bits,
+				   int aalg_id,
+				   const struct oakley_group_desc *dh_group UNUSED,
+				   char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
 	/* ah=null is invalid */
 	if (aalg_id > 0) {
@@ -311,6 +314,7 @@ static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 				ealg_id, ek_bits,
 				AUTH_ALGORITHM_HMAC_SHA1);
 	}
+	return NULL;
 }
 
 const struct parser_param esp_parser_param = {

@@ -5,7 +5,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,36 @@ struct parser_policy {
 	bool ikev2;
 };
 
+/*
+ * Place holder so that it is possible to clearly differentiate
+ * between an unspecified rather than 'null' integrity algorithm.
+ *
+ * NOTE:
+ *
+ * The callback .alg_info_add() is passed NULL to identify an
+ * unspecified algorithm (in keeping with the C tradition of 'no
+ * value'), and either 'alg_info_integ_null' or 'ike_alg_encrypt_null'
+ * to identify an explicitly specified 'null' algorithm
+ *
+ * Only when the algorithm is NULL (unspecified or missing) should
+ * .alg_info_add() consider adding in defaults.  For instance: in
+ * esp=aes, neither the integrity nor DH algorithm were specified so
+ * both would be NULL; however in esp=aes_gcm-null, integrity was
+ * specified as 'null' so 'ike_alg_integ_null' is used, but DH would
+ * still be NULL.
+ *
+ * 'struct state', on the other hand, uses NULL for 'null' integrity,
+ * and 'ike_alg_encrypt_null' for 'null' encryption.  .alg_info_add()
+ * must deal with this (for the moment, 'ike_alg_integ_null' should
+ * never escape the parser).
+ *
+ * Why not use NULL for 'null' and something else for unspecifed in
+ * the parser?  Several reasons: as noted above, NULL is C's universal
+ * identifier of 'no value'; having having lots of ike_alg_XXX_missing
+ * structs quickly gets more messy.
+ */
+extern const struct integ_desc alg_info_integ_null;
+
 struct parser_param {
        const char *protocol;
        enum ike_alg_key ikev1_alg_id;
@@ -45,13 +75,23 @@ struct parser_param {
         * agnostic.
         */
 	unsigned protoid;
-	void (*alg_info_add)(const struct parser_policy *const policy,
-			     struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     const struct oakley_group_desc *dh_group);
+	/*
+	 * If things go wrong, return a non-null error string
+	 * (possibly snprintf'd into ERR_BUF).
+	 */
+	const char *(*alg_info_add)(const struct parser_policy *const policy,
+				    struct alg_info *alg_info,
+				    int ealg_id, int ek_bits,
+				    int aalg_id,
+				    const struct oakley_group_desc *dh_group,
+				    char *err_buf, size_t err_buf_len);
 	int (*ealg_getbyname)(const char *const str);
 	int (*aalg_getbyname)(const char *const str);
+
+	/*
+	 * This lookup functions must set err and return null if NAME
+	 * isn't valid.
+	 */
 	const struct oakley_group_desc *(*group_byname)(const struct parser_param *param,
 							const struct parser_policy *const policy,
 							char *err_buf, size_t err_buf_len,

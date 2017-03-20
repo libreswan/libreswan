@@ -26,8 +26,11 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-/* abstract reference */
-struct oakley_group_desc;
+const struct integ_desc alg_info_integ_null = {
+       .common = {
+               .name = "XXX-NULL-XXX",
+       },
+};
 
 /*
  *	Creates a new alg_info by parsing passed string
@@ -613,12 +616,12 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-	p_ctx->param->alg_info_add(&p_ctx->policy,
-				   alg_info,
-				   ealg_id, p_ctx->eklen,
-				   aalg_id,
-				   group);
-	return NULL;
+	return p_ctx->param->alg_info_add(&p_ctx->policy,
+					  alg_info,
+					  ealg_id, p_ctx->eklen,
+					  aalg_id,
+					  group,
+					  err_buf, err_buf_len);
 #	undef COMMON_KEY_LENGTH
 }
 
@@ -643,7 +646,8 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0);
+		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0,
+				    err_buf, err_buf_len);
 
 	ptr = alg_str;
 	do {
