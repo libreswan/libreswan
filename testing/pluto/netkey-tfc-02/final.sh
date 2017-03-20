@@ -1,5 +1,5 @@
 # ESP should not show TFC
-grep "PARENT SA established" /tmp/pluto.log
+grep " IPsec SA established tunnel mode" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

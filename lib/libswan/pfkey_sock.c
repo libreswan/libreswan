@@ -58,7 +58,7 @@ int pfkey_open_sock_with_error(void)
 			break;
 		case EBUSY:
 			fprintf(stderr,
-				"KLIPS is busy.  Most likely a serious internal error occured in a previous command. Please report as much detail as possible to development team.\n");
+				"KLIPS is busy.  Most likely a serious internal error occurred in a previous command. Please report as much detail as possible to development team.\n");
 			break;
 		case EINVAL:
 			fprintf(stderr,

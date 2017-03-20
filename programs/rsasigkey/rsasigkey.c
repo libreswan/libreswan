@@ -6,8 +6,8 @@
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
- * Copyright (C) 2016, Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -105,7 +105,7 @@ char *progname = "ipsec rsasigkey";  /* for messages */
 
 /* forwards */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco);
-void getrandom(size_t nbytes, unsigned char *buf);
+void lsw_random(size_t nbytes, unsigned char *buf);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 /*
@@ -137,14 +137,26 @@ static char *base64_bundle(int e, chunk_t modulus)
 	return bundle;
 }
 
-/* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
+/*
+ * UpdateRNG - Updates NSS's PRNG with user generated entropy
+ *
+ * pluto and rsasigkey use the NSS crypto library as its random source.
+ * Some government Three Letter Agencies require that pluto reads additional
+ * bits from /dev/random and feed these into the NSS RNG before drawing random
+ * from the NSS library, despite the NSS library itself already seeding its
+ * internal state. This process can block pluto or rsasigkey for an extended
+ * time during startup, depending on the entropy of the system. Therefor,
+ * the default is to not perform this redundant seeding. If specifying a
+ * value, it is recommended to specify at least 460 bits (for FIPS) or 440
+ * bits (for BSI).
+ */
 static void UpdateNSS_RNG(int seedbits)
 {
 	SECStatus rv;
 	int seedbytes = BYTES_FOR_BITS(seedbits);
 	unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
 
-	getrandom(seedbytes, buf);
+	lsw_random(seedbytes, buf);
 	rv = PK11_RandomUpdate(buf, seedbytes);
 	assert(rv == SECSuccess);
 	messupn(buf, seedbytes);
@@ -380,10 +392,10 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 }
 
 /*
- * getrandom - get some random bytes from /dev/random (or wherever)
+ * lsw_random - get some random bytes from /dev/random (or wherever)
  * NOTE: This is only used for additional seeding of the NSS RNG
  */
-void getrandom(size_t nbytes, unsigned char *buf)
+void lsw_random(size_t nbytes, unsigned char *buf)
 {
 	size_t ndone;
 	int dev;

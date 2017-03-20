@@ -31,7 +31,6 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c ike_info.c anyaddr.c
 	constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
-	nss_copies.c \
 	iprange.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c \
@@ -46,6 +45,10 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c ike_info.c anyaddr.c
 	lswnss.c \
 	pexpect.c \
 	$(X509LIB)
+
+ifeq ($(NSS_REQ_AVA_COPY),true)
+SRCS+=nss_copies.c
+endif
 
 ifeq ($(USE_DNSSEC),true)
 SRCS+=unbound.c
@@ -88,6 +91,11 @@ CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
 # XXX: hack until everything uses a consistent .c.o rule
 CFLAGS+=$(USERLAND_CFLAGS)
 CFLAGS+=${CROSSFLAGS}
+
+ifeq ($(NSS_REQ_AVA_COPY),true)
+CFLAGS+=-DNSS_REQ_AVA_COPY
+endif
+
 
 ARFLAGS=crvs
 EXTHDRS=des.h

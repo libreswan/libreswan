@@ -1,6 +1,7 @@
 # Makefile for the KLIPS interface utilities
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,9 +14,10 @@
 # for more details.
 
 PROGRAM=klipsdebug
+OBJS += $(PROGRAM).o
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 MANPAGES=ipsec_$(PROGRAM).5
-
-LIBS=${LIBRESWANLIB}
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

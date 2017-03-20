@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,6 +73,8 @@
 #define NO_DB_CONTEXT
 #include "db_ops.h"
 #endif
+
+#include "pluto_stats.h"
 
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -155,7 +158,8 @@ void pluto_init_log(void)
  */
 static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 {
-	bool reproc = *fmt == '~';
+	bool reproc = (*fmt == '~') || (*fmt == '#');
+
 	size_t ps;
 	struct connection *c = cur_state != NULL ? cur_state->st_connection :
 			       cur_connection;
@@ -563,7 +567,11 @@ void whack_log(int mess_no, const char *message, ...)
 	if (wfd != NULL_FD || dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
+		int prelen = 0;
+
+		/* support to suppress numeral prefix using # */
+		if (message[0] != '#')
+			prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
 
 		passert(prelen >= 0);
 
@@ -623,7 +631,7 @@ void libreswan_passert_fail(const char *file_str,
 	va_end(args);
 
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s at %s:%lu)",
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s() at %s:%lu)",
 	       m, func_str, file_str, line_no);
 	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
@@ -790,6 +798,7 @@ static void show_system_security(void)
 void show_global_status(void)
 {
 	show_globalstate_status();
+	show_pluto_stats();
 }
 
 void show_status(void)
@@ -1200,7 +1209,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		} else {
 			if (!st->st_ikev2) {
 				/* ikev1 takes integ from prf, ecept of cause gcm */
-				/* but we dont support gcm in ikev1 for now */
+				/* but we don't support gcm in ikev1 for now */
 				jam_str(integname, sizeof(integname), prfname);
 			} else {
 				snprintf(integname, sizeof(integname), "none");
@@ -1212,7 +1221,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
-			enum_short_name(&oakley_group_names, st->st_oakley.group->group));
+			st->st_oakley.group->common.name);
 		break;
 
 	case LAK_CHILD_START:

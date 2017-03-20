@@ -226,7 +226,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef LIBCURL
 	" CURL(non-NSS)"
 #endif
-#ifdef LDAP_VER
+#ifdef LIBLDAP
 	" LDAP(non-NSS)"
 #endif
 ;
@@ -867,7 +867,7 @@ int main(int argc, char **argv)
 		case 'L':	/* --listen ip_addr */
 		{
 			ip_address lip;
-			err_t e = ttoaddr(optarg, 0, AF_UNSPEC, &lip);
+			err_t e = ttoaddr_num(optarg, 0, AF_UNSPEC, &lip);
 
 			if (e != NULL) {
 				/*
@@ -1442,13 +1442,9 @@ int main(int argc, char **argv)
 				close(i);
 
 		/* make sure that stdin, stdout, stderr are reserved */
-		if (open("/dev/null", O_RDONLY) != 0)
-			lsw_abort();
-		if (dup2(0, 1) != 1)
-			lsw_abort();
-		if (!log_to_stderr && dup2(0, 2) != 2)
-
-			lsw_abort();
+		passert(open("/dev/null", O_RDONLY) == 0);
+		passert(dup2(0, 1) == 1);
+		passert(log_to_stderr || dup2(0, 2) == 2);
 	}
 
 	init_constants();
@@ -1700,7 +1696,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_id();
 	init_vendorid();
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	init_fetch();
 #endif
 #ifdef HAVE_LABELED_IPSEC
@@ -1740,7 +1736,7 @@ void exit_pluto(int status)
 	 * forget to do this.
 	 */
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	free_crl_fetch();	/* free chain of crl fetch requests */
 #endif
 

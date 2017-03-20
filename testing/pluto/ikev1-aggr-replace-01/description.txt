@@ -1,0 +1,8 @@
+testing ikev1 aggressive mode uniqueid code. initiator gets new ip and restart.
+This should not cause an "route already in use" on east.
+
+This uses RSA because the code for PSK will (soon) assume uniquids=no like
+behaviour regardless of the actual option set.
+
+libreswan up to and including 3.19 would show two conns on east instead of one.
+

@@ -212,7 +212,7 @@ class Remote:
 
         In addition to matching EXPECT+"\s+"+PROMPT, and to speed up
         error detection, just PROMPT is also matched.  The latter is
-        treated as if a timeout occured.  If things are not kept in
+        treated as if a timeout occurred.  If things are not kept in
         sync, this will match an earlier prompt.  The idea is found in
         DEJAGNU based tools.
 

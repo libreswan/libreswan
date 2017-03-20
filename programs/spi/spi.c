@@ -752,7 +752,7 @@ int main(int argc, char *argv[])
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &edst);
+			error_s = ttoaddr_num(optarg, 0, address_family, &edst);
 			if (error_s != NULL) {
 				if (error_s) {
 					fprintf(stderr,
@@ -953,7 +953,7 @@ int main(int argc, char *argv[])
 					progname, optarg, dst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &dst);
+			error_s = ttoaddr_num(optarg, 0, address_family, &dst);
 			if (error_s != NULL) {
 				fprintf(stderr,
 					"%s: Error, %s converting --dst argument:%s\n",
@@ -1027,7 +1027,7 @@ int main(int argc, char *argv[])
 					progname, optarg, src_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &src);
+			error_s = ttoaddr_num(optarg, 0, address_family, &src);
 			if (error_s != NULL) {
 				fprintf(stderr,
 					"%s: Error, %s converting --src argument:%s\n",
@@ -1576,7 +1576,7 @@ int main(int argc, char *argv[])
 			break;
 		case EBUSY:
 			fprintf(stderr,
-				"KLIPS is busy.  Most likely a serious internal error occured in a previous command.  Please report as much detail as possible to development team.\n");
+				"KLIPS is busy.  Most likely a serious internal error occurred in a previous command.  Please report as much detail as possible to development team.\n");
 			break;
 		case EINVAL:
 			fprintf(stderr,

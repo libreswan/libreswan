@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,15 +18,11 @@
 # -D... goes in here
 USERLAND_CFLAGS=-std=gnu99
 
-ifeq ($(origin GCCM),undefined)
-ifeq ($(ARCH),i686)
-GCCM=-m32
-endif
-ifeq ($(ARCH),x86_64)
-GCCM=-m64
-endif
-endif
-USERLAND_CFLAGS+=$(GCCM)
+# If you want or need to override the default detected arch
+# GCCM=-m32
+# GCCM=-mx32
+# GCCM=-m64
+# USERLAND_CFLAGS+=$(GCCM)
 
 ifeq ($(origin DEBUG_CFLAGS),undefined)
 DEBUG_CFLAGS=-g
@@ -35,7 +31,7 @@ USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
 ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
-# _FORTIFY_SOURCE (to what? who knows!); force it to our prefered
+# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
 # value.
 OPTIMIZE_CFLAGS=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
@@ -44,7 +40,7 @@ USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
 ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
+USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
@@ -69,22 +65,37 @@ endif
 
 ifeq ($(USE_SECCOMP),true)
 USERLAND_CFLAGS+=-DHAVE_SECCOMP
+SECCOMP_LDFLAGS=-lseccomp
 endif
 
 ifeq ($(USE_LIBCURL),true)
 USERLAND_CFLAGS+=-DLIBCURL
+CURL_LDFLAGS ?= -lcurl
 endif
 
 ifeq ($(USE_LINUX_AUDIT),true)
 USERLAND_CFLAGS+=-DUSE_LINUX_AUDIT
+LINUX_AUDIT_LDFLAGS ?= -laudit
+endif
+
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+USERLAND_CFLAGS+=-DUSE_SYSTEMD_WATCHDOG
+SYSTEMD_WATCHDOG_LDFLAGS ?= -lsystemd
 endif
 
 ifeq ($(USE_LDAP),true)
-USERLAND_CFLAGS+=-DLDAP_VER=3
+USERLAND_CFLAGS += -DLIBLDAP
+LDAP_LDFLAGS ?= -lldap -llber
 endif
 
 ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
+endif
+
+# if we use pam for password checking then add it too
+ifeq ($(USE_XAUTHPAM),true)
+USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
+XAUTHPAM_LDFLAGS ?= -lpam
 endif
 
 ifeq ($(USE_SAREF_KERNEL),true)
@@ -131,6 +142,10 @@ USERLAND_CFLAGS+=-DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
 USERLAND_CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS+=-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\"
 USERLAND_CFLAGS+=-DIPSEC_SECRETS_FILE=\"$(IPSEC_SECRETS_FILE)\"
+# Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
+# calls should have been eliminated (replaced by passert()), keep this
+# definition just in case.
+USERLAND_CFLAGS+=-DFORCE_PR_ASSERT
 
 ifeq ($(origin RETRANSMIT_INTERVAL_DEFAULT),undefined)
 USERLAND_CFLAGS+=-DRETRANSMIT_INTERVAL_DEFAULT="500"
@@ -167,7 +182,7 @@ endif
 #
 # Some system's don't suport daemon() and some systems don't support
 # fork().  Since the daemon call can lead to a race it isn't the
-# prefered option.
+# preferred option.
 USE_DAEMON ?= false
 ifeq ($(USE_DAEMON),true)
 USERLAND_CFLAGS += -DUSE_DAEMON=1

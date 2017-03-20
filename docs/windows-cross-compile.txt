@@ -23,7 +23,7 @@ d) cd winsup
       ln -s ../gcc-4.0.1/libstdc++-v3 .
       rm -rf winsup/mingw               # has CC_FOR_TARGET/CC mixups
       rm -rf sid                        # has some problem,and we don't need it
-      rm -rf rda                        # has dependancy on intl, which
+      rm -rf rda                        # has dependency on intl, which
                                         # doesn't get built.
 
 
@@ -95,7 +95,7 @@ the moment.
 WHAT I DID WRONG
 ================
 
-The first time, I tried building binutils seperately.
+The first time, I tried building binutils separately.
 This failed when building GCC 3.x. The problem is that the AR_FOR_TARGET
 macros used in the makefiles for gcc are, it seems expanded a variable number
 of times in different paths, and the t=/echo $$t stuff got expanded by MAKE

@@ -362,30 +362,41 @@ static void init_netlink(void)
 	linux_pfkey_add_hard_wired();
 }
 
+struct nlm_resp {
+	struct nlmsghdr n;
+	union {
+		struct nlmsgerr e;
+		struct xfrm_userpolicy_info pol;	/* netlink_policy_expire */
+		struct xfrm_usersa_info sa;	/* netlink_get_spi */
+		struct xfrm_usersa_info info;	/* netlink_get_sa */
+		char data[MAX_NETLINK_DATA_SIZE];
+	} u;
+};
+
 /*
  * send_netlink_msg
  *
  * @param hdr - Data to be sent.
+ * @param expected_resp_type - type of message expected from netlink
  * @param rbuf - Return Buffer - contains data returned from the send.
- * @param rbuf_len - Length of rbuf
  * @param description - String - user friendly description of what is
  *                      being attempted.  Used for diagnostics
  * @param text_said - String
- * @return bool True if the message was succesfully sent.
+ * @return bool True if the message was successfully sent.
  */
-static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
-			size_t rbuf_len,
+static int netlink_errno;	/* side-channel result of send_netlink_msg */
+
+static bool send_netlink_msg(struct nlmsghdr *hdr,
+			unsigned expected_resp_type, struct nlm_resp *rbuf,
 			const char *description, const char *text_said)
 {
-	struct {
-		struct nlmsghdr n;
-		struct nlmsgerr e;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
+	struct nlm_resp rsp;
 	size_t len;
 	ssize_t r;
 	struct sockaddr_nl addr;
-	static uint32_t seq;
+	static uint32_t seq = 0;	/* STATIC */
+
+	netlink_errno = 0;
 
 	if (kern_interface == NO_KERNEL)
 		return TRUE;
@@ -403,22 +414,21 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 		return FALSE;
 	} else if ((size_t)r != len) {
 		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink write() of %s message for %s %s truncated: %ld instead of %lu",
+			"ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
 			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			description, text_said,
-			(long)r, (unsigned long)len);
+			description, text_said, r, len);
 		return FALSE;
 	}
 
 	for (;;) {
-		socklen_t alen;
+		socklen_t alen = sizeof(addr);
 
-		alen = sizeof(addr);
 		r = recvfrom(netlinkfd, &rsp, sizeof(rsp), 0,
 			(struct sockaddr *)&addr, &alen);
 		if (r < 0) {
 			if (errno == EINTR)
 				continue;
+			netlink_errno = errno;
 			log_errno((e, "netlink recvfrom() of response to our %s message for %s %s failed",
 					sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
@@ -426,8 +436,8 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			libreswan_log(
-				"netlink read truncated message: %ld bytes; ignore message",
-				(long) r);
+				"netlink read truncated message: %zd bytes; ignore message",
+				r);
 			continue;
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
@@ -450,40 +460,44 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 
 	if (rsp.n.nlmsg_len > (size_t) r) {
 		loglog(RC_LOG_SERIOUS,
-			"netlink recvfrom() of response to our %s message for %s %s was truncated: %ld instead of %lu",
+			"netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
 			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			description, text_said,
-			(long) len, (unsigned long) rsp.n.nlmsg_len);
+			len, (size_t) rsp.n.nlmsg_len);
 		return FALSE;
-	} else if (rsp.n.nlmsg_type != NLMSG_ERROR   &&
-		(rbuf != NULL && rsp.n.nlmsg_type != rbuf->nlmsg_type)) {
+	}
+	netlink_errno = -rsp.u.e.error;
+	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
+		if (rsp.u.e.error != 0 && expected_resp_type != NLMSG_NOOP) {
+			loglog(RC_LOG_SERIOUS,
+				"ERROR: netlink response for %s %s included errno %d: %s",
+				description, text_said, -rsp.u.e.error,
+				strerror(-rsp.u.e.error));
+			return FALSE;
+		}
+		/*
+		 * What the heck does a 0 error mean?
+		 * Since the caller doesn't depend on the result
+		 * we'll let it pass.
+		 * This really happens for netlink_add_sa().
+		 */
+		DBG(DBG_KERNEL,
+			DBG_log("netlink response for %s %s included non-error error",
+				description, text_said));
+		/* ignore */
+	}
+	if (rbuf == NULL) {
+		return TRUE;
+	}
+	if (rsp.n.nlmsg_type != expected_resp_type) {
 		loglog(RC_LOG_SERIOUS,
 			"netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			description, text_said,
 			sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
-	} else if (rbuf != NULL) {
-		if ((size_t) r > rbuf_len) {
-			loglog(RC_LOG_SERIOUS,
-				"netlink recvfrom() of response to our %s message for %s %s was too long: %ld > %lu",
-				sparse_val_show(xfrm_type_names,
-						hdr->nlmsg_type),
-				description, text_said,
-				(long)r, (unsigned long)rbuf_len);
-			return FALSE;
-		}
-		memcpy(rbuf, &rsp, r);
-		return TRUE;
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.e.error) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink response for %s %s included errno %d: %s",
-			description, text_said, -rsp.e.error,
-			strerror(-rsp.e.error));
-		errno = -rsp.e.error;
-		return FALSE;
 	}
-
+	memcpy(rbuf, &rsp, r);
 	return TRUE;
 }
 
@@ -498,22 +512,16 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 			const char *text_said)
 {
-	struct {
-		struct nlmsghdr n;
-		struct nlmsgerr e;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
-	int error;
+	struct nlm_resp rsp;
 
-	rsp.n.nlmsg_type = NLMSG_ERROR;
-	if (!send_netlink_msg(hdr, &rsp.n, sizeof(rsp), "policy", text_said))
+	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp, "policy", text_said))
 		return FALSE;
 
-	error = -rsp.e.error;
-	if (error == 0)
-		return TRUE;
+	/* kind of surprising: we get here by success which implies an error structure! */
 
-	if (error == ENOENT && enoent_ok)
+	int error = -rsp.u.e.error;
+
+	if (error == 0 || (error == ENOENT && enoent_ok))
 		return TRUE;
 
 	loglog(RC_LOG_SERIOUS,
@@ -569,16 +577,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		} u;
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
-	int shift;
-	int dir;
-	int family;
-	int policy;
-	bool ok;
-	bool enoent_ok;
-	ip_subnet local_client;
+
 	int satype = 0;
 
-	policy = IPSEC_POLICY_IPSEC;
+	int policy = IPSEC_POLICY_IPSEC;
 
 	switch (esatype) {
 	case ET_UNSPEC:
@@ -610,7 +612,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			break;
 		case SPI_HOLD:
 			/*
-			 * We don't know how to implement %hold, but it is okay
+			 * We don't know how to implement %hold, but it is okay.
 			 * When we need a hold, the kernel XFRM acquire state
 			 * will do the job (by dropping or holding the packet)
 			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
@@ -635,6 +637,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			bad_case(ntohl(new_spi));
 		}
 		break;
+
 	default:
 		bad_case(esatype);
 	}
@@ -644,10 +647,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				satype));
 	}
 
-	if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
-		dir = XFRM_POLICY_IN;
-	else
-		dir = XFRM_POLICY_OUT;
+	const int dir = (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
+		XFRM_POLICY_IN : XFRM_POLICY_OUT;
 
 	/*
 	 * Bug #1004 fix.
@@ -655,6 +656,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * so eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
+	ip_subnet local_client;
+
 	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == SA_ESP) {
 		/*
 		 * Variable "that" should be remote, but here it's not.
@@ -680,8 +683,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	family = that_client->addr.u.v4.sin_family;
-	shift = (family == AF_INET) ? 5 : 7;
+	const int family = that_client->addr.u.v4.sin_family;
+	const int shift = (family == AF_INET) ? 5 : 7;
 
 	req.u.p.sel.sport = portof(&this_client->addr);
 	req.u.p.sel.dport = portof(&that_client->addr);
@@ -857,12 +860,16 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 #endif
 
-	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
+	bool enoent_ok = sadb_op == ERO_DEL_INBOUND ||
+		(sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
-	ok = netlink_policy(&req.n, enoent_ok, text_said);
+	bool ok = netlink_policy(&req.n, enoent_ok, text_said);
+
+	/* ??? deal with any forwarding policy */
 	switch (dir) {
 	case XFRM_POLICY_IN:
 		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY) {
+			/* ??? we will call netlink_policy even if !ok. */
 			req.u.id.dir = XFRM_POLICY_FWD;
 		} else if (!ok) {
 			break;
@@ -885,7 +892,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
  *
  * @param sa Kernel SA to add/modify
  * @param replace boolean - true if this replaces an existing SA
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 {
@@ -1251,8 +1258,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
-	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
-	if (!ret && errno == ESRCH &&
+	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Add SA", sa->text_said);
+	if (!ret && netlink_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
 			"Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
@@ -1264,7 +1271,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
  * netlink_del_sa - Delete an SA from the Kernel
  *
  * @param sa Kernel SA to be deleted
- * @return bool True if successfull
+ * @return bool True if successful
  */
 static bool netlink_del_sa(const struct kernel_sa *sa)
 {
@@ -1286,7 +1293,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	return send_netlink_msg(&req.n, NULL, 0, "Del SA", sa->text_said);
+	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Del SA", sa->text_said);
 }
 
 /*
@@ -1354,14 +1361,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 #endif
 
 	DBG(DBG_KERNEL,
-		DBG_log("xfrm netlink msg len %lu",
-			(unsigned long) n->nlmsg_len));
+		DBG_log("xfrm netlink msg len %zu",
+			(size_t) n->nlmsg_len));
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
 		libreswan_log(
-			"netlink_acquire got message with length %lu < %lu bytes; ignore message",
-			(unsigned long) n->nlmsg_len,
-			(unsigned long) sizeof(*acquire));
+			"netlink_acquire got message with length %zu < %zu bytes; ignore message",
+			(size_t) n->nlmsg_len,
+			sizeof(*acquire));
 		return;
 	}
 
@@ -1541,17 +1548,13 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_id id;
 	} req;
-	struct {
-		struct nlmsghdr n;
-		struct xfrm_userpolicy_info pol;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
+	struct nlm_resp rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
 		libreswan_log(
-			"netlink_policy_expire got message with length %lu < %lu bytes; ignore message",
-			(unsigned long) n->nlmsg_len,
-			(unsigned long) sizeof(*upe));
+			"netlink_policy_expire got message with length %zu < %zu bytes; ignore message",
+			(size_t) n->nlmsg_len,
+			sizeof(*upe));
 		return;
 	}
 
@@ -1574,31 +1577,27 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	/* ??? would next call ever succeed AA_2015 MAY */
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
-				"Get policy", "?")) {
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy", "?")) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 				req.id.dir, req.id.index));
-	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.pol))) {
+	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
 		libreswan_log(
-			"netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %lu < %lu bytes; ignore message",
-			(unsigned long) rsp.n.nlmsg_len,
-			(unsigned long) sizeof(rsp.pol));
-	} else if (req.id.index != rsp.pol.index) {
+			"netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
+			(size_t) rsp.n.nlmsg_len,
+			sizeof(rsp.u.pol));
+	} else if (req.id.index != rsp.u.pol.index) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
-				req.id.dir, req.id.index, rsp.pol.index));
-	} else if (upe->pol.curlft.add_time != rsp.pol.curlft.add_time) {
+				req.id.dir, req.id.index, rsp.u.pol.index));
+	} else if (upe->pol.curlft.add_time != rsp.u.pol.curlft.add_time) {
 		DBG(DBG_KERNEL,
 			DBG_log("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
 				req.id.dir, req.id.index));
 	} else {
 		switch (upe->pol.dir) {
 		case XFRM_POLICY_OUT:
-			netlink_shunt_expire(&rsp.pol);
+			netlink_shunt_expire(&rsp.u.pol);
 			break;
 		}
 	}
@@ -1607,10 +1606,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 /* returns FALSE iff EAGAIN */
 static bool netlink_get(void)
 {
-	struct {
-		struct nlmsghdr n;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
+	struct nlm_resp rsp;
 	struct sockaddr_nl addr;
 	socklen_t alen = sizeof(addr);
 	ssize_t r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
@@ -1638,9 +1634,8 @@ static bool netlink_get(void)
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		libreswan_log(
-			"netlink_get read message with length %ld that doesn't equal nlmsg_len %lu bytes; ignore message",
-			(long) r,
-			(unsigned long) rsp.n.nlmsg_len);
+			"netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
+			r, (size_t) rsp.n.nlmsg_len);
 		return TRUE;
 	}
 
@@ -1681,14 +1676,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		struct nlmsghdr n;
 		struct xfrm_userspi_info spi;
 	} req;
-	struct {
-		struct nlmsghdr n;
-		union {
-			struct nlmsgerr e;
-			struct xfrm_usersa_info sa;
-		} u;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
+	struct nlm_resp rsp;
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1703,38 +1691,18 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
 
-	rsp.n.nlmsg_type = XFRM_MSG_NEWSA;
-
 	req.spi.min = min;
 	req.spi.max = max;
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp, "Get SPI",
 				text_said)) {
 		return 0;
 	}
 
-	if (rsp.n.nlmsg_type == NLMSG_ERROR &&
-		rsp.u.e.error == -EINVAL &&
-		proto == IPPROTO_COMP) {
-		libreswan_log("netlink_get_spi: trying workaround for kernel CPI allocation bug");
-
-		req.spi.min = htonl(min);
-		req.spi.max = htonl(max);
-		if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
-					text_said)) {
-			return 0;
-		}
-	}
-
-	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink_get_spi for %s failed with errno %d: %s",
-			text_said, -rsp.u.e.error, strerror(-rsp.u.e.error));
-		return 0;
-	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
+	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
 		libreswan_log(
-			"netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %lu < %lu bytes; ignore message",
-			(unsigned long) rsp.n.nlmsg_len,
-			(unsigned long) sizeof(rsp.u.sa));
+			"netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
+			(size_t) rsp.n.nlmsg_len,
+			sizeof(rsp.u.sa));
 		return 0;
 	}
 
@@ -2009,7 +1977,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen) {
-		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+		err_t e = ttoaddr_num(pluto_listen, 0, AF_UNSPEC, &lip);
 
 		if (e != NULL) {
 			DBG_log("invalid listen= option ignored: %s", e);
@@ -2095,7 +2063,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 		if (kern_interface == USE_NETKEY) {
 			v = ifp;
-			goto add_entry;
 		}
 
 		/* what if we didn't find a virtual interface? */
@@ -2130,141 +2097,130 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		 * We've got all we need; see if this is a new thing:
 		 * search old interfaces list.
 		 */
-add_entry:
+
 		/*
-		 * last check before we actually add the entry due to ugly
-		 * goto code
+		 * last check before we actually add the entry.
 		 *
 		 * ignore if --listen is specified and we do not match
 		 */
-		if (pluto_listen != NULL) {
-			if (!sameaddr(&lip, &ifp->addr)) {
-				ipstr_buf b;
+		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+			ipstr_buf b;
 
-				libreswan_log("skipping interface %s with %s",
-					ifp->name, ipstr(&ifp->addr, &b));
-				continue;
-			}
+			libreswan_log("skipping interface %s with %s",
+				ifp->name, ipstr(&ifp->addr, &b));
+			continue;
 		}
 
-		{
-			struct iface_port **p = &interfaces;
+		struct iface_port **p = &interfaces;
 
-			for (;;) {
-				struct iface_port *q = *p;
-				struct iface_dev *id = NULL;
+		for (;;) {
+			struct iface_port *q = *p;
+			struct iface_dev *id = NULL;
 
-				/* search is over if at end of list */
-				if (q == NULL) {
-					/*
-					 * matches nothing --
-					 * create a new entry
-					 */
-					ipstr_buf b;
-					int fd = create_socket(ifp, v->name,
-							pluto_port);
+			/* search is over if at end of list */
+			if (q == NULL) {
+				/* matches nothing -- create a new entry */
+				ipstr_buf b;
+				int fd = create_socket(ifp, v->name,
+						pluto_port);
 
+				if (fd < 0)
+					break;
+
+				q = alloc_thing(struct iface_port,
+						"struct iface_port");
+				id = alloc_thing(struct iface_dev,
+						"struct iface_dev");
+
+				LIST_INSERT_HEAD(&interface_dev, id,
+						id_entry);
+
+				q->ip_dev = id;
+				id->id_rname = clone_str(ifp->name,
+							"real device name");
+				id->id_vname = clone_str(v->name,
+							"virtual device name netlink");
+				id->id_count++;
+
+				q->ip_addr = ifp->addr;
+				q->fd = fd;
+				q->next = interfaces;
+				q->change = IFN_ADD;
+				q->port = pluto_port;
+				q->ike_float = FALSE;
+
+				interfaces = q;
+
+				libreswan_log(
+					"adding interface %s/%s %s:%d",
+					q->ip_dev->id_vname,
+					q->ip_dev->id_rname,
+					ipstr(&q->ip_addr, &b),
+					q->port);
+
+				/*
+				 * right now, we do not support NAT-T
+				 * on IPv6, because  the kernel did
+				 * not support it, and gave an error
+				 * it one tried to turn it on.
+				 */
+				if (addrtypeof(&ifp->addr) == AF_INET) {
+					fd = create_socket(ifp,
+							v->name,
+							pluto_nat_port);
 					if (fd < 0)
 						break;
-
-					q = alloc_thing(struct iface_port,
-							"struct iface_port");
-					id = alloc_thing(struct iface_dev,
-							"struct iface_dev");
-
-					LIST_INSERT_HEAD(&interface_dev, id,
-							id_entry);
-
+					nat_traversal_espinudp_socket(
+						fd, "IPv4");
+					q = alloc_thing(
+						struct iface_port,
+						"struct iface_port");
 					q->ip_dev = id;
-					id->id_rname = clone_str(ifp->name,
-								"real device name");
-					id->id_vname = clone_str(v->name,
-								"virtual device name netlink");
 					id->id_count++;
 
 					q->ip_addr = ifp->addr;
+					setportof(htons(pluto_nat_port),
+						&q->ip_addr);
+					q->port = pluto_nat_port;
 					q->fd = fd;
 					q->next = interfaces;
 					q->change = IFN_ADD;
-					q->port = pluto_port;
-					q->ike_float = FALSE;
-
+					q->ike_float = TRUE;
 					interfaces = q;
-
 					libreswan_log(
 						"adding interface %s/%s %s:%d",
-						q->ip_dev->id_vname,
-						q->ip_dev->id_rname,
+						q->ip_dev->id_vname, q->ip_dev->id_rname,
 						ipstr(&q->ip_addr, &b),
 						q->port);
-
-					/*
-					 * right now, we do not support NAT-T
-					 * on IPv6, because  the kernel did
-					 * not support it, and gave an error
-					 * it one tried to turn it on.
-					 */
-					if (addrtypeof(&ifp->addr) == AF_INET) {
-						fd = create_socket(ifp,
-								v->name,
-								pluto_nat_port);
-						if (fd < 0)
-							break;
-						nat_traversal_espinudp_socket(
-							fd, "IPv4");
-						q = alloc_thing(
-							struct iface_port,
-							"struct iface_port");
-						q->ip_dev = id;
-						id->id_count++;
-
-						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_nat_port),
-							&q->ip_addr);
-						q->port = pluto_nat_port;
-						q->fd = fd;
-						q->next = interfaces;
-						q->change = IFN_ADD;
-						q->ike_float = TRUE;
-						interfaces = q;
-						libreswan_log(
-							"adding interface %s/%s %s:%d",
-							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ipstr(&q->ip_addr, &b),
-							q->port);
-					}
-
-					break;
 				}
 
-				/* search over if matching old entry found */
-				if (streq(q->ip_dev->id_rname, ifp->name) &&
-					streq(q->ip_dev->id_vname, v->name) &&
-					sameaddr(&q->ip_addr, &ifp->addr)) {
-					/* matches -- rejuvinate old entry */
-					q->change = IFN_KEEP;
+				break;
+			}
 
-					/*
-					 * look for other interfaces to keep
-					 * (due to NAT-T)
-					 */
-					for (q = q->next; q; q = q->next) {
-						if (streq(q->ip_dev->id_rname,
-								ifp->name) &&
-							streq(q->ip_dev->id_vname,
-								v->name) &&
-							sameaddr(&q->ip_addr,
-								&ifp->addr))
-							q->change = IFN_KEEP;
-					}
+			/* search over if matching old entry found */
+			if (streq(q->ip_dev->id_rname, ifp->name) &&
+				streq(q->ip_dev->id_vname, v->name) &&
+				sameaddr(&q->ip_addr, &ifp->addr)) {
+				/* matches -- rejuvinate old entry */
+				q->change = IFN_KEEP;
 
-					break;
+				/*
+				 * look for other interfaces to keep
+				 * (due to NAT-T)
+				 */
+				for (q = q->next; q; q = q->next) {
+					if (streq(q->ip_dev->id_rname, ifp->name) &&
+					    streq(q->ip_dev->id_vname, v->name) &&
+					    sameaddr(&q->ip_addr, &ifp->addr))
+						q->change = IFN_KEEP;
 				}
 
-				/* try again */
-				p = &q->next;
-			}	/* for (;;) */
-		}
+				break;
+			}
+
+			/* try again */
+			p = &q->next;
+		} /* for (;;) */
 	}
 
 	/* delete the raw interfaces list */
@@ -2282,7 +2238,7 @@ add_entry:
  * @param sa Kernel SA to be queried
  * @return bool True if successful
  */
-static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
+static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		uint64_t *add_time)
 {
 	struct {
@@ -2290,11 +2246,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 		struct xfrm_usersa_id id;
 	} req;
 
-	struct {
-		struct nlmsghdr n;
-		struct xfrm_usersa_info info;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} rsp;
+	struct nlm_resp rsp;
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -2307,18 +2259,12 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
-	rsp.n.nlmsg_type = XFRM_MSG_NEWSA;
 
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SA",
-				sa->text_said))
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp, "Get SA", sa->text_said))
 		return FALSE;
 
-	/*
-	 * ??? CLANG 3.5 think that "Assigned value is garbage or undefined".
-	 * It's right.  See <linux/xfrm.h>: bytes has type __u64.
-	 */
-	*bytes = (u_int) rsp.info.curlft.bytes;
-	*add_time = rsp.info.curlft.add_time;
+	*bytes = rsp.u.info.curlft.bytes;
+	*add_time = rsp.u.info.curlft.add_time;
 	return TRUE;
 }
 

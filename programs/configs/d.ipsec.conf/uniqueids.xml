@@ -1,17 +1,20 @@
   <varlistentry>
   <term><emphasis remap='B'>uniqueids</emphasis></term>
   <listitem>
-<para>whether a particular participant ID should be kept unique,
-with any new (automatically keyed)
-connection using an ID from a different IP address
-deemed to replace all old ones using that ID.
-Acceptable values are <emphasis remap='B'>yes</emphasis>
-(the default)
-and
-<emphasis remap='B'>no</emphasis>.
-Participant IDs normally <emphasis remap='I'>are</emphasis> unique,
-so a new (automatically-keyed) connection using the same ID is
-almost invariably intended to replace an old one.</para>
-
+<para> Whether IDs should be considered identifying remote parties
+uniquely. Acceptable values are <emphasis remap='B'>yes</emphasis> (the
+default) and <emphasis remap='B'>no</emphasis>.  Participant IDs normally
+are unique, so a new connection instance using the same remote ID is
+almost invariably intended to replace an old existing connection.
+</para>
+<para> When the connection is defined to be a server (using xauthserver=)
+and the connection policy is authby=secret, this option is ignored (as
+of 3.20) and old connections will never be replaced.  This situation is
+commonly known as clients using a "Group ID".
+</para>
+<para> This option may disappear in the near future. People using identical
+X.509 certificates on multiple devices are urged to upgrade to use seperate
+certificates per client and device.
+</para>
   </listitem>
   </varlistentry>

@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add north-east
+002 added connection description "north-east"
+east #
+ echo "initdone"
+initdone
+east #
+ # should not match anything
+east #
+ grep "already in use" /tmp/pluto.log
+east #
+ # should only show 1 connection
+east #
+ ipsec whack --trafficstatus
+006 #4: "north-east"[2] 192.1.3.34, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=testing@libreswan.org'
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

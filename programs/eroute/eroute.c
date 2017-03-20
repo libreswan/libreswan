@@ -662,7 +662,7 @@ int main(int argc, char **argv)
 
 	if (debug) {
 		fprintf(stdout,
-			"%s: DEBUG: pfkey_msg_hdr_build successfull.\n",
+			"%s: DEBUG: pfkey_msg_hdr_build successful.\n",
 			progname);
 	}
 
@@ -942,7 +942,7 @@ sa_build:
 			break;
 		case EBUSY:
 			fprintf(stderr,
-				"KLIPS is busy.  Most likely a serious internal error occured in a previous command.  Please report as much detail as possible to development team.\n");
+				"KLIPS is busy.  Most likely a serious internal error occurred in a previous command.  Please report as much detail as possible to development team.\n");
 			break;
 		case ENODEV:
 			fprintf(stderr, "KLIPS not loaded or enabled.\n");
@@ -1007,7 +1007,7 @@ sa_build:
  * Patch from mt@suse.de to avoid GCC warnings with system() calls
  *
  * Revision 1.66  2005/07/08 02:56:38  paul
- * gcc4 fixes that were not commited because vault was down
+ * gcc4 fixes that were not committed because vault was down
  *
  * Revision 1.65  2005/03/22 23:14:54  ken
  * *** empty log message ***
@@ -1074,7 +1074,7 @@ sa_build:
  *
  * Revision 1.46  2001/10/02 17:03:45  rgb
  * Check error return for all "tto*" calls and report errors.  This, in
- * conjuction with the fix to "tto*" will detect AF not set.
+ * conjunction with the fix to "tto*" will detect AF not set.
  *
  * Revision 1.45  2001/09/07 22:12:27  rgb
  * Added EAFNOSUPPORT error return explanation for KLIPS not loaded.

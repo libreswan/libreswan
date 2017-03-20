@@ -150,7 +150,7 @@ sub D_ENCRYPT
 	&xor(	$t,		$R		);
 	&rotr(	$t,		4		);
 
-	# the numbers at the end of the line are origional instruction order
+	# the numbers at the end of the line are original instruction order
 	&mov(	$tmp2,		$u		);			# 1 2
 	&mov(	$tmp1,		$t		);			# 1 1
 	&and(	$tmp2,		"0xfc"		);			# 1 4

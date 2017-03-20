@@ -1,5 +1,5 @@
 
-PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/freebsd/include -isystem /usr/local/include
+PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/freebsd/include -isystem /usr/local/include
 PORTDEFINE+=-DHAS_SUN_LEN -DNEED_SIN_LEN
 
 # no KLIPS, we will be using FreeBSD copy of pfkey code.

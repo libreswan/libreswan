@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -222,11 +222,25 @@ bool ikev1_out_sa(pb_stream *outs,
 	struct db_sa *revised_sadb;
 
 	if (oakley_mode) {
-		/* Aggr-Mode - Max transforms == 2 - Multiple transforms, 1 DH group */
-		revised_sadb = oakley_alg_makedb(
-			st->st_connection->alg_info_ike,
-			sadb,
-			aggressive_mode);
+		/*
+		 * Construct the proposals by combining ALG_INFO_IKE
+		 * with the AUTH (proof of identity) extracted from
+		 * the (default?) SADB.  As if by magic, attrs[2] is
+		 * always the authentication method.
+		 *
+		 * XXX: Should replace SADB with a simple map to the
+		 * auth method.
+		 */
+		struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		enum ikev1_auth_method auth_method = auth->val;
+		/*
+		 * Aggr-Mode - Max transforms == 2 - Multiple
+		 * transforms, 1 DH group
+		 */
+		revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+						 auth_method,
+						 aggressive_mode);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->alg_info_esp,
@@ -488,7 +502,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
 
-				/* Within tranform: Attributes. */
+				/* Within transform: Attributes. */
 
 				/* For Phase 2 / Quick Mode, GROUP_DESCRIPTION is
 				 * automatically generated because it must be the same
@@ -624,9 +638,34 @@ bool ikev1_out_sa(pb_stream *outs,
 
 					if (oakley_mode) {
 						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
-							int defkeysize = crypto_req_keysize(CRK_IKEv1, a->val);
-
-							if (defkeysize != 0) {
+							const struct encrypt_desc *enc = ikev1_get_ike_encrypt_desc(a->val);
+							passert(enc); /* algorithm known */
+							/*
+							 * Since
+							 * spdb_struct.c
+							 * should have
+							 * added
+							 * default
+							 * keys when
+							 * needed, the
+							 * only way
+							 * this path
+							 * can be
+							 * executed is
+							 * when the
+							 * length
+							 * should be
+							 * omitted
+							 * (i.e.,
+							 * 3des).
+							 * i.e., this
+							 * code path
+							 * is dead.
+							 */
+							pexpect(enc->keylen_omitted);
+							if (!enc->keylen_omitted) {
+								int defkeysize = enc->keydeflen;
+								passert(defkeysize); /* never ike=NULL */
 								DBG(DBG_CONTROLMORE, DBG_log("inserting default oakley key length attribute payload of %d bits",
 									defkeysize));
 								if (!out_attr(OAKLEY_KEY_LENGTH,
@@ -777,51 +816,13 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	 * in a connection's policy.
 	 *
 	 * If both PSK and RSASIG are present now, that means that
-	 * either is acceptible.  The right way to express this is
+	 * either is acceptable.  The right way to express this is
 	 * to turn both off!
 	 */
 	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
 		policy &= ~(POLICY_PSK | POLICY_RSASIG);
 
 	return policy;
-}
-
-static bool ike_alg_enc_ok(int ealg, unsigned key_len,
-			   struct alg_info_ike *alg_info_ike __attribute__((unused)),
-			   const char **errp, char *ugh_buf, size_t ugh_buf_len)
-{
-	int ret = TRUE;
-	const struct encrypt_desc *enc_desc = ikev1_get_ike_encrypt_desc(ealg);
-
-	passert(ugh_buf_len != 0);
-	if (enc_desc == NULL) {
-		/* failure: encrypt algo must be present */
-		snprintf(ugh_buf, ugh_buf_len, "encrypt algo not found");
-		ret = FALSE;
-	} else if (key_len != 0 && !encrypt_has_key_bit_length(enc_desc, key_len)) {
-		/* failure: if key_len specified, it must be in range */
-		snprintf(ugh_buf, ugh_buf_len,
-			 "key_len invalid: encalg=%d, key_len=%d",
-			 ealg, key_len);
-		libreswan_log("ike_alg_enc_ok(): %s", ugh_buf);
-		ret = FALSE;
-	}
-
-	DBG(DBG_KERNEL,
-	    if (ret) {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): blocksize=%d, keydeflen=%d, ret=%d",
-			    ealg, key_len,
-			    (int)enc_desc->enc_blocksize,
-			    enc_desc->keydeflen,
-			    ret);
-	    } else {
-		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): NO",
-			    ealg, key_len);
-	    }
-	    );
-	if (!ret && errp != NULL)
-		*errp = ugh_buf;
-	return ret;
 }
 
 static bool ike_alg_ok_final(int ealg, unsigned key_len,
@@ -878,7 +879,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
  * proposal is emitted.
  *
  * If "selection" is true, the SA is supposed to represent the
- * single tranform that the peer has accepted.
+ * single transform that the peer has accepted.
  * ??? We only check that it is acceptable, not that it is one that we offered!
  *
  * It also means that we are inR1, and this as implications when we are
@@ -892,7 +893,7 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
 				    const struct isakmp_sa *sa,	/* header of input SA Payload */
 				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-				    bool selection,		/* if this SA is a selection, only one tranform
+				    bool selection,		/* if this SA is a selection, only one transform
 								 * can appear. */
 				    struct state *const st)	/* current state object */
 {
@@ -1024,7 +1025,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		u_int16_t life_type = 0;	/* initialized to silence GCC */
 		struct trans_attrs ta;
 		err_t ugh = NULL;       /* set to diagnostic when problem detected */
-		char ugh_buf[256];      /* room for building a diagnostic */
 
 		zero(&ta);	/* ??? may not NULL pointer fields */
 
@@ -1116,28 +1116,25 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				if (ike_alg_enc_ok(val, 0, c->alg_info_ike,
-						   &ugh, ugh_buf,
-						   sizeof(ugh_buf))) {
-					/* if (ike_alg_enc_present(val)) { */
-					ta.encrypt = val;
-					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
-					ta.enckeylen = ta.encrypter->keydeflen;
-				} else switch (val) {
-				case OAKLEY_3DES_CBC:
-					ta.encrypt = val;
-					ta.encrypter = ikev1_get_ike_encrypt_desc(val);
-					break;
-
-				case OAKLEY_DES_CBC:
-					libreswan_log("1DES is not encryption");
-				/* FALL THROUGH */
-				default:
+			{
+				const struct encrypt_desc *encrypter = ikev1_get_ike_encrypt_desc(val);
+				if (encrypter == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_enc_names,
 								  val));
+					break;
 				}
+				if (ike_alg_is_aead(encrypter)) {
+					ugh = builddiag("AEAD algorithm %s is not supported",
+							enum_show(&oakley_enc_names,
+								  val));
+					break;
+				}
+				ta.encrypter = encrypter;
+				ta.encrypt = val;
+				ta.enckeylen = ta.encrypter->keydeflen;
 				break;
+			}
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				ta.prf = ikev1_get_ike_prf_desc(val);
@@ -1146,7 +1143,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 							enum_show(&oakley_hash_names,
 								  val));
 				}
-/* #endif */
 				break;
 
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
@@ -1354,14 +1350,19 @@ rsasig_common:
 					break;
 				}
 				/*
-				 * check if this keylen is compatible with
-				 * specified alg_info_ike
+				 * check if this keylen is compatible
+				 * with specified alg_info_ike.
+				 *
+				 * XXX: The val!=0 guard comes from
+				 * the old ike_alg_enc_ok() function
+				 * which only checked the key bit
+				 * length, when val was non-zero.
+				 * Should val==0 check be added?
 				 */
-				if (!ike_alg_enc_ok(ta.encrypt, val,
-						    c->alg_info_ike, NULL,
-						    ugh_buf,
-						    sizeof(ugh_buf)))
+				if (val != 0 && !encrypt_has_key_bit_length(ta.encrypter, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
+					break;
+				}
 
 				ta.enckeylen = val;
 				break;
@@ -1530,7 +1531,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_trans *trans;
 	struct db_prop  *prop;
 	struct db_prop_conj *cprop;
-	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
 
 	zero(&ta);	/* ??? may not NULL pointer fields */
@@ -1539,9 +1539,28 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.life_seconds = st->st_connection->sa_ike_life_seconds;
 	ta.life_kilobytes = 1000000;
 
-	/* Max transforms == 2 - Multiple transforms, 1 DH group */
-	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 IKEv1_oakley_am_sadb(policy, c), TRUE);
+	/*
+	 * Construct the proposals by combining ALG_INFO_IKE with the
+	 * AUTH (proof of identity) extracted from the aggressive mode
+	 * SADB.  As if by magic, attrs[2] is always the
+	 * authentication method.
+	 *
+	 * XXX: Should replace IKEv1_oakley_am_sadb() with a simple
+	 * map to the auth method.
+	 */
+	struct db_sa *revised_sadb;
+	{
+		struct db_sa *sadb = IKEv1_oakley_am_sadb(policy, c);
+		struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		enum ikev1_auth_method auth_method = auth->val;
+		/*
+		 * Max transforms == 2 - Multiple transforms, 1 DH
+		 * group
+		 */
+		revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+						 auth_method, TRUE);
+	}
 
 	if (revised_sadb == NULL)
 		return FALSE;
@@ -1608,7 +1627,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
  * proposal is emitted into it.
  *
  * If "selection" is true, the SA is supposed to represent the
- * single tranform that the peer has accepted.
+ * single transform that the peer has accepted.
  * ??? We only check that it is acceptable, not that it is one that we offered!
  *
  * Only IPsec DOI is accepted (what is the ISAKMP DOI?).
@@ -1779,7 +1798,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 *
 				 * Note:
 				 *
-				 * GCC now complains about comparisions between
+				 * GCC now complains about comparisons between
 				 * signed and unsigned values.  This is good:
 				 * should the comparison be done as if the
 				 * unsigned representation were signed or as if

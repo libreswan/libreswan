@@ -114,8 +114,15 @@ typedef struct chunk chunk_t;
 #define clonereplacechunk(ch, addr, size, name) \
 	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
 
-#define chunkcpy(dst, chunk) \
-	{ memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; }
+/*
+ * Concatenate the contents of a chunk onto a string.
+ * The destination pointer is incremented by the length.
+ * Pray that there is enough space.
+ */
+#define catchunk(dst, chunk) { \
+		memcpy((dst), (chunk).ptr, (chunk).len); \
+		(dst) += (chunk).len; \
+	}
 
 #define same_chunk(a, b) \
 	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))

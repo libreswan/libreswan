@@ -240,7 +240,7 @@ enum ipsec_rcv_value ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	 * it includes the space for the UDP header.
 	 *
 	 * Note: UDP-encap code has already moved the
-	 *       skb->data forward to accomodate this.
+	 *       skb->data forward to accommodate this.
 	 */
 	encaplen = skb_transport_header(skb) -
 		   (skb_network_header(skb) + irs->iphlen);

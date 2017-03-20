@@ -99,9 +99,11 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 		.names = { "aes", "aes_cbc", },
 		.officname = "aes",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_CBC,
-		.ikev1_esp_id = ESP_AES,
-		.ikev2_id = IKEv2_ENCR_AES_CBC,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CBC,
+			[IKEv1_ESP_ID] = ESP_AES,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CBC,
+		},
 		.fips =        TRUE,
 		.nss_mechanism = CKM_AES_CBC,
 	},
@@ -110,7 +112,7 @@ struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = ike_alg_nss_cbc,
+	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
 };
 
 /*
@@ -305,6 +307,10 @@ static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
+static const struct encrypt_ops aes_ctr_encrypt_ops = {
+	.do_crypt = do_aes_ctr,
+};
+
 struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
@@ -312,9 +318,11 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 		.names = { "aesctr", "aes_ctr", },
 		.officname = "aes_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_CTR,
-		.ikev1_esp_id = ESP_AES_CTR,
-		.ikev2_id = IKEv2_ENCR_AES_CTR,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CTR,
+			[IKEv1_ESP_ID] = ESP_AES_CTR,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CTR,
+		},
 		.fips =        TRUE,
 		.nss_mechanism = CKM_AES_CTR,
 	},
@@ -324,7 +332,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.salt_size = 4,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt =     do_aes_ctr,
+	.encrypt_ops = &aes_ctr_encrypt_ops,
 };
 
 /*
@@ -379,9 +387,11 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 		/* XXX: aes_gcm_16 has aes_gcm as alias */
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_GCM_8,
-		.ikev1_esp_id = ESP_AES_GCM_8,
-		.ikev2_id = IKEv2_ENCR_AES_GCM_8,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_8,
+			[IKEv1_ESP_ID] = ESP_AES_GCM_8,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_8,
+		},
 		.fips =        TRUE,
 		.nss_mechanism = CKM_AES_GCM,
 	},
@@ -392,7 +402,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -402,9 +412,11 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.names = { "aes_gcm_12", "aes_gcm_b" },
 		.officname = "aes_gcm_12",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_GCM_12,
-		.ikev1_esp_id = ESP_AES_GCM_12,
-		.ikev2_id = IKEv2_ENCR_AES_GCM_12,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_12,
+			[IKEv1_ESP_ID] = ESP_AES_GCM_12,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_12,
+		},
 		.fips =        TRUE,
 		.nss_mechanism = CKM_AES_GCM,
 	},
@@ -415,7 +427,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -426,9 +438,11 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.names = { "aes_gcm", "aes_gcm_16", "aes_gcm_c" },
 		.officname = "aes_gcm_16",
 		.algo_type =  IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_GCM_16,
-		.ikev1_esp_id = ESP_AES_GCM_16,
-		.ikev2_id = IKEv2_ENCR_AES_GCM_16,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_16,
+			[IKEv1_ESP_ID] = ESP_AES_GCM_16,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_16,
+		},
 		.fips =        TRUE,
 		.nss_mechanism = CKM_AES_GCM,
 	},
@@ -439,7 +453,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 /*
@@ -456,13 +470,12 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.names = { "aes_ccm_8", "aes_ccm_a" },
 		.officname = "aes_ccm_8",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_CCM_8,
-		.ikev1_esp_id = ESP_AES_CCM_8,
-		.ikev2_id = IKEv2_ENCR_AES_CCM_8,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_8,
+			[IKEv1_ESP_ID] = ESP_AES_CCM_8,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_8,
+		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -480,13 +493,12 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.names = { "aes_ccm_12", "aes_ccm_b" },
 		.officname = "aes_ccm_12",
 		.algo_type =    IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_CCM_12,
-		.ikev1_esp_id = ESP_AES_CCM_12,
-		.ikev2_id = IKEv2_ENCR_AES_CCM_12,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_12,
+			[IKEv1_ESP_ID] = ESP_AES_CCM_12,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_12,
+		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
@@ -504,13 +516,12 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.names = { "aes_ccm", "aes_ccm_16", "aes_ccm_c" },
 		.officname = "aes_ccm_16",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_AES_CCM_16,
-		.ikev1_esp_id = ESP_AES_CCM_16,
-		.ikev2_id = IKEv2_ENCR_AES_CCM_16,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_16,
+			[IKEv1_ESP_ID] = ESP_AES_CCM_16,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_16,
+		},
 		.fips =         TRUE,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_AES_CCM,
-#endif
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -527,19 +538,12 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 		.names = { "aes_xcbc", "aes_xcbc_96", },
 		.officname =  "aes_xcbc",
 		.algo_type = IKE_ALG_INTEG,
-		.ikev1_esp_id = AUTH_ALGORITHM_AES_XCBC,
-		.ikev2_id = IKEv2_AUTH_AES_XCBC_96,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_XCBC,
+			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_XCBC_96,
+		},
 		.fips = TRUE,
 	},
-#ifdef NOT_IMPLMENTED
-	.hash_ctx_size = sizeof(aes_xcbc_context),
-	.hash_key_size = AES_XCBC_DIGEST_SIZE,
-	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
-	.hash_block_size = AES_CBC_BLOCK_SIZE,
-	.hash_init = aes_xcbc_init_thunk,
-	.hash_update = aes_xcbc_write_thunk,
-	.hash_final = aes_xcbc_final_thunk,
-#endif
 	.integ_key_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
@@ -550,12 +554,10 @@ struct integ_desc ike_alg_integ_aes_cmac = {
 		.names = { "aes_cmac", "aes_cmac_96", },
 		.officname =  "aes_cmac",
 		.algo_type = IKE_ALG_INTEG,
-#ifdef NOT_IMPLMENTED
-		/* not supported */
-		.ikev1_oakley_id = AUTH_ALGORITHM_AES_CMAC_96,
-#endif
-		.ikev1_esp_id = AUTH_ALGORITHM_AES_CMAC_96,
-		.ikev2_id = IKEv2_AUTH_AES_CMAC_96,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_CMAC_96,
+			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_CMAC_96,
+		},
 		.fips = TRUE,
 	},
 	.integ_key_size = BYTES_FOR_BITS(128),

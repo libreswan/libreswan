@@ -3,25 +3,57 @@
 # Some tools other than /bin/sh process it.
 #
 
-# test-kind	directory-containing-test	expectation	[PR#]
+# test-kind	directory-containing-test	expectation	[PR#] # comment
 
-# test-kind:
-#  umlplutotest - not yet converted, will not be run with 'make check'
-#  kvmplutotest - coverted to use KVM, will be run with 'make check'
-#  skiptest - skip this test
-#  hwtest - connect to physical test machines, not KVM [FUTURE]
-#  umlXhost - ????
-
-# expectation:
-#  good - output matches known output
-#  bad  - output should NOT match [only for unit tests, not pluto test]
-#  wip  - this test still need work.
-#  skiptest - presumably never test
+# Test Kind:
+#
+#   kvmplutotest: uses KVM (and hopefully docker); will be run by
+#                 default
+#
+#   umlplutotest: not converted to KVM; not run by default.
+#
+#   umlXhost: not converted to KVM; not run by default; requires
+#             missing domains, such as japan
+#
+# Expectation:
+#
+#   good: since reference output for all in-use domains exists and
+#         matches the test consistently passes, hence the test is run
+#         by default
+#
+#   wip: since reference output is either missing (UNRESOLVED) or
+#        often different (FAILED) the the test does not consistently
+#        pass, hence the test is not run by default
+#
+#   skiptest: used for unit tests where a human is expected to examine
+#             the output; this test is not run by default
+#
+#
+# Invoking the testsuite:
+#
+#     make kvm-install
+#     make kvm-test
+#
+# For more info see the output from: make kvm-help
+#
+# To run an individual test that is normally skipped, either invoke
+# make as:
+#
+#     make kvm-test KVM_TESTS=path/to/test/directory
+#
+# or invoke kvmrunner.py directly as:
+#
+#    ./testing/utils/kvmrunner.py path/to/test/directory ...
+#
+# To add the WIP tests to a test run specify:
+#
+#      KVM_TEST_FLAGS=--test-result "good|wip"
+#
+# either as a parameter to make, or added to Makefile.inc.local.
+#
 
 # run the lib/libswan/ tests (make changes broke this)
 kvmplutotest	basic-pluto-00	wip
-
-kvmplutotest	addconn-01	good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
@@ -38,6 +70,13 @@ kvmplutotest	ikev1-initial-contact-01	wip
 kvmplutotest	basic-pluto-01-wrongkey			wip
 kvmplutotest	basic-pluto-01-nokey			wip
 kvmplutotest	basic-pluto-01-vanishingkey		wip
+
+
+#################################################################
+# Parser tests
+#################################################################
+kvmplutotest	addconn-01	good
+
 
 #################################################################
 # IKEv2 tests
@@ -88,11 +127,12 @@ kvmplutotest	ikev2-49-hub-spoke			wip
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			wip
 kvmplutotest	ikev2-53-clean-pending			good
+kvmplutotest	ikev2-54-replace-leave-old		good
 
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
-kvmplutotest	ikev2-27-uniqueid			wip
+kvmplutotest	ikev2-27-uniqueid			good
 kvmplutotest	ikev2-29-no-rekey			good
 kvmplutotest	ikev2-ddns-01				good
 kvmplutotest	ikev2-ddns-02				good
@@ -135,6 +175,10 @@ kvmplutotest	ikev2-algo-sha2-05			good
 kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-08			good
+
+# dh tests
+kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
+kvmplutotest	interop-ikev2-strongswan-33-ike-dh-ecp-responder	good
 
 kvmplutotest	klips-ikev2-algo-sha2-07		wip
 # interop tests for KLIPS-NETKEY with SHA2
@@ -209,6 +253,11 @@ kvmplutotest	nflog-03-conns				good
 kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
 kvmplutotest	netkey-vti-03				wip
+kvmplutotest	netkey-vti-04				wip
+kvmplutotest	netkey-vti-05				good
+kvmplutotest	netkey-vti-06				good
+kvmplutotest	netkey-vti-06b				wip
+kvmplutotest	netkey-vti-06c				good
 
 kvmplutotest	netkey-tfc-01				good
 kvmplutotest	netkey-tfc-02				good
@@ -294,6 +343,9 @@ kvmplutotest	certoe-07-nat-2-clients			good
 kvmplutotest	certoe-08-nat-packet-cop-restart	good
 kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
+kvmplutotest	certoe-12-nat-server			wip
+
+kvmplutotest	ikev2-initiate-template-01		good
 
 kvmplutotest	ikev2-asymmetric-01-parsing		good
 kvmplutotest	ikev2-asymmetric-02-orienting		good
@@ -397,6 +449,9 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
+kvmplutotest	ikev2-child-ipsec	wip
+kvmplutotest	ikev2-child-ipseac-replace-ike	good
+kvmplutotest	ikev2-child-ipsec-responder	good
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
@@ -405,6 +460,7 @@ kvmplutotest	delete-sa-05			wip
 kvmplutotest	delete-sa-06			wip
 kvmplutotest	delete-sa-08-rhbz1311360	good
 kvmplutotest	delete-sa-09-rhbz1311360-c32	good
+kvmplutotest	ikev1-27-uniqueid		good
 
 kvmplutotest	ikev1-rekey-connswitch	wip
 
@@ -552,6 +608,10 @@ kvmplutotest	xauth-pluto-19		good
 kvmplutotest	xauth-pluto-20-pam	good
 
 
+# esp=null-*
+kvmplutotest	ikev1-algo-esp-null-01	good
+kvmplutotest	ikev2-algo-esp-null-01	good
+kvmplutotest	interop-ikev2-strongswan-34-esp-null-responder	good
 
 
 #
@@ -563,11 +623,12 @@ kvmplutotest	aggr-pluto-04		wip
 
 # Various algo tests
 kvmplutotest	ikev1-algo-ike-pfs-01	good
-kvmplutotest	ikev1-algo-esp-null-01	good
 
 kvmplutotest	basic-pluto-01-valgrind	skiptest
 
 kvmplutotest	ikev1-algo-ike-bogus-01	good
+kvmplutotest	ikev1-aggr-sendcert-01	good
+kvmplutotest	ikev1-aggr-replace-01	good
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		wip
@@ -619,14 +680,14 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 #
 # tests for usnig multiple subnets using conn aliases
 #
-kvmplutotest	multinet-01		good
-kvmplutotest	multinet-03		good
+kvmplutotest	multinet-01		wip
+kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
 # transport mode related tests
 umlplutotest	klips-transport-01	good
 umlplutotest	transport-02		good
-umlplutotest	transport-03		bad
+umlplutotest	transport-03		skiptest # bad
 kvmplutotest	nat-transport-02	good
 kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
@@ -656,6 +717,8 @@ kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
 kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev1-strongswan-15-twofish		good
 kvmplutotest	interop-ikev1-strongswan-16-serpent		good
+kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
+kvmplutotest	interop-ikev2-strongswan-32-ip-lease		wip
 
 
 umlplutotest	protoport-01		good
@@ -737,7 +800,8 @@ kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	good
+kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
+kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  wip
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
@@ -783,7 +847,8 @@ kvmplutotest	fips-default-ikev2-02-nofips-west	good
 
 kvmplutotest	fips-03-ikev1-md5			good
 kvmplutotest	fips-04-ikev2-md5			good
-skiptest	fips-05-ikev1-gcm			wip
+# AES GCM and IKEv1 do not work
+kvmplutotest	fips-05-ikev1-gcm			skiptest
 kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
 kvmplutotest	fips-08-ikev2-x509			good

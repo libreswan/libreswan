@@ -652,7 +652,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
  * Handle IKEv1 Known VendorID's.  This function parses what the remote peer
  * sends us, and enables/disables features based on it.  As we go along,
  * we set vid_useful to TRUE if we did something based on this VendorID.  This
- * supresses the 'Ignored VendorID ...' log message.
+ * suppresses the 'Ignored VendorID ...' log message.
  *
  * @param md message_digest
  * @param vidstr VendorID String

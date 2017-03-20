@@ -21,7 +21,7 @@ import logging
 from fab import shell
 from fab import logutil
 
-# Can be anything as it either matches immediatly or dies with EOF.
+# Can be anything as it either matches immediately or dies with EOF.
 CONSOLE_TIMEOUT = 30
 
 class STATE:

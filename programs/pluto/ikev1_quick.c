@@ -901,7 +901,7 @@ stf_status quick_outI1(int whack_sock,
 #endif
 		       )
 {
-	struct state *st = duplicate_state(isakmp_sa);
+	struct state *st = duplicate_state(isakmp_sa, TRUE);
 	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
@@ -968,8 +968,7 @@ stf_status quick_outI1(int whack_sock,
 		char replacestr[32];
 
 		if ((policy & POLICY_PFS) != LEMPTY)
-			pfsgroupname = enum_name(&oakley_group_names,
-						 st->st_pfs_group->group);
+			pfsgroupname = st->st_pfs_group->common.name;
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)
@@ -1526,7 +1525,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 	/* now that we are sure of our connection, create our new state */
 	{
-		struct state *const st = duplicate_state(p1st);
+		struct state *const st = duplicate_state(p1st, IPSEC_SA);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key

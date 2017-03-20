@@ -172,6 +172,8 @@ enum event_type {
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
+	EVENT_v2_INITIATE_CHILD,	/* initiate a IPSec child */
+	EVENT_v2_SEND_NEXT_IKE,	/* send next IKE message using partent*/
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -180,7 +182,7 @@ enum event_type {
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
 /*
- * an arbitary milliseconds delay for responder. A workaround for iOS, iPhone.
+ * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.
  */
 #define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
@@ -269,6 +271,8 @@ typedef enum {
 #define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 32
+
+#define IKE_V2_OVERLAPPING_WINDOW_SIZE	1 /* our default for rfc 7296 # 2.3 */
 
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
@@ -469,6 +473,22 @@ enum state_kind {
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
 	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
+	/* IKEv2 CREATE_CHILD_SA INITIATOR states */
+	STATE_V2_CREATE_I0,     /* ephemeral: sent nothing yet */
+	STATE_V2_CREATE_I,      /* sent first message of CREATE_CHILD new IPsec */
+
+	STATE_V2_REKEY_IKE_I0,  /* ephemeral: sent nothing yet */
+	STATE_V2_REKEY_IKE_I,   /* sent first message (via parrenti) to rekey parent */
+	STATE_V2_REKEY_CHILD_I0,
+	STATE_V2_REKEY_CHILD_I, /* sent first message (via parent to rekey child sa. */
+	/* IKEv2 CREATE_CHILD_SA Responder states */
+	STATE_V2_CREATE_R,     /* ephemeral: sent nothing yet. */
+	STATE_V2_REKEY_IKE_R,  /* ephemeral: sent nothing yet terminal state STATE_PARENT_R2 */
+	STATE_V2_REKEY_CHILD_R,
+
+	STATE_V2_IPSEC_I,	/* IPsec SA final state - CREATE_CHILD & AUTH */
+	STATE_V2_IPSEC_R,
+
 	/* IKEv2 Delete States */
 	STATE_IKESA_DEL,
 	STATE_CHILDSA_DEL,
@@ -550,7 +570,9 @@ enum original_role {
 				       LELEM(STATE_MODE_CFG_R2) | \
 				       LELEM(STATE_MODE_CFG_I1) | \
 				       LELEM(STATE_XAUTH_I0) | \
-				       LELEM(STATE_XAUTH_I1))
+				       LELEM(STATE_XAUTH_I1) | \
+				       LELEM(STATE_PARENT_I3) | \
+				       LELEM(STATE_PARENT_R2))
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
@@ -558,6 +580,8 @@ enum original_role {
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
 				    (s) == STATE_QUICK_R1 || \
 				    (s) == STATE_QUICK_R2 || \
+				    (s) == STATE_V2_IPSEC_I || \
+				    (s) == STATE_V2_IPSEC_R || \
 				    (s) == STATE_PARENT_I3 || \
 				    (s) == STATE_PARENT_R2)
 
@@ -567,7 +591,9 @@ enum original_role {
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
+#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || \
+		(s) == STATE_PARENT_I3 || (s) == STATE_V2_IPSEC_I || \
+		(s) == STATE_V2_IPSEC_R)
 
 #define IS_IKE_SA_ESTABLISHED(st) \
 	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
@@ -580,7 +606,8 @@ enum original_role {
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
+    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2 || \
+      st->st_state == STATE_V2_IPSEC_I || st->st_state == STATE_V2_IPSEC_R) && \
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
@@ -596,6 +623,14 @@ enum original_role {
 
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
+
+#define IS_CHILD_SA_REQUEST(st) \
+	((st)->st_state == STATE_V2_REKEY_IKE_R || \
+	  (st)->st_state == STATE_V2_CREATE_R)
+
+#define IS_CHILD_IPSECSA_RESPONSE(st) \
+	((st)->st_state == STATE_V2_REKEY_IKE_I || \
+	  (st)->st_state == STATE_V2_CREATE_I)
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
@@ -719,7 +754,7 @@ enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
-	POLICY_DISABLEARRIVALCHECK_IX,	/* supress tunnel egress address checking */
+	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -796,7 +831,7 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* supress tunnel egress address checking */
+#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
 #define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)

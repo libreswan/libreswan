@@ -1,6 +1,6 @@
 IKEv2 test with an invalid explicit DH-group.
 
 Since west's explicitly selected DH-group is not found in any of
-east's explictly listed policies, east responds with INVALID_KE and
+east's explicitly listed policies, east responds with INVALID_KE and
 suggests the group from the selected policy (returning the default or
 first group isn't sufficient).

@@ -109,7 +109,7 @@ verify_config() {
     RETVAL=$?
     if [ $RETVAL != 0 ]
     then
-        echo "Configuration error - the following error occured:"
+        echo "Configuration error - the following error occurred:"
         echo $config_error
         echo "IKE daemon status was not modified"
         exit $RETVAL

@@ -21,6 +21,9 @@ extern struct oakley_group_desc oakley_group_modp3072;
 extern struct oakley_group_desc oakley_group_modp4096;
 extern struct oakley_group_desc oakley_group_modp6144;
 extern struct oakley_group_desc oakley_group_modp8192;
+extern struct oakley_group_desc oakley_group_dh19;
+extern struct oakley_group_desc oakley_group_dh20;
+extern struct oakley_group_desc oakley_group_dh21;
 #ifdef USE_DH22
 extern struct oakley_group_desc oakley_group_dh22;
 #endif

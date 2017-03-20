@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,13 +47,13 @@
 #include "packet.h"
 #include "crypto.h"
 #include "demux.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_prf.h"
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "crypt_symkey.h"
-#include "crypt_dbg.h"
 #include "ikev2_prf.h"
 #include "kernel.h"
 
@@ -149,14 +150,14 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
 	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
-	free_any_symkey("ikey:", &ikey);
+	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
 	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
-	free_any_symkey("rkey:", &rkey);
+	release_symkey(__func__, "rkey", &rkey);
 
-	free_any_symkey("keymat", &keymat);
+	release_symkey(__func__, "keymat", &keymat);
 
 	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_PRIVATE, {

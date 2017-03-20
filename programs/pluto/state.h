@@ -11,7 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -151,11 +151,17 @@ struct ipsec_proto_info {
 	u_int16_t keymat_len;           /* same for both */
 	u_char *our_keymat;
 	u_char *peer_keymat;
-	u_int our_bytes;
-	u_int peer_bytes;
+	uint64_t our_bytes;
+	uint64_t peer_bytes;
 	monotime_t our_lastused;
 	monotime_t peer_lastused;
 	uint64_t add_time;
+};
+
+struct initiate_list {
+	so_serial_t st_serialno;
+//	enum initiate_new_exchagnge send_type;
+	struct  initiate_list *next;
 };
 
 struct ike_frag {
@@ -197,7 +203,6 @@ struct hidden_variables {
 	bool st_peer_supports_dpd;              /* Peer supports DPD/IKEv2 Liveness
 						 * NOTE: dpd_active_locally() tracks
 						 * the local enablement of DPD */
-	bool st_logged_p1algos;                 /* if we have logged algos */
 	lset_t st_nat_traversal;                /* bit field of permitted
 						 * methods. If non-zero, then
 						 * NAT-T has been detected, and
@@ -239,12 +244,15 @@ struct traffic_selector {
 struct state {
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
+	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
+	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
 
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
-	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
-	bool has_pam_thread;                    /* per state PAM thread flag */
+	pthread_t xauth_tid;                 /* per state XAUTH_RO thread id */
+	bool has_pam_thread;                   /* per state PAM thread flag */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
+	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
 						 * to be replaced with IKEv2
 						 */
@@ -332,6 +340,7 @@ struct state {
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
+	struct initiate_list *send_next_ix;
 
 	/** end of IKEv2-only things **/
 
@@ -439,9 +448,10 @@ struct state {
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
+	/* IKEv1 only */
+	PK11SymKey *st_skeyid_nss;	/* Key material */
+
 	/* v1 names are aliases for subset of v2 fields (#define) */
-#define st_skeyid_nss   st_skeyseed_nss
-	PK11SymKey *st_skeyseed_nss;	/* Key material */
 #define st_skeyid_d_nss st_skey_d_nss
 	PK11SymKey *st_skey_d_nss;	/* KM for non-ISAKMP key derivation */
 #define st_skeyid_a_nss st_skey_ai_nss
@@ -534,7 +544,7 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st),
+	*duplicate_state(struct state *st, bool ipsec),
 	*find_state_ikev1(const u_char *icookie,
 			  const u_char *rcookie,
 			  msgid_t msgid),
@@ -544,11 +554,15 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
 
+struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
+		                enum state_kind expected_state);
+
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
-extern struct state *find_state_ikev2_parent_init(const u_char *icookie,
-						  enum state_kind expected_state);
+extern struct state *ikev2_find_state_in_init(const u_char *icookie,
+						  enum state_kind expected_state,
+						  bool is_child);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,
@@ -573,6 +587,10 @@ extern void initialize_new_state(struct state *st,
 
 extern void show_traffic_status(void);
 extern void show_states_status(void);
+
+
+extern void ikev2_repl_est_ipsec(struct state *st, void *data);
+extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 

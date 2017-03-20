@@ -19,7 +19,7 @@ if [ -f /usr/libexec/ipsec/pluto ]; then
     exit 1
 fi
 
-# we don't trust all makefile dependancies, esp lib/
+# we don't trust all makefile dependencies, esp lib/
 rm -rf $(make showobjdir) modobj
 
 targets="base module"

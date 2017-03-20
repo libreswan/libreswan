@@ -11,7 +11,7 @@ function lsw_summary_load(prefix, f) {
 		return
 	    }
 	    var summary = {
-		results: results[0],
+		test_runs: results[0],
 		commits: results[1],
 		current: results[2],
 	    }
@@ -64,34 +64,34 @@ function lsw_summary_cleanup(summary) {
     // Clean up the result values; cross link with commits (when
     // possible).
 
-    summary.results.forEach(function (result) {
+    summary.test_runs.forEach(function (test_run) {
 	// Clean up the contents
-	result.start_time = new Date(result.start_time)
-	result.end_time = new Date(result.end_time)
-	// Try to cross link commit and result
-	var hash = result.hash
+	test_run.start_time = new Date(test_run.start_time)
+	test_run.end_time = new Date(test_run.end_time)
+	// Try to cross link commit and test_run
+	var hash = test_run.hash
 	if (!hash) {
-	    console.warn("missing hash for result", result)
+	    console.warn("missing hash for test_run", test_run)
 	    return
 	}
 	// Cross link when possible.
 	var commit = commit_by_hash[hash]
 	if (!commit) {
-	    console.warn("missing commit for result", result)
+	    console.warn("missing commit for test_run", test_run)
 	    return
 	}
-	// Cross link commits and results
-	result.commit = commit
-	commit.result = result
+	// Cross link commits and test_runs
+	test_run.commit = commit
+	commit.test_run = test_run
     })
 
-    // Use the commit<->result links, along with commit.parents, to
-    // Compute the list of commits that each result tested.
+    // Use the commit<->test_run links, along with commit.parents, to
+    // Compute the list of commits that each test_run tested.
     //
     // What order should this be in?
 
-    summary.results.forEach(function(result) {
-	result.commits = lsw_summary_commits(result.commit)
+    summary.test_runs.forEach(function(test_run) {
+	test_run.commits = lsw_summary_commits(test_run.commit)
     })
     summary.current.commits = lsw_summary_commits(summary.current.commit)
 
@@ -109,8 +109,8 @@ function lsw_commit_texts(commits) {
     return subject
 }
 
-// Use the commit<>result links and the commit.parents to identify all
-// commits for a result.
+// Use the commit<>test_run links and the commit.parents to identify all
+// commits for a test_run.
 function lsw_summary_commits(commit) {
     var commits = []
     if (commit) {
@@ -118,8 +118,8 @@ function lsw_summary_commits(commit) {
 	var parents = commit.parents.slice()
 	while (parents.length) {
 	    var parent = parents.shift()
-	    if (parent.result) {
-		// stop when there is a result
+	    if (parent.test_run) {
+		// stop when there is a test_run
 		continue
 	    }
 	    if (commits.indexOf(parent) >= 0) {

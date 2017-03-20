@@ -86,7 +86,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 4,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
@@ -103,7 +103,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 13,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
@@ -120,7 +120,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 14,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
@@ -137,7 +137,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 15,
-	.do_aead_crypt_auth = ike_alg_nss_gcm,
+	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
 static struct encrypt_desc *encrypts[] = {
@@ -189,14 +189,15 @@ static void decrypt(void)
 
 	chunk_t text_and_tag = concat_chunk_chunk("text-and-tag", ct, tag);
 
-	bool result = gcm_alg->do_aead_crypt_auth(gcm_alg,
-						  salt.ptr, salt.len,
-						  iv.ptr, iv.len,
-						  aad.ptr, aad.len,
-						  text_and_tag.ptr,
-						  ct.len, tag.len,
-						  gcm_key,
-						  FALSE/*encrypt*/);
+	bool result = gcm_alg->encrypt_ops
+		->do_aead(gcm_alg,
+			  salt.ptr, salt.len,
+			  iv.ptr, iv.len,
+			  aad.ptr, aad.len,
+			  text_and_tag.ptr,
+			  ct.len, tag.len,
+			  gcm_key,
+			  FALSE/*encrypt*/);
 	if (result) {
 		/* plain text */
 		chunk_t pt = {
@@ -207,7 +208,7 @@ static void decrypt(void)
 	} else {
 		print_line("FAIL");
 	}
-	free_any_symkey("GCM key", &gcm_key);
+	release_symkey(__func__, "GCM-key", &gcm_key);
 	freeanychunk(text_and_tag);
 }
 

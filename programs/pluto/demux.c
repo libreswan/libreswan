@@ -1,12 +1,14 @@
 /* demultiplex incoming IKE messages
  *
- * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013,2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,6 +65,8 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
 #include "udpfromto.h"
+
+#include "pluto_stats.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
@@ -400,6 +404,8 @@ static bool read_packet(struct msg_digest *md)
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
+
+	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
 	 * sometimes generates an extra useless buggy confusing

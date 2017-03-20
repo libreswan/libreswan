@@ -17,18 +17,18 @@ Some examples are
 <emphasis remap='B'>ike=aes_ctr</emphasis>,
 <emphasis remap='B'>ike=aes_gcm256-sha2</emphasis>,
 <emphasis remap='B'>ike=aes128-md5;modp2048</emphasis>,
+<emphasis remap='B'>ike=aes256-sha2;dh19</emphasis>,
 <emphasis remap='B'>ike=aes128-sha1;dh22</emphasis>,
 <emphasis remap='B'>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis>.
 The options must be suitable as a value of
 <citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
-<option>--ike</option> option. The default is to use IKE, and to allow all combinations of:
-<literallayout remap='.nf'><emphasis remap='B'>
-                cipher:                 3des or aes128 or aes256
-                hash:                   sha1 or md5
-                pfsgroup (DHgroup):     modp1024 or modp1536 or modp2048
-</emphasis></literallayout>
+<option>--ike</option> option. The default IKE proposal depends on the version of libreswan
+used. It follow the recommendations of RFC4306, RFC7321 and as of this writing their successor
+draft documents RFC4306bis and RFC7321bis. For IKEv1, 3DES,  SHA1 and MODP1536 are still allowed per
+default for backwards compatibility. IKEv2's minimum is AES, MODP2048 and SHA2. The default key
+size is 256 bits. The default AES_GCM ICV is 16 bytes.</para>
 
-Note that AES-GCM is an AEAD algorithm, meaning that it performs encryption+authentication in one step. This
+<para>Note that AES-GCM is an AEAD algorithm, meaning that it performs encryption+authentication in one step. This
 means that AES-GCM must not specify an authentication algorithm. However, it does require a PRF function, so
 the second argument to an AEAD algorithm denotes the PRF. So ike=aes_gcm-sha2 means propose AES_GCM with no
 authentication and using SHA2 as the prf. Note that for phase2alg, there is no prf, so AES-GCM is
@@ -43,14 +43,16 @@ will be removed in the near future. Additionally, md5 and sha1 will be removed w
 encryption is available, and should only be used for testing or benchmarking purposes. Please do not request for
 insecure algorithms to be re-added to libreswan.
 </para>
-<para>Diffie-Hellman groups 22, 23 and 24 are also implemented as per RFC-5114. Instead of the modp
-key syntax, use the "dh" keyword, for example <emphasis>ike=3des-sha1;dh23</emphasis>. These specific
-DH groups are extremely controversial and MUST NOT be used unless forced (administratively) by the other party.
-Support for these groups will most likely be removed in 2017, as it cannot be proven these DH groups do not
-have a cryptographic trapdoor embedded in them (a backdoor by the USG who gave us these primes without
-revealing the seeds and generation process)
+<para>Diffie-Hellman groups 19,20 and 21 from RFC- 5903 and 22, 23 and 24 from RFC-5114 are also supported.
+For all groups, the "dh" keyword can be used. For the MODP based groups, the modp= keyword can be used. for
+example <emphasis>ike=3des-sha1;dh19</emphasis>.
+The RFC-5114 DH groups are extremely controversial and MUST NOT be used unless forced (administratively) by
+the other party. Support for these groups will most likely be removed in 2017, as it cannot be proven these
+DH groups do not have a cryptographic trapdoor embedded in them (a backdoor by the USG who provided these
+primes without revealing the seeds and generation process used). Due the the weakness od DH22, support for
+this group is not compiled in by default and can be re-enabled using USE_DH22=true.
 </para>
-<para>The modp syntax will be removed in favour of the dh syntax.</para>
+<para>The modp syntax will be removed in favour of the dh syntax in the future</para>
   </listitem>
   </varlistentry>
 

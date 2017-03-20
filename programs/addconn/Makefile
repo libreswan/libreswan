@@ -1,5 +1,7 @@
 # ipsec starter Makefile
+#
 # Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,27 +13,19 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} ${EFENCE} $(NSS_LDFLAGS)
-
 PROGRAM=addconn
-
-ifeq ($(USE_SECCOMP),true)
-SECCOMP_DEFS=-DHAVE_SECCOMP
-SECCOMP_LIBS=-lseccomp
-endif
+OBJS += $(PROGRAM).o
+OBJS += $(IPSECCONFLIB)
+OBJS += $(WHACKLIB)
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
 
 # reach into pluto for now.
-INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${SRCDIR}
+CFLAGS += -I$(top_srcdir)/programs/pluto
+LDFLAGS += $(UNBOUND_LDFLAGS) $(SECCOMP_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../mk/program.mk
 endif
-
-PROGLIBS+=$(UNBOUND_LDFLAGS) $(SECCOMP_LIBS)
-
-TAGS:	$(DISTSRC)
-	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]
-

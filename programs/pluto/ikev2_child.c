@@ -5,7 +5,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012,2016 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2012,2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
  *
@@ -52,6 +52,7 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
@@ -900,7 +901,7 @@ static stf_status ikev2_create_responder_child_state(
 		update_state_connection(cst, b);
 	} else {
 		/* ??? is this only for AUTH exchange? */
-		cst = duplicate_state(cst);
+		cst = duplicate_state(cst, IPSEC_SA);
 		cst->st_connection = b;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
@@ -938,7 +939,7 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 		cst = md->st;
 		update_state_connection(cst, c);
 	} else {
-		cst = duplicate_state(md->st);
+		cst = duplicate_state(md->st, IPSEC_SA);
 		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
@@ -965,19 +966,19 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 
 	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
 			ntfy.isan_protoid == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPSec SA rekey "
+		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPsec SA rekey "
 					"Protocol %s",
 					enum_show(&ikev2_protocol_names,
 						ntfy.isan_protoid)));
 
 	} else {
-		libreswan_log("CREATE_CHILD_SA IPSec SA rekey invalid Protocol ID %s",
+		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 				enum_show(&ikev2_protocol_names,
 					ntfy.isan_protoid));
 		return NULL;
 	}
 	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
-		libreswan_log("CREATE_CHILD_SA IPSec SA rekey invalid spi "
+		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi "
 				"size %u", ntfy.isan_spisize);
 		return NULL;
 	}
@@ -985,7 +986,7 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 		return NULL;      /* cannot happen */
 
-	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPSec SA(0x%08"
+	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08"
 				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
 				enum_show(&ikev2_protocol_names,
 					ntfy.isan_protoid)));
@@ -993,7 +994,7 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
 			ntfy.isan_protoid, spi);
 	if (st == NULL) {
-		libreswan_log("CREATE_CHILD_SA no such IPSec SA to rekey SA(0x%08"
+		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08"
 				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
 				enum_show(&ikev2_protocol_names,
 					ntfy.isan_protoid));
@@ -1022,9 +1023,10 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 			 * do we support that yet? RFC 7296 3.10
 			 * return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			 */
+			change_state(st, STATE_V2_REKEY_CHILD_R);
 			rst = find_state_to_rekey(ntfy, pst);
 			if(rst == NULL) {
-				libreswan_log("no valid IPSec SA SPI to rekey");
+				libreswan_log("no valid IPsec SA SPI to rekey");
 				return FALSE;
 			}
 			break;
@@ -1041,7 +1043,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		/*
 		 * RFC 7296 #2.9.2 the exact or the superset.
 		 * exact is a should. Here we only allow the exact.
-		 * Inherit the TSi TSr from old state, IPSec SA.
+		 * Inherit the TSi TSr from old state, IPsec SA.
 		 */
 
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit spd, TSi TSr, from "
@@ -1094,8 +1096,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	send_use_transport = ( pst->st_seen_use_transport &&
 		 (c->policy & POLICY_TUNNEL) == LEMPTY);
 
-	if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (c->spd.that.has_lease &&
+			md->chain[ISAKMP_NEXT_v2CP] != NULL &&
+			cst->st_state != STATE_V2_REKEY_IKE_R) {
 		ikev2_send_cp(c, ISAKMP_NEXT_v2SA, outpbs);
+	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
+					cst->st_serialno,
+					enum_name(&state_names, cst->st_state)));
 	}
 
 	/* start of SA out */
@@ -1108,20 +1116,21 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
+		stf_status ret;
 
 		ikev2_proposals_from_alg_info_esp(c->name, "responder",
 						  c->alg_info_esp, c->policy,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
 
-		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
-							  &sa_pd->pbs,
-							  /*expect_ike*/ FALSE,
-							  /*expect_spi*/ TRUE,
-							  /*expect_accepted*/ FALSE,
-							  c->policy & POLICY_OPPORTUNISTIC,
-							  &cst->st_accepted_esp_or_ah_proposal,
-							  c->esp_or_ah_proposals);
+		ret = ikev2_process_sa_payload("ESP/AH responder",
+				&sa_pd->pbs,
+				/*expect_ike*/ FALSE,
+				/*expect_spi*/ TRUE,
+				/*expect_accepted*/ FALSE,
+				c->policy & POLICY_OPPORTUNISTIC,
+				&cst->st_accepted_esp_or_ah_proposal,
+				c->esp_or_ah_proposals);
 
 		if (ret == STF_OK) {
 			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
@@ -1270,6 +1279,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	ikev2_derive_child_keys(cst, role);
+
+	/* Check to see if we need to release an old instance */
+       ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))

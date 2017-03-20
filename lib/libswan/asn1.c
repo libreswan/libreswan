@@ -181,7 +181,7 @@ u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen)
 	*pos++ = type;
 
 	/* copy the asn.1 length field and advance the pointer */
-	chunkcpy(pos, length);
+	catchunk(pos, length);
 
 	return pos;
 }
@@ -208,7 +208,7 @@ u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 	*pos++ = inner_type;
 
 	/* copy the inner asn.1 length field and advance the pointer */
-	chunkcpy(pos, length);
+	catchunk(pos, length);
 
 	return pos;
 }
@@ -230,7 +230,7 @@ bool is_printablestring(chunk_t str)
 }
 
 /*
- * Converts ASN.1 UTCTIME or GENERALIZEDTIME into calender time
+ * Converts ASN.1 UTCTIME or GENERALIZEDTIME into calendar time
  * ??? Returns UNDEFINED_TIME for many problems and TIME_MAX for others.  Is this reasonable?
  */
 realtime_t asn1totime(const chunk_t *utctime, asn1_t type)

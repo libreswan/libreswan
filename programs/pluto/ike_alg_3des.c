@@ -116,6 +116,10 @@ static void do_3des_nss(const struct encrypt_desc *alg UNUSED,
 		DBG_log("NSS: do_3des init end"));
 }
 
+static const struct encrypt_ops nss_3des_encrypt_ops = {
+	.do_crypt = do_3des_nss,
+};
+
 struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
 	.common = {
@@ -123,9 +127,11 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.names = { "3des", "3des_cbc", },
 		.officname =     "3des",
 		.algo_type =     IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_3DES_CBC,
-		.ikev1_esp_id = ESP_3DES,
-		.ikev2_id = IKEv2_ENCR_3DES,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_3DES_CBC,
+			[IKEv1_ESP_ID] = ESP_3DES,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
+		},
 		.fips =          TRUE,
 		.nss_mechanism = CKM_DES3_CBC,
 	},
@@ -135,5 +141,5 @@ struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keylen_omitted = TRUE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.key_bit_lengths = { DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE, },
-	.do_crypt = do_3des_nss,
+	.encrypt_ops = &nss_3des_encrypt_ops,
 };

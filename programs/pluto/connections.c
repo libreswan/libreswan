@@ -13,7 +13,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
@@ -77,6 +77,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -1652,7 +1653,6 @@ void add_connection(const struct whack_message *wm)
 		 *  if nothing is provided mark and mask are set to 0;
 		 */
 
-
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
 			mark_parse(wm->conn_mark_both, &c->sa_marks.in);
@@ -1718,7 +1718,6 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
 
@@ -1766,7 +1765,6 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->spd.spd_next = NULL;
-
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1895,9 +1893,13 @@ void add_connection(const struct whack_message *wm)
 				c->sa_replay_window,
 				prettypolicy(c->policy),
 				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+
+		/* non configurable */
+		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
+
 }
 
 /*
@@ -2052,7 +2054,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-
 	if (c->sa_marks.in.val == UINT_MAX) {
 		/* -1 means unique marks */
 		d->sa_marks.in.val = global_marks;
@@ -2068,7 +2069,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 
 	return d;
 }
-
 
 struct connection *rw_instantiate(struct connection *c,
 				const ip_address *him,
@@ -3013,7 +3013,6 @@ struct connection *refine_host_connection(const struct state *st,
 			c->name, fmt_conn_instance(c, cib));
 		});
 
-
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
 	{
@@ -3217,7 +3216,7 @@ struct connection *refine_host_connection(const struct state *st,
 				const chunk_t *dpsk = get_preshared_secret(d);
 
 				/*
-				 * We can change PSK mid-way in IKEv2 or agressive mode.
+				 * We can change PSK mid-way in IKEv2 or aggressive mode.
 				 * If we initiated, the key we used and the key
 				 * we would have used with d must match.
 				 */
@@ -4333,4 +4332,50 @@ void liveness_clear_connection(struct connection *c, char *v)
 					c->kind), v));
 		unroute_connection(c); /* --unroute */
 	}
+}
+
+/*
+ * When replacing an old existing connection, suppress sending delete notify
+ */
+void suppress_delete(struct connection *c)
+{
+	struct state *pst = state_with_serialno(c->newest_isakmp_sa);
+	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+	if (pst != NULL) {
+		pst->st_ikev2_no_del = TRUE;
+		DBG(DBG_CONTROL, DBG_log("Marked IKE state #%lu to suppress sending delete notify",
+		c->newest_isakmp_sa));
+	} else {
+		libreswan_log("did not find old IKE state to mark for suppressing delete");
+	}
+
+	if (cst != NULL) {
+		cst->st_ikev2_no_del = TRUE;
+		DBG(DBG_CONTROL, DBG_log("Marked IPSEC state #%lu to suppress sending delete notify",
+		c->newest_ipsec_sa));
+	} else {
+		libreswan_log("did not find old IPsec state to mark for suppressing delete");
+	}
+}
+
+bool liveness_action_hold(struct connection *c)
+{
+	switch (c->dpd_action) {
+	case DPD_ACTION_CLEAR:
+		liveness_clear_connection(c, "IKEv2 liveness action clear");
+		return FALSE;
+
+	case DPD_ACTION_RESTART:
+		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+		restart_connections_by_peer(c);
+		return FALSE;
+
+	case DPD_ACTION_HOLD:
+		DBG(DBG_DPD, DBG_log("liveness_check - handling default by rescheduling"));
+		return TRUE;
+
+	default:
+		bad_case(c->dpd_action);
+	}
+	return FALSE;
 }

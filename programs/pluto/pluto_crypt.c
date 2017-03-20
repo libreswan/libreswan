@@ -9,6 +9,7 @@
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -236,7 +237,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	struct timeval tv0;
 	gettimeofday(&tv0, NULL);
-	const char *story = NULL;
 
 	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d doing %s; request ID %u",
@@ -267,7 +267,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		break;
 
 	case pcr_compute_dh_v2:
-		calc_dh_v2(r, &story);
+		calc_dh_v2(r);
 		break;
 	}
 
@@ -276,10 +276,9 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 			unsigned long tv_diff;
 			gettimeofday(&tv1, NULL);
 			tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
-			DBG_log("crypto helper %d finished %s%s; request ID %u time elapsed %ld usec",
+			DBG_log("crypto helper %d finished %s; request ID %u time elapsed %ld usec",
 					helpernum,
 					enum_show(&pluto_cryptoop_names, r->pcr_type),
-					(story != NULL) ? story : "",
 					r->pcr_id, tv_diff));
 	}
 

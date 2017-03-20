@@ -38,7 +38,7 @@ export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
 export PATH
 
-# supress ElectricFence banner changing our reference testing output
+# suppress ElectricFence banner changing our reference testing output
 export EF_DISABLE_BANNER=1
 
 # things not to be listed in --help command list
@@ -216,10 +216,14 @@ case "${1}" in
 	    # A lot of nss commands use -d to specify NSS db location.
 	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
 		"${2}" = "--nssdir" ]
 	    then
 		if [ -d "${3}" ]; then
 		    IPSEC_NSSDIR="${3}"
+		    if [ "${2}" = "--configdir" ]; then
+			echo "ipsec import warning: --configdir is obsoleted, use --nssdir" >&2
+		    fi
 		else
 		    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
 		    exit 1
@@ -251,10 +255,14 @@ case "${1}" in
 	    # A lot of nss commands use -d to specify NSS db location.
 	    # We use --nssdir.
 	    if [ "${2}" = "-d" -o \
+		"${2}" = "--configdir" -o \
 		"${2}" = "--nssdir" ]
 	    then
 		IPSEC_NSSDIR="${3}"
 		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+		if [ "${2}" = "--configdir" ]; then
+		    echo "ipsec initnss warning: --configdir is obsoleted, use --nssdir" >&2
+		fi
 	    else
 		echo "usage: ipsec initnss [--nssdir ${IPSEC_NSSDIR}]" >&2
 		exit 1
@@ -316,7 +324,7 @@ case "${1}" in
 
 		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		${rc}=$?
+		rc=$?
 		if [ ${rc} -ne 0 ]; then
 		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
 		    exit ${rc}

@@ -1,5 +1,6 @@
 # _import_crl Makefile
 # Copyright (C) 2015 Matt Rogers
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,13 +12,11 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGLIBS=${NSSFLAGS}
-
 PROGRAM=_import_crl
-LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB} $(NSS_LDFLAGS)
-
-#INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir} -I${LIBRESWANSRCDIR}/include
+OBJS += $(PROGRAM).o
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
+LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

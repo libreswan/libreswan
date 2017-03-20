@@ -1,7 +1,7 @@
 /*
  * Parse CAVP test vectors, for libreswan
  *
- * Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +27,6 @@
 #include "lswfips.h"
 #include "ike_alg.h"
 #include "crypto.h"
-#include "crypt_dbg.h"
 #include "crypt_symkey.h"
 #include "test_buffer.h"
 
@@ -175,7 +174,7 @@ void op_chunk(struct cavp_entry *entry,
 void op_symkey(struct cavp_entry *entry,
 	       const char *value)
 {
-	free_any_symkey(__func__, entry->symkey);
+	release_symkey(__func__, "entry", entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
 	*(entry->symkey) = symkey_from_chunk("symkey", DBG_CRYPT,
 					     NULL, chunk);

@@ -48,14 +48,14 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected = decode_to_chunk(output_name, output);
 
 	/* do_crypt modifies the data and IV in place.  */
-	encrypt_desc->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
-			       sym_key, iv.ptr, encrypt);
+	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
+					    sym_key, iv.ptr, encrypt);
 
-	if (!compare_chunks(op, expected, tmp)) {
+	if (!verify_chunk(op, expected, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: output does not match", description, op));
 		ok = FALSE;
 	}
-	if (!compare_chunk("updated CBC IV", iv,
+	if (!verify_chunk_data("updated CBC IV", iv,
 			   expected_iv.ptr + expected_iv.len - iv.len)) {
 		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: IV does not match", description, op));
 		ok = FALSE;
@@ -95,7 +95,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	}
 
 	/* Clean up.  */
-	free_any_symkey("sym_key", &sym_key);
+	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s %s",
 			       test->description, ok ? "passed" : "failed"));

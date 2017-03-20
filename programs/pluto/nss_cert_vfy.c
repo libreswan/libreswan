@@ -29,7 +29,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
-#include "nss_copies.h"
 #include "nss_cert_vfy.h"
 #include "nss_err.h"
 #include <secder.h>
@@ -65,7 +64,7 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 
 static bool crl_is_current(CERTSignedCrl *crl)
 {
-	return NSSCERT_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
 static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
@@ -372,7 +371,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	/* kludge alert!!
 	 * verification may be performed twice: once with the
 	 * 'client' usage and once with 'server', which is an NSS
-	 * detail and not related to IKE. In the absense of a real
+	 * detail and not related to IKE. In the absence of a real
 	 * IKE profile being available for NSS, this covers more
 	 * KU/EKU combinations
 	 */

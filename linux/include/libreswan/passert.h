@@ -30,8 +30,18 @@ extern void libreswan_passert_fail(const char *file_str,
 	NEVER_RETURNS
 	PRINTF_LIKE(4);
 
-#define PASSERT_FAIL(FMT, ...)					\
-	libreswan_passert_fail(__FILE__, __LINE__,		\
+/*
+ * http://stackoverflow.com/questions/8487986/file-macro-shows-full-path#8488201
+ *
+ * It is tempting to tweak the .c.o line so that it passes in the
+ * required value.
+ */
+#ifndef PASSERT_BASENAME
+#define PASSERT_BASENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
+
+#define PASSERT_FAIL(FMT, ...)						\
+	libreswan_passert_fail(PASSERT_BASENAME, __LINE__,		\
 			       __func__, FMT, __VA_ARGS__)
 
 #define bad_case(N) {						\
@@ -65,8 +75,8 @@ extern void pexpect_log(const char *file_str, unsigned long line_no,
 			const char *func_str, const char *fmt, ...)
 	PRINTF_LIKE(4);
 
-#define PEXPECT_LOG(FMT, ...) \
-	pexpect_log(__FILE__, __LINE__, __func__,		\
+#define PEXPECT_LOG(FMT, ...)					\
+	pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
 		    FMT,  __VA_ARGS__)
 
 #define pexpect(pred) {							\

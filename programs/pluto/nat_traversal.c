@@ -64,6 +64,7 @@
 #include "whack.h"
 #include "timer.h"
 #include "ike_alg.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
@@ -729,9 +730,11 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 int nat_traversal_espinudp_socket(int sk, const char *fam)
 {
 	int r;
+#if defined(KLIPS)
 	struct ifreq ifr;
 	int *fdp = (int *) &ifr.ifr_data;
 	const char *ifn;
+#endif
 
 #if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
 	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {

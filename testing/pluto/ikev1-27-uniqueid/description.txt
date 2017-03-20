@@ -1,0 +1,3 @@
+testing ikev1 uniqueid code. initiator gets new ip and restart.
+This must not cause an "route already in use" on east, and both
+ends need to end up with only one connection.

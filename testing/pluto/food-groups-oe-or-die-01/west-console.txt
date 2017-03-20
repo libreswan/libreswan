@@ -35,7 +35,7 @@ mconsole initialized on PATH
 Mounted devfs on /dev
 INIT: version 2.78 booting
 Activating swap...
-Calculating module dependancies
+Calculating module dependencies
 done.
 Loading modules: LIST
 

@@ -32,7 +32,7 @@ NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
 Mounted devfs on /dev
 INIT: version 2.78 booting
 Activating swap...
-Calculating module dependancies
+Calculating module dependencies
 done.
 Loading modules: LIST
 

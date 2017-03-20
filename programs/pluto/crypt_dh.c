@@ -12,7 +12,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,91 +74,15 @@
 PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
 			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk, const char **story)
+			   const SECKEYPublicKey *local_pubk)
 {
-	SECStatus status;
-
-	DBG(DBG_CRYPT,
-		DBG_log("Started DH shared-secret computation in NSS:"));
-
-	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	passert(arena != NULL);
-
-	SECKEYPublicKey *remote_pubk = (SECKEYPublicKey *)
-		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-
-	remote_pubk->arena = arena;
-	remote_pubk->keyType = dhKey;
-	remote_pubk->pkcs11Slot = NULL;
-	remote_pubk->pkcs11ID = CK_INVALID_HANDLE;
-
-	SECItem nss_g = {
-		.data = g.ptr,
-		.len = (unsigned int)g.len,
-		.type = siBuffer
-	};
-
-	status = SECITEM_CopyItem(remote_pubk->arena, &remote_pubk->u.dh.prime,
-				  &local_pubk->u.dh.prime);
-	passert(status == SECSuccess);
-
-	status = SECITEM_CopyItem(remote_pubk->arena, &remote_pubk->u.dh.base,
-				  &local_pubk->u.dh.base);
-	passert(status == SECSuccess);
-
-	status = SECITEM_CopyItem(remote_pubk->arena,
-				  &remote_pubk->u.dh.publicValue, &nss_g);
-	passert(status == SECSuccess);
-
-	PK11SymKey *dhshared = PK11_PubDerive(privk, remote_pubk, PR_FALSE, NULL, NULL,
-				  CKM_DH_PKCS_DERIVE,
-				  CKM_CONCATENATE_DATA_AND_BASE,
-				  CKA_DERIVE, group->bytes,
-				  lsw_return_nss_password_file_info());
-
-	if (dhshared != NULL) {
-		unsigned int shortfall = group->bytes - sizeof_symkey(dhshared);
-
-		if (shortfall > 0) {
-			/*
-			 * We've got to pad the result with [shortfall] 0x00 bytes.
-			 * The chance of shortfall being n should be 1 in 256^n.
-			 * So really zauto ought to be big enough for the zeros.
-			 * If it isn't, we allocate space on the heap
-			 * (this will likely never be executed).
-			 */
-			DBG(DBG_CRYPT,
-				DBG_log("restoring %u DHshared leading zeros", shortfall));
-			unsigned char zauto[10];
-			unsigned char *z =
-				shortfall <= sizeof(zauto) ?
-					zauto : alloc_bytes(shortfall, "DH shortfall");
-			memset(z, 0x00, shortfall);
-			CK_KEY_DERIVATION_STRING_DATA string_params = {
-				.pData = z,
-				.ulLen = shortfall
-			};
-			SECItem params = {
-				.data = (unsigned char *)&string_params,
-				.len = sizeof(string_params)
-			};
-			PK11SymKey *newdhshared =
-				PK11_Derive(dhshared,
-					    CKM_CONCATENATE_DATA_AND_BASE,
-					    &params,
-					    CKM_CONCATENATE_DATA_AND_BASE,
-					    CKA_DERIVE, 0);
-			passert(newdhshared != NULL);
-			if (z != zauto)
-				pfree(z);
-			free_any_symkey("dhshared", &dhshared);
-			dhshared = newdhshared;
-		}
-	}
-
-	*story = enum_name(&oakley_group_names, group->group);
-
-	SECKEY_DestroyPublicKey(remote_pubk);
+	PK11SymKey *dhshared = group->dhmke_ops->calc_g_ir(group, privk,
+							   local_pubk,
+							   g.ptr, g.len);
+	/*
+	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
+	 */
+	DBG(DBG_CRYPT, DBG_symkey(__func__, "g^ir", dhshared));
 	return dhshared;
 }
 
@@ -189,7 +113,5 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	const char *story;	/* we ignore the value */
-
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 }

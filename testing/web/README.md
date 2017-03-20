@@ -5,27 +5,6 @@ See:
 
   http://libreswan.org/results/testing/
 
-Nuances:
-
-  - libreswan's repo contains knots: where the commit date is out of
-    order; this is stumbled over
-
-  - libreswan's repo contains plats: where a merge flips first-master
-    with a development branch
-
-  - an accumulative bar graph might represent the first-master better
-    (but then what to do with branches, over lay just them as a
-    scatter plot)
-
-  - code needs to be more d3.js esque
-
-  - interaction with the graphic would be nice
-
-  - expect to occasionally prune the results as they take up a lot of
-    space
-
-  - better colour choice welcome
-
 Set Up
 ------
 

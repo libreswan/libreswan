@@ -35,6 +35,12 @@ KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
 
+# To avoid the problem where the host has no "default" KVM network
+# (there's a rumour that libreswan's main testing machine has this
+# problem) define a dedicated swandefault network.
+
+KVM_DEFAULT_NETWORK ?= swandefault
+
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
 # qemu://system. Finally, it comes with a warning: QEMU usermode
@@ -255,8 +261,6 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # Build a pool of networks from scratch
 #
 
-.PHONY: install-kvm-test-networks uninstall-kvm-test-networks
-
 # Generate install and uninstall rules for each network within the
 # pool.
 
@@ -298,10 +302,16 @@ define check-no-kvm-network
 	fi
 endef
 
+KVM_TEST_SUBNETS = \
+	$(notdir $(wildcard testing/libvirt/net/192*))
+
+KVM_TEST_NETWORKS = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)), $(KVM_TEST_SUBNETS)))
+
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
-  install-kvm-test-networks: install-kvm-network-$(1)$(2)
   .PHONY: install-kvm-network-$(1)$(2)
   install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
@@ -325,40 +335,32 @@ define install-kvm-test-network
 	$(call install-kvm-network,$(1)$(2),$$@)
 endef
 
+$(foreach prefix, $(KVM_PREFIXES), \
+	$(foreach subnet, $(KVM_TEST_SUBNETS), \
+		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
+
 define uninstall-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
   .PHONY: uninstall-kvm-network-$(1)$(2)
-  uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	: uninstall-kvm-test-network prefix=$(1) network=$(2)
 	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
 endef
 
-KVM_TEST_NETWORKS = $(notdir $(wildcard testing/libvirt/net/192*))
 $(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach network, $(KVM_TEST_NETWORKS), \
-		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
-$(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach network, $(KVM_TEST_NETWORKS), \
-		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(network)))))
+	$(foreach subnet, $(KVM_TEST_SUBNETS), \
+		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
 
-# To avoid the problem where the host has no "default" KVM network
-# (there's a rumour that libreswan's main testing machine has this
-# problem) create a dedicated swandefault.
-
-KVM_DEFAULT_NETWORK ?= swandefault
 KVM_DEFAULT_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_DEFAULT_NETWORK).xml
-.PHONY: install-kvm-default-network install-kvm-network-$(KVM_DEFAULT_NETWORK)
-install-kvm-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
+.PHONY: install-kvm-network-$(KVM_DEFAULT_NETWORK)
 install-kvm-network-$(KVM_DEFAULT_NETWORK): $(KVM_DEFAULT_NETWORK_FILE)
 $(KVM_DEFAULT_NETWORK_FILE): | testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $(KVM_BASEDIR)
 	$(call check-no-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $@.tmp
 	$(call install-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
 
-.PHONY: uninstall-kvm-default-network uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
-uninstall-kvm-default-network: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
+.PHONY: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
 uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
 	$(call uninstall-kvm-network,$(KVM_DEFAULT_NETWORK),$(KVM_DEFAULT_NETWORK_FILE))
 
@@ -461,17 +463,13 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 		--initrd-inject=$@.tmp \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
 		--noreboot
-	: make certain that the image is accessable
+	: make certain that the image is accessible
 	test -r $(basename $@).qcow2 || sudo chgrp $(KVM_GROUP) $(basename $@).qcow2
 	test -r $(basename $@).qcow2 || sudo chmod g+r $(basename $@).qcow2
 	mv $@.tmp $@
 	: the reboot message from virt-install can be ignored
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-
-# mostly for testing
-.PHONY: install-kvm-base-domain
-install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
@@ -508,9 +506,6 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
 install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
-# mostly for testing
-.PHONY: install-kvm-clone-domain
-install-kvm-clone-domain: $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 
 # Install the $(KVM_TEST_DOMAINS) in $(KVM_CLONEDIR)
 #
@@ -532,7 +527,7 @@ define install-kvm-test-domain
   $$(KVM_CLONEDIR)/$(1)$(2).xml: \
 		| \
 		$$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).xml \
-		$$(foreach network,$$(KVM_TEST_NETWORKS), $$(KVM_CLONEDIR)/$(1)$$(network).xml) \
+		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_CLONEDIR)/$(1)$$(subnet).xml) \
 		testing/libvirt/vm/$(2)
 	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
@@ -561,9 +556,6 @@ endef
 $(foreach prefix, $(KVM_PREFIXES), \
 	$(foreach host,$(KVM_TEST_HOSTS), \
 		$(eval $(call install-kvm-test-domain,$(call strip-prefix,$(prefix)),$(host)))))
-
-.PHONY: install-kvm-test-domains
-install-kvm-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
 
 
 #
@@ -617,6 +609,30 @@ kvm-uninstall-clone-domain: kvm-uninstall-test-domains $(addprefix uninstall-kvm
 
 .PHONY: kvm-uninstall-test-domains
 kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
+
+.PHONY: kvm-install-test-networks
+kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
+
+.PHONY: kvm-uninstall-test-networks
+kvm-uninstall-test-networks: kvm-uninstall-test-domains $(addprefix uninstall-kvm-network-,$(KVM_TEST_NETWORKS))
+
+.PHONY: kvm-install-default-network
+kvm-install-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
+
+.PHONY: kvm-uninstall-default-network
+kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
+
+
+#
+# Get rid of (almost) everything
+#
+# XXX: don't depend on targets that trigger a KVM build.
+
+.PHONY: kvm-purge
+kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
+
+.PHONY: kvm-demolish
+kvm-demolish: kvm-purge kvm-uninstall-default-network
 
 
 #
@@ -687,20 +703,13 @@ kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
 # that they still get created.
 kvm-install: | $(foreach domain, $(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
 
+
 # kvm-uninstall et.al.
 #
-# these are simple and brutal
+# this is simple and brutal
 
 .PHONY: kvm-uninstall
-kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
-
-.PHONY: kvm-uninstall-clones
-kvm-uninstall-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
-
-# This does not uninstall-kvm-default-network as that is shared between
-# base domains.
-.PHONY: kvm-uninstall-base
-kvm-uninstall-base: uninstall-kvm-base-domain uninstall-kvm-test-networks
+kvm-uninstall: kvm-uninstall-clone-domain kvm-uninstall-test-networks
 
 
 #
@@ -723,17 +732,6 @@ $(foreach host, $(KVM_TEST_HOSTS), \
 $(eval $(call kvmsh,build,$(KVM_BUILD_DOMAIN)))
 $(eval $(call kvmsh,clone,$(KVM_CLONE_DOMAIN)))
 $(eval $(call kvmsh,base,$(KVM_BASE_DOMAIN)))
-
-
-.PHONY: uninstall-kvm-base-domain
-uninstall-kvm-base-domain: $(addprefix uninstall-kvm-domain-,$(KVM_DOMAINS))
-
-.PHONY: uninstall-kvm-clone-domain
-uninstall-kvm-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS) $(KVM_CLONE_DOMAIN))
-
-.PHONY: uninstall-kvm-test-domains
-uninstall-kvm-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
-
 
 # Generate rules to shut down all the domains (kvm-shutdown) and
 # individual domains (kvm-shutdown-DOMAIN).
@@ -899,14 +897,38 @@ kvm-help:
 	@echo '                                - also destroy the derived'
 	@echo '                                  clone domain and test domains'
 	@echo ''
-	@echo '   Create/destroy the default NAT network $(KVM_DEFAULT_NETWORK):'
+	@echo '   Creating networks:'
 	@echo ''
-	@echo '     install-kvm-default-network    - create the default NAT'
-	@echo '                                      network shared between'
-	@echo '                                      base domains'
-	@echo '     uninstall-kvm-default-network  - destroy the default NAT'
-	@echo '                                      network shared between'
-	@echo '                                      base domains'
+	@echo '     kvm-install-test-networks   - create the test networks'
+	@echo '     kvm-install-default-network - create the default NAT'
+	@echo '                                   network shared by'
+	@echo '                                   base and clone domains'
+	@echo ''
+	@echo '   Destroying networks:'
+	@echo ''
+	@echo '     kvm-uninstall-test-networks - destroy the test networks'
+	@echo '                                 - also destroy the test'
+	@echo '                                   domains that use the'
+	@echo '                                   test networks'
+	@echo ''
+	@echo '     kvm-uninstall-default-network'
+	@echo '                                 - destroy the default NAT'
+	@echo '                                   network shared between'
+	@echo '                                   base domains'
+	@echo '                                 - also destroy the base'
+	@echo '                                   and clone domains that'
+	@echo '                                   use the default network'
+	@echo ''
+	@echo '   Try to delete (almost) everything:'
+	@echo ''
+	@echo '     kvm-purge                   - delete everything specific'
+	@echo '                                   to this directory, i.e.,'
+	@echo '                                   clone domain, test domains,'
+	@echo '                                   test networks, test'
+	@echo '                                   results, and test build'
+	@echo ''
+	@echo '     kvm-demolish                - also delete the base domain'
+	@echo '                                   and default network'
 	@echo ''
 	@echo ' Additional rules:'
 	@echo ''

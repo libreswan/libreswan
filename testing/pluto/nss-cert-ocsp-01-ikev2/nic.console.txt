@@ -8,9 +8,10 @@ nic #
 nic #
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
 nic #
- #stock ocspd.conf, used seperate ones for different configs
+ #stock ocspd.conf, used separate ones for different configs
 nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
+ocspd - ERROR::General error, please check logs (exit with -1)
 nic #
  echo "done."
 done.

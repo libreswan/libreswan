@@ -16,7 +16,8 @@
 
 me='ipsec auto'
 usage="Usage:
-	${me} [--showonly] [--asynchronous] --{up|down} connectionname
+	${me} [--showonly] [--asynchronous] --up connectionname [--remote-host ipaddr]
+	${me} [--showonly] [--asynchronous] --down connectionname 
 	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
@@ -35,6 +36,7 @@ op=
 argc=
 utc=
 verbose=
+remote=
 
 for dummy
 do
@@ -57,6 +59,10 @@ do
 	    ;;
 	--config)
 	    config="--config $2"
+	    shift
+	    ;;
+	--remote-host)
+	    remote="--remote-host $2"
 	    shift
 	    ;;
 	--asynchronous)
@@ -188,12 +194,12 @@ case "${op}" in
 	exit
 	;;
     --up)
-	${showonly} ipsec whack ${async} --name ${names} --initiate
+	${showonly} ipsec whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --start)
 	${showonly} ipsec addconn ${verbose} ${config} ${names}
-	${showonly} ipsec whack ${async} --name ${names} --initiate
+	${showonly} ipsec whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --down)

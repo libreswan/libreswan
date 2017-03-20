@@ -27,13 +27,16 @@ struct encrypt_desc;
 
 /*
  * Log some information on a SYMKEY.
+ *
+ * The format is <PREFIX>: <NAME>-key@...
  */
-void DBG_symkey(const char *prefix, PK11SymKey *key);
+void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
 /*
- * Free any symkey and then stomp on the pointer.
+ * Add/delete references to a reference-countered PK11SymKey.
  */
-void free_any_symkey(const char *prefix, PK11SymKey **key);
+void release_symkey(const char *prefix, const char *name, PK11SymKey **key);
+PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
 /*
  * Length of a symkey in bytes.
@@ -48,15 +51,13 @@ size_t sizeof_symkey(PK11SymKey *key);
  * Concatenate two pieces of keying material creating a
  * new SYMKEY object.
  */
-PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
-				 PK11SymKey *lhs, PK11SymKey *rhs);
-PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
-				PK11SymKey *lhs, const void *rhs,
+PK11SymKey *concat_symkey_symkey(PK11SymKey *lhs, PK11SymKey *rhs);
+PK11SymKey *concat_symkey_bytes(PK11SymKey *lhs, const void *rhs,
 				size_t sizeof_rhs);
-PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
-				PK11SymKey *lhs, chunk_t rhs);
-PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
-			       PK11SymKey *lhs, uint8_t rhs);
+PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
+				PK11SymKey *rhs);
+PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
+PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs);
 chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
 
 /*
@@ -65,15 +66,13 @@ chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
  *
  * Use this to chain a series of concat operations.
  */
-void append_symkey_symkey(const struct hash_desc *hasher,
-			  PK11SymKey **lhs, PK11SymKey *rhs);
-void append_symkey_bytes(const struct hash_desc *hasher,
-			 PK11SymKey **lhs, const void *rhs,
+void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs);
+void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
 			 size_t sizeof_rhs);
-void append_symkey_chunk(const struct hash_desc *hasher,
-			 PK11SymKey **lhs, chunk_t rhs);
-void append_symkey_byte(const struct hash_desc *hasher,
-			PK11SymKey **lhs, uint8_t rhs);
+void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
+			 PK11SymKey **rhs);
+void append_symkey_chunk(PK11SymKey **lhs, chunk_t rhs);
+void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs);
 void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
 
 /*
@@ -98,6 +97,9 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
  */
 chunk_t chunk_from_symkey(const char *prefix, lset_t debug,
 			  PK11SymKey *symkey);
+chunk_t chunk_from_symkey_bytes(const char *prefix, lset_t debug,
+				PK11SymKey *symkey,
+				size_t chunk_start, size_t sizeof_chunk);
 
 /*
  * Create a key suitable for ALG.

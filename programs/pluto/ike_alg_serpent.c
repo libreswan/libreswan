@@ -71,6 +71,10 @@ static void do_serpent(const struct encrypt_desc *alg UNUSED,
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
 
+static const struct encrypt_ops serpent_encrypt_ops = {
+	.do_crypt = do_serpent,
+};
+
 struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 {
 	.common = {
@@ -78,14 +82,16 @@ struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 		.names = { "serpent", "serpent_cbc", },
 		.officname = "serpent",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_SERPENT_CBC,
-		.ikev1_esp_id = ESP_SERPENT,
-		.ikev2_id = IKEv2_ENCR_SERPENT_CBC,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_SERPENT_CBC,
+			[IKEv1_ESP_ID] = ESP_SERPENT,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_SERPENT_CBC,
+		},
 	},
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = do_serpent,
+	.encrypt_ops = &serpent_encrypt_ops,
 };

@@ -54,12 +54,17 @@ for dummy; do
 	    exit 0
 	    ;;
 	--random)
-	    echo "$me warning: --random is obsoleted, using --seeddev"
+	    echo "$me warning: --random is obsoleted, using --seeddev" >&2
 	    seeddev="--seeddev ${2}"
 	    shift
 	    ;;
 	--seeddev)
 	    seeddev="--seeddev ${2}"
+	    shift
+	    ;;
+	--configdir)
+	    echo "$me warning: --configdir is obsoleted, use --nssdir" >&2
+	    nssdir="${2}"
 	    shift
 	    ;;
 	--nssdir)

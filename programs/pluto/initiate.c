@@ -120,62 +120,49 @@ static void swap_ends(struct connection *c)
 bool orient(struct connection *c)
 {
 	if (!oriented(*c)) {
-		struct spd_route *sr;
-
-		for (sr = &c->spd; sr; sr = sr->spd_next) {
-			/* There can be more then 1 spd policy associated - required
-			 * for cisco split networking when remote_peer_type=cisco
-			 */
-			if (c->remotepeertype == CISCO && sr != &c->spd )
+		const struct iface_port *p;
+		struct spd_route *sr = &c->spd;
+		for (p = interfaces; p != NULL; p = p->next) {
+			if (p->ike_float)
 				continue;
 
-			/* Note: this loop does not stop when it finds a match:
-			 * it continues checking to catch any ambiguity.
-			 */
-			const struct iface_port *p;
-
-			for (p = interfaces; p != NULL; p = p->next) {
-				if (p->ike_float)
-					continue;
-
-				for (;;) {
-					/* check if this interface matches this end */
-					if (sameaddr(&sr->this.host_addr,
-						     &p->ip_addr) &&
-					    (kern_interface != NO_KERNEL ||
-					     sr->this.host_port ==
-					     pluto_port)) {
-						if (oriented(*c)) {
-							if (c->interface->ip_dev == p->ip_dev) {
-								char cib[CONN_INST_BUF];
-								loglog(RC_LOG_SERIOUS,
-									"both sides of \"%s\"%s are our interface %s!",
-									c->name, fmt_conn_instance(c, cib),
-									p->ip_dev->id_rname);
-							} else {
-								char cib[CONN_INST_BUF];
-								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
-									c->name, fmt_conn_instance(c, cib),
-									c->interface->ip_dev->id_rname,
-									p->ip_dev->id_rname);
+			for (;;) {
+				/* check if this interface matches this end */
+				if (sameaddr(&sr->this.host_addr,
+					     &p->ip_addr) &&
+				    (kern_interface != NO_KERNEL ||
+				     sr->this.host_port ==
+				     pluto_port)) {
+					if (oriented(*c)) {
+						if (c->interface->ip_dev == p->ip_dev) {
+							char cib[CONN_INST_BUF];
+							loglog(RC_LOG_SERIOUS,
+								"both sides of \"%s\"%s are our interface %s!",
+								c->name, fmt_conn_instance(c, cib),
+								p->ip_dev->id_rname);
+						} else {
+							char cib[CONN_INST_BUF];
+							loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
+								c->name, fmt_conn_instance(c, cib),
+								c->interface->ip_dev->id_rname,
+								p->ip_dev->id_rname);
 							}
-							terminate_connection(c->name);
-							c->interface = NULL; /* withdraw orientation */
-							return FALSE;
-						}
-						c->interface = p;
+						terminate_connection(c->name);
+						c->interface = NULL; /* withdraw orientation */
+						return FALSE;
 					}
-
-					/* done with this interface if it doesn't match that end */
-					if (!(sameaddr(&sr->that.host_addr,
-						       &p->ip_addr) &&
-					      (kern_interface != NO_KERNEL ||
-					       sr->that.host_port ==
-					       pluto_port)))
-						break;
-
-					swap_ends(c);
+					c->interface = p;
 				}
+
+				/* done with this interface if it doesn't match that end */
+				if (!(sameaddr(&sr->that.host_addr,
+					       &p->ip_addr) &&
+				      (kern_interface != NO_KERNEL ||
+				       sr->that.host_port ==
+				       pluto_port)))
+					break;
+
+				swap_ends(c);
 			}
 		}
 	}
@@ -207,125 +194,154 @@ struct initiate_stuff {
 	int whackfd;
 	lset_t moredebug;
 	enum crypto_importance importance;
+	char *remote_host;
 };
 
-static int initiate_a_connection(struct connection *c,
-				 void *arg)
+static int initiate_a_connection(struct connection *c, void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	int whackfd = is->whackfd;
 	lset_t moredebug = is->moredebug;
 	enum crypto_importance importance = is->importance;
-	int success = 0;
 
 	set_cur_connection(c);
 
 	/* turn on any extra debugging asked for */
 	c->extra_debugging |= moredebug;
 
+	/* If whack supplied a remote IP, fill it in if we can */
+	if (is->remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
+		ip_address remote_ip;
+
+		ttoaddr_num(is->remote_host, 0, AF_UNSPEC, &remote_ip);
+
+		if (c->kind != CK_TEMPLATE) {
+			loglog(RC_NOPEERIP,
+				"Cannot instantiate non-template connection to a supplied remote IP address");
+			reset_cur_connection();
+			return 0;
+		}
+
+		c = instantiate(c, &remote_ip, NULL);
+		whack_log(RC_LOG, "Instantiated connection '%s' with remote IP set to %s",
+			c->name, is->remote_host);
+		/* now proceed as normal */
+	}
+
 	if (!oriented(*c)) {
 		ipstr_buf a;
 		ipstr_buf b;
 		loglog(RC_ORIENT,
-		       "We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-		       ipstr(&c->spd.this.host_addr, &a),
-		       ipstr(&c->spd.that.host_addr, &b));
-	} else if (NEVER_NEGOTIATE(c->policy)) {
+			"We cannot identify ourselves with either end of this connection.  %s or %s are not usable",
+			ipstr(&c->spd.this.host_addr, &a),
+			ipstr(&c->spd.that.host_addr, &b));
+		reset_cur_connection();
+		return 0;
+	}
+
+	if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
-		       "cannot initiate an authby=never connection");
-	} else if ((c->kind != CK_PERMANENT) &&
-		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+			"cannot initiate an authby=never connection");
+		reset_cur_connection();
+		return 0;
+	}
+
+	if ((is->remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				       enum_show(&connection_kind_names,
-						 c->kind));
-				success = 1;
-				c->policy |= POLICY_UP;
-			} else {
-				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without knowing peer IP address (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-			}
-		} else if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			loglog(RC_WILDCARD,
-			       "cannot initiate connection with narrowing=no and (kind=%s)",
-			       enum_show(&connection_kind_names, c->kind));
-		} else {
-			loglog(RC_WILDCARD,
-			       "cannot initiate connection with ID wildcards (kind=%s)",
-			       enum_show(&connection_kind_names, c->kind));
-		}
-	} else {
-		if (isanyaddr(&c->spd.that.host_addr) &&
-		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
-			if (c->dnshostname != NULL) {
-				loglog(RC_NOPEERIP,
-				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				       enum_show(&connection_kind_names,
-						 c->kind),
-				       (c->policy &
-					POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
-				success = 1;
-				c->policy |= POLICY_UP;
-			} else {
-				loglog(RC_NOPEERIP,
-					"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 					enum_show(&connection_kind_names,
-						c->kind),
-			       (c->policy &
-				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+						 c->kind));
+				c->policy |= POLICY_UP;
+				reset_cur_connection();
+				return 1;
+			} else {
+				loglog(RC_NOPEERIP,
+					"cannot initiate connection without knowing peer IP address (kind=%s)",
+					enum_show(&connection_kind_names, c->kind));
 			}
+			reset_cur_connection();
+			return 0;
+		}
+
+		if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+			loglog(RC_WILDCARD,
+				"cannot initiate connection with narrowing=no and (kind=%s)",
+				enum_show(&connection_kind_names, c->kind));
 		} else {
-			if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
-				c->kind == CK_TEMPLATE) {
-					c = instantiate(c, NULL, NULL);
-			}
+			loglog(RC_WILDCARD,
+				"cannot initiate connection with ID wildcards (kind=%s)",
+				enum_show(&connection_kind_names, c->kind));
+		}
+		reset_cur_connection();
+		return 0;
+	}
 
-			/* We will only request an IPsec SA if policy isn't empty
-			 * (ignoring Main Mode items).
-			 * This is a fudge, but not yet important.
-			 * If we are to proceed asynchronously, whackfd will be NULL_FD.
-			 */
+	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
+		if (c->dnshostname != NULL) {
+			loglog(RC_NOPEERIP,
+				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
+				enum_show(&connection_kind_names, c->kind),
+					(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
 			c->policy |= POLICY_UP;
-
-			if (c->policy &
-			    (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-				struct alg_info_esp *alg = c->alg_info_esp;
-				struct db_sa *phase2_sa = kernel_alg_makedb(
-					c->policy, alg, TRUE);
-
-				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_LOG_SERIOUS,
-						  "cannot initiate: no acceptable kernel algorithms loaded");
-					reset_cur_connection();
-					close_any(is->whackfd);
-					return 0;
-				}
-				free_sa(&phase2_sa);
-			}
-
-			{
-				whackfd = dup(whackfd);
-				ipsecdoi_initiate(whackfd, c, c->policy, 1,
-						  SOS_NOBODY, importance
-#ifdef HAVE_LABELED_IPSEC
-						  , NULL
-#endif
-						  );
-				success = 1;
-			}
+			reset_cur_connection();
+			return 1;
+		} else {
+			loglog(RC_NOPEERIP,
+				"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+				enum_show(&connection_kind_names,
+					c->kind),
+				(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+			reset_cur_connection();
+			return 0;
 		}
 	}
-	reset_cur_connection();
 
-	return success;
+	if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+		c->kind == CK_TEMPLATE) {
+			c = instantiate(c, NULL, NULL);
+	}
+
+	/* We will only request an IPsec SA if policy isn't empty
+	 * (ignoring Main Mode items).
+	 * This is a fudge, but not yet important.
+	 * If we are to proceed asynchronously, whackfd will be NULL_FD.
+	 */
+
+	if (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+
+		struct alg_info_esp *alg = c->alg_info_esp;
+		struct db_sa *phase2_sa = kernel_alg_makedb(
+			c->policy, alg, TRUE);
+
+		if (alg != NULL && phase2_sa == NULL) {
+			whack_log(RC_LOG_SERIOUS,
+				  "cannot initiate: no acceptable kernel algorithms loaded");
+			reset_cur_connection();
+			close_any(is->whackfd);
+			return 0;
+		}
+		free_sa(&phase2_sa);
+	}
+
+	c->policy |= POLICY_UP;
+	whackfd = dup(whackfd);
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, importance
+#ifdef HAVE_LABELED_IPSEC
+		  , NULL
+#endif
+		  );
+
+	reset_cur_connection();
+	return 1;
 }
 
 void initiate_connection(const char *name, int whackfd,
 			 lset_t moredebug,
-			 enum crypto_importance importance)
+			 enum crypto_importance importance,
+			 char *remote_host)
 {
 	struct initiate_stuff is;
 	struct connection *c = con_by_name(name, FALSE);
@@ -335,9 +351,11 @@ void initiate_connection(const char *name, int whackfd,
 	is.whackfd   = whackfd;
 	is.moredebug = moredebug;
 	is.importance = importance;
+	is.remote_host = remote_host;
 
 	if (c != NULL) {
-		initiate_a_connection(c, &is);
+		if (!initiate_a_connection(c, &is))
+			whack_log(RC_FATAL, "failed to initiate %s", c->name);
 		close_any(is.whackfd);
 		return;
 	}
@@ -416,7 +434,7 @@ void restart_connections_by_peer(struct connection *const c)
 		if (same_host(dnshostname, &host_addr,
 				d->dnshostname, &d->spd.that.host_addr))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
-					pcim_demand_crypto);
+					pcim_demand_crypto, NULL);
 	}
 	pfreeany(dnshostname);
 }
@@ -929,73 +947,59 @@ void initiate_ondemand(const ip_address *our_client,
 bool uniqueIDs = FALSE; /* --uniqueids? */
 
 /*
- * Called by main_inI3_outR3_tail() and ikev2_child_sa_respond() which is called for
- * initiator and responder alike! So this function should not be in initiate.c.
- * It is also not called in IKEv1 Aggressive Mode!
+ * Called by IKEv1 and IKEv2 when the IKE SA is established.
+ * It checks if the freshly established connection needs is
+ * replacing an established version of itself.
+ *
+ * The use of uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections,
+ * which only act based on being a "server using PSK".
  */
 void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && !c->spd.this.xauth_server &&
-		(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
-		/*
-		 * for all connections: if the same Phase 1 IDs are used
-		 * for different IP addresses, unorient that connection.
-		 * We also check ports, since different Phase 1 ID's can
-		 * exist for the same IP when NAT is involved.
-		 */
-		struct connection *d;
+	/* NULL authentication can never replaced - it is all anonnymous */
+	if (LIN(POLICY_AUTH_NULL, c->policy) ||
+	   ( c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
 
-		for (d = connections; d != NULL; ) {
-			/* might move underneath us */
-			struct connection *next = d->ac_next;
+		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
+		return;
+	}
 
-			/*
-			 * We try to find duplicate instances of same
-			 * connection to clean up old ones when uniqueids=yes
-			 *
-			 * We are testing for all of:
-			 * 1: an appropriate kind to consider
-			 * 2: same ids, left and right
-			 * 3: same address family
-			 * 4: same connection name
-			 * 5: but different IP address or port
-			 * 6: differing dnsnames (sort of)
-			 *
-			 * DHR (2014-10-29):
-			 * Is the sense of the last clause inverted?
-			 * The logic kind of suggests that in fact the
-			 * same dnsnames should be the same, not different.
-			 *
-			 * Let's make 6 clearer:
-			 *   if BOTH have dnsnames, they must be unequal.
-			 *
-			 * I suspect that it should be:
-			 *   if BOTH have dnsnames, they must be equal.
-			 *
-			 * In other words the streq result should be negated.
-			 */
-			if ((d->kind == CK_PERMANENT ||
-				d->kind == CK_INSTANCE ||
-				d->kind == CK_GOING_AWAY) &&
-				(c->name == d->name) &&
-				same_id(&c->spd.this.id, &d->spd.this.id) &&
-				same_id(&c->spd.that.id, &d->spd.that.id) &&
-				addrtypeof(&c->spd.that.host_addr) ==
-				addrtypeof(&d->spd.that.host_addr) &&
-				(!sameaddr(&c->spd.that.host_addr,
-					&d->spd.that.host_addr) ||
-				c->spd.that.host_port !=
-					d->spd.that.host_port) &&
-				!(c->dnshostname != NULL &&
-					d->dnshostname != NULL &&
-					streq(c->dnshostname,
-						d->dnshostname))) {
-				release_connection(d, FALSE);
-			}
-			d = next;
+	/*
+	 * If we are a server and use PSK, all clients use the same group ID
+	 * Note that "xauth_server" also refers to IKEv2 CP
+	 */
+	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
+		return;
+	}
+
+	if (!uniqueIDs) {
+		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
+		return;
+	}
+
+	/*
+	 * for all existing connections: if the same Phase 1 IDs are used,
+	 * unorient that (old) connection - This is a replacement.
+	 */
+	struct connection *d;
+
+	for (d = connections; d != NULL; ) {
+		/* might move underneath us */
+		struct connection *next = d->ac_next;
+
+		if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+		    (same_id(&c->spd.this.id, &d->spd.this.id) &&
+		     same_id(&c->spd.that.id, &d->spd.that.id)))
+		{
+		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+		  suppress_delete(d); /* don't send a delete */
+		  release_connection(d, FALSE);
 		}
+		d = next;
 	}
 }
 
@@ -1102,7 +1106,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto);
+	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto, NULL);
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1112,7 +1116,7 @@ static void connection_check_ddns1(struct connection *c)
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
-					    pcim_demand_crypto);
+					    pcim_demand_crypto, NULL);
 	}
 }
 

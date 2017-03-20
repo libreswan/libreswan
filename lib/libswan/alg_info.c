@@ -476,7 +476,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				/*
 				 * ESP AEAD ciphers do not require
 				 * separate authentication (by
-				 * defintion, authentication is
+				 * definition, authentication is
 				 * built-in).
 				 */
 				switch (ealg_id) {
@@ -495,7 +495,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				/*
 				 * While IKE AEAD ciphers do not
 				 * require separate authentication (by
-				 * defintion, authentication is
+				 * definition, authentication is
 				 * built-in), they do require a PRF.
 				 *
 				 * The non-empty authentication
@@ -525,7 +525,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				/*
 				 * ESP AEAD ciphers do not require
 				 * separate authentication (by
-				 * defintion, authentication is
+				 * definition, authentication is
 				 * built-in).
 				 *
 				 * Reject any non-null authentication
@@ -547,7 +547,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				/*
 				 * While IKE AEAD ciphers do not
 				 * require separate authentication (by
-				 * defintion, authentication is
+				 * definition, authentication is
 				 * built-in), they do require a PRF.
 				 *
 				 * So regardless of the algorithm type

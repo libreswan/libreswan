@@ -49,7 +49,7 @@ enum pluto_crypto_requests {
 	pcr_build_nonce,	/* generate a nonce */
 	pcr_compute_dh_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
 	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
-	pcr_compute_dh_v2,	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
+	pcr_compute_dh_v2,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
 
 typedef unsigned int pcr_req_id;
@@ -152,7 +152,7 @@ struct pcr_kenonce {
 	DECLARE_WIRE_ARENA(KENONCE_SIZE);
 
 	/* inputs */
-	u_int16_t oakley_group;
+	const struct oakley_group_desc *group;
 
 	/* outputs */
 	SECKEYPrivateKey *secret;
@@ -173,7 +173,7 @@ struct pcr_skeyid_q {
 	const struct prf_desc *prf;
 	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
-	size_t salt_size; /* ov IV salt, in bytes */
+	size_t salt_size; /* of IV salt, in bytes */
 	wire_chunk_t gi;
 	wire_chunk_t gr;
 	wire_chunk_t pss;
@@ -184,6 +184,8 @@ struct pcr_skeyid_q {
 	SECKEYPrivateKey *secret;
 	const struct encrypt_desc *encrypter;
 	SECKEYPublicKey *pubk;
+	PK11SymKey *skey_d_old;
+	const struct prf_desc *old_prf;
 };
 
 /* response */
@@ -205,7 +207,6 @@ struct pcr_skeycalc_v2_r {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
 	PK11SymKey *shared;
-	PK11SymKey *skeyseed;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_ai;
 	PK11SymKey *skeyid_ar;
@@ -349,6 +350,10 @@ extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 extern void log_crypto_workers(void);
 
 /* actual helper functions */
+extern stf_status build_child_dh_v2( struct pluto_crypto_req_cont *cn,
+		const struct oakley_group_desc *group,
+		enum crypto_importance importance);
+
 extern stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
 			   const struct oakley_group_desc *group,
 			   enum crypto_importance importance);
@@ -382,6 +387,13 @@ extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
 extern stf_status start_dh_v2(struct msg_digest *md,
+			      const char *name,
+			      enum original_role role,
+			      PK11SymKey *skey_d_old,
+			      const struct prf_desc *old_prf,
+			      crypto_req_cont_func pcrc_func);
+
+extern stf_status start_child_dh_v2(struct msg_digest *md,
 			      const char *name,
 			      enum original_role role,
 			      crypto_req_cont_func pcrc_func);

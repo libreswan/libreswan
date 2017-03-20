@@ -42,13 +42,13 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb);
 
 	/* do_crypt modifies the data and IV in place.  */
-	encrypt_desc->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
-			       sym_key, cb.ptr, encrypt);
-	if (!compare_chunks(op, expected_output, tmp)) {
+	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
+					    sym_key, cb.ptr, encrypt);
+	if (!verify_chunk(op, expected_output, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: output does not match", description, op));
 		ok = FALSE;
 	}
-	if (!compare_chunks("counter-block", expected_cb, cb)) {
+	if (!verify_chunk("counter-block", expected_cb, cb)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: counter-block does not match", description, op));
 		ok = FALSE;
 	}
@@ -82,7 +82,7 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	}
 
 	/* Clean up.  */
-	free_any_symkey("sym_key", &sym_key);
+	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s %s",
 			       test->description, ok ? "passed" : "failed"));

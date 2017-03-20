@@ -40,7 +40,7 @@ config setup
 	# exclude networks used on server side by adding %v4:!a.b.c.0/24
 	# It seems that T-Mobile in the US and Rogers/Fido in Canada are
 	# using 25/8 as "private" address space on their wireless networks.
-	# This range has never been announced via BGP (at least upto 2015)
+	# This range has never been announced via BGP (at least up to 2015)
 	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
 
 # For example connections, see your distribution's documentation directory,

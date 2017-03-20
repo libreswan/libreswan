@@ -5,7 +5,7 @@ s/Program invoked with \(.*\)\/start.sh/Program invoked with PATH\/start.sh/
 s/Starting UML \(.*\)\/start.*sh/Starting UML PATH\/start.sh/
 s/Kernel command line: .*/Kernel command line:/
 /mconsole .*initialized on .*/d
-s/Calculating module dependencies... .*/Calculating module dependancies/
+s/Calculating module dependencies... .*/Calculating module dependencies/
 s/Loading modules: .*/Loading modules: LIST/
 /modprobe: /d
 s/Calibrating delay loop... .*/Calibrating delay loop... XXXX bogomips/

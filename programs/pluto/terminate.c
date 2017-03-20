@@ -78,7 +78,7 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 		if (c->newest_ipsec_sa != SOS_NOBODY)
 			delete_state(state_with_serialno(c->newest_ipsec_sa));
 	} else {
-		DBG(DBG_CONTROL, DBG_log("connection not shared pkilling phase1 and phase2"));
+		DBG(DBG_CONTROL, DBG_log("connection not shared - terminating IKE and IPsec SA"));
 		delete_states_by_connection(c, FALSE);
 	}
 
