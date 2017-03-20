@@ -48,4 +48,4 @@ include ../../mk/program.mk
 endif
 
 selfcheck: $(PROGRAM)
-	$(objdir)/$(PROGRAM) | diff -u - $(srcdir)/OUTPUT.$(PROGRAM).txt
+	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -

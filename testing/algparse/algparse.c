@@ -10,28 +10,24 @@
 
 static void do_test(const char *algstr, int ttype)
 {
-	char err_buf[256];	/* ??? big enough? */
-	char algbuf[256];
-
 	printf("[%*s] ", 20, algstr);
-	algbuf[0] = '\0';
 
 	switch (ttype) {
 #define CHECK(TYPE,PARSE) {						\
+			char err_buf[256] = "";	/* ??? big enough? */	\
 			struct alg_info_##TYPE *e =			\
 				alg_info_##PARSE##_create_from_str(0, algstr, \
-								  err_buf, \
-								  sizeof(err_buf)); \
-			if (err_buf[0] != '\0') {			\
-				printf("ERROR: alg=%s  error=%s\n",	\
-				       algbuf, err_buf);		\
-			} else {					\
-				passert(e);				\
-				alg_info_##TYPE##_snprint(algbuf, sizeof(algbuf), e); \
-				printf("   OK: alg=%s\n", algbuf);	\
-			}						\
+								   err_buf, \
+								   sizeof(err_buf)); \
 			if (e != NULL) {				\
+				passert(err_buf[0] == '\0');		\
+				char algbuf[256] = "";			\
+				alg_info_##TYPE##_snprint(algbuf, sizeof(algbuf), e); \
+				printf("   OK: %s\n", algbuf);		\
 				alg_info_free(&e->ai);			\
+			} else {					\
+				passert(err_buf[0]);			\
+				printf("ERROR: %s\n", err_buf);		\
 			}						\
 		}
 	case PROTO_IPSEC_ESP:
@@ -43,6 +39,7 @@ static void do_test(const char *algstr, int ttype)
 	case PROTO_ISAKMP:
 		CHECK(ike,ike);
 		break;
+#undef CHECK
 	}
 }
 
