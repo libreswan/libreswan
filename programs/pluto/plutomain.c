@@ -939,7 +939,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
-			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
+			ugh = ttoulb(optarg, 0, 10, (unsigned long) TIME_T_MAX, &u);
 			if (ugh != NULL)
 				break;
 			crl_check_interval = deltatime(u);
@@ -1785,12 +1785,12 @@ void show_setup_plutomain(void)
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%lus, xfrmlifetime=%ds",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%llds, xfrmlifetime=%llds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		!log_to_perpeer ? "no" : base_perpeer_logdir,
-		deltasecs(pluto_shunt_lifetime),
-		pluto_xfrmlifetime
+                (long long int) deltasecs(pluto_shunt_lifetime),
+                (long long int) pluto_xfrmlifetime
 	);
 
 	whack_log(RC_COMMENT,
@@ -1801,10 +1801,10 @@ void show_setup_plutomain(void)
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	whack_log(RC_COMMENT,
-		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s, nflog-all=%d",
+		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lld, listen=%s, nflog-all=%d",
 		pluto_port,
 		crl_strict ? "yes" : "no",
-		deltasecs(crl_check_interval),
+                (long long int) deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
 		);
