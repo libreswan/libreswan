@@ -1,0 +1,40 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Mon, 20 Mar 2017 18:39:48 -0400
+Subject: fix time_t printf on x32
+
+On the x32 architecture (x86_64 with 32-bit address space), we see:
+
+programs/pluto/connections.c: In function 'add_connection':
+programs/pluto/connections.c:1603:74: error: format '%ld' expects argument of type 'long int', but argument 3 has type 'time_t {aka long long int}' [-Werror=format=]
+     loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %lds",
+                                                                          ^
+programs/pluto/connections.c:1608:76: error: format '%ld' expects argument of type 'long int', but argument 3 has type 'time_t {aka long long int}' [-Werror=format=]
+     loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %lds",
+                                                                            ^
+This patch should make the time_t printf work portably.
+---
+ programs/pluto/connections.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/programs/pluto/connections.c b/programs/pluto/connections.c
+index 9d03f0f..4229b97 100644
+--- a/programs/pluto/connections.c
++++ b/programs/pluto/connections.c
+@@ -1600,13 +1600,13 @@ void add_connection(const struct whack_message *wm)
+ 		}
+ #endif
+ 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
+-				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %lds",
+-					max_ike);
++				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %llds",
++                                       (long long int) max_ike);
+ 				c->sa_ike_life_seconds = deltatime(max_ike);
+ 			}
+ 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
+-				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %lds",
+-					max_ipsec);
++				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %llds",
++                                       (long long int) max_ipsec);
+ 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
+ 			}
+ 		}
