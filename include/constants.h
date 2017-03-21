@@ -236,6 +236,17 @@ extern const char *strip_prefix(const char *s, const char *prefix);
 extern int enum_search(enum_names *ed, const char *string);
 
 /*
+ * Search ED for an enum matching STRING.  Return -1 if no match is
+ * found.
+ *
+ * Unlike enum_search() this compares strings both with and without
+ * any prefixes and suffixes.  For instance, and assuming "ESP_" is
+ * the prefix discarded by enum_short_name(), "blowfish" will match
+ * "ESP_BLOWFISH(OBSOLETE)" while enum_search() will not.
+ */
+extern int enum_match(enum_names *ed, const char *string);
+
+/*
  * Printing enum enums.
  *
  * An enum_enum_names table describes an enumeration first identified

@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "constants.h"
 #include "lswlog.h"
@@ -7,31 +8,101 @@
 
 static void test_enum(char *enumname, enum_names *enum_test, int max)
 {
-	fprintf(stdout, "%s:\n", enumname);
+	printf("  %s:\n", enumname);
 	for (int i = 0; i < max; i++) {
 		const char *name = enum_name(enum_test, i);
-
-		if (name != NULL) {
-			int found = enum_search(enum_test, name);
-
-			fprintf(stdout,"%s: [%5d] -> %s -> %d\n",
-				found == i ? "OK" : "ERROR",
-				i, name, found);
+		if (name == NULL) {
+			continue;
 		}
+
+		printf("  %3d -> %s\n", i, name);
+		const char *prefix = "        ";
+
+		/*
+		 * So that it is easy to see what was tested, print
+		 * something for every comparision.
+		 *
+		 * "break" is used to make bailing early easier
+		 */
+		do {
+			int e;
+
+			printf("%s search %s: ", prefix, name);
+			e = enum_search(enum_test, name);
+			if (e != i) {
+				printf("%d ERROR\n", e);
+				break;
+			}
+			printf("OK\n");
+
+			e = enum_match(enum_test, name);
+			printf("%s match %s: ", prefix, name);
+			if (e != i) {
+				printf("%d ERROR\n", e);
+				break;
+			}
+			printf("OK\n");
+
+			if (strchr(name, '(')) {
+				char *trunc_name = clone_str(name, "trunc_name");
+				*strchr(trunc_name, '(') = '\0';
+				e = enum_match(enum_test, trunc_name);
+				printf("%s match %s: ", prefix, trunc_name);
+				pfree(trunc_name);
+				if (e != i) {
+					printf("%d ERROR\n", e);
+					break;
+				}
+				printf("OK\n");
+			}
+
+			const char *short_name = enum_short_name(enum_test, i);
+			if (short_name != name) {
+				if (short_name == NULL) {
+					printf("%s short_name %d: ERROR\n",
+					       prefix, e);
+					break;
+				}
+
+				e = enum_match(enum_test, short_name);
+				printf("%s match %s: ", prefix, short_name);
+				if (e != i) {
+					printf("%d ERROR\n", e);
+					break;
+				}
+				printf("OK\n");
+
+				if (strchr(short_name, '(')) {
+					char *trunc_short_name = clone_str(short_name, "trunc_short_name");
+					*strchr(trunc_short_name, '(') = '\0';
+					e = enum_match(enum_test, trunc_short_name);
+					printf("%s match %s: ", prefix, trunc_short_name);
+					pfree(trunc_short_name);
+					if (e != i) {
+						printf("%d ERROR\n", e);
+						break;
+					}
+					printf("OK\n");
+				}
+			}
+		} while (FALSE);
+
 	}
-	fprintf(stdout,"\n");
-	fflush(stdout);
+	printf("\n");
 }
 
 int main(int argc UNUSED, char *argv[])
 {
 	tool_init_log(argv[0]);
 
-	fprintf(stdout, "pluto enum_names:\n");
+	/* don't hold back */
+	setbuf(stdout, NULL);
+
+	printf("pluto enum_names:\n\n");
 	test_enum("connection_kind_names", &connection_kind_names, 256);
 	test_enum("certpolicy_type_names", &certpolicy_type_names, 256);
 
-	fprintf(stdout, "IETF registry enum_names:\n");
+	printf("IETF registry enum_names:\n\n");
 	test_enum("version_names", &version_names, 256);
 	test_enum("doi_names", &doi_names, 256);
 	test_enum("ikev1_payload_names", &ikev1_payload_names, 256);
