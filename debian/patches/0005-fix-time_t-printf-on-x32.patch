@@ -29,11 +29,12 @@ This patch also resolves this warning.
 ---
  programs/pluto/connections.c | 36 ++++++++++++++++++------------------
  programs/pluto/defs.c        |  5 +++--
+ programs/pluto/ikev2.c       | 12 ++++++------
  programs/pluto/pending.c     |  6 +++---
  programs/pluto/plutomain.c   | 12 ++++++------
  programs/pluto/state.c       | 12 ++++++------
- programs/pluto/timer.c       | 22 +++++++++++-----------
- 6 files changed, 47 insertions(+), 46 deletions(-)
+ programs/pluto/timer.c       | 28 ++++++++++++++--------------
+ 7 files changed, 56 insertions(+), 55 deletions(-)
 
 diff --git a/programs/pluto/connections.c b/programs/pluto/connections.c
 index 9d03f0f..cdb2017 100644
@@ -133,6 +134,49 @@ index 8b2da03..111a232 100644
  		return buf;
  	}
  }
+diff --git a/programs/pluto/ikev2.c b/programs/pluto/ikev2.c
+index c064c9d..fa16841 100644
+--- a/programs/pluto/ikev2.c
++++ b/programs/pluto/ikev2.c
+@@ -1675,15 +1675,15 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+ 		 */
+ 		if (IS_IKE_SA_ESTABLISHED(st)) {
+ 			delay = deltasecs(c->sa_ike_life_seconds);
+-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%lu", delay));
++			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%lld", (long long int) delay));
+ 		} else {
+ 			delay = PLUTO_HALFOPEN_SA_LIFE;
+-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%lu", delay));
++			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%lld", (long long int) delay));
+ 		}
+ 	} else {
+ 		/* Delay is what the user said, no negotiation. */
+ 		delay = deltasecs(c->sa_ipsec_life_seconds);
+-		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lu", delay));
++		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lld", (long long int) delay));
+ 	}
+ 
+ 	/* By default, we plan to rekey.
+@@ -1900,7 +1900,7 @@ static void success_v2_state_transition(struct msg_digest *md)
+ 						EVENT_RELEASE_WHACK_DELAY, st);
+ 				kind = EVENT_SA_REPLACE;
+ 				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
+-				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
++				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lld seconds", (long long int) delay));
+ 				event_schedule(kind, delay, st);
+ 
+ 			}  else {
+@@ -1913,8 +1913,8 @@ static void success_v2_state_transition(struct msg_digest *md)
+ 			break;
+ 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
+ 			delay = ikev2_replace_delay(st, &kind, st->st_original_role);
+-			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
+-				IS_IKE_SA(st) ? "parent" : "child", delay));
++			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lld seconds",
++                            IS_IKE_SA(st) ? "parent" : "child", (long long int) delay));
+ 			delete_event(st);
+ 			event_schedule(kind, delay, st);
+ 			break;
 diff --git a/programs/pluto/pending.c b/programs/pluto/pending.c
 index 7c1578c..81436b2 100644
 --- a/programs/pluto/pending.c
@@ -234,7 +278,7 @@ index a4e69eb..682a97b 100644
  		}
  
 diff --git a/programs/pluto/timer.c b/programs/pluto/timer.c
-index 167665f..f0dc0ac 100644
+index 167665f..8e59753 100644
 --- a/programs/pluto/timer.c
 +++ b/programs/pluto/timer.c
 @@ -459,9 +459,9 @@ static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
@@ -290,3 +334,23 @@ index 167665f..f0dc0ac 100644
  			st == NULL ? SOS_NOBODY : st->st_serialno);
  
  		if (st != NULL && st->st_connection != NULL) {
+@@ -939,8 +939,8 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay,
+ 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
+ 	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
+ 
+-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
+-		delay.tv_sec));
++	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lld seconds and change",
++	    (long long int) delay.tv_sec));
+ 
+ 	/*
+ 	 * Scheduling a month into the future is most likely a bug.
+@@ -1028,7 +1028,7 @@ void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
+ {
+ 	struct timeval delay;
+ 
+-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
++	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lld seconds", (long long int) delay_sec));
+ 
+ 	/* unexpectedly far away, pexpect will flag in test cases */
+ 	pexpect(delay_sec < 3600 * 24 * 31);
