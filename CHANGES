@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v3.21 (March 14, 2017) Not released
+* pluto: Support for "idXXX" esp/ike transform IDs removed [Andrew,Paul]
+
 v3.20 (March 14, 2017)
 * pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
 * pluto: Add dh= aliases for all modp= groups (eg "dh2" for "modp1024") [Paul]

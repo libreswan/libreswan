@@ -164,13 +164,6 @@ static int aalg_getbyname_ike(const char *str)
 	if (strcaseeq(str, "null"))
 		return INT_MAX;
 
-	/* support idXXX as syntax, matching iana numbers directly */
-
-	int num_read = -1;
-	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 &&
-	    num_read == (int) strlen(str))
-		return ret;
-
 	return -1;
 }
 

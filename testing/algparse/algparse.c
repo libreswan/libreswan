@@ -167,12 +167,12 @@ int main(int argc UNUSED, char *argv[])
 	do_test("vanitycipher", PROTO_IPSEC_ESP);
 	do_test("ase-sah", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes-sah1", PROTO_IPSEC_ESP); /* should get rejected */
-	/* we no longer support IDxxx because we cannot know block/key sizes */
-	do_test("id3", PROTO_IPSEC_ESP); /* alternative spelling for 3DES */
-	do_test("id12", PROTO_IPSEC_ESP); /* alternative spelling for AES */
+	do_test("id3", PROTO_IPSEC_ESP); /* should be rejected; idXXX removed */
+	do_test("aes-id3", PROTO_IPSEC_ESP); /* should be rejected; idXXX removed */
 	do_test("aes_gcm-md5", PROTO_IPSEC_ESP); /* AEAD must have auth null */
 
 	/* ah= */
+
 	fprintf(stdout, "\n---- AH tests that should succeed ----\n");
 	do_test("md5", PROTO_IPSEC_AH);
 	do_test("sha", PROTO_IPSEC_AH);
@@ -191,15 +191,20 @@ int main(int argc UNUSED, char *argv[])
 	do_test("aes-sha1", PROTO_IPSEC_AH);
 	do_test("vanityhash1", PROTO_IPSEC_AH);
 	do_test("aes_gcm_c-256", PROTO_IPSEC_AH);
-	do_test("id3", PROTO_IPSEC_AH);
+	do_test("id3", PROTO_IPSEC_AH); /* should be rejected; idXXX removed */
 	do_test("3des", PROTO_IPSEC_AH);
 	do_test("null", PROTO_IPSEC_AH);
 	do_test("aes_gcm", PROTO_IPSEC_AH);
 	do_test("aes_ccm", PROTO_IPSEC_AH);
 
 	/* ike= */
-	fprintf(stdout, "\n---- IKE tests ----\n");
+
+	fprintf(stdout, "\n---- IKE tests that should succeed ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
+
+	fprintf(stdout, "\n---- IKE tests that should fail ----\n");
+	do_test("id2", PROTO_ISAKMP); /* should be rejected; idXXX removed */
+	do_test("3des-id2", PROTO_ISAKMP); /* should be rejected; idXXX removed */
 
 	fflush(NULL);
 	report_leaks();
