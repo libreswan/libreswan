@@ -1,3 +1,9 @@
+libreswan (3.20-4) unstable; urgency=medium
+
+  * still more x32 time_t printf fixes
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Mon, 20 Mar 2017 22:11:22 -0400
+
 libreswan (3.20-3) unstable; urgency=medium
 
   * more fixes for printing time_t on x32
