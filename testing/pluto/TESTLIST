@@ -178,7 +178,6 @@ kvmplutotest	ikev2-algo-sha2-08			good
 
 # dh tests
 kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
-kvmplutotest	interop-ikev2-strongswan-33-ike-dh-ecp-responder	good
 
 kvmplutotest	klips-ikev2-algo-sha2-07		wip
 # interop tests for KLIPS-NETKEY with SHA2
@@ -813,6 +812,7 @@ kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		wip
+kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 
 #################################################################
 # DNSSEC tests
