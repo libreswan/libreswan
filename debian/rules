@@ -6,8 +6,8 @@ include /usr/share/dpkg/default.mk
 	dh $@ --with systemd
 
 # this should track the definition of USERCOMPILE in mk/userland-cflags.mk:43
-# but without -fstack-protector-all for arches like hppa that lack stack-protector
-ifeq ($(DEB_HOST_ARCH), hppa)
+# but without -fstack-protector-all for arches that lack stack-protector
+ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
 export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
 endif
 
