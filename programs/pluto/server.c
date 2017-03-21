@@ -628,7 +628,9 @@ static void pluto_event_free(struct pluto_events *pluto_evs)
 	event_free(pluto_evs->ev_sig_chld);
 	event_free(pluto_evs->ev_sig_term);
 	event_free(pluto_evs->ev_sig_hup);
+#ifdef HAVE_SECCOMP
 	event_free(pluto_evs->ev_sig_sys);
+#endif
 }
 
 static void main_loop(void)
