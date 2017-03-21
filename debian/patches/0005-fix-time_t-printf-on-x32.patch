@@ -14,7 +14,8 @@ programs/pluto/connections.c:1608:76: error: format '%ld' expects argument of ty
 This patch should make the time_t printf work portably.
 ---
  programs/pluto/connections.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ programs/pluto/defs.c        | 5 +++--
+ 2 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/programs/pluto/connections.c b/programs/pluto/connections.c
 index 9d03f0f..4229b97 100644
@@ -38,3 +39,19 @@ index 9d03f0f..4229b97 100644
  				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
  			}
  		}
+diff --git a/programs/pluto/defs.c b/programs/pluto/defs.c
+index 8b2da03..111a232 100644
+--- a/programs/pluto/defs.c
++++ b/programs/pluto/defs.c
+@@ -146,8 +146,9 @@ const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
+ 			time_left /= secs_per_minute;
+ 			unit = "minute";
+ 		}
+-		snprintf(buf, sizeof(buf), "warning (expires in %ld %s%s)",
+-			time_left, unit, (time_left == 1) ? "" : "s");
++		snprintf(buf, sizeof(buf), "warning (expires in %lld %s%s)",
++                         (long long int) time_left, unit,
++                         (time_left == 1) ? "" : "s");
+ 		return buf;
+ 	}
+ }
