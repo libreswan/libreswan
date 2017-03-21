@@ -15,13 +15,25 @@ programs/pluto/connections.c:1608:76: error: format '%ld' expects argument of ty
 
 This patch should make the time_t printf work portably by always
 casting it to a long long int where it gets printed.
+
+The use of TIME_T_MAX in ttolub also produces a warning:
+
+linux/include/libreswan.h:60:21: error: large integer implicitly truncated to unsigned type [-Werror=overflow]
+ #define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
+                     ^
+programs/pluto/plutomain.c:942:32: note: in expansion of macro 'TIME_T_MAX'
+    ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
+                                ^~~~~~~~~~
+
+This patch also resolves this warning.
 ---
  programs/pluto/connections.c | 36 ++++++++++++++++++------------------
  programs/pluto/defs.c        |  5 +++--
  programs/pluto/pending.c     |  6 +++---
+ programs/pluto/plutomain.c   | 12 ++++++------
  programs/pluto/state.c       | 12 ++++++------
  programs/pluto/timer.c       | 22 +++++++++++-----------
- 5 files changed, 41 insertions(+), 40 deletions(-)
+ 6 files changed, 47 insertions(+), 46 deletions(-)
 
 diff --git a/programs/pluto/connections.c b/programs/pluto/connections.c
 index 9d03f0f..cdb2017 100644
@@ -140,6 +152,48 @@ index 7c1578c..81436b2 100644
  			});
  
  		if (deltasecs(c->dpd_timeout) > 0) {
+diff --git a/programs/pluto/plutomain.c b/programs/pluto/plutomain.c
+index 32018d8..4e7834e 100644
+--- a/programs/pluto/plutomain.c
++++ b/programs/pluto/plutomain.c
+@@ -939,7 +939,7 @@ int main(int argc, char **argv)
+ 			continue;
+ 
+ 		case 'x':	/* --crlcheckinterval <seconds> */
+-			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
++			ugh = ttoulb(optarg, 0, 10, (unsigned long) TIME_T_MAX, &u);
+ 			if (ugh != NULL)
+ 				break;
+ 			crl_check_interval = deltatime(u);
+@@ -1785,12 +1785,12 @@ void show_setup_plutomain(void)
+ 		pluto_vendorid);
+ 
+ 	whack_log(RC_COMMENT,
+-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%lus, xfrmlifetime=%ds",
++		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%llds, xfrmlifetime=%llds",
+ 		nhelpers,
+ 		uniqueIDs ? "yes" : "no",
+ 		!log_to_perpeer ? "no" : base_perpeer_logdir,
+-		deltasecs(pluto_shunt_lifetime),
+-		pluto_xfrmlifetime
++                (long long int) deltasecs(pluto_shunt_lifetime),
++                (long long int) pluto_xfrmlifetime
+ 	);
+ 
+ 	whack_log(RC_COMMENT,
+@@ -1801,10 +1801,10 @@ void show_setup_plutomain(void)
+ 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
+ 
+ 	whack_log(RC_COMMENT,
+-		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s, nflog-all=%d",
++		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lld, listen=%s, nflog-all=%d",
+ 		pluto_port,
+ 		crl_strict ? "yes" : "no",
+-		deltasecs(crl_check_interval),
++                (long long int) deltasecs(crl_check_interval),
+ 		pluto_listen != NULL ? pluto_listen : "<any>",
+ 		pluto_nflog_group
+ 		);
 diff --git a/programs/pluto/state.c b/programs/pluto/state.c
 index a4e69eb..682a97b 100644
 --- a/programs/pluto/state.c
