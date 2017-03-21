@@ -4,6 +4,9 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+struct ike_alg;
+enum ike_alg_key;
+
 /*
  * More meaningful passert.
  */
@@ -16,25 +19,30 @@
 	}
 
 /*
- * Different algorithms used by IKEv1/IKEv2.
+ * Different algorithm classes used by IKEv1/IKEv2 protocols.
  */
-enum ike_alg_type {
-	/* 0 is invalid */
-	IKE_ALG_ENCRYPT = 1,
-	IKE_ALG_HASH,
-	IKE_ALG_PRF,
-	IKE_ALG_INTEG,
-	IKE_ALG_DH,
-};
-#define IKE_ALG_FLOOR IKE_ALG_ENCRYPT
-#define	IKE_ALG_ROOF (IKE_ALG_DH+1)
+
+struct ike_alg_type;
+
+extern const struct ike_alg_type ike_alg_encrypt;
+extern const struct ike_alg_type ike_alg_hash;
+extern const struct ike_alg_type ike_alg_prf;
+extern const struct ike_alg_type ike_alg_integ;
+extern const struct ike_alg_type ike_alg_dh;
+
+/* keep old code working */
+#define IKE_ALG_ENCRYPT &ike_alg_encrypt
+#define IKE_ALG_HASH &ike_alg_hash
+#define IKE_ALG_PRF &ike_alg_prf
+#define IKE_ALG_INTEG &ike_alg_integ
+#define IKE_ALG_DH &ike_alg_dh
 
 /*
  * User frendly string representing the algorithm type (family).
  * "...Name()" returns the capitalized name.
  */
-const char *ike_alg_type_name(enum ike_alg_type type);
-const char *ike_alg_type_Name(enum ike_alg_type type);
+const char *ike_alg_type_name(const struct ike_alg_type *type);
+const char *ike_alg_type_Name(const struct ike_alg_type *type);
 
 /*
  * Different lookup KEYs used by IKEv1/IKEv2
@@ -61,8 +69,8 @@ const char *ike_alg_key_name(enum ike_alg_key key);
  * intended as a way to identify algorithms defined by IETF but not
  * supported here.
  */
-const struct ike_alg *ike_alg_byname(enum ike_alg_type type, const char *name);
-int ike_alg_enum_match(enum ike_alg_type type, enum ike_alg_key key,
+const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type, const char *name);
+int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
 		       const char *name);
 
 /*
@@ -188,7 +196,7 @@ struct ike_alg {
 	 * index references (tacky, unixish, and delay churning the
 	 * code).
 	 */
-	const enum ike_alg_type algo_type;
+	const struct ike_alg_type *algo_type;
 #define ikev1_oakley_id id[IKEv1_OAKLEY_ID]
 #define ikev1_esp_id id[IKEv1_ESP_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]

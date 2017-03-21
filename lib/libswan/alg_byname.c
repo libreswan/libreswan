@@ -23,7 +23,7 @@
 
 static const struct ike_alg *alg_byname(const struct parser_param *param,
 					const struct parser_policy *const policy,
-					enum ike_alg_type type,
+					const struct ike_alg_type *type,
 					bool ike,
 					char *err_buf, size_t err_buf_len,
 					const char *name)

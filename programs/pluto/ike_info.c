@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -296,7 +296,7 @@ static const struct ike_defaults ike_defaults = {
  *
  * Or NULL if there are none.
  */
-static const struct ike_alg **clone_valid(enum ike_alg_type type,
+static const struct ike_alg **clone_valid(const struct ike_alg_type *type,
 					  const struct parser_policy *policy,
 					  const struct alg_defaults *algs)
 {

@@ -103,7 +103,7 @@ struct algorithm_table {
 		.end = (const struct ike_alg **)(TABLE) + elemsof(TABLE),	\
 	}
 
-struct type_algorithms {
+struct ike_alg_type {
 	/*
 	 * Having the full capitalized name might make localization
 	 * easier.
@@ -111,20 +111,17 @@ struct type_algorithms {
 	const char *name;
 	const char *Name; /* capitalized */
 	struct algorithm_table *algorithms;
-	enum ike_alg_type type;
 	enum_names *const enum_names[IKE_ALG_KEY_ROOF];
 	void (*desc_check)(const struct ike_alg*);
 	bool (*desc_is_ike)(const struct ike_alg*);
 };
 
-static const struct type_algorithms ike_alg_encrypt;
-static const struct type_algorithms ike_alg_hash;
-static const struct type_algorithms ike_alg_prf;
-static const struct type_algorithms ike_alg_integ;
-static const struct type_algorithms ike_alg_dh;
+#define FOR_EACH_IKE_ALG_TYPEP(TYPEP)					\
+	for (const struct ike_alg_type *const *TYPEP = ike_alg_types;	\
+	     TYPEP < ike_alg_types + elemsof(ike_alg_types);		\
+	     TYPEP++)
 
-static const struct type_algorithms *const type_algorithms[] = {
-	/*INVALID*/ NULL,
+static const struct ike_alg_type *const ike_alg_types[] = {
 	&ike_alg_encrypt,
 	&ike_alg_hash,
 	&ike_alg_prf,
@@ -143,7 +140,7 @@ const char *ike_alg_key_name(enum ike_alg_key key)
 	return names[key];
 }
 
-static const struct ike_alg **next_alg(const struct type_algorithms *type,
+static const struct ike_alg **next_alg(const struct ike_alg_type *type,
 				       const struct ike_alg **last)
 {
 	struct algorithm_table *table = type->algorithms;
@@ -183,11 +180,10 @@ const struct oakley_group_desc **next_oakley_group(const struct oakley_group_des
 							  (const struct ike_alg**)last);
 }
 
-
-const struct ike_alg *ike_alg_byname(enum ike_alg_type alg_type, const char *name)
+const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
+				     const char *name)
 {
-	passert(alg_type < elemsof(type_algorithms));
-	const struct type_algorithms *type = type_algorithms[alg_type];
+	passert(type != NULL);
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
 		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
@@ -199,19 +195,18 @@ const struct ike_alg *ike_alg_byname(enum ike_alg_type alg_type, const char *nam
 	return NULL;
 }
 
-int ike_alg_enum_match(enum ike_alg_type alg_type,
+int ike_alg_enum_match(const struct ike_alg_type *type,
 		       enum ike_alg_key key,
 		       const char *name)
 {
-	passert(alg_type < elemsof(type_algorithms));
-	const struct type_algorithms *type = type_algorithms[alg_type];
+	passert(type != NULL);
 	passert(key < IKE_ALG_KEY_ROOF);
 	return enum_match(type->enum_names[key], name);
 }
 
 bool ike_alg_is_valid(const struct ike_alg *alg)
 {
-	FOR_EACH_IKE_ALGP(type_algorithms[alg->algo_type], algp) {
+	FOR_EACH_IKE_ALGP(alg->algo_type, algp) {
 		if (*algp == alg) {
 			return TRUE;
 		}
@@ -221,24 +216,23 @@ bool ike_alg_is_valid(const struct ike_alg *alg)
 
 bool ike_alg_is_ike(const struct ike_alg *alg)
 {
-	return type_algorithms[alg->algo_type]->desc_is_ike(alg);
+	return alg->algo_type->desc_is_ike(alg);
 }
 
-const char *ike_alg_type_name(enum ike_alg_type type)
+const char *ike_alg_type_name(const struct ike_alg_type *type)
 {
-	passert(type < elemsof(type_algorithms));
-	return type_algorithms[type]->name;
+	passert(type != NULL);
+	return type->name;
 }
 
-const char *ike_alg_type_Name(enum ike_alg_type type)
+const char *ike_alg_type_Name(const struct ike_alg_type *type)
 {
-	passert(type < elemsof(type_algorithms));
-	return type_algorithms[type]->Name;
+	passert(type != NULL);
+	return type->Name;
 }
 
 bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
 {
-	pexpect(enc_desc != NULL);
 	return enc_desc != NULL && enc_desc->aead_tag_size > 0;
 }
 
@@ -246,30 +240,30 @@ bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
  * return ike_alg object by {type, key, id}
  */
 
-static const struct ike_alg *lookup_by_id(const struct type_algorithms *algorithms,
+static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 					  enum ike_alg_key key,
 					  int id, lset_t debug)
 {
-	FOR_EACH_IKE_ALGP(algorithms, algp) {
+	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
 			DBG(debug,
-			    const char *name = enum_short_name(algorithms->enum_names[key], id);
+			    const char *name = enum_short_name(type->enum_names[key], id);
 			    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
-				    algorithms->name,
+				    type->name,
 				    name ? name : "???",
 				    id, alg->name));
 			return alg;
 		}
  	}
 	DBG(debug,
-	    const char *name = enum_short_name(algorithms->enum_names[key], id);
+	    const char *name = enum_short_name(type->enum_names[key], id);
 	    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, not found\n",
-		    algorithms->name, name ? name : "???", id));
+		    type->name, name ? name : "???", id));
 	return NULL;
 }
 
-static const struct ike_alg *ikev1_oakley_lookup(const struct type_algorithms *algorithms,
+static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
 						 unsigned id)
 {
 	const struct ike_alg *alg = lookup_by_id(algorithms,
@@ -301,7 +295,7 @@ const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
 }
 
-static const struct ike_alg *ikev2_lookup(const struct type_algorithms *algorithms, int id)
+static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
 {
 
 	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, DBG_CRYPT);
@@ -335,7 +329,7 @@ const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
  */
 
 static void check_alg_in_table(const struct ike_alg *alg,
-			       const struct type_algorithms *type)
+			       const struct ike_alg_type *type)
 {
 	FOR_EACH_IKE_ALGP(type, algp) {
 		if (alg == *algp) {
@@ -359,7 +353,7 @@ static void check_name_in_names(const char *adjective,
 		}
 	}
 	PEXPECT_LOG("%s name %s missing from %s %s names",
-		    adjective, name, type_algorithms[alg->algo_type]->name, alg->name);
+		    adjective, name, alg->algo_type->name, alg->name);
 }
 
 static void check_names_in_names(const char *adjective,
@@ -407,11 +401,10 @@ static bool hash_desc_is_ike(const struct ike_alg *alg)
 
 static struct algorithm_table hash_algorithms = ALGORITHM_TABLE(hash_descriptors);
 
-static const struct type_algorithms ike_alg_hash = {
+const struct ike_alg_type ike_alg_hash = {
 	.name = "hash",
 	.Name = "Hash",
 	.algorithms = &hash_algorithms,
-	.type = IKE_ALG_HASH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 	},
@@ -479,11 +472,10 @@ static bool prf_desc_is_ike(const struct ike_alg *alg)
 
 static struct algorithm_table prf_algorithms = ALGORITHM_TABLE(prf_descriptors);
 
-static const struct type_algorithms ike_alg_prf = {
+const struct ike_alg_type ike_alg_prf = {
 	.name = "PRF",
 	.Name = "PRF",
 	.algorithms = &prf_algorithms,
-	.type = IKE_ALG_PRF,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 		[IKEv1_ESP_ID] = NULL, /* ESP/AH uses IKE PRF */
@@ -539,11 +531,10 @@ static bool integ_desc_is_ike(const struct ike_alg *alg)
 
 static struct algorithm_table integ_algorithms = ALGORITHM_TABLE(integ_descriptors);
 
-static const struct type_algorithms ike_alg_integ = {
+const struct ike_alg_type ike_alg_integ = {
 	.name = "integrity",
 	.Name = "Integrity",
 	.algorithms = &integ_algorithms,
-	.type = IKE_ALG_INTEG,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 		[IKEv1_ESP_ID] = &auth_alg_names,
@@ -671,11 +662,10 @@ static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 
 static struct algorithm_table encrypt_algorithms = ALGORITHM_TABLE(encrypt_descriptors);
 
-static const struct type_algorithms ike_alg_encrypt = {
+const struct ike_alg_type ike_alg_encrypt = {
 	.name = "encryption",
 	.Name = "Encryption",
 	.algorithms = &encrypt_algorithms,
-	.type = IKE_ALG_ENCRYPT,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
 		[IKEv1_ESP_ID] = &esp_transformid_names,
@@ -689,7 +679,7 @@ static const struct type_algorithms ike_alg_encrypt = {
  * DH group
  */
 
-static const struct oakley_group_desc *dhmke_descriptors[] = {
+static const struct oakley_group_desc *dh_descriptors[] = {
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -707,48 +697,47 @@ static const struct oakley_group_desc *dhmke_descriptors[] = {
 	&oakley_group_dh24,
 };
 
-static void dhmke_desc_check(const struct ike_alg *alg)
+static void dh_desc_check(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
-	passert_ike_alg(alg, dhmke->group > 0);
-	passert_ike_alg(alg, dhmke->bytes > 0);
-	passert_ike_alg(alg, dhmke->common.id[IKEv2_ALG_ID] == dhmke->group);
-	passert_ike_alg(alg, dhmke->common.id[IKEv1_OAKLEY_ID] == dhmke->group);
+	const struct oakley_group_desc *dh = oakley_group_desc(alg);
+	passert_ike_alg(alg, dh->group > 0);
+	passert_ike_alg(alg, dh->bytes > 0);
+	passert_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
+	passert_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* IKEv1 supports MODP groups but not ECC. */
-	passert_ike_alg(alg, (dhmke->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
-			      ? dhmke->common.id[IKEv1_ESP_ID] == dhmke->group
-			      : dhmke->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
-			      ? dhmke->common.id[IKEv1_ESP_ID] == 0
+	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
+			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      ? dh->common.id[IKEv1_ESP_ID] == 0
 			      : FALSE));
 	/* always implemented */
-	passert_ike_alg(alg, dhmke->dhmke_ops != NULL);
-	passert_ike_alg(alg, dhmke->dhmke_ops->check != NULL);
-	passert_ike_alg(alg, dhmke->dhmke_ops->calc_ke != NULL);
-	passert_ike_alg(alg, dhmke->dhmke_ops->calc_g_ir != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops->check != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops->calc_ke != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops->calc_g_ir != NULL);
 	/* more? */
-	dhmke->dhmke_ops->check(dhmke);
+	dh->dhmke_ops->check(dh);
 }
 
-static bool dhmke_desc_is_ike(const struct ike_alg *alg)
+static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
-	return dhmke->dhmke_ops != NULL;
+	const struct oakley_group_desc *dh = oakley_group_desc(alg);
+	return dh->dhmke_ops != NULL;
 }
 
-static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dhmke_descriptors);
+static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);
 
-static const struct type_algorithms ike_alg_dh = {
+const struct ike_alg_type ike_alg_dh = {
 	.name = "DH",
 	.Name = "DH",
 	.algorithms = &dh_algorithms,
-	.type = IKE_ALG_DH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_ESP_ID] = &oakley_group_names,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
-	.desc_check = dhmke_desc_check,
-	.desc_is_ike = dhmke_desc_is_ike,
+	.desc_check = dh_desc_check,
+	.desc_is_ike = dh_desc_is_ike,
 };
 
 /*
@@ -761,7 +750,7 @@ static void check_enum_name(const char *what,
 	if (id > 0) {
 		if (enum_names == NULL) {
 			PASSERT_FAIL("%s %s %s has no enum names",
-				     type_algorithms[alg->algo_type]->name,
+				     alg->algo_type->name,
 				     alg->name, what);
 		}
 		const char *enum_name = enum_short_name(enum_names, id);
@@ -779,29 +768,30 @@ static void check_enum_name(const char *what,
  * Verify an algorithm table, pruning anything that isn't supported.
  */
 
-static void check_algorithm_table(const struct type_algorithms *algorithms)
+static void check_algorithm_table(const struct ike_alg_type *type)
 {
 	/*
 	 * Sanity check the raw algorithm table.
 	 *
 	 * Anything going wrong here results in an abort.
 	 */
-	passert(algorithms->name != NULL);
-	passert(algorithms->Name != NULL);
-	passert(strcasecmp(algorithms->name, algorithms->Name) == 0);
+	passert(type->name != NULL);
+	passert(type->Name != NULL);
+	passert(strcasecmp(type->name, type->Name) == 0);
 
-	DBG(DBG_CRYPT, DBG_log("%s algorithm assertion checks", algorithms->name));
-	FOR_EACH_IKE_ALGP(algorithms, algp) {
+	DBG(DBG_CRYPT, DBG_log("%s algorithm assertion checks", type->name));
+	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 
 		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
-				       algorithms->name, alg->name, alg->officname,
+				       type->name, alg->name, alg->officname,
 				       alg->id[IKEv1_OAKLEY_ID],
 				       alg->id[IKEv1_ESP_ID],
 				       alg->id[IKEv2_ALG_ID]));
+
 		passert_ike_alg(alg, alg->name != NULL);
 		passert_ike_alg(alg, alg->officname != NULL);
-		passert_ike_alg(alg, alg->algo_type == algorithms->type);
+		passert_ike_alg(alg, alg->algo_type == type);
 
 		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
@@ -819,7 +809,7 @@ static void check_algorithm_table(const struct type_algorithms *algorithms)
 				at_least_one_valid_id = TRUE;
 				check_enum_name(ike_alg_key_name(key),
 						alg, id,
-						algorithms->enum_names[key]);
+						type->enum_names[key]);
 			}
 		}
 		passert_ike_alg(alg, at_least_one_valid_id);
@@ -830,7 +820,7 @@ static void check_algorithm_table(const struct type_algorithms *algorithms)
 		 * Requiring this is easier than trying to ensure that
 		 * changes to NAME don't break NAMES.
 		 */
-		check_name_in_names(algorithms->name, alg->name, alg);
+		check_name_in_names(type->name, alg->name, alg);
 
 		/*
 		 * Algorithm can't appear twice.
@@ -839,9 +829,9 @@ static void check_algorithm_table(const struct type_algorithms *algorithms)
 		 * fudged up ALL array that only contain the
 		 * previously verified algorithms.
 		 */
-		struct algorithm_table table = *algorithms->algorithms;
+		struct algorithm_table table = *type->algorithms;
 		table.end = algp;
-		struct type_algorithms scratch = *algorithms;
+		struct ike_alg_type scratch = *type;
 		scratch.algorithms = &table;
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
@@ -854,8 +844,8 @@ static void check_algorithm_table(const struct type_algorithms *algorithms)
 		/*
 		 * Extra algorithm specific checks.
 		 */
-		passert_ike_alg(alg, algorithms->desc_check != NULL);
-		algorithms->desc_check(alg);
+		passert_ike_alg(alg, type->desc_check != NULL);
+		type->desc_check(alg);
 	}
 
         /*
@@ -866,8 +856,8 @@ static void check_algorithm_table(const struct type_algorithms *algorithms)
 	 */
 	libreswan_log("%s%s algorithms:",
 		      libreswan_fipsmode() ? "FIPS " : "",
-		      algorithms->Name);
-	FOR_EACH_IKE_ALGP(algorithms, algp) {
+		      type->Name);
+	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		char buf[IKE_ALG_SNPRINT_BUFSIZ] = "";
 		ike_alg_snprint(buf, sizeof(buf), alg);
@@ -922,24 +912,20 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	bool v2_esp;
 	bool v1_ah;
 	bool v2_ah;
-	switch (alg->algo_type) {
-	case IKE_ALG_PRF:
-	case IKE_ALG_HASH:
+	if (alg->algo_type == &ike_alg_hash
+	    || alg->algo_type == &ike_alg_prf) {
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
-		break;
-	case IKE_ALG_ENCRYPT:
+	} else if (alg->algo_type == &ike_alg_encrypt) {
 		v1_esp = alg->id[IKEv1_ESP_ID] > 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] > 0;
 		v1_ah = FALSE;
 		v2_ah = FALSE;
-		break;
-	case IKE_ALG_INTEG:
-	case IKE_ALG_DH:
+	} else if (alg->algo_type == &ike_alg_integ
+		   || alg->algo_type == &ike_alg_dh) {
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
-		break;
-	default:
-		bad_case(alg->algo_type);
+	} else {
+		bad_case(0);
 	}
 	append(&buf, end, "  IKEv1:");
 	append(&buf, end, (v1_ike
@@ -1025,7 +1011,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
  *
  * This prevents checks being performed on algorithms that are.
  */
-static void strip_nonfips(const struct type_algorithms *type)
+static void strip_nonfips(const struct ike_alg_type *type)
 {
 	const struct ike_alg **end = type->algorithms->start;
 	FOR_EACH_IKE_ALGP(type, algp) {
@@ -1053,25 +1039,15 @@ void ike_alg_init(void)
 	 * referring to something that's been disabled.
 	 */
 	if (fips) {
-		for (enum ike_alg_type type = IKE_ALG_FLOOR;
-		     type < IKE_ALG_ROOF; type++) {
-			const struct type_algorithms *algorithms = type_algorithms[type];
-			if (algorithms) {
-				passert(algorithms->type == type);
-				strip_nonfips(algorithms);
-			}
+		FOR_EACH_IKE_ALG_TYPEP(typep) {
+			strip_nonfips(*typep);
 		}
 	}
 
 	/*
 	 * Now verify what is left.
 	 */
-	for (enum ike_alg_type type = IKE_ALG_FLOOR;
-	     type < IKE_ALG_ROOF; type++) {
-		const struct type_algorithms *algorithms = type_algorithms[type];
-		if (algorithms) {
-			passert(algorithms->type == type)
-			check_algorithm_table(algorithms);
-		}
+	FOR_EACH_IKE_ALG_TYPEP(typep) {
+		check_algorithm_table(*typep);
 	}
 }
