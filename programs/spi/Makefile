@@ -15,10 +15,38 @@
 # for more details.
 
 PROGRAM=spi
+
+MANPAGES += ipsec_$(PROGRAM).5
+
 OBJS += $(PROGRAM).o
+
+#
+# XXX: For the moment build things by pulling in chunks of pluto.
+# What, if anything, should be moved to libswan or another library?
+#
+CFLAGS += -I$(top_srcdir)/programs/pluto
+PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
+PLUTOOBJS += ike_info.o
+PLUTOOBJS += crypt_symkey.o
+PLUTOOBJS += crypt_hash.o
+PLUTOOBJS += test_buffer.o
+PLUTOOBJS += ikev1_prf.o
+PLUTOOBJS += ikev2_prf.o
+PLUTOOBJS += crypt_prf.o
+PLUTOOBJS += crypt_dh.o
+PLUTOOBJS += crypt_utils.o
+OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
+# $(PROGRAM): pluto-base
+# .PHONY: pluto-base
+# pluto-base:
+#	$(MAKE) -C $(top_srcdir)/programs/pluto base
+
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWLOGLIBS)
-MANPAGES += ipsec_$(PROGRAM).5
+OBJS += $(LIBSERPENT)
+OBJS += $(LIBTWOFISH)
+
+LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
