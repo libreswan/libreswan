@@ -1,3 +1,10 @@
+libreswan (3.20-5) unstable; urgency=medium
+
+  * no stack-protector on alpha either
+  * more fixes for x32 and time_t
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Tue, 21 Mar 2017 12:14:08 -0400
+
 libreswan (3.20-4) unstable; urgency=medium
 
   * still more x32 time_t printf fixes
