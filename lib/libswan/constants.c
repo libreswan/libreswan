@@ -700,7 +700,7 @@ static const char *const ike_idtype_name[] = {
 	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
-	"ID_USER_FQDN",	/* v1 only */
+	"ID_IPV4_ADDR_SUBNET", /* v1 only */
 	"ID_IPV6_ADDR",
 	"ID_IPV6_ADDR_SUBNET",	/* v1 only */
 	"ID_IPV4_ADDR_RANGE",	/* v1 only */
