@@ -186,6 +186,29 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 	p_ctx->state = state;
 }
 
+static void parser_init(struct parser_context *ctx,
+			lset_t policy,
+			const struct parser_param *param)
+{
+	*ctx = (struct parser_context) {
+		.param = param,
+		.policy = {
+			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
+			.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
+		 },
+		.state = (param->ealg_getbyname
+			  ? ST_INI_EA
+			  : ST_INI_AA),
+		/*
+		 * DANGER: this is a pointer to a very small buffer on
+		 * the stack.
+		 */
+		.ealg_str = ctx->ealg_buf,
+		.aalg_str = ctx->aalg_buf,
+		.modp_str = ctx->modp_buf,
+	};
+}
+
 static err_t parser_machine(struct parser_context *p_ctx)
 {
 	int ch = p_ctx->ch;
@@ -588,29 +611,6 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				   group);
 	return NULL;
 #	undef COMMON_KEY_LENGTH
-}
-
-static void parser_init(struct parser_context *ctx,
-			lset_t policy,
-			const struct parser_param *param)
-{
-	*ctx = (struct parser_context) {
-		.param = param,
-		.policy = {
-			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-			.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
-		 },
-		.state = (param->ealg_getbyname
-			  ? ST_INI_EA
-			  : ST_INI_AA),
-		/*
-		 * DANGER: this is a pointer to a very small buffer on
-		 * the stack.
-		 */
-		.ealg_str = ctx->ealg_buf,
-		.aalg_str = ctx->aalg_buf,
-		.modp_str = ctx->modp_buf,
-	};
 }
 
 /*
