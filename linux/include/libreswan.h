@@ -17,12 +17,16 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
+/* linux has 'typedef _bool bool' in KERNEL/include/types.h */
+
+#ifndef __KERNEL__
+# include <stdbool.h> /* for 'bool' */
+#endif
+
 /* you'd think this should be builtin to compiler... */
+
 #ifndef TRUE
 # define TRUE 1
-# ifndef __KERNEL__
-typedef int bool;
-# endif
 #endif
 
 #ifndef FALSE

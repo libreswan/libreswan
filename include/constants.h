@@ -87,11 +87,11 @@
  */
 
 /* you'd think this should be builtin to compiler... */
+
+#include <stdbool.h> /* for 'bool' */
+
 #ifndef TRUE
 #  define TRUE 1
-#  ifndef LIBRESWAN_COCOA_APP
-typedef int bool;
-#  endif
 #endif
 
 #ifndef FALSE
