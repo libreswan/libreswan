@@ -771,7 +771,7 @@ kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	wip
 # Interop tests
 #################################################################
 kvmplutotest    interop-ikev2-racoon-01-noconn			wip
-kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
+kvmplutotest    interop-ikev2-racoon-02-psk-responder		wip
 kvmplutotest    interop-ikev2-racoon-03-psk-initiator		wip
 kvmplutotest    interop-ikev2-racoon-04-x509-responder		wip
 kvmplutotest    interop-ikev2-racoon-05-x509-initiator		wip
