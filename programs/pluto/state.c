@@ -1942,9 +1942,9 @@ void fmt_state(struct state *st, const monotime_t n,
 
 			/* ??? why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
-				 "; lastdpd=%lds(seq in:%u out:%u)",
+				 "; lastdpd=%llds(seq in:%u out:%u)",
 				 st->st_last_dpd.mono_secs != UNDEFINED_TIME ?
-					(long)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (long)-1,
+					(long long int)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (long long int)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
@@ -1954,9 +1954,9 @@ void fmt_state(struct state *st, const monotime_t n,
 
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
-						"; lastlive=%lds",
+						"; lastlive=%llds",
 						pst->st_last_liveness.mono_secs != UNDEFINED_TIME ?
-						deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+                                                 (long long int) deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
 						0);
 				}
 			}
@@ -2011,8 +2011,8 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			snprintf(lastused, sizeof(lastused),
-				 " used %lds ago;",
-				 (long) deltasecs(monotimediff(mononow(),
+				 " used %llds ago;",
+				 (long long int) deltasecs(monotimediff(mononow(),
 						  st->st_outbound_time)));
 		}
 

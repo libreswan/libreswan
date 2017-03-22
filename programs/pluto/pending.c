@@ -335,11 +335,11 @@ bool pending_check_timeout(const struct connection *c)
 		DBG(DBG_DPD, {
 			deltatime_t waited = monotimediff(mononow(), p->pend_time);
 			char cib[CONN_INST_BUF];
-			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %lds, patience 3*%lds)",
+			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %llds, patience 3*%llds)",
 				c->name,
 				fmt_conn_instance(c, cib),
-				(long) deltasecs(waited),
-				(long) deltasecs(c->dpd_timeout));
+				(long long int) deltasecs(waited),
+				(long long int) deltasecs(c->dpd_timeout));
 			});
 
 		if (deltasecs(c->dpd_timeout) > 0) {
