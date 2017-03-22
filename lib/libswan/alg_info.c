@@ -194,7 +194,16 @@ static void parser_init(struct parser_context *ctx,
 		.param = param,
 		.policy = {
 			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-			.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
+			/*
+			 * logic needs to match pick_initiator()
+			 *
+			 * XXX: Once pluto is changed to IKEv1 XOR
+			 * IKEv2 it should be possible to move this
+			 * magic into pluto proper and instead pass a
+			 * simple boolean.
+			 */
+			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
+				  && (policy & POLICY_IKEV2_ALLOW)),
 		 },
 		.state = (param->ealg_getbyname
 			  ? ST_INI_EA
