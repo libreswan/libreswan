@@ -459,9 +459,9 @@ static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 			/* because we cannot tell the difference sending out to a dead SA? */
 			if (get_sa_info(st, TRUE, &last_used_age)) {
 				snprintf(story, sizeof(story),
-					"last used %lds ago < %ld ",
-					(long)deltasecs(last_used_age),
-					(long)deltasecs(c->sa_rekey_margin));
+					"last used %jds ago < %jd ",
+					(intmax_t)deltasecs(last_used_age),
+					(intmax_t)deltasecs(c->sa_rekey_margin));
 			} else {
 				snprintf(story, sizeof(story),
 					"unknown usage - get_sa_info() failed");
@@ -482,10 +482,10 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 
 	/* we observed no traffic, let IPSEC SA and IKE SA expire */
 	DBG(DBG_LIFECYCLE,
-		DBG_log("not replacing unused IPSEC SA #%lu: last used %lds ago > %ld let it and the parent #%lu expire",
+		DBG_log("not replacing unused IPSEC SA #%lu: last used %jds ago > %jd let it and the parent #%lu expire",
 			st->st_serialno,
-			(long)deltasecs(last_used_age),
-			(long)deltasecs(c->sa_rekey_margin),
+			(intmax_t)deltasecs(last_used_age),
+			(intmax_t)deltasecs(c->sa_rekey_margin),
 			pst->st_serialno));
 
 	delete_event(pst);
@@ -763,9 +763,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			 * at stake.
 			 */
 			DBG(DBG_LIFECYCLE, DBG_log(
-					"not replacing stale %s SA: inactive for %lds",
+					"not replacing stale %s SA: inactive for %jds",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					(long)deltasecs(monotimediff(mononow(),
+					(intmax_t)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
 			ikev2_log_v2_sa_expired(st, type);
@@ -911,10 +911,10 @@ void timer_list(void)
 		int type = ev->ev_type;
 		struct state *st = ev->ev_state;
 
-		whack_log(RC_LOG, "event %s is schd: %ld (in %lds) #%lu",
+		whack_log(RC_LOG, "event %s is schd: %jd (in %jds) #%lu",
 			enum_show(&timer_event_names, type),
-			(long)ev->ev_time.mono_secs,
-			(long)deltasecs(monotimediff(ev->ev_time, nw)),
+			(intmax_t)ev->ev_time.mono_secs,
+			(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)),
 			st == NULL ? SOS_NOBODY : st->st_serialno);
 
 		if (st != NULL && st->st_connection != NULL) {
@@ -939,8 +939,8 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
 	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
 
-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
-		delay.tv_sec));
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %jd seconds and change",
+	    (intmax_t) delay.tv_sec));
 
 	/*
 	 * Scheduling a month into the future is most likely a bug.
@@ -1028,7 +1028,7 @@ void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
 {
 	struct timeval delay;
 
-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %jd seconds", (intmax_t) delay_sec));
 
 	/* unexpectedly far away, pexpect will flag in test cases */
 	pexpect(delay_sec < 3600 * 24 * 31);

@@ -1675,15 +1675,15 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%lu", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%jd", (intmax_t) delay));
 		} else {
 			delay = PLUTO_HALFOPEN_SA_LIFE;
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%lu", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%jd", (intmax_t) delay));
 		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
 		delay = deltasecs(c->sa_ipsec_life_seconds);
-		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lu", delay));
+		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%jd", (intmax_t) delay));
 	}
 
 	/* By default, we plan to rekey.
@@ -1900,7 +1900,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
 				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
+				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jd seconds", (intmax_t) delay));
 				event_schedule(kind, delay, st);
 
 			}  else {
@@ -1913,8 +1913,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			break;
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
 			delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
-				IS_IKE_SA(st) ? "parent" : "child", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jd seconds",
+                            IS_IKE_SA(st) ? "parent" : "child", (intmax_t) delay));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
