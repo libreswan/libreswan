@@ -4746,10 +4746,13 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 
 		DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 				enum_name(&ikev2_notify_names, v2_notify_num));
+		return ret; /* abort building the response message */
 	} else if (ret != STF_OK) {
 		DBG_log("ikev2_child_sa_respond returned %s",
 				enum_name(&stfstatus_name, ret));
+		return ret; /* abort building the response message */
 	}
+
 	if (!ikev2_padup_pre_encrypt(pst, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
