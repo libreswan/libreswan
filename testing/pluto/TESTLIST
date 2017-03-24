@@ -812,6 +812,8 @@ kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		wip
+kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey-pfs	wip
+kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		wip
 kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 
 #################################################################
