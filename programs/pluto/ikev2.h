@@ -100,6 +100,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp, lset_t policy,
+				       enum isakmp_xchg_types isa_xchg,
 				       struct ikev2_proposals **proposals);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
@@ -314,6 +315,9 @@ void ikev2_isakamp_established(struct state *st,
 				const struct state_v2_microcode
 				*svm, enum state_kind new_state,
 				enum original_role role);
+
+extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
+		pb_stream *outs, u_int8_t np);
 
 #define SEND_V2_NOTIFICATION(t) { \
 	if (st != NULL) \

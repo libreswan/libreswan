@@ -1,5 +1,4 @@
-/* IKEv2 - CHILD SA - calculations
- *
+/*
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
@@ -1054,6 +1053,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		st->st_ts_that = ikev2_end_to_ts(&spd->that);
 		ikev2_print_ts(&st->st_ts_this);
 		ikev2_print_ts(&st->st_ts_that);
+		st->st_ipsec_pred = rst->st_serialno;
 	}
 
 	return (rst == NULL ? FALSE : TRUE );
@@ -1065,11 +1065,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
-	struct state *pst = md->st;	/* parent state */
+	struct state *pst;
 	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	bool send_use_transport;
 	stf_status ret = STF_FAIL;
+
+	pst = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 			ikev2_rekey_child_copy_ts(md)) {
@@ -1119,8 +1122,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		stf_status ret;
 
 		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-						  c->alg_info_esp, c->policy,
-						  &c->esp_or_ah_proposals);
+				c->alg_info_esp, c->policy, isa_xchg,
+				&c->esp_or_ah_proposals);
+
 		passert(c->esp_or_ah_proposals != NULL);
 
 		ret = ikev2_process_sa_payload("ESP/AH responder",
@@ -1162,7 +1166,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pb_stream pb_nr;
 
 		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = ISAKMP_NEXT_v2TSi;
+		in.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
+			ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi;
+
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
@@ -1173,6 +1179,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);
+
+		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+			if (!justship_v2KE(&cst->st_gr,
+						cst->st_oakley.group, outpbs,
+						ISAKMP_NEXT_v2TSi))
+				return STF_INTERNAL_ERROR;
+		}
+
 	}
 
 	if (role == ORIGINAL_RESPONDER) {

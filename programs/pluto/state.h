@@ -544,7 +544,7 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st, bool ipsec),
+	*duplicate_state(struct state *st, sa_t ipsec),
 	*find_state_ikev1(const u_char *icookie,
 			  const u_char *rcookie,
 			  msgid_t msgid),

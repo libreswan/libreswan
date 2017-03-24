@@ -1389,6 +1389,7 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	if (sa_type == IPSEC_SA) {
 		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
+		nst->st_oakley = st->st_oakley;
 	}
 
 	nst->quirks = st->quirks;
@@ -1442,7 +1443,6 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 		clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
-		nst->st_oakley = st->st_oakley;
 	}
 
 	jam_str(nst->st_username, sizeof(nst->st_username),

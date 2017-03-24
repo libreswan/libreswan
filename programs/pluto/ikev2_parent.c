@@ -200,8 +200,9 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 	stf_status e = STF_OK;
 
-	if (st->st_state != STATE_V2_REKEY_IKE_R)
-		return e;
+
+	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
+		return STF_OK;
 
 	if(r->pcr_type == pcr_build_ke_and_nonce) {
 		if (pst == NULL) {
@@ -214,7 +215,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "ikev2_in_childIoutR DHv2",
-				ORIGINAL_RESPONDER,
+				pst->st_original_role,
 				pst->st_skey_d_nss, pst->st_oakley.prf,
 				ikev2_crypto_continue);
 	}
@@ -282,7 +283,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 					r->pcr_type == pcr_build_ke_and_nonce){
 				unpack_KE_from_helper(st, r, &st->st_gr);
 			}
-			e = ikev2_rekey_dh_start(r,md); /* e == STF_SUSPEND */
+			e = ikev2_rekey_dh_start(r,md); /* STF_SUSPEND | OK */
 		}
 		break;
 	default :
@@ -618,8 +619,7 @@ stf_status ikev2parent_outI1(int whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-static bool justship_v2KE(chunk_t *g,
-			  const struct oakley_group_desc *group,
+bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 			  pb_stream *outs, u_int8_t np)
 {
 	struct ikev2_ke v2ke;
@@ -2992,7 +2992,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 						  cc->alg_info_esp,
-						  cc->policy,
+						  cc->policy, ISAKMP_v2_SA_INIT,
 						  &cc->esp_or_ah_proposals);
 		passert(cc->esp_or_ah_proposals != NULL);
 
