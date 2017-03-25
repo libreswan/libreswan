@@ -1,6 +1,5 @@
-Interop with strongswan using one connections that will reauthenticate.
+Interop with strongswan using one connection and it REKEY IKE SA.
 
-This is not supported yet with libreswan and will result in:
-
-"westnet-eastnet-ikev2" #1: rejecting create child SA from 192.1.2.45:4500 -- new KE in DH for PFS is not yet supported
-
+West, strongswan, will initiate IKE. And later rekey the IKE SA leaving Child SA alone.
+IKE rekey use CREATE_CHILD_SA exchange.
+The libreswan is the responder for IKE Rekey RFC 7296 #1.3.2.
