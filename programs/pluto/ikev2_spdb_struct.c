@@ -62,6 +62,8 @@
 
 #include "nat_traversal.h"
 
+extern struct oakley_group_desc oakley_group_modp2048;
+
 /* Taken from ikev1_spdb_struct.c, as the format is similar */
 /* Note: cloned from out_attr, with the same bugs */
 static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
@@ -2127,9 +2129,17 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
+static void add_pfs_group_to_proposal(struct ikev2_proposal *proposal,
+		const struct oakley_group_desc *pfs_group)
+{
+	if (pfs_group != NULL)
+		append_transform(proposal, IKEv2_TRANS_TYPE_DH, pfs_group->group, 0);
+}
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
+				       const struct oakley_group_desc
+						*pfs_group,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
@@ -2182,7 +2192,9 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing ESP/AH proposals for %s", what));
+	DBG(DBG_CONTROL, DBG_log("constructing ESP/AH proposals %sfor %s",
+				(pfs_group == NULL) ? "": "with pfsgroup ",
+				what));
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
@@ -2255,6 +2267,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
 						 integ->common.id[IKEv2_ALG_ID], 0);
 			}
+			add_pfs_group_to_proposal(proposal, pfs_group);
 			break;
 
 		case POLICY_AUTHENTICATE:

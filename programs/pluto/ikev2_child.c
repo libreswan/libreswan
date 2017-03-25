@@ -1121,8 +1121,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
 		stf_status ret;
 
+		if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
+			cst->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+
 		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-				c->alg_info_esp, c->policy, isa_xchg,
+				c->alg_info_esp, c->policy, cst->st_pfs_group,
 				&c->esp_or_ah_proposals);
 
 		passert(c->esp_or_ah_proposals != NULL);

@@ -2995,7 +2995,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 						  cc->alg_info_esp,
-						  cc->policy, ISAKMP_v2_SA_INIT,
+						  cc->policy, NULL, /* pfs=no */
 						  &cc->esp_or_ah_proposals);
 		passert(cc->esp_or_ah_proposals != NULL);
 
@@ -3908,8 +3908,12 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(st, c->policy);
 
+		if (md->hdr.isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
+			st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+
 		ikev2_proposals_from_alg_info_esp(c->name, "responder",
 						  c->alg_info_esp, c->policy,
+						  st->st_pfs_group,
 						  &c->esp_or_ah_proposals);
 		passert(c->esp_or_ah_proposals != NULL);
 
@@ -4359,9 +4363,12 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));
 
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
+		cst->st_pfs_group = ike_alg_pfsgroup(cc, cc->policy);
+
 	ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 			cc->alg_info_esp,
-			cc->policy,
+			cc->policy, cst->st_pfs_group,
 			&cc->esp_or_ah_proposals);
 	passert(cc->esp_or_ah_proposals != NULL);
 
@@ -4708,6 +4715,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	if (st->st_state == STATE_V2_REKEY_IKE_R) {
 		ret = ikev2_child_add_ike_payloads(md, &e_pbs_cipher);
 	} else if (st->st_state == STATE_V2_CREATE_I0) {
+		free_ikev2_proposals(&st->st_connection->esp_or_ah_proposals);
 		ret = ikev2_child_add_ipsec_payloads(md, &e_pbs_cipher,
 				ISAKMP_v2_CREATE_CHILD_SA);
 	} else  {
