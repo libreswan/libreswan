@@ -231,6 +231,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
 	stf_status e = STF_OK;
+	bool only_shared = FALSE;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
 		DBG_log("ikev2_crypto_continue for #%lu: %s", cn->pcrc_serialno,
@@ -273,9 +274,11 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		break;
 
 	case STATE_V2_CREATE_R:
+		only_shared = TRUE;
+		/* FALL THROUGH*/
 	case STATE_V2_REKEY_IKE_R:
 		if (r->pcr_type == pcr_compute_dh_v2) {
-			if (!finish_dh_v2(st, r))
+			if (!finish_dh_v2(st, r, only_shared))
 				e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		} else {
 			unpack_nonce(&st->st_nr, r);
@@ -2749,7 +2752,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	int send_cp_r = 0;
 
-	if (!finish_dh_v2(pst, r))
+	if (!finish_dh_v2(pst, r, FALSE))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	ikev2_log_parentSA(pst);
@@ -3402,7 +3405,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	/* extract calculated values from r */
-	if (!finish_dh_v2(st, r))
+	if (!finish_dh_v2(st, r, FALSE))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 
 	ikev2_log_parentSA(st);
