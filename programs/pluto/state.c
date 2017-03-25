@@ -2460,7 +2460,8 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	}
 }
 
-void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
+void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		const u_char *icookie, const u_char *rcookie)
 {
 	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
 
@@ -2473,6 +2474,7 @@ void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
 		FOR_EACH_ENTRY(st, i, {
 				if (st->st_clonedfrom == osn) {
 					set_st_clonedfrom(st, nsn);
+					rehash_state(st, icookie, rcookie);
 				}});
 	}
 	return;

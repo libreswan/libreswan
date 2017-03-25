@@ -1860,7 +1860,8 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	st->st_clonedfrom = SOS_NOBODY;
 
 	/* And inherit. Child SA from parent */
-	ikev2_inherit_ipsec_sa(osn, st->st_serialno);
+	ikev2_inherit_ipsec_sa(osn, st->st_serialno, st->st_icookie,
+			st->st_rcookie);
 
 	/* initialze the the new IKE SA. reset and message ID */
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
