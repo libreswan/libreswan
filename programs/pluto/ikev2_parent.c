@@ -395,15 +395,12 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	return e;
 }
 
-static stf_status ike2_verify_accepted_modp_prop (struct msg_digest *md,
+static stf_status ike2_match_ke_group_and_prop(struct msg_digest *md,
 		struct trans_attrs accepted_oakley)
 {
-	/*
-	 * AA_2016 copied from ikev2parent_inI1outR1 use this function there before merging
-	 */
 
 	/*
-	 * Check the MODP group matches the accepted proposal.
+	 * Check the MODP (KE) group matches the accepted proposal.
 	 */
 	{
 		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -1167,25 +1164,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 
 	/*
-	 * Check the MODP group matches the accepted proposal.
+	 * Check the MODP group in the payload matches the accepted proposal.
 	 */
-	{
-		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
-		if (accepted_oakley.group->group != ke_group) {
-			struct esb_buf ke_esb;
-			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-				      enum_show_shortb(&oakley_group_names,
-						       ke_group, &ke_esb),
-				      accepted_oakley.group->common.name);
-			pstats(invalidke_sent_u, ke_group);
-			pstats(invalidke_sent_s, accepted_oakley.group->group);
-			send_v2_notification_invalid_ke(md, accepted_oakley.group);
-			pexpect(md->st == NULL);
-			/* free early return items */
-			free_ikev2_proposal(&accepted_ike_proposal);
-			return STF_FAIL;
-		}
+	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
+		free_ikev2_proposal(&accepted_ike_proposal);
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
 	/*
@@ -4566,7 +4549,7 @@ static notification_t accept_ike_sa_rekey_req(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	if (ike2_verify_accepted_modp_prop (md, accepted_oakley) == STF_FAIL) {
+	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -4594,8 +4577,8 @@ static notification_t accept_ike_sa_rekey_req(struct msg_digest *md, struct stat
 	return STF_OK;
 }
 
-/* ikev2 create IPSec Child SA Response */
-stf_status ikev2_child_ipsec_inR(struct msg_digest *md)
+/* ikev2 create Child SA Response */
+stf_status ikev2_child_inR(struct msg_digest *md)
 {
 	struct state *st = md->st;
 
@@ -4604,7 +4587,7 @@ stf_status ikev2_child_ipsec_inR(struct msg_digest *md)
 	return e;
 }
 
-stf_status ikev2_child_ipsec_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *st = md->st; /* child state */
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
@@ -4631,7 +4614,6 @@ stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 
 	passert(pst != NULL);
 
-	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, pst->st_oakley));
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */
 

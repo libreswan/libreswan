@@ -33,8 +33,8 @@ extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
 extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 						struct pluto_crypto_req *r);
 extern stf_status ikev2_child_ike_inIoutR(struct msg_digest *md);
-extern stf_status ikev2_child_ipsec_inR(struct msg_digest *md);
-extern stf_status ikev2_child_ipsec_inIoutR(struct msg_digest *md);
+extern stf_status ikev2_child_inR(struct msg_digest *md);
+extern stf_status ikev2_child_inIoutR(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
