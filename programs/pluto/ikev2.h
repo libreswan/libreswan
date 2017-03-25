@@ -316,6 +316,8 @@ void ikev2_isakamp_established(struct state *st,
 				*svm, enum state_kind new_state,
 				enum original_role role);
 
+extern stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md);
+
 extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 		pb_stream *outs, u_int8_t np);
 

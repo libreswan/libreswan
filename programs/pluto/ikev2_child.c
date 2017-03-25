@@ -1002,7 +1002,7 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 	return st;
 }
 
-static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
+stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 {
 
 	struct state *st = md->st;  /* new child state */
@@ -1014,7 +1014,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		switch (ntfy->payload.v2n.isan_type) {
 
 		case v2N_REKEY_SA:
-			DBG(DBG_CONTROL, DBG_log("received v2N REKEY_SA "));
+			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
 			/*
 			 * incase of a failure the response is
 			 * a v2N_CHILD_SA_NOT_FOUND with
@@ -1026,7 +1026,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 			rst = find_state_to_rekey(ntfy, pst);
 			if(rst == NULL) {
 				libreswan_log("no valid IPsec SA SPI to rekey");
-				return FALSE;
+				return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			}
 			break;
 		default:
@@ -1056,7 +1056,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		st->st_ipsec_pred = rst->st_serialno;
 	}
 
-	return (rst == NULL ? FALSE : TRUE );
+	return (rst == NULL ? STF_FAIL : STF_OK );
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
@@ -1075,12 +1075,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-			ikev2_rekey_child_copy_ts(md)) {
+			md->st->st_ipsec_pred != SOS_NOBODY) {
+		/* this is Child SA rekey we already have child sa */
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
-		if (ret != STF_OK)
-			return ret;
+		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,
+					isa_xchg));
 	} else {
 		ret = ikev2_create_responder_child_state(md, &cst, role,
 				isa_xchg);

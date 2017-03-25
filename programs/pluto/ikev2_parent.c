@@ -4711,6 +4711,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		ret = ikev2_child_add_ipsec_payloads(md, &e_pbs_cipher,
 				ISAKMP_v2_CREATE_CHILD_SA);
 	} else  {
+		RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_copy_ts(md));
 		ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
 				&e_pbs_cipher, ISAKMP_v2_CREATE_CHILD_SA);
 	}
