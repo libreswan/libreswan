@@ -977,7 +977,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * case the cookie shouldn't be updated at
 			 * all.
 			 */
-			rehash_state(st, md->hdr.isa_rcookie);
+			rehash_state(st, NULL, md->hdr.isa_rcookie);
 		}
 
 		/*

@@ -639,12 +639,12 @@ void insert_state(struct state *st)
 
 /*
  * unlink a state object from the hash table, update its RCOOKIE and
- * then, and hash it into the right place.
+ * optionally ICOOKIE, and then hash it into the right place.
  *
- * This doesn't update ICOOKIE_HASH_TABLE since the ICOOKIE didn't
- * change.
+ * ICOOKIE is only updated if icookie != NULL
  */
-void rehash_state(struct state *st, const u_char *rcookie)
+void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
@@ -654,6 +654,8 @@ void rehash_state(struct state *st, const u_char *rcookie)
 	remove_state_entry(&st->st_hash_entry);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
+	if (icookie != NULL)
+		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
 	/* now, re-insert */
 	insert_by_state_cookies(&statetable, &st->st_hash_entry,
 				st->st_icookie, st->st_rcookie);

@@ -1073,7 +1073,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, md->hdr.isa_rcookie);
+	rehash_state(st, NULL, md->hdr.isa_rcookie);
 
 	return STF_OK;
 }
