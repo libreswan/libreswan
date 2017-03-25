@@ -323,6 +323,10 @@ extern stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md);
 extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 		pb_stream *outs, u_int8_t np);
 
+extern bool is_msg_response(struct msg_digest *md);
+extern bool is_msg_request(struct msg_digest *md);
+
+
 #define SEND_V2_NOTIFICATION(t) { \
 	if (st != NULL) \
 		send_v2_notification_from_state(st, t, NULL); \

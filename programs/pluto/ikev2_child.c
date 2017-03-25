@@ -1009,11 +1009,13 @@ stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 	struct state *rst = NULL; /* old child state being rekeyed */
 	struct payload_digest *ntfy;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	stf_status ret = STF_OK; /* if no v2N_REKEY_SA return OK */
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 
 		case v2N_REKEY_SA:
+			ret = STF_FAIL; /* this is a rekey request */
 			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
 			/*
 			 * incase of a failure the response is
@@ -1054,9 +1056,10 @@ stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		ikev2_print_ts(&st->st_ts_this);
 		ikev2_print_ts(&st->st_ts_that);
 		st->st_ipsec_pred = rst->st_serialno;
+		ret = STF_OK; /* success */
 	}
 
-	return (rst == NULL ? STF_FAIL : STF_OK );
+	return ret;
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
@@ -1119,25 +1122,25 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
-		stf_status ret;
+		stf_status ret = STF_OK;
 
-		if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
-			cst->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
 
-		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-				c->alg_info_esp, c->policy, cst->st_pfs_group,
-				&c->esp_or_ah_proposals);
+			ikev2_proposals_from_alg_info_esp(c->name, "responder",
+					c->alg_info_esp, c->policy, cst->st_pfs_group,
+					&c->esp_or_ah_proposals);
 
-		passert(c->esp_or_ah_proposals != NULL);
+			passert(c->esp_or_ah_proposals != NULL);
 
-		ret = ikev2_process_sa_payload("ESP/AH responder",
-				&sa_pd->pbs,
-				/*expect_ike*/ FALSE,
-				/*expect_spi*/ TRUE,
-				/*expect_accepted*/ FALSE,
-				c->policy & POLICY_OPPORTUNISTIC,
-				&cst->st_accepted_esp_or_ah_proposal,
-				c->esp_or_ah_proposals);
+			ret = ikev2_process_sa_payload("ESP/AH responder",
+					&sa_pd->pbs,
+					/*expect_ike*/ FALSE,
+					/*expect_spi*/ TRUE,
+					/*expect_accepted*/ FALSE,
+					c->policy & POLICY_OPPORTUNISTIC,
+					&cst->st_accepted_esp_or_ah_proposal,
+					c->esp_or_ah_proposals);
+		}
 
 		if (ret == STF_OK) {
 			passert(cst->st_accepted_esp_or_ah_proposal != NULL);

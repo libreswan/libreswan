@@ -4516,7 +4516,7 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 	return NOTHING_WRONG;
 }
 
-static notification_t accept_ike_sa_rekey_req(struct msg_digest *md, struct state *pst,
+static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct state *pst,
 		struct state *st)
 {
 	struct connection *c = st->st_connection;
@@ -4597,6 +4597,81 @@ stf_status ikev2_child_inR(struct msg_digest *md)
 	return e;
 }
 
+static stf_status process_child_sa_pl(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct connection *c = st->st_connection;
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
+	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
+			c->policy);
+	stf_status ret;
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+		if ((c->policy & POLICY_PFS) && (st->st_pfs_group == NULL))
+		{
+			loglog(RC_LOG_SERIOUS, "reject Child SA proposal."
+					"missing local ESP DH(pfs) group "
+					"with PFS=yes");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		free_ikev2_proposals(&c->esp_or_ah_proposals);
+		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
+	}
+
+	ikev2_proposals_from_alg_info_esp(c->name, "responder",
+			c->alg_info_esp,
+			c->policy,
+			st->st_pfs_group,
+			&c->esp_or_ah_proposals);
+
+	passert(c->esp_or_ah_proposals != NULL);
+
+	ret = ikev2_process_sa_payload("ESP/AH responder",
+			&sa_pd->pbs,
+			/*expect_ike*/ FALSE,
+			/*expect_spi*/ TRUE,
+			/*expect_accepted*/ FALSE,
+			c->policy & POLICY_OPPORTUNISTIC,
+			&st->st_accepted_esp_or_ah_proposal,
+			c->esp_or_ah_proposals);
+
+	if (ret != STF_OK)
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+
+	passert(st->st_accepted_esp_or_ah_proposal != NULL);
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
+		struct trans_attrs accepted_oakley;
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
+					&accepted_oakley)) {
+			loglog(RC_LOG_SERIOUS, "ESP responder accepted an unsupported algorithm");
+		}
+
+		/* Child/ESP's  st_oakley is partial ??  get PRF from parent */
+		/* AA_2017 check with paul ? prf from the parent IKE */
+		accepted_oakley.prf = st->st_oakley.prf;
+		st->st_oakley = accepted_oakley;
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
+					&accepted_oakley)) {
+			loglog(RC_LOG_SERIOUS, "ESP/AH responder accepted an unsupported algorithm");
+			return STF_IGNORE;
+		}
+	}
+
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", st->st_accepted_esp_or_ah_proposal));
+	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
+		DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
+		ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	return STF_OK;
+}
+
+/* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
 stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *st = md->st; /* child state */
@@ -4610,13 +4685,16 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
+	RETURN_STF_FAILURE_STATUS(process_child_sa_pl(md));
+
 	/* KE in with old (pst) accepted_oakley */
-	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, pst->st_oakley));
+	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
 	stf_status e = ikev2_crypto_start(md, st);
 	return e;
 }
 
+/* processsing a new Rekeying IKE SAs with the CREATE_CHILD_SA RFC 7296 1.3.2 */
 stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 {
 	struct state *st = md->st; /* child state */
@@ -4630,10 +4708,7 @@ stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	stf_status res = accept_ike_sa_rekey_req(md, pst,st);
-	if (res != STF_OK) {
-		  return res;
-	}
+	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst,st));
 
 	return ikev2_crypto_start(md, st);
 }
