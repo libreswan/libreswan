@@ -843,7 +843,7 @@ static struct state *process_v2_child_ix (struct msg_digest *md,
 	char *what = NULL;  /* to make life easier to log */
 	char *why = "";
 	/* this a new IKE request.  Not a response */
-	const bool newreq = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) == 0;
+	const bool newreq = is_msg_request(md);
 
 	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
 	if (newreq) {
@@ -925,7 +925,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-	const bool msg_r = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
+	const bool msg_r = is_msg_response(md);
 	const bool ike_i = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
@@ -1072,7 +1072,7 @@ void process_v2_packet(struct msg_digest **mdp)
 				 * Beware of unsigned arrithmetic.
 				 */
 
-				if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
+				if (is_msg_response(md)) {
 					/* Response to our request */
 					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
 					    st->st_msgid_lastack > md->msgid_received)
@@ -2291,4 +2291,22 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return v2N_NOTHING_WRONG;
+}
+
+/*
+ * The rold of a received (from network) message. RFC 7296 #3.1
+ * "message is a response to a message containing the same Message ID."
+ *
+ * Seperate from this is IKE role ORIGINAL_INITIATOR or ORIGINAL_RESPONDER
+ * RFC 7296 2.2
+ */
+bool is_msg_response(struct msg_digest *md)
+{
+	return(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R);
+}
+
+/* message is a request */
+bool is_msg_request(struct msg_digest *md)
+{
+	return(!is_msg_response(md));
 }
