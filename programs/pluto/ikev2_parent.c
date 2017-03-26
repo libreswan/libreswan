@@ -3769,6 +3769,95 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 	/* ??? what does that mean?  We cannot even reach here. */
 }
 
+stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
+		bool expect_accepted)
+{
+	struct state *st = md->st;
+	struct connection *c = st->st_connection;
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
+	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
+			c->policy);
+	stf_status ret;
+	char *what;
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+		if ((c->policy & POLICY_PFS) && (st->st_pfs_group == NULL))
+		{
+			loglog(RC_LOG_SERIOUS, "reject Child SA proposal."
+					"missing local ESP DH(pfs) group "
+					"with PFS=yes");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		if (st->st_state != STATE_V2_CREATE_I) {
+			what = "ESP/AH initiator";
+		} else {
+			what = "ESP/AH responder";
+		}
+		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
+	} else {
+		what = "ESP/AH responder";
+	}
+
+	ikev2_proposals_from_alg_info_esp(c->name, what,
+			c->alg_info_esp,
+			c->policy,
+			st->st_pfs_group,
+			&c->esp_or_ah_proposals);
+
+	passert(c->esp_or_ah_proposals != NULL);
+
+	ret = ikev2_process_sa_payload(what,
+			&sa_pd->pbs,
+			/*expect_ike*/ FALSE,
+			/*expect_spi*/ TRUE,
+			expect_accepted,
+			c->policy & POLICY_OPPORTUNISTIC,
+			&st->st_accepted_esp_or_ah_proposal,
+			c->esp_or_ah_proposals);
+
+	if (ret != STF_OK)
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+
+	passert(st->st_accepted_esp_or_ah_proposal != NULL);
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
+		struct trans_attrs accepted_oakley;
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
+					&accepted_oakley)) {
+			loglog(RC_LOG_SERIOUS, "%s responder accepted an unsupported algorithm", what);
+			ret = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+
+		/* ESP/AH use use IKE negotiated PRF */
+		accepted_oakley.prf = st->st_oakley.prf;
+		st->st_oakley = accepted_oakley;
+
+		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
+					&accepted_oakley)) {
+			loglog(RC_LOG_SERIOUS, "%s responder accepted an unsupported algorithm", what);
+			ret = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+	}
+
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, st->st_accepted_esp_or_ah_proposal));
+	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
+		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
+		ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	if (ret != STF_OK) {
+		/*
+		 * leave it on st for reporting or clean?
+		 * it will get freed with st object
+		 * free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
+		 */
+	}
+	return ret;
+}
+
 static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 {
 	int cp_r;
@@ -3925,43 +4014,9 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		}
 	} /* end of TS check block */
 
-	{
-		struct payload_digest *const sa_pd =
-			md->chain[ISAKMP_NEXT_v2SA];
-		/* ??? this code won't support AH + ESP */
-		struct ipsec_proto_info *proto_info
-			= ikev2_esp_or_ah_proto_info(st, c->policy);
-
-		if (md->hdr.isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
-			st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
-
-		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-						  c->alg_info_esp, c->policy,
-						  st->st_pfs_group,
-						  &c->esp_or_ah_proposals);
-		passert(c->esp_or_ah_proposals != NULL);
-
-		stf_status ret = ikev2_process_sa_payload("ESP/AH responder",
-							  &sa_pd->pbs,
-							  /*expect_ike*/ FALSE,
-							  /*expect_spi*/ TRUE,
-							  /*expect_accepted*/ TRUE,
-							  c->policy & POLICY_OPPORTUNISTIC,
-							  &st->st_accepted_esp_or_ah_proposal,
-							  c->esp_or_ah_proposals);
-
-		if (ret == STF_OK) {
-			passert(st->st_accepted_esp_or_ah_proposal != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", st->st_accepted_esp_or_ah_proposal));
-			if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
-				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
-				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			}
-		}
-
-		if (ret != STF_OK)
-			return ret;
-	}
+	/* examin and accpept SA ESP/AH proposals */
+	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
+		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
 	/* examine each notification payload */
 	{
@@ -4620,85 +4675,6 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	return STF_OK;
 }
 
-static stf_status process_child_sa_pl(struct msg_digest *md)
-{
-	struct state *st = md->st;
-	struct connection *c = st->st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
-	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
-			c->policy);
-	stf_status ret;
-	char *what;
-
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
-		if ((c->policy & POLICY_PFS) && (st->st_pfs_group == NULL))
-		{
-			loglog(RC_LOG_SERIOUS, "reject Child SA proposal."
-					"missing local ESP DH(pfs) group "
-					"with PFS=yes");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (st->st_state != STATE_V2_CREATE_I) {
-			free_ikev2_proposals(&c->esp_or_ah_proposals);
-			what = "ESP/AH initiator";
-		} else {
-			what = "ESP/AH responder";
-		}
-		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
-	}
-
-	ikev2_proposals_from_alg_info_esp(c->name, what,
-			c->alg_info_esp,
-			c->policy,
-			st->st_pfs_group,
-			&c->esp_or_ah_proposals);
-
-	passert(c->esp_or_ah_proposals != NULL);
-
-	ret = ikev2_process_sa_payload(what,
-			&sa_pd->pbs,
-			/*expect_ike*/ FALSE,
-			/*expect_spi*/ TRUE,
-			/*expect_accepted*/ FALSE,
-			c->policy & POLICY_OPPORTUNISTIC,
-			&st->st_accepted_esp_or_ah_proposal,
-			c->esp_or_ah_proposals);
-
-	if (ret != STF_OK)
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-
-	passert(st->st_accepted_esp_or_ah_proposal != NULL);
-
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
-		struct trans_attrs accepted_oakley;
-
-		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
-					&accepted_oakley)) {
-			loglog(RC_LOG_SERIOUS, "ESP responder accepted an unsupported algorithm");
-		}
-
-		/* Child/ESP's  st_oakley is partial ??  get PRF from parent */
-		/* AA_2017 check with paul ? prf from the parent IKE */
-		accepted_oakley.prf = st->st_oakley.prf;
-		st->st_oakley = accepted_oakley;
-
-		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
-					&accepted_oakley)) {
-			loglog(RC_LOG_SERIOUS, "ESP/AH responder accepted an unsupported algorithm");
-			return STF_IGNORE;
-		}
-	}
-
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", st->st_accepted_esp_or_ah_proposal));
-	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
-		DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
-		ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-	}
-
-	return STF_OK;
-}
 
 /* ikev2 initiator received a create Child SA Response */
 stf_status ikev2_child_inR(struct msg_digest *md)
@@ -4708,7 +4684,7 @@ stf_status ikev2_child_inR(struct msg_digest *md)
 
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
-	RETURN_STF_FAILURE_STATUS(process_child_sa_pl(md));
+	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
 	if (st->st_pfs_group == NULL) {
 		e = ikev2_process_ts_and_rest(md);
@@ -4736,7 +4712,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	RETURN_STF_FAILURE_STATUS(process_child_sa_pl(md));
+	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 
 	/* KE in with old (pst) accepted_oakley */
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));

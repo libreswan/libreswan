@@ -1070,7 +1070,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct state *cst;	/* child state */
 	struct state *pst;
 	struct connection *c = md->st->st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	bool send_use_transport;
 	stf_status ret = STF_FAIL;
 
@@ -1122,48 +1121,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
-		stf_status ret = STF_OK;
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
-
-			ikev2_proposals_from_alg_info_esp(c->name, "responder",
-					c->alg_info_esp, c->policy, cst->st_pfs_group,
-					&c->esp_or_ah_proposals);
-
-			passert(c->esp_or_ah_proposals != NULL);
-
-			ret = ikev2_process_sa_payload("ESP/AH responder",
-					&sa_pd->pbs,
-					/*expect_ike*/ FALSE,
-					/*expect_spi*/ TRUE,
-					/*expect_accepted*/ FALSE,
-					c->policy & POLICY_OPPORTUNISTIC,
-					&cst->st_accepted_esp_or_ah_proposal,
-					c->esp_or_ah_proposals);
+			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 		}
-
-		if (ret == STF_OK) {
-			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", cst->st_accepted_esp_or_ah_proposal));
-			if (!ikev2_proposal_to_proto_info(cst->st_accepted_esp_or_ah_proposal, proto_info)) {
-				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
-				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			} else {
-				proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
-				chunk_t local_spi;
-				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-					 sizeof(proto_info->our_spi));
-				if (!ikev2_emit_sa_proposal(outpbs,
-							    cst->st_accepted_esp_or_ah_proposal,
-							    &local_spi, next_payload_type)) {
-					DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
-					ret = STF_INTERNAL_ERROR;
-				}
-			}
+		proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+				sizeof(proto_info->our_spi));
+		if (!ikev2_emit_sa_proposal(outpbs,
+					cst->st_accepted_esp_or_ah_proposal,
+					&local_spi, next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+			return STF_INTERNAL_ERROR;
 		}
-
-		if (ret != STF_OK)
-			return ret;
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
