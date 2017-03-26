@@ -4676,7 +4676,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		if(IS_CHILD_SA_REQUEST(st)) {
+		if(IS_CHILD_SA_RESPONDER(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
@@ -4692,8 +4692,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
-		if(IS_CHILD_SA_REQUEST(st)) {
-			md->hdr = hdr;
+		if(!IS_CHILD_SA_RESPONDER(st)) {
+			md->hdr = hdr; /* fill it with fake header ??? */
 		}
 		if (!out_struct(&hdr, &isakmp_hdr_desc,
 				&reply_stream, &md->rbody))

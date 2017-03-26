@@ -629,7 +629,7 @@ enum original_role {
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 
-#define IS_CHILD_SA_REQUEST(st) \
+#define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
 	  (st)->st_state == STATE_V2_CREATE_R)
 
