@@ -44,6 +44,8 @@ extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
 extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 						struct pluto_crypto_req *r);
+extern stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,
+					struct pluto_crypto_req *r);
 extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		struct connection *c, lset_t policy, unsigned long try,
 		so_serial_t replacing

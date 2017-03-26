@@ -258,11 +258,14 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	switch (st->st_state) {
 
 	case STATE_PARENT_I1:
+		/* tail function will extract crypto results */
 		break;
 
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
-		/* AA_2016 if PFS unpack KE too */
+		if(r->pcr_type == pcr_build_ke_and_nonce)
+			unpack_KE_from_helper(st, r, &st->st_gi);
+
 		e = add_st_send_list(st, pst);
 		if (e == STF_SUSPEND)
 			set_suspended(st, md);
@@ -271,6 +274,12 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	case STATE_V2_REKEY_IKE_I0:
 		unpack_nonce(&st->st_ni, r);
 		unpack_KE_from_helper(st, r, &st->st_gi);
+		break;
+
+	case STATE_V2_CREATE_I:
+		only_shared = TRUE;
+		if (!finish_dh_v2(st, r, only_shared))
+			e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		break;
 
 	case STATE_V2_CREATE_R:
@@ -334,7 +343,8 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_REKEY_CHILD_I0:
 		fake_md->svm = &ikev2_rekey_ike_firststate_microcode;
 		ci = pcim_known_crypto;
-		what = "Child Rekey Initiator ni";
+		what = (st->st_pfs_group == NULL) ? "Child Rekey Initiator nonce ni" :
+			"Child Rekey Initiator KE and nonce ni";
 		break;
 
 	case STATE_V2_REKEY_IKE_R:
@@ -350,7 +360,14 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_CREATE_I0:
 		fake_md->svm = &ikev2_create_child_initiate_microcode;
 		ci = pcim_known_crypto;
-		what = "Child Initiator nonce ni";
+		what = (st->st_pfs_group == NULL) ? "Child Initiator nonce ni" :
+			"Child Initiator KE and nonce ni";
+		break;
+
+	case STATE_V2_CREATE_I:
+		ci = pcim_known_crypto;
+		what = "ikev2 Child SA initiator pfs=yes";
+		/* DH will call its own new_pcrc */
 		break;
 
 	default:
@@ -358,7 +375,8 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 	}
 
-	ke = new_pcrc(ikev2_crypto_continue, what, st, md);
+	if (st->st_state != STATE_V2_CREATE_I)
+		ke = new_pcrc(ikev2_crypto_continue, what, st, md);
 
 	switch (st->st_state) {
 
@@ -381,14 +399,20 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		}
 		break;
 
+	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
-		e = build_nonce(ke, ci);
-		/* AA_2016 support PFS */
+		if (st->st_pfs_group == NULL) {
+			e = build_nonce(ke, ci);
+		} else {
+			e = build_ke_and_nonce(ke, st->st_pfs_group, ci);
+		}
 		break;
 
-	case STATE_V2_REKEY_CHILD_I0:
-		/* don't support PFS yet */
-		e = build_nonce(ke, pcim_known_crypto);
+	case STATE_V2_CREATE_I:
+		e = start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
+				/* AA_201703 should this be message role ???? */
+				st->st_original_role, NULL, st->st_oakley.prf,
+				ikev2_crypto_continue);
 		break;
 
 	default:
@@ -4381,7 +4405,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		pb_stream pb_nr;
 
 		zero(&in);      /* OK: no pointer fields */
-		in.isag_np = ISAKMP_NEXT_v2TSi;
+		in.isag_np =  (cst->st_pfs_group != NULL) ? ISAKMP_NEXT_v2KE :
+			ISAKMP_NEXT_v2TSi;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
@@ -4390,8 +4415,14 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
 				!out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
-
 		close_output_pbs(&pb_nr);
+
+		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+			if (!justship_v2KE(&cst->st_gi,
+						cst->st_pfs_group, outpbs,
+						ISAKMP_NEXT_v2TSi))
+				return STF_INTERNAL_ERROR;
+		}
 	}
 
 	cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
@@ -4496,21 +4527,23 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 		struct state *st, struct trans_attrs accepted_oakley)
 {
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-		chunk_t accepted_gi = empty_chunk;
+		chunk_t accepted_g = empty_chunk;
 		{
-			if (accept_KE(&accepted_gi, "Gi", accepted_oakley.group,
+			if (accept_KE(&accepted_g, "Gi", accepted_oakley.group,
 					&md->chain[ISAKMP_NEXT_v2KE]->pbs)
 					!= NOTHING_WRONG) {
 				/*
 				 * A KE with the incorrect number of bytes is
 				 * a syntax error and not a wrong modp group.
 				 */
-				freeanychunk(accepted_gi);
+				freeanychunk(accepted_g);
 				return v2N_INVALID_KE_PAYLOAD;
 			}
 		}
-		st->st_gi = accepted_gi; /* AA_2016 hard coded. change to suppor
-					  * ike rekey initiator */
+		if(is_msg_request(md))
+			st->st_gi = accepted_g;
+		else
+			st->st_gr = accepted_g;
 	}
 
 	return NOTHING_WRONG;
@@ -4587,16 +4620,6 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	return STF_OK;
 }
 
-/* ikev2 create Child SA Response */
-stf_status ikev2_child_inR(struct msg_digest *md)
-{
-	struct state *st = md->st;
-
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
-	stf_status e = ikev2_process_ts_and_rest(md);
-	return e;
-}
-
 static stf_status process_child_sa_pl(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -4606,6 +4629,7 @@ static stf_status process_child_sa_pl(struct msg_digest *md)
 	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
 			c->policy);
 	stf_status ret;
+	char *what;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
@@ -4616,11 +4640,16 @@ static stf_status process_child_sa_pl(struct msg_digest *md)
 					"with PFS=yes");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
-		free_ikev2_proposals(&c->esp_or_ah_proposals);
+		if (st->st_state != STATE_V2_CREATE_I) {
+			free_ikev2_proposals(&c->esp_or_ah_proposals);
+			what = "ESP/AH initiator";
+		} else {
+			what = "ESP/AH responder";
+		}
 		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
 	}
 
-	ikev2_proposals_from_alg_info_esp(c->name, "responder",
+	ikev2_proposals_from_alg_info_esp(c->name, what,
 			c->alg_info_esp,
 			c->policy,
 			st->st_pfs_group,
@@ -4628,7 +4657,7 @@ static stf_status process_child_sa_pl(struct msg_digest *md)
 
 	passert(c->esp_or_ah_proposals != NULL);
 
-	ret = ikev2_process_sa_payload("ESP/AH responder",
+	ret = ikev2_process_sa_payload(what,
 			&sa_pd->pbs,
 			/*expect_ike*/ FALSE,
 			/*expect_spi*/ TRUE,
@@ -4669,6 +4698,28 @@ static stf_status process_child_sa_pl(struct msg_digest *md)
 	}
 
 	return STF_OK;
+}
+
+/* ikev2 initiator received a create Child SA Response */
+stf_status ikev2_child_inR(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	stf_status e;
+
+	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+
+	RETURN_STF_FAILURE_STATUS(process_child_sa_pl(md));
+
+	if (st->st_pfs_group == NULL) {
+		e = ikev2_process_ts_and_rest(md);
+		return e;
+	}
+
+	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
+
+	e = ikev2_crypto_start(md, st);
+
+	return e;
 }
 
 /* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
@@ -4849,6 +4900,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	return STF_OK;
 }
 
+stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,
+					struct pluto_crypto_req *r UNUSED)
+{
+	struct msg_digest *md = qke->pcrc_md;
+	stf_status e = ikev2_process_ts_and_rest(md);
+
+	return e;
+}
 stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 					struct pluto_crypto_req *r UNUSED)
 {
@@ -5672,6 +5731,8 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 	char replacestr[32];
 	const char *pfsgroupname = "no-pfs";
 
+	passert(c != NULL);
+
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
@@ -5702,6 +5763,21 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
 				replacing);
 
+	passert(st->st_connection != NULL);
+
+	if ((policy & POLICY_PFS) != LEMPTY) {
+		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection, policy);
+		if (st->st_pfs_group == NULL) {
+			delete_state(st);
+			loglog(RC_LOG_SERIOUS, "no local pfs group found. "
+					"can not initiate Child SA. ");
+			return;
+		}
+		pfsgroupname = st->st_pfs_group->common.name;
+	} else {
+		st->st_pfs_group = NULL;
+	}
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu schedule event to initiate IPsec SA "
 				"%s%s using IKE#%lu pfs=%s",
 				st->st_serialno,
@@ -5717,9 +5793,6 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 
 void ikev2_child_outI(struct state *st)
 {
-	/* figure out PFS group, if any */
-
 	ikev2_crypto_start(NULL, st);
-
 	return;
 }
