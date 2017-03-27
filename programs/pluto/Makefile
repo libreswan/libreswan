@@ -22,12 +22,6 @@
 
 # XXX: Pluto currently doesn't include include program.mk:
 #
-# - program.mk (reasonably) expects only one program per directory but
-#   this directory creates two programs (pluto and cavp).
-#
-#   Either cavp gets merged into pluto, or cavp gets moved to its own
-#   directory.
-#
 # - this make file tests USE_ variables defined in config.mk using
 #   GNU-make's 'ifeq' statement and that only works if config.mk is
 #   included before the tests.
@@ -272,18 +266,16 @@ OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
 
-CAVP += cavp
-
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJS) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJS) $(BINNAMEPLUTO), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(CAVP)
+buildall: $(BINNAMEPLUTO)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
@@ -301,36 +293,6 @@ check:
 	echo no checks in lib right now.
 
 checkprograms:
-
-# Cryptographic Algorithm Validation Program (CAVP)
-# see: http://csrc.nist.gov/groups/STM/cavp/index.html
-
-OBJSCAVP += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
-OBJSCAVP += crypt_symkey.o
-OBJSCAVP += crypt_prf.o
-OBJSCAVP += crypt_hash.o
-OBJSCAVP += test_buffer.o
-OBJSCAVP += ikev1_prf.o
-OBJSCAVP += ikev2_prf.o
-OBJSCAVP += crypt_dh.o
-OBJSCAVP += crypt_utils.o
-
-OBJSCAVP += cavp.o
-OBJSCAVP += cavp_print.o
-OBJSCAVP += cavp_ikev1.o
-OBJSCAVP += cavp_ikev2.o
-OBJSCAVP += cavp_sha.o
-OBJSCAVP += cavp_hmac.o
-OBJSCAVP += cavp_gcm.o
-
-OBJSCAVP += $(LIBRESWANLIB)
-OBJSCAVP += $(LSWLOGLIBS)
-
-OBJSCAVP += $(LIBSERPENT)
-OBJSCAVP += $(LIBTWOFISH)
-
-cavp: $(OBJSCAVP)
-	$(CC) -o $@ $(OBJSCAVP) $(LDFLAGS) $(USERLINK)
 
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
