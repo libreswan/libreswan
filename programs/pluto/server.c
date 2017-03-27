@@ -445,6 +445,46 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	return fd;
 }
 
+void delete_pluto_event(struct pluto_event **evp)
+{
+        struct pluto_event *e = *evp;
+
+        if (e == NULL) {
+                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
+                return;
+        }
+
+	unlink_pluto_event_list(e);
+
+        /* ??? when would e->ev be NULL? */
+        if (e->ev != NULL) {
+                event_free(e->ev);
+                e->ev = NULL;
+        }
+
+	DBG(DBG_LIFECYCLE,
+	    const char *en = enum_name(&timer_event_names, e->ev_type);
+	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
+        pfree(e);
+        *evp = NULL;
+}
+
+struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
+		event_callback_fn cb, void *arg, const struct timeval *delay,
+		char *name) {
+	struct pluto_event *e = alloc_thing(struct pluto_event, name);
+	e->ev_type = EVENT_NULL;
+	e->ev_name = name;
+	e->ev = pluto_event_new(fd, events, cb, arg, delay);
+	link_pluto_event_list(e);
+	if (delay != NULL)
+	{
+		e->ev_time = monotimesum(mononow(), deltatime(delay->tv_sec));
+	}
+	loglog(RC_LOG_SERIOUS, "AA_201703 add %s", e->ev_name);
+	return e; /* compaitable with pluto_event_new for the time being */
+}
+
 /* a wrapper for libevent's event_new + event_add; any error is fatal */
 struct event *pluto_event_new(evutil_socket_t fd, short events,
 		event_callback_fn cb, void *arg, const struct timeval *t)
