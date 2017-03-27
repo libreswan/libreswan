@@ -2020,9 +2020,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	}
 	unshare_connection(d);
 
-	if (c->pool !=  NULL)
-		reference_addresspool(c->pool);
-
 	d->kind = CK_INSTANCE;
 
 	passert(oriented(*d));
