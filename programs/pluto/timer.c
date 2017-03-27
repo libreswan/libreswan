@@ -63,6 +63,8 @@
 
 #include "pluto_sd.h"
 
+static	struct pluto_event *pluto_events_head = NULL;
+
 static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 {
 	struct connection *c = st->st_connection;
@@ -497,27 +499,6 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
 }
 
-static void delete_pluto_event(struct pluto_event **evp)
-{
-        struct pluto_event *e = *evp;
-
-        if (e == NULL) {
-                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-                return;
-        }
-        /* ??? when would e->ev be NULL? */
-        if (e->ev != NULL) {
-                event_free(e->ev);
-                e->ev = NULL;
-        }
-
-	DBG(DBG_LIFECYCLE,
-	    const char *en = enum_name(&timer_event_names, e->ev_type);
-	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
-        pfree(e);
-        *evp = NULL;
-}
-
 /*
  * Delete a state backlinked event.
  */
@@ -890,18 +871,36 @@ void delete_event(struct state *st)
 	delete_pluto_event(&st->st_event);
 }
 
+#define UNLINK_FOM_LIST(head , element, del)	{				  \
+	__typeof__(element) *(pp);  __typeof__(element) (p);		  \
+	for (pp = &pluto_events_head; (p = *pp) != NULL; pp = &p->next) { \
+		if (p == element) {					  \
+			*pp = p->next;  /* unlink this dns request */	  \
+			if (del) pfree(element);			  \
+			return;						  \
+		}							  \
+	}								  \
+}
+
+void unlink_pluto_event_list(struct pluto_event *e) {
+	UNLINK_FOM_LIST(pluto_events_head, e, FALSE);
+}
+
+void link_pluto_event_list(struct pluto_event *e) {
+	e->next = pluto_events_head;
+	pluto_events_head = e;
+}
+
 /*
  * dump list of events to whacklog
  */
 void timer_list(void)
 {
-#if 0
-/* AA_2015 not yet ported to libevent */
 
 	monotime_t nw;
-	struct p_event *ev = evlist;
+	struct pluto_event *ev = pluto_events_head;
 
-	if (ev == (struct p_event *) NULL) {
+	if (ev == NULL) {
 		/* Just paranoid */
 		whack_log(RC_LOG, "no events are queued");
 		return;
@@ -913,25 +912,29 @@ void timer_list(void)
 		(unsigned long)nw.mono_secs);
 
 	while (ev != NULL) {
-		int type = ev->ev_type;
 		struct state *st = ev->ev_state;
+		char buf[256] = "not timer based";
 
-		whack_log(RC_LOG, "event %s is schd: %jd (in %jds) #%lu",
-			enum_show(&timer_event_names, type),
-			(intmax_t)ev->ev_time.mono_secs,
-			(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)),
-			st == NULL ? SOS_NOBODY : st->st_serialno);
+		if (ev->ev_type != EVENT_NULL) {
+			snprintf(buf, sizeof(buf), "schd: %jd (in %jds)",
+					(intmax_t)ev->ev_time.mono_secs,
+					(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)));
+		}
 
 		if (st != NULL && st->st_connection != NULL) {
 			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "    connection: \"%s\"",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib));
+			whack_log(RC_LOG, "event %s is %s \"%s\"%s #%lu",
+					ev->ev_name, buf,
+					st->st_connection->name,
+					fmt_conn_instance(st->st_connection, cib),
+					st->st_serialno);
+		} else {
+
+			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
 		}
 
-		ev = ev->ev_next;
+		ev = ev->next;
 	}
-#endif
 }
 
 /*
@@ -954,12 +957,14 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
 	ev->ev_type = type;
+	ev->ev_name = enum_name(&timer_event_names, type);
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
 
 	ev->ev_state = st;
 	ev->ev = pluto_event_new(NULL_FD, EV_TIMEOUT, timer_event_cb, ev, &delay);
+	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
 	 * If the event is associated with a state, put a backpointer to the

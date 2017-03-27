@@ -2760,9 +2760,10 @@ void init_kernel(void)
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
-	/* Note: kernel_ops is const but pluto_event_new cannot know that */
-	ev_fd = pluto_event_new(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
-			kernel_process_msg_cb, (void *)kernel_ops, NULL);
+	/* Note: kernel_ops is const but pluto_event_add cannot know that */
+	pluto_event_add(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
+			kernel_process_msg_cb, (void *)kernel_ops, NULL,
+			"KERNEL_FD");
 
 	if (kernel_ops->process_queue != NULL) {
 		/*
