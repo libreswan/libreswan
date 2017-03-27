@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,7 +15,17 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+# XXX: libswan currently doesn't include include library.mk:
 #
+# - this make file tests USE_ variables defined in config.mk using
+#   GNU-make's 'ifeq' statement and that only works if config.mk is
+#   included before the tests.
+#
+#   That code can be replaced by '$(call if-enabled)'.
+#
+# - alternatively, the optional files could be moved to their own
+#   library?
 
 ifndef top_srcdir
 include ../../mk/dirs.mk
@@ -72,9 +82,6 @@ endif
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
-LOGSRCS=lswlog.c lswid.c
-
-
 OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
@@ -85,7 +92,6 @@ VPATH+= ${KLIPSSRCDIR}
 HDRS=${KLIPSINC}/libreswan.h internal.h
 
 LIBA=libswan.a
-LIBL=liblswlog.a
 # Original flags
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR}
@@ -110,17 +116,14 @@ local-base: $(builddir)/Makefile
 
 local-clean-base:
 	rm -f $(builddir)/*core* core *.core
-	rm -f $(foreach f,$(OBJS) $(LOGOBJS) $(LIBA) $(LIBL) $(EXTHDRS) $(EXTLIBS) version.c, $(builddir)/$(f))
+	rm -f $(foreach f,$(OBJS) $(LOGOBJS) $(LIBA) $(EXTHDRS) $(EXTLIBS) version.c, $(builddir)/$(f))
 
-buildall: $(LIBA) $(LIBL)
+buildall: $(LIBA)
 list-local-base:
 	@: never nothing to do
 
 $(LIBA): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIBA) $(OBJS)
-
-$(LIBL): $(LOGOBJS)
-	$(AR) $(ARFLAGS) $(LIBL) $(LOGOBJS)
 
 $(OBJS):	$(HDRS)
 

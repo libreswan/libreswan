@@ -1,8 +1,6 @@
-# Makefile for the KLIPS interface utilities
+# Libreswan library for standalone logging
 #
-# Copyright (C) 1998, 1999  Henry Spencer.
-# Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,17 +12,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-ifndef top_srcdir
-include ../mk/dirs.mk
+LIB = liblswlog.a
+
+OBJS += lswlog.o
+OBJS += lswid.o
+
+ifdef top_srcdir
+include ${top_srcdir}/mk/library.mk
+else
+include ../../mk/library.mk
 endif
-
-include $(top_srcdir)/Makefile.inc
-
-SUBDIRS=libswan libcrypto libwhack libipsecconf
-SUBDIRS += liblswlog
-
-ifeq ($(USE_BSDKAME),true)
-SUBDIRS+=libbsdpfkey
-endif
-
-include $(top_srcdir)/mk/subdirs.mk

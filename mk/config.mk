@@ -475,7 +475,7 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
+LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
 # XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
 LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
 
