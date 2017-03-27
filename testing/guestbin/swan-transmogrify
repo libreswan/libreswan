@@ -139,10 +139,13 @@ if GUESTOS == "redhat":
         output += "\n" + subprocess.getoutput("service network restart")
     # get rid of damn cp/mv/rm aliases for root
 
-    if not "#alias" in open("/root/.bashrc", "r").read():
+    if not "# alias" in open("/root/.bashrc", "r").read():
         output += "\n" + \
-            subprocess.getoutput("sed -i 's/alias/# alias/g' /root/.bashrc")
-
+            subprocess.getoutput("sed -i 's/alias rm/# alias rm/g' /root/.bashrc")
+        output += "\n" + \
+            subprocess.getoutput("sed -i 's/alias cp/# alias cp/g' /root/.bashrc")
+        output += "\n" + \
+            subprocess.getoutput("sed -i 's/alias mv/# alias mv/g' /root/.bashrc")
 
 elif GUESTOS == "debian":
     shutil.copyfile("/testing/baseconfigs/%s/etc/network/interfaces" %
