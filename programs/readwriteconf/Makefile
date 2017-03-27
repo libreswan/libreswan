@@ -19,8 +19,6 @@ OBJS += $(WHACKLIB)
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWLOGLIBS)
 
-# reach into pluto for now.
-CFLAGS += -I${top_srcdir}/programs/pluto
 LDFLAGS += $(NSS_LDFLAGS)
 LDFLAGS += $(UNBOUND_LDFLAGS)
 

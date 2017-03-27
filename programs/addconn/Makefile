@@ -20,8 +20,6 @@ OBJS += $(WHACKLIB)
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWLOGLIBS)
 
-# reach into pluto for now.
-CFLAGS += -I$(top_srcdir)/programs/pluto
 LDFLAGS += $(UNBOUND_LDFLAGS) $(SECCOMP_LDFLAGS)
 
 ifdef top_srcdir

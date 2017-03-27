@@ -18,7 +18,6 @@
 #
 
 VPATH += $(top_srcdir)/programs/pluto
-CFLAGS += -I$(top_srcdir)/programs/pluto
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
 
 OBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
