@@ -2,7 +2,7 @@
 
 // Load up the result list and then generate a comparison table.
 
-var lsw_compare_table_id = "compare"
+var lsw_compare_table_id = "compare-results"
 
 function lsw_compare_test_runs(test_runs) {
 

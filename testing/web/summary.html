@@ -45,150 +45,47 @@
 	  <button name="summary"
 		  onclick='
 		  d3.select("#summary").style("display", "");
-		  d3.select("#compare").style("display", "none");
-		  d3.select("#notes").style("display", "none")'
+		  d3.select("#compare-results").style("display", "none");
+		  d3.select("#compare-tests").style("display", "none")'
 		  >
 	    Summary
 	  </button>
-	  <button name="compare"
+	  <button name="compare-results"
 		  onclick='
 		  d3.select("#summary").style("display", "none");
-		  d3.select("#compare").style("display", "");
-		  d3.select("#notes").style("display", "none")'
+		  d3.select("#compare-results").style("display", "");
+		  d3.select("#compare-tests").style("display", "none")'
 		  >
 	    Compare Results
 	  </button>
-	  <button name="Notes"
+	  <!--
+	  <button name="compare-tests"
 		  onclick='
 		  d3.select("#summary").style("display", "none");
-		  d3.select("#compare").style("display", "none");
-		  d3.select("#notes").style("display", "")'
+		  d3.select("#compare-results").style("display", "none");
+		  d3.select("#compare-tests").style("display", "")'
 		  >
-	    Notes
+	    Compare Tests
 	  </button>
+	  -->
 	</div>
-	<p>
-	  Results can be selected and compared using the "Compare
-	  Results" button (tab) (select a result by either clicking on
-	  a row below, or result bullet above).
-	</p>
+	<div>
+	  <p>
+	    Results can be selected and compared using the "Compare
+	    Results" button (tab) (select a result by either clicking on
+	    a row below, or result bullet above).
+	    <br>
+	    For more information, see
+	    the <a href="https://github.com/libreswan/libreswan/blob/master/testing/web/README.md">
+	    README </a> file.
+	  </p>
+	</div>
 	<div id="summary">
 	</div>
-	<div id="compare" style="display:none">
+	<div id="compare-results" style="display:none">
 	</div>
-	<div id="notes" style="display:none;text-align:left">
-
-	  <h3>Nuances</h3>
-
-	  <p>
-	    Some things, annoyingly, don't quite work right:
-	    <ul>
-	      <li>
-		new results slow to appear <br/> The local browser
-		cache seems to get in the way.  One solution is to
-		fetch the json files with ?&lt;current-git-rev&gt;
-		appended.
-	      </li>
-	      <li>
-		comparisons sometimes loose a result <br/> The code
-		fetching all the json result tables is likely racy,
-		when too may results are clicked too fast a result
-		goes missing. <br/> The work around is to de-select
-		and then re-select the missing result.
-	      </li>
-	      <li>
-		libreswan's repo contains "knots" <br/> When
-		following a linear history (parent links), the commit
-		dates normally decrease.  In this repo they some times
-		increase resulting in graph doubling back on itself.
-	      </li>
-	      <li>
-		libreswan's repo contains "plats" <br/> As a
-		generalization, is good to merge local changes onto
-		the remote first-parent branch and not the reverse.
-		Unfortunately "git pull (git merge)" does the reverse
-		by default.  The resut is that first-parent keeps
-		switching with development branches.
-	      </li>
-	      <li>
-		clicking links toggls a results selection <br/> For
-		instance, control-click a result's subject hash link
-		(to open a new tab displaying the diff)) also toggls
-		the results appearance under the comparison tab
-	      </li>
-	    </ul>
-	  </p>
-
-	  <h3>Maintenance</h3>
-
-	  <p>
-	    From time to time the test results are seen to decay - an
-	    increasing number of tests fail with a result of
-	    "unresolved" and an error of "output-missing".  The
-	    problem is domains taking too long to boot (over 2 minutes
-	    each).
-	  </p>
-	  <p>
-	    The fix is to restart the machine and then re-build the
-	    test domains.  It is also a good opportunity to perform
-	    some more general maintenance.
-	    <ul>
-	      <li>
-		upgrade and reboot the test machine: <br/>
-		<tt> dnf upgrade -y ; reboot </tt>
-	      </li>
-	      <li>
-		delete the existing domains: <br/>
-		<tt> cd $BUILDDIR && make kvm-uninstall </tt>
-	      </li>
-	      <li>
-		update the build tree to latest: <br/>
-		<tt> cd $BUILDDIR && git pull --ff-only </tt>
-	      </li>
-	      <li>
-		delete result directories with missing output: <br/>
-		<tt> cd $WEBDIR && grep '"output-missing"' */results.json | cut -d/  -f1 | sort -u # | xargs rm -rf </tt>
-	      </li>
-	      <li>
-		delete result directories with incomplete output: </br>
-		<tt> cd $WEBDIR && ls -d */ | while read d ; do test -r $d/results.json || echo $d ; done # | xargs rm -rf </tt>
-	      </li>
-	      <li>
-		compress any log files: </br>
-		<tt> cd $WEBDIR && find * -name '*.log' -print | xargs bzip2 -9 </tt>
-	      </li>
-	      <li>
-		restart <tt>tester.sh</tt>: <br/>
-		<tt> cd && nohup $SCRIPTDIR/testing/web/tester.sh $BUILDDIR $WEBDIR </tt>
-	      </li>
-	    </ul>
-	  </p>
-
-	  <p>
-	    Some things could work better:
-	    <ul>
-	      <li>
-		can't select individual tests for comparison
-		<br/>
-		selecting an individual or small set of tests and
-		comparing them across results would be nice
-	      </li>
-	      <li>
-		can't bookmark a comparison
-	      </li>
-	      <li>
-		an accumulative bar graph is probably a better way to
-		represent the data (or at least the first-parents)
-		that could then be overlaid with a scatter plot
-	      </li>
-	      <li>
-		the graph should pan and zoom
-	      </li>
-	      <li>
-		better colour scheme welcome
-	      </li>
-	    </dl>
-	  </p>
+	<div id="compare-tests" style="display:none;text-align:left">
+	  <h3>Scratch Pad For when someone implements test comparisons</h3>
 	</div>
       </div>
     </center>
