@@ -104,6 +104,11 @@ struct algorithm_table {
 	}
 
 struct type_algorithms {
+	/*
+	 * Having the full capitalized name might make localization
+	 * easier.
+	 */
+	const char *Name; /* capitalized */
 	struct algorithm_table all;
 	enum ike_alg_type type;
 	enum_names *const enum_names[IKE_ALG_KEY_ROOF];
@@ -214,6 +219,12 @@ const char *ike_alg_type_name(enum ike_alg_type type)
 {
 	passert(type < elemsof(type_algorithms));
 	return type_algorithms[type]->all.name;
+}
+
+const char *ike_alg_type_Name(enum ike_alg_type type)
+{
+	passert(type < elemsof(type_algorithms));
+	return type_algorithms[type]->Name;
 }
 
 bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
@@ -421,7 +432,8 @@ static bool hash_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms hash_algorithms = {
-	.all = ALGORITHM_TABLE("HASH", hash_descriptors),
+	.Name = "Hash",
+	.all = ALGORITHM_TABLE("hash", hash_descriptors),
 	.type = IKE_ALG_HASH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
@@ -489,6 +501,7 @@ static bool prf_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms prf_algorithms = {
+	.Name = "PRF",
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
 	.type = IKE_ALG_PRF,
 	.enum_names = {
@@ -545,7 +558,8 @@ static bool integ_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms integ_algorithms = {
-	.all = ALGORITHM_TABLE("INTEG", integ_descriptors),
+	.Name = "Integrity",
+	.all = ALGORITHM_TABLE("integrity", integ_descriptors),
 	.type = IKE_ALG_INTEG,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
@@ -673,7 +687,8 @@ static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms encrypt_algorithms = {
-	.all = ALGORITHM_TABLE("ENCRYPT", encrypt_descriptors),
+	.Name = "Encryption",
+	.all = ALGORITHM_TABLE("encryption", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
@@ -729,6 +744,7 @@ static bool dhmke_desc_is_ike(const struct ike_alg *alg)
 }
 
 static struct type_algorithms dhmke_algorithms = {
+	.Name = "DH",
 	.all = ALGORITHM_TABLE("DH", dhmke_descriptors),
 	.type = IKE_ALG_DH,
 	.enum_names = {
@@ -775,6 +791,7 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 	 *
 	 * Anything going wrong here results in an abort.
 	 */
+	passert(algorithms->Name != NULL);
 
 	DBG(DBG_CRYPT, DBG_log("%s algorithm assertion checks", algorithms->all.name));
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
@@ -844,12 +861,18 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 
         /*
 	 * Log the final list as a pretty table.
+	 *
+	 * If FIPS, scream about.  This way grepping for FIPS shows up
+	 * more information.
 	 */
+	libreswan_log("%s%s algorithms:",
+		      libreswan_fipsmode() ? "FIPS " : "",
+		      algorithms->Name);
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
 		char buf[IKE_ALG_SNPRINT_BUFSIZ] = "";
 		ike_alg_snprint(buf, sizeof(buf), alg);
-		libreswan_log("%s", buf);
+		libreswan_log("  %s", buf);
 	}
 }
 
@@ -874,12 +897,11 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	 */
 	{
 		char *start = buf;
-		append(&buf, end, ike_alg_type_name(alg->algo_type));
-		append(&buf, end, " ");
 		append(&buf, end, alg->name);
-		append(&buf, end, ":");
-		/* magic number from eyeballing the output */
-		ssize_t pad = 21 - (buf - start);
+		/*
+		 * magic number from eyeballing the output
+		 */
+		ssize_t pad = 12 - (buf - start);
 		passert_ike_alg(alg, pad >= 0);
 		for (ssize_t i = 0; i < pad; i++) {
 			append(&buf, end, " ");
@@ -1013,8 +1035,8 @@ static void strip_nonfips(struct type_algorithms *algorithms)
 		 * Check FIPS before trying to run any tests.
 		 */
 		if (!alg->fips) {
-			libreswan_log("%s algorithm %s: DISABLED; not FIPS compliant",
-				      algorithms->all.name, alg->name);
+			libreswan_log("%s algorithm %s disabled; not FIPS compliant",
+				      algorithms->Name, alg->name);
 			continue;
 		}
 		*end++ = alg;

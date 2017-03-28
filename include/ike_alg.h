@@ -31,8 +31,10 @@ enum ike_alg_type {
 
 /*
  * User frendly string representing the algorithm type (family).
+ * "...Name()" returns the capitalized name.
  */
 const char *ike_alg_type_name(enum ike_alg_type type);
+const char *ike_alg_type_Name(enum ike_alg_type type);
 
 /*
  * Different lookup KEYs used by IKEv1/IKEv2
