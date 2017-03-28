@@ -205,6 +205,9 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		return STF_OK;
 
 	if(r->pcr_type == pcr_build_ke_and_nonce) {
+		enum original_role  role;
+		role = IS_CHILD_SA_RESPONDER(st) ? ORIGINAL_RESPONDER :
+			ORIGINAL_INITIATOR;
 		if (pst == NULL) {
 			loglog(RC_LOG_SERIOUS, "#%lu can not find parent state "
 					"#%lu to setup DH v2", st->st_serialno,
@@ -214,9 +217,9 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		passert (st->st_sec_in_use == TRUE); /* child has its own KE */
 
 		/* initiate calculation of g^xy */
-		e = start_dh_v2(md, "ikev2_in_childIoutR DHv2",
-				pst->st_original_role,
-				pst->st_skey_d_nss, pst->st_oakley.prf,
+		e = start_dh_v2(md, "DHv2 for child sa", role,
+				pst->st_skey_d_nss, /* only IKE has SK_d */
+				pst->st_oakley.prf, /* for IKE/ESP/AH */
 				ikev2_crypto_continue);
 	}
 	return e;
@@ -410,8 +413,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 
 	case STATE_V2_CREATE_I:
 		e = start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
-				/* AA_201703 should this be message role ???? */
-				st->st_original_role, NULL, st->st_oakley.prf,
+				ORIGINAL_INITIATOR, NULL, st->st_oakley.prf,
 				ikev2_crypto_continue);
 		break;
 
