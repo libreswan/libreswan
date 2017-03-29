@@ -3019,6 +3019,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
 
+		free_ikev2_proposals(&cc->esp_or_ah_proposals);
 		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 						  cc->alg_info_esp,
 						  cc->policy, NULL, /* pfs=no */
@@ -3800,6 +3801,10 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
 	} else {
 		what = "ESP/AH responder";
+	}
+	if (!expect_accepted) {
+		/* preparing to initiate or parse a request flush old ones */
+		free_ikev2_proposals(&c->esp_or_ah_proposals);
 	}
 
 	ikev2_proposals_from_alg_info_esp(c->name, what,
