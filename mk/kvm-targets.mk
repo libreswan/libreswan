@@ -63,30 +63,39 @@ VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTIN
 # The KVM's operating system.
 KVM_OS ?= fedora
 
+#
 # Note:
 #
 # Need to better differientate between DOMAINs (what KVM calls test
 # machines) and HOSTs (what the test framework calls the test
 # machines).  This is a transition.
+#
 
-KVM_BASE_DOMAIN = swan$(KVM_OS)base
+KVM_BASE_HOST = swan$(KVM_OS)base
 
 KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
 
-strip-prefix = $(subst '',,$(subst "",,$(1)))
-first-prefix = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
-
 KVM_CLONE_HOST ?= clone
 KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
 
-KVM_CLONE_DOMAIN = $(addprefix $(call first-prefix), $(KVM_CLONE_HOST))
-KVM_BUILD_DOMAIN = $(addprefix $(call first-prefix), $(KVM_BUILD_HOST))
+KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_CLONE_HOST) $(KVM_TEST_HOSTS)
 
-KVM_INSTALL_DOMAINS = $(foreach prefix, $(KVM_PREFIXES), \
-	$(addprefix $(call strip-prefix,$(prefix)),$(KVM_INSTALL_HOSTS)))
-KVM_TEST_DOMAINS = $(foreach prefix, $(KVM_PREFIXES), \
-	$(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS)))
+strip-prefix = $(subst '',,$(subst "",,$(1)))
+add-first-domain-prefix = \
+	$(addprefix $(call strip-prefix,$(firstword $(KVM_PREFIXES))),$(1))
+add-all-domain-prefixes = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
+
+KVM_BASE_DOMAIN = $(KVM_BASE_HOST)
+
+KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
+KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
+
+KVM_CLONE_DOMAIN = $(call add-first-domain-prefix, $(KVM_CLONE_HOST))
+KVM_BUILD_DOMAIN = $(call add-first-domain-prefix, $(KVM_BUILD_HOST))
+
 KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS)
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
@@ -96,6 +105,17 @@ KVM_OBJDIR = OBJ.kvm
 
 # file to mark keys are up-to-date
 KVM_KEYS = testing/x509/keys/up-to-date
+
+#
+# For when HOST!=DOMAIN, generate maps from the host rule to the
+# domain rule.
+#
+
+define kvm-HOST-DOMAIN
+  #(info kvm-HOST-DOMAIN prefix=$(1) host=$(2) suffix=$(3))
+  .PHONY: $(1)$(2)$(3)
+  $(1)$(2)$(3): $(1)$$(call add-first-domain-prefix,$(2))$(3)
+endef
 
 #
 # Check that things are correctly configured for creating the KVM
@@ -653,34 +673,39 @@ kvm-clean clean-kvm: kvm-shutdown
 	rm -rf $(KVM_OBJDIR)
 
 
-# kvm-build and kvm-build-DOMAIN
+#
+# kvm-build and kvm-HOST|DOMAIN-build
 #
 # To avoid "make base" and "make module" running in parallel on the
 # build machine (stepping on each others toes), this uses two explicit
 # commands (each invokes make on the domain) to ensre that "make base"
 # and "make modules" are serialized.
+#
 
-define kvm-build-domain
-  #(info kvm-build-domain domain=$(1))
-  kvm-build-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
-	: kvm-build-domain domain=$(1)
+define kvm-DOMAIN-build
+  #(info kvm-DOMAIN-build domain=$(1))
+  .PHONY: kvm-$(1)-build
+  kvm-$(1)-build: | $$(KVM_DOMAIN_$(1)_FILES)
+	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
 endef
 
-# this includes $(KVM_BASE_DOMAIN), oops
+# this includes $(KVM_BASE_DOMAIN) and $(KVM_CLONE_DOMAIN)
 $(foreach domain, $(KVM_DOMAINS), \
-	$(eval $(call kvm-build-domain,$(domain))))
+	$(eval $(call kvm-DOMAIN-build,$(domain))))
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-build)))
 
 .PHONY: kvm-build
-kvm-build: kvm-build-$(KVM_BUILD_DOMAIN)
+kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 
 
-# kvm-install and kvm-install-DOMAIN
+# kvm-install and kvm-HOST|DOMAIN-install
 #
-# "kvm-install-DOMAIN" can't start until the common
-# kvm-build-$(KVM_BUILD_DOMAIN) has completed.
+# "kvm-DOMAIN-install" can't start until the common
+# kvm-$(KVM_BUILD_DOMAIN)-build has completed.
 #
 # After installing shut down the domain.  Otherwise, when KVM_PREFIX
 # is large, the idle domains consume huge amounts of memory.
@@ -689,24 +714,29 @@ kvm-build: kvm-build-$(KVM_BUILD_DOMAIN)
 # below target.  It should be possible to instead create one domain
 # with everything installed and then clone it.
 
-define kvm-install-domain
-  .PHONY: kvm-install-$(1)
-  kvm-install-$(1): kvm-build-$$(KVM_BUILD_DOMAIN) | $$(KVM_DOMAIN_$(1)_FILES)
-	: kvm-install-domain domain=$(1)
+define kvm-DOMAIN-install
+  #(info kvm-DOMAIN-install domain=$(1))
+  .PHONY: kvm-$(1)-install
+  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_DOMAIN_$(1)_FILES)
+	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
 endef
 
-# this includes $(KVM_BASE_DOMAIN), oops
+# this includes $(KVM_BASE_DOMAIN) and $(KVM_CLONE_DOMAIN)
 $(foreach domain, $(KVM_DOMAINS), \
-	$(eval $(call kvm-install-domain,$(domain))))
+	$(eval $(call kvm-DOMAIN-install,$(domain))))
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
 
+# By default, install where needed.
 .PHONY: kvm-install
-kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
+kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
+
 # Since the install domains list isn't exhaustive (for instance, nic
-# is missing), add an explicit dependency on the missing domains so
-# that they still get created.
-kvm-install: | $(foreach domain, $(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
+# is missing), add an explicit dependency on all the domains so that
+# they still get created.
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_DOMAIN_$(domain)_FILES))
 
 
 # kvm-uninstall et.al.
@@ -720,23 +750,24 @@ kvm-uninstall: kvm-uninstall-clone-domain kvm-uninstall-test-networks
 #
 # kvmsh-HOST
 #
-# Map this onto the first-prefix domain group.  Logging into the other
+# Map this onto the first domain group.  Logging into the other
 # domains can be done by invoking kvmsh.py directly.
 #
 
-define kvmsh
-  #(info host=$(1) domain=$(2))
+define kvmsh-DOMAIN
+  #(info kvmsh-DOMAIN domain=$(1))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1): | $$(KVM_DOMAIN_$(2)_FILES)
-	: kvmsh-host host=$(1)
+  kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+	: kvmsh-DOMAIN domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) $(2)
+	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
 endef
-$(foreach host, $(KVM_TEST_HOSTS), \
-	$(eval $(call kvmsh,$(host),$(call first-prefix)$(host))))
-$(eval $(call kvmsh,build,$(KVM_BUILD_DOMAIN)))
-$(eval $(call kvmsh,clone,$(KVM_CLONE_DOMAIN)))
-$(eval $(call kvmsh,base,$(KVM_BASE_DOMAIN)))
+$(foreach domain,  $(KVM_DOMAINS), \
+	$(eval $(call kvmsh-DOMAIN,$(domain))))
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+	$(eval $(call kvm-HOST-DOMAIN,kvmsh-,$(host))))
+kvmsh-build: kvmsh-$(KVM_BUILD_DOMAIN)
+kvmsh-base: kvmsh-$(KVM_BASE_DOMAIN)
 
 # Generate rules to shut down all the domains (kvm-shutdown) and
 # individual domains (kvm-shutdown-DOMAIN).
@@ -779,9 +810,11 @@ kvm-publish:
 	./testing/web/rsync-results.sh . $(KVM_PUBLISHDIR)/$(KVM_GITSTAMP)
 	./testing/web/build-results.sh . testing/pluto $(KVM_PUBLISHDIR)/$(KVM_GITSTAMP)
 
+#
 # Some hints
 #
 # Only what is listed in here is "supported"
+#
 
 empty =
 comma = ,
@@ -946,7 +979,7 @@ kvm-help:
 	@echo '                                - boot and log into the domain'
 	@echo '                                  using kvmsh.py'
 	@echo '                                - for test domains log into'
-	@echo '                                  $(call first-prefix)HOST'
+	@echo '                                  $(call add-first-domain-prefix, HOST)'
 	@echo '   kvm-publish                  - use rsync to publish the test'
 	@echo '                                  results to $$(KVM_PUBLISHDIR).'
 	@echo ''
