@@ -1582,7 +1582,7 @@ def cmdline():
     parser.add_argument("--retry", default=DEFAULTCONFIG['retry'],
                         type=int, help="retry %d when there is console error." % DEFAULTCONFIG['retry'])
     parser.add_argument("--rpm", default=DEFAULTCONFIG['rpm'],
-                        help="binary rpm to install libreswan %s. Default run make install" % DEFAULTCONFIG['rpm'])
+                        help="binary rpm to install libreswan %s. Default run make install-base" % DEFAULTCONFIG['rpm'])
 
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
@@ -1723,7 +1723,7 @@ def docker_swan_build(args, dname):
         cmd = "sudo docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
             dname, args.rpm)
     else:
-        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install'" % dname
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install-base'" % dname
 
     (line, e) = runcmd_check_output(cmd)
     if e:
@@ -1953,12 +1953,14 @@ def docker_run_script(host, testname, script, timer=90):
     logging.debug("%s execute commands from file %s", host, script)
 
     logfile = "OUTPUT/%s.console.verbose.txt" % host
+
     f_log = open(logfile, 'a', encoding='utf-8')
     f_cmds = open(script, "r")
-    prompt = "%s #" % host
+    prompt = "[root@%s %s]# " % (host, testname)
     output = ''
     for line in f_cmds:
         f_log.write(line)
+
         cmd = "sudo docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s;%s'" % (
             host, testname, testname, line)
         logging.info("%s", cmd)
@@ -1970,10 +1972,9 @@ def docker_run_script(host, testname, script, timer=90):
             logging.error("ERROR %s %s", cmd, e.output)
             output = e.output
 
-        f_log.write(output.decode('ascii'))
-        f_log.write("\n")
-        f_log.write(prompt)
-        f_log.write("\n")
+        output = output.decode('ascii')
+        output = output.replace('\r', '')
+        f_log.writelines(output + prompt)
     f_log.close()
     f_cmds.close()
 
