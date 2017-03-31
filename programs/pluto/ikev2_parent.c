@@ -4522,42 +4522,43 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
                                   pb_stream *outpbs)
 {
 	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	chunk_t local_spi;
 	chunk_t local_nonce;
 	chunk_t *local_g;
 
-	if (st->st_original_role == ORIGINAL_INITIATOR) {
+	if (is_msg_request(md)) {
+		local_g = &st->st_gr;
+		setchunk(local_spi, st->st_rcookie,
+				sizeof(st->st_rcookie));
+		local_nonce = st->st_nr;
+
+		/* send selected v2 IKE SA */
+		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
+					&local_spi, ISAKMP_NEXT_v2Ni)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting accepted ike proposal in CREATE_CHILD_SA"));
+			return STF_INTERNAL_ERROR;
+		}
+	} else {
 		local_g = &st->st_gi;
 		setchunk(local_spi, st->st_icookie,
 				sizeof(st->st_icookie));
 		local_nonce = st->st_ni;
 
-	} else {
-		local_g = &st->st_gr;
-		setchunk(local_spi, st->st_rcookie,
-				sizeof(st->st_rcookie));
-		local_nonce = st->st_nr;
-	}
+		free_ikev2_proposals(&c->ike_proposals);
+		ikev2_proposals_from_alg_info_ike(c->name,
+				"ike rekey initiating child",
+				c->alg_info_ike,
+				&c->ike_proposals);
 
-	{
-		/* AA_2016 condition need a better fix ??? */
-		if (st->st_original_role == ORIGINAL_INITIATOR) {
-			if(!ikev2_emit_sa_proposals(outpbs,
-						st->st_connection->ike_proposals,
-						&local_spi,
-						ISAKMP_NEXT_v2Ni))  {
-				libreswan_log("outsa fail");
-				DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
-				return STF_INTERNAL_ERROR;
-			}
-		} else {
-			setchunk(local_spi, st->st_rcookie,
-					sizeof(st->st_rcookie));
-			if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
-						&local_spi, ISAKMP_NEXT_v2Ni)) {
-				DBG(DBG_CONTROL, DBG_log("problem emitting accepted ike proposal in CREATE_CHILD_SA"));
-				return STF_INTERNAL_ERROR;
-			}
+		/* send v2 IKE SAs*/
+		if(!ikev2_emit_sa_proposals(outpbs,
+					st->st_connection->ike_proposals,
+					&local_spi,
+					ISAKMP_NEXT_v2Ni))  {
+			libreswan_log("outsa fail");
+			DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -4624,14 +4625,13 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 						c->alg_info_ike,
 						&c->ike_proposals);
 	passert(c->ike_proposals != NULL);
-	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder",
+	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 			&sa_pd->pbs,
 			/*expect_ike*/ TRUE,
 			/*expect_spi*/ TRUE,
 			/*expect_accepted*/ FALSE,
 			c->policy & POLICY_OPPORTUNISTIC,
 			&accepted_ike_proposal,
-	/* AA_201607 Paul? st->accepted_ike_proposal or  c->ike_proposals */
 			c->ike_proposals);
 	if (ret != STF_OK) {
 		passert(accepted_ike_proposal == NULL);
@@ -4736,6 +4736,9 @@ stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 
 	passert(pst != NULL);
 
+	/* child's role could be different from original ike role, of pst; */
+	st->st_original_role = ORIGINAL_RESPONDER;
+
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */
 
@@ -4786,7 +4789,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			st->st_msgid = htonl(pst->st_msgid_nextuse);
 		}
 
-		if(st->st_original_role == ORIGINAL_INITIATOR) {
+		if(pst->st_original_role == ORIGINAL_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		}
 
