@@ -16,6 +16,9 @@ import os
 import re
 import subprocess
 import difflib
+import weakref
+import gzip
+import bz2
 
 from fab import logutil
 
@@ -38,6 +41,8 @@ class Resolution:
         return self.state
     def __eq__(self, rhs):
         return self.state == rhs
+    def isresolved(self):
+        return self.state in [self.PASSED, self.FAILED]
     def unsupported(self):
         assert(self.state in [None])
         self.state = self.UNSUPPORTED
@@ -114,24 +119,6 @@ class Issues:
             self.issues[host].append(error)
         self.logger.debug("host %s has error %s", host, error)
 
-    def search(self, regex, string, error, host):
-        self.logger.debug("searching host %s for '%s' (error %s)", host, regex, error)
-        if re.search(regex, string):
-            self.add(error, host)
-            return True
-        else:
-            return False
-
-    def grep(self, regex, filename, error, host):
-        self.logger.debug("grepping host %s file '%s' for '%s' (error %s)", host, filename, regex, error)
-        command = ['grep', '-e', regex, filename]
-        process = subprocess.Popen(command, stdin=subprocess.DEVNULL,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode or stderr:
-            return False
-        self.add(error, host)
-        return True
 
 def _strip(s):
     s = re.sub(r"[ \t]+", r"", s)
@@ -161,11 +148,11 @@ def _diff(logger, ln, l, rn, r):
     return diff
 
 
-def _sanitize_output(logger, raw_file, test):
+def _sanitize_output(logger, raw_path, test):
     # Run the sanitizer found next to the test_sanitize_directory.
     command = [
         test.testing_directory("utils", "sanitizer.sh"),
-        raw_file,
+        raw_path,
         test.testing_directory("pluto", test.name)
     ]
     logger.debug("sanitize command: %s", command)
@@ -213,7 +200,7 @@ class TestResult:
         return self.resolution in [self.resolution.PASSED, self.resolution.FAILED, self.resolution.UNRESOLVED]
 
     def __init__(self, logger, test, quick, update=None,
-                 output_directory=None, finished=None):
+                 output_directory=None):
 
         # Set things up for passed
         self.logger = logger
@@ -222,58 +209,33 @@ class TestResult:
         self.issues = Issues(self.logger)
         self.diffs = {}
         self.sanitized_output = {}
-
-        output_directory = output_directory or test.output_directory
+        self.grub_cache = {}
+        self.output_directory = output_directory or test.output_directory
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
         # attempt was made to run the test.
-        if not os.path.exists(output_directory):
+        if not os.path.exists(self.output_directory):
             self.resolution.untested()
-            self.logger.debug("output directory missing: %s", output_directory)
+            self.logger.debug("output directory missing: %s", self.output_directory)
             return
 
-        # Did the test finish (resolved)?
-        #
-        # If a test is unfinished (for instance, aborted, or in
-        # progress) then it should be marked as UNRESOLVED.
-        #
-        # Something other than RESULT is needed as a way to detect a
-        # finished test.
+        # Start out assuming that it passed and then prove otherwise.
+        self.resolution.passed()
 
-        if finished is None:
-            # For moment use the presence of the RESULT file as a
-            # proxy for a test being resolved.
-            finished = os.path.isfile(test.result_file(output_directory))
-        if finished:
-            # Start out assuming that it passed and then prove
-            # otherwise.
-            self.resolution.passed()
-        else:
-            # Something is known to be wrong.  Start out with failed.
-            self.resolution.unresolved()
-
-        # crash or other unexpected behaviour.
+        # did pluto crash?
         for host_name in test.host_names:
-            pluto_log = os.path.join(output_directory, host_name + ".pluto.log")
-            if os.path.exists(pluto_log):
-                self.logger.debug("checking '%s' for errors", pluto_log)
-                if self.issues.grep("ASSERTION FAILED", pluto_log, "ASSERTION", host_name):
-                    self.resolution.failed()
+            pluto_log_filename = host_name + ".pluto.log"
+            if self.grub(pluto_log_filename, "ASSERTION FAILED"):
+                self.issues.add("ASSERTION", host_name)
+                self.resolution.failed()
+            if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
+                self.issues.add("EXPECTATION", host_name)
                 # XXX: allow expection failures?
-                self.issues.grep("EXPECTATION FAILED", pluto_log, "EXPECTATION", host_name)
 
         # Check the raw console output for problems and that it
         # matches expected output.
         for host_name in test.host_names:
-
-            # Try to load this hosts's raw console output.
-
-            raw_output_filename = os.path.join(output_directory,
-                                               host_name + ".console.verbose.txt")
-            self.logger.debug("host %s raw console output '%s'",
-                              host_name, raw_output_filename)
-            raw_output = _load_file(self.logger, raw_output_filename)
 
             # Check that the host's raw output is present.
             #
@@ -283,7 +245,8 @@ class TestResult:
             # Since things really screwed up, mark the test as
             # UNRESOLVED and give up.
 
-            if raw_output is None:
+            raw_output_filename = host_name + ".console.verbose.txt"
+            if self.grub(raw_output_filename) is None:
                 self.issues.add("output-missing", host_name)
                 self.resolution.unresolved()
                 # With no raw console output, there's little point in
@@ -295,11 +258,14 @@ class TestResult:
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
-            if self.issues.search(r"[\r\n]CORE FOUND", raw_output, "CORE", host_name):
+            if self.grub(raw_output_filename, r"[\r\n]CORE FOUND"):
+                self.issues.add("CORE", host_name)
                 self.resolution.failed()
-            if self.issues.search(r"SEGFAULT", raw_output, "SEGFAULT", host_name):
+            if self.grub(raw_output_filename, r"SEGFAULT"):
+                self.issues.add("SEGFAULT", host_name)
                 self.resolution.failed()
-            if self.issues.search(r"GPFAULT", raw_output, "GPFAULT", host_name):
+            if self.grub(raw_output_filename, r"GPFAULT"):
+                self.issues.add("GPFAULT", host_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.
@@ -319,56 +285,63 @@ class TestResult:
             ending = ": ==== end ===="
             logger.debug("host %s checking if raw console output contains '%s' (or '%s')",
                          host_name, DONE, ending)
-            if not DONE in raw_output and not ending in raw_output:
+            if self.grub(raw_output_filename, DONE) is None \
+            and self.grub(raw_output_filename, ending) is None:
+                # this is probably truncated output; but if the test
+                # is old it may not be the case. and an unresolved
+                # test, but need to first exclude other options.
                 self.issues.add("output-truncated", host_name)
-                self.resolution.failed()
-                # Should this skip the remaining checks?  No.
-                # Generating the sanitized output is still useful
-                # here.
+                if os.path.isfile(test.result_file(self.output_directory)):
+                    self.resolution.failed()
+                else:
+                    self.resolution.unresolved()
 
             # Sanitize what ever output there is and save it.
+            #
+            # Even when the output is seemingly truncated this is
+            # useful.
 
-            sanitized_output_filename = os.path.join(output_directory,
-                                                     host_name + ".console.txt")
+            sanitized_output_path = os.path.join(self.output_directory,
+                                                 host_name + ".console.txt")
             self.logger.debug("host %s sanitize console output '%s'",
-                              host_name, sanitized_output_filename)
+                              host_name, sanitized_output_path)
             sanitized_output = None
             if quick:
                 sanitized_output = _load_file(self.logger,
-                                              sanitized_output_filename)
+                                              sanitized_output_path)
             if sanitized_output is None:
                 sanitized_output = _sanitize_output(self.logger,
-                                                    raw_output_filename,
+                                                    os.path.join(self.output_directory, raw_output_filename),
                                                     test)
             if sanitized_output is None:
                 self.issues.add("sanitizer-failed", host_name)
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
-                                  host_name, sanitized_output_filename)
-                with open(sanitized_output_filename, "w") as f:
+                                  host_name, sanitized_output_path)
+                with open(sanitized_output_path, "w") as f:
                     f.write(sanitized_output)
 
             self.sanitized_output[host_name] = sanitized_output
 
-            expected_output_filename = test.testing_directory("pluto", test.name,
-                                                              host_name + ".console.txt")
+            expected_output_path = test.testing_directory("pluto", test.name,
+                                                          host_name + ".console.txt")
             self.logger.debug("host %s comparing against known-good output '%s'",
-                              host_name, expected_output_filename)
+                              host_name, expected_output_path)
 
-            expected_output = _load_file(self.logger, expected_output_filename)
+            expected_output = _load_file(self.logger, expected_output_path)
             if expected_output is None:
                 self.issues.add("output-unchecked", host_name)
                 self.resolution.unresolved()
                 continue
 
             diff = None
-            diff_filename = os.path.join(output_directory, host_name + ".console.diff")
+            diff_filename = host_name + ".console.diff"
 
             if quick:
                 # Try to load the existing diff file.  Like _diff()
                 # save a list of lines.
-                diff = _load_file(self.logger, diff_filename)
+                diff = self.grub(diff_filename)
                 if diff is not None:
                     diff = diff.splitlines()
 
@@ -385,7 +358,7 @@ class TestResult:
                                   host_name, diff_filename)
                 # Always create the diff file; when there is no diff
                 # leave it empty.
-                with open(diff_filename, "w") as f:
+                with open(os.path.join(self.output_directory, diff_filename), "w") as f:
                     if diff:
                         for line in diff:
                             f.write(line)
@@ -401,11 +374,36 @@ class TestResult:
                 else:
                     self.issues.add("output-different", host_name)
 
+    def grub(self, filename, regex=None, cast=lambda x: x):
+        """Grub around FILENAME to find regex"""
+        self.logger.debug("grubbing '%s' for '%s'", filename, regex)
+        # Find/load the file, and uncompress when needed.
+        if not filename in self.grub_cache:
+            self.grub_cache[filename] = None
+            for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
+                path = os.path.join(self.output_directory, filename + suffix)
+                if os.path.isfile(path):
+                    self.logger.debug("loading '%s' into cache", path)
+                    with open_op(path, "rt") as f:
+                        self.grub_cache[filename] = f.read()
+                        break
+        contents = self.grub_cache[filename]
+        if contents is None:
+            return None
+        if regex is None:
+            return contents
+        match = re.search(regex, contents, re.MULTILINE)
+        if not match:
+            return None
+        group = match.group(len(match.groups()))
+        self.logger.debug("grub '%s' matched '%s'", regex, group)
+        return cast(group)
+
 
 # XXX: given that most of args are passed in unchagned, this should
 # change to some type of result factory.
 
-def mortem(test, args, domain_prefix="", finished=None,
+def mortem(test, args, domain_prefix="",
            baseline=None, output_directory=None,
            quick=False, update=False):
 
@@ -413,7 +411,6 @@ def mortem(test, args, domain_prefix="", finished=None,
 
     test_result = TestResult(logger, test, quick,
                              output_directory=output_directory,
-                             finished=finished,
                              update=update)
 
     if not test_result:

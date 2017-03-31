@@ -13,6 +13,7 @@
 # for more details.
 
 import sys
+import os
 
 from fab import tee
 
@@ -81,6 +82,17 @@ def timeout(arg):
         return None
     else:
         return v
+
+def directory(arg):
+    if os.path.isdir(arg):
+        return arg
+    raise Exception("directory '%s' not found" % arg)
+
+def directory_file(arg):
+    d,b = os.path.split(arg)
+    if os.path.isdir(d):
+        return arg
+    raise Exception("directory '%d' for file '%s' not found" % (d, b))
 
 def add_redirect_argument(parser, what, *args, **kwargs):
     # Can't use '-FILE' as the argument as the parser doesn't like it.
