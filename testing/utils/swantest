@@ -1827,7 +1827,7 @@ def docker_add_net_bridges(args, test):
 
     brname = ''
     pcap_file_ext = '.pcap'
-    pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
+    pcap_file = None
 
     prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
 
@@ -1902,6 +1902,7 @@ def docker_add_net_bridges(args, test):
             brname = "br%s" % bidn3
             # docker_net_bridge(dname=dname, brname=brname, iface=iface,
             # prefix=prefix, brlist=brlist)
+            pcap_file = None
 
         if host == "east":
 
@@ -1924,10 +1925,10 @@ def docker_add_net_bridges(args, test):
                 brlist=brlist)
             pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
-        tcpdump_args =  args.tcpdump + \
-            " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
-
-        tcpdump_cmds[tcpdump_args] = 1
+        if pcap_file:
+            tcpdump_args =  args.tcpdump + \
+                " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
+            tcpdump_cmds[tcpdump_args] = 1
 
     # tcpdump pid(s) to kill the right tcpdump at the end.
     # killall is not an option, there could be other tests in the root pid
