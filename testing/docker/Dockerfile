@@ -1,8 +1,8 @@
 FROM fedora:23
 MAINTAINER "Antony Antony" <antony@phenome.org>
 ENV container docker
-RUN dnf -y update; dnf clean all
-RUN dnf -y install systemd; dnf clean all; \
+RUN dnf -y update;
+RUN dnf -y install systemd; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
 rm -f /etc/systemd/system/*.wants/*;\
@@ -11,32 +11,36 @@ rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
 rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
-RUN dnf install -y wget vim-enhanced bison flex nss-devel \
- nspr-devel nss-tools  gcc make unbound-libs ipsec-tools pexpect racoon2 \
- nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel \
- audit-libs-devel strace unbound pexpect net-tools bind-utils \
- rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
- curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography \
- tcpdump trousers traceroute telnet libselinux-devel systemd-devel conntrack-tools;
-RUN dnf clean all;
+#put these first that way if install break you start it up.
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/usr/sbin/init"]
+RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
+ conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
+ hping3 iproute iptables ipsec-tools libcap-ng-devel libevent-devel \
+ libfaketime libselinux-devel lsof make \
+ mtr nc net-tools nmap nspr-devel nss-devel nss-tools ocspd openldap-devel \
+ openssh-server openssh-clients pam-devel pam-devel pexpect pexpect psmisc \
+ pyOpenSSL python3-cryptography \
+ python3-pexpect python3-setproctitle racoon2 \
+ redhat-rpm-config rpm-build screen strace systemd-devel tcpdump telnet \
+ traceroute trousers unbound unbound-devel unbound-libs valgrind vim-enhanced \
+ wget xl2tpd xmlto;
+RUN dnf -y install 'dnf-command(debuginfo-install)'
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
  libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap \
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib nspr \
- nss libevent-devel; dnf clean all
+ nss libevent-devel;
 RUN mkdir -p /home/build/libreswan
 VOLUME ["/home/build/libreswan:/home/build/libreswan"]
 RUN ln -s /home/build/libreswan/testing /testing
 RUN echo " * soft core unlimited" >> /etc/security/limits.conf
 RUN echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 #
-#ssh
-RUN dnf -y install openssh-server
-RUN dnf -y install openssh-clients
+#setup ssh
 RUN mkdir /root/.ssh
 RUN mkdir /var/run/sshd
-# create host keys
+# create ssh host keys
 RUN ssh-keygen -b 1024 -t rsa -f /etc/ssh/ssh_host_key
 RUN ssh-keygen -b 1024 -t rsa -f /etc/ssh/ssh_host_rsa_key
 RUN ssh-keygen -b 1024 -t dsa -f /etc/ssh/ssh_host_dsa_key
@@ -58,5 +62,3 @@ RUN chmod a+x /etc/rc.d/rc.local;
 RUN systemctl enable rc-local.service  
 RUN printf 'export TERM=xterm\nexport EDITOR=vim\n' > /etc/profile.d/docker_exec_hack.sh
 RUN dnf -y update; dnf clean all
-VOLUME [ "/sys/fs/cgroup" ]
-CMD ["/usr/sbin/init"]

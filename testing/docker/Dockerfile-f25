@@ -1,4 +1,4 @@
-FROM fedora:23
+FROM fedora:25
 MAINTAINER "Antony Antony" <antony@phenome.org>
 ENV container docker
 RUN dnf -y update;
