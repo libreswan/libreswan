@@ -855,6 +855,7 @@ kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
 kvmplutotest	fips-08-ikev2-x509			good
 kvmplutotest	fips-09-ikev2-gcm			good
+kvmplutotest	fips-10-ikev2-psk			good
 
 #################################################################
 # passthrough tests
