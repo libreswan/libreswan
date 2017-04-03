@@ -2034,7 +2034,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		 */
 		if (st->st_state != from_state &&
 			st->st_state != STATE_UNDEFINED &&
-			IS_V2_ESTABLISHED(st->st_state) &&
+			IS_CHILD_SA_ESTABLISHED(st) &&
 			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
