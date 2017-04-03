@@ -28,7 +28,7 @@ v3.20 (March 14, 2017)
 * IKEV2: OE/CAT: Don't send CP request when responder is behind NAT [Antony]
 * IKEv2: log first notify payload when we receive an Notify Error [Paul]
 * IKEv2: Fix memory leak in DH secret calculation (since v3.9) [Andrew]
-         (reported by Eric Andresson)
+         (reported by Eric Andersson)
 * IKEv2: If re-entering ikev2_crypto_start(), reset msgid [Paul]
 * IKEv2: prevent copying bogus peer id when ID kind is IPv4/IPv6 [Paul]
          (rhbz#1392191)
