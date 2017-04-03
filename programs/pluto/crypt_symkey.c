@@ -70,21 +70,18 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		}
 	} else {
 		mechanism = alg->nss_mechanism;
-		switch (alg->algo_type) {
-		case IKE_ALG_ENCRYPT:
+		if (alg->algo_type == IKE_ALG_ENCRYPT) {
 			flags = CKF_ENCRYPT | CKF_DECRYPT;
-			break;
-		case IKE_ALG_PRF:
-		case IKE_ALG_INTEG:
+		} else if (alg->algo_type == IKE_ALG_PRF
+			   || alg->algo_type == IKE_ALG_INTEG) {
 			flags = CKF_SIGN;
-			break;
-		case IKE_ALG_HASH:
+		} else if (alg->algo_type == IKE_ALG_HASH) {
 			flags = CKF_DIGEST;
-			break;
-		default:
+		} else {
 			flags = 0;
-			/* crypto will likely fail */
-			PEXPECT_LOG("algorithm type %d unknown", alg->algo_type);
+			/* should never happen - ike_alg checks for this */
+			PASSERT_FAIL("NSS algorithm '%s' type %s unknown",
+				     alg->name, ike_alg_type_name(alg->algo_type));
 		}
 		if (DBGP(debug)) {
 			DBG_log("%s %s for NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
