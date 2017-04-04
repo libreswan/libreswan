@@ -1,0 +1,11 @@
+Test CREATE_CHILD_SA Child SA created by the original responder(west).
+
+East initiate the IKE SA + child SA.  Then West initiate the second
+child SA.
+
+East and west have two connections. The east has one of them with
+auto=start.
+So east is the original IKE initiator in this case.
+The west will add a second child connection. It is the initiator of
+CREATE_CHILD_SA exchange. Both Child SAs will share the IKE SA.
+

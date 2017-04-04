@@ -4,6 +4,7 @@
  * Copyright (C) 2009 - 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,86 +59,22 @@
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)
 {
-	SECKEYDHParams dhp;
-	PK11SlotInfo *slot = NULL;
-	SECKEYPrivateKey *privk;
-	SECKEYPublicKey *pubk;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
-	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
-	chunk_t base;
-	chunk_t prime;
-	get_oakley_group_param(group, &base, &prime);
+	const struct oakley_group_desc *group = kn->group;
 
-	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:", prime));
-	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:", base));
+	ALLOC_WIRE_CHUNK(*kn, gi, group->bytes);
+	u_int8_t *ke = WIRE_CHUNK_PTR(*kn, gi);
 
-	dhp.prime.data = prime.ptr;
-	dhp.prime.len = prime.len;
-	dhp.base.data = base.ptr;
-	dhp.base.len = base.len;
-
-	slot = PK11_GetBestSlot(CKM_DH_PKCS_KEY_PAIR_GEN,
-				lsw_return_nss_password_file_info());
-	if (slot == NULL)
-		loglog(RC_LOG_SERIOUS, "NSS: slot for DH key gen is NULL");
-	passert(slot != NULL);
-
-	for (;;) {
-		pubk = NULL;	/* ??? is this needed? Output-only from next call? */
-		privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN,
-					     &dhp, &pubk, PR_FALSE, PR_TRUE,
-					     lsw_return_nss_password_file_info());
-		if (privk == NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "NSS: DH private key creation failed (err %d)",
-			       PR_GetError());
-		}
-		passert(privk != NULL && pubk != NULL);
-
-		if (group->bytes == pubk->u.dh.publicValue.len) {
-			DBG(DBG_CRYPT,
-			    DBG_log("NSS: generated dh priv and pub keys: %d",
-				    pubk->u.dh.publicValue.len));
-			break;
-		} else {
-			DBG(DBG_CRYPT,
-			    DBG_log("NSS: generating dh priv and pub keys again"));
-
-			SECKEY_DestroyPrivateKey(privk);
-			SECKEY_DestroyPublicKey(pubk);
-		}
-	}
-
-	kn->secret = privk;
-	kn->pubk = pubk;
-
-	ALLOC_WIRE_CHUNK(*kn, gi, pubk->u.dh.publicValue.len);
-	{
-		unsigned char *gip = WIRE_CHUNK_PTR(*kn, gi);
-
-		memcpy(gip, pubk->u.dh.publicValue.data,
-		       pubk->u.dh.publicValue.len);
-	}
-
-	DBG(DBG_CRYPT, {
-		    DBG_log("NSS: Local DH secret (pointer): %p",
-			     kn->secret);
-		    DBG_dump("NSS: Public DH value sent(computed in NSS):",
-			     WIRE_CHUNK_PTR(*kn, gi),
-			     pubk->u.dh.publicValue.len);
-	    });
+	group->dhmke_ops->calc_ke(group, &kn->secret, &kn->pubk,
+				  ke, group->bytes);
 
 	DBG(DBG_CRYPT,
-	    DBG_log("NSS: Local DH public value (pointer): %p",
-		    kn->pubk));
-
-	/* clean up after ourselves */
-
-	if (slot != NULL)
-		PK11_FreeSlot(slot);
-
-	freeanychunk(prime);
-	freeanychunk(base);
+	    DBG_log("NSS: Local DH %s public value (pointer): %p",
+		    group->common.name, kn->pubk);
+	    DBG_log("NSS: Local DH %s secret (pointer): %p",
+		    group->common.name, kn->secret);
+	    DBG_dump("NSS: Public DH wire value:",
+		     ke, group->bytes));
 }
 
 /* MUST BE THREAD-SAFE */
@@ -170,7 +107,7 @@ stf_status build_ke_and_nonce(
 	 */
 	passert(cur_state->st_serialno == cn->pcrc_serialno && !cur_state->st_sec_in_use);
 	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
-	rd.pcr_d.kn.oakley_group = group->group;
+	rd.pcr_d.kn.group = group;
 
 	return send_crypto_helper_request(&rd, cn);
 }

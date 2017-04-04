@@ -2,7 +2,7 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015-2016, Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -568,37 +568,6 @@ rpm:
 	@echo To build an rpm, use: rpmbuild -ba packaging/XXX/libreswan.spec
 	@echo where XXX is your rpm based vendor
 	rpmbuild -bs packaging/fedora/libreswan.spec
-
-ipkg_strip:
-	@echo "Minimizing size for ipkg binaries..."
-	@cd $(DESTDIR)$(INC_USRLOCAL)/lib/ipsec && \
-	for f in *; do (if file $$f | grep ARM > /dev/null; then ( $(STRIP) --strip-unneeded $$f); fi); done
-	@rm -r $(DESTDIR)$(INC_USRLOCAL)/man
-	@rm -f $(DESTDIR)$(INC_RCDEFAULT)/*.old
-	@rm -f $(DESTDIR)$(INC_USRLOCAL)/lib/ipsec/*.old
-	@rm -f $(DESTDIR)$(INC_USRLOCAL)/libexec/ipsec/*.old
-	@rm -f $(DESTDIR)$(INC_USRLOCAL)/sbin/*.old
-	@rm -f $(DESTDIR)$(INC_USRLOCAL)/share/doc/libreswan/*
-
-
-ipkg_module:
-	@echo "Moving ipsec.o into temporary location..."
-	KV=$(shell ${KVUTIL} ${KERNELSRC}/Makefile) && \
-	mkdir -p $(LIBRESWANSRCDIR)/packaging/ipkg/kernel-module/lib/modules/$$KV/net/ipsec
-	KV=$(shell ${KVUTIL} ${KERNELSRC}/Makefile) && \
-	cp ${LIBRESWANSRCDIR}/modobj*/ipsec.[k]o $(LIBRESWANSRCDIR)/packaging/ipkg/kernel-module/lib/modules/$$KV/net/ipsec/
-	KV=$(shell ${KVUTIL} ${KERNELSRC}/Makefile)
-
-ipkg_clean:
-	rm -rf $(LIBRESWANSRCDIR)/packaging/ipkg/kernel-module/
-	rm -rf $(LIBRESWANSRCDIR)/packaging/ipkg/ipkg/
-	rm -f $(LIBRESWANSRCDIR)/packaging/ipkg/control-libreswan
-	rm -f $(LIBRESWANSRCDIR)/packaging/ipkg/control-libreswan-module
-
-
-ipkg: programs install ipkg_strip ipkg_module
-	@echo "Generating ipkg...";
-	DESTDIR=${DESTDIR} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} IPSECVERSION=${IPSECVERSION} ./packaging/ipkg/generate-ipkg
 
 tarpkg:
 	@echo "Generating tar.gz package to install"

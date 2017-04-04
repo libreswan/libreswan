@@ -7,7 +7,8 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,7 +20,20 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
+# XXX: Pluto currently doesn't include include program.mk:
+#
+# - program.mk (reasonably) expects only one program per directory but
+#   this directory creates two programs (pluto and cavp).
+#
+#   Either cavp gets merged into pluto, or cavp gets moved to its own
+#   directory.
+#
+# - this make file tests USE_ variables defined in config.mk using
+#   GNU-make's 'ifeq' statement and that only works if config.mk is
+#   included before the tests.
+#
+#   That code is slowly being replaced by '$(call if-enabled)'.
+#
 
 ifndef top_srcdir
 include ../../mk/dirs.mk
@@ -28,31 +42,17 @@ endif
 # XXX: Pluto doesn't include mk/program.mk and define PROGRAM
 MANPAGES += ipsec_pluto.8
 
-# XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
-ifeq ($(USE_LDAP),true)
-# Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
-# if you require LDAPv2
-LDAP_VERSION=3
-endif
+# Object files required by this pluto build.
 
-# compile with PAM support will increase the size of the distribution
-# and thus it may not be the best solution for embedded systems. XAUTH
-# will use the crypt() lib and a password file by default.
-ifeq ($(USE_XAUTHPAM),true)
-XAUTH_HAVE_PAM=1
-endif
+OBJS =
 
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
 HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
-
-
-# BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
-# BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
@@ -69,247 +69,156 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 #    Double quoting may be needed.
 
 ifeq ($(USE_PFKEYv2),true)
-PFKEYv2_DIST_SRC=kernel_pfkey.c kernel_pfkey.h
-PFKEYv2_OBJS=kernel_pfkey.o
-else
-PFKEYv2_DIST_SRC=
-PFKEYv2_OBJS=
+OBJS += kernel_pfkey.o
 endif
 
-NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h
 ifeq ($(USE_NETKEY),true)
 NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
-NETKEY_SRCS=${NETKEY_DIST_SRCS} ${PFKEYv2_DIST_SRC}
-NETKEY_OBJS=kernel_netlink.o
+OBJS += kernel_netlink.o
 endif
 
-KLIPS_DIST_SRCS=kernel_klips.c
 ifeq ($(USE_KLIPS),true)
-KLIPS_SRCS=${KLIPS_DIST_SRCS}
 KLIPS_DEFS=-DKLIPS -DPFKEY
-KLIPS_OBJS=kernel_klips.o
+OBJS += kernel_klips.o
 endif
 
-MAST_DIST_SRCS=kernel_mast.c
 ifeq ($(USE_MAST),true)
-MAST_SRCS=${MAST_DIST_SRCS}
 MAST_DEFS=-DKLIPS_MAST
-MAST_OBJS=kernel_mast.o
+OBJS += kernel_mast.o
 endif
 
-WIN2K_DIST_SRCS=kernel_win2k.c
 ifeq ($(USE_WIN2K_NATIVE),true)
-WIN2K_SRCS=${WIN2K_DIST_SRCS}
 WIN2K_DEFS=-DWIN2K_NATIVE_IPSEC
-WIN2K_OBJS=kernel_win2k.o
+OBJS += kernel_win2k.o
 endif
 
-BSDKAME_DIST_SRCS=kernel_bsdkame.c
 ifeq ($(USE_BSDKAME),true)
-BSDKAME_SRCS=${BSDKAME_DIST_SRCS}
 BSDKAME_DEFS=-DBSD_KAME
-BSDKAME_OBJS=kernel_bsdkame.o
-BSDKAME_LIBS=${LIBBSDPFKEY}
+OBJS += kernel_bsdkame.o
+# LIBBSDPFKEY is presumably passed in.
+LDFLAGS += ${LIBBSDPFKEY}
 endif
 
-
-# the files are defined here so that TAGS: can catch them.
-#
-X509_DIST_OBJS=x509.o
-X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
-X509_DIST_SRCS+=fetch.h
-THREADS_DIST_OBJS=fetch.o
-THREADS_DIST_SRCS=${THREADS_DIST_OBJS:.o=.c}
-X509_OBJS=${X509_DIST_OBJS}
-X509_SRCS=${X509_DIST_SRCS}
-
-# dynamic LDAP CRL fetching requires OpenLDAP library
-ifeq ($(USE_LDAP),true)
-X509_LLIBS+= -lldap -llber
-PLUTOMINUSL+= -llber
-ifdef LDAP_VERSION
-X509_DEFS+= -DLDAP_VER=$(LDAP_VERSION)
-endif
-endif
-
-THREADS_OBJS=${THREADS_DIST_OBJS}
-THREADS_SRCS=${THREADS_DIST_SRCS}
-THREADS_LLIBS=-lpthread
+OBJS += x509.o
+OBJS += fetch.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-XAUTH_DIST_SRCS=ikev1_xauth.c ikev1_xauth.h addresspool.c addresspool.h pam_conv.c pam_conv.h
-XAUTH_DIST_OBJS=ikev1_xauth.o addresspool.o pam_conv.o
-XAUTH_OBJS=${XAUTH_DIST_OBJS}
-XAUTH_SRCS=${XAUTH_DIST_SRCS}
+# pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
+OBJS += ikev1_xauth.o addresspool.o pam_conv.o
+LDFLAGS += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
-XAUTH_LLIBS=-lcrypt
-endif
-# if we use pam for password checking then add it too
-ifeq ($(USE_XAUTHPAM),true)
-XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
-XAUTHPAM_LIBS=-lpam
+LDFLAGS += -lcrypt
 endif
 
-AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
-AGGRESSIVE_DIST_SRCS=${AGGRESSIVE_DIST_OBJS:.o=.c}
-AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
-AGGRESSIVE_SRCS=${AGGRESSIVE_DIST_SRCS}
+OBJS += ikev1_aggr.o
 
 # LABELED IPSEC support - requires SElinux
-LABELED_IPSEC_DIST_OBJS=security_selinux.o
-LABELED_IPSEC_DIST_SRCS=${LABELED_IPSEC_DIST_OBJS:.o=.c}
 ifeq ($(USE_LABELED_IPSEC),true)
-LABELED_IPSEC_DEFS=-DHAVE_LABELED_IPSEC
-LABELED_IPSEC_OBJS=${LABELED_IPSEC_DIST_OBJS}
-LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
-LABELED_IPSEC_LIBS=-lselinux
+OBJS += security_selinux.o
+LDFLAGS += -lselinux
 endif
 
-SECCOMP_DIST_OBJS=pluto_seccomp.o
-SECCOMP_DIST_SRCS=pluto_seccomp.c
 ifeq ($(USE_SECCOMP),true)
-SECCOMP_DEFS=-DHAVE_SECCOMP
-SECCOMP_OBJS=${SECCOMP_DIST_OBJS}
-SECCOMP_SRCS=${SECCOMP_DIST_SRCS}
-SECCOMP_LIBS=-lseccomp
+OBJS += pluto_seccomp.o
 endif
 
+OBJS += $(call if-enabled, USE_SYSTEMD_WATCHDOG, pluto_sd.o)
+LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
-SYSTEMD_NOTIFY_DIST_OBJS=pluto_sd.o
-SYSTEMD_NOTIFY_DIST_SRCS=${SYSTEMD_NOTIFY_DIST_OBJS:.o=.c}
-ifeq ($(USE_SYSTEMD_WATCHDOG),true)
-SYSTEMD_NOTIFY_DEFS=-DUSE_SYSTEMD_WATCHDOG
-SYSTEMD_NOTIFY_OBJS=${SYSTEMD_NOTIFY_DIST_OBJS}
-SYSTEMD_NOTIFY_SRC=${SYSTEMD_NOTIFY_DIST_SRC}
-SYSTEMD_NOTIFY_LIBS=-lsystemd
-endif
+LDFLAGS += $(CURL_LDFLAGS)
 
+# XXX: hack until ike_alg gets a library
+OBJS += ike_info.o
 
-ifeq ($(USE_LIBCURL),true)
-# This compile option activates dynamic URL fetching
-# with libcurl in the source code
-CURL_DEFS=-DLIBCURL
-CURL_LLIBS=-lcurl
-endif
-
-EXTRA_CRYPTO_SRCS+=ike_alg_nss_hash_ops.c
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_hash_ops.o
-EXTRA_CRYPTO_SRCS+=ike_alg_hmac_prf_ops.c
-EXTRA_CRYPTO_OBJS+=ike_alg_hmac_prf_ops.o
-EXTRA_CRYPTO_SRCS+=ike_alg_nss_prf_ops.c
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_prf_ops.o
-EXTRA_CRYPTO_SRCS+=ike_alg_nss_gcm.c
-EXTRA_CRYPTO_OBJS+=ike_alg_nss_gcm.o
-
-EXTRA_CRYPTO_SRCS+=ike_alg_null.c
-EXTRA_CRYPTO_OBJS+=ike_alg_null.o
+OBJS += ike_alg_nss_modp.o
+OBJS += ike_alg_nss_ecp.o
+OBJS += ike_alg_nss_cbc.o
+OBJS += ike_alg_nss_hash_ops.o
+OBJS += ike_alg_hmac_prf_ops.o
+OBJS += ike_alg_nss_prf_ops.o
+OBJS += ike_alg_nss_gcm.o
+OBJS += ike_alg_null.o
 
 ifeq ($(USE_SERPENT),true)
-EXTRA_CRYPTO_SRCS+=ike_alg_serpent.c
-EXTRA_CRYPTO_OBJS+=ike_alg_serpent.o
-EXTRA_CRYPTO_LIBS+=$(LIBSERPENT)
+OBJS += ike_alg_serpent.o
+# an archive
+OBJS += $(LIBSERPENT)
 endif
 
 ifeq ($(USE_TWOFISH),true)
-EXTRA_CRYPTO_SRCS+=ike_alg_twofish.c
-EXTRA_CRYPTO_OBJS+=ike_alg_twofish.o
-EXTRA_CRYPTO_LIBS+=$(LIBTWOFISH)
+OBJS += ike_alg_twofish.o
+# an archive
+OBJS += $(LIBTWOFISH)
 endif
 
 ifeq ($(USE_CAST),true)
-EXTRA_CRYPTO_SRCS+=ike_alg_cast.c
-EXTRA_CRYPTO_OBJS+=ike_alg_cast.o
+OBJS += ike_alg_cast.o
 endif
 
 ifeq ($(USE_RIPEMD),true)
-EXTRA_CRYPTO_SRCS+=ike_alg_ripemd.c
-EXTRA_CRYPTO_OBJS+=ike_alg_ripemd.o
+OBJS += ike_alg_ripemd.o
 endif
 
-EXTRA_CRYPTO_SRCS += ike_alg_sha1.c
-EXTRA_CRYPTO_OBJS += ike_alg_sha1.o
-
-EXTRA_CRYPTO_SRCS += ike_alg_md5.c
-EXTRA_CRYPTO_OBJS += ike_alg_md5.o
+OBJS += ike_alg_sha1.o
+OBJS += ike_alg_md5.o
 
 ifeq ($(USE_3DES),true)
-EXTRA_CRYPTO_SRCS += ike_alg_3des.c
-EXTRA_CRYPTO_OBJS += ike_alg_3des.o
+OBJS += ike_alg_3des.o
 endif
 
-ifeq ($(USE_SINGLE_CONF_DIR),true)
-SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
-endif
+OBJS += ike_alg_aes.o
+OBJS += ike_alg_dh.o
+OBJS += ike_alg_camellia.o
+OBJS += ike_alg_sha2.o
+OBJS += ike_alg.o db_ops.o
 
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
 	$(KEYRR_DEFINES) \
-	$(BYTE_ORDER) \
 	$(NETKEY_DEFS) \
-	$(X509_DEFS) \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	${LABELED_IPSEC_DEFS} \
-	${SECCOMP_DEFS} \
 	${SYSTEMD_NOTIFY_DEFS} \
-	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
 
-
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=$(X509_LIBS)
-LIBSPLUTO+=$(THREADS_LIBS)
-LIBSPLUTO+=${CURL_LIBS}
-LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS} ${SECCOMP_LIBS}
-LIBSPLUTO+=${SYSTEMD_NOTIFY_LIBS}
-LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} $(NSS_LDFLAGS)
-PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
-PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} $(NSS_LDFLAGS)
-PLUTOMINUSL+= ${LIBCRYPT}
+LDFLAGS += $(SECCOMP_LDFLAGS)
+LDFLAGS += $(NSS_LDFLAGS)
 
 # For avoiding implicit DSO linking
-LIBSPLUTO+= -lpthread
+LDFLAGS += -lpthread
 
-ifeq ($(USE_FIPSCHECK),true)
-LIBSPLUTO+= -lfipscheck
-endif
+LDFLAGS += $(FIPSCHECK_LDFLAGS)
 
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
-LIBSPLUTO+= -lcap-ng
+LDFLAGS += -lcap-ng
 endif
 
 BINNAMEPLUTO = pluto
-BINNAMEWHACK = whack
-BINNAMEIMPORTCRL = _import_crl
 
+# OSDEP already set in objdir.mk?
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-SYSDEP_SRC=sysdep_${OSDEP}.c
-SYSDEP_OBJ=sysdep_${OSDEP}.o
-
-# End of configuration coping options.
-
-LDFLAGS+=$(NSS_LDFLAGS)
+OBJS += sysdep_${OSDEP}.o
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
-LIBSPLUTO += $(UNBOUND_LDFLAGS)
+LDFLAGS += -lrt
+LDFLAGS += $(UNBOUND_LDFLAGS)
+LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 
-ifeq ($(USE_LINUX_AUDIT),true)
-LIBSPLUTO += -laudit
-endif
+LDFLAGS += -levent
+LDFLAGS += -levent_pthreads
 
-LIBSPLUTO += -levent
-LIBSPLUTO += -levent_pthreads
+LDFLAGS += $(LDAP_LDFLAGS)
 
 ifeq ($(USE_KLIPS),true)
 # Linux always supports udpfromto
@@ -323,10 +232,7 @@ ifeq ($(USE_BSDKAME),true)
 # BSD always supports udpfromto
 UDPFROMTO_SRCS=udpfromto.c
 endif
-
-# Solaris needs -lsocket -lnsl
-LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
-
+OBJS += $(UDPFROMTO_SRCS:.c=.o)
 
 RM = /bin/rm
 RMFLAGS = -f
@@ -334,121 +240,37 @@ RMFLAGS = -f
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-# files for a (source) distribution
+OBJS += connections.o initiate.o terminate.o
+OBJS += cbc_test_vectors.o
+OBJS += ctr_test_vectors.o
+OBJS += gcm_test_vectors.o
+OBJS += test_buffer.o
+OBJS += pending.o cookie.o crypto.o defs.o
+OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJS += state_entry.o
+OBJS += timer.o hmac.o hostpair.o
+OBJS += myid.o ipsec_doi.o
+OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
+OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
+OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
+OBJS += crypt_hash.o
+OBJS += kernel.o
+OBJS += kernel_noklips.o rcv_whack.o pluto_stats.o
+OBJS += demux.o msgdigest.o keys.o
+OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
+OBJS += rnd.o spdb.o spdb_struct.o
+OBJS += vendor.o nat_traversal.o virtual.o
+OBJS += packet.o pluto_constants.o readwhackmsg.o
+OBJS += nss_cert_load.o pem.o nss_cert_vfy.o
+OBJS += nss_ocsp.o nss_crl_import.o
+OBJS += nss_err.o
 
-DISTMISC = CHANGES PLUTO-CONVENTIONS TODO Makefile routing.txt \
-	 pluto.8 ipsec_whack.8 .cvsignore
-
-DISTSRC = \
-	ike_alg_nss_cbc.h ike_alg_nss_cbc.c \
-	cbc_test_vectors.h cbc_test_vectors.c \
-	ctr_test_vectors.h ctr_test_vectors.c \
-	gcm_test_vectors.h gcm_test_vectors.c \
-	test_buffer.h test_buffer.c \
-        connections.c initiate.c terminate.c connections.h \
-	pending.c pending.h \
-	foodgroups.c foodgroups.h \
-	cookie.c cookie.h \
-	crypto.h crypto.c \
-	db_ops.c \
-	defs.h defs.c \
-	demux.c demux.h msgdigest.c \
-	myid.c hmac.c \
-	hostpair.c ipsec_doi.c ipsec_doi.h \
-	spdb.c spdb_struct.c spdb.h \
-	ikev1.c ikev1_quick.c ikev1_continuations.h \
-	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
-	ikev1_msgid.c \
-        ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
-	crypt_dbg.c \
-	crypt_symkey.c crypt_prf.c ikev1_prf.c ikev2_prf.c \
-	crypt_hash.c \
-	ikev2_spdb_struct.c \
-	ikev2_rsa.c ikev2_psk.c \
-	kernel.c kernel.h \
-	${NETKEY_SRCS} \
-	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} \
-	kernel_noklips.c kernel_noklips.h \
-	ike_alg.c ike_alg.h \
-	ike_alg_aes.c \
-	ike_alg_dh.c \
-	ike_alg_camellia.c \
-	rcv_whack.c rcv_whack.h \
-	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
-	log.c log.h \
-	plutomain.c plutoalg.c \
-	pluto_crypt.c crypt_utils.c pluto_crypt.h \
-	crypt_ke.c crypt_dh.c crypt_start_dh.c \
-	keys.c keys.h \
-	rnd.c rnd.h \
-	server.c server.h \
-	state.c state.h \
-	state_entry.c state_entry.h \
-	${SYSDEP_SRC} \
-	timer.c timer.h \
-	$(X509_DIST_SRCS) \
-	$(THREADS_DIST_SRCS) \
-	vendor.c nat_traversal.c virtual.c \
-	whack.c \
-	${XAUTH_DIST_SRCS} \
-	${AGGRESSIVE_DIST_SRCS} \
-	${LABELED_IPSEC_DIST_SRCS} \
-	${SECCOMP_DIST_SRCS} \
-	${SYSTEMD_NOTIFY_DIST_SRCS} \
-	packet.c pluto_constants.c readwhackmsg.c \
-	nss_cert_load.c nss_cert_load.h pem.c \
-	nss_cert_vfy.c nss_cert_vfy.h \
-	nss_ocsp.c nss_ocsp.h \
-	nss_crl_import.c nss_crl_import.h \
-	nss_err.c nss_err.h \
-	${UDPFROMTO_SRCS}
-
-DIST = $(DISTMISC) $(DISTSRC)
-
-OBJSPLUTO  = connections.o initiate.o terminate.o
-OBJSPLUTO += ike_alg_nss_cbc.o
-OBJSPLUTO += cbc_test_vectors.o
-OBJSPLUTO += ctr_test_vectors.o
-OBJSPLUTO += gcm_test_vectors.o
-OBJSPLUTO += test_buffer.o
-OBJSPLUTO += pending.o cookie.o crypto.o defs.o
-OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
-OBJSPLUTO += state_entry.o
-OBJSPLUTO += timer.o hmac.o hostpair.o
-OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
-OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
-OBJSPLUTO += crypt_dbg.o
-OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
-OBJSPLUTO += crypt_hash.o
-OBJSPLUTO += kernel.o
-OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
-OBJSPLUTO += kernel_noklips.o rcv_whack.o
-OBJSPLUTO += demux.o msgdigest.o keys.o
-OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
-OBJSPLUTO += rnd.o spdb.o spdb_struct.o
-OBJSPLUTO += vendor.o nat_traversal.o virtual.o
-OBJSPLUTO += ike_alg_aes.o
-OBJSPLUTO += ike_alg_dh.o
-OBJSPLUTO += ike_alg_camellia.o
-OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
-OBJSPLUTO += ike_alg.o db_ops.o
-OBJSPLUTO += ${XAUTH_OBJS}
-OBJSPLUTO += ${AGGRESSIVE_OBJS}
-OBJSPLUTO += ${LABELED_IPSEC_OBJS}
-OBJSPLUTO += ${SECCOMP_OBJS}
-OBJSPLUTO += ${SYSTEMD_NOTIFY_OBJS}
-OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
-OBJSPLUTO += ${OBJSLIBPLUTO}
-OBJSPLUTO += ${SYSDEP_OBJ}
-OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
-OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
-OBJSPLUTO += nss_ocsp.o nss_crl_import.o
-OBJSPLUTO += nss_err.o
-OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
-
-OBJSWHACK = whack.o
+# Archives
+OBJS += $(LIBRESWANLIB)
+OBJS += $(WHACKLIB)
+OBJS += $(IPSECCONFLIB)
+OBJS += $(LIBRESWANLIB)
 
 CAVP += cavp
 
@@ -457,27 +279,23 @@ local-base: $(builddir)/Makefile
 
 local-clean-base: $(builddir)/Makefile
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJSPLUTO) $(BINNAMEPLUTO) $(OBJSWHACK) $(BINNAMEWHACK) $(BINNAMEADNS) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+		$(foreach f,$(OBJS) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(BINNAMEWHACK) $(CAVP)
+buildall: $(BINNAMEPLUTO) $(CAVP)
 
 doinstall:
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 755 $(VARDIR)/run/pluto
-	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
+	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(LIBEXECDIR)
 
 list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 
-$(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
-
-$(BINNAMEWHACK): $(OBJSWHACK)
-	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}
+$(BINNAMEPLUTO): $(OBJS)
+	$(CC) -o $(BINNAMEPLUTO) $(OBJS) $(LDFLAGS) $(USERLINK)
 
 check:
 	echo no checks in lib right now.
@@ -486,23 +304,37 @@ checkprograms:
 
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
-CAVPSRC += cavp.c
-CAVPSRC += cavp_print.c
-CAVPSRC += cavp_stubs.c
-CAVPSRC += cavp_ikev1.c
-CAVPSRC += cavp_ikev2.c
-CAVPSRC += cavp_sha.c
-CAVPSRC += cavp_hmac.c
-CAVPSRC += cavp_gcm.c
-DISTSRC += $(CAVPSRC)
-OBJSCAVP = $(CAVPSRC:.c=.o) $(filter-out plutomain.o, $(OBJSPLUTO))
+
+OBJSCAVP += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
+OBJSCAVP += crypt_symkey.o
+OBJSCAVP += crypt_prf.o
+OBJSCAVP += crypt_hash.o
+OBJSCAVP += test_buffer.o
+OBJSCAVP += ikev1_prf.o
+OBJSCAVP += ikev2_prf.o
+OBJSCAVP += crypt_dh.o
+OBJSCAVP += crypt_utils.o
+
+OBJSCAVP += cavp.o
+OBJSCAVP += cavp_print.o
+OBJSCAVP += cavp_ikev1.o
+OBJSCAVP += cavp_ikev2.o
+OBJSCAVP += cavp_sha.o
+OBJSCAVP += cavp_hmac.o
+OBJSCAVP += cavp_gcm.o
+
+OBJSCAVP += $(LIBRESWANLIB)
+OBJSCAVP += $(LSWLOGLIBS)
+
+OBJSCAVP += $(LIBSERPENT)
+OBJSCAVP += $(LIBTWOFISH)
+
 cavp: $(OBJSCAVP)
-	$(CC) -o $@ $(OBJSCAVP) \
-		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO) ${PLUTOMINUSL}
+	$(CC) -o $@ $(OBJSCAVP) $(LDFLAGS) $(USERLINK)
 
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
-MK_DEPEND_FILES = $(DISTSRC)
+MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJS))
 MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk

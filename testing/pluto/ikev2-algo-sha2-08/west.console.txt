@@ -106,15 +106,18 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
-000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
-000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
-000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
-000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
-000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
-000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
-000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
-000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
-000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
+000 algorithm IKE DH Key Exchange: name=MODP1024, bits=1024
+000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
+000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
+000 algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
+000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
+000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
+000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+000 algorithm IKE DH Key Exchange: name=DH19, bits=512
+000 algorithm IKE DH Key Exchange: name=DH20, bits=768
+000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
+000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
+000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
@@ -157,7 +160,7 @@ west #
 134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

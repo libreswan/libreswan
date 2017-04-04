@@ -663,10 +663,9 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 
-	progname = argv[0];
 	rootdir[0] = '\0';
 
-	tool_init_log();
+	tool_init_log(argv[0]);
 
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {

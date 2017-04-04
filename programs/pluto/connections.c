@@ -13,7 +13,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
@@ -77,6 +77,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -1584,11 +1585,11 @@ void add_connection(const struct whack_message *wm)
 		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			libreswan_log("conn: %s, rekeymargin (%lds) >= salifetime (%lds); reducing rekeymargin to %ld seconds",
+			libreswan_log("conn: %s, rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 				c->name,
-				(long) deltasecs(c->sa_rekey_margin),
-				(long) deltasecs(c->sa_ipsec_life_seconds),
-				(long) deltasecs(new_rkm));
+				(intmax_t) deltasecs(c->sa_rekey_margin),
+				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
+				(intmax_t) deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1603,13 +1604,13 @@ void add_connection(const struct whack_message *wm)
 		}
 #endif
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %lds",
-					max_ike);
+				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %jds",
+                                       (intmax_t) max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %lds",
-					max_ipsec);
+				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %jds",
+                                       (intmax_t) max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
 		}
@@ -1659,7 +1660,6 @@ void add_connection(const struct whack_message *wm)
 		 *  if mark is provided and mask is not mask will default to 0xFFFFFFFF
 		 *  if nothing is provided mark and mask are set to 0;
 		 */
-
 
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
@@ -1726,7 +1726,6 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
 
@@ -1774,7 +1773,6 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->spd.spd_next = NULL;
-
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1894,18 +1892,22 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lds; ipsec_life: %lds; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-				(long) deltasecs(c->sa_ike_life_seconds),
-				(long) deltasecs(c->sa_ipsec_life_seconds),
-				(long) deltasecs(c->sa_rekey_margin),
+			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+				(intmax_t) deltasecs(c->sa_ike_life_seconds),
+				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
+				(intmax_t) deltasecs(c->sa_rekey_margin),
 				c->sa_rekey_fuzz,
 				c->sa_keying_tries,
 				c->sa_replay_window,
 				prettypolicy(c->policy),
 				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+
+		/* non configurable */
+		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
+
 }
 
 /*
@@ -2026,9 +2028,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	}
 	unshare_connection(d);
 
-	if (c->pool !=  NULL)
-		reference_addresspool(c->pool);
-
 	d->kind = CK_INSTANCE;
 
 	passert(oriented(*d));
@@ -2060,7 +2059,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-
 	if (c->sa_marks.in.val == UINT_MAX) {
 		/* -1 means unique marks */
 		d->sa_marks.in.val = global_marks;
@@ -2076,7 +2074,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 
 	return d;
 }
-
 
 struct connection *rw_instantiate(struct connection *c,
 				const ip_address *him,
@@ -3020,7 +3017,6 @@ struct connection *refine_host_connection(const struct state *st,
 			ikev1 ? "IKEv1" : "IKEv2",
 			c->name, fmt_conn_instance(c, cib));
 		});
-
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
@@ -4055,22 +4051,22 @@ void show_one_connection(const struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds; replay_window: %u; rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(long) deltasecs(c->sa_ike_life_seconds),
-		(long) deltasecs(c->sa_ipsec_life_seconds),
+		(intmax_t) deltasecs(c->sa_ike_life_seconds),
+		(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
 		c->sa_replay_window,
-		(long) deltasecs(c->sa_rekey_margin),
+		(intmax_t) deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %lds;",
+		"\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %jds;",
 		c->name,
 		instance,
 		c->r_interval,
-		(long) deltasecs(c->r_timeout));
+		(intmax_t) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
@@ -4372,4 +4368,26 @@ void suppress_delete(struct connection *c)
 	} else {
 		libreswan_log("did not find old IPsec state to mark for suppressing delete");
 	}
+}
+
+bool liveness_action_hold(struct connection *c)
+{
+	switch (c->dpd_action) {
+	case DPD_ACTION_CLEAR:
+		liveness_clear_connection(c, "IKEv2 liveness action clear");
+		return FALSE;
+
+	case DPD_ACTION_RESTART:
+		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+		restart_connections_by_peer(c);
+		return FALSE;
+
+	case DPD_ACTION_HOLD:
+		DBG(DBG_DPD, DBG_log("liveness_check - handling default by rescheduling"));
+		return TRUE;
+
+	default:
+		bad_case(c->dpd_action);
+	}
+	return FALSE;
 }

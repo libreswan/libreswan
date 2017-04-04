@@ -1,10 +1,55 @@
 
 See also https://libreswan.org/
 
-v3.20 (unreleased)
+v3.21 (March 14, 2017) Not released
+* pluto: Support for "idXXX" esp/ike transform IDs removed [Andrew,Paul]
+
+v3.20 (March 14, 2017)
+* pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
+* pluto: Add dh= aliases for all modp= groups (eg "dh2" for "modp1024") [Paul]
+* pluto: Add statistics support to ipsec whack --globalstatus [Paul]
+* pluto: Add statistics clearing support using ipsec whack --clearstats [Paul]
+* pluto: Fix use-after-free in whack event handler (since v3.19) [Andrew]
+* pluto: Cleanup kernel_netlink.c [Hugh]
+* pluto: Print AH= algorithm and ESN when established [Paul/Andrew]
+* pluto: strip file path from abort messages [Andrew]
+* pluto: Support initiating template conn with --remote-host <ipaddr> [Paul]
+* pluto/libswan: Change most ttoaddr() to ttoaddr_num() to prevent DNS [Paul]
+* pluto: fix use-after-free with EVENT_v2_RELEASE_WHACK [Andrew]
+* pluto: orient() asserted on SPLIT_INC without remote-peer-type=cisco [Paul]
+         (reported by Oleg Rosowiecki)
+* pluto: accurately size a buffer for the decimal representation [Hugh]
+         (debian bug 853507)
+* pluto: avoid gcc unused variable warnings when USE_KLIPS=false [dkg]
+* pluto: Support for Linux systems without IFA_F_TENTATIVE  (CentOS5) [Paul]
+* pluto: Ignore uniqueids= for roadwarrior PSK and assume non-unique [Paul]
+* IKEv2: CREATE_CHILD support for Parent SA and Child SA rekeying [Antony]
+* IKEv2: Various refactoring for CREATE_CHILD support [Antony]
+* IKEV2: OE/CAT: Don't send CP request when responder is behind NAT [Antony]
+* IKEv2: log first notify payload when we receive an Notify Error [Paul]
+* IKEv2: Fix memory leak in DH secret calculation (since v3.9) [Andrew]
+         (reported by Eric Andersson)
+* IKEv2: If re-entering ikev2_crypto_start(), reset msgid [Paul]
+* IKEv2: prevent copying bogus peer id when ID kind is IPv4/IPv6 [Paul]
+         (rhbz#1392191)
+* IKEv2: suppress DELETE notifies for connections being replaced [Paul]
+* IKEv2: re-instate ISAKMP_SA_established() [Paul]
+* IKEv1: For IKE (phase 1), prefer 256-bit bit encryption [Andrew]
+* IKEv1: Print conn algo's when using XAUTH [Andrew]
+* IKEv1: Simplify ike= defaults (drop MODP1024, MD5, add MODP2048) [Andrew]
+* IKEv1: Prefer 256-bit keys over 128-bit keys for IKE [Andrew]
+* IKEv1: Also call ISAKMP_SA_established() in Aggressive Mode [Paul]
+* newhostkey: Convert remaining --configdir for --nssdir [Tuomo]
 * barf: Ensure proper macros are used. Add certutil/crlutil output [Paul]
+* misc: Fix various spelling errors in code/comments/man pages [dkg]
 * packaging: spec files should use 0 and 1, not true and false [David Arnold]
-* IKEv1: for IKE (phase 1), prefer 256-bit bit encryption [Andrew]
+* building: NSS_REQ_AVA_COPY?=true to support new NSS lib export fix [Paul]
+* building: Remove no longer needed NSSCERT_CheckCrlTimes() copy [Paul]
+* building: fetch: remove support for ancient LDAP version 2 [Tuomo]
+* building: move whack to separate programs/whack/ directory [Andrew]
+* building: Various Makefile variable cleanups and double link fixes [Andrew]
+* building: Don't check runtime for SElinux/systemd with DESTDIR [Paul]
+* documentation: added oe-letsencrypt-* example configs [Paul]
 
 v3.19 (January 15, 2017)
 * NSS: Support for configurable nss dir via @IPSEC_NSSDIR@ [dkg/Tuomo]

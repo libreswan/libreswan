@@ -14,8 +14,6 @@
  * for more details.
  */
 
-#ifdef KLIPS
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -72,7 +70,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 		ip_address lip;
 
 		if (pluto_listen != NULL) {
-			err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+			err_t e = ttoaddr_num(pluto_listen, 0, AF_UNSPEC, &lip);
 
 			if (e != NULL) {
 				DBG_log("invalid listen= option ignored: %s",
@@ -367,4 +365,3 @@ const struct kernel_ops klips_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };
-#endif /* KLIPS */

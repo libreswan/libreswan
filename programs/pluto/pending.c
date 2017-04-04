@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011 Anthony Tong <atong@TrustedCS.com>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,6 +48,8 @@
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
+#include "ikev2.h"
 
 /* struct pending, the structure representing IPsec SA
  * negotiations delayed until a Keying Channel has been negotiated.
@@ -104,11 +107,16 @@ void add_pending(int whack_sock,
 
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		char cib[CONN_INST_BUF];
-		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s",
-			ipstr(&c->spd.that.host_addr, &b),
-			c->name, fmt_conn_instance(c, cib));
-	});
+		char ciba[CONN_INST_BUF];
+		char cibb[CONN_INST_BUF];
+		struct connection *cb = isakmp_sa->st_connection;
+		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s "
+				"IKE SA #%lu \"%s\"%s",
+				ipstr(&c->spd.that.host_addr, &b),
+				c->name, fmt_conn_instance(c, ciba),
+				isakmp_sa->st_serialno,
+				cb->name, fmt_conn_instance(cb, cibb));
+		});
 
 	p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = whack_sock;
@@ -222,22 +230,60 @@ static void delete_pending(struct pending **pp)
  * YYY but, in fact, quick_mode will enqueue a cryptographic operation
  *     anyway, which will get done "later" anyway, so make it is just fine
  *     as it is.
+ *     In IKEv2 it called when AUTH is complete, child is established.
+ *     Established child get removed not unpend.
  */
-void unpend(struct state *st)
+void unpend(struct state *st, struct connection *cc)
 {
 	struct pending **pp, *p;
+	char *what ="unqueuing";
 
-	DBG(DBG_DPD,
-	    DBG_log("unpending state #%lu", st->st_serialno));
+	if (cc == NULL) {
+		DBG(DBG_CONTROL, DBG_log("unpending state #%lu",
+					st->st_serialno));
+	} else {
+		char cib[CONN_INST_BUF];
+		DBG(DBG_CONTROL, DBG_log("unpending state #%lu connection "
+					"\"%s\"%s",
+					st->st_serialno, cc->name,
+					fmt_conn_instance(cc, cib)));
+	}
 
 	for (pp = host_pair_first_pending(st->st_connection);
 	     (p = *pp) != NULL; )
 	{
 		if (p->isakmp_sa == st) {
+
+			p->pend_time = mononow();
+			if (st->st_ikev2 && cc != p->connection) {
+				ikev2_add_ipsec_child(p->whack_sock, st,
+						p->connection, p->policy,
+						p->try, p->replacing
+#ifdef HAVE_LABELED_IPSEC
+						, p->uctx
+#endif
+					       );
+
+			} else if (!st->st_ikev2) {
+				(void) quick_outI1(p->whack_sock, st, p->connection,
+						   p->policy,
+						   p->try, p->replacing
+#ifdef HAVE_LABELED_IPSEC
+						   , p->uctx
+#endif
+						   );
+			} else {
+				/*
+				 * IKEv2 AUTH negotiation include child.
+				 * nothing to upend, like in IKEv1, delete it
+				 */
+				 what = "delete from";
+			}
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				char cib[CONN_INST_BUF];
-				DBG_log("unqueuing pending %s with %s \"%s\"%s %s",
+				DBG_log("%s pending %s with %s \"%s\"%s %s",
+					what,
 					st->st_ikev2 ? "Child SA" : "Quick Mode",
 					ipstr(&p->connection->spd.that.host_addr, &b),
 					p->connection->name,
@@ -246,16 +292,6 @@ void unpend(struct state *st)
 						  st->st_import));
 			});
 
-			p->pend_time = mononow();
-			if (!st->st_ikev2) {
-				(void) quick_outI1(p->whack_sock, st, p->connection,
-						   p->policy,
-						   p->try, p->replacing
-#ifdef HAVE_LABELED_IPSEC
-						   , p->uctx
-#endif
-						   );
-			}
 			p->whack_sock = NULL_FD;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);	/* in effect, advances pp */
@@ -299,11 +335,11 @@ bool pending_check_timeout(const struct connection *c)
 		DBG(DBG_DPD, {
 			deltatime_t waited = monotimediff(mononow(), p->pend_time);
 			char cib[CONN_INST_BUF];
-			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %lds, patience 3*%lds)",
+			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %jd, patience 3*%jd)",
 				c->name,
 				fmt_conn_instance(c, cib),
-				(long) deltasecs(waited),
-				(long) deltasecs(c->dpd_timeout));
+				(intmax_t) deltasecs(waited),
+				(intmax_t) deltasecs(c->dpd_timeout));
 			});
 
 		if (deltasecs(c->dpd_timeout) > 0) {

@@ -1,11 +1,11 @@
 /* Structure of messages from whack to Pluto proper.
  *
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 1998-2001,2015-2017 D. Hugh Redelmeier.
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013,2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -119,6 +119,7 @@ struct whack_message {
 
 	bool whack_status;
 	bool whack_global_status;
+	bool whack_clear_stats;
 	bool whack_traffic_status;
 	bool whack_shunt_status;
 	bool whack_fips_status;
@@ -237,6 +238,9 @@ struct whack_message {
 	bool whack_myid;
 	char *myid;	/* string 7 */
 
+	/* for REMOTE_HOST */
+	char *remote_host;
+
 	/* for WHACK_ROUTE: */
 	bool whack_route;
 
@@ -351,6 +355,7 @@ struct whack_message {
 	 * 25 genstring3
 	 * 26 dnshostname
 	 * 27 policy_label if compiled with with LABELED_IPSEC
+	 * 28 remote_host
 	 * plus keyval (limit: 8K bits + overhead), a chunk.
 	 */
 	size_t str_size;

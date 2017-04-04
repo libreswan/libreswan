@@ -512,7 +512,6 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 		/* ??? Assume diagnostic already logged? */
 	} else if (p != NULL) {
 		/* re-use existing pool p */
-		reference_addresspool(p);
 		DBG(DBG_CONTROLMORE, {
 			char rbuf[RANGETOT_BUF];
 
@@ -525,7 +524,6 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 		p = alloc_thing(struct ip_pool, "addresspool entry");
 
 		p->pool_refcount = 0;
-		reference_addresspool(p);
 		p->r = *pool_range;
 		p->size = ntohl(p->r.end.u.v4.sin_addr.s_addr) -
 			  ntohl(p->r.start.u.v4.sin_addr.s_addr) + 1;

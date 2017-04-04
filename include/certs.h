@@ -4,6 +4,7 @@
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
@@ -21,6 +22,19 @@
 
 #ifndef _CERTS_H
 #define _CERTS_H
+
+/* workaround for NSS/NSPR bug on MIPS with cert.h */
+#ifndef _ABIO32
+# define _ABIO32        1
+#endif
+
+#ifndef _ABIN32
+# define _ABIN32        2
+#endif
+
+#ifndef _ABI64
+# define _ABI64         3
+#endif
 
 #include <cert.h> /* NSS */
 #include "x509.h"

@@ -3,6 +3,7 @@
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,11 +62,6 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
 #define DBG_dump_chunk(label, ch) DBG_dump(label, (ch).ptr, (ch).len)
 
-extern void tool_init_log(void);
-extern void tool_close_log(void);
-
-#define lsw_abort()	libreswan_log_abort(__FILE__, __LINE__)
-
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \
 								      ch))
@@ -84,9 +80,17 @@ extern void tool_close_log(void);
 
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
-extern char *progname;
 extern bool log_to_stderr;          /* should log go to stderr? */
 extern bool log_to_syslog;          /* should log go to syslog? */
+
+/*
+ * For stand-alone tools.
+ *
+ * XXX: can "progname" be made private to lswlog.c?
+ */
+extern char *progname;
+extern void tool_init_log(char *progname);
+extern void tool_close_log(void);
 
 /* Codes for status messages returned to whack.
  * These are 3 digit decimal numerals.  The structure

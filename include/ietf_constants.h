@@ -839,7 +839,7 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_AES_CCM_8 = 14,
 	IKEv2_ENCR_AES_CCM_12 = 15,
 	IKEv2_ENCR_AES_CCM_16 = 16,
-	IKEv2_UNASSIGNED_17 = 17,
+	IKEv2_UNUSED_17 = 17,
 	IKEv2_ENCR_AES_GCM_8 = 18,
 	IKEv2_ENCR_AES_GCM_12 = 19,
 	IKEv2_ENCR_AES_GCM_16 = 20,
@@ -850,7 +850,9 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_A = 25, /* CAMELLIA_CCM_8 RFC 5529 */
 	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* CAMELLIA_CCM_12 RFC 5529 */
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* CAMELLIA_CCM_16 RFC 5529 */
-	/* 28 - 1023 Reserved to IANA */
+	IKEv2_ENCR_CHACHA20_POLY1305 = 28, /* RFC7634 */
+	IKEv2_ENCR_ROOF,
+	/* 29 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
 	IKEv2_ENCR_SERPENT_CBC = 65004,
 	IKEv2_ENCR_TWOFISH_CBC = 65005,
@@ -889,6 +891,7 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_256_128 = 12, /* RFC4595 */
 	IKEv2_AUTH_HMAC_SHA2_384_192 = 13, /* RFC4306 */
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
+	IKEv2_AUTH_ROOF = IKEv2_AUTH_HMAC_SHA2_512_256,
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_AUTH_INVALID = 65536
@@ -1016,6 +1019,7 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
+	AUTH_ALGORITHM_ROOF,
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
@@ -1257,7 +1261,7 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
 	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
 	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
-	OAKLEY_GROUP_ECP_512 = 21, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_521 = 21, /* RFC 5903 */
 	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
 	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
 	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
@@ -1270,6 +1274,7 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+	OAKLEY_GROUP_ROOF,
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
@@ -1323,6 +1328,7 @@ typedef enum {
 	CERTIFICATE_UNAVAILABLE = 28,
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
 	UNEQUAL_PAYLOAD_LENGTHS = 30,
+	v1N_ERROR_ROOF, /* used to cap statistics array */
 	/* 31-8191 RESERVED (Future Use) */
 
 	/*
@@ -1403,6 +1409,7 @@ typedef enum {
 	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
+	v2N_ERROR_ROOF, /* used to cap statistics array */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,

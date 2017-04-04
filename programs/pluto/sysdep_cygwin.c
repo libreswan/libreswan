@@ -101,7 +101,7 @@ bool use_interface(const char *rifn)
 
 	ri = alloc_thing(*ri, "static interface");
 
-	e = ttoaddr(rifn, strlen(rifn), AF_UNSPEC, &ri->addr);
+	e = ttoaddr_num(rifn, strlen(rifn), AF_UNSPEC, &ri->addr);
 	if (e != NULL) {
 		fprintf(stderr, "--interface failed: %s\n", e);
 		exit(10);

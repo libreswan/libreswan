@@ -15,6 +15,17 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+# A Makefile wanting to test variables defined below has two choides:
+#
+# - include config.mk early and use GNU-make's 'ifeq' statement
+#
+# - include config.mk late, and use $(call if-enabled,VARIABLE,result)
+#
+
+if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
+
+
 #
 #
 # TODO: Some creative ifeq ($(BUILDENV,xxx) to automatically determine
@@ -225,6 +236,10 @@ NSSFLAGS?=$(shell pkg-config --cflags nss)
 # We don't want to link against every library pkg-config --libs nss
 # returns
 NSS_LDFLAGS ?= -lnss3 -lnspr4
+
+# Use nss copy for CERT_CompareAVA
+# See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
+NSS_REQ_AVA_COPY?=true
 
 # To build with clang, use: scan-build make programs
 #GCC=clang
@@ -460,18 +475,13 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
+LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
+# XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
+LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
-
-ifeq ($(USE_TWOFISH),true)
-CRYPTOLIBS+= ${LIBTWOFISH}
-endif
-ifeq ($(USE_SERPENT),true)
-CRYPTOLIBS+= ${LIBSERPENT}
-endif
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
@@ -481,7 +491,7 @@ export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWLOGLIB
 export LIBDESSRCDIR
 export LIBTWOFISH LIBSERPENT
-export CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1
 

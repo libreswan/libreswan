@@ -175,8 +175,7 @@ static st_jbuf_t *alloc_st_jbuf(void)
 	if (st_jbuf_mem == NULL) {
 		/* no array: allocate one slot plus endmarker */
 		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
-		if (st_jbuf_mem == NULL)
-			lsw_abort();
+		passert(st_jbuf_mem != NULL);
 
 		/*
 		 * Initialize end marker.
@@ -199,8 +198,7 @@ static st_jbuf_t *alloc_st_jbuf(void)
 				/* allocate n entries, plus one new entry, plus new endmarker */
 				/* ??? why are we using reealloc instead of Pluto's functions? */
 				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
-				if (st_jbuf_mem == NULL)
-					lsw_abort();
+				passert(st_jbuf_mem != NULL);
 
 				ptr = st_jbuf_mem + n;
 
@@ -239,7 +237,10 @@ static void sigIntHandler(int sig)
 		ptr = get_ptr_matching_tid();
 		if (ptr == NULL) {
 			pthread_mutex_unlock(&st_jbuf_mutex);
-			lsw_abort();
+			/*
+			 * Why unlock when things will crash anyway?
+			 */
+			passert(ptr != NULL);
 		}
 		/* note: st_jbuf_mutex is locked */
 		siglongjmp(ptr->jbuf, 1);

@@ -60,7 +60,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	if (DBGP(debug)) {
-		DBG_log("%s prf: created %s context %p from key %s(%p)",
+		DBG_log("%s prf: created %s context %p from %s-key@%p",
 			name, prf_desc->common.name,
 			context, key_name, key);
 	}
@@ -73,10 +73,9 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	if (DBGP(debug)) {
-		DBG_log("%s prf: begin %s with context %p from key %s(%p)",
+		DBG_log("%s prf: begin %s with context %p from %s-key@%p",
 			name, prf_desc->common.name,
-			context,
-			key_name, key);
+			context, key_name, key);
 	}
 
 	struct prf_context *prf = alloc_thing(struct prf_context, name);
@@ -86,8 +85,6 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		.desc = prf_desc,
 		.context = context,
 	};
-	DBG(DBG_CRYPT, DBG_log("%s prf %s: init %p",
-			       name, prf_desc->common.name, prf));
 	return prf;
 }
 
@@ -106,7 +103,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 						     key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
-	free_any_symkey("clone", &clone);
+	release_symkey(name, "clone", &clone);
 	return prf;
 }
 
@@ -125,7 +122,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 					      key, sizeof_key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
-	free_any_symkey("clone", &clone);
+	release_symkey(name, "clone", &clone);
 	return prf ;
 }
 
@@ -134,13 +131,8 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
  */
 
 static void digest_symkey(struct prf_context *prf,
-			  const char *symkey_name, PK11SymKey *symkey)
+			  const char *symkey_name UNUSED, PK11SymKey *symkey)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: update symkey %s %p (size %zd)",
-			prf->name, symkey_name, symkey,
-			sizeof_symkey(symkey));
-	}
 	/*
 	 * Feed the key's raw bytes to the digest function.  NSS's
 	 * PK11_DigestKey() doesn't work with HMAC (only simple MAC),
@@ -157,23 +149,15 @@ static void digest_symkey(struct prf_context *prf,
 	passert(rc == SECSuccess);
 }
 
-static void digest_bytes(struct prf_context *prf,
-			 const char *name, const u_int8_t *bytes, size_t sizeof_bytes)
+static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
+			 const u_int8_t *bytes, size_t sizeof_bytes)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: update bytes %s %p (length %zd)",
-			prf->name, name, bytes, sizeof_bytes);
-	}
 	SECStatus rc = PK11_DigestOp(prf->context, bytes, sizeof_bytes);
 	passert(rc == SECSuccess);
 }
 
 static void final(struct prf_context *prf, void *bytes, size_t sizeof_bytes)
 {
-	if (DBGP(prf->debug)) {
-		DBG_log("%s prf: final %p (length %zd)",
-			prf->name, bytes, sizeof_bytes);
-	}
 	unsigned bytes_out;
 	SECStatus rc = PK11_DigestFinal(prf->context, bytes,
 					&bytes_out, sizeof_bytes);
@@ -201,7 +185,14 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	return final;
 }
 
+static void nss_prf_check(const struct prf_desc *prf)
+{
+	const struct ike_alg *alg = &prf->common;
+	passert_ike_alg(alg, prf->common.nss_mechanism > 0);
+}
+
 const struct prf_ops ike_alg_nss_prf_ops = {
+	nss_prf_check,
 	init_symkey,
 	init_bytes,
 	digest_symkey,

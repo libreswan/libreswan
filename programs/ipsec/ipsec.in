@@ -324,7 +324,7 @@ case "${1}" in
 
 		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		${rc}=$?
+		rc=$?
 		if [ ${rc} -ne 0 ]; then
 		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
 		    exit ${rc}

@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,9 +36,10 @@ extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 
-extern void delete_liveness_event(struct state *st);
-/* extra debugging of dpd event removal */
-extern void delete_dpd_event(struct state *st);
+extern void delete_state_event(struct state *st, struct pluto_event **ev);
+#define delete_liveness_event(ST) delete_state_event((ST), &(ST)->st_liveness_event)
+#define delete_dpd_event(ST) delete_state_event((ST), &(ST)->st_dpd_event)
+
 extern void timer_list(void);
 
 #endif /* _TIMER_H */

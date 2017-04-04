@@ -51,6 +51,7 @@
 #include "ike_alg.h"
 #include "id.h"
 #include "keys.h"
+#include "crypt_symkey.h" /* to get free_any_symkey */
 
 /*
  * invoke helper to do DH work (IKEv1)
@@ -198,6 +199,8 @@ void finish_dh_secret(struct state *st,
 stf_status start_dh_v2(struct msg_digest *md,
 		       const char *name,
 		       enum original_role role,
+		       PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
+		       const struct prf_desc *old_prf, /* IKE Rekey */
 		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
@@ -214,7 +217,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
 		    enum_name(&ikev2_trans_type_prf_names,
-			      st->st_oakley.prf->common.ikev2_id),
+			      st->st_oakley.prf->common.id[IKEv2_ALG_ID]),
 		    enum_name(&ikev2_trans_type_integ_names,
 			      st->st_oakley.integ_hash),
 		    enum_name(&ikev2_trans_type_encr_names,
@@ -230,6 +233,12 @@ stf_status start_dh_v2(struct msg_digest *md,
 	dhq->salt_size = st->st_oakley.encrypter->salt_size;
 
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
+
+	dhq->old_prf = old_prf;
+	dhq->skey_d_old = reference_symkey(__func__, "skey_d_old", skey_d_old);
+	if (skey_d_old != NULL) {
+		passert(old_prf != NULL);
+	}
 
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);

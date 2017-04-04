@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,7 +54,6 @@
 #include "crypt_prf.h"
 #include "crypt_dh.h"
 #include "crypt_symkey.h"
-#include "crypt_dbg.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
@@ -65,7 +64,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     PK11SymKey *shared,
 			     const size_t key_size,
 			     const size_t salt_size,
-			     PK11SymKey **skeyseed_out,
 			     PK11SymKey **SK_d_out,
 			     PK11SymKey **SK_ai_out,
 			     PK11SymKey **SK_ar_out,
@@ -116,8 +114,16 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
 
+	if (skq->skey_d_old == NULL) {
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = ikev2_ike_sa_skeyseed(skq->prf, ni, nr, shared);
+		skeyseed_k = ikev2_ike_sa_skeyseed(skq->prf, ni, nr, shared);
+	}  else {
+		skeyseed_k = ikev2_ike_sa_rekey_skeyseed(skq->old_prf,
+					skq->skey_d_old,
+					shared, ni, nr);
+		release_symkey(__func__, "parent-SK_d", &skq->skey_d_old);
+	}
+
 	passert(skeyseed_k != NULL);
 
 	/* now we have to generate the keys for everything */
@@ -136,6 +142,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
 						   ni, nr, spii, spir,
 						   total_keysize);
+	release_symkey(__func__, "skeyseed_k", &skeyseed_k);
 
 	size_t next_byte = 0;
 
@@ -158,7 +165,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 							       salt_size);
 	initiator_salt = chunk_from_symkey("initiator salt", DBG_CRYPT,
 					   initiator_salt_key);
-	free_any_symkey("initiator salt key:", &initiator_salt_key);
+	release_symkey(__func__, "initiator-salt-key", &initiator_salt_key);
 
 	next_byte += salt_size;
 
@@ -172,7 +179,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 							       salt_size);
 	responder_salt = chunk_from_symkey("responder salt", DBG_CRYPT,
 					   responder_salt_key);
-	free_any_symkey("responder salt key:", &responder_salt_key);
+	release_symkey(__func__, "responder-salt-key", &responder_salt_key);
 	next_byte += salt_size;
 
 	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
@@ -187,10 +194,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
-	free_any_symkey("finalkey", &finalkey);
+	release_symkey(__func__, "finalkey", &finalkey);
 
-	passert(*skeyseed_out == NULL);
-	*skeyseed_out = skeyseed_k;
 	passert(*SK_d_out == NULL);
 	*SK_d_out = SK_d_k;
 	passert(*SK_ai_out == NULL);
@@ -212,8 +217,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	*chunk_SK_pr_out = chunk_SK_pr;
 
 	DBG(DBG_CRYPT,
-	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
-		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
+	    DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
+		    shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
 	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
 	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
 	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
@@ -222,7 +227,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
+void calc_dh_v2(struct pluto_crypto_req *r)
 {
 	struct pcr_skeycalc_v2_r *const skr = &r->pcr_d.dhv2;
 
@@ -248,7 +253,7 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
 	if (skr->shared != NULL) {
 	/* okay, so now all the shared key material */
@@ -257,7 +262,6 @@ void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 		dhq.key_size,  /* input */
 		dhq.salt_size, /* input */
 
-		&skr->skeyseed,        /* output */
 		&skr->skeyid_d,        /* output */
 		&skr->skeyid_ai,       /* output */
 		&skr->skeyid_ar,       /* output */
@@ -289,7 +293,7 @@ static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, sizeof_symkey(prfplus));
+	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", prfplus);
 	while (sizeof_symkey(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", DBG_CRYPT,
@@ -298,11 +302,11 @@ static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey("seed", prf, seed);
 		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(prf_desc->hasher, &prfplus, new_t);
-		free_any_symkey("old_t[N]", &old_t);
+		append_symkey_symkey(&prfplus, new_t);
+		release_symkey(__func__, "old_t[N]", &old_t);
 		old_t = new_t;
 	}
-	free_any_symkey("old_t[final]", &old_t);
+	release_symkey(__func__, "old_t[final]", &old_t);
 	return prfplus;
 }
 
@@ -356,13 +360,13 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes)
 {
 	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
-	append_symkey_chunk(prf_desc->hasher, &data, Nr);
-	append_symkey_chunk(prf_desc->hasher, &data, SPIi);
-	append_symkey_chunk(prf_desc->hasher, &data, SPIr);
+	append_symkey_chunk(&data, Nr);
+	append_symkey_chunk(&data, SPIi);
+	append_symkey_chunk(&data, SPIr);
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    skeyseed, data,
 					    required_bytes);
-	free_any_symkey(__func__, &data);
+	release_symkey(__func__, "data", &data);
 	return prfplus;
 }
 
@@ -378,17 +382,14 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
 		data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
-		append_symkey_chunk(prf_desc->hasher,
-				    &data, Nr);
+		append_symkey_chunk(&data, Nr);
 	} else {
-		data = concat_symkey_chunk(prf_desc->hasher,
-					   new_dh_secret, Ni);
-		append_symkey_chunk(prf_desc->hasher,
-				    &data, Nr);
+		data = concat_symkey_chunk(new_dh_secret, Ni);
+		append_symkey_chunk(&data, Nr);
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    SK_d, data,
 					    required_bytes);
-	free_any_symkey(__func__, &data);
+	release_symkey(__func__, "data", &data);
 	return prfplus;
 }

@@ -50,6 +50,7 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
@@ -188,7 +189,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		crypt_prf_update_bytes("hash", prf, idhash, hash_len);
 		crypt_prf_final_bytes(&prf, signed_octets, hash_len);
 	}
-	free_any_symkey("<prf-psk>", &prf_psk);
+	release_symkey(__func__, "prf-psk", &prf_psk);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);

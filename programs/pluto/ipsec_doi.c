@@ -1,16 +1,16 @@
-/* IPsec DOI and Oakley resolution routines
+/*
+ * IPsec DOI and Oakley resolution routines
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2010-2017 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,6 +81,8 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
+#include "pluto_stats.h"
+
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
@@ -97,12 +99,40 @@
 /*
  * Process KE values.
  */
-void unpack_KE_from_helper(
-	struct state *st,
-	const struct pluto_crypto_req *r,
-	chunk_t *g)
+void unpack_KE_from_helper(struct state *st,
+			   const struct pluto_crypto_req *r,
+			   chunk_t *g)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
+
+	/*
+	 * Should the crypto helper group and the state group be in
+	 * sync?
+	 *
+	 * Probably not, yet seemingly (IKEv2) code is assuming this.
+	 *
+	 * For instance, with IKEv2, the initial initiator is setting
+	 * st_oakley.group to the draft KE group (and well before
+	 * initial responder has had a chance to agree to any thing).
+	 * Should the initial responder comes back with INVALID_KE
+	 * then st_oakley.group gets changed to match the suggestion
+	 * and things restart; should the initial responder come back
+	 * with an accepted proposal and KE, then the st_oakley.group
+	 * is set based on the accepted proposal (the two are
+	 * checked).
+	 *
+	 * Surely, instead, st_oakley.group should be left alone.  The
+	 * the initial initiator would maintain a list of KE values
+	 * proposed (INVALID_KE flip-flopping can lead to more than
+	 * one) and only set st_oakley.group when the initial
+	 * responder comes back with a vald accepted propsal and KE.
+	 */
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("wire (crypto helper) group %s and state group %s %s",
+			kn->group ? kn->group->common.name : "NULL",
+			st->st_oakley.group ? st->st_oakley.group->common.name : "NULL",
+			kn->group == st->st_oakley.group ? "match" : "differ");
+	}
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
 	passert(!st->st_sec_in_use);
@@ -180,7 +210,7 @@ bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
  * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
  * clients are discovered in the wild, we will revisit this - please contact
  * the libreswan developers if you find such an implementation.
- * Therefor, the ikepad= option has no effect on IKEv2 connections.
+ * Therefore the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */
@@ -256,7 +286,8 @@ void ipsecdoi_initiate(int whack_sock,
 	 */
 	struct state *st = find_phase1_state(c,
 					     ISAKMP_SA_ESTABLISHED_STATES |
-					     PHASE1_INITIATOR_STATES);
+					     PHASE1_INITIATOR_STATES |
+					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
 		initiator_function *initiator = pick_initiator(c, policy);
@@ -285,18 +316,25 @@ void ipsecdoi_initiate(int whack_sock,
 				    , uctx
 #endif
 				    );
+		} else if(st->st_ikev2) {
+			ikev2_add_ipsec_child(whack_sock, st, c, policy, try,
+					replacing
+#ifdef HAVE_LABELED_IPSEC
+					, uctx
+#endif
+					);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
 			 * It isn't clear what to do with the error return.
 			 */
 			(void) quick_outI1(whack_sock, st, c, policy, try,
-					   replacing
+					replacing
 #ifdef HAVE_LABELED_IPSEC
-					   , uctx
+					, uctx
 #endif
-					   );
-		}
+					);
+			}
 	}
 }
 
@@ -323,20 +361,19 @@ void ipsecdoi_replace(struct state *st,
 	 */
 	if (IS_IKE_SA(st) || !HAS_IPSEC_POLICY(policy)) {
 		struct connection *c = st->st_connection;
-
-		policy = (c->policy & ~POLICY_IPSEC_MASK & ~policy_del) |
-			policy_add;
+		policy = (c->policy & ~POLICY_IPSEC_MASK &
+				~policy_del) | policy_add;
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
 		if (initiator != NULL) {
-			(void) initiator(whack_sock, st->st_connection, st,
-					 policy,
-					 try, st->st_import
+			(void) initiator(whack_sock, st->st_connection,
+					st, policy,
+					try, st->st_import
 #ifdef HAVE_LABELED_IPSEC
-					 , st->sec_ctx
+					, st->sec_ctx
 #endif
-					 );
+					);
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(whack_sock);
@@ -527,6 +564,18 @@ bool send_delete(struct state *st)
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
+static void pstats_sa(bool nat, bool tfc, bool esn)
+{
+	if (nat)
+		pstats_ipsec_encap_yes++;
+	else
+		pstats_ipsec_encap_no++;
+	if (esn)
+		pstats_ipsec_esn++;
+	if (tfc)
+		pstats_ipsec_tfc++;
+}
+
 void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
 	struct connection *const c = st->st_connection;
@@ -538,8 +587,17 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	       c->policy & POLICY_TUNNEL ?
 		" tunnel mode" : " transport mode");
 
+	/* don't count IKEv1 half ipsec sa */
+	if (st->st_state == STATE_QUICK_R1) {
+		pstats_ipsec_sa++;
+	}
+
 	if (st->st_esp.present) {
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+		bool nat = st->hidden_variables.st_nat_traversal & NAT_T_DETECTED;
+		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+
+		if (nat)
 			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 				    c->spd.that.host_port));
 
@@ -552,9 +610,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
-			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
-			 st->st_esp.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			 c->sa_tfcpad != 0 && !st->st_seen_no_tfc ? "/TFC" : "",
+			 nat ? "/NAT" : "",
+			 esn ? "/ESN" : "",
+			 tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 enum_show_shortb(&esp_transformid_names,
@@ -567,20 +625,34 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_esp++;
+		pstats(ipsec_encr, st->st_esp.attrs.transattrs.encrypt);
+		pstats(ipsec_integ, st->st_esp.attrs.transattrs.integ_hash);
+		pstats_sa(nat, tfc, esn);
 	}
 
 	if (st->st_ah.present) {
+		struct esb_buf ah_t;
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH%s=>0x%08lx <0x%08lx",
+			 "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
 			 ini,
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
-			 (unsigned long)ntohl(st->st_ah.our_spi));
+			 (unsigned long)ntohl(st->st_ah.our_spi),
+			 enum_show_shortb(&auth_alg_names,
+					  st->st_ah.attrs.transattrs.integ_hash, &ah_t));
 
 		/* advance b to end of string */
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_ah++;
+		pstats(ipsec_integ, st->st_ah.attrs.transattrs.integ_hash);
+		pstats_sa(FALSE, FALSE, esn);
 	}
 
 	if (st->st_ipcomp.present) {
@@ -594,6 +666,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		b = b + strlen(b);
 
 		ini = " ";
+
+		pstats_ipsec_ipcomp++;
 	}
 
 	b = add_str(sadetails, sad_len, b, ini);
@@ -679,6 +753,19 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 st->st_oakley.enckeylen,
 		 integ_name,
 		 prf_name,
-		 enum_short_name(&oakley_group_names, st->st_oakley.group->group));
-	st->hidden_variables.st_logged_p1algos = TRUE;
+		 st->st_oakley.group->common.name);
+
+	/* keep IKE SA statistics */
+	if (st->st_ikev2) {
+		pstats_ikev2_sa++;
+		pstats(ikev2_encr, st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]);
+		if (st->st_oakley.integ != NULL)
+			pstats(ikev2_integ, st->st_oakley.integ->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_groups, st->st_oakley.group->group);
+	} else {
+		pstats_ikev1_sa++;
+		pstats(ikev1_encr, st->st_oakley.encrypter->common.ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_groups, st->st_oakley.group->group);
+	}
 }

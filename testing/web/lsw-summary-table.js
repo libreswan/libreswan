@@ -43,9 +43,9 @@ function lsw_summary_table(table_id, summary) {
     // Add error columns.
 
     var errors = []
-    summary.results.forEach(function(result) {
-	for (var error in result.errors) {
-	    if (result.errors.hasOwnProperty(error)) {
+    summary.test_runs.forEach(function(test_run) {
+	for (var error in test_run.errors) {
+	    if (test_run.errors.hasOwnProperty(error)) {
 		if (error == error.toUpperCase()) {
 		    if (errors.indexOf(error) < 0) {
 			errors.push(error)
@@ -118,16 +118,16 @@ function lsw_summary_table(table_id, summary) {
     lsw_table({
 	id: table_id,
 	data: (summary.current.commits.length
-	       ? summary.results.concat(summary.current)
-	       : summary.results),
+	       ? summary.test_runs.concat(summary.current)
+	       : summary.test_runs),
 	sort: {
 	    column: columns[0], // Commits
 	    assending: false,
 	},
 	columns: columns,
 	select: {
-	    row: function(results_summaries) {
-		lsw_compare_summary(results_summaries)
+	    row: function(selected_test_runs) {
+		lsw_compare_test_runs(selected_test_runs)
 	    }
 	},
     })

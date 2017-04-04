@@ -4,78 +4,87 @@
 
 var lsw_compare_table_id = "compare"
 
-function lsw_compare_summary(results_summaries) {
+function lsw_compare_test_runs(test_runs) {
 
     // Filter out the "current" row?
 
     var queue = d3.queue()
 
-    var requests = []
-    results_summaries.forEach(function(results_summary) {
-	if (results_summary.directory !== undefined &&
-	    results_summary.test_results === undefined) {
-	    requests.push(results_summary)
-	    var request = results_summary.directory + "/results.json"
+    // may be sparse so maintain an array of the actual requests
+    var requested_runs = []
+
+    test_runs.forEach(function(run) {
+	if (run.directory !== undefined &&
+	    run.test_results === undefined) {
+	    requested_runs.push(run)
+	    var request = run.directory + "/results.json"
 	    queue.defer(d3.json, request)
 	}
     })
 
     // what happens if there is more than one load?
 
-    queue.awaitAll(function(error, test_results) {
+    queue.awaitAll(function(error, results) {
 	if (error) {
 	    return console.warn(error)
 	}
 
 	// fill in the now-loaded results.
-	for (var i = 0; i < test_results.length; i++) {
-	    requests[i].test_results = test_results[i]
+	for (var i = 0; i < results.length; i++) {
+	    requested_runs[i].test_results = results[i]
 	}
 
-	lsw_compare_table(results_summaries)
+	lsw_compare_table(test_runs)
     })
 }
 
-function lsw_compare_table(results_summaries) {
+function lsw_compare_table(test_runs) {
 
-    // A dictionary mapping test names to loaded results.
+    // Create a test_dictionary mapping each test name onto a
+    // (possibly sparse) array of directory results.
 
-    var dictionary = {}
-    results_summaries.forEach(function(results_summary) {
-	if (results_summary.test_results) {
-	    results_summary.test_results.forEach(function(test_result) {
+    var test_dictionary = {}
+    test_runs.forEach(function(run, index) {
+	if (run.test_results) {
+	    run.test_results.forEach(function(test_result) {
 		var name = test_result.test_name
-		if (dictionary[name] === undefined) {
-		    dictionary[name] = { }
+		if (test_dictionary[name] === undefined) {
+		    test_dictionary[name] = new Array(test_runs.length)
 		}
-		dictionary[name][results_summary.directory] = test_result
+		test_dictionary[name][index] = test_result
 	    })
 	}
     })
 
-    // Convert the dictionary into a comparison table containing just
-    // the items that are different.
+    // Convert the test dictionary into an array.
 
-    var values = []
-    for (var name in dictionary) {
-	var test_results = dictionary[name]
-	if (results_summaries.length < 2) {
-	    values.push({
-		test_name: name,
-		test_results: test_results,
-	    })
-	} else {
-	    var result = {}
-	    var test_kind = {}
-	    var test_status = {}
-	    var test_errors = {}
-	    for (var directory in test_results) {
-		var test_result = test_results[directory]
-		result[test_result.result] = true
-		test_kind[test_result.test_kind] = true
-		test_status[test_result.test_status] = true
-		// are the error strings different, keys has no
-		// defined order.
+    var results = []
+    Object.keys(test_dictionary).forEach(function(test_name) {
+	var test_results = test_dictionary[test_name]
+	results.push({
+	    test_name: test_name,
+	    test_results: test_results,
+	})
+    })
+
+    // Filter the results array leaving only stuff that needs to be
+    // displayed.
+
+    if (test_runs.length > 1) {
+	// Only need to filter when there is more than one test run
+	// involved.
+	results = results.filter(function(test) {
+	    // Use result[0] as a baseline that all other results
+	    // should match
+	    var baseline = test.test_results[0]
+	    // A missing result is presumably from it being
+	    // added/deleted, always display it.
+	    if (!baseline) {
+		return true
+	    }
+	    // For the errors, convert them to a string so any change
+	    // is detected.
+	    var error_string = function(test_result) {
 		var errors = "errors"
 		Object.keys(test_result.errors).sort().forEach(function(host) {
 		    errors += ":" + host
@@ -83,32 +92,28 @@ function lsw_compare_table(results_summaries) {
 			errors += ":" + error
 		    })
 		})
-		test_errors[errors] = true
+		return errors
 	    }
-	    if (Object.keys(result).length > 1
-		|| Object.keys(test_kind).length > 1
-		|| Object.keys(test_status).length > 1
-		|| Object.keys(test_errors).length > 1) {
-		values.push({
-		    test_name: name,
-		    test_results: test_results,
-		})
-	    }
-	}
+	    var baseline_errors = error_string(baseline)
+	    return test.test_results.slice(1).some(function(current) {
+		if (!current) {
+		    return true
+		}
+		if (baseline.result != current.result) {
+		    return true
+		}
+		if (baseline.test_kind != current.test_kind) {
+		    return true
+		}
+		if (baseline.test_status != current.test_status) {
+		    return true
+		}
+		if (baseline_errors != error_string(current)) {
+		    return true
+		}
+	    })
+	})
     }
-
-    // Go through the filtered values and see which columns need
-    // displaying.
-
-    var test_kind = {}
-    var test_status = {}
-    values.forEach(function(value) {
-	for (var directory in value.test_results) {
-	    var test_result = value.test_results[directory]
-	    test_kind[test_result.test_kind] = true
-	    test_status[test_result.test_status] = true
-	}
-    })
 
     var columns = [
 	{
@@ -116,48 +121,64 @@ function lsw_compare_table(results_summaries) {
 	    columns: [
 		{
 		    title: "Test Name",
-		    body_align: "left"
+		    body_align: "left",
+		    value: function(row) {
+			return row.test_name
+		    },
 		},
 	    ],
 	}
     ]
 
-    if (Object.keys(test_kind).length == 1) {
-	// force value into a new context
-	Object.keys(test_kind).forEach(function(value) {
-	    columns[0].columns.push({
-		title: "Kind",
-		value: function(row) {
-		    return value
-		}
-	    })
+    // If "test_kind" and/or "test_status" is identical across the
+    // entire table, exclude them in the side-by-side comparison.
+    // Instead display them once, next to name.
+
+    var same_kind = undefined
+    var same_status = undefined
+    results.forEach(function(test) {
+	test.test_results.forEach(function(result) {
+	    if (result) {
+		same_kind = (same_kind === undefined ? result.test_kind
+			     : same_kind == result.test_kind ? same_kind
+			     : false)
+		same_status = (same_status === undefined ? result.test_status
+			     : same_status == result.test_status ? same_status
+			     : false)
+	    }
+	})
+    })
+
+    if (same_kind) {
+	columns[0].columns.push({
+	    title: "Kind",
+	    value: function(row) {
+		return same_kind
+	    }
 	})
     }
 
-    if (Object.keys(test_status).length == 1) {
-	// force value into a new context
-	Object.keys(test_status).forEach(function(value) {
-	    columns[0].columns.push({
-		title: "Status",
-		value: function(row) {
-		    return value
-		}
-	    })
+    if (same_status) {
+	columns[0].columns.push({
+	    title: "Status",
+	    value: function(row) {
+		return same_status
+	    }
 	})
     }
 
-    results_summaries.forEach(function(results_summary) {
+    test_runs.forEach(function(run, run_index) {
 	var results_column = {
-	    title: lsw_commits_html(results_summary.commits),
+	    title: lsw_commits_html(run.commits),
 	    header_align: "left",
 	    columns: []
 	}
-	if (Object.keys(test_kind).length > 1) {
+	if (!same_kind) {
 	    results_column.columns.push({
-		directory: results_summary.directory,
+		directory: run.directory,
 		title: "Kind",
 		value: function(row) {
-		    var result = row.test_results[this.directory]
+		    var result = row.test_results[run_index]
 		    if (result == undefined) {
 			return ""
 		    }
@@ -169,12 +190,12 @@ function lsw_compare_table(results_summaries) {
 		},
 	    })
 	}
-	if (Object.keys(test_status).length > 1) {
+	if (!same_status) {
 	    results_column.columns.push({
-		directory: results_summary.directory,
+		directory: run.directory,
 		title: "Status",
 		value: function(row) {
-		    var result = row.test_results[this.directory]
+		    var result = row.test_results[run_index]
 		    if (result == undefined) {
 			return ""
 		    }
@@ -187,10 +208,10 @@ function lsw_compare_table(results_summaries) {
 	    })
 	}
 	results_column.columns.push({
-	    directory: results_summary.directory,
+	    directory: run.directory,
 	    title: "Result",
 	    value: function(row) {
-		var result = row.test_results[this.directory]
+		var result = row.test_results[run_index]
 		if (result == undefined) {
 		    return ""
 		}
@@ -214,18 +235,18 @@ function lsw_compare_table(results_summaries) {
 	    },
 	})
 	results_column.columns.push({
-	    directory: results_summary.directory,
+	    directory: run.directory,
 	    title: "Issues",
 	    value: function(row) {
 		if (this.title in row.test_results) {
-		    return row.test_results[this.title].result
+		    return row.test_results[run_index].result
 		} else {
 		    return ""
 		}
 	    },
 	    body_align: "left",
 	    html: function(row) {
-		var result = row.test_results[this.directory]
+		var result = row.test_results[run_index]
 		if (result == undefined) {
 		    return ""
 		}
@@ -295,10 +316,9 @@ function lsw_compare_table(results_summaries) {
 
     lsw_table({
 	id: lsw_compare_table_id,
-	results_summaries: results_summaries,
-	data: values,
+	test_runs: test_runs,
+	data: results,
 	columns: columns,
     })
 
 }
-

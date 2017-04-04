@@ -186,6 +186,38 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 	p_ctx->state = state;
 }
 
+static void parser_init(struct parser_context *ctx,
+			lset_t policy,
+			const struct parser_param *param)
+{
+	*ctx = (struct parser_context) {
+		.param = param,
+		.policy = {
+			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
+			/*
+			 * logic needs to match pick_initiator()
+			 *
+			 * XXX: Once pluto is changed to IKEv1 XOR
+			 * IKEv2 it should be possible to move this
+			 * magic into pluto proper and instead pass a
+			 * simple boolean.
+			 */
+			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
+				  && (policy & POLICY_IKEV2_ALLOW)),
+		 },
+		.state = (param->ealg_getbyname
+			  ? ST_INI_EA
+			  : ST_INI_AA),
+		/*
+		 * DANGER: this is a pointer to a very small buffer on
+		 * the stack.
+		 */
+		.ealg_str = ctx->ealg_buf,
+		.aalg_str = ctx->aalg_buf,
+		.modp_str = ctx->modp_buf,
+	};
+}
+
 static err_t parser_machine(struct parser_context *p_ctx)
 {
 	int ch = p_ctx->ch;
@@ -590,29 +622,6 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 #	undef COMMON_KEY_LENGTH
 }
 
-static void parser_init(struct parser_context *ctx,
-			lset_t policy,
-			const struct parser_param *param)
-{
-	*ctx = (struct parser_context) {
-		.param = param,
-		.policy = {
-			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-			.ikev2 = LIN(POLICY_IKEV2_ALLOW, policy),
-		 },
-		.state = (param->ealg_getbyname
-			  ? ST_INI_EA
-			  : ST_INI_AA),
-		/*
-		 * DANGER: this is a pointer to a very small buffer on
-		 * the stack.
-		 */
-		.ealg_str = ctx->ealg_buf,
-		.aalg_str = ctx->aalg_buf,
-		.modp_str = ctx->modp_buf,
-	};
-}
-
 /*
  * on success: returns alg_info
  * on failure: alg_info_free(alg_info) and return NULL;
@@ -656,7 +665,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 		case ST_END:
 		case ST_EOF:
 			{
-				char error[100]; /* arbitrary */
+				char error[100] = ""; /* arbitrary */
 				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
 								alg_info);
 				if (ugh != NULL) {

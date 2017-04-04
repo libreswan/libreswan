@@ -40,17 +40,17 @@ HASH algorithm md5: DISABLED; not FIPS compliant
 PRF algorithm md5: DISABLED; not FIPS compliant
 INTEG algorithm md5: DISABLED; not FIPS compliant
 INTEG algorithm ripemd: DISABLED; not FIPS compliant
-DH algorithm modp1024: DISABLED; not FIPS compliant
-DH algorithm modp1536: DISABLED; not FIPS compliant
-ENCRYPT aes_ccm_16:    IKEv1:     ESP     IKEv2:     ESP     FIPS  (aes_ccm aes_ccm_c)
-ENCRYPT aes_ccm_12:    IKEv1:     ESP     IKEv2:     ESP     FIPS  (aes_ccm_b)
-ENCRYPT aes_ccm_8:     IKEv1:     ESP     IKEv2:     ESP     FIPS  (aes_ccm_a)
-ENCRYPT 3des_cbc:      IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (3des)
-ENCRYPT aes_gcm_16:    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (aes_gcm aes_gcm_c)
-ENCRYPT aes_gcm_12:    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (aes_gcm_b)
-ENCRYPT aes_gcm_8:     IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (aes_gcm_a)
-ENCRYPT aes_ctr:       IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (aesctr)
-ENCRYPT aes:           IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  (aes_cbc)
+DH algorithm MODP1024: DISABLED; not FIPS compliant
+DH algorithm MODP1536: DISABLED; not FIPS compliant
+ENCRYPT aes_ccm_16:    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
+ENCRYPT aes_ccm_12:    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
+ENCRYPT aes_ccm_8:     IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_a)
+ENCRYPT 3des_cbc:      IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
+ENCRYPT aes_gcm_16:    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+ENCRYPT aes_gcm_12:    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+ENCRYPT aes_gcm_8:     IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+ENCRYPT aes_ctr:       IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
+ENCRYPT aes:           IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_cbc)
 HASH sha:              IKEv1: IKE         IKEv2:             FIPS  (sha1)
 HASH sha2_256:         IKEv1: IKE         IKEv2:             FIPS  (sha2 sha256)
 HASH sha2_384:         IKEv1: IKE         IKEv2:             FIPS  (sha384)
@@ -65,13 +65,16 @@ INTEG sha2_384:        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 hmac_
 INTEG sha2_256:        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 hmac_sha2_256 hmac_sha2_256_128)
 INTEG aes_xcbc:        IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc_96)
 INTEG aes_cmac:        IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac_96)
-DH modp2048:           IKEv1: IKE         IKEv2: IKE         FIPS
-DH modp3072:           IKEv1: IKE         IKEv2: IKE         FIPS
-DH modp4096:           IKEv1: IKE         IKEv2: IKE         FIPS
-DH modp6144:           IKEv1: IKE         IKEv2: IKE         FIPS
-DH modp8192:           IKEv1: IKE         IKEv2: IKE         FIPS
-DH dh23:               IKEv1: IKE         IKEv2: IKE         FIPS
-DH dh24:               IKEv1: IKE         IKEv2: IKE         FIPS
+DH MODP2048:           IKEv1: IKE         IKEv2: IKE         FIPS  (dh14)
+DH MODP3072:           IKEv1: IKE         IKEv2: IKE         FIPS  (dh15)
+DH MODP4096:           IKEv1: IKE         IKEv2: IKE         FIPS  (dh16)
+DH MODP6144:           IKEv1: IKE         IKEv2: IKE         FIPS  (dh17)
+DH MODP8192:           IKEv1: IKE         IKEv2: IKE         FIPS  (dh18)
+DH DH19:               IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_256)
+DH DH20:               IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_384)
+DH DH21:               IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_521)
+DH DH23:               IKEv1: IKE         IKEv2: IKE         FIPS
+DH DH24:               IKEv1: IKE         IKEv2: IKE         FIPS
 east #
  ipsec auto --add westnet-eastnet-md5
 003 PRF algorithm MD5=1 is not supported

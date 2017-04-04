@@ -134,7 +134,7 @@ ip_said *sa;
 	alen = srclen - (addr - src);
 	if (af == AF_UNSPEC)
 		af = (memchr(addr, ':', alen) != NULL) ? AF_INET6 : AF_INET;
-	oops = ttoaddr(addr, alen, af, &sa->dst);
+	oops = ttoaddr_num(addr, alen, af, &sa->dst);
 	if (oops != NULL)
 		return oops;
 

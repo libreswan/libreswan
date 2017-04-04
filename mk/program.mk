@@ -4,6 +4,13 @@ ifndef top_srcdir
 include $(dir $(lastword $(MAKEFILE_LIST)))dirs.mk
 endif
 
+# Unless PROGRAM_MANPAGE has been pre-defined (only done by whack and
+# only to suppress its man page), force MANPAGES to include a MANPAGE
+# for this program.
+
+PROGRAM_MANPAGE ?= $(addsuffix .8, $(PROGRAM))
+MANPAGES += $(PROGRAM_MANPAGE)
+
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
@@ -13,15 +20,14 @@ LEX=flex
 BISON=bison
 RM=rm
 
-INCLUDES+=-I${LIBRESWANSRCDIR} -I${KLIPSINC} -I${LIBRESWANSRCDIR}/include ${NSSFLAGS}
-
-CFLAGS+=-pthread
-
 # XXX: hack until everything uses a consistent .c.o rule.
-CFLAGS+=$(USERLAND_CFLAGS)
-CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
-
-LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${CRYPTOLIBS}
+CFLAGS += -pthread
+CFLAGS += $(USERLAND_CFLAGS)
+CFLAGS += $(PORTINCLUDE)
+CFLAGS += -I$(KLIPSINC)
+CFLAGS += -I$(top_srcdir)/include
+CFLAGS += $(NSSFLAGS)
+CFLAGS += $(CROSSFLAGS)
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
@@ -116,22 +122,21 @@ list-local-base:
 		echo $$destdir/$$file ; \
 	)
 
-LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
+ifdef OBJS
 
-%: %.o $(OBJS) ${LIBS}
-	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
+# To avoid problems with implicit make rules creating and then
+# deleting $(PROGRAM).o, $(OBJS) must include the main object
+# (typically $(PROGRAM).o).  Since there is no difference between how
+# objects and archives are handled, $(OBJS) includes both.  Duplicate
+# archives do no halm.
+$(PROGRAM): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
-# cancel direct version
-%: %.c
+MK_DEPEND_FILES = $(OBJS)
+MK_DEPEND_CFLAGS = $(CFLAGS)
+include $(top_srcdir)/mk/depend.mk
 
-# cancel direct version
-%: %.c
-
-%.o: ${SRCDIR}%.c
-	${CC} -c ${CFLAGS} $<
-
-%.i: %.c
-	$(CC) $(CFLAGS) -E -o $@ $<
+else
 
 %: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'IN' $< '->' $@
@@ -144,3 +149,5 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS}
 	@${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
+
+endif

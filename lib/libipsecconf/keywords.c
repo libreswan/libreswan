@@ -193,8 +193,13 @@ static const struct keyword_enum_values kw_auto_list = VALUES_INITIALIZER(kw_aut
  * Values for connaddrfamily={ipv4,ipv6}
  */
 static const struct keyword_enum_value kw_connaddrfamily_values[] = {
-	{ "ipv4",   AF_INET },
-	{ "ipv6",   AF_INET6 },
+	{ "ipv4",  AF_INET },
+	{ "ipv6",  AF_INET6 },
+	/* aliases - undocumented on purpose */
+	{ "v4",    AF_INET },
+	{ "inet",  AF_INET },
+	{ "v6",    AF_INET6 },
+	{ "inet6", AF_INET6 },
 };
 
 static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALIZER(kw_connaddrfamily_values);
@@ -645,6 +650,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "nflog",  kv_conn,  kt_number,  KBF_NFLOG_CONN,  NOT_ENUM },
 
   { "aggrmode",  kv_conn,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
+  /* alias for compatibility - undocumented on purpose */
+  { "aggressive",  kv_conn | kv_alias,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
 
   { NULL,  0,  0,  0,  NOT_ENUM }
 };

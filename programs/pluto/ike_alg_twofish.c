@@ -73,6 +73,15 @@ static void do_twofish(const struct encrypt_desc *alg UNUSED,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
+static void twofish_check(const struct encrypt_desc *alg UNUSED)
+{
+}
+
+static const struct encrypt_ops twofish_encrypt_ops = {
+	.check = twofish_check,
+	.do_crypt = do_twofish,
+};
+
 struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 {
 	.common = {
@@ -80,19 +89,18 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		.names = { "twofish", "twofish_cbc", },
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC,
-		.ikev1_esp_id = ESP_TWOFISH,
-		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_TWOFISH_CBC
-#endif
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC,
+			[IKEv1_ESP_ID] = ESP_TWOFISH,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_TWOFISH_CBC,
+		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = do_twofish,
+	.encrypt_ops = &twofish_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_twofish_ssh =
@@ -102,16 +110,15 @@ struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.names = { "twofish_ssh", "twofish_cbc_ssh", },
 		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_TWOFISH_CBC_SSH,
-		.ikev2_id = IKEv2_ENCR_TWOFISH_CBC_SSH,
-#ifdef NOT_YET
-		.nss_mechanism = CKM_TWOFISH_CBC
-#endif
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC_SSH,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_TWOFISH_CBC_SSH,
+		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = do_twofish,
+	.encrypt_ops = &twofish_encrypt_ops,
 };

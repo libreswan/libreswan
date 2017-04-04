@@ -488,6 +488,8 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+
 	__u32 spi = 0;
 	int c;
 	ip_said said;
@@ -513,13 +515,10 @@ int main(int argc, char *argv[])
 	struct stat sts;
 	struct sadb_builds sab;
 
-	progname = argv[0];
 	mypid = getpid();
 	natt = 0;
 	sport = 0;
 	dport = 0;
-
-	tool_init_log();
 
 	zero(&said);	/* OK: no pointer fields */
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
@@ -602,12 +601,12 @@ int main(int argc, char *argv[])
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
 
-			progname = malloc(room);
+			char *progname = malloc(room);
 			snprintf(progname, room, combine_fmt,
-				argv[0],
-				optarg);
+				 argv[0],
+				 optarg);
 			tool_close_log();
-			tool_init_log();
+			tool_init_log(progname);
 
 			argcount -= 2;
 			break;
@@ -752,7 +751,7 @@ int main(int argc, char *argv[])
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &edst);
+			error_s = ttoaddr_num(optarg, 0, address_family, &edst);
 			if (error_s != NULL) {
 				if (error_s) {
 					fprintf(stderr,
@@ -953,7 +952,7 @@ int main(int argc, char *argv[])
 					progname, optarg, dst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &dst);
+			error_s = ttoaddr_num(optarg, 0, address_family, &dst);
 			if (error_s != NULL) {
 				fprintf(stderr,
 					"%s: Error, %s converting --dst argument:%s\n",
@@ -1027,7 +1026,7 @@ int main(int argc, char *argv[])
 					progname, optarg, src_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, address_family, &src);
+			error_s = ttoaddr_num(optarg, 0, address_family, &src);
 			if (error_s != NULL) {
 				fprintf(stderr,
 					"%s: Error, %s converting --src argument:%s\n",

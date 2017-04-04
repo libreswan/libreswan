@@ -29,7 +29,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
-#include "nss_copies.h"
 #include "nss_cert_vfy.h"
 #include "nss_err.h"
 #include <secder.h>

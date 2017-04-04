@@ -171,6 +171,8 @@ int debug = 0;
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+
 	struct ifreq ifr;
 	struct ipsectunnelconf shc;
 	int s;
@@ -183,9 +185,6 @@ int main(int argc, char *argv[])
 	zero(&ifr);
 	zero(&shc);
 	virtname[0] = '\0';
-	progname = argv[0];
-
-	tool_init_log();
 
 	while ((c = getopt_long_only(argc, argv, "" /*"adchvV:P:l:+:"*/,
 				     longopts, 0)) != EOF) {

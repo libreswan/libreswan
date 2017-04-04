@@ -5,16 +5,13 @@
 
 #include <cert.h>
 #include <secder.h>
-#include "nss_copies.h"
 
 /*
  * The NSS function CERT_CompareAVA() appears in the NSS header files,
  * but the library does not actually export the function. This is a copy
  * of that function until upstream NSS is fixed and the fix available in
- * the common Linux distributions.
- *
- * This file contains the copied code necessary to make use of this function
- * and provides NSSCERT_CompareAVA() for pluto use.
+ * the common Linux distributions. This workaround is enabled using
+ * NSS_REQ_AVA_COPY=true
  *
  * See also:
  * https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
@@ -106,7 +103,7 @@ static SECComparison _NSSCPY_CERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
     return rv;
 }
 
-SECComparison NSSCERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
+SECComparison CERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
 {
 	return _NSSCPY_CERT_CompareAVA(a, b);
 }

@@ -16,7 +16,7 @@
  *
  */
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 #include <pthread.h>    /* Must be the first include file */
 #include <stdlib.h>
 #include <errno.h>
@@ -29,7 +29,7 @@
 
 #include <libreswan.h>
 
-#ifdef LDAP_VER
+#ifdef LIBLDAP
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 #endif
@@ -211,7 +211,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 #endif
 }
 
-#ifdef LDAP_VER
+#ifdef LIBLDAP
 /*
  * parses the result returned by an ldap query
  */
@@ -289,8 +289,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
 
 		if (ldap != NULL) {
-			int ldap_version =
-				LDAP_VER == 2 ? LDAP_VERSION2 : LDAP_VERSION3;
+			int ldap_version = LDAP_VERSION3;
 			struct timeval timeout;
 
 			timeout.tv_sec  = FETCH_CMD_TIMEOUT;
@@ -707,6 +706,6 @@ void list_crl_fetch_requests(bool utc)
 	unlock_crl_fetch_list("list_crl_fetch_requests");
 }
 
-#else /* defined(LIBCURL) || defined(LDAP_VER) */
+#else /* defined(LIBCURL) || defined(LIBLDAP) */
 /* we'll just ignore for now - this is all going away anyway */
 #endif

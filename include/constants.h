@@ -87,11 +87,11 @@
  */
 
 /* you'd think this should be builtin to compiler... */
+
+#include <stdbool.h> /* for 'bool' */
+
 #ifndef TRUE
 #  define TRUE 1
-#  ifndef LIBRESWAN_COCOA_APP
-typedef int bool;
-#  endif
 #endif
 
 #ifndef FALSE
@@ -216,8 +216,14 @@ extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
-	/* enough space for any unsigned 32-bit + "??" */
-	char buf[14];
+	/* enough space for decimal rep of any unsigned long + "??"
+	 * sizeof yields log-base-256 of maximum value.
+	 * Multiplying by 241/100 converts this to the number of decimal digits
+	 * (the common log), rounded up a little (instead of 2.40654...).
+	 * The addition of 99 ensures that the division rounds up to an integer
+	 * rather than truncates.
+	 */
+	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 };
 extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
 extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
@@ -228,6 +234,17 @@ extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRA
 extern const char *strip_prefix(const char *s, const char *prefix);
 
 extern int enum_search(enum_names *ed, const char *string);
+
+/*
+ * Search ED for an enum matching STRING.  Return -1 if no match is
+ * found.
+ *
+ * Unlike enum_search() this compares strings both with and without
+ * any prefixes and suffixes.  For instance, and assuming "ESP_" is
+ * the prefix discarded by enum_short_name(), "blowfish" will match
+ * "ESP_BLOWFISH(OBSOLETE)" while enum_search() will not.
+ */
+extern int enum_match(enum_names *ed, const char *string);
 
 /*
  * Printing enum enums.

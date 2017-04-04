@@ -1,0 +1,165 @@
+/testing/guestbin/swan-prep
+west #
+ ip addr add 192.0.100.254/24 dev eth0:1
+west #
+ ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair-retransmits
+west #
+ ipsec auto --add westnet-eastnet-ikev2a
+002 added connection description "westnet-eastnet-ikev2a"
+west #
+ ipsec auto --add westnet-eastnet-ikev2b
+002 added connection description "westnet-eastnet-ikev2b"
+west #
+ ipsec auto --add westnet-eastnet-ikev2c
+002 added connection description "westnet-eastnet-ikev2c"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2a
+002 "westnet-eastnet-ikev2a" #1: initiating v2 parent SA
+133 "westnet-eastnet-ikev2a" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ikev2a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ikev2a" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+134 "westnet-eastnet-ikev2a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
+002 "westnet-eastnet-ikev2a" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2a" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_512 NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec auto --up westnet-eastnet-ikev2b
+139 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: sent IPSec Child req wait response
+002 "westnet-eastnet-ikev2b" #3: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0,192.0.100.255:0-65535 0] -> [192.0.200.0,192.0.200.255:0-65535 0]
+004 "westnet-eastnet-ikev2b" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_512 NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.100.254 192.0.200.254
+PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.200.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec auto --up westnet-eastnet-ikev2c
+139 "westnet-eastnet-ikev2c" #4: STATE_V2_CREATE_I: sent IPSec Child req wait response
+002 "westnet-eastnet-ikev2c" #4: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0,192.0.101.255:0-65535 0] -> [192.0.201.0,192.0.201.255:0-65535 0]
+004 "westnet-eastnet-ikev2c" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_512 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ipsec status | grep westnet-eastnet-ikev2
+000 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
+000 "westnet-eastnet-ikev2a":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2a":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ikev2a":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2a":   policy_label:unset;
+000 "westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2a":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ikev2a":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ikev2a":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+ESN_NO;
+000 "westnet-eastnet-ikev2a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ikev2a":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2a":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ikev2a":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet-ikev2a":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2a":   IKE algorithms found:  3DES_CBC(5)_192-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_192-AUTH_HMAC_MD5_96-PRF_HMAC_MD5-MODP2048
+000 "westnet-eastnet-ikev2a":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2a":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2a":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<Phase1>
+000 "westnet-eastnet-ikev2b": 192.0.100.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.200.0/24; erouted; eroute owner: #3
+000 "westnet-eastnet-ikev2b":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ikev2b":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2b":   policy_label:unset;
+000 "westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2b":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ikev2b":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ikev2b":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+ESN_NO;
+000 "westnet-eastnet-ikev2b":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "westnet-eastnet-ikev2b":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2b":   IKE algorithms found:  3DES_CBC(5)_192-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2b":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2b":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2b":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<Phase1>
+000 "westnet-eastnet-ikev2c": 192.0.101.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.201.0/24; erouted; eroute owner: #4
+000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ikev2c":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2c":   policy_label:unset;
+000 "westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2c":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ikev2c":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ikev2c":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+ESN_NO;
+000 "westnet-eastnet-ikev2c":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "westnet-eastnet-ikev2c":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2c":   IKE algorithms found:  3DES_CBC(5)_192-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2c":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2c":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2c":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<Phase1>
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
+000 #1: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
+000 #1: "westnet-eastnet-ikev2a" ref=0 refhim=0 Traffic: 
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
+west #
+ echo done
+done
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

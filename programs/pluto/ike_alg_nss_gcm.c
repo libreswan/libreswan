@@ -26,13 +26,13 @@
 #include "ike_alg_nss_gcm.h"
 #include "crypt_symkey.h"
 
-bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
-		     u_int8_t *salt, size_t salt_size,
-		     u_int8_t *wire_iv, size_t wire_iv_size,
-		     u_int8_t *aad, size_t aad_size,
-		     u_int8_t *text_and_tag,
-		     size_t text_size, size_t tag_size,
-		     PK11SymKey *sym_key, bool enc)
+static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
+			    u_int8_t *salt, size_t salt_size,
+			    u_int8_t *wire_iv, size_t wire_iv_size,
+			    u_int8_t *aad, size_t aad_size,
+			    u_int8_t *text_and_tag,
+			    size_t text_size, size_t tag_size,
+			    PK11SymKey *sym_key, bool enc)
 {
 	/* See pk11gcmtest.c */
 	bool ok = TRUE;
@@ -101,3 +101,13 @@ bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 
 	return ok;
 }
+
+static void nss_gcm_check(const struct encrypt_desc *encrypt) {
+	const struct ike_alg *alg = &encrypt->common;
+	passert_ike_alg(alg, encrypt->common.nss_mechanism > 0);
+}
+
+const struct encrypt_ops ike_alg_nss_gcm_encrypt_ops = {
+	.check = nss_gcm_check,
+	.do_aead = ike_alg_nss_gcm,
+};

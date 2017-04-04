@@ -7,7 +7,7 @@ USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
 USERLINK=-L/0g/sandboxes/cygwin/lib -mcygwin
 OSDEP=cygwin
 
-PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include
+PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/win2k/include
 
 USE_KLIPS=false
 USE_NETKEY=false

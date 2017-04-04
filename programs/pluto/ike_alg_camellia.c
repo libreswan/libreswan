@@ -98,9 +98,11 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.names = { "camellia", "camellia_cbc", },
 		.officname = "camellia",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_CAMELLIA_CBC,
-		.ikev1_esp_id = ESP_CAMELLIAv1,
-		.ikev2_id = IKEv2_ENCR_CAMELLIA_CBC,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CBC,
+			[IKEv1_ESP_ID] = ESP_CAMELLIAv1,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CBC,
+		},
 		.nss_mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
@@ -108,7 +110,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.wire_iv_size =       CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.do_crypt = ike_alg_nss_cbc,
+	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
 };
 
 struct encrypt_desc ike_alg_encrypt_camellia_ctr =
@@ -118,9 +120,11 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		.names = { "camellia_ctr", },
 		.officname = "camellia_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.ikev1_oakley_id = OAKLEY_CAMELLIA_CTR,
-		.ikev1_esp_id = ESP_CAMELLIA_CTR, /* not assigned in/for IKEv1 */
-		.ikev2_id = IKEv2_ENCR_CAMELLIA_CTR,
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CTR,
+			[IKEv1_ESP_ID] = ESP_CAMELLIA_CTR, /* not assigned in/for IKEv1 */
+			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CTR,
+		},
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,

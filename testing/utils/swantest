@@ -1582,7 +1582,7 @@ def cmdline():
     parser.add_argument("--retry", default=DEFAULTCONFIG['retry'],
                         type=int, help="retry %d when there is console error." % DEFAULTCONFIG['retry'])
     parser.add_argument("--rpm", default=DEFAULTCONFIG['rpm'],
-                        help="binary rpm to install libreswan %s. Default run make install" % DEFAULTCONFIG['rpm'])
+                        help="binary rpm to install libreswan %s. Default run make install-base" % DEFAULTCONFIG['rpm'])
 
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
@@ -1723,7 +1723,7 @@ def docker_swan_build(args, dname):
         cmd = "sudo docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
             dname, args.rpm)
     else:
-        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install'" % dname
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install-base'" % dname
 
     (line, e) = runcmd_check_output(cmd)
     if e:
@@ -1827,7 +1827,7 @@ def docker_add_net_bridges(args, test):
 
     brname = ''
     pcap_file_ext = '.pcap'
-    pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
+    pcap_file = None
 
     prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
 
@@ -1902,6 +1902,7 @@ def docker_add_net_bridges(args, test):
             brname = "br%s" % bidn3
             # docker_net_bridge(dname=dname, brname=brname, iface=iface,
             # prefix=prefix, brlist=brlist)
+            pcap_file = None
 
         if host == "east":
 
@@ -1924,10 +1925,10 @@ def docker_add_net_bridges(args, test):
                 brlist=brlist)
             pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
-        tcpdump_args =  args.tcpdump + \
-            " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
-
-        tcpdump_cmds[tcpdump_args] = 1
+        if pcap_file:
+            tcpdump_args =  args.tcpdump + \
+                " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
+            tcpdump_cmds[tcpdump_args] = 1
 
     # tcpdump pid(s) to kill the right tcpdump at the end.
     # killall is not an option, there could be other tests in the root pid
@@ -1953,12 +1954,14 @@ def docker_run_script(host, testname, script, timer=90):
     logging.debug("%s execute commands from file %s", host, script)
 
     logfile = "OUTPUT/%s.console.verbose.txt" % host
+
     f_log = open(logfile, 'a', encoding='utf-8')
     f_cmds = open(script, "r")
-    prompt = "%s #" % host
+    prompt = "[root@%s %s]# " % (host, testname)
     output = ''
     for line in f_cmds:
         f_log.write(line)
+
         cmd = "sudo docker exec -ti %s-%s /bin/bash -c 'cd /testing/pluto/%s;%s'" % (
             host, testname, testname, line)
         logging.info("%s", cmd)
@@ -1970,10 +1973,9 @@ def docker_run_script(host, testname, script, timer=90):
             logging.error("ERROR %s %s", cmd, e.output)
             output = e.output
 
-        f_log.write(output.decode('ascii'))
-        f_log.write("\n")
-        f_log.write(prompt)
-        f_log.write("\n")
+        output = output.decode('ascii')
+        output = output.replace('\r', '')
+        f_log.writelines(output + prompt)
     f_log.close()
     f_cmds.close()
 

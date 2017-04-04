@@ -115,7 +115,7 @@ static struct type_algorithms encrypt_algorithms;
 static struct type_algorithms hash_algorithms;
 static struct type_algorithms prf_algorithms;
 static struct type_algorithms integ_algorithms;
-static struct type_algorithms dh_algorithms;
+static struct type_algorithms dhmke_algorithms;
 
 static struct type_algorithms *const type_algorithms[] = {
 	/*INVALID*/ NULL,
@@ -123,8 +123,19 @@ static struct type_algorithms *const type_algorithms[] = {
 	&hash_algorithms,
 	&prf_algorithms,
 	&integ_algorithms,
-	&dh_algorithms,
+	&dhmke_algorithms,
 };
+
+const char *ike_alg_key_name(enum ike_alg_key key)
+{
+	static const char *names[IKE_ALG_KEY_ROOF] = {
+		[IKEv1_OAKLEY_ID] = "IKEv1 OAKLEY ID",
+		[IKEv1_ESP_ID] = "IKEv1 ESP ID",
+		[IKEv2_ALG_ID] = "IKEv2 ID",
+	};
+	passert(key < elemsof(names));
+	return names[key];
+}
 
 static const struct ike_alg **next_alg(const struct algorithm_table *table,
 				       const struct ike_alg **last)
@@ -161,7 +172,7 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 
 const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **last)
 {
-	return (const struct oakley_group_desc**)next_alg(&dh_algorithms.all,
+	return (const struct oakley_group_desc**)next_alg(&dhmke_algorithms.all,
 							  (const struct ike_alg**)last);
 }
 
@@ -181,7 +192,7 @@ static const struct ike_alg *alg_byname(const struct algorithm_table *algorithms
 
 const struct oakley_group_desc *group_desc_byname(const char *name)
 {
-	return oakley_group_desc(alg_byname(&dh_algorithms.all, name));
+	return oakley_group_desc(alg_byname(&dhmke_algorithms.all, name));
 }
 
 bool ike_alg_is_valid(const struct ike_alg *alg)
@@ -246,31 +257,42 @@ const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
 }
 
 /*
- *      return ike_algo object by {type, id}
+ * return ike_alg object by {type, key, id}
  */
+
+static const struct ike_alg *lookup_by_id(struct type_algorithms *algorithms,
+					  enum ike_alg_key key,
+					  int id, lset_t debug)
+{
+	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
+		const struct ike_alg *alg = *algp;
+		if (alg->id[key] == id) {
+			DBG(debug,
+			    const char *name = enum_short_name(algorithms->enum_names[key], id);
+			    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
+				    algorithms->all.name,
+				    name ? name : "???",
+				    id, alg->name));
+			return alg;
+		}
+ 	}
+	DBG(debug,
+	    const char *name = enum_short_name(algorithms->enum_names[key], id);
+	    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, not found\n",
+		    algorithms->all.name, name ? name : "???", id));
+	return NULL;
+}
 
 static const struct ike_alg *ikev1_oakley_lookup(struct type_algorithms *algorithms,
 						 unsigned id)
 {
-	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
-		const struct ike_alg *e = *algp;
-		if (e->ikev1_oakley_id == id
-		    && ike_alg_is_ike(e)) {
-			DBG(DBG_CRYPT,
-			    struct esb_buf buf;
-			    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, found %s\n",
-				    enum_showb(algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID],
-					       id, &buf),
-				    id, e->name));
-			return e;
-		}
+	const struct ike_alg *alg = lookup_by_id(algorithms,
+						 IKEv1_OAKLEY_ID,
+						 id, DBG_CRYPT);
+	if (alg == NULL || !ike_alg_is_ike(alg)) {
+		return NULL;
 	}
-	DBG(DBG_CRYPT,
-	    struct esb_buf buf;
-	    DBG_log("IKEv1 Oakley lookup by IKEv1 id: %s=%u, not found\n",
-		    enum_showb(algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID], id, &buf),
-		    id));
-	return NULL;
+	return alg;
 }
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
@@ -288,49 +310,25 @@ const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 	return integ_desc(ikev1_oakley_lookup(&integ_algorithms, id));
 }
 
-static const struct ike_alg *ikev1_esp_lookup(const struct algorithm_table *table, int id)
+static const struct ike_alg *ikev2_lookup(struct type_algorithms *algorithms, int id)
 {
-	FOR_EACH_IKE_ALGP(table, algp) {
-		const struct ike_alg *e = *algp;
-		if (e->ikev1_esp_id == id) {
-			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 ESP id: %d, found %s\n",
-					       table->name, id, e->name));
-			return e;
-		}
-	}
-	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv1 ESP id:%d, not found\n",
-			       table->name, id));
-	return NULL;
-}
 
-static const struct ike_alg *ikev2_lookup(const struct algorithm_table *table, int id)
-{
-	FOR_EACH_IKE_ALGP(table, algp) {
-		const struct ike_alg *e = *algp;
-		if (e->ikev2_id == id) {
-			DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id: %d, found %s\n",
-					       table->name, id, e->name));
-			return e;
-		}
-	}
-	DBG(DBG_CRYPT, DBG_log("%s lookup by IKEv2 id:%u, not found\n",
-			       table->name, id));
-	return NULL;
+	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, DBG_CRYPT);
 }
 
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
 {
-	return encrypt_desc(ikev2_lookup(&encrypt_algorithms.all, id));
+	return encrypt_desc(ikev2_lookup(&encrypt_algorithms, id));
 }
 
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
 {
-	return prf_desc(ikev2_lookup(&prf_algorithms.all, id));
+	return prf_desc(ikev2_lookup(&prf_algorithms, id));
 }
 
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 {
-	return integ_desc(ikev2_lookup(&integ_algorithms.all, id));
+	return integ_desc(ikev2_lookup(&integ_algorithms, id));
 }
 
 const struct oakley_group_desc *lookup_group(u_int16_t group)
@@ -403,17 +401,16 @@ static struct hash_desc *hash_descriptors[] = {
 static void hash_desc_check(const struct ike_alg *alg)
 {
 	const struct hash_desc *hash = hash_desc(alg);
-	passert(hash->hash_digest_len > 0);
-	passert(hash->hash_block_size > 0);
+	passert_ike_alg(alg, hash->hash_digest_len > 0);
+	passert_ike_alg(alg, hash->hash_block_size > 0);
 	check_name_in_names("hash", hash->common.name, &hash->common);
 	if (hash->hash_ops) {
-		passert(hash->hash_ops->digest_symkey != NULL &&
-			hash->hash_ops->digest_bytes != NULL &&
-			hash->hash_ops->final_bytes != NULL &&
-			hash->hash_ops->symkey_to_symkey != NULL);
-	}
-	if (hash->hash_ops == &ike_alg_nss_hash_ops) {
-		passert(hash->common.nss_mechanism > 0);
+		passert_ike_alg(alg, hash->hash_ops->check != NULL);
+		passert_ike_alg(alg, hash->hash_ops->digest_symkey != NULL);
+		passert_ike_alg(alg, hash->hash_ops->digest_bytes != NULL);
+		passert_ike_alg(alg, hash->hash_ops->final_bytes != NULL);
+		passert_ike_alg(alg, hash->hash_ops->symkey_to_symkey != NULL);
+		hash->hash_ops->check(hash);
 	}
 }
 
@@ -427,7 +424,7 @@ static struct type_algorithms hash_algorithms = {
 	.all = ALGORITHM_TABLE("HASH", hash_descriptors),
 	.type = IKE_ALG_HASH,
 	.enum_names = {
-		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 	},
 	.desc_check = hash_desc_check,
 	.desc_is_ike = hash_desc_is_ike,
@@ -457,40 +454,31 @@ static struct prf_desc *prf_descriptors[] = {
 static void prf_desc_check(const struct ike_alg *alg)
 {
 	const struct prf_desc *prf = prf_desc(alg);
-	passert(prf->prf_key_size > 0);
-	passert(prf->prf_output_size > 0);
+	passert_ike_alg(alg, prf->prf_key_size > 0);
+	passert_ike_alg(alg, prf->prf_output_size > 0);
 	if (prf->prf_ops != NULL) {
-		passert(prf->prf_ops->init_symkey != NULL &&
-			prf->prf_ops->init_bytes != NULL &&
-			prf->prf_ops->digest_symkey != NULL &&
-			prf->prf_ops->digest_bytes != NULL &&
-			prf->prf_ops->final_symkey != NULL &&
-			prf->prf_ops->final_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->check != NULL);
+		passert_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->init_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->digest_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->digest_bytes != NULL);
+		passert_ike_alg(alg, prf->prf_ops->final_symkey != NULL);
+		passert_ike_alg(alg, prf->prf_ops->final_bytes != NULL);
 		/*
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
-		passert(prf->common.ikev1_oakley_id == 0
-			|| prf->hasher != NULL);
-	}
-	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
-		passert(prf->hasher != NULL);
-		/* i.e., implemented */
-		passert(hash_desc_is_ike(&prf->hasher->common));
+		passert_ike_alg(alg, prf->common.id[IKEv1_OAKLEY_ID] == 0
+				     || prf->hasher != NULL);
+		prf->prf_ops->check(prf);
 	}
 	if (prf->hasher) {
 		/*
 		 * Check for dangling pointer.
 		 */
 		check_alg_in_table(&prf->hasher->common, &hash_algorithms.all);
-		passert(prf->prf_output_size == prf->hasher->hash_digest_len);
+		passert_ike_alg(alg, prf->prf_output_size == prf->hasher->hash_digest_len);
 		check_names_in_names("prf hasher", &prf->hasher->common, alg);
-	}
-	if (prf->prf_ops == &ike_alg_hmac_prf_ops) {
-		passert(prf->hasher != NULL);
-	}
-	if (prf->prf_ops == &ike_alg_nss_prf_ops) {
-		passert(prf->common.nss_mechanism > 0);
 	}
 }
 
@@ -504,9 +492,9 @@ static struct type_algorithms prf_algorithms = {
 	.all = ALGORITHM_TABLE("PRF", prf_descriptors),
 	.type = IKE_ALG_PRF,
 	.enum_names = {
-		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
-		[IKE_ALG_IKEv1_ESP_ID] = NULL, /* ESP/AH uses IKE PRF */
-		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_prf_names,
+		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKEv1_ESP_ID] = NULL, /* ESP/AH uses IKE PRF */
+		[IKEv2_ALG_ID] = &ikev2_trans_type_prf_names,
 	},
 	.desc_check = prf_desc_check,
 	.desc_is_ike = prf_desc_is_ike,
@@ -540,12 +528,12 @@ static struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	passert(integ->integ_key_size > 0);
-	passert(integ->integ_output_size > 0);
+	passert_ike_alg(alg, integ->integ_key_size > 0);
+	passert_ike_alg(alg, integ->integ_output_size > 0);
 	if (integ->prf) {
-		passert(integ->integ_key_size == integ->prf->prf_key_size);
-		passert(integ->integ_output_size <= integ->prf->prf_output_size);
-		passert(prf_desc_is_ike(&integ->prf->common));
+		passert_ike_alg(alg, integ->integ_key_size == integ->prf->prf_key_size);
+		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
+		passert_ike_alg(alg, prf_desc_is_ike(&integ->prf->common));
 		check_names_in_names("integ prf", &integ->prf->common, alg);
 	}
 }
@@ -560,9 +548,9 @@ static struct type_algorithms integ_algorithms = {
 	.all = ALGORITHM_TABLE("INTEG", integ_descriptors),
 	.type = IKE_ALG_INTEG,
 	.enum_names = {
-		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_hash_names,
-		[IKE_ALG_IKEv1_ESP_ID] = &auth_alg_names,
-		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_integ_names,
+		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKEv1_ESP_ID] = &auth_alg_names,
+		[IKEv2_ALG_ID] = &ikev2_trans_type_integ_names,
 	},
 	.desc_check = integ_desc_check,
 	.desc_is_ike = integ_desc_is_ike,
@@ -629,15 +617,20 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	/*
 	 * Only implemented one way, if at all.
 	 */
-	passert((encrypt->do_crypt == NULL && encrypt->do_aead_crypt_auth == NULL)
-		|| ((encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL)));
+	if (encrypt->encrypt_ops != NULL) {
+		passert_ike_alg(alg, encrypt->encrypt_ops->check != NULL);
+		passert_ike_alg(alg, ((encrypt->encrypt_ops->do_crypt == NULL)
+				      != (encrypt->encrypt_ops->do_aead == NULL)));
+	}
 
 	/*
 	 * AEAD implementation implies a valid AEAD tag size.
 	 * Converse for non-AEAD implementation.
 	 */
-	passert(encrypt->do_aead_crypt_auth == NULL || encrypt->aead_tag_size > 0);
-	passert(encrypt->do_crypt == NULL || encrypt->aead_tag_size == 0);
+	if (encrypt->encrypt_ops != NULL) {
+		passert_ike_alg(alg, encrypt->encrypt_ops->do_aead == NULL || encrypt->aead_tag_size > 0);
+		passert_ike_alg(alg, encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
+	}
 
 	if (encrypt->keydeflen) {
 		/*
@@ -651,41 +644,41 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		 * - provided there is a KEYDEFLEN (i.e., not the NULL
 		 *   algorithm), there is at least one key length.
 		 */
-		passert(encrypt->key_bit_lengths[0] > 0);
-		passert(encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[0] > 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
 		for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
 			/* at end, keyp[1] will be 0 */
-			passert(keyp[0] > keyp[1]);
+			passert_ike_alg(alg, keyp[0] > keyp[1]);
 		}
 		/*
 		 * the default appears in the list
 		 */
-		passert(encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
+		passert_ike_alg(alg, encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
 	} else {
 		/*
 		 * Interpret a zero default key as implying NULL encryption.
 		 */
-		passert(encrypt->common.ikev1_esp_id == ESP_NULL
-			|| encrypt->common.ikev2_id == IKEv2_ENCR_NULL);
-		passert(encrypt->enc_blocksize == 1);
-		passert(encrypt->wire_iv_size == 0);
-		passert(encrypt->key_bit_lengths[0] == 0);
+		passert_ike_alg(alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL
+			|| encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
+		passert_ike_alg(alg, encrypt->enc_blocksize == 1);
+		passert_ike_alg(alg, encrypt->wire_iv_size == 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[0] == 0);
 	}
 }
 
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	return (encrypt->do_crypt != NULL) != (encrypt->do_aead_crypt_auth != NULL);
+	return encrypt->encrypt_ops != NULL;
 }
 
 static struct type_algorithms encrypt_algorithms = {
 	.all = ALGORITHM_TABLE("ENCRYPT", encrypt_descriptors),
 	.type = IKE_ALG_ENCRYPT,
 	.enum_names = {
-		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_enc_names,
-		[IKE_ALG_IKEv1_ESP_ID] = &esp_transformid_names,
-		[IKE_ALG_IKEv2_ID] = &ikev2_trans_type_encr_names,
+		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
+		[IKEv1_ESP_ID] = &esp_transformid_names,
+		[IKEv2_ALG_ID] = &ikev2_trans_type_encr_names,
 	},
 	.desc_check = encrypt_desc_check,
 	.desc_is_ike = encrypt_desc_is_ike,
@@ -695,7 +688,7 @@ static struct type_algorithms encrypt_algorithms = {
  * DH group
  */
 
-static struct oakley_group_desc *dh_descriptors[] = {
+static struct oakley_group_desc *dhmke_descriptors[] = {
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -703,6 +696,9 @@ static struct oakley_group_desc *dh_descriptors[] = {
 	&oakley_group_modp4096,
 	&oakley_group_modp6144,
 	&oakley_group_modp8192,
+	&oakley_group_dh19,
+	&oakley_group_dh20,
+	&oakley_group_dh21,
 #ifdef USE_DH22
 	&oakley_group_dh22,
 #endif
@@ -710,31 +706,38 @@ static struct oakley_group_desc *dh_descriptors[] = {
 	&oakley_group_dh24,
 };
 
-static void dh_desc_check(const struct ike_alg *alg)
+static void dhmke_desc_check(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *group = oakley_group_desc(alg);
-	passert(group->group > 0);
-	passert(group->common.ikev2_id == group->group);
-	passert(group->common.ikev1_oakley_id == group->group);
+	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
+	passert_ike_alg(alg, dhmke->group > 0);
+	passert_ike_alg(alg, dhmke->bytes > 0);
+	passert_ike_alg(alg, dhmke->common.id[IKEv2_ALG_ID] == dhmke->group);
+	passert_ike_alg(alg, dhmke->common.id[IKEv1_OAKLEY_ID] == dhmke->group);
+	/* always implemented */
+	passert_ike_alg(alg, dhmke->dhmke_ops != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->check != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->calc_ke != NULL);
+	passert_ike_alg(alg, dhmke->dhmke_ops->calc_g_ir != NULL);
 	/* more? */
+	dhmke->dhmke_ops->check(dhmke);
 }
 
-static bool dh_desc_is_ike(const struct ike_alg *alg)
+static bool dhmke_desc_is_ike(const struct ike_alg *alg)
 {
-	passert(alg->algo_type == IKE_ALG_DH);
-	return TRUE;
+	const struct oakley_group_desc *dhmke = oakley_group_desc(alg);
+	return dhmke->dhmke_ops != NULL;
 }
 
-static struct type_algorithms dh_algorithms = {
-	.all = ALGORITHM_TABLE("DH", dh_descriptors),
+static struct type_algorithms dhmke_algorithms = {
+	.all = ALGORITHM_TABLE("DH", dhmke_descriptors),
 	.type = IKE_ALG_DH,
 	.enum_names = {
-		[IKE_ALG_IKEv1_OAKLEY_ID] = &oakley_group_names,
-		[IKE_ALG_IKEv1_ESP_ID] = NULL,
-		[IKE_ALG_IKEv2_ID] = &oakley_group_names,
+		[IKEv1_OAKLEY_ID] = &oakley_group_names,
+		[IKEv1_ESP_ID] = NULL,
+		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
-	.desc_check = dh_desc_check,
-	.desc_is_ike = dh_desc_is_ike,
+	.desc_check = dhmke_desc_check,
+	.desc_is_ike = dhmke_desc_is_ike,
 };
 
 /*
@@ -754,8 +757,7 @@ static void check_enum_name(const char *what,
 		DBG(DBG_CRYPT,
 		    DBG_log("%s id: %d enum name: %s",
 			    what, id, enum_name));
-		passert(enum_name != NULL);
-		passert(enum_name);
+		passert_ike_alg(alg, enum_name != NULL);
 		check_name_in_names("enum", enum_name, alg);
 	} else {
 		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
@@ -780,31 +782,33 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 
 		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
 				       algorithms->all.name, alg->name, alg->officname,
-				       alg->ikev1_oakley_id,
-				       alg->ikev1_esp_id,
-				       alg->ikev2_id));
-		passert(alg->name);
-		passert(alg->officname);
-		passert(alg->algo_type == algorithms->type);
+				       alg->id[IKEv1_OAKLEY_ID],
+				       alg->id[IKEv1_ESP_ID],
+				       alg->id[IKEv2_ALG_ID]));
+		passert_ike_alg(alg, alg->name != NULL);
+		passert_ike_alg(alg, alg->officname != NULL);
+		passert_ike_alg(alg, alg->algo_type == algorithms->type);
 
 		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
 		 * entries.
 		 *
 		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
-		 * define the IKEv1 field "common.ikev1_oakley_id" so need to
+		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]" so need to
 		 * handle that.
 		 */
-		passert(alg->ikev1_oakley_id > 0 || alg->ikev2_id > 0 || alg->ikev1_esp_id > 0);
-		check_enum_name("IKEv1 OAKLEY ID",
-				alg, alg->ikev1_oakley_id,
-				algorithms->enum_names[IKE_ALG_IKEv1_OAKLEY_ID]);
-		check_enum_name("IKEv1 ESP INFO ID",
-				alg, alg->ikev1_esp_id,
-				algorithms->enum_names[IKE_ALG_IKEv1_ESP_ID]);
-		check_enum_name("IKEv2 ID",
-				alg, alg->ikev2_id,
-				algorithms->enum_names[IKE_ALG_IKEv2_ID]);
+		bool at_least_one_valid_id = FALSE;
+		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
+		     key < IKE_ALG_KEY_ROOF; key++) {
+			int id = alg->id[key];
+			if (id > 0) {
+				at_least_one_valid_id = TRUE;
+				check_enum_name(ike_alg_key_name(key),
+						alg, id,
+						algorithms->enum_names[key]);
+			}
+		}
+		passert_ike_alg(alg, at_least_one_valid_id);
 
 		/*
 		 * Check that name appears in the names list.
@@ -817,96 +821,182 @@ static void check_algorithm_table(struct type_algorithms *algorithms)
 		/*
 		 * Algorithm can't appear twice.
 		 *
-		 * Fudge up the ALL so that it only contain the
-		 * previously verified algorithms and then use that
-		 * for a search.  The search should fail.
+		 * Search the previously validated algorithms using a
+		 * fudged up ALL array that only contain the
+		 * previously verified algorithms.
 		 */
 		struct type_algorithms scratch = *algorithms;
 		scratch.all.end = algp;
-		passert(alg->ikev1_oakley_id == 0 ||
-			ikev1_oakley_lookup(&scratch, alg->ikev1_oakley_id) == NULL);
-		passert(alg->ikev1_esp_id == 0 ||
-			ikev1_esp_lookup(&scratch.all, alg->ikev1_esp_id) == NULL);
-		passert(alg->ikev2_id == 0 ||
-			ikev2_lookup(&scratch.all, alg->ikev2_id) == NULL);
+		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
+		     key < IKE_ALG_KEY_ROOF; key++) {
+			int id = alg->id[key];
+			passert_ike_alg(alg, id == 0
+				|| (lookup_by_id(&scratch, key, id, LEMPTY)
+				    == NULL));
+		}
 
 		/*
 		 * Extra algorithm specific checks.
 		 */
-		passert(algorithms->desc_check);
+		passert_ike_alg(alg, algorithms->desc_check != NULL);
 		algorithms->desc_check(alg);
 	}
 
         /*
-	 * Go through ALL algorithms identifying any suitable for IKE.
-	 *
-	 * Log the result as a pretty table.
+	 * Log the final list as a pretty table.
 	 */
 	FOR_EACH_IKE_ALGP(&algorithms->all, algp) {
 		const struct ike_alg *alg = *algp;
+		char buf[IKE_ALG_SNPRINT_BUFSIZ] = "";
+		ike_alg_snprint(buf, sizeof(buf), alg);
+		libreswan_log("%s", buf);
+	}
+}
 
-		/*
-		 * Need to fix things like not even mentioning ESP/AH
-		 * on the PRF line.
-		 */
-		bool v1_ike;
-		bool v2_ike;
-		passert(algorithms->desc_is_ike);
-		if (algorithms->desc_is_ike(alg)) {
-			v1_ike = alg->ikev1_oakley_id > 0;
-			v2_ike = alg->ikev2_id > 0;
+/*
+ * Yet more code dealing with appending a string to a string buffer.
+ */
+static void append(char **bufp, const char *end, const char *str)
+{
+	passert(*bufp + strlen(str) < end);
+	strcpy(*bufp, str);
+	*bufp += strlen(str);
+	passert(*bufp < end);
+}
+
+void ike_alg_snprint(char *buf, size_t sizeof_buf,
+		     const struct ike_alg *alg)
+{
+	pexpect(sizeof_buf >= IKE_ALG_SNPRINT_BUFSIZ);
+	char *const end = buf + sizeof_buf;
+	/*
+	 * TYPE NAME:
+	 */
+	{
+		char *start = buf;
+		append(&buf, end, ike_alg_type_name(alg->algo_type));
+		append(&buf, end, " ");
+		append(&buf, end, alg->name);
+		append(&buf, end, ":");
+		/* magic number from eyeballing the output */
+		ssize_t pad = 21 - (buf - start);
+		passert_ike_alg(alg, pad >= 0);
+		for (ssize_t i = 0; i < pad; i++) {
+			append(&buf, end, " ");
+		}
+	}
+	/*
+	 * IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
+	 */
+	bool v1_ike;
+	bool v2_ike;
+	if (ike_alg_is_ike(alg)) {
+		v1_ike = alg->id[IKEv1_OAKLEY_ID] > 0;
+		v2_ike = (alg->id[IKEv2_ALG_ID] > 0);
+	} else {
+		v1_ike = FALSE;
+		v2_ike = FALSE;
+	}
+	bool v1_esp;
+	bool v2_esp;
+	bool v1_ah;
+	bool v2_ah;
+	switch (alg->algo_type) {
+	case IKE_ALG_PRF:
+	case IKE_ALG_DH:
+	case IKE_ALG_HASH:
+		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
+		break;
+	case IKE_ALG_ENCRYPT:
+		v1_esp = alg->id[IKEv1_ESP_ID] > 0;
+		v2_esp = alg->id[IKEv2_ALG_ID] > 0;
+		v1_ah = FALSE;
+		v2_ah = FALSE;
+		break;
+	case IKE_ALG_INTEG:
+		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
+		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
+		break;
+	default:
+		bad_case(alg->algo_type);
+	}
+	append(&buf, end, "  IKEv1:");
+	append(&buf, end, (v1_ike
+			   ? " IKE"
+			   : "    "));
+	append(&buf, end, (v1_esp
+			   ? " ESP"
+			   : "    "));
+	append(&buf, end, (v1_ah
+			   ? " AH"
+			   : "   "));
+	append(&buf, end, "  IKEv2:");
+	append(&buf, end, (v2_ike
+			   ? " IKE"
+			   : "    "));
+	append(&buf, end, (v2_esp
+			   ? " ESP"
+			   : "    "));
+	append(&buf, end, (v2_ah
+			   ? " AH"
+			   : "   "));
+
+	/*
+	 * FIPS?
+	 */
+	{
+		append(&buf, end, "  ");
+		if (alg->fips) {
+			append(&buf, end, "FIPS");
 		} else {
-			v1_ike = FALSE;
-			v2_ike = FALSE;
+			append(&buf, end, "    ");
 		}
-		bool v1_esp;
-		bool v2_esp;
-		bool v1_ah;
-		bool v2_ah;
-		switch (alg->algo_type) {
-		case IKE_ALG_PRF:
-		case IKE_ALG_DH:
-		case IKE_ALG_HASH:
-			v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
-			break;
-		case IKE_ALG_ENCRYPT:
-			v1_esp = alg->ikev1_esp_id > 0;
-			v2_esp = alg->ikev2_id > 0;
-			v1_ah = FALSE;
-			v2_ah = FALSE;
-			break;
-		case IKE_ALG_INTEG:
-			v1_esp = v1_ah = alg->ikev1_esp_id > 0;
-			v2_esp = v2_ah = alg->ikev2_id > 0;
-			break;
-		default:
-			bad_case(alg->algo_type);
-		}
-		char names[60] = "";
+	}
+	passert_ike_alg(alg, buf < end);
+
+	/*
+	 * Concatenate [key,...] or {key,...} with default
+	 * marked with '*'.
+	 */
+	if (alg->algo_type == IKE_ALG_ENCRYPT) {
+		const struct encrypt_desc *encr = encrypt_desc(alg);
+		append(&buf, end, encr->keylen_omitted ? "  [" : "  {");
 		const char *sep = "";
+		for (const unsigned *keyp = encr->key_bit_lengths; *keyp; keyp++) {
+			append(&buf, end, sep);
+			if (*keyp == encr->keydeflen) {
+				append(&buf, end, "*");
+			}
+			/* no large keys */
+			passert_ike_alg(alg, *keyp < 1000 && buf + 3 < end);
+			snprintf(buf, end - buf, "%d", *keyp);
+			buf += strlen(buf);
+			sep = ",";
+		}
+		append(&buf, end, encr->keylen_omitted ? "]" : "}");
+		/* did fit */
+	}
+	passert_ike_alg(alg, buf < end);
+
+	/*
+	 * Concatenate (alias ...)
+	 */
+	{
+		const char *start = buf;
+		const char *sep = "  (";
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
 			if (!strcaseeq(*name, alg->name)) {
-				passert(strlen(names) + strlen(sep) + strlen(*name) < sizeof(names));
-				strcat(names, sep);
-				strcat(names, *name);
-				passert(strlen(names) < sizeof(names));
+				append(&buf, end, sep);
+				append(&buf, end, *name);
 				sep = " ";
 			}
 		}
-		/* 19 is eyeballed */
-		libreswan_log("%s %s:%*s  IKEv1: %3s %3s %2s  IKEv2: %3s %3s %2s  %4s%s%s%s",
-			      algorithms->all.name, alg->name,
-			      (int)(19 - strlen(algorithms->all.name) - strlen(alg->name)), "",
-			      v1_ike ? "IKE" : "",
-			      v1_esp ? "ESP" : "",
-			      v1_ah ? "AH" : "",
-			      v2_ike ? "IKE" : "",
-			      v2_esp ? "ESP" : "",
-			      v2_ah ? "AH" : "",
-			      alg->fips ? "FIPS" : "",
-			      *names ? "  (" : "", names, *names ? ")" : "");
+		if (*start) {
+			append(&buf, end, ")");
+		}
 	}
+	passert_ike_alg(alg, buf < end);
 }
 
 /*

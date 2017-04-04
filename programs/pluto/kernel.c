@@ -385,14 +385,14 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 		return;
 
 	if (get_sa_info(st, FALSE, NULL)) { /* our_bytes = out going bytes */
-		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%u' ",
+		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%" PRIu64 "' ",
 			st->st_esp.present ? st->st_esp.peer_bytes :
 			st->st_ah.present ? st->st_ah.peer_bytes :
 			st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
 			0);
 	}
 	if (get_sa_info(st, TRUE, NULL)) {
-		snprintf(istr, istr_len, "PLUTO_INBYTES='%u' ",
+		snprintf(istr, istr_len, "PLUTO_INBYTES='%" PRIu64 "' ",
 			st->st_esp.present ? st->st_esp.our_bytes :
 			st->st_ah.present ? st->st_ah.our_bytes :
 			st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
@@ -3523,7 +3523,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
 	char text_said[SATOT_BUF];
 	u_int proto;
-	u_int bytes;
+	uint64_t bytes;
 	uint64_t add_time;
 	ipsec_spi_t spi;
 	const ip_address *src, *dst;

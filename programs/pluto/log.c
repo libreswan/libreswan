@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,6 +73,8 @@
 #define NO_DB_CONTEXT
 #include "db_ops.h"
 #endif
+
+#include "pluto_stats.h"
 
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -155,7 +158,8 @@ void pluto_init_log(void)
  */
 static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 {
-	bool reproc = *fmt == '~';
+	bool reproc = (*fmt == '~') || (*fmt == '#');
+
 	size_t ps;
 	struct connection *c = cur_state != NULL ? cur_state->st_connection :
 			       cur_connection;
@@ -538,18 +542,11 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void libreswan_log_abort(const char *file_str, int line_no)
-{
-	loglog(RC_LOG_SERIOUS, "ABORT at %s:%d", file_str, line_no);
-	abort();
-}
-
 /* emit message to whack.
  * form is "ddd statename text" where
  * - ddd is a decimal status code (RC_*) as described in whack.h
  * - text is a human-readable annotation
  */
-static volatile sig_atomic_t dying_breath = FALSE;
 
 void whack_log(int mess_no, const char *message, ...)
 {
@@ -560,10 +557,14 @@ void whack_log(int mess_no, const char *message, ...)
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
 
-	if (wfd != NULL_FD || dying_breath) {
+	if (wfd != NULL_FD || lsw_dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
+		int prelen = 0;
+
+		/* support to suppress numeral prefix using # */
+		if (message[0] != '#')
+			prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
 
 		passert(prelen >= 0);
 
@@ -571,7 +572,7 @@ void whack_log(int mess_no, const char *message, ...)
 		fmt_log(m + prelen, sizeof(m) - prelen, message, args);
 		va_end(args);
 
-		if (dying_breath) {
+		if (lsw_dying_breath) {
 			/* status output copied to log */
 			if (log_to_stderr || pluto_log_fp != NULL)
 				fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -608,26 +609,6 @@ void whack_log(int mess_no, const char *message, ...)
 		}
 	}
 	pthread_mutex_unlock(&log_mutex);
-}
-
-void libreswan_passert_fail(const char *file_str,
-			    unsigned long line_no,
-			    const char *func_str,
-			    const char *fmt, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, fmt);
-	fmt_log(m, sizeof(m), fmt, args);
-	va_end(args);
-
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s at %s:%lu)",
-	       m, func_str, file_str, line_no);
-	dying_breath = TRUE;
-	/* exiting correctly doesn't always work */
-	libreswan_log_abort(file_str, line_no);
 }
 
 lset_t
@@ -790,6 +771,7 @@ static void show_system_security(void)
 void show_global_status(void)
 {
 	show_globalstate_status();
+	show_pluto_stats();
 }
 
 void show_status(void)
@@ -1212,7 +1194,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
-			enum_short_name(&oakley_group_names, st->st_oakley.group->group));
+			st->st_oakley.group->common.name);
 		break;
 
 	case LAK_CHILD_START:

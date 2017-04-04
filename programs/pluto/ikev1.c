@@ -1,13 +1,13 @@
 /* State machine for IKEv1
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010,2013-2015 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2010,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -160,7 +160,10 @@
 #include "kernel.h"
 #endif
 
-/* state_microcode is a tuple of information parameterizing certain
+#include "pluto_stats.h"
+
+/*
+ * state_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
  * specifies what payloads are expected in this message.
  * The microcode is selected primarily based on the state.
@@ -636,6 +639,9 @@ static stf_status informational(struct msg_digest *md)
 						   n->isan_type),
 					 n->isan_type));
 
+		if (n->isan_type < v1N_ERROR_ROOF) /* known NOTIFY type ERROR */
+			pstats(ikev1_recv_notifies_e, n->isan_type);
+
 		switch (n->isan_type) {
 		case R_U_THERE:
 			if (st == NULL) {
@@ -675,6 +681,7 @@ static stf_status informational(struct msg_digest *md)
 					md->st = st = NULL;
 				}
 			}
+
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
@@ -823,7 +830,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    LEMPTY, pcim_demand_crypto);
+						    LEMPTY, pcim_demand_crypto, NULL);
 				return STF_IGNORE;
 			}
 			loglog(RC_LOG_SERIOUS,
@@ -893,6 +900,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 #define SEND_NOTIFICATION(t) { \
+		pstats(ikev1_sent_notifies_e, t); \
 		if (st != NULL) \
 			send_notification_from_state(st, from_state, t); \
 		else \
@@ -2012,14 +2020,12 @@ void process_packet_tail(struct msg_digest **mdp)
 					DBG(DBG_CONTROL, DBG_log(
 					       "ignoring informational payload %s, no corresponding state",
 					       enum_show(& ikev1_notify_names,
-							 p->payload.
-							 notification.isan_type)));
+							 p->payload.notification.isan_type)));
 				} else {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 					       enum_show(&ikev1_notify_names,
-							 p->payload.
-							 notification.isan_type),
+							 p->payload.notification.isan_type),
 					       st->st_msgid,
 					       p->payload.notification.isan_length);
 					DBG_dump_pbs(&p->pbs);
@@ -2147,6 +2153,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	passert(md != NULL);
 
 	/* handle oddball/meta results now */
+
+	/* stats fixup for STF_FAIL */
+	if (result > STF_FAIL) {
+		pstats(ike_stf, STF_FAIL);
+	} else {
+		pstats(ike_stf, result);
+	}
 
 	switch (result) {
 	case STF_SUSPEND:
@@ -2413,16 +2426,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
-			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
-				   !st->hidden_variables.st_logged_p1algos) {
+				w = RC_SUCCESS; /* log our success */
+
+			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				fmt_isakmp_sa_established(st, sadetails,
 							  sizeof(sadetails));
-			}
-
-			if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
-			    IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-				/* log our success */
-				w = RC_SUCCESS;
+				w = RC_SUCCESS; /* log our success */
 			}
 
 			/* tell whack and logs our progress */
@@ -2570,7 +2579,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * as it is.
 			 *
 			 */
-			unpend(st);
+			unpend(st, NULL);
 		}
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||

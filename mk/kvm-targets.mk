@@ -261,8 +261,6 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # Build a pool of networks from scratch
 #
 
-.PHONY: install-kvm-test-networks uninstall-kvm-test-networks
-
 # Generate install and uninstall rules for each network within the
 # pool.
 
@@ -314,7 +312,6 @@ KVM_TEST_NETWORKS = \
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
-  install-kvm-test-networks: install-kvm-network-$(1)$(2)
   .PHONY: install-kvm-network-$(1)$(2)
   install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
@@ -346,7 +343,6 @@ define uninstall-kvm-test-network
   #(info prefix=$(1) network=$(2))
 
   .PHONY: uninstall-kvm-network-$(1)$(2)
-  uninstall-kvm-test-networks: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	: uninstall-kvm-test-network prefix=$(1) network=$(2)
 	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
@@ -357,16 +353,14 @@ $(foreach prefix, $(KVM_PREFIXES), \
 		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
 
 KVM_DEFAULT_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_DEFAULT_NETWORK).xml
-.PHONY: install-kvm-default-network install-kvm-network-$(KVM_DEFAULT_NETWORK)
-install-kvm-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
+.PHONY: install-kvm-network-$(KVM_DEFAULT_NETWORK)
 install-kvm-network-$(KVM_DEFAULT_NETWORK): $(KVM_DEFAULT_NETWORK_FILE)
 $(KVM_DEFAULT_NETWORK_FILE): | testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $(KVM_BASEDIR)
 	$(call check-no-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $@.tmp
 	$(call install-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
 
-.PHONY: uninstall-kvm-default-network uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
-uninstall-kvm-default-network: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
+.PHONY: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
 uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
 	$(call uninstall-kvm-network,$(KVM_DEFAULT_NETWORK),$(KVM_DEFAULT_NETWORK_FILE))
 
@@ -477,10 +471,6 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 
-# mostly for testing
-.PHONY: install-kvm-base-domain
-install-kvm-base-domain: | $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
@@ -516,9 +506,6 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
 install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
-# mostly for testing
-.PHONY: install-kvm-clone-domain
-install-kvm-clone-domain: $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 
 # Install the $(KVM_TEST_DOMAINS) in $(KVM_CLONEDIR)
 #
@@ -569,9 +556,6 @@ endef
 $(foreach prefix, $(KVM_PREFIXES), \
 	$(foreach host,$(KVM_TEST_HOSTS), \
 		$(eval $(call install-kvm-test-domain,$(call strip-prefix,$(prefix)),$(host)))))
-
-.PHONY: install-kvm-test-domains
-install-kvm-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
 
 
 #
@@ -642,9 +626,10 @@ kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$
 #
 # Get rid of (almost) everything
 #
+# XXX: don't depend on targets that trigger a KVM build.
 
 .PHONY: kvm-purge
-kvm-purge: kvm-clean kvm-test-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
+kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge kvm-uninstall-default-network
@@ -718,20 +703,13 @@ kvm-install: $(addprefix kvm-install-,$(KVM_INSTALL_DOMAINS))
 # that they still get created.
 kvm-install: | $(foreach domain, $(filter-out $(KVM_INSTALL_DOMAINS),$(KVM_TEST_DOMAINS)),$(KVM_DOMAIN_$(domain)_FILES))
 
+
 # kvm-uninstall et.al.
 #
-# these are simple and brutal
+# this is simple and brutal
 
 .PHONY: kvm-uninstall
-kvm-uninstall: uninstall-kvm-test-domains uninstall-kvm-test-networks
-
-.PHONY: kvm-uninstall-clones
-kvm-uninstall-clones: uninstall-kvm-clone-domain uninstall-kvm-test-networks
-
-# This does not uninstall-kvm-default-network as that is shared between
-# base domains.
-.PHONY: kvm-uninstall-base
-kvm-uninstall-base: uninstall-kvm-base-domain uninstall-kvm-test-networks
+kvm-uninstall: kvm-uninstall-clone-domain kvm-uninstall-test-networks
 
 
 #
@@ -754,17 +732,6 @@ $(foreach host, $(KVM_TEST_HOSTS), \
 $(eval $(call kvmsh,build,$(KVM_BUILD_DOMAIN)))
 $(eval $(call kvmsh,clone,$(KVM_CLONE_DOMAIN)))
 $(eval $(call kvmsh,base,$(KVM_BASE_DOMAIN)))
-
-
-.PHONY: uninstall-kvm-base-domain
-uninstall-kvm-base-domain: $(addprefix uninstall-kvm-domain-,$(KVM_DOMAINS))
-
-.PHONY: uninstall-kvm-clone-domain
-uninstall-kvm-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS) $(KVM_CLONE_DOMAIN))
-
-.PHONY: uninstall-kvm-test-domains
-uninstall-kvm-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
-
 
 # Generate rules to shut down all the domains (kvm-shutdown) and
 # individual domains (kvm-shutdown-DOMAIN).

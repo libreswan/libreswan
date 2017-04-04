@@ -29,14 +29,11 @@
 #include "ike_alg.h"
 #include "ike_alg_nss_cbc.h"
 
-void ike_alg_nss_cbc(const struct encrypt_desc *alg,
-		     u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-		     u_int8_t *iv, bool enc)
+static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
+			    u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
+			    u_int8_t *iv, bool enc)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
-
-	passert(alg->common.nss_mechanism != CKM_VENDOR_DEFINED);
-	passert(alg->common.nss_mechanism != 0);
 
 	if (symkey == NULL) {
 		PASSERT_FAIL("%s - NSS derived enc key in NULL",
@@ -106,3 +103,14 @@ void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 		SECITEM_FreeItem(secparam, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - exit", alg->common.name));
 }
+
+static void nss_cbc_check(const struct encrypt_desc *encrypt)
+{
+	const struct ike_alg *alg = &encrypt->common;
+	passert_ike_alg(alg, encrypt->common.nss_mechanism > 0);
+}
+
+const struct encrypt_ops ike_alg_nss_cbc_encrypt_ops = {
+	.check = nss_cbc_check,
+	.do_crypt = ike_alg_nss_cbc,
+};

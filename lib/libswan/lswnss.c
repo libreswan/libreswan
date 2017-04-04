@@ -393,6 +393,7 @@ const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_SHA512_HMAC);
 
 		CASE(CKM_DH_PKCS_DERIVE);
+		CASE(CKM_ECDH1_DERIVE);
 
 		CASE(CKM_VENDOR_DEFINED);
 

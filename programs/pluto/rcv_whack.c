@@ -1,13 +1,17 @@
 
-/* whack communicating routines
+/*
+ * hack communicating routines
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2001,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2014-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -67,6 +71,7 @@
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
+#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h" /* for pluto_seccomp */
 
@@ -74,6 +79,8 @@
 #include "ike_alg.h"
 
 #include "pluto_sd.h"
+
+#include "pluto_stats.h"
 
 /* bits loading keys from asynchronous DNS */
 
@@ -416,7 +423,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	if (m->whack_reread & REREAD_CRLS)
 		loglog(RC_LOG_SERIOUS, "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
 
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_reread & REREAD_FETCH)
 			wake_fetch_thread("whack command");
 #endif
@@ -432,7 +439,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 	if (m->whack_list & LIST_CRLS) {
 		list_crls();
-#if defined(LIBCURL) || defined(LDAP_VER)
+#if defined(LIBCURL) || defined(LIBLDAP)
 		list_crl_fetch_requests(m->whack_utc);
 #endif
 	}
@@ -496,12 +503,28 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --initiate");
 		} else {
+			ip_address testip;
+			const char *oops;
+			bool pass_remote = FALSE;
+
+			if (m->remote_host != NULL) {
+				oops = ttoaddr(m->remote_host, 0, AF_UNSPEC, &testip);
+
+				if (oops != NULL) {
+					whack_log(RC_NOPEERIP, "remote host IP address '%s' is invalid: %s",
+						m->remote_host, oops);
+				} else {
+					pass_remote = TRUE;
+				}
+			}
 			initiate_connection(m->name,
-					    m->whack_async ?
-					      NULL_FD :
-					      dup_any(whackfd),
-					    m->debugging,
-					    pcim_demand_crypto);
+			    m->whack_async ?
+			      NULL_FD :
+			      dup_any(whackfd),
+			    m->debugging,
+			    pcim_demand_crypto,
+			    pass_remote ? m->remote_host : NULL
+				);
 		}
 	}
 
@@ -531,6 +554,9 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 	if (m->whack_global_status)
 		show_global_status();
+
+	if (m->whack_clear_stats)
+		clear_pluto_stats();
 
 	if (m->whack_traffic_status)
 		show_traffic_status();

@@ -1,6 +1,5 @@
 
-PORTINCLUDE=
-PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/netbsd/include
+PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/netbsd/include
 
 PORTLASTINCLUDE=
 PORTLASTINCLUDE+=-isystem /usr/local/include

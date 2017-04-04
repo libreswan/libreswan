@@ -16,7 +16,7 @@ MANPAGES += ipsec_version.5
 MANPAGES += ipsec_trap_count.5
 MANPAGES += ipsec_trap_sendcount.5
 
-LIBS=${FREESWANLIB}
+LIBS = ${FREESWANLIB}
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

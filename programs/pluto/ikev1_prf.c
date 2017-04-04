@@ -161,8 +161,8 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 		keymat = crypt_prf_final_symkey(&prf);
 	}
 
-	/* make a copy to keep things easy */
-	PK11SymKey *old_k = key_from_symkey_bytes(keymat, 0, sizeof_symkey(keymat));
+	/* make a reference to keep things easy */
+	PK11SymKey *old_k = reference_symkey(__func__, "old_k#1", keymat);
 	while (sizeof_symkey(keymat) < required_keymat) {
 		/* Kn = prf(skeyid_e, Kn-1) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("Kn", DBG_CRYPT,
@@ -170,16 +170,16 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 							      "SKEYID_e", skeyid_e);
 		crypt_prf_update_symkey("old_k", prf, old_k);
 		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(prf_desc->hasher, &keymat, new_k);
-		free_any_symkey("old_k#N", &old_k);
+		append_symkey_symkey(&keymat, new_k);
+		release_symkey(__func__, "old_k#N", &old_k);
 		old_k = new_k;
 	}
-	free_any_symkey("old_k#final", &old_k);
+	release_symkey(__func__, "old_k#final", &old_k);
 	PK11SymKey *cryptkey = symkey_from_symkey_bytes("cryptkey", DBG_CRYPT,
 							&encrypter->common,
 							0, required_keymat,
 							keymat);
-	free_any_symkey("keymat", &keymat);
+	release_symkey(__func__, "keymat", &keymat);
 	return cryptkey;
 }
 
@@ -311,8 +311,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	const char *story;	/* we don't use the value set in calc_dh_shared */
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
 	if (skr->shared != NULL) {
 		chunk_t new_iv = empty_chunk;

@@ -1,4 +1,6 @@
-/* IPsec IKE Dead Peer Detection code.
+/*
+ * IPsec IKE Dead Peer Detection / Liveness code.
+ *
  * Copyright (C) 2003 Ken Bantoft        <ken@xelerance.com>
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
@@ -6,9 +8,10 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Andrey Alexandrenko <aalexandrenko@telco-tech.de>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2015 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2014-2016 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,7 +62,10 @@
 
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-/**
+
+#include "pluto_stats.h"
+
+/*
  * Initialize RFC 3706 Dead Peer Detection
  *
  * @param st An initialized state structure
@@ -330,6 +336,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	st->st_last_dpd = nw;
 	p1st->st_last_dpd = nw;
 	p1st->st_dpd_expectseqno = p1st->st_dpd_seqno++;
+	pstats_ike_dpd_sent++;
 }
 
 static void p1_dpd_outI1(struct state *p1st)
@@ -465,6 +472,8 @@ stf_status dpd_inI_outR(struct state *p1st,
 	/* update the time stamp */
 	p1st->st_last_dpd = nw;
 
+	pstats_ike_dpd_replied++;
+
 	/*
 	 * since there was activity, kill any EVENT_DPD_TIMEOUT that might
 	 * be waiting.
@@ -542,6 +551,8 @@ stf_status dpd_inR(struct state *p1st,
 		       seqno);
 		/* do not update time stamp, so we'll send a new one sooner */
 	}
+
+	pstats_ike_dpd_recv++;
 
 	/*
 	 * since there was activity, kill any EVENT_DPD_TIMEOUT that might
