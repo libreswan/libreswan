@@ -109,7 +109,6 @@ make %{?_smp_mflags} \
     USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
     USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
-    WERROR_CFLAGS= \
 %endif
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
     INC_USRLOCAL=%{_prefix} \

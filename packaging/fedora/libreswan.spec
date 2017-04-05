@@ -135,7 +135,6 @@ make %{?_smp_mflags} \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
-  WERROR_CFLAGS="" \
   NSS_REQ_AVA_COPY=false \
   programs
 FS=$(pwd)
@@ -176,7 +175,6 @@ make \
 %endif
   USE_DNSSEC="%{USE_DNSSEC}" \
   USE_SECCOMP="%{USE_SECCOMP}" \
-  WERROR_CFLAGS="" \
   NSS_REQ_AVA_COPY=false \
   install
 FS=$(pwd)
