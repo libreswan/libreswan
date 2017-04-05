@@ -2390,7 +2390,6 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 {
 	stf_status status;
 	chunk_t chunk;
-	struct ikev2_payloads_summary summary;
 
 	if (md->chain[ISAKMP_NEXT_v2SKF]) {
 		status = ikev2_reassemble_fragments(md, &chunk);
@@ -2406,10 +2405,9 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	}
 
 	if (status != STF_OK) {
-		summary.status = status;
-		summary.repeated = LEMPTY;
-		summary.seen = LEMPTY;
-		return summary;
+		return (struct ikev2_payloads_summary) {
+			.status = status,
+		};
 	}
 
 	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
@@ -2425,7 +2423,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
 		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 
-	summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
+	struct ikev2_payloads_summary summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
 	if (summary.status != STF_OK) {
 		return summary;
 	}
