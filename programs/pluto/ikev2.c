@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -118,15 +118,15 @@ enum smf2_flags {
 	SMF2_MSG_R_CLEAR = LELEM(6),
 
 	/*
-	 * Should the SK (secured-by-key) payload be unpacked and
-	 * verified?
+	 * Should the SK (secured-by-key) decryption and verification
+	 * be skipped?
 	 *
-	 * The original responder, in R2 state isn't able to decrypt
-	 * incoming messages.
-	 *
-	 * Some state transition processes do their own decryption.
+	 * The original responder, when it receives the encrypted AUTH
+	 * payload, isn't yet ready to decrypt it - receiving the
+	 * packet is what triggers the DH calculation needed before
+	 * encryption can occure.
 	 */
-	SMF2_UNPACK_SK = LELEM(7),
+	SMF2_SKIP_UNPACK_SK = LELEM(7),
 };
 
 /*
@@ -368,7 +368,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_SKIP_UNPACK_SK,
 	  .expected_payloads = { .clear = { .required = P(SK), },
 				 .encrypted = { .required = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 						.optional = P(CERT) | P(CERTREQ) | P(IDr) | P(CP), }, },
@@ -1225,6 +1225,13 @@ void process_v2_packet(struct msg_digest **mdp)
 			if ((clear_payload_summary.seen & P(SKF))
 			    && !ikev2_collect_fragment(md, st)) {
 				return;
+			}
+			/*
+			 * If the SK payload can't be decrypted assume
+			 * a match.
+			 */
+			if (svm->flags & SMF2_SKIP_UNPACK_SK) {
+				break;
 			}
 			encrypted_payload_summary.status = STF_OK;
 		}
