@@ -644,13 +644,24 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
 						  const struct ikev2_expected_payloads *payloads)
 {
+	/*
+	 * Convert SKF onto SK for the comparison (but only when it is
+	 * on its own).
+	 */
+	lset_t seen = summary.seen;
+	if ((seen & (P(SKF)|P(SK))) == P(SKF)) {
+		seen &= ~P(SKF);
+		seen |= P(SK);
+	}
+
 	lset_t req_payloads = payloads->required;
 	lset_t opt_payloads = payloads->optional;
+
 	struct ikev2_payload_errors errors = {
 		.status = STF_OK,
 		.bad_repeat = summary.repeated & ~repeatable_payloads,
-		.missing = req_payloads & ~summary.seen,
-		.unexpected = summary.seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
+		.missing = req_payloads & ~seen,
+		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
 	};
 
 	if ((errors.bad_repeat | errors.missing | errors.unexpected) != LEMPTY) {
@@ -1159,18 +1170,14 @@ void process_v2_packet(struct msg_digest **mdp)
 				complete_v2_state_transition(mdp, clear_payload_summary.status);
 				return;
 			}
-
-			if (clear_payload_summary.seen &
-			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
-				clear_payload_summary.seen ^=
-					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
-					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
-			if (clear_payload_summary.repeated &
-			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
-				clear_payload_summary.repeated ^=
-					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
-					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
 		}
+
+		/*
+		 * XXX: Should some packets be dropped immediately
+		 * (for instance both SKF and SK, or a .bad_repeat)?
+		 * As things stand, they probably result in a NOTIFY
+		 * when there shouldn't be one.
+		 */
 		struct ikev2_payload_errors clear_payload_errors
 			= ikev2_verify_payloads(clear_payload_summary,
 						&svm->expected_payloads.clear);
