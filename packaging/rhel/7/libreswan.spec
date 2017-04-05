@@ -49,7 +49,7 @@ BuildRequires: nss-devel >= 3.16.2, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel
+BuildRequires: unbound-devel >= 1.5.4 ldns-devel
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
