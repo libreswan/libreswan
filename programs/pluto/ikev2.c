@@ -713,6 +713,11 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
 		return FALSE;
 	}
+	if (!(st->st_seen_fragvid)) {
+		DBG(DBG_CONTROL, DBG_log(
+			    "discarding IKE encrypted fragment - remote never proposed fragmentation"));
+		return FALSE;
+	}
 
 	DBG(DBG_CONTROL, DBG_log(
 		"received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
