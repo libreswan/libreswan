@@ -1122,10 +1122,10 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
-	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
+	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_ROOF };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 	bool decrypted = FALSE;
-	struct ikev2_payloads_summary enc_payload_summary = { .status = STF_IGNORE };
+	struct ikev2_payloads_summary enc_payload_summary = { .status = STF_ROOF };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
@@ -1152,7 +1152,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * will accept the packet, unpack the clear payload
 		 * and continue matching.
 		 */
-		if (clear_payload_summary.status != STF_OK) {
+		if (clear_payload_summary.status == STF_ROOF) {
 			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
 			clear_payload_summary = ikev2_decode_payloads(md, &md->message_pbs,
 								      md->hdr.isa_np);

@@ -227,8 +227,13 @@ enum seccomp_mode {
 	SECCOMP_DISABLED
 };
 
-/* status for state-transition-function
- * Note: STF_FAIL + notification_t means fail with that notification
+/*
+ * status for state-transition-function
+ *
+ * Note: STF_FAIL + <notification> (<notification> is either
+ * notification_t or v2_notification_t) means fail with that
+ * notification.  Since <notification> is a uint16_t, it is limited to
+ * 65535 possible values (0 isn't valid).
  */
 
 typedef enum {
@@ -245,6 +250,7 @@ typedef enum {
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
 				 * values STF_FAIL + x are notifications.
 				 */
+	STF_ROOF = STF_FAIL + 65536, /* see RFC and above */
 } stf_status;
 
 /* Misc. stuff */
