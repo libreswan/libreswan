@@ -1174,13 +1174,13 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 		struct ikev2_payload_errors clear_payload_errors
 			= ikev2_verify_payloads(clear_payload_summary, svm, FALSE);
-
 		if (clear_payload_errors.status != STF_OK) {
 			/* Save this failure for later logging. */
 			clear_payload_status = clear_payload_errors;
 			continue;
-		} else if (clear_payload_errors.status == STF_OK &&
-				ix == ISAKMP_v2_CREATE_CHILD_SA) {
+		}
+
+		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 
 			md->st = st; /* set to NULL on failure? */
 
