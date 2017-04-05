@@ -231,8 +231,7 @@ enum smf2_flags {
 
 /* Short forms for building payload type sets */
 
-#define PT(n) ISAKMP_NEXT_v2 ## n
-#define P(N) LELEM(PINDEX(PT(N)))
+#define P(N) LELEM(PINDEX(ISAKMP_NEXT_v2##N))
 
 /* From RFC 5996:
  *
@@ -517,9 +516,6 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "roof",
 	  .state      = STATE_IKEv2_ROOF }
 };
-
-#undef P
-#undef PT
 
 /*
  * split an incoming message into payloads
