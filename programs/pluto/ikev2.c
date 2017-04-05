@@ -1218,8 +1218,20 @@ void process_v2_packet(struct msg_digest **mdp)
 				/* no match */
 				continue;
 			}
-
 		} /* else { go ahead } */
+
+		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
+			/*
+			 * XXX: Can this be moved to outside of the
+			 * lookup loop?  (It was originally burried in
+			 * a function checking encrypted payloads.
+			 */
+			struct state *pst = IS_CHILD_SA(md->st) ?
+				state_with_serialno(md->st->st_clonedfrom) : md->st;
+			/* going to switch to child st. before that update parent */
+			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+				update_ike_endpoints(pst, md);
+		}
 
 		/* must be the right state machine entry */
 		break;

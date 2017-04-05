@@ -2372,15 +2372,6 @@ stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
 		return errors.status;
 	}
 
-	{
-		struct state *pst = IS_CHILD_SA(md->st) ?
-			state_with_serialno(md->st->st_clonedfrom) : md->st;
-
-		/* going to switch to child st. before that update parent */
-		if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-			update_ike_endpoints(pst, md);
-	}
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu match encrypted payloads to svm %s",
 				md->st->st_serialno, svm->story));
 
@@ -2431,6 +2422,13 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 
 	if (verify_pl) {
 		summary.status = ikev2_verify_enc_payloads(md, summary, md->svm);
+		if (summary.status == STF_OK) {
+			struct state *pst = IS_CHILD_SA(md->st) ?
+				state_with_serialno(md->st->st_clonedfrom) : md->st;
+			/* going to switch to child st. before that update parent */
+			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+				update_ike_endpoints(pst, md);
+		}
 	}
 	return summary;
 }
