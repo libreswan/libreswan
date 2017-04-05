@@ -86,6 +86,10 @@ ifeq ($(NSS_REQ_AVA_COPY),true)
 OBJS += nss_copies.o
 endif
 
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+endif
+
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif

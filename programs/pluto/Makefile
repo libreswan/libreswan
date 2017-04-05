@@ -123,6 +123,10 @@ LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+endif
+
 # XXX: hack until ike_alg gets a library
 OBJS += ike_info.o
 
