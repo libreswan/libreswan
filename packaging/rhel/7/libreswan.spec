@@ -1,17 +1,21 @@
-%global USE_FIPSCHECK 1
-%global USE_LIBCAP_NG 1
-%global USE_LABELED_IPSEC 1
-%global USE_CRL_FETCHING 1
-%global USE_DNSSEC 1
-%global USE_NM 1
-%global USE_LINUX_AUDIT 1
-%global USE_SECCOMP 0
 
+# These are rpm macros and are 0 or 1
+%global crl_fetching 1
 %global _hardened_build 1
-
+%global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 %global cavstests 1
+
+# These are libreswan/make macros and are false or true
+%global USE_FIPSCHECK true
+%global USE_LIBCAP_NG true
+%global USE_LABELED_IPSEC true
+%global USE_DNSSEC true
+%global USE_NM true
+%global USE_LINUX_AUDIT true
+# not production ready yet
+%global USE_SECCOMP false
 
 #global prever rc1
 
@@ -65,7 +69,7 @@ BuildRequires: systemd-devel
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif
-%if %{USE_CRL_FETCHING}
+%if %{crl_fetching}
 BuildRequires: openldap-devel curl-devel
 %endif
 %if %{buildefence}
@@ -108,23 +112,25 @@ make %{?_smp_mflags} \
     WERROR_CFLAGS= \
 %endif
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
     INITSYSTEM=systemd \
-    USE_DYNAMICDNS="true" \
     USE_NM=%{USE_NM} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK="%{USE_FIPSCHECK}" \
     USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
     USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
-%if %{USE_CRL_FETCHING}
+%if %{crl_fetching}
     USE_LDAP=true \
     USE_LIBCURL=true \
+%else
+    USE_LDAP=false \
+    USE_LIBCURL=false \
 %endif
     USE_DNSSEC="%{USE_DNSSEC}" \
     USE_SECCOMP="%{USE_SECCOMP}" \
-    INC_USRLOCAL=%{_prefix} \
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    MANTREE=%{_mandir} \
-    INC_RCDEFAULT=%{_initrddir} \
     programs
 FS=$(pwd)
 
@@ -147,6 +153,20 @@ make \
     INC_RCDEFAULT=%{_initrddir} \
     INSTMANFLAGS="-m 644" \
     INITSYSTEM=systemd \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
+    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+%if %{crl_fetching}
+    USE_LDAP=true \
+    USE_LIBCURL=true \
+%else
+    USE_LDAP=false \
+    USE_LIBCURL=false \
+%endif
+    USE_DNSSEC="%{USE_DNSSEC}" \
+    USE_SECCOMP="%{USE_SECCOMP}" \
     install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
