@@ -3,8 +3,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
- *
- *
+ * Copyright (C) 2017 Andrew Cagney
  */
 
 extern void process_v2_packet(struct msg_digest **mdp);
@@ -77,15 +76,6 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		  return STF_FAIL + res; \
 	} \
 }
-
-/* a function that returns STF_STATUS on failure */
-#define RETURN_STF_FAILURE_STATUS(f) { \
-	stf_status res = (f); \
-	if (res != STF_OK) { \
-		  return res; \
-	} \
-}
-
 
 struct ikev2_proposal;
 struct ikev2_proposals;

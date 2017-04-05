@@ -4649,10 +4649,12 @@ stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	RETURN_STF_FAILURE_STATUS(accept_ike_sa_rekey_req(md, pst,st));
+	stf_status res = accept_ike_sa_rekey_req(md, pst,st);
+	if (res != STF_OK) {
+		  return res;
+	}
 
-	stf_status e = ikev2_crypto_start(md, st);
-	return e;
+	return ikev2_crypto_start(md, st);
 }
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md)
