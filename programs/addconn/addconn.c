@@ -56,6 +56,8 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
 
+#include "dnssec.h"
+
 #ifdef HAVE_SECCOMP
 # include <seccomp.h>
 # define EXIT_SECCOMP_FAIL 8
@@ -63,6 +65,7 @@
 
 char *progname;
 static int verbose = 0;
+struct ub_ctx *dnsctx = NULL;
 
 /* Buffer size for netlink query (~100 bytes) and replies.
  * If DST is specified, reply will be ~100 bytes.
@@ -326,10 +329,18 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
-			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
+			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
-			if (er != NULL)
-				return -1;
+			if (er != NULL) {
+				/* not numeric, so resolve it */
+				if (!unbound_resolve(dnsctx, peer->strings[KSCF_IP],
+					0, AF_INET, &peer->addr)) {
+						if (!unbound_resolve(dnsctx, peer->strings[KSCF_IP],
+							0, AF_INET6, &peer->addr)) {
+								return -1;
+						}
+				}
+			}
 		}
 
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
@@ -521,6 +532,8 @@ static int resolve_defaultroute_one(struct starter_end *host,
 static
 void resolve_defaultroute(struct starter_conn *conn)
 {
+	dnsctx = unbound_init();
+
 	if (resolve_defaultroute_one(&conn->left, &conn->right) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right);
 	if (resolve_defaultroute_one(&conn->right, &conn->left) == 1)
@@ -1109,5 +1122,6 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
+	ub_ctx_delete(dnsctx);
 	exit(exit_status);
 }
