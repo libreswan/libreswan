@@ -701,9 +701,8 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 	}
 }
 
-static bool ikev2_check_fragment(struct msg_digest *md)
+static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 {
-	struct state *st = md->st;
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	struct ikev2_frag *i;
 
@@ -783,15 +782,14 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 	return TRUE;
 }
 
-static bool ikev2_collect_fragment(struct msg_digest *md)
+static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 {
-	struct state *st = md->st;
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 	struct ikev2_frag *frag, **i;
 	int num_frags;
 
-	if (!ikev2_check_fragment(md))
+	if (!ikev2_check_fragment(md, st))
 		return FALSE;
 
 	frag = alloc_thing(struct ikev2_frag, "ikev2_frag");
@@ -1141,6 +1139,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 	bool decrypted = FALSE;
 	struct ikev2_payloads_summary enc_payload_summary = { .status = STF_ROOF };
+	struct ikev2_payloads_summary encrypted_payload_summary = { .status = STF_ROOF };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
@@ -1202,15 +1201,39 @@ void process_v2_packet(struct msg_digest **mdp)
 			break;
 		}
 
+		/*
+		 * SK payloads require state.
+		 */
+		passert(st != NULL);
+
+		/*
+		 * Since the encrypted payload appears plausable, deal
+		 * with fragmentation.
+		 */
+		if (encrypted_payload_summary.status == STF_ROOF) {
+			/*
+			 * Deal with fragmentation.  The function
+			 * returns FALSE both when there are more
+			 * fragments and when the fragment is corrupt.
+			 * Either way stop processing.
+			 *
+			 * XXX: This should also check that the
+			 * fragment can be decrypted; however that
+			 * isn't always possible since the fragment
+			 * may be the trigger for DH.
+			 */
+			if ((clear_payload_summary.seen & P(SKF))
+			    && !ikev2_collect_fragment(md, st)) {
+				return;
+			}
+			encrypted_payload_summary.status = STF_OK;
+		}
+
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 
 			md->st = st; /* set to NULL on failure? */
 
 			if (!decrypted) {
-				if (md->chain[ISAKMP_NEXT_v2SKF] != NULL &&
-						!ikev2_collect_fragment(md))
-					return;
-
 				enc_payload_summary = ikev2_decrypt_msg(md, FALSE);
 				if (enc_payload_summary.status != STF_OK) {
 					md->st = NULL;
@@ -1304,11 +1327,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	md->st = st;
 
 	if (state_busy(st))
-		return;
-
-	if ( ix != ISAKMP_v2_CREATE_CHILD_SA &&
-			md->chain[ISAKMP_NEXT_v2SKF] != NULL &&
-			!ikev2_collect_fragment(md))
 		return;
 
 	DBG(DBG_CONTROL,
