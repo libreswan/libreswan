@@ -14,8 +14,6 @@ tags
 modobj
 modobj24
 modobj26
-testing/*/OUTPUT/*
-testing/*/BACKUP/*
 testing/*/*/OUTPUT*
 testing/x509/*/*
 testing/x509/index.*
@@ -24,7 +22,9 @@ testing/x509/serial*
 testing/x509/nss-pw
 osxApp/build
 Makefile.inc.local
-kvmsetup.sh
 .ycm_extra_conf.py
 cscope.out
-kvm-checksum
+testing/baseconfigs/all/etc/bind/signed/*.signed
+testing/baseconfigs/all/etc/bind/keys/*.key
+testing/baseconfigs/all/etc/bind/keys/*.private
+testing/baseconfigs/all/etc/bind/dsset/dsset-*
