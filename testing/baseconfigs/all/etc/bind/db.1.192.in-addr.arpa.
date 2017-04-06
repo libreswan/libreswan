@@ -1,4 +1,3 @@
-;
 $TTL	604800
 @	IN	SOA	1.192.in-addr.arpa. root.testing.libreswan.org. (
 			2015030301	; Serial
@@ -7,9 +6,7 @@ $TTL	604800
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
 	IN	NS	nic.testing.libreswan.org.
-; include DNSSEC keys
 
-; and my subdomains and keys
-2		IN	NS	nic.testing.libreswan.org.
-3		IN	NS	nic.testing.libreswan.org.
-4		IN	NS	nic.testing.libreswan.org.
+2	IN	NS	nic.testing.libreswan.org.
+3	IN	NS	nic.testing.libreswan.org.
+4	IN	NS	nic.testing.libreswan.org.

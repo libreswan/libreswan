@@ -1,17 +1,13 @@
-;
-; BIND reverse data file for east subnet - 192.0.2.0/24
-;
 $TTL	604800
 @	IN	SOA	2.0.192.in-addr.arpa. root.testing.libreswan.org. (
-			2015030301	; Serial
+			2017010101	; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-	IN	NS	beet.testing.libreswan.org.
-1	IN	PTR	sunrise.testing.libreswan.org.
-2	IN	PTR	sunrise-oe.testing.libreswan.org.
-2       IN      TXT     "X-IPsec-Server(10)=192.1.2.23 " "AQN3cn11FrBVbZhWGwRnFDAf8O9FHBmBIyIvmvt0kfkI2UGDDq8" "k+vYgRkwBZDviLd1p3SkL30LzuV0rqG3vBriqaAUUGoCQ0UMgsuX+k01bROLsqGB1QNXYvYiPLsnoDhKd2Gx9MUMHEjwwEZeyskMT5k91jvoAZvdEkg+9h7urbJ+kRQ4e+IHkMUrr" "eDGwGVptV/hYQVCD54RZep6xp5ymaKRCDgMpzWvlzO80fP7JDjSZf9LI/MMu6c+qwXIKnWoNha75IhFyLWniVczxK2RdhmMhLsi0kC0CoOwWDSIEOb+5zbECDjjud+SF5tT8qRCWn" "SomX8jtbCdZ50WraQlL"
+	IN	NS	nic.testing.libreswan.org.
+
 254	IN	PTR	east-private.testing.libreswan.org.
-254     IN      TXT     "X-IPsec-Server(10)=192.1.2.254 " "AQN3cn11FrBVbZhWGwRnFDAf8O9FHBmBIyIvmvt0kfkI2UGDDq8" "k+vYgRkwBZDviLd1p3SkL30LzuV0rqG3vBriqaAUUGoCQ0UMgsuX+k01bROLsqGB1QNXYvYiPLsnoDhKd2Gx9MUMHEjwwEZeyskMT5k91jvoAZvdEkg+9h7urbJ+kRQ4e+IHkMUrr" "eDGwGVptV/hYQVCD54RZep6xp5ymaKRCDgMpzWvlzO80fP7JDjSZf9LI/MMu6c+qwXIKnWoNha75IhFyLWniVczxK2RdhmMhLsi0kC0CoOwWDSIEOb+5zbECDjjud+SF5tT8qRCWn" "SomX8jtbCdZ50WraQlL"
+254	IN	IPSECKEY 10 0 2 . AQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+
 
