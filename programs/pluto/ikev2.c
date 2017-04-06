@@ -1192,6 +1192,16 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 		}
 
+		/*
+		 * If there is no SK (or SKF) payload then checking is
+		 * complete and things have matched.
+		 *
+		 * (.seen&(P(SK)|P(SKF))!=0 is equivalent.
+		 */
+		if (!(svm->expected_payloads.clear.required & P(SK))) {
+			break;
+		}
+
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 
 			md->st = st; /* set to NULL on failure? */
