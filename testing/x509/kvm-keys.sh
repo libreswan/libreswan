@@ -51,3 +51,7 @@ mkdir -p ${dest}
 kvmsh . "cp /tmp/x509/kvm-keys.tar ${dest}"
 ( cd ${dest} && tar xpf kvm-keys.tar )
 rm ${dest}/kvm-keys.tar
+
+# Also regenerate the DNSSEC keys
+${libreswandir}/testing/baseconfigs/all/bind/generate-dnssec.sh
+
