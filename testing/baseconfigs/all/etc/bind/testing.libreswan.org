@@ -5,7 +5,8 @@ $TTL	604800
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-		IN	NS	nic.root-servers.net.
+	IN	NS	nic.root-servers.net.
+
 ;
 nic.testing.libreswan.org.		IN	A	192.1.2.254
 ;
