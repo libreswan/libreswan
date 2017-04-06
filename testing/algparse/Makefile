@@ -12,21 +12,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#
-# For the moment build things by pulling in chunks of pluto.  What, if
-# anything, should be moved to libswan or another library.
-#
-
-VPATH += $(top_srcdir)/programs/pluto
-CFLAGS += -I$(top_srcdir)/lib/libcrypto
-
-OBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
-
-OBJS += ike_info.o
-OBJS += crypt_symkey.o
-OBJS += crypt_hash.o
-OBJS += test_buffer.o
-
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
@@ -39,6 +24,21 @@ OBJS += $(LSWLOGLIBS)
 LDFLAGS += $(LIBSERPENT)
 LDFLAGS += $(LIBTWOFISH)
 LDFLAGS += $(NSS_LDFLAGS)
+
+#
+# XXX: For the moment build things by pulling in chunks of pluto.
+# What, if anything, should be moved to libswan or another library?
+#
+PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
+PLUTOOBJS += ike_info.o
+PLUTOOBJS += crypt_symkey.o
+PLUTOOBJS += crypt_hash.o
+PLUTOOBJS += test_buffer.o
+OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
+# $(PROGRAM): pluto-base
+# .PHONY: pluto-base
+# pluto-base:
+#	$(MAKE) -C $(top_srcdir)/programs/pluto base
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
