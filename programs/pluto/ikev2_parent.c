@@ -2365,7 +2365,8 @@ stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
 {
 	const struct state_v2_microcode *s = svm == NULL ? md->svm : svm;
 
-	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary, s, TRUE);
+	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary,
+								   &s->expected_payloads.encrypted);
 	if (errors.status != STF_OK) {
 		ikev2_log_payload_errors(errors, md->st);
 		return errors.status;

@@ -263,15 +263,27 @@ struct ikev2_payload_errors {
 	lset_t missing;
 	lset_t unexpected;
 };
+
+struct ikev2_expected_payloads {
+	/*
+	 * required payloads: one of each type must be present
+	 */
+	lset_t required;
+	/*
+	 * optional payloads: up to one of each type can be present
+	 */
+	lset_t optional;
+};
+
 struct state_v2_microcode {
 	const char *const story;
 	enum state_kind state, next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;
-	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
+	struct {
+		struct ikev2_expected_payloads clear;
+		struct ikev2_expected_payloads encrypted;
+	} expected_payloads;
 	enum event_type timeout_event;
 	state_transition_fn *processor;
 	crypto_transition_fn *crypto_end;
@@ -281,7 +293,7 @@ void ikev2_copy_cookie_from_sa(struct state *st,
 		                struct ikev2_proposal *accepted_ike_proposal);
 
 struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
-						  const struct state_v2_microcode *svm, bool enc);
+						  const struct ikev2_expected_payloads *expected);
 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
 			      struct state *st);
