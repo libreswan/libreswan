@@ -254,7 +254,12 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_DOMAIN_$(KV
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
 .PHONY: $(KVM_KEYS_CLEAN_TARGETS)
 $(KVM_KEYS_CLEAN_TARGETS):
-	rm -rf testing/x509/*/ testing/x509/nss-pw
+	rm -rf testing/x509/*/
+	rm -f testing/x509/nss-pw
+	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
+	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
+	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
+	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
 
 
 #
