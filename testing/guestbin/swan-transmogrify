@@ -90,7 +90,13 @@ shutil.copyfile(resolv, "/etc/resolv.conf")
 if not os.path.isdir("/etc/bind"):
     os.mkdir("/etc/bind")
 output += "\n" + \
-    subprocess.getoutput("cp /testing/baseconfigs/all/etc/bind/* /etc/bind/")
+    subprocess.getoutput("cp -a /testing/baseconfigs/all/etc/bind/* /etc/bind/")
+
+if hostname == "nic":
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/unbound /etc/")
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/nsd /etc/")
 
 if not os.path.isdir("/etc/ssh"):
     os.makedirs("/etc/ssh", 0o755)
@@ -175,6 +181,14 @@ for dbfile in glob.glob("/etc/ipsec.d/*.db"):
 # SElinux fixup
 if GUESTOS == "redhat":
     output += "\n" + subprocess.getoutput("restorecon -R /etc/")
+
+# selinux does not like our /testing include files
+if hostname == "nic":
+    output += "\n" + subprocess.getoutput("setenforce 0")
+    output += "\n" + \
+        subprocess.getoutput("service nsd start")
+    output += "\n" + \
+        subprocess.getoutput("service unbound start")
 
 if len(sys.argv) > 1:
     print(output.strip())
