@@ -3,6 +3,8 @@
 DIR=$(dirname $0)
 pushd $DIR
 
+mkdir -p dsset signed
+
 rm -f keys/K* signed/*.signed dsset/dsset*
 
 for zone in *arpa *libreswan.org;
