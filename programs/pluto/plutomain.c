@@ -118,6 +118,9 @@ static const struct lsw_conf_options *oco;
 static char *coredir;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
+static bool do_dnssec = TRUE;
+static char *pluto_dnssec_rootfile = DEFAULT_DNSSEC_ROOTKEY_FILE;
+static char *pluto_dnssec_trusted = NULL;
 
 extern bool crl_strict;
 extern bool ocsp_strict;
@@ -147,6 +150,8 @@ static void free_pluto_main(void)
 	pfreeany(base_perpeer_logdir);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
+	pfreeany(pluto_dnssec_rootfile);
+	pfreeany(pluto_dnssec_trusted);
 }
 
 /*
@@ -476,7 +481,7 @@ u_int16_t secctx_attr_type = SECCTX;
  * The table should be ordered to maximize the clarity of --help.
  *
  * free one letter options as of 2016-12-14
- * '1' 'a' 'Q' 'R' 'W'
+ * '1' 'W'
  */
 
 #define DBG_OFFSET 256
@@ -489,6 +494,7 @@ static const struct option long_opts[] = {
 	{ "nofork\0", no_argument, NULL, '0' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
+	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL, 'a' },
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
@@ -512,6 +518,7 @@ static const struct option long_opts[] = {
 	{ "ocsp-method\0", required_argument, NULL, 'B' },
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
+	{ "no-dnssec\0", no_argument, NULL, 'R' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-nostack\0",  no_argument, NULL, 'n' },
 	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
@@ -841,6 +848,14 @@ int main(int argc, char **argv)
 			log_to_file_desired = TRUE;
 			continue;
 
+		case 'a':	/* --dnssec-rootkey-file */
+			pluto_dnssec_rootfile = clone_str(optarg, "dnssec_rootkey_file");
+			continue;
+
+		case 'Q':	/* --dnssec-trusted */
+			pluto_dnssec_trusted = clone_str(optarg, "pluto_dnssec_trusted");
+			continue;
+
 		case 't':	/* --log-no-time */
 			log_with_timestamp = FALSE;
 			continue;
@@ -1010,6 +1025,10 @@ int main(int argc, char **argv)
 			uniqueIDs = TRUE;
 			continue;
 
+		case 'R':	/* --no-dnssec */
+			do_dnssec = FALSE;
+			continue;
+
 		case 'i':	/* --interface <ifname|ifaddr> */
 			if (!use_interface(optarg)) {
 				ugh = "too many --interface specifications";
@@ -1133,6 +1152,10 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+			set_cfg_string(&pluto_dnssec_rootfile,
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
+			set_cfg_string(&pluto_dnssec_trusted,
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
@@ -1172,6 +1195,7 @@ int main(int argc, char **argv)
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
+			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
 			/*
 			 * We don't check interfaces= here because that part
 			 * has been dealt with in _stackmanager before we
@@ -1766,15 +1790,20 @@ void show_setup_plutomain(void)
 {
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
-	whack_log(RC_COMMENT,
-		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, nssdir=%s, dumpdir=%s, statsbin=%s",
+	whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 		oco->confdir,
 		oco->conffile,
 		oco->secretsfile,
-		oco->confddir,
+		oco->confddir);
+
+	whack_log(RC_COMMENT, "nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->nssdir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+
+	whack_log(RC_COMMENT, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
+		pluto_dnssec_rootfile,
+		pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
 
 	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
@@ -1785,9 +1814,10 @@ void show_setup_plutomain(void)
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
+		"nhelpers=%d, uniqueids=%s, dnssec-enable=%s, perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
+		do_dnssec ? "yes" : "no",
 		!log_to_perpeer ? "no" : base_perpeer_logdir,
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime

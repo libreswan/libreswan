@@ -543,10 +543,6 @@ static int resolve_defaultroute_one(struct starter_end *host,
 static
 void resolve_defaultroute(struct starter_conn *conn)
 {
-#ifdef DNSSEC
-	dnsctx = unbound_init();
-#endif
-
 	if (resolve_defaultroute_one(&conn->left, &conn->right) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right);
 	if (resolve_defaultroute_one(&conn->right, &conn->left) == 1)
@@ -842,6 +838,12 @@ int main(int argc, char *argv[])
 	default:
 		bad_case(cfg->setup.options[KBF_SECCOMP]);
 	}
+#endif
+
+#ifdef DNSSEC
+	dnsctx = unbound_init(cfg->setup.options[KBF_DO_DNSSEC],
+			cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+			cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 #endif
 
 	if (autoall) {
