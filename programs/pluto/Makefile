@@ -7,7 +7,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney
 # Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -136,29 +136,8 @@ OBJS += ike_alg_nss_prf_ops.o
 OBJS += ike_alg_nss_gcm.o
 OBJS += ike_alg_null.o
 
-ifeq ($(USE_SERPENT),true)
-OBJS += ike_alg_serpent.o
-# an archive
-OBJS += $(LIBSERPENT)
-endif
-
-ifeq ($(USE_TWOFISH),true)
-OBJS += ike_alg_twofish.o
-# an archive
-OBJS += $(LIBTWOFISH)
-endif
-
-ifeq ($(USE_CAST),true)
-OBJS += ike_alg_cast.o
-endif
-
 OBJS += ike_alg_sha1.o
 OBJS += ike_alg_md5.o
-
-ifeq ($(USE_3DES),true)
-OBJS += ike_alg_3des.o
-endif
-
 OBJS += ike_alg_aes.o
 OBJS += ike_alg_dh.o
 OBJS += ike_alg_camellia.o
@@ -261,6 +240,14 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
+
+ifeq ($(USE_SERPENT),true)
+OBJS += $(LIBSERPENT)
+endif
+
+ifeq ($(USE_TWOFISH),true)
+OBJS += $(LIBTWOFISH)
+endif
 
 local-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) buildall

@@ -57,13 +57,28 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c anyaddr.c \
 	lsw_passert_fail.c \
 	$(X509LIB)
 
-# Crypto algorithms:
+# Crypto code:
+#
+# XXX: More is comming as it gets cleaned up and made more library
+# like.
 
+CFLAGS += -I$(top_srcdir)/lib/libcrypto
+ifeq ($(USE_3DES),true)
+OBJS += ike_alg_3des.o
+endif
+ifeq ($(USE_CAST),true)
+OBJS += ike_alg_cast.o
+endif
 ifeq ($(USE_RIPEMD),true)
-SRCS += ike_alg_ripemd.c
+OBJS += ike_alg_ripemd.o
+endif
+ifeq ($(USE_SERPENT),true)
+OBJS += ike_alg_serpent.o
+endif
+ifeq ($(USE_TWOFISH),true)
+OBJS += ike_alg_twofish.o
 endif
 
-# NOT-YET: SRCS += ike_info.c
 
 ifeq ($(NSS_REQ_AVA_COPY),true)
 SRCS+=nss_copies.c
@@ -88,7 +103,7 @@ endif
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
-OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
+OBJS+=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
