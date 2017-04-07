@@ -80,6 +80,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
+	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
@@ -94,6 +95,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 	cfg->setup.options[KBF_DROP_OPPO_NULL] = FALSE;
+
+	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
@@ -1533,7 +1536,10 @@ struct starter_config *confread_load(const char *file,
 	}
 
 #ifdef DNSSEC
-	struct ub_ctx *dnsctx = unbound_init();
+	struct ub_ctx *dnsctx = unbound_init(
+				cfg->setup.options[KBF_DO_DNSSEC],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS] );
 
 	if (dnsctx == NULL)
 		return NULL;

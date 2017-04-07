@@ -9,7 +9,8 @@
 
 #include <unbound.h>
 
-extern struct ub_ctx *unbound_init(void);
+extern struct ub_ctx *unbound_init(bool do_dnssec, const char *rootfile, const char *trusted);
+
 extern bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen,
 			   int af, ip_address *ipaddr);
 

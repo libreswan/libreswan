@@ -23,6 +23,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <libreswan.h>
 #include <arpa/inet.h>
 #include "constants.h"
@@ -30,12 +31,9 @@
 #include <unbound.h>	/* from unbound devel */
 #include "dnssec.h"
 #include <errno.h>
+#include <glob.h>
 
-/* DNSSEC root key */
-static const char rootanchor[] =
-	". IN DNSKEY 257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=";
-
-struct ub_ctx *unbound_init(void)
+struct ub_ctx *unbound_init(bool do_dnssec, const char *rootfile, const char *trusted)
 {
 	int ugh;
 
@@ -78,25 +76,89 @@ struct ub_ctx *unbound_init(void)
 	DBG(DBG_DNS,
 		DBG_log("/etc/resolv.conf usage activated");
 		);
-
 	/*
 	 * add trust anchors to libunbound context - make this configurable
 	 * later
 	 */
-	DBG(DBG_DNS,
-		DBG_log("Loading root key:%s", rootanchor);
-		);
-#ifdef UNBOUND_VERSION_MAJOR
-	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
-#else
-	/* for unbound < 1.4.21 */
-	ugh = ub_ctx_add_ta(dnsctx, (char*) rootanchor);
-#endif
-	if (ugh != 0) {
-		libreswan_log("error adding the DNSSEC root key: %s: %s",
-			ub_strerror(ugh), strerror(errno));
-		ub_ctx_delete(dnsctx);
-		return NULL;
+	if (!do_dnssec) {
+		/* nothing more to configure */
+		libreswan_log("DNSSEC validation disabled by configuration");
+		return dnsctx;
+	}
+
+	if (rootfile == NULL) {
+		libreswan_log("dnssec enabled but no dnssec-rootkey-file specified?");
+		return dnsctx;
+	} else {
+		DBG(DBG_DNS, DBG_log("Loading DNSSEC ROOT key from:%s", rootfile));
+		ugh = ub_ctx_add_ta_autr(dnsctx, rootfile);
+		if (ugh != 0) {
+			libreswan_log("error adding DNSSEC ROOT key: %s: %s",
+				ub_strerror(ugh), strerror(errno));
+			libreswan_log("WARNING: DNSSEC validation likely broken!");
+		}
+	}
+
+	if (trusted == NULL) {
+		libreswan_log("No additional DNSSEC trust anchors defined via dnssec-trusted= option");
+	} else {
+		if (strchr(trusted, '*') == NULL) {
+			struct stat buf;
+			int ugh;
+			stat(trusted, &buf);
+			if (S_ISREG(buf.st_mode)) {
+				ugh = ub_ctx_add_ta_file(dnsctx, trusted);
+				if (ugh != 0) {
+					libreswan_log("Ignored trusted key file %s: %s",
+						trusted,  ub_strerror(ugh));
+				} else {
+					libreswan_log("Added contents of trusted key file %s to unbound resolved context",
+						trusted);
+				}
+			} else if (S_ISDIR(buf.st_mode)) {
+				libreswan_log("PAUL: Add dir + globbing support");
+			} else {
+				libreswan_log("ignored trusted key '%s': not a regular file or directory",
+					trusted);
+			}
+
+		} else {
+			glob_t globbuf;
+			char **fnp;
+	                int r = glob(trusted, GLOB_ERR, NULL, &globbuf);
+
+			if (r != 0) {
+				switch(r) {
+					case GLOB_NOSPACE:
+						libreswan_log("out of space procesing dnssec-trusted= argument:%s",
+							trusted);
+						globfree(&globbuf);
+						return dnsctx;
+					case GLOB_ABORTED:
+						break; /* already logged */
+					case GLOB_NOMATCH:
+						libreswan_log("no trust anchor files matched '%s'", trusted);
+						break;
+					default:
+						libreswan_log("trusted keys: unknown glob error %d",
+							r);
+						globfree(&globbuf);
+						return dnsctx;
+				}
+			}
+
+			for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+				ugh = ub_ctx_add_ta_file(dnsctx, *fnp);
+				if (ugh != 0) {
+					libreswan_log("Ignored trusted key file %s: %s",
+						*fnp,  ub_strerror(ugh));
+				} else {
+					libreswan_log("Added contents of trusted key file %s to unbound resolved context",
+						*fnp);
+				}
+			}
+			globfree(&globbuf);
+		}
 	}
 
 	return dnsctx;
