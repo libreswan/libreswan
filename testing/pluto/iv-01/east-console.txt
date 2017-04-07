@@ -72,7 +72,7 @@ east:~#
 
 east:~#
 east:~#
- if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 east:~#
  ipsec setup stop
 IPSEC EVENT: KLIPS device ipsec0 shut down.

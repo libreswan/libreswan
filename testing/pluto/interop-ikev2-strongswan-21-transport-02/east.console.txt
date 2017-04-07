@@ -44,7 +44,7 @@ westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, XX bytes_i, XX bytes_o, rek
 westnet-eastnet-ikev2{1}:   192.1.2.23/32 === 192.1.2.45/32
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

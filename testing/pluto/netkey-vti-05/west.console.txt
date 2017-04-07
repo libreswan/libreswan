@@ -84,7 +84,7 @@ west #
 ip_vti0: ip/ip  remote any  local any  ttl inherit  nopmtudisc key 0
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

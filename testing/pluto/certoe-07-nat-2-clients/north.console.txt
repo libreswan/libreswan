@@ -299,7 +299,7 @@ north #
 |    auth method: IKEv2_AUTH_RSA (0x1)
 north #
 north #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -79,7 +79,7 @@ leak: EVENT_REINIT_SECRET, item size: 32
 leak detective found 8 leaks, total size 256
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

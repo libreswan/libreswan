@@ -70,7 +70,7 @@ east-ec                                                      P,,
 nic                                                          P,,  
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 CORE FOUND
 mv: failed to preserve ownership for ‘OUTPUT/core.west.pluto.2316’: Operation not permitted
 west #

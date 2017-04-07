@@ -1195,7 +1195,7 @@ packet from 192.1.2.45:500: received and ignored informational message
 | * processed 0 messages from cryptographic helpers 
 | next event EVENT_PENDING_PHASE2 in 45 seconds
 east:~# : ==== tuc ====
-east:~# if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 east:~# : ==== end ====
 east:~# ipsec setup stop
 ipsec_setup: Stopping Libreswan IPsec...

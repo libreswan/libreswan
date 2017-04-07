@@ -44,7 +44,7 @@ westnet-eastnet-ikev1{1}:  CAMELLIA_CBC_256/HMAC_SHA1_96/MODP_2048, XXX bytes_i 
 westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

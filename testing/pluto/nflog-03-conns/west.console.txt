@@ -277,7 +277,7 @@ target     prot opt source               destination
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

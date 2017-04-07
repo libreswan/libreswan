@@ -124,7 +124,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 type=AVC msg=audit(1395258051.659:47): avc:  denied  { read } for  pid=1749 comm="pluto" name="ipsec.conf.common" dev="9p" ino=529045 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file

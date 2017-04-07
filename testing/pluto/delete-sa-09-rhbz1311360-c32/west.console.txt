@@ -94,7 +94,7 @@ west #
 000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

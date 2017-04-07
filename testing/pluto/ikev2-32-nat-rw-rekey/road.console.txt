@@ -190,7 +190,7 @@ west                                                         P,,
 west-ec                                                      P,,  
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; core=`ls /tmp/core* 2>/dev/null`; gdb --batch PATH/libexec/ipsec/pluto $core; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -86,7 +86,7 @@ east #
 | sending 440 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
