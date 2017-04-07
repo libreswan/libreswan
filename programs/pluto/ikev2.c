@@ -1137,9 +1137,8 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_ROOF };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
-	bool decrypted = FALSE;
-	struct ikev2_payloads_summary enc_payload_summary = { .status = STF_ROOF };
 	struct ikev2_payloads_summary encrypted_payload_summary = { .status = STF_ROOF };
+	struct ikev2_payload_errors encrypted_payload_status = { .status = STF_OK };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
@@ -1233,44 +1232,55 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (svm->flags & SMF2_SKIP_UNPACK_SK) {
 				break;
 			}
-			encrypted_payload_summary.status = STF_OK;
-		}
-
-		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
-
-			md->st = st; /* set to NULL on failure? */
-
-			if (!decrypted) {
-				enc_payload_summary = ikev2_decrypt_msg(md, FALSE);
-				if (enc_payload_summary.status != STF_OK) {
-					md->st = NULL;
-					complete_v2_state_transition(mdp,
-							enc_payload_summary.status);
-					/* drop the message decryption failed */
-					return;
-				}
-			}
-			decrypted = TRUE;
-			if (ikev2_verify_enc_payloads(md,
-						enc_payload_summary, svm) !=
-					STF_OK) {
+			/*
+			 * "FALSE", passed to ikev2_decrypt_msg()
+			 * means don't also call verify_payloads() to
+			 * check that the payloads that were found
+			 * were expected.  That is done further down.
+			 *
+			 * If the packet didn't decrypt drop it.
+			 *
+			 * XXX: Setting/clearing md->st is to preserve
+			 * existing behaviour (what ever that was).
+			 * Can md->st instead be set before entering
+			 * this loop?
+			 */
+			md->st = st;
+			encrypted_payload_summary = ikev2_decrypt_msg(md, FALSE);;
+			if (encrypted_payload_status.status != STF_OK) {
 				md->st = NULL;
-				/* no match */
-				continue;
+				complete_v2_state_transition(mdp, encrypted_payload_summary.status);
+				return;
 			}
+			md->st = NULL;
 		} /* else { go ahead } */
+		struct ikev2_payload_errors encrypted_payload_errors
+			= ikev2_verify_payloads(encrypted_payload_summary,
+						&svm->expected_payloads.encrypted);
+		if (encrypted_payload_errors.status != STF_OK) {
+			/* Save this failure for later logging. */
+			encrypted_payload_status = encrypted_payload_errors;
+			continue;
+		}
 
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * XXX: Can this be moved to outside of the
 			 * lookup loop?  (It was originally burried in
 			 * a function checking encrypted payloads.
+			 *
+			 * XXX: Setting/clearing md->st is to preserve
+			 * existing behaviour (what ever that was).
+			 * Can md->st instead be set before entering
+			 * this loop?
 			 */
+			md->st = st;
 			struct state *pst = IS_CHILD_SA(md->st) ?
 				state_with_serialno(md->st->st_clonedfrom) : md->st;
 			/* going to switch to child st. before that update parent */
 			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
 				update_ike_endpoints(pst, md);
+			md->st = NULL;
 		}
 
 		/* must be the right state machine entry */
@@ -1297,6 +1307,9 @@ void process_v2_packet(struct msg_digest **mdp)
 
 			complete_v2_state_transition(mdp, clear_payload_status.status);
 
+		} else if (encrypted_payload_status.status != STF_OK) {
+			ikev2_log_payload_errors(encrypted_payload_status, st);
+			complete_v2_state_transition(mdp, encrypted_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so

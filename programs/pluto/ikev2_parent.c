@@ -4031,22 +4031,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
-	/*
-	 * the initiator sent us an encrypted payload. We need to calculate
-	 * our g^xy, and skeyseed values, and then decrypt the payload.
-	 */
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("ikev2 parent inR2: calculating g^{xy} in order to decrypt I2"));
-
-	/* decrypt things. */
-	{
-		struct ikev2_payloads_summary ps = ikev2_decrypt_msg(md, TRUE);
-
-		if (ps.status != STF_OK)
-			return ps.status;
-	}
-
 	/* Process NOTIFY payloads before AUTH so we can log any error notifies */
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
@@ -4891,14 +4875,6 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
 			c_serialno, st->st_serialno));
-	}
-
-	/* decrypt message */
-	{
-		 struct ikev2_payloads_summary ps = ikev2_decrypt_msg(md, TRUE);
-
-		if (ps.status != STF_OK)
-			return ps.status;
 	}
 
 	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
