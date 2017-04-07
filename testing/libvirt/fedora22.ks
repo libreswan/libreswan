@@ -62,6 +62,7 @@ mtr
 nc
 net-tools
 nmap
+nsd
 nss-tools
 psmisc
 pyOpenSSL

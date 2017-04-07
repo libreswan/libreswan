@@ -75,6 +75,7 @@ nc
 nc6
 net-tools
 nmap
+nsd
 nspr-devel
 nss-devel
 nss-tools
