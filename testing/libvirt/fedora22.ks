@@ -62,7 +62,6 @@ mtr
 nc
 net-tools
 nmap
-nsd
 nss-tools
 psmisc
 pyOpenSSL
@@ -136,6 +135,8 @@ dnf install -y 2>&1 \
     hping3 \
     hping3 \
     ipsec-tools \
+    ldns \
+    ldns-devel \
     libcap-ng-devel \
     libfaketime \
     libevent-devel \
@@ -143,6 +144,7 @@ dnf install -y 2>&1 \
     lsof \
     nc \
     nc6 \
+    nsd \
     nss-devel \
     nss-tools \
     nspr-devel \
