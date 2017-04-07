@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -56,6 +56,12 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c anyaddr.c \
 	lsw_pexpect_log.c \
 	lsw_passert_fail.c \
 	$(X509LIB)
+
+# Crypto algorithms:
+
+ifeq ($(USE_RIPEMD),true)
+SRCS += ike_alg_ripemd.c
+endif
 
 # NOT-YET: SRCS += ike_info.c
 

@@ -18,13 +18,6 @@ PROGRAM_MANPAGE =
 PROGRAM = algparse
 OBJS += $(PROGRAM).o
 
-OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
-
-LDFLAGS += $(LIBSERPENT)
-LDFLAGS += $(LIBTWOFISH)
-LDFLAGS += $(NSS_LDFLAGS)
-
 #
 # XXX: For the moment build things by pulling in chunks of pluto.
 # What, if anything, should be moved to libswan or another library?
@@ -39,6 +32,13 @@ OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
 # .PHONY: pluto-base
 # pluto-base:
 #	$(MAKE) -C $(top_srcdir)/programs/pluto base
+
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWLOGLIBS)
+OBJS += $(LIBSERPENT)
+OBJS += $(LIBTWOFISH)
+
+LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

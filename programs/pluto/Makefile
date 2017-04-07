@@ -152,10 +152,6 @@ ifeq ($(USE_CAST),true)
 OBJS += ike_alg_cast.o
 endif
 
-ifeq ($(USE_RIPEMD),true)
-OBJS += ike_alg_ripemd.o
-endif
-
 OBJS += ike_alg_sha1.o
 OBJS += ike_alg_md5.o
 
