@@ -5,7 +5,8 @@ pushd $DIR
 
 mkdir -p dsset signed
 
-rm -f keys/K* signed/*.signed dsset/dsset*
+rm -f keys/K* signed/*.signed dsset/dsset* signed/root.zone
+wget https://www.internic.net/domain/root.zone -O signed/root.zone
 
 sign_zone()
 {
