@@ -276,10 +276,18 @@ struct state_v2_microcode {
 	enum state_kind state, next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;
+#ifdef NOT_YET
+	/* or struct ... clear_payloads ; struct ... encrypted_payloads; */
 	struct {
 		struct ikev2_expected_payloads clear;
 		struct ikev2_expected_payloads encrypted;
 	} expected_payloads;
+#else
+	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
+	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
+	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
+	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
+#endif
 	enum event_type timeout_event;
 	state_transition_fn *processor;
 	crypto_transition_fn *crypto_end;

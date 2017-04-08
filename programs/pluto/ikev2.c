@@ -306,7 +306,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(N), }, },
+	  .req_clear_payloads = P(N),
+	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_RETAIN, },
@@ -321,8 +322,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(SA) | P(KE) | P(Nr),
-					    .optional = P(CERTREQ), }, },
+	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
+	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
@@ -336,9 +337,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-						.optional = P(CERT)|P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2parent_inR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -351,7 +352,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(SA) | P(KE) | P(Ni), }, },
+	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
@@ -369,9 +370,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_SKIP_UNPACK_SK,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-						.optional = P(CERT) | P(CERTREQ) | P(IDr) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2parent_inI2outR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -396,9 +397,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_V2_REKEY_IKE_R,
 	  .next_state = STATE_PARENT_R2,
 	  .flags =      SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(SA) | P(Ni) | P(KE),
-						.optional = P(N), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
+	  .opt_enc_payloads = P(N),
 	  .processor  = ikev2_child_ike_inIoutR,
 	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
@@ -408,9 +409,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_V2_CREATE_I,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_SET,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-						.optional = P(KE) | P(N), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_ipsec_inR,
 	  .crypto_end = NULL,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
@@ -420,9 +421,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_V2_CREATE_I,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-						.optional = P(KE) | P(N), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_ipsec_inR,
 	  .crypto_end = NULL,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
@@ -432,9 +433,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_V2_CREATE_R,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-						.optional = P(KE) | P(N), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_ipsec_inIoutR,
 	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
@@ -445,9 +446,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_V2_CREATE_R,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-						.optional = P(KE) | P(N), }, },
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_ipsec_inIoutR,
 	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
@@ -465,8 +466,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_SET,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .optional = P(N) | P(D) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -475,8 +476,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_CLEAR,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .optional = P(N) | P(D) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -485,8 +486,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_IKE_I_SET,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .optional = P(N) | P(D) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -495,8 +496,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_IKE_I_CLEAR,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .optional = P(N) | P(D) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -505,8 +506,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
 	  .flags      = 0,
-	  .expected_payloads = { .clear = { .required = P(SK), },
-				 .encrypted = { .optional = P(N) | P(D) | P(CP), }, },
+	  .req_clear_payloads = P(SK),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -1180,10 +1181,17 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * (for instance both SKF and SK, or a .bad_repeat)?
 		 * As things stand, they probably result in a NOTIFY
 		 * when there shouldn't be one.
+		 *
+		 * XXX: hack until expected_clear_paylods is added to
+		 * struct state_v2_microcode or replacement.
 		 */
+		struct ikev2_expected_payloads expected_clear_payloads = {
+			.required = svm->req_clear_payloads,
+			.optional = svm->opt_clear_payloads,
+		};
 		struct ikev2_payload_errors clear_payload_errors
 			= ikev2_verify_payloads(clear_payload_summary,
-						&svm->expected_payloads.clear);
+						&expected_clear_payloads);
 		if (clear_payload_errors.status != STF_OK) {
 			/* Save this failure for later logging. */
 			clear_payload_status = clear_payload_errors;
@@ -1196,7 +1204,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 *
 		 * (.seen&(P(SK)|P(SKF))!=0 is equivalent.
 		 */
-		if (!(svm->expected_payloads.clear.required & P(SK))) {
+		if (!(expected_clear_payloads.required & P(SK))) {
 			break;
 		}
 
@@ -1254,9 +1262,17 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			md->st = NULL;
 		} /* else { go ahead } */
+		/*
+		 * XXX: hack until expected_encrypted_paylods is added
+		 * to struct state_v2_microcode or replacement.
+		 */
+		struct ikev2_expected_payloads expected_encrypted_payloads = {
+			.required = svm->req_enc_payloads,
+			.optional = svm->opt_enc_payloads,
+		};
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(encrypted_payload_summary,
-						&svm->expected_payloads.encrypted);
+						&expected_encrypted_payloads);
 		if (encrypted_payload_errors.status != STF_OK) {
 			/* Save this failure for later logging. */
 			encrypted_payload_status = encrypted_payload_errors;

@@ -2365,8 +2365,16 @@ static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
 {
 	const struct state_v2_microcode *s = svm == NULL ? md->svm : svm;
 
+	/*
+	 * XXX: hack until expected_encrypted_paylods is added to
+	 * struct state_v2_microcode or replacement.
+	 */
+	struct ikev2_expected_payloads expected_encrypted_payloads = {
+		.required = s->req_enc_payloads,
+		.optional = s->opt_enc_payloads,
+	};
 	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary,
-								   &s->expected_payloads.encrypted);
+								   &expected_encrypted_payloads);
 	if (errors.status != STF_OK) {
 		ikev2_log_payload_errors(errors, md->st);
 		return errors.status;
