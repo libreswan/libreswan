@@ -2359,9 +2359,9 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	return STF_OK;
 }
 
-stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
-			struct ikev2_payloads_summary summary,
-			const struct state_v2_microcode *svm)
+static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
+					    struct ikev2_payloads_summary summary,
+					    const struct state_v2_microcode *svm)
 {
 	const struct state_v2_microcode *s = svm == NULL ? md->svm : svm;
 

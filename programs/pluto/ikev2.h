@@ -247,10 +247,6 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 						    pb_stream *in_pbs,
 						    enum next_payload_types_ikev2 np);
 
-extern stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
-					struct ikev2_payloads_summary summary,
-					const struct state_v2_microcode *svm);
-
 struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool
 		verify_pl);
 
