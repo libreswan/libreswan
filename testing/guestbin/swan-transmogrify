@@ -187,6 +187,8 @@ if hostname == "nic":
     output += "\n" + subprocess.getoutput("setenforce 0")
     output += "\n" + \
         subprocess.getoutput("service nsd start")
+    output += "\n" + \
+        subprocess.getoutput("service unbound start")
 
 if len(sys.argv) > 1:
     print(output.strip())
