@@ -77,6 +77,14 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
+/* macro that returns STF_STATUS on failure */
+#define RETURN_STF_FAILURE_STATUS(f) { \
+	stf_status res = (f); \
+	if (res != STF_OK) { \
+		return res; \
+	} \
+}
+
 struct ikev2_proposal;
 struct ikev2_proposals;
 
