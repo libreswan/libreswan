@@ -3772,6 +3772,26 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 	/* ??? what does that mean?  We cannot even reach here. */
 }
 
+static void ikev2_child_set_pfs(struct state *st)
+{
+	struct connection *c = st->st_connection;
+
+	st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
+	if (st->st_pfs_group == NULL &&
+			(c->policy & POLICY_PFS) != LEMPTY) {
+		struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+		st->st_pfs_group = pst->st_oakley.group;
+		DBG(DBG_CONTROL, DBG_log("#%lu no phase2 MODP group specified "
+					"on this connection %s use seletected "
+					"IKE MODP group %s from #%lu",
+					st->st_serialno,
+					c->name,
+					st->st_pfs_group->common.name,
+					pst->st_serialno));
+	}
+}
+
 stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		bool expect_accepted)
 {
@@ -3785,22 +3805,14 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	char *what;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
-		if ((c->policy & POLICY_PFS) && (st->st_pfs_group == NULL))
-		{
-			loglog(RC_LOG_SERIOUS, "reject Child SA proposal."
-					"missing local ESP DH(pfs) group "
-					"with PFS=yes");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (st->st_state != STATE_V2_CREATE_I) {
-			what = "ESP/AH initiator";
+		if (st->st_state == STATE_V2_CREATE_I) {
+			what = "ESP/AH initiator Child";
 		} else {
-			what = "ESP/AH responder";
+			ikev2_child_set_pfs(st);
+			what = "ESP/AH responder Child";
 		}
-		st->st_accepted_esp_or_ah_proposal = NULL; /* not ours */
 	} else {
-		what = "ESP/AH responder";
+		what = "ESP/AH responder AUTH Child";
 	}
 	if (!expect_accepted) {
 		/* preparing to initiate or parse a request flush old ones */
@@ -4448,9 +4460,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	chunk_t local_spi;
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));
-
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA)
-		cst->st_pfs_group = ike_alg_pfsgroup(cc, cc->policy);
 
 	ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 			cc->alg_info_esp,
@@ -5751,17 +5760,10 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 
 	passert(st->st_connection != NULL);
 
+	st->st_pfs_group = NULL;
 	if ((policy & POLICY_PFS) != LEMPTY) {
-		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection, policy);
-		if (st->st_pfs_group == NULL) {
-			delete_state(st);
-			loglog(RC_LOG_SERIOUS, "no local pfs group found. "
-					"can not initiate Child SA. ");
-			return;
-		}
+		ikev2_child_set_pfs(st);
 		pfsgroupname = st->st_pfs_group->common.name;
-	} else {
-		st->st_pfs_group = NULL;
 	}
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu schedule event to initiate IPsec SA "

@@ -2180,6 +2180,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		struct ikev2_proposal *proposal;
 		FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 			add_esn_transforms(proposal, policy);
+			add_pfs_group_to_proposal(proposal, pfs_group);
 		}
 		*result = proposals;
 
