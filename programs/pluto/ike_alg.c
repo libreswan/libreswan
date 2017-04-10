@@ -181,9 +181,11 @@ const struct oakley_group_desc **next_oakley_group(const struct oakley_group_des
 							  (const struct ike_alg**)last);
 }
 
-static const struct ike_alg *alg_byname(const struct type_algorithms *type,
-					const char *name)
+
+const struct ike_alg *ike_alg_byname(enum ike_alg_type alg_type, const char *name)
 {
+	passert(alg_type < elemsof(type_algorithms));
+	const struct type_algorithms *type = type_algorithms[alg_type];
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
 		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
@@ -195,9 +197,14 @@ static const struct ike_alg *alg_byname(const struct type_algorithms *type,
 	return NULL;
 }
 
-const struct oakley_group_desc *group_desc_byname(const char *name)
+int ike_alg_enum_match(enum ike_alg_type alg_type,
+		       enum ike_alg_key key,
+		       const char *name)
 {
-	return oakley_group_desc(alg_byname(&ike_alg_dh, name));
+	passert(alg_type < elemsof(type_algorithms));
+	const struct type_algorithms *type = type_algorithms[alg_type];
+	passert(key < IKE_ALG_KEY_ROOF);
+	return enum_match(type->enum_names[key], name);
 }
 
 bool ike_alg_is_valid(const struct ike_alg *alg)

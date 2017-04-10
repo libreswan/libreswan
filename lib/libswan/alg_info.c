@@ -604,7 +604,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 
 	const struct oakley_group_desc *group = NULL;
 	if (p_ctx->param->group_byname != NULL && *p_ctx->modp_buf != '\0') {
-		group = p_ctx->param->group_byname(&p_ctx->policy,
+		group = p_ctx->param->group_byname(p_ctx->param, &p_ctx->policy,
 						   err_buf, err_buf_len,
 						   p_ctx->modp_buf);
 		if (group == NULL) {

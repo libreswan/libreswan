@@ -20,6 +20,7 @@
 
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "alg_byname.h"
 
 #include "alg_info.h"
 #include "ike_alg.h"
@@ -653,60 +654,14 @@ static void alg_info_ike_add(const struct parser_policy *const policy,
 		ealg, ek_bits, aalg, dh_group);
 }
 
-static const struct oakley_group_desc *group_byname(const struct parser_policy *const policy,
-						    char *err_buf, size_t err_buf_len,
-						    const char *name)
-{
-	const struct oakley_group_desc *group = group_desc_byname(name);
-	if (group == NULL) {
-		snprintf(err_buf, err_buf_len,
-			 "modp group '%s' not found",
-			 name);
-		return NULL;
-	}
-	/*
-	 * If the connection is IKEv1|IKEv2 then this code will
-	 * exclude anything not supported by both protocols.
-	 */
-	if (policy->ikev1 && group->common.ikev1_oakley_id == 0) {
-		snprintf(err_buf, err_buf_len,
-			 "modp group '%s' not supported by IKEv2",
-			 name);
-		return NULL;
-	}
-	if (policy->ikev2 && group->common.id[IKEv2_ALG_ID] == 0) {
-		snprintf(err_buf, err_buf_len,
-			 "modp group '%s' not supported by IKEv1",
-			 name);
-		return NULL;
-	}
-	/*
-	 * XXX: surely this is dead?
-	 */
-	if (group->group == 22) {
-		snprintf(err_buf, err_buf_len,
-			 "DH22 from RFC-5114 is no longer supported - see RFC-4307bis");
-		return NULL;
-	}
-	/*
-	 * Since the D-H calculation is performed in-process, IKE is
-	 * always required.
-	 */
-	if (!ike_alg_is_ike(&group->common)) {
-		snprintf(err_buf, err_buf_len,
-			 "modp group '%s' not implemented",
-			 name);
-		return NULL;
-	}
-	return group;
-}
-
 const struct parser_param ike_parser_param = {
+	.protocol = "IKE",
+	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
 	.alg_info_add = alg_info_ike_add,
 	.ealg_getbyname = ealg_getbyname_ike,
 	.aalg_getbyname = aalg_getbyname_ike,
-	.group_byname = group_byname,
+	.group_byname = dh_alg_byname,
 };
 
 struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,

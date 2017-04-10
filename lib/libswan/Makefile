@@ -55,6 +55,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c esp_info.c anyaddr.c \
 	lswnss.c \
 	lsw_pexpect_log.c \
 	lsw_passert_fail.c \
+	alg_byname.c \
 	$(X509LIB)
 
 # Crypto code:

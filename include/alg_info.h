@@ -22,13 +22,14 @@
 #define ALG_INFO_H
 
 #include "constants.h"
+#include "ike_alg.h"
+
+struct parser_context;
+struct alg_info;
 
 /*
  * Parameters to tune the parser.
  */
-struct parser_context;
-struct alg_info;
-struct oakley_group_desc;
 
 struct parser_policy {
 	bool ikev1;
@@ -36,6 +37,13 @@ struct parser_policy {
 };
 
 struct parser_param {
+       const char *protocol;
+       enum ike_alg_key ikev1_alg_id;
+
+       /*
+        * XXX: Is the proto-id needed?  Parser should be protocol
+        * agnostic.
+        */
 	unsigned protoid;
 	void (*alg_info_add)(const struct parser_policy *const policy,
 			     struct alg_info *alg_info,
@@ -44,7 +52,8 @@ struct parser_param {
 			     const struct oakley_group_desc *dh_group);
 	int (*ealg_getbyname)(const char *const str);
 	int (*aalg_getbyname)(const char *const str);
-	const struct oakley_group_desc *(*group_byname)(const struct parser_policy *const policy,
+	const struct oakley_group_desc *(*group_byname)(const struct parser_param *param,
+							const struct parser_policy *const policy,
 							char *err_buf, size_t err_buf_len,
 							const char *name);
 };

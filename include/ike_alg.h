@@ -53,6 +53,19 @@ enum ike_alg_key {
 const char *ike_alg_key_name(enum ike_alg_key key);
 
 /*
+ * Look for NAME within TYPE algorithms.
+ *
+ * The first version uses the "ike_alg" tables only.
+ *
+ * The second variant uses the ietf_constant.h enum tables and is only
+ * intended as a way to identify algorithms defined by IETF but not
+ * supported here.
+ */
+const struct ike_alg *ike_alg_byname(enum ike_alg_type type, const char *name);
+int ike_alg_enum_match(enum ike_alg_type type, enum ike_alg_key key,
+		       const char *name);
+
+/*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
  * prf_desc and struct integ_desc).
  *
@@ -473,17 +486,6 @@ struct integ_desc {
 	 */
 	struct prf_desc *prf;
 };
-
-/*
- * Find the algorithm matching NAME.
- */
-
-#ifdef NOT_YET
-const struct encrypt_desc *encrypt_desc_byname(const char *name);
-const struct prf_desc *prf_desc_byname(const char *name);
-const struct integ_desc *integ_desc_byname(const char *name);
-#endif
-const struct oakley_group_desc *group_desc_byname(const char *name);
 
 /*
  * Find the IKEv2 ENCRYPT/PRF/INTEG algorithm using IKEv2 wire-values.

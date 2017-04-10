@@ -314,6 +314,8 @@ static void alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 }
 
 const struct parser_param esp_parser_param = {
+	.protocol = "ESP",
+	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
 	.alg_info_add = alg_info_esp_add,
 	.ealg_getbyname = ealg_getbyname_esp,
@@ -321,6 +323,8 @@ const struct parser_param esp_parser_param = {
 };
 
 const struct parser_param ah_parser_param = {
+	.protocol = "AH",
+	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
 	.alg_info_add = alg_info_ah_add,
 	.aalg_getbyname = aalg_getbyname_esp,
