@@ -821,6 +821,7 @@ kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 #################################################################
 
 kvmplutotest	dnssec-pluto-01					good
+kvmplutotest	dnssec-dig-test-1				wip
 
 #################################################################
 # Specific bug tests
