@@ -3,10 +3,9 @@ set -e
 DIR=$(dirname $0)
 pushd $DIR
 
-mkdir -p dsset signed
+mkdir -p dsset signed keys
 
-rm -f keys/K* signed/*.signed dsset/dsset* signed/root.zone
-wget https://www.internic.net/domain/root.zone -O signed/root.zone
+rm -f keys/K* signed/*.signed dsset/dsset* keys/testing.key
 
 sign_zone()
 {
@@ -29,6 +28,7 @@ do
 done
 mv dsset-* dsset/
 cat dsset/dsset-* >> dsset/dsset.all
+cat keys/*key > keys/testing.key
 # to test
 # dig +sigchase +trusted-key=/testing/baseconfigs/all/etc/bind/dsset/dsset.all  east.testing.libreswan.org
 popd
