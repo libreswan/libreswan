@@ -16,8 +16,8 @@ VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]
 RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
- hping3 iproute iptables ipsec-tools libcap-ng-devel libevent-devel \
- libfaketime libselinux-devel lsof make \
+ hping3 iproute iptables ipsec-tools ldns-devel libcap-ng-devel \
+ libevent-devel libfaketime libselinux-devel lsof make \
  mtr nc net-tools nmap nsd nspr-devel nss-devel nss-tools ocspd openldap-devel \
  openssh-server openssh-clients pam-devel pam-devel pexpect pexpect psmisc \
  pyOpenSSL python3-cryptography \
@@ -27,7 +27,7 @@ RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  wget xl2tpd xmlto;
 RUN dnf -y install 'dnf-command(debuginfo-install)'
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
- krb5-libs ldns ldns-devel libcap-ng libcom_err libcurl libevent libgcc libidn
+ krb5-libs ldns ldns-devel libcap-ng libcom_err libcurl libevent libgcc libidn \
  libselinux libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap \
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib nspr \
  nss libevent-devel;
