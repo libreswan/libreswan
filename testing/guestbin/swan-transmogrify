@@ -97,6 +97,9 @@ if hostname == "nic":
         subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/unbound /etc/")
     output += "\n" + \
         subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/nsd /etc/")
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/systemd/system/unbound.service /etc/systemd/system/")
+
 
 if not os.path.isdir("/etc/ssh"):
     os.makedirs("/etc/ssh", 0o755)
