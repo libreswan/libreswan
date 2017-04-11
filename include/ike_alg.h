@@ -419,7 +419,7 @@ struct prf_desc {
 	 *
 	 * If non-NULL its values must be consistent with the above.
 	 */
-	struct hash_desc *hasher;
+	const struct hash_desc *hasher;
 	/*
 	 * FIPS controlled native implementation.
 	 */
@@ -484,7 +484,7 @@ struct integ_desc {
 	 *
 	 * Non-NULL IFF there is a native implementation.
 	 */
-	struct prf_desc *prf;
+	const struct prf_desc *prf;
 };
 
 /*

@@ -31,7 +31,7 @@
  * allowing 128-bit keys.
  */
 
-struct encrypt_desc ike_alg_encrypt_cast_cbc =
+const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 {
 	.common = {
 		.name = "cast",

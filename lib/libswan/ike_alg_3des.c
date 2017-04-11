@@ -31,7 +31,7 @@
 #include "ike_alg_3des.h"
 #include "ike_alg_nss_cbc.h"
 
-struct encrypt_desc ike_alg_encrypt_3des_cbc =
+const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
 	.common = {
 		.name = "3des_cbc",

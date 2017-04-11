@@ -14,4 +14,4 @@
  * for more details.
  */
 
-extern struct encrypt_desc ike_alg_encrypt_null;
+extern const struct encrypt_desc ike_alg_encrypt_null;

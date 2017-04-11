@@ -13,14 +13,14 @@
  *
  */
 
-extern struct hash_desc ike_alg_hash_sha2_256;
-extern struct hash_desc ike_alg_hash_sha2_384;
-extern struct hash_desc ike_alg_hash_sha2_512;
+extern const struct hash_desc ike_alg_hash_sha2_256;
+extern const struct hash_desc ike_alg_hash_sha2_384;
+extern const struct hash_desc ike_alg_hash_sha2_512;
 
-extern struct prf_desc ike_alg_prf_sha2_256;
-extern struct prf_desc ike_alg_prf_sha2_384;
-extern struct prf_desc ike_alg_prf_sha2_512;
+extern const struct prf_desc ike_alg_prf_sha2_256;
+extern const struct prf_desc ike_alg_prf_sha2_384;
+extern const struct prf_desc ike_alg_prf_sha2_512;
 
-extern struct integ_desc ike_alg_integ_sha2_256;
-extern struct integ_desc ike_alg_integ_sha2_384;
-extern struct integ_desc ike_alg_integ_sha2_512;
+extern const struct integ_desc ike_alg_integ_sha2_256;
+extern const struct integ_desc ike_alg_integ_sha2_384;
+extern const struct integ_desc ike_alg_integ_sha2_512;

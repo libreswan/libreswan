@@ -374,7 +374,7 @@ static void check_names_in_names(const char *adjective,
  * Simple hash functions.
  */
 
-static struct hash_desc *hash_descriptors[] = {
+static const struct hash_desc *hash_descriptors[] = {
 	&ike_alg_hash_md5,
 	&ike_alg_hash_sha1,
 	&ike_alg_hash_sha2_256,
@@ -425,7 +425,7 @@ static const struct type_algorithms ike_alg_hash = {
  * construct.
  */
 
-static struct prf_desc *prf_descriptors[] = {
+static const struct prf_desc *prf_descriptors[] = {
 #ifdef USE_MD5
 	&ike_alg_prf_md5,
 #endif
@@ -496,7 +496,7 @@ static const struct type_algorithms ike_alg_prf = {
  * Integrity.
  */
 
-static struct integ_desc *integ_descriptors[] = {
+static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_MD5
 	&ike_alg_integ_md5,
 #endif
@@ -556,7 +556,7 @@ static const struct type_algorithms ike_alg_integ = {
  * Encryption
  */
 
-static struct encrypt_desc *encrypt_descriptors[] = {
+static const struct encrypt_desc *encrypt_descriptors[] = {
 #ifdef USE_AES
 	&ike_alg_encrypt_aes_ccm_16,
 	&ike_alg_encrypt_aes_ccm_12,
@@ -688,7 +688,7 @@ static const struct type_algorithms ike_alg_encrypt = {
  * DH group
  */
 
-static struct oakley_group_desc *dhmke_descriptors[] = {
+static const struct oakley_group_desc *dhmke_descriptors[] = {
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,

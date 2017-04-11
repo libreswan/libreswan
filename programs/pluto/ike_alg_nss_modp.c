@@ -128,7 +128,7 @@ static void nss_modp_check(const struct oakley_group_desc *dhmke)
 	passert_ike_alg(alg, dhmke->modp != NULL);
 }
 
-struct dhmke_ops ike_alg_nss_modp_dhmke_ops = {
+const struct dhmke_ops ike_alg_nss_modp_dhmke_ops = {
 	.check = nss_modp_check,
 	.calc_ke = nss_modp_calc_ke,
 	.calc_g_ir = nss_modp_calc_g_ir,
