@@ -1,0 +1,18 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #5: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@west'
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
