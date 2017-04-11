@@ -62,3 +62,15 @@ Nuances:
   - separate script and <repodir>s are required; when going back
     through history this script does evil things to <repodir> such as:
     git reset --hard.
+
+
+Testing Updates
+---------------
+
+- set up a local web server
+
+- run testing/web/local-rsync.sh to copy the useful bits of the web
+  site
+
+- run testing/web/local-install.sh to install local changes on top of
+  the local copy
