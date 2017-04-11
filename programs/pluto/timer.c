@@ -275,6 +275,11 @@ static void retransmit_v2_msg(struct state *st)
 		delay_ms = c->r_interval;
 	}
 
+	if (need_this_intiator(st)) {
+		delete_state(st);
+		return;
+	}
+
 	if (delay_ms != 0) {
 		delay_ms = retrans_delay(st, delay_ms);
 

@@ -1736,6 +1736,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
+	if (need_this_intiator(st)) {
+		return STF_DROP;
+	}
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 
@@ -5783,4 +5786,26 @@ void ikev2_child_outI(struct state *st)
 {
 	ikev2_crypto_start(NULL, st);
 	return;
+}
+
+/*
+ * if this connection has a newer Child SA than this state
+ * this negotitation is not relevent any more.
+ * would this cover if there are multiple CREATE_CHILD_SA pending on
+ * this IKE negotiation ???
+ */
+bool need_this_intiator(struct state *st)
+{
+	struct connection *c = st->st_connection;
+
+	if (st->st_state !=  STATE_PARENT_I1)
+		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
+
+	if (c->newest_ipsec_sa > st->st_serialno) {
+		libreswan_log( "supressing retransmit because superseded by "
+				"#%lu try=%lu. Drop this negotitation",
+				c->newest_ipsec_sa, st->st_try);
+		return TRUE;
+	}
+	return FALSE;
 }
