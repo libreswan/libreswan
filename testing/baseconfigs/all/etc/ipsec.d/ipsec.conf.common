@@ -14,101 +14,6 @@
 conn slow-retransmits
         retransmit-interval=2000
 
-conn us-to-anyone
-	also=us
-	also=me-to-anyone
-
-conn me-to-anyone
-	right=%defaultroute
-	rightnexthop=%defaultroute
-	left=%opportunistic
-	failureshunt=drop
-	# uncomment to enable incoming; change to auto=route for outgoing
-	#auto=add
-
-# food groups: clear, clear-or-private, private-or-clear, private, block
-# Tempting to use "postcard" instead of "clear"
-# these are for a subnet behind us.
-conn us-clear
-	also=clear
-	also=us
-
-conn us-let-my-dns-go
-	also=let-my-dns-go
-
-# except the connection to the DNS server
-conn let-my-dns-go
-        left=%defaultroute
-        leftprotoport=17/%any
-        right=0.0.0.0
-        rightsubnet=0.0.0.0/0
-        rightprotoport=17/53
-        type=passthrough
-        auto=ignore
-
-conn us-clear-or-private
-	also=clear-or-private
-	also=us
-
-conn us-private-or-clear
-	also=private-or-clear
-	also=us
-
-conn us-private-or-clear-all
-	also=private-or-clear
-	also=us
-
-conn us-private
-	also=private
-	also=us
-
-conn us-block
-	also=block
-	also=us
-
-# a different named conn, so we can have a different policy
-conn private-or-clear-all
-	also=private-or-clear
-
-# these are for self
-conn clear
-	type=passthrough
-	authby=never
-	right=%defaultroute
-	left=%group
-	#auto=route
-
-conn clear-or-private
-	type=passthrough
-	right=%defaultroute
-	left=%opportunisticgroup
-	# by using "add", we get passive.
-	# but this does not actually implement "clear" :-(
-	failureshunt=passthrough
-	#auto=route
-
-conn private-or-clear
-	type=tunnel
-	right=%defaultroute
-	left=%opportunisticgroup
-	failureshunt=passthrough
-	#auto=route
-
-conn private
-	type=tunnel
-	right=%defaultroute
-	left=%opportunisticgroup
-	# without failureshunt, renegotiation will be tried.
-	failureshunt=drop
-	#auto=route
-
-conn block
-	type=reject
-	authby=never
-	right=%defaultroute
-	left=%group
-	#auto=route
-
 # VPN connection
 conn west-east
 	also=west-east-base-id-nss
@@ -304,13 +209,29 @@ conn west-east-base-id-psk
 
 conn east-rightrsasigkey
         rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+
 conn east-rightckaid
         rightckaid=61559973d3acef7d3a370e3e82ad92c18a8225f1
 
+conn east-rightrsasigkey2
+        rightrsasigkey2=0sAQPpBS16vT1sRb36HfEZhLAyh7/RJF7rxqMTesvJ6bw410USD62RZ/SteHbzf6JtT03nKfuwa304MD7cBJrTFs+zl2Ay+BblUrBzLW/cfx63TlELqZPA46onTea+PP0nR/D4+FSkatwghvhjJk1P6JDuKOsEOO2EbThytjmTh11H0X2EqV3JkyR8YpWjKg0pCKX8d1H8nSI/LE1mRHL9nSjht/Nhl+BQO5h94yeau8rXgeQ59JJh1ZQN2jSOdn2s5kICAI7ltZUCUGEqsgE3xwzRJIdHrCWBBjiaTK2W6zJ6CUOE0AMHtIdmbQl+NS5NdAY3h3fZ7APtFLoFTUqbTLqDPHtEelQLmE6NjCIV6AO238UCmBikgVod/imFAYlTafBQrHYiRizwdPasV1yxKa4kiEcK9VlulzmKirdEIJR2AS0iu0PSEHQQtCkPG7H1PI89zt2T5zDhyTTgw+QfhIWqXAIm2OYCXk9u3im0JyQKhS7qfBtIj+NQdxehX4JKhT4Sf+KNSzLbqkLMlC1HSYi1VfSIxJD9zZhKe2qSJRn2YSaEnpBr2JsOGHIzkPSpkP62Hy1nbtY4BFilS8hKRa0IZEFRus5aj9hCzZdCFHTQfSPMutvYklC1V+KSd8J+eHEk4yFXAchLUtsBUKU=
+
+conn east-rightckaid2
+	# need support for leftckaid2
+        rightckaid=ef18550716b8e5f650f5615dcb264dfdda557084
+
 conn west-leftrsasigkey
         leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+
 conn west-leftrsasigkey
         leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
+
+conn west-leftrsasigkey2
+        leftrsasigkey2=0sAQO/yP+HGmCQMpGnOsd82Hs7cARF2FFqztzZF/7xeaUSwBB/zZ497WaJRCyGYdOtQlftJGgbkEuT/B6Yv+8Is6aifYmZ+z6yxsk/rQ5ev4CUETwfrnqDuId6xBuU3qM30M69EbiDgET0kaBcZG91gsUP1s2BQOPzQKConq5ZjJiOby2QKdWEWqGQERmbIrflJStZOEYqKyiOFYS+ep0pkdzLvz/kNlrR9qKICNjNUHvY94EvwNTtipS6cJ/wmXSHsluGJQaYlMs4Ikc90+OHbhdyGnKcFViroD7eeiA9RISgPIDIXAhAxuVqUx+n925vwW/1S49GuPD1VfiOCYvFzpXlZJToYJqd3HPbQWHLd+U4wg/1s934ZD/UIWLBhF/O0fp7BNy5qiq4CG4ZkID/MN6dDjoFXnEVUfysUICbZbR1htNFxzF0gArUFiMKsvDn304UQ1qJfDKtxclfPTFM9rykWfW55vkD47YmVabQbNQ0xN31enOLC2RvMXM9L+FRDEPZVj76eFGmlzF1bj7hntYmjj4rWxa5iIAyUCvFtvJtABzrweu+d3H/QrM6sra6+JdVfHl7HrgoLoADfOP86myiZiAEw7PrPbeGPg2qsDMpH6MVXVrHzjaJaKxND1Br05Tt7dWwWks=
+
+conn west-leftrsasigkey2
+	# need support for leftckaid2
+        leftckaid=a493a68193080b36d17bb6956325a8e8562990b8
 
 conn road-leftrsasigkey
 	leftrsasigkey=0sAQPHFfpyJ3Ck4fMKcCH5DD/iZRKH2f0Sy6/U4MLj3Xeg76rH1qKyMPJksMXmx6cnF1R6jjLJrP2/j7MzuXR0c90jgxFT1tSRDjZ+Z/yJHkis6douZp1uT+KYp9xBs6Q39QepnCNpg1SHe+oAp1urLUE00aMXHqdkLX//RXpdhVxz3WPnQK3rceZfIUOA9SNMPUoRLMqa1nnFwlFur8NumfUmHGfuij4wS8GTp5I0Noy/5tDT/ngLCmQERMqMg/3xLrUAdmGm3vFZZyttwlfg8n1rn9NGQYwxwv3EYHIIO7tW+wH8HVdOz3wPxG9ybyoO8zDboID5cMy7B6n513aZY0tqDxo3lcub6hf3VWJrioMF/0N4V929CIWc8WI1bmnHBAtLxBvSOImM3lbQyCxRVDIbfSfczTd6Tssa7NLOSO1DSJyK/DCfsVccqZjlhJNs2k3MleP18qWznXCuJI0IOw+M6Vql8E2cPC9/vBCVNByWdCn8q/uPS3GqCya18DKYkGr9MfWr
@@ -318,10 +239,25 @@ conn road-leftrsasigkey
 conn road-leftckaid
         leftckaid=1a15cce89273439c2bf4202ac1066ef259b0ef45
 
+conn road-leftrsasigkey2
+	leftrsasigkey2=0sAQPhNstk9P5SghfwUjHiuiS2NmMEGgZQLAXbvoojwGHMRT1lZ2o01DamdyTmtBsCNVsFRkSTkOWhWOHxRi2Gwujr8XRfJ1k3UA23B/GSFaaNy8s9xMEamxrlmsFOgym4ndsXBKMi7NZMH8czTU08hH48y9h62ojA+QYpPpAhMwn3ehC2J60LDvjkPvae7jBYK8v57JhcChxmnVc8bzrTa3fKRV6Opv7KgXSVh128vWcn4Sw9BVz9r/VBEhkgj1iU9cN1LoL1YUCSFKqrG0Xwo0K07AgSvAFC3QJicckSW6TGRZWu5Nuh021SV9r6K53Z/zMNVFCSj31K+59yzdLLUtWJ77TexbTJXQ83YR6XkAfny8/wnv2xGq/6THBUP3fcFTEVHTvZpnY/GX1CQY1RG761u07MXw0Qt63SkhEgvCWQqPlOJUNUhURioFWC63I8s3KK3A7+H2JUL3jwIGAU0eDOO3AmVAky/NwRhJemWxen6RAqeOO9rcCyjFORqdU67lOLRtvji73E15xa5t2EuhjMMjix4zr3Agg9PZvXWg/tdpIchpbvMvFDxsXdcbY+TLQDDgFwjkUmLgU3E08ynbB/cU4otAJQTXhCYjCyNIsZkw==
+
+conn road-leftckaid2
+	# need support for leftckaid2
+        leftckaid=a5c1ebb85a35fa4f2d69fda6b9b015b90d4e520f
+
 conn north-leftrsasigkey
         leftrsasigkey=0sAQPl33O2PtU2qPE9DdMCq3/sTJ6LDg7Szw9Zv22IIYaTnhA0ry3Ps37r5bIksqWwAQN9tZatZu5IwijZmnY2qRCEtQmPF09lztgvjniAiof0a5jZkZRrUhVbnEcSvthvJbRlOH7kjcfwWNOfaRTMPsgWH6+7XZMrMzkOlFWB9LPMklhuSlpOw3arBC4RCAZVEw8CbN3RvMC4jWX1l+38GDn5Vav6DcVJmX8bz8PemX2eym+eFNZa/97WT1dqg6tRumR04CLpmsUQcbvU66SZKJyFDjHqzKvvmIQ/WcF1qrNh62GMWKWSJYStx3nzh9DHg8LWiv4mnSr/sd2biSF8yvU4LT9kDEGcNOmyVQ+CGrPHXqWZ
+
 conn north-leftckaid
         leftckaid=905dfca10868747c6f20d31b2d204b8f88aa7c5d
+
+conn north-leftrsasigkey2
+	leftrsasigkey2=0sAQO1Q9/tcFQpxRm9drmGSqlaVgK6ndCb/GAnS0apKSoIZxh5xk1IhLhZmKpPVwsJzNLXDuKvhPb/RuP10dBf3aiNNrkBfYlvEbm7T/W1gXOUjBcdp5OaGoqilI9xSPdCUfnwC8VeCIgXT+iJTl7+m7yuswV/8+SxnJ/ffN+Xx6ckwyZMqfz+DcU6EcElQVrM0M7DzsnPjAPz0lqst6SlJR6Vlq8CVi4/3NKq+4o8LTBNbM3O5T88bP+HI7csseaWS8zEX+r4U897YKegAgrHZZGWZBnWWtiUf1sLetZS2ryXr3YGPsT5t+Acfm7KN8V2N+xWUPTTmCaInjhg354Gj2pMd7ZBrG1JX+VJ8V+3gD2mC1JnqJhYIucz6HUEn0lhz2nmPH0/4F6bzH0EBgtcL+GzWDSEgc728/wTy06NU6kTinCIhgu5Taf0CesK9jaC9eUKpwvuWhojbWLnQ0CLxWPj9bfZ+gnzQVEvMnFlXLeseEfaW7xhVSwpo8ctIb7XULT+q7fsxOxEIOjQGBy9GnCHfFU=
+
+conn north-leftckaid2
+	# need support for leftckaid2
+        leftckaid=7ef3f77bc894d266fc956d8a44d68091ad1cafdd
 
 conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
