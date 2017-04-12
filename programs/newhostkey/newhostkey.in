@@ -136,6 +136,9 @@ out()
 if [ -n "${output}" ]; then
     umask 077
     TEMPFILE=$(/bin/mktemp ${output}.XXXXXXX)
-    out > ${TEMPFILE}
+    if [ -f ${output} ]; then
+       cat ${output} >> ${TEMPFILE}
+    fi
+    out >> ${TEMPFILE}
     mv ${TEMPFILE} ${output}
 fi
