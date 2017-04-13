@@ -320,6 +320,8 @@ void delete_connection(struct connection *c, bool relations)
 
 	set_debugging(old_cur_debugging);
 	pfreeany(c->name);
+	pfreeany(c->connalias);
+	pfreeany(c->vti_iface);
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
 	pfreeany(c->modecfg_banner);
