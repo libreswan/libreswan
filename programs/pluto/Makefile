@@ -20,25 +20,28 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Pluto currently doesn't include include program.mk:
+PROGRAM = pluto
+
+# XXX: Pluto doesn't include mk/program.mk and define PROGRAM
+PROGRAM_MANPAGE = ipsec_pluto.8
+
 #
-# - this make file tests USE_ variables defined in config.mk using
-#   GNU-make's 'ifeq' statement and that only works if config.mk is
-#   included before the tests.
+# XXX:
 #
-#   That code is slowly being replaced by '$(call if-enabled)'.
+# Because pluto's Makefile tests USE_... variables, defined in
+# config.mk, using "ifeq", it needs to include that file early.
+#
+# Instead:
+#
+# - replace the code with '$(call if-enabled)'.
+#
+# - move the optional files to their own library?
 #
 
 ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
-
-# XXX: Pluto doesn't include mk/program.mk and define PROGRAM
-MANPAGES += ipsec_pluto.8
-
 include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/targets.mk
-include $(top_srcdir)/mk/manpages.mk
 
 # Object files required by this pluto build.
 
@@ -63,27 +66,27 @@ OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
+CFLAGS += -DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
 ifeq ($(USE_KLIPS),true)
-KLIPS_DEFS=-DKLIPS -DPFKEY
+CFLAGS += -DKLIPS -DPFKEY
 OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_MAST),true)
-MAST_DEFS=-DKLIPS_MAST
+CFLAGS += -DKLIPS_MAST
 OBJS += kernel_mast.o
 endif
 
 ifeq ($(USE_WIN2K_NATIVE),true)
-WIN2K_DEFS=-DWIN2K_NATIVE_IPSEC
+CFLAGS += -DWIN2K_NATIVE_IPSEC
 OBJS += kernel_win2k.o
 endif
 
 ifeq ($(USE_BSDKAME),true)
-BSDKAME_DEFS=-DBSD_KAME
+CFLAGS += -DBSD_KAME
 OBJS += kernel_bsdkame.o
 # LIBBSDPFKEY is presumably passed in.
 LDFLAGS += ${LIBBSDPFKEY}
@@ -93,7 +96,7 @@ OBJS += x509.o
 OBJS += fetch.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
-IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
+CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
@@ -140,17 +143,6 @@ OBJS += ike_alg_camellia.o
 OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
 
-DEFINES = $(EXTRA_DEFINES) \
-	${VENDORID} \
-	$(KEYRR_DEFINES) \
-	$(NETKEY_DEFS) \
-	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	${LABELED_IPSEC_DEFS} \
-	${SYSTEMD_NOTIFY_DEFS} \
-	${CURL_DEFS}\
-	${SINGLE_CONF_DIR} \
-	${IPSEC_CONNECTION_LIMIT_DEFS} \
-
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LDFLAGS += $(SECCOMP_LDFLAGS)
@@ -162,11 +154,9 @@ LDFLAGS += -lpthread
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
 
 ifeq ($(USE_LIBCAP_NG),true)
-DEFINES+=-DHAVE_LIBCAP_NG
+CFLAGS += -DHAVE_LIBCAP_NG
 LDFLAGS += -lcap-ng
 endif
-
-BINNAMEPLUTO = pluto
 
 # OSDEP already set in objdir.mk?
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
@@ -245,37 +235,14 @@ ifeq ($(USE_TWOFISH),true)
 OBJS += $(LIBTWOFISH)
 endif
 
-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) buildall
+# legacy mess, something is still needed
+CFLAGS += $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(NSSFLAGS) ${CROSSFLAGS}
+CFLAGS += $(EXTRA_DEFINES) \
+	${VENDORID} \
+	$(KEYRR_DEFINES) \
+	${LABELED_IPSEC_DEFS} \
+	${SYSTEMD_NOTIFY_DEFS} \
+	${CURL_DEFS}\
+	${SINGLE_CONF_DIR}
 
-local-clean-base: $(builddir)/Makefile
-	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJS) $(BINNAMEPLUTO), $(builddir)/$(f))
-
-local-install-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO)
-
-doinstall:
-	mkdir -p ${LIBEXECDIR}
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d
-	mkdir -p -m 755 $(VARDIR)/run/pluto
-	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(LIBEXECDIR)
-
-list-local-base:
-	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-
-$(BINNAMEPLUTO): $(OBJS)
-	$(CC) -o $(BINNAMEPLUTO) $(OBJS) $(LDFLAGS) $(USERLINK)
-
-check:
-	echo no checks in lib right now.
-
-checkprograms:
-
-%.i: %.c
-	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
-
-MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJS))
-MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
-include $(top_srcdir)/mk/depend.mk
+include $(top_srcdir)/mk/program.mk
