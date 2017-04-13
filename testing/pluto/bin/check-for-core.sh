@@ -17,10 +17,7 @@ ls /tmp/core* 2>/dev/null | while read core ; do
 
     if test -n "${prog}" ; then
 	echo
-	gdb -q ${prog} ${core} <<EOF
-bt
-quit
-EOF
+	gdb -ex bt  -q -batch  ${prog} ${core}
 	echo
     fi
 
