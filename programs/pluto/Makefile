@@ -54,10 +54,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 # The following are best left undefined -- each can be overridden at runtime
 # if need be.
 # -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
-# -DSHARED_SECRETS_FILE=string overrides /etc/ipsec.secrets as the
-#    default name of the file containing secrets used to authenticate other
-#    IKE daemons.  In the Makefile, two levels of quoting are needed:
-#    -DSHARED_SECRETS_FILE='"/etc/ipsec.secrets"'
 # -DDEFAULT_CTLBASE=string overrides /var/run/pluto as default directory
 #    and basename for pluto's lockfile (.pid) and control socket (.ctl).
 #    Double quoting may be needed.
