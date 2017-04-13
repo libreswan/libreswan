@@ -29,6 +29,7 @@
 const struct integ_desc alg_info_integ_null = {
        .common = {
                .name = "XXX-NULL-XXX",
+	       .algo_type = IKE_ALG_INTEG,
        },
 };
 
@@ -543,6 +544,24 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
+	const struct prf_desc *prf =
+		prf_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+				       p_ctx->param->prf_alg_byname,
+				       p_ctx->aalg_buf, 0,
+				       "PRF"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
+
+	const struct integ_desc *integ =
+		integ_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+					 p_ctx->param->integ_alg_byname,
+					 p_ctx->aalg_buf, 0,
+					 "integrity"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
+
 	int aalg_id = -1;
 	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
 		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
@@ -665,6 +684,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 					  alg_info,
 					  ealg_id, p_ctx->eklen,
 					  aalg_id,
+					  prf, integ,
 					  group,
 					  err_buf, err_buf_len);
 
@@ -695,7 +715,8 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 
 	/* use default if null string */
 	if (*alg_str == '\0')
-		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0,
+		param->alg_info_add(&ctx.policy, alg_info,
+				    0, 0, 0, NULL, NULL, NULL,
 				    err_buf, err_buf_len);
 
 	ptr = alg_str;

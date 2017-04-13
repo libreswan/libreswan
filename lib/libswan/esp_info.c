@@ -242,6 +242,8 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 				    struct alg_info *alg_info,
 				    int ealg_id, int ek_bits,
 				    int aalg_id,
+				    const struct prf_desc *prf UNUSED,
+				    const struct integ_desc *integ UNUSED,
 				    const struct oakley_group_desc *dh_group UNUSED,
 				    char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
@@ -289,6 +291,8 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 				   struct alg_info *alg_info,
 				   int ealg_id, int ek_bits,
 				   int aalg_id,
+				   const struct prf_desc *prf UNUSED,
+				   const struct integ_desc *integ UNUSED,
 				   const struct oakley_group_desc *dh_group UNUSED,
 				   char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
