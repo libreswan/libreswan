@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015,2017 Andrew Cagney
 # Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -15,6 +15,9 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+ifndef config.mk
+config.mk = true
 
 # A Makefile wanting to test variables defined below has two choides:
 #
@@ -542,3 +545,5 @@ OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x
 # Now that all the configuration variables are defined, use them to
 # define USERLAND_CFLAGS
 include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
+
+endif
