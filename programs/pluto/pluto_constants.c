@@ -365,6 +365,7 @@ enum_names stfstatus_name = {
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
 const char *const sa_policy_bit_names[] = {
+	"AUTH_NEVER",
 	"PSK",
 	"RSASIG",
 	"AUTHNULL",

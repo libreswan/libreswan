@@ -744,14 +744,12 @@ extern const char *prettypolicy(lset_t policy);
  * in sa_policy_bit_names.
  */
 enum sa_policy_bits {
+	POLICY_AUTH_NEVER_IX,
 	POLICY_PSK_IX,
 	POLICY_RSASIG_IX,
 	POLICY_AUTH_NULL_IX,
 
-	/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH
-	* ??? This set constant certainly doesn't include XAUTH.
-	*/
-#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
+#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_AUTH_NEVER_IX, POLICY_AUTH_NULL_IX)
 
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
@@ -828,6 +826,7 @@ enum sa_policy_bits {
 #define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
+#define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
@@ -878,7 +877,7 @@ enum sa_policy_bits {
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
 /* Don't allow negotiation? */
-#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
+#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE) || (p & POLICY_AUTH_NEVER))
 
 /* values for right=/left= */
 enum keyword_host {
