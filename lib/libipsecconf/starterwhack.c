@@ -729,13 +729,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (r != 0)
 		return r;
 
-	/* why does this not work?
-	 * if ((conn->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-	 */
-
-	if ((conn->policy & POLICY_RSASIG) == LEMPTY &&
-		(conn->policy & POLICY_PSK) == LEMPTY &&
-		(conn->policy & POLICY_AUTH_NULL) == LEMPTY) {
+	 if ((conn->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 			/* authby= was also not specified - fill in default */
 			conn->policy |= POLICY_RSASIG;
 	}
