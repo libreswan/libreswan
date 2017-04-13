@@ -747,7 +747,6 @@ enum sa_policy_bits {
 	POLICY_PSK_IX,
 	POLICY_RSASIG_IX,
 	POLICY_AUTH_NULL_IX,
-#define POLICY_ISAKMP_SHIFT	POLICY_PSK_IX
 
 	/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH
 	* ??? This set constant certainly doesn't include XAUTH.
