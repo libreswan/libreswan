@@ -1447,7 +1447,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
-					struct msg_digest *whole_md = alloc_md();
+					struct msg_digest *whole_md = alloc_md("msg_digest by ikev1 fragment handler");
 					u_int8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;

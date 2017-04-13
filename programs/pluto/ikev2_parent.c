@@ -315,7 +315,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	enum crypto_importance ci = pcim_stranger_crypto;
 
 	if (md == NULL) {
-		fake_md = alloc_md();
+		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
 		fake_md->st = st;
 		fake_md->from_state = STATE_IKEv2_BASE;
 		md = fake_md;

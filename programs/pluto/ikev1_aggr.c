@@ -1173,7 +1173,7 @@ stf_status aggr_outI1(int whack_sock,
 	 * Note: almost identical code appears at the end of ikev2parent_outI1.
 	 */
 	{
-		struct msg_digest *fake_md = alloc_md();
+		struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
 		struct pluto_crypto_req_cont *ke;
 		stf_status e;
 
