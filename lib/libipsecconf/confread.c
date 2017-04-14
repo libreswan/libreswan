@@ -6,7 +6,7 @@
  * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
@@ -785,12 +785,6 @@ static bool translate_conn(struct starter_conn *conn,
 
 		unsigned int field = kw->keyword.keydef->field;
 
-#ifdef PARSER_TYPE_DEBUG
-		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
-			    kw->keyword.keydef->keyname, field,
-			    kw->keyword.keydef->type);
-#endif
-
 		assert(kw->keyword.keydef != NULL);
 		switch (kw->keyword.keydef->type) {
 		case kt_string:
@@ -1126,27 +1120,34 @@ static bool load_conn(
 		}
 	}
 
-#ifdef PARSER_TYPE_DEBUG
-	/* translate strings/numbers into conn items */
-	starter_log(LOG_LEVEL_DEBUG,
-		    "#checking options_set[KBF_TYPE,%d]=%d %d",
-		    KBF_TYPE,
-		    conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
-#endif
 
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
 		case KS_TUNNEL:
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=tunnel must not specify authby=never";
+					return TRUE;
+			}
 			conn->policy |= POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_TRANSPORT:
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=transport must not specify authby=never";
+					return TRUE;
+			}
 			conn->policy &= ~POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_PASSTHROUGH:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=passthrough must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1155,6 +1156,10 @@ static bool load_conn(
 			break;
 
 		case KS_DROP:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1163,6 +1168,10 @@ static bool load_conn(
 			break;
 
 		case KS_REJECT:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1204,19 +1213,12 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS, POLICY_PFS);
 
-	/* reset authby flags */
+	/* reset authby= flags */
 	if (conn->options_set[KBF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
 
-#ifdef STARTER_POLICY_DEBUG
-		starter_log(LOG_LEVEL_DEBUG,
-			    "%s: setting conn->policy=%08x (%08x)",
-			    conn->name,
-			    (unsigned int)conn->policy,
-			    conn->options[KBF_AUTHBY]);
-#endif
 	}
 
 	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
@@ -1351,6 +1353,22 @@ static bool load_conn(
 			break;
 		}
 	}
+
+	/*
+	 * some options are set as part of our default, but
+	 * some make no sense for shunts, so remove those again
+	 */
+	if (NEVER_NEGOTIATE(conn->policy)) {
+		/* remove IPsec related options */
+		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
+			POLICY_ESN_YES | POLICY_SAREF_TRACK |
+			POLICY_SAREF_TRACK_CONNTRACK);
+		/* remove IKE related options */
+		conn->policy &= ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
+			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |
+			POLICY_IKE_FRAG_FORCE);
+	}
+
 
 	err |= validate_end(
 #ifdef DNSSEC

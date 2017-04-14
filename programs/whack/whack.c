@@ -2096,14 +2096,7 @@ int main(int argc, char **argv)
 		    subnettypeof(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
-		if (NEVER_NEGOTIATE(msg.policy)) {
-			/*
-			 * we think this is just a shunt
-			 * (because he didn't specify
-			 * a host authentication method).
-			 * If he didn't specify a shunt type,
-			 * he's probably gotten it wrong.
-			 */
+		if (msg.policy & POLICY_AUTH_NEVER) {
 			if ((msg.policy & POLICY_SHUNT_MASK) ==
 			    POLICY_SHUNT_TRAP)
 				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");

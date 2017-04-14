@@ -1064,58 +1064,8 @@ static bool check_connection_end(const struct whack_end *this,
 				"connection %s must specify host IP address for our side",
 				wm->name);
 			return FALSE;
-		} else if (!NEVER_NEGOTIATE(wm->policy)) {
-			/*
-			 * Check that all main mode RW IKE policies agree
-			 * because we must implement them before the correct
-			 * connection is known.
-			 *
-			 * We cannot enforce this for other non-RW connections
-			 * because differentiation is possible when a command
-			 * specifies which to initiate.
-			 *
-			 * Aggressive mode IKE policies do not have to agree
-			 * amongst themselves as the ID is known from the
-			 * outset.
-			 */
-			const struct connection *c =
-				find_host_pair_connections(&this->host_addr,
-						this->host_port,
-						(const ip_address *)NULL,
-						that->host_port);
-
-			for (; c != NULL; c = c->hp_next) {
-				if (c->policy & POLICY_AGGRESSIVE)
-					continue;
-#if 0	/* ??? suppressing this code makes this whole leg pointless */
-				if (!NEVER_NEGOTIATE(c->policy) &&
-					((c->policy ^ wm->policy) &
-						(POLICY_PSK | POLICY_RSASIG))) {
-					char cib[CONN_INST_BUF];
-
-					loglog(RC_CLASH,
-						"authentication method disagrees with \"%s\"%s, which is also for an unspecified peer",
-						c->name, fmt_conn_instance(c, cib));
-					return FALSE;
-				}
-#endif
-			}
 		}
 	}
-
-#if 0
-	/*
-	 * Virtual IP is also valid with rightsubnet=vnet:%priv or with
-	 * rightprotoport=17/%any
-	 */
-	if (this->virt != NULL &&
-		(!isanyaddr(&this->host_addr) || this->has_client))
-	{
-		loglog(RC_CLASH,
-			"virtual IP must only be used with %%any and without client");
-		return FALSE;
-	}
-#endif
 
 	return TRUE; /* happy */
 }
@@ -1289,12 +1239,12 @@ void add_connection(const struct whack_message *wm)
 
 	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 	case LEMPTY:
-		if (!NEVER_NEGOTIATE(wm->policy)) {
+		if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
 			loglog(RC_LOG_SERIOUS,
-				"Connection without either AH or ESP cannot negotiate");
+				"Connection without AH or ESP must use authby=never");
 			return;
 		}
-		if (wm->policy & POLICY_TUNNEL) {
+		if (wm->policy & POLICY_TUNNEL) { /* what about type=transport :P */
 			loglog(RC_LOG_SERIOUS,
 				"connection with type=tunnel cannot have authby=never");
 			return;
@@ -1306,7 +1256,21 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
-	if (!NEVER_NEGOTIATE(wm->policy) && wm->ike != NULL) {
+	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
+		if ((wm->policy & POLICY_SHUNT_MASK) == LEMPTY) {
+			loglog(RC_LOG_SERIOUS,
+				"connection with authby=never must specify shunt type via type=");
+			return;
+		}
+	} else {
+		if ((wm->policy & POLICY_SHUNT_MASK) != LEMPTY) {
+			loglog(RC_LOG_SERIOUS,
+				"shunt connection cannot have authentication method other then authby=never");
+			return;
+		}
+	}
+
+	if (LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
 
 		alg_info_ike = alg_info_ike_create_from_str(wm->policy, wm->ike,
