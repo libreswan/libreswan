@@ -5,7 +5,7 @@ if test $# -lt 1 ; then
 
 Usage:
 
-    $0 [ --json <json> ] [ --commit <repo> <rev> | --job <job> ] --start <start> --date <date> [ <details> ... ]
+    $0 [ --json <json> ] [ --directory <directory> ] [ --commit <repo> <rev> | --job <job> ] --start <start> --date <date> [ <details> ... ]
 
 Update the <json> file with the current status.  Multiple <details>
 are allowed and are appended.
@@ -30,6 +30,7 @@ while test $# -gt 0; do
 	--job ) shift ; job=$1 ; shift ;;
 	--start ) shift ; start=$1 ; shift ;;
 	--date ) shift ; date=$1 ; shift ;;
+	--directory ) shift ; directory=$1 ; shift ;;
 	--commit )
 	    shift ; repodir=$1 ; shift ; hash=$1 ; shift
 	    details=$(cd ${repodir} && git show --no-patch --format='%s' ${hash})
@@ -60,7 +61,16 @@ echo {} | \
        --arg date "${date}" \
        --arg details "${details}" \
        --arg hash "${hash}" \
-       '{ job: $job, start: $start, date: $date, details: $details, hash: $hash }' | \
+       --arg directory "${directory}" \
+       '
+{
+    job: $job,
+    start: $start,
+    date: $date,
+    details: $details,
+    hash: $hash,
+    directory: $directory,
+ }' | \
     if test -n "${json}" ; then
 	cat > ${json}.tmp
 	mv ${json}.tmp ${json}

@@ -1,9 +1,9 @@
 
-function lsw_load_jobs_table(jobs_id, directories) {
+function lsw_load_jobs_table(jobs_id, paths) {
 
     var queue = d3.queue()
-    directories.forEach(function(directory) {
-	queue.defer(d3.json, directory + "status.json")
+    paths.forEach(function(path) {
+	queue.defer(d3.json, path + "status.json")
     })
 
     queue.awaitAll(function(error, results) {
@@ -13,24 +13,34 @@ function lsw_load_jobs_table(jobs_id, directories) {
 	    return
 	}
 
-	// Merge directory/results
-	for (var i = 0; i < directories.length; i++) {
-	    results[i].directory = directories[i]
-	}
+	// Add in the path to the directory.
+	results.forEach(function(result, i) {
+	    result.directory = paths[i] + result.directory
+	})
 
 	var columns = [
 	    {
-		title: directories[0] ? "Directory" : "Current Time",
+		title: "Current Time",
+		value: function(status) {
+		    return new Date()
+		},
+		html: function(status) {
+		    return lsw_date2iso(new Date())
+		}
+	    },
+	    {
+		title: "Directory",
 		value: function(status) {
 		    return status.directory
 		},
 		html: function(status) {
-		    if (status.directory.length > 0) {
+		    console.log(status)
+		    if (status.directory && status.directory.length) {
 			return ("<a href=\"" + status.directory + "\">"
 				+ status.directory
 				+ "</a>")
 		    } else {
-			return lsw_date2iso(new Date())
+			""
 		    }
 		}
 	    },

@@ -94,12 +94,14 @@ function lsw_summary_table(table_id, summary) {
 	{
 	    title: "Directory",
 	    html: function(row) {
-		if (row.directory) {
+		if (row == summary.current) {
+		    return ("<a href=\"" + row.directory + "\">"
+			    + "in progress"
+			    + "</a>")
+		} else {
 		    return ("<a href=\"" + row.directory + "\">"
 			    + row.directory
 			    + "</a>")
-		} else {
-		    return "<b>in progress</b>"
 		}
 	    },
 	    value: function(row) {

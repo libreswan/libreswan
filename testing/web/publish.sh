@@ -67,7 +67,9 @@ start=$(date -u -Iseconds)
 script="${webdir}/json-status.sh \
   --json ${summarydir}/status.json \
   --commit ${repodir} ${gitrev} \
-  --start ${start}"
+  --start ${start} \
+  --directory ${gitstamp}"
+
 status() {
     ${script} --date $(date -u -Iseconds) " ($*)"
 }
