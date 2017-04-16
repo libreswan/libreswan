@@ -13,6 +13,7 @@
  * Copyright (C) 2012 Roel van Meer <roel.vanmeer@bokxing.nl>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1192,6 +1193,68 @@ bool pfkey_del_sa(const struct kernel_sa *sa)
 
 	       && finish_pfkey_msg(extensions, "Delete SA", sa->text_said,
 				   NULL);
+}
+
+/*
+ * pfkey_get_sa - Get SA information from the kernel
+ *
+ * @param sa Kernel SA to be queried
+ * @param bytes octets processed by SA
+ * @param add_time timestamp when SA was added
+ * @return bool True if successful
+ */
+bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
+		  uint64_t *add_time)
+{
+	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
+	pfkey_buf pfb;
+
+	if (! (pfkey_msg_start(K_SADB_GET, proto2satype(
+				       sa->proto),
+			       "pfkey_msg_hdr get SA", sa->text_said,
+			       extensions)
+
+	       && pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
+					     K_SADB_EXT_SA,
+					     sa->spi, /* in host order */
+					     0, K_SADB_SASTATE_MATURE, 0, 0,
+					     0),
+			      "pfkey_sa get SA", sa->text_said, extensions)
+
+	       && pfkeyext_address(K_SADB_EXT_ADDRESS_SRC, sa->src,
+				   "pfkey_addr_s get SA", sa->text_said,
+				   extensions)
+
+	       && pfkeyext_address(K_SADB_EXT_ADDRESS_DST, sa->dst,
+				   "pfkey_addr_d get SA", sa->text_said,
+				   extensions)
+
+	       && finish_pfkey_msg(extensions, "Get SA", sa->text_said,
+				   &pfb) );
+		return FALSE;
+
+	// get reply
+
+	/* extract the sa info */
+	struct sadb_ext *replies[K_SADB_EXT_MAX + 1];
+	int error;
+
+	error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
+	if (error != 0)
+		libreswan_log("success on unparsable message - cannot happen");
+
+	if (replies[K_SADB_EXT_LIFETIME_CURRENT]) {
+		struct sadb_lifetime *sal = (struct sadb_lifetime *)
+			replies[K_SADB_EXT_LIFETIME_CURRENT];
+
+		//*allocations = sal->sadb_lifetime_allocations;
+		*bytes = sal->sadb_lifetime_bytes;
+		*add_time = sal->sadb_lifetime_addtime;
+		//*use_time = sal->sadb_lifetime_usetime;
+		//*packets = sal->sadb_x_lifetime_packets;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 void pfkey_close(void)

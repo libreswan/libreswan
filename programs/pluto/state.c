@@ -17,6 +17,7 @@
  * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
  * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2025,7 +2026,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 SA_AH);
 /* needs proper fix, via kernel_ops? */
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if (defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_ah.peer_bytes,
 						       mbcp,
@@ -2036,7 +2037,7 @@ void fmt_state(struct state *st, const monotime_t n,
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
@@ -2057,7 +2058,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 SA_ESP);
 /* ??? needs proper fix, via kernel_ops? */
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
@@ -2068,7 +2069,7 @@ void fmt_state(struct state *st, const monotime_t n,
 #endif
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
@@ -2088,7 +2089,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (st->st_ipcomp.present) {
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
@@ -2100,7 +2101,7 @@ void fmt_state(struct state *st, const monotime_t n,
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
