@@ -1,6 +1,6 @@
 /*
  * @(#) RFC2367 PF_KEYv2 Key management API message parser
- * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
+ * Copyright (C) 1999, 2000, 2001, 2017  Richard Guy Briggs <rgb@freeswan.org>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
  *
@@ -3555,6 +3555,7 @@ int pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg)
 	case K_SADB_UPDATE:
 	case K_SADB_ADD:
 	case K_SADB_DELETE:
+	case K_SADB_GET:
 	case K_SADB_X_GRPSA:
 	case K_SADB_X_ADDFLOW:
 		if (!(extr.ips->ips_said.proto =
