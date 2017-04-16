@@ -85,10 +85,6 @@ int address_family = 0;
 unsigned char proto = 0;
 int alg = 0;
 
-/*
- *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
- */
-#define XF_OTHER_ALG (XF_CLR - 1)       /* define magic XF_ symbol for alg_info's */
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */

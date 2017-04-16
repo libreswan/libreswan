@@ -36,6 +36,10 @@
 #define XF_COMPDEFLATE          16      /* IPCOMP deflate */
 #define XF_COMPLZS              17      /* IPCOMP LZS */
 
+/*
+ *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
+ */
+#define XF_OTHER_ALG		125	/* define magic XF_ symbol for alg_infos */
 #define XF_CLR                  126     /* Clear SA table */
 #define XF_DEL                  127     /* Delete SA */
 
