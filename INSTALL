@@ -14,6 +14,8 @@ for dnssec support: unbound-devel
 for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
 for CRL fetching support: openldap-devel curl-devel
+for audit support: audit-libs-devel
+for curl support: libcurl-devel
 
 Building userland
 -----------------
