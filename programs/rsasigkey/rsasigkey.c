@@ -5,7 +5,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2016 Tuomo Soini <tis@foobar.fi>
  *
@@ -18,6 +18,8 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
+ * NOTE: This should probably be rewritten to use NSS RSA_NewKey()
  */
 
 #include <sys/types.h>
@@ -76,8 +78,8 @@
 
 #define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
 
-#define E       3               /* standard public exponent */
-/* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
+/* No longer use E=3 to comply to FIPS 186-4, section B.3.1 */
+#define F4	65537
 
 char usage[] =
 	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>]\n"
@@ -109,17 +111,15 @@ static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 /*
  * bundle - bundle e and n into an RFC2537-format chunk_t
  */
-static char *base64_bundle(int e, chunk_t modulus)
+static char *base64_bundle(int f4, chunk_t modulus)
 {
 	/*
-	 * Pack the single-byte exponent into a byte array.
+	 * Pack the exponent into a byte array.
 	 */
-	assert(e <= 255);
-	u_char exponent_byte = e;
-	chunk_t exponent = {
-		.ptr = &exponent_byte,
-		.len = 1,
-	};
+	chunk_t exponent;
+	u_int32_t f4_bytes = (u_int32_t)f4;
+
+	clonetochunk(exponent, &f4_bytes, sizeof(u_int32_t), "exponent");
 
 	/*
 	 * Create the resource record.
@@ -132,6 +132,7 @@ static char *base64_bundle(int e, chunk_t modulus)
 		exit(1);
 	}
 
+	freeanychunk(exponent);
 	return bundle;
 }
 
@@ -291,7 +292,7 @@ int main(int argc, char *argv[])
  */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 {
-	PK11RSAGenParams rsaparams = { nbits, (long) E };
+	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
 	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
@@ -371,7 +372,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 
 	/* RFC2537/RFC3110-ish format */
 	{
-		char *bundle = base64_bundle(E, public_modulus);
+		char *bundle = base64_bundle(F4, public_modulus);
 		printf("\t#pubkey=%s\n", bundle);
 		pfree(bundle);
 	}
