@@ -714,8 +714,8 @@ static const char *const ike_idtype_name[] = {
 
 /* IKEv1 */
 enum_names ike_idtype_names = {
-	ID_IPV4_ADDR, ID_FC_NAME,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_FC_NAME-ID_IPV4_ADDR+1,
+	ID_IPV4_ADDR, ID_NULL,
+	&ike_idtype_name[ID_IPV4_ADDR], ID_NULL-ID_IPV4_ADDR+1,
 	NULL, /* prefix */
 	NULL
 };
