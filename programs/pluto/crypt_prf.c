@@ -46,13 +46,18 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc, lset_t debug,
 			      const char *name,
 			      struct prf_context *context)
 {
-	struct crypt_prf *prf = alloc_thing(struct crypt_prf, name);
-	*prf = (struct crypt_prf) {
-		.context = context,
-		.debug = debug,
-		.name = name,
-		.desc = prf_desc,
-	};
+	struct crypt_prf *prf = NULL;
+	if (context != NULL) {
+		prf = alloc_thing(struct crypt_prf, name);
+		*prf = (struct crypt_prf) {
+			.context = context,
+			.debug = debug,
+			.name = name,
+			.desc = prf_desc,
+		};
+	}
+	DBG(debug, DBG_log("%s PRF %s crypt-prf@%p",
+			   name, prf_desc->common.name, prf));
 	return prf;
 }
 
@@ -60,7 +65,7 @@ struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
 				       const struct prf_desc *prf_desc,
 				       const char *chunk_name, chunk_t chunk)
 {
-	DBG(debug, DBG_log("%s prf %s init %s-chunk@%p (length %zd)",
+	DBG(debug, DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
 			   name, prf_desc->common.name,
 			   chunk_name, chunk.ptr, chunk.len));
 	return wrap(prf_desc, debug, name,
@@ -72,7 +77,7 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
 					const struct prf_desc *prf_desc,
 					const char *key_name, PK11SymKey *key)
 {
-	DBG(debug, DBG_log("%s prf %s init %s-key@%p (size %zd)",
+	DBG(debug, DBG_log("%s PRF %s init %s-key@%p (size %zd)",
 			   name, prf_desc->common.name,
 			   key_name, key, sizeof_symkey(key)));
 	return wrap(prf_desc, debug, name,
@@ -87,7 +92,7 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
 void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
 			    chunk_t update)
 {
-	DBG(prf->debug, DBG_log("%s prf %s update %s-chunk@%p (length %zd)",
+	DBG(prf->debug, DBG_log("%s PRF %s update %s-chunk@%p (length %zd)",
 				prf->name, prf->desc->common.name,
 				name, update.ptr, update.len));
 	prf->desc->prf_ops->digest_bytes(prf->context, name, update.ptr, update.len);
@@ -96,7 +101,7 @@ void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
 void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
 			     PK11SymKey *update)
 {
-	DBG(prf->debug, DBG_log("%s prf %s update %s-key@%p (size %zd)",
+	DBG(prf->debug, DBG_log("%s PRF %s update %s-key@%p (size %zd)",
 				prf->name, prf->desc->common.name,
 				name, update, sizeof_symkey(update)));
 	prf->desc->prf_ops->digest_symkey(prf->context, name, update);
@@ -105,7 +110,7 @@ void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
 void crypt_prf_update_byte(const char *name, struct crypt_prf *prf,
 			   uint8_t update)
 {
-	DBG(prf->debug, DBG_log("%s prf %s update %s-byte@0x%x (%u)",
+	DBG(prf->debug, DBG_log("%s PRF %s update %s-byte@0x%x (%u)",
 				prf->name, prf->desc->common.name,
 				name, update, update));
 	prf->desc->prf_ops->digest_bytes(prf->context, name, &update, 1);
@@ -114,7 +119,7 @@ void crypt_prf_update_byte(const char *name, struct crypt_prf *prf,
 void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 			    const void *update, size_t sizeof_update)
 {
-	DBG(prf->debug, DBG_log("%s prf %s update %s-bytes@%p (length %zd)",
+	DBG(prf->debug, DBG_log("%s PRF %s update %s-bytes@%p (length %zd)",
 				prf->name, prf->desc->common.name,
 				name, update, sizeof_update));
 	prf->desc->prf_ops->digest_bytes(prf->context, name, update, sizeof_update);
@@ -123,10 +128,10 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 {
 	struct crypt_prf *prf = *prfp;
-	DBG(prf->debug, DBG_log("%s prf %s final-key ...",
+	DBG(prf->debug, DBG_log("%s PRF %s final-key ...",
 				prf->name, prf->desc->common.name));
 	PK11SymKey *tmp = prf->desc->prf_ops->final_symkey(&prf->context);
-	DBG(prf->debug, DBG_log("%s prf %s final-key@%p (size %zu)",
+	DBG(prf->debug, DBG_log("%s PRF %s final-key@%p (size %zu)",
 				(*prfp)->name, (*prfp)->desc->common.name,
 				tmp, sizeof_symkey(tmp)));
 	pfree(*prfp);
@@ -138,10 +143,10 @@ void crypt_prf_final_bytes(struct crypt_prf **prfp,
 			   void *bytes, size_t sizeof_bytes)
 {
 	struct crypt_prf *prf = *prfp;
-	DBG(prf->debug, DBG_log("%s prf %s final-bytes ...",
+	DBG(prf->debug, DBG_log("%s PRF %s final-bytes ...",
 				prf->name, prf->desc->common.name));
 	prf->desc->prf_ops->final_bytes(&prf->context, bytes, sizeof_bytes);
-	DBG(prf->debug, DBG_log("%s prf %s final-bytes@%p (length %zu)",
+	DBG(prf->debug, DBG_log("%s PRF %s final-bytes@%p (length %zu)",
 				(*prfp)->name, (*prfp)->desc->common.name,
 				bytes, sizeof_bytes));
 	pfree(*prfp);
