@@ -219,8 +219,6 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 extern int alg_enum_search(enum_names *ed, const char *prefix,
 			   const char *postfix, const char *name);
 
-struct oakley_group_desc;	/* so it isn't local to the function prototype */
-
 /*
  * on success: returns alg_info
  * on failure: pfree(alg_info) and return NULL;
