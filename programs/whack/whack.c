@@ -570,9 +570,9 @@ static const struct option long_opts[] = {
 	{ "to", no_argument, NULL, CD_TO + OO },
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
-	PS("auth-never", AUTH_NEVER),
 	PS("psk", PSK),
 	PS("rsasig", RSASIG),
+	PS("auth-never", AUTH_NEVER),
 	PS("auth-null", AUTH_NULL),
 
 	PS("encrypt", ENCRYPT),
@@ -1549,9 +1549,9 @@ int main(int argc, char **argv)
 			end_seen = LEMPTY;
 			continue;
 
-		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_RSASIG_IX:	/* --rsasig */
+		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --null */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */

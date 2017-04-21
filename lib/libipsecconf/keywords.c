@@ -133,10 +133,10 @@ static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_
  * Values for authby={never, rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
-        { "never",     POLICY_AUTH_NEVER },
-        { "null",      POLICY_AUTH_NULL },
         { "secret",    POLICY_PSK },
         { "rsasig",    POLICY_RSASIG },
+        { "never",     POLICY_AUTH_NEVER },
+        { "null",      POLICY_AUTH_NULL },
         { "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
 };
 static const struct keyword_enum_values kw_authby_list = VALUES_INITIALIZER(kw_authby_values);

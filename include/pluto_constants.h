@@ -744,12 +744,20 @@ extern const char *prettypolicy(lset_t policy);
  * in sa_policy_bit_names.
  */
 enum sa_policy_bits {
+	/*
+	 * XXX: Do not re-order or re-number the following pair.  Bad
+	 * things happen.
+	 *
+	 * (They are used to index an array in spdb.c when determining
+	 * default IKEv1 proposals; arguably the array should be
+	 * deleted but that is another story).
+	 */
+	POLICY_PSK_IX = 0,
+	POLICY_RSASIG_IX = 1,
 	POLICY_AUTH_NEVER_IX,
-	POLICY_PSK_IX,
-	POLICY_RSASIG_IX,
 	POLICY_AUTH_NULL_IX,
 
-#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_AUTH_NEVER_IX, POLICY_AUTH_NULL_IX)
+#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
@@ -826,9 +834,9 @@ enum sa_policy_bits {
 #define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
-#define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
 #define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
