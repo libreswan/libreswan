@@ -71,6 +71,11 @@ void alg_info_snprint_ike_info(char *buf, size_t buflen,
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
+	if (alg_info == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	const char *sep = "";
 
@@ -102,6 +107,11 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 void alg_info_ike_snprint(char *buf, size_t buflen,
 			  const struct alg_info_ike *alg_info_ike)
 {
+	if (alg_info_ike == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info_ike unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	char *be = buf + buflen;
 
