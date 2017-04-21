@@ -92,6 +92,24 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 			return FALSE; /* failure: no PSK to use */
 		}
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
+		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.prf);
+		if (pss->len < key_size_min) {
+			if (libreswan_fipsmode()) {
+				loglog(RC_LOG_SERIOUS,
+				       "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+				       st->st_connection->name,
+				       pss->len,
+				       st->st_oakley.prf->common.name,
+				       key_size_min);
+				return FALSE;
+			} else {
+				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					      st->st_connection->name,
+					      pss->len,
+					      st->st_oakley.prf->common.name,
+					      key_size_min);
+			}
+		}
 	} else {
 		/*
 		 * RFC-7619

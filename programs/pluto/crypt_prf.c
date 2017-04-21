@@ -35,6 +35,36 @@
 #include "crypt_symkey.h"
 #include "crypto.h"
 
+size_t crypt_prf_fips_key_size_min(const struct prf_desc *prf)
+{
+	/*
+	 * FIPS 198 Section 3 CRYPTOGRAPHIC KEYS requires keys to be
+	 * >= "L/2" (where L is the block-size in bytes of the hash
+	 * function).
+	 *
+	 * FIPS 198-1 Section 3 instead cites SP 800-107.  Good luck
+	 * reading the latter.
+	 */
+	return prf->prf_key_size / 2;
+}
+
+size_t crypt_prf_fips_key_size_floor(void)
+{
+	static size_t key_size_floor;
+	if (!key_size_floor) {
+		key_size_floor = SIZE_MAX;
+		for (const struct prf_desc **prfp = next_prf_desc(NULL);
+		     prfp != NULL; prfp = next_prf_desc(prfp)) {
+			if (!(*prfp)->common.fips) {
+				continue;
+			}
+			key_size_floor = min(key_size_floor,
+					     crypt_prf_fips_key_size_min(*prfp));
+		}
+	}
+	return key_size_floor;
+}
+
 struct crypt_prf {
 	struct prf_context *context;
 	lset_t debug;
