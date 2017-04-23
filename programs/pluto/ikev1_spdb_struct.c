@@ -1435,6 +1435,7 @@ rsasig_common:
 						ta.group->group : 65535,
 					      c->alg_info_ike))
 				ugh = "OAKLEY proposal refused";
+				loglog(RC_LOG_SERIOUS, "%s", ugh);
 		}
 
 		if (ugh == NULL) {
