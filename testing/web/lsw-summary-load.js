@@ -51,12 +51,20 @@ function lsw_summary_cleanup(summary) {
 	// Fix values
 	commit.author.date = new Date(commit.author.date)
 	commit.committer.date = new Date(commit.committer.date)
-	// Convert all commit parent hashes to pointers
+	commit.children = []
 	commit.parents = []
+    })
+
+    // Convert all parent commit hashes to pointers to parents and
+    // children
+
+    summary.commits.forEach(function (commit) {
 	commit.abbreviated_parent_hashes.forEach(function (parent_hash) {
 	    var parent = commit_by_hash[parent_hash]
 	    if (parent) {
+		// cross link the parent and child
 		commit.parents.push(parent)
+		parent.children.push(commit)
 	    }
 	})
     })
@@ -153,22 +161,29 @@ function lsw_html_escape(string) {
     })
 }
 
-// Convert commits to html
+// Return the commits as a blob of HTML.
 
 function lsw_commits_html(commits) {
     html = ""
+    html += "<table class=\"commits\"><tbody class=\"commits\">"
     commits.forEach(function(commit) {
+	html += "<tr class=\"" + commit.interesting + "\" title=\"interesting commit: " + commit.interesting + "\">"
+	html += "<td class=\"date\">"
 	html += lsw_date2iso(commit.committer.date)
-	html += ": "
+	html += ":</td>"
+	html += "<td class=\"hash\">"
 	html += "<a href=\""
 	html += "https://github.com/libreswan/libreswan/commit/"
 	html += commit.abbreviated_commit_hash
 	html += "\">"
 	html += commit.abbreviated_commit_hash
 	html += "</a>"
-	html += " "
+	html += "</td>"
+	html += "<td class=\"subject\">"
 	html += lsw_html_escape(commit.subject)
-	html += "<br/>"
+	html += "</td>"
+	html += "</tr>"
     })
+    html += "</tbody></table>"
     return html
 }

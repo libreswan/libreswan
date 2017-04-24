@@ -100,12 +100,20 @@ for gitrev in "$@" ; do
 
 	# Add an "interesting" commit attribute.  Only "interesting"
 	# commits get tested.
+	#
+	# git-interesting outputs "reason: details" for really
+	# interesting stuff, "true" for patches, and nothing
+	# otherwise.  Need to convert that to proper json.
 
-	if ${webdir}/git-interesting.sh ${repodir} ${gitrev} > /dev/null ; then
-	    echo true
+	if interesting=$(${webdir}/git-interesting.sh ${repodir} ${gitrev}) ; then
+	    # 'reason: details' -> '"reason"'
+	    interesting=$(echo ${interesting} | sed -e 's/\(.*\):.*/"\1"/')
 	else
-	    echo false
-	fi | jq '{ interesting: . }'
+	    interesting=false
+	fi
+	jq --null-input \
+	   --argjson interesting "${interesting}" \
+	   '{ interesting: $interesting }'
 
 	# Rest are easy to deal with.
 

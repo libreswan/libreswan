@@ -117,17 +117,16 @@ function lsw_compare_table(test_runs) {
 
     var columns = [
 	{
-	    title: "",
-	    columns: [
-		{
-		    title: "Test Name",
-		    body_align: "left",
-		    value: function(row) {
-			return row.test_name
-		    },
+	    title: "Test Name",
+	    style: {
+		body: {
+		    "text-align": "left",
 		},
-	    ],
-	}
+	    },
+	    value: function(row) {
+		return row.test_name
+	    },
+	},
     ]
 
     // If "test_kind" and/or "test_status" is identical across the
@@ -150,7 +149,7 @@ function lsw_compare_table(test_runs) {
     })
 
     if (same_kind) {
-	columns[0].columns.push({
+	columns.push({
 	    title: "Kind",
 	    value: function(row) {
 		return same_kind
@@ -159,7 +158,7 @@ function lsw_compare_table(test_runs) {
     }
 
     if (same_status) {
-	columns[0].columns.push({
+	columns.push({
 	    title: "Status",
 	    value: function(row) {
 		return same_status
@@ -168,13 +167,16 @@ function lsw_compare_table(test_runs) {
     }
 
     test_runs.forEach(function(run, run_index) {
-	var results_column = {
-	    title: lsw_commits_html(run.commits),
-	    header_align: "left",
-	    columns: []
+	var results_column = []
+	results_column.title = lsw_commits_html(run.commits)
+	results_column.style = {
+	    header: {
+		"text-align": "left",
+		"vertical-align": "top",
+	    },
 	}
 	if (!same_kind) {
-	    results_column.columns.push({
+	    results_column.push({
 		directory: run.directory,
 		title: "Kind",
 		value: function(row) {
@@ -191,7 +193,7 @@ function lsw_compare_table(test_runs) {
 	    })
 	}
 	if (!same_status) {
-	    results_column.columns.push({
+	    results_column.push({
 		directory: run.directory,
 		title: "Status",
 		value: function(row) {
@@ -207,7 +209,7 @@ function lsw_compare_table(test_runs) {
 		},
 	    })
 	}
-	results_column.columns.push({
+	results_column.push({
 	    directory: run.directory,
 	    title: "Result",
 	    value: function(row) {
@@ -234,7 +236,7 @@ function lsw_compare_table(test_runs) {
 		}
 	    },
 	})
-	results_column.columns.push({
+	results_column.push({
 	    directory: run.directory,
 	    title: "Issues",
 	    value: function(row) {
@@ -244,7 +246,11 @@ function lsw_compare_table(test_runs) {
 		    return ""
 		}
 	    },
-	    body_align: "left",
+	    style: {
+		body: {
+		    "text-align": "left",
+		},
+	    },
 	    html: function(row) {
 		var result = row.test_results[run_index]
 		if (result == undefined) {

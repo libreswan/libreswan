@@ -10,6 +10,13 @@ table {
 th, td {
     border: 1px solid grey;
     padding: 5px 5px;
-    vertical-align: top;
     text-align: center;
+}
+
+td {
+    vertical-align: top;
+}
+
+th {
+    vertical-align: bottom;
 }
