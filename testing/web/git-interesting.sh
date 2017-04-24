@@ -1,43 +1,77 @@
 #!/bin/sh
 
-if test $# -lt 2; then
+usage() {
     cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <repodir> <gitrev>
+    $0 [ <repodir> ] <gitrev>
 
-Is <gitrev> in <repodir> sufficiently "interesting" to test?
+Where <repodir> defaults to the current directory.  XXX: The parameter
+order needs to be reversed.
 
-Interesting is loosely defined as changes in the code or testsuite;
-but not changes in the testing or web infrastructure.
+Examine <gitrev> in <repodir> and determine if it is sufficiently
+"interesting" to be worth testing.
 
-In addition, all merge points are considered interesting.
+"interesting" is any of:
+
+    - a commit with a tag
+
+    - a merge point
+
+    - a branch point
+
+    - a commit that changes build and/or source files
 
 EOF
-    exit 1
-fi
+}
 
 set -eu
 
 webdir=$(dirname $0)
 
-repodir=$1 ; shift
-gitrev=$1 ; shift
+# XXX: arguments are backwards
+
+case $# in
+    0 ) usage ; exit 1 ;;
+    1 ) gitrev=$1   ; repodir=. ;;
+    2 ) gitrev=$2   ; repodir=$1 ;;
+    * ) echo "Too many arguments." ; usage ; exit 1 ;;
+esac
+
+# All tags are interesting.
+#
+# If there is no tag then this command fails with an error so suppress
+# that.
+
+tag=$(cd ${repodir} && git describe --exact-match ${gitrev} 2>/dev/null || :)
+if test -n "${tag}" ; then
+    echo tag: ${tag}
+    exit 0
+fi
 
 # All merges (commits with more than one parent) are "interesting".
 
-parents=$(${webdir}/gime-git-parents.sh ${repodir} ${gitrev} | wc -l)
-if test ${parents} -gt 1 ; then
-    echo "${parents} parents"
+parents=$(cd ${repodir} && git show --no-patch --format=%P "${gitrev}^{commit}")
+if test $(echo ${parents} | wc -w) -gt 1 ; then
+    echo merge: ${parents}
     exit 0
 fi
 
 # All branches (commits with more than one child) are "interesting".
+#
+# Determining children is messy for some reason.  Search revisions
+# more recent than GITREV (REV.. seems to be interpreted as that) for
+# a parent matching GITREV.
 
-children=$(${webdir}/gime-git-children.sh ${repodir} ${gitrev} | wc -l)
-if test ${children} -gt 1 ; then
-    echo "${children} children"
+children=$(cd ${repodir} && git rev-list --parents ${gitrev}.. | \
+    while read commit parents ; do
+	case " ${parents} " in
+	    *" ${gitrev}"* ) echo ${commit} ;;
+	esac
+    done)
+if test $(echo ${children} | wc -w) -gt 1 ; then
+    echo branch: ${children}
     exit 0
 fi
 
@@ -57,7 +91,7 @@ if git show "${gitrev}^{commit}" \
        testing/sanitizers \
        testing/baseconfigs \
 	| grep . > /dev/null ; then
-    echo "interesting"
+    echo "true"
     exit 0
 fi
 
