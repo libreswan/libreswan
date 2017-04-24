@@ -10,6 +10,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -717,14 +718,13 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (r != 0)
 		return r;
 
-	if ((conn->policy & POLICY_RSASIG) || conn->left.authby == AUTH_RSASIG) {
+	if (conn->left.rsakey1 != NULL || conn->left.rsakey2 != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r != 0)
 			return r;
 	}
-
-	if ((conn->policy & POLICY_RSASIG) || conn->right.authby == AUTH_RSASIG) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->right, "right");
+	if (conn->right.rsakey1 != NULL || conn->right.rsakey2 != NULL) {
+		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
 		if (r != 0)
 			return r;
 	}
