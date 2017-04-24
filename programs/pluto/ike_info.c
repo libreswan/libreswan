@@ -73,6 +73,9 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 {
 	if (alg_info == NULL) {
 		PEXPECT_LOG("%s", "parameter alg_info unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
 		return;
 	}
 
@@ -109,6 +112,9 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 {
 	if (alg_info_ike == NULL) {
 		PEXPECT_LOG("%s", "parameter alg_info_ike unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
 		return;
 	}
 

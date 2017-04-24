@@ -519,6 +519,14 @@ void alg_info_snprint_esp_info(char *buf, size_t buflen,
 static void alg_info_snprint_esp(char *buf, size_t buflen,
 				 struct alg_info_esp *alg_info)
 {
+	if (alg_info == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	const char *sep = "";
 
@@ -560,6 +568,14 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 static void alg_info_snprint_ah(char *buf, size_t buflen,
 				struct alg_info_esp *alg_info)
 {
+	if (alg_info == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	const char *sep = "";
 
