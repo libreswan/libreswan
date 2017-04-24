@@ -635,6 +635,9 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 				    char *err_buf, size_t err_buf_len,
 				    const struct parser_param *param)
 {
+	DBG(DBG_CONTROL,
+	    DBG_log("parsing '%s' for %s", alg_str, param->protocol));
+
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
