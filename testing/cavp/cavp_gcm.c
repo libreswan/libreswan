@@ -15,6 +15,7 @@
  */
 
 #include <pk11pub.h>
+#include <blapit.h>
 
 #include "lswalloc.h"
 #include "ike_alg.h"

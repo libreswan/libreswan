@@ -32,6 +32,7 @@
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
+#include <blapit.h>
 
 #include "ike_alg_nss_cbc.h"
 #include "ike_alg_nss_gcm.h"

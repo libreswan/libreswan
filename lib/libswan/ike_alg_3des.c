@@ -21,6 +21,7 @@
 
 #include <prerror.h>
 #include <prmem.h>
+#include <blapit.h>
 
 #include <libreswan.h>
 
