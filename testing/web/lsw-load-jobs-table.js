@@ -34,7 +34,6 @@ function lsw_load_jobs_table(jobs_id, paths) {
 		    return status.directory
 		},
 		html: function(status) {
-		    console.log(status)
 		    if (status.directory && status.directory.length) {
 			return ("<a href=\"" + status.directory + "\">"
 				+ status.directory
