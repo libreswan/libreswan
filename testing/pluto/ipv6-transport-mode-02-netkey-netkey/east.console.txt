@@ -95,6 +95,9 @@ east #
 000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
 000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
 000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+000 algorithm IKE DH Key Exchange: name=DH19, bits=512
+000 algorithm IKE DH Key Exchange: name=DH20, bits=768
+000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
 000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  

@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep --userland racoon
 east #
+ ipsec _stackmanager start --netkey
+east #
  PATH/sbin/racoon2-spmd
 east #
  PATH/sbin/racoon2-iked -d -d -d -l /tmp/racoon.log

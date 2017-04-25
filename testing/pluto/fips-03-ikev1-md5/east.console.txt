@@ -29,17 +29,17 @@ FIPS mode enabled for pluto daemon
 NSS library is running in FIPS mode
 FIPS HMAC integrity verification self-test passed
 Starting Pluto (Libreswan Version )
-encryption algorithm camellia_ctr disabled; not FIPS compliant
-encryption algorithm camellia disabled; not FIPS compliant
-encryption algorithm serpent disabled; not FIPS compliant
-encryption algorithm twofish disabled; not FIPS compliant
-encryption algorithm twofish_ssh disabled; not FIPS compliant
-encryption algorithm cast disabled; not FIPS compliant
-encryption algorithm null disabled; not FIPS compliant
-hash algorithm md5 disabled; not FIPS compliant
+Encryption algorithm camellia_ctr disabled; not FIPS compliant
+Encryption algorithm camellia disabled; not FIPS compliant
+Encryption algorithm serpent disabled; not FIPS compliant
+Encryption algorithm twofish disabled; not FIPS compliant
+Encryption algorithm twofish_ssh disabled; not FIPS compliant
+Encryption algorithm cast disabled; not FIPS compliant
+Encryption algorithm null disabled; not FIPS compliant
+Hash algorithm md5 disabled; not FIPS compliant
 PRF algorithm md5 disabled; not FIPS compliant
-integrity algorithm md5 disabled; not FIPS compliant
-integrity algorithm ripemd disabled; not FIPS compliant
+Integrity algorithm md5 disabled; not FIPS compliant
+Integrity algorithm ripemd disabled; not FIPS compliant
 DH algorithm MODP1024 disabled; not FIPS compliant
 DH algorithm MODP1536 disabled; not FIPS compliant
 FIPS Encryption algorithms:
@@ -82,8 +82,7 @@ FIPS DH algorithms:
   DH24          IKEv1: IKE         IKEv2: IKE         FIPS
 east #
  ipsec auto --add westnet-eastnet-md5
-003 PRF algorithm MD5=1 is not supported
-003 got 0 transforms for ike="aes-md5"
+003 ike string error: PRF algorithm MD5=1 is not supported, enc_alg="aes"(0), auth_alg="md5", modp=""
 east #
  echo "initdone"
 initdone
