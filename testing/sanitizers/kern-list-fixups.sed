@@ -106,3 +106,4 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
 /^.*CPU feature 'AVX registers' is not supported.*$/d
 /^.*hrtimer: interrupt took .*$/d
+/^.*Clocksource tsc unstabl.*$/d
