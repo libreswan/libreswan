@@ -1433,9 +1433,10 @@ rsasig_common:
 					      ta.prf,
 					      ta.group != NULL ?
 						ta.group->group : 65535,
-					      c->alg_info_ike))
-				ugh = "OAKLEY proposal refused";
-				loglog(RC_LOG_SERIOUS, "%s", ugh);
+					      c->alg_info_ike)) {
+					ugh = "OAKLEY proposal refused";
+					loglog(RC_LOG_SERIOUS, "%s", ugh);
+			}
 		}
 
 		if (ugh == NULL) {
