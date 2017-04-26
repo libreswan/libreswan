@@ -1,5 +1,5 @@
 ipsec look
-grep calc_dh_shared /tmp/pluto.log
+grep calc_dh_shared /tmp/pluto.log | sed "s/@0x.*, size/@0xXXXX, size/g"
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
