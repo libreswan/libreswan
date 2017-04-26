@@ -46,14 +46,16 @@ cd ${repodir}
 # grep . exits non-zero when there is no input (i.e., the diff is
 # empty); and this will cause the command to fail.
 
-if git show ${gitrev} \
-    lib \
-    mk \
-    programs \
-    include \
-    testing/pluto \
-    testing/sanitizers \
-    testing/baseconfigs \
+if git show "${gitrev}^{commit}" \
+       Makefile \
+       Makefile.inc \
+       lib \
+       mk \
+       programs \
+       include \
+       testing/pluto \
+       testing/sanitizers \
+       testing/baseconfigs \
 	| grep . > /dev/null ; then
     echo "interesting"
     exit 0
