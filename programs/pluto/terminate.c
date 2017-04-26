@@ -93,7 +93,7 @@ void terminate_connection(const char *name)
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by con_by_name).
 	 */
-	struct connection *c = con_by_name(name, TRUE);
+	struct connection *c = con_by_name(name, FALSE);
 
 	if (c != NULL) {
 		while (c != NULL) {
@@ -108,12 +108,12 @@ void terminate_connection(const char *name)
 	} else {
 		int count;
 
-		loglog(RC_COMMENT, "terminating all conns with alias='%s'", name);
+		loglog(RC_COMMENT, "no such connection found, looking for all conns with alias='%s'", name);
 		count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
 
 		if (count == 0) {
 			whack_log(RC_UNKNOWN_NAME,
-				  "no connection named \"%s\"", name);
+				  "no such connection or aliased connection named \"%s\"", name);
 		}
 	}
 }
