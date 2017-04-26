@@ -32,9 +32,6 @@ TODO: a.k.a. what needs fixing
 
 The following are quirks in the build system:
 
-- drop the ipsec_ prefix to man page names in the source tree makes
-  finding them a pain
-
 - merge config.mk and userlandcflags.mk; two types of flags are needed:
   USERLAND_CFLAGS += -D ... - defined for all builds
   <FEATURE>_LDFLAGS = ... - added as needed to an application's LDFLAGS
@@ -50,18 +47,12 @@ The following are quirks in the build system:
 - recursive make targets should stick to $(srcdir); currently some
   switch back to $(builddir) at the last moment (see above)
 
-- lib/libswan should use library.mk
-
-- programs/pluto should to use program.mk
-
 - remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
 - rename modobj to something more specific - like builddir
 
 - unit tests under testing/ could do with their own unit-test.mk file;
   grep for UNITTEST in testing's Makefile-s
-
-- free up CFLAGS; see autoconf/automake for possible guidelines?
 
 - be more consistent with "=", ":=" and "?="; there's a meta issue
   here - configuration files are included early leading to "?=" rather
@@ -92,19 +83,21 @@ The following are quirks with /testing:
 - run ../../../testing/guestbin/swan-init (a relative path within the
   current test tree), and not /testing/guestbin/swan-init
 
+- kvmrunner should write a marker at the start/end of each script and
+  when things are done - clean up "abort" magic
+
+- kvmrunner should always format its output as <test>/OUTPUT
+
 The following are quirks in the test infrastructure:
+
+- move guest scripts from testing/pluto/bin to testing/guestbin; and
+  KVM scripts to testing/libvirt
 
 - have *init.sh et.al. scripts always succeed.  This means that
   commands like ping that are expected to fail (demonstrating no
   conectivity) will need a "!" prefix so the failure is success.
 
-- support multiple run files (for instance run1east.sh, run2west.sh,
-  ...); this will allow more complicated tests such as where west
-  establishes a connection but east triggers the re-establish
-
 - simplify fips check
-
-- eliminate test results "incomplete" and "bad"
 
 - swan-transmogrify runs chcon -R testing/pluto, it should only run
   that over the current test directory

@@ -40,6 +40,9 @@ Some things, annoyingly, don't quite work right:
   new tab displaying the diff)) also toggls the results appearance
   under the comparison tab
 
+- testsuite output should be written directly to the web directory
+
+  so that it is easy to see the progress of the current test run
 
 # Maintenance
 
@@ -183,4 +186,3 @@ Nuances:
 
 
 # References
-
