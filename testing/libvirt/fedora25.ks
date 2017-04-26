@@ -137,6 +137,7 @@ dnf install -y 2>&1 \
     libcap-ng-devel \
     libfaketime \
     libevent-devel \
+    libseccomp-devel \
     libselinux-devel \
     lsof \
     nc \
@@ -181,6 +182,7 @@ $kvm_debuginfo && dnf debuginfo-install -y \
     libevent-devel \
     libgcc \
     libidn \
+    libseccomp \
     libselinux \
     libssh2 \
     nspr \
