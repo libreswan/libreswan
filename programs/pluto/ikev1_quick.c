@@ -892,6 +892,20 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *qke,
 	reset_globals();
 }
 
+/* Get pfsgroup for this connection */
+static const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
+							lset_t policy)
+{
+	const struct oakley_group_desc * ret = NULL;
+
+	/* ??? 0 isn't a legitimate value for esp_pfsgroup */
+	if ((policy & POLICY_PFS) &&
+	    c->alg_info_esp != NULL &&
+	    c->alg_info_esp->esp_pfsgroup != 0)
+		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
+	return ret;
+}
+
 stf_status quick_outI1(int whack_sock,
 		       struct state *isakmp_sa,
 		       struct connection *c,
