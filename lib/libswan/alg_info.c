@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -379,12 +379,18 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				       char *err_buf, size_t err_buf_len,
 				       struct alg_info *alg_info)
 {
-#	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
-	int ealg_id, aalg_id;
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("add ealg_buf='%s' aalg_buf='%s' modp_buf='%s'",
+		    p_ctx->ealg_buf,
+		    p_ctx->aalg_buf,
+		    p_ctx->modp_buf));
 
-	ealg_id = aalg_id = -1;
+#	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
+
+	int ealg_id = -1;
 	if (p_ctx->param->ealg_getbyname && p_ctx->ealg_buf[0] != '\0') {
 		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
+		DBG(DBG_CONTROLMORE, DBG_log("ealg_id = %d", ealg_id));
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
@@ -498,8 +504,11 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 	}
+
+	int aalg_id = -1;
 	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
 		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
+		DBG(DBG_CONTROLMORE, DBG_log("aalg_id = %d", aalg_id));
 		if (aalg_id < 0) {
 			return "hash_alg not found";
 		}
@@ -622,6 +631,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 					  aalg_id,
 					  group,
 					  err_buf, err_buf_len);
+
 #	undef COMMON_KEY_LENGTH
 }
 
