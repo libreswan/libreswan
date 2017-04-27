@@ -241,40 +241,6 @@ bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
 }
 
 /*
- * Casts
- */
-
-const struct hash_desc *hash_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_HASH);
-	return (const struct hash_desc *)alg;
-}
-
-const struct prf_desc *prf_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_PRF);
-	return (const struct prf_desc *)alg;
-}
-
-const struct integ_desc *integ_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_INTEG);
-	return (const struct integ_desc *)alg;
-}
-
-const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_ENCRYPT);
-	return (const struct encrypt_desc *)alg;
-}
-
-const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
-	return (const struct oakley_group_desc *)alg;
-}
-
-/*
  * return ike_alg object by {type, key, id}
  */
 

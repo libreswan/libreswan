@@ -63,6 +63,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 # XXX: More is comming as it gets cleaned up and made more library
 # like.
 
+OBJS += ike_alg_desc.o
+
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o
