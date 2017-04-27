@@ -59,13 +59,6 @@ void init_crypto(void)
 				 aes_cbc_tests));
 }
 
-void get_oakley_group_param(const struct oakley_group_desc *group,
-			    chunk_t *base, chunk_t *prime)
-{
-	*base = decode_hex_to_chunk(group->gen, group->gen);
-	*prime = decode_hex_to_chunk(group->modp, group->modp);
-}
-
 /* Encryption Routines
  *
  * Each uses and updates the state object's st_new_iv.

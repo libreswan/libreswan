@@ -26,11 +26,6 @@
 
 extern void init_crypto(void);
 
-struct oakley_group_desc;
-
-void get_oakley_group_param(const struct oakley_group_desc *,
-			    chunk_t *base, chunk_t *prime);
-
 /* unification of cryptographic encoding/decoding algorithms
  *
  * The IV is taken from and returned to st->st_new_iv.
