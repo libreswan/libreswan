@@ -10,7 +10,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
