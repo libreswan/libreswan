@@ -92,10 +92,10 @@ struct parser_param {
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */
-	const struct oakley_group_desc *(*group_byname)(const struct parser_param *param,
-							const struct parser_policy *const policy,
-							char *err_buf, size_t err_buf_len,
-							const char *name);
+	const struct ike_alg *(*dh_alg_byname)(const struct parser_param *param,
+					       const struct parser_policy *const policy,
+					       char *err_buf, size_t err_buf_len,
+					       const char *name, size_t key_bit_length);
 };
 
 struct esp_info {

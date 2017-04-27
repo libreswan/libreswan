@@ -19,27 +19,24 @@ struct parser_policy;
 
 /*
  * Helper functions to implement most of the lookup.
- *
- * Should be possible to trim the parameter list (using more from
- * parser_param?).
  */
 
-const struct encrypt_desc *encrypt_alg_byname(const struct parser_param *param,
-					      const struct parser_policy *const policy,
-					      char *err_buf, size_t err_buf_len,
-					      const char *name, size_t key_bit_length);
+const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
+					 const struct parser_policy *const policy,
+					 char *err_buf, size_t err_buf_len,
+					 const char *name, size_t key_bit_length);
 
-const struct prf_desc *prf_alg_byname(const struct parser_param *param,
-				      const struct parser_policy *const policy,
-				      char *err_buf, size_t err_buf_len,
-				      const char *name);
+const struct ike_alg *prf_alg_byname(const struct parser_param *param,
+				     const struct parser_policy *const policy,
+				     char *err_buf, size_t err_buf_len,
+				     const char *name, size_t key_bit_length);
 
-const struct integ_desc *integ_alg_byname(const struct parser_param *param,
-					  const struct parser_policy *const policy,
-					  char *err_buf, size_t err_buf_len,
-					  const char *name);
+const struct ike_alg *integ_alg_byname(const struct parser_param *param,
+				       const struct parser_policy *const policy,
+				       char *err_buf, size_t err_buf_len,
+				       const char *name, size_t key_bit_length);
 
-const struct oakley_group_desc *dh_alg_byname(const struct parser_param *param,
-					      const struct parser_policy *const policy,
-					      char *err_buf, size_t err_buf_len,
-					      const char *name);
+const struct ike_alg *dh_alg_byname(const struct parser_param *param,
+				    const struct parser_policy *const policy,
+				    char *err_buf, size_t err_buf_len,
+				    const char *name, size_t key_bit_length);

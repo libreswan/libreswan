@@ -78,10 +78,10 @@ static const struct ike_alg *alg_byname(const struct parser_param *param,
 	return alg;
 }
 
-const struct encrypt_desc *encrypt_alg_byname(const struct parser_param *param,
-					      const struct parser_policy *const policy,
-					      char *err_buf, size_t err_buf_len,
-					      const char *name, size_t key_bit_length)
+const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
+					 const struct parser_policy *const policy,
+					 char *err_buf, size_t err_buf_len,
+					 const char *name, size_t key_bit_length)
 {
 	const struct ike_alg *alg = alg_byname(param, policy, IKE_ALG_ENCRYPT,
 					       param->ikev1_alg_id == IKEv1_OAKLEY_ID,
@@ -109,40 +109,43 @@ const struct encrypt_desc *encrypt_alg_byname(const struct parser_param *param,
 			return NULL;
 		}
 	}
-	return encrypt;
+	return alg;
 }
 
-const struct prf_desc *prf_alg_byname(const struct parser_param *param,
-				      const struct parser_policy *const policy,
-				      char *err_buf, size_t err_buf_len,
-				      const char *name)
+const struct ike_alg *prf_alg_byname(const struct parser_param *param,
+				     const struct parser_policy *const policy,
+				     char *err_buf, size_t err_buf_len,
+				     const char *name,
+				     size_t key_bit_length UNUSED)
 {
-	return prf_desc(alg_byname(param, policy, IKE_ALG_PRF,
-				   param->ikev1_alg_id == IKEv1_OAKLEY_ID,
-				   err_buf, err_buf_len,
-				   name));
+	return alg_byname(param, policy, IKE_ALG_PRF,
+			  param->ikev1_alg_id == IKEv1_OAKLEY_ID,
+			  err_buf, err_buf_len,
+			  name);
 }
 
-const struct integ_desc *integ_alg_byname(const struct parser_param *param,
-					  const struct parser_policy *const policy,
-					  char *err_buf, size_t err_buf_len,
-					  const char *name)
+const struct ike_alg *integ_alg_byname(const struct parser_param *param,
+				       const struct parser_policy *const policy,
+				       char *err_buf, size_t err_buf_len,
+				       const char *name,
+				       size_t key_bit_length UNUSED)
 {
-	return integ_desc(alg_byname(param, policy, IKE_ALG_INTEG,
-				     param->ikev1_alg_id == IKEv1_OAKLEY_ID,
-				     err_buf, err_buf_len,
-				     name));
+	return alg_byname(param, policy, IKE_ALG_INTEG,
+			  param->ikev1_alg_id == IKEv1_OAKLEY_ID,
+			  err_buf, err_buf_len,
+			  name);
 }
 
-const struct oakley_group_desc *dh_alg_byname(const struct parser_param *param,
-					      const struct parser_policy *const policy,
-					      char *err_buf, size_t err_buf_len,
-					      const char *name)
+const struct ike_alg *dh_alg_byname(const struct parser_param *param,
+				    const struct parser_policy *const policy,
+				    char *err_buf, size_t err_buf_len,
+				    const char *name,
+				    size_t key_bit_length UNUSED)
 {
 	/*
 	 * DH is always requires an in-tree implementation of the algorithm.
 	 */
-	return oakley_group_desc(alg_byname(param, policy, IKE_ALG_DH, TRUE,
-					    err_buf, err_buf_len,
-					    name));
+	return alg_byname(param, policy, IKE_ALG_DH, TRUE,
+			  err_buf, err_buf_len,
+			  name);
 }

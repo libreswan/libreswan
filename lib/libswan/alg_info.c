@@ -354,7 +354,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->param->group_byname != NULL && isalpha(ch)) {
+			if (p_ctx->param->dh_alg_byname != NULL && isalpha(ch)) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -373,6 +373,44 @@ static err_t parser_machine(struct parser_context *p_ctx)
 		}
 		return NULL;
 	}
+}
+
+static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
+					   char *err_buf, size_t err_buf_len,
+					   const struct ike_alg *(alg_byname)(const struct parser_param *param,
+									      const struct parser_policy *const policy,
+									      char *err_buf, size_t err_buf_len,
+									      const char *name,
+									      size_t key_bit_length),
+					   const char *name,
+					   size_t key_bit_length,
+					   const char *what)
+{
+	err_buf[0] = '\0';
+	if (name[0] != '\0') {
+		if (alg_byname != NULL) {
+			const struct ike_alg *alg = alg_byname(p_ctx->param,
+							       &p_ctx->policy,
+							       err_buf, err_buf_len,
+							       name, key_bit_length);
+			if (alg == NULL) {
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("%s_byname('%s') failed: %s",
+					    what, name, err_buf));
+				passert(err_buf[0]);
+				return NULL;
+			}
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("%s_byname('%s') returned '%s'",
+				    what, name, alg->name));
+			return alg;
+		} else {
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("ignoring %s '%s'", what, name));
+			return NULL;
+		}
+	}
+	return NULL;
 }
 
 static const char *parser_alg_info_add(struct parser_context *p_ctx,
@@ -614,15 +652,13 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-	const struct oakley_group_desc *group = NULL;
-	if (p_ctx->param->group_byname != NULL && *p_ctx->modp_buf != '\0') {
-		group = p_ctx->param->group_byname(p_ctx->param, &p_ctx->policy,
-						   err_buf, err_buf_len,
-						   p_ctx->modp_buf);
-		if (group == NULL) {
-			pexpect(err_buf[0]);
-			return err_buf;
-		}
+	const struct oakley_group_desc *group =
+		oakley_group_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+						p_ctx->param->dh_alg_byname,
+						p_ctx->modp_buf, 0,
+						"group"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
 	}
 
 	return p_ctx->param->alg_info_add(&p_ctx->policy,
