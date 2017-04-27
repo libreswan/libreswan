@@ -59,30 +59,6 @@ void init_crypto(void)
 				 aes_cbc_tests));
 }
 
-/* Encryption Routines
- *
- * Each uses and updates the state object's st_new_iv.
- * This must already be initialized.
- * 1DES support removed - it is simply too weak
- * BLOWFISH support removed - author suggests TWOFISH instead
- */
-
-void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
-			u_int8_t *buf, size_t size, struct state *st)
-{
-	passert(st->st_new_iv_len >= e->enc_blocksize);
-	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
-
-#if 0
-	DBG(DBG_CRYPT,
-	    DBG_log("encrypting buf=%p size=%d NSS keyptr: %p, iv: %p enc: %d",
-		    buf, size, st->st_enc_key_nss,
-		    st->st_new_iv, enc));
-#endif
-
-	e->encrypt_ops->do_crypt(e, buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
-}
-
 /*
  * Return a required oakley or ipsec keysize or 0 if not required.
  * The first parameter uses 0 for ESP, and anything above that for

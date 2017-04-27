@@ -530,7 +530,11 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 			(unsigned int)enc_len,
 			enum_show(&oakley_enc_names, st->st_oakley.encrypt)));
 
-	crypto_cbc_encrypt(e, TRUE, enc_start, enc_len, st);
+	passert(st->st_new_iv_len >= e->enc_blocksize);
+	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
+				 st->st_enc_key_nss,
+				 st->st_new_iv, TRUE);
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);

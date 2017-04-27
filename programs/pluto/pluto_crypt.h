@@ -324,6 +324,8 @@ struct pluto_crypto_req_cont {
 };
 /* struct pluto_crypto_req_cont allocators */
 
+struct state;
+
 extern struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,
 	const char *name,

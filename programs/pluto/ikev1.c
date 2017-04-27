@@ -1679,8 +1679,12 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
-					   pbs_left(&md->message_pbs), st);
+			passert(st->st_new_iv_len >= e->enc_blocksize);
+			st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+			e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
+						 pbs_left(&md->message_pbs),
+						 st->st_enc_key_nss,
+						 st->st_new_iv, FALSE);
 
 		}
 
