@@ -16,8 +16,8 @@
  * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2090,11 +2090,15 @@ struct connection *oppo_instantiate(struct connection *c,
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
 		/*
-		 * There was a client in the abstract connection
-		 * so we demand that the required client is within that subnet.
+		 * There was a client in the abstract connection so we demand
+		 * that the required client is within that subnet, * or that
+		 * it is our private ip in case we are behind a port forward
 		 */
-		passert(addrinsubnet(our_client, &d->spd.this.client));
-		happy(addrtosubnet(our_client, &d->spd.this.client));
+		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
+
+		if (addrinsubnet(our_client, &d->spd.this.client))
+			happy(addrtosubnet(our_client, &d->spd.this.client));
+
 		/* opportunistic connections do not use port selectors */
 		setportof(0, &d->spd.this.client.addr);
 	} else {
