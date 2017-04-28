@@ -14,6 +14,7 @@ v3.21 (Not released)
 * IKEv2: drop CREATE_CHILD_SA message when no IKE state found [Antony]
 * IKEv2: Do not send a new delete request for the same Child SA [Antony]
 * IKEv2: During Child SA rekey, abort when ESP proposals mismatch [Antony]
+* IKEv2: OE client check should take responders behind NAT into account [Paul]
 * lib: move the alg_info lookup-by-name code to libswan [Andrew]
 * lib: move all conditionally compiled ike_alg*.c files to libswan.a [Andrew]
 * addconn: replace ttoaddr() with calls supporting DNSSEC [Paul]
