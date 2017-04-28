@@ -128,6 +128,7 @@ class TestDomain:
         self.console.chdir(test_directory)
 
     def read_file_run(self, basename):
+        self.console.child.logfile.write("%s %s %s" % (post.CUT, basename, post.TUC))
         with self.logger.time("running script %s", basename):
             filename = os.path.join(self.test.directory, basename)
             with open(filename, "r") as file:
@@ -377,6 +378,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                     break
                                 test_domain = test_domains[host]
                                 test_domain.read_file_run(script)
+                            for test_domain in test_domains.values():
+                                test_domain.console.child.logfile.write(post.DONE)
                         except pexpect.TIMEOUT as e:
                             # A test ending with a timeout is still a
                             # finished test.  Analysis of the results
@@ -386,16 +389,14 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     finally:
 
                         # Close the redirected test-result log files
+                        logger.info("closing all the test domain log files")
                         for test_domain in test_domains.values():
-                            logfile = test_domain.console.output()
-                            logfile.close()
+                            outfile = test_domain.console.output()
+                            outfile.close()
 
                         # Always disconnect from the test domains.
-                        logger.info("closing all test domains")
+                        logger.info("closing all the test domains")
                         for test_domain in test_domains.values():
-                            logfile = test_domain.console.output()
-                            if logfile:
-                                logfile.close()
                             test_domain.close()
 
     # The test finished.  Aborts such as a failed boot, or a timeout,

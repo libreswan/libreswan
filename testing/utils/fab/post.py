@@ -19,6 +19,12 @@ import difflib
 
 from fab import logutil
 
+# Strings used to mark up files; see also runner.py where it marks up
+# the file names.
+CUT = ">>>>>>>>>>cut>>>>>>>>>>"
+TUC = "<<<<<<<<<<tuc<<<<<<<<<<"
+DONE = CUT + " done " + TUC
+
 
 class Resolution:
     PASSED = "passed"
@@ -311,13 +317,14 @@ class TestResult:
             # with the RESULT hack forcing the test to UNRESOLVED.
 
             ending = ": ==== end ===="
-            logger.debug("host %s checking if raw console output contains %s",
-                         host_name, ending)
-            if not ending in raw_output:
+            logger.debug("host %s checking if raw console output contains '%s' (or '%s')",
+                         host_name, DONE, ending)
+            if not DONE in raw_output and not ending in raw_output:
                 self.issues.add("output-truncated", host_name)
                 self.resolution.failed()
-                # Should this skip the remaining tests?  No.
-                # Sanitizing the output is still useful here.
+                # Should this skip the remaining checks?  No.
+                # Generating the sanitized output is still useful
+                # here.
 
             # Sanitize what ever output there is and save it.
 
