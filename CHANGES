@@ -1,8 +1,30 @@
 
 See also https://libreswan.org/
 
-v3.21 (March 14, 2017) Not released
+v3.21 (Not released)
+* FIPS: Don't crash on too weak PSK's in FIPS mode, warn for non-FIPS [Andrew]
+* FIPS: rsasigkey: Use modulus F4, not 3 (FIPS 186-4, section B.3.1) [Paul]
 * pluto: Support for "idXXX" esp/ike transform IDs removed [Andrew,Paul]
+* pluto: Do not return whack error when termining an alias connection [Paul]
+* pluto: Remove IKE policy bits on passthrough conns [Paul]
+* pluto: Minor memory leak fixes [Paul]
+* pluto: Fix memory leak due to addresspool reference count error [Antony]
+* IKEv2: Decrypt and verify the paylods before calling processor [Andrew]
+* IKEv2: Fragmentation code cleanup [Andrew]
+* IKEv2: drop CREATE_CHILD_SA message when no IKE state found [Antony]
+* IKEv2: Do not send a new delete request for the same Child SA [Antony]
+* IKEv2: During Child SA rekey, abort when ESP proposals mismatch [Antony]
+* lib: move the alg_info lookup-by-name code to libswan [Andrew]
+* lib: move all conditionally compiled ike_alg*.c files to libswan.a [Andrew]
+* addconn: replace ttoaddr() with calls supporting DNSSEC [Paul]
+* libswan: Algo code cleanup [Andrew]
+* libipsecconf: Load specified RSA keys irrespective of policy [Paul]
+* libipsecconf/pluto: Be more strict in verifying authby= and type= combinations
+  (Note: type=passthrough now requires authby=never to be specified)
+* newhostkey: actually append to secrets as the warning claims it will [Paul]
+* building: convert lib/ to use mk/library.mk [Andrew]
+* packaging: better split rpm and make variables [Paul]
+* testing: Add DNSSEC, Opportunistic IPsec testcases, fixups [Multiple people]
 
 v3.20 (March 14, 2017)
 * pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
