@@ -59,7 +59,6 @@ kvmplutotest	basic-pluto-00	wip
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-02			good
 kvmplutotest	basic-pluto-03			good
-kvmplutotest    basic-pluto-04			wip
 kvmplutotest    basic-pluto-07-sourceip		wip
 
 kvmplutotest	netkey-audit-01	good
@@ -124,9 +123,9 @@ kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-48-nat-cp-start			good
-kvmplutotest	ikev2-49-hub-spoke			wip
+kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
-kvmplutotest	ikev2-51-rw-nat-ikeport			wip
+kvmplutotest	ikev2-51-rw-nat-ikeport			good
 kvmplutotest	ikev2-53-clean-pending			good
 kvmplutotest	ikev2-54-replace-leave-old		good
 
@@ -181,7 +180,7 @@ kvmplutotest	ikev2-algo-sha2-08			good
 # dh tests
 kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
 
-kvmplutotest	klips-ikev2-algo-sha2-07		wip
+kvmplutotest	klips-ikev2-algo-sha2-07		good
 # interop tests for KLIPS-NETKEY with SHA2
 kvmplutotest	ikev1-algo-esp-sha2-01-netkey-klips	good
 kvmplutotest	ikev1-algo-esp-sha2-02-netkey-klips	good
@@ -238,7 +237,8 @@ kvmplutotest	ikev2-ddos-01				wip
 
 kvmplutotest	ikev2-switchnat-01			wip
 kvmplutotest	ikev1-switchnat-01			wip
-kvmplutotest	ikev1-hub-spoke 			wip
+
+kvmplutotest	ikev1-hub-spoke 			good
 
 kvmplutotest	pluto-ipcmp-01	good
 
@@ -454,7 +454,7 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
-kvmplutotest	ikev2-child-ipsec	wip
+kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipseac-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
 
@@ -467,7 +467,7 @@ kvmplutotest	delete-sa-08-rhbz1311360	good
 kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
 
-kvmplutotest	ikev1-rekey-connswitch	wip
+kvmplutotest	ikev1-rekey-connswitch	good
 
 # oe-snat-01 - do Source address NAT and then OE
 #
@@ -624,7 +624,7 @@ kvmplutotest	interop-ikev2-strongswan-34-esp-null-responder	good
 #
 kvmplutotest	aggr-pluto-01		good
 kvmplutotest	aggr-pluto-02		good
-kvmplutotest	aggr-pluto-04		wip
+kvmplutotest	aggr-pluto-04		good
 
 # Various algo tests
 kvmplutotest	ikev1-algo-ike-pfs-01	good
@@ -639,7 +639,7 @@ kvmplutotest	ikev1-aggr-replace-01	good
 kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
-kvmplutotest	basic-pluto-15-no-retransmit wip
+kvmplutotest	basic-pluto-15-no-retransmit good
 
 # this tests rekeys (--down/--up) when behind a NAT. a --replace
 # may cancel things that the --down/--up may not. This also
@@ -760,13 +760,13 @@ umlplutotest	ipv6-v6-through-v6-klips-netkey		good
 umlplutotest	ipv6-v4-through-v6-klips-klips		good
 umlplutotest	ipv6-v6-through-v4-klips-klips		good
 kvmplutotest	ipv6-transport-mode-01-klips-klips	wip
-kvmplutotest	ipv6-transport-mode-02-netkey-netkey	wip
+kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
 kvmplutotest	ipv6-transport-mode-03-klips-netkey	wip
 kvmplutotest	ipv6-tunnel-mode-01-klips-klips		wip
 kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
 kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	wip
-kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	wip
-kvmplutotest	ipv6-tunnel-mode-03-rw			wip
+kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	good
+kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
 kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	good
 
