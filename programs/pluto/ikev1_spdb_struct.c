@@ -860,8 +860,10 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 		libreswan_log(
 			"Oakley Transform [%s (%d), %s, %s] refused%s",
 			enum_name(&oakley_enc_names, ealg), key_len,
-			enum_name(&oakley_hash_names,
-				  prf->common.ikev1_oakley_id),
+			(prf != NULL) ?
+				enum_name(&oakley_hash_names,
+					prf->common.ikev1_oakley_id)
+				: "invalid prf",
 			enum_name(&oakley_group_names, group),
 			ealg_insecure ?
 				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
@@ -1403,7 +1405,7 @@ rsasig_common:
 			}
 		}
 
-		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL) {
+		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL && ta.prf != NULL) {
 			const size_t key_size_min = crypt_prf_fips_key_size_min(ta.prf);
 
 			if (pss->len < key_size_min) {
