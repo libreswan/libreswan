@@ -348,7 +348,7 @@ kvmplutotest	certoe-07-nat-2-clients			good
 kvmplutotest	certoe-08-nat-packet-cop-restart	good
 kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
-kvmplutotest	certoe-12-nat-server			wip
+kvmplutotest	certoe-12-nat-server			good
 
 kvmplutotest	ikev2-initiate-template-01		good
 
