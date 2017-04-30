@@ -401,7 +401,7 @@ extern stf_status start_child_dh_v2(struct msg_digest *md,
 			      crypto_req_cont_func pcrc_func);
 
 extern bool finish_dh_v2(struct state *st,
-			 const struct pluto_crypto_req *r);
+			 const struct pluto_crypto_req *r, bool only_shared);
 
 extern void unpack_KE_from_helper(
 	struct state *st,

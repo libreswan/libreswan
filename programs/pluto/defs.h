@@ -26,7 +26,7 @@ typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
 
-typedef bool sa_t;
+typedef int sa_t;
 #define  IKE_SA		0
 #define  IPSEC_SA	1
 

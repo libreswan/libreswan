@@ -111,6 +111,7 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			wip
 kvmplutotest	ikev2-16-alias-whack-up			good
+kvmplutotest	ikev2-16-alias-whack-start		good
 kvmplutotest	ikev2-19-x509-auto-start		wip
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
 kvmplutotest	ikev2-32-nat-rw-rekey			good
@@ -455,6 +456,7 @@ kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
 kvmplutotest	ikev2-child-ipsec	good
+kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipseac-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
 
@@ -804,7 +806,7 @@ kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  wip
+kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  good
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
@@ -816,9 +818,12 @@ kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
-kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey-pfs	wip
-kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		wip
+kvmplutotest    interop-ikev2-strongswan-29-responder-rekey	good
 kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
+kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
+kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
+kvmplutotest	interop-ikev2-strongswan-35-rekey-reauth	good
+kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 
 #################################################################
 # DNSSEC tests

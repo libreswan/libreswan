@@ -639,12 +639,12 @@ void insert_state(struct state *st)
 
 /*
  * unlink a state object from the hash table, update its RCOOKIE and
- * then, and hash it into the right place.
+ * optionally ICOOKIE, and then hash it into the right place.
  *
- * This doesn't update ICOOKIE_HASH_TABLE since the ICOOKIE didn't
- * change.
+ * ICOOKIE is only updated if icookie != NULL
  */
-void rehash_state(struct state *st, const u_char *rcookie)
+void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
@@ -654,6 +654,8 @@ void rehash_state(struct state *st, const u_char *rcookie)
 	remove_state_entry(&st->st_hash_entry);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
+	if (icookie != NULL)
+		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
 	/* now, re-insert */
 	insert_by_state_cookies(&statetable, &st->st_hash_entry,
 				st->st_icookie, st->st_rcookie);
@@ -1387,6 +1389,7 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	if (sa_type == IPSEC_SA) {
 		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
+		nst->st_oakley = st->st_oakley;
 	}
 
 	nst->quirks = st->quirks;
@@ -1440,7 +1443,6 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 		clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
-		nst->st_oakley = st->st_oakley;
 	}
 
 	jam_str(nst->st_username, sizeof(nst->st_username),
@@ -2458,7 +2460,8 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	}
 }
 
-void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
+void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		const u_char *icookie, const u_char *rcookie)
 {
 	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
 
@@ -2471,6 +2474,7 @@ void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
 		FOR_EACH_ENTRY(st, i, {
 				if (st->st_clonedfrom == osn) {
 					set_st_clonedfrom(st, nsn);
+					rehash_state(st, icookie, rcookie);
 				}});
 	}
 	return;

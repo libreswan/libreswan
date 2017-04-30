@@ -6,6 +6,7 @@
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -143,10 +144,19 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	chunk_t nr;
 	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
 	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
+	PK11SymKey *shared = NULL;
+
+	if (st->st_pfs_group != NULL) {
+		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					st->st_shared_nss));
+		shared = st->st_shared_nss;
+	}
 
 	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf,
 						   st->st_skey_d_nss,
-						   NULL/*dh*/, ni, nr,
+						   shared, ni, nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
 	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);

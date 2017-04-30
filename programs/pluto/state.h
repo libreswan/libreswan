@@ -10,7 +10,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
@@ -532,7 +532,8 @@ extern struct state *new_rstate(struct msg_digest *md);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void rehash_state(struct state *st, const u_char *rcookie);
+extern void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
@@ -543,7 +544,7 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st, bool ipsec),
+	*duplicate_state(struct state *st, sa_t ipsec),
 	*find_state_ikev1(const u_char *icookie,
 			  const u_char *rcookie,
 			  msgid_t msgid),
@@ -589,7 +590,9 @@ extern void show_states_status(void);
 
 
 extern void ikev2_repl_est_ipsec(struct state *st, void *data);
-extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn);
+extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		                const u_char *icookie,
+				const u_char *rcookie);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 
