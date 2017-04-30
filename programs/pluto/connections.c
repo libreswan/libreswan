@@ -1214,7 +1214,12 @@ static void mark_parse(char *wmmark, struct sa_mark *sa_mark) {
 	else
 		sa_mark->mask = 0xffffffff;
 }
-
+/*
+ * XXX: This function should be rewritten, with more careful distinction
+ * between wm->policy and c->policy. It now jumps back and forth due to
+ * implicit defaults. Also add checks from confread/whack should be moved
+ * here so it is similar for all methods of loading * a connection.
+ */
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
@@ -1237,38 +1242,39 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
-	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
-	case LEMPTY:
-		if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
-			loglog(RC_LOG_SERIOUS,
-				"Connection without AH or ESP must use authby=never");
-			return;
-		}
-		if (wm->policy & POLICY_TUNNEL) { /* what about type=transport :P */
-			loglog(RC_LOG_SERIOUS,
-				"connection with type=tunnel cannot have authby=never");
-			return;
-		}
-		break;
-	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-		loglog(RC_LOG_SERIOUS,
-			"Must specify either AH or ESP.");
-		return;
-	}
-
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
 		if ((wm->policy & POLICY_SHUNT_MASK) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS,
-				"connection with authby=never must specify shunt type via type=");
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\", connection with authby=never must specify shunt type via type=",
+				wm->name);
+			return;
+		}
+	}
+	if ((wm->policy & POLICY_SHUNT_MASK) != LEMPTY) {
+		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\" : shunt connection cannot have authentication method other then authby=never",
+				wm->name);
 			return;
 		}
 	} else {
-		if ((wm->policy & POLICY_SHUNT_MASK) != LEMPTY) {
-			loglog(RC_LOG_SERIOUS,
-				"shunt connection cannot have authentication method other then authby=never");
+		switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+		case LEMPTY:
+			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\" : non-shunt connection must have AH or ESP",
+					wm->name);
+				return;
+			}
+			break;
+		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\" : non-shunt connection must specify either AH or ESP",
+				wm->name);
 			return;
 		}
 	}
+
 
 	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
@@ -1278,25 +1284,28 @@ void add_connection(const struct whack_message *wm)
 
 		if (alg_info_ike == NULL) {
 			pexpect(err_buf[0]); /* something */
-			loglog(RC_LOG_SERIOUS, "ike string error: %s",
-				err_buf);
+			loglog(RC_FATAL, "Failed to add connection \"%s\" : ike string error: %s",
+				wm->name, err_buf);
 			return;
 		}
 		if (alg_info_ike->ai.alg_info_cnt == 0) {
-			loglog(RC_LOG_SERIOUS,
-				"got 0 transforms for ike=\"%s\"", wm->ike);
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\" : got 0 transforms for ike=\"%s\"",
+				wm->name, wm->ike);
 			return;
 		}
 	}
 
 	if ((wm->policy & POLICY_IKEV2_PROPOSE) && (wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "Cannot insist on IKEv2 while forbidding it");
+			loglog(RC_FATAL, "Failed to add connection \"%s\" : cannot insist on IKEv2 while forbidding it",
+				wm->name);
 			return;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
 		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "Opportunistic connection MUST be ikev2=insist");
+			loglog(RC_FATAL, "Failed to add connection \"%s\" : opportunistic connection MUST have ikev2=insist",
+				wm->name);
 			return;
 		}
 	}
@@ -1310,21 +1319,22 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
 		}
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
-			loglog(RC_INFORMATIONAL, "Ignored leftauth= / rightauth= option for type=passthrough connection");
-
+			loglog(RC_FATAL, "Failed to add connection \"%s\" : leftauth= / rightauth= options are invalid for type=passthrough connection",
+				wm->name);
+			return;
 		}
 	} else {
 
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
 			if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
-				loglog(RC_LOG_SERIOUS,
+				loglog(RC_FATAL,
 					"Failed to add connection \"%s\" : leftauth= and rightauth= require ikev2=insist",
 						wm->name);
 				return;
 			}
 			if (wm->left.authby == AUTH_UNSET || wm->right.authby == AUTH_UNSET) {
-				loglog(RC_LOG_SERIOUS,
+				loglog(RC_FATAL,
 					"Failed to add connection \"%s\" : leftauth= and rightauth= must both be set or both be unset",
 						wm->name);
 				return;
@@ -1337,25 +1347,25 @@ void add_connection(const struct whack_message *wm)
 				switch(wm->left.authby) {
 				case AUTH_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
-						loglog(RC_LOG_SERIOUS, "leftauthby=secret but authby= is not secret");
+						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
 						conflict = TRUE;
 					}
 					break;
 				case AUTH_RSASIG:
 					if (auth_pol != POLICY_RSASIG && auth_pol != LEMPTY) {
-						loglog(RC_LOG_SERIOUS, "leftauthby=rsasig but authby= is not rsasig");
+						loglog(RC_FATAL, "leftauthby=rsasig but authby= is not rsasig");
 						conflict = TRUE;
 					}
 					break;
 				case AUTH_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
-						loglog(RC_LOG_SERIOUS, "leftauthby=null but authby= is not null");
+						loglog(RC_FATAL, "leftauthby=null but authby= is not null");
 						conflict = TRUE;
 					}
 					break;
 				case AUTH_NEVER:
 					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
-						loglog(RC_LOG_SERIOUS, "leftauthby=never but authby= is not never - double huh?");
+						loglog(RC_FATAL, "leftauthby=never but authby= is not never - double huh?");
 						conflict = TRUE;
 					}
 					break;
@@ -1363,7 +1373,7 @@ void add_connection(const struct whack_message *wm)
 					bad_case(wm->left.authby);
 				}
 				if (conflict) {
-					loglog(RC_LOG_SERIOUS,
+					loglog(RC_FATAL,
 						"Failed to add connection \"%s\" : leftauth=%s and rightauth=%s must not conflict with authby=%s",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
@@ -1373,7 +1383,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else { /* leftauth != rightauth so authby MUST be unset */
 				if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
-					loglog(RC_LOG_SERIOUS,
+					loglog(RC_FATAL,
 						"Failed to add connection \"%s\" : leftauth=%s is unequal to rightauth=%s so authby=%s must not be set",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
@@ -1383,7 +1393,7 @@ void add_connection(const struct whack_message *wm)
 				}
 				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
 				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
-					loglog(RC_LOG_SERIOUS,
+					loglog(RC_FATAL,
 						"Failed to add connection \"%s\" : cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
@@ -1395,7 +1405,7 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if (wm->right.has_port_wildcard && wm->left.has_port_wildcard) {
-		loglog(RC_LOG_SERIOUS,
+		loglog(RC_FATAL,
 			"Failed to add connection \"%s\" : cannot have protoport with %%any on both sides",
 				wm->name);
 		return;
@@ -1476,16 +1486,16 @@ void add_connection(const struct whack_message *wm)
 				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp == NULL) {
-				loglog(RC_LOG_SERIOUS,
-					"phase2alg string error: %s",
-					err_buf);
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\" : phase2alg string error: %s",
+					wm->name, err_buf);
 				pfree(c);
 				return;
 			}
 			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
-				loglog(RC_LOG_SERIOUS,
-					"got 0 transforms for esp=\"%s\"",
-					wm->esp);
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\" : got 0 transforms for esp=\"%s\"",
+					wm->name, wm->esp);
 				alg_info_free(&c->alg_info_esp->ai);
 				pfree(c);
 				return;
@@ -1512,9 +1522,9 @@ void add_connection(const struct whack_message *wm)
 			c->alg_info_ike = alg_info_ike;
 
 			if (c->alg_info_ike == NULL) {
-				loglog(RC_LOG_SERIOUS,
-					"ike string error: %s",
-					err_buf);
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\" : ike string error: %s",
+					wm->name, err_buf);
 				pfree(c);
 				return;
 			}
@@ -1526,9 +1536,9 @@ void add_connection(const struct whack_message *wm)
 					buf);
 			});
 			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
-				loglog(RC_LOG_SERIOUS,
-					"got 0 transforms for ike=\"%s\"",
-					wm->ike);
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\" : got 0 transforms for ike=\"%s\"",
+					wm->name, wm->ike);
 				alg_info_free(&c->alg_info_ike->ai);
 				pfree(c);
 				return;
@@ -1633,7 +1643,17 @@ void add_connection(const struct whack_message *wm)
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
 
-		} /* !NEVER_NEGOTIATE() */
+		} else { /* not !NEVER_NEGOTIATE() */
+			/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
+			if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+				if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+						/* authby= was also not specified - fill in default */
+						c->policy |= POLICY_AUTH_NEVER;
+						DBG(DBG_CONTROL, DBG_log("No AUTH policy was set for type=passthrough - defaulting to %s",
+							prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
+				}
+			}
+		}
 
 #ifdef HAVE_NM
 		c->nmconfigured = wm->nmconfigured;
@@ -1715,6 +1735,8 @@ void add_connection(const struct whack_message *wm)
 				break;
 			}
 		}
+
+
 
 		/*
 		 * force any wildcard host IP address, any wildcard subnet
@@ -1863,7 +1885,8 @@ void add_connection(const struct whack_message *wm)
 		/* non configurable */
 		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 	} else {
-		loglog(RC_FATAL, "attempt to load incomplete connection");
+		loglog(RC_FATAL, "Failed to load connection \"%s\" : attempt to load incomplete connection",
+			wm->name);
 	}
 
 }
