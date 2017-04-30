@@ -1090,7 +1090,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			(ip_address *)NULL, md->sender_port);
 
 		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+			if ((tmp->policy & POLICY_SHUNT_MASK) != LEMPTY) {
 				if (tmp->kind == CK_INSTANCE) {
 					if (addrinsubnet(&md->sender, &tmp->spd.that.client)) {
 						DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
