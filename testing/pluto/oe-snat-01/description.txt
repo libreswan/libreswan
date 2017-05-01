@@ -1,9 +1,0 @@
-This test invokes Opportunistic Encryption for a gateway that performs source
-NAPT (aka "IP masquerading") on the packets first.
-
-NOTE, that this test manages *sunset* and *west*, but uses the mechanism
-for managing "east" to manage "sunset". As a result, the output files are
-named "east", which may well be confusing.
-
-
-
