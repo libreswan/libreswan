@@ -351,7 +351,7 @@ notifyNM() {
 
 addsource() {
     st=0
-    if [ -z ${PLUTO_MY_SOURCEIP} ]; then
+    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
         return ${st}
     fi
     # check if given sourceip is local and add as alias if not
@@ -382,7 +382,7 @@ addsource() {
 
 delsource() {
     st=0
-    if [ -z ${PLUTO_MY_SOURCEIP} ]; then
+    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
         return ${st}
     fi
     # check if given sourceip is local and add as alias if not
