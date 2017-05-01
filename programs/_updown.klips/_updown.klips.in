@@ -321,8 +321,8 @@ notifyNM() {
 addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
-    if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep -q ^local; then
-	it="ip addr add ${PLUTO_MY_SOURCEIP%/*}/32 dev ${PLUTO_INTERFACE%:*}"
+    if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
+	it="ip addr add ${PLUTO_MY_SOURCEIP}/32 dev ${PLUTO_INTERFACE%:*}"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
 	if [ -z "${oops}" -a ${st} -ne 0 ]; then
@@ -347,7 +347,7 @@ changesource() {
     st=0
     parms="${PLUTO_PEER_CLIENT}"
     parms2="dev ${PLUTO_INTERFACE}"
-    parms3="src ${PLUTO_MY_SOURCEIP%/*}"
+    parms3="src ${PLUTO_MY_SOURCEIP}"
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
     fi
@@ -392,7 +392,7 @@ dorule() {
 		    it="ip rule ${1} ${iprule} ${iprule2}"
 		fi
 	    else
-		if [ "${PLUTO_MY_SOURCEIP%/*}" = "${PLUTO_MY_CLIENT%/*}" ]; then
+		if [ "${PLUTO_MY_SOURCEIP}" = "${PLUTO_MY_CLIENT%/*}" ]; then
 		    it="ip rule ${1} iif lo ${iprule2}"
 		else
 		    it="ip rule ${1} ${iprule} ${iprule2}"
@@ -495,7 +495,7 @@ doroute() {
 
     if [ "${1}" = "add" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
 	addsource
-	parms3="${parms3} src ${PLUTO_MY_SOURCEIP%/*}"
+	parms3="${parms3} src ${PLUTO_MY_SOURCEIP}"
     fi
 
     case "${PLUTO_PEER_CLIENT}" in

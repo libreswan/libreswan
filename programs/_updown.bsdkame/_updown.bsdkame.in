@@ -159,14 +159,7 @@ downrule() {
 addsource() {
 	st=0
 	## add an alias to the loopback interface if not already there
-	cidr=${PLUTO_PEER_CLIENT##*/}
-	snet=${PLUTO_MY_SOURCEIP%/*}/32
-
-	if test "${PLUTO_PEER_CLIENT}" != "${cidr}"
-	then
-		snet=${PLUTO_MY_SOURCEIP%/*}/${cidr}
-	fi
-
+	snet=${PLUTO_MY_SOURCEIP}/32
 	st=1
 	return $st
 }
