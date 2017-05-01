@@ -595,7 +595,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		struct esb_buf esb_t, esb_a;
 
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s%s%s",
 			 ini,
 			 nat ? "/NAT" : "",
 			 esn ? "/ESN" : "",
@@ -606,7 +606,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 				   st->st_esp.attrs.transattrs.encrypt, &esb_t),
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 enum_show_shortb(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash, &esb_a));
+				 st->st_esp.attrs.transattrs.integ_hash, &esb_a),
+			 st->st_pfs_group == NULL ? "" : "-",
+			 st->st_pfs_group == NULL ? "" : st->st_pfs_group->common.name);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
