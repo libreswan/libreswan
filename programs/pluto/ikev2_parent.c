@@ -212,7 +212,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 			loglog(RC_LOG_SERIOUS, "#%lu can not find parent state "
 					"#%lu to setup DH v2", st->st_serialno,
 					st->st_clonedfrom);
-			e = STF_FAIL;
+			return STF_FAIL;
 		}
 		passert (st->st_sec_in_use == TRUE); /* child has its own KE */
 
@@ -231,8 +231,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 {
 	struct msg_digest *md = cn->pcrc_md;
 	struct state *const st = md->st;
-	struct state *pst = IS_CHILD_SA(st) ?
-		state_with_serialno(st->st_clonedfrom) : st;
+	struct state *pst;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
@@ -250,6 +249,9 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
+
+	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
+	passert(pst != NULL);
 
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
