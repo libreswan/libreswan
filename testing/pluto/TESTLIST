@@ -457,8 +457,10 @@ kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
+kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
 kvmplutotest	ikev2-child-ipseac-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
+kvmplutotest	ikev2-56-restart		skiptest
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good

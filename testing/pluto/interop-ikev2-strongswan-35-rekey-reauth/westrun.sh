@@ -2,7 +2,7 @@ ipsec auto --up westnet-eastnet-ikev2
 ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 ping -s 512 -n -c  15 -I 192.0.1.254 192.0.2.254
-#Child #3 with traffic 
+#Child #3 with traffic
 ipsec whack --trafficstatus
 echo "sleep 60  seconds, east reauthenticate IKE and Child SA"
 sleep 30

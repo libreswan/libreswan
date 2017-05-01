@@ -18,6 +18,9 @@ east #
  echo "initdone"
 initdone
 east #
+ grep inline /tmp/pluto.log
+no crypto helpers will be started; all cryptographic operations will be done inline
+east #
 east #
  ../bin/check-for-core.sh
 east #

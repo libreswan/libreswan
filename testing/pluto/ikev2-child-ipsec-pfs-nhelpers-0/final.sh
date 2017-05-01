@@ -1,3 +1,4 @@
+grep inline /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

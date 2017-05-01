@@ -31,14 +31,14 @@ east #
 000 "westnet-eastnet-ikev2":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)
 000 "westnet-eastnet-ikev2":   ESP algorithm newest: AES_256-HMAC_SHA2_512; pfsgroup=MODP2048
 000 #2: "westnet-eastnet-ikev2":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#4; idle; import:admin initiate
-000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=672B ESPout=672B! ESPmax=0B 
+000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=1008B ESPout=1008B! ESPmax=0B 
 000 #4: "westnet-eastnet-ikev2":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #4: "westnet-eastnet-ikev2" ref=0 refhim=0 Traffic: 
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

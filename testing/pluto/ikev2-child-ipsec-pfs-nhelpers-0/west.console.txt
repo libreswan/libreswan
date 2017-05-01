@@ -72,6 +72,9 @@ west #
  echo done
 done
 west #
+ grep inline /tmp/pluto.log
+no crypto helpers will be started; all cryptographic operations will be done inline
+west #
 west #
  ../bin/check-for-core.sh
 west #
