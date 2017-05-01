@@ -71,7 +71,7 @@ export LC_ALL
 #	PLUTO_MY_CLIENT
 #		is the IP address / count of our client subnet.  If
 #		the  client  is  just  the  host,  this will be the
-#		host's own IP address / max (where max  is  32  for
+#		host's own IP address / mask (where max is  32  for
 #		IPv4 and 128 for IPv6).
 #
 #	PLUTO_MY_CLIENT_NET
@@ -100,7 +100,7 @@ export LC_ALL
 #	PLUTO_PEER_CLIENT
 #		is the IP address / count of the peer's client subnet.
 #		If the client is just the peer, this will be
-#		the peer's own IP address / max (where  max  is  32
+#		the peer's own IP address / mask (where  max  is  32
 #		for IPv4 and 128 for IPv6).
 #
 #	PLUTO_PEER_CLIENT_NET
