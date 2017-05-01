@@ -471,11 +471,6 @@ kvmplutotest	ikev1-27-uniqueid		good
 
 kvmplutotest	ikev1-rekey-connswitch	good
 
-# oe-snat-01 - do Source address NAT and then OE
-#
-umlplutotest	oe-snat-01	good # OE TEMP DISABLED
-
-#
 # oe-fail-without-resp-client-txt-01 - when responding using an OE
 # connection, checks that there is a TXT (and possibly KEY) record
 # that delegates this security gateway to act for the client on our
@@ -574,10 +569,6 @@ kvmplutotest	nat-pluto-10		wip
 # Test of NAT traversal w/DPD
 kvmplutotest	nat-dpd-pluto-01	wip
 
-# Test of NAT traversal, with Aggressive Mode client
-umlXhost	nat-aggr-01		good
-
-
 #
 # a test of using AES with pluto
 #
@@ -674,8 +665,6 @@ kvmplutotest	klips-basic-pluto-01	good
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
 kvmplutotest    algo-pluto-04          wip
-umlplutotest    algo-pluto-05          good
-umlplutotest    algo-pluto-06          good
 kvmplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-10          good
@@ -692,9 +681,7 @@ kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
 # transport mode related tests
-umlplutotest	klips-transport-01	good
-umlplutotest	transport-02		good
-umlplutotest	transport-03		skiptest # bad
+kvmplutotest	klips-transport-01	good
 kvmplutotest	nat-transport-02	good
 kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
@@ -728,18 +715,8 @@ kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease		wip
 
 
-umlplutotest	protoport-01		good
-umlplutotest	protoport-02		good
-
-
 kvmplutotest    netkey-klips-pluto-03		good
-umlplutotest    netkey-pluto-05			good
 kvmplutotest    klips-netkey-pluto-06		good
-kvmplutotest    netkey-psk-pluto-06		wip
-umlplutotest	netkey-psk-vhost-01		good
-umlplutotest	netkey-psk-vhost-02		good
-umlplutotest	netkey-psk-vhost-03		good
-umlplutotest	netkey-psk-vhost-04		good
 # Selinux / secure labeling tests (require netkey and selinux)
 kvmplutotest    labeled-ipsec-01		wip
 
@@ -748,19 +725,16 @@ kvmplutotest    compress-pluto-01		good
 kvmplutotest    compress-pluto-02		good
 kvmplutotest    compress-pluto-netkey-03	good
 kvmplutotest    compress-pluto-netkey-klips-04	good
-
-# sourceip tests
-umlplutotest	sourceip-01			good
-umlplutotest	sourceip-02			good
+kvmplutotest	sourceip-01			good
 
 #################################################################
 # IPv6 tests
 #################################################################
 kvmplutotest	ipv6-v6-through-v6-klips-klips		wip
-umlplutotest	ipv6-v6-through-v6-netkey-netkey	wip
-umlplutotest	ipv6-v6-through-v6-klips-netkey		good
-umlplutotest	ipv6-v4-through-v6-klips-klips		good
-umlplutotest	ipv6-v6-through-v4-klips-klips		good
+kvmplutotest	ipv6-v6-through-v6-netkey-netkey	wip
+kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
+kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
+kvmplutotest	ipv6-v6-through-v4-klips-klips		wip
 kvmplutotest	ipv6-transport-mode-01-klips-klips	wip
 kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
 kvmplutotest	ipv6-transport-mode-03-klips-netkey	wip
@@ -835,9 +809,6 @@ kvmplutotest	dnssec-dig-test-1				wip
 #################################################################
 # Specific bug tests
 #################################################################
-# trying out bug #888
-umlplutotest	phase1-expire-01-reconnect-klips		good
-umlplutotest	phase1-expire-02-reconnect-netkey		good
 
 kvmplutotest	replay-authip-01			good
 
