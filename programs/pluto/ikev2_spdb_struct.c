@@ -62,8 +62,6 @@
 
 #include "nat_traversal.h"
 
-extern struct oakley_group_desc oakley_group_modp2048;
-
 /* Taken from ikev1_spdb_struct.c, as the format is similar */
 /* Note: cloned from out_attr, with the same bugs */
 static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
