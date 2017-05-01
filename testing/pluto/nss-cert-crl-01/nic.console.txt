@@ -1,16 +1,7 @@
 # set up the crl server
 nic #
- cp /testing/x509/crls/cacrlvalid.crl /testing/pluto/nss-cert-crl-01/revoked.crl
+ cp ../../x509/crls/cacrlvalid.crl OUTPUT/revoked.crl
 nic #
- cd /testing/pluto/nss-cert-crl-01
-nic #
- # in case httpd runs for freeipa tests, shut down httpd
-nic #
- service httpd stop > /dev/null 2> /dev/null
-nic #
- PATH/bin/python -m SimpleHTTPServer 80 &
-[x] PID
-nic #
- echo "done."
-done.
+ ../bin/simple-http-server.sh OUTPUT 80
+Serving HTTP on 0.0.0.0 port 80 ...
 
