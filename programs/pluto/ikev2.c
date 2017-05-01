@@ -284,7 +284,7 @@ const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode =
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
 const struct state_v2_microcode ikev2_create_child_initiate_microcode =
-	/* no state:   --> CREATE IPSec Child Request
+	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
 	 */
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",

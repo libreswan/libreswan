@@ -14042,7 +14042,7 @@ packaging/utils/kernelpatch 2.6
 +#
 +
 +#
-+# Libreswan IPSec implementation, KLIPS kernel config defaults
++# Libreswan IPsec implementation, KLIPS kernel config defaults
 +#
 +
 +#
@@ -14067,7 +14067,7 @@ packaging/utils/kernelpatch 2.6
 +# To config as static (preferred), 'y'.  To config as module, 'm'.
 +CONFIG_KLIPS=m
 +
-+# To do tunnel mode IPSec, this must be enabled.
++# To do tunnel mode IPsec, this must be enabled.
 +CONFIG_KLIPS_IPIP=y
 +
 +# To enable authentication, say 'y'.   (Highly recommended)

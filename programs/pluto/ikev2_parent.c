@@ -5024,11 +5024,11 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 	/*
 	 * Pass 1 over Delete Payloads:
 	 *
-	 * - Count number of IPSec SA Delete Payloads
+	 * - Count number of IPsec SA Delete Payloads
 	 * - notice any IKE SA Delete Payload
 	 * - sanity checking
 	 */
-	int ndp = 0;	/* number Delete payloads for IPSec protocols */
+	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = FALSE;	/* any IKE SA Deletions? */
 
 	for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
@@ -5078,7 +5078,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 	}
 
 	if (del_ike && ndp != 0)
-		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPSec SA");
+		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 
 	/*
 	 * response packet preparation

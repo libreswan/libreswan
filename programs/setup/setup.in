@@ -37,7 +37,7 @@ ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 if test `ip addr list|grep -c cipsec` -ne 0
 then
-	echo "Cisco IPSec client is already loaded, aborting! (cipsec# device found)"
+	echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
 	exit 1
 fi
 

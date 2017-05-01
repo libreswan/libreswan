@@ -1301,7 +1301,7 @@ struct_desc suggested_group_desc = {
 #ifdef HAVE_LABELED_IPSEC
 
 /*
- * Undocumented Security Context for Labeled IPSec
+ * Undocumented Security Context for Labeled IPsec
  *
  * See struct sec_ctx in state.h
  */

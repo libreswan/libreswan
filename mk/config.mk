@@ -397,7 +397,7 @@ ifeq ($(OSDEP),linux)
 USE_LINUX_AUDIT?=false
 endif
 
-# Enable Labeled IPSec Functionality (requires SElinux)
+# Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
 # Enable seccomp support (whitelist allows syscalls)

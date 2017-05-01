@@ -258,7 +258,7 @@ static const char *const state_story[] = {
 	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
 	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
 	"STATE_V2_CREATE_I0",
-	"sent IPSec Child req wait response",
+	"sent IPsec Child req wait response",
 	"STATE_V2_REKEY_IKE_I0",
 	"STATE_V2_REKEY_IKE_I",
 	"STATE_V2_REKEY_CHILD_I0",
