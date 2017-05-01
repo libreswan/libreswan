@@ -158,6 +158,8 @@ fi
 
 LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
+MAX_CIDR=32	# for ipv4
+[ "${PLUTO_CONN_ADDRFAMILY}" = ipv6 ] &&  MAX_CIDR=128
 
 # check parameter(s)
 case "${1}:$*" in
@@ -322,7 +324,7 @@ addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
-	it="ip addr add ${PLUTO_MY_SOURCEIP}/32 dev ${PLUTO_INTERFACE%:*}"
+	it="ip addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${PLUTO_INTERFACE%:*}"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
 	if [ -z "${oops}" -a ${st} -ne 0 ]; then
@@ -440,7 +442,7 @@ dorule() {
 
 doproxyarp() {
     # Check if client has a single ip only client net
-    if [ ${PLUTO_PEER_CLIENT#*/} = 32 -o ${PLUTO_PEER_CLIENT#*/} = 128 ]; then
+    if [ ${PLUTO_PEER_CLIENT#*/} = ${MAX_CIDR} ]; then
 	# Skip OE special connections
 	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
 	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
