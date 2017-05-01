@@ -1,6 +1,0 @@
-This is a test case for the prototype=17/%any case on the INITIATOR
-
-The problem is that the server tries to instantiate the conn because of
-the %any.
-
-This is bug #582. A patch was committed.
