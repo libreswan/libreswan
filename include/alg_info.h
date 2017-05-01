@@ -81,8 +81,11 @@ struct parser_param {
 	 */
 	const char *(*alg_info_add)(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
+				    const struct encrypt_desc *encrypt,
 				    int ealg_id, int ek_bits,
 				    int aalg_id,
+				    const struct prf_desc *prf,
+				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
 				    char *err_buf, size_t err_buf_len);
 	int (*ealg_getbyname)(const char *const str);
@@ -92,10 +95,22 @@ struct parser_param {
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */
-	const struct oakley_group_desc *(*group_byname)(const struct parser_param *param,
-							const struct parser_policy *const policy,
-							char *err_buf, size_t err_buf_len,
-							const char *name);
+	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_param *param,
+						    const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name, size_t bit_length);
+	const struct ike_alg *(*prf_alg_byname)(const struct parser_param *param,
+						const struct parser_policy *const policy,
+						char *err_buf, size_t err_buf_len,
+						const char *name, size_t key_bit_length);
+	const struct ike_alg *(*integ_alg_byname)(const struct parser_param *param,
+						  const struct parser_policy *const policy,
+						  char *err_buf, size_t err_buf_len,
+						  const char *name, size_t key_bit_length);
+	const struct ike_alg *(*dh_alg_byname)(const struct parser_param *param,
+					       const struct parser_policy *const policy,
+					       char *err_buf, size_t err_buf_len,
+					       const char *name, size_t key_bit_length);
 };
 
 struct esp_info {
