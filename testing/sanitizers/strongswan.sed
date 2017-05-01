@@ -9,7 +9,7 @@ s/SPIs: [0-9a-z]*_i\([\*]*\) [0-9a-z]*_r\([\*]*\)/SPIs: SPISPI_i\1 SPISPI_r\2/g
 s/^\(.*  INSTALLED, T[A-Z]*, .* SPIs: \)\(.*_i \)\(.*_o\)$/\1SPISPI_i SPISPI_o/g
 s/^\(scheduling reauthentication in \)\([0-9]*s\)/\1XXXs/g
 s/^\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g
-s/[0-9]* bytes_i (\([0-9]*\) pkts, [0-9]*s ago), [0-9]* bytes_o (\([0-9]*\) pkts, [0-9]*s ago), rekeying in [0-9]* minutes/XXX bytes_i (\1 pkts, XXs ago), XXX bytes_o (\2 pkts, XXs ago), rekeying in XX minutes/g
+s/[0-9]* bytes_i ([0-9]* pkts, [0-9X]*s ago), [0-9X]* bytes_o ([0-9X]* pkts, [0-9X]*s ago), rekeying in [0-9X]* minutes/XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
 s/[0-9]* bytes_i ([0-9]*s ago), [0-9]* bytes_o ([0-9]* pkts, [0-9]*s ago), rekeying in [0-9]* minutes/XXX bytes_i (xxs ago), XX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
 s/[0-9]* bytes_i, [0-9]* bytes_o, rekeying in [0-9]* minutes/XX bytes_i, XX bytes_o, rekeying in XX minutes/g
 s/([0-9]* bytes)/(XXX bytes)/g
