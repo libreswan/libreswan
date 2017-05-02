@@ -29,8 +29,10 @@ v3.21 (Not released)
 * libswan: Algo code cleanup [Andrew]
 * libipsecconf: Load specified RSA keys irrespective of policy [Paul]
 * libipsecconf/pluto: Be more strict in verifying authby= and type= combinations
-  (Note: type=passthrough now requires authby=never to be specified)
 * newhostkey: actually append to secrets as the warning claims it will [Paul]
+* _updown.netkey: fix syntax failure when PLUTO_MY_SOURCEIP is not set [Tuomo]
+* _updown.netkey: remove wrong use of PLUTO_PEER_CLIENT netmask [Tuomo]
+* _updown: add MAX_CIDR variable for host netmask [Tuomo]
 * building: convert lib/ to use mk/library.mk [Andrew]
 * packaging: better split rpm and make variables [Paul]
 * testing: Add DNSSEC, Opportunistic IPsec testcases, fixups [Multiple people]
