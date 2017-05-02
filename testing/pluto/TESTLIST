@@ -75,6 +75,7 @@ kvmplutotest	basic-pluto-01-vanishingkey		wip
 # Parser tests
 #################################################################
 kvmplutotest	addconn-01	good
+kvmplutotest	alias-01	wip
 
 
 #################################################################
