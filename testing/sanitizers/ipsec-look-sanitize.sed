@@ -9,3 +9,5 @@ s/addtime(.*,.*,.*)//
 s/esp\.[a-z0-9]\{1,8\}@/esp.ESPSPIi@/g
 s/ah\.[a-z0-9]\{1,8\}@/ah.AHSPIi@/g
 s/comp\.[a-z0-9]\{1,8\}@/comp.COMPSPIi@/g
+#this is a workaround until F25, which removed extra white spaces
+s/\(eth[0-9]\)  proto kernel  scope link  src/\1 proto kernel scope link src/g
