@@ -154,6 +154,7 @@ err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **base64_rr)
 	size_t n = datatot(rr_chunk.ptr, rr_chunk.len, 's', rr, rr_len);
 	if (n >= rr_len) {
 		freeanychunk(rr_chunk);
+		freeanychunk(rr);
 		return "base64 encoded RSA public key resource record larger than expected";
 	}
 
