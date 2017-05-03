@@ -1480,7 +1480,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * to enum ipsec_trans_attrs
 				 * .ipsec_authentication_algo.
 				 */
-				ta.integ_hash = integ->common.ikev2_id
+				ta.integ_hash = integ->common.id[IKEv2_ALG_ID];
 				ta.integ = integ;
 				break;
 			}
