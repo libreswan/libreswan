@@ -661,7 +661,7 @@ static const char *alg_info_ike_add(const struct parser_policy *const policy,
 	 * XXX: Cross check PRF/integrity lookups for now.
 	 */
 	pexpect(integ == NULL);
-	pexpect((aalg_id == 0) == (prf == NULL));
+	pexpect((aalg_id <= 0) == (prf == NULL));
 	pexpect(prf == NULL || aalg_id == prf->common.id[IKEv1_OAKLEY_ID]);
 
 	return ike_add(policy, &ike_defaults, alg_info,
