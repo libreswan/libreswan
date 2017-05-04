@@ -3257,6 +3257,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 		loglog(RC_LOG_SERIOUS, "could not create socketpair for ikev2 pam authorize: %s",
 				strerror(errno));
+		pfree(p);
 		return STF_INTERNAL_ERROR;
 	}
 	p->master_fd = fds[0];
@@ -3294,6 +3295,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 		close(fds[1]);
 		close(fds[0]);
 		p->master_fd = NULL_FD;
+		free_pam_thread_entry(&p);
 		return STF_INTERNAL_ERROR;
 	}
 
