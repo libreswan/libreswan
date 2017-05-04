@@ -14,7 +14,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PLUTO_OPTIONS=$@
+PLUTO_OPTIONS=$*
 pidfile=@FINALVARDIR@/run/pluto/pluto.pid
 execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
 
