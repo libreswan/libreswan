@@ -841,7 +841,7 @@ static struct state *process_v2_child_ix (struct msg_digest *md,
 		if (st == NULL && md->from_state == STATE_V2_CREATE_I) {
 			why = "no matching IPsec child state for this response";
 			what = "Child SA Response";
-		} else if (st == NULL && STATE_V2_REKEY_IKE_I) {
+		} else if (st == NULL && md->from_state == STATE_V2_REKEY_IKE_I) {
 			why = "no matching local IKE Rekey state found";
 			what = "IKE Rekey Response";
 		}
