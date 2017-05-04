@@ -4407,8 +4407,10 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Adding a v2N Payload"));
+	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
+
+	zero(&n);
+
 	n.isan_np = np;
 	n.isan_critical = critical;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
