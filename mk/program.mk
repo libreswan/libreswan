@@ -132,8 +132,6 @@ ifdef OBJS
 $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
-MK_DEPEND_FILES = $(OBJS)
-MK_DEPEND_CFLAGS = $(CFLAGS)
 include $(top_srcdir)/mk/depend.mk
 
 else

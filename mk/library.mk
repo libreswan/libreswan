@@ -42,6 +42,4 @@ list-local-base:
 $(LIB): $(OBJS) | $(builddir)
 	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
-MK_DEPEND_FILES = $(OBJS)
-MK_DEPEND_CFLAGS = $(CFLAGS)
 include $(top_srcdir)/mk/depend.mk
