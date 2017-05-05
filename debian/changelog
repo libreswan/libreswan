@@ -1,3 +1,11 @@
+libreswan (3.20-7) unstable; urgency=medium
+
+  [ Laurent Bigonville ]
+  * Enable SELinux/LABELED_IPSEC support (Closes: #861881)
+  * Only depends against libcap-ng-dev on linux (Closes: #861887)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Fri, 05 May 2017 12:46:31 -0400
+
 libreswan (3.20-6) unstable; urgency=medium
 
   * another batch of fixes for time_t on x32
