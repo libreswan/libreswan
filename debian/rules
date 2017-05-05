@@ -11,6 +11,12 @@ ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
 export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
 endif
 
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+  ENABLE_SELINUX = USE_LABELED_IPSEC=true USE_LINUX_AUDIT=true
+else
+  ENABLE_SELINUX = USE_LABELED_IPSEC=false USE_LINUX_AUDIT=false
+endif
+
 override_dh_auto_build:
 	$(MAKE) programs \
 		INC_USRLOCAL=/usr \
@@ -23,7 +29,7 @@ override_dh_auto_build:
 		USE_XAUTHPAM=true \
 		USE_FIPSCHECK=false \
 		USE_LIBCAP_NG=true \
-		USE_LABELED_IPSEC=false \
+		$(ENABLE_SELINUX) \
 		USE_KLIPS=false \
 		USE_DNSSEC=true
 
