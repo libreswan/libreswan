@@ -13,8 +13,10 @@ endif
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)
   ENABLE_SELINUX = USE_LABELED_IPSEC=true USE_LINUX_AUDIT=true
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=true
 else
   ENABLE_SELINUX = USE_LABELED_IPSEC=false USE_LINUX_AUDIT=false
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=false
 endif
 
 override_dh_auto_build:
@@ -28,7 +30,7 @@ override_dh_auto_build:
 		USE_LIBCURL=true \
 		USE_XAUTHPAM=true \
 		USE_FIPSCHECK=false \
-		USE_LIBCAP_NG=true \
+		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
 		USE_KLIPS=false \
 		USE_DNSSEC=true

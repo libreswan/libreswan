@@ -15,7 +15,7 @@ Build-Depends:
  flex,
  htmldoc,
  libaudit-dev [linux-any],
- libcap-ng-dev,
+ libcap-ng-dev [linux-any],
  libcurl4-nss-dev,
  libevent-dev,
  libkrb5-dev,
