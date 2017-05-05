@@ -1487,15 +1487,15 @@ void add_connection(const struct whack_message *wm)
 			});
 			if (c->alg_info_esp == NULL) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : phase2alg string error: %s",
-					wm->name, err_buf);
+				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
+				       wm->name, wm->esp, err_buf);
 				pfree(c);
 				return;
 			}
 			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : got 0 transforms for esp=\"%s\"",
-					wm->name, wm->esp);
+				       "Failed to add connection \"%s\", esp=\"%s\" contained 0 valid transforms",
+				       wm->name, wm->esp);
 				alg_info_free(&c->alg_info_esp->ai);
 				pfree(c);
 				return;
