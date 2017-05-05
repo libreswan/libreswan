@@ -47,7 +47,6 @@ PATH/libexec/ipsec/algparse   sha2_384      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
 PATH/libexec/ipsec/algparse   sha2_256      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 hmac_sha2_256 hmac_sha2_256_128)
 PATH/libexec/ipsec/algparse   aes_xcbc      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc_96)
 PATH/libexec/ipsec/algparse   aes_cmac      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac_96)
-PATH/libexec/ipsec/algparse   ripemd        IKEv1:     ESP AH  IKEv2:                   (hmac_ripemd hmac_ripemd_160_96)
 PATH/libexec/ipsec/algparse DH algorithms:
 PATH/libexec/ipsec/algparse   MODP1024      IKEv1: IKE         IKEv2: IKE               (dh2)
 PATH/libexec/ipsec/algparse   MODP1536      IKEv1: IKE         IKEv2: IKE               (dh5)
