@@ -2069,6 +2069,9 @@ IETF registry enum_names:
    12 -> ID_FC_NAME
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
+   13 -> ID_NULL
+         search ID_NULL: OK
+         match ID_NULL: OK
 
   ikev2_idtype_names:
     1 -> ID_IPV4_ADDR

@@ -1,38 +1,70 @@
 /testing/guestbin/swan-prep
 west #
- ( cd /source/testing/lib/libswan; rm -f algparse enumcheck; cd -)
-/testing/pluto/basic-pluto-00
-west #
- ( cd /source/testing/lib/libswan; make; cd -)
-/bin/bash -c "unset module; export LIBRESWANLIB=/source/OBJ.linux.x86_64/lib/libswan/libswan.a REGRESSRESULTS=${REGRESSRESULTS-../results} ; . /source/testing/utils/functions.sh; . ./TESTLIST"
-**** make libtest COMPILING enumcheck.c ****
-   Sourcing ./FLAGS.enumcheck
- cc -g -o enumcheck -DSWAN_TESTING -DENUMCHECK_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./enumcheck.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lefence -Iinclude/
-   Running enumcheck
-   Exit code 0
-   output matched
-Recording "true: 0" to ../results/lib-enumcheck/status
-*******  PASSED  lib-enumcheck ********
-**** make libtest COMPILING algparse.c ****
-   Sourcing ./FLAGS.algparse
- cc -g -o algparse -DSWAN_TESTING -DALGPARSE_MAIN  -I/source/ports/linux/include -I/source/ports/linux/include -I/source/ports/linux/include  -I/source/linux/include -I/source -I/source/include ./algparse.c /source/OBJ.linux.x86_64/lib/libswan/libswan.a  /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a /source/OBJ.linux.x86_64/lib/libswan/libswan.a /source/OBJ.linux.x86_64/lib/libswan/liblswlog.a -IPATH/include/nss3 -IPATH/include/nspr4  -lnss3 -lnspr4 -lefence -Iinclude/
-   Running algparse
-   Exit code 0
-   output matched
-Recording "true: 0" to ../results/lib-algparse/status
-*******  PASSED lib-algparse ********
-/testing/pluto/basic-pluto-00
-west #
- # diffs should be empty
-west #
- cat /source/testing/lib/libswan/lib-algparse/OUTPUT/algparse.output.diff
-west #
- cat /source/testing/lib/libswan/lib-enumcheck/OUTPUT/enumcheck.output.diff
-west #
  echo "initdone"
 initdone
 west #
- # not used - all action happens in westinit.sh
+ # diffs should be empty
+west #
+ PATH/libexec/ipsec/algparse | diff -u - ../../algparse/OUTPUT.algparse.txt
+PATH/libexec/ipsec/algparse Initializing NSS
+PATH/libexec/ipsec/algparse FIPS Product: NO
+PATH/libexec/ipsec/algparse FIPS Kernel: NO
+PATH/libexec/ipsec/algparse FIPS Mode: NO
+PATH/libexec/ipsec/algparse Encryption algorithms:
+PATH/libexec/ipsec/algparse   aes_ccm_16    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
+PATH/libexec/ipsec/algparse   aes_ccm_12    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
+PATH/libexec/ipsec/algparse   aes_ccm_8     IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_a)
+PATH/libexec/ipsec/algparse   3des_cbc      IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
+PATH/libexec/ipsec/algparse   camellia_ctr  IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}
+PATH/libexec/ipsec/algparse   camellia      IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (camellia_cbc)
+PATH/libexec/ipsec/algparse   aes_gcm_16    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+PATH/libexec/ipsec/algparse   aes_gcm_12    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+PATH/libexec/ipsec/algparse   aes_gcm_8     IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+PATH/libexec/ipsec/algparse   aes_ctr       IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
+PATH/libexec/ipsec/algparse   aes           IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_cbc)
+PATH/libexec/ipsec/algparse   serpent       IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (serpent_cbc)
+PATH/libexec/ipsec/algparse   twofish       IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (twofish_cbc)
+PATH/libexec/ipsec/algparse   twofish_ssh   IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  (twofish_cbc_ssh)
+PATH/libexec/ipsec/algparse   cast          IKEv1:     ESP     IKEv2:     ESP           {*128}  (cast_cbc)
+PATH/libexec/ipsec/algparse   null          IKEv1:     ESP     IKEv2:     ESP           []
+PATH/libexec/ipsec/algparse Hash algorithms:
+PATH/libexec/ipsec/algparse   md5           IKEv1: IKE         IKEv2:                 
+PATH/libexec/ipsec/algparse   sha           IKEv1: IKE         IKEv2:             FIPS  (sha1)
+PATH/libexec/ipsec/algparse   sha2_256      IKEv1: IKE         IKEv2:             FIPS  (sha2 sha256)
+PATH/libexec/ipsec/algparse   sha2_384      IKEv1: IKE         IKEv2:             FIPS  (sha384)
+PATH/libexec/ipsec/algparse   sha2_512      IKEv1: IKE         IKEv2:             FIPS  (sha512)
+PATH/libexec/ipsec/algparse PRF algorithms:
+PATH/libexec/ipsec/algparse   md5           IKEv1: IKE         IKEv2: IKE               (hmac_md5)
+PATH/libexec/ipsec/algparse   sha           IKEv1: IKE         IKEv2: IKE         FIPS  (sha1 hmac_sha1)
+PATH/libexec/ipsec/algparse   sha2_256      IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 hmac_sha2_256)
+PATH/libexec/ipsec/algparse   sha2_384      IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 hmac_sha2_384)
+PATH/libexec/ipsec/algparse   sha2_512      IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 hmac_sha2_512)
+PATH/libexec/ipsec/algparse Integrity algorithms:
+PATH/libexec/ipsec/algparse   md5           IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (hmac_md5 hmac_md5_96)
+PATH/libexec/ipsec/algparse   sha           IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha1 sha1_96 hmac_sha1 hmac_sha1_96)
+PATH/libexec/ipsec/algparse   sha2_512      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 hmac_sha2_512 hmac_sha2_512_256)
+PATH/libexec/ipsec/algparse   sha2_384      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 hmac_sha2_384 hmac_sha2_384_192)
+PATH/libexec/ipsec/algparse   sha2_256      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 hmac_sha2_256 hmac_sha2_256_128)
+PATH/libexec/ipsec/algparse   aes_xcbc      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc_96)
+PATH/libexec/ipsec/algparse   aes_cmac      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac_96)
+PATH/libexec/ipsec/algparse   ripemd        IKEv1:     ESP AH  IKEv2:                   (hmac_ripemd hmac_ripemd_160_96)
+PATH/libexec/ipsec/algparse DH algorithms:
+PATH/libexec/ipsec/algparse   MODP1024      IKEv1: IKE         IKEv2: IKE               (dh2)
+PATH/libexec/ipsec/algparse   MODP1536      IKEv1: IKE         IKEv2: IKE               (dh5)
+PATH/libexec/ipsec/algparse   MODP2048      IKEv1: IKE         IKEv2: IKE         FIPS  (dh14)
+PATH/libexec/ipsec/algparse   MODP3072      IKEv1: IKE         IKEv2: IKE         FIPS  (dh15)
+PATH/libexec/ipsec/algparse   MODP4096      IKEv1: IKE         IKEv2: IKE         FIPS  (dh16)
+PATH/libexec/ipsec/algparse   MODP6144      IKEv1: IKE         IKEv2: IKE         FIPS  (dh17)
+PATH/libexec/ipsec/algparse   MODP8192      IKEv1: IKE         IKEv2: IKE         FIPS  (dh18)
+PATH/libexec/ipsec/algparse   DH19          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_256)
+PATH/libexec/ipsec/algparse   DH20          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_384)
+PATH/libexec/ipsec/algparse   DH21          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_521)
+PATH/libexec/ipsec/algparse   DH23          IKEv1: IKE         IKEv2: IKE         FIPS
+PATH/libexec/ipsec/algparse   DH24          IKEv1: IKE         IKEv2: IKE         FIPS
+PATH/libexec/ipsec/algparse leak detective found no leaks
+west #
+ PATH/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt
+PATH/libexec/ipsec/enumcheck leak detective found no leaks
 west #
  echo done
 done
