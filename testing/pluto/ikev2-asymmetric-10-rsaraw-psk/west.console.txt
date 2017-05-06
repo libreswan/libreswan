@@ -2,7 +2,7 @@
 west #
  # we meed to pickup stock secrets for raw rsa key
 west #
- echo '@east @west : PSK "ABCDEFGHIJ12345"' >> /etc/ipsec.secrets
+ echo '@east @west : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 west #
  # confirm that the network is alive
 west #
