@@ -212,7 +212,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 			loglog(RC_LOG_SERIOUS, "#%lu can not find parent state "
 					"#%lu to setup DH v2", st->st_serialno,
 					st->st_clonedfrom);
-			e = STF_FAIL;
+			return STF_FAIL;
 		}
 		passert (st->st_sec_in_use == TRUE); /* child has its own KE */
 
@@ -231,8 +231,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 {
 	struct msg_digest *md = cn->pcrc_md;
 	struct state *const st = md->st;
-	struct state *pst = IS_CHILD_SA(st) ?
-		state_with_serialno(st->st_clonedfrom) : st;
+	struct state *pst;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
@@ -250,6 +249,9 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
+
+	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
+	passert(pst != NULL);
 
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -3255,6 +3257,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 		loglog(RC_LOG_SERIOUS, "could not create socketpair for ikev2 pam authorize: %s",
 				strerror(errno));
+		pfree(p);
 		return STF_INTERNAL_ERROR;
 	}
 	p->master_fd = fds[0];
@@ -3292,6 +3295,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 		close(fds[1]);
 		close(fds[0]);
 		p->master_fd = NULL_FD;
+		free_pam_thread_entry(&p);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -4403,8 +4407,10 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Adding a v2N Payload"));
+	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
+
+	zero(&n);
+
 	n.isan_np = np;
 	n.isan_critical = critical;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
