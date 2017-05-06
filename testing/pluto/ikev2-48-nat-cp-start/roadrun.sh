@@ -1,8 +1,8 @@
 sleep 4
-route -n
+ip -4 route
 # ipsec will configure 192.0.2.1 on eth0
 ip addr show  dev eth0
-ping -n -c 2 -I 192.0.2.1 192.1.2.23
+ping -n -c 2 192.1.2.23
 ipsec whack --trafficstatus
 ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 #check if the address, 192.0.2.1, is removed
