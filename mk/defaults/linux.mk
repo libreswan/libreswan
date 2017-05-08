@@ -27,4 +27,5 @@ endif
 ifeq ($(LINUX_VARIANT),fedora)
 USE_FIPSCHECK?=true
 USE_LINUX_AUDIT?=true
+USE_SECCOMP?=true
 endif
