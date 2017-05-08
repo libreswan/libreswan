@@ -170,7 +170,7 @@ static int ealg_getbyname_ike(const char *const str)
 static int aalg_getbyname_ike(const char *str)
 {
 	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
-	if (str == NULL || str == '\0')
+	if (str == NULL || *str == '\0')
 		return -1;
 
 	int ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
