@@ -1,62 +1,127 @@
 // Callback with the loaded and cleaned up summary.json data set.
 
-function lsw_summary_load(prefix, f) {
-    d3.queue()
-	.defer(d3.json, prefix + "summaries.json")
-	.defer(d3.json, prefix + "commits.json")
-	.defer(d3.json, prefix + "status.json")
-	.awaitAll(function(error, results) {
-	    if (error) {
-		console.warn(error)
-		return
+function lsw_safe_load(query, path, callback)  {
+    // wrap the d3.queue() "callback" function with our custom version
+    // that discards a 404 (not found) error that might bubble up from
+    // d3.json().
+    return d3.json(path, function(error, json) {
+	if (error) {
+	    if (error.target && error.target.status == 404) {
+		console.log("ignoring not-found", error)
+		return callback(null, null)
+	    } else {
+		console.log("fetching failed", error)
+		return callback(error)
 	    }
-	    var summary = {
-		test_runs: results[0],
-		commits: results[1],
-		current: results[2],
-	    }
-	    lsw_summary_cleanup(summary)
-	    f(summary)
-	})
+	} else {
+	    return callback(null, json)
+	}
+    })
 }
 
-function lsw_summary_cleanup(summary) {
+function lsw_directory_hash(path) {
+    if (!path) {
+	return undefined
+    }
+    var npath = path.replace(/.*-g([^-]*)-.*/, "$1")
+    if (npath == path) {
+	return undefined
+    }
+    return npath
+}
 
-    // create a hash->commit lookup table so that hashes can be
-    // converted to pointers.
+function lsw_summary_load(prefix, f) {
+    var now = Date()
+    var q = d3.queue()
+    q.defer(d3.json, prefix + "status.json?" + now)
+    q.await(function(error, status) {
+	if (error) {
+	    console.warn("fetching status failed", error)
+	    return
+	}
+	console.log("status:", status)
+
+	// Generate a tag for fetching big stuff that changes once
+	// per-directory.
+	var tag = "?"
+	if (status) {
+	    if (status.directory) {
+		// a current directory, assume commits.json was
+		// updated when the directory was started.
+		tag += status.directory
+	    } else {
+		// no current directory, assume things are idle and
+		// won't be updated until at least the next status
+		// update.
+		tag += status.date
+	    }
+	} else {
+	    // no status, be conservative and force an update using
+	    // the date.
+	    tag += now
+	}
+
+	// pull in the commits and subdirectories.
+	var q = d3.queue()
+	q.defer(d3.json, prefix + "commits.json" + tag)
+	q.defer(d3.json, prefix + "summaries.json" + tag)
+	// also fetch the current directory's summary; it might not be
+	// present
+	if (status.directory && status.directory.length) {
+	    q.defer(lsw_safe_load, d3.json, prefix + status.directory + "/summary.json?" + now)
+	}
+	q.await(function(error, commits, summaries, current) {
+	    if (error) {
+		console.warn("fetching commits/summaries failed", error)
+		return
+	    }
+	    console.log("commits:", commits.length)
+	    console.log("summaries:", summaries.length)
+	    console.log("current:", current)
+
+	    var summary = lsw_summary_cleanup(status, commits, summaries, current)
+	    f(summary)
+	})
+    })
+}
+
+function lsw_summary_cleanup(status, commits, summaries, current) {
+
+    var summary = {}
+
+    // Clean up the commits discarding anything strange.  Accumulate a
+    // table containing all the commits.
 
     var commit_by_hash = []
-    summary.commits.forEach(function (commit) {
-	// create the lookup table
-	var hash = commit.abbreviated_commit_hash
-	commit_by_hash[hash] = commit
-    })
-
-    // Clean up 'current' (the status table); cross link current's
-    // commit with current.
-
-    summary.current.start = new Date(summary.current.start)
-    summary.current.date = new Date(summary.current.date)
-    if (summary.current.hash) {
-	var commit = commit_by_hash[summary.current.hash]
-	if (commit) {
-	    summary.current.commit = commit
-	    commit.current = summary.current
-	}
-    }
-
-    // Clean up the commits
-
-    summary.commits.forEach(function (commit) {
+    summary.commits = commits.filter(function (commit) {
 	// Fix values
-	commit.author.date = new Date(commit.author.date)
-	commit.committer.date = new Date(commit.committer.date)
+	if (!lsw_cleanup_dates(commit.author, ["date"])) {
+	    console.log("discarding commit with no author date", commit)
+	    return false
+	}
+	if (!lsw_cleanup_dates(commit.committer, ["date"])) {
+	    console.log("discarding commit with no committer date", commit)
+	    return false
+	}
+	// add to the lookup table
+	var hash = commit.abbreviated_commit_hash
+	if (!hash) {
+	    console.log("discarding commit with no hash", commit)
+	    return false
+	}
+	if (commit_by_hash[hash]) {
+	    console.log("discarding duplicate commit", commit)
+	    return false
+	}
+	commit_by_hash[hash] = commit
+	// other fields; see below
 	commit.children = []
 	commit.parents = []
+	return true
     })
 
-    // Convert all parent commit hashes to pointers to parents and
-    // children
+    // Using the above hash->commit table, fill in the .parent[] and
+    // .children[] fields from the relevant hashes.
 
     summary.commits.forEach(function (commit) {
 	commit.abbreviated_parent_hashes.forEach(function (parent_hash) {
@@ -69,40 +134,72 @@ function lsw_summary_cleanup(summary) {
 	})
     })
 
-    // Clean up the result values; cross link with commits (when
-    // possible).
+    // Create "summary.current" by merging current into status.
 
-    summary.test_runs.forEach(function (test_run) {
-	// Clean up the contents
-	test_run.start_time = new Date(test_run.start_time)
-	test_run.end_time = new Date(test_run.end_time)
+    summary.current = status
+    if (current) {
+	Object.keys(current).forEach(function(key) {
+	    status[key] = current[key]
+	})
+    }
+    // probably redundant; but easier
+    lsw_cleanup_dates(summary.current, ["date"])
+    console.log("summary.current", summary.current)
+
+    // Clean up the result values discarding anything strange.
+    //
+    // Use the hash table above to cross link the test run with its
+    // commit.
+    //
+    // Ensure the summary for current is up-to-date by appending the
+    // latest and discarding any older earlier entry.
+
+    if (current) {
+	summaries.push(summary.current)
+    }
+    summary.test_runs = summaries.filter(function (test_run, index) {
+	// The above appended current's summary on the end so anything
+	// earlier is an out-of-date duplicate.
+	if (index < summaries.length - 1 && status.directory == test_run.directory) {
+	    console.warn("discarding test run", test_run, "at", index, "duplicating current")
+	    return false
+	}
+	// Validate the contents
+	if (!lsw_cleanup_dates(test_run, ["start_time", "end_time"])) {
+	    console.warn("discarding test run", test_run, "at", index, "with invalid dates")
+	    return false
+	}
 	// Try to cross link commit and test_run
-	var hash = test_run.hash
+	var hash = test_run.hash = lsw_directory_hash(test_run.directory)
 	if (!hash) {
-	    console.warn("missing hash for test_run", test_run)
-	    return
+	    console.warn("discarding test run", test_run, "at", index, "with an invalid hash")
+	    return false
 	}
 	// Cross link when possible.
 	var commit = commit_by_hash[hash]
 	if (!commit) {
-	    console.warn("missing commit for test_run", test_run)
-	    return
+	    console.warn("discarding test run", test_run, "at", index, "with no corresponding commit")
+	    return false
 	}
 	// Cross link commits and test_runs
 	test_run.commit = commit
 	commit.test_run = test_run
+	return true
     })
 
-    // Use the commit<->test_run links, along with commit.parents, to
-    // Compute the list of commits that each test_run tested.
-    //
-    // What order should this be in?
+    // Sort the test run by committer.date in assending order.
+    summary.test_runs.sort(function(l, r) {
+	return l.commit.committer.date - r.commit.committer.date
+    })
+
+    // Use the commit<->test_run and commit.parent[] links created
+    // above to find the commits unique to this test run.
 
     summary.test_runs.forEach(function(test_run) {
 	test_run.commits = lsw_summary_commits(test_run.commit)
     })
-    summary.current.commits = lsw_summary_commits(summary.current.commit)
 
+    return summary
 }
 
 function lsw_commit_texts(commits) {
@@ -117,8 +214,9 @@ function lsw_commit_texts(commits) {
     return subject
 }
 
-// Use the commit<>test_run links and the commit.parents to identify all
-// commits for a test_run.
+// Use the commit<>test_run links and the commit.parents to identify
+// all commits for a test_run.
+
 function lsw_summary_commits(commit) {
     var commits = []
     if (commit) {
@@ -139,7 +237,10 @@ function lsw_summary_commits(commit) {
 	    parents = parents.concat(parent.parents)
 	}
     }
-    return commits
+    // Return the list in reverse commit-date order.
+    return commits.sort(function(l, r) {
+	return r.committer.date - l.committer.date
+    })
 }
 
 // see http://stackoverflow.com/questions/24816/escaping-html-strings-with-jquery#12034334

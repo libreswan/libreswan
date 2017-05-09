@@ -5,7 +5,7 @@ if test $# -lt 2; then
 
 Usage:
 
-    $0 <summarydir> <repodir> [ <first-hash> ]
+    $0 <summarydir> [ <repodir> ]
 
 Print an untested commit hash on stdout.  The commit is selected by
 looking for the first:
@@ -22,31 +22,24 @@ EOF
   exit 1
 fi
 
-webdir=$(dirname $0)
-
-summarydir=$1 ; shift
-repodir=$1 ; shift
+webdir=$(cd $(dirname $0) && pwd)
+summarydir=$(cd $1 && pwd) ; shift
 if test $# -gt 0 ; then
-    start_hash=$1 ; shift
-else
-    start_hash=$(${webdir}/earliest-commit.sh ${repodir} ${summarydir})
+    cd $1
+    shift
 fi
+
+start_hash=$(${webdir}/earliest-commit.sh ${summarydir})
 
 print_selected() {
     echo selecting $1 at $2 1>&2
-    ( cd ${repodir} && git show --no-patch $2 ) 1>&2
+    ( git show --no-patch $2 ) 1>&2
     echo $2
     exit 0
 }
 
-branch=$(${webdir}/gime-git-branch.sh ${repodir})
-remote=$(${webdir}/gime-git-remote.sh ${repodir} ${branch})
-
-# if there is no start hash then this is likely an empty directory.
-if test -z "${start_hash}" ; then
-    start_hash=$(cd ${repodir} && git show --no-patch --format=%h ${branch})
-    print_selected HEAD ${start_hash}
-fi
+branch=$(${webdir}/gime-git-branch.sh .)
+remote=$(git config --get branch.${branch}.remote)
 
 # Find the longest untested run of commits.
 
@@ -70,7 +63,7 @@ while read hashes ; do
     hash=$(set -- ${hashes} ; echo $1)
 
     # Skip uninteresting commits.
-    interesting=$(${webdir}/git-interesting.sh ${repodir} ${hash})
+    interesting=$(${webdir}/git-interesting.sh ${hash})
     if test -z "${interesting}" ; then
 	continue
     fi
@@ -147,11 +140,11 @@ while read hashes ; do
 
     run="${run} ${hash}"
 
-done < <(${webdir}/gime-git-revisions.sh \
-		  ${repodir} \
-		  --topo-order \
-		  --children \
-		  ${start_hash}..${remote})
+done < <(git rev-list \
+	     --abbrev-commit \
+	     --topo-order \
+	     --children \
+	     ${start_hash}..${remote} ; echo ${start_hash})
 
 # Now which came first?
 

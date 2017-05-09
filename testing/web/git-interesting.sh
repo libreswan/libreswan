@@ -5,7 +5,7 @@ usage() {
 
 Usage:
 
-    $0 [ <repodir> ] <gitrev>
+    $0 <gitrev> [ <repodir> ]
 
 Where <repodir> defaults to the current directory.  XXX: The parameter
 order needs to be reversed.
@@ -28,23 +28,19 @@ EOF
 
 set -eu
 
-webdir=$(dirname $0)
-
-# XXX: arguments are backwards
-
-case $# in
-    0 ) usage ; exit 1 ;;
-    1 ) gitrev=$1   ; repodir=. ;;
-    2 ) gitrev=$2   ; repodir=$1 ;;
-    * ) echo "Too many arguments." ; usage ; exit 1 ;;
-esac
+webdir=$(cd $(dirname $0) && pwd)
+gitrev=$1 ; shift
+if test $# -gt 0 ; then
+    cd $1
+    shift
+fi
 
 # All tags are interesting.
 #
 # If there is no tag then this command fails with an error so suppress
 # that.
 
-tag=$(cd ${repodir} && git describe --exact-match ${gitrev} 2>/dev/null || :)
+tag=$(git describe --exact-match ${gitrev} 2>/dev/null || :)
 if test -n "${tag}" ; then
     echo tag: ${tag}
     exit 0
@@ -52,7 +48,7 @@ fi
 
 # All merges (commits with more than one parent) are "interesting".
 
-parents=$(cd ${repodir} && git show --no-patch --format=%P "${gitrev}^{commit}")
+parents=$(git show --no-patch --format=%P "${gitrev}^{commit}")
 if test $(echo ${parents} | wc -w) -gt 1 ; then
     echo merge: ${parents}
     exit 0
@@ -64,7 +60,7 @@ fi
 # more recent than GITREV (REV.. seems to be interpreted as that) for
 # a parent matching GITREV.
 
-children=$(cd ${repodir} && git rev-list --parents ${gitrev}.. | \
+children=$(git rev-list --parents ${gitrev}.. | \
     while read commit parents ; do
 	case " ${parents} " in
 	    *" ${gitrev}"* ) echo ${commit} ;;
@@ -74,8 +70,6 @@ if test $(echo ${children} | wc -w) -gt 1 ; then
     echo branch: ${children}
     exit 0
 fi
-
-cd ${repodir}
 
 # grep . exits non-zero when there is no input (i.e., the diff is
 # empty); and this will cause the command to fail.

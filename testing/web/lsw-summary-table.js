@@ -33,19 +33,21 @@ function lsw_summary_table(table_id, summary) {
     var kinds_seen = {}
     summary.test_runs.forEach(function(test_run) {
 	// kind
-	Object.keys(test_run.totals).forEach(function(kind) {
-	    var statuses = test_run.totals[kind]
-	    var statuses_seen = kinds_seen[kind] = kinds_seen[kind] || {}
-	    // status
-	    Object.keys(statuses).forEach(function(status) {
-		var results = statuses[status]
-		var results_seen = statuses_seen[status] = statuses_seen[status] || {}
-		// result
-		Object.keys(results).forEach(function(result) {
-		    results_seen[result] = {}
+	if (test_run.totals) {
+	    Object.keys(test_run.totals).forEach(function(kind) {
+		var statuses = test_run.totals[kind]
+		var statuses_seen = kinds_seen[kind] = kinds_seen[kind] || {}
+		// status
+		Object.keys(statuses).forEach(function(status) {
+		    var results = statuses[status]
+		    var results_seen = statuses_seen[status] = statuses_seen[status] || {}
+		    // result
+		    Object.keys(results).forEach(function(result) {
+			results_seen[result] = {}
+		    })
 		})
 	    })
-	})
+	}
     })
 
     // Walk this multi-level table to create the headings.
@@ -99,23 +101,26 @@ function lsw_summary_table(table_id, summary) {
 	})
     })
 
-    // Add error columns.
+    // If there are interesting (uppercase) errors, add them, broken
+    // down, under an errors column.
+    //
+    // XXX: The errors should be broken down further into "good" and
+    // "wip" but that data isn't available.
 
-    var errors_columns = []
-    errors_columns.title = "Errors"
-    var errors = []
+    var errors = {}
     summary.test_runs.forEach(function(test_run) {
-	for (var error in test_run.errors) {
-	    if (test_run.errors.hasOwnProperty(error)) {
+	if (test_run.errors) {
+	    Object.keys(test_run.errors).forEach(function(error) {
+		// only upper case errors
 		if (error == error.toUpperCase()) {
-		    if (errors.indexOf(error) < 0) {
-			errors.push(error)
-		    }
+		    errors[error] = true
 		}
-	    }
+	    })
 	}
     })
-    errors.forEach(function(error) {
+    var errors_columns = []
+    errors_columns.title = "Errors"
+    Object.keys(errors).forEach(function(error) {
 	errors_columns.push({
 	    title: {
 		"ASSERTION": "ASSERT",
@@ -128,7 +133,9 @@ function lsw_summary_table(table_id, summary) {
 	    },
 	})
     })
-    columns.push(errors_columns)
+    if (errors_columns.length) {
+	columns.push(errors_columns)
+    }
 
     // Add Extra info columns
 
@@ -137,15 +144,11 @@ function lsw_summary_table(table_id, summary) {
 	html: function(row) {
 	    return (row.start_time
 		    ? lsw_date2iso(row.start_time)
-		    : row.start
-		    ? lsw_date2iso(row.start)
 		    : "")
 	},
 	value: function(row) {
 	    return (row.start_time
 		    ? row.start_time
-		    : row.start
-		    ? row.start
 		    : "")
 	},
     })
@@ -160,15 +163,13 @@ function lsw_summary_table(table_id, summary) {
     columns.push({
 	title: "Directory",
 	html: function(row) {
+	    var a = ("<a href=\"" + row.directory + "\">"
+		     + row.directory
+		     + "</a>")
 	    if (row == summary.current) {
-		return ("<a href=\"" + row.directory + "\">"
-			+ "in progress"
-			+ "</a>")
-	    } else {
-		return ("<a href=\"" + row.directory + "\">"
-			+ row.directory
-			+ "</a>")
+		a += "<br/>" + summary.current.details
 	    }
+	    return a
 	},
 	value: function(row) {
 	    return row.directory
@@ -179,9 +180,7 @@ function lsw_summary_table(table_id, summary) {
 
     lsw_table({
 	id: table_id,
-	data: (summary.current.commits.length
-	       ? summary.test_runs.concat(summary.current)
-	       : summary.test_runs),
+	data: summary.test_runs,
 	sort: {
 	    column: columns[0], // Commits
 	    assending: false,
