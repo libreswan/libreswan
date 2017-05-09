@@ -17,10 +17,10 @@ CMD ["/usr/sbin/init"]
 RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
  hping3 iproute iptables ipsec-tools ldns-devel libcap-ng-devel \
- libevent-devel libfaketime libselinux-devel lsof make \
- mtr nc net-tools nmap nsd nspr-devel nss-devel nss-tools ocspd openldap-devel \
- openssh-server openssh-clients pam-devel pam-devel pexpect pexpect psmisc \
- pyOpenSSL python3-cryptography \
+ libevent-devel libfaketime libseccomp libseccomp-devel libselinux-devel \
+ lsof make mtr nc net-tools nmap nsd nspr-devel nss-devel nss-tools ocspd \
+ openldap-devel openssh-server openssh-clients pam-devel pam-devel pexpect \
+ pexpect psmisc pyOpenSSL python3-cryptography \
  python3-pexpect python3-setproctitle racoon2 \
  redhat-rpm-config rpm-build screen strace systemd-devel tcpdump telnet \
  traceroute trousers unbound unbound-devel unbound-libs valgrind vim-enhanced \
