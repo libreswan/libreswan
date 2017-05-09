@@ -1,25 +1,29 @@
 #!/bin/sh
 
-if test $# -lt 2 ; then
+if test $# -lt 1 ; then
     cat >>/dev/stderr <<EOF
 
 Usage:
 
-    $0 <repodir> <summarydir>
+    $0 <summarydir> [ <repodir> ]
 
 Identify the git revision of the earliest test result (based on commit
 rank) in <summarydir>.
+
+If there are no test results, use <repodir>'s HEAD.
 
 EOF
     exit 1
 fi
 
-# paths need to be absolute as CDing to $repodir
+# paths need to be absolute as potentially cd'ing to $repodir
 webdir=$(cd $(dirname $0) && pwd)
-repodir=$1 ; shift
 summarydir=$(cd $1 && pwd) ; shift
 
-cd $repodir
+if test $# -gt 0 ; then
+    cd $1
+    shift
+fi
 
 # Create a list of the earliest hashes.  Use xargs to keep the length
 # under control.
@@ -35,7 +39,9 @@ hashes=$(ls ${summarydir} \
 	    | xargs --no-run-if-empty \
 		    git merge-base --octopus )
 if test -z "${hashes}" ; then
-    echo "No results in ${summarydir}" 1>&2
+    hash=$(git show --no-patch --format=%h HEAD)
+    echo "No results in ${summarydir} using HEAD ${hash}" 1>&2
+    echo $hash
     exit 0
 fi
 

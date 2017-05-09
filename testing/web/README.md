@@ -4,16 +4,22 @@
 See: http://libreswan.org/results/testing/
 
 
+# Local Setup
+
+
+To publish results from kvm-test locally, point WEBDIR at the
+directory under which results should be published.  For instance, by
+adding:
+
+   WEBDIR=/var/www/html/results
+
+to Makefile.inc.local
+
+
 # Nuances
 
 
 Some things, annoyingly, don't quite work right:
-
-- new results slow to appear
-
-  The local browser cache seems to get in the way.  One solution would
-  be to append `<current-git-rev>` to the requests for .json files
-  (this would bypass the cache).
 
 - comparisons sometimes loose a result
 
@@ -40,11 +46,74 @@ Some things, annoyingly, don't quite work right:
   new tab displaying the diff)) also toggls the results appearance
   under the comparison tab
 
-- testsuite output should be written directly to the web directory
+- if the build fails, no entry for it appears
 
-  so that it is easy to see the progress of the current test run
 
-# Maintenance
+# Ideas
+
+
+Some things could work better:
+
+- Errors column should be broken down further into "good" and "wip";
+  unfortunately that data currently isn't available
+
+- same for the graph so it goes, good, fail, good, fail, unresolved,
+  untested?
+
+- can't select individual tests for comparison
+
+  selecting an individual or small set of tests and comparing them
+  across results would be nice
+
+- can't bookmark a comparison
+
+- an accumulative bar graph is probably a better way to represent the
+  data (or at least the first-parents) that could then be overlaid
+  with a scatter plot
+
+- the graph should pan and zoom
+
+- better colour scheme welcome
+
+- trim older directories so the total is kept reasonable
+
+# Automated Testing
+
+
+## Setup
+
+
+Automated testing requires two libreswan repositories:
+
+- the repository under test (aka slave)
+
+  This repository is constantly updated (for instance, pulling new
+  commits from upstream, or switching to an old commit using git reset
+  --hard).
+
+  Create a top-level Makefile.inc.local file in this directory to
+  configure KVM_WORKERS and KVM_PREFIXES as required.
+
+- the repository containing the test scripts (aka master)
+
+  This repository is left unchanged.
+
+for instance:
+
+    $ git clone git@github.com:libreswan/libreswan.git libreswan-slave
+    $ git clone git@github.com:libreswan/libreswan.git libreswan-master
+
+
+## Running
+
+
+Assuming results are to be published in /var/www/html/results, the
+testing script is invoked as:
+
+    libreswan-master/testing/web/tester.sh libreswan-slave /var/www/html/results/
+
+
+## Maintenance
 
 
 From time to time the test results are seen to decay - an increasing
@@ -85,104 +154,6 @@ maintenance.
 - restart <tt>tester.sh</tt>:
 
       cd && nohup $SCRIPTDIR/testing/web/tester.sh $BUILDDIR $WEBDIR
-
-
-# Ideas
-
-
-Some things could work better:
-
-- can't select individual tests for comparison
-
-  selecting an individual or small set of tests and comparing them
-  across results would be nice
-
-- can't bookmark a comparison
-
-- an accumulative bar graph is probably a better way to represent the
-  data (or at least the first-parents) that could then be overlaid
-  with a scatter plot
-
-- the graph should pan and zoom
-
-- better colour scheme welcome
-
-- rather than one-directory per test run, all the results should be
-  put into a single directory (somewhat works)
-
-
-# Setting Up a new Web Site
-
-
-See the script:
-
-    ./testing/web/setup.sh
-
-make a copy, and hack it as needed.  It defaults to setting things up
-in ~/results.
-
-The only web requirement is d3.js (this is deliberate).
-
-
-## Publishing Results
-
-
-Use the script publish.sh:
-
-  ./testing/web/publish.sh <repodir> <summarydir>
-
-for instance:
-
-  ./testing/web/publish.sh . ~/results/master
-
-Nuances:
-
-  - remote <summarydir> is broken
-
-  - the <repodir> is required (defaulting to current directory would
-    be nice VS batch testing requires separate script and test
-    directories).
-
-  - wonder what happens if multiple branches publish to a common
-    directory, should be made to work
-
-
-## Automated testing
-
-
-Use the script:
-
-    ./testing/web/tester.sh <repodir> <summarydir>
-
-For instance:
-
-    ./testing/web/tester.sh ~/libreswan ~/results/master
-
-Nuances:
-
-- it assumes that "git fetch" works; which is true for anonymous
-  access to github
-
-- probably need at least one directory before running this
-
-- uses a heuristic to decide what to test next
-
-- separate script and <repodir>s are required; when going back through
-  history this script does evil things to <repodir> such as:
-
-      git reset --hard
-
-
-## Testing Updates
-
-
-- set up a local web server
-
-- run testing/web/local-rsync.sh to copy the useful bits of the web
-  site
-
-- run testing/web/local-install.sh to install local changes on top of
-  the local copy
 
 
 # References
