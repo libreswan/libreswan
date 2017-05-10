@@ -211,7 +211,7 @@ conn westnet-eastnet-ipv4-psk
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
-	
+
 conn westnet-eastnet-ipv4
 	also=west-east-base-id-nss
 	also=west-east-base-ipv4
@@ -355,14 +355,27 @@ conn north-east-x509-ipv4
 	also=right-defaultroute
 	narrowing=yes
 
+conn road-west-x509-ipv4
+	also=road-west-base-x509
+	also=road-client
+
 conn road-east-x509-ipv4
 	also=road-east-base-x509
-	leftmodecfgclient=yes
-	also=left-defaultroute
-	also=right-defaultroute
+	also=road-client
+
+conn rw-westnet-pool-x509-ipv4
+	also=rw-west-base-x509
+	also=west-ipv4-pool-100
+	rightsubnet=192.0.1.0/24
 	narrowing=yes
 
-conn rw-eastnet-x509-ipv4
+conn rw-eastnet-pool-x509-ipv4
+	also=rw-east-base-x509
+	also=east-ipv4-pool-100
+	also=eastnet-ipv4
+	narrowing=yes
+
+conn rw-east-pool-x509-ipv4
 	also=rw-east-base-x509
 	also=east-ipv4-pool-100
 	also=right-defaultroute
@@ -377,6 +390,17 @@ conn north-east-base-x509
         rightid=%fromcert
         rightrsasigkey=%cert
         rightcert=east
+
+conn road-west-base-x509
+        left=%defaultroute
+        leftrsasigkey=%cert
+        leftid=%fromcert
+        leftcert=road
+        # Right security gateway, subnet behind it,toward left.
+        right=192.1.2.45
+        rightid=%fromcert
+        rightrsasigkey=%cert
+        rightcert=west
 
 conn road-east-base-x509
         left=%defaultroute
@@ -399,6 +423,17 @@ conn west-east-base-x509
         rightid=%fromcert
         rightrsasigkey=%cert
         rightcert=east
+
+conn rw-west-base-x509
+        left=%any
+        leftrsasigkey=%cert
+        leftid=%fromcert
+        # Right security gateway, subnet behind it,toward left.
+        right=192.1.2.45
+        rightid=%fromcert
+        rightrsasigkey=%cert
+        rightcert=west
+
 
 conn rw-east-base-x509
         left=%any
@@ -481,3 +516,9 @@ conn north-east-x509-fail-base
 
 conn northnet
         leftsubnet=192.0.3.0/24
+
+conn road-client
+	leftmodecfgclient=yes
+	also=left-defaultroute
+	also=right-defaultroute
+	narrowing=yes

@@ -488,9 +488,6 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 		--initrd-inject=$@.tmp \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
 		--noreboot
-	: make certain that the image is accessible
-	test -r $(basename $@).qcow2 || sudo chgrp $(KVM_GROUP) $(basename $@).qcow2
-	test -r $(basename $@).qcow2 || sudo chmod g+r $(basename $@).qcow2
 	mv $@.tmp $@
 	: the reboot message from virt-install can be ignored
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
@@ -503,7 +500,10 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
+	: shutdown base and fix any disk modes - logging into base messes that up
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP)  $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	qemu-img convert -p -O qcow2 \
 		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
 		$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2

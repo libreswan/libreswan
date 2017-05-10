@@ -52,8 +52,8 @@
 # either as a parameter to make, or added to Makefile.inc.local.
 #
 
-# run the lib/libswan/ tests (make changes broke this)
-kvmplutotest	basic-pluto-00	wip
+# run the stand alone programs under testing/
+kvmplutotest	basic-pluto-00				good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
@@ -125,12 +125,14 @@ kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-48-nat-cp-start			good
+kvmplutotest	ikev2-48-nat-cp-nondefault		good
+kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
+kvmplutotest	ikev2-48-nat-cp-two-servers		good
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
 kvmplutotest	ikev2-53-clean-pending			good
 kvmplutotest	ikev2-54-replace-leave-old		good
-
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good

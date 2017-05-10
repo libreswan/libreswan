@@ -170,7 +170,7 @@ static int ealg_getbyname_ike(const char *const str)
 static int aalg_getbyname_ike(const char *str)
 {
 	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
-	if (str == NULL || str == '\0')
+	if (str == NULL || *str == '\0')
 		return -1;
 
 	int ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
@@ -661,7 +661,7 @@ static const char *alg_info_ike_add(const struct parser_policy *const policy,
 	 * XXX: Cross check PRF/integrity lookups for now.
 	 */
 	pexpect(integ == NULL);
-	pexpect((aalg_id == 0) == (prf == NULL));
+	pexpect((aalg_id <= 0) == (prf == NULL));
 	pexpect(prf == NULL || aalg_id == prf->common.id[IKEv1_OAKLEY_ID]);
 
 	return ike_add(policy, &ike_defaults, alg_info,

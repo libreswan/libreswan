@@ -6,8 +6,8 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add rw-eastnet-x509-ipv4
-002 added connection description "rw-eastnet-x509-ipv4"
+ ipsec auto --add rw-east-x509-ipv4
+002 added connection description "rw-east-x509-ipv4"
 east #
  echo "initdone"
 initdone

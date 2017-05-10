@@ -724,12 +724,14 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 	parser_init(&ctx, policy, param);
 
 	/* use default if null string */
-	if (*alg_str == '\0')
+	if (*alg_str == '\0') {
 		param->alg_info_add(&ctx.policy, alg_info,
 				    NULL,
 				    0, 0, 0,
 				    NULL, NULL, NULL,
 				    err_buf, err_buf_len);
+		return alg_info;
+	}
 
 	ptr = alg_str;
 	do {

@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+
+# swantest: run kvmpluto and dockerpluto tests
+#
+# Copyright (C) 2016-2017 Antony Antony
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
 import threading
 import time
 import os
@@ -21,6 +36,7 @@ import collections
 import datetime
 import csv
 import operator
+import signal
 
 from os import listdir
 from os.path import isfile, join, islink
@@ -36,8 +52,6 @@ except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s" % module)
 
-q = Queue()
-
 # hosts = ['east', 'west', 'road', 'nic', 'north']
 r_init = threading.Event()
 i_ran = threading.Event()
@@ -51,6 +65,33 @@ ch = logging.StreamHandler()
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
+
+tq = Queue()
+tp = Queue()  # test progress queue
+
+dqstart = Queue()
+dqstop = Queue()
+
+parent_pid = os.getpid()
+
+
+def handler(signum, frame):
+    ppid = os.getpid()
+    pids = subprocess.getoutput("ps --ppid %d -o \"pid=\"" % ppid).split()
+    for p in pids:
+        try:
+            logging.info("terminate child %d and part %d , %d", int(p), int(ppid),
+                         int(parent_pid))
+            os.kill(int(p), signal.SIGKILL)
+            os.kill(int(p), 0)
+        except:
+            pass
+    if parent_pid == ppid:
+        logging.info("parent process stop the loop %d", ppid)
+        sys.exit(1)
+    else:
+        logging.info("child process shutdown done %d", ppid)
+        sys.exit(1)
 
 
 class PipeworkEroor():
@@ -76,9 +117,8 @@ def grep_4_known_errors(test):
 
         if os.path.exists(conslelog):
             grep_n_add(test, host, conslelog, 'segfault', "SEGFAULT")
-            grep_n_add(test,
-                       host, conslelog, 'general protection', "GPFAULT")
-            grep_n_add(test, host, conslelog, "^CORE FOUND$", "CORE")
+            grep_n_add(test, host, conslelog, 'general protection', "GPFAULT")
+            grep_n_add(test, host, conslelog, "^CORE FOUND", "CORE")
 
 
 def grep_n_add(test, host, filename, pattern, note):
@@ -104,12 +144,12 @@ def grep_n_add(test, host, filename, pattern, note):
 
 class guest (threading.Thread):
 
-    def __init__(self, hostname, role, testname, args, install=None, compile=None):
+    def __init__(self, hostname, role, testname, args, prefix=None, install=None, compile=None):
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dname = hostname
-        if args.instance:
-            self.dname = str(args.instance) + hostname
+        if prefix:
+            self.dname = prefix + hostname
         self.role = role
         self.testname = testname
         self.status = "NEW"
@@ -220,8 +260,10 @@ class guest (threading.Thread):
                    (self.hostname, time.time() - start)))
 
         cmd = "./final.sh"
-        if os.path.exists(cmd):
+        if os.path.exists(cmd) and self.role != "nic":
             e = read_exec_shell_cmd(child, cmd, prompt, timer, self.hostname)
+            # expirment, give other side time to get ipsec look output
+            time.sleep(4)
             if e:
                 f.close
                 return e
@@ -284,6 +326,8 @@ class guest (threading.Thread):
                 logging.info(v_start)
                 re_e = re.search(r'error:', v_start, re.I)
                 if re_e:
+                    if(re.search(r'Domain not found', v_start, re.I)):
+                        break
                     tries -= 1
                     time.sleep(1)
                 else:
@@ -462,19 +506,25 @@ class TestList:
             try:
                 testtype, testdir, testexpect = line.split()
             except:
+                if re.search(r'#', line):
+                    continue
                 # This is serious
                 logging.error("****** malformed line: %s", line)
                 continue
             tdir = self.trpath + '/' + testdir
             if not os.path.exists(tdir):
                 # This is serious
-                logging.error(
-                    "****** invalid test %s: directory %s not found", testdir, tdir)
-                continue
+                if self.verbose:
+                    logging.error(
+                        "****** invalid test %s: directory %s not found", testdir, tdir)
+                    continue
             reason = self.skip_test(testtype, testdir, testexpect)
             if reason and self.verbose:
                 TestList.log_skip(testdir, reason)
+
+            if reason:
                 continue
+
             logging.debug("read: %s %s %s", testtype, testdir, testexpect)
             return (testtype, testdir, testexpect)
 
@@ -487,7 +537,11 @@ class TestList:
         logging.warning("****** skipping test %s: %s", testdir, reason)
 
     def skip_test(self, testtype, testdir, testexpect):
+
         if testtype == "skiptest":
+            return "type is skiptest"
+
+        if testexpect == "skiptest":
             return "type is skiptest"
 
         if testtype != "dockerplutotest" and testtype != "kvmplutotest":
@@ -579,6 +633,10 @@ class scantests:
             self.scan_test_results()
 
     def append_node_sum(self, g_sum='', h_sum=''):
+
+        graphsums = None
+        htmlsums = None
+
         if not self.to_append:
             self.graphsums.append(g_sum)
             self.htmlsums["rows"].append(h_sum)
@@ -597,9 +655,11 @@ class scantests:
         if graphsums:
             g = dict()
             for o in graphsums:
+                logging.debug("directory %s" % o["dir"])
                 if o["dir"] != g_sum["dir"] and (not o["dir"] in g):
                     g[o["dir"]] = True
                     self.graphsums.append(o)
+                    logging.debug("append to graphsum %s" % o["dir"])
 
         hfile = self.args.resultsdir + '/' + 'table.json'
         logging.debug("reading file %s" % hfile)
@@ -910,11 +970,8 @@ class scantests:
                 pass
 
     def write_txt(self, table):
-        if self.args.instance:
-            csvfile = self.trpath + '/' + 'table' + \
-                str(self.args.instance) + '.txt'
-        else:
-            csvfile = self.trpath + '/' + 'table.txt'
+
+        csvfile = self.trpath + '/' + 'table.txt'
         logging.info("write text summary file %s" % csvfile)
 
         with open(csvfile, 'w') as csvfile:
@@ -1050,7 +1107,7 @@ class scantests:
                 self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
                 self.grep_n_add(
                     role, conslelog, 'general protection', "GPFAULT")
-                self.grep_n_add(role, conslelog, "^CORE FOUND$", "CORE")
+                self.grep_n_add(role, conslelog, "^CORE FOUND", "CORE")
 
     def grep_n_add(self, role, filename, pattern, note):
         if not os.path.exists(filename):
@@ -1088,7 +1145,7 @@ def opened_w_error(filename, mode="r"):
 
 
 def rsync_file(src, dst):
-    cmd = "/usr/bin/rsync -q -aP %s %s" % (src, dst)
+    cmd = "/usr/bin/rsync --delete -q -aP %s %s" % (src, dst)
     logging.debug("%s", cmd)
     try:
         os.system(cmd)
@@ -1097,7 +1154,7 @@ def rsync_file(src, dst):
 
 
 def rsync_file_to_dir(src, dst):
-    cmd = "/usr/bin/rsync -q -aP %s %s/" % (src, dst)
+    cmd = "/usr/bin/rsync --delete -q -aP %s %s/" % (src, dst)
     logging.debug("%s", cmd)
     try:
         os.system(cmd)
@@ -1120,15 +1177,15 @@ def get_results(r):
             return x
 
 
-def shut_down_hosts(args, test_hosts):
+def shut_down_hosts(args, test_hosts, prefix=None):
 
     running = []
     all_hosts = list(DEFAULTCONFIG['swanhosts'])
     all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
 
-    if args.instance:
+    if prefix:
         for i, host in enumerate(all_hosts):
-            all_hosts[i] += str(args.instance)
+            all_hosts[i] = prefix + host
 
     if args.noreboot:
         logging.debug(
@@ -1159,7 +1216,7 @@ def shut_down_hosts(args, test_hosts):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logging.info(
-            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -1218,7 +1275,7 @@ def find_other_hosts(test, test_hosts):
         logging.debug("add others %s", host.group(1))
 
 
-def orient(args, test):
+def orient(args, test, prefix=None):
     test_hosts = []
     log_line = ''
     if os.path.exists("eastrun.sh"):
@@ -1238,7 +1295,14 @@ def orient(args, test):
         test_hosts.append(test["nic"])
         log_line = "and nic"
 
-    tcpdump_devs = ["swan12"]
+    if prefix:
+        tcpdump_devs = ["-w OUTPUT/%s -i %s" %
+                        ("swan12.pcap", prefix + "192_1_2")]
+        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
+            "swan13.pcap", prefix + "192_1_3")
+    else:
+        tcpdump_devs = ["-w OUTPUT/%s -i %s" % ("swan12.pcap", "sawn12")]
+        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
 
     if os.path.exists("westrun.sh"):
         if os.path.exists("westinit.sh"):
@@ -1249,14 +1313,14 @@ def orient(args, test):
     elif os.path.exists("roadrun.sh"):
         if os.path.exists("roadinit.sh"):
             test["initiator"] = "road"
-            tcpdump_devs.append("swan13")
+            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logging.error(
                 "ABORT can't identify INITIATOR: no %s/roadinit.sh, but there is roadrun.sh" % os.getcwd())
     elif os.path.exists("northrun.sh"):
         if os.path.exists("northinit.sh"):
             test["initiator"] = "north"
-            tcpdump_devs.append("swan13")
+            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logging.error(
                 "ABORT can't identify INITIATOR: no %s/northinit.sh, but there is northrun.sh" % os.getcwd())
@@ -1279,24 +1343,16 @@ def orient(args, test):
             pcap_file = 'OUTPUT/' + iface + '.pcap'
             # cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file,
             # iface, tcpdump_filter)
-            cmd = args.tcpdump + \
-                " -w %s -i %s " % (pcap_file, iface) + args.tcpdumpfilter
+            cmd = args.tcpdump + " " + args.tcpdumpfilter + " " + iface
             logging.debug(cmd)
-            for c in cmds:
-                if c == cmd:
-                    cmd = ''
-            if cmd:
-                cmds.append(cmd)
+            cmds.append(cmd)
+
+        cmds = sorted(set(cmds))
 
     find_other_hosts(test, test_hosts)
 
     if "others" in test:
         log_line = log_line + " also " + " ".join(test["others"])
-
-    if args.instance:
-        logging.debug("this is a second instance of the test turn")
-        for i, host in enumerate(test_hosts):
-            test_hosts[i] += str(args.instance)
 
     logging.debug("test hosts are initiator %s responder %s %s",
                   test["initiator"], test["responder"], log_line)
@@ -1491,7 +1547,8 @@ DEFAULTCONFIG = {
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
-    'instance': 0,
+    #'prefix': ['t1.', 't2.', 't3.', 't4.', 't5.', 't6.', 't7.'],
+    'prefix': [],
     'initshwait': 600,
     'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
     'newrun': None,
@@ -1507,7 +1564,8 @@ DEFAULTCONFIG = {
     'swanhosts': ['east', 'west', 'road', 'north'],
     'tcpdumpfilter': "-s  0 -n not stp and not port 22",
     'tcpdump': "/usr/sbin/tcpdump",
-    'testlist': "TESTLIST"
+    'testlist': "TESTLIST",
+    'testrun': None
 }
 
 
@@ -1534,6 +1592,9 @@ def cmdline():
     parser.add_argument("--exclude", default=None,
                         type=compile_regex_arg, help="Exclude tests that match <regex>")
 
+    parser.add_argument("--failed", default=None, action="store_true",
+                        help="re-run result=failed and expected == good")
+
     parser.add_argument("--graphsappend", default='',
                         help="update this graph entry. full path ")
 
@@ -1548,8 +1609,8 @@ def cmdline():
         type=int, help="seconds to wait for the init.sh, Python Thread, %s seconds" % DEFAULTCONFIG['initshwait'])
 
     parser.add_argument(
-        "--instance", default=DEFAULTCONFIG['instance'],
-        help="instance prefix %s" % DEFAULTCONFIG['instance'])
+        "--prefix", default=DEFAULTCONFIG['prefix'],
+        action="append", help="prefix to domain %s" % DEFAULTCONFIG['prefix'])
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1557,6 +1618,9 @@ def cmdline():
 
     parser.add_argument('--leavezombies', default=None, action="store_true",
                         help='leave other instances running. Default kill all other swantest and lingering tcpdump')
+
+    parser.add_argument("--libreswandir", default=DEFAULTCONFIG['libreswandir'],
+                        help="libreswan source/repository directory %s" % DEFAULTCONFIG['libreswandir'])
 
     parser.add_argument("--newrun", default=DEFAULTCONFIG['newrun'],
                         action="store_true", help="overwrite the results in %s/<hostname>/<YYYY-MM-DD>-libreswan-version>. Default %s" % (DEFAULTCONFIG['resultsdir'], DEFAULTCONFIG['newrun']))
@@ -1612,6 +1676,9 @@ def cmdline():
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
 
+    parser.add_argument('--testrun', action="store_true", default=DEFAULTCONFIG['testrun'],
+                        help="run tests from %s " % DEFAULTCONFIG['testlist'])
+
     parser.add_argument('--testname', '-t',
                         help='The name of the test to run from directory %s/testing/pluto/' % DEFAULTCONFIG["libreswandir"])
 
@@ -1630,7 +1697,7 @@ def cmdline():
     return args
 
 
-def kvm_error(r_file):
+def kvm_error(r_file, failed=False):
     if not os.path.exists(r_file):
         return False
     f = open(r_file, 'r')
@@ -1644,39 +1711,54 @@ def kvm_error(r_file):
                 return line
         except:
             pass
+        if "msg" in x:
+            if re.search(r'aborting', x['msg'], re.I):
+                logging.info(line)
+                f.close
+                return line
+
+        if failed and "result" in x and "expect" in x:
+            if x['result'] == "failed" and x['expect'] == "good":
+                return line
+
     f.close
     return False
 
 
 def runcmd(cmd):
+
     logging.info("%s", cmd)
     o = subprocess.getoutput(cmd)
     logging.debug(o)
+
     return o
 
 
 def runcmd_check_output(cmd):
     logging.info("%s", cmd)
     try:
-        o = subprocess.check_output(cmd, shell=True)
+        o = subprocess.check_output(cmd, shell=True).decode('ascii')
         logging.debug(o)
         return (o, None)
     except subprocess.CalledProcessError as e:
-        logging.error("ERROR %s %s", cmd, e.output)
+        logging.error("ERROR %s %s", cmd, e.output.decode('ascii'))
         return (None, e)
 
 
 def docker_stop_container(dname):
     if not dname:
         return
-    # docker exec -ti west-basic-pluto-01 halt
 
-    runcmd("sudo docker exec -ti %s halt" % dname)
+    prefix = None
+
+    # runcmd("sudo docker exec -ti %s halt" % dname) # this is more gentle. It
+    # hangs on F23
     runcmd("sudo docker stop --time=1 %s" % dname)
     runcmd("sudo docker rm -f %s" % dname)
 
 
 def docker_start_container(dhost, dname, dimage):
+
     cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
         dhost, dname, dimage)
     return (runcmd(cmd))
@@ -1723,7 +1805,7 @@ def docker_swan_build(args, dname):
         cmd = "sudo docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
             dname, args.rpm)
     else:
-        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install-base'" % dname
+        cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make base install-base'" % dname
 
     (line, e) = runcmd_check_output(cmd)
     if e:
@@ -1738,8 +1820,7 @@ def docker_swan_build(args, dname):
 
     cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make showobjdir'" % dname
     (line, e) = runcmd_check_output(cmd)
-    objdir = line.decode('ascii')
-    objdir = objdir.strip()
+    objdir = line.strip()
     if e:
         return(e.output)
     cmd = "sudo chown build.build -R /home/build/libreswan/%s" % objdir
@@ -1749,11 +1830,34 @@ def docker_swan_build(args, dname):
 
 def docker_containers_start_stop(args, test, st, stop):
 
+    start = time.time()
+
+    logging.info("%s in docker_containers_start_stop ", test["name"])
+
+    if "is_testlist" in st and not stop:
+        logging.info(
+            "%s stop boot q is enabled wait for the turn", test["name"])
+        prefix = dqstart.get()
+        logging.info("%s got a boot q slot %s %.2f" %
+                     (test["name"], prefix, time.time() - start))
+    elif  "is_testlist" in st and stop:
+        logging.info(
+            "%s stop boot q is enabled wait for the turn", test["name"])
+        prefix = dqstop.get()
+        logging.info("%s got a boot q slot %s %.2f" %
+                     (test["name"], prefix, time.time() - start))
+    else:
+        logging.info("stop boot q is not enabled")
+
     for host in test["test_hosts"]:
         dname = host + "-" + test["name"]
         docker_stop_container(dname)
 
     if stop:
+        if "is_testlist" in st:
+            logging.debug("%s put boot q slot %s back %.2f" %
+                          (test["name"], prefix, time.time() - start))
+            dqstop.put(prefix)
         return
 
     if init_output_dir():
@@ -1762,6 +1866,11 @@ def docker_containers_start_stop(args, test, st, stop):
     for host in test["test_hosts"]:
         dname = host + "-" + test["name"]
         docker_start_container(host, dname, args.dockerimage)
+
+    if "is_testlist" in st:
+        logging.debug("%s put boot q slot %s back %.2f" %
+                      (test["name"], prefix, time.time() - start))
+        dqstart.put(prefix)
 
     try:
         docker_add_net_bridges(args, test)
@@ -1925,10 +2034,10 @@ def docker_add_net_bridges(args, test):
                 brlist=brlist)
             pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
-        if pcap_file:
-            tcpdump_args =  args.tcpdump + \
-                " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
-            tcpdump_cmds[tcpdump_args] = 1
+            if pcap_file:
+                tcpdump_args =  args.tcpdump + \
+                    " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
+                tcpdump_cmds[tcpdump_args] = 1
 
     # tcpdump pid(s) to kill the right tcpdump at the end.
     # killall is not an option, there could be other tests in the root pid
@@ -2052,15 +2161,15 @@ def do_dockerplutotest(args, start, test, st):
         docker_containers_start_stop(args, test, st, True)
 
 
-def do_kvmplutotest(args, start, test, st):
+def do_kvmplutotest(args, start, test, st, prefix=None):
 
     logging.info("***** KVM PLUTO RUNNING test %s *******", test["name"])
 
-    tcpdump_cmds, test_hosts = orient(args, test)
+    tcpdump_cmds, test_hosts = orient(args, test, prefix=prefix)
     if not test_hosts:
-        return "eroor"
+        return "error"
 
-    e = shut_down_hosts(args, test_hosts)
+    e = shut_down_hosts(args, test_hosts, prefix=prefix)
     if init_output_dir():
         return True
 
@@ -2078,11 +2187,13 @@ def do_kvmplutotest(args, start, test, st):
     n_init.clear()
 
     # Create new threads
-    th_responder = guest(test["responder"], "responder", test["name"], args)
+    th_responder = guest(test["responder"], "responder", test[
+                         "name"], args, prefix=prefix)
     if "nic" in test:
-        th_nic = guest(test["nic"], "nic", test["name"], args)
+        th_nic = guest(test["nic"], "nic", test["name"], args, prefix=prefix)
 
-    th_initiator = guest(test["initiator"], "initiator", test["name"], args)
+    th_initiator = guest(test["initiator"], "initiator", test[
+                         "name"], args, prefix=prefix)
 
     # Start Threads
     th_responder.start()
@@ -2094,7 +2205,8 @@ def do_kvmplutotest(args, start, test, st):
     if "others" in test:
         others = dict()
         for host in test["others"]:
-            others[host] = guest(host, "other", test["name"], args)
+            others[host] = guest(host, "other", test[
+                                 "name"], args, prefix=prefix)
             others[host].start()
 
     th_initiator.start()
@@ -2112,13 +2224,18 @@ def do_kvmplutotest(args, start, test, st):
     kill_zombie_tcpdump()
 
     if "is_testlist" in st:
-        e = shut_down_hosts(args, test_hosts)
+        e = shut_down_hosts(args, test_hosts, prefix=prefix)
+        if (prefix):
+            tq.put(prefix)
 
     return e
 
 
 def setup_single_test(args, start='', st=None):
+
     test = dict()
+
+    logging.debug("try to run as single test")
     if args.docker:
         test["type"] = "dockerplutotest"
         if check_host_netkey_stack():
@@ -2129,9 +2246,12 @@ def setup_single_test(args, start='', st=None):
         logging.info("ABORT %s single test unknown type", test["type"])
         return
 
-    if args.testname:
+    if args.testname and args.testrun:
+        logging.info("ABORT conflicting options --testname and --testrun")
+        return True
+    elif args.testname:
         test["name"] = args.testname
-        d = "%s/testing/pluto/" % DEFAULTCONFIG["libreswandir"]
+        d = "%s/testing/pluto/" % args.libreswandir
         if not os.path.isdir(d):
             logging.error("****** missing directory %s", d)
             return
@@ -2145,10 +2265,15 @@ def setup_single_test(args, start='', st=None):
             "expect"] = "XXXX"  # this is a single test don't know the expected outcome
         logging.debug(
             "start test from cwd %s type %s", test["name"], test["type"])
-    do_single_test(args=args, start=start, test=test, st=st)
+
+    prefix = None
+    if args.prefix:
+        prefix = args.prefix[0]
+
+    do_single_test(args=args, start=start, test=test, st=st, prefix=prefix)
 
 
-def do_single_test(args, start='', test=None, st=None):
+def do_single_test(args, start='', test=None, st=None, prefix=None):
 
     if not start:
         start = time.time()
@@ -2188,7 +2313,7 @@ def do_single_test(args, start='', test=None, st=None):
             os.chdir("..")  # chdir end
             return True
     elif test["type"] == 'kvmplutotest':
-        if do_kvmplutotest(args=args, start=start, test=test, st=st):
+        if do_kvmplutotest(args=args, start=start, test=test, st=st, prefix=prefix):
             os.chdir("..")  # chdir end
             return True
     else:
@@ -2261,14 +2386,13 @@ def check_host_netkey_stack():
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
         logging.debug("no netkey stack found, try to load it %s", v_line)
-        runcmd("sudo ipsec _stackmanager start --netkey")
+        runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --netkey")
         v_line = runcmd("ipsec version")
         if v_line.split()[3] != '(netkey)':
             # give up
             logging.error(
                 "ABORT no netkey stack found. can not run docker test, %s", v_line)
             return True
-    logging.debug(v_line)
 
 
 def run_docker_q(args, tests, st):
@@ -2280,6 +2404,14 @@ def run_docker_q(args, tests, st):
     if check_host_netkey_stack():
         return True
 
+    if "is_testlist" in st:
+        bootp = [1, 2]
+        logging.debug("add %d boot workers to dq" % (len(bootp)))
+        for i in bootp:
+            logging.debug("add %d to the dq" % (i))
+            dqstart.put(i)
+            dqstop.put(i)
+
     for name, test in tests.items():
         logging.debug("queue up %s type %s", test["name"], test["type"])
 
@@ -2290,12 +2422,65 @@ def run_docker_q(args, tests, st):
             logging.debug("queue up %s type %s", test["name"], test["type"])
             executor.submit(do_single_test, args=args, test=test, st=st)
 
-    while not q.empty():
-        print (q.get())
-
 
 def update_progress_table(args, tests, st):
     return
+
+
+def tlist_progress_worker(args, st):
+
+    if tp.empty():
+        return  # no need to execute
+
+    tp.get()
+    progress = scantests(args, stdir=st["odir"], to_append=True)
+    progress.scan_test_runs()
+    tp.put(1)
+
+
+def kvm_test_worker(args, test, st):
+
+    logging.debug("work q %s", test["name"])
+    start = time.time()
+    prefix = tq.get(True)  # Blocking wait to get worker slot.
+    logging.info("%s got worker slot %s. Waited for %.2f" %
+                 (test["name"], prefix, time.time() - start))
+    start = time.time()  # now it is the start of the test
+    do_single_test(args, start, test, st, prefix=prefix)
+
+
+def run_kvm_q_conc(args, tests, st):
+    logging.info(
+        "%s kvmpluto tests to run concurrently. pool size %s, from %s", st[
+            "ktorun"], len(args.prefix), args.testlist)
+
+    for name, test in tests.items():
+        logging.debug("queue up %s type %s", test["name"], test["type"])
+
+    for i in args.prefix:
+        tq.put(i)
+
+    tp.put(1)
+
+    maxWorkers = len(args.prefix) + 1
+    with concurrent.futures.ProcessPoolExecutor(max_workers=maxWorkers) as executor:
+        progress_period = maxWorkers
+        i = 0
+        try:
+            for name, test in tests.items():
+                if test["type"] != 'kvmplutotest':
+                    continue
+                i += 1
+                logging.debug("queue up %s %s", test["type"], test["name"])
+                if (i % progress_period == 0):
+                    executor.submit(tlist_progress_worker, args=args, st=st)
+                    progress_period *= 2
+                    progress_period = 50 if progress_period >= 50 else progress_period
+
+                executor.submit(kvm_test_worker, args=args, test=test, st=st)
+        except KeyboardInterrupt:
+            executor.cancel()
+            return
 
 
 def run_kvm_q(args, tests, st):
@@ -2314,7 +2499,16 @@ def run_kvm_q(args, tests, st):
 
 def do_test_list(args, start, tried, output_dir):
 
+    if args.testname and args.testrun:
+        logging.info("ABORT conflicting options --testname and --testrun")
+        return True
+    elif args.testrun:
+        tdir = args.libreswandir + '/testing/pluto'
+        logging.debug("change working directory to %s", tdir)
+        os.chdir(tdir)
+
     if not os.path.exists(args.testlist):
+        logging.debug("no TESTLIST file \"%s\" found" % (args.testlist))
         return ("", False, 0)
     ran = 0
     torun = 0
@@ -2347,12 +2541,12 @@ def do_test_list(args, start, tried, output_dir):
     tests = collections.OrderedDict()  # slow but keeps the order
     tests.clear()
 
-    progress = scantests(args, stdir=os.getcwd())
+    progress = scantests(args, stdir=odir)
     progress.scan_test_runs()
     st["progress"] = progress
 
     logging.info("** read tests from file %s **", args.testlist)
-    for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=True):
+    for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=False):
         st["n_lines"] = st["n_lines"] + 1
         if os.path.exists(s):
             logging.error("* stop all tests now. Found %s *", s)
@@ -2360,12 +2554,13 @@ def do_test_list(args, start, tried, output_dir):
 
         r_file = odir + '/' + testdir + '/OUTPUT/RESULT'
         if os.path.exists(r_file):
-            if tried and (tried < args.retry):
-                if kvm_error(r_file):
+
+            if args.failed or tried:
+                if kvm_error(r_file, failed=args.failed):
                     logging.info(
                         "result [%s] KVMERROR. deleting previous run, retrying %s/%s", r_file, tried, args.retry)
                     o = odir + '/' + testdir
-                    shutil.rmtree(o)
+                    # shutil.rmtree(o)
                 else:
                     TestList.log_skip(
                         testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
@@ -2412,7 +2607,10 @@ def do_test_list(args, start, tried, output_dir):
         run_docker_q(args, tests, st)
 
     if st["ktorun"]:
-        run_kvm_q(args, tests, st)
+        if len(args.prefix) > 1:
+            run_kvm_q_conc(args, tests, st)
+        else:
+            run_kvm_q(args, tests, st)
 
     if os.path.isdir(st["odir"]) and ((st["dtorun"] + st["ktorun"]) > 0):
         endscan = scantests(args, stdir=st["odir"], to_append=True)
@@ -2463,7 +2661,7 @@ def setup_result_dir(args, to_create):
     if not ipsecversion:
         # Lets assume the path is <LIBRESWANSRC>/testing/utis
         cwd = os.getcwd()
-        dn = DEFAULTCONFIG["libreswandir"]
+        dn = args.libreswandir
         os.chdir(dn)
         cmd = "make showversion"
         ipsecversion = subprocess.getoutput(cmd)
@@ -2471,7 +2669,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logging.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logging.debug("IPSECVERSION %s was set in environment", ipsecversion)
+        logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion
@@ -2526,6 +2724,8 @@ def gen_stop_tests_now(args):
 
 
 def main():
+    signal.signal(signal.SIGINT, handler)
+
     start = time.time()
     args = cmdline()
     tried = 0
@@ -2549,13 +2749,14 @@ def main():
         scancwd(args)
         return
 
-    if args.instance:
+    if args.prefix:
         args.leavezombies = True
 
     if not args.leavezombies:
         kill_zombies("swantest")
 
     output_dir = ''
+
     # if there is TESTLIST run in batch mode.
     (output_dir, is_testlist, ran_tests) = do_test_list(
         args, start, tried, output_dir)

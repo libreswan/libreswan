@@ -1,5 +1,8 @@
 sleep 5
 unbound-control-setup > /dev/null 2>&1
+# use modified service file that skips ICANN root key checks
+cp unbound.service /etc/systemd/system/unbound.service
+systemctl daemon-reload
 service unbound start
 unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
 # wait for DDNS event

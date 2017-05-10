@@ -4,7 +4,7 @@ east #
 east #
  echo '# when get_preshared_key() can deal with asymmetric, we can narrow it down' >> /etc/ipsec.secrets
 east #
- echo ': PSK "ABCDEFGHIJ12345"' >> /etc/ipsec.secrets
+ echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service

@@ -1,4 +1,6 @@
 ipsec look
+# clean up after ourselves
+rm -f /etc/systemd/system/unbound.service
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
