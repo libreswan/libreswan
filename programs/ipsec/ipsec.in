@@ -3,7 +3,7 @@
 # prefix command to run stuff from our programs directory
 #
 # Copyright (C) 1998-2002  Henry Spencer.
-# Copyright (C) 2013-2016  Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2017  Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2013-2016  Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -79,9 +79,16 @@ fixversion() {
 
 set_db_trusts() {
     # has to handle a NSS nick with spaces
-    certutil -L -d "${IPSEC_NSSDIR_SQL}" | egrep -v 'Certificate|MIME' | awk '{$NF=""; print $0}' | grep -v "^$" | while read -r cert; do
-	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -q 'Is a CA' &&
-	  [ $(certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]; then
+    certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
+	egrep -v 'Certificate|MIME' | \
+	awk '{$NF=""; print $0}' | \
+	grep -v "^$" | \
+	while read -r cert
+    do
+	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | \
+	    grep -q 'Is a CA' && \
+	    [ $(certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
+	then
 	    echo "correcting trust bits for ${cert}"
 	    certutil -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
 	fi
