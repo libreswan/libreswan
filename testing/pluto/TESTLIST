@@ -276,8 +276,8 @@ kvmplutotest	ikev2-frag-02-ipv6			good
 kvmplutotest	dynamic-iface-01			good
 
 # rsasigkey2= related tests
-kvmplutotest	rsasigkey2-01				good
-kvmplutotest	rsasigkey2-02				good
+kvmplutotest	rsasig2-01				good
+kvmplutotest	rsasig2-02				good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
