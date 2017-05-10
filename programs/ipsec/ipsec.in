@@ -80,9 +80,8 @@ fixversion() {
 set_db_trusts() {
     # has to handle a NSS nick with spaces
     certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
-	egrep -v 'Certificate|MIME' | \
+	grep -E -v '(Trust Attributes|SSL,S/MIME,JAR/XPI|^)$' | \
 	awk '{$NF=""; print $0}' | \
-	grep -v "^$" | \
 	while read -r cert
     do
 	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | \
