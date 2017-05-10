@@ -2152,6 +2152,29 @@ void fmt_state(struct state *st, const monotime_t n,
 
 /*
  * sorting logic is:
+ *  name
+ *  state serial no#
+ */
+
+static int state_compare_serial(const void *a, const void *b)
+{
+	const struct state *sap = *(const struct state *const *)a;
+	const struct state *sbp = *(const struct state *const *)b;
+	const so_serial_t a_sn = sap->st_serialno;
+	const so_serial_t b_sn = sbp->st_serialno;
+	struct connection *ca = sap->st_connection;
+	struct connection *cb = sbp->st_connection;
+	int ret;
+
+	ret = strcmp(ca->name, cb->name);
+	if (ret != 0)
+		return ret;
+
+	return a_sn < b_sn ? -1 : a_sn > b_sn ? 1 : 0;
+}
+
+/*
+ * sorting logic is:
  *
  *  name
  *  type
@@ -2159,7 +2182,7 @@ void fmt_state(struct state *st, const monotime_t n,
  *  isakmp_sa (XXX probably wrong)
  *
  */
-static int state_compare(const void *a, const void *b)
+static int state_compare_c(const void *a, const void *b)
 {
 	const struct state *sap = *(const struct state *const *)a;
 	struct connection *ca = sap->st_connection;
@@ -2174,7 +2197,7 @@ static int state_compare(const void *a, const void *b)
 /*
  * NULL terminated array of state pointers.
  */
-static struct state **sort_states(void)
+static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 {
 	/* COUNT the number of states. */
 	int count = 0;
@@ -2211,7 +2234,7 @@ static struct state **sort_states(void)
 	}
 
 	/* sort it!  */
-	qsort(array, count, sizeof(struct state *), state_compare);
+	qsort(array, count, sizeof(struct state *), sort_fn);
 
 	return array;
 }
@@ -2219,7 +2242,7 @@ static struct state **sort_states(void)
 void show_traffic_status(void)
 {
 
-	struct state **array = sort_states();
+	struct state **array = sort_states(state_compare_serial);
 
 	/* now print sorted results */
 	if (array != NULL) {
@@ -2255,7 +2278,7 @@ void show_states_status(void)
 		  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
 	whack_log(RC_COMMENT, " ");             /* spacer */
 
-	struct state **array = sort_states();
+	struct state **array = sort_states(state_compare_c);
 
 	if (array != NULL) {
 		monotime_t n = mononow();
