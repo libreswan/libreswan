@@ -758,7 +758,6 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	bool rev_opts[RO_SZ];
 	char namebuf[IDTOA_BUF];
 
-	const char *email = NULL;
 	char ipstr[IDTOA_BUF];
 
 	rev_opts[RO_OCSP] = ocsp_enable;
@@ -828,11 +827,11 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		case ID_DER_ASN1_DN:
 			/* this has already been checked in ikev2_decode_peer_id_and_certs() */
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			loglog(RC_LOG_SERIOUS("Unexpected ID_DER_ASN1_DN:%s", namebuf);
+			loglog(RC_LOG_SERIOUS, "Unexpected ID_DER_ASN1_DN:%s", namebuf);
 			break;
 
 		default:
-			loglog(RC_LOG_SERIOUS("Unhandled ID type %d: %s",
+			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
 				c->spd.that.id.kind,
 				enum_show(&ike_idtype_names, c->spd.that.id.kind));
 		}
