@@ -1,0 +1,13 @@
+--- MASTER/ikev2-x509-06-san-email-mismatch/east.console.txt
++++ OUTPUT/ikev2-x509-06-san-email-mismatch/east.console.txt
+@@ -8,8 +8,8 @@
+ east #
+  /testing/pluto/bin/wait-until-pluto-started
+ east #
+- ipsec auto --add idmismatch
+-002 added connection description "idmismatch"
++ ipsec auto --add san
++002 added connection description "san"
+ east #
+  echo "initdone"
+ initdone

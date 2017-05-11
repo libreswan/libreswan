@@ -1,0 +1,1 @@
+{"testname": "ikev2-x509-11-san-dns-match", "runtime": 59.5, "boot_time": 42.0, "script_time": 17.5, "time": "2017-05-03 22:24", "expect": "good", "total_time": 59.5, "hosts": ["east", "west"], "result": "failed", "errors": {"east": ["output-different"], "west": ["output-different"]}}

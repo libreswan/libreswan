@@ -232,6 +232,20 @@ kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 kvmplutotest	ikev1-impair-gx-01			good
 kvmplutotest	ikev1-impair-gx-02			good
 
+kvmplutotest	ikev1-x509-05-san-firstemail-match	good
+kvmplutotest	ikev1-x509-06-san-email-mismatch	good
+kvmplutotest	ikev1-x509-07-san-ip-mismatch		good
+kvmplutotest	ikev1-x509-08-san-dns-mismatch		good
+kvmplutotest	ikev1-x509-09-san-email-match		good
+kvmplutotest	ikev1-x509-10-san-ip-match		good
+kvmplutotest	ikev1-x509-11-san-dns-match		good
+kvmplutotest	ikev2-x509-05-san-firstemail-match	good
+kvmplutotest	ikev2-x509-06-san-email-mismatch	good
+kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
+kvmplutotest	ikev2-x509-08-san-dns-mismatch		good
+kvmplutotest	ikev2-x509-09-san-email-match		good
+kvmplutotest	ikev2-x509-10-san-ip-match		good
+kvmplutotest	ikev2-x509-11-san-dns-match		good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
@@ -944,3 +958,4 @@ kvmplutotest	seccomp-02-tolerant		good
 kvmplutotest	ipsec-hostkey-ckaid-01		good
 kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
 kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
+

@@ -1,0 +1,3 @@
+{"epoch": 1489345979, "time": "2017-03-12 15:12", "hostname": "east", "msg": "end", "runtime": 47.95, "testname": "ikev2-x509-06-match-san"}
+{"epoch": 1489345979, "time": "2017-03-12 15:12", "hostname": "west", "msg": "end", "runtime": 47.97, "testname": "ikev2-x509-06-match-san"}
+{"epoch": 1489345980, "time": "2017-03-12 15:13", "runtime": 51.45, "node": "thinkpad.nohats.ca", "result": "failed", "expect": "XXXX", "testname": "ikev2-x509-06-match-san"}

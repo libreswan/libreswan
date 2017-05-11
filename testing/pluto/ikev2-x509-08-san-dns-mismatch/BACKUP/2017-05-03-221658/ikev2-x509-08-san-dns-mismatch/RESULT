@@ -1,0 +1,1 @@
+{"boot_time": 42.6, "script_time": 18.1, "total_time": 60.7, "testname": "ikev2-x509-08-san-dns-mismatch", "time": "2017-05-03 19:48", "hosts": ["east", "west"], "errors": {"west": ["output-different"], "east": ["output-different"]}, "result": "failed", "runtime": 60.7, "expect": "good"}
