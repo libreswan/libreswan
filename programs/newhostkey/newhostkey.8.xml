@@ -82,7 +82,7 @@
 	<listitem>
 	  <para>The <option>--nssdir</option> option specifies the NSS DB
 	  directory where the certificate key, and modsec databases reside
-	  (default <filename>@IPSEC_NSSDIR@</filename>.</para>
+	  (default <filename>@IPSEC_NSSDIR@</filename>)</para>
 	</listitem>
       </varlistentry>
 
