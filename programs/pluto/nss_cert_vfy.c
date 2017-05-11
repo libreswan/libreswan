@@ -1,6 +1,7 @@
 /* pluto NSS certificate verification routines
  *
  * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -491,3 +492,95 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 
 	return ret;
 }
+
+bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
+{
+	SECStatus rv;
+	SECItem	subAltName;
+	PLArenaPool *arena = NULL;
+	CERTGeneralName *nameList = NULL;
+	CERTGeneralName *current = NULL;
+	bool san_ip = FALSE;
+	unsigned int len = strlen(name);
+	ip_address myip;
+
+	rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
+			&subAltName);
+	if (rv != SECSuccess) {
+		DBG(DBG_X509, DBG_log("certificate contains no subjectAltName extension"));
+		return FALSE;
+	}
+
+	if (tnatoaddr(name, 0, AF_UNSPEC, &myip) == NULL)
+		san_ip = TRUE;
+
+	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	passert(arena != NULL);
+
+	nameList = current = CERT_DecodeAltNameExtension(arena, &subAltName);
+	passert(current != NULL);
+
+	do
+	{
+		switch(current->type) {
+		case certDNSName:
+		case certRFC822Name:
+			if (san_ip)
+				break;
+			if (current->name.other.len == len) {
+				if (memcmp(current->name.other.data, name, len) == 0) {
+					DBG(DBG_X509, DBG_log("subjectAltname %s found in certificate", name));
+					PORT_FreeArena(arena, PR_FALSE);
+					return TRUE;
+				}
+			}
+
+			if (current->name.other.len != 0 && current->name.other.len < IDTOA_BUF) {
+				char osan[IDTOA_BUF];
+
+				memcpy(osan,current->name.other.data, current->name.other.len);
+				osan[current->name.other.len] = '\0';
+				DBG(DBG_X509, DBG_log("subjectAltname (len=%d) %s not match %s", current->name.other.len, osan, name));
+			} else {
+				DBG(DBG_X509, DBG_log("subjectAltname <TOO BIG TO PRINT> does not match %s", name));
+			}
+			break;
+
+		case certIPAddress:
+			if (!san_ip)
+				break;
+			if ((current->name.other.len == 4) && (addrtypeof(&myip) == AF_INET)) {
+				if (memcmp(current->name.other.data, &myip.u.v4.sin_addr.s_addr, 4) == 0) {
+					DBG(DBG_X509, DBG_log("subjectAltname IPv4 matches %s", name));
+					PORT_FreeArena(arena, PR_FALSE);
+					return TRUE;
+				} else {
+					DBG(DBG_X509, DBG_log("subjectAltname IPv4 does not match %s", name));
+					break;
+				}
+			}
+			if ((current->name.other.len == 16) && (addrtypeof(&myip) == AF_INET6)) {
+				if (memcmp(current->name.other.data, &myip.u.v6.sin6_addr.s6_addr, 16) == 0) {
+					DBG(DBG_X509, DBG_log("subjectAltname IPv6 matches %s", name));
+					PORT_FreeArena(arena, PR_FALSE);
+					return TRUE;
+				} else {
+					DBG(DBG_X509, DBG_log("subjectAltname IPv6 does not match %s", name));
+					break;
+				}
+			}
+			DBG(DBG_X509, DBG_log("subjectAltnamea IP address family mismatch for %s", name));
+			break;
+
+		default:
+			break;
+		}
+		current = CERT_GetNextGeneralName(current);
+	} while (current != nameList);
+
+	loglog(RC_LOG_SERIOUS, "No matching subjectAltName found");
+	/* Don't free nameList, it's part of the arena. */
+	PORT_FreeArena(arena, PR_FALSE);
+	return FALSE;
+}
+

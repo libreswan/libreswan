@@ -385,6 +385,8 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
+	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
+
 	/*
 	 * Diffie-Hellman exchange values
 	 *

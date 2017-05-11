@@ -3456,6 +3456,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
+	/* calculate hash of IDi for AUTH below */
 	{
 		struct hmac_ctx id_ctx;
 		const pb_stream *id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;
@@ -3463,8 +3464,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
 		hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pi_nss);
-
-		/* calculate hash of IDi for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		hmac_final(idhash_in, &id_ctx);

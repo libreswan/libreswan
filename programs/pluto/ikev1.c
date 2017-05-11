@@ -2818,7 +2818,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
 			r = refine_host_connection(st, &peer, initiator,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
-			pexpect(r != NULL);
 		}
 
 		if (r == NULL) {
