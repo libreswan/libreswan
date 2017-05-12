@@ -1,1 +1,0 @@
-{"boot_time": 40.9, "time": "2017-05-10 23:10", "result": "failed", "hosts": ["east", "west"], "script_time": 8.8, "total_time": 49.6, "expect": "good", "runtime": 49.6, "errors": {"east": ["output-different"], "west": ["output-different"]}, "testname": "ikev2-x509-09-san-email-match"}

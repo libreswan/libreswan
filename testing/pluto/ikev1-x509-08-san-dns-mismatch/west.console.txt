@@ -8,8 +8,8 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec auto --add idmismatch
-002 added connection description "idmismatch"
+ ipsec auto --add san
+002 added connection description "san"
 west #
  echo "initdone"
 initdone
@@ -18,16 +18,23 @@ west #
 west #
  # this should fail
 west #
- ipsec auto --up idmismatch
-002 "idmismatch" #1: initiating v2 parent SA
-133 "idmismatch" #1: STATE_PARENT_I1: initiate
-133 "idmismatch" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "idmismatch" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "idmismatch" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "idmismatch" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "idmismatch" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
-003 "idmismatch" #2: we require IKEv2 peer to have ID '@east', but peer declares '@NOTeast'
-224 "idmismatch" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
+ ipsec auto --up san
+002 "san" #1: initiating Main Mode
+104 "san" #1: STATE_MAIN_I1: initiate
+106 "san" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "san" #1: I am sending my cert
+002 "san" #1: I am sending a certificate request
+108 "san" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "san" #1: Main mode peer ID is ID_FQDN: '@NOTeast.testing.libreswan.org'
+002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "san" #1: No matching subjectAltName found
+003 "san" #1: certificate does not contain ID_FQDN subjectAltName=NOTeast.testing.libreswan.org
+002 "san" #1: Peer public key is not available for this exchange
+218 "san" #1: STATE_MAIN_I3: INVALID_ID_INFORMATION
+002 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
+002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
+031 "san" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "san" #1: deleting state (STATE_MAIN_I3)
 west #
  echo "done"
 done

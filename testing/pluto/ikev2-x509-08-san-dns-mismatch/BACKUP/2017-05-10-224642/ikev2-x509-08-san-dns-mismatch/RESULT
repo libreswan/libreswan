@@ -1,1 +1,0 @@
-{"hosts": ["east", "west"], "errors": {"west": ["output-different"], "east": ["output-different"]}, "script_time": 16.0, "time": "2017-05-10 11:19", "runtime": 56.9, "result": "failed", "boot_time": 40.9, "total_time": 56.9, "expect": "good", "testname": "ikev2-x509-08-san-dns-mismatch"}
