@@ -784,13 +784,11 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		case ID_IPV4_ADDR:
 		case ID_IPV6_ADDR:
 			idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
-			DBG(DBG_X509, DBG_log("created ID string '%s' to pass to cert_VerifySubjectAltName",
-				ipstr));
 			if (cert_VerifySubjectAltName(end_cert, ipstr)) {
 				st->st_peer_alt_id = TRUE;
-				libreswan_log("ID_IP '%s' matched with CERT_* code", ipstr);
+				DBG(DBG_X509, DBG_log("ID_IP '%s' matched", ipstr));
 			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain IP subjectAltName=%s",
+				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_IP subjectAltName=%s",
 						ipstr);
 				return FALSE;
 			}
@@ -799,12 +797,10 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		case ID_FQDN:
 			/* We need to skip the "@" prefix from our configured FQDN */
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			DBG(DBG_X509, DBG_log("created ID string '%s' to pass to cert_VerifySubjectAltName",
-				namebuf+1));
 
 			 if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
 				st->st_peer_alt_id = TRUE;
-				libreswan_log("ID_FQDN '%s' matched with CERT_* code", namebuf+1);
+				DBG(DBG_X509, DBG_log("ID_FQDN '%s' matched", namebuf+1));
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain subjectAltName=%s",
 					namebuf + 1);
@@ -816,27 +812,31 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
 			if (cert_VerifySubjectAltName(end_cert, namebuf)) {
 				st->st_peer_alt_id = TRUE;
-				libreswan_log("ID_USER_FQDN '%s' matched", namebuf);
+				DBG(DBG_X509, DBG_log("ID_USER_FQDN '%s' matched", namebuf));
 			} else {
-				loglog(RC_LOG_SERIOUS, "No email SAN's on the certificate match required peer id '%s'",
+				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
 					namebuf);
 				return FALSE;
 			}
 			break;
 
+		case ID_FROMCERT:
 		case ID_DER_ASN1_DN:
-			/* this has already been checked in ikev2_decode_peer_id_and_certs() */
+			/* We don't care about ID type DN, since the CA already verified it */
+			st->st_peer_alt_id = TRUE;
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			loglog(RC_LOG_SERIOUS, "Unexpected ID_DER_ASN1_DN:%s", namebuf);
+			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does need need further ID verification", namebuf));
 			break;
 
 		default:
 			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
 				c->spd.that.id.kind,
 				enum_show(&ike_idtype_names, c->spd.that.id.kind));
+				return FALSE;
 		}
 
 		if (st->st_peer_alt_id) {
+			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert and adding pubkey from cert"));
 			c->spd.that.cert.u.nss_cert = end_cert;
 			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
 			add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
@@ -888,6 +888,7 @@ bool ikev1_decode_cert(struct msg_digest *md)
 	bool ret = TRUE;
 	int der_num = 0;
 
+	DBG(DBG_X509, DBG_log("checking for CERT payloads"));
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
 		struct isakmp_cert *const cert = &p->payload.cert;
 
@@ -903,6 +904,7 @@ bool ikev1_decode_cert(struct msg_digest *md)
 	}
 
 	if (der_num > 0) {
+		DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
 		if (!pluto_process_certs(st, der_list, der_num)) {
 			libreswan_log("Peer public key is not available for this exchange");
 			ret = FALSE;
