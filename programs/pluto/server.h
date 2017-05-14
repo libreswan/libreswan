@@ -87,7 +87,9 @@ extern struct event *pluto_event_new(evutil_socket_t ft, short events,
 extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		                event_callback_fn cb, void *arg,
 				const struct timeval *delay, char *name);
-void delete_pluto_event(struct pluto_event **evp);
+extern void delete_pluto_event(struct pluto_event **evp);
+extern void link_pluto_event_list(struct pluto_event *e);
+extern void free_pluto_event_list(void);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode);
