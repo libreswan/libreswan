@@ -63,8 +63,6 @@
 
 #include "pluto_sd.h"
 
-static	struct pluto_event *pluto_events_head = NULL;
-
 static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 {
 	struct connection *c = st->st_connection;
@@ -869,72 +867,6 @@ void delete_event(struct state *st)
 	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT || st->st_event->ev_type == EVENT_v2_RETRANSMIT)
 		st->st_retransmit = 0;
 	delete_pluto_event(&st->st_event);
-}
-
-#define UNLINK_FOM_LIST(head , element, del)	{				  \
-	__typeof__(element) *(pp);  __typeof__(element) (p);		  \
-	for (pp = &pluto_events_head; (p = *pp) != NULL; pp = &p->next) { \
-		if (p == element) {					  \
-			*pp = p->next;  /* unlink this dns request */	  \
-			if (del) pfree(element);			  \
-			return;						  \
-		}							  \
-	}								  \
-}
-
-void unlink_pluto_event_list(struct pluto_event *e) {
-	UNLINK_FOM_LIST(pluto_events_head, e, FALSE);
-}
-
-void link_pluto_event_list(struct pluto_event *e) {
-	e->next = pluto_events_head;
-	pluto_events_head = e;
-}
-
-/*
- * dump list of events to whacklog
- */
-void timer_list(void)
-{
-
-	monotime_t nw;
-	struct pluto_event *ev = pluto_events_head;
-
-	if (ev == NULL) {
-		/* Just paranoid */
-		whack_log(RC_LOG, "no events are queued");
-		return;
-	}
-
-	nw = mononow();
-
-	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
-		(unsigned long)nw.mono_secs);
-
-	while (ev != NULL) {
-		struct state *st = ev->ev_state;
-		char buf[256] = "not timer based";
-
-		if (ev->ev_type != EVENT_NULL) {
-			snprintf(buf, sizeof(buf), "schd: %jd (in %jds)",
-					(intmax_t)ev->ev_time.mono_secs,
-					(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)));
-		}
-
-		if (st != NULL && st->st_connection != NULL) {
-			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "event %s is %s \"%s\"%s #%lu",
-					ev->ev_name, buf,
-					st->st_connection->name,
-					fmt_conn_instance(st->st_connection, cib),
-					st->st_serialno);
-		} else {
-
-			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
-		}
-
-		ev = ev->next;
-	}
 }
 
 /*

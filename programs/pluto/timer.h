@@ -35,8 +35,6 @@ extern void event_schedule(enum event_type type, time_t delay_sec,
 extern void event_schedule_ms(enum event_type type, unsigned long delay_ms,
 		struct state *st);
 extern void delete_event(struct state *st);
-extern void unlink_pluto_event_list (struct pluto_event *e);
-extern void link_pluto_event_list(struct pluto_event *e);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 

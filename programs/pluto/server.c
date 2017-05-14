@@ -115,6 +115,8 @@ struct iface_list interface_dev;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
+static  struct pluto_event *pluto_events_head = NULL;
+
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
 
@@ -437,28 +439,60 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	return fd;
 }
 
+static struct pluto_event *free_event_entry(struct pluto_event **evp)
+{
+	struct pluto_event *e = *evp;
+	struct pluto_event *next = e->next;
+
+	/* unlink this pluto_event from the list */
+	if (e->ev != NULL) {
+		event_free(e->ev);
+		e->ev  = NULL;
+	}
+
+	DBG(DBG_LIFECYCLE,
+			const char *en = enum_name(&timer_event_names, e->ev_type);
+			DBG_log("%s: release %s-pe@%p", __func__, en, e));
+
+	pfree(e);
+	*evp = NULL;
+	return next;
+}
+
+static void unlink_pluto_event_list(struct pluto_event **evp) {
+	struct pluto_event **pp;
+	struct pluto_event *p;
+	struct pluto_event *e = *evp;
+
+	for (pp = &pluto_events_head; (p = *pp) != NULL; pp = &p->next) {
+		if (p != e)
+			continue;
+		*pp = free_event_entry(evp); /* unlink this entry from the list */
+		return;
+	}
+}
+
+void free_pluto_event_list(void)
+{
+	struct pluto_event **head = &pluto_events_head;
+	while (*head != NULL)
+		*head = free_event_entry(head);
+
+}
+
+void link_pluto_event_list(struct pluto_event *e) {
+	e->next = pluto_events_head;
+	pluto_events_head = e;
+}
+
 void delete_pluto_event(struct pluto_event **evp)
 {
-        struct pluto_event *e = *evp;
-
-        if (e == NULL) {
+        if (*evp == NULL) {
                 DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
                 return;
         }
 
-	unlink_pluto_event_list(e);
-
-        /* ??? when would e->ev be NULL? */
-        if (e->ev != NULL) {
-                event_free(e->ev);
-                e->ev = NULL;
-        }
-
-	DBG(DBG_LIFECYCLE,
-	    const char *en = enum_name(&timer_event_names, e->ev_type);
-	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
-        pfree(e);
-        *evp = NULL;
+	unlink_pluto_event_list(evp);
 }
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
@@ -488,6 +522,52 @@ struct event *pluto_event_new(evutil_socket_t fd, short events,
 	r = event_add(ev, t);
 	passert(r >= 0);
 	return ev;
+}
+
+/*
+ * dump list of events to whacklog
+ */
+void timer_list(void)
+{
+
+	monotime_t nw;
+	struct pluto_event *ev = pluto_events_head;
+
+	if (ev == NULL) {
+		/* Just paranoid */
+		whack_log(RC_LOG, "no events are queued");
+		return;
+	}
+
+	nw = mononow();
+
+	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
+		(unsigned long)nw.mono_secs);
+
+	while (ev != NULL) {
+		struct state *st = ev->ev_state;
+		char buf[256] = "not timer based";
+
+		if (ev->ev_type != EVENT_NULL) {
+			snprintf(buf, sizeof(buf), "schd: %jd (in %jds)",
+					(intmax_t)ev->ev_time.mono_secs,
+					(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)));
+		}
+
+		if (st != NULL && st->st_connection != NULL) {
+			char cib[CONN_INST_BUF];
+			whack_log(RC_LOG, "event %s is %s \"%s\"%s #%lu",
+					ev->ev_name, buf,
+					st->st_connection->name,
+					fmt_conn_instance(st->st_connection, cib),
+					st->st_serialno);
+		} else {
+
+			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
+		}
+
+		ev = ev->next;
+	}
 }
 
 void find_ifaces(void)
