@@ -103,14 +103,6 @@
  *  Server main loop and socket initialization routines.
  */
 
-struct pluto_events {
-	struct event *ev_ctl ;
-	struct event *ev_sig_hup;
-	struct event *ev_sig_sys;
-	struct event *ev_sig_term;
-	struct event *ev_sig_chld;
-} pluto_evs;
-
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 char *pluto_vendorid;
@@ -661,51 +653,35 @@ void init_event_base(void) {
 	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
 }
 
-/* free pluto events at the end. better memory accounting. */
-static void pluto_event_free(struct pluto_events *pluto_evs)
-{
-	event_free(pluto_evs->ev_ctl);
-	event_free(pluto_evs->ev_sig_chld);
-	event_free(pluto_evs->ev_sig_term);
-	event_free(pluto_evs->ev_sig_hup);
-#ifdef HAVE_SECCOMP
-	event_free(pluto_evs->ev_sig_sys);
-#endif
-}
-
 static void main_loop(void)
 {
 	int r;
-	struct pluto_events pluto_evs;
 
 	/*
-	 * new lbevent setup and loop
-	 * setup basic events
+	 * setup basic events, CTL and SIGNALs
 	 */
 
 	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
 
-	pluto_evs.ev_ctl = pluto_event_new(ctl_fd, EV_READ | EV_PERSIST,
-				 whack_handle_cb, NULL, NULL);
+	pluto_event_add(ctl_fd, EV_READ | EV_PERSIST, whack_handle_cb, NULL,
+			NULL, "PLUTO_CTL_FD");
 
-	pluto_evs.ev_sig_chld = pluto_event_new(SIGCHLD, EV_SIGNAL,
-				      childhandler_cb, NULL, NULL);
+	pluto_event_add(SIGCHLD, EV_SIGNAL, childhandler_cb, NULL, NULL,
+			"PLUTO_SIGCHLD");
 
-	pluto_evs.ev_sig_term = pluto_event_new(SIGTERM, EV_SIGNAL,
-				      termhandler_cb, NULL, NULL);
+	pluto_event_add(SIGTERM, EV_SIGNAL, termhandler_cb, NULL, NULL,
+			"PLUTO_SIGTERM");
 
-	pluto_evs.ev_sig_hup = pluto_event_new(SIGHUP, EV_SIGNAL|EV_PERSIST,
-				     huphandler_cb, NULL, NULL);
+	pluto_event_add(SIGHUP, EV_SIGNAL|EV_PERSIST, huphandler_cb, NULL,
+			NULL,  "PLUTO_SIGHUP");
 
 #ifdef HAVE_SECCOMP
-	pluto_evs.ev_sig_sys = pluto_event_new(SIGSYS, EV_SIGNAL,
-				      syshandler_cb, NULL, NULL);
+	pluto_event_add(SIGSYS, EV_SIGNAL, syshandler_cb, NULL, NULL,
+			"PLUTO_SIGSYS");
 #endif
 
 	r = event_base_loop(pluto_eb, 0);
 	passert (r == 0);
-
-	pluto_event_free(&pluto_evs);
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
