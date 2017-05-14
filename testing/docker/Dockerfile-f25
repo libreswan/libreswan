@@ -1,4 +1,4 @@
-FROM fedora:25
+FROM fedora:23
 MAINTAINER "Antony Antony" <antony@phenome.org>
 ENV container docker
 RUN dnf -y update;
@@ -22,9 +22,9 @@ RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  openldap-devel openssh-server openssh-clients pam-devel pam-devel pexpect \
  pexpect psmisc pyOpenSSL python3-cryptography \
  python3-pexpect python3-setproctitle racoon2 \
- redhat-rpm-config rpm-build screen strace systemd-devel tcpdump telnet \
- traceroute trousers unbound unbound-devel unbound-libs valgrind vim-enhanced \
- wget xl2tpd xmlto;
+ redhat-rpm-config rpm-build screen strace strongswan systemd-devel tcpdump \
+ telnet traceroute trousers unbound unbound-devel unbound-libs valgrind \
+ vim-enhanced wget xl2tpd xmlto;
 RUN dnf -y install 'dnf-command(debuginfo-install)'
 RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns ldns-devel libcap-ng libcom_err libcurl libevent libgcc libidn \
