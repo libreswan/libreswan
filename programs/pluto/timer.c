@@ -497,27 +497,6 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
 }
 
-static void delete_pluto_event(struct pluto_event **evp)
-{
-        struct pluto_event *e = *evp;
-
-        if (e == NULL) {
-                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-                return;
-        }
-        /* ??? when would e->ev be NULL? */
-        if (e->ev != NULL) {
-                event_free(e->ev);
-                e->ev = NULL;
-        }
-
-	DBG(DBG_LIFECYCLE,
-	    const char *en = enum_name(&timer_event_names, e->ev_type);
-	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
-        pfree(e);
-        *evp = NULL;
-}
-
 /*
  * Delete a state backlinked event.
  */
@@ -891,50 +870,6 @@ void delete_event(struct state *st)
 }
 
 /*
- * dump list of events to whacklog
- */
-void timer_list(void)
-{
-#if 0
-/* AA_2015 not yet ported to libevent */
-
-	monotime_t nw;
-	struct p_event *ev = evlist;
-
-	if (ev == (struct p_event *) NULL) {
-		/* Just paranoid */
-		whack_log(RC_LOG, "no events are queued");
-		return;
-	}
-
-	nw = mononow();
-
-	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
-		(unsigned long)nw.mono_secs);
-
-	while (ev != NULL) {
-		int type = ev->ev_type;
-		struct state *st = ev->ev_state;
-
-		whack_log(RC_LOG, "event %s is schd: %jd (in %jds) #%lu",
-			enum_show(&timer_event_names, type),
-			(intmax_t)ev->ev_time.mono_secs,
-			(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)),
-			st == NULL ? SOS_NOBODY : st->st_serialno);
-
-		if (st != NULL && st->st_connection != NULL) {
-			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "    connection: \"%s\"",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib));
-		}
-
-		ev = ev->ev_next;
-	}
-#endif
-}
-
-/*
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
@@ -954,12 +889,14 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
 	ev->ev_type = type;
+	ev->ev_name = enum_name(&timer_event_names, type);
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
 
 	ev->ev_state = st;
 	ev->ev = pluto_event_new(NULL_FD, EV_TIMEOUT, timer_event_cb, ev, &delay);
+	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
 	 * If the event is associated with a state, put a backpointer to the
