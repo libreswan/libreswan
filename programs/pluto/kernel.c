@@ -115,10 +115,6 @@ uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
 static int num_ipsec_eroute = 0;
 #endif
 
-
-static struct event *ev_fd = NULL; /* could these two go in kernel_ops AA_2015 ??? */
-static struct event *ev_pq = NULL;
-
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL, {
@@ -2774,9 +2770,10 @@ void init_kernel(void)
 		 */
 		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
 
-		/* Note: kernel_ops is read-only but pluto_event_new cannot know that */
-		ev_pq = pluto_event_new(NULL_FD, EV_TIMEOUT | EV_PERSIST,
-				kernel_process_queue_cb, (void *)kernel_ops, &delay);
+		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
+		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,
+				kernel_process_queue_cb, (void *)kernel_ops,
+				&delay, "KERNEL_PROCESS_Q_FD");
 	}
 }
 
@@ -3591,19 +3588,6 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 	return TRUE;
-}
-
-void free_kernelfd(void)
-{
-	if (ev_fd != NULL) {
-		event_free(ev_fd);
-		ev_fd = NULL;
-	}
-	if (ev_pq != NULL) {
-		event_free(ev_pq);
-		ev_pq = NULL;
-	}
-
 }
 
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,

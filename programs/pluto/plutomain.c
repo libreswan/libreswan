@@ -1749,7 +1749,6 @@ void exit_pluto(int status)
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
-	free_kernelfd();	/* stop listening to kernel FD, remove event */
 	free_pluto_main();	/* our static chars */
 
 	/* report memory leaks now, after all free_* calls */
