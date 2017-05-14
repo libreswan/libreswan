@@ -821,11 +821,17 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			break;
 
 		case ID_FROMCERT:
-		case ID_DER_ASN1_DN:
 			/* We don't care about ID type DN, since the CA already verified it */
 			st->st_peer_alt_id = TRUE;
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does need need further ID verification", namebuf));
+			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf));
+			break;
+
+		case ID_DER_ASN1_DN:
+			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison", namebuf));
+			loglog(RC_LOG_SERIOUS, "PAUL: How to properly compare cert RDN with our ID chunk?");
+			loglog(RC_LOG_SERIOUS, "PAUL: failing until code is added");
 			break;
 
 		default:
