@@ -379,20 +379,28 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                                       test_domain.domain.host_name + ".console.verbose.txt")
                                 test_domain.console.output(open(output, "w"))
 
-                            try:
-                                for host, script in test.host_script_tuples:
-                                    if args.stop_at == script:
-                                        logger.error("stopping test run at (before executing) script %s", script)
-                                        break
-                                    test_domain = test_domains[host]
+                            for host, script in test.host_script_tuples:
+                                if args.stop_at == script:
+                                    logger.error("stopping test run at (before executing) script %s", script)
+                                    break
+                                test_domain = test_domains[host]
+                                try:
                                     test_domain.read_file_run(script)
-                                for test_domain in test_domains.values():
-                                    test_domain.console.child.logfile.write(post.DONE)
-                            except pexpect.TIMEOUT as e:
-                                # A test ending with a timeout is still a
-                                # finished test.  Analysis of the results
-                                # will detect this and flag it as a fail.
-                                logger.error("**** timeout out while running script %s ****", script)
+                                except BaseException as e:
+                                    # if there is an exception, write
+                                    # it to the console
+                                    test_domain.console.child.logfile.write("\n*** exception running script %s ***\n%s" % (script, str(e)))
+                                    raise
+
+                            for test_domain in test_domains.values():
+                                test_domain.console.child.logfile.write(post.DONE)
+
+                        except pexpect.TIMEOUT as e:
+                            # A test ending with a timeout gets
+                            # treated as unresolved.  Timeouts
+                            # shouldn't occure so human intervention
+                            # is required.
+                            logger.error("**** timeout out while running test script %s ****", script)
 
                         finally:
 
