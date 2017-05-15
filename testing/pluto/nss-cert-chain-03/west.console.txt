@@ -68,15 +68,8 @@ west #
 west #
  grep leak /tmp/pluto.log
 leak-detective enabled
-leak: EVENT_NAT_T_KEEPALIVE, item size: 32
-leak: EVENT_SD_WATCHDOG, item size: 32
-leak: EVENT_LOG_DAILY, item size: 32
-leak: EVENT_SHUNT_SCAN, item size: 32
 leak: kernel integ, item size: 32
-leak: EVENT_PENDING_PHASE2, item size: 32
-leak: EVENT_PENDING_DDNS, item size: 32
-leak: EVENT_REINIT_SECRET, item size: 32
-leak detective found 8 leaks, total size 256
+leak detective found 1 leaks, total size 32
 west #
 west #
  ../bin/check-for-core.sh
