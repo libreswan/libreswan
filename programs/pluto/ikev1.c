@@ -2762,8 +2762,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+		if (!st->st_peer_alt_id &&
+			!same_id(&st->st_connection->spd.that.id, &peer) &&
+			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -2815,8 +2817,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r = NULL;
 
+		/* aggresive mode already pinned ID in first packet */
 		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator,
+			r = refine_host_connection(st, &peer, FALSE /* initiator */,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
 		}
 
@@ -2824,10 +2827,19 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			char buf[IDTOA_BUF];
 
 			idtoa(&peer, buf, sizeof(buf));
-			loglog(RC_LOG_SERIOUS,
-			       "no suitable connection for peer '%s'",
-			       buf);
-			return FALSE;
+			DBG(DBG_CONTROL, DBG_log(
+			       "no suitable connection for peer '%s'", buf));
+			/* can we continue with what we had? */
+			if (!md->st->st_peer_alt_id &&
+				!same_id(&c->spd.that.id, &peer) &&
+				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+					libreswan_log("Peer mismatch on first found connection and no better connection found");
+					return FALSE;
+			} else {
+				libreswan_log("Peer ID matches and no better connection found - continuing with existing connection");
+				r = c;
+				md->st->st_peer_alt_id = FALSE; /* no longer used but better safe than sorry */
+			}
 		}
 
 		DBG(DBG_CONTROL, {
