@@ -1392,8 +1392,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (initiator) {
 		if (!md->st->st_peer_alt_id &&
 			!same_id(&c->spd.that.id, &peer_id) &&
-			id_kind(&st->st_connection->spd.that.id) !=
-			ID_FROMCERT) {
+			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
@@ -1437,7 +1436,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 			struct connection *r = NULL;
 
 			if (authby != AUTH_NULL) {
-				/* should never return NULL */
 				r = refine_host_connection(
 				md->st, &peer_id, FALSE /*initiator*/,
 				LEMPTY /* auth_policy */, authby, &fromcert);
@@ -1448,18 +1446,18 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 				idtoa(&peer_id, buf, sizeof(buf));
 				DBG(DBG_CONTROL, DBG_log(
-					"no refined connection for peer '%s'", buf));
+					"no suitable connection for peer '%s'", buf));
 				/* can we continue with what we had? */
 				if (!md->st->st_peer_alt_id &&
 					!same_id(&c->spd.that.id, &peer_id) &&
 					id_kind(&c->spd.that.id) != ID_FROMCERT) {
 						libreswan_log("Peer mismatch on first found connection and no better connection found");
 						return FALSE;
-					} else {
-						libreswan_log("Peer ID matches and no better connection found - continuing with existing connection");
-						r = c;
-						md->st->st_peer_alt_id = FALSE; /* no longer used but better safe than sorry */
-					}
+				} else {
+					libreswan_log("Peer ID matches and no better connection found - continuing with existing connection");
+					r = c;
+					md->st->st_peer_alt_id = FALSE; /* no longer used but better safe than sorry */
+				}
 
 			}
 
