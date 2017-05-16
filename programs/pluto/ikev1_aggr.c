@@ -295,8 +295,6 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
 		0;	/* we don't really know */
 
-	/* note: ikev1_decode_peer_id() may change md->st->st_connection */
-
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
@@ -304,13 +302,13 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
 			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
+		       "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
 		       buf, ipstr(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	c = st->st_connection;	/* fixup after ikev1_decode_peer_id() */
+	c = st->st_connection;	/* ikev1_decode_peer_id() may change md->st->st_connection */
 
 	extra_debugging(c);
 	st->st_try = 0;                                 /* Not our job to try again from start */
