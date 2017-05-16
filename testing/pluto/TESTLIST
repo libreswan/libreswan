@@ -241,6 +241,17 @@ kvmplutotest	ikev1-x509-10-san-ip-match		good
 kvmplutotest	ikev1-x509-11-san-dns-match		good
 kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
+kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
+kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
+kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
+kvmplutotest	ikev1-x509-aggr-08-san-dns-mismatch	good
+kvmplutotest	ikev1-x509-aggr-09-san-email-match	good
+kvmplutotest	ikev1-x509-aggr-10-san-ip-match		good
+kvmplutotest	ikev1-x509-aggr-11-san-dns-match	good
+kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
+kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
+kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
+
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-06-san-email-mismatch	good
 kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
