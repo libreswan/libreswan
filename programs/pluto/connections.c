@@ -818,21 +818,21 @@ static void unshare_connection(struct connection *c)
 }
 
 static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
-				     struct end *dst, const char *source,
+				     struct end *d_end, const char *source,
 				     const char *name)
 {
-	dst->cert.ty = CERT_NONE;
-	dst->cert.u.nss_cert = NULL;
+	d_end->cert.ty = CERT_NONE;
+	d_end->cert.u.nss_cert = NULL;
 
 	if (cert == NULL) {
 		whack_log(RC_FATAL, "%s certificate with %s \'%s\' not found in NSS DB",
 			  which, source, name);
 		/* No cert, default to IP ID */
-		dst->id.kind = ID_NONE;
+		d_end->id.kind = ID_NONE;
 		return;
 	}
 
-	select_nss_cert_id(cert, &dst->id);
+	select_nss_cert_id(cert, &d_end->id);
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(),
@@ -845,13 +845,13 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 
 	DBG(DBG_X509, DBG_log("loaded %s certificate \'%s\'", which, name));
 
-	add_rsa_pubkey_from_cert(&dst->id, cert);
-	dst->cert.ty = CERT_X509_SIGNATURE;
-	dst->cert.u.nss_cert = cert;
+	add_rsa_pubkey_from_cert(&d_end->id, cert);
+	d_end->cert.ty = CERT_X509_SIGNATURE;
+	d_end->cert.u.nss_cert = cert;
 
 	/* if no CA is defined, use issuer as default */
-	if (dst->ca.ptr == NULL) {
-		dst->ca = same_secitem_as_chunk(cert->derIssuer);
+	if (d_end->ca.ptr == NULL) {
+		d_end->ca = same_secitem_as_chunk(cert->derIssuer);
 	}
 }
 
