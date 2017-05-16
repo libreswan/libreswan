@@ -208,6 +208,7 @@ def results(logger, tests, baseline, args, result_stats):
             printer.build_result(logger, result, baseline, args, args.print, b)
             publish.json_result(logger, args, result)
 
+    publish.json_status(logger, args, "finished")
 
 if __name__ == "__main__":
     sys.exit(main())
