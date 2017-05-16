@@ -827,7 +827,7 @@ kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-04	wip
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
@@ -971,7 +971,7 @@ kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 # seccomp
-kvmplutotest	seccomp-01-enabled		good
+kvmplutotest	seccomp-01-enabled		wip
 kvmplutotest	seccomp-02-tolerant		good
 
 # Utility tests like "ipsec showhostkey"
