@@ -4117,6 +4117,20 @@ void show_one_connection(const struct connection *c)
 		  c->vti_shared ? "yes" : "no"
 	);
 
+	{
+		char thisid[IDTOA_BUF];
+		char thatid[IDTOA_BUF];
+
+		idtoa(&c->spd.this.id, thisid, sizeof(thisid));
+		idtoa(&c->spd.that.id, thatid, sizeof(thatid));
+
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id:%s",
+		c->name, instance,
+		enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
+		enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
+	}
+
 	/* slightly complicated stuff to avoid extra crap */
 	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
