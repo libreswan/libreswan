@@ -273,8 +273,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
         # Would the number of tests to be [re]run be better?
         test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
-        publish.json_status(logger, args,
-                            "processing %s, test %d of %d" % (test.name, test_count, tests_count))
+        publish.json_status(logger, args, "processing %s" % test_prefix)
 
         ignored, details = ignore.test(logger, args, test)
         if ignored:
@@ -418,8 +417,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
     finally:
 
-        publish.json_status(logger, args,
-                            "finished %s, test %d of %d" % (test.name, test_count, tests_count))
+        publish.json_status(logger, args, "finished %s" % test_prefix)
 
         # The test finished; it is assumed that post.mortem can deal
         # with a crashed test.
@@ -551,3 +549,4 @@ def run_tests(logger, args, tests, test_stats, result_stats):
             domain_prefix = domain_prefixes[0]
             logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
             _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger)
+    publish.json_status(logger, args, "finished")
