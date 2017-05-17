@@ -22,6 +22,31 @@
 
 struct sadb_msg; /* forward definition */
 
+struct kernel_alg_info {
+	/*
+	 * The encryption algorithm and key length; if required by
+	 * ESP.
+	 *
+	 * Because struct encrypt_desc still specifies multiple key
+	 * lengths, ENCKEYLEN is still required.
+	 */
+	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
+	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
+	/*
+	 * The authentication algorithm; if required by ESP/AH.
+	 */
+	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
+	/*
+	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
+	 * used by the kernel backends.
+	 */
+	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
+	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
+				 * Paul: apparently related to magic at
+				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
+				 */
+};
+
 /* Registration messages from pluto */
 extern void kernel_alg_register_pfkey(const struct sadb_msg *msg);
 
@@ -59,10 +84,10 @@ extern bool kernel_alg_proc_read(void);
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);
 
-/* returns pointer to static buffer -- NOT RE-ENTRANT */
-extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,
-					    u_int16_t keylen,
-					    u_int16_t auth);
+extern bool kernel_alg_info(u_int8_t transid,
+			    u_int16_t keylen,
+			    u_int16_t auth,
+			    struct kernel_alg_info *ki);
 
 extern struct sadb_alg esp_aalg[];
 extern struct sadb_alg esp_ealg[];

@@ -1971,7 +1971,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			inbound ? st->st_esp.our_keymat : st->st_esp.
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
-		const struct esp_info *ei;
 
 		/*
 		 * ??? table of non-registered algorithms?
@@ -1984,7 +1983,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * kernel_alg_esp_info()) it may well be possible to
 		 * delete this table.
 		 */
-		static const struct esp_info esp_info[] = {
+		static const struct kernel_alg_info hardwired_info[] = {
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
@@ -2084,21 +2083,25 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 				ta->encrypt, ta->enckeylen, ta->integ_hash));
 
-		for (ei = esp_info; ; ei++) {
+		const struct kernel_alg_info *ei = NULL;
+		struct kernel_alg_info ki = { 0, };
+		for (ei = hardwired_info; ; ei++) {
 
 			/* if it is the last key entry, then ask algo */
-			if (ei == &esp_info[elemsof(esp_info)]) {
+			if (ei == &hardwired_info[elemsof(hardwired_info)]) {
 				/*
 				 * Check for additional kernel alg
 				 * Note: result will be in a static buffer!
 				 */
 				struct esb_buf buftn, bufan;
 
-				ei = kernel_alg_esp_info(ta->encrypt,
-							ta->enckeylen,
-							ta->integ_hash);
-				if (ei != NULL)
+				if (!kernel_alg_info(ta->encrypt,
+						     ta->enckeylen,
+						     ta->integ_hash,
+						     &ki)) {
 					break;
+				}
+				ei = &ki;
 
 				loglog(RC_LOG_SERIOUS,
 					"ESP transform %s(%d) / auth %s not implemented or allowed",
