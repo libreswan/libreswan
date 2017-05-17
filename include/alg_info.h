@@ -178,10 +178,6 @@ struct alg_info_ike {
 	struct ike_info ike[128];
 };
 
-extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
-	enum ikev1_auth_attribute auth);
-extern int alg_info_esp_sadb2aa(int sadb_aalg);
-
 extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
