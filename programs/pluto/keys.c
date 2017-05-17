@@ -411,6 +411,9 @@ stf_status RSA_check_signature_gen(struct state *st,
 		struct pubkey_list *p, **pp;
 		int pathlen;
 		realtime_t nw = realnow();
+		char thatid[IDTOA_BUF];
+
+		idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
 
 		pp = &pluto_pubkeys;
 
@@ -425,7 +428,11 @@ stf_status RSA_check_signature_gen(struct state *st,
 		}
 		for (p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
+			char printkid[IDTOA_BUF];
 
+			idtoa(&key->id, printkid, IDTOA_BUF);
+			DBG(DBG_CONTROL, DBG_log("checking keyid '%s' for match with '%s'",
+				printkid, thatid));
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
 			    trusted_ca_nss(key->issuer, c->spd.that.ca,
