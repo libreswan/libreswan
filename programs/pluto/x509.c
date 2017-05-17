@@ -301,6 +301,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
  */
 void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
+#if 0
 	bool use_dn = FALSE;	/* ID is subject DN */
 
 	/* check for cert email addr first */
@@ -329,7 +330,6 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 			use_dn = TRUE;
 		}
 	}
-
 	if (end_id->kind == ID_FROMCERT || end_id->kind == ID_NONE || use_dn) {
 		DBG(DBG_X509,
 		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'",
@@ -337,6 +337,15 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 		end_id->name = same_secitem_as_chunk(cert->derSubject);
 		end_id->kind = ID_DER_ASN1_DN;
 	}
+#endif
+
+	if (end_id->kind == ID_FROMCERT) {
+		DBG(DBG_X509,
+                    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName));
+		end_id->name = same_secitem_as_chunk(cert->derSubject);
+		end_id->kind = ID_DER_ASN1_DN;
+	}
+
 }
 
 static char *make_crl_uri_str(chunk_t *uri)
@@ -924,7 +933,6 @@ bool ikev1_decode_cert(struct msg_digest *md)
 }
 
 /* Decode IKEV2 CERT Payload */
-
 bool ikev2_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -948,8 +956,8 @@ bool ikev2_decode_cert(struct msg_digest *md)
 		}
 	}
 
-	DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
 	if (der_num > 0) {
+		DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
 		if (!pluto_process_certs(st, der_list, der_num)) {
 			libreswan_log("Peer public key is not available for this exchange");
 			ret = FALSE;
