@@ -5,7 +5,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -66,59 +66,56 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 		st->st_esp.present? &st->st_esp :
 		st->st_ah.present? &st->st_ah :
 		NULL;
-	struct esp_info *ei;
 
 	passert(ipi != NULL);	/* ESP or AH must be present */
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
-	/* ??? there is no kernel_alg_ah_info */
-	/* ??? will this work if the result of kernel_alg_esp_info
-	 * is a pointer into its own static buffer (therefore ephemeral)?
+	/*
+	 * XXX: Is this call redundant?  Is everything in alg_info?
 	 */
-	ei = kernel_alg_esp_info(
-		ipi->attrs.transattrs.encrypt,
-		ipi->attrs.transattrs.enckeylen,
-		ipi->attrs.transattrs.integ_hash);
-
-	passert(ei != NULL);
+	struct kernel_alg_info ki;
+	passert(kernel_alg_info(ipi->attrs.transattrs.encrypt,
+				ipi->attrs.transattrs.enckeylen,
+				ipi->attrs.transattrs.integ_hash,
+				&ki));
 
 	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
-	unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+	unsigned authkeylen = ikev1_auth_kernel_attrs(ki.auth, NULL);
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
-	switch (ei->transid) {
+	switch (ki.transid) {
 	case IKEv2_ENCR_reserved:
 		/* AH */
 		ipi->keymat_len = authkeylen;
 		break;
 
 	case IKEv2_ENCR_AES_CTR:
-		ipi->keymat_len = ei->enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
+		ipi->keymat_len = ki.enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
 		break;
 
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:
 		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		ipi->keymat_len = ei->enckeylen + AES_GCM_SALT_BYTES;
+		ipi->keymat_len = ki.enckeylen + AES_GCM_SALT_BYTES;
 		break;
 
 	case IKEv2_ENCR_AES_CCM_8:
 	case IKEv2_ENCR_AES_CCM_12:
 	case IKEv2_ENCR_AES_CCM_16:
 		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		ipi->keymat_len = ei->enckeylen + AES_CCM_SALT_BYTES;
+		ipi->keymat_len = ki.enckeylen + AES_CCM_SALT_BYTES;
 		break;
 
 	default:
 		/* ordinary ESP */
-		ipi->keymat_len = ei->enckeylen + authkeylen;
+		ipi->keymat_len = ki.enckeylen + authkeylen;
 		break;
 	}
 
 	DBG(DBG_CONTROL,
 		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%u, keymat_len=%" PRIu16,
-			ei->enckeylen, authkeylen, ipi->keymat_len));
+			ki.enckeylen, authkeylen, ipi->keymat_len));
 
 	/*
 	 *

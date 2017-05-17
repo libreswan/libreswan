@@ -515,12 +515,11 @@ int kernel_alg_ah_auth_keylen(int auth)
 	return a_keylen;
 }
 
-/* returns pointer to static buffer -- NOT RE-ENTRANT */
-struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
-				u_int16_t auth)
+bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
+		     struct kernel_alg_info *ki)
 {
 	int sadb_aalg, sadb_ealg;
-	static struct esp_info ei_buf; /* static ??? fixme */
+	zero(ki);
 
 	DBG(DBG_PARSING,
 		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
@@ -532,11 +531,10 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 		!ESP_AALG_PRESENT(sadb_aalg)) {
 		DBG(DBG_PARSING,
 			DBG_log("kernel_alg_esp_info(): transid or auth not registered with kernel"));
-		return NULL;
+		return FALSE;
 	}
-	zero(&ei_buf);
-	ei_buf.transid = transid;
-	ei_buf.auth = auth;
+	ki->transid = transid;
+	ki->auth = auth;
 
 	/*
 	 * don't return "default" keylen because this value is used from
@@ -546,11 +544,11 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 
 	/* if no key length is given, return default */
 	if (keylen == 0) {
-		ei_buf.enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
+		ki->enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
 			BITS_PER_BYTE;
 	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
 		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		ei_buf.enckeylen = keylen / BITS_PER_BYTE;
+		ki->enckeylen = keylen / BITS_PER_BYTE;
 	} else {
 		DBG(DBG_PARSING,
 			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
@@ -559,18 +557,18 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 				esp_ealg[sadb_ealg].sadb_alg_maxbits);
 			);
 		/* proposed key length is invalid! */
-		return NULL;
+		return FALSE;
 	}
 
-	ei_buf.encryptalg = sadb_ealg;
-	ei_buf.authalg = sadb_aalg;
+	ki->encryptalg = sadb_ealg;
+	ki->authalg = sadb_aalg;
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, ei=%p, enckeylen=%d, encryptalg=%d, authalg=%d",
-			transid, auth, &ei_buf, (int)ei_buf.enckeylen,
-			ei_buf.encryptalg,
-			ei_buf.authalg);
+		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, enckeylen=%d, encryptalg=%d, authalg=%d",
+			transid, auth, (int)ki->enckeylen,
+			ki->encryptalg,
+			ki->authalg);
 		);
-	return &ei_buf;
+	return TRUE;
 }
 
 /*
