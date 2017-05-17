@@ -122,9 +122,6 @@ struct trans_attrs {
 	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *integ;		/* package of integrity routines */
 	const struct oakley_group_desc *group;	/* Oakley group */
-
-	/* used in phase2/CHILD_SA */
-	struct esp_info *ei;
 };
 
 /* IPsec (Phase 2 / Quick Mode) transform and attributes

@@ -81,7 +81,6 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 		ipi->attrs.transattrs.integ_hash);
 
 	passert(ei != NULL);
-	ipi->attrs.transattrs.ei = ei;
 
 	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
 	unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
