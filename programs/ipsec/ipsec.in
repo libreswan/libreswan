@@ -167,7 +167,7 @@ case "${1}" in
     --stopnflog|stopnflog)
 	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
-		exit 0
+	    exit 0
 	fi
 	iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
 	iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
@@ -179,10 +179,10 @@ case "${1}" in
 	if [ -z "${NFGROUP}" ]; then
 	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	    if [ -n "${OLDNFGROUP}" ]; then
-		    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-		    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		fi
+		echo "deleting rules with old nflog group ${OLDNFGROUP}"
+		iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+	    fi
 	    echo "nflog ipsec capture disabled"
 	    exit 0
 	else

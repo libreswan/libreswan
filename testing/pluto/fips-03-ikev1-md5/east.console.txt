@@ -39,7 +39,6 @@ Encryption algorithm null disabled; not FIPS compliant
 Hash algorithm md5 disabled; not FIPS compliant
 PRF algorithm md5 disabled; not FIPS compliant
 Integrity algorithm md5 disabled; not FIPS compliant
-Integrity algorithm ripemd disabled; not FIPS compliant
 DH algorithm MODP1024 disabled; not FIPS compliant
 DH algorithm MODP1536 disabled; not FIPS compliant
 FIPS Encryption algorithms:

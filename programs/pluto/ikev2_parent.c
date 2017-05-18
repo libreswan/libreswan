@@ -89,7 +89,7 @@ struct ikev2_pam_helper {
 	struct ikev2_pam_helper *next;  /* set outside thread */
 	int master_fd;                  /* master's fd (-1 if none) */
 	int helper_fd;                  /* helper's fd */
-	struct event *evm;              /* callback event on master_fd. */
+	struct pluto_event *ev;         /* callback event on master_fd. */
 };
 
 static struct ikev2_pam_helper *pluto_v2_pam_helpers = NULL;
@@ -3163,7 +3163,7 @@ static void free_pam_thread_entry(struct ikev2_pam_helper **pp)
 	pfreeany(p->pam.c_name);
 	pfreeany(p->pam.ra);
 	pthread_cancel(p->tid);
-	event_free(p->evm);
+	delete_pluto_event(&p->ev);
 	if (p->master_fd != NULL_FD)
 		close(p->master_fd);
 	if (p->helper_fd != NULL_FD)
@@ -3306,7 +3306,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	pthread_attr_destroy(&pattr);
 
 	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback for master fd %d", p->master_fd));
-	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb, p, NULL);
+	p->ev = pluto_event_add(p->master_fd, EV_READ, ikev2_pam_continue_cb,
+					p, NULL, "PAM_THREAD_FD");
 
 	return STF_SUSPEND;
 }

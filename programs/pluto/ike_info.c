@@ -143,47 +143,6 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 	}
 }
 
-/**
- *      Search oakley_enc_names for a match, eg:
- *              "3des_cbc" <=> "OAKLEY_3DES_CBC"
- *
- * @param str String containing ALG name (eg: AES, 3DES)
- * @return int Registered # of ALG if loaded or -1 on failure.
- */
-static int ealg_getbyname_ike(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-	int ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str);
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str);
-	return ret;
-}
-
-/**
- *      Search  oakley_hash_names for a match, eg:
- *              "md5" <=> "OAKLEY_MD5"
- * @param str String containing Hash name (eg: MD5, SHA1)
- * @param len Length of str (note: not NUL-terminated)
- * @return int Registered # of Hash ALG if loaded.
- */
-static int aalg_getbyname_ike(const char *str)
-{
-	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
-	if (str == NULL || *str == '\0')
-		return -1;
-
-	int ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
-	if (ret >= 0)
-		return ret;
-
-	/* Special value for no authentication since zero is already used. */
-	if (strcaseeq(str, "null"))
-		return INT_MAX;
-
-	return -1;
-}
-
 /*
  * Raw add routine: only checks for no duplicates
  */
@@ -644,26 +603,13 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 static const char *alg_info_ike_add(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
 				    const struct encrypt_desc *encrypt,
-				    int ealg_id, int ek_bits,
-				    int aalg_id,
+				    int ealg_id UNUSED, int ek_bits,
+				    int aalg_id UNUSED,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
 				    char *err_buf, size_t err_buf_len)
 {
-	/*
-	 * XXX: Cross check encryption lookups for now.
-	 */
-	pexpect((ealg_id == 0) == (encrypt == NULL));
-	pexpect(encrypt == NULL || ealg_id == encrypt->common.id[IKEv1_OAKLEY_ID]);
-
-	/*
-	 * XXX: Cross check PRF/integrity lookups for now.
-	 */
-	pexpect(integ == NULL);
-	pexpect((aalg_id <= 0) == (prf == NULL));
-	pexpect(prf == NULL || aalg_id == prf->common.id[IKEv1_OAKLEY_ID]);
-
 	return ike_add(policy, &ike_defaults, alg_info,
 		       encrypt, ek_bits, prf, integ, dh_group,
 		       err_buf, err_buf_len);
@@ -674,8 +620,6 @@ const struct parser_param ike_parser_param = {
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
 	.alg_info_add = alg_info_ike_add,
-	.ealg_getbyname = ealg_getbyname_ike,
-	.aalg_getbyname = aalg_getbyname_ike,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.prf_alg_byname = prf_alg_byname,
 	.dh_alg_byname = dh_alg_byname,

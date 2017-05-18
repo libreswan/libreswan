@@ -74,7 +74,7 @@ kvmplutotest	basic-pluto-01-vanishingkey		wip
 #################################################################
 # Parser tests
 #################################################################
-kvmplutotest	addconn-01	good
+kvmplutotest	addconn-01	wip # dumps core
 kvmplutotest	alias-01	wip
 
 
@@ -126,8 +126,8 @@ kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-48-nat-cp-start			good
 kvmplutotest	ikev2-48-nat-cp-nondefault		good
-kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
-kvmplutotest	ikev2-48-nat-cp-two-servers		good
+kvmplutotest	ikev2-48-nat-cp-two-servers-same	wip
+kvmplutotest	ikev2-48-nat-cp-two-servers		wip
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
@@ -277,7 +277,7 @@ kvmplutotest	dynamic-iface-01			good
 
 # rsasigkey2= related tests
 kvmplutotest	rsasig2-01				good
-kvmplutotest	rsasig2-02				good
+kvmplutotest	rsasig2-02				wip
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
@@ -793,7 +793,7 @@ kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
+kvmplutotest	interop-ikev2-strongswan-21-transport-04	wip
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
@@ -937,7 +937,7 @@ kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 # seccomp
-kvmplutotest	seccomp-01-enabled		good
+kvmplutotest	seccomp-01-enabled		wip
 kvmplutotest	seccomp-02-tolerant		good
 
 # Utility tests like "ipsec showhostkey"

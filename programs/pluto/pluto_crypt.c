@@ -163,7 +163,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
-	struct event *evm;      /* pointer to master_fd event. AA_2015 free it */
+	struct pluto_event *ev; /* pointer to master_fd event. AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
@@ -936,9 +936,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
 
-	if (w->evm != NULL) {
-		event_del(w->evm);
-		w->evm = NULL;
+	if (w->ev != NULL) {
+		delete_pluto_event(&w->ev);
 	}
 
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
@@ -997,8 +996,9 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
 		DBG(DBG_CONTROL, DBG_log("setup helper callback for master fd %d",
 				w->pcw_master_fd));
-		w->evm = pluto_event_new(w->pcw_master_fd, EV_READ | EV_PERSIST,
-				handle_helper_answer_cb, w, NULL);
+		w->ev = pluto_event_add(w->pcw_master_fd, EV_READ | EV_PERSIST,
+				handle_helper_answer_cb, w, NULL,
+				"CRYPTO_HELPER_FD");
 	}
 }
 

@@ -84,6 +84,12 @@ extern void init_event_base(void);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 extern struct event *pluto_event_new(evutil_socket_t ft, short events,
 		event_callback_fn cb, void *arg, const struct timeval *t);
+extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
+		                event_callback_fn cb, void *arg,
+				const struct timeval *delay, char *name);
+extern void delete_pluto_event(struct pluto_event **evp);
+extern void link_pluto_event_list(struct pluto_event *e);
+extern void free_pluto_event_list(void);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode);

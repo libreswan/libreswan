@@ -659,19 +659,17 @@ kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks k
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge kvm-uninstall-default-network
 
+.PHONY: kvm-clean clean-kvm
+kvm-clean clean-kvm: kvm-shutdown kvm-keys-clean
+	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
+	rm -rf $(KVM_OBJDIR)
+
 
 #
 # Build targets
 #
-
 # Map the documented targets, and their aliases, onto
 # internal/canonical targets.
-
-.PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-shutdown
-	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
-	rm -rf $(KVM_OBJDIR)
-
 
 #
 # kvm-build and kvm-HOST|DOMAIN-build
