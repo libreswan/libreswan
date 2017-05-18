@@ -2,6 +2,7 @@
 .*.sw?
 \#*\#
 .\#*
+BACKUP
 DEADJOE
 OBJ.*
 *.rej
