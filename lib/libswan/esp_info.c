@@ -111,8 +111,8 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	esp_info[cnt].auth = aalg_id;
 
 	/* sadb values */
-	esp_info[cnt].encryptalg = ealg_id;
 	esp_info[cnt].authalg = alg_info_esp_aa2sadb(aalg_id);
+
 	alg_info->ai.alg_info_cnt++;
 }
 
