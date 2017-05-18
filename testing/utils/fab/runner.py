@@ -264,7 +264,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     suffix = "******"
     test_stats.add(test, "total")
 
-    test_runtime = test_boot_time = test_script_time = test_total_time = old_result = None
+    test_runtime = test_boot_time = test_script_time = test_total_time = test_post_time = None
+    old_result = None
+    backup_directory = os.path.join(args.backup_directory, test.name)
 
     # From here on, every test is counted and published; even those
     # that are skipped or ignored.
@@ -274,16 +276,27 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         # Would the number of tests to be [re]run be better?
         test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
         publish.json_status(logger, args, "processing %s" % test_prefix)
-
-        ignored, details = ignore.test(logger, args, test)
-        if ignored:
-            result_stats.add_ignored(test, ignored)
-            test_stats.add(test, "ignored")
-            logger.info("%s %s ignored (%s) %s",
-                        prefix, test_prefix, details, suffix)
-            return
-
         with logger.time("processing test %s", test_prefix) as test_total_time:
+
+            ignored, details = ignore.test(logger, args, test)
+            if ignored:
+                # If there is any pre-existing output move it to
+                # backup.  Otherwise it looks like the test was run
+                # when it wasn't (and besides, the output is no longer
+                # applicable).
+                #
+                # The isdir() test followed by a simple move, while
+                # racy, should be good enough.
+                if os.path.isdir(test.output_directory):
+                    logger.info("moving '%s' to '%s'", test.output_directory,
+                                backup_directory)
+                    os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
+                    os.rename(test.output_directory, backup_directory)
+                result_stats.add_ignored(test, ignored)
+                test_stats.add(test, "ignored")
+                logger.info("%s %s ignored (%s) %s",
+                            prefix, test_prefix, details, suffix)
+                return
 
             # Be lazy when gathering the results, don't run the sanitizer
             # or diff.  Let post.mortem figure out if the test finished.
@@ -333,7 +346,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 # Bail, something is messed up (for instance the parent directory doesn't exist).
                 return
             except FileExistsError:
-                backup_directory = os.path.join(args.backup_directory, test.name)
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, backup_directory)
                 # Even if OUTPUT/ is empty, move it.
