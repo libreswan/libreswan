@@ -133,7 +133,6 @@ struct esp_info {
 	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
 	 * used by the kernel backends.
 	 */
-	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
 	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
 				 * Paul: apparently related to magic at
 				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
