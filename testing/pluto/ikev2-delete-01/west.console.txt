@@ -184,9 +184,9 @@ west #
 000  
 west #
  ipsec whack --deletestate 1
-002 deleting other state #2 (STATE_V2_IPSEC_I) "westnet-eastnet-ipv4-psk-ikev2"
-005 ESP traffic information: in=336B out=336B
-002 deleting other state #1 (STATE_PARENT_I3) "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting other state #2 (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2" #1: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
 west #
  sleep 2
 west #
