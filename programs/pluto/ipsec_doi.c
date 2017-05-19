@@ -548,6 +548,10 @@ bool send_delete(struct state *st)
 			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
 		return TRUE;
 	}
+	DBG(DBG_CONTROL, DBG_log("#%lu send %s detlete notification for %s",
+			st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
+			enum_name(&state_names, st->st_state)));
+
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 

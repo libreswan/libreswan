@@ -789,6 +789,73 @@ static void flush_pending_children(struct state *pst)
 			});
 }
 
+static bool send_delete_check(const struct state *st)
+{
+
+	if (st->st_ikev2_no_del)
+		return FALSE;
+
+	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+			IS_ISAKMP_SA_ESTABLISHED(st->st_state))
+	{
+		if (st->st_ikev2 &&
+				IS_CHILD_SA(st) &&
+				state_with_serialno(st->st_clonedfrom) == NULL) {
+			/* ??? in v2, there must be a parent */
+			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
+
+			return FALSE;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void delete_state_log(struct state *st)
+{
+	struct connection *const c = st->st_connection;
+	char *send_inf = send_delete_check(st) ? " and sending notification" : "";
+
+	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
+		/* reduced logging of OE failures */
+		DBG(DBG_LIFECYCLE, {
+				char cib[CONN_INST_BUF];
+				DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					c->name,
+					fmt_conn_instance(c, cib), send_inf);
+		});
+	} else if (cur_state != NULL && cur_state == st) {
+		/*
+		 * Don't log state and connection if it is the same as
+		 * the message prefix.
+		 */
+		libreswan_log("deleting state (%s)%s",
+				enum_name(&state_names, st->st_state), send_inf);
+	} else if (cur_state != NULL && cur_state->st_connection ==  st->st_connection) {
+		libreswan_log("deleting other state #%lu (%s)%s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state),
+				send_inf);
+
+	} else {
+		char cib[CONN_INST_BUF];
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state),
+				c->name,
+				fmt_conn_instance(c, cib), send_inf);
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    struct state_category *category = categorize_state(st, st->st_state);
+	    DBG_log("%s state #%lu: %s(%s) => delete",
+		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+		    enum_name(&state_names, st->st_state), category->description));
+
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -808,37 +875,7 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		/* reduced logging of OE failures */
-		DBG(DBG_LIFECYCLE, {
-			char cib[CONN_INST_BUF];
-			DBG_log("deleting state #%lu (%s) \"%s\"%s",
-				st->st_serialno,
-				enum_name(&state_names, st->st_state),
-				c->name,
-				fmt_conn_instance(c, cib));
-		});
-	} else if (cur_state == st) {
-		/*
-		 * Don't log state and connection if it is the same as
-		 * the message prefix.
-		 */
-		libreswan_log("deleting state (%s)",
-			enum_name(&state_names, st->st_state));
-	} else {
-		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
-			st->st_serialno,
-			enum_name(&state_names, st->st_state),
-			c->name,
-			fmt_conn_instance(c, cib));
-	}
-
-	DBG(DBG_CONTROLMORE,
-	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: %s(%s) => delete",
-		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_name(&state_names, st->st_state), category->description));
+	delete_state_log(st);
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -952,23 +989,18 @@ void delete_state(struct state *st)
 		st->st_suspended_md->st = NULL;
 	}
 
-	/* tell the other side of any IPSEC SAs that are going down */
-	if (!st->st_ikev2_no_del && (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-			IS_ISAKMP_SA_ESTABLISHED(st->st_state))) {
-		if (st->st_ikev2 && IS_CHILD_SA(st) &&
-		    state_with_serialno(st->st_clonedfrom) == NULL) {
-			/* ??? in v2, there must be a parent */
-			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
-			change_state(st, STATE_CHILDSA_DEL);
-		} else  {
-			/*
-			 * ??? in IKEv2, we should not immediately delete:
-			 * we should use an Informational Exchange to
-			 * co-ordinate deletion.
-			 * ikev2_delete_out doesn't really accomplish this.
-			 */
-			send_delete(st);
-		}
+	if (send_delete_check(st)) {
+		/*
+		 * tell the other side of any IPSEC SAs that are going down
+		 *
+		 * ??? in IKEv2, we should not immediately delete:
+		 * we should use an Informational Exchange to
+		 * co-ordinate deletion.
+		 * ikev2_delete_out doesn't really accomplish this.
+		 */
+		send_delete(st);
+	} else if (IS_CHILD_SA(st)) {
+		change_state(st, STATE_CHILDSA_DEL);
 	}
 
 	delete_event(st); /* delete any pending timer event */

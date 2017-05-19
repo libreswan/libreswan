@@ -377,6 +377,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
 					m->whack_deletestateno);
 		} else {
+			set_cur_state(st);
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
