@@ -71,6 +71,27 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/*
+	 * Integrity seed (key).  AEAD, for instance has NULL (no)
+	 * separate integrity.
+	 */
+	const struct integ_desc *integ = ipi->attrs.transattrs.integ;
+	size_t integ_key_size = (integ != NULL ? integ->integ_key_size : 0);
+	/*
+	 * If there is encryption, then ENCKEYLEN contains the
+	 * required number of bits.
+	 */
+	size_t encrypt_key_size = BYTES_FOR_BITS(ipi->attrs.transattrs.enckeylen);
+	/*
+	 * Finally, some encryption algorithms such as AEAD and CTR
+	 * require "salt" as part of the "starting variable".
+	 */
+	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.encrypter;
+	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
+
+	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
+
+#if 1
+	/*
 	 * XXX: Is this call redundant?  Is everything in alg_info?
 	 */
 	struct kernel_alg_info ki;
@@ -81,16 +102,47 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 
 	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
 	unsigned authkeylen = ikev1_auth_kernel_attrs(ki.auth, NULL);
+
+	/*
+	 * As a starting point for switching to ike_alg, dump what is
+	 * known.
+	 */
+	if (DBGP(DBG_CONTROLMORE)) {
+		DBG_log("IKE_ALG: ta.enckeylen=%" PRIu16 ", ki.enckeylen=%" PRIu32 ", authkeylen=%u",
+			ipi->attrs.transattrs.enckeylen,
+			ki.enckeylen, authkeylen);
+		if (encrypt != NULL) {
+			DBG_log("IKE_ALG: encrypt=%s .salt_size=%zu%s",
+				encrypt->common.name,
+				encrypt_salt_size,
+				ike_alg_is_aead(encrypt) ? " AEAD" : "");
+		}
+		if (integ != NULL) {
+			DBG_log("IKE_ALG: integ=%s .key_size=%zu",
+				integ->common.name,
+				integ_key_size);
+		}
+	}
+
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
 	switch (ki.transid) {
 	case IKEv2_ENCR_reserved:
 		/* AH */
 		ipi->keymat_len = authkeylen;
+		pexpect(ipi->attrs.transattrs.enckeylen == 0);
+		pexpect(ki.enckeylen == 0);
+		pexpect(integ_key_size == authkeylen);
+		pexpect(encrypt_key_size == 0);
+		pexpect(encrypt_salt_size == 0);
 		break;
 
 	case IKEv2_ENCR_AES_CTR:
-		ipi->keymat_len = ki.enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
+		ipi->keymat_len = ki.enckeylen + authkeylen + AES_CTR_SALT_BYTES;
+		pexpect(ipi->attrs.transattrs.enckeylen == ki.enckeylen * 8);
+		pexpect(integ_key_size == authkeylen);
+		pexpect(encrypt_key_size == ki.enckeylen);
+		pexpect(encrypt_salt_size == AES_CTR_SALT_BYTES);
 		break;
 
 	case IKEv2_ENCR_AES_GCM_8:
@@ -98,6 +150,10 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	case IKEv2_ENCR_AES_GCM_16:
 		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
 		ipi->keymat_len = ki.enckeylen + AES_GCM_SALT_BYTES;
+		pexpect(ipi->attrs.transattrs.enckeylen == ki.enckeylen * 8);
+		pexpect(integ_key_size == 0);
+		pexpect(encrypt_key_size == ki.enckeylen);
+		pexpect(encrypt_salt_size == AES_GCM_SALT_BYTES);
 		break;
 
 	case IKEv2_ENCR_AES_CCM_8:
@@ -105,17 +161,35 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	case IKEv2_ENCR_AES_CCM_16:
 		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
 		ipi->keymat_len = ki.enckeylen + AES_CCM_SALT_BYTES;
+		pexpect(ipi->attrs.transattrs.enckeylen == ki.enckeylen * 8);
+		pexpect(integ_key_size == 0);
+		pexpect(encrypt_key_size == ki.enckeylen);
+		pexpect(encrypt_salt_size == AES_CCM_SALT_BYTES);
 		break;
 
 	default:
 		/* ordinary ESP */
 		ipi->keymat_len = ki.enckeylen + authkeylen;
+		pexpect(ipi->attrs.transattrs.enckeylen == ki.enckeylen * 8);
+		pexpect(encrypt_key_size == ki.enckeylen);
+		pexpect(integ_key_size == authkeylen);
 		break;
 	}
 
 	DBG(DBG_CONTROL,
 		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%u, keymat_len=%" PRIu16,
 			ki.enckeylen, authkeylen, ipi->keymat_len));
+#endif
+
+	pexpect(ipi->keymat_len == integ_key_size + encrypt_key_size + encrypt_salt_size);
+
+	DBG(DBG_CONTROL,
+	    DBG_log("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
+		    integ != NULL ? integ->common.name : "N/A",
+		    integ_key_size,
+		    encrypt != NULL ? encrypt->common.name : "N/A",
+		    encrypt_key_size, encrypt_salt_size,
+		    ipi->keymat_len));
 
 	/*
 	 *
