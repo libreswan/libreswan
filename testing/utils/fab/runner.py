@@ -264,19 +264,18 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     suffix = "******"
     test_stats.add(test, "total")
 
-    test_runtime = test_boot_time = test_script_time = test_total_time = test_post_time = None
+    test_runtime = test_boot_time = test_script_time = test_post_time = None
     old_result = None
     backup_directory = os.path.join(args.backup_directory, test.name)
 
-    # From here on, every test is counted and published; even those
-    # that are skipped or ignored.
+    # Would the number of tests to be [re]run be better?
+    test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
+    publish.json_status(logger, args, "processing %s" % test_prefix)
+    with logger.time("processing test %s", test_prefix):
 
-    try:
 
-        # Would the number of tests to be [re]run be better?
-        test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
-        publish.json_status(logger, args, "processing %s" % test_prefix)
-        with logger.time("processing test %s", test_prefix) as test_total_time:
+        # always perform post mortem on the test directory.
+        try:
 
             ignored, details = ignore.test(logger, args, test)
             if ignored:
@@ -298,8 +297,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             prefix, test_prefix, details, suffix)
                 return
 
-            # Be lazy when gathering the results, don't run the sanitizer
-            # or diff.  Let post.mortem figure out if the test finished.
+            # Be lazy when gathering the results, don't run the
+            # sanitizer or diff.  Let post.mortem figure out if the
+            # test finished.
 
             old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
             if skip.result(logger, args, old_result):
@@ -319,26 +319,28 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             test_stats.add(test, "tests")
 
             # Create just the OUTPUT/ directory; if it already exists,
-            # move any contents to BACKUP/.  Do it file-by-file so that,
-            # at no point, the OUTPUT/ directory is missing (having an
-            # OUTPUT/ directory implies the test was started).
+            # move any contents to BACKUP/.  Do it file-by-file so
+            # that, at no point, the OUTPUT/ directory is missing
+            # (having an OUTPUT/ directory implies the test was
+            # started).
             #
-            # Don't create the path.  If the parent directory is missing,
-            # this will fail.
+            # Don't create the path.  If the parent directory is
+            # missing, this will fail.
             #
-            # By backing up each test just before it is started, a trail
-            # of what tests were attempted during each run is created.
+            # By backing up each test just before it is started, a
+            # trail of what tests were attempted during each run is
+            # created.
             #
             # XXX:
             #
             # During boot, swan-transmogrify runs "chcon -R
-            # testing/pluto".  Of course this means that each time a test
-            # is added and/or a test is run (adding files under
-            # <test>/OUTPUT), the boot process (and consequently the time
-            # taken to run a test) keeps increasing.
+            # testing/pluto".  Of course this means that each time a
+            # test is added and/or a test is run (adding files under
+            # <test>/OUTPUT), the boot process (and consequently the
+            # time taken to run a test) keeps increasing.
             #
-            # By moving the directory contents to BACKUP/, which is not
-            # under testing/pluto/ this problem is avoided.
+            # By moving the directory contents to BACKUP/, which is
+            # not under testing/pluto/ this problem is avoided.
 
             try:
                 os.mkdir(test.output_directory)
@@ -356,8 +358,9 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     logger.debug("moving '%s' to '%s'", src, dst)
                     os.replace(src, dst)
 
-            # Now that the OUTPUT directory is empty, start a debug log
-            # writing to that directory; include timing for this test run.
+            # Now that the OUTPUT directory is empty, start a debug
+            # log writing to that directory; include timing for this
+            # test run.
 
             with logger.debug_time("testing %s", test_prefix,
                                    logfile=os.path.join(test.output_directory,
@@ -426,52 +429,49 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             for test_domain in test_domains.values():
                                 test_domain.close()
 
+        finally:
 
-    finally:
+            with logger.time("post-mortem %s", test_prefix):
+                # The test finished; it is assumed that post.mortem
+                # can deal with a crashed test.
+                result = post.mortem(test, args, domain_prefix=domain_prefix,
+                                     update=True)
+                logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
+                            result.issues and " ", result.issues, suffix)
 
-        publish.json_status(logger, args, "finished %s" % test_prefix)
+            if result.resolution.isresolved():
+                # Since the the test finished (resolved in POSIX
+                # terminology)", emit enough JSON to fool scripts like
+                # pluto-testlist-scan.sh.
+                #
+                # A test that timed-out or crashed, isn't considered
+                # resolved so this file isn't created.
+                RESULT = {
+                    jsonutil.result.testname: test.name,
+                    jsonutil.result.expect: test.status,
+                    jsonutil.result.result: result,
+                    jsonutil.result.issues: result.issues,
+                    jsonutil.result.hosts: test.host_names,
+                    jsonutil.result.time: jsonutil.ftime(test_runtime.start),
+                    jsonutil.result.runtime: round(test_runtime.seconds(), 1),
+                    jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
+                    jsonutil.result.script_time: round(test_script_time.seconds(), 1),
+                    jsonutil.result.total_time: round(test_runtime.seconds(), 1),
+                }
+                j = jsonutil.dumps(RESULT)
+                logger.debug("filling '%s' with json: %s", test.result_file(), j)
+                with open(test.result_file(), "w") as f:
+                    f.write(j)
+                    f.write("\n")
 
-        # The test finished; it is assumed that post.mortem can deal
-        # with a crashed test.
+            # Do this after RESULT is created so it too is published.
+            publish.everything(logger, args, result)
+            publish.json_status(logger, args, "finished %s" % test_prefix)
 
-        result = post.mortem(test, args, domain_prefix=domain_prefix,
-                             update=True)
-
-        logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
-                    result.issues and " ", result.issues, suffix)
-
-        if result.resolution.isresolved():
-            # Since the the test finished (resolved in POSIX
-            # terminology)", emit enough JSON to fool scripts like
-            # pluto-testlist-scan.sh.
-            #
-            # A test that timed-out or crashed, isn't considered
-            # resolved so this file isn't created.
-            RESULT = {
-                jsonutil.result.testname: test.name,
-                jsonutil.result.expect: test.status,
-                jsonutil.result.result: result,
-                jsonutil.result.issues: result.issues,
-                jsonutil.result.hosts: test.host_names,
-                jsonutil.result.time: jsonutil.ftime(test_total_time.start),
-                jsonutil.result.runtime: round(test_runtime.seconds(), 1),
-                jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
-                jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-                jsonutil.result.total_time: round(test_total_time.seconds(), 1),
-            }
-            j = jsonutil.dumps(RESULT)
-            logger.info("filling '%s' with json: %s", test.result_file(), j)
-            with open(test.result_file(), "w") as f:
-                f.write(j)
-                f.write("\n")
-
-        # Do this after RESULT is created so it too is published.
-        publish.everything(logger, args, result)
-
-        test_stats.add(test, "tests", str(result))
-        result_stats.add_result(result, old_result)
-        test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
-        result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
+            test_stats.add(test, "tests", str(result))
+            result_stats.add_result(result, old_result)
+            # test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
+            result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
 def _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger):
