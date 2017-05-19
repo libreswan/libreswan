@@ -461,6 +461,7 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 kvmplutotest	ikev2-liveness-08	wip
+kvmplutotest	ikev2-liveness-09	good
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
