@@ -2746,8 +2746,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		char buf[IDTOA_BUF];
 
 		idtoa(&peer, buf, sizeof(buf));
-		libreswan_log("%s mode peer ID is %s: '%s'",
-			      aggrmode ? "Aggressive" : "Main",
+		libreswan_log("Peer ID is %s: '%s'",
 			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
@@ -2757,10 +2756,14 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
+	 * Aggressive mode cannot switch connections
 	 * We must not switch horses if we initiated:
 	 * - if the initiation was explicit, we'd be ignoring user's intent
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
+	if (aggrmode)
+		return TRUE;
+
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
 			!same_id(&st->st_connection->spd.that.id, &peer) &&

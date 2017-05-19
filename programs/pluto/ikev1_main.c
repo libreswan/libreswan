@@ -1682,6 +1682,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 /*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
+ * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			bool aggrmode)
@@ -1695,8 +1696,15 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!aggrmode && !ikev1_decode_peer_id(md, initiator, FALSE))
+	if (!ikev1_decode_peer_id(md, initiator, aggrmode))
 		return STF_FAIL + INVALID_ID_INFORMATION;
+
+	/*
+	 * process any CERT payloads if aggrmode
+	 */
+	if (aggrmode && !ikev1_decode_cert(md)) {
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * Hash the ID Payload.
