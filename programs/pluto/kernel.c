@@ -2095,13 +2095,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 */
 				struct esb_buf buftn, bufan;
 
-				if (!kernel_alg_info(ta->encrypt,
+				if (kernel_alg_info(ta->encrypt,
 						     ta->enckeylen,
 						     ta->integ_hash,
 						     &ki)) {
+					ei = &ki;
 					break;
 				}
-				ei = &ki;
 
 				loglog(RC_LOG_SERIOUS,
 					"ESP transform %s(%d) / auth %s not implemented or allowed",
