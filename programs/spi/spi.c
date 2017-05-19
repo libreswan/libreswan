@@ -386,7 +386,7 @@ static int decode_esp(char *algname)
 				progname,
 				alg_info->ai.alg_info_cnt,
 				esp_info->transid,
-				esp_info->authalg);
+				esp_info->auth);
 		}
 		esp_ealg_id = esp_info->transid;
 		esp_aalg_id = esp_info->auth;
