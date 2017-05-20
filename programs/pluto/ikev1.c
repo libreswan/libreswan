@@ -2750,9 +2750,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
-	/* check for certificates */
-	if (!ikev1_decode_cert(md))
-		return FALSE;
+	if (!aggrmode) {
+		/* check for certificates */
+		if (!ikev1_decode_cert(md))
+			return FALSE;
+	}
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
