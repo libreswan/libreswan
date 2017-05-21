@@ -766,8 +766,9 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	bool cont = TRUE;
 	bool rev_opts[RO_SZ];
 	char namebuf[IDTOA_BUF];
-
 	char ipstr[IDTOA_BUF];
+	char sbuf[ASN1_BUF_LEN];
+	generalName_t *gn1;
 
 	rev_opts[RO_OCSP] = ocsp_enable;
 	rev_opts[RO_OCSP_S] = ocsp_strict;
@@ -838,9 +839,22 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 
 		case ID_DER_ASN1_DN:
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison", namebuf));
-			loglog(RC_LOG_SERIOUS, "PAUL: How to properly compare cert RDN with our ID chunk?");
-			loglog(RC_LOG_SERIOUS, "PAUL: failing until code is added");
+			dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
+			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
+				sbuf, namebuf));
+
+
+			gn1 = alloc_thing(generalName_t, "generalName");
+			gn1->kind = GN_DIRECTORY_NAME;
+			gn1->name = c->spd.that.id.name;
+			if (same_dn_any_order(gn1->name, same_secitem_as_chunk(end_cert->derSubject))) {
+				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
+				st->st_peer_alt_id = TRUE;
+			} else {
+				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+					end_cert->subjectName, namebuf);
+			}
+			free_generalNames(gn1, FALSE);
 			break;
 
 		default:
