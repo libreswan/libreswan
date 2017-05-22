@@ -1212,6 +1212,7 @@ enum ikev2_cp_type {
  */
 
 enum ikev2_auth_method {
+	IKEv2_AUTH_RESERVED = 0,
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
@@ -1463,15 +1464,10 @@ typedef enum {
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 
-/* Public key algorithm number
- * Same numbering as used in DNSSEC
- * See RFC 2535 DNSSEC 3.2 The KEY Algorithm Number Specification.
- * Also found in BIND 8.2.2 include/isc/dst.h as DST algorithm codes.
- */
-
+/* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {
-	PUBKEY_ALG_RSA = 1,
-	PUBKEY_ALG_DSA = 3,
+	PUBKEY_ALG_DSA = 1,
+	PUBKEY_ALG_RSA = 2,
 };
 
 /*
