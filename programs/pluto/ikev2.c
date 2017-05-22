@@ -2025,7 +2025,6 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 	set_cur_state(st);      /* might have changed */
 
-	enum_name(&state_names, st->st_state);
 	fmt_conn_instance(st->st_connection, b);
 
 	DBG(DBG_CONTROL, DBG_log("\"%s\"%s #%lu complete v2 state %s transition with %s suspended from %s:%d",

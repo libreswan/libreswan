@@ -1577,3 +1577,8 @@ void set_whack_pluto_ddos(enum ddos_mode mode)
 	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
 }
+
+struct event_base *get_pluto_event_base(void)
+{
+	return pluto_eb;
+}

@@ -71,6 +71,8 @@
 
 #define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
+struct ikev2_ipseckey_dns; /* forward declaration of tag */
+
 struct state;   /* forward declaration of tag */
 
 /* Oakley (Phase 1 / Main Mode) transform and attributes
@@ -338,6 +340,9 @@ struct state {
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
 	struct initiate_list *send_next_ix;
+
+	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
+	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
 	/** end of IKEv2-only things **/
 

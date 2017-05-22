@@ -102,6 +102,10 @@
 
 # include "pluto_sd.h"
 
+#ifdef USE_DNSSEC
+#include "dnssec.h"
+#endif
+
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
@@ -118,8 +122,8 @@ static const struct lsw_conf_options *oco;
 static char *coredir;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
-static bool do_dnssec = TRUE;
-static char *pluto_dnssec_rootfile = DEFAULT_DNSSEC_ROOTKEY_FILE;
+static bool do_dnssec = FALSE;
+static char *pluto_dnssec_rootfile = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
 extern bool crl_strict;
@@ -198,7 +202,7 @@ static const char compile_time_interop_options[] = ""
 	" BROKEN_POPEN"
 #endif
 	" NSS"
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 	" DNSSEC"
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
@@ -849,7 +853,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'a':	/* --dnssec-rootkey-file */
-			pluto_dnssec_rootfile = clone_str(optarg, "dnssec_rootkey_file");
+			if (strlen(optarg) > 0)
+				pluto_dnssec_rootfile = clone_str(optarg,
+						"dnssec_rootkey_file");
 			continue;
 
 		case 'Q':	/* --dnssec-trusted */
@@ -1152,10 +1158,12 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
-			set_cfg_string(&pluto_dnssec_rootfile,
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
+			if(strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
+				set_cfg_string(&pluto_dnssec_rootfile,
+						cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
+			}
 			set_cfg_string(&pluto_dnssec_trusted,
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+					cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
@@ -1731,6 +1739,11 @@ int main(int argc, char **argv)
 	pluto_sd_init();
 #endif
 
+#ifdef USE_DNSSEC
+	unbound_event_init(get_pluto_event_base(), do_dnssec,
+			pluto_dnssec_rootfile, pluto_dnssec_trusted);
+#endif
+
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
 }
@@ -1775,6 +1788,11 @@ void exit_pluto(int status)
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_event_list(); /* no libevent evnts beyond this point */
 	free_pluto_main();	/* our static chars */
+
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
+#endif
+
 
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective)
