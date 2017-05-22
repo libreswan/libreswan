@@ -1,0 +1,14 @@
+The responder validates initiator's address in forward zone.
+
+Road is the initiator and east is the responder.
+
+When road initiate the connection, it send an IKE request, and
+simultaneously start query for the responders IPSECKEY in reverse zone.
+23.2.1.192.IN-ADDR.ARPA.    120 IN IPSECKEY 10 0 2 . AQO9bJbr3
+
+When the east, the responder, IDi (in IKEv2 AUTH exchange), is road.
+
+road.testing.libreswan.org. 120 IN IPSECKEY 10 0 2 . AQ
+
+east also send adtional query for road.testing.libreswan.org. A
+The address and IDi match authentication success.
