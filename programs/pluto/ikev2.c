@@ -1456,7 +1456,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				} else {
 					libreswan_log("Peer ID matches and no better connection found - continuing with existing connection");
 					r = c;
-					md->st->st_peer_alt_id = FALSE; /* no longer used but better safe than sorry */
 				}
 
 			}
