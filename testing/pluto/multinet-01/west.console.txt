@@ -135,16 +135,16 @@ west #
 000 no such connection found, looking for all conns with alias='westnet-eastnet-subnets'
 002 "westnet-eastnet-subnets/2x2": terminating SAs using this connection
 002 "westnet-eastnet-subnets/2x2": IKE SA is shared - only terminating IPsec SA
-002 "westnet-eastnet-subnets/2x2": deleting other state #5 (STATE_QUICK_I2) "westnet-eastnet-subnets/2x2"
-005 "westnet-eastnet-subnets/2x2": ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-subnets/2x2" #5: deleting state (STATE_QUICK_I2) and sending notification
+005 "westnet-eastnet-subnets/2x2" #5: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-subnets/2x1": terminating SAs using this connection
-002 "westnet-eastnet-subnets/2x1" #4: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-subnets/2x1" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-subnets/2x1" #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-subnets/1x2": terminating SAs using this connection
-002 "westnet-eastnet-subnets/1x2" #3: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-subnets/1x2" #3: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-subnets/1x2" #3: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-subnets/1x1": terminating SAs using this connection
-002 "westnet-eastnet-subnets/1x1" #2: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-subnets/1x1" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-subnets/1x1" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec status | grep westnet

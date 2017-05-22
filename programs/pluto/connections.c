@@ -4348,24 +4348,33 @@ void suppress_delete(struct connection *c)
 	}
 }
 
-bool liveness_action_hold(struct connection *c)
+void liveness_action(struct connection *c)
 {
+	char cib[CONN_INST_BUF];
+
+	fmt_conn_instance(c, cib);
+
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
+		libreswan_log("IKEv2 peer liveness  action - clearing connection");
 		liveness_clear_connection(c, "IKEv2 liveness action clear");
-		return FALSE;
+		break;
 
 	case DPD_ACTION_RESTART:
-		libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+		libreswan_log("IKEv2 peer liveness action - restarting all connections that share this peer");
 		restart_connections_by_peer(c);
-		return FALSE;
+		break;
 
 	case DPD_ACTION_HOLD:
-		DBG(DBG_DPD, DBG_log("liveness_check - handling default by rescheduling"));
-		return TRUE;
+		libreswan_log("IKEv2 peer liveness action - putting connection into %%hold");
+		if (c->kind == CK_INSTANCE) {
+			DBG(DBG_DPD, DBG_log("DPD: warning dpdaction=hold on instance futile - will be deleted"));
+		}
+		delete_states_by_connection(c, TRUE);
+		break;
 
 	default:
 		bad_case(c->dpd_action);
 	}
-	return FALSE;
+	return;
 }

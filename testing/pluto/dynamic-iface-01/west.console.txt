@@ -62,9 +62,9 @@ west #
 002 listening for IKE messages
 002 shutting down interface eth1/eth1 192.1.2.66:4500
 002 shutting down interface eth1/eth1 192.1.2.66:500
-002 "float-east" #4: deleting state (STATE_QUICK_I2)
+002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
-002 "float-east" #3: deleting state (STATE_MAIN_I4)
+002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
