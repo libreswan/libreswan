@@ -776,8 +776,6 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 
 	CERTCertificate *end_cert = NULL;
 
-	st->st_peer_alt_id = FALSE;
-
 	int ret = verify_and_cache_chain(certs, num_certs, &end_cert,
 						       rev_opts);
 
