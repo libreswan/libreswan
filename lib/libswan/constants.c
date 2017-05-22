@@ -1443,6 +1443,7 @@ enum_names ikev2_cp_type_names = {
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
+	"IKEv2_AUTH_RESERVED", /* 0 */
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
 	"IKEv2_AUTH_DSA(UNUSED)",
@@ -1459,7 +1460,7 @@ static const char *const ikev2_auth_name[] = {
 };
 
 enum_names ikev2_auth_names = {
-	IKEv2_AUTH_RSA,
+	IKEv2_AUTH_RESERVED,
 	IKEv2_AUTH_NULL,
 	ARRAY_REF(ikev2_auth_name),
 	NULL, /* prefix */
