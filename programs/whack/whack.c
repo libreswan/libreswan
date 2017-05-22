@@ -558,7 +558,9 @@ static const struct option long_opts[] = {
 	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
 	{ "client", required_argument, NULL, END_CLIENT + OO },
 	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT + OO },
+#ifdef USE_DNSSEC
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
+#endif
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },

@@ -224,8 +224,10 @@ static const struct keyword_enum_values kw_type_list = VALUES_INITIALIZER(kw_typ
 static const struct keyword_enum_value kw_rsasigkey_values[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
+#ifdef USE_DNSSEC
 	{ "%dns",         PUBKEY_DNSONDEMAND },
 	{ "%dnsondemand", PUBKEY_DNSONDEMAND },
+#endif
 };
 
 static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(kw_rsasigkey_values);
@@ -415,6 +417,11 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "logtime",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },
   { "plutostderrlogtime",  kv_config | kv_alias,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },  /* obsolete */
   { "logappend",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGAPPEND,  NOT_ENUM },
+#ifdef USE_DNSSEC
+  { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC,  NOT_ENUM },
+  { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE,  NOT_ENUM },
+  { "dnssec-anchors",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ANCHORS,  NOT_ENUM },
+#endif
   { "plutorestartoncrash",  kv_config,  kt_bool,  KBF_PLUTORESTARTONCRASH,  NOT_ENUM },
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR,  NOT_ENUM },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR,  NOT_ENUM },

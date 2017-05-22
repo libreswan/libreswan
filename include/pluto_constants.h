@@ -30,6 +30,15 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
+#ifdef USE_DNSSEC
+#ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
+#  define DEFAULT_DNSSEC_ROOTKEY_FILE "/var/lib/unbound/root.key"
+#endif
+#else
+# define DEFAULT_DNSSEC_ROOTKEY_FILE ""
+#endif
+
+
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h

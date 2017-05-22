@@ -2011,6 +2011,23 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 }
 
+static void log_stf_suspend(struct state *st, stf_status result)
+{
+	char b[CONN_INST_BUF];
+
+	set_cur_state(st);      /* might have changed */
+
+	fmt_conn_instance(st->st_connection, b);
+
+	DBG(DBG_CONTROL, DBG_log("\"%s\"%s #%lu complete v2 state %s transition with %s suspended from %s:%d",
+				st->st_connection->name, b, st->st_serialno,
+				enum_name(&state_names, st->st_state),
+				enum_show(&stfstatus_name, result),
+				st->st_suspended_md_func,
+				st->st_suspended_md_line
+				));
+}
+
 /* complete job started by the state-specific state transition function
  *
  * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
@@ -2060,8 +2077,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	switch (result) {
 	case STF_SUSPEND:
-		cur_state = md->st;	/* might have changed */
-		/* FALL THROUGH */
+		log_stf_suspend(md->st, result);
+		*mdp = NULL;    /* take md away from parent */
+		return;
+
 	case STF_INLINE:	/* all done, including release_any_md */
 		*mdp = NULL;	/* take md away from parent */
 		/* FALL THROUGH */

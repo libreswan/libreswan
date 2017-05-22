@@ -218,6 +218,30 @@ conn westnet-eastnet-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
 
+conn rad-eastnet-fqdn-ikev2
+	also=rad-eastnet-fqdn
+	ikev2=insist
+
+conn road-eastnet
+	also=road-east-base
+	also=road-east-base-id-nss
+	also=eastnet-ipv4
+
+conn rad-eastnet-fqdn
+	also=road-east-base-fqdn-default-route
+	also=road-east-base-id-nss
+	also=eastnet-ipv4
+
+conn westnet-eastnet-fqdn-ikev2
+	also=westnet-eastnet-fqdn
+	ikev2=insist
+
+conn westnet-eastnet-fqdn
+	also=west-east-base-fqdn
+	also=west-east-base-id-nss
+	also=westnet-ipv4
+	also=eastnet-ipv4
+
 # this has no base because it is included with a base of 6 or 4
 conn westnet-eastnet-ipv6
 	leftsubnet=2001:db8:0:1::/64
@@ -276,6 +300,18 @@ conn right-defaultroute
 conn west-east-base
 	also=west-east-base-ipv4
 	also=west-east-base-id-nss
+
+conn road-east-base
+	left=192.1.3.209
+	right=192.1.2.23
+
+conn road-east-base-fqdn-default-route
+	left=%defaultroute
+	right=east.testing.libreswan.org
+
+conn west-east-base-fqdn
+	left=west.testing.libreswan.org
+	right=east.testing.libreswan.org
 
 conn west-east-base-ipv4
 	left=192.1.2.45

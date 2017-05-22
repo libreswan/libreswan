@@ -69,6 +69,7 @@
 #include "vendor.h"
 #include "ike_alg_sha2.h"
 #include "crypt_hash.h"
+#include "ikev2_ipseckey.h"
 
 #include "ietf_constants.h"
 
@@ -538,6 +539,57 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	}
 }
 
+static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
+{
+	struct id id = st->st_connection->spd.that.id;
+	const struct connection *c = st->st_connection;
+	const char *err1 = "%dnsondemand";
+	const char *err2 = "";
+	const char *err21 = "";
+	const char *err3 = "ID_FQDN";
+	const char *err31 = "";
+	char thatid[IDTOA_BUF];
+	ipstr_buf ra;
+
+	if (c->spd.that.key_from_DNS_on_demand &&
+			c->spd.that.authby == AUTH_RSASIG &&
+			(id.kind == ID_FQDN ||
+			 id.kind == ID_IPV4_ADDR ||
+			 id.kind == ID_IPV6_ADDR)) {
+		if(atype == IKEv2_AUTH_RESERVED) {
+			return FALSE; /* called from the initiator */
+		} else if (atype == IKEv2_AUTH_RSA) {
+			return FALSE; /* success */
+		}
+	}
+
+	idtoa(&id, thatid, sizeof(thatid));
+
+	if(!c->spd.that.key_from_DNS_on_demand)
+	{
+		err1 = "that end rsasigkey != %dnsondemand";
+	}
+
+	if (atype != IKEv2_AUTH_RESERVED && atype != IKEv2_AUTH_RSA) {
+		err2 = "initiator IKEv2 Auth Method is not IKEv2_AUTH_RSA, ";
+		err3 = enum_name(&ikev2_auth_names, atype);
+	}
+
+	if(id.kind != ID_FQDN &&
+			id.kind != ID_IPV4_ADDR &&
+			id.kind != ID_IPV6_ADDR) {
+		err2 = " can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
+		err21 = enum_show(&ike_idtype_names, id.kind);
+	}
+
+	DBG(DBG_CONTROLMORE, DBG_log("%s #%lu not fetching ipseckey "
+			"%s %s%s %s%s remote=%s thatid=%s",
+			c->name, st->st_serialno,
+			err1, err2, err21, err3, err31,
+			ipstr(&st->st_remoteaddr, &ra), thatid));
+	return TRUE;
+}
+
 /*
  *
  ***************************************************************
@@ -622,6 +674,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 		}
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
 			  enum_name(&state_names, st->st_state));
+	}
+
+	if (IS_LIBUNBOUND && !id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
+		stf_status ret = idr_ipseckey_fetch(st);
+		if (ret != STF_OK)
+			return ret;
 	}
 
 	/*
@@ -3437,7 +3495,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 {
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
-	unsigned char idhash_in[MAX_DIGEST_LEN];
+	stf_status ret = STF_OK;
+	enum ikev2_auth_method atype;
 
 	/* extract calculated values from r */
 	if (!finish_dh_v2(st, r, FALSE))
@@ -3456,6 +3515,25 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+
+	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
+	if (IS_LIBUNBOUND && !id_ipseckey_allowed(st, atype)) {
+		ret = idi_ipseckey_fetch(md);
+		if (ret != STF_OK)
+			return ret;
+	}
+
+	if(ret == STF_OK) {
+		ret = ikev2_parent_inI2outR2_id_tail(md);
+	}
+
+	return ret;
+}
+
+stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
+{
+	struct state *const st = md->st;
+	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	{
 		struct hmac_ctx id_ctx;
