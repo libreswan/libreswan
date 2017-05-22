@@ -634,9 +634,17 @@ void extra_debugging(const struct connection *c)
 	 * we are processing, because it may not be clear in later debugging.
 	 */
 	DBG(~LEMPTY, {
+		char buf[CONN_INST_BUF] =  "";
 		char b1[CONN_INST_BUF];
-		DBG_log("processing connection \"%s\"%s",
-			c->name, fmt_conn_instance(c, b1));
+		ipstr_buf ra;
+		/* fmt_conn_instance include the same if  POLICY_OPPORTUNISTIC */
+		if (cur_state != NULL && !(c->policy & POLICY_OPPORTUNISTIC)) {
+			snprintf(buf, sizeof(buf), " #%lu %s",
+				cur_state->st_serialno,
+				ipstr(&cur_state->st_remoteaddr, &ra));
+		}
+		DBG_log("processing connection \"%s\"%s%s",
+			c->name, fmt_conn_instance(c, b1), buf);
 	});
 
 }

@@ -66,6 +66,8 @@ extern const struct state_v2_microcode ikev2_create_child_initiator_final_microc
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
 
+extern stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest * md);
+
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
@@ -319,6 +321,7 @@ void ikev2_isakamp_established(struct state *st,
 				const struct state_v2_microcode
 				*svm, enum state_kind new_state,
 				enum original_role role);
+struct ikev2_ipseckey_dns;
 
 extern stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md);
 extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,

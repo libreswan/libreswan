@@ -103,5 +103,6 @@ extern bool record_and_send_ike_msg(struct state *st, struct packet_byte_stream 
 extern bool send_ike_msg_without_recording(struct state *st, struct packet_byte_stream *pbs, const char *where);
 extern bool resend_ike_v1_msg(struct state *st, const char *where);
 extern bool send_keepalive(struct state *st, const char *where);
+extern struct event_base *get_pluto_event_base(void);
 
 #endif /* _SERVER_H */
