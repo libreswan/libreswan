@@ -1,0 +1,17 @@
+# once unbound work properly replace the next lines
+nic #
+ sed -i 's/5353/53/' /etc/nsd/nsd.conf
+nic #
+ # /testing/guestbin/swan-prep --dnssec
+nic #
+ systemctl restart nsd
+nic #
+ dig +short @127.0.0.1  west.testing.libreswan.org
+192.1.2.45
+nic #
+ dig +short @127.0.0.1  east.testing.libreswan.org
+192.1.2.23
+nic #
+ echo done
+done
+

@@ -1,0 +1,21 @@
+The responder failto validate IPSECKEY of initiator and A record.
+
+Road is the initiator and east is the responder.
+Road has acces to nort's key, it has public and private key.
+
+When road initiate the connection, it send an IKE request, and
+simultaneously start query for the responders IPSECKEY in reverse zone.
+23.2.1.192.IN-ADDR.ARPA.    120 IN IPSECKEY 10 0 2 . AQO9bJbr3
+
+When the east, the responder, receive IDi (in IKEv2 AUTH exchange),
+IDi type FQDN, responder will query forward zone for IPSECKEY.
+
+north.testing.libreswan.org. 120 IN IPSECKEY 10 0 2 . AQ
+
+east also send adtional query for north.testing.libreswan.org.
+
+A reocrd does not match the address(es) returned to the current address.
+
+The authentication fail.
+
+This only works without NAT.

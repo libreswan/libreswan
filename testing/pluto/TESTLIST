@@ -386,7 +386,10 @@ kvmplutotest	certoe-07-nat-2-clients			good
 kvmplutotest	certoe-08-nat-packet-cop-restart	good
 kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
-kvmplutotest	certoe-12-nat-server			good
+kvmplutotest	rawrsaoe-asymetric-nat			good
+kvmplutotest	rawrsaoe-asymetric-01			good
+kvmplutotest	dnsoe-01				good
+kvmplutotest	dnsoe-02				good
 
 kvmplutotest	ikev2-initiate-template-01		good
 
@@ -844,6 +847,12 @@ kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 
 kvmplutotest	dnssec-pluto-01					good
 kvmplutotest	dnssec-dig-test-1				wip
+kvmplutotest 	ikev2-55-ipseckey-01				good
+kvmplutotest 	ikev2-55-ipseckey-02				good
+kvmplutotest 	ikev2-55-ipseckey-03				good
+kvmplutotest 	ikev2-55-ipseckey-04				good
+kvmplutotest 	ikev2-55-ipseckey-05				good
+kvmplutotest 	ikev2-55-ipseckey-06				good
 
 #################################################################
 # Specific bug tests
