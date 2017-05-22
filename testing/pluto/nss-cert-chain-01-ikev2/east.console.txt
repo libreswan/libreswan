@@ -10,7 +10,7 @@ east #
 002 added connection description "nss-cert-chain"
 east #
  ipsec auto --status |grep nss-cert-chain
-000 "nss-cert-chain": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "nss-cert-chain": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-chain":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east_chain_endcert
 000 "nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-chain":   our auth:rsasig, their auth:rsasig
@@ -24,6 +24,7 @@ east #
 000 "nss-cert-chain":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org; their idtype: (null); their id:%fromcert
 000 "nss-cert-chain":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-chain":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
