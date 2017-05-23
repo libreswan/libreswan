@@ -1,19 +1,23 @@
 # Example
 
 
-See: http://libreswan.org/results/testing/
+See: http://libreswan.org/results/
 
 
-# Local Setup
+# Manual Setup
 
 
-To publish results from kvm-test locally, point WEBDIR at the
-directory under which results should be published.  For instance, by
-adding:
+To publish the results from running `make kvm-results` as a web page,
+point the make variable `LSW_WEBDIR` at the web page's HTML directory.
+For instance, either by adding it to Makefile.inc.local:
 
-   WEBDIR=/var/www/html/results
+   $ mkdir /var/www/html/results
+   echo LSW_WEBDIR=/var/www/html/results >> Makefile.inc.local
 
-to Makefile.inc.local
+or your .profile:
+
+   $ echo export LSW_WEBDIR=/var/www/html/results >> ~/.profile
+
 
 
 # Nuances
@@ -46,36 +50,44 @@ Some things, annoyingly, don't quite work right:
   new tab displaying the diff)) also toggls the results appearance
   under the comparison tab
 
-- if the build fails, no entry for it appears
 
 
-# Ideas
+# Improvements
 
 
 Some things could work better:
 
-- Errors column should be broken down further into "good" and "wip";
-  unfortunately that data currently isn't available
+- "good" and "wip" each list their errors separately
 
-- same for the graph so it goes, good, fail, good, fail, unresolved,
-  untested?
+  So it is easier to identify "good" errors.
 
-- can't select individual tests for comparison
+  Unfortunately, the raw data (found in `results.json`) isn't
+  currently included in `summary.json`.
 
-  selecting an individual or small set of tests and comparing them
-  across results would be nice
+- examine (compare) individual tests
 
-- can't bookmark a comparison
+  For instance, select a test in the "Compare Results" tab would
+  display (graph?) that test's history under a "Compare Test" tab.
 
-- an accumulative bar graph is probably a better way to represent the
-  data (or at least the first-parents) that could then be overlaid
-  with a scatter plot
+  The raw test results are in <run>/<test>/OUTPUT/result.json.
 
-- the graph should pan and zoom
+- Bookmark comparisons
 
-- better colour scheme welcome
+  For instance `results?hash,hash`.
+
+  The required information seems to be in `location.search`.
+
+- Use an accumulative bar graph instead of a scatter plot
+
+  It probably better represents the data.  However, since it needs to
+  also plot branches things could get interesting.
+
+- Graph should pan and zoom
 
 - trim older directories so the total is kept reasonable
+
+- use rowspan=... in the summary table
+
 
 # Automated Testing
 
@@ -83,25 +95,31 @@ Some things could work better:
 ## Setup
 
 
-Automated testing requires two libreswan repositories:
+Automated testing requires at least two libreswan repositories:
 
-- the repository under test (aka slave)
+- the repository under test (aka slave) - required
 
-  This repository is constantly updated (for instance, pulling new
-  commits from upstream, or switching to an old commit using git reset
-  --hard).
+  In addition to regular updates using "git fetch", this repository is
+  switched to the commit being tested using "git reset --hard".
 
   Create a top-level Makefile.inc.local file in this directory to
   configure KVM_WORKERS and KVM_PREFIXES as required.
 
-- the repository containing the test scripts (aka master)
+- the repository containing the web sources and scripts (aka master) -
+  required
 
-  This repository is left unchanged.
+- the repository for rebuilding the web site (aka scratch) - optional
+
+  When re-generating the results from a test run (for instance as part
+  of rebuilding the web-site after a json file format change), this
+  repository is "git reset --hard" to the original commit used to
+  generate those results.
 
 for instance:
 
-    $ git clone git@github.com:libreswan/libreswan.git libreswan-slave
-    $ git clone git@github.com:libreswan/libreswan.git libreswan-master
+    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-slave
+    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-master
+    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-scratch
 
 
 ## Running
@@ -110,50 +128,105 @@ for instance:
 Assuming results are to be published in /var/www/html/results, the
 testing script is invoked as:
 
-    libreswan-master/testing/web/tester.sh libreswan-slave /var/www/html/results/
+    $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave /var/www/html/results/ &
+    $ tail -f nohup.out
 
 
 ## Maintenance
 
 
-From time to time the test results are seen to decay - an increasing
-number of tests fail with a result of "unresolved" and an error of
-"output-missing".  The problem is domains taking too long to boot
-(over 2 minutes each).
+From time to time the test results are seen to decay.  The symptom is
+an increasing number of test failures with a result of "unresolved"
+and an error of "output-missing".  The error occures because one or
+more test domains fail to start in a timely manner (the test runner
+gives up after two minutes), hence, while the test is processed there
+is never any output.
 
-The fix is to restart the machine and then re-build the test domains.
-It is also a good opportunity to perform some more general
-maintenance.
+Per the below, the best workaround seems to be to stop the testing
+script and then re-build the test domains.  The alternative - rebuild
+the test domains from the base domain at the start of each new test
+run - is even less reliable!  Perhaps tester.sh should be modified to
+automate the below.
 
-- upgrade and reboot the test machine:
+- (optional, but a good idea) upgrade and reboot the test machine:
 
-      dnf upgrade -y ; reboot
+      $ sudo dnf upgrade -y ; sudo reboot
+
+- shutdown (or crash, see next step) the current test run
 
 - delete the existing domains:
 
-      cd $BUILDDIR && make kvm-uninstall
+      $ ( cd libreswan-web-slave && make kvm-uninstall )
 
-- update the build tree to latest:
+- update the slave repository:
 
-      cd $BUILDDIR && git pull --ff-only
+      $ ( cd libreswan-web-slave && git pull --ff-only )
 
-- delete result directories with missing output; to list the
-  directories:
+- update the master repository:
 
-      cd $WEBDIR && grep '"output-missing"' */results.json | cut -d/  -f1 | sort -u # | xargs rm -rf
+      $ ( cd libreswan-web-master && git pull --ff-only )
 
-- delete result directories with incomplete output; to list the
-  directories:
+- examine (and perhaps delete) any test runs where tests have
+  'missing-output':
 
-      cd $WEBDIR && ls -d */ | while read d ; do test -r $d/results.json || echo $d ; done # | xargs rm -rf
+      $ ( cd $WEBDIR && grep '"output-missing"' *-g*-*/results.json | cut -d/  -f1 | sort -u )
 
-- compress any log files:
+- examine (and perhaps delete) result directories with incomplete
+  output:
 
-      cd $WEBDIR && find * -path '*/OUTPUT/*.log' -type f -print | xargs bzip2 -v -9
+      $ ( cd $WEBDIR && ls *-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done )
 
 - restart <tt>tester.sh</tt>:
 
-      cd && nohup $SCRIPTDIR/testing/web/tester.sh $BUILDDIR $WEBDIR
+      $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave $WEBDIR
+
+
+## Rebuilding
+
+
+From time-to-time the web site may require a partial or full rebuild.
+
+For HTML (.html, .css and .js) files, the process is straight forward.
+However, for the .json files, the process can be slow (and in the case
+of the results, a dedicated git repository is needed).
+
+- `make web [WEB_SCRATCH_REPODIR=.../libreswan-web-scratch]`
+
+  Update the web site.
+
+  If WEB_SCRATCH_REPODIR is specified, then the result.json files in
+  the test run sub-directories under $(WEB_SUMMARYDIR) are also
+  updated.
+
+- `make web-results-html`
+
+  Update any out-of-date HTML (.html, .css and .json) files in the
+  results sub-directories.
+
+  Touching the source file `testing/web/results.html` will force an
+  update.
+
+- `make web-commits-json`
+
+  Update the commits.json file which contains a table of all the
+  commits.  Slow.
+
+  Touching the script `testing/web/json-commit.sh`, which is used to
+  create the files, will force an update.  So too will deleting the
+  .../commits/ directory.
+
+- `make web-results-json WEB_SCRATCH_REPODIR=.../libreswan-web-scratch`
+
+  Update the `results.json` file in each test run's sub-directory.
+  Very slow.  Requires a dedicated git repository.
+
+  Touching the script `testing/utils/kvmresults.py`, which is used to
+  generate results.json, will force an update.
+
+- `make '$(WEB_SUMMARYDIR)/<run>/results.json' WEB_SCRATCH_REPODIR=.../libreswan-web-scratch`
+
+  Update an individual test run's `results.json` file.  Slow.
+  Requires a dedicated git repository.
 
 
 # References
