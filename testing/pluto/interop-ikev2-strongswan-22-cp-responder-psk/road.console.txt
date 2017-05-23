@@ -114,6 +114,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
@@ -184,6 +185,14 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 src 192.0.2.1/32 dst 0.0.0.0/0 
 	dir out priority 2112 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23

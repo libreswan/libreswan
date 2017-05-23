@@ -51,6 +51,10 @@ west #
 002 "westnet-eastnet-vti" #2: prepare-client output: net.ipv4.conf.vti0.forwarding = 1
 004 "westnet-eastnet-vti" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
+ # Without the sleep, XfrmInNoPols shows first packet sometimes goes out before policy is in place?
+west #
+ sleep 1
+west #
  ping -n -c 4 -I 192.1.99.1 192.1.99.254
 PING 192.1.99.254 (192.1.99.254) from 192.1.99.1 : 56(84) bytes of data.
 64 bytes from 192.1.99.254: icmp_seq=1 ttl=64 time=0.XXX ms
