@@ -2084,7 +2084,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				ta->encrypt, ta->enckeylen, ta->integ_hash));
 
 		const struct kernel_alg_info *ei = NULL;
-		struct kernel_alg_info ki = { 0, };
+		struct kernel_alg_info ki = { .transid = 0, }; /* RHEL-6 GCC breakage */
 		for (ei = hardwired_info; ; ei++) {
 
 			/* if it is the last key entry, then ask algo */
