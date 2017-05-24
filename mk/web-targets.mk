@@ -13,7 +13,7 @@
 # for more details.
 
 #
-# If enabled (WEBDIR, WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set),
+# If enabled (LSW_WEBDIR, WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set),
 # publish the results in HTML/json form.
 #
 
@@ -21,7 +21,7 @@ WEB_REPODIR ?= .
 WEB_UTILSDIR = testing/utils
 WEB_SOURCEDIR = $(abspath testing/web)
 WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
-WEB_SUMMARYDIR ?= $(WEBDIR)
+WEB_SUMMARYDIR ?= $(LSW_WEBDIR)
 # XXX: should this be evaluated once?
 WEB_TIME = $(shell $(WEB_SOURCEDIR)/now.sh)
 
