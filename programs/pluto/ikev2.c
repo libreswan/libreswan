@@ -1454,7 +1454,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 						libreswan_log("Peer mismatch on first found connection and no better connection found");
 						return FALSE;
 				} else {
-					libreswan_log("Peer ID matches and no better connection found - continuing with existing connection");
+					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
 					r = c;
 				}
 
