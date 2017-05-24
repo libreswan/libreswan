@@ -146,7 +146,7 @@ west #
  ipsec auto --down westnet-eastnet-nflog
 002 "westnet-eastnet-nflog": terminating SAs using this connection
 002 "westnet-eastnet-nflog": IKE SA is shared - only terminating IPsec SA
-002 "westnet-eastnet-nflog": deleting other state #2 (STATE_QUICK_I2) "westnet-eastnet-nflog"
+002 "westnet-eastnet-nflog" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-nflog": ESP traffic information: in=0B out=0B
 west #
  iptables -L -n
@@ -167,7 +167,7 @@ DROP       all  --  0.0.0.0/0            0.0.0.0/0
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
-002 "west-east-nflog" #3: deleting state (STATE_QUICK_I2)
+002 "west-east-nflog" #3: deleting state (STATE_QUICK_I2) and sending notification
 005 "west-east-nflog" #3: ESP traffic information: in=0B out=0B
 west #
  iptables -L -n
