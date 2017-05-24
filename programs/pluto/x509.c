@@ -301,44 +301,6 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
  */
 void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
-#if 0
-	bool use_dn = FALSE;	/* ID is subject DN */
-
-	/* check for cert email addr first */
-	if (end_id->kind == ID_USER_FQDN) {
-		char email[IDTOA_BUF];
-
-		idtoa(end_id, email, IDTOA_BUF);
-		if (cert->emailAddr == NULL || !streq(cert->emailAddr, email)) {
-			DBG(DBG_X509,
-			    DBG_log("no email \'%s\' for cert, using ASN1 subjectName",
-						email));
-			use_dn = TRUE;
-		}
-	}
-
-	if (end_id->kind == ID_DER_ASN1_DN) {
-		chunk_t certdn = same_secitem_as_chunk(cert->derSubject);
-
-		if (!same_dn_any_order(end_id->name, certdn)) {
-			char idb[IDTOA_BUF];
-
-			idtoa(end_id, idb, IDTOA_BUF);
-			DBG(DBG_X509,
-			    DBG_log("no subject \'%s\' for cert, using ASN1 subjectName \'%s\'",
-						idb, cert->subjectName));
-			use_dn = TRUE;
-		}
-	}
-	if (end_id->kind == ID_FROMCERT || end_id->kind == ID_NONE || use_dn) {
-		DBG(DBG_X509,
-		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'",
-			    cert->subjectName));
-		end_id->name = same_secitem_as_chunk(cert->derSubject);
-		end_id->kind = ID_DER_ASN1_DN;
-	}
-#endif
-
 	if (end_id->kind == ID_FROMCERT) {
 		DBG(DBG_X509,
                     DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName));
