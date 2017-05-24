@@ -239,8 +239,8 @@ kvmplutotest	ikev1-x509-08-san-dns-mismatch		good
 kvmplutotest	ikev1-x509-09-san-email-match		good
 kvmplutotest	ikev1-x509-10-san-ip-match		good
 kvmplutotest	ikev1-x509-11-san-dns-match		good
-kvmplutotest	ikev1-x509-12-san-dn-match		wip
-kvmplutotest	ikev1-x509-13-san-dn-mismatch		wip
+kvmplutotest	ikev1-x509-12-san-dn-match		good
+kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
 kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
