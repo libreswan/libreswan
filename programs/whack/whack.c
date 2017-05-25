@@ -2356,10 +2356,12 @@ int main(int argc, char **argv)
 							strtoul(ls, NULL, 10);
 
 						switch (s) {
+						/* these logs are informational only */
 						case RC_COMMENT:
 						case RC_INFORMATIONAL:
 						case RC_INFORMATIONAL_TRAFFIC:
 						case RC_LOG:
+						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
 							/* ignore */
 							break;
 						case RC_SUCCESS:
@@ -2391,7 +2393,6 @@ int main(int argc, char **argv)
 								   usernamelen);
 							break;
 
-						/* case RC_LOG_SERIOUS: */
 						default:
 							if (msg.whack_async)
 								exit_status =
