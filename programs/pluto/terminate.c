@@ -96,7 +96,7 @@ void terminate_connection(const char *name)
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by con_by_name).
 	 */
-	struct connection *c = con_by_name(name, FALSE);
+	struct connection *c = con_by_name(name, TRUE);
 
 	if (c != NULL) {
 		while (c != NULL) {
