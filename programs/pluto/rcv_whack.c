@@ -300,8 +300,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				base_debugging = m->debugging;
 				set_debugging(base_debugging);
 			} else if (!m->whack_connection) {
-				struct connection *c = con_by_name(m->name,
-								   TRUE);
+				struct connection *c = conn_by_name(m->name,
+								   TRUE, FALSE);
 
 				if (c != NULL) {
 					c->extra_debugging = m->debugging;
@@ -457,7 +457,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --route");
 		} else {
-			struct connection *c = con_by_name(m->name, TRUE);
+			struct connection *c = conn_by_name(m->name, TRUE, FALSE);
 
 			if (c != NULL) {
 				set_cur_connection(c);
@@ -477,7 +477,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	}
 
 	if (m->whack_unroute) {
-		struct connection *c = con_by_name(m->name, TRUE);
+		struct connection *c = conn_by_name(m->name, TRUE, FALSE);
 
 		if (c != NULL) {
 			const struct spd_route *sr;

@@ -97,15 +97,16 @@ static uint32_t global_marks = 1001;
  * Move the winner (if any) to the front.
  * If none is found, and strict, a diagnostic is logged to whack.
  */
-struct connection *con_by_name(const char *nm, bool strict)
+struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 {
 	struct connection *p, *prev;
 
 	for (prev = NULL, p = connections;; prev = p, p = p->ac_next) {
 		if (p == NULL) {
 			if (strict)
-				whack_log(RC_UNKNOWN_NAME,
-					"no connection named \"%s\"", nm);
+				if (!quiet)
+					whack_log(RC_UNKNOWN_NAME,
+						"no connection named \"%s\"", nm);
 			break;
 		}
 		if (streq(p->name, nm) &&
@@ -403,13 +404,13 @@ void delete_connections_by_name(const char *name, bool strict)
 	bool f = FALSE;
 
 	passert(name != NULL);
-	struct connection *c = con_by_name(name, strict);
+	struct connection *c = conn_by_name(name, strict, TRUE);
 
 	if (c == NULL) {
 		(void)foreach_connection_by_alias(name, delete_connection_wrap,
 						  &f);
 	} else {
-		for (; c != NULL; c = con_by_name(name, FALSE))
+		for (; c != NULL; c = conn_by_name(name, FALSE, FALSE))
 			delete_connection(c, FALSE);
 	}
 }
@@ -1226,7 +1227,7 @@ void add_connection(const struct whack_message *wm)
 
 	alg_info_ike = NULL;
 
-	if (con_by_name(wm->name, FALSE) != NULL) {
+	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
 		return;
@@ -1916,7 +1917,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
 	}
 
-	if (con_by_name(namebuf, FALSE) != NULL) {
+	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME,
 			"group name + target yields duplicate name \"%s\"",
 			namebuf);
