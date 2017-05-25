@@ -21,6 +21,8 @@ WEB_REPODIR ?= .
 WEB_UTILSDIR = testing/utils
 WEB_SOURCEDIR = $(abspath testing/web)
 WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
+# XXX: Some name shuffling is needed.
+LSW_WEBDIR ?= $(top_srcdir)/RESULTS
 WEB_SUMMARYDIR ?= $(LSW_WEBDIR)
 # XXX: should this be evaluated once?
 WEB_TIME = $(shell $(WEB_SOURCEDIR)/now.sh)
@@ -55,6 +57,10 @@ $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 	cp $(filter-out $(WEB_SOURCEDIR)/summary.html, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/summary.html
+
+$(WEB_SUMMARYDIR):
+	: only create the directory, not the path
+	mkdir $(WEB_SUMMARYDIR)
 
 #
 # Update the pooled summaries from all the test runs
@@ -158,7 +164,7 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 	$(WEB_SOURCEDIR)/json-summary.sh $(WEB_TIME) > $@.tmp
 	mv $@.tmp $@
 
-$(WEB_RESULTSDIR):
+$(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
 	mkdir $(WEB_RESULTSDIR)
 
 endif
