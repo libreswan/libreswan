@@ -730,7 +730,6 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
 	char sbuf[ASN1_BUF_LEN];
-	generalName_t *gn1;
 
 	rev_opts[RO_OCSP] = ocsp_enable;
 	rev_opts[RO_OCSP_S] = ocsp_strict;
@@ -804,19 +803,17 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 				sbuf, namebuf));
 
 
-			gn1 = alloc_thing(generalName_t, "generalName");
-			gn1->kind = GN_DIRECTORY_NAME;
-			gn1->name = c->spd.that.id.name;
-			if (same_dn_any_order(gn1->name, same_secitem_as_chunk(end_cert->derSubject))) {
+			struct id certid;
+			int wildcards; /* ignored? */
+			certid.name = same_secitem_as_chunk(end_cert->derSubject);
+			if (!match_id(&certid, &c->spd.that.id, &wildcards)) {
 				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
 				st->st_peer_alt_id = TRUE;
 			} else {
 				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 					end_cert->subjectName, namebuf);
 			}
-			free_generalNames(gn1, FALSE);
 			break;
-
 		default:
 			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
 				c->spd.that.id.kind,
