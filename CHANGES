@@ -29,12 +29,13 @@ v3.21 (Not released)
 * IKEv2: During Child SA rekey, abort when ESP proposals mismatch [Antony]
 * IKEv2: OE client check should take responders behind NAT into account [Paul]
 * IKEv2: Improved dpdaction=hold processing [Antony]
+* IKEv1: add SHA2_256 (prefered) and SHA2_512 to IKE (phase 1) defaults [Cangey]
 * lib: Move the alg_info lookup-by-name code to libswan [Andrew]
 * lib: Move all conditionally compiled ike_alg*.c files to libswan.a [Andrew]
 * addconn: Replace ttoaddr() with calls supporting DNSSEC [Paul/Antony]
 * libswan: Algo code cleanup [Andrew]
 * libipsecconf: Load specified RSA keys irrespective of policy [Paul]
-* libipsecconf/pluto: Be more strict in verifying authby= and type= combinations
+* libipsecconf/pluto: Be more strict in verifying authby= & type= combinations
 * newhostkey: Actually append to secrets as the warning claims it will [Paul]
 * _updown.netkey: Fix syntax failure when PLUTO_MY_SOURCEIP is not set [Tuomo]
 * _updown.netkey,klips: fix use of printf when updating resolv.conf [Tuomo]
@@ -47,7 +48,6 @@ v3.21 (Not released)
 * packaging: Better split rpm and make variables [Paul]
 * packaging: Updates for new requirements for ldns, unbound-devel [Paul]
 * testing: Add DNSSEC, Opportunistic IPsec testcases, fixups [Multiple people]
-* IKEv1: add SHA2_256 (prefered) and SHA2_512 to IKE (phase 1) defaults [Cangey]
 
 v3.20 (March 14, 2017)
 * pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
