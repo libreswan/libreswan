@@ -484,6 +484,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
@@ -507,6 +508,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
@@ -530,6 +532,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
