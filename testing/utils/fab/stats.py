@@ -99,4 +99,4 @@ class Results(Counts):
         self.count_result(result)
         if old_result:
             Counts.add(self, result.test.name, result.test.status,
-                       str(result), "previous", str(old_result))
+                       str(result), "previous=" + str(old_result))

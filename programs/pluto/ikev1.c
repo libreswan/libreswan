@@ -696,7 +696,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
-				struct connection *tmp_c = con_by_name(tmp_name, FALSE);
+				struct connection *tmp_c = conn_by_name(tmp_name, FALSE, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
 					      "redirected remote end info:", n_pbs->cur + pbs_left(

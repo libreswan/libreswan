@@ -109,11 +109,9 @@ enum rc_type {
 	RC_INFORMATIONAL_TRAFFIC, /* status of an established IPSEC (aka Phase 2) state */
 
 	/* failure, but not definitive */
-
 	RC_RETRANSMISSION = 10,
 
 	/* improper request */
-
 	RC_DUPNAME = 20,	/* attempt to reuse a connection name */
 	RC_UNKNOWN_NAME,	/* connection name unknown or state number */
 	RC_ORIENT,		/* cannot orient connection: neither end is us */
@@ -129,7 +127,6 @@ enum rc_type {
 	RC_CRLERROR,		/* CRL fetching disabled or obsolete reread cmd */
 
 	/* permanent failure */
-
 	RC_BADWHACKMESSAGE = 30,
 	RC_NORETRANSMISSION,
 	RC_INTERNALERR,

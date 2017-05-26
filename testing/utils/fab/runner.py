@@ -439,13 +439,17 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                             result.issues and " ", result.issues, suffix)
 
-            if result.resolution.isresolved():
-                # Since the the test finished (resolved in POSIX
-                # terminology)", emit enough JSON to fool scripts like
-                # pluto-testlist-scan.sh.
-                #
-                # A test that timed-out or crashed, isn't considered
-                # resolved so this file isn't created.
+            # If the test was run (a fresh run would delete RESULT)
+            # and finished (resolved in POSIX terminology), emit
+            # enough JSON to fool scripts like pluto-testlist-scan.sh.
+            #
+            # A test that timed-out or crashed, isn't considered
+            # resolved so the file isn't created.
+            #
+            # XXX: this should go away.
+
+            if not os.path.isfile(test.result_file()) \
+            and result.resolution.isresolved():
                 RESULT = {
                     jsonutil.result.testname: test.name,
                     jsonutil.result.expect: test.status,

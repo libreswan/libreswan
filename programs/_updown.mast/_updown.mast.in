@@ -424,7 +424,8 @@ notifyNM() {
         export PLUTO_PEER_BANNER
         export PLUTO_MY_SOURCEIP
         export PLUTO_PEER
-        /usr/libexec/nm-libreswan-service-helper
+        [ -x /usr/libexec/nm-libreswan-service-helper ] && \
+            /usr/libexec/nm-libreswan-service-helper
     fi
     return 0
 }
