@@ -558,32 +558,6 @@ static const char *ike_add(const struct parser_policy *const policy,
 
 struct alg_info_ike *ikev1_default_ike_info(void)
 {
-	static const struct ike_alg *default_ikev1_groups[] = {
-		&oakley_group_modp2048.common,
-		&oakley_group_modp1536.common,
-		NULL,
-	};
-	static const struct ike_alg *default_ikev1_ealgs[] = {
-		&ike_alg_encrypt_aes_cbc.common,
-		&ike_alg_encrypt_3des_cbc.common,
-		NULL,
-	};
-	static const struct ike_alg *default_ikev1_aalgs[] = {
-		&ike_alg_prf_sha1.common,
-		NULL,
-	};
-	static const struct ike_defaults spdb_defaults = {
-		.groups = {
-			.ikev1 = default_ikev1_groups,
-		},
-		.ealgs = {
-			.ikev1 = default_ikev1_ealgs,
-		},
-		.aalgs = {
-			.ikev1 = default_ikev1_aalgs,
-		},
-	};
-
 	static const struct parser_policy policy = {
 		.ikev1 = TRUE,
 	};
@@ -591,7 +565,7 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 	struct alg_info_ike *default_info = alloc_thing(struct alg_info_ike, "ike_info");
 
 	char err_buf[100] = "";
-	if (ike_add(&policy, &spdb_defaults, &default_info->ai,
+	if (ike_add(&policy, &ike_defaults, &default_info->ai,
 		    NULL, 0, NULL, NULL, NULL,
 		    err_buf, sizeof(err_buf)) != NULL) {
 		PEXPECT_LOG("invalid IKEv1 default algorithms: %s", err_buf);

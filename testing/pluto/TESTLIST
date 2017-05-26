@@ -76,6 +76,7 @@ kvmplutotest	basic-pluto-01-vanishingkey		wip
 #################################################################
 kvmplutotest	addconn-01	wip # dumps core
 kvmplutotest	alias-01	wip
+kvmplutotest	readwriteconf-01 wip
 
 
 #################################################################

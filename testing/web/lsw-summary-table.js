@@ -26,7 +26,10 @@ function lsw_summary_table(table_id, summary) {
     })
 
     //
-    // Add columns for all the totals: <status> <result> <count>
+    // Add columns showing the broken down totals.
+    //
+    // The table "totals" is structured <kind> . <status> . <result>
+    // . <count> and the table reflects this (with some filtering).
     //
 
     // First form a nested table of what titles there could be
@@ -101,11 +104,57 @@ function lsw_summary_table(table_id, summary) {
 	})
     })
 
-    // If there are interesting (uppercase) errors, add them, broken
-    // down, under an errors column.
+    //
+    // Add an untested column.
+    //
+    // Need to compute it from the totals table
+    //
+    // XXX: should this and similar code in the graph table be merged?
+    // Perhaps, but they are not that similar.
+    //
+    // XXX: Strictly speaking, an entry such as status=good
+    // result=untested will be double counted (both below and above).
+    // Fortunately, this "should never happen" - all status=good tests
+    // should have been tested (if it does something bad happened and
+    // the test run can be discarded).
+
+    summary.test_runs.forEach(function(test_run) {
+	test_run.untested = 0
+	if (!test_run.totals) {
+	    return
+	}
+	Object.keys(test_run.totals).forEach(function(kind) {
+	    var kind_totals = test_run.totals[kind]
+	    Object.keys(kind_totals).forEach(function(status) {
+		var status_totals = kind_totals[status]
+		if (status_totals.untested) {
+		    test_run.untested += status_totals.untested
+		}
+	    })
+	})
+    })
+
+    columns.push({
+	title: "Untested",
+    })
+
+    //
+    // Add the totals column
+    //
+
+    columns.push({
+	title: "Total",
+    })
+
+    //
+    // Add the error columns
+    //
+    // For the moment just list the interesting (uppercase) errors,
+    // add them, broken down, under an errors column.
     //
     // XXX: The errors should be broken down further into "good" and
     // "wip" but that data isn't available.
+    //
 
     var errors = {}
     summary.test_runs.forEach(function(test_run) {

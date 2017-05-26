@@ -94,9 +94,10 @@ void terminate_connection(const char *name)
 {
 	/*
 	 * Loop because more than one may match (master and instances)
-	 * But at least one is required (enforced by con_by_name).
+	 * But at least one is required (enforced by conn_by_name).
+	 * Don't log an error if not found before we checked aliases
 	 */
-	struct connection *c = con_by_name(name, FALSE);
+	struct connection *c = conn_by_name(name, TRUE, TRUE);
 
 	if (c != NULL) {
 		while (c != NULL) {

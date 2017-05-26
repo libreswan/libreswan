@@ -13,7 +13,7 @@
 # for more details.
 
 #
-# If enabled (WEBDIR, WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set),
+# If enabled (LSW_WEBDIR, WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set),
 # publish the results in HTML/json form.
 #
 
@@ -21,7 +21,9 @@ WEB_REPODIR ?= .
 WEB_UTILSDIR = testing/utils
 WEB_SOURCEDIR = $(abspath testing/web)
 WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
-WEB_SUMMARYDIR ?= $(WEBDIR)
+# XXX: Some name shuffling is needed.
+LSW_WEBDIR ?= $(top_srcdir)/RESULTS
+WEB_SUMMARYDIR ?= $(LSW_WEBDIR)
 # XXX: should this be evaluated once?
 WEB_TIME = $(shell $(WEB_SOURCEDIR)/now.sh)
 
@@ -55,6 +57,10 @@ $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 	cp $(filter-out $(WEB_SOURCEDIR)/summary.html, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/summary.html
+
+$(WEB_SUMMARYDIR):
+	: only create the directory, not the path
+	mkdir $(WEB_SUMMARYDIR)
 
 #
 # Update the pooled summaries from all the test runs
@@ -95,7 +101,7 @@ $(WEB_SUMMARYDIR)/status.json:
 .PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
 web web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
 $(WEB_SUMMARYDIR)/commits.json:
-	: rebuild commits
+	: running MAKE silently to rebuild out-of-date commits
 	@$(MAKE) --no-print-directory -s $(WEB_COMMITSDIR) $(COMMIT_FILES)
 	: pick up all commits unconditionally and unsorted.
 	find $(WEB_COMMITSDIR) -name '*.json' -exec cat \{\} \; \
@@ -158,7 +164,7 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 	$(WEB_SOURCEDIR)/json-summary.sh $(WEB_TIME) > $@.tmp
 	mv $@.tmp $@
 
-$(WEB_RESULTSDIR):
+$(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
 	mkdir $(WEB_RESULTSDIR)
 
 endif
@@ -166,18 +172,20 @@ endif
 
 #
 # update the json in all the results directories; very slow so only
-# enabled when everything is just right
+# enabled when WEB_SCRATCH_REPODIR is set.
 #
 
 ifneq ($(WEB_SUMMARYDIR),)
-ifneq ($(abspath $(WEB_REPODIR)),$(abspath .))
+ifneq ($(WEB_SCRATCH_REPODIR),)
+ifneq ($(abspath $(WEB_SCRATCH_REPODIR)),$(abspath .))
 
 .PHONY: web-results-json
-web-results-json: $(sort $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.json))
+web web-results-json: $(sort $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.json))
 
 $(WEB_SUMMARYDIR)/%/results.json: $(WEB_UTILSDIR)/kvmresults.py $(WEB_UTILSDIR)/fab/*.py
-	$(WEB_SOURCEDIR)/json-results.sh $(WEB_REPODIR) $(dir $@)
+	$(WEB_SOURCEDIR)/json-results.sh $(WEB_SCRATCH_REPODIR) $(dir $@)
 
+endif
 endif
 endif
 
@@ -192,7 +200,7 @@ Web Configuration:
     The test results can be published as a web page using either of
     the make variables:
 
-    $(call kvm-var-value,WEBDIR)
+    $(call kvm-var-value,LSW_WEBDIR)
     $(call kvm-var-value,WEB_SUMMARYDIR)
 
         The top-level html directory containing a summary of all test
@@ -201,15 +209,16 @@ Web Configuration:
 	The results from individual test runs are stored under this
         directory.
 
+    $(call kvm-var-value,WEB_SUBDIR)
     $(call kvm-var-value,WEB_RESULTSDIR)
 
-        The second-level html directory containing results from an
-        individual test run.
+        Sub-directory to store the current test run's results.
 
-	By default, individual test results are stored as separate
-	directories under $$(WEB_SUMMARYDIR) using the directory name
-	TAG-OFFSET-gREV-BRANCH (for instance $(WEB_SUBDIR)) (see "git
-	describe --long").
+	By default, the test run's results are stored as the
+	sub-directory $$(WEB_SUBDIR) under $$(WEB_SUMMARYDIR), and
+	$$(WEB_SUBDIR) is formatted as TAG-OFFSET-gREV-BRANCH using
+	information from $$(WEB_REPODIR)'s current commit (see also
+	`git describe --long`).
 
     $(call kvm-var-value,WEB_REPODIR)
 
@@ -220,25 +229,36 @@ Web Configuration:
 
 Internal targets:
 
+    web:
+
+        update the web site
+
     web-results-html:
 
-        update the html in all the results directories under
-	$$(WEB_SUMMARYDIR)
-
-    web-results-json:
-
-        rebuild the json in all the results directories; very expensive
-	and $$(WEB_REPODIR) must point at a separate scratch directory.
+        update the HTML files in all the test run sub-directories
+	under $$(WEB_SUMMARYDIR)
 
     web-commits-json:
 
-        build or update the commits.json database
+        update the commits.json file in $$(WEB_SUMMARYDIR)
+
+    web-results-json:
+
+        update the results.json in all the test run sub-directories
+        under $$(WEB_SUMMARYDIR)
+
+	very slow
+
+	requires $$(WEB_SCRATCH_REPODIR) set and pointing at a
+	dedicated git repository
 
 Web targets:
 
-    web web-summarydir:
-	build or update the web pages under $$(WEB_SUMMARYDIR)
-	(but not the individual results.json files, see above)
+    web-summarydir:
+
+	build or update the top-level summary web page under
+	$$(WEB_SUMMARYDIR) (the test run sub-directories are not
+	updated, see above).
 
     web-resultsdir:
 

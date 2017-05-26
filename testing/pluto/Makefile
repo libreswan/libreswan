@@ -25,7 +25,7 @@ include $(top_srcdir)/mk/config.mk
 
 UTILS=${LIBRESWANSRCDIR}/testing/utils
 
-check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+check:
 ifeq ($(UPDATEONLY),)
 	$(MAKE) -C $(LIBRESWANSRCDIR) kvm-keys-up-to-date
 endif

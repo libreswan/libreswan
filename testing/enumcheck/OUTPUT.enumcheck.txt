@@ -1626,6 +1626,9 @@ IETF registry enum_names:
          match IKEv2_SEC_FC_CT_AUTHENTICATION: OK
 
   ikev2_auth_names:
+    0 -> IKEv2_AUTH_RESERVED
+         search IKEv2_AUTH_RESERVED: OK
+         match IKEv2_AUTH_RESERVED: OK
     1 -> IKEv2_AUTH_RSA
          search IKEv2_AUTH_RSA: OK
          match IKEv2_AUTH_RSA: OK
