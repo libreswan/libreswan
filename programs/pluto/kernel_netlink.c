@@ -131,6 +131,7 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
 	{ SADB_X_AALG_RIPEMD160HMAC, "hmac(rmd160)" },
 	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
+	{ SADB_X_AALG_AES_CMAC, "cmac(aes)" },
 	/* { SADB_X_AALG_RSA - not supported by us */
 	/*
 	 * GMAC's not supported by Linux kernel yet
@@ -185,6 +186,8 @@ static const struct aead_alg aead_algs[] =
 		.name = "rfc4106(gcm(aes))" },
 	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16,
 		.name = "rfc4106(gcm(aes))" },
+	{ .id = SADB_X_EALG_CHACHA20_POLY1305, .icvlen = 0, /* variable icvlen */
+		.name = "rfc7539esp(chacha20,poly1305)" },
 	/*
 	 * The Linux kernel has rfc4494 "cmac(aes)", except there is
 	 * no such AH/ESP transform, only an IKEv2 transform.
