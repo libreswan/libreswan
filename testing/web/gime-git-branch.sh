@@ -35,13 +35,13 @@ BEGIN {
 found == "" && $3 == "checkout:" && (sha == "" || sha == $1 ) {
   from = $(NF - 2)
   to = $NF
-  print "checkout:", "from=" from, "to=" to, "length(from)=" length(from) >> "/dev/stderr"
+  # print "checkout:", "from=" from, "to=" to, "length(from)=" length(from) >> "/dev/stderr"
   if (length(from) != 40) {
     found = from
-    print "found=" found >> "/dev/stderr"
+    # print "found=" found >> "/dev/stderr"
   } else {
     sha=substr(from, 1, 7)
-    print "sha=" sha >> "/dev/stderr"
+    # print "sha=" sha >> "/dev/stderr"
   }
 }
 END {
