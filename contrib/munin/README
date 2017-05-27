@@ -1,0 +1,6 @@
+
+this is a libreswan plugin for munin.
+
+See: http://munin-monitoring.org/
+
+It requires libreswan 3.20 or later
