@@ -704,7 +704,6 @@ kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-07-klips-netkey	good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
-kvmplutotest	ah-pluto-11		good
 kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	good
 kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	good
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
