@@ -22,7 +22,8 @@ look()
 	 -o -type f -name 'Makefile*' -print \
 	 -o -type f -name '*.mk' -print \
 	 -o -type f -name '*.py' -print \
-	 -o -type f -name '*.sh' -print
+	 -o -type f -name '*.sh' -print \
+	 -o -type f -name '*.awk' -print
 }
 
 if test $# -gt 0 ; then
