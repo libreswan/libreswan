@@ -48,6 +48,7 @@ v3.21 (Not released)
 * packaging: Better split rpm and make variables [Paul]
 * packaging: Updates for new requirements for ldns, unbound-devel [Paul]
 * testing: Add DNSSEC, Opportunistic IPsec testcases, fixups [Multiple people]
+* contrib: Munin plugin for libreswan [Kim/Paul]
 
 v3.20 (March 14, 2017)
 * pluto: Add ECP dh19(secp256r1), dh20(secp384r1) and dh21(secp521r1) [Andrew]
