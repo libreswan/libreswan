@@ -71,51 +71,40 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/*
-	 * XXX: Is this call redundant?  Is everything in alg_info?
+	 * Integrity seed (key).  AEAD, for instance has NULL (no)
+	 * separate integrity.
 	 */
-	struct kernel_alg_info ki;
-	passert(kernel_alg_info(ipi->attrs.transattrs.encrypt,
-				ipi->attrs.transattrs.enckeylen,
-				ipi->attrs.transattrs.integ_hash,
-				&ki));
+	const struct integ_desc *integ = ipi->attrs.transattrs.integ;
+	size_t integ_key_size = (integ != NULL ? integ->integ_key_size : 0);
+	/*
+	 * If there is encryption, then ENCKEYLEN contains the
+	 * required number of bits.
+	 */
+	size_t encrypt_key_size = BYTES_FOR_BITS(ipi->attrs.transattrs.enckeylen);
+	/*
+	 * Finally, some encryption algorithms such as AEAD and CTR
+	 * require "salt" as part of the "starting variable".
+	 */
+	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.encrypter;
+	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
-	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
-	unsigned authkeylen = ikev1_auth_kernel_attrs(ki.auth, NULL);
-	/* ??? no account is taken of AH */
-	/* transid is same as esp_ealg_id */
-	switch (ki.transid) {
-	case IKEv2_ENCR_reserved:
-		/* AH */
-		ipi->keymat_len = authkeylen;
-		break;
-
-	case IKEv2_ENCR_AES_CTR:
-		ipi->keymat_len = ki.enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
-		break;
-
-	case IKEv2_ENCR_AES_GCM_8:
-	case IKEv2_ENCR_AES_GCM_12:
-	case IKEv2_ENCR_AES_GCM_16:
-		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		ipi->keymat_len = ki.enckeylen + AES_GCM_SALT_BYTES;
-		break;
-
-	case IKEv2_ENCR_AES_CCM_8:
-	case IKEv2_ENCR_AES_CCM_12:
-	case IKEv2_ENCR_AES_CCM_16:
-		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		ipi->keymat_len = ki.enckeylen + AES_CCM_SALT_BYTES;
-		break;
-
-	default:
-		/* ordinary ESP */
-		ipi->keymat_len = ki.enckeylen + authkeylen;
-		break;
-	}
+	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
 
 	DBG(DBG_CONTROL,
-		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%u, keymat_len=%" PRIu16,
-			ki.enckeylen, authkeylen, ipi->keymat_len));
+	    DBG_log("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
+		    integ != NULL ? integ->common.name : "N/A",
+		    integ_key_size,
+		    encrypt != NULL ? encrypt->common.name : "N/A",
+		    encrypt_key_size, encrypt_salt_size,
+		    ipi->keymat_len));
+
+	DBG(DBG_CONTROL,
+	    DBG_log("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
+		    integ != NULL ? integ->common.name : "N/A",
+		    integ_key_size,
+		    encrypt != NULL ? encrypt->common.name : "N/A",
+		    encrypt_key_size, encrypt_salt_size,
+		    ipi->keymat_len));
 
 	/*
 	 *
