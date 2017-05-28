@@ -87,11 +87,13 @@ bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 				&& sameaddr(&(c)->spd.this.host_nexthop, \
 					&(d)->spd.this.host_nexthop))
 
-/* forward declaration */
+/* forward declarations */
 static void set_text_said(char *text_said,
-			const ip_address *dst,
-			ipsec_spi_t spi,
-			int proto);
+			  const ip_address *dst,
+			  ipsec_spi_t spi,
+			  int proto);
+static unsigned ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth,
+					int *alg);
 
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
