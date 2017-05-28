@@ -134,6 +134,8 @@ kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
 kvmplutotest	ikev2-53-clean-pending			good
 kvmplutotest	ikev2-54-replace-leave-old		good
+kvmplutotest	ikev2-59-multiple-acquires		good
+kvmplutotest	ikev2-59-multiple-acquires-alias	good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good

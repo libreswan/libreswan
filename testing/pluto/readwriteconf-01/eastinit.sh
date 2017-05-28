@@ -1,3 +1,4 @@
 /testing/guestbin/swan-prep
-# not used
+# this test do no use pluto
+/usr/local/libexec/ipsec/readwriteconf
 echo "initdone"
