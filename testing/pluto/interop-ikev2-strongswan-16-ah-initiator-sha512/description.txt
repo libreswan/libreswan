@@ -4,3 +4,6 @@ This uses IKEv2. It requires netkey
 
 This test requires strongswan 5.1.1 or newer for AH support.
 
+As of strongswan-5.5.2 is performs AH alignment differently, and the kernel
+doesn't support either alignment. Requires an update to libreswan
+

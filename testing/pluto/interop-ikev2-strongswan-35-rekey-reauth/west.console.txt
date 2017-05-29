@@ -53,6 +53,7 @@ west #
  #Child #3 with traffic
 west #
  ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=8436, outBytes=8436, id='@east'
 006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  echo "sleep 60  seconds, east reauthenticate IKE and Child SA"
@@ -78,6 +79,7 @@ west #
 000 "westnet-eastnet-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #4; newest IPsec SA: #5;
 000 "westnet-eastnet-ikev2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14)
@@ -121,6 +123,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
+006 #5: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 006 #7: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  echo done

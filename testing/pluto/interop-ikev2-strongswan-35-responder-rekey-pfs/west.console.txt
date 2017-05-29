@@ -1,28 +1,7 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- strongswan starter --debug-all
-Starting strongSwan X.X.X IPsec [starter]...
-Loading config setup
-Loading conn 'westnet-eastnet-ikev2'
-  authby=secret
-  auto=add
-  esp=aes128-sha2_512-modp2048!
-  ike=3des-md5-modp2048
-  keyexchange=ikev2
-  left=192.1.2.45
-  leftid=@west
-  leftsubnet=192.0.1.0/24
-  mobike=no
-  reauth=no
-  rekeyfuzz=0%
-  right=192.1.2.23
-  rightid=@east
-  rightsubnet=192.0.2.0/24
-  keyingtries=1
-  lifebytes=600
-  marginbytes=300
-  rekeymargin=10
-found netkey IPsec stack
+ service strongswan start
+Redirecting to /bin/systemctl start  strongswan.service
 west #
  echo "initdone"
 initdone
@@ -56,6 +35,8 @@ west #
  strongswan status
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{2}:  DELETING, TUNNEL, reqid 1
+westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
 westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
 west #
