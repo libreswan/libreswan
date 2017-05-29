@@ -32,6 +32,7 @@ v3.21 (Not released)
 * IKEv2: Improved dpdaction=hold processing [Antony]
 * IKEv1: re-add SHA2_256 (prefered) and SHA2_512 to IKEv1 defaults [Cangey]
 * IKEv1: Aggressive Mode fixes for sending CERT / CERTREQ payloads [Paul]
+* XFRM: Use proper alignment for IPv4 AH as per RFC4302 Section 3.3.3.2.1 [Paul]
 * lib: Move the alg_info lookup-by-name code to libswan [Andrew]
 * lib: Move all conditionally compiled ike_alg*.c files to libswan.a [Andrew]
 * addconn: Replace ttoaddr() with calls supporting DNSSEC [Paul/Antony]
