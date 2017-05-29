@@ -140,7 +140,6 @@ struct pubkey {
 	struct id id;
 	unsigned refcnt; /* reference counted! */
 	enum dns_auth_level dns_auth_level;
-	char *dns_sig;
 	realtime_t installed_time;
 	realtime_t until_time;
 	chunk_t issuer;
