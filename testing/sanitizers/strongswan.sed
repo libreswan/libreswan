@@ -26,3 +26,6 @@ s/auth-trunc \([^ ]*\) 0x[a-z0-9]* \(.*\)$/auth-trunc \1 0xKEY \2/g
 s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/g
 s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
 s/ESTABLISHED [0-9]* seconds ago/ESTABLISHED XXX seconds ago/g
+s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
+s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
+
