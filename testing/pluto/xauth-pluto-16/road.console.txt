@@ -19,8 +19,8 @@ road #
 002 "modecfg-road-east" #1: I am sending my cert
 002 "modecfg-road-east" #1: I am sending a certificate request
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "modecfg-road-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
+002 "modecfg-road-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "modecfg-road-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=3des_cbc_192 integ=sha group=MODP2048}
 041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
 040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
@@ -69,6 +69,14 @@ src 192.1.3.209 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 src 192.0.2.1/32 dst 0.0.0.0/0 
 	dir out priority 2112 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23

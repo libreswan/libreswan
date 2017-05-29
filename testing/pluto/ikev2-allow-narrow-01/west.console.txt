@@ -44,6 +44,7 @@ west #
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -61,8 +62,6 @@ west #
 002 "westnet-eastnet-ikev2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-003 "westnet-eastnet-ikev2" #1: missing payload(s) (ISAKMP_NEXT_v2SK). Message dropped.
-207 "westnet-eastnet-ikev2" #1: STATE_PARENT_I2: v2N_INVALID_SYNTAX
 west #
  echo done
 done

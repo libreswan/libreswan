@@ -46,6 +46,7 @@ west #
 000 "westnet-eastnet-ikev2":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2":   our idtype: ID_NULL; our id=ID_NULL; their idtype: (null); their id:%fromcert
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -63,7 +64,7 @@ west #
 002 "westnet-eastnet-ikev2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "westnet-eastnet-ikev2" #2: Peer attempted NULL authentication but we want rsasig
 036 "westnet-eastnet-ikev2" #2: encountered fatal error in state STATE_PARENT_I2
 west #
