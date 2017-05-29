@@ -1638,26 +1638,6 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
-/* a SIG record in ASCII */
-struct ipsec_dns_sig {
-	char fqdn[256];
-	char dns_sig[768]; /* empty string if not signed */
-};
-
-struct ipsec_raw_key {
-	char id_name[256];
-	char fs_keyid[8];
-};
-
-struct ipsec_identity {
-	enum ike_id_type ii_type;
-	enum ike_cert_type ii_format;
-	union {
-		struct ipsec_dns_sig ipsec_dns_signed;
-		/* some thing for PKIX */
-		struct ipsec_raw_key ipsec_raw_key;
-	} ii_credential;
-};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

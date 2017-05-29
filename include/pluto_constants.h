@@ -920,16 +920,6 @@ enum dns_auth_level {
 };
 
 /*
- * define a macro for use in error messages
- */
-
-#ifdef USE_KEYRR
-#define RRNAME "TXT or KEY"
-#else
-#define RRNAME "TXT"
-#endif
-
-/*
  * private key types for keys.h
  */
 enum PrivateKeyKind {
