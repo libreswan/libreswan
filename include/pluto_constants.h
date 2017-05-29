@@ -907,16 +907,19 @@ enum keyword_host {
 	KH_IPADDR       = LOOSE_ENUM_OTHER,
 };
 
-/* BIND enumerated types */
-
-/* How authenticated is info that might have come from DNS?
+/*
+ * reltated libunbound enumerated types
+ *
+ * How authenticated is info that might have come from DNS?
  * In order of increasing confidence.
  */
 enum dns_auth_level {
-	DAL_UNSIGNED,   /* AD in response, but no signature: no authentication */
-	DAL_NOTSEC,     /* no AD in response: authentication impossible */
-	DAL_SIGNED,     /* AD and signature in response: authentic */
-	DAL_LOCAL       /* locally provided (pretty good) */
+	DNSSEC_UNKNOWN,		/* didn't come from DNS like source */
+	DNSSEC_BOGUS,           /* UB retunred BOGUS */
+	DNSSEC_INSECURE,        /* UB retrured INSECURE */
+	PUBKEY_LOCAL,           /* came from local source, wahck, plugin etc */
+	DNSSEC_SECURE,          /* UB retrurned SECURE */
+	DNSSEC_ROOF,
 };
 
 /*

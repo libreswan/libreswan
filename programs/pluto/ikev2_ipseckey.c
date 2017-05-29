@@ -219,9 +219,9 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf)
 	}
 
 	if (dnsr->secure == UB_EVNET_SECURE) {
-		al = DAL_SIGNED;
+		al = DNSSEC_SECURE;
 	} else {
-		al = DAL_NOTSEC;
+		al = DNSSEC_INSECURE;
 	}
 	ugh = add_public_key(&keyid, al, PUBKEY_ALG_RSA,
 			&keyval, &pluto_pubkeys);
