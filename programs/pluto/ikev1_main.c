@@ -1696,13 +1696,13 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!ikev1_decode_peer_id(md, initiator, aggrmode))
+	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode))
 		return STF_FAIL + INVALID_ID_INFORMATION;
 
 	/*
 	 * process any CERT payloads if aggrmode
 	 */
-	if (aggrmode && !ikev1_decode_cert(md)) {
+	if (!st->st_peer_alt_id && aggrmode && !ikev1_decode_cert(md)) {
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 

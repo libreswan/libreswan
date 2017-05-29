@@ -2750,9 +2750,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
-	/* check for certificates */
-	if (!ikev1_decode_cert(md))
-		return FALSE;
+	if (!aggrmode) {
+		/* check for certificates */
+		if (!ikev1_decode_cert(md))
+			return FALSE;
+	}
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
@@ -2765,8 +2767,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		return TRUE;
 
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+		if (!st->st_peer_alt_id &&
+			!same_id(&st->st_connection->spd.that.id, &peer) &&
+			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -2818,20 +2822,28 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r = NULL;
 
-		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator,
+		/* aggresive mode already pinned ID in first packet */
+		if (!aggrmode) {
+			r = refine_host_connection(st, &peer, FALSE /* initiator */,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
-			pexpect(r != NULL);
 		}
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
 
 			idtoa(&peer, buf, sizeof(buf));
-			loglog(RC_LOG_SERIOUS,
-			       "no suitable connection for peer '%s'",
-			       buf);
-			return FALSE;
+			DBG(DBG_CONTROL, DBG_log(
+			       "no more suitable connection for peer '%s'", buf));
+			/* can we continue with what we had? */
+			if (!md->st->st_peer_alt_id &&
+				!same_id(&c->spd.that.id, &peer) &&
+				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+					libreswan_log("Peer mismatch on first found connection and no better connection found");
+					return FALSE;
+			} else {
+				DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
+				r = c;
+			}
 		}
 
 		DBG(DBG_CONTROL, {

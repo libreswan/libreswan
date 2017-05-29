@@ -3535,6 +3535,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	struct state *const st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 
+	/* calculate hash of IDi for AUTH below */
 	{
 		struct hmac_ctx id_ctx;
 		const pb_stream *id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;
@@ -3542,8 +3543,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
 		hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pi_nss);
-
-		/* calculate hash of IDi for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		hmac_final(idhash_in, &id_ctx);
