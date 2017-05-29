@@ -1,0 +1,7 @@
+IKEv2 AUTH test. The certs are valid but both ends use an
+explicit ID, not the cert ID. These IDs may only be trusted
+if they appear as subjectAltName (SAN) on the certificate.
+
+Since both FQDN's used for IDs are in the SAN, this connection
+should succeed.
+
