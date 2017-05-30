@@ -1,8 +1,0 @@
-Basic pluto with IKEv2 using PSK on the responder (west), and Racoon2 on
-the initiator (east).
-
-This is the reverse test of interop-ikev2-racoon-02
-
-NOTE: racoon2 reads the psk file as binary, so the secret file needs to
-be created using "echo -n "secret" > psk/test.psk. You cannot use cat or vi
-
