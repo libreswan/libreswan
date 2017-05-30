@@ -434,6 +434,22 @@ static const char *const policy_fail_names[4] = {
 	"REJECT",
 };
 
+static const char *const dns_auth_level_name[] = {
+	"DNSSEC_UNKNOWN",
+	"DNSSEC_BOGUS",
+	"DNSSEC_INSECURE",
+	"PUBKEY_LOCAL",
+	"DNSSEC_SECURE",
+	"DNSSEC_ROOF",
+};
+
+enum_names dns_auth_level_names = {
+	DNSSEC_UNKNOWN, DNSSEC_ROOF,
+	ARRAY_REF(dns_auth_level_name),
+	NULL, /* prefix */
+	NULL
+};
+
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */

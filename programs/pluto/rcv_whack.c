@@ -225,7 +225,7 @@ static void key_add_request(const struct whack_message *msg)
 #endif
 		if (msg->keyval.len != 0) {
 			DBG_dump_chunk("add pubkey", msg->keyval);
-			ugh = add_public_key(&keyid, DAL_LOCAL,
+			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
 					     msg->pubkey_alg,
 					     &msg->keyval, &pluto_pubkeys);
 			if (ugh != NULL)

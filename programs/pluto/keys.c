@@ -775,7 +775,42 @@ err_t add_public_key(const struct id *id,
 	return NULL;
 }
 
+err_t add_ipseckey(const struct id *id,
+		     enum dns_auth_level dns_auth_level,
+		     enum pubkey_alg alg,
+		     u_int32_t ttl, u_int32_t ttl_used,
+		     const chunk_t *key,
+		     struct pubkey_list **head)
+{
+	struct pubkey *pk = alloc_thing(struct pubkey, "ipseckey publickey");
 
+	/* first: algorithm-specific decoding of key chunk */
+	switch (alg) {
+	case PUBKEY_ALG_RSA:
+	{
+		err_t ugh = unpack_RSA_public_key(&pk->u.rsa, key);
+
+		if (ugh != NULL) {
+			pfree(pk);
+			return ugh;
+		}
+	}
+	break;
+	default:
+		bad_case(alg);
+	}
+
+	pk->dns_ttl = ttl;
+	pk->until_time = pk->installed_time = realnow();
+	pk->until_time.real_secs += ttl_used; /* check for overflow ? */
+	pk->id = *id;
+	pk->dns_auth_level = dns_auth_level;
+	pk->alg = alg;
+	pk->issuer = empty_chunk; /* ipseckey has no issuer */
+
+	install_public_key(pk, head);
+	return NULL;
+}
 
 /*
  *  list all public keys in the chained list

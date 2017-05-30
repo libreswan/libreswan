@@ -16,11 +16,11 @@
 # not production ready yet
 %global USE_SECCOMP false
 
-#global prever rc1
+%global prever rc2
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: IPSECBASEVERSION
+Version: 3.21
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -261,5 +261,5 @@ fi
 %endif
 
 %changelog
-* Tue Mar 14 2017 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Tue May 30 2017 Team Libreswan <team@libreswan.org> - 3.21-0.1.rc2
 - Automated build from release tar ball
