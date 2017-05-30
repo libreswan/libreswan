@@ -103,16 +103,18 @@ def test_files(logger, args, result):
         return
     dstdir = _mkdir_test(logger, args, result)
     test = result.test
-    good = re.compile(r"(\.txt|\.sh)$")
+    ignore = re.compile(r"[~]$")
     for name in os.listdir(test.directory):
+        if ignore.search(name):
+            continue
         src = os.path.join(test.directory, name)
         dst = os.path.join(dstdir, name)
-        if good.search(name):
-            if os.path.isfile(dst) and os.path.samefile(src, dst):
-                continue
-            logger.info("copying '%s' to '%s'", src, dst)
-            shutil.copyfile(src, dst)
+        if not os.path.isfile(src):
             continue
+        if os.path.isfile(dst) and os.path.samefile(src, dst):
+            continue
+        logger.info("copying '%s' to '%s'", src, dst)
+        shutil.copyfile(src, dst)
     return dstdir
 
 
