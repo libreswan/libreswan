@@ -188,7 +188,8 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	return ret;
 }
 
-static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf)
+static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
+		u_int32_t ttl)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	struct id keyid = st->st_connection->spd.that.id;
@@ -196,6 +197,21 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf)
 	err_t ugh = NULL;
 	enum dns_auth_level al;
 	char thatidbuf[IDTOA_BUF];
+	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
+	u_int32_t ttl_used;
+
+	/*
+	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey does not expire while
+	 * negotiating
+	 */
+	ttl_used = max(ttl,  (u_int32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+
+	if(ttl_used == ttl) {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
+	} else {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u", ttl,
+				ttl_used);
+	}
 
 	if (!get_keyval_chunk(dnsr, rdf, &keyval))
 		return "could not get key to add";
@@ -210,20 +226,24 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf)
 		dnsr->delete_exisiting_keys = FALSE;
 	}
 
-	if (keyid.kind == ID_FQDN) {
-		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s", thatidbuf));
-	} else {
-		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s "
-					"dns query is %s", thatidbuf,
-					dnsr->qname));
-	}
-
 	if (dnsr->secure == UB_EVNET_SECURE) {
 		al = DNSSEC_SECURE;
 	} else {
 		al = DNSSEC_INSECURE;
 	}
-	ugh = add_public_key(&keyid, al, PUBKEY_ALG_RSA,
+
+	if (keyid.kind == ID_FQDN) {
+		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s %s %s",
+					thatidbuf, ttl_buf,
+					enum_name(&dns_auth_level_names, al)));
+	} else {
+		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s"
+					" dns query is %s %s %s", thatidbuf,
+					dnsr->qname, ttl_buf,
+					enum_name(&dns_auth_level_names, al)));
+	}
+
+	ugh = add_ipseckey(&keyid, al, PUBKEY_ALG_RSA, ttl, ttl_used,
 			&keyval, &pluto_pubkeys);
 	if (ugh != NULL)
 		loglog(RC_LOG_SERIOUS, "Add  publickey failed %s, %s, %s", ugh,
@@ -313,7 +333,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		if (status != LDNS_STATUS_OK) {
 			continue;
 		}
-		ldns_buffer_printf(output, " %d ", ldns_rr_ttl(ans));
+		ldns_buffer_printf(output, " %u ", ldns_rr_ttl(ans));
 		status = ldns_rr_class2buffer_str(output,
 				ldns_rr_get_class(ans));
 		if (status != LDNS_STATUS_OK) {
@@ -361,7 +381,8 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		if (dnsr->qtype == atype && atype == LDNS_RR_TYPE_IPSECKEY) {
 			/* the real work done here -- add key to pluto store */
-			err = add_rsa_pubkey_to_pluto(dnsr, rdf);
+			err = add_rsa_pubkey_to_pluto(dnsr, rdf,
+					ldns_rr_ttl(ans));
 		}
 
 		if (atype != dnsr->qtype) {
