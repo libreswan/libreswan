@@ -217,14 +217,14 @@ define kvm-test
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$(if $(WEB_RESULTSDIR),$(MAKE) web-resultsdir)
-	$(if $(WEB_SUMMARYDIR),$(MAKE) web-summarydir)
+	$(MAKE) --no-print-directory web-test-prep
 	$(KVMRUNNER) \
 		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
 		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
 		$(if $(WEB_RESULTSDIR), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_SUMMARYDIR), --publish-status $(WEB_SUMMARYDIR)/status.json) \
 		$(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
+	$(MAKE) --no-print-directory web-test-post
 endef
 
 # "test" and "check" just runs the entire testsuite.

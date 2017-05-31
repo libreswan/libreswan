@@ -17,17 +17,55 @@
 # publish the results in HTML/json form.
 #
 
-WEB_REPODIR ?= .
-WEB_UTILSDIR = testing/utils
-WEB_SOURCEDIR = $(abspath testing/web)
-WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
-# XXX: Some name shuffling is needed.
 LSW_WEBDIR ?= $(top_srcdir)/RESULTS
-WEB_SUMMARYDIR ?= $(LSW_WEBDIR)
-# XXX: should this be evaluated once?
-WEB_TIME = $(shell $(WEB_SOURCEDIR)/now.sh)
+WEB_SUMMARYDIR ?= $(wildcard $(LSW_WEBDIR))
+WEB_UTILSDIR = testing/utils
+
+.PHONY: web-test-prep web-test-post web-page
+
+ifeq ($(WEB_SUMMARYDIR),)
+
+define web-page
+Web-pages disabled.
+To enable web pages create the directory LSW_WEBDIR=$(LSW_WEBDIR).
+To convert the current results into a web page run: make web-page
+endef
+
+web-test-prep web-test-post:
+	$(info $(web-page))
+
+web-page:
+	test -d $(LSW_WEBDIR) || mkdir $(LSW_WEBDIR)
+	$(MAKE) web-page WEB_SUMMARYDIR=$(LSW_WEBDIR)
+
+else
+
+web-test-prep:
+	$(MAKE) web-resultsdir
+	$(MAKE) web-summarydir
+
+web-test-post:
+
+web-page: web-summarydir web-resultsdir
+	$(WEB_UTILSDIR)/kvmresults.py \
+		--quick \
+		--test-kind '' \
+		--test-status '' \
+		--publish-status $(WEB_SUMMARYDIR)/status.json \
+		--publish-results $(WEB_RESULTSDIR) \
+		testing/pluto
+
+endif
 
 ifneq ($(WEB_SUMMARYDIR),)
+
+WEB_REPODIR ?= .
+WEB_SOURCEDIR = $(abspath testing/web)
+WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
+# XXX: should this be evaluated once?
+WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
+# This is verbose so it is easy to spot
+WEB_SUBDIR := $(shell cd $(WEB_REPODIR) ; set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh)
 
 #
 # Update the web site
@@ -57,10 +95,6 @@ $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 	cp $(filter-out $(WEB_SOURCEDIR)/summary.html, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/summary.html
-
-$(WEB_SUMMARYDIR):
-	: only create the directory, not the path
-	mkdir $(WEB_SUMMARYDIR)
 
 #
 # Update the pooled summaries from all the test runs
@@ -143,8 +177,7 @@ endif
 # Note: don't use "make showversion" as that doesn't include the
 # gitver (-gXXXXX-) when the commit is on a tag.
 
-WEB_SUBDIR ?= $(shell cd $(WEB_REPODIR) ; $(WEB_SOURCEDIR)/gime-git-description.sh)
-WEB_RESULTSDIR ?= $(if $(WEB_SUMMARYDIR),$(WEB_SUMMARYDIR)/$(WEB_SUBDIR))
+WEB_RESULTSDIR := $(if $(WEB_SUMMARYDIR),$(WEB_SUMMARYDIR)/$(WEB_SUBDIR))
 
 ifneq  ($(WEB_RESULTSDIR),)
 
@@ -263,6 +296,11 @@ Web targets:
     web-resultsdir:
 
         build or update $$(WEB_RESULTSDIR)
+
+    web-page:
+
+        build or update the web page in $(LSW_WEBDIR) including the
+        results from the most recent test run
 
 endef
 
