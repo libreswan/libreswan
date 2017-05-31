@@ -247,7 +247,7 @@ static void retransmit_v2_msg(struct state *st)
 	unsigned long try;
 	unsigned long try_limit;
 	const char *details = "";
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
 	set_cur_state(st);
@@ -288,7 +288,7 @@ static void retransmit_v2_msg(struct state *st)
 		delay_ms = retrans_delay(st, delay_ms);
 
 		if (delay_ms != 0) {
-			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
+			send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
 			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
 			return;
 		}
