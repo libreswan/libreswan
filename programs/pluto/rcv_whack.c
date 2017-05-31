@@ -118,7 +118,7 @@ static int whack_route_connection(struct connection *c,
 		whack_log(RC_ROUTE, "could not route");
 
 	reset_cur_connection();
-	return TRUE;
+	return 1;
 }
 
 static int whack_unroute_connection(struct connection *c,
@@ -142,7 +142,7 @@ static int whack_unroute_connection(struct connection *c,
 		unroute_connection(c);
 
 	reset_cur_connection();
-	return TRUE;
+	return 1;
 }
 
 static void do_whacklisten(void)
@@ -501,24 +501,38 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			struct connection *c = conn_by_name(m->name,
 							TRUE, TRUE);
 
-			if (c != NULL)
+			if (c != NULL) {
 				whack_route_connection(c, NULL);
-			else
-				foreach_connection_by_alias(m->name,
-							whack_route_connection,
-							NULL);
+			} else {
+				int count = 0;
+
+				count = foreach_connection_by_alias(m->name,
+								whack_route_connection,
+								NULL);
+				if (count == 0)
+					whack_log(RC_ROUTE,
+						"no connection or alias '%s'",
+						m->name);
+			}
 		}
 	}
 
 	if (m->whack_unroute) {
 		struct connection *c = conn_by_name(m->name, TRUE, TRUE);
 
-		if (c != NULL)
+		if (c != NULL) {
 			whack_unroute_connection(c, NULL);
-		else
-			foreach_connection_by_alias(m->name,
-						whack_unroute_connection,
-						NULL);
+		} else {
+			int count = 0;
+
+			count = foreach_connection_by_alias(m->name,
+							whack_unroute_connection,
+							NULL);
+			if (count == 0)
+				whack_log(RC_ROUTE,
+					"no connection or alias '%s'",
+					m->name);
+		}
 	}
 
 	if (m->whack_initiate) {
