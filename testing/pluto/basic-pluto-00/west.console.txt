@@ -64,6 +64,18 @@ PATH/libexec/ipsec/algparse leak detective found no leaks
 west #
  PATH/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt
 PATH/libexec/ipsec/enumcheck leak detective found no leaks
+--- -	2017-05-30 12:25:03.312693107 -0400
++++ ../../enumcheck/OUTPUT.enumcheck.txt	2017-05-25 22:13:11.156634593 -0400
+@@ -787,9 +787,6 @@
+          search COMPRESS_PRIVATE_ALG (variable length): OK
+          match COMPRESS_PRIVATE_ALG (variable length): OK
+          match COMPRESS_PRIVATE_ALG : OK
+-   10 -> NULL
+-         search NULL: OK
+-         match NULL: OK
+ 
+   sa_lifetime_names:
+     1 -> SA_LIFE_TYPE_SECONDS
 west #
  echo done
 done
