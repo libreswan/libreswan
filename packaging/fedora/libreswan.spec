@@ -203,7 +203,7 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %if %{cavstests}
 # we should add a new makefile target for this
-cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
+cp -a OBJ.linux.*/testing/cavp/cavp %{buildroot}%{_libexecdir}/ipsec
 %endif
 
 %if %{cavstests}
@@ -218,13 +218,13 @@ bunzip2 *.fax.bz2
 export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
-OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+OBJ.linux.*/testing/cavp/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+OBJ.linux.*/testing/cavp/cavp -v1sig ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
-OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+OBJ.linux.*/testing/cavp/cavp -v1psk ikev1_psk.fax | \
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 %endif
