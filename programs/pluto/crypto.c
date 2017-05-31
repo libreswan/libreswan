@@ -106,14 +106,10 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)
 {
-	const struct oakley_group_desc * ret = NULL;
-
-	/* ??? 0 isn't a legitimate value for esp_pfsgroup */
-	if ((policy & POLICY_PFS) &&
-	    c->alg_info_esp != NULL &&
-	    c->alg_info_esp->esp_pfsgroup != 0)
-		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
-	return ret;
+	if ((policy & POLICY_PFS) && c->alg_info_esp != NULL)
+		/* might be NULL. */
+		return c->alg_info_esp->esp_pfsgroup;
+	return NULL;
 }
 
 /*

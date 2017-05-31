@@ -73,7 +73,6 @@ int main(int argc UNUSED, char *argv[])
 	esp("3des-sha1;modp1024");
 	esp("3des-sha1;modp1536");
 	esp("3des-sha1;modp2048");
-	esp("3des-sha1;dh22");
 	esp("3des-sha1;dh23");
 	esp("3des-sha1;dh24");
 	esp("3des-sha1");
@@ -177,6 +176,9 @@ int main(int argc UNUSED, char *argv[])
 	esp("aes-id3"); /* should be rejected; idXXX removed */
 	esp("aes_gcm-md5"); /* AEAD must have auth null */
 	esp("mars"); /* support removed */
+	esp("3des-sha1;dh22"); /* support for dh22 removed */
+	esp("3des-sha1-dh21"); /* ';' vs '-' */
+	esp("3des-sha1;dh21,3des-sha2"); /* DH must be last */
 
 	/*
 	 * ah=

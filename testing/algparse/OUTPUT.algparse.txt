@@ -5,7 +5,6 @@
 [  3des-sha1;modp1024]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1024(2)
 [  3des-sha1;modp1536]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1536(5)
 [  3des-sha1;modp2048]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP2048(14)
-[      3des-sha1;dh22]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH22(22)
 [      3des-sha1;dh23]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH23(23)
 [      3des-sha1;dh24]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH24(24)
 [           3des-sha1]    OK: 3DES(3)_000-SHA1(2)
@@ -82,6 +81,9 @@
 [             aes-id3] ERROR: ESP integrity algorithm 'id3' is not recognized, enc_alg="aes"(0), auth_alg="id3", modp=""
 [         aes_gcm-md5] ERROR: AEAD ESP cipher must have null authentication, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
 [                mars] ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
+[      3des-sha1;dh22] ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
+[      3des-sha1-dh21] ERROR: ESP DH algorithm 'DH21' must be separated using a ';'
+[3des-sha1;dh21,3des-sha2] ERROR: ESP DH algorithm 'DH21' must be specified last
 
 ---- AH tests that should succeed ----
 [                    ]    OK: MD5(1), SHA1(2)
@@ -98,7 +100,7 @@
 [            aes_xcbc]    OK: AES_XCBC(9)
 
 ---- AH tests that should fail ----
-[            aes-sha1] ERROR: Invalid modulus, just after "aes-" (state=ST_AA_END)
+[            aes-sha1] ERROR: AH integrity algorithm 'aes' is not recognized, enc_alg=""(0), auth_alg="aes", modp="sha1"
 [         vanityhash1] ERROR: AH integrity algorithm 'vanityhash1' is not recognized, enc_alg=""(0), auth_alg="vanityhash1", modp=""
 [       aes_gcm_c-256] ERROR: Invalid modulus, just after "aes_gcm_c-" (state=ST_AA_END)
 [                 id3] ERROR: AH integrity algorithm 'id3' is not recognized, enc_alg=""(0), auth_alg="id3", modp=""
