@@ -98,14 +98,6 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 		    encrypt_key_size, encrypt_salt_size,
 		    ipi->keymat_len));
 
-	DBG(DBG_CONTROL,
-	    DBG_log("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
-		    integ != NULL ? integ->common.name : "N/A",
-		    integ_key_size,
-		    encrypt != NULL ? encrypt->common.name : "N/A",
-		    encrypt_key_size, encrypt_salt_size,
-		    ipi->keymat_len));
-
 	/*
 	 *
 	 * Keying material MUST be taken from the expanded KEYMAT in the

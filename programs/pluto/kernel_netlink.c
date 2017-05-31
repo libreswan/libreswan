@@ -1013,6 +1013,25 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
+	/*
+	 * The Linux IPv4 AH stack aligns the AH header on a 64 bit boundary
+	 * (like in IPv6). This is not RFC compliant (see RFC4302, Section
+	 * 3.3.3.2.1), it should be aligned on 32 bits.
+	 *
+	 * For most of the authentication algorithms, the ICV size is 96 bits.
+	 * The AH header alignment on 32 or 64 bits gives the same results.
+	 *
+	 * However for SHA-256-128 for instance, the wrong 64 bit alignment results
+	 * in adding useless padding in IPv4 AH, which is forbidden by the RFC.
+	 *
+	 * To avoid breaking backward compatibility, we use a new flag
+	 * (XFRM_STATE_ALIGN4) do change original behavior.
+	*/
+	if (sa->esatype == ET_AH && sa->src->u.v4.sin_family == AF_INET) {
+		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
+		req.p.flags |= XFRM_STATE_ALIGN4;
+	}
+
 	if (sa->esatype != ET_IPCOMP) {
 		if (sa->esn) {
 			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));

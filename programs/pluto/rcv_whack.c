@@ -104,6 +104,47 @@ struct key_add_continuation {
 	enum key_add_attempt lookingfor;
 };
 
+static int whack_route_connection(struct connection *c,
+			__attribute__((unused)) void *arg)
+{
+	set_cur_connection(c);
+
+	if (!oriented(*c))
+		whack_log(RC_ORIENT,
+			"we cannot identify ourselves with either end of this connection");
+	else if (c->policy & POLICY_GROUP)
+		route_group(c);
+	else if (!trap_connection(c))
+		whack_log(RC_ROUTE, "could not route");
+
+	reset_cur_connection();
+	return TRUE;
+}
+
+static int whack_unroute_connection(struct connection *c,
+			__attribute__((unused)) void *arg)
+{
+	const struct spd_route *sr;
+	int fail = 0;
+
+	set_cur_connection(c);
+
+	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		if (sr->routing >= RT_ROUTED_TUNNEL)
+			fail++;
+	}
+	if (fail > 0)
+		whack_log(RC_RTBUSY,
+			"cannot unroute: route busy");
+	else if (c->policy & POLICY_GROUP)
+		unroute_group(c);
+	else
+		unroute_connection(c);
+
+	reset_cur_connection();
+	return TRUE;
+}
+
 static void do_whacklisten(void)
 {
 	fflush(stderr);
@@ -184,7 +225,7 @@ static void key_add_request(const struct whack_message *msg)
 #endif
 		if (msg->keyval.len != 0) {
 			DBG_dump_chunk("add pubkey", msg->keyval);
-			ugh = add_public_key(&keyid, DAL_LOCAL,
+			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
 					     msg->pubkey_alg,
 					     &msg->keyval, &pluto_pubkeys);
 			if (ugh != NULL)
@@ -457,47 +498,27 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --route");
 		} else {
-			struct connection *c = conn_by_name(m->name, TRUE, FALSE);
+			struct connection *c = conn_by_name(m->name,
+							TRUE, TRUE);
 
-			if (c != NULL) {
-				set_cur_connection(c);
-
-				if (!oriented(*c)) {
-					whack_log(RC_ORIENT,
-						  "we cannot identify ourselves with either end of this connection");
-				} else if (c->policy & POLICY_GROUP) {
-					route_group(c);
-				} else if (!trap_connection(c)) {
-					whack_log(RC_ROUTE, "could not route");
-				}
-
-				reset_cur_connection();
-			}
+			if (c != NULL)
+				whack_route_connection(c, NULL);
+			else
+				foreach_connection_by_alias(m->name,
+							whack_route_connection,
+							NULL);
 		}
 	}
 
 	if (m->whack_unroute) {
-		struct connection *c = conn_by_name(m->name, TRUE, FALSE);
+		struct connection *c = conn_by_name(m->name, TRUE, TRUE);
 
-		if (c != NULL) {
-			const struct spd_route *sr;
-			int fail = 0;
-
-			set_cur_connection(c);
-
-			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-				if (sr->routing >= RT_ROUTED_TUNNEL)
-					fail++;
-			}
-			if (fail > 0)
-				whack_log(RC_RTBUSY,
-					  "cannot unroute: route busy");
-			else if (c->policy & POLICY_GROUP)
-				unroute_group(c);
-			else
-				unroute_connection(c);
-			reset_cur_connection();
-		}
+		if (c != NULL)
+			whack_unroute_connection(c, NULL);
+		else
+			foreach_connection_by_alias(m->name,
+						whack_unroute_connection,
+						NULL);
 	}
 
 	if (m->whack_initiate) {

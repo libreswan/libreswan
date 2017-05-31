@@ -549,7 +549,6 @@ static void create_cert_pubkey(struct pubkey **pkp,
 
 	passert(pk != NULL);
 	pk->id = *id;
-	pk->dns_auth_level = DAL_LOCAL;
 	pk->until_time = get_nss_cert_notafter(cert);
 	pk->issuer = same_secitem_as_chunk(cert->derIssuer);
 	*pkp = pk;
