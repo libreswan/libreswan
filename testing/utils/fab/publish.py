@@ -113,6 +113,10 @@ def test_files(logger, args, result):
             continue
         if os.path.isfile(dst) and os.path.samefile(src, dst):
             continue
+        if os.path.isfile(dst) \
+        and os.path.getsize(src) == os.path.getsize(dst) \
+        and os.path.getmtime(src) < os.path.getmtime(dst):
+            continue
         logger.info("copying '%s' to '%s'", src, dst)
         shutil.copyfile(src, dst)
     return dstdir
@@ -132,17 +136,21 @@ def test_output_files(logger, args, result):
         # copy simple files
         src = os.path.join(result.output_directory, name)
         dst = os.path.join(dstdir, name)
+        if os.path.isfile(dst) and os.path.samefile(src, dst):
+            continue
+        if os.path.isfile(dst) \
+        and os.path.getmtime(src) < os.path.getmtime(dst):
+            continue
         if good.search(name):
-            if os.path.isfile(dst) and os.path.samefile(src, dst):
-                continue
             logger.info("copying '%s' to '%s'", src, dst)
             shutil.copyfile(src, dst)
             continue
         # copy compressed files
         dst = dst + ".bz2"
+        if os.path.isfile(dst) \
+        and os.path.getmtime(src) < os.path.getmtime(dst):
+            continue
         if log.search(name):
-            if os.path.isfile(dst) and os.path.samefile(src, dst):
-                continue
             logger.info("compressing '%s' to '%s'", src, dst)
             with open(src, "rb") as f:
                 data = f.read()
