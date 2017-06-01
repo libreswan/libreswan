@@ -507,7 +507,6 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 	{
 		e->ev_time = monotimesum(mononow(), deltatime(delay->tv_sec));
 	}
-	loglog(RC_LOG_SERIOUS, "AA_201703 add %s", e->ev_name);
 	return e; /* compaitable with pluto_event_new for the time being */
 }
 
