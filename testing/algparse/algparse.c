@@ -150,7 +150,6 @@ int main(int argc UNUSED, char *argv[])
 	esp("aes_ctr256");
 	esp("serpent");
 	esp("twofish");
-	esp("mars");
 	/*
 	 * should this be supported - for now man page says not
 	 * esp("modp1536");
@@ -177,6 +176,7 @@ int main(int argc UNUSED, char *argv[])
 	esp("id3"); /* should be rejected; idXXX removed */
 	esp("aes-id3"); /* should be rejected; idXXX removed */
 	esp("aes_gcm-md5"); /* AEAD must have auth null */
+	esp("mars"); /* support removed */
 
 	/*
 	 * ah=
@@ -196,7 +196,6 @@ int main(int argc UNUSED, char *argv[])
 	ah("sha2_384");
 	ah("sha2_512");
 	ah("aes_xcbc");
-	ah("ripemd");
 
 	printf("\n---- AH tests that should fail ----\n");
 
@@ -208,6 +207,7 @@ int main(int argc UNUSED, char *argv[])
 	ah("null");
 	ah("aes_gcm");
 	ah("aes_ccm");
+	ah("ripemd"); /* support removed */
 
 	/*
 	 * ike=
