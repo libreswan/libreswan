@@ -124,6 +124,9 @@ def gauge_all(name, title, vlabel, values, config):
 
 def print_values(values, config):
     """Print values or config"""
+    if not values:
+        return
+
     derive_all(
         'vpn_ipsec_types', 'IPsec SA Types', 'total',
         values['total']['ipsec']['type'], config)
