@@ -46,6 +46,14 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 @core
 
+# Install the kernel stuff from the CD so it is somewhat stable.
+
+kernel-core
+kernel-devel
+kernel-headers
+kernel-modules
+kernel-modules-extra
+
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
