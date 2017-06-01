@@ -49,6 +49,7 @@ const struct oakley_group_desc oakley_group_modp1024 = {
 		.officname = "modp1024",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP1024,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP1024,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1024,
 		},
 	},
@@ -67,6 +68,7 @@ const struct oakley_group_desc oakley_group_modp1536 = {
 		.officname = "modp1536",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP1536,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP1536,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1536,
 		},
 	},
@@ -85,6 +87,7 @@ const struct oakley_group_desc oakley_group_modp2048 = {
 		.officname = "modp2048",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP2048,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP2048,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP2048,
 		},
 		.fips = TRUE,
@@ -104,6 +107,7 @@ const struct oakley_group_desc oakley_group_modp3072 = {
 		.officname = "modp3072",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP3072,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP3072,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP3072,
 		},
 		.fips = TRUE,
@@ -123,6 +127,7 @@ const struct oakley_group_desc oakley_group_modp4096 = {
 		.officname = "modp4096",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP4096,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP4096,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP4096,
 		},
 		.fips = TRUE,
@@ -142,6 +147,7 @@ const struct oakley_group_desc oakley_group_modp6144 = {
 		.officname = "modp6144",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP6144,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP6144,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP6144,
 		},
 		.fips = TRUE,
@@ -161,6 +167,7 @@ const struct oakley_group_desc oakley_group_modp8192 = {
 		.officname = "modp8192",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP8192,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_MODP8192,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP8192,
 		},
 		.fips = TRUE,
@@ -235,6 +242,7 @@ const struct oakley_group_desc oakley_group_dh22 = {
 		.officname = "dh22",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH22,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH22,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH22,
 		},
 	},
@@ -254,6 +262,7 @@ const struct oakley_group_desc oakley_group_dh23 = {
 		.officname = "dh23",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH23,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH23,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH23,
 		},
 		.fips = TRUE,
@@ -273,6 +282,7 @@ const struct oakley_group_desc oakley_group_dh24 = {
 		.officname = "dh24",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH24,
+			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH24,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH24,
 		},
 		.fips = TRUE,
