@@ -2674,7 +2674,8 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      unsigned int count, unsigned int total,
 				      const char *desc)
 {
-	struct state *st = md->st;
+	struct state *st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	struct ikev2_skf e;
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
@@ -2766,8 +2767,12 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 				       chunk_t *payload, /* read-only */
 				       const char *desc)
 {
-	struct state *const st = md->st;
+	struct state *const st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	unsigned int len;
+
+	release_fragments(st);
+	freeanychunk(st->st_tpacket);
 
 	len = (st->st_connection->addr_family == AF_INET) ?
 	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
