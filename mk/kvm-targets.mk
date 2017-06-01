@@ -488,7 +488,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200" \
 		--noreboot
 	: the reboot message from virt-install can be ignored
-	$(MAKE) kvm-upgrade-base
+	$(MAKE) kvm-upgrade-base-domain
 	cp $(KVM_KICKSTART_FILE) $@
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
