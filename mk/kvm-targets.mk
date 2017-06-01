@@ -64,6 +64,9 @@ VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCED
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
 # The KVM's operating system.
+#
+# It should be KVM_OS ?= fedora22 so an upgrade leaves the old stuff
+# in place?
 KVM_OS ?= fedora
 
 #
@@ -403,16 +406,19 @@ uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
 # Build KVM domains from scratch
 #
 
+# XXX: Once KVM_OS gets re-named to include the release, this hack can
+# be deleted.
+ifeq ($(KVM_OS),fedora)
+include testing/libvirt/fedora22.mk
+else
+include testing/libvirt/$(KVM_OS).mk
+endif
 
-# KVM_ISO_URL_$(KVM_OS) = ...
-KVM_ISO_URL_fedora21 = http://fedora.bhs.mirrors.ovh.net/linux/releases/21/Server/x86_64/iso/Fedora-Server-DVD-x86_64-21.iso
-KVM_ISO_URL_fedora22 = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
-KVM_ISO_URL_fedora25 = http://fedora.bhs.mirrors.ovh.net/linux/releases/25/Server/x86_64/iso/Fedora-Server-dvd-x86_64-25-1.3.iso
-# XXX: Next time the ISO needs an update, set KVM_OS to that release
-# and delete the below hack.
-KVM_ISO_URL_fedora = $(KVM_ISO_URL_fedora22)
-KVM_ISO_URL = $(KVM_ISO_URL_$(KVM_OS))
+ifeq ($(KVM_ISO_URL),)
+$(error KVM_ISO_URL not defined)
+endif
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
+
 .PHONY: kvm-iso
 kvm-iso: $(KVM_ISO)
 $(KVM_ISO): | $(KVM_BASEDIR)
@@ -447,22 +453,8 @@ define check-kvm-domain
 	fi
 endef
 
-# XXX: Once KVM_OS gets re-named to include the release, this hack can
-# be deleted.
-ifeq ($(KVM_OS),fedora)
-KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
-else
-KVM_KICKSTART_FILE = testing/libvirt/$(KVM_OS).ks
-endif
-KVM_DEBUGINFO ?= true
-
-ifeq ($(KVM_OS),fedora25)
-	# fedora 25 hack. run swan-transmogrify to initialze Network interscace
-	# It does not seems to run the first time when called from /etc/rc.d/rc.local
-	# This slows down installation. If you 7 prefixes it could cost 40 min:)
-	KVM_F25_HACK=$(KVMSH) --shutdown $(1)$(2) '/testing/guestbin/swan-transmogrify'
-else
-	KVM_F25_HACK=
+ifeq ($(KVM_KICKSTART_FILE),)
+$(error KVM_KICKSTART_FILE not defined)
 endif
 
 
@@ -482,8 +474,6 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 	$(call check-kvm-entropy)
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
-	sed -e 's/^kvm_debuginfo=.*/kvm_debuginfo=$(KVM_DEBUGINFO)/' \
-		< $(KVM_KICKSTART_FILE) > $@.tmp
 	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
@@ -494,13 +484,21 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 		$(VIRT_BASE_NETWORK) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
-		--initrd-inject=$@.tmp \
-		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $@).tmp console=tty0 console=ttyS0,115200" \
+		--initrd-inject=$(KVM_KICKSTART_FILE) \
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200" \
 		--noreboot
-	mv $@.tmp $@
 	: the reboot message from virt-install can be ignored
+	$(MAKE) kvm-upgrade-base
+	cp $(KVM_KICKSTART_FILE) $@
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
+
+.PHONY: kvm-upgrade-base-domain
+kvm-upgrade-base-domain:
+	$(if $(KVM_PACKAGES), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
+		$(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+	$(if $(KVM_DEBUGINFO), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
+		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
@@ -972,6 +970,13 @@ Low-level make targets:
 
     kvm-demolish                - also delete the base domain
                                   and default network
+
+  Upgrading everything:
+
+    make kvm-purge
+    make kvm-upgrade-base-domain
+    make kvm-install
+
 
 Standard targets:
 
