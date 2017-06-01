@@ -81,6 +81,11 @@ sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
 # sometimes it need another ifup
 ifup ens2 >> /var/tmp/network.log
 
+# workaround for vim fedora25 packaging bug. we want vim-enhanced and
+# that clashes with vim-minimal.
+
+rpm -e vim-minimal --nodeps
+
 mkdir /testing /source
 
 cat << EOD >> /etc/issue
