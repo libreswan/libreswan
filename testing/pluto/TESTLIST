@@ -884,7 +884,7 @@ kvmplutotest	fips-09-ikev2-gcm			good
 kvmplutotest	fips-10-ikev2-psk			good
 # a non-FIPS proposal gets mashed up instead of not parsing
 kvmplutotest    fips-11-ikev2-esp-dh                    wip
-kvmplutotest    fips-11-ikev2-esp-dh-wrong              wip
+kvmplutotest    fips-12-ikev2-esp-dh-wrong              wip
 
 #################################################################
 # passthrough tests
