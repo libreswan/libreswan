@@ -19,17 +19,18 @@ west #
 west #
  ping -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-4 packets transmitted, 2 received, 50% packet loss, time XXXX
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo "initdone"
 initdone
 west #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
 006 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
 west #
  iptables -t nat -L -n
@@ -151,16 +152,16 @@ IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

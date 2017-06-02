@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aes256
-003 phase2alg string error: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
+036 Failed to add connection "westnet-eastnet-aes256", esp="aes256-sha2_256-4096" is invalid: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
 west #
  echo "initdone"
 initdone
@@ -14,7 +14,7 @@ west #
  echo done
 done
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

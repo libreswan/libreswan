@@ -8,14 +8,12 @@ nic #
 nic #
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
 nic #
+ restorecon -Rv /etc/ocspd
+nic #
  systemctl start ocspd.service
 nic #
  echo "initdone"
 initdone
 nic #
  journalctl --no-pager -b -xn -u ocspd.service | egrep "status|request" | sed "s/^.*: //"
-request for certificate serial 2
-status VALID for 2
-request for certificate serial 4
-status VALID for 4
 

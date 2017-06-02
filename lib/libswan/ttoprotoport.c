@@ -25,7 +25,7 @@ char *src;	/* input string */
 size_t src_len;	/* length of input string, use strlen() if 0 */
 u_int8_t *proto;	/* extracted protocol number */
 u_int16_t *port;	/* extracted port number if it exists */
-int *has_port_wildcard;	/* set if port is %any */
+bool *has_port_wildcard;	/* set if port is %any */
 {
 	char *end, *service_name;
 	char proto_name[16];
@@ -33,7 +33,7 @@ int *has_port_wildcard;	/* set if port is %any */
 	long int l;
 	struct protoent *protocol;
 	struct servent *service;
-	int wildcard;
+	bool wildcard;
 
 	/* get the length of the string */
 	if (!src_len)
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 	const char *oops;
 	u_int8_t proto;
 	u_int16_t port;
-	int has_port_wildcard;
+	bool has_port_wildcard;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s {0x<hex>|0s<base64>|-r}\n", pgm);
@@ -165,7 +165,7 @@ char *pgm;
 	for (r = atodatatab; r->ascii != NULL; r++) {
 		u_int8_t proto;
 		u_int16_t port;
-		int has_port_wildcard;
+		bool has_port_wildcard;
 		err_t err = ttoprotoport(r->ascii, strlen(r->ascii),
 				&proto, &port, &has_port_wildcard);
 

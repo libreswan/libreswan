@@ -542,18 +542,11 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void libreswan_log_abort(const char *file_str, int line_no)
-{
-	loglog(RC_LOG_SERIOUS, "ABORT at %s:%d", file_str, line_no);
-	abort();
-}
-
 /* emit message to whack.
  * form is "ddd statename text" where
  * - ddd is a decimal status code (RC_*) as described in whack.h
  * - text is a human-readable annotation
  */
-static volatile sig_atomic_t dying_breath = FALSE;
 
 void whack_log(int mess_no, const char *message, ...)
 {
@@ -564,7 +557,7 @@ void whack_log(int mess_no, const char *message, ...)
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
 
-	if (wfd != NULL_FD || dying_breath) {
+	if (wfd != NULL_FD || lsw_dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
 		int prelen = 0;
@@ -579,7 +572,7 @@ void whack_log(int mess_no, const char *message, ...)
 		fmt_log(m + prelen, sizeof(m) - prelen, message, args);
 		va_end(args);
 
-		if (dying_breath) {
+		if (lsw_dying_breath) {
 			/* status output copied to log */
 			if (log_to_stderr || pluto_log_fp != NULL)
 				fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -618,26 +611,6 @@ void whack_log(int mess_no, const char *message, ...)
 	pthread_mutex_unlock(&log_mutex);
 }
 
-void libreswan_passert_fail(const char *file_str,
-			    unsigned long line_no,
-			    const char *func_str,
-			    const char *fmt, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, fmt);
-	fmt_log(m, sizeof(m), fmt, args);
-	va_end(args);
-
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED: %s (in %s() at %s:%lu)",
-	       m, func_str, file_str, line_no);
-	dying_breath = TRUE;
-	/* exiting correctly doesn't always work */
-	libreswan_log_abort(file_str, line_no);
-}
-
 lset_t
 	base_debugging = DBG_NONE, /* default to reporting nothing */
 	cur_debugging =  DBG_NONE;
@@ -661,9 +634,17 @@ void extra_debugging(const struct connection *c)
 	 * we are processing, because it may not be clear in later debugging.
 	 */
 	DBG(~LEMPTY, {
+		char buf[CONN_INST_BUF] =  "";
 		char b1[CONN_INST_BUF];
-		DBG_log("processing connection \"%s\"%s",
-			c->name, fmt_conn_instance(c, b1));
+		ipstr_buf ra;
+		/* fmt_conn_instance include the same if  POLICY_OPPORTUNISTIC */
+		if (cur_state != NULL && !(c->policy & POLICY_OPPORTUNISTIC)) {
+			snprintf(buf, sizeof(buf), " #%lu %s",
+				cur_state->st_serialno,
+				ipstr(&cur_state->st_remoteaddr, &ra));
+		}
+		DBG_log("processing connection \"%s\"%s%s",
+			c->name, fmt_conn_instance(c, b1), buf);
 	});
 
 }

@@ -2,5 +2,5 @@
 modprobe cast6_generic
 modprobe cast5_generic
 modprobe cast_common
-strongswan starter --debug-all
+service strongswan start
 echo "initdone"

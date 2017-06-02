@@ -26,8 +26,6 @@
  *
  */
 
-#ifdef PFKEY
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -1914,5 +1912,3 @@ bool pfkey_plumb_mast_device(int mast_dev)
 	return TRUE;
 }
 #endif  /* KLIPS_MAST */
-
-#endif  /* PFKEY */

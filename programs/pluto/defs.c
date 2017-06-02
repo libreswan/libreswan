@@ -146,8 +146,9 @@ const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
 			time_left /= secs_per_minute;
 			unit = "minute";
 		}
-		snprintf(buf, sizeof(buf), "warning (expires in %ld %s%s)",
-			time_left, unit, (time_left == 1) ? "" : "s");
+		snprintf(buf, sizeof(buf), "warning (expires in %jd %s%s)",
+                         (intmax_t) time_left, unit,
+                         (time_left == 1) ? "" : "s");
 		return buf;
 	}
 }

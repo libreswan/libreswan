@@ -87,11 +87,13 @@ bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 				&& sameaddr(&(c)->spd.this.host_nexthop, \
 					&(d)->spd.this.host_nexthop))
 
-/* forward declaration */
+/* forward declarations */
 static void set_text_said(char *text_said,
-			const ip_address *dst,
-			ipsec_spi_t spi,
-			int proto);
+			  const ip_address *dst,
+			  ipsec_spi_t spi,
+			  int proto);
+static unsigned ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth,
+					int *alg);
 
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
@@ -114,10 +116,6 @@ uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
-
-
-static struct event *ev_fd = NULL; /* could these two go in kernel_ops AA_2015 ??? */
-static struct event *ev_pq = NULL;
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
@@ -1975,7 +1973,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			inbound ? st->st_esp.our_keymat : st->st_esp.
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
-		const struct esp_info *ei;
 
 		/*
 		 * ??? table of non-registered algorithms?
@@ -1988,7 +1985,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * kernel_alg_esp_info()) it may well be possible to
 		 * delete this table.
 		 */
-		static const struct esp_info esp_info[] = {
+		static const struct kernel_alg_info hardwired_info[] = {
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
@@ -2088,21 +2085,25 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 				ta->encrypt, ta->enckeylen, ta->integ_hash));
 
-		for (ei = esp_info; ; ei++) {
+		const struct kernel_alg_info *ei = NULL;
+		struct kernel_alg_info ki = { .transid = 0, }; /* RHEL-6 GCC breakage */
+		for (ei = hardwired_info; ; ei++) {
 
 			/* if it is the last key entry, then ask algo */
-			if (ei == &esp_info[elemsof(esp_info)]) {
+			if (ei == &hardwired_info[elemsof(hardwired_info)]) {
 				/*
 				 * Check for additional kernel alg
 				 * Note: result will be in a static buffer!
 				 */
 				struct esb_buf buftn, bufan;
 
-				ei = kernel_alg_esp_info(ta->encrypt,
-							ta->enckeylen,
-							ta->integ_hash);
-				if (ei != NULL)
+				if (kernel_alg_info(ta->encrypt,
+						     ta->enckeylen,
+						     ta->integ_hash,
+						     &ki)) {
+					ei = &ki;
 					break;
+				}
 
 				loglog(RC_LOG_SERIOUS,
 					"ESP transform %s(%d) / auth %s not implemented or allowed",
@@ -2760,9 +2761,10 @@ void init_kernel(void)
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
-	/* Note: kernel_ops is const but pluto_event_new cannot know that */
-	ev_fd = pluto_event_new(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
-			kernel_process_msg_cb, (void *)kernel_ops, NULL);
+	/* Note: kernel_ops is const but pluto_event_add cannot know that */
+	pluto_event_add(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
+			kernel_process_msg_cb, (void *)kernel_ops, NULL,
+			"KERNEL_FD");
 
 	if (kernel_ops->process_queue != NULL) {
 		/*
@@ -2773,9 +2775,10 @@ void init_kernel(void)
 		 */
 		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
 
-		/* Note: kernel_ops is read-only but pluto_event_new cannot know that */
-		ev_pq = pluto_event_new(NULL_FD, EV_TIMEOUT | EV_PERSIST,
-				kernel_process_queue_cb, (void *)kernel_ops, &delay);
+		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
+		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,
+				kernel_process_queue_cb, (void *)kernel_ops,
+				&delay, "KERNEL_PROCESS_Q_FD");
 	}
 }
 
@@ -3590,19 +3593,6 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 	return TRUE;
-}
-
-void free_kernelfd(void)
-{
-	if (ev_fd != NULL) {
-		event_free(ev_fd);
-		ev_fd = NULL;
-	}
-	if (ev_pq != NULL) {
-		event_free(ev_pq);
-		ev_pq = NULL;
-	}
-
 }
 
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,

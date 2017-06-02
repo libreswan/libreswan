@@ -36,15 +36,9 @@ struct hash_context {
 static struct hash_context *init(const struct hash_desc *hash_desc,
 				 const char *name, lset_t debug)
 {
-	SECOidTag tag = PK11_MechanismToAlgtag(hash_desc->common.nss_mechanism);
-	if (DBGP(debug)) {
-		DBG_log("%s %s hasher: mapped mechanism %lx to tag %x",
-			name, hash_desc->common.name,
-			hash_desc->common.nss_mechanism, tag);
-	}
 	struct hash_context *hash = alloc_thing(struct hash_context, "hasher");
 	*hash = (struct hash_context) {
-		.context = PK11_CreateDigestContext(tag),
+		.context = PK11_CreateDigestContext(hash_desc->nss_oid_tag),
 		.name = name,
 		.debug = debug,
 		.desc = hash_desc,
@@ -135,7 +129,7 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 				    const char *name, lset_t debug,
 				    const char *symkey_name, PK11SymKey *symkey)
 {
-	CK_MECHANISM_TYPE derive = nss_digest_derivation(hash_desc->common.nss_mechanism);
+	CK_MECHANISM_TYPE derive = hash_desc->nss_derive_mechanism;
 	SECItem *param = NULL;
 	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY; /* bogus */
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
@@ -156,7 +150,20 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	return result;
 }
 
+static void nss_hash_check(const struct hash_desc *hash)
+{
+	const struct ike_alg *alg = &hash->common;
+	// passert_ike_alg(alg, hash->common.nss_mechanism == 0);
+	passert_ike_alg(alg, hash->nss_oid_tag > 0);
+	passert_ike_alg(alg, hash->nss_derive_mechanism > 0);
+	passert_ike_alg(alg, (nss_digest_derivation(hash->common.nss_mechanism)
+			      == hash->nss_derive_mechanism));
+	passert_ike_alg(alg, (PK11_MechanismToAlgtag(hash->common.nss_mechanism)
+			      == hash->nss_oid_tag));
+}
+
 const struct hash_ops ike_alg_nss_hash_ops = {
+	nss_hash_check,
 	init,
 	digest_symkey,
 	digest_bytes,

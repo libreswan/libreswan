@@ -132,12 +132,16 @@ dnf install -y 2>&1 \
     glibc-devel \
     hping3 \
     ipsec-tools \
+    ldns \
+    ldns-devel \
     libcap-ng-devel \
     libfaketime \
     libevent-devel \
+    libseccomp-devel \
     libselinux-devel \
     lsof \
     nc \
+    nsd \
     nspr-devel \
     nss-devel \
     nss-tools \
@@ -178,6 +182,7 @@ $kvm_debuginfo && dnf debuginfo-install -y \
     libevent-devel \
     libgcc \
     libidn \
+    libseccomp \
     libselinux \
     libssh2 \
     nspr \

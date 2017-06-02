@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -700,7 +700,7 @@ static const char *const ike_idtype_name[] = {
 	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
-	"ID_USER_FQDN",	/* v1 only */
+	"ID_IPV4_ADDR_SUBNET", /* v1 only */
 	"ID_IPV6_ADDR",
 	"ID_IPV6_ADDR_SUBNET",	/* v1 only */
 	"ID_IPV4_ADDR_RANGE",	/* v1 only */
@@ -714,8 +714,8 @@ static const char *const ike_idtype_name[] = {
 
 /* IKEv1 */
 enum_names ike_idtype_names = {
-	ID_IPV4_ADDR, ID_FC_NAME,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_FC_NAME-ID_IPV4_ADDR+1,
+	ID_IPV4_ADDR, ID_NULL,
+	&ike_idtype_name[ID_IPV4_ADDR], ID_NULL-ID_IPV4_ADDR+1,
 	NULL, /* prefix */
 	NULL
 };
@@ -1443,6 +1443,7 @@ enum_names ikev2_cp_type_names = {
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
+	"IKEv2_AUTH_RESERVED", /* 0 */
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
 	"IKEv2_AUTH_DSA(UNUSED)",
@@ -1459,7 +1460,7 @@ static const char *const ikev2_auth_name[] = {
 };
 
 enum_names ikev2_auth_names = {
-	IKEv2_AUTH_RSA,
+	IKEv2_AUTH_RESERVED,
 	IKEv2_AUTH_NULL,
 	ARRAY_REF(ikev2_auth_name),
 	NULL, /* prefix */
@@ -2219,6 +2220,61 @@ int enum_search(enum_names *ed, const char *str)
 	return -1;
 }
 
+int enum_match(enum_names *ed, const char *string)
+{
+	enum_names  *p;
+
+	for (p = ed; p != NULL; p = p->en_next_range) {
+		unsigned long en;
+
+		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+		for (en = p->en_first; en <= p->en_last; en++) {
+			const char *name = p->en_names[en - p->en_first];
+
+			if (name == NULL) {
+				continue;
+			}
+
+			passert(en <= INT_MAX);
+
+			/*
+			 * Try matching the entire name including any
+			 * prefix.  If needed, ignore any trailing
+			 * '(...)'
+			 */
+			if (strcaseeq(name, string)) {
+				return en;
+			}
+			if (strncaseeq(name, string, strlen(string))
+			    && name[strlen(string)] == '('
+			    && name[strlen(name) - 1] == ')') {
+				return en;
+			}
+
+			/*
+			 * Try matching the name minus any prefix.  If
+			 * needed, ignore any trailing '(...)'.
+			 */
+			if (ed->en_prefix == NULL) {
+				continue;
+			}
+			const char *short_name = strip_prefix(name, ed->en_prefix);
+			if (short_name == name) {
+				continue;
+			}
+			if (strcaseeq(short_name, string)) {
+				return en;
+			}
+			if (strncaseeq(short_name, string, strlen(string))
+			    && short_name[strlen(string)] == '('
+			    && short_name[strlen(short_name) - 1] == ')') {
+				return en;
+			}
+
+		}
+	}
+	return -1;
+}
 
 /* choose table from struct enum_enum_names */
 enum_names *enum_enum_table(enum_enum_names *een,

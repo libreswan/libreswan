@@ -1,8 +1,0 @@
-west to east, both do not have their peer certificates cached
-west has leftsendcert=always with a specific rightca
-
-east has strictcrlpolicy=yes and the mainca crl is cached locally
-
-NOTE: this test is obsoleted but it might be useful to show that
-      we do load the CRLs from /etc/ipsec.d/crls into NSS on
-      service startup

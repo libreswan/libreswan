@@ -411,6 +411,9 @@ stf_status RSA_check_signature_gen(struct state *st,
 		struct pubkey_list *p, **pp;
 		int pathlen;
 		realtime_t nw = realnow();
+		char thatid[IDTOA_BUF];
+
+		idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
 
 		pp = &pluto_pubkeys;
 
@@ -425,7 +428,11 @@ stf_status RSA_check_signature_gen(struct state *st,
 		}
 		for (p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
+			char printkid[IDTOA_BUF];
 
+			idtoa(&key->id, printkid, IDTOA_BUF);
+			DBG(DBG_CONTROL, DBG_log("checking keyid '%s' for match with '%s'",
+				printkid, thatid));
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
 			    trusted_ca_nss(key->issuer, c->spd.that.ca,
@@ -768,7 +775,42 @@ err_t add_public_key(const struct id *id,
 	return NULL;
 }
 
+err_t add_ipseckey(const struct id *id,
+		     enum dns_auth_level dns_auth_level,
+		     enum pubkey_alg alg,
+		     u_int32_t ttl, u_int32_t ttl_used,
+		     const chunk_t *key,
+		     struct pubkey_list **head)
+{
+	struct pubkey *pk = alloc_thing(struct pubkey, "ipseckey publickey");
 
+	/* first: algorithm-specific decoding of key chunk */
+	switch (alg) {
+	case PUBKEY_ALG_RSA:
+	{
+		err_t ugh = unpack_RSA_public_key(&pk->u.rsa, key);
+
+		if (ugh != NULL) {
+			pfree(pk);
+			return ugh;
+		}
+	}
+	break;
+	default:
+		bad_case(alg);
+	}
+
+	pk->dns_ttl = ttl;
+	pk->until_time = pk->installed_time = realnow();
+	pk->until_time.real_secs += ttl_used; /* check for overflow ? */
+	pk->id = *id;
+	pk->dns_auth_level = dns_auth_level;
+	pk->alg = alg;
+	pk->issuer = empty_chunk; /* ipseckey has no issuer */
+
+	install_public_key(pk, head);
+	return NULL;
+}
 
 /*
  *  list all public keys in the chained list

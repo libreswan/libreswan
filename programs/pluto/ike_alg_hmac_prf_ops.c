@@ -192,7 +192,14 @@ static void final_bytes(struct prf_context **prfp,
 	*prfp = NULL;
 }
 
+static void hmac_prf_check(const struct prf_desc *prf)
+{
+	const struct ike_alg *alg = &prf->common;
+	passert_ike_alg(alg, prf->hasher != NULL);
+}
+
 const struct prf_ops ike_alg_hmac_prf_ops = {
+	hmac_prf_check,
 	init_symkey,
 	init_bytes,
 	digest_symkey,

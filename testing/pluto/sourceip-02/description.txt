@@ -1,9 +1,0 @@
-This tests leftsourceip= setting when the last IPsec SA expires.
-Currently, the route is not deleted, causing packet flow issues.
-This happens when phase 1 is still up but phase 2 is down, on the receiver
-side. West is using netkey for this.
-
-East is configured to have a tunnel to the sunset network.
-Sunset is alive on the westnet.
-
-east will use internal IP to talk to sunset.

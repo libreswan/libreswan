@@ -60,7 +60,7 @@ east NOW
 192.1.2.23/32      -> 192.0.1.0/24       => %pass
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23
 192.0.1.0/24 via 192.1.2.45 dev ipsec0
 0.0.0.0/1 via 192.1.2.45 dev ipsec0
@@ -98,7 +98,7 @@ east NOW
 192.1.2.23/32      -> 192.0.1.0/24       => %pass
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23
 192.0.1.0/24 via 192.1.2.45 dev ipsec0
 0.0.0.0/1 via 192.1.2.45 dev ipsec0

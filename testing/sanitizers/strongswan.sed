@@ -9,7 +9,7 @@ s/SPIs: [0-9a-z]*_i\([\*]*\) [0-9a-z]*_r\([\*]*\)/SPIs: SPISPI_i\1 SPISPI_r\2/g
 s/^\(.*  INSTALLED, T[A-Z]*, .* SPIs: \)\(.*_i \)\(.*_o\)$/\1SPISPI_i SPISPI_o/g
 s/^\(scheduling reauthentication in \)\([0-9]*s\)/\1XXXs/g
 s/^\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g
-s/[0-9]* bytes_i (\([0-9]*\) pkts, [0-9]*s ago), [0-9]* bytes_o (\([0-9]*\) pkts, [0-9]*s ago), rekeying in [0-9]* minutes/XXX bytes_i (\1 pkts, XXs ago), XXX bytes_o (\2 pkts, XXs ago), rekeying in XX minutes/g
+s/[0-9]* bytes_i ([0-9]* pkts, [0-9X]*s ago), [0-9X]* bytes_o ([0-9X]* pkts, [0-9X]*s ago), rekeying in [0-9X]* minutes/XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
 s/[0-9]* bytes_i ([0-9]*s ago), [0-9]* bytes_o ([0-9]* pkts, [0-9]*s ago), rekeying in [0-9]* minutes/XXX bytes_i (xxs ago), XX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
 s/[0-9]* bytes_i, [0-9]* bytes_o, rekeying in [0-9]* minutes/XX bytes_i, XX bytes_o, rekeying in XX minutes/g
 s/([0-9]* bytes)/(XXX bytes)/g
@@ -25,3 +25,7 @@ s/auth-trunc \([^ ]*\) 0x[a-z0-9]* \(.*\)$/auth-trunc \1 0xKEY \2/g
 # strip out our own changing vendor id
 s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/g
 s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
+s/ESTABLISHED [0-9]* seconds ago/ESTABLISHED XXX seconds ago/g
+s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
+s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
+

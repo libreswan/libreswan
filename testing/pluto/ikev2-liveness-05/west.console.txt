@@ -67,7 +67,6 @@ west #
  # But shuntstatus only shows bare shunts, not connection shunts :(
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -77,6 +76,9 @@ west #
 west #
  ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=12075 DF PROTO=ICMP TYPE=8 CODE=0 ID=1811 SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=12949 DF PROTO=ICMP TYPE=8 CODE=0 ID=1811 SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=13487 DF PROTO=ICMP TYPE=8 CODE=0 ID=1811 SEQ=1 
 --- 192.0.2.254 ping statistics ---
 0 packets transmitted, 0 received
 west #
@@ -95,7 +97,6 @@ west #
  # Tunnel should be back up now even without triggering traffic
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=504, id='@east'
 west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -103,17 +104,20 @@ west #
 west #
  # ping should reply
 west #
- ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -W 1 -w 4 -q -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=17980 DF PROTO=ICMP TYPE=8 CODE=0 ID=1818 SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=18252 DF PROTO=ICMP TYPE=8 CODE=0 ID=1818 SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=18731 DF PROTO=ICMP TYPE=8 CODE=0 ID=1818 SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=19475 DF PROTO=ICMP TYPE=8 CODE=0 ID=1818 SEQ=1 
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+0 packets transmitted, 0 received
 west #
  echo done
 done
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; core=`ls /tmp/core* 2>/dev/null`; gdb --batch PATH/libexec/ipsec/pluto $core; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

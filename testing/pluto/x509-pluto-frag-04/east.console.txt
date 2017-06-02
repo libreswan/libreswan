@@ -15,10 +15,10 @@ east #
 initdone
 east #
  grep "fragment" /tmp/pluto.log
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:23:12:00:00:de:ad:ba:08:00 SRC=192.1.3.209 DST=192.1.2.23 LEN=2088 TOS=0x00 PREC=0x00 TTL=63 ID=XXXXX PROTO=UDP SPT=500 DPT=500 LEN=2068 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:23:12:00:00:de:ad:ba:08:00 SRC=192.1.3.209 DST=192.1.2.23 LEN=XXXX TOS=0x00 PREC=0x00 TTL=63 ID=XXXXX PROTO=UDP SPT=500 DPT=500 LEN=XXXX 
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

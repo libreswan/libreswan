@@ -1,5 +1,5 @@
 #
-# Libreswan IPSec implementation, KLIPS+OCF kernel config defaults
+# Libreswan IPsec implementation, KLIPS+OCF kernel config defaults
 #
 
 #
@@ -24,7 +24,7 @@ CONFIG_IP_MASQUERADE_IPSEC=n
 # To config as static (preferred), 'y'.  To config as module, 'm'.
 CONFIG_KLIPS=m
 
-# To do tunnel mode IPSec, this must be enabled.
+# To do tunnel mode IPsec, this must be enabled.
 CONFIG_KLIPS_IPIP=y
 
 # To enable authentication, say 'y'.   (Highly recommended)

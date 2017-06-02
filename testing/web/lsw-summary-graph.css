@@ -1,5 +1,4 @@
-.axis path,
-.axis line {
+.axis path, .axis line {
   fill: none;
   stroke: #000;
   shape-rendering: crispEdges;
@@ -8,33 +7,47 @@
 .line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 1.5px;
+  stroke-width: 1px;
 }
-#dataTable.classy {
-	color: red;
-}
+
+/* applied to circles AND text */
 
 .passed {
-    fill: green
+    fill: green;
 }
-
 .failed {
-    fill: orange
+    fill: orange;
 }
-
 .unresolved {
-    fill: red
+    fill: red;
 }
-
 .untested {
-    fill: blue
+    fill: blue;
 }
 
-.pending {
+/* applied to circles only */
+.passed > circle.current {
+    fill: white;
+    stroke: green;
+}
+.failed > circle.current {
+    fill: white;
+    stroke: orange;
+}
+.unresolved > circle.current {
+    fill: white;
+    stroke: red;
+}
+.untested > circle.current {
+    fill: white;
+    stroke: blue;
+}
+
+text.current {
+    fill: brown;
+}
+
+.empty {
     fill: white;
     stroke: brown;
-}
-
-.current {
-    fill: brown;
 }

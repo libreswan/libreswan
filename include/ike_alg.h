@@ -5,6 +5,17 @@
 #include <pk11pub.h>
 
 /*
+ * More meaningful passert.
+ */
+#define passert_ike_alg(ALG, ASSERTION) {				\
+		bool __assertion = (ASSERTION);				\
+		if (!__assertion) {					\
+			PASSERT_FAIL("algorithm '%s' fails: %s",	\
+				     (ALG)->name, #ASSERTION);	\
+		}							\
+	}
+
+/*
  * Different algorithms used by IKEv1/IKEv2.
  */
 enum ike_alg_type {
@@ -20,8 +31,10 @@ enum ike_alg_type {
 
 /*
  * User frendly string representing the algorithm type (family).
+ * "...Name()" returns the capitalized name.
  */
 const char *ike_alg_type_name(enum ike_alg_type type);
+const char *ike_alg_type_Name(enum ike_alg_type type);
 
 /*
  * Different lookup KEYs used by IKEv1/IKEv2
@@ -38,6 +51,19 @@ enum ike_alg_key {
  * User friendly string representing the key (protocol family).
  */
 const char *ike_alg_key_name(enum ike_alg_key key);
+
+/*
+ * Look for NAME within TYPE algorithms.
+ *
+ * The first version uses the "ike_alg" tables only.
+ *
+ * The second variant uses the ietf_constant.h enum tables and is only
+ * intended as a way to identify algorithms defined by IETF but not
+ * supported here.
+ */
+const struct ike_alg *ike_alg_byname(enum ike_alg_type type, const char *name);
+int ike_alg_enum_match(enum ike_alg_type type, enum ike_alg_key key,
+		       const char *name);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
@@ -190,21 +216,42 @@ struct ike_alg {
 };
 
 struct encrypt_desc {
-	struct ike_alg common;	/* MUST BE FIRST and writable */
+	struct ike_alg common;	/* MUST BE FIRST */
+	/*
+	 * The block size of the encryption algorithm in bytes.
+	 */
 	const size_t enc_blocksize;
 	/*
 	 * Does this algorithm require padding to the above
 	 * ENC_BLOCKSIZE bytes?
 	 *
-	 * This shouldn't be confused with the need to pad things to
+	 * This shouldn't be confused with the need to pad payloads to
 	 * 4-bytes (ESP) or not at all (IKE).
 	 */
 	const bool pad_to_blocksize;
+
 	/*
-	 * Number of additional bytes that should be extracted from
-	 * the initial shared-secret.
+	 * For stream and AEAD ciphers, bytes in addition to the KEY,
+	 * that need to be extracted from initial shared-secret
+	 * (PRF+).  It is concatenated to other material to form an
+	 * ENC_BLOCKSIZE sized "starting variable".
 	 *
-	 * CTR calls this nonce; CCM calls it salt.
+	 * Note: the term "starting variable" comes from Wikipedia.
+	 * The more common term Initialization Vector (IV) has
+	 * conflicting definitions - the RFCs seem to use it to
+	 * describe the chunk of starting variable sent over the wire.
+	 * Another common term is "counter block".
+	 *
+	 * For CTR mode this is called the "nuance value in the
+	 * counter block" (AES-CTR - RFC 3686).  It, the [wire] IV,
+	 * and block counter are concatenated to form the "starting
+	 * variable".
+	 *
+	 * For AEAD, this is called the "salt" (RFC 5282, RFC-4309 -
+	 * AES-CCM-ESP, RFC-4106 - AES-GCM-ESP).  It, and the [wire]
+	 * IV are concatenated to form the "nunce"; the block counter
+	 * and the "nunce" are then concatenated to form the "starting
+	 * variable".
 	 */
 	const size_t salt_size;
 	/*
@@ -237,9 +284,11 @@ struct encrypt_desc {
 	 * If a key-length is required (!keylen_omitted) but omitted
 	 * from the {ike,esp}= line, then both KEYDEFLEN and (if
 	 * different) key_bit_lengths[0] are used in proposals.
+	 *
+	 * The selected keylen bits of keying material are extracted
+	 * from the initial shared-secret (PRF+).
 	 */
 	const unsigned key_bit_lengths[4];
-
 	/*
 	 * The default key length.
 	 *
@@ -260,6 +309,11 @@ struct encrypt_desc {
 };
 
 struct encrypt_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct encrypt_desc *alg);
+
 	/*
 	 * Perform simple encryption.
 	 *
@@ -303,6 +357,21 @@ struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	const size_t hash_digest_len;
 	const size_t hash_block_size;
+
+	/*
+	 * For NSS.
+	 *
+	 * The NSS_OID_TAG identifies the the PK11 digest (hash)
+	 * context that should be passed to PK11_Digest*() while
+	 * NSS_DERIVE_MECHANISM specifies the equivalent derivation
+	 * used by CKA_DERIVE.
+	 *
+	 * Need to specify both as NSS doesn't have a way to go from
+	 * one to the other.
+	 */
+	SECOidTag nss_oid_tag;
+	CK_MECHANISM_TYPE nss_derive_mechanism;
+
 	const struct hash_ops *hash_ops;
 };
 
@@ -312,6 +381,11 @@ struct hash_desc {
 struct hash_context;
 
 struct hash_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct hash_desc *alg);
+
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
 				     const char *name, lset_t debug);
 	void (*digest_symkey)(struct hash_context *hash,
@@ -368,7 +442,7 @@ struct prf_desc {
 	 *
 	 * If non-NULL its values must be consistent with the above.
 	 */
-	struct hash_desc *hasher;
+	const struct hash_desc *hasher;
 	/*
 	 * FIPS controlled native implementation.
 	 */
@@ -376,6 +450,11 @@ struct prf_desc {
 };
 
 struct prf_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct prf_desc *alg);
+
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
 					   const char *name, lset_t debug,
 					   const char *key_name, PK11SymKey *key);
@@ -428,19 +507,8 @@ struct integ_desc {
 	 *
 	 * Non-NULL IFF there is a native implementation.
 	 */
-	struct prf_desc *prf;
+	const struct prf_desc *prf;
 };
-
-/*
- * Find the algorithm matching NAME.
- */
-
-#ifdef NOT_YET
-const struct encrypt_desc *encrypt_desc_byname(const char *name);
-const struct prf_desc *prf_desc_byname(const char *name);
-const struct integ_desc *integ_desc_byname(const char *name);
-#endif
-const struct oakley_group_desc *group_desc_byname(const char *name);
 
 /*
  * Find the IKEv2 ENCRYPT/PRF/INTEG algorithm using IKEv2 wire-values.
@@ -540,6 +608,11 @@ struct oakley_group_desc {
 };
 
 struct dhmke_ops {
+	/*
+	 * Delegate responsiblity for checking OPS specific fields.
+	 */
+	void (*const check)(const struct oakley_group_desc *alg);
+
 	/*
 	 * Create KE.
 	 *

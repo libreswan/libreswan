@@ -9,5 +9,5 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 modprobe cast6_generic
 modprobe cast5_generic
 modprobe cast_common
-strongswan starter --debug-all
+service strongswan start
 echo "initdone"

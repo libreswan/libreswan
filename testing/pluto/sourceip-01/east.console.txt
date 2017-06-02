@@ -1,0 +1,14 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-sourceip
+002 added connection description "westnet-eastnet-sourceip"
+east #
+ echo "initdone"
+initdone
+east #
+ 

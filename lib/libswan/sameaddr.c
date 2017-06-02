@@ -17,7 +17,7 @@
 #include "libreswan.h"
 #include "constants.h"
 
-static int samenbits(const ip_address *a, const ip_address *b, int n);
+static bool samenbits(const ip_address *a, const ip_address *b, int n);
 
 /*
  * addrcmp - compare two addresses

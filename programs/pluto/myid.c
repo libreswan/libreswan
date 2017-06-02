@@ -155,7 +155,8 @@ void free_myFQDN(void)
 	}
 }
 
-/* build an ID payload
+/*
+ * Build an ID payload
  * Note: no memory is allocated for the body of the payload (tl->ptr).
  * We assume it will end up being a pointer into a sufficiently
  * stable datastructure.  It only needs to last a short time.
@@ -176,6 +177,7 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	case ID_FQDN:
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
+	case ID_FROMCERT:
 	case ID_KEY_ID:
 		*tl = id->name;
 		break;

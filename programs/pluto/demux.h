@@ -107,7 +107,7 @@ struct msg_digest {
 	struct isakmp_quirks quirks;
 };
 
-extern struct msg_digest *alloc_md(void);
+extern struct msg_digest *alloc_md(char *mdname);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
 

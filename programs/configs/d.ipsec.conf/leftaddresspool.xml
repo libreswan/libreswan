@@ -1,10 +1,10 @@
   <varlistentry>
   <term><emphasis remap='B'>leftaddresspool</emphasis></term>
   <listitem>
-<para> address pool from with the XAUTH server can assign IP addresses to clients.
-When configured as an XAUTH server, using
+<para> address pool from with the IKEv1 XAUTH or IKEv2 server can assign IP addresses to clients.
+When configured as a server, using
 <emphasis remap='I'>leftxauthserver=yes</emphasis> this option specifies the address pool from
-which IP addresses are taken to assign the the XAUTH clients. The syntax of the address pool specifies a
+which IP addresses are taken to assign the clients. The syntax of the address pool specifies a
 range (not a CIDR), in the following syntax: <emphasis remap='I'>rightaddresspool=192.168.1.100-192.168.1.200</emphasis>.
 Generally, the <emphasis remap='I'>rightaddresspool=</emphasis> option will be accompanied by
 <emphasis remap='I'>rightxauthclient=yes</emphasis>, <emphasis remap='I'>leftxauthserver=yes</emphasis> and <emphasis remap='I'>leftsubnet=0.0.0.0/0</emphasis> option.

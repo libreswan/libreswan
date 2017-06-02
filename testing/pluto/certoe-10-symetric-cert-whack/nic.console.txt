@@ -19,7 +19,7 @@ OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 nic #
 nic #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 nic #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

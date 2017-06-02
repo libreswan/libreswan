@@ -4,41 +4,65 @@
 //
 //     [{[{}]}, ...]
 //
-// into lists of headers:
+// into an array of header rows:
 //
 //     [{}, ...]
 //     [{}, ...]
 //
 // with a span value
+//
+// This is effectively a leaf walk.
 
-function lsw_table_headers(columns, headers, depth) {
-    if (headers[depth] === undefined) {
-	headers[depth] = []
-    }
-    var span = 0
-    columns.forEach(function(column) {
-	headers[depth].push(column)
-	if (column.columns === undefined) {
-	    column.span = 1
-	} else {
-	    column.span = lsw_table_headers(column.columns, headers, depth + 1)
+function lsw_table_headers(recursion, start, table, headers) {
+    var this_row = 0
+    if (table.length) {
+	table.span = 0
+	table.forEach(function(column) {
+	    // Keep track of the number of rows below this one.
+	    var rows_below = lsw_table_headers(recursion + 1,
+					       start + table.span,
+					       column, headers)
+	    // If this column is short a few rows, add them.
+	    for (var row = rows_below; row < this_row; row++) {
+		headers[row].push({
+		    span: column.span
+		})
+	    }
+	    this_row = Math.max(this_row, rows_below)
+	    table.span += column.span
+	})
+	// If this row is missing, add it with skips to the left; but
+	// not the very first row as that has no title.
+	if (recursion > 0) {
+	    while (headers.length <= this_row) {
+		headers.push([{
+		    span: start,
+		}])
+	    }
+	    headers[this_row].push(table)
 	}
-	span += column.span
-    })
-    return span
+    } else {
+	headers[0].push(table)
+	table.span = 1
+    }
+    return this_row + 1
 }
 
 function lsw_table(table) {
 
     // Recursively convert the columns into rows of headers.
 
-    table.headers = []
-    table.span = lsw_table_headers(table.columns, table.headers, 0)
+    table.headers = [[]]
+    table.span = lsw_table_headers(0, 0, table.columns, table.headers)
+    table.headers.reverse()
 
     // Fuge up "table.column" inheritance
 
     table.headers.forEach(function(header) {
 	header.forEach(function(column) {
+	    if (column.title === undefined) {
+		column.title = ""
+	    }
 	    if (column.value === undefined) {
 		column.index = column.title.toLowerCase().replace(/ /g, "_")
 		column.value = function(row) {
@@ -73,7 +97,7 @@ function lsw_table(table) {
 	table.sort.column = table.headers[table.headers.length - 1][0]
     }
     if (table.sort.assending === undefined) {
-	table.sort.assending = true
+	table.sort.assending = false
     }
 
     // Fudge up select inheritance
@@ -106,8 +130,7 @@ function lsw_table(table) {
     // Create the table; and save the table wide data.
 
     d3.select("#" + table.id)
-	.append("table")
-	.attr("class", table.id)
+	.append("table").attr("class", table.id)
 	.data([table])
 
     // Create the headers from the column
@@ -130,10 +153,17 @@ function lsw_table(table) {
 	.append("th")
 	.html(function(column) {
 	    // return this column
-	    return column.title
+	    return column && column.title || ""
 	})
-	.style("text-align", function(column) {
-	    return column.header_align || null
+	.each(function(column) {
+	    var styles = column.style && column.style.header
+	    if (styles) {
+		var selection = d3.select(this)
+		Object.keys(styles).forEach(function(name) {
+		    value = styles[name]
+		    selection.style(name, value)
+		})
+	    }
 	})
 	.attr("colspan", function(column) {
 	    return column.span
@@ -148,7 +178,7 @@ function lsw_table(table) {
 		table.sort.assending = !table.sort.assending
 	    } else {
 		table.sort.column = column
-		table.sort.assending = true
+		table.sort.assending = false
 	    }
 	    lsw_table_body(table)
 	})
@@ -170,8 +200,7 @@ function lsw_table_body(table) {
 
     // cheat - rebuild the table body
 
-    d3.select("table." + table.id)
-	.selectAll("tbody." + table.id)
+    d3.selectAll("tbody." + table.id)
 	.remove()
 
     var tr = d3.select("table." + table.id)
@@ -180,6 +209,7 @@ function lsw_table_body(table) {
 	.data(function(table) {
 	    return table.rows
 	})
+        // add the table row
 	.enter()
 	.append("tr")
 	.style("background-color", function(row) {
@@ -190,29 +220,31 @@ function lsw_table_body(table) {
 		lsw_table_select_row(table.id, row.data)
 	    }
  	})
-
-    var td = d3.select("table." + table.id)
-	.select("tbody." + table.id)
-	.selectAll("tr")
+        // add the row data
 	.selectAll("td")
 	.data(function(row) {
 	    return row.columns
 	})
 	.enter()
 	.append("td")
-	.html(function(column) {
-	    return column.text
+	.html(function(element) {
+	    return element.text
 	})
-	.style("text-align", function(column) {
-	    return column.column.body_align || null
+	.each(function(element, index) {
+	    var styles = element.column.style && element.column.style.body
+	    if (styles) {
+		var selection = d3.select(this)
+		Object.keys(styles).forEach(function(name) {
+		    value = styles[name]
+		    selection.style(name, value)
+		})
+	    }
 	})
 }
 
 function lsw_table_select_row(table_id, selection) {
     // toggle SELECTION's "background"
-    d3.select("table." + table_id)
-	.selectAll("tbody." + table_id)
-	.selectAll("tr")
+    d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
 	    return row.data == selection
 	})
@@ -231,9 +263,7 @@ function lsw_table_select_row(table_id, selection) {
 		    : "transparent")
 	})
     // select all with non-blank backgrounds
-    var data = d3.select("table." + table_id)
-	.selectAll("tbody." + table_id)
-	.selectAll("tr")
+    var data = d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
 	    // var background = d3.select(this).style("background-color")
 	    // return background != "" && background != "transparent"
@@ -248,4 +278,3 @@ function lsw_table_select_row(table_id, selection) {
     var table = d3.select("table." + table_id).data()[0]
     table.select.row(data)
 }
-

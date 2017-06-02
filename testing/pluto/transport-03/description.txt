@@ -1,5 +1,0 @@
-a pluto test of transport mode.
-
-A single connection between east-west with a misconfigured transport vs
-tunnel mode SA is attempted. It should fail.
-

@@ -6,7 +6,7 @@
  * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
@@ -54,12 +54,12 @@
 			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
 	}
 
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 # include <unbound.h>
 # include <errno.h>
 # include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
-#endif /* DNSSEC */
+#endif /* USE_DNSSEC */
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -80,6 +80,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
+	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
@@ -94,6 +95,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 	cfg->setup.options[KBF_DROP_OPPO_NULL] = FALSE;
+
+	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
@@ -394,11 +397,7 @@ static bool load_setup(struct starter_config *cfg,
  * @return bool TRUE if failed
  */
 
-static bool validate_end(
-#ifdef DNSSEC
-			struct ub_ctx *dnsctx,
-#endif
-			struct starter_conn *conn_st,
+static bool validate_end(struct starter_conn *conn_st,
 			struct starter_end *end,
 			const char *leftright,
 			bool resolvip UNUSED,
@@ -546,14 +545,14 @@ static bool validate_end(
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 				      &end->nexthop) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(dnsctx, value,
+				if (!unbound_resolve(value,
 						strlen(value), AF_INET,
 						&end->nexthop) &&
-				    !unbound_resolve(dnsctx, value,
+				    !unbound_resolve(value,
 						strlen(value), AF_INET6,
 						&end->nexthop))
 					ERR_FOUND("bad value for %snexthop=%s\n",
@@ -624,14 +623,14 @@ static bool validate_end(
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &end->sourceip) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
-			if (!unbound_resolve(dnsctx, value,
+			if (!unbound_resolve(value,
 					strlen(value), AF_INET,
 					&end->sourceip) &&
-			    !unbound_resolve(dnsctx, value,
+			    !unbound_resolve(value,
 					strlen(value), AF_INET6,
 					&end->sourceip))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
@@ -784,12 +783,6 @@ static bool translate_conn(struct starter_conn *conn,
 		}
 
 		unsigned int field = kw->keyword.keydef->field;
-
-#ifdef PARSER_TYPE_DEBUG
-		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
-			    kw->keyword.keydef->keyname, field,
-			    kw->keyword.keydef->type);
-#endif
 
 		assert(kw->keyword.keydef != NULL);
 		switch (kw->keyword.keydef->type) {
@@ -971,9 +964,6 @@ static void move_comment_list(struct starter_comments_list *to,
 }
 
 static bool load_conn(
-#ifdef DNSSEC
-		     struct ub_ctx *dnsctx,
-#endif
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1126,27 +1116,34 @@ static bool load_conn(
 		}
 	}
 
-#ifdef PARSER_TYPE_DEBUG
-	/* translate strings/numbers into conn items */
-	starter_log(LOG_LEVEL_DEBUG,
-		    "#checking options_set[KBF_TYPE,%d]=%d %d",
-		    KBF_TYPE,
-		    conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
-#endif
 
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
 		case KS_TUNNEL:
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=tunnel must not specify authby=never";
+					return TRUE;
+			}
 			conn->policy |= POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_TRANSPORT:
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=transport must not specify authby=never";
+					return TRUE;
+			}
 			conn->policy &= ~POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_PASSTHROUGH:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=passthrough must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1155,6 +1152,10 @@ static bool load_conn(
 			break;
 
 		case KS_DROP:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1163,6 +1164,10 @@ static bool load_conn(
 			break;
 
 		case KS_REJECT:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
@@ -1204,19 +1209,12 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS, POLICY_PFS);
 
-	/* reset authby flags */
+	/* reset authby= flags */
 	if (conn->options_set[KBF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
 
-#ifdef STARTER_POLICY_DEBUG
-		starter_log(LOG_LEVEL_DEBUG,
-			    "%s: setting conn->policy=%08x (%08x)",
-			    conn->name,
-			    (unsigned int)conn->policy,
-			    conn->options[KBF_AUTHBY]);
-#endif
 	}
 
 	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
@@ -1352,16 +1350,24 @@ static bool load_conn(
 		}
 	}
 
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->left, "left", resolvip, perr);
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->right, "right", resolvip, perr);
+	/*
+	 * some options are set as part of our default, but
+	 * some make no sense for shunts, so remove those again
+	 */
+	if (NEVER_NEGOTIATE(conn->policy)) {
+		/* remove IPsec related options */
+		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
+			POLICY_ESN_YES | POLICY_SAREF_TRACK |
+			POLICY_SAREF_TRACK_CONNTRACK);
+		/* remove IKE related options */
+		conn->policy &= ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
+			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |
+			POLICY_IKE_FRAG_FORCE);
+	}
+
+	err |= validate_end(conn, &conn->left, "left", resolvip, perr);
+	err |= validate_end(conn, &conn->right, "right", resolvip, perr);
+
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1444,11 +1450,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name
 	return conn;
 }
 
-static bool init_load_conn(
-#ifdef DNSSEC
-		   struct ub_ctx *dnsctx,
-#endif
-		   struct starter_config *cfg,
+static bool init_load_conn(struct starter_config *cfg,
 		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
 		   bool defaultconn,
@@ -1459,11 +1461,7 @@ static bool init_load_conn(
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(
-#ifdef DNSSEC
-				dnsctx,
-#endif
-				conn, cfgp, sconn, TRUE,
+	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
 				defaultconn, resolvip, perr);
 
 	if (connerr) {
@@ -1514,13 +1512,6 @@ struct starter_config *confread_load(const char *file,
 		return NULL;
 	}
 
-#ifdef DNSSEC
-	struct ub_ctx *dnsctx = unbound_init();
-
-	if (dnsctx == NULL)
-		return NULL;
-#endif
-
 	if (!setuponly) {
 		/**
 		 * Find %default
@@ -1528,16 +1519,18 @@ struct starter_config *confread_load(const char *file,
 		 */
 		struct section_list *sconn;
 
+#ifdef USE_DNSSEC
+		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+#endif
+
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err |= load_conn(
-#ifdef DNSSEC
-						dnsctx,
-#endif
-						 &cfg->conn_default,
+				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, FALSE,
 						/*default conn*/ TRUE,
 						 resolvip, perr);
@@ -1551,19 +1544,15 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default"))
 				continue;
-			err |= init_load_conn(
-#ifdef DNSSEC
-						 dnsctx,
-#endif
-						 cfg, cfgp, sconn,
+			err |= init_load_conn(cfg, cfgp, sconn,
 						 FALSE,
 						 resolvip, perr);
 		}
 	}
 
 	parser_free_conf(cfgp);
-#ifdef DNSSEC
-	ub_ctx_delete(dnsctx);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
 #endif
 	return cfg;
 }

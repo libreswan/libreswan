@@ -15,10 +15,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -44,6 +44,7 @@ west #
 000 "westnet-eastnet-ikev2-fallback":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2-fallback":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2-fallback":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2-fallback":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-ikev2-fallback":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2-fallback":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -120,27 +121,13 @@ west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -178,10 +165,10 @@ IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -190,7 +177,7 @@ west #
  ipsec stop
 Redirecting to: systemctl stop ipsec.service
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

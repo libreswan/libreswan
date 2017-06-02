@@ -98,8 +98,6 @@ struct option opts[] = {
 	{ 0,            0,                      NULL,   0, }
 };
 
-char *progname = "ipsec showhostkey";   /* for messages */
-
 static void print(struct private_key_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
@@ -322,6 +320,9 @@ static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid
 
 int main(int argc, char *argv[])
 {
+	log_to_stderr = FALSE;
+	tool_init_log("ipsec showhostkey");
+
 	int opt;
 	bool left_flg = FALSE;
 	bool right_flg = FALSE;
@@ -332,9 +333,6 @@ int main(int argc, char *argv[])
 	int precedence = 10;
 	char *ckaid = NULL;
 	char *rsaid = NULL;
-
-	log_to_stderr = FALSE;
-	tool_init_log();
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 		switch (opt) {

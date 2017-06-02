@@ -176,13 +176,13 @@ road:~# ipsec look
 road Tue Feb 28 20:57:28 GMT 2006
 192.1.3.209/32:1701 -> 192.1.2.23/32:1701 => esp0xae595bac@192.1.2.23:17 (0)
 ipsec0->eth0 mtu=16260(1500)->1500
-esp0x76d53c54@192.1.3.209 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0x0415cf7b2a768be0 ooowin=64 alen=128 aklen=128 eklen=192 life(c,s,h)=addtime(0,0,0) natencap=nonesp natsport=4500 natdport=4500 refcount=2 ref=2 refhim=1
-esp0xae595bac@192.1.2.23 ESP_3DES_HMAC_MD5: dir=out src=192.1.3.209 iv_bits=64bits iv=0xfe7aa27b3937c852 ooowin=64 alen=128 aklen=128 eklen=192 life(c,s,h)=addtime(0,0,0) natencap=nonesp natsport=4500 natdport=4500 refcount=2 ref=1 refhim=0
+esp0x76d53c54@192.1.3.209 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0x0415cf7b2a768be0 ooowin=64 alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=2 ref=2 refhim=1
+esp0xae595bac@192.1.2.23 ESP_3DES_HMAC_MD5: dir=out src=192.1.3.209 iv_bits=64bits iv=0xfe7aa27b3937c852 ooowin=64 alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=2 ref=1 refhim=0
 IPSEC TABLE
 iptables: Table does not exist (do you need to insmod?)
 ROUTING TABLE
 192.1.2.23 dev ipsec0  scope link 
-192.1.3.0/24 dev eth0  proto kernel  scope link  src 192.1.3.209 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
 192.1.3.0/24 dev ipsec0  proto kernel  scope link  src 192.1.3.209 
 default via 192.1.3.254 dev eth0 
 road:~# sleep 5
@@ -241,7 +241,7 @@ road:~# ipsec auto --status
 000 "road--east-l2tp":   ESP algorithm newest: 3DES_0-HMAC_MD5; pfsgroup=<Phase1>
 000  
 000 #2: "road--east-l2tp":4500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in 28175s; newest IPSEC; eroute owner
-000 #2: "road--east-l2tp" esp.ae595bac@192.1.2.23 esp.76d53c54@192.1.3.209
+000 #2: "road--east-l2tp" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209
 000 #1: "road--east-l2tp":4500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in 2922s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0)
 000  
 road:~# cat /tmp/pluto.log
@@ -549,7 +549,7 @@ added connection description "road--east-l2tp"
 | sr for #2: unrouted
 | route owner of "road--east-l2tp" unrouted: NULL; eroute owner: NULL
 | route_and_eroute with c: road--east-l2tp (next: none) ero:null esr:{(nil)} ro:null rosr:{(nil)} and state: 2
-| eroute_connection add eroute 192.1.3.209/32:1701 --17-> 192.1.2.23/32:1701 => esp.ae595bac@192.1.2.23 (raw_eroute)
+| eroute_connection add eroute 192.1.3.209/32:1701 --17-> 192.1.2.23/32:1701 => esp.ESPSPIi@192.1.2.23 (raw_eroute)
 | command executing up-host
 |   trusted_ca called with a=(empty) b=(empty)
 | executing up-host: 2>&1 PLUTO_VERB='up-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='road--east-l2tp' PLUTO_INTERFACE='ipsec0' PLUTO_ME='192.1.3.209' PLUTO_MY_ID='@road' PLUTO_MY_CLIENT='192.1.3.209/32' PLUTO_MY_CLIENT_NET='192.1.3.209' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='1701' PLUTO_MY_PROTOCOL='17' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='1701' PLUTO_PEER_PROTOCOL='17' PLUTO_PEER_CA='' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+PFS+UP'   ipsec _updown

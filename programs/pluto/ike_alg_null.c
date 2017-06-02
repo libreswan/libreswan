@@ -28,7 +28,7 @@
  * https://tools.ietf.org/html/rfc2410
  */
 
-struct encrypt_desc ike_alg_encrypt_null =
+const struct encrypt_desc ike_alg_encrypt_null =
 {
 	.common = {
 		.name = "null",

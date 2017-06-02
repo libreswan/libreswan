@@ -45,8 +45,8 @@ endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
 ifeq ($(USE_DNSSEC),true)
-USERLAND_CFLAGS+=-DDNSSEC
-UNBOUND_LDFLAGS ?= -lunbound
+USERLAND_CFLAGS+=-DUSE_DNSSEC
+UNBOUND_LDFLAGS ?= -lunbound -lldns
 endif
 
 ifeq ($(USE_FIPSCHECK),true)

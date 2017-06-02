@@ -56,6 +56,10 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
 
+#ifdef USE_DNSSEC
+# include "dnssec.h"
+#endif
+
 #ifdef HAVE_SECCOMP
 # include <seccomp.h>
 # define EXIT_SECCOMP_FAIL 8
@@ -326,10 +330,25 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
+#ifdef USE_DNSSEC
+			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
+				AF_UNSPEC, &peer->addr);
+			if (er != NULL) {
+				/* not numeric, so resolve it */
+				if (!unbound_resolve(peer->strings[KSCF_IP],
+					0, AF_INET, &peer->addr)) {
+						if (!unbound_resolve(peer->strings[KSCF_IP],
+							0, AF_INET6, &peer->addr)) {
+								return -1;
+						}
+				}
+			}
+#else
 			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
 			if (er != NULL)
 				return -1;
+#endif
 		}
 
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
@@ -663,10 +682,9 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 
-	progname = argv[0];
 	rootdir[0] = '\0';
 
-	tool_init_log();
+	tool_init_log(argv[0]);
 
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {
@@ -817,6 +835,12 @@ int main(int argc, char *argv[])
 	default:
 		bad_case(cfg->setup.options[KBF_SECCOMP]);
 	}
+#endif
+
+#ifdef USE_DNSSEC
+	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 #endif
 
 	if (autoall) {
@@ -1110,5 +1134,8 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
+#endif
 	exit(exit_status);
 }

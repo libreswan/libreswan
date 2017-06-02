@@ -4,7 +4,7 @@ east #
 east #
  echo '# when get_preshared_key() can deal with asymmetric, we can narrow it down' >> /etc/ipsec.secrets
 east #
- echo ': PSK "ABCDEFGHIJ12345"' >> /etc/ipsec.secrets
+ echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
@@ -28,6 +28,7 @@ east #
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id:@west
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
@@ -36,12 +37,13 @@ initdone
 east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
+OUTPUT/east.pluto.log:| westnet-eastnet-ikev2 #1 not fetching ipseckey that end rsasigkey != %dnsondemand initiator IKEv2 Auth Method is not IKEv2_AUTH_RSA,  IKEv2_AUTH_SHARED remote=192.1.2.45 thatid=@west
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

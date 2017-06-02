@@ -6,14 +6,14 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add rw-eastnet-x509-ipv4
-002 added connection description "rw-eastnet-x509-ipv4"
+ ipsec auto --add rw-east-pool-x509-ipv4
+002 added connection description "rw-east-pool-x509-ipv4"
 east #
  echo "initdone"
 initdone
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; core=`ls /tmp/core* 2>/dev/null`; gdb --batch PATH/libexec/ipsec/pluto $core; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

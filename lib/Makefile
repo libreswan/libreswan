@@ -21,6 +21,7 @@ endif
 include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=libswan libcrypto libwhack libipsecconf
+SUBDIRS += liblswlog
 
 ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=libbsdpfkey

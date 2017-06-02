@@ -5,7 +5,7 @@ east #
  ip route add 192.0.100.0/24 via 192.1.2.23  dev eth1
 east #
  strongswan starter --debug-all
-Starting strongSwan 5.4.0 IPsec [starter]...
+Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2a'
   authby=secret
@@ -53,16 +53,16 @@ initdone
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2a[1]: ESTABLISHED 9 seconds ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2a{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: cf7cc766_i d035701b_o
+westnet-eastnet-ikev2a[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev2a{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2a{1}:   192.0.2.0/24 === 192.0.1.0/24
-westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: c4550b6a_i b05cdd77_o
+westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2b{2}:   192.0.200.0/24 === 192.0.100.0/24
-westnet-eastnet-ikev2c{3}:  INSTALLED, TUNNEL, reqid 3, ESP SPIs: cf8ecd22_i 75114563_o
+westnet-eastnet-ikev2c{3}:  INSTALLED, TUNNEL, reqid 3, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2c{3}:   192.0.201.0/24 === 192.0.101.0/24
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

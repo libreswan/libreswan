@@ -526,15 +526,13 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						bad_case(kind);
 					}
 					if (!same) {
-						loglog(RC_LOG_SERIOUS,
-							"multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used"
-							);
-						best = s;	/*
-								 * list is
-								 * backwards:
-								 * take latest
-								 * in list
-								 */
+						DBG(DBG_CONTROL,
+						    DBG_log("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used"));
+						/*
+						 * list is backwards:
+						 * take latest in list
+						 */
+						best = s;
 					}
 				} else if (match > best_match) {
 					DBG(DBG_CONTROL,
