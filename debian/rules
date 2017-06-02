@@ -45,10 +45,6 @@ override_dh_auto_install-arch:
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		USE_KLIPS=false \
 		DESTDIR=$(CURDIR)/debian/libreswan
-	echo "removing files debian packaging does not need:"
-	find \
-	     $(CURDIR)/debian/libreswan/var/run \
-	  -print -delete
 
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
