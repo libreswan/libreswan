@@ -20,6 +20,7 @@ Build-Depends:
  libevent-dev,
  libkrb5-dev,
  libldap2-dev,
+ libldns-dev,
  libnspr4-dev,
  libnss3-dev (>= 3.16),
  libnss3-tools,
