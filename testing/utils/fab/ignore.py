@@ -24,15 +24,16 @@ def add_arguments(parser):
     group.add_argument("--test-status", default="good",
                        type=re.compile, metavar="REGULAR-EXPRESSION",
                        help="Select tests with status matching %(metavar)s (default: '%(default)s')")
-    # Backward compatibility
-    group.add_argument("--test-result", default=argparse.SUPPRESS, dest="test_status",
-                       type=re.compile, help=argparse.SUPPRESS)
+    group.add_argument("--test-name", default="",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help="Select tests with name matching %(metavar)s (default: '%(default)s')")
 
 
 def log_arguments(logger, args):
     logger.info("Test filter arguments:")
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-status: '%s'" , args.test_status.pattern)
+    logger.info("  test-name: '%s'" , args.test_name.pattern)
 
 
 def test(logger, args, test):
@@ -46,9 +47,14 @@ def test(logger, args, test):
 
     """
 
-    if args.test_kind.pattern and not args.test_kind.search(test.kind):
-        return test.kind, "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
-    if args.test_status.pattern and not args.test_status.search(test.status):
-        return test.status, "status '%s' does not match '%s'" % (test.status, args.test_status.pattern)
+    for arg, field, title in [(args.test_kind, test.kind, "kind"),
+                              (args.test_status, test.status, "status"),
+                              (args.test_name, test.name, "name")]:
+        if not arg.pattern:
+            continue
+        if arg.search(field):
+            continue
+        return (title + "!=" + arg.pattern,
+                "%s '%s' does not match '%s'" % (title, field, arg.pattern))
 
     return None, None

@@ -5,7 +5,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015-2016 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,31 +22,95 @@
 #define ALG_INFO_H
 
 #include "constants.h"
+#include "ike_alg.h"
+
+struct parser_context;
+struct alg_info;
 
 /*
  * Parameters to tune the parser.
  */
-struct parser_context;
-struct alg_info;
-struct oakley_group_desc;
 
 struct parser_policy {
 	bool ikev1;
 	bool ikev2;
 };
 
+/*
+ * Place holder so that it is possible to clearly differentiate
+ * between an unspecified rather than 'null' integrity algorithm.
+ *
+ * NOTE:
+ *
+ * The callback .alg_info_add() is passed NULL to identify an
+ * unspecified algorithm (in keeping with the C tradition of 'no
+ * value'), and either 'alg_info_integ_null' or 'ike_alg_encrypt_null'
+ * to identify an explicitly specified 'null' algorithm
+ *
+ * Only when the algorithm is NULL (unspecified or missing) should
+ * .alg_info_add() consider adding in defaults.  For instance: in
+ * esp=aes, neither the integrity nor DH algorithm were specified so
+ * both would be NULL; however in esp=aes_gcm-null, integrity was
+ * specified as 'null' so 'ike_alg_integ_null' is used, but DH would
+ * still be NULL.
+ *
+ * 'struct state', on the other hand, uses NULL for 'null' integrity,
+ * and 'ike_alg_encrypt_null' for 'null' encryption.  .alg_info_add()
+ * must deal with this (for the moment, 'ike_alg_integ_null' should
+ * never escape the parser).
+ *
+ * Why not use NULL for 'null' and something else for unspecifed in
+ * the parser?  Several reasons: as noted above, NULL is C's universal
+ * identifier of 'no value'; having having lots of ike_alg_XXX_missing
+ * structs quickly gets more messy.
+ */
+extern const struct integ_desc alg_info_integ_null;
+
 struct parser_param {
+       const char *protocol;
+       enum ike_alg_key ikev1_alg_id;
+
+       /*
+        * XXX: Is the proto-id needed?  Parser should be protocol
+        * agnostic.
+        */
 	unsigned protoid;
-	void (*alg_info_add)(const struct parser_policy *const policy,
-			     struct alg_info *alg_info,
-			     int ealg_id, int ek_bits,
-			     int aalg_id,
-			     const struct oakley_group_desc *dh_group);
+	/*
+	 * If things go wrong, return a non-null error string
+	 * (possibly snprintf'd into ERR_BUF).
+	 */
+	const char *(*alg_info_add)(const struct parser_policy *const policy,
+				    struct alg_info *alg_info,
+				    const struct encrypt_desc *encrypt,
+				    int ealg_id, int ek_bits,
+				    int aalg_id,
+				    const struct prf_desc *prf,
+				    const struct integ_desc *integ,
+				    const struct oakley_group_desc *dh_group,
+				    char *err_buf, size_t err_buf_len);
 	int (*ealg_getbyname)(const char *const str);
 	int (*aalg_getbyname)(const char *const str);
-	const struct oakley_group_desc *(*group_byname)(const struct parser_policy *const policy,
-							char *err_buf, size_t err_buf_len,
-							const char *name);
+
+	/*
+	 * This lookup functions must set err and return null if NAME
+	 * isn't valid.
+	 */
+	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_param *param,
+						    const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name, size_t bit_length);
+	const struct ike_alg *(*prf_alg_byname)(const struct parser_param *param,
+						const struct parser_policy *const policy,
+						char *err_buf, size_t err_buf_len,
+						const char *name, size_t key_bit_length);
+	const struct ike_alg *(*integ_alg_byname)(const struct parser_param *param,
+						  const struct parser_policy *const policy,
+						  char *err_buf, size_t err_buf_len,
+						  const char *name, size_t key_bit_length);
+	const struct ike_alg *(*dh_alg_byname)(const struct parser_param *param,
+					       const struct parser_policy *const policy,
+					       char *err_buf, size_t err_buf_len,
+					       const char *name, size_t key_bit_length);
 };
 
 struct esp_info {
@@ -65,15 +129,6 @@ struct esp_info {
 	 */
 	const struct integ_desc *esp_integ;
 	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
-	/*
-	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
-	 * used by the kernel backends.
-	 */
-	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
-	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
-				 * Paul: apparently related to magic at
-				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
-				 */
 };
 
 struct ike_info {
@@ -114,13 +169,13 @@ struct alg_info_ike {
 	struct ike_info ike[128];
 };
 
-extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
-	enum ikev1_auth_attribute auth);
-extern int alg_info_esp_sadb2aa(int sadb_aalg);
-
 extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
+
+extern struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+							 const char *alg_str,
+							 char *err_buf, size_t err_buf_len);
 
 extern struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 							 const char *alg_str,
@@ -165,8 +220,6 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 
 extern int alg_enum_search(enum_names *ed, const char *prefix,
 			   const char *postfix, const char *name);
-
-struct oakley_group_desc;	/* so it isn't local to the function prototype */
 
 /*
  * on success: returns alg_info

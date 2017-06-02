@@ -75,8 +75,11 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 
 	if (shared_phase1_connection(c)) {
 		libreswan_log("IKE SA is shared - only terminating IPsec SA");
-		if (c->newest_ipsec_sa != SOS_NOBODY)
-			delete_state(state_with_serialno(c->newest_ipsec_sa));
+		if (c->newest_ipsec_sa != SOS_NOBODY) {
+			struct state *st = state_with_serialno(c->newest_ipsec_sa);
+			set_cur_state(st);
+			delete_state(st);
+		}
 	} else {
 		DBG(DBG_CONTROL, DBG_log("connection not shared - terminating IKE and IPsec SA"));
 		delete_states_by_connection(c, FALSE);
@@ -91,9 +94,10 @@ void terminate_connection(const char *name)
 {
 	/*
 	 * Loop because more than one may match (master and instances)
-	 * But at least one is required (enforced by con_by_name).
+	 * But at least one is required (enforced by conn_by_name).
+	 * Don't log an error if not found before we checked aliases
 	 */
-	struct connection *c = con_by_name(name, TRUE);
+	struct connection *c = conn_by_name(name, TRUE, TRUE);
 
 	if (c != NULL) {
 		while (c != NULL) {
@@ -108,12 +112,12 @@ void terminate_connection(const char *name)
 	} else {
 		int count;
 
-		loglog(RC_COMMENT, "terminating all conns with alias='%s'", name);
+		loglog(RC_COMMENT, "no such connection found, looking for all conns with alias='%s'", name);
 		count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
 
 		if (count == 0) {
 			whack_log(RC_UNKNOWN_NAME,
-				  "no connection named \"%s\"", name);
+				  "no such connection or aliased connection named \"%s\"", name);
 		}
 	}
 }

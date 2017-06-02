@@ -22,9 +22,9 @@ west #
 west #
  ipsec auto --delete west-east-auto
 002 "west-east-auto": deleting non-instance connection
-002 "west-east-auto" #2: deleting state (STATE_QUICK_R2)
+002 "west-east-auto" #2: deleting state (STATE_QUICK_R2) and sending notification
 005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting state (STATE_MAIN_R3)
+002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
 west #
  # give Delete/Notify some time
 west #
@@ -51,7 +51,7 @@ west #
  ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in /EVENT_v1_RETRANSMIT in .../"
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

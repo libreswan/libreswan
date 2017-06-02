@@ -1,8 +1,8 @@
 ipsec look
-grep calc_dh_shared /tmp/pluto.log
+grep calc_dh_shared /tmp/pluto.log | sed "s/@0x.*, size/@0xXXXX, size/g"
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 : ==== end ====

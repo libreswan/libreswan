@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015,2017 Andrew Cagney
 # Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -15,6 +15,9 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+ifndef config.mk
+config.mk = true
 
 # A Makefile wanting to test variables defined below has two choides:
 #
@@ -241,6 +244,11 @@ NSS_LDFLAGS ?= -lnss3 -lnspr4
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
 NSS_REQ_AVA_COPY?=true
 
+# When compiling on a system where unbound is missing the required unbound-event.h
+# include file, enable this workaround option that will enable an included copy of
+# this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
+USE_UNBOUND_EVENT_H_COPY?=true
+
 # To build with clang, use: scan-build make programs
 #GCC=clang
 GCC?=gcc
@@ -394,7 +402,7 @@ ifeq ($(OSDEP),linux)
 USE_LINUX_AUDIT?=false
 endif
 
-# Enable Labeled IPSec Functionality (requires SElinux)
+# Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
 # Enable seccomp support (whitelist allows syscalls)
@@ -429,7 +437,7 @@ USE_3DES?=true
 USE_DH22?=false
 USE_CAMELLIA?=true
 USE_CAST?=true
-USE_RIPEMD?=true
+USE_RIPEMD?=false
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -475,7 +483,7 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
+LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
 # XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
 LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
 
@@ -542,3 +550,5 @@ OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x
 # Now that all the configuration variables are defined, use them to
 # define USERLAND_CFLAGS
 include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
+
+endif

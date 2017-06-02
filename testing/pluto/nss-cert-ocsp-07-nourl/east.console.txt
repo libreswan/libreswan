@@ -22,11 +22,22 @@ initdone
 east #
  # on east, revocation should show up
 east #
- grep "certificate revoked" /tmp/pluto.log
+ hostname | grep east && grep "certificate revoked" /tmp/pluto.log
+east
 "nss-cert-ocsp" #1: certificate revoked!
 east #
+ # should show a hit
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ hostname |grep east && grep ERROR /tmp/pluto.log
+east
+"nss-cert-ocsp" #1: ERROR: Peer's Certificate has been revoked.
+east #
+ # should not show a hit
+east #
+ hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
+east #
+east #
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

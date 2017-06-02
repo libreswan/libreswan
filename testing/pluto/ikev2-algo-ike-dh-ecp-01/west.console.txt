@@ -15,10 +15,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -41,9 +41,9 @@ west #
 004 "ikev2-ike=aes128-sha1-dh19" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh19" #2: deleting state (STATE_V2_IPSEC_I)
+002 "ikev2-ike=aes128-sha1-dh19" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ikev2-ike=aes128-sha1-dh19" #2: ESP traffic information: in=0B out=0B
-002 "ikev2-ike=aes128-sha1-dh19" #1: deleting state (STATE_PARENT_I3)
+002 "ikev2-ike=aes128-sha1-dh19" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh19": deleting non-instance connection
 west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
@@ -57,9 +57,9 @@ west #
 004 "ikev2-ike=aes128-sha1-dh20" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh20" #4: deleting state (STATE_V2_IPSEC_I)
+002 "ikev2-ike=aes128-sha1-dh20" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ikev2-ike=aes128-sha1-dh20" #4: ESP traffic information: in=0B out=0B
-002 "ikev2-ike=aes128-sha1-dh20" #3: deleting state (STATE_PARENT_I3)
+002 "ikev2-ike=aes128-sha1-dh20" #3: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh20": deleting non-instance connection
 west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
@@ -73,9 +73,9 @@ west #
 004 "ikev2-ike=aes128-sha1-dh21" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh21" #6: deleting state (STATE_V2_IPSEC_I)
+002 "ikev2-ike=aes128-sha1-dh21" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ikev2-ike=aes128-sha1-dh21" #6: ESP traffic information: in=0B out=0B
-002 "ikev2-ike=aes128-sha1-dh21" #5: deleting state (STATE_PARENT_I3)
+002 "ikev2-ike=aes128-sha1-dh21" #5: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh21": deleting non-instance connection
 west #
  echo done
@@ -122,16 +122,16 @@ IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

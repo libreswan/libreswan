@@ -14,8 +14,6 @@
  * for more details.
  */
 
-#ifdef KLIPS
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -367,4 +365,3 @@ const struct kernel_ops klips_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };
-#endif /* KLIPS */

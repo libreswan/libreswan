@@ -530,7 +530,11 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 			(unsigned int)enc_len,
 			enum_show(&oakley_enc_names, st->st_oakley.encrypt)));
 
-	crypto_cbc_encrypt(e, TRUE, enc_start, enc_len, st);
+	passert(st->st_new_iv_len >= e->enc_blocksize);
+	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
+				 st->st_enc_key_nss,
+				 st->st_new_iv, TRUE);
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
@@ -1069,7 +1073,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, md->hdr.isa_rcookie);
+	rehash_state(st, NULL, md->hdr.isa_rcookie);
 
 	return STF_OK;
 }
@@ -1678,6 +1682,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 /*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
+ * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			bool aggrmode)
@@ -1691,8 +1696,15 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!aggrmode && !ikev1_decode_peer_id(md, initiator, FALSE))
+	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode))
 		return STF_FAIL + INVALID_ID_INFORMATION;
+
+	/*
+	 * process any CERT payloads if aggrmode
+	 */
+	if (!st->st_peer_alt_id && aggrmode && !ikev1_decode_cert(md)) {
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * Hash the ID Payload.

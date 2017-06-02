@@ -2,6 +2,8 @@
  * Use libunbound to use DNSSEC supported resolving.
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,8 +15,22 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#ifndef DNSSEC
+#ifndef USE_DNSSEC
 # error this file should only be compiled when using DNSSEC
+#endif
+
+/*
+ * ub_ctx_add_ta_autr was added in unbound 1.5.0
+ * UNBOUND_VERSION_* was introduced >= 1.4.12
+ */
+#ifndef UNBOUND_VERSION_MAJOR
+# define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
+#else
+# if UNBOUND_VERSION_MAJOR < 2
+#  if UNBOUND_VERSION_MINOR < 5
+#   define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
+#  endif
+# endif
 #endif
 
 #include <stdlib.h>
@@ -23,83 +39,171 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <libreswan.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <glob.h>
+#include <event2/event.h>
+#include <unbound.h>	/* from unbound devel */
+#include <unbound-event.h> /* from unbound devel */
+
+#include "dnssec.h"
 #include "constants.h"
 #include "lswlog.h"
-#include <unbound.h>	/* from unbound devel */
-#include "dnssec.h"
-#include <errno.h>
 
-/* DNSSEC root key */
-static const char rootanchor[] =
-	". IN DNSKEY 257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=";
+static struct ub_ctx *dns_ctx = NULL;
 
-struct ub_ctx *unbound_init(void)
+void unbound_ctx_free(void)
+{
+	if (dns_ctx != NULL) {
+		ub_ctx_delete(dns_ctx);
+		dns_ctx = NULL;
+	}
+}
+
+static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted)
 {
 	int ugh;
 
-	/* create unbound resolver context */
-	struct ub_ctx *dnsctx = ub_ctx_create();
-
-	if (dnsctx == NULL) {
-		libreswan_log("error: could not create unbound context");
-		return NULL;
-	}
-	DBG(DBG_DNS,
-		ub_ctx_debuglevel(dnsctx, 5);
+	if (DBGP(DBG_DNS)) {
+		ub_ctx_debuglevel(dns_ctx, 5);
 		DBG_log("unbound context created - setting debug level to 5");
-		);
+	};
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
-	ugh = ub_ctx_hosts(dnsctx, "/etc/hosts");
+	ugh = ub_ctx_hosts(dns_ctx, "/etc/hosts");
 	if (ugh != 0) {
-		libreswan_log("error reading hosts: %s: %s",
+		loglog(RC_LOG_SERIOUS, "error reading hosts: %s: %s",
 			ub_strerror(ugh), strerror(errno));
-		ub_ctx_delete(dnsctx);
-		return NULL;
+	} else {
+		DBG(DBG_DNS, DBG_log("/etc/hosts lookups activated"));
 	}
-	DBG(DBG_DNS,
-		DBG_log("/etc/hosts lookups activated");
-		);
 
 	/*
-	 * Use /etc/resolv.conf as forwarding cache - we expect people to
-	 * reconfigure this file if they need to work around DHCP DNS obtained
-	 * servers
+	 * Use /etc/resolv.conf as forwarding cache - we expect people
+	 * to reconfigure this file if they need to work around DHCP DNS
+	 * obtained servers.
 	 */
-	ugh = ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf");
+	ugh = ub_ctx_resolvconf(dns_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
-		libreswan_log("error reading resolv.conf: %s: %s",
+		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: %s",
 			ub_strerror(ugh), strerror(errno));
-		ub_ctx_delete(dnsctx);
-		return NULL;
-	}
-	DBG(DBG_DNS,
-		DBG_log("/etc/resolv.conf usage activated");
-		);
-
-	/*
-	 * add trust anchors to libunbound context - make this configurable
-	 * later
-	 */
-	DBG(DBG_DNS,
-		DBG_log("Loading root key:%s", rootanchor);
-		);
-#ifdef UNBOUND_VERSION_MAJOR
-	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
-#else
-	/* for unbound < 1.4.21 */
-	ugh = ub_ctx_add_ta(dnsctx, (char*) rootanchor);
-#endif
-	if (ugh != 0) {
-		libreswan_log("error adding the DNSSEC root key: %s: %s",
-			ub_strerror(ugh), strerror(errno));
-		ub_ctx_delete(dnsctx);
-		return NULL;
+	} else {
+		DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated"));
 	}
 
-	return dnsctx;
+	if (!do_dnssec) {
+		/* No DNSSEC - nothing more to configure */
+		DBG(DBG_DNS, DBG_log("dnssec validation disabled by configuration"));
+	}
+
+	if (rootfile == NULL) {
+		if (trusted != NULL) {
+			loglog(RC_LOG_SERIOUS, "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
+			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation disabled");
+		}
+	} else {
+		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
+		/* the cast is there for unbound < 1.4.12 */
+		ugh = ub_ctx_add_ta_autr(dns_ctx, (char *) rootfile);
+		if (ugh != 0) {
+			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s: %s",
+				ub_strerror(ugh), strerror(errno));
+			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation likely broken!");
+		}
+	}
+
+	if (trusted == NULL) {
+		DBG(DBG_DNS,DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
+	} else {
+		if (strchr(trusted, '*') == NULL) {
+			struct stat buf;
+			int ugh;
+			stat(trusted, &buf);
+			if (S_ISREG(buf.st_mode)) {
+				/* the cast is there for unbound < 1.4.12 */
+				ugh = ub_ctx_add_ta_file(dns_ctx, (char *) trusted);
+				if (ugh != 0) {
+					/* what does unbound do if first 5 keys are valid but 6th isn't? ? */
+					loglog(RC_LOG_SERIOUS, "Ignored badly formed trusted key file %s: %s",
+						trusted,  ub_strerror(ugh));
+				} else {
+					DBG(DBG_DNS,DBG_log("Added contents of trusted key file %s to unbound resolved context", trusted));
+				}
+			} else if (S_ISDIR(buf.st_mode)) {
+				libreswan_log("PAUL: Add dir + globbing support");
+			} else {
+				loglog(RC_LOG_SERIOUS, "ignored trusted key '%s': not a regular file or directory",
+					trusted);
+			}
+
+		} else {
+			glob_t globbuf;
+			char **fnp;
+	                int r = glob(trusted, GLOB_ERR, NULL, &globbuf);
+
+			if (r != 0) {
+				switch(r) {
+				case GLOB_NOSPACE:
+						loglog(RC_LOG_SERIOUS, "out of space procesing dnssec-trusted= argument:%s",
+							trusted);
+						globfree(&globbuf);
+					case GLOB_ABORTED:
+						break; /* already logged */
+					case GLOB_NOMATCH:
+						loglog(RC_LOG_SERIOUS, "no trust anchor files matched '%s'", trusted);
+						break;
+					default:
+						loglog(RC_LOG_SERIOUS, "trusted key file '%s': unknown glob error %d",
+							trusted, r);
+						globfree(&globbuf);
+				}
+			}
+
+			for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+				ugh = ub_ctx_add_ta_file(dns_ctx, *fnp);
+				if (ugh != 0) {
+					loglog(RC_LOG_SERIOUS, "Ignored trusted key file %s: %s",
+						*fnp,  ub_strerror(ugh));
+				} else {
+					DBG(DBG_DNS, DBG_log("Added contents of trusted key file %s to unbound resolver context",
+						*fnp));
+				}
+			}
+			globfree(&globbuf);
+		}
+	}
+}
+
+/*
+ * initialize a ub_ctx for asynchronous calls using libevent from pluto.
+ *  only call once
+ */
+void unbound_event_init(struct event_base *eb, bool do_dnssec,
+			const char *rootfile, const char *trusted)
+{
+	passert(dns_ctx == NULL); /* block re-entry to the function */
+	dns_ctx = ub_ctx_create_event(eb);
+	passert(dns_ctx != NULL);
+	unbound_ctx_config(do_dnssec, rootfile, trusted);
+}
+
+/*
+ * initialize a ub_ct for blocking dns calls. Do not call from pluto.
+ * Call this function once directly, such as addconn.
+ * dns_ctx is static in this file. call unbound_ctx_free() to free it.
+ */
+void unbound_sync_init(bool do_dnssec, const char *rootfile,
+			const char *trusted)
+{
+	if (!do_dnssec)
+		return;
+
+	passert(dns_ctx == NULL); /* block re-entry to the function */
+	dns_ctx = ub_ctx_create();
+	passert(dns_ctx != NULL);
+	unbound_ctx_config(do_dnssec, rootfile, trusted);
 }
 
 /*
@@ -107,14 +211,13 @@ struct ub_ctx *unbound_init(void)
  * src_len == 0 means "apply strlen"
  * af == AF_UNSPEC means "try both families"
  */
-bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
-		ip_address *ipaddr)
+bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 {
 	/* 28 = AAAA record, 1 = A record */
 	const int qtype = (af == AF_INET6) ? 28 : 1;
 	struct ub_result *result;
 
-	passert(dnsctx != NULL);
+	passert(dns_ctx != NULL);
 
 	if (srclen == 0) {
 		srclen = strlen(src);
@@ -125,7 +228,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	}
 
 	{
-		int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */,
+		int ugh = ub_resolve(dns_ctx, src, qtype, 1 /* CLASS IN */,
 				&result);
 		if (ugh != 0) {
 			libreswan_log("unbound error: %s", ub_strerror(ugh));
@@ -203,4 +306,9 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 			return FALSE;
 		}
 	}
+}
+
+struct ub_ctx * get_unbound_ctx(void)
+{
+	return dns_ctx;
 }

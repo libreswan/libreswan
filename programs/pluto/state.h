@@ -10,7 +10,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
@@ -71,6 +71,8 @@
 
 #define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
+struct ikev2_ipseckey_dns; /* forward declaration of tag */
+
 struct state;   /* forward declaration of tag */
 
 /* Oakley (Phase 1 / Main Mode) transform and attributes
@@ -122,9 +124,6 @@ struct trans_attrs {
 	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *integ;		/* package of integrity routines */
 	const struct oakley_group_desc *group;	/* Oakley group */
-
-	/* used in phase2/CHILD_SA */
-	struct esp_info *ei;
 };
 
 /* IPsec (Phase 2 / Quick Mode) transform and attributes
@@ -342,6 +341,9 @@ struct state {
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
 	struct initiate_list *send_next_ix;
 
+	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
+	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
+
 	/** end of IKEv2-only things **/
 
 
@@ -384,6 +386,8 @@ struct state {
 	 */
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
+
+	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 
 	/*
 	 * Diffie-Hellman exchange values
@@ -532,19 +536,19 @@ extern struct state *new_rstate(struct msg_digest *md);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void rehash_state(struct state *st, const u_char *rcookie);
+extern void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
-struct connection;      /* forward declaration of tag */
 extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st, bool ipsec),
+	*duplicate_state(struct state *st, sa_t ipsec),
 	*find_state_ikev1(const u_char *icookie,
 			  const u_char *rcookie,
 			  msgid_t msgid),
@@ -590,7 +594,9 @@ extern void show_states_status(void);
 
 
 extern void ikev2_repl_est_ipsec(struct state *st, void *data);
-extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn);
+extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		                const u_char *icookie,
+				const u_char *rcookie);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 

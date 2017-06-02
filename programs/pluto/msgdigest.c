@@ -71,7 +71,7 @@ void free_md_pool(void)
 	}
 }
 
-struct msg_digest *alloc_md(void)
+struct msg_digest *alloc_md(char *mdname)
 {
 	struct msg_digest *md = md_pool;
 
@@ -83,7 +83,7 @@ struct msg_digest *alloc_md(void)
 	static const struct msg_digest blank_md;
 
 	if (md == NULL)
-		md = alloc_thing(struct msg_digest, "msg_digest");
+		md = alloc_thing(struct msg_digest, mdname);
 	else
 		md_pool = md->next;
 

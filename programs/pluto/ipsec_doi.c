@@ -83,19 +83,6 @@
 
 #include "pluto_stats.h"
 
-/* MAGIC: perform f, a function that returns notification_t
- * and return from the ENCLOSING stf_status returning function if it fails.
- */
-/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
- * Sometimes more than one copy is defined!
- */
-#define RETURN_STF_FAILURE(f) { \
-	notification_t res = (f); \
-	if (res != NOTHING_WRONG) { \
-		  return STF_FAIL + res; \
-	} \
-}
-
 /*
  * Process KE values.
  */
@@ -210,7 +197,7 @@ bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
  * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
  * clients are discovered in the wild, we will revisit this - please contact
  * the libreswan developers if you find such an implementation.
- * Therefor, the ikepad= option has no effect on IKEv2 connections.
+ * Therefore the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */
@@ -561,6 +548,10 @@ bool send_delete(struct state *st)
 			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
 		return TRUE;
 	}
+	DBG(DBG_CONTROL, DBG_log("#%lu send %s detlete notification for %s",
+			st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
+			enum_name(&state_names, st->st_state)));
+
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
@@ -619,10 +610,15 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 				   st->st_esp.attrs.transattrs.encrypt, &esb_t),
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 enum_show_shortb(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash, &esb_a));
+				 st->st_esp.attrs.transattrs.integ_hash, &esb_a));
 
 		/* advance b to end of string */
 		b = b + strlen(b);
+
+		if(st->st_ikev2 && st->st_pfs_group != NULL)  {
+			b = add_str(sadetails, sad_len , b, "-");
+			b = add_str(sadetails, sad_len, b, st->st_pfs_group->common.name);
+		}
 
 		ini = " ";
 

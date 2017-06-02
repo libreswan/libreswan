@@ -211,10 +211,42 @@ conn westnet-eastnet-ipv4-psk
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
-	
+
 conn westnet-eastnet-ipv4
 	also=west-east-base-id-nss
 	also=west-east-base-ipv4
+	also=westnet-ipv4
+	also=eastnet-ipv4
+
+conn northnet-eastnet
+	also=northnet-eastnet-ipv4
+
+conn northnet-eastnet-ipv4
+	also=north-east-base
+	also=north-ipv4
+	also=eastnet-ipv4
+
+conn rad-eastnet-fqdn-ikev2
+	also=rad-eastnet-fqdn
+	ikev2=insist
+
+conn road-eastnet
+	also=road-east-base
+	also=road-east-base-id-nss
+	also=eastnet-ipv4
+
+conn rad-eastnet-fqdn
+	also=road-east-base-fqdn-default-route
+	also=road-east-base-id-nss
+	also=eastnet-ipv4
+
+conn westnet-eastnet-fqdn-ikev2
+	also=westnet-eastnet-fqdn
+	ikev2=insist
+
+conn westnet-eastnet-fqdn
+	also=west-east-base-fqdn
+	also=west-east-base-id-nss
 	also=westnet-ipv4
 	also=eastnet-ipv4
 
@@ -273,9 +305,25 @@ conn left-defaultroute
 conn right-defaultroute
 	rightsubnet=0.0.0.0/0
 
+conn north-east-base
+	also=north-east-base-ipv4
+	also=north-east-base-id-nss
+
 conn west-east-base
 	also=west-east-base-ipv4
 	also=west-east-base-id-nss
+
+conn road-east-base-fqdn-default-route
+	left=%defaultroute
+	right=east.testing.libreswan.org
+
+conn west-east-base-fqdn
+	left=west.testing.libreswan.org
+	right=east.testing.libreswan.org
+
+conn north-east-base-ipv4
+	left=192.1.3.33
+	right=192.1.2.23
 
 conn west-east-base-ipv4
 	left=192.1.2.45
@@ -312,16 +360,24 @@ conn west-leftrsasigkey
 conn west-leftrsasigkey
         leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
 
-# Road uses the same key as west
 conn road-leftrsasigkey
-        leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
+	leftrsasigkey=0sAQPHFfpyJ3Ck4fMKcCH5DD/iZRKH2f0Sy6/U4MLj3Xeg76rH1qKyMPJksMXmx6cnF1R6jjLJrP2/j7MzuXR0c90jgxFT1tSRDjZ+Z/yJHkis6douZp1uT+KYp9xBs6Q39QepnCNpg1SHe+oAp1urLUE00aMXHqdkLX//RXpdhVxz3WPnQK3rceZfIUOA9SNMPUoRLMqa1nnFwlFur8NumfUmHGfuij4wS8GTp5I0Noy/5tDT/ngLCmQERMqMg/3xLrUAdmGm3vFZZyttwlfg8n1rn9NGQYwxwv3EYHIIO7tW+wH8HVdOz3wPxG9ybyoO8zDboID5cMy7B6n513aZY0tqDxo3lcub6hf3VWJrioMF/0N4V929CIWc8WI1bmnHBAtLxBvSOImM3lbQyCxRVDIbfSfczTd6Tssa7NLOSO1DSJyK/DCfsVccqZjlhJNs2k3MleP18qWznXCuJI0IOw+M6Vql8E2cPC9/vBCVNByWdCn8q/uPS3GqCya18DKYkGr9MfWr
+        
 conn road-leftckaid
-        leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
+        leftckaid=1a15cce89273439c2bf4202ac1066ef259b0ef45
 
 conn north-leftrsasigkey
         leftrsasigkey=0sAQPl33O2PtU2qPE9DdMCq3/sTJ6LDg7Szw9Zv22IIYaTnhA0ry3Ps37r5bIksqWwAQN9tZatZu5IwijZmnY2qRCEtQmPF09lztgvjniAiof0a5jZkZRrUhVbnEcSvthvJbRlOH7kjcfwWNOfaRTMPsgWH6+7XZMrMzkOlFWB9LPMklhuSlpOw3arBC4RCAZVEw8CbN3RvMC4jWX1l+38GDn5Vav6DcVJmX8bz8PemX2eym+eFNZa/97WT1dqg6tRumR04CLpmsUQcbvU66SZKJyFDjHqzKvvmIQ/WcF1qrNh62GMWKWSJYStx3nzh9DHg8LWiv4mnSr/sd2biSF8yvU4LT9kDEGcNOmyVQ+CGrPHXqWZ
 conn north-leftckaid
         leftckaid=905dfca10868747c6f20d31b2d204b8f88aa7c5d
+
+conn north-east-base-id-nss
+	# Left security gateway, subnet behind it, next hop toward right.
+	leftid=@north
+	also=north-leftrsasigkey
+	# Right security gateway, subnet behind it, next hop toward left.
+	rightid=@east
+	also=east-rightrsasigkey
 
 conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
@@ -355,28 +411,52 @@ conn north-east-x509-ipv4
 	also=right-defaultroute
 	narrowing=yes
 
+conn road-west-x509-ipv4
+	also=road-west-base-x509
+	also=road-client
+
 conn road-east-x509-ipv4
 	also=road-east-base-x509
-	leftmodecfgclient=yes
-	also=left-defaultroute
-	also=right-defaultroute
+	also=road-client
+
+conn rw-westnet-pool-x509-ipv4
+	also=rw-west-base-x509
+	also=west-ipv4-pool-100
+	rightsubnet=192.0.1.0/24
 	narrowing=yes
 
-conn rw-eastnet-x509-ipv4
+conn rw-eastnet-pool-x509-ipv4
+	also=rw-east-base-x509
+	also=east-ipv4-pool-100
+	also=eastnet-ipv4
+	narrowing=yes
+
+conn rw-east-pool-x509-ipv4
 	also=rw-east-base-x509
 	also=east-ipv4-pool-100
 	also=right-defaultroute
 
 conn north-east-base-x509
+	left=192.1.3.33
+	leftrsasigkey=%cert
+	leftid=%fromcert
+	leftcert=north
+	# Right security gateway
+	right=192.1.2.23
+	rightid=%fromcert
+	rightrsasigkey=%cert
+	rightcert=east
+
+conn road-west-base-x509
         left=%defaultroute
         leftrsasigkey=%cert
         leftid=%fromcert
-        leftcert=north
+        leftcert=road
         # Right security gateway, subnet behind it,toward left.
-        right=192.1.2.23
+        right=192.1.2.45
         rightid=%fromcert
         rightrsasigkey=%cert
-        rightcert=east
+        rightcert=west
 
 conn road-east-base-x509
         left=%defaultroute
@@ -399,6 +479,17 @@ conn west-east-base-x509
         rightid=%fromcert
         rightrsasigkey=%cert
         rightcert=east
+
+conn rw-west-base-x509
+        left=%any
+        leftrsasigkey=%cert
+        leftid=%fromcert
+        # Right security gateway, subnet behind it,toward left.
+        right=192.1.2.45
+        rightid=%fromcert
+        rightrsasigkey=%cert
+        rightcert=west
+
 
 conn rw-east-base-x509
         left=%any
@@ -481,3 +572,9 @@ conn north-east-x509-fail-base
 
 conn northnet
         leftsubnet=192.0.3.0/24
+
+conn road-client
+	leftmodecfgclient=yes
+	also=left-defaultroute
+	also=right-defaultroute
+	narrowing=yes

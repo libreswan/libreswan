@@ -7,7 +7,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2017 Andrew Cagney
 # Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -20,31 +20,28 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Pluto currently doesn't include include program.mk:
+PROGRAM = pluto
+
+# XXX: Pluto doesn't include mk/program.mk and define PROGRAM
+PROGRAM_MANPAGE = ipsec_pluto.8
+
 #
-# - program.mk (reasonably) expects only one program per directory but
-#   this directory creates two programs (pluto and cavp).
+# XXX:
 #
-#   Either cavp gets merged into pluto, or cavp gets moved to its own
-#   directory.
+# Because pluto's Makefile tests USE_... variables, defined in
+# config.mk, using "ifeq", it needs to include that file early.
 #
-# - this make file tests USE_ variables defined in config.mk using
-#   GNU-make's 'ifeq' statement and that only works if config.mk is
-#   included before the tests.
+# Instead:
 #
-#   That code is slowly being replaced by '$(call if-enabled)'.
+# - replace the code with '$(call if-enabled)'.
+#
+# - move the optional files to their own library?
 #
 
 ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
-
-# XXX: Pluto doesn't include mk/program.mk and define PROGRAM
-MANPAGES += ipsec_pluto.8
-
 include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/targets.mk
-include $(top_srcdir)/mk/manpages.mk
 
 # Object files required by this pluto build.
 
@@ -60,10 +57,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 # The following are best left undefined -- each can be overridden at runtime
 # if need be.
 # -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
-# -DSHARED_SECRETS_FILE=string overrides /etc/ipsec.secrets as the
-#    default name of the file containing secrets used to authenticate other
-#    IKE daemons.  In the Makefile, two levels of quoting are needed:
-#    -DSHARED_SECRETS_FILE='"/etc/ipsec.secrets"'
 # -DDEFAULT_CTLBASE=string overrides /var/run/pluto as default directory
 #    and basename for pluto's lockfile (.pid) and control socket (.ctl).
 #    Double quoting may be needed.
@@ -73,27 +66,27 @@ OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
+CFLAGS += -DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
 ifeq ($(USE_KLIPS),true)
-KLIPS_DEFS=-DKLIPS -DPFKEY
+CFLAGS += -DKLIPS -DPFKEY
 OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_MAST),true)
-MAST_DEFS=-DKLIPS_MAST
+CFLAGS += -DKLIPS_MAST
 OBJS += kernel_mast.o
 endif
 
 ifeq ($(USE_WIN2K_NATIVE),true)
-WIN2K_DEFS=-DWIN2K_NATIVE_IPSEC
+CFLAGS += -DWIN2K_NATIVE_IPSEC
 OBJS += kernel_win2k.o
 endif
 
 ifeq ($(USE_BSDKAME),true)
-BSDKAME_DEFS=-DBSD_KAME
+CFLAGS += -DBSD_KAME
 OBJS += kernel_bsdkame.o
 # LIBBSDPFKEY is presumably passed in.
 LDFLAGS += ${LIBBSDPFKEY}
@@ -103,7 +96,7 @@ OBJS += x509.o
 OBJS += fetch.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
-IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
+CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
@@ -130,6 +123,13 @@ LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+endif
+
+# XXX: hack until ike_alg gets a library
+OBJS += ike_info.o
+
 OBJS += ike_alg_nss_modp.o
 OBJS += ike_alg_nss_ecp.o
 OBJS += ike_alg_nss_cbc.o
@@ -139,49 +139,13 @@ OBJS += ike_alg_nss_prf_ops.o
 OBJS += ike_alg_nss_gcm.o
 OBJS += ike_alg_null.o
 
-ifeq ($(USE_SERPENT),true)
-OBJS += ike_alg_serpent.o
-# an archive
-OBJS += $(LIBSERPENT)
-endif
-
-ifeq ($(USE_TWOFISH),true)
-OBJS += ike_alg_twofish.o
-# an archive
-OBJS += $(LIBTWOFISH)
-endif
-
-ifeq ($(USE_CAST),true)
-OBJS += ike_alg_cast.o
-endif
-
-ifeq ($(USE_RIPEMD),true)
-OBJS += ike_alg_ripemd.o
-endif
-
 OBJS += ike_alg_sha1.o
 OBJS += ike_alg_md5.o
-
-ifeq ($(USE_3DES),true)
-OBJS += ike_alg_3des.o
-endif
-
 OBJS += ike_alg_aes.o
 OBJS += ike_alg_dh.o
 OBJS += ike_alg_camellia.o
 OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
-
-DEFINES = $(EXTRA_DEFINES) \
-	${VENDORID} \
-	$(KEYRR_DEFINES) \
-	$(NETKEY_DEFS) \
-	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
-	${LABELED_IPSEC_DEFS} \
-	${SYSTEMD_NOTIFY_DEFS} \
-	${CURL_DEFS}\
-	${SINGLE_CONF_DIR} \
-	${IPSEC_CONNECTION_LIMIT_DEFS} \
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
@@ -194,11 +158,9 @@ LDFLAGS += -lpthread
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
 
 ifeq ($(USE_LIBCAP_NG),true)
-DEFINES+=-DHAVE_LIBCAP_NG
+CFLAGS += -DHAVE_LIBCAP_NG
 LDFLAGS += -lcap-ng
 endif
-
-BINNAMEPLUTO = pluto
 
 # OSDEP already set in objdir.mk?
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
@@ -247,6 +209,9 @@ OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += state_entry.o
 OBJS += timer.o hmac.o hostpair.o
 OBJS += myid.o ipsec_doi.o
+ifeq ($(USE_DNSSEC),true)
+OBJS += ikev2_ipseckey.o
+endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
@@ -269,53 +234,22 @@ OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
 
-CAVP += cavp
+ifeq ($(USE_SERPENT),true)
+OBJS += $(LIBSERPENT)
+endif
 
-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) buildall
+ifeq ($(USE_TWOFISH),true)
+OBJS += $(LIBTWOFISH)
+endif
 
-local-clean-base: $(builddir)/Makefile
-	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
-		$(foreach f,$(OBJS) $(BINNAMEPLUTO) $(OBJSCAVP) $(CAVP), $(builddir)/$(f))
+# legacy mess, something is still needed
+CFLAGS += $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(NSSFLAGS) ${CROSSFLAGS}
+CFLAGS += $(EXTRA_DEFINES) \
+	${VENDORID} \
+	$(KEYRR_DEFINES) \
+	${LABELED_IPSEC_DEFS} \
+	${SYSTEMD_NOTIFY_DEFS} \
+	${CURL_DEFS}\
+	${SINGLE_CONF_DIR}
 
-local-install-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) doinstall
-buildall: $(BINNAMEPLUTO) $(CAVP)
-
-doinstall:
-	mkdir -p ${LIBEXECDIR}
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d
-	mkdir -p -m 755 $(VARDIR)/run/pluto
-	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(LIBEXECDIR)
-
-list-local-base:
-	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-
-$(BINNAMEPLUTO): $(OBJS)
-	$(CC) -o $(BINNAMEPLUTO) $(OBJS) $(LDFLAGS) $(USERLINK)
-
-check:
-	echo no checks in lib right now.
-
-checkprograms:
-
-# Cryptographic Algorithm Validation Program (CAVP)
-# see: http://csrc.nist.gov/groups/STM/cavp/index.html
-OBJSCAVP += cavp.o
-OBJSCAVP += cavp_print.o
-OBJSCAVP += cavp_stubs.o
-OBJSCAVP += cavp_ikev1.o
-OBJSCAVP += cavp_ikev2.o
-OBJSCAVP += cavp_sha.o
-OBJSCAVP += cavp_hmac.o
-OBJSCAVP += cavp_gcm.o
-OBJSCAVP += $(filter-out plutomain.o, $(OBJS))
-cavp: $(OBJSCAVP)
-	$(CC) -o $@ $(OBJSCAVP) $(LDFLAGS) $(USERLINK)
-
-%.i: %.c
-	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
-
-MK_DEPEND_FILES = $(sort $(OBJSCAVP) $(OBJS))
-MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
-include $(top_srcdir)/mk/depend.mk
+include $(top_srcdir)/mk/program.mk

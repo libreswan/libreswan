@@ -19,10 +19,10 @@ east #
  # can be seen on east logs
 east #
  hostname | grep west > /dev/null || grep "IKEv2 peer liveness" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 peer liveness - restarting all connections that share this peer
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 peer liveness action - restarting all connections that share this peer
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

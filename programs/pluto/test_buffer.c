@@ -65,10 +65,8 @@ chunk_t decode_hex_to_chunk(const char *original, const char *string)
 			}
 		}
 		if (buf[1] == '\0') {
-			loglog(RC_INTERNALERR,
-			       "expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
-			       pos - string, string, pos);
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
+				     pos - string, string, pos);
 		}
 
 		char *end;

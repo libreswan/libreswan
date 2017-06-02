@@ -65,7 +65,7 @@ if [ $(id -u) -ne 0 ]; then
 fi
 
 if [ $(ip addr list | grep -c cipsec) -ne 0 ]; then
-    echo "Cisco IPSec client is already loaded, aborting! (cipsec# device found)"
+    echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
     exit 1
 fi
 
@@ -235,7 +235,7 @@ case "$1" in
     status)
 	status -p ${plutopid} -l ${lockfile} ${IPSEC_EXECDIR}/pluto
 	RETVAL=$?
-	${IPSEC_EXECDIR}/whack --status | grep Total | sed 's/^000\ Total\ //'
+	${IPSEC_EXECDIR}/whack --status 2>/dev/null | grep Total | sed 's/^000\ Total\ //'
 	;;
     version)
 	version

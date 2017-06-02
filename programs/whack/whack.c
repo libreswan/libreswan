@@ -82,7 +82,7 @@ static void help(void)
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] \\\n"
+		"	[--psk] | [--rsasig] | [ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] \\\n"
 		"	[--overlapip] [--tunnel] [--pfs] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
@@ -497,8 +497,7 @@ static const struct option long_opts[] = {
 	{ "terminate", no_argument, NULL, OPT_TERMINATE + OO },
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
-	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
-	  NUMERIC_ARG },
+	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO + NUMERIC_ARG },
 	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
@@ -558,9 +557,10 @@ static const struct option long_opts[] = {
 	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
 	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
 	{ "client", required_argument, NULL, END_CLIENT + OO },
-	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT +
-	  OO },
+	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT + OO },
+#ifdef USE_DNSSEC
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
+#endif
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
@@ -574,6 +574,8 @@ static const struct option long_opts[] = {
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
 	PS("rsasig", RSASIG),
+	PS("auth-never", AUTH_NEVER),
+	PS("auth-null", AUTH_NULL),
 
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
@@ -1489,7 +1491,11 @@ int main(int argc, char **argv)
 			diagq(tnatoaddr(optarg, strchr(optarg, '/') - optarg, AF_UNSPEC, &msg.right.host_vtiip.addr), optarg);
 			continue;
 
-		case END_AUTHBY: /* --authby secret | rsasig | null */
+		/*
+		 * --authby secret | rsasig | null
+		 *  Note: auth-never cannot be asymmetrical
+		 */
+		case END_AUTHBY:
 			if (streq(optarg, "psk"))
 				msg.right.authby = AUTH_PSK;
 			else if (streq(optarg, "null"))
@@ -1547,6 +1553,7 @@ int main(int argc, char **argv)
 
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_RSASIG_IX:	/* --rsasig */
+		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --null */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
@@ -2091,22 +2098,15 @@ int main(int argc, char **argv)
 		    subnettypeof(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
-		if (NEVER_NEGOTIATE(msg.policy)) {
-			/*
-			 * we think this is just a shunt
-			 * (because he didn't specify
-			 * a host authentication method).
-			 * If he didn't specify a shunt type,
-			 * he's probably gotten it wrong.
-			 */
+		if (msg.policy & POLICY_AUTH_NEVER) {
 			if ((msg.policy & POLICY_SHUNT_MASK) ==
 			    POLICY_SHUNT_TRAP)
-				diag("non-shunt connection must have --psk or --rsasig or both");
+				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
 				msg.left.authby == AUTH_NEVER && msg.right.authby == AUTH_NEVER)
-				diag("must specify --rsasig or --psk for a connection");
+				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 
 			/*
 			 * If neither v1 nor v2, default to v1
@@ -2356,10 +2356,12 @@ int main(int argc, char **argv)
 							strtoul(ls, NULL, 10);
 
 						switch (s) {
+						/* these logs are informational only */
 						case RC_COMMENT:
 						case RC_INFORMATIONAL:
 						case RC_INFORMATIONAL_TRAFFIC:
 						case RC_LOG:
+						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
 							/* ignore */
 							break;
 						case RC_SUCCESS:
@@ -2391,7 +2393,6 @@ int main(int argc, char **argv)
 								   usernamelen);
 							break;
 
-						/* case RC_LOG_SERIOUS: */
 						default:
 							if (msg.whack_async)
 								exit_status =

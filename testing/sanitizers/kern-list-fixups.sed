@@ -104,5 +104,10 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
 s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
+s/ LEN=[0-9]* / LEN=XXXX /g
 /^.*CPU feature 'AVX registers' is not supported.*$/d
 /^.*hrtimer: interrupt took .*$/d
+/^.*Clocksource tsc unstabl.*$/d
+/^.*audit_printk.*$/d
+/^.*audit: type=.*$/d
+/^.*SELinux: unrecognized netlink message.*$/d

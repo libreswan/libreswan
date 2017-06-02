@@ -17,12 +17,16 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
+/* linux has 'typedef _bool bool' in KERNEL/include/types.h */
+
+#ifndef __KERNEL__
+# include <stdbool.h> /* for 'bool' */
+#endif
+
 /* you'd think this should be builtin to compiler... */
+
 #ifndef TRUE
 # define TRUE 1
-# ifndef __KERNEL__
-typedef int bool;
-# endif
 #endif
 
 #ifndef FALSE
@@ -499,7 +503,7 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 		    size_t mlen, char *dst, size_t dstlen);
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
-		   int *has_port_wildcard);
+			  bool *has_port_wildcard);
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
@@ -528,15 +532,15 @@ extern void networkof(const ip_subnet *src, ip_address *dst);
 extern void maskof(const ip_subnet *src, ip_address *dst);
 
 /* tests */
-extern int sameaddr(const ip_address *a, const ip_address *b);
+extern bool sameaddr(const ip_address *a, const ip_address *b);
 extern int addrcmp(const ip_address *a, const ip_address *b);
-extern int samesubnet(const ip_subnet *a, const ip_subnet *b);
-extern int addrinsubnet(const ip_address *a, const ip_subnet *s);
-extern int subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
-extern int subnetishost(const ip_subnet *s);
-extern int samesaid(const ip_said *a, const ip_said *b);
-extern int sameaddrtype(const ip_address *a, const ip_address *b);
-extern int samesubnettype(const ip_subnet *a, const ip_subnet *b);
+extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
+extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
+extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
+extern bool subnetishost(const ip_subnet *s);
+extern bool samesaid(const ip_said *a, const ip_said *b);
+extern bool sameaddrtype(const ip_address *a, const ip_address *b);
+extern bool samesubnettype(const ip_subnet *a, const ip_subnet *b);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);

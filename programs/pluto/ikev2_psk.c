@@ -8,7 +8,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,6 +57,7 @@
 #include "keys.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "lswfips.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -91,6 +92,24 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 			return FALSE; /* failure: no PSK to use */
 		}
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
+		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.prf);
+		if (pss->len < key_size_min) {
+			if (libreswan_fipsmode()) {
+				loglog(RC_LOG_SERIOUS,
+				       "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+				       st->st_connection->name,
+				       pss->len,
+				       st->st_oakley.prf->common.name,
+				       key_size_min);
+				return FALSE;
+			} else {
+				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					      st->st_connection->name,
+					      pss->len,
+					      st->st_oakley.prf->common.name,
+					      key_size_min);
+			}
+		}
 	} else {
 		/*
 		 * RFC-7619
@@ -140,6 +159,16 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 					     DBG_CRYPT,
 					     st->st_oakley.prf,
 					     "shared secret", *pss);
+		if (prf == NULL) {
+			if (libreswan_fipsmode()) {
+				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
+					     st->st_oakley.prf->common.name);
+			}
+			loglog(RC_LOG_SERIOUS,
+			       "failure creating %s PRF context for digesting PSK",
+			       st->st_oakley.prf->common.name);
+			return FALSE;
+		}
 		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
 				       psk_key_pad_str, psk_key_pad_str_len);
 		prf_psk = crypt_prf_final_symkey(&prf);

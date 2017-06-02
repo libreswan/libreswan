@@ -1,5 +1,4 @@
-/* IKEv2 - CHILD SA - calculations
- *
+/*
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
@@ -8,6 +7,7 @@
  * Copyright (C) 2012,2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1003,19 +1003,21 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 	return st;
 }
 
-static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
+stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 {
 
 	struct state *st = md->st;  /* new child state */
 	struct state *rst = NULL; /* old child state being rekeyed */
 	struct payload_digest *ntfy;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	stf_status ret = STF_OK; /* if no v2N_REKEY_SA return OK */
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 
 		case v2N_REKEY_SA:
-			DBG(DBG_CONTROL, DBG_log("received v2N REKEY_SA "));
+			ret = STF_FAIL; /* this is a rekey request */
+			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
 			/*
 			 * incase of a failure the response is
 			 * a v2N_CHILD_SA_NOT_FOUND with
@@ -1027,7 +1029,7 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 			rst = find_state_to_rekey(ntfy, pst);
 			if(rst == NULL) {
 				libreswan_log("no valid IPsec SA SPI to rekey");
-				return FALSE;
+				return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			}
 			break;
 		default:
@@ -1054,9 +1056,11 @@ static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		st->st_ts_that = ikev2_end_to_ts(&spd->that);
 		ikev2_print_ts(&st->st_ts_this);
 		ikev2_print_ts(&st->st_ts_that);
+		st->st_ipsec_pred = rst->st_serialno;
+		ret = STF_OK; /* success */
 	}
 
-	return (rst == NULL ? FALSE : TRUE );
+	return ret;
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
@@ -1065,19 +1069,21 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
-	struct state *pst = md->st;	/* parent state */
+	struct state *pst;
 	struct connection *c = md->st->st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	bool send_use_transport;
 	stf_status ret = STF_FAIL;
 
+	pst = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
+
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-			ikev2_rekey_child_copy_ts(md)) {
+			md->st->st_ipsec_pred != SOS_NOBODY) {
+		/* this is Child SA rekey we already have child sa */
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
-		if (ret != STF_OK)
-			return ret;
+		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,
+					isa_xchg));
 	} else {
 		ret = ikev2_create_responder_child_state(md, &cst, role,
 				isa_xchg);
@@ -1116,44 +1122,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
-		stf_status ret;
 
-		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-						  c->alg_info_esp, c->policy,
-						  &c->esp_or_ah_proposals);
-		passert(c->esp_or_ah_proposals != NULL);
-
-		ret = ikev2_process_sa_payload("ESP/AH responder",
-				&sa_pd->pbs,
-				/*expect_ike*/ FALSE,
-				/*expect_spi*/ TRUE,
-				/*expect_accepted*/ FALSE,
-				c->policy & POLICY_OPPORTUNISTIC,
-				&cst->st_accepted_esp_or_ah_proposal,
-				c->esp_or_ah_proposals);
-
-		if (ret == STF_OK) {
-			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", cst->st_accepted_esp_or_ah_proposal));
-			if (!ikev2_proposal_to_proto_info(cst->st_accepted_esp_or_ah_proposal, proto_info)) {
-				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
-				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			} else {
-				proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
-				chunk_t local_spi;
-				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-					 sizeof(proto_info->our_spi));
-				if (!ikev2_emit_sa_proposal(outpbs,
-							    cst->st_accepted_esp_or_ah_proposal,
-							    &local_spi, next_payload_type)) {
-					DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
-					ret = STF_INTERNAL_ERROR;
-				}
-			}
+		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
+			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 		}
-
-		if (ret != STF_OK)
-			return ret;
+		proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+				sizeof(proto_info->our_spi));
+		if (!ikev2_emit_sa_proposal(outpbs,
+					cst->st_accepted_esp_or_ah_proposal,
+					&local_spi, next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -1162,7 +1144,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pb_stream pb_nr;
 
 		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = ISAKMP_NEXT_v2TSi;
+		in.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
+			ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi;
+
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
@@ -1173,6 +1157,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);
+
+		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+			if (!justship_v2KE(&cst->st_gr,
+						cst->st_oakley.group, outpbs,
+						ISAKMP_NEXT_v2TSi))
+				return STF_INTERNAL_ERROR;
+		}
+
 	}
 
 	if (role == ORIGINAL_RESPONDER) {

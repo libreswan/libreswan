@@ -1,26 +1,28 @@
-%global USE_FIPSCHECK 1
-%global USE_LIBCAP_NG 1
-%global USE_LABELED_IPSEC 1
-%global USE_CRL_FETCHING 1
-%global USE_DNSSEC 1
-%global USE_NM 1
-%global USE_LINUX_AUDIT 1
-# not production ready yet
-%global USE_SECCOMP 0
 
+# These are rpm macros and are 0 or 1
+%global crl_fetching 1
 %global _hardened_build 1
-
 %global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 %global cavstests 1
 
-#global prever rc1
+# These are libreswan/make macros and are false or true
+%global USE_FIPSCHECK true
+%global USE_LIBCAP_NG true
+%global USE_LABELED_IPSEC true
+%global USE_DNSSEC true
+%global USE_NM true
+%global USE_LINUX_AUDIT true
+# not production ready yet
+%global USE_SECCOMP false
+
+%global prever rc2
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.20
+Version: 3.21
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -48,7 +50,7 @@ BuildRequires: nss-devel >= 3.16.1, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel
+BuildRequires: unbound-devel >= 1.6.0-6 ldns-devel
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
@@ -67,7 +69,7 @@ Buildrequires: audit-libs-devel
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif
-%if %{USE_CRL_FETCHING}
+%if %{crl_fetching}
 BuildRequires: openldap-devel curl-devel
 %endif
 %if %{buildefence}
@@ -120,9 +122,12 @@ make %{?_smp_mflags} \
 %endif
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
-%if %{USE_CRL_FETCHING}
+%if %{crl_fetching}
   USE_LDAP=true \
   USE_LIBCURL=true \
+%else
+  USE_LDAP=false \
+  USE_LIBCURL=false \
 %endif
   USE_DNSSEC="%{USE_DNSSEC}" \
   USE_SECCOMP="%{USE_SECCOMP}" \
@@ -130,7 +135,6 @@ make %{?_smp_mflags} \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
-  WERROR_CFLAGS="" \
   NSS_REQ_AVA_COPY=false \
   programs
 FS=$(pwd)
@@ -162,13 +166,15 @@ make \
 %endif
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
-%if %{USE_CRL_FETCHING}
+%if %{crl_fetching}
   USE_LDAP=true \
   USE_LIBCURL=true \
+%else
+  USE_LDAP=false \
+  USE_LIBCURL=false \
 %endif
   USE_DNSSEC="%{USE_DNSSEC}" \
   USE_SECCOMP="%{USE_SECCOMP}" \
-  WERROR_CFLAGS="" \
   NSS_REQ_AVA_COPY=false \
   install
 FS=$(pwd)
@@ -257,5 +263,5 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Tue Mar 14 2017 Team Libreswan <team@libreswan.org> - 3.20-1
+* Tue May 30 2017 Team Libreswan <team@libreswan.org> - 3.21-0.1.rc2
 - Automated build from release tar ball

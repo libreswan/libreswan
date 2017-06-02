@@ -34,7 +34,7 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_nss_prf_ops.h"
 
-struct hash_desc ike_alg_hash_sha1 = {
+const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
 		.name = "sha",
 		.names = { "sha", "sha1", },
@@ -46,12 +46,14 @@ struct hash_desc ike_alg_hash_sha1 = {
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1,
 	},
+	.nss_oid_tag = SEC_OID_SHA1,
+	.nss_derive_mechanism = CKM_SHA1_KEY_DERIVATION,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
-struct prf_desc ike_alg_prf_sha1 = {
+const struct prf_desc ike_alg_prf_sha1 = {
 	.common = {
 		.name = "sha",
 		.names = { "sha", "sha1", "hmac_sha1", },
@@ -70,7 +72,7 @@ struct prf_desc ike_alg_prf_sha1 = {
 	.prf_ops = &ike_alg_nss_prf_ops,
 };
 
-struct integ_desc ike_alg_integ_sha1 = {
+const struct integ_desc ike_alg_integ_sha1 = {
 	.common = {
 		.name = "sha",
 		.names = { "sha", "sha1", "sha1_96", "hmac_sha1", "hmac_sha1_96", },

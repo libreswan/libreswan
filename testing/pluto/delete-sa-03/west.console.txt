@@ -28,6 +28,7 @@ west #
 000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; unrouted; eroute owner: #0
@@ -43,6 +44,7 @@ west #
 000 "west-east-b":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "west-east-c": 198.51.100.3/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.4/32; unrouted; eroute owner: #0
@@ -58,6 +60,7 @@ west #
 000 "west-east-c":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -69,8 +72,8 @@ west #
 104 "west-east" #1: STATE_MAIN_I1: initiate
 106 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-002 "west-east" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
+002 "west-east" #1: Peer ID is ID_FQDN: '@east'
+004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "west-east" #2: STATE_QUICK_I1: initiate
 004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
@@ -99,9 +102,10 @@ west #
 000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #2;
-000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA2_256-MODP2048
 000 "west-east":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset
@@ -116,6 +120,7 @@ west #
 000 "west-east-b":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "west-east-b":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -132,6 +137,7 @@ west #
 000 "west-east-c":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "west-east-c":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -148,8 +154,8 @@ west #
  ipsec auto --down west-east
 002 "west-east": terminating SAs using this connection
 002 "west-east": IKE SA is shared - only terminating IPsec SA
-002 "west-east": deleting other state #2 (STATE_QUICK_I2) "west-east"
-005 "west-east": ESP traffic information: in=0B out=0B
+002 "west-east" #2: deleting state (STATE_QUICK_I2) and sending notification
+005 "west-east" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec status |grep west-
 000 "west-east": 192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]; prospective erouted; eroute owner: #0
@@ -165,9 +171,10 @@ west #
 000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0;
-000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -181,6 +188,7 @@ west #
 000 "west-east-b":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "west-east-b":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -197,6 +205,7 @@ west #
 000 "west-east-c":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "west-east-c":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -222,9 +231,10 @@ west #
 000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0;
-000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "west-east":   IKE algorithm newest: AES_CBC_256-SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -238,6 +248,7 @@ west #
 000 "west-east-b":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "west-east-b":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -254,6 +265,7 @@ west #
 000 "west-east-c":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "west-east-c":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -264,7 +276,7 @@ west #
 000 #4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

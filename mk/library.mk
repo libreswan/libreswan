@@ -32,16 +32,14 @@ ARFLAGS=crvs
 local-base: $(LIB)
 
 local-clean-base:
-	rm -f $(foreach f,$(OBJS) $(LIB), $(builddir)/$(f))
+	rm -f $(builddir)/*.o
+	rm -f $(builddir)/*.a
+	rm -f $(builddir)/*.c
 
 list-local-base:
 	@: never nothing to do
 
-$(LIB): $(OBJS)
-	cd $(builddir) ; $(AR) $(ARFLAGS) $(LIB) $(OBJS)
+$(LIB): $(OBJS) | $(builddir)
+	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
-$(OBJS):	$(HDRS)
-
-MK_DEPEND_FILES = $(OBJS)
-MK_DEPEND_CFLAGS = $(CFLAGS)
 include $(top_srcdir)/mk/depend.mk

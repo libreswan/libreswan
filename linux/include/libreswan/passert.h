@@ -17,16 +17,23 @@
  * License for more details.
  */
 
+#include <signal.h>	/* for sig_atomic_t */
 #include "libreswan.h"
 
 #ifndef _LIBRESWAN_PASSERT_H
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-extern void libreswan_passert_fail(const char *file_str,
-				   unsigned long line_no,
-				   const char *func_str,
-				   const char *fmt, ...)
+/*
+ * Set by lsw_passert_fail() to communicate to libreswan_loglog() that
+ * the message must get through.
+ */
+extern volatile sig_atomic_t lsw_dying_breath;
+
+extern void lsw_passert_fail(const char *file_str,
+			     unsigned long line_no,
+			     const char *func_str,
+			     const char *fmt, ...)
 	NEVER_RETURNS
 	PRINTF_LIKE(4);
 
@@ -40,9 +47,9 @@ extern void libreswan_passert_fail(const char *file_str,
 #define PASSERT_BASENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
-#define PASSERT_FAIL(FMT, ...)						\
-	libreswan_passert_fail(PASSERT_BASENAME, __LINE__,		\
-			       __func__, FMT, __VA_ARGS__)
+#define PASSERT_FAIL(FMT, ...)					\
+	lsw_passert_fail(PASSERT_BASENAME, __LINE__,		\
+			 __func__, FMT, __VA_ARGS__)
 
 #define bad_case(N) {						\
 		long _n = (N);				\
@@ -71,13 +78,13 @@ extern void libreswan_passert_fail(const char *file_str,
  * statement).
  */
 
-extern void pexpect_log(const char *file_str, unsigned long line_no,
-			const char *func_str, const char *fmt, ...)
+extern void lsw_pexpect_log(const char *file_str, unsigned long line_no,
+			    const char *func_str, const char *fmt, ...)
 	PRINTF_LIKE(4);
 
 #define PEXPECT_LOG(FMT, ...)					\
-	pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
-		    FMT,  __VA_ARGS__)
+	lsw_pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
+			FMT,  __VA_ARGS__)
 
 #define pexpect(pred) {							\
 		if (pred) {} else {					\

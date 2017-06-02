@@ -3,3 +3,23 @@ An interop test of Authenticated Header (AH) using sha2_256
 This uses IKEv1. It requires netkey
 
 This test requires strongswan 5.1.1 or newer for AH support.
+
+But it requires strongswan < 5.5.2 because there they broke it :/
+
+Seems what we receive is badly formed:
+
+| *****parse ISAKMP Transform Payload (AH):
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (0x1c)
+|    AH transform number: 1 (0x1)
+|    AH transform ID: AH_AES_XCBC_MAC (0x9)
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: AUTH_ALGORITHM (0x8005)
+|    length/value: 5 (0x5)
+|    [5 is AUTH_ALGORITHM_HMAC_SHA2_256]
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: GROUP_DESCRIPTION (0x8003)
+|    length/value: 5 (0x5)
+|    [5 is OAKLEY_GROUP_MODP1536]
+
+

@@ -413,7 +413,7 @@ extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
 
 struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
-*con_by_name(const char *nm, bool strict);
+*conn_by_name(const char *nm, bool strict, bool quiet);
 
 stf_status ikev2_find_host_connection(struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
@@ -536,4 +536,4 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);
 
-extern bool liveness_action_hold(struct connection *c);
+extern void liveness_action(struct connection *c);

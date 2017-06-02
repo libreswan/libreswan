@@ -184,7 +184,7 @@ static void key_add_request(const struct whack_message *msg)
 #endif
 		if (msg->keyval.len != 0) {
 			DBG_dump_chunk("add pubkey", msg->keyval);
-			ugh = add_public_key(&keyid, DAL_LOCAL,
+			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
 					     msg->pubkey_alg,
 					     &msg->keyval, &pluto_pubkeys);
 			if (ugh != NULL)
@@ -300,8 +300,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				base_debugging = m->debugging;
 				set_debugging(base_debugging);
 			} else if (!m->whack_connection) {
-				struct connection *c = con_by_name(m->name,
-								   TRUE);
+				struct connection *c = conn_by_name(m->name,
+								   TRUE, FALSE);
 
 				if (c != NULL) {
 					c->extra_debugging = m->debugging;
@@ -377,6 +377,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
 					m->whack_deletestateno);
 		} else {
+			set_cur_state(st);
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
@@ -456,7 +457,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --route");
 		} else {
-			struct connection *c = con_by_name(m->name, TRUE);
+			struct connection *c = conn_by_name(m->name, TRUE, FALSE);
 
 			if (c != NULL) {
 				set_cur_connection(c);
@@ -476,7 +477,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	}
 
 	if (m->whack_unroute) {
-		struct connection *c = con_by_name(m->name, TRUE);
+		struct connection *c = conn_by_name(m->name, TRUE, FALSE);
 
 		if (c != NULL) {
 			const struct spd_route *sr;

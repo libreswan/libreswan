@@ -1,0 +1,1 @@
+This is test for dnssec working in the test envirmet. No pluto used

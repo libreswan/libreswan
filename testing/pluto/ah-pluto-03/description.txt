@@ -1,1 +1,5 @@
 Testing AH with sha2_512 using NETKEY
+
+Note that there is an alignment issue here with kernels < 2.6.39
+and with libreswan < v3.20 and strongswan < 5.5.2 not setting
+the proper alignment

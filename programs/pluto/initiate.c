@@ -344,7 +344,7 @@ void initiate_connection(const char *name, int whackfd,
 			 char *remote_host)
 {
 	struct initiate_stuff is;
-	struct connection *c = con_by_name(name, FALSE);
+	struct connection *c = conn_by_name(name, FALSE, FALSE);
 	int count;
 
 	passert(name != NULL);

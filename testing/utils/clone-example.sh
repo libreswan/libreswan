@@ -2,8 +2,6 @@
 
 set -ex
 
-prefix=krb.
-
 # To run GSSAPI/Kerberos tests, nic needs to be configured as KDC and
 # west and east need to join the kerberos domain.
 
@@ -21,44 +19,41 @@ prefix=krb.
 #
 # before running this script.
 
-make KVM_PREFIX=${prefix} \
-     uninstall-kvm-test-domains
+make kvm-purge
 
-make KVM_PREFIX=${prefix} \
-     install-kvm-clone-domain
+make kvmsh-clone \
+     KVMSH_COMMAND="dnf install -y \
+     bind \
+     bind-dyndb-ldap \
+     bind-utils \
+     freeipa-admintools \
+     freeipa-client \
+     freeipa-server"
 
-./testing/utils/kvmsh.py \
-    ${prefix}clone dnf install -y \
-    bind \
-    bind-dyndb-ldap \
-    bind-utils \
-    freeipa-admintools \
-    freeipa-client \
-    freeipa-server
-
-./testing/utils/kvmsh.py \
-    ${prefix}clone dnf debuginfo-install -y \
-    bind \
-    bind-dyndb-ldap \
-    freeipa-admintools \
-    freeipa-client \
-    freeipa-server
+make kvmsh-clone \
+     KVMSH_COMMAND="dnf debuginfo-install -y \
+     bind \
+     bind-dyndb-ldap \
+     freeipa-admintools \
+     freeipa-client \
+     freeipa-server"
 
 
-# Pre-install/update libreswan on clone.
+# Pre-build/install/update libreswan on clone.
 #
 # This hack avoids having to install libreswan on the individual
 # domains.
+#
+# Need to set KVM_BUILD_DOMAIN to the clone domain as otherwise it
+# will build/install using the default build domain (which is 'east').
+# XXX: should KVM_BUILD_DOMAIN be set to 'clone'?
 
-make KVM_PREFIX=${prefix} \
-     KVM_BUILD_DOMAIN=${prefix}clone \
-     kvm-install-${prefix}clone
-
+make kvm-clone-install \
+     KVM_BUILD_DOMAIN='$(KVM_CLONE_DOMAIN)'
 
 # Create the test domains from the clone.
 
-make KVM_PREFIX=${prefix} \
-     install-kvm-test-domains
+make kvm-install-test-domains
 
 
 # Transmogrify the domains using swan-transmogrify.sh.
@@ -76,10 +71,10 @@ make KVM_PREFIX=${prefix} \
 #  - deals with FQDNs (/etc/hosts, /etc/hostname) needed by kerberos
 
 for host in nic east west ; do
-    ./testing/utils/kvmsh.py \
-	--shutdown --chdir . ${prefix}${host} \
-	./testing/guestbin/swan-transmogrify.sh \
-	${host}.testing.libreswan.org
+    make kvmsh-${host} \
+	 KVMSH_FLAGS="--chdir . --shutdown" \
+	 KVMSH_COMMAND="./testing/guestbin/swan-transmogrify.sh \
+	 ${host}.testing.libreswan.org"
 done
 
 
@@ -87,40 +82,38 @@ done
 #
 # This leaves NIC running, should it?
 
-./testing/utils/kvmsh.py \
-    ${prefix}nic \
-    ipa-server-install \
-    -r TESTING.LIBRESWAN.ORG \
-    -n testing.libreswan.org \
-    -p swanswan -P swanswan -a swanswan \
-    --no-ntp \
-    --no-sshd \
-    --unattended
+make kvmsh-nic \
+     KVMSH_COMMAND="ipa-server-install \
+     -r TESTING.LIBRESWAN.ORG \
+     -n testing.libreswan.org \
+     -p swanswan -P swanswan -a swanswan \
+     --no-ntp \
+     --no-sshd \
+     --unattended"
 
 
 # Add east and west to the kerberos domain:
 
 for host in east west ; do \
-    ./testing/utils/kvmsh.py \
-	--shutdown ${prefix}${host} \
-	ipa-client-install \
-	--enable-dns-updates \
-	--domain=testing.libreswan.org \
-	--server=nic.testing.libreswan.org \
-	--realm=TESTING.LIBRESWAN.ORG \
-	-p admin \
-	-w swanswan \
-	--hostname=${host}.testing.libreswan.org \
-	--no-ntp \
-	--no-ssh \
-	--no-sshd \
-	--fixed-primary \
-	--unattended
+    make kvmsh-${host} \
+	 KVMSH_FLAGS="--shutdown" \
+	 KVMSH_COMMAND="ipa-client-install \
+	 --enable-dns-updates \
+	 --domain=testing.libreswan.org \
+	 --server=nic.testing.libreswan.org \
+	 --realm=TESTING.LIBRESWAN.ORG \
+	 -p admin \
+	 -w swanswan \
+	 --hostname=${host}.testing.libreswan.org \
+	 --no-ntp \
+	 --no-ssh \
+	 --no-sshd \
+	 --fixed-primary \
+	 --unattended"
 done
 
 
 # Finally, run a test case to prove all is ok.
 
-make KVM_PREFIX=${prefix} \
-     KVM_TESTS=testing/pluto/ikev2-gssapi-01 \
-     kvm-test
+make kvm-test \
+     KVM_TESTS=testing/pluto/ikev2-gssapi-01

@@ -41,7 +41,7 @@ const struct oakley_group_desc unset_group = {
 	.group = OAKLEY_GROUP_invalid,
 };
 
-struct oakley_group_desc oakley_group_modp1024 = {
+const struct oakley_group_desc oakley_group_modp1024 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP1024",
@@ -59,7 +59,7 @@ struct oakley_group_desc oakley_group_modp1024 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp1536 = {
+const struct oakley_group_desc oakley_group_modp1536 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP1536",
@@ -77,7 +77,7 @@ struct oakley_group_desc oakley_group_modp1536 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp2048 = {
+const struct oakley_group_desc oakley_group_modp2048 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP2048",
@@ -96,7 +96,7 @@ struct oakley_group_desc oakley_group_modp2048 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp3072 = {
+const struct oakley_group_desc oakley_group_modp3072 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP3072",
@@ -115,7 +115,7 @@ struct oakley_group_desc oakley_group_modp3072 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp4096 = {
+const struct oakley_group_desc oakley_group_modp4096 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP4096",
@@ -134,7 +134,7 @@ struct oakley_group_desc oakley_group_modp4096 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp6144 = {
+const struct oakley_group_desc oakley_group_modp6144 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP6144",
@@ -153,7 +153,7 @@ struct oakley_group_desc oakley_group_modp6144 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_modp8192 = {
+const struct oakley_group_desc oakley_group_modp8192 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "MODP8192",
@@ -172,7 +172,7 @@ struct oakley_group_desc oakley_group_modp8192 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_dh19 = {
+const struct oakley_group_desc oakley_group_dh19 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH19",
@@ -190,7 +190,7 @@ struct oakley_group_desc oakley_group_dh19 = {
 	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_dh20 = {
+const struct oakley_group_desc oakley_group_dh20 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH20",
@@ -208,7 +208,7 @@ struct oakley_group_desc oakley_group_dh20 = {
 	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_dh21 = {
+const struct oakley_group_desc oakley_group_dh21 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH21",
@@ -227,7 +227,7 @@ struct oakley_group_desc oakley_group_dh21 = {
 };
 
 #ifdef USE_DH22
-struct oakley_group_desc oakley_group_dh22 = {
+const struct oakley_group_desc oakley_group_dh22 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH22",
@@ -246,7 +246,7 @@ struct oakley_group_desc oakley_group_dh22 = {
 };
 #endif
 
-struct oakley_group_desc oakley_group_dh23 = {
+const struct oakley_group_desc oakley_group_dh23 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH23",
@@ -265,7 +265,7 @@ struct oakley_group_desc oakley_group_dh23 = {
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
 
-struct oakley_group_desc oakley_group_dh24 = {
+const struct oakley_group_desc oakley_group_dh24 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.name = "DH24",

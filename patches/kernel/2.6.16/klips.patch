@@ -13,7 +13,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/arch/x86_64/defconfig linux-2.6.16-ng-natt
 + #
 + 
 + #
-+ # Libreswan IPSec implementation, KLIPS kernel config defaults
++ # Libreswan IPsec implementation, KLIPS kernel config defaults
 + #
 + 
 + #
@@ -38,7 +38,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/arch/x86_64/defconfig linux-2.6.16-ng-natt
 + # To config as static (preferred), 'y'.  To config as module, 'm'.
 + CONFIG_KLIPS=m
 + 
-+ # To do tunnel mode IPSec, this must be enabled.
++ # To do tunnel mode IPsec, this must be enabled.
 + CONFIG_KLIPS_IPIP=y
 + 
 + # To enable authentication, say 'y'.   (Highly recommended)
@@ -1522,7 +1522,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/.config linux-2.6.16-ng-natt-klips/.config
 + #
 + 
 + #
-+ # Libreswan IPSec implementation, KLIPS kernel config defaults
++ # Libreswan IPsec implementation, KLIPS kernel config defaults
 + #
 + 
 + #
@@ -1547,7 +1547,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/.config linux-2.6.16-ng-natt-klips/.config
 + # To config as static (preferred), 'y'.  To config as module, 'm'.
 + CONFIG_KLIPS=m
 + 
-+ # To do tunnel mode IPSec, this must be enabled.
++ # To do tunnel mode IPsec, this must be enabled.
 + CONFIG_KLIPS_IPIP=y
 + 
 + # To enable authentication, say 'y'.   (Highly recommended)
@@ -15259,7 +15259,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/net/ipsec/defconfig linux-2.6.16-ng-natt-k
 + #
 + 
 + #
-+ # Libreswan IPSec implementation, KLIPS kernel config defaults
++ # Libreswan IPsec implementation, KLIPS kernel config defaults
 + #
 + 
 + #
@@ -15284,7 +15284,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/net/ipsec/defconfig linux-2.6.16-ng-natt-k
 + # To config as static (preferred), 'y'.  To config as module, 'm'.
 + CONFIG_KLIPS=m
 + 
-+ # To do tunnel mode IPSec, this must be enabled.
++ # To do tunnel mode IPsec, this must be enabled.
 + CONFIG_KLIPS_IPIP=y
 + 
 + # To enable authentication, say 'y'.   (Highly recommended)
@@ -71375,7 +71375,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/libreswan.patch linux-2.6.16-ng-natt-klips
 + +#
 + +
 + +#
-+ +# Libreswan IPSec implementation, KLIPS kernel config defaults
++ +# Libreswan IPsec implementation, KLIPS kernel config defaults
 + +#
 + +
 + +#
@@ -71400,7 +71400,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/libreswan.patch linux-2.6.16-ng-natt-klips
 + +# To config as static (preferred), 'y'.  To config as module, 'm'.
 + +CONFIG_KLIPS=m
 + +
-+ +# To do tunnel mode IPSec, this must be enabled.
++ +# To do tunnel mode IPsec, this must be enabled.
 + +CONFIG_KLIPS_IPIP=y
 + +
 + +# To enable authentication, say 'y'.   (Highly recommended)

@@ -1,1 +1,0 @@
-East has west's certificate ("revoked") revoked via CRL. The connection should fail.

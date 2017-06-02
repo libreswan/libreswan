@@ -14,7 +14,7 @@ west #
 whack error: unexpected argument "all"
 west #
  ipsec auto --add westnet-eastnet-aes256
-003 phase2alg string error: 3DES does not take variable key lengths, enc_alg="3des"(333), auth_alg="sha1", modp=""
+036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths, enc_alg="3des"(333), auth_alg="sha1", modp=""
 west #
  ipsec auto --status | grep westnet-eastnet-aes256
 west #
@@ -33,7 +33,7 @@ west #
  grep ID_UNASSIGNED_ID4 /tmp/pluto.log
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

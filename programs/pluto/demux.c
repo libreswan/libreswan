@@ -227,7 +227,7 @@ static void comm_handle(const struct iface_port *ifp)
 
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-	md = alloc_md();
+	md = alloc_md("msg_digest in comm_handle");
 	md->iface = ifp;
 
 	if (read_packet(md))

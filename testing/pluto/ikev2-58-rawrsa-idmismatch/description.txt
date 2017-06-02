@@ -1,0 +1,19 @@
+Mismatched ID and connection should fail to establish.
+Basic pluto with IKEv2 on the initiator (west), and on the responder,
+using RAW RSA keys for authentication.
+West use IDi as west.  East has no leftid configured, it will default to IPv4
+and fail to establish the first connection west-westnet-eastnet.
+
+Then delete the first connection, the public keys are left around.
+Add and initiate new connection with east-westnet-eastnet.
+Now there will be 3 public keys.
+
+West's key is twice one with IP address as ID and another with west.
+
+000 Apr 20 21:07:49 2017, 2192 RSA Key AQO9bJbr3 (no private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@east'
+000 Apr 20 21:07:49 2017, 2192 RSA Key AQOm9dY/4 (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_IPV4_ADDR '192.1.2.45'
+000 Apr 20 21:07:34 2017, 2192 RSA Key AQOm9dY/4 (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@west'
+west #

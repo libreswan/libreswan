@@ -99,7 +99,7 @@ westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: SPISPI_i SPISP
 westnet-eastnet-ikev2b{2}:   192.0.100.0/24 === 192.0.200.0/24
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

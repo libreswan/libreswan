@@ -30,6 +30,15 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
+#ifdef USE_DNSSEC
+#ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
+#  define DEFAULT_DNSSEC_ROOTKEY_FILE "/var/lib/unbound/root.key"
+#endif
+#else
+# define DEFAULT_DNSSEC_ROOTKEY_FILE ""
+#endif
+
+
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
@@ -160,7 +169,7 @@ enum event_type {
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
 	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
-	EVENT_v2_SA_REPLACE_IF_USED_IKE, /* v2 IKE SA, replace if IPSec SA is in use */
+	EVENT_v2_SA_REPLACE_IF_USED_IKE, /* v2 IKE SA, replace if IPsec SA is in use */
 	EVENT_v2_SA_REPLACE_IF_USED,    /* v2 IPSEC SA, replace if used */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
@@ -172,7 +181,7 @@ enum event_type {
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
-	EVENT_v2_INITIATE_CHILD,	/* initiate a IPSec child */
+	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_SEND_NEXT_IKE,	/* send next IKE message using partent*/
 	EVENT_RETAIN,			/* don't change the previous event */
 };
@@ -227,8 +236,13 @@ enum seccomp_mode {
 	SECCOMP_DISABLED
 };
 
-/* status for state-transition-function
- * Note: STF_FAIL + notification_t means fail with that notification
+/*
+ * status for state-transition-function
+ *
+ * Note: STF_FAIL + <notification> (<notification> is either
+ * notification_t or v2_notification_t) means fail with that
+ * notification.  Since <notification> is a uint16_t, it is limited to
+ * 65535 possible values (0 isn't valid).
  */
 
 typedef enum {
@@ -245,6 +259,7 @@ typedef enum {
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
 				 * values STF_FAIL + x are notifications.
 				 */
+	STF_ROOF = STF_FAIL + 65536, /* see RFC and above */
 } stf_status;
 
 /* Misc. stuff */
@@ -606,8 +621,7 @@ enum original_role {
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2 || \
-      st->st_state == STATE_V2_IPSEC_I || st->st_state == STATE_V2_IPSEC_R) && \
+    ((st->st_state == STATE_V2_IPSEC_I || st->st_state == STATE_V2_IPSEC_R) && \
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
@@ -624,7 +638,7 @@ enum original_role {
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 
-#define IS_CHILD_SA_REQUEST(st) \
+#define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
 	  (st)->st_state == STATE_V2_CREATE_R)
 
@@ -738,14 +752,19 @@ extern const char *prettypolicy(lset_t policy);
  * in sa_policy_bit_names.
  */
 enum sa_policy_bits {
-	POLICY_PSK_IX,
-	POLICY_RSASIG_IX,
+	/*
+	 * XXX: Do not re-order or re-number the following pair.  Bad
+	 * things happen.
+	 *
+	 * (They are used to index an array in spdb.c when determining
+	 * default IKEv1 proposals; arguably the array should be
+	 * deleted but that is another story).
+	 */
+	POLICY_PSK_IX = 0,
+	POLICY_RSASIG_IX = 1,
+	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
-#define POLICY_ISAKMP_SHIFT	POLICY_PSK_IX
 
-	/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH
-	* ??? This set constant certainly doesn't include XAUTH.
-	*/
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
 	/* Quick Mode (IPSEC) attributes */
@@ -825,6 +844,7 @@ enum sa_policy_bits {
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
 #define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
@@ -872,7 +892,6 @@ enum sa_policy_bits {
  */
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
-/* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
 /* values for right=/left= */
@@ -888,27 +907,20 @@ enum keyword_host {
 	KH_IPADDR       = LOOSE_ENUM_OTHER,
 };
 
-/* BIND enumerated types */
-
-/* How authenticated is info that might have come from DNS?
+/*
+ * reltated libunbound enumerated types
+ *
+ * How authenticated is info that might have come from DNS?
  * In order of increasing confidence.
  */
 enum dns_auth_level {
-	DAL_UNSIGNED,   /* AD in response, but no signature: no authentication */
-	DAL_NOTSEC,     /* no AD in response: authentication impossible */
-	DAL_SIGNED,     /* AD and signature in response: authentic */
-	DAL_LOCAL       /* locally provided (pretty good) */
+	DNSSEC_UNKNOWN,		/* didn't come from DNS like source */
+	DNSSEC_BOGUS,           /* UB retunred BOGUS */
+	DNSSEC_INSECURE,        /* UB retrured INSECURE */
+	PUBKEY_LOCAL,           /* came from local source, wahck, plugin etc */
+	DNSSEC_SECURE,          /* UB retrurned SECURE */
+	DNSSEC_ROOF,
 };
-
-/*
- * define a macro for use in error messages
- */
-
-#ifdef USE_KEYRR
-#define RRNAME "TXT or KEY"
-#else
-#define RRNAME "TXT"
-#endif
 
 /*
  * private key types for keys.h

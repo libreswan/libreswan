@@ -1,7 +1,0 @@
-Package: libreswan
-Section: base
-Priority: optional
-Maintainer: Libreswan <team@libreswan.org>
-Source: buildroot internal
-depends: ip, mawk
-Description: Libreswan IPSec software

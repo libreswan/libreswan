@@ -1,3 +1,6 @@
 liveness test with west using narrowing=yes, causing instantiation.
 
-west must install a %trap but does not because narowing is causing instantiation
+west will install a %trap for the TEMPLATE connection.
+Not for the narrowed one.
+
+Trap will be installed only if the connection can be oriented.

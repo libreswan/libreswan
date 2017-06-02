@@ -1437,7 +1437,7 @@ packet from 192.1.2.23:500: Informational Exchange is for an unknown (expired?) 
 | * processed 0 messages from cryptographic helpers 
 | next event EVENT_PENDING_PHASE2 in 62 seconds
 west:~# : ==== tuc ====
-west:~# if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 west:~# : ==== end ====
 west:~# ipsec setup stop
 ipsec_setup: Stopping Libreswan IPsec...

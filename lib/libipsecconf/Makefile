@@ -22,9 +22,6 @@ SRCS=confread.c confwrite.c starterwhack.c starterlog.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c
 
-#enable to get lots more debugging about semantics.
-#CFLAGS+=-DPARSER_TYPE_DEBUG
-
 OBJS=${SRCS:.c=.o}
 
 # pick up generated LEX/YACC files
