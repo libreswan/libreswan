@@ -1,7 +1,3 @@
-pluto RSA test with west in FIPS mode using default IKE parameters and IKEv2
+Test CREATE_CHILD_SA initiate IPsec SA section RFC 7296 1.3.1 with pfs=yes
 
-East is in default mode, allowing for test of FIPS-only proposals by west
-
-This test requires compilation with USE_FIPSCHECK=true
-This test fakes the kernel being in FIPS mode
-This test uses NSS modutil to put NSS explicitely in FIPS mode
+West has two connections to east. Both will share one IKE SA.
