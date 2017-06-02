@@ -1,3 +1,9 @@
+libreswan (3.21~rc2-1) experimental; urgency=medium
+
+  * new upstream release-candidate
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Fri, 02 Jun 2017 09:58:40 -0400
+
 libreswan (3.20-7) unstable; urgency=medium
 
   [ Laurent Bigonville ]
