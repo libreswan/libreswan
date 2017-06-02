@@ -5,5 +5,5 @@ opts=pgpsigurlmangle=s/$/.asc/ \
  https://download.libreswan.org/@PACKAGE@@ANY_VERSION@@ARCHIVE_EXT@
  
 # look for development releases:
-opts=pgpsigurlmangle=s/$/.asc/,uversionmangle=s/dr/~dr/ \
+opts=pgpsigurlmangle=s/$/.asc/,uversionmangle=s/(dr|rc)/~\\1/ \
  https://download.libreswan.org/development/@PACKAGE@@ANY_VERSION@@ARCHIVE_EXT@
