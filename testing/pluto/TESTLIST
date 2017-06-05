@@ -748,7 +748,7 @@ kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev1-strongswan-14-camellia	good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
-kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	good
+kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	wip
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	good
 kvmplutotest	interop-ikev2-strongswan-24-aes_ctr	good
 kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
@@ -914,7 +914,7 @@ kvmplutotest	nss-cert-04-ikev2		good
 kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
-kvmplutotest	nss-cert-07			good
+kvmplutotest	nss-cert-07			wip
 kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
