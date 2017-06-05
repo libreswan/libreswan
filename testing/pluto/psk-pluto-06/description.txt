@@ -1,8 +1,0 @@
-This is a test of pre-shared mode from a random IP address.
-It uses aggressive mode.
-
-It declares a PSK for east/west as well, so that one clearly has
-to use the ID in the aggressive mode packet.
-
-However, in this test case, east turns out not to have the right PSK
-for road.
