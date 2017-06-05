@@ -13,75 +13,107 @@
 # for more details.
 
 #
-# If enabled (LSW_WEBDIR, WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set),
-# publish the results in HTML/json form.
+# If enabled WEB_SUMMARYDIR, or WEB_RESULTSDIR is is set), publish the
+# results in HTML/json form.
 #
+# The variable must be explicitly set via Makefile.inc.local, from the
+# command line, or from the environment.  Otherwise rules that invoke
+# "git" (for instance any rule requiring a definition of
+# $(WEB_RESULTSDIR)) are enabled.
 
 LSW_WEBDIR ?= $(top_srcdir)/RESULTS
-WEB_SUMMARYDIR ?= $(wildcard $(LSW_WEBDIR))
+
 WEB_UTILSDIR = testing/utils
+WEB_SOURCEDIR = testing/web
+WEB_REPODIR ?= .
+
+# This is verbose so it being invoked is easy to spot
+WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
+
+#
+# Rules for building web pages during test runs.
+#
+# To prevent GIT being invoked: this is only enabled when the
+# destination directory exists; and WEB_SUMMARYDIR is only set as part
+# of a further recursive make.
 
 .PHONY: web-test-prep web-test-post web-page
 
-ifeq ($(WEB_SUMMARYDIR),)
+ifeq ($(wildcard $(LSW_WEBDIR)),)
 
 define web-page
 Web-pages disabled.
-To enable web pages create the directory LSW_WEBDIR=$(LSW_WEBDIR).
+To enable web pages create the directory $(LSW_WEBDIR) (LSW_WEBDIR).
 To convert the current results into a web page run: make web-page
 endef
 
 web-test-prep web-test-post:
 	$(info $(web-page))
 
-web-page:
-	test -d $(LSW_WEBDIR) || mkdir $(LSW_WEBDIR)
-	$(MAKE) web-page WEB_SUMMARYDIR=$(LSW_WEBDIR)
-
 else
 
 web-test-prep:
-	$(MAKE) web-resultsdir
-	$(MAKE) web-summarydir
+	$(MAKE) web-resultsdir WEB_SUMMARYDIR=$(LSW_WEBDIR)
+	$(MAKE) web-summarydir WEB_SUMMARYDIR=$(LSW_WEBDIR)
 
 web-test-post:
+	@: nothing to do
 
-web-page: web-summarydir web-resultsdir
+endif
+
+web-page: | $(LSW_WEBDIR)
+	$(MAKE) web-summarydir WEB_SUMMARYDIR=$(LSW_WEBDIR)
+	$(MAKE) web-resultsdir WEB_SUMMARYDIR=$(LSW_WEBDIR)
 	$(WEB_UTILSDIR)/kvmresults.py \
 		--quick \
 		--test-kind '' \
 		--test-status '' \
-		--publish-status $(WEB_SUMMARYDIR)/status.json \
-		--publish-results $(WEB_RESULTSDIR) \
+		--publish-status $(LSW_WEBDIR)/status.json \
+		--publish-results $(LSW_WEBDIR)/$(WEB_SUBDIR) \
 		testing/pluto
 
-endif
-
-ifneq ($(WEB_SUMMARYDIR),)
-
-WEB_REPODIR ?= .
-WEB_SOURCEDIR = $(abspath testing/web)
-WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
-# XXX: should this be evaluated once?
-WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
-# This is verbose so it is easy to spot
-WEB_SUBDIR := $(shell cd $(WEB_REPODIR) ; set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh)
+$(LSW_WEBDIR):
+	mkdir $(LSW_WEBDIR)
 
 #
 # Update the web site
+#
+# Well almost everything, result .json files are not updated by
+# default - very slow.
 #
 
 .PHONY: web
 web:
 
 #
-# Create or update just the summary directory.  This is a cheap
-# short-cut that, unlike "web", doesn't update the sub-directory's
-# html.
+# Create or update just the summary web page.
+#
+# This is a cheap short-cut that, unlike "web", doesn't update the
+# sub-directory's html.
 #
 
 .PHONY: web-summarydir
 web-summarydir:
+
+#
+# Create or update a test run's results page.
+#
+
+.PHONY: web-resultsdir
+web-resultsdir:
+
+#
+# Conditional rules for building the summary web page.  Requires
+# WEB_SUMMARYDIR.
+#
+
+WEB_SUMMARYDIR ?=
+
+ifneq ($(WEB_SUMMARYDIR),)
+
+WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
+# XXX: should this be evaluated once?
+WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
 
 #
 # Update the summary html pages
@@ -144,13 +176,13 @@ $(WEB_SUMMARYDIR)/commits.json:
 
 WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
 
-FIRST_COMMIT = $(shell cd  $(WEB_REPODIR) ; $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR))
+FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
 COMMIT_HASHES = $(shell cd $(WEB_REPODIR) ; git rev-list --abbrev-commit $(FIRST_COMMIT)^..)
 COMMIT_FILES = $(addsuffix .json, $(addprefix $(WEB_COMMITSDIR)/, $(COMMIT_HASHES)))
 # MISSING_COMMIT_FILES = $(filter-out $(wildcard $(WEB_COMMITSDIR)/*.json), $(COMMIT_FILES))
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
-	( cd $(WEB_REPODIR) ; $(WEB_SOURCEDIR)/json-commit.sh $* ) > $@.tmp
+	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
 	mv $@.tmp $@
 
 $(WEB_COMMITSDIR):
@@ -172,10 +204,9 @@ $(WEB_SUMMARYDIR)/%/results.html: $(WEB_SOURCES)
 endif
 
 #
-# Create or update a test results directory web pages.
+# Conditional rules for building an individual test run's results
+# page.  Requires WEB_SUMMARYDIR or WEB_RESULTSDIR.
 #
-# Note: don't use "make showversion" as that doesn't include the
-# gitver (-gXXXXX-) when the commit is on a tag.
 
 WEB_RESULTSDIR := $(if $(WEB_SUMMARYDIR),$(WEB_SUMMARYDIR)/$(WEB_SUBDIR))
 
