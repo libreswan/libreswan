@@ -670,7 +670,10 @@ kvmplutotest	ikev1-algo-ike-pfs-01	good
 
 kvmplutotest	basic-pluto-01-valgrind	skiptest
 
-kvmplutotest	ikev1-algo-ike-bogus-01	good
+# This needs a new impair as the parser now prevents us from
+# creating the bogus keysize
+kvmplutotest	ikev1-algo-ike-bogus-01	wip
+
 kvmplutotest	ikev1-aggr-sendcert-01	good
 kvmplutotest	ikev1-aggr-replace-01	good
 

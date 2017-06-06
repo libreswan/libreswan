@@ -16,6 +16,8 @@ road #
  service strongswan start
 Redirecting to /bin/systemctl start  strongswan.service
 road #
+ sleep 3
+road #
  echo "initdone"
 initdone
 road #

@@ -47,6 +47,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets 
@@ -63,6 +64,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets 
@@ -79,6 +81,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets 
@@ -95,6 +98,7 @@ west #
 000 "westnet-eastnet-subnets/2x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/2x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets 
@@ -109,7 +113,7 @@ west #
 106 "westnet-eastnet-subnets/2x2" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "westnet-eastnet-subnets/2x2" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-subnets/2x2" #1: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-subnets/2x2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
+004 "westnet-eastnet-subnets/2x2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "westnet-eastnet-subnets/1x1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "westnet-eastnet-subnets/1x2" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "westnet-eastnet-subnets/2x1" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
@@ -161,6 +165,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets 
@@ -177,6 +182,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets 
@@ -193,6 +199,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets 
@@ -209,10 +216,11 @@ west #
 000 "westnet-eastnet-subnets/2x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-subnets/2x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #1; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets 
-000 "westnet-eastnet-subnets/2x2":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
+000 "westnet-eastnet-subnets/2x2":   IKE algorithm newest: AES_CBC_256-SHA2_256-MODP2048
 000 #1: "westnet-eastnet-subnets/2x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 west #
  echo done

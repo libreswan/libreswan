@@ -25,6 +25,8 @@ west #
  service strongswan start
 Redirecting to /bin/systemctl start  strongswan.service
 west #
+ sleep 3
+west #
  echo "initdone"
 initdone
 west #
@@ -52,6 +54,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254

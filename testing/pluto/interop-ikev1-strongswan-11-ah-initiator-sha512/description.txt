@@ -5,6 +5,7 @@ This uses IKEv1. It requires netkey
 This test requires strongswan 5.1.1 or newer for AH support.
 
 But it requires strongswan < 5.5.2 because there they broke it :/
+Apparently fixed and will be in 5.5.4
 
 | PROTO AH: we should check registration of attrs->transattrs.integ_hash=5
 "westnet-eastnet-ikev1" #2: AUTH_ALGORITHM_HMAC_SHA2_256 attribute inappropriate in AH_AES_XCBC_MAC Transform

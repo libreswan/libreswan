@@ -25,6 +25,8 @@ west #
  service strongswan start
 Redirecting to /bin/systemctl start  strongswan.service
 west #
+ sleep 3
+west #
  echo "initdone"
 initdone
 west #
