@@ -1501,21 +1501,6 @@ void add_connection(const struct whack_message *wm)
 				pfree(c);
 				return;
 			}
-			/*
-			 * XXX: Fill in esp_integ and esp_encrypt.
-			 * The alg_info should be setting those fields
-			 * directly.  For instance like how IKE fills
-			 * in the DH fields.
-			 */
-			FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
-				if (!fill_in_esp_info_ike_algs(esp_info,
-							       "esp", wm->esp)) {
-					/* already loglog()ed */
-					alg_info_free(&c->alg_info_esp->ai);
-					pfree(c);
-					return;
-				}
-			}
 		}
 
 		c->alg_info_ike = NULL;
