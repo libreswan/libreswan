@@ -574,9 +574,7 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 
 static const char *alg_info_ike_add(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
-				    const struct encrypt_desc *encrypt,
-				    int ealg_id UNUSED, int ek_bits,
-				    int aalg_id UNUSED,
+				    const struct encrypt_desc *encrypt, int ek_bits,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,

@@ -81,15 +81,11 @@ struct parser_param {
 	 */
 	const char *(*alg_info_add)(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
-				    const struct encrypt_desc *encrypt,
-				    int ealg_id, int ek_bits,
-				    int aalg_id,
+				    const struct encrypt_desc *encrypt, int ek_bits,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
 				    char *err_buf, size_t err_buf_len);
-	int (*ealg_getbyname)(const char *const str);
-	int (*aalg_getbyname)(const char *const str);
 
 	/*
 	 * This lookup functions must set err and return null if NAME
@@ -226,9 +222,6 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 	for (__typeof__((ALG_INFO)->ike[0]) *(IKE_INFO) = (ALG_INFO)->ike; \
 	     (IKE_INFO) < (ALG_INFO)->ike + (ALG_INFO)->ai.alg_info_cnt; \
 	     (IKE_INFO)++)
-
-extern int alg_enum_search(enum_names *ed, const char *prefix,
-			   const char *postfix, const char *name);
 
 /*
  * on success: returns alg_info

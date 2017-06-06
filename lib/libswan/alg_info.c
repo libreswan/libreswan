@@ -67,103 +67,6 @@ struct parser_context {
 	int ch;	/* character that stopped parsing */
 };
 
-#define MAX_ALG_ALIASES 16
-
-struct alg_alias {
-	const char *const alg;
-	const char *const alias_set[MAX_ALG_ALIASES];
-};
-
-/* if str is a known alias, return the real alg */
-static const char *find_alg_alias(const struct alg_alias *alias, const char *str)
-{
-	const struct alg_alias *aa;
-
-	for (aa = alias; aa->alg != NULL; aa++) {
-		const char *const *aset;
-
-		for (aset = aa->alias_set; *aset != NULL; aset++) {
-			if (strcaseeq(str, *aset)) {
-				return aa->alg;
-			}
-		}
-	}
-	return NULL;
-}
-
-static int alg_getbyname_or_alias(const struct alg_alias *aliases, const char *str,
-				  int (*getbyname)(const char *const str))
-{
-	const char *alias = find_alg_alias(aliases, str);
-
-	return getbyname(alias == NULL ? str : alias);
-}
-
-static int aalg_getbyname_or_alias(const struct parser_context *context,
-				   const char *str)
-{
-	static const struct alg_alias aliases[] = {
-		/* alg */	/* aliases */
-		{ "sha2_256",	{ "sha2", NULL } },
-		{ "sha2_256",	{ "sha256", NULL } },
-		{ "sha2_384",	{ "sha384", NULL } },
-		{ "sha2_512",	{ "sha512", NULL } },
-		{ "sha1",	{ "sha", NULL } },
-		{ "sha1",	{ "sha1_96", NULL } },
-		{ "aes_cmac_96", { "aes_cmac", NULL } },
-		{ NULL, { NULL } }
-	};
-
-	return alg_getbyname_or_alias(aliases, str, context->param->aalg_getbyname);
-}
-
-/*
- * Aliases should NOT be used to match a base cipher to a key size,
- * as that would change the meaning of the loaded connection. For
- * examples aes cannot become an alias for aes128 or else a responder
- * with esp=aes would reject aes256.
- */
-
-static int ealg_getbyname_or_alias(const struct parser_context *context,
-				   const char *str)
-{
-	static const struct alg_alias aliases[] = {
-		/* alg */	/* aliases */
-		{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
-		{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
-		{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
-		{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
-		{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
-		{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
-		{ "aes_ctr",	{ "aesctr", NULL } },
-		{ "aes",	{ "aes_cbc", NULL } },
-		{ NULL, { NULL } }
-	};
-
-	return alg_getbyname_or_alias(aliases, str, context->param->ealg_getbyname);
-}
-
-/*
- * Search enum_name array with string, uppercased, prefixed, and postfixed
- */
-int alg_enum_search(enum_names *ed, const char *prefix,
-		    const char *postfix, const char *name)
-{
-	char buf[64];
-	size_t prelen = strlen(prefix);
-	size_t postlen = strlen(postfix);
-	size_t name_len = strlen(name);
-
-	if (prelen + name_len + postlen >= sizeof(buf))
-		return -1;	/* cannot match */
-
-	memcpy(buf, prefix, prelen);
-	memcpy(buf + prelen, name, name_len);
-	memcpy(buf + prelen + name_len, postfix, postlen + 1);	/* incl. NUL */
-
-	return enum_search(ed, buf);
-}
-
 static const char *parser_state_names[] = {
 	"ST_INI_EA",
 	"ST_INI_AA",
@@ -209,7 +112,7 @@ static void parser_init(struct parser_context *ctx,
 			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
 				  && (policy & POLICY_IKEV2_ALLOW)),
 		 },
-		.state = (param->ealg_getbyname || param->encrypt_alg_byname
+		.state = (param->encrypt_alg_byname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
 		/*
@@ -508,126 +411,6 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		}
 	}
 
-#	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
-
-	int ealg_id = -1;
-	if (p_ctx->param->ealg_getbyname && p_ctx->ealg_buf[0] != '\0') {
-		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
-		DBG(DBG_CONTROLMORE, DBG_log("ealg_id = %d", ealg_id));
-		if (ealg_id < 0) {
-			return "enc_alg not found";
-		}
-
-		/* reject things we know but don't like */
-		switch (p_ctx->param->protoid) {
-		case PROTO_ISAKMP:
-			switch (ealg_id) {
-			case OAKLEY_DES_CBC:
-			case OAKLEY_IDEA_CBC:
-			case OAKLEY_BLOWFISH_CBC:
-			case OAKLEY_RC5_R16_B64_CBC:
-				return "IKE cipher not implemented";
-			}
-			break;
-		case PROTO_IPSEC_ESP:
-			switch (ealg_id) {
-			case ESP_reserved:
-			case ESP_DES_IV64:
-			case ESP_DES:
-			case ESP_RC5:
-			case ESP_IDEA:
-			case ESP_BLOWFISH:
-			case ESP_3IDEA:
-			case ESP_DES_IV32:
-			case ESP_RC4:
-			case ESP_ID17:
-				/*
-				 * kernel uses IKEv1, where it is camellia
-				 * - case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
-				 */
-				return "ESP cipher not implemented";
-			}
-			break;
-		}
-
-		/*
-		 * Enforce RFC restrictions in key size, documented in
-		 * ietf_constants.h
-		 * If using --impair-send-key-size-check this check is bypassed
-		 * for testing purposes.
-		 */
-		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch (p_ctx->param->protoid) {
-			case PROTO_ISAKMP:
-				switch (ealg_id) {
-				case OAKLEY_3DES_CBC:
-					return "3DES does not take variable key lengths";
-				case OAKLEY_CAST_CBC:
-					if (p_ctx->eklen != 128) {
-						return "CAST is only supported for 128 bits (to avoid padding)";
-					}
-					break;
-				case OAKLEY_SERPENT_CBC:
-				case OAKLEY_TWOFISH_CBC:
-				case OAKLEY_TWOFISH_CBC_SSH:
-				case OAKLEY_AES_CBC:
-				case OAKLEY_AES_CTR:
-				case OAKLEY_AES_GCM_8:
-				case OAKLEY_AES_GCM_12:
-				case OAKLEY_AES_GCM_16:
-				case OAKLEY_AES_CCM_8:
-				case OAKLEY_AES_CCM_12:
-				case OAKLEY_AES_CCM_16:
-				case OAKLEY_CAMELLIA_CBC:
-				case OAKLEY_CAMELLIA_CTR:
-				case OAKLEY_CAMELLIA_CCM_A:
-				case OAKLEY_CAMELLIA_CCM_B:
-				case OAKLEY_CAMELLIA_CCM_C:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
-					}
-					break;
-				}
-				break;
-			case PROTO_IPSEC_ESP:
-				switch (ealg_id) {
-				case ESP_3DES:
-					return "3DES does not take variable key lengths";
-				case ESP_NULL:
-					return "NULL does not take variable key lengths";
-				case ESP_CAST:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "CAST is only supported for 128 bits (to avoid padding)";
-					}
-					break;
-				case ESP_CAMELLIAv1: /* this value is hit instead */
-				case ESP_AES:
-				case ESP_AES_CTR:
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-				case ESP_TWOFISH:
-				case ESP_SERPENT:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
-					}
-					break;
-#if 0
-				case ESP_SEED_CBC:
-					if (p_ctx->eklen != 128) {
-						return "wrong encryption key length - SEED-CBC key size must be 128";
-					}
-					break;
-#endif
-				}
-				break;
-			}
-		}
-	}
-
 	const struct prf_desc *prf =
 		prf_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
 				       p_ctx->param->prf_alg_byname,
@@ -646,115 +429,6 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		return err_buf;
 	}
 
-	int aalg_id = -1;
-	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
-		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
-		DBG(DBG_CONTROLMORE, DBG_log("aalg_id = %d", aalg_id));
-		if (aalg_id < 0) {
-			return "hash_alg not found";
-		}
-
-		/* some code stupidly uses INT_MAX for "null" */
-		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
-			switch (p_ctx->param->protoid) {
-			case PROTO_IPSEC_ESP:
-				/*
-				 * ESP AEAD ciphers do not require
-				 * separate authentication (by
-				 * definition, authentication is
-				 * built-in).
-				 */
-				switch (ealg_id) {
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-					break; /* ok */
-				default:
-					return "non-AEAD ESP cipher cannot have null authentication";
-				}
-				break;
-			case PROTO_ISAKMP:
-				/*
-				 * While IKE AEAD ciphers do not
-				 * require separate authentication (by
-				 * definition, authentication is
-				 * built-in), they do require a PRF.
-				 *
-				 * The non-empty authentication
-				 * algorithm will be used as the PRF.
-				 */
-				switch (ealg_id) {
-				case OAKLEY_AES_CCM_8:
-				case OAKLEY_AES_CCM_12:
-				case OAKLEY_AES_CCM_16:
-				case OAKLEY_AES_GCM_8:
-				case OAKLEY_AES_GCM_12:
-				case OAKLEY_AES_GCM_16:
-				case OAKLEY_CAMELLIA_CCM_A:
-				case OAKLEY_CAMELLIA_CCM_B:
-				case OAKLEY_CAMELLIA_CCM_C:
-					return "AEAD IKE cipher cannot have null pseudo-random-function";
-				default:
-					return "non-AEAD IKE cipher cannot have null authentication";
-				}
-				break;
-			case PROTO_IPSEC_AH:
-				return "AH cannot have null authentication";
-			}
-		} else {
-			switch (p_ctx->param->protoid) {
-			case PROTO_IPSEC_ESP:
-				/*
-				 * ESP AEAD ciphers do not require
-				 * separate authentication (by
-				 * definition, authentication is
-				 * built-in).
-				 *
-				 * Reject any non-null authentication
-				 * algorithm
-				 */
-				switch (ealg_id) {
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-					return "AEAD ESP cipher must have null authentication";
-				default:
-					break; /* ok */
-				}
-				break;
-			case PROTO_ISAKMP:
-				/*
-				 * While IKE AEAD ciphers do not
-				 * require separate authentication (by
-				 * definition, authentication is
-				 * built-in), they do require a PRF.
-				 *
-				 * So regardless of the algorithm type
-				 * allow an explicit authentication.
-				 * (IKE AEAD uses it for the PRF).
-				 */
-				break;
-			}
-		}
-
-		if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch (aalg_id) {
-			case AH_NULL:
-				if (ealg_id == -1)
-					return "Encryption and authentication cannot both be null";
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
 	const struct oakley_group_desc *group =
 		oakley_group_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
 						p_ctx->param->dh_alg_byname,
@@ -766,14 +440,11 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 
 	return p_ctx->param->alg_info_add(&p_ctx->policy,
 					  alg_info,
-					  encrypt,
-					  ealg_id, p_ctx->eklen,
-					  aalg_id,
+					  encrypt, p_ctx->eklen,
 					  prf, integ,
 					  group,
 					  err_buf, err_buf_len);
 
-#	undef COMMON_KEY_LENGTH
 }
 
 /*
@@ -801,8 +472,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 	/* use default if null string */
 	if (*alg_str == '\0') {
 		param->alg_info_add(&ctx.policy, alg_info,
-				    NULL,
-				    0, 0, 0,
+				    NULL, 0,
 				    NULL, NULL, NULL,
 				    err_buf, err_buf_len);
 		return alg_info;
