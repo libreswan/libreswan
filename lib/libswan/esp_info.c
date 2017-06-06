@@ -35,48 +35,6 @@
 #include "ike_alg_sha1.h"
 
 /*
- * Search esp_transformid_names for a match, eg:
- *	"3des" <=> "ESP_3DES"
- */
-static int ealg_getbyname_esp(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-
-	return alg_enum_search(&esp_transformid_names, "ESP_", "", str);
-}
-
-/*
- * Search auth_alg_names for a match, eg:
- *	"md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
- */
-static int aalg_getbyname_esp(const char *str)
-{
-	int ret = -1;
-	static const char null_esp[] = "null";
-
-	if (str == NULL || *str == '\0')
-		return -1;
-
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "", str);
-	if (ret >= 0)
-		return ret;
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "", str);
-	if (ret >= 0)
-		return ret;
-
-	/*
-	 * INT_MAX is used as the special value for "no authentication"
-	 * since 0 is already used.
-	 * ??? this is extremely ugly.
-	 */
-	if (strcaseeq(str, null_esp))
-		return INT_MAX;
-
-	return ret;
-}
-
-/*
  * Raw add routine: only checks for no duplicates
  */
 /* ??? much of this code is the same as raw_alg_info_ike_add (same bugs!) */
@@ -124,27 +82,14 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 static const char *alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 				    struct alg_info *alg_info,
 				    const struct encrypt_desc *encrypt,
-				    int ealg_id, int ek_bits,
-				    int aalg_id,
+				    int ealg_id UNUSED, int ek_bits,
+				    int aalg_id UNUSED,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh,
 				    char *err_buf, size_t err_buf_len)
 {
 	pexpect(prf == NULL);
-
-	/*
-	 * XXX: Cross check encryption lookups.
-	 */
-	pexpect((ealg_id == 0) == (encrypt == NULL));
-	pexpect(encrypt == NULL || ealg_id == encrypt->common.id[IKEv1_ESP_ID]);
-
-	/*
-	 * XXX: Cross check integrity lookups.
-	 */
-	pexpect((integ == NULL && aalg_id <= 0)
-		|| (integ == &alg_info_integ_null && aalg_id == INT_MAX)
-		|| (integ != NULL && aalg_id == integ->common.id[IKEv1_ESP_ID]));
 
 	/* Policy: default to AES */
 	if (encrypt == NULL) {
@@ -197,24 +142,16 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 static const char *alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 				   struct alg_info *alg_info,
 				   const struct encrypt_desc *encrypt,
-				   int ealg_id, int ek_bits,
-				   int aalg_id,
+				   int ealg_id UNUSED, int ek_bits,
+				   int aalg_id UNUSED,
 				   const struct prf_desc *prf,
 				   const struct integ_desc *integ,
 				   const struct oakley_group_desc *dh,
 				   char *err_buf, size_t err_buf_len)
 {
-	pexpect(ealg_id <= 0);
 	pexpect(ek_bits == 0);
 	pexpect(encrypt == NULL);
 	pexpect(prf == NULL);
-
-	/*
-	 * XXX: Cross check integrity lookups.
-	 */
-	pexpect((integ == NULL && aalg_id <= 0)
-		|| (integ == &alg_info_integ_null && aalg_id == INT_MAX)
-		|| (integ != NULL && aalg_id == integ->common.id[IKEv1_ESP_ID]));
 
 	/* ah=null is invalid */
 	if (integ == &alg_info_integ_null) {
@@ -246,8 +183,6 @@ const struct parser_param esp_parser_param = {
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
 	.alg_info_add = alg_info_esp_add,
-	.ealg_getbyname = ealg_getbyname_esp,
-	.aalg_getbyname = aalg_getbyname_esp,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
@@ -258,7 +193,6 @@ const struct parser_param ah_parser_param = {
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
 	.alg_info_add = alg_info_ah_add,
-	.aalg_getbyname = aalg_getbyname_esp,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };
