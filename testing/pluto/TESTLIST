@@ -256,7 +256,7 @@ kvmplutotest	ikev1-x509-aggr-10-san-ip-match		good
 kvmplutotest	ikev1-x509-aggr-11-san-dns-match	good
 
 kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
-kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	goos
+kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
