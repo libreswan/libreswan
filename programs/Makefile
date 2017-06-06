@@ -27,13 +27,13 @@ SUBDIRS+=whack
 SUBDIRS+=proc addconn
 SUBDIRS+=configs _keycensor _plutorun _stackmanager
 SUBDIRS+=_secretcensor _updown
-SUBDIRS+=auto barf verify ipsec newhostkey
+SUBDIRS+=auto barf verify ipsec look newhostkey
 SUBDIRS+=rsasigkey setup showhostkey
 SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
 
 ifeq ($(USE_KLIPS),true)
-SUBDIRS+= _updown.klips eroute klipsdebug look pf_key spi spigrp tncfg
+SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg
 endif
 ifeq ($(USE_MAST),true)
 SUBDIRS+= _updown.mast
