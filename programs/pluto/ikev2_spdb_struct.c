@@ -262,85 +262,22 @@ struct ikev2_proposals {
 	     (PROPNUM) < (BOUND) && (PROPNUM) < (PROPOSALS)->roof;	\
 	     (PROPNUM)++, (PROPOSAL)++)
 
-struct print {
-	size_t pos;	/* index of '\0' in buf */
-	char buf[1024];
-};
-
-static struct print *print_buf(void)
+static void print_name_value(struct lswlog *log, const char *name, int value)
 {
-	return alloc_thing(struct print, "print buf");
-}
-
-static void print_join(struct print *buf, int n)
-{
-	const size_t max = sizeof(buf->buf);
-	/*
-	 * The caller used the unsigned expression:
-	 *
-	 *    sizeof(buf->buf) - buf->pos
-	 *
-	 * to determine the amount of space left.  The below is a
-	 * "better late than never" assertion that the unsigned
-	 * expression didn't underflow.
-	 */
-	passert(buf->pos <= max);
-	if (n < 0) {
-		/*
-		 * What else to do?
-		 *
-		 * A negative value either indicates an "output error"
-		 * (will that happen?); or a very old, non-compliant,
-		 * s*printf() implementation that returns -1 instead
-		 * of the required size.
-		 */
-		pexpect(n >= 0);
-	} else if (buf->pos + n >= max) {
-		/* buffer overflow: add ... as indicator */
-		strcpy(&buf->buf[max - sizeof("...")], "...");
-		buf->pos = max;
-	} else {
-		buf->pos += n;
-	}
-}
-
-static void print_string(struct print *buf, const char *string)
-{
-	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "%s", string));
-}
-
-static void print_byte(struct print *buf, int byte)
-{
-	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "%02x", byte));
-}
-
-static void print_value(struct print *buf, int value)
-{
-	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "%d", value));
-}
-
-static void print_name_value(struct print *buf, const char *name, int value)
-{
-	print_join(buf, snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				 "%s(%d)", name, value));
+	lswlogf(log, "%s(%d)", name, value);
 }
 
 /*
  * Print <TRANSFORM> to the buffer.
  */
-static void print_transform(struct print *buf, enum ikev2_trans_type type,
+static void print_transform(struct lswlog *buf, enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	print_string(buf,
+	lswlogs(buf,
 		enum_enum_short_name(&v2_transform_ID_enums,
-			type, transform->id));
+				     type, transform->id));
 	if (transform->attr_keylen > 0) {
-		print_join(buf,
-			   snprintf(buf->buf + buf->pos, sizeof(buf->buf) - buf->pos,
-				    "_%d", transform->attr_keylen));
+		lswlogf(buf, "_%d", transform->attr_keylen);
 	}
 }
 
@@ -352,11 +289,11 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 /*
  * Print <TRANSFORM-TYPE> "=" <TRANSFORM> to the buffer
  */
-static void print_type_transform(struct print *buf, enum ikev2_trans_type type,
+static void print_type_transform(struct lswlog *buf, enum ikev2_trans_type type,
 				 const struct ikev2_transform *transform)
 {
-	print_string(buf, trans_type_name(type));
-	print_string(buf, "=");
+	lswlogs(buf, trans_type_name(type));
+	lswlogs(buf, "=");
 	print_transform(buf, type, transform);
 }
 
@@ -368,38 +305,37 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 /*
  * Print <TRANSFORM-TYPE>  "=" <TRANSFORM> { "," <TRANSFORM> }+.
  */
-static void print_type_transforms(struct print *buf, enum ikev2_trans_type type,
+static void print_type_transforms(struct lswlog *buf, enum ikev2_trans_type type,
 				  const struct ikev2_transforms *transforms)
 {
-	print_string(buf, trans_type_name(type));
-	print_string(buf, "=");
+	lswlogs(buf, trans_type_name(type));
+	lswlogs(buf, "=");
 	char *sep = "";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
-		print_string(buf, sep);
+		lswlogs(buf, sep);
 		print_transform(buf, type, transform);
 		sep = ",";
 	};
 }
 
-static void print_proposal(struct print *buf, int propnum,
+static void print_proposal(struct lswlog *buf, int propnum,
 			   const struct ikev2_proposal *proposal)
 {
 	if (propnum != 0) {
-		print_value(buf, propnum);
-		print_string(buf, ":");
+		lswlogf(buf, "%d:", propnum);
 	}
-	print_string(buf, protoid_name(proposal->protoid));
-	print_string(buf, ":");
+	lswlogs(buf, protoid_name(proposal->protoid));
+	lswlogs(buf, ":");
 	const char *sep = "";
 	if (proposal->remote_spi.size > 0) {
 		pexpect(proposal->remote_spi.size <= sizeof(proposal->remote_spi.size));
-		print_string(buf, "SPI=");
+		lswlogs(buf, "SPI=");
 		size_t i;
 		for (i = 0; (i < proposal->remote_spi.size
 			     && i < sizeof(proposal->remote_spi.size));
 		     i++) {
-			print_byte(buf, proposal->remote_spi.bytes[i]);
+			lswlogf(buf, "%02x", proposal->remote_spi.bytes[i]);
 		}
 		sep = ";";
 	}
@@ -408,32 +344,40 @@ static void print_proposal(struct print *buf, int propnum,
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
-			print_string(buf, sep);
+			lswlogs(buf, sep);
 			print_type_transforms(buf, type, transforms);
 			sep = ";";
 		}
 	}
 }
 
+static void lswlog_chosen_proposal(struct lswlog *buf,
+				   struct ikev2_proposal *best_proposal,
+				   struct lswlog *proposals)
+{
+	lswlogs(buf, "proposal ");
+	print_proposal(buf, best_proposal->propnum, best_proposal);
+	lswlogs(buf, " chosen from: ");
+	lswlogl(buf, proposals);
+}
+
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
-	{
-		struct print *buf = print_buf();
+	LSWDBG(buf) {
+		lswlogf(buf, "%s ikev2_proposal: ", prefix);
 		print_proposal(buf, proposal->propnum, proposal);
-		DBG_log("%s ikev2_proposal: %s", prefix, buf->buf);
-		pfree(buf);
 	}
 }
 
-static void print_proposals(struct print *buf, struct ikev2_proposals *proposals)
+static void print_proposals(struct lswlog *buf, struct ikev2_proposals *proposals)
 {
 	passert(proposals->proposal[0].protoid == 0);
 	const char *proposal_sep = "";
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-		print_string(buf, proposal_sep);
+		lswlogs(buf, proposal_sep);
 		proposal_sep = " ";
 		print_proposal(buf, propnum, proposal);
 	}
@@ -453,22 +397,18 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		} else {
 			DBG_log("  proposal: %d", propnum);
 		}
-		{
-			struct print *buf = print_buf();
-			print_string(buf, "protoid=");
+		LSWDBG(buf) {
+			lswlogf(buf, "    ");
+			lswlogs(buf, "protoid=");
 			print_name_value(buf, protoid_name(proposal->protoid),
 					 proposal->protoid);
-			DBG_log("    %s", buf->buf);
-			pfree(buf);
 		}
 		enum ikev2_trans_type type;
 		const struct ikev2_transforms *transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-			{
-				struct print *buf = print_buf();
+			LSWDBG(buf) {
+				lswlogf(buf, "    ");
 				print_type_transforms(buf, type, transforms);
-				DBG_log("    %s", buf->buf);
-				pfree(buf);
 			}
 		}
 	}
@@ -489,7 +429,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
  * is accumulated in REMOTE_PRINT_BUF.
  */
 
-static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_buf,
+static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_buf,
 			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
 			      struct ikev2_proposals *local_proposals,
@@ -611,7 +551,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 	     remote_transform_nr < num_remote_transforms;
 	     remote_transform_nr++) {
 
-		print_string(remote_print_buf, remote_transform_sep);
+		lswlogs(remote_print_buf, remote_transform_sep);
 		remote_transform_sep = ";";
 
 		/* first the transform */
@@ -621,7 +561,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 			       prop_pbs, &trans_pbs)) {
 			libreswan_log("remote proposal %u transform %d is corrupt",
 				      remote_propnum, remote_transform_nr);
-			print_string(remote_print_buf, "[corrupt-transform]");
+			lswlogs(remote_print_buf, "[corrupt-transform]");
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
 
@@ -647,7 +587,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				       &attr_pbs)) {
 				libreswan_log("remote proposal %u transform %d contains corrupt attribute",
 					      remote_propnum, remote_transform_nr);
-				print_string(remote_print_buf, "[corrupt-attribute]");
+				lswlogs(remote_print_buf, "[corrupt-attribute]");
 				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 			}
 
@@ -664,7 +604,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				libreswan_log("remote proposal %u transform %d has unknown attribute %d or unexpeced attribute encoding",
 					      remote_propnum, remote_transform_nr,
 					      attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
-				print_string(remote_print_buf, "[unknown-attribute]");
+				lswlogs(remote_print_buf, "[unknown-attribute]");
 				return 0; /* try next proposal */
 			}
 		}
@@ -680,7 +620,7 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 				libreswan_log("remote proposal %u transform %d has too much NULL integrity %d %d",
 					      remote_propnum, remote_transform_nr,
 					      first_integrity_transid, remote_trans.isat_transid);
-				print_string(remote_print_buf, "[mixed-integrity]");
+				lswlogs(remote_print_buf, "[mixed-integrity]");
 				return 0; /* try next proposal */
 			}
 		}
@@ -730,17 +670,15 @@ static int process_transforms(pb_stream *prop_pbs, struct print *remote_print_bu
 					}
 					if (local_transform->id == remote_transform.id
 					    && local_transform->attr_keylen == remote_transform.attr_keylen) {
-						DBG(DBG_CONTROLMORE,
-						    {
-							    struct print *buf = print_buf();
-							    print_type_transform(buf, type, &remote_transform);
-							    DBG_log("remote proposal %u transform %d (%s) matches local proposal %d type %d (%s) transform %td",
-								    remote_propnum, remote_transform_nr,
-								    buf->buf, local_propnum,
-								    type, trans_type_name(type),
-								    local_transform - local_transforms->transform);
-							    pfree(buf);
-						    });
+						LSWDBGP(DBG_CONTROLMORE, buf) {
+							lswlogf(buf, "remote proposal %u transform %d (",
+								remote_propnum, remote_transform_nr);
+							print_type_transform(buf, type, &remote_transform);
+							lswlogf(buf, ") matches local proposal %d type %d (%s) transform %td",
+								local_propnum,
+								type, trans_type_name(type),
+								local_transform - local_transforms->transform);
+						}
 						/*
 						 * Update the sentinel
 						 * with this new best
@@ -955,7 +893,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				   bool expect_accepted,
 				   struct ikev2_proposals *local_proposals,
 				   struct ikev2_proposal *best_proposal,
-				   struct print *remote_print_buf)
+				   struct lswlog *remote_print_buf)
 {
 	/*
 	 * Array to track best proposals/transforms.
@@ -988,16 +926,15 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		if (!in_struct(&remote_proposal, &ikev2_prop_desc, sa_payload,
 			       &proposal_pbs)) {
 			libreswan_log("proposal %d corrupt", next_propnum);
-			print_string(remote_print_buf, " [corrupt-proposal]");
+			lswlogs(remote_print_buf, " [corrupt-proposal]");
 			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
 		}
-		print_string(remote_print_buf, remote_proposal_sep);
+		lswlogs(remote_print_buf, remote_proposal_sep);
 		remote_proposal_sep = " ";
-		print_value(remote_print_buf, remote_proposal.isap_propnum);
-		print_string(remote_print_buf, ":");
-		print_string(remote_print_buf, protoid_name(remote_proposal.isap_protoid));
-		print_string(remote_print_buf, ":");
+		lswlogf(remote_print_buf, "%d:", remote_proposal.isap_propnum);
+		lswlogs(remote_print_buf, protoid_name(remote_proposal.isap_protoid));
+		lswlogs(remote_print_buf, ":");
 
 		/*
 		 * Validate the Last Substruc and Proposal Num.
@@ -1015,13 +952,13 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			/* There can be only one accepted proposal.  */
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
 				libreswan_log("Error: more than one accepted proposal received.");
-				print_string(remote_print_buf, "[too-many-accepted-proposals]");
+				lswlogs(remote_print_buf, "[too-many-accepted-proposals]");
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
 			}
 			if (remote_proposal.isap_propnum < 1 || remote_proposal.isap_propnum >= local_proposals->roof) {
 				libreswan_log("Error: invalid accepted proposal.");
-				print_string(remote_print_buf, "[invalid-accepted-proposal]");
+				lswlogs(remote_print_buf, "[invalid-accepted-proposal]");
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
 			}
@@ -1030,7 +967,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				libreswan_log("proposal number was %u but %u expected",
 					      remote_proposal.isap_propnum,
 					      next_propnum);
-				print_string(remote_print_buf, "[wrong-protonum]");
+				lswlogs(remote_print_buf, "[wrong-protonum]");
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				break;
 			}
@@ -1048,7 +985,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			libreswan_log("proposal %d has unexpected Protocol ID %d, expected IKE",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_protoid);
-			print_string(remote_print_buf, "[unexpected-protoid]");
+			lswlogs(remote_print_buf, "[unexpected-protoid]");
 			continue;
 		}
 
@@ -1070,14 +1007,14 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			libreswan_log("proposal %d has unrecognized Protocol ID %u; ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_protoid);
-			print_string(remote_print_buf, "[unknown-protocol]");
+			lswlogs(remote_print_buf, "[unknown-protocol]");
 			continue;
 		}
 		if (remote_proposal.isap_spisize > sizeof(remote_spi.bytes)) {
 			libreswan_log("proposal %d has huge SPI size (%u); ignored",
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_spisize);
-			print_string(remote_print_buf, "[spi-huge]");
+			lswlogs(remote_print_buf, "[spi-huge]");
 			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX); */
 			continue;
 		}
@@ -1086,7 +1023,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				      remote_proposal.isap_propnum,
 				      (unsigned)remote_proposal.isap_spisize,
 				      remote_spi.size);
-			print_string(remote_print_buf, "[spi-size]");
+			lswlogs(remote_print_buf, "[spi-size]");
 			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX); */
 			continue;
 		}
@@ -1095,7 +1032,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				libreswan_log("proposal %d contains corrupt SPI",
 					      remote_proposal.isap_propnum);
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
-				print_string(remote_print_buf, "[corrupt-spi]");
+				lswlogs(remote_print_buf, "[corrupt-spi]");
 				break;
 			}
 		}
@@ -1131,10 +1068,10 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			/* mark what happened */
 			if (matching_local_propnum == 0) {
 				/* first match */
-				print_string(remote_print_buf, "[first-match]");
+				lswlogs(remote_print_buf, "[first-match]");
 			} else {
 				/* second or further match */
-				print_string(remote_print_buf, "[better-match]");
+				lswlogs(remote_print_buf, "[better-match]");
 			}
 			/* capture the new best proposal  */
 			matching_local_propnum = match;
@@ -1200,9 +1137,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 * Must be freed by this function.
 	 */
 	stf_status status;
-	{
-		struct print *remote_print_buf = print_buf();
-
+	LSWBUF(remote_print_buf) {
 		int matching_local_propnum = ikev2_process_proposals(sa_payload,
 								     expect_ike, expect_spi,
 								     expect_accepted,
@@ -1212,47 +1147,52 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 		if (matching_local_propnum < 0) {
 			/*
-			 * best_local_proposal is -STF_FAIL status indicating
-			 * corruption.
+			 * best_local_proposal is -STF_FAIL status
+			 * indicating corruption.
 			 *
-			 * Dump the proposals so far.  The detailed error
-			 * reason will have already been logged.
+			 * Dump the proposals so far.  The detailed
+			 * error reason will have already been logged.
 			 */
-			libreswan_log("partial list of proposals:%s",
-				      remote_print_buf->buf);
+			LSWDBG(buf) {
+				lswlogs(buf, "partial list of proposals:");
+				lswlogl(buf, remote_print_buf);
+			}
 			status = -matching_local_propnum;
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
-				libreswan_log("accepted proposal invalid:%s",
-					      remote_print_buf->buf);
+				LSWDBG(buf) {
+					lswlogs(buf, "accepted proposal invalid:");
+					lswlogl(buf, remote_print_buf);
+				}
 				status = STF_FAIL;
 			} else {
-				libreswan_log("no proposal chosen from:%s",
-					      remote_print_buf->buf);
+				LSWDBG(buf) {
+					lswlogs(buf, "no proposal chosen from:");
+					lswlogl(buf, remote_print_buf);
+				}
 				status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		} else {
 			if (expect_accepted) {
 				pexpect(matching_local_propnum == best_proposal->propnum);
 				/* don't log on initiator's end - redundant */
-				DBG(DBG_CONTROL,
-				    DBG_log("proposal %s was accepted",
-					    remote_print_buf->buf));
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "proposal ");
+					lswlogl(buf, remote_print_buf);
+					lswlogs(buf, " was accepted");
+				}
 			} else {
-				{
-					struct print *prop = print_buf();
-					print_proposal(prop, best_proposal->propnum, best_proposal);
-					if (opportunistic) {
-						/* Don't log when opportunistic.  */
-						DBG(DBG_CONTROL,
-						    DBG_log("proposal %s chosen from: %s",
-							    prop->buf, remote_print_buf->buf));
-					} else {
-						libreswan_log("proposal %s chosen from: %s",
-							      prop->buf, remote_print_buf->buf);
+				if (opportunistic) {
+					LSWDBGP(DBG_CONTROL, buf) {
+						lswlog_chosen_proposal(buf, best_proposal,
+								       remote_print_buf);
 					}
-					pfree(prop);
+				} else {
+					LSWLOG(buf) {
+						lswlog_chosen_proposal(buf, best_proposal,
+								       remote_print_buf);
+					}
 				}
 			}
 
@@ -1262,7 +1202,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 			status = STF_OK;
 		}
 
-		pfree(remote_print_buf);
 	}
 
 	pfreeany(best_proposal); /* only free if still owned by us */
@@ -1996,12 +1935,10 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		DBG(DBG_CONTROL, DBG_log("selecting default IKE proposals for %s", what));
 		*result = &default_ikev2_ike_proposals;
 
-		{
-			struct print *buf = print_buf();
+		LSWLOG(buf) {
+			lswlogf(buf, "%s IKE proposals for %s: ", name, what);
 			print_proposals(buf, *result);
-			libreswan_log("%s IKE proposals for %s: %s (default)",
-				      name, what, buf->buf);
-			pfree(buf);
+			lswlogf(buf, " (default)");
 		}
 
 		return;
@@ -2085,11 +2022,9 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 	}
 	*result = proposals;
 
-	{
-		struct print *buf = print_buf();
+	LSWLOG(buf) {
+		lswlogf(buf, "%s IKE proposals for %s: ", name, what);
 		print_proposals(buf, *result);
-		libreswan_log("%s IKE proposals for %s: %s", name, what, buf->buf);
-		pfree(buf);
 	}
 }
 
@@ -2235,12 +2170,10 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		}
 		*result = proposals;
 
-		{
-			struct print *buf = print_buf();
+		LSWLOG(buf) {
+			lswlogf(buf, "%s ESP/AH proposals for %s: ", name, what);
 			print_proposals(buf, *result);
-			libreswan_log("%s ESP/AH proposals for %s: %s (default)",
-				      name, what, buf->buf);
-			pfree(buf);
+			lswlogf(buf, " (default)");
 		}
 
 		return;
@@ -2330,11 +2263,10 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 	*result = proposals;
 
-	{
-		struct print *buf = print_buf();
+	LSWLOG(buf) {
+		lswlogf(buf, "%s ESP/AH proposals for %s: ",
+			name, what);
 		print_proposals(buf, *result);
-		libreswan_log("%s ESP/AH proposals for %s: %s", name, what, buf->buf);
-		pfree(buf);
 	}
 }
 
