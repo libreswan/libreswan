@@ -104,9 +104,9 @@ static const struct ike_alg_type *const ike_alg_types[] = {
 const char *ike_alg_key_name(enum ike_alg_key key)
 {
 	static const char *names[IKE_ALG_KEY_ROOF] = {
-		[IKEv1_OAKLEY_ID] = "IKEv1 OAKLEY ID",
-		[IKEv1_ESP_ID] = "IKEv1 ESP ID",
-		[IKEv2_ALG_ID] = "IKEv2 ID",
+		[IKEv1_OAKLEY_ID] = "IKEv1 OAKLEY",
+		[IKEv1_ESP_ID] = "IKEv1 ESP/AH",
+		[IKEv2_ALG_ID] = "IKEv2",
 	};
 	passert(key < elemsof(names));
 	return names[key];
@@ -233,6 +233,40 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, not found\n",
 		    type->name, name ? name : "???", id));
 	return NULL;
+}
+
+size_t lswlog_ike_alg_id_name(struct lswlog *log,
+			      const struct ike_alg_type *type,
+			      enum ike_alg_key key, int id)
+{
+	/* passert(type != NULL); */
+	passert(key < IKE_ALG_KEY_ROOF);
+
+	/*
+	 * Try the IKE_ALG database.  Presumably this function is
+	 * being called because it wasn't there. But, well, you never
+	 * know.
+	 */
+	const struct ike_alg *alg = lookup_by_id(type, key, id, LEMPTY);
+	if (alg != NULL) {
+		return lswlogf(log, "%s", alg->name);
+	}
+
+	/*
+	 * Try the enum table.
+	 */
+	const char *name = enum_short_name(type->enum_names[key], id);
+	if (name != NULL) {
+		return lswlogf(log, "%s", name);
+	}
+
+	/*
+	 * dump it in decimal.
+	 */
+	return lswlogf(log, "<<%s %s ID %d?>>",
+		       ike_alg_key_name(key),
+		       ike_alg_type_name(type),
+		       id);
 }
 
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,

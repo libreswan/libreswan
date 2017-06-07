@@ -25,6 +25,7 @@
 struct ike_alg;
 struct lswlog;
 enum ike_alg_key;
+struct lswlog;
 
 /*
  * More meaningful passert.
@@ -134,6 +135,16 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 				     shunk_t name);
 int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
 		       shunk_t name);
+
+/*
+ * Reverse, look for ID within TYPE's enums.
+ *
+ * Use this as a fallback for when the more direct lookups fail; for
+ * instance when an ID that is unknown is encountered.
+ */
+size_t lswlog_ike_alg_id_name(struct lswlog *log,
+			      const struct ike_alg_type *type,
+			      enum ike_alg_key key, int id);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
