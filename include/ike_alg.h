@@ -511,29 +511,6 @@ struct integ_desc {
 };
 
 /*
- * Find the IKEv2 ENCRYPT/PRF/INTEG algorithm using IKEv2 wire-values.
- *
- * The returned algorithm may not have native support.  Native
- * algorithms have do_ike_test non-NULL.
- */
-
-const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
-const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
-const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
-
-/*
- * Find the IKEv1 ENCRYPT/PRF/INTEG algorithm using IKEv1 OAKLEY
- * values.
- *
- * Unlike IKEv2, IKEv1 uses different wire-values for IKE, ESP, and
- * AH.  This just deals with OAKLEY.
- */
-
-const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
-const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
-const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
-
-/*
  * Is the encryption algorithm AEAD (Authenticated Encryption with
  * Associated Data)?
  *
@@ -635,7 +612,6 @@ struct dhmke_ops {
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */
-extern const struct oakley_group_desc *lookup_group(u_int16_t group);
 const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **);
 
 /*
@@ -649,6 +625,36 @@ const struct prf_desc *prf_desc(const struct ike_alg *alg);
 const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
 const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg);
+const struct oakley_group_desc *dh_desc(const struct ike_alg *alg);
+
+/*
+ * Find the ENCRYPT / PRF / INTEG / DH algorithm using the IKEv2 wire
+ * value.
+ *
+ * Use ike_alg_is_ike() to confirm that the algorithm has a native
+ * implementation (as needed by IKE and ESP/AH PFS).  Use a kernel
+ * query to confirm that the algorithm has kernel support (XXX: what?
+ * who knows).
+ */
+
+const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
+const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
+const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
+const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
+
+/*
+ * Find the ENCRYPT / PRF / INTEG / DH algorithm using IKEv1 IKE (aka
+ * OAKLEY) wire value.
+ *
+ * Unlike IKEv2, IKEv1 uses different wire-values for IKE, ESP, and
+ * AH.  This just deals with IKE (well, ok, in the case of DH, it also
+ * deals with ESP/AH as the value is the same).
+ */
+
+const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
+const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
+const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
+const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
 
 /*
  * Pretty print the algorithm into a buffer as a string.  The string

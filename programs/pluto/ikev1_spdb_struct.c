@@ -1285,7 +1285,7 @@ rsasig_common:
 			break;
 
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-				ta.group = lookup_group(val);
+				ta.group = ikev1_get_ike_dh_desc(val);
 				if (ta.group == NULL) {
 					ugh = builddiag(
 						"OAKLEY_GROUP %d not supported",
@@ -1637,7 +1637,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.group = lookup_group(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
+	ta.group = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.group != NULL);
 
 	st->st_oakley = ta;
@@ -1871,7 +1871,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				loglog(RC_COMMENT,
 				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			pfs_group = lookup_group(val);
+			pfs_group = ikev1_get_ike_dh_desc(val);
 			if (pfs_group == NULL) {
 				loglog(RC_LOG_SERIOUS,
 				       "OAKLEY_GROUP %" PRIu32 " not supported for PFS",

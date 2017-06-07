@@ -1486,7 +1486,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_DH: {
 				const struct oakley_group_desc *group =
-					lookup_group(transform->id);
+					ikev2_get_dh_desc(transform->id);
 				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
@@ -2358,7 +2358,8 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 		int t;
 		for (t = 0; t < transforms->transform[t].valid; t++) {
 			int groupnum = transforms->transform[t].id;
-			const struct oakley_group_desc *group = lookup_group(groupnum);
+			const struct oakley_group_desc *group =
+				ikev2_get_dh_desc(groupnum);
 			if (group == NULL) {
 				/*
 				 * Things screwed up (this group
@@ -2374,7 +2375,8 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 	}
 	DBG(DBG_CONTROL, DBG_log("No valid MODP (DH) transform found"));
 	/* return something that should be supported.  */
-	const struct oakley_group_desc *group = lookup_group(OAKLEY_GROUP_MODP2048);
+	const struct oakley_group_desc *group =
+		ikev2_get_dh_desc(OAKLEY_GROUP_MODP2048);
 	passert(group != NULL);
 	return group;
 }

@@ -296,6 +296,11 @@ const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
 	return integ_desc(ikev1_oakley_lookup(&ike_alg_integ, id));
 }
 
+const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
+{
+	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
+}
+
 static const struct ike_alg *ikev2_lookup(const struct type_algorithms *algorithms, int id)
 {
 
@@ -317,15 +322,9 @@ const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id));
 }
 
-const struct oakley_group_desc *lookup_group(u_int16_t group)
+const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
 {
-	for (const struct oakley_group_desc **groupp = next_oakley_group(NULL);
-	     groupp != NULL; groupp = next_oakley_group(groupp)) {
-		if (group == (*groupp)->group) {
-			return *groupp;
-		}
-	}
-	return NULL;
+	return dh_desc(ikev2_lookup(&ike_alg_dh, id));
 }
 
 /*

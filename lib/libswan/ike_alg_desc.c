@@ -49,8 +49,13 @@ const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
 	return (const struct encrypt_desc *)alg;
 }
 
-const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
+const struct oakley_group_desc *dh_desc(const struct ike_alg *alg)
 {
 	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
 	return (const struct oakley_group_desc *)alg;
+}
+
+const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
+{
+	return dh_desc(alg);
 }

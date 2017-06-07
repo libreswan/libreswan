@@ -1732,7 +1732,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				 * local proposal groups, a lookup of
 				 * sg.sg_group must succeed.
 				 */
-				const struct oakley_group_desc *new_group = lookup_group(sg.sg_group);
+				const struct oakley_group_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 				passert(new_group);
 				DBG(DBG_CONTROLMORE, {
 					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
