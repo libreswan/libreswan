@@ -936,36 +936,21 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
 
 
 /*
- * Compare all remote proposals against all local proposals finding
- * and returning the "first" local proposal to match.
+ * Process all the transforms, returning:
  *
- * The need to load all the remote proposals into buffers is avoided
- * by processing them in a single.  This is a tradeoff.  Since each
- * remote proposal in turn is compared against all local proposals
- * (and not each local proposal in turn compared against all remote
- * proposals) a local proposal matching only the last remote proposal
- * takes more comparisons.  Othe other and mallocing an pointer
- * jugging is avoided.
+ *    -ve: the STF_FAIL status
+ *    0: no proposal matched
+ *    [1..LOCAL_PROPOSALS->ROOF): best match so far
  */
-stf_status ikev2_process_sa_payload(const char *what,
-				    pb_stream *sa_payload,
-				    bool expect_ike,
-				    bool expect_spi,
-				    bool expect_accepted,
-				    bool opportunistic,
-				    struct ikev2_proposal **chosen_proposal,
-				    struct ikev2_proposals *local_proposals)
+
+static int ikev2_process_proposals(pb_stream *sa_payload,
+				   bool expect_ike,
+				   bool expect_spi,
+				   bool expect_accepted,
+				   struct ikev2_proposals *local_proposals,
+				   struct ikev2_proposal *best_proposal,
+				   struct print *remote_print_buf)
 {
-	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
-				 what, local_proposals->roof - 1));
-
-	/*
-	 * The chosen proposal.  If there was a match, and no errors,
-	 * it will be returned via CHOSEN_PROPOSAL (and STF_OK).
-	 * Otherwise it must be freed.
-	 */
-	struct ikev2_proposal *best_proposal = alloc_thing(struct ikev2_proposal, "best proposal");
-
 	/*
 	 * Array to track best proposals/transforms.
 	 *
@@ -974,13 +959,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 	struct ikev2_proposal_match *matching_local_proposals;
 	matching_local_proposals = alloc_things(struct ikev2_proposal_match, local_proposals->roof,
 						"matching_local_proposals");
-
-	/*
-	 * Buffer to accumulate the entire proposal (in ascii form).
-	 *
-	 * Must be freed.
-	 */
-	struct print *remote_print_buf = print_buf();
 
 	/*
 	 * This loop contains no "return" statements.  Instead it
@@ -997,6 +975,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	int next_propnum = 1;
 	const char *remote_proposal_sep = "";
 	struct ikev2_prop remote_proposal;
+
 	do {
 		/* Read the next proposal */
 		pb_stream proposal_pbs;
@@ -1174,6 +1153,55 @@ stf_status ikev2_process_sa_payload(const char *what,
 		}
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
 
+	pfree(matching_local_proposals);
+	return matching_local_propnum;
+}
+
+/*
+ * Compare all remote proposals against all local proposals finding
+ * and returning the "first" local proposal to match.
+ *
+ * The need to load all the remote proposals into buffers is avoided
+ * by processing them in a single.  This is a tradeoff.  Since each
+ * remote proposal in turn is compared against all local proposals
+ * (and not each local proposal in turn compared against all remote
+ * proposals) a local proposal matching only the last remote proposal
+ * takes more comparisons.  Othe other and mallocing an pointer
+ * jugging is avoided.
+ */
+stf_status ikev2_process_sa_payload(const char *what,
+				    pb_stream *sa_payload,
+				    bool expect_ike,
+				    bool expect_spi,
+				    bool expect_accepted,
+				    bool opportunistic,
+				    struct ikev2_proposal **chosen_proposal,
+				    struct ikev2_proposals *local_proposals)
+{
+	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
+				 what, local_proposals->roof - 1));
+
+	/*
+	 * The chosen proposal.  If there was a match, and no errors,
+	 * it will be returned via CHOSEN_PROPOSAL (and STF_OK).
+	 * Otherwise it must be freed.
+	 */
+	struct ikev2_proposal *best_proposal = alloc_thing(struct ikev2_proposal, "best proposal");
+
+	/*
+	 * Buffer to accumulate the entire proposal (in ascii form).
+	 *
+	 * Must be freed.
+	 */
+	struct print *remote_print_buf = print_buf();
+
+	int matching_local_propnum = ikev2_process_proposals(sa_payload,
+							     expect_ike, expect_spi,
+							     expect_accepted,
+							     local_proposals,
+							     best_proposal,
+							     remote_print_buf);
+
 	stf_status status;
 	if (matching_local_propnum < 0) {
 		/*
@@ -1218,13 +1246,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 			}
 			pfree(prop);
 		}
+
 		/* transfer ownership of BEST_PROPOSAL to caller */
 		*chosen_proposal = best_proposal;
 		best_proposal = NULL;
 		status = STF_OK;
 	}
 
-	pfree(matching_local_proposals);
 	pfreeany(best_proposal); /* only free if still owned by us */
 	pfree(remote_print_buf);
 
