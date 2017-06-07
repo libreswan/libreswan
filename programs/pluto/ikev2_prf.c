@@ -4,7 +4,7 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -324,6 +324,10 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 						     prf_desc,
 						     "Ni|Nr", key);
 	freeanychunk(key);
+	if (prf == NULL) {
+		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
+		return NULL;
+	}
 	/* seed = g^ir */
 	crypt_prf_update_symkey("g^ir", prf, dh_secret);
 	/* generate */
@@ -342,6 +346,11 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed",
 						      DBG_CRYPT, prf_desc,
 						      "SK_d (old)", SK_d_old);
+	if (prf == NULL) {
+		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
+		return NULL;
+	}
+
 	/* seed: g^ir (new) | Ni | Nr) */
 	crypt_prf_update_symkey("g^ir (new)", prf, new_dh_secret);
 	crypt_prf_update_chunk("Ni", prf, Ni);
