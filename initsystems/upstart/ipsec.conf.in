@@ -11,11 +11,7 @@ stop on runlevel [!2345]
 
 respawn
 
-pre-start script
-    cd /
-    . /etc/default/pluto
-    @FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
-end script
+pre-start exec @FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
 
 script
     . /etc/default/pluto
