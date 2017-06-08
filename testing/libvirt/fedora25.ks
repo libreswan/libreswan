@@ -86,6 +86,9 @@ ifup ens2 >> /var/tmp/network.log
 
 rpm -e vim-minimal --nodeps
 
+echo "exclude=kernel*" >> /etc/dnf/dnf.conf
+dnf -y update 2>&1 | tee /var/tmp/dnf-update.log
+
 mkdir /testing /source
 
 cat << EOD >> /etc/issue

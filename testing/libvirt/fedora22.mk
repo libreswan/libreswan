@@ -27,6 +27,7 @@ KVM_PACKAGES = \
     libseccomp-devel \
     libselinux-devel \
     lsof \
+    mtr \
     nc \
     nc6 \
     nsd \
@@ -42,11 +43,13 @@ KVM_PACKAGES = \
     python3-pexpect \
     python3-setproctitle \
     pyOpenSSL \
+    screen \
     racoon2 \
     strace \
     systemd-devel \
     tar \
     tcpdump \
+    telnet  \
     unbound \
     unbound-devel \
     unbound-libs \

@@ -13,6 +13,7 @@ KVM_F25_HACK=$(KVMSH) --shutdown $(1)$(2) '/testing/guestbin/swan-transmogrify'
 KVM_PACKAGES = \
     ElectricFence \
     audit-libs-devel \
+    bind-utils	\
     bison \
     conntrack-tools \
     curl-devel \
@@ -32,7 +33,9 @@ KVM_PACKAGES = \
     libseccomp-devel \
     libselinux-devel \
     lsof \
+    mtr \
     nc \
+    net-tools \
     nsd \
     nspr-devel \
     nss-devel \
@@ -41,13 +44,17 @@ KVM_PACKAGES = \
     openldap-devel \
     pam-devel \
     pexpect \
-    python3-pexpect \
-    python3-setproctitle \
+    psmisc \
+    python-pexpect \
+    python-setproctitle \
     racoon2 \
+    screen \
     strace \
     strongswan \
     systemd-devel \
     tar \
+    tcpdump \
+    telnet \
     unbound \
     unbound-devel \
     unbound-libs \
