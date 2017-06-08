@@ -8,6 +8,7 @@ KVM_PACKAGES = \
     ElectricFence \
     audit-libs-devel \
     bison \
+    bind-utils \
     conntrack-tools \
     curl-devel \
     fipscheck-devel \
@@ -29,6 +30,7 @@ KVM_PACKAGES = \
     nc \
     nc6 \
     nsd \
+    net-tools \
     nss-devel \
     nss-tools \
     nspr-devel \
@@ -36,6 +38,7 @@ KVM_PACKAGES = \
     openldap-devel \
     pam-devel \
     pexpect \
+    psmisc \
     python3-pexpect \
     python3-setproctitle \
     pyOpenSSL \
@@ -43,6 +46,7 @@ KVM_PACKAGES = \
     strace \
     systemd-devel \
     tar \
+    tcpdump \
     unbound \
     unbound-devel \
     unbound-libs \
