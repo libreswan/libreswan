@@ -168,8 +168,7 @@ int sign_hash(const struct RSA_private_key *k,
 
 	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
 	if (PK11_Authenticate(slot, PR_FALSE,
-			       lsw_return_nss_password_file_info()) ==
-	     SECSuccess) {
+			       lsw_return_nss_password_file_info()) == SECSuccess) {
 		DBG(DBG_CRYPT,
 		    DBG_log("NSS: Authentication to NSS successful"));
 	} else {
