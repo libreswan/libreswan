@@ -250,6 +250,8 @@ static void retransmit_v2_msg(struct state *st)
 	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
+	passert(IS_PARENT_SA(pst));
+
 	set_cur_state(st);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
@@ -366,12 +368,19 @@ static void retransmit_v2_msg(struct state *st)
 	 * XXX There should not have been a child sa unless this was a timeout of
 	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
 	 */
-	// passert(IS_PARENT_SA(st)); in the glorious future
+
 
 	delete_state(st);
-	if (pst != NULL) {
-		delete_state(pst);
+
+	if (pst != st) { 
+		if (pst->st_state == STATE_PARENT_I2) {
+			delete_state(pst);
+		} else {
+			release_fragments(st);
+			freeanychunk(st->st_tpacket);
+		}
 	}
+
 	/* note: no md->st to clear */
 }
 
